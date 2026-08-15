@@ -1,7 +1,8 @@
 /**
  * Upsert platform super-admin / ecosystem demo users in a satellite DB.
  * Creates every email from PLATFORM_SUPER_ADMIN_EMAILS (defaults include
- * shirinov.chingiz@gmail.com) with max admin role + bootstrap password.
+ * shirinov.chingiz@gmail.com) with Hotel_Admin role + full permissions +
+ * bootstrap password.
  *
  * Run from satellite root: npx tsx prisma/scripts/upsert-ecosystem-demo-user.ts
  */
@@ -16,11 +17,18 @@ const {
   platformSuperAdminBootstrapPassword,
 } = require("@era/satellite-kit") as typeof import("@era/satellite-kit");
 
+const {
+  ROLE_CODES,
+  ROLE_PERMISSIONS,
+  serializePermissions,
+} = require("./src/lib/auth/permissions") as typeof import("../../src/lib/auth/permissions");
+
 const password =
   process.env.ECOSYSTEM_DEMO_PASSWORD?.trim() ||
   platformSuperAdminBootstrapPassword();
-const adminRoleCode = process.env.ECOSYSTEM_DEMO_ADMIN_ROLE ?? "ADMIN";
 const fullName = process.env.ECOSYSTEM_DEMO_FULL_NAME ?? "Platform Super Admin";
+const adminRoleCode =
+  process.env.ECOSYSTEM_DEMO_ADMIN_ROLE?.trim() || ROLE_CODES.HOTEL_ADMIN;
 
 function resolveLogins(): string[] {
   const emails = [...platformSuperAdminEmails()];
@@ -35,20 +43,31 @@ const prisma = new PrismaClient();
 
 async function main() {
   const hash = await hashPassword(password);
+  const perms =
+    ROLE_PERMISSIONS[adminRoleCode as keyof typeof ROLE_PERMISSIONS] ??
+    ROLE_PERMISSIONS[ROLE_CODES.HOTEL_ADMIN];
+  const permissionsJson = serializePermissions(perms);
 
   let role = await prisma.role.findUnique({ where: { code: adminRoleCode } });
-  if (!role) {
-    role = await prisma.role.findFirst({ orderBy: { code: "asc" } });
-  }
   if (!role) {
     role = await prisma.role.create({
       data: {
         code: adminRoleCode,
         name: adminRoleCode.replace(/_/g, " "),
-        permissionsJson: "[]",
+        permissionsJson,
       },
     });
     console.info(`[demo-user] created role ${adminRoleCode}`);
+  } else if (
+    !role.permissionsJson ||
+    role.permissionsJson === "[]" ||
+    role.permissionsJson.trim() === "[]"
+  ) {
+    role = await prisma.role.update({
+      where: { id: role.id },
+      data: { permissionsJson },
+    });
+    console.info(`[demo-user] repaired empty permissionsJson on ${adminRoleCode}`);
   }
 
   for (const login of resolveLogins()) {
@@ -72,7 +91,7 @@ async function main() {
         isCrossSystem: true,
       },
     });
-    console.info(`[demo-user] upserted ${login} (${adminRoleCode})`);
+    console.info(`[demo-user] upserted ${login} → ${adminRoleCode}`);
   }
 }
 

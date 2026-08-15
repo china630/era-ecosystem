@@ -1,15 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  DEFAULT_LIST_PAGE_SIZE,
+  ListPaginationFooter,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { getOrchAccessToken } from "../../../../lib/orch-api";
+import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 
 type OrgUnitOpt = { id: string; name: string; status: string };
@@ -26,8 +36,11 @@ type EmploymentRow = {
   hireDate: string;
   status: string;
   financeEmployeeId?: string | null;
-  orgUnit?: { name: string } | null;
-  position?: { name: string } | null;
+  orgUnit?: { name: string; id?: string } | null;
+  position?: { name: string; id?: string } | null;
+  orgUnitId?: string;
+  positionId?: string;
+  roleBindings?: Array<{ satelliteKey: string }>;
 };
 
 type ListResponse = {
@@ -43,10 +56,26 @@ type ListResponse = {
   >;
 };
 
+function orgIdFromToken(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const claims = JSON.parse(atob(token.split(".")[1] ?? "")) as {
+      organizationId?: string | null;
+    };
+    return claims.organizationId ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function mdmWorkforceFetch(path: string, init: RequestInit = {}) {
   const token = getOrchAccessToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  const orgId = orgIdFromToken(token);
+  if (orgId && !headers.has("x-organization-id")) {
+    headers.set("x-organization-id", orgId);
+  }
   if (!headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json");
   }
@@ -60,6 +89,10 @@ async function workforceFetch(path: string, init: RequestInit = {}) {
   const token = getOrchAccessToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  const orgId = orgIdFromToken(token);
+  if (orgId && !headers.has("x-organization-id")) {
+    headers.set("x-organization-id", orgId);
+  }
   if (!headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json");
   }
@@ -69,13 +102,21 @@ async function workforceFetch(path: string, init: RequestInit = {}) {
   });
 }
 
+const SATELLITE_OPTIONS = [
+  { key: "industry_clinic", label: "Clinic" },
+  { key: "industry_hotel_pms", label: "Hotel PMS" },
+  { key: "industry_fnb_pos", label: "F&B POS" },
+] as const;
+
 export default function WorkforceEmploymentsPage() {
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceEmployments");
+  const tCommon = useTranslations("common");
   const [rows, setRows] = useState<EmploymentRow[]>([]);
   const [persons, setPersons] = useState<ListResponse["persons"]>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [hireOpen, setHireOpen] = useState(false);
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [resolveFin, setResolveFin] = useState("");
   const [resolveName, setResolveName] = useState("");
@@ -87,17 +128,21 @@ export default function WorkforceEmploymentsPage() {
   const [hireDate, setHireDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
+  const [notEntitled, setNotEntitled] = useState(false);
+  const [enabling, setEnabling] = useState(false);
   const [satelliteKeys, setSatelliteKeys] = useState<string[]>([
     "industry_clinic",
     "industry_hotel_pms",
     "industry_fnb_pos",
   ]);
 
-  const SATELLITE_OPTIONS = [
-    { key: "industry_clinic", label: "Clinic" },
-    { key: "industry_hotel_pms", label: "Hotel PMS" },
-    { key: "industry_fnb_pos", label: "F&B POS" },
-  ] as const;
+  const [filterText, setFilterText] = useState("");
+  const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
+  const [filterPositionId, setFilterPositionId] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterSatellite, setFilterSatellite] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
 
   const loadRefs = useCallback(async () => {
     const [unitRes, posRes] = await Promise.all([
@@ -125,8 +170,18 @@ export default function WorkforceEmploymentsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    await loadRefs();
     const res = await workforceFetch("employments");
+    if (res.status === 403) {
+      const body = (await res.json().catch(() => null)) as { code?: string } | null;
+      if (body?.code === "PLATFORM_WORKFORCE_REQUIRED") {
+        setNotEntitled(true);
+        setRows([]);
+        setLoading(false);
+        return;
+      }
+    }
+    setNotEntitled(false);
+    await loadRefs();
     if (!res.ok) {
       setError(`${res.status}`);
       setRows([]);
@@ -158,6 +213,67 @@ export default function WorkforceEmploymentsPage() {
   const filteredPositions = positions.filter(
     (p) => !orgUnitId || p.orgUnitId === orgUnitId,
   );
+
+  const filterPositionOptions = positions.filter(
+    (p) => !filterOrgUnitId || p.orgUnitId === filterOrgUnitId,
+  );
+
+  const filteredRows = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (filterStatus && r.status !== filterStatus) return false;
+      if (filterOrgUnitId) {
+        const unitId = r.orgUnitId ?? r.orgUnit?.id;
+        if (unitId !== filterOrgUnitId) return false;
+      }
+      if (filterPositionId) {
+        const posId = r.positionId ?? r.position?.id;
+        if (posId !== filterPositionId) return false;
+      }
+      if (filterSatellite) {
+        const keys = r.roleBindings?.map((b) => b.satelliteKey) ?? [];
+        if (!keys.includes(filterSatellite)) return false;
+      }
+      if (q) {
+        const person = persons[r.globalPersonId];
+        const name = (person?.displayName ?? "").toLowerCase();
+        const fin = (person?.finMasked ?? "").toLowerCase();
+        if (!name.includes(q) && !fin.includes(q) && !r.globalPersonId.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [
+    rows,
+    persons,
+    filterText,
+    filterOrgUnitId,
+    filterPositionId,
+    filterStatus,
+    filterSatellite,
+  ]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterText, filterOrgUnitId, filterPositionId, filterStatus, filterSatellite]);
+
+  function openHire() {
+    setResolveFin("");
+    setResolveName("");
+    setGlobalPersonId("");
+    setResolvedLabel(null);
+    setPositionId("");
+    setHireDate(new Date().toISOString().slice(0, 10));
+    setSatelliteKeys(["industry_clinic", "industry_hotel_pms", "industry_fnb_pos"]);
+    setError(null);
+    setHireOpen(true);
+  }
 
   async function onResolvePerson() {
     if (busy || !resolveFin.trim() || !resolveName.trim()) return;
@@ -208,14 +324,55 @@ export default function WorkforceEmploymentsPage() {
       return;
     }
     setGlobalPersonId("");
+    setHireOpen(false);
     await load();
     setBusy(false);
   }
 
+  async function enableWorkforce() {
+    setEnabling(true);
+    const token = getOrchAccessToken();
+    if (!token) {
+      setEnabling(false);
+      return;
+    }
+    const res = await orchFetch("/v1/billing/toggle-module", {
+      token,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
+    }).catch(() => null);
+    setEnabling(false);
+    if (res?.ok) {
+      setNotEntitled(false);
+      await load();
+    }
+  }
+
   if (!ready) return null;
   if (!user?.organizationId) {
+    return <p className="text-sm text-[#7F8C8D]">{t("selectOrg")}</p>;
+  }
+
+  if (notEntitled) {
     return (
-      <p className="text-sm text-[#7F8C8D]">{t("selectOrg")}</p>
+      <div className={`${CARD_CONTAINER_CLASS} mx-auto max-w-lg p-8 text-center`}>
+        <h1 className="text-xl font-semibold text-[#34495E]">{t("gateTitle")}</h1>
+        <p className="mt-2 text-sm text-[#7F8C8D]">{t("gateHint")}</p>
+        <button
+          type="button"
+          className={`${PRIMARY_BUTTON_CLASS} mt-6`}
+          disabled={enabling}
+          onClick={() => void enableWorkforce()}
+        >
+          {enabling ? t("gateEnabling") : t("gateEnable")}
+        </button>
+        <p className="mt-4 text-sm">
+          <Link href="/workspace" className="text-[#2980B9] hover:underline">
+            {t("gateBack")}
+          </Link>
+        </p>
+      </div>
     );
   }
 
@@ -225,20 +382,10 @@ export default function WorkforceEmploymentsPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <div className="flex flex-wrap gap-2">
-            <Link href="/workspace/workforce/security" className={SECONDARY_BUTTON_CLASS}>
-              {t("goSecurity")}
-            </Link>
-            <Link href="/workspace/workforce/org-structure" className={SECONDARY_BUTTON_CLASS}>
-              {t("goOrgStructure")}
-            </Link>
-            <Link href="/workspace/workforce/positions" className={SECONDARY_BUTTON_CLASS}>
-              {t("goPositions")}
-            </Link>
-            <Link href="/workspace/workforce/absences" className={SECONDARY_BUTTON_CLASS}>
-              {t("goAbsences")}
-            </Link>
-          </div>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openHire}>
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            {t("addEmployee")}
+          </button>
         }
       />
 
@@ -256,28 +403,161 @@ export default function WorkforceEmploymentsPage() {
         </div>
       ) : null}
 
-      <form
-        onSubmit={(e) => void onHire(e)}
-        className={`${CARD_CONTAINER_CLASS} mb-6 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-5`}
+      <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-4`}>
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("filterSearch")}
+          <input
+            className="mt-1 block w-48 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            placeholder={t("filterSearchPlaceholder")}
+          />
+        </label>
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("filterOrgUnit")}
+          <select
+            className="mt-1 block min-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            value={filterOrgUnitId}
+            onChange={(e) => {
+              setFilterOrgUnitId(e.target.value);
+              setFilterPositionId("");
+            }}
+          >
+            <option value="">{t("filterAll")}</option>
+            {orgUnits.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("filterPosition")}
+          <select
+            className="mt-1 block min-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            value={filterPositionId}
+            onChange={(e) => setFilterPositionId(e.target.value)}
+          >
+            <option value="">{t("filterAll")}</option>
+            {filterPositionOptions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("filterStatus")}
+          <select
+            className="mt-1 block min-w-[8rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="">{t("filterAll")}</option>
+            <option value="ACTIVE">{t("statusActive")}</option>
+            <option value="TERMINATED">{t("statusTerminated")}</option>
+          </select>
+        </label>
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("filterSatellite")}
+          <select
+            className="mt-1 block min-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            value={filterSatellite}
+            onChange={(e) => setFilterSatellite(e.target.value)}
+          >
+            <option value="">{t("filterAll")}</option>
+            {SATELLITE_OPTIONS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {error && !hireOpen ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
+      {loading ? (
+        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
+      ) : filteredRows.length === 0 ? (
+        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("empty")}</div>
+      ) : (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFinMasked")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHireDate")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedRows.map((r) => (
+                <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {persons[r.globalPersonId]?.displayName ??
+                      (persons[r.globalPersonId]?.accessDenied
+                        ? t("maskedPerson")
+                        : r.globalPersonId.slice(0, 8))}
+                  </td>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
+                    {persons[r.globalPersonId]?.finMasked ?? "—"}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.orgUnit?.name ?? "—"}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.position?.name ?? "—"}</td>
+                  <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
+                    {String(r.hireDate).slice(0, 10)}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={filteredRows.length}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        </div>
+      )}
+
+      <ModalShell
+        open={hireOpen}
+        title={t("hireTitle")}
+        subtitle={t("hireSubtitle")}
+        onClose={() => !busy && setHireOpen(false)}
+        closeLabel={tCommon("close")}
       >
-        <label className="block text-[13px] font-medium text-[#34495E]">
-          {t("resolveFin")}
-          <input
-            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={resolveFin}
-            onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
-            placeholder="1A2B3C4"
-          />
-        </label>
-        <label className="block text-[13px] font-medium text-[#34495E]">
-          {t("resolveFullName")}
-          <input
-            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={resolveName}
-            onChange={(e) => setResolveName(e.target.value)}
-          />
-        </label>
-        <div className="flex items-end">
+        <form onSubmit={(e) => void onHire(e)} className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("resolveFin")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={resolveFin}
+                onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
+                placeholder="1A2B3C4"
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("resolveFullName")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={resolveName}
+                onChange={(e) => setResolveName(e.target.value)}
+              />
+            </label>
+          </div>
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
@@ -286,140 +566,110 @@ export default function WorkforceEmploymentsPage() {
           >
             {t("resolvePerson")}
           </button>
-        </div>
-        <label className="block text-[13px] font-medium text-[#34495E] lg:col-span-2">
-          {t("globalPersonId")}
-          <input
-            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px] font-mono"
-            value={globalPersonId}
-            readOnly
-            placeholder={t("resolveFirst")}
-            required
-          />
-          {resolvedLabel ? (
-            <span className="mt-1 block text-xs text-[#27AE60]">{resolvedLabel}</span>
-          ) : null}
-        </label>
-        <label className="block text-[13px] font-medium text-[#34495E]">
-          {t("orgUnit")}
-          <select
-            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={orgUnitId}
-            onChange={(e) => {
-              setOrgUnitId(e.target.value);
-              setPositionId("");
-            }}
-            required
-            disabled={orgUnits.length === 0}
-          >
-            <option value="">{t("selectOrgUnit")}</option>
-            {orgUnits.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-[13px] font-medium text-[#34495E]">
-          {t("position")}
-          <select
-            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={positionId}
-            onChange={(e) => setPositionId(e.target.value)}
-            required
-            disabled={filteredPositions.length === 0}
-          >
-            <option value="">{t("selectPosition")}</option>
-            {filteredPositions.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-[13px] font-medium text-[#34495E]">
-          {t("hireDate")}
-          <input
-            type="date"
-            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={hireDate}
-            onChange={(e) => setHireDate(e.target.value)}
-            required
-          />
-        </label>
-        <div className="flex items-end">
-          <button
-            type="submit"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={busy || !orgUnitId || !positionId}
-          >
-            {busy ? t("busy") : t("hire")}
-          </button>
-        </div>
-        <p className="lg:col-span-5 text-xs text-[#7F8C8D]">{t("mdmHint")}</p>
-        <fieldset className="lg:col-span-5 rounded-lg border border-[#D5DADF] p-3">
-          <legend className="px-1 text-xs font-medium text-[#34495E]">{t("satelliteAccess")}</legend>
-          <div className="flex flex-wrap gap-4">
-            {SATELLITE_OPTIONS.map((s) => (
-              <label key={s.key} className="flex items-center gap-2 text-xs text-[#34495E]">
-                <input
-                  type="checkbox"
-                  checked={satelliteKeys.includes(s.key)}
-                  onChange={(e) => {
-                    setSatelliteKeys((prev) =>
-                      e.target.checked
-                        ? [...prev, s.key]
-                        : prev.filter((k) => k !== s.key),
-                    );
-                  }}
-                />
-                {s.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      </form>
-
-      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : rows.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("empty")}</div>
-      ) : (
-        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
-          <table className="min-w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-[#D5DADF]">
-                <th className="p-2 text-left font-semibold">{t("colPerson")}</th>
-                <th className="p-2 text-left font-semibold">{t("colFinMasked")}</th>
-                <th className="p-2 text-left font-semibold">{t("colOrgUnit")}</th>
-                <th className="p-2 text-left font-semibold">{t("colPosition")}</th>
-                <th className="p-2 text-left font-semibold">{t("colHireDate")}</th>
-                <th className="p-2 text-left font-semibold">{t("colStatus")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-[#EBEDF0]">
-                  <td className="p-2">
-                    {persons[r.globalPersonId]?.displayName ??
-                      (persons[r.globalPersonId]?.accessDenied
-                        ? t("maskedPerson")
-                        : r.globalPersonId.slice(0, 8))}
-                  </td>
-                  <td className="p-2 font-mono text-xs">
-                    {persons[r.globalPersonId]?.finMasked ?? "—"}
-                  </td>
-                  <td className="p-2">{r.orgUnit?.name ?? "—"}</td>
-                  <td className="p-2">{r.position?.name ?? "—"}</td>
-                  <td className="p-2 tabular-nums">{String(r.hireDate).slice(0, 10)}</td>
-                  <td className="p-2">{r.status}</td>
-                </tr>
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("globalPersonId")}
+            <input
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px] font-mono"
+              value={globalPersonId}
+              readOnly
+              placeholder={t("resolveFirst")}
+              required
+            />
+            {resolvedLabel ? (
+              <span className="mt-1 block text-xs text-[#27AE60]">{resolvedLabel}</span>
+            ) : null}
+          </label>
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("orgUnit")}
+            <select
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              value={orgUnitId}
+              onChange={(e) => {
+                setOrgUnitId(e.target.value);
+                setPositionId("");
+              }}
+              required
+              disabled={orgUnits.length === 0}
+            >
+              <option value="">{t("selectOrgUnit")}</option>
+              {orgUnits.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </select>
+          </label>
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("position")}
+            <select
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              value={positionId}
+              onChange={(e) => setPositionId(e.target.value)}
+              required
+              disabled={filteredPositions.length === 0}
+            >
+              <option value="">{t("selectPosition")}</option>
+              {filteredPositions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("hireDate")}
+            <input
+              type="date"
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+              required
+            />
+          </label>
+          <fieldset className="rounded-lg border border-[#D5DADF] p-3">
+            <legend className="px-1 text-xs font-medium text-[#34495E]">
+              {t("satelliteAccess")}
+            </legend>
+            <div className="flex flex-wrap gap-4">
+              {SATELLITE_OPTIONS.map((s) => (
+                <label key={s.key} className="flex items-center gap-2 text-xs text-[#34495E]">
+                  <input
+                    type="checkbox"
+                    checked={satelliteKeys.includes(s.key)}
+                    onChange={(e) => {
+                      setSatelliteKeys((prev) =>
+                        e.target.checked
+                          ? [...prev, s.key]
+                          : prev.filter((k) => k !== s.key),
+                      );
+                    }}
+                  />
+                  {s.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <p className="text-xs text-[#7F8C8D]">{t("mdmHint")}</p>
+          {error && hireOpen ? <p className="text-sm text-red-700">{error}</p> : null}
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setHireOpen(false)}
+              disabled={busy}
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              type="submit"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={busy || !orgUnitId || !positionId || !globalPersonId}
+            >
+              {busy ? t("busy") : t("hire")}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
     </>
   );
 }

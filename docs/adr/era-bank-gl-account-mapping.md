@@ -24,7 +24,7 @@ Forces:
 | Kind | Source of truth | Resolver | Examples |
 |------|-----------------|----------|----------|
 | **Product GL** | `ProductTemplate.paramsJson` keys | `getProductGlCode(paramsJson, key)` in `apps/api/src/common/product-gl.ts` | Loan portfolio asset, term deposit liability, product interest income/expense |
-| **System GL** | `SystemGlConfig` table (`bankOrgId` + `key` → `glCode`) | `SystemGlConfigService.resolve(key)` in `kernel/ledger/` | Cash vault, MFR, nostro/vostro, FX transit, interbank placement, GS, interest income/expense (bank-wide) |
+| **System GL** | `SystemGlConfig` table (`bankOrgId` + `key` → `glCode`) | `SystemGlConfigService.resolve(key)` in `kernel/ledger/` | Cash vault, MFR, nostro/vostro, FX transit, interbank placement, GS, interest income/expense, loan-loss expense/allowance (bank-wide) |
 
 Convention for `paramsJson` GL keys:
 
@@ -33,7 +33,9 @@ Convention for `paramsJson` GL keys:
 - `glInterestIncomeCode`
 - `glInterestExpenseCode`
 
-Canonical `SystemGlKey` values: `CASH_VAULT`, `MFR_SETTLEMENT`, `INTERBANK_PLACEMENT`, `FX_TRANSIT`, `NOSTRO`, `VOSTRO`, `GOV_SECURITIES`, `INTEREST_INCOME`, `INTEREST_EXPENSE`.
+Canonical `SystemGlKey` values: `CASH_VAULT`, `MFR_SETTLEMENT`, `INTERBANK_PLACEMENT`, `FX_TRANSIT`, `NOSTRO`, `VOSTRO`, `GOV_SECURITIES`, `INTEREST_INCOME`, `INTEREST_EXPENSE`, `LOAN_LOSS_EXPENSE`, `LOAN_LOSS_ALLOWANCE`, plus BE Lite→Deep keys: `FEE_INCOME`, `FEE_RECEIVABLE`, `FEE_SUSPENSE`, `TRADE_CONTINGENT_ASSET`, `TRADE_CONTINGENT_LIABILITY`, `TRADE_MARGIN`, `TRADE_COMMISSION_INCOME`, `TRADE_SETTLEMENT`, `NPL_WORKOUT`, `RECOVERY_INCOME`, `VIRTUAL_ACCOUNT_CLEARING`, `ESCROW_LIABILITY`, `STANDING_ORDER_CLEARING`, `DIRECT_DEBIT_CLEARING`, `ISLAMIC_ASSET`, `ISLAMIC_LIABILITY`, `ISLAMIC_INCOME`, `ISLAMIC_EXPENSE`, `CARD_DISPUTE_SUSPENSE`, `TELLER_TILL`.
+
+Non-GL product params (`rateAnnual`, `termMonths`, card limits, bands) are defined in [era-bank-product-params.md](./era-bank-product-params.md).
 
 ### G2 — Forbidden: inline GL code literals in posting builders
 

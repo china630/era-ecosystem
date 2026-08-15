@@ -1,46 +1,103 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { Check, Eye } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   ColorLegend,
-  MODAL_INPUT_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SCROLL_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  Field,
+  FieldSelect,
+  FieldTextarea,
+  LINK_ACCENT_CLASS,
+  ListPaginationFooter,
+  MODAL_CHECKBOX_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   PageHeader,
+  TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
+import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import {
   expandPackageCodes,
   filterAndSortCatalogItems,
+  pickL10n,
 } from "@/domain/catalog/diagnostic-catalog-shared";
+
+type ModalityRef = { code: string; titleEn: string; titleRu: string; titleAz: string };
+type DiagnosticServiceRef = { code: string; modality?: ModalityRef | null };
+type LabOrderItem = { id: string; serviceCode: string; diagnosticService?: DiagnosticServiceRef | null };
 
 type LabOrder = {
   id: string;
   testCode: string;
   status: string;
   amountNet: string;
+  createdAt?: string;
   patientRef: { refCode: string; fullName: string };
+  items?: LabOrderItem[];
 };
 
 type PatientOption = { id: string; refCode: string; fullName: string };
 
+type ListFilters = {
+  status: string;
+  criticalOnly: boolean;
+  modality: string;
+  patientRefId: string;
+  dateFrom: string;
+  dateTo: string;
+};
+
+const emptyFilters: ListFilters = {
+  status: "",
+  criticalOnly: false,
+  modality: "",
+  patientRefId: "",
+  dateFrom: "",
+  dateTo: "",
+};
+
+function servicesLabel(order: LabOrder): string {
+  if (order.items?.length) {
+    return order.items.map((i) => i.serviceCode).join(", ");
+  }
+  return order.testCode;
+}
+
+function modalityLabel(order: LabOrder): string {
+  return order.items?.[0]?.diagnosticService?.modality?.code ?? "—";
+}
+
 export default function LabOrdersPage() {
   const t = useTranslations("labOrders");
   const tc = useTranslations("common");
-  const tNav = useTranslations("nav");
+  const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<LabOrder[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [patients, setPatients] = useState<PatientOption[]>([]);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [criticalOnly, setCriticalOnly] = useState(false);
+  const [filters, setFilters] = useState<ListFilters>(emptyFilters);
   const [loading, setLoading] = useState(true);
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ patientRefCode: "", visitId: "" });
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
@@ -49,27 +106,59 @@ export default function LabOrdersPage() {
   const [favoritesMode, setFavoritesMode] = useState<"first" | "only">("first");
   const [search, setSearch] = useState("");
   const [modalityFilter, setModalityFilter] = useState("");
+  const [externalResult, setExternalResult] = useState(false);
+  const [resultDate, setResultDate] = useState("");
+  const [externalResultsText, setExternalResultsText] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (statusFilter) params.set("status", statusFilter);
-    if (criticalOnly) params.set("criticalOnly", "true");
-    const query = params.toString() ? `?${params}` : "";
-    const res = await fetch(`/api/lab-orders${query}`);
-    const data = await res.json();
-    setOrders(Array.isArray(data) ? data : (data.data ?? []));
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (filters.status) params.set("status", filters.status);
+    if (filters.criticalOnly) params.set("criticalOnly", "true");
+    if (filters.modality) params.set("modality", filters.modality);
+    if (filters.patientRefId) params.set("patientRefId", filters.patientRefId);
+    if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.set("dateTo", filters.dateTo);
+    const res = await fetch(`/api/lab-orders?${params}`);
+    const raw = await res.json();
+    if (Array.isArray(raw)) {
+      // Legacy shape (pre-pagination API) — treat the array as a single unpaginated page.
+      setOrders(raw);
+      setTotal(raw.length);
+    } else {
+      const list = (raw.data ?? raw.items ?? []) as LabOrder[];
+      setOrders(Array.isArray(list) ? list : []);
+      setTotal(typeof raw.total === "number" ? raw.total : list.length);
+      if (typeof raw.page === "number") setPage(raw.page);
+      if (typeof raw.pageSize === "number") setPageSize(raw.pageSize);
+    }
     setLoading(false);
-  }, [statusFilter, criticalOnly]);
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     void loadOrders();
   }, [loadOrders]);
 
   useEffect(() => {
+    const fromQuery = searchParams.get("order");
+    if (fromQuery) setWorkflowId(fromQuery);
+  }, [searchParams]);
+
+  function closeWorkflow() {
+    setWorkflowId(null);
+    if (searchParams.get("order")) {
+      router.replace("/lab-orders");
+    }
+  }
+
+  useEffect(() => {
     void fetch("/api/patients")
       .then((r) => r.json())
-      .then((d) => setPatients((d.data ?? d) as PatientOption[]));
+      .then((d) => {
+        const payload = (d.data ?? d) as { items?: PatientOption[] } | PatientOption[];
+        setPatients(Array.isArray(payload) ? payload : (payload.items ?? []));
+      });
   }, []);
 
   useEffect(() => {
@@ -106,27 +195,69 @@ export default function LabOrdersPage() {
     [catalogItems, favoriteKeys, favoritesMode, search, modalityFilter],
   );
 
+  function patchFilters(patch: Partial<ListFilters>) {
+    setFilters((prev) => ({ ...prev, ...patch }));
+    setPage(1);
+  }
+
+  function resetFilters() {
+    setFilters(emptyFilters);
+    setPage(1);
+  }
+
   async function createOrder() {
     const patient = patients.find((p) => p.refCode === form.patientRefCode);
     if (!patient || selectedCodes.length === 0) return;
+    setCreateError(null);
     const expanded = expandPackageCodes(selectedCodes, catalogItems);
+    const payload: Record<string, unknown> = {
+      patientRefCode: patient.refCode,
+      patientFullName: patient.fullName,
+      testCodes: expanded,
+      visitId: form.visitId.trim() || undefined,
+    };
+    if (externalResult) {
+      payload.source = "EXTERNAL";
+      payload.resultDate = resultDate;
+      const lines = externalResultsText
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [code, ...rest] = line.split(/[:=]/);
+          const value = rest.join(":").trim() || code;
+          return { code: rest.length ? code.trim() : "value", value };
+        });
+      if (lines.length === 0 && externalResultsText.trim()) {
+        payload.results = [{ code: "value", value: externalResultsText.trim() }];
+      } else {
+        payload.results = lines;
+      }
+    }
     const res = await fetch("/api/lab-orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        patientRefCode: patient.refCode,
-        patientFullName: patient.fullName,
-        testCodes: expanded,
-        visitId: form.visitId.trim() || undefined,
-      }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
+    if (!res.ok) {
+      const errMsg =
+        data?.error ?? data?.message ?? (res.status === 400 ? "Request failed" : tc("failed"));
+      setCreateError(String(errMsg));
+      return;
+    }
     const order = data.data ?? data;
     setCreateOpen(false);
     setForm({ patientRefCode: "", visitId: "" });
     setSelectedCodes([]);
-    if (order?.id) router.push(`/lab-orders/${order.id}`);
-    else await loadOrders();
+    setExternalResult(false);
+    setResultDate("");
+    setExternalResultsText("");
+    setCreateError(null);
+    if (order?.id) {
+      await loadOrders();
+      setWorkflowId(order.id as string);
+    } else await loadOrders();
   }
 
   async function completeOrder(id: string) {
@@ -142,99 +273,201 @@ export default function LabOrdersPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <div className="flex gap-2">
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
-              {t("createTitle")}
-            </button>
-            <Link href="/admin/lis-profiles" className={SECONDARY_BUTTON_CLASS}>
-              {t("importCsv")}
-            </Link>
-            <Link href="/" className={SECONDARY_BUTTON_CLASS}>
-              {tNav("home")}
-            </Link>
-          </div>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
+            {t("createTitle")}
+          </button>
         }
       />
-      <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-6`}>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
-            checked={criticalOnly}
-            onChange={(e) => {
-              setLoading(true);
-              setCriticalOnly(e.target.checked);
-            }}
-          />
-          {t("criticalOnly")}
-        </label>
-        <ColorLegend
-          className="mb-2"
-          items={[
-            { id: "ordered", label: "ORDERED", swatchClassName: "bg-slate-100" },
-            { id: "ready", label: "RESULT_READY", swatchClassName: "bg-blue-50" },
-            { id: "done", label: "COMPLETED", swatchClassName: "bg-green-50" },
-          ]}
+      <EraListFilterBar
+        resetLabel={tc("filterReset")}
+        onReset={resetFilters}
+        actionsExtra={
+          <label className={`inline-flex items-center gap-2 text-[13px] ${MODAL_FIELD_LABEL_CLASS}`}>
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              checked={filters.criticalOnly}
+              onChange={(e) => patchFilters({ criticalOnly: e.target.checked })}
+            />
+            {t("criticalOnly")}
+          </label>
+        }
+      >
+        <FieldSelect
+          label={t("statusFilter")}
+          preset="select"
+          value={filters.status}
+          onChange={(e) => patchFilters({ status: e.target.value })}
+        >
+          <option value="">{tc("all")}</option>
+          <option value="ORDERED">ORDERED</option>
+          <option value="COLLECTED">COLLECTED</option>
+          <option value="RESULT_READY">RESULT_READY</option>
+          <option value="PUBLISHED">PUBLISHED</option>
+          <option value="COMPLETED">COMPLETED</option>
+        </FieldSelect>
+        <FieldSelect
+          label={t("modalityFilter")}
+          preset="select"
+          value={filters.modality}
+          onChange={(e) => patchFilters({ modality: e.target.value })}
+        >
+          <option value="">{tc("all")}</option>
+          {modalities.map((m) => (
+            <option key={m.code} value={m.code}>
+              {pickL10n(m.title, locale)}
+            </option>
+          ))}
+        </FieldSelect>
+        <FieldSelect
+          label={t("patientFilter")}
+          preset="select"
+          value={filters.patientRefId}
+          onChange={(e) => patchFilters({ patientRefId: e.target.value })}
+        >
+          <option value="">{tc("all")}</option>
+          {patients.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.fullName} ({p.refCode})
+            </option>
+          ))}
+        </FieldSelect>
+        <DatePicker
+          label={t("dateFrom")}
+          value={filters.dateFrom}
+          onChange={(isoDate) => patchFilters({ dateFrom: isoDate })}
+          placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
         />
-        <label className="flex items-center gap-2 text-[13px]">
-          {t("statusFilter")}
-          <select
-            className="rounded border px-2 py-1"
-            value={statusFilter}
-            onChange={(e) => {
-              setLoading(true);
-              setStatusFilter(e.target.value);
-            }}
-          >
-            <option value="">{tc("all")}</option>
-            <option value="ORDERED">ORDERED</option>
-            <option value="COLLECTED">COLLECTED</option>
-            <option value="RESULT_READY">RESULT_READY</option>
-            <option value="PUBLISHED">PUBLISHED</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
-        </label>
-        {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
-        ) : orders.length === 0 ? (
-          <p className="text-[13px] text-[#7F8C8D]">{t("empty")}</p>
-        ) : (
-          <ul className="space-y-2">
-            {orders.map((order) => (
-              <li
-                key={order.id}
-                className="flex items-center justify-between rounded border p-3 text-[13px]"
-              >
-                <div>
-                  <Link
-                    href={`/lab-orders/${order.id}`}
-                    className="font-medium text-[#2980B9] hover:underline"
-                  >
-                    <strong>{order.testCode}</strong>
-                  </Link>{" "}
-                  — {order.patientRef.fullName} ({order.patientRef.refCode})
-                  <div className="text-[#7F8C8D]">
-                    {order.status} · {order.amountNet} AZN
-                  </div>
-                </div>
-                {order.status === "PUBLISHED" && (
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    onClick={() => completeOrder(order.id)}
-                  >
-                    {tc("complete")}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        <DatePicker
+          label={t("dateTo")}
+          value={filters.dateTo}
+          onChange={(isoDate) => patchFilters({ dateTo: isoDate })}
+          placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
+        />
+      </EraListFilterBar>
+
+      <ColorLegend
+        className="mb-2"
+        items={[
+          { id: "ordered", label: "ORDERED", swatchClassName: "bg-slate-100" },
+          { id: "ready", label: "RESULT_READY", swatchClassName: "bg-blue-50" },
+          { id: "done", label: "COMPLETED", swatchClassName: "bg-green-50" },
+        ]}
+      />
+
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className={DATA_TABLE_SCROLL_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPatient")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colServices")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colType")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("status")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colAmount")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCreated")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr
+                  key={order.id}
+                  className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}
+                  onClick={() => setWorkflowId(order.id)}
+                >
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="font-medium">{order.patientRef.fullName}</div>
+                    <div className={TEXT_MUTED_CLASS}>{order.patientRef.refCode}</div>
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <button
+                      type="button"
+                      className={`font-medium ${LINK_ACCENT_CLASS}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setWorkflowId(order.id);
+                      }}
+                    >
+                      {servicesLabel(order)}
+                    </button>
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{modalityLabel(order)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{order.status}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{order.amountNet} AZN</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={t("openOrder")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWorkflowId(order.id);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                      </button>
+                      {order.status === "PUBLISHED" && (
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("complete")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void completeOrder(order.id);
+                          }}
+                        >
+                          <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                    {loading ? tc("loading") : t("empty")}
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          loading={loading}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
 
-      <ModalShell open={createOpen} title={t("createTitle")} onClose={() => setCreateOpen(false)}>
+      <ModalShell
+        open={createOpen}
+        title={t("createTitle")}
+        onClose={() => {
+          setCreateOpen(false);
+          setCreateError(null);
+        }}
+      >
         <div className="space-y-3">
-          <select
-            className={MODAL_INPUT_CLASS}
+          <FieldSelect
+            label={t("selectPatient")}
+            preset="select"
             value={form.patientRefCode}
             onChange={(e) => setForm({ ...form, patientRefCode: e.target.value })}
           >
@@ -244,7 +477,34 @@ export default function LabOrdersPage() {
                 {p.fullName} ({p.refCode})
               </option>
             ))}
-          </select>
+          </FieldSelect>
+          <label className={`flex items-center gap-2 text-[13px] ${MODAL_FIELD_LABEL_CLASS}`}>
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              checked={externalResult}
+              onChange={(e) => setExternalResult(e.target.checked)}
+            />
+            {t("externalResult", { defaultValue: "External / brought-in result" })}
+          </label>
+          {externalResult ? (
+            <>
+              <DatePicker
+                label={t("resultDate", { defaultValue: "Result date" })}
+                preset="date"
+                value={resultDate}
+                onChange={setResultDate}
+                placeholder={tc("datePlaceholder")}
+                openCalendarLabel={tc("openCalendar")}
+              />
+              <FieldTextarea
+                label={t("externalResults", { defaultValue: "Results (one per line: code: value)" })}
+                rows={4}
+                value={externalResultsText}
+                onChange={(e) => setExternalResultsText(e.target.value)}
+              />
+            </>
+          ) : null}
           <DiagnosticCatalogPicker
             items={pickerItems}
             selected={selectedCodes}
@@ -265,23 +525,35 @@ export default function LabOrdersPage() {
             }}
           />
           {selectedCodes.length > 0 && (
-            <p className="text-[12px] text-[#7F8C8D]">
+            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
               {t("selectedCount", { count: selectedCodes.length })}
             </p>
           )}
-          <input
-            className={MODAL_INPUT_CLASS}
+          <Field
+            label={t("visitIdOptional")}
+            preset="shortText"
             placeholder={t("visitIdOptional")}
             value={form.visitId}
             onChange={(e) => setForm({ ...form, visitId: e.target.value })}
           />
+          {createError ? <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{createError}</p> : null}
         </div>
         <ModalFooter
-          onCancel={() => setCreateOpen(false)}
+          onCancel={() => {
+            setCreateOpen(false);
+            setCreateError(null);
+          }}
           onSubmit={() => void createOrder()}
           submitLabel={tc("save")}
         />
       </ModalShell>
+
+      <LabOrderWorkflowModal
+        open={Boolean(workflowId)}
+        orderId={workflowId}
+        onClose={closeWorkflow}
+        onChanged={() => void loadOrders()}
+      />
     </>
   );
 }

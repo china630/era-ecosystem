@@ -13,11 +13,11 @@ import {
   Decimal,
   EmployeeKind,
   OrganizationKind,
-  PayrollComponentCode,
   PayrollComponentKind,
   PayrollRunStatus,
   UserRole,
 } from "@erafinance/database";
+import { PayrollComponentCode } from "./payroll-component-codes";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -38,6 +38,7 @@ import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-c
 import { batchEmployeePersonMap } from "./employee-person.util";
 import { assertMayAccessPayrollFinance } from "../auth/policies/hr-payroll.policy";
 import { NotificationService } from "../notifications/notification.service";
+import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 import {
   STORAGE_SERVICE,
   type StorageService,
@@ -429,12 +430,20 @@ export class PayrollService {
       throw new BadRequestException("No slips");
     }
 
-    await this.prisma.payrollRun.update({
-      where: { id: run.id },
+    // SEC-FIN-10: atomic DRAFT→POSTED claim
+    const claimed = await this.prisma.payrollRun.updateMany({
+      where: {
+        id: run.id,
+        organizationId,
+        status: PayrollRunStatus.DRAFT,
+      },
       data: {
         status: PayrollRunStatus.POSTED,
       },
     });
+    if (claimed.count !== 1) {
+      throw new ConflictException("Payroll run already posted");
+    }
 
     return this.getRun(organizationId, run.id);
   }
@@ -602,6 +611,15 @@ export class PayrollService {
     const refBase = `PAY-${run.year}-${String(run.month).padStart(2, "0")}`;
 
     const updatedRegistry = await this.prisma.$transaction(async (tx) => {
+      // SEC-FIN-03: claim SENT→PAID before journals (rolls back if tx fails)
+      const claimed = await (tx as { salaryRegistry: { updateMany: Function } }).salaryRegistry.updateMany({
+        where: { id: registryId, organizationId, status: "SENT" },
+        data: { status: "PAID" },
+      });
+      if (claimed.count !== 1) {
+        throw new BadRequestException("Only SENT registry can be marked as PAID");
+      }
+
       /** First created GL transaction id when multiple departmental postings exist (backward-compatible link on PayrollRun). */
       let runTransactionId = run.transactionId;
       if (!runTransactionId) {
@@ -816,9 +834,8 @@ export class PayrollService {
         where: { id: run.id },
         data: { transactionId: runTransactionId ?? undefined },
       });
-      return (tx as any).salaryRegistry.update({
+      return (tx as any).salaryRegistry.findUniqueOrThrow({
         where: { id: registryId },
-        data: { status: "PAID" },
       });
     });
 

@@ -23,6 +23,10 @@ export type ConstructorModuleRow = {
   pricePerMonth: number;
   sortOrder: number;
   isPremium: boolean;
+  /** Catalog grouping: satellite gate this module belongs to (null = platform-wide). */
+  satelliteKey: string | null;
+  /** SATELLITE gate vs billable MODULE vs platform ADDON. */
+  catalogKind: string;
 };
 
 @Injectable()
@@ -98,6 +102,8 @@ export class PricingService implements OnModuleInit {
         pricePerMonth: pm,
         sortOrder: r.sortOrder,
         isPremium: r.isPremium,
+        satelliteKey: r.satelliteKey ?? null,
+        catalogKind: r.catalogKind,
       };
     });
     await this.refreshPremiumModuleKeys();
@@ -124,6 +130,8 @@ export class PricingService implements OnModuleInit {
         pricePerMonth: pm,
         sortOrder: r.sortOrder,
         isPremium: r.isPremium,
+        satelliteKey: r.satelliteKey ?? null,
+        catalogKind: r.catalogKind,
       };
     });
   }

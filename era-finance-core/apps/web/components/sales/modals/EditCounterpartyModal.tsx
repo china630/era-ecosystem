@@ -43,6 +43,7 @@ type CounterpartyRow = {
   email: string | null;
   address: string | null;
   isVatPayer?: boolean;
+  paymentTermsDays?: number | null;
 };
 
 export function EditCounterpartyModal({
@@ -66,6 +67,7 @@ export function EditCounterpartyModal({
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [isVatPayer, setIsVatPayer] = useState(false);
+  const [paymentTermsDays, setPaymentTermsDays] = useState("");
   const [isRiskyTaxpayer, setIsRiskyTaxpayer] = useState<boolean | null>(null);
   const [voenCheckBusy, setVoenCheckBusy] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -133,6 +135,11 @@ export function EditCounterpartyModal({
     setAddress(r.address ?? "");
     setEmail(r.email ?? "");
     setIsVatPayer(Boolean(r.isVatPayer));
+    setPaymentTermsDays(
+      r.paymentTermsDays == null || r.paymentTermsDays === undefined
+        ? ""
+        : String(r.paymentTermsDays),
+    );
     setIsRiskyTaxpayer(null);
     const d = String(r.taxId ?? "").replace(/\D/g, "");
     lastAutoLookup.current = d.length === 10 ? d : "";
@@ -309,6 +316,7 @@ export function EditCounterpartyModal({
       address: address.trim() || undefined,
       email: email.trim() || undefined,
       isVatPayer,
+      paymentTermsDays: paymentTermsDays.trim() === "" ? null : Number(paymentTermsDays),
     };
     const res = await apiFetch(`/api/counterparties/${counterpartyId}`, {
       method: "PATCH",
@@ -424,6 +432,21 @@ export function EditCounterpartyModal({
           />
           <span>{t("counterparties.vatPayerCheckbox")}</span>
         </label>
+        <div>
+          <span className={lbl}>
+            {t("counterparties.paymentTermsDays", { defaultValue: "Payment terms (days)" })}
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={365}
+            className={MODAL_INPUT_CLASS}
+            value={paymentTermsDays}
+            onChange={(e) => setPaymentTermsDays(e.target.value)}
+            disabled={loadBusy}
+            placeholder="30"
+          />
+        </div>
         {isRiskyTaxpayer === true ? (
           <div className="inline-flex items-center rounded-lg border border-amber-300 bg-amber-100 px-2.5 py-1 text-[13px] font-semibold text-amber-900">
             {t("counterparties.riskyTaxpayerBadge")}

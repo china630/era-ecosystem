@@ -51,6 +51,52 @@ export {
   type ComplianceIdentityResult,
 } from "./person-identity.client";
 
+/**
+ * Canonical organization name from the orchestrator control plane (MDM).
+ * Satellites should prefer this over local profile/tenant records so the
+ * displayed company name is the single source of truth from the orchestrator.
+ * Fails soft (returns null) so a control-plane hiccup never breaks the header.
+ */
+export async function fetchControlPlaneOrganizationName(
+  organizationId: string,
+  opts?: MdmLookupOptions,
+): Promise<string | null> {
+  const details = await fetchControlPlaneOrganizationDetails(organizationId, opts);
+  return details?.name ?? null;
+}
+
+export async function fetchControlPlaneOrganizationDetails(
+  organizationId: string,
+  opts?: MdmLookupOptions,
+): Promise<{ organizationId: string; name: string; taxId: string | null } | null> {
+  const id = organizationId?.trim();
+  if (!id) return null;
+  const token = serviceToken(opts);
+  try {
+    const res = await fetch(
+      `${baseUrl(opts)}/internal/v1/mdm/organizations/${encodeURIComponent(id)}/details`,
+      {
+        headers: token ? { "x-service-token": token } : {},
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      organizationId?: string;
+      name?: string;
+      taxId?: string | null;
+    };
+    if (!data?.name) return null;
+    return {
+      organizationId: data.organizationId ?? id,
+      name: data.name,
+      taxId: data.taxId ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Resolve legal entity by VÖEN (B2B invoicing party). */
 export async function lookupLegalEntityByVoen(
   taxId: string,

@@ -1,7 +1,8 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
-import { hasCriticalFlag } from "@/lib/lab-result-flags";
 import { prisma } from "@/lib/prisma";
+import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 
 const createSchema = z.object({
   patientRefCode: z.string(),
@@ -10,6 +11,22 @@ const createSchema = z.object({
   testCodes: z.array(z.string()).optional(),
   visitId: z.string().optional(),
   amountNet: z.number().nonnegative().default(0),
+  source: z.enum(["IN_HOUSE", "EXTERNAL"]).optional(),
+  resultDate: z.string().optional(),
+  results: z
+    .array(
+      z.object({
+        code: z.string().optional(),
+        analyte: z.string().optional(),
+        value: z.string(),
+        unit: z.string().optional(),
+        refMin: z.string().optional(),
+        refMax: z.string().optional(),
+        flag: z.string().optional(),
+      }),
+    )
+    .optional(),
+  fasting: z.boolean().optional(),
 });
 
 const querySchema = z.object({
@@ -27,6 +44,12 @@ const querySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((v) => v === "true"),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  modality: z.string().optional(),
+  patientRefId: z.string().optional(),
 });
 
 export async function GET(req: Request) {
@@ -35,29 +58,73 @@ export async function GET(req: Request) {
     const query = querySchema.parse({
       status: url.searchParams.get("status") ?? undefined,
       criticalOnly: url.searchParams.get("criticalOnly") ?? undefined,
+      page: url.searchParams.get("page") ?? undefined,
+      pageSize: url.searchParams.get("pageSize") ?? undefined,
+      dateFrom: url.searchParams.get("dateFrom") ?? undefined,
+      dateTo: url.searchParams.get("dateTo") ?? undefined,
+      modality: url.searchParams.get("modality") ?? undefined,
+      patientRefId: url.searchParams.get("patientRefId") ?? undefined,
     });
 
-    const orders = await prisma.labOrder.findMany({
-      where: query.status ? { status: query.status } : undefined,
-      include: { patientRef: true, visit: true },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
-
-    if (!query.criticalOnly) return jsonOk(orders);
-
-    const filtered = orders.filter((o) => {
-      if (!o.resultJson) return false;
-      try {
-        const lines = JSON.parse(o.resultJson) as Parameters<
-          typeof hasCriticalFlag
-        >[0];
-        return hasCriticalFlag(lines);
-      } catch {
-        return false;
+    const conditions: Prisma.LabOrderWhereInput[] = [];
+    if (query.status) conditions.push({ status: query.status });
+    if (query.patientRefId) conditions.push({ patientRefId: query.patientRefId });
+    if (query.dateFrom || query.dateTo) {
+      const dateFrom = query.dateFrom ? new Date(query.dateFrom) : undefined;
+      const dateTo = query.dateTo ? new Date(query.dateTo) : undefined;
+      if (dateFrom && Number.isNaN(dateFrom.getTime())) {
+        return jsonError("Invalid dateFrom", 400);
       }
-    });
-    return jsonOk(filtered);
+      if (dateTo && Number.isNaN(dateTo.getTime())) {
+        return jsonError("Invalid dateTo", 400);
+      }
+      conditions.push({
+        createdAt: {
+          ...(dateFrom ? { gte: dateFrom } : {}),
+          ...(dateTo ? { lte: dateTo } : {}),
+        },
+      });
+    }
+    if (query.modality) {
+      const services = await prisma.diagnosticService.findMany({
+        where: { modality: { code: query.modality } },
+        select: { id: true },
+      });
+      conditions.push({
+        items: { some: { diagnosticServiceId: { in: services.map((s) => s.id) } } },
+      });
+    }
+    if (query.criticalOnly) {
+      conditions.push({
+        items: { some: { results: { some: { flag: "CRITICAL" } } } },
+      });
+    }
+
+    const where: Prisma.LabOrderWhereInput | undefined = conditions.length
+      ? { AND: conditions }
+      : undefined;
+
+    const [total, orders] = await Promise.all([
+      prisma.labOrder.count({ where }),
+      prisma.labOrder.findMany({
+        where,
+        include: {
+          patientRef: true,
+          visit: true,
+          items: {
+            include: {
+              diagnosticService: { include: { modality: true } },
+              results: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      }),
+    ]);
+
+    return jsonOk({ data: orders, total, page: query.page, pageSize: query.pageSize });
   } catch (err) {
     return handleRouteError(err);
   }
@@ -95,15 +162,36 @@ export async function POST(req: Request) {
       if (!visit) return jsonError("Visit not found", 404);
     }
 
-    const order = await prisma.labOrder.create({
-      data: {
-        patientRefId: patient.id,
-        visitId: body.visitId,
-        testCode: codes.join(","),
-        amountNet: body.amountNet,
-      },
-      include: { patientRef: true, visit: true },
+    const source = body.source ?? "IN_HOUSE";
+    let resultDate: Date | undefined;
+    if (source === "EXTERNAL") {
+      if (!body.resultDate) {
+        return jsonError("resultDate required for EXTERNAL lab orders", 400);
+      }
+      resultDate = new Date(body.resultDate);
+      if (Number.isNaN(resultDate.getTime())) {
+        return jsonError("Invalid resultDate", 400);
+      }
+      const ageMs = Date.now() - resultDate.getTime();
+      if (ageMs > 90 * 24 * 60 * 60 * 1000) {
+        return jsonError("External lab results older than 90 days are not accepted", 400);
+      }
+      if (!body.results?.length) {
+        return jsonError("results required for EXTERNAL lab orders", 400);
+      }
+    }
+
+    const order = await createLabOrderWithItems({
+      patientRefId: patient.id,
+      visitId: body.visitId,
+      codes,
+      amountNet: body.amountNet,
+      source,
+      resultDate,
+      fasting: body.fasting,
+      resultLines: body.results,
     });
+
     return jsonOk(order, 201);
   } catch (err) {
     return handleRouteError(err);

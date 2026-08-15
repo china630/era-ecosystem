@@ -28,7 +28,7 @@ import { ControlPlaneModule } from "../control-plane/control-plane.module";
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow<string>("JWT_SECRET"),
+        secret: config.getOrThrow<string>("ERA_JWT_SECRET"),
         signOptions: {
           expiresIn: (config.get<string>("JWT_ACCESS_EXPIRES") ?? "12h") as any,
         },

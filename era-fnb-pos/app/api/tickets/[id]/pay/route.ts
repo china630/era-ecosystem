@@ -14,7 +14,7 @@ import {
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const paySchema = z.object({
-  method: z.enum(["CASH", "CARD"]),
+  method: z.enum(["CASH", "CARD", "TRANSFER"]),
   amount: z.number().positive().optional(),
   delivery: z.boolean().optional(),
   customHostname: z.string().max(253).optional(),

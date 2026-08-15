@@ -57,7 +57,37 @@ export const BANKING_PRICING_MODULE_KEYS = [
   "banking_treasury",
   "banking_dbo",
   "banking_regreporting",
+  "banking_risk",
+  "banking_trade",
+  "banking_collections",
+  "banking_cash",
+  "banking_islamic",
+  "banking_wealth",
+  "banking_markets",
+  "banking_pension",
+  "banking_psa",
 ] as const;
+
+/** Clinic modules (MODULES_CATALOG M0–M14). */
+export const CLINIC_PRICING_MODULE_KEYS = [
+  "clinic_shell",
+  "clinic_patients",
+  "clinic_schedule",
+  "clinic_appointments",
+  "clinic_visit",
+  "clinic_lab",
+  "clinic_service_catalog",
+  "clinic_notifications",
+  "clinic_portal",
+  "clinic_reschedule",
+  "clinic_ehr",
+  "clinic_lis_import",
+  "clinic_insurance",
+  "clinic_inpatient",
+  "clinic_telehealth",
+] as const;
+
+export type ClinicPricingModuleKey = (typeof CLINIC_PRICING_MODULE_KEYS)[number];
 
 export type IndustrySatelliteModuleKey = (typeof INDUSTRY_SATELLITE_MODULE_KEYS)[number];
 
@@ -90,6 +120,8 @@ export function isHotelModuleActive(
 export function isPassThroughCatalogModuleKey(moduleKey: string): boolean {
   return (
     moduleKey.startsWith("hotel_") ||
+    moduleKey.startsWith("clinic_") ||
+    moduleKey.startsWith("banking_") ||
     moduleKey.startsWith("industry_") ||
     moduleKey.startsWith("platform_")
   );

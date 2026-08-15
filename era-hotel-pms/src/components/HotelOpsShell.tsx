@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import type { Locale } from '@era/i18n-common';
@@ -45,6 +44,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { HotelHeaderTierBar } from '@/components/HotelHeaderTierBar';
 import ReservationCardModal from '@/components/ReservationCardModal';
+import GroupBookingModal from '@/components/GroupBookingModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -80,6 +80,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
   const searchParams = useSearchParams();
   const openReservation = searchParams.get('openReservation') === '1';
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
   const t = useTranslations('nav');
   const tMeta = useTranslations('meta');
   const tHeader = useTranslations('header');
@@ -91,13 +92,16 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
   }
 
   useEffect(() => {
-    if (searchParams.get('openReservation') !== '1' && searchParams.get('newBooking') !== '1') {
-      return;
-    }
-    setBookingModalOpen(true);
+    const openRoom =
+      searchParams.get('openReservation') === '1' || searchParams.get('newBooking') === '1';
+    const openGroup = searchParams.get('groupBooking') === '1';
+    if (!openRoom && !openGroup) return;
+    if (openRoom) setBookingModalOpen(true);
+    if (openGroup) setGroupModalOpen(true);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('openReservation');
     params.delete('newBooking');
+    params.delete('groupBooking');
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [searchParams, pathname, router]);
@@ -141,69 +145,75 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: TrendingUp,
               active: pathname.startsWith('/executive/forecast'),
             },
+            {
+              id: 'home-unit-econ',
+              href: '/executive/unit-economics',
+              label: t('unitEconomics'),
+              icon: TrendingUp,
+              active: pathname.startsWith('/executive/unit-economics'),
+            },
           ],
         },
         {
           id: 'hotel_core',
-          title: t('sectionCore'),
+          title: t('sectionFrontOffice'),
           icon: LayoutGrid,
           items: sectionItems([
-            { id: 'core-rack', href: '/', labelKey: 'chessboard', icon: LayoutGrid, show: true },
             {
-              id: 'core-plan',
-              href: '/room-plan',
-              labelKey: 'roomPlan',
-              icon: BedDouble,
+              id: 'fo-rta',
+              href: '/fo/availability',
+              labelKey: 'roomTypeAvailability',
+              icon: CalendarDays,
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
-              id: 'core-res-list',
-              href: '/reports/reservations',
+              id: 'fo-res-list',
+              href: '/fo/reservations',
               labelKey: 'reservationList',
               icon: ClipboardList,
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
-              id: 'core-group-res',
-              href: '/reports/group-reservations',
+              id: 'fo-rack',
+              href: '/fo/rack',
+              labelKey: 'chessboard',
+              icon: LayoutGrid,
+              show: true,
+            },
+            {
+              id: 'fo-plan',
+              href: '/fo/room-plan',
+              labelKey: 'roomPlan',
+              icon: BedDouble,
+              show: can(PERMISSIONS.RESERVATIONS_READ),
+            },
+            {
+              id: 'fo-groups',
+              href: '/fo/groups',
               labelKey: 'groupReservations',
               icon: ClipboardList,
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
-              id: 'core-inhouse',
-              href: '/in-house',
+              id: 'fo-inhouse',
+              href: '/fo/in-house',
               labelKey: 'inHouse',
               icon: Users,
               show: can(PERMISSIONS.FOLIO_READ) || can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
-              id: 'core-eod',
-              href: '/reports/end-of-day-logs',
-              labelKey: 'endOfDayLogs',
-              icon: FileBarChart,
-              show: can(PERMISSIONS.NIGHT_AUDIT_RUN),
-            },
-            {
-              id: 'core-room-changes',
-              href: '/reports/room-changes',
+              id: 'fo-room-changes',
+              href: '/fo/room-changes',
               labelKey: 'roomChanges',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'core-daily-inhouse',
-              href: '/reports/inhouse-daily',
-              labelKey: 'dailyInhouseList',
+              id: 'fo-res-times',
+              href: '/fo/reservation-times',
+              labelKey: 'actualCheckTimes',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
-            },
-            {
-              id: 'core-na',
-              href: '/operations',
-              labelKey: 'operations',
-              icon: Moon,
-              show: can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.RESERVATIONS_CANCEL),
             },
           ]),
         },
@@ -219,19 +229,61 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: Banknote,
               show: can(PERMISSIONS.FOLIO_PAYMENT) || can(PERMISSIONS.FOLIO_VOID),
             },
+            {
+              id: 'fc-agency',
+              href: '/front-cash/agency-ledger',
+              labelKey: 'agencyLedger',
+              icon: ClipboardList,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'fc-tx',
+              href: '/front-cash/transactions',
+              labelKey: 'cashTransactions',
+              icon: Banknote,
+              show: can(PERMISSIONS.FOLIO_PAYMENT) || can(PERMISSIONS.FOLIO_READ),
+            },
           ]),
         },
         {
-          id: 'hotel_reports',
-          title: t('sectionReports'),
-          icon: FileBarChart,
+          id: 'hotel_night_audit',
+          title: t('sectionNightAudit'),
+          icon: Moon,
           items: sectionItems([
             {
-              id: 'rep-res-times',
-              href: '/reports/reservation-times',
-              labelKey: 'actualCheckTimes',
+              id: 'na-eod',
+              href: '/night-audit',
+              labelKey: 'endOfDay',
+              icon: Moon,
+              show: can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.RESERVATIONS_CANCEL),
+            },
+            {
+              id: 'na-reports',
+              href: '/night-audit/reports',
+              labelKey: 'eodReports',
               icon: FileBarChart,
+              show: can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'na-logs',
+              href: '/night-audit/logs',
+              labelKey: 'endOfDayLogs',
+              icon: FileBarChart,
+              show: can(PERMISSIONS.NIGHT_AUDIT_RUN),
+            },
+            {
+              id: 'na-res-updates',
+              href: '/night-audit/reservation-updates',
+              labelKey: 'reservationUpdates',
+              icon: ClipboardList,
               show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'na-year-end',
+              href: '/night-audit/year-end',
+              labelKey: 'endOfYear',
+              icon: CalendarDays,
+              show: can(PERMISSIONS.NIGHT_AUDIT_RUN),
             },
           ]),
         },
@@ -242,7 +294,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           items: sectionItems([
             {
               id: 'hk-ops',
-              href: '/housekeeping',
+              href: '/hk',
               labelKey: 'housekeeping',
               icon: Wrench,
               show: can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS),
@@ -256,31 +308,101 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
             },
             {
               id: 'hk-minibar',
-              href: '/housekeeping/minibar',
+              href: '/hk/minibar',
               labelKey: 'minibarControl',
               icon: Package,
               show: can(PERMISSIONS.HOUSEKEEPING_MANAGE),
             },
             {
               id: 'hk-maids',
-              href: '/housekeeping/maids',
+              href: '/hk/maids',
               labelKey: 'maidManagement',
               icon: Users,
               show: can(PERMISSIONS.HOUSEKEEPING_MANAGE),
             },
             {
               id: 'hk-ooo',
-              href: '/housekeeping/closed-rooms',
+              href: '/hk/closed-rooms',
               labelKey: 'closedRoomList',
               icon: Wrench,
               show: can(PERMISSIONS.ROOMS_STATUS),
             },
             {
               id: 'hk-lost',
-              href: '/housekeeping/lost-and-found',
+              href: '/hk/lost-and-found',
               labelKey: 'lostAndFound',
               icon: Package,
               show: can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS),
+            },
+          ]),
+        },
+        {
+          id: 'hotel_guest_experience',
+          title: t('sectionGuests'),
+          icon: Users,
+          items: sectionItems([
+            {
+              id: 'gx-guests',
+              href: '/guests',
+              labelKey: 'guests',
+              icon: Users,
+              show: can(PERMISSIONS.RESERVATIONS_READ),
+            },
+          ]),
+        },
+        {
+          id: 'hotel_distribution',
+          title: t('sectionDistribution'),
+          icon: Radio,
+          items: sectionItems([
+            {
+              id: 'dist-channel',
+              href: '/distribution/channel',
+              labelKey: 'channel',
+              icon: Radio,
+              show: can(PERMISSIONS.CHANNEL_MANAGE),
+            },
+            {
+              id: 'dist-contracts',
+              href: '/distribution/contracts',
+              labelKey: 'salesContracts',
+              icon: TrendingUp,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-allotment-blocks',
+              href: '/distribution/allotment-blocks',
+              labelKey: 'allotmentBlocks',
+              icon: TrendingUp,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-promo',
+              href: '/distribution/promotion-codes',
+              labelKey: 'promotionCodes',
+              icon: Settings,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-agencies',
+              href: '/distribution/travel-agencies',
+              labelKey: 'travelAgencies',
+              icon: Users,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-child-matrix',
+              href: '/distribution/child-matrix',
+              labelKey: 'childMatrix',
+              icon: Settings,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-yield-rules',
+              href: '/distribution/yield-rules',
+              labelKey: 'yieldRules',
+              icon: TrendingUp,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
           ]),
         },
@@ -315,69 +437,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/migration',
               labelKey: 'migrationQueue',
               icon: ClipboardList,
-              show: can(PERMISSIONS.RESERVATIONS_READ),
-            },
-          ]),
-        },
-        {
-          id: 'hotel_distribution',
-          title: t('sectionDistribution'),
-          icon: Radio,
-          items: sectionItems([
-            {
-              id: 'dist-channel',
-              href: '/channel',
-              labelKey: 'channel',
-              icon: Radio,
-              show: can(PERMISSIONS.CHANNEL_MANAGE),
-            },
-            {
-              id: 'dist-contracts',
-              href: '/admin/contracts',
-              labelKey: 'salesContracts',
-              icon: TrendingUp,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'dist-promo',
-              href: '/admin/promotion-codes',
-              labelKey: 'promotionCodes',
-              icon: Settings,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'dist-agencies',
-              href: '/admin/travel-agencies',
-              labelKey: 'travelAgencies',
-              icon: Users,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'dist-child-matrix',
-              href: '/admin/child-matrix',
-              labelKey: 'childMatrix',
-              icon: Settings,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'dist-yield-rules',
-              href: '/admin/yield-rules',
-              labelKey: 'yieldRules',
-              icon: TrendingUp,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-          ]),
-        },
-        {
-          id: 'hotel_guest_experience',
-          title: t('sectionGuests'),
-          icon: Users,
-          items: sectionItems([
-            {
-              id: 'gx-guests',
-              href: '/guests',
-              labelKey: 'guests',
-              icon: Users,
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
           ]),
@@ -467,27 +526,76 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           ]),
         },
         {
-          id: 'hotel_setup_advanced',
-          title: t('sectionSetup'),
-          icon: Building2,
+          id: 'hotel_settings',
+          title: t('sectionSettings'),
+          icon: Settings,
           items: sectionItems([
             {
-              id: 'su-bar',
-              href: '/admin/bar-calendar',
-              labelKey: 'barCalendar',
-              icon: Building2,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'su-master',
-              href: '/admin/master-data',
+              id: 'set-master',
+              href: '/settings/master-data',
               labelKey: 'masterData',
               icon: Building2,
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
             {
-              id: 'su-import',
-              href: '/admin/import',
+              id: 'set-bar',
+              href: '/settings/bar-calendar',
+              labelKey: 'barCalendar',
+              icon: Building2,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'set-pricing-policy',
+              href: '/settings/pricing-policy',
+              labelKey: 'pricingPolicy',
+              icon: Banknote,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'set-pricing-components',
+              href: '/settings/pricing-components',
+              labelKey: 'pricingComponents',
+              icon: Banknote,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'set-package-prices',
+              href: '/settings/package-prices',
+              labelKey: 'packagePrices',
+              icon: Banknote,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'set-users',
+              href: '/settings/users',
+              labelKey: 'users',
+              icon: Users,
+              show: can(PERMISSIONS.USERS_MANAGE),
+            },
+            {
+              id: 'set-int',
+              href: '/settings/integration',
+              labelKey: 'integration',
+              icon: Link2,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'set-audit',
+              href: '/settings/audit',
+              labelKey: 'auditViewer',
+              icon: ClipboardList,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'set-stock',
+              href: '/settings/stock',
+              labelKey: 'stock',
+              icon: Package,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'set-import',
+              href: '/settings/import',
               labelKey: 'elektrawebImport',
               icon: FileText,
               show: canRunElektrawebImport,
@@ -495,89 +603,54 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           ]),
         },
         {
-          id: 'general',
-          title: t('sectionGeneral'),
+          id: 'hotel_reports',
+          title: t('sectionReports'),
           icon: FileBarChart,
           items: sectionItems([
             {
-              id: 'gn-agency-profit',
+              id: 'rep-agency-profit',
               href: '/reports/agency-profitability',
               labelKey: 'agencyProfit',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'gn-guest-dedup',
+              id: 'rep-guest-dedup',
               href: '/reports/guest-dedup',
               labelKey: 'guestDedup',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'gn-analytics',
+              id: 'rep-analytics',
               href: '/reports/analytics',
               labelKey: 'analytics',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'gn-occ',
+              id: 'rep-occ',
               href: '/reports/occupancy',
               labelKey: 'occupancy',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'gn-inv',
+              id: 'rep-inv',
               href: '/reports/invoices',
               labelKey: 'invoices',
               icon: FileBarChart,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'gn-agency',
-              href: '/reports/agency-ledger',
-              labelKey: 'agencyLedger',
-              icon: ClipboardList,
-              show: can(PERMISSIONS.REPORTS_READ),
-            },
-            {
-              id: 'gn-recon',
+              id: 'rep-recon',
               href: '/reports/reconciliation',
               labelKey: 'reconciliation',
               icon: Activity,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
-              id: 'gn-stock',
-              href: '/admin/stock',
-              labelKey: 'stock',
-              icon: Package,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'gn-int',
-              href: '/admin/integration',
-              labelKey: 'integration',
-              icon: Link2,
-              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
-            },
-            {
-              id: 'gn-audit',
-              href: '/admin/audit',
-              labelKey: 'auditViewer',
-              icon: ClipboardList,
-              show: can(PERMISSIONS.REPORTS_READ),
-            },
-            {
-              id: 'gn-users',
-              href: '/admin/users',
-              labelKey: 'users',
-              icon: Users,
-              show: can(PERMISSIONS.USERS_MANAGE),
-            },
-            {
-              id: 'gn-pos',
+              id: 'rep-pos',
               href: posCalendarHref(),
               labelKey: 'posCalendar',
               icon: CalendarDays,
@@ -585,7 +658,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
-              id: 'gn-retail',
+              id: 'rep-retail',
               href: souvenirRetailHref(),
               labelKey: 'souvenirShop',
               icon: ShoppingBag,
@@ -609,43 +682,51 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
 
   const headerLeft = (
     <div className="hidden min-w-0 items-center gap-2 lg:flex">
-      <Link href="/" className={headerQuickLinkClass(pathname === '/')}>
-        <LayoutGrid className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span>{t('chessboard')}</span>
-      </Link>
-      {can(PERMISSIONS.RESERVATIONS_READ) ? (
-        <Link
-          href="/room-plan"
-          className={headerQuickLinkClass(
-            pathname === '/room-plan' || pathname.startsWith('/room-plan/'),
-          )}
-        >
-          <BedDouble className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>{t('roomPlan')}</span>
-        </Link>
-      ) : null}
       {can(PERMISSIONS.RESERVATIONS_WRITE) ? (
-        <button
-          type="button"
-          className={headerQuickLinkClass(openReservation && bookingModalOpen)}
-          onClick={() => {
-            setBookingModalOpen(true);
-            const params = new URLSearchParams(searchParams.toString());
-            params.delete('openReservation');
-            params.delete('newBooking');
-            const qs = params.toString();
-            if (qs) router.replace(`${pathname}?${qs}`, { scroll: false });
-          }}
-        >
-          <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>{t('newBooking')}</span>
-        </button>
+        <>
+          <button
+            type="button"
+            className={headerQuickLinkClass(openReservation && bookingModalOpen)}
+            title={t('roomBooking')}
+            aria-label={t('roomBooking')}
+            onClick={() => {
+              setBookingModalOpen(true);
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete('openReservation');
+              params.delete('newBooking');
+              params.delete('groupBooking');
+              const qs = params.toString();
+              if (qs) router.replace(`${pathname}?${qs}`, { scroll: false });
+            }}
+          >
+            <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{t('roomBooking')}</span>
+          </button>
+          <button
+            type="button"
+            className={headerQuickLinkClass(groupModalOpen)}
+            title={t('groupBooking')}
+            aria-label={t('groupBooking')}
+            onClick={() => {
+              setGroupModalOpen(true);
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete('openReservation');
+              params.delete('newBooking');
+              params.delete('groupBooking');
+              const qs = params.toString();
+              if (qs) router.replace(`${pathname}?${qs}`, { scroll: false });
+            }}
+          >
+            <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{t('groupBooking')}</span>
+          </button>
+        </>
       ) : null}
     </div>
   );
 
   const profileItems: HeaderProfileMenuItem[] = [
-    { label: tHeader('settings', { defaultValue: 'Settings' }), href: '/admin/master-data' },
+    { label: tHeader('settings', { defaultValue: 'Settings' }), href: '/settings/master-data' },
     { label: tHeader('help', { defaultValue: 'Help' }), href: '/help' },
   ];
 
@@ -693,10 +774,16 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         {children}
       </EraAppRouteShell>
       {can(PERMISSIONS.RESERVATIONS_WRITE) ? (
-        <ReservationCardModal
-          open={bookingModalOpen}
-          onClose={() => setBookingModalOpen(false)}
-        />
+        <>
+          <ReservationCardModal
+            open={bookingModalOpen}
+            onClose={() => setBookingModalOpen(false)}
+          />
+          <GroupBookingModal
+            open={groupModalOpen}
+            onClose={() => setGroupModalOpen(false)}
+          />
+        </>
       ) : null}
     </>
   );

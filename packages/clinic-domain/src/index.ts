@@ -31,3 +31,8 @@ export function canAssignBed(bedStatus: string, hasActiveAssignment: boolean): b
 export function wardDayChargeReference(admissionId: string, chargeDate: string): string {
   return `ward-day:${admissionId}:${chargeDate}`;
 }
+
+export {
+  localizedCatalogDescription,
+  type CatalogDescriptionFields,
+} from "./localized-catalog-description";

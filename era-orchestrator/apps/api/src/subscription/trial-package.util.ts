@@ -1,17 +1,10 @@
 import type { Prisma } from "@era365/database";
 import { PRICING_MODULE_CASH_BANK_PRO } from "@era365/database";
-import { computeTrialExpiresEndOfMonthBaku } from "./trial-date.util";
 
-/** @deprecated Always use {@link computeTrialExpiresAtBaku} with 3 calendar months. */
+/** Default when system_config billing.trial_period_days is unset. */
 export const DEFAULT_TRIAL_DURATION_DAYS = 90;
 
 export const TRIAL_3_MONTHS_SLUG = "TRIAL_3_MONTHS";
-
-const TRIAL_EXCLUDED_MODULE_SLUGS = new Set([
-  "tax_pro",
-  "trade_pro",
-  "compliance_pro",
-]);
 
 /**
  * Slugs granted on trial when no `PricingBundle` with trial slug/default exists.
@@ -30,21 +23,11 @@ export const DEFAULT_TRIAL_MODULE_SLUGS: readonly string[] = [
   "audit_hub",
 ] as const;
 
-function asStringArray(v: unknown): string[] {
-  if (!Array.isArray(v)) return [];
-  return v.map((x) => String(x).trim()).filter(Boolean);
-}
-
-function filterTrialModules(modules: string[]): string[] {
-  return modules.filter((k) => !TRIAL_EXCLUDED_MODULE_SLUGS.has(k));
-}
-
 export { computeTrialExpiresEndOfMonthBaku } from "./trial-date.util";
 export { computeTrialExpiresAtBaku } from "./trial-date.util";
 
 /**
  * End of UTC day after adding `trialDurationDays` calendar days to `signupAt`.
- * @deprecated Prefer {@link computeTrialExpiresAtBaku} for new org trials.
  */
 export function computeTrialExpiresAtUtc(
   signupAt: Date,
@@ -66,10 +49,13 @@ export type TrialSubscriptionSeed = {
 /**
  * Org-only trial row at registration — no satellite/module materialization.
  * Owner connects verticals via POST /v1/subscription/connect-satellite.
+ * `trialPeriodDays` is snapshotted into expiresAt; changing the global default
+ * does not affect existing subscriptions.
  */
 export async function resolveNewOrganizationTrialSubscription(
   tx: Prisma.TransactionClient,
   signupAt: Date,
+  trialPeriodDays: number = DEFAULT_TRIAL_DURATION_DAYS,
 ): Promise<TrialSubscriptionSeed> {
   let bundle = await tx.pricingBundle.findFirst({
     where: { slug: TRIAL_3_MONTHS_SLUG },
@@ -81,7 +67,11 @@ export async function resolveNewOrganizationTrialSubscription(
     });
   }
 
-  const expiresAt = computeTrialExpiresEndOfMonthBaku(signupAt, 3);
+  const days =
+    Number.isFinite(trialPeriodDays) && trialPeriodDays > 0
+      ? Math.floor(trialPeriodDays)
+      : DEFAULT_TRIAL_DURATION_DAYS;
+  const expiresAt = computeTrialExpiresAtUtc(signupAt, days);
   const trialPackageId = bundle?.id ?? "default";
   const trialPlanSlug =
     bundle?.slug === TRIAL_3_MONTHS_SLUG ? TRIAL_3_MONTHS_SLUG : bundle?.slug ?? undefined;
@@ -89,6 +79,7 @@ export async function resolveNewOrganizationTrialSubscription(
   const customConfig: Prisma.InputJsonValue = {
     modules: [],
     trialPackageId,
+    trialPeriodDays: days,
     ...(trialPlanSlug ? { trialPlanSlug } : {}),
     ...(bundle?.trialQuotas != null &&
     typeof bundle.trialQuotas === "object" &&

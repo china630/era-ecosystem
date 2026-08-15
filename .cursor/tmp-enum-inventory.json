@@ -1,0 +1,4464 @@
+{
+  "totalEnums": 315,
+  "apps": [
+    {
+      "app": "era-hotel-pms",
+      "path": "era-hotel-pms/prisma/schema.prisma",
+      "count": 55,
+      "enums": [
+        {
+          "name": "RoomStatus",
+          "values": [
+            "AVAILABLE",
+            "OCCUPIED",
+            "DIRTY",
+            "CLEAN",
+            "INSPECTED",
+            "OOO",
+            "OOS",
+            "MAINTENANCE"
+          ],
+          "usedBy": [
+            "Room.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ReservationStatus",
+          "values": [
+            "OPTION",
+            "CONFIRMED",
+            "IN_HOUSE",
+            "CHECKED_OUT",
+            "CANCELLED",
+            "NO_SHOW"
+          ],
+          "usedBy": [
+            "Reservation.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PaymentMethod",
+          "values": [
+            "CASH",
+            "CARD",
+            "COMPANY_ACCOUNT",
+            "LOYALTY_POINTS",
+            "DEPOSIT"
+          ],
+          "usedBy": [
+            "Reservation.paymentMethod",
+            "FolioPayment.paymentMethod",
+            "FolioDeposit.paymentMethod"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "FolioPaymentKind",
+          "values": [
+            "PAYMENT",
+            "REFUND"
+          ],
+          "usedBy": [
+            "FolioPayment.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AllotmentBlockStatus",
+          "values": [
+            "TENTATIVE",
+            "DEFINITE",
+            "CANCELLED",
+            "RELEASED"
+          ],
+          "usedBy": [
+            "AllotmentBlock.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BookingFolioMode",
+          "values": [
+            "INDIVIDUAL",
+            "MASTER",
+            "SPLIT"
+          ],
+          "usedBy": [
+            "ReservationGroup.folioMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PartyBillingMode",
+          "values": [
+            "PRIMARY",
+            "EQUAL"
+          ],
+          "usedBy": [
+            "Reservation.partyBillingMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "FolioDepositStatus",
+          "values": [
+            "HELD",
+            "APPLIED",
+            "REFUNDED",
+            "FORFEITED"
+          ],
+          "usedBy": [
+            "FolioDeposit.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CardAuthorizationStatus",
+          "values": [
+            "HELD",
+            "CAPTURED",
+            "RELEASED",
+            "EXPIRED",
+            "VOIDED"
+          ],
+          "usedBy": [
+            "CardAuthorization.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "FolioSettlementStatus",
+          "values": [
+            "OPEN",
+            "COMPLETED",
+            "VOID"
+          ],
+          "usedBy": [
+            "FolioSettlement.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ReservationNoteType",
+          "values": [
+            "EXTRA_REQ",
+            "RES_NOTE",
+            "CIN_NOTE",
+            "COUT_NOTE",
+            "ROOM_NOTE",
+            "CANCEL_NOTE",
+            "PAYMENT_NOTE",
+            "PRICE_NOTE",
+            "INVOICE_NOTE",
+            "CONFIRMATION",
+            "GENERAL_NOTE",
+            "ARRIVAL_POSTPONED",
+            "DEPARTURE_EXTENDED",
+            "SET_ARRIVAL_EARLY",
+            "SET_DEPARTURE_EARLY"
+          ],
+          "usedBy": [
+            "ReservationNote.noteType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "FolioType",
+          "values": [
+            "GUEST",
+            "COMPANY",
+            "AGENCY"
+          ],
+          "usedBy": [
+            "Folio.type",
+            "FolioRoutingRule.targetFolioType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "FolioStatus",
+          "values": [
+            "OPEN",
+            "CLOSED",
+            "VOID",
+            "PENDING_AR",
+            "TRANSFERRED_AR"
+          ],
+          "usedBy": [
+            "Folio.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BusinessDayStatus",
+          "values": [
+            "OPEN",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "BusinessDay.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "NightAuditStatus",
+          "values": [
+            "RUNNING",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "usedBy": [
+            "NightAuditRun.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "OutboundEventStatus",
+          "values": [
+            "PENDING",
+            "SENT",
+            "FAILED",
+            "SKIPPED"
+          ],
+          "usedBy": [
+            "OutboundEventLog.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CashShiftStatus",
+          "values": [
+            "OPEN",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "CashShift.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SettlementPendingStatus",
+          "values": [
+            "PENDING",
+            "PAID",
+            "VOID"
+          ],
+          "usedBy": [
+            "SettlementPendingCharge.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SettlementSourceSystem",
+          "values": [
+            "FNB_POS",
+            "CLINIC",
+            "RETAIL"
+          ],
+          "usedBy": [
+            "SettlementPendingCharge.sourceSystem"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "HousekeepingTaskStatus",
+          "values": [
+            "PENDING",
+            "IN_PROGRESS",
+            "DONE"
+          ],
+          "usedBy": [
+            "HousekeepingTask.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ChannelErrorStatus",
+          "values": [
+            "OPEN",
+            "RESOLVED"
+          ],
+          "usedBy": [
+            "ChannelSyncError.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "MedicalOrderStatus",
+          "values": [
+            "PENDING",
+            "COMPLETED"
+          ],
+          "usedBy": [
+            "MedicalOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "LabResultFlag",
+          "values": [
+            "NORMAL",
+            "HIGH",
+            "LOW"
+          ],
+          "usedBy": [
+            "LabResult.flag"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "UserStatus",
+          "values": [
+            "ACTIVE",
+            "DISABLED"
+          ],
+          "usedBy": [
+            "User.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "FiscalDocumentStatus",
+          "values": [
+            "PENDING",
+            "SENT",
+            "ACCEPTED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "FiscalDocument.fiscalStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TourismSubmissionStatus",
+          "values": [
+            "PENDING",
+            "SENT",
+            "FAILED"
+          ],
+          "usedBy": [
+            "TourismSubmission.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PosResourceType",
+          "values": [
+            "TABLE",
+            "SPA_CABIN",
+            "BANQUET_HALL"
+          ],
+          "usedBy": [
+            "PosResource.resourceType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "BanquetEventStatus",
+          "values": [
+            "DRAFT",
+            "CONFIRMED",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "BanquetEvent.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PosReservationStatus",
+          "values": [
+            "BOOKED",
+            "SEATED",
+            "CANCELLED",
+            "COMPLETED"
+          ],
+          "usedBy": [
+            "PosReservation.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ProcedureAppointmentStatus",
+          "values": [
+            "BOOKED",
+            "FINISHED",
+            "NO_SHOW"
+          ],
+          "usedBy": [
+            "ProcedureAppointment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TransferDirection",
+          "values": [
+            "IN",
+            "OUT"
+          ],
+          "usedBy": [
+            "TransferOrder.direction"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TransferOrderStatus",
+          "values": [
+            "BOOKED",
+            "CONFIRMED",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "TransferOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "StockMovementType",
+          "values": [
+            "RECEIPT",
+            "ISSUE",
+            "TRANSFER"
+          ],
+          "usedBy": [
+            "StockMovement.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RatePlanType",
+          "values": [
+            "BASE",
+            "DERIVED"
+          ],
+          "usedBy": [
+            "RatePlan.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RateAdjustmentMode",
+          "values": [
+            "PERCENT",
+            "FIXED"
+          ],
+          "usedBy": [
+            "RatePlan.adjustmentMode?"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AddOnPricingUnit",
+          "values": [
+            "PER_STAY",
+            "PER_NIGHT",
+            "PER_GUEST",
+            "PER_GUEST_NIGHT"
+          ],
+          "usedBy": [
+            "AddOn.pricingUnit"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "AddOnInclusion",
+          "values": [
+            "INCLUDED",
+            "OPTIONAL"
+          ],
+          "usedBy": [
+            "RatePlanAddOn.inclusion"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProductType",
+          "values": [
+            "SELLABLE",
+            "STOCK"
+          ],
+          "usedBy": [
+            "Product.productType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "RoomTypeRateSource",
+          "values": [
+            "AUTO",
+            "MANUAL"
+          ],
+          "usedBy": [
+            "RoomTypeRate.source"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ContractPricingRuleType",
+          "values": [
+            "DISCOUNT",
+            "SUPPLEMENT"
+          ],
+          "usedBy": [
+            "ContractPricingRule.ruleType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "SalesContractStatus",
+          "values": [
+            "DRAFT",
+            "ACTIVE",
+            "EXPIRED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "SalesContract.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SalesContractCounterpartyType",
+          "values": [
+            "AGENCY",
+            "CORPORATE"
+          ],
+          "usedBy": [
+            "SalesContract.counterpartyType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EventOrderLineKind",
+          "values": [
+            "MENU",
+            "EQUIPMENT",
+            "STAFF",
+            "ROOM_RENTAL",
+            "OTHER"
+          ],
+          "usedBy": [
+            "EventOrderLine.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "EventStaffAssignmentStatus",
+          "values": [
+            "PLANNED",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "EventStaffAssignment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "MigrationRegistrationStatus",
+          "values": [
+            "PENDING",
+            "SUBMITTED",
+            "ACCEPTED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "MigrationRegistration.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "RoomChangeStatus",
+          "values": [
+            "PENDING",
+            "APPLIED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "RoomChangePlan.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "LostFoundStatus",
+          "values": [
+            "OPEN",
+            "RETURNED",
+            "DISPOSED"
+          ],
+          "usedBy": [
+            "LostFoundItem.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PosBridgeShiftStatus",
+          "values": [
+            "OPEN",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "PosBridgeShift.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ConciergeProductCategory",
+          "values": [
+            "EXCURSION",
+            "TICKET",
+            "RESTAURANT_EXT"
+          ],
+          "usedBy": [
+            "ConciergeProduct.category"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ConciergeOrderStatus",
+          "values": [
+            "REQUESTED",
+            "CONFIRMED",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ConciergeOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "DispatchRequestStatus",
+          "values": [
+            "QUEUED",
+            "ASSIGNED",
+            "IN_PROGRESS",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "DispatchRequest.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ServiceWorkOrderStatus",
+          "values": [
+            "OPEN",
+            "IN_PROGRESS",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "MaintenanceWorkOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ServiceRequestSource",
+          "values": [
+            "GUEST",
+            "STAFF",
+            "RECURRING"
+          ],
+          "usedBy": [
+            "MaintenanceWorkOrder.source"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ServicePriority",
+          "values": [
+            "LOW",
+            "NORMAL",
+            "HIGH"
+          ],
+          "usedBy": [
+            "MaintenanceWorkOrder.priority"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ServiceCadence",
+          "values": [
+            "DAILY",
+            "WEEKLY",
+            "MONTHLY",
+            "QUARTERLY",
+            "YEARLY",
+            "DATE",
+            "EVENT"
+          ],
+          "usedBy": [
+            "RecurringServiceSchedule.cadence"
+          ],
+          "kind": "system constant"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "GuestComment",
+          "field": "state",
+          "default": "NEW",
+          "documented": null,
+          "line": 893
+        },
+        {
+          "model": "GuestCommunication",
+          "field": "status",
+          "default": "STUB",
+          "documented": null,
+          "line": 936
+        },
+        {
+          "model": "GuestTimeShareAgreement",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 1005
+        },
+        {
+          "model": "GuestTask",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 1030
+        },
+        {
+          "model": "ReservationTask",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 1275
+        }
+      ]
+    },
+    {
+      "app": "era-clinic",
+      "path": "era-clinic/prisma/schema.prisma",
+      "count": 31,
+      "enums": [
+        {
+          "name": "LabOrderStatus",
+          "values": [
+            "ORDERED",
+            "COLLECTED",
+            "IN_PROGRESS",
+            "RESULT_READY",
+            "PUBLISHED",
+            "COMPLETED"
+          ],
+          "usedBy": [
+            "LabOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PatientOrigin",
+          "values": [
+            "WALK_IN",
+            "IN_HOUSE"
+          ],
+          "usedBy": [
+            "Visit.patientOrigin",
+            "ClinicalEpisode.patientOrigin",
+            "ProcedureOrder.patientOrigin"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AppointmentStatus",
+          "values": [
+            "SCHEDULED",
+            "CHECKED_IN",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "NO_SHOW",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "Appointment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "VisitStatus",
+          "values": [
+            "IN_PROGRESS",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "Visit.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BillingTarget",
+          "values": [
+            "FINANCE",
+            "HOTEL_FOLIO",
+            "SETTLEMENT_HUB"
+          ],
+          "usedBy": [
+            "Visit.billingTarget"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ResourceKind",
+          "values": [
+            "ROOM",
+            "EQUIPMENT"
+          ],
+          "usedBy": [
+            "Resource.kind",
+            "ProcedureType.resourceKind?",
+            "ProcedureTypeRequirement.resourceKind?"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ProcedureRequirementRole",
+          "values": [
+            "LOCATION",
+            "EQUIPMENT",
+            "STAFF"
+          ],
+          "usedBy": [
+            "ProcedureTypeRequirement.role",
+            "ProcedureAllocation.role"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "ProcedureStaffMode",
+          "values": [
+            "HARD",
+            "SOFT"
+          ],
+          "usedBy": [
+            "ProcedureTypeRequirement.staffMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProcedureOrderStatus",
+          "values": [
+            "PROPOSED",
+            "SCHEDULED",
+            "CHECKED_IN",
+            "COMPLETED",
+            "NO_SHOW",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ProcedureOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "RotationScope",
+          "values": [
+            "BODY_PART",
+            "GROUP"
+          ],
+          "usedBy": [
+            "ProcedureRotationRule.scope"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "LabResultSource",
+          "values": [
+            "IN_HOUSE",
+            "EXTERNAL"
+          ],
+          "usedBy": [
+            "LabOrder.source"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "LabResultFlag",
+          "values": [
+            "NORMAL",
+            "HIGH",
+            "LOW",
+            "CRITICAL"
+          ],
+          "usedBy": [
+            "LabResult.flag"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProcedureCheckInChannel",
+          "values": [
+            "QR",
+            "OVERRIDE",
+            "MANUAL"
+          ],
+          "usedBy": [
+            "ProcedureOrder.checkInChannel?"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "ProgramSchedulingMode",
+          "values": [
+            "ON_CHECKIN",
+            "AFTER_CHECKUP"
+          ],
+          "usedBy": [
+            "Tenant.programSchedulingMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProcedureOverQuotaPolicy",
+          "values": [
+            "CHARGE_FOLIO",
+            "BLOCK",
+            "WARN_ONLY"
+          ],
+          "usedBy": [
+            "Tenant.procedureOverQuotaPolicy"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ClinicReceiptStatus",
+          "values": [
+            "OPEN",
+            "PAID",
+            "VOID"
+          ],
+          "usedBy": [
+            "ClinicReceipt.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ClinicReceiptChannel",
+          "values": [
+            "LOCAL",
+            "FINANCE",
+            "HOTEL_FOLIO",
+            "SETTLEMENT_HUB"
+          ],
+          "usedBy": [
+            "ClinicReceipt.channel"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "ClinicReceiptLineSource",
+          "values": [
+            "VISIT_LINE",
+            "LAB_ITEM",
+            "PROCEDURE",
+            "MANUAL"
+          ],
+          "usedBy": [
+            "ClinicReceiptLine.sourceType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "QueueTicketStatus",
+          "values": [
+            "WAITING",
+            "CALLED",
+            "SERVED",
+            "SKIPPED"
+          ],
+          "usedBy": [
+            "QueueTicket.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "LisFileFormat",
+          "values": [
+            "CSV",
+            "HL7_FRAGMENT"
+          ],
+          "usedBy": [
+            "LisFileProfile.format"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "PatientSex",
+          "values": [
+            "MALE",
+            "FEMALE",
+            "OTHER",
+            "UNKNOWN"
+          ],
+          "usedBy": [
+            "PatientRef.sex"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PatientBloodGroup",
+          "values": [
+            "A_POS",
+            "A_NEG",
+            "B_POS",
+            "B_NEG",
+            "AB_POS",
+            "AB_NEG",
+            "O_POS",
+            "O_NEG",
+            "UNKNOWN"
+          ],
+          "usedBy": [
+            "PatientRef.bloodGroup"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "PractitionerSchedulePattern",
+          "values": [
+            "WEEKLY",
+            "WEEK_PARITY",
+            "MONTH_DAY_PARITY",
+            "CYCLE"
+          ],
+          "usedBy": [
+            "PractitionerScheduleRule.pattern"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ScheduleParity",
+          "values": [
+            "EVEN",
+            "ODD"
+          ],
+          "usedBy": [
+            "PractitionerScheduleRule.parity?"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PractitionerScheduleExceptionKind",
+          "values": [
+            "DAY_OFF",
+            "EXTRA_SHIFT",
+            "CUSTOM_HOURS"
+          ],
+          "usedBy": [
+            "PractitionerScheduleException.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AnalyteValueType",
+          "values": [
+            "NUMERIC",
+            "QUALITATIVE"
+          ],
+          "usedBy": [
+            "DiagnosticAnalyte.valueType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "BodyPart",
+          "values": [
+            "HEAD",
+            "NECK",
+            "CHEST",
+            "BACK",
+            "ABDOMEN",
+            "ARM_LEFT",
+            "ARM_RIGHT",
+            "LEG_LEFT",
+            "LEG_RIGHT",
+            "FULL_BODY"
+          ],
+          "usedBy": [
+            "ProcedureType.bodyPart?",
+            "ProcedureRule.bodyPart?",
+            "PatientContraindication.bodyPart",
+            "ProcedureOrder.bodyPart?"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ProcedureRuleKind",
+          "values": [
+            "SEQUENCE_GAP",
+            "MUTUAL_EXCLUSION"
+          ],
+          "usedBy": [
+            "ProcedureRule.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProcedureCompatibilityRuleType",
+          "values": [
+            "FORBID_SAME_DAY",
+            "MIN_HOURS_GAP",
+            "FORBID_SEQUENCE"
+          ],
+          "usedBy": [
+            "ProcedureCompatibilityRule.ruleType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ServiceCatalogKind",
+          "values": [
+            "PROCEDURE",
+            "DIAGNOSTIC",
+            "LAB",
+            "VISIT",
+            "OTHER"
+          ],
+          "usedBy": [
+            "ServiceCatalogCache.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "InpatientAdmissionStatus",
+          "values": [
+            "ADMITTED",
+            "DISCHARGED",
+            "TRANSFERRED"
+          ],
+          "usedBy": [
+            "InpatientAdmission.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "ClinicalEpisode",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 668
+        },
+        {
+          "model": "Bed",
+          "field": "status",
+          "default": "AVAILABLE",
+          "documented": null,
+          "line": 1040
+        },
+        {
+          "model": "ClinicShift",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 1078
+        },
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 1196
+        }
+      ]
+    },
+    {
+      "app": "era-finance-core",
+      "path": "era-finance-core/packages/database/prisma/schema.prisma",
+      "count": 113,
+      "enums": [
+        {
+          "name": "UserLocale",
+          "values": [
+            "AZ",
+            "RU"
+          ],
+          "usedBy": [
+            "User.locale"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "OrganizationKind",
+          "values": [
+            "COMMERCIAL",
+            "BUDGET",
+            "NGO"
+          ],
+          "usedBy": [
+            "TemplateAccount.kind",
+            "TemplatePostingRole.kind",
+            "ChartOfAccountsEntry.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ReferralCommissionStatus",
+          "values": [
+            "ACCRUED",
+            "PAID",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ReferralCommission.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "WorkScheduleKind",
+          "values": [
+            "FIVE_DAY",
+            "SIX_DAY",
+            "TWO_SHIFT"
+          ],
+          "usedBy": [
+            "WorkSchedule.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PayrollComponentKind",
+          "values": [
+            "EARNING",
+            "DEDUCTION"
+          ],
+          "usedBy": [
+            "PayrollComponent.kind",
+            "PayrollSlipLine.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PayrollComponentCode",
+          "values": [
+            "BONUS",
+            "MATERIAL_AID",
+            "ALIMONY",
+            "EXECUTION_SHEET",
+            "LOAN",
+            "ADVANCE",
+            "UNION_DUE",
+            "INCOME_TAX_RELIEF",
+            "NIGHT_PREMIUM",
+            "EVENING_PREMIUM",
+            "OVERTIME_PREMIUM",
+            "BASE_SALARY"
+          ],
+          "usedBy": [
+            "PayrollComponent.code",
+            "PayrollSlipLine.code"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "BusinessTripKind",
+          "values": [
+            "DOMESTIC",
+            "FOREIGN"
+          ],
+          "usedBy": [
+            "BusinessTrip.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "NotificationSeverity",
+          "values": [
+            "INFO",
+            "WARNING",
+            "CRITICAL"
+          ],
+          "usedBy": [
+            "NotificationType.defaultSeverity",
+            "Notification.severity"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EarlyAccessModuleKey",
+          "values": [
+            "RETAIL_ECOM",
+            "LOGISTICS_CUSTOMS",
+            "CONSTRUCTION",
+            "CRM_WHATSAPP",
+            "AUTO_STO",
+            "CLINIC",
+            "WHOLESALE",
+            "HOTEL_PMS",
+            "FB_POS"
+          ],
+          "usedBy": [
+            "EarlyAccessEvent.moduleKey",
+            "EarlyAccessSignup.moduleKey",
+            "EarlyAccessThresholdAlert.moduleKey"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EarlyAccessEventType",
+          "values": [
+            "VIEW_CLICK",
+            "MODAL_OPEN",
+            "MODAL_CLOSE",
+            "CTA_CLICK",
+            "SURVEY_SUBMIT"
+          ],
+          "usedBy": [
+            "EarlyAccessEvent.eventType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EntityCommentKind",
+          "values": [
+            "NORMAL",
+            "AUDIT_NOTE"
+          ],
+          "usedBy": [
+            "EntityComment.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AuditEngagementStatus",
+          "values": [
+            "OPEN",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "AuditEngagement.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "AuditEngagementInviteStatus",
+          "values": [
+            "PENDING",
+            "ACCEPTED",
+            "DECLINED",
+            "REVOKED",
+            "EXPIRED"
+          ],
+          "usedBy": [
+            "AuditEngagementInvite.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ApprovalDocumentType",
+          "values": [
+            "CASH_ORDER",
+            "PURCHASE_INVOICE",
+            "PAYROLL_RUN",
+            "BANK_MANUAL_ENTRY"
+          ],
+          "usedBy": [
+            "ApprovalPolicy.documentType",
+            "ApprovalRequest.documentType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ApprovalRequestStatus",
+          "values": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ApprovalRequest.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ApprovalStepDecision",
+          "values": [
+            "APPROVED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "ApprovalStep.decision?"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PrepaidExpenseStatus",
+          "values": [
+            "ACTIVE",
+            "FULLY_AMORTIZED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PrepaidExpense.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PrepaidExpenseScheduleStatus",
+          "values": [
+            "PENDING",
+            "POSTED",
+            "SKIPPED_CLOSED"
+          ],
+          "usedBy": [
+            "PrepaidExpenseSchedule.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PurchaseRequestStatus",
+          "values": [
+            "DRAFT",
+            "SUBMITTED",
+            "APPROVED",
+            "RFQ",
+            "ORDERED",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "PurchaseRequest.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PurchaseRequestApprovalDecision",
+          "values": [
+            "APPROVED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "PurchaseRequestApproval.decision"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EmployeeDocumentKind",
+          "values": [
+            "CONTRACT",
+            "ID_DOCUMENT",
+            "MEDICAL",
+            "EDUCATION",
+            "TAX",
+            "OTHER"
+          ],
+          "usedBy": [
+            "EmployeeDocument.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ProjectStatus",
+          "values": [
+            "ACTIVE",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PsaProject.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ProjectBillingMode",
+          "values": [
+            "FIXED",
+            "HOURLY"
+          ],
+          "usedBy": [
+            "PsaProject.billingMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProjectTaskStatus",
+          "values": [
+            "OPEN",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PsaProjectTask.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TimeEntryStatus",
+          "values": [
+            "DRAFT",
+            "SUBMITTED",
+            "APPROVED",
+            "INVOICED"
+          ],
+          "usedBy": [
+            "PsaTimeEntry.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "OverheadDriverType",
+          "values": [
+            "VOLUME",
+            "TIME",
+            "MATERIAL_COST"
+          ],
+          "usedBy": [
+            "OverheadDriver.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProcurementProtocolStatus",
+          "values": [
+            "DRAFT",
+            "REGISTERED"
+          ],
+          "usedBy": [
+            "ProcurementProtocol.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ManufacturingOrderStatus",
+          "values": [
+            "DRAFT",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ManufacturingOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ProfitTaxAdjustmentKind",
+          "values": [
+            "PERMANENT",
+            "TEMPORARY"
+          ],
+          "usedBy": [
+            "ProfitTaxAdjustment.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ProfitTaxAdjustmentSource",
+          "values": [
+            "MANUAL",
+            "AUTO_TAX_DEPRECIATION"
+          ],
+          "usedBy": [
+            "ProfitTaxAdjustment.source"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EmasContractEventType",
+          "values": [
+            "HIRE",
+            "TRANSFER",
+            "TERMINATE"
+          ],
+          "usedBy": [
+            "EmasContractEvent.eventType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EmasContractEventStatus",
+          "values": [
+            "PENDING",
+            "SUBMITTED",
+            "ACCEPTED",
+            "REJECTED",
+            "FAILED"
+          ],
+          "usedBy": [
+            "EmasContractEvent.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "NetworkDocumentStatus",
+          "values": [
+            "PENDING_REVIEW",
+            "ACCEPTED",
+            "REJECTED",
+            "POSTED",
+            "SUPERSEDED"
+          ],
+          "usedBy": [
+            "NetworkDocument.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CustomsDeclarationStatus",
+          "values": [
+            "DRAFT",
+            "CAPTURED",
+            "ATTACHED",
+            "ARCHIVED"
+          ],
+          "usedBy": [
+            "CustomsDeclaration.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CouncilTriggerSource",
+          "values": [
+            "MANUAL",
+            "TAX_LIMIT_HIT",
+            "HIGH_VALUE_TRANSACTION",
+            "VOEN_RISKY_COUNTERPARTY",
+            "WEEKLY_CRON",
+            "PRE_TAX_CRON"
+          ],
+          "usedBy": [
+            "CouncilVerdict.triggerSource"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CouncilTargetEntityType",
+          "values": [
+            "ORGANIZATION",
+            "RISK_AUDIT",
+            "INVOICE",
+            "CASH_ORDER",
+            "LEDGER_PERIOD"
+          ],
+          "usedBy": [
+            "CouncilVerdict.targetEntityType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CouncilVerdictStatus",
+          "values": [
+            "QUEUED",
+            "RUNNING",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "usedBy": [],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "RiskAuditType",
+          "values": [
+            "TAX",
+            "FRAUD",
+            "COMPLIANCE"
+          ],
+          "usedBy": [
+            "RiskAudit.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RiskSeverity",
+          "values": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "usedBy": [
+            "RiskAudit.severity"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RiskAuditStatus",
+          "values": [
+            "PENDING",
+            "MITIGATED",
+            "IGNORED"
+          ],
+          "usedBy": [
+            "RiskAudit.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "DualApprovalStatus",
+          "values": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "EXPIRED",
+            "EXECUTED"
+          ],
+          "usedBy": [],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "DisputeStatus",
+          "values": [
+            "EVIDENCE_REQUIRED",
+            "EVIDENCE_REVIEW",
+            "INCUMBENT_NOTIFIED",
+            "COOLDOWN",
+            "APPROVED",
+            "REJECTED",
+            "EXECUTED",
+            "REVERTED"
+          ],
+          "usedBy": [
+            "OwnershipDispute.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "DisputeSeverity",
+          "values": [
+            "SOFT",
+            "HARD"
+          ],
+          "usedBy": [
+            "OwnershipDispute.severity"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "SecurityMode",
+          "values": [
+            "NORMAL",
+            "DISPUTE",
+            "POST_TRANSFER_LOCK",
+            "ROLLBACK_IN_PROGRESS",
+            "HARD_BLOCK_PLATFORM"
+          ],
+          "usedBy": [
+            "OrganizationSecurityState.mode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TenantRollbackStatus",
+          "values": [
+            "PENDING",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "FAILED",
+            "ABORTED"
+          ],
+          "usedBy": [
+            "TenantRollbackRecord.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InventoryValuationMethod",
+          "values": [
+            "AVCO",
+            "FIFO"
+          ],
+          "usedBy": [
+            "Organization.valuationMethod"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "BankAccountType",
+          "values": [
+            "MAIN",
+            "SALARY",
+            "CARD",
+            "TENDER",
+            "CREDIT",
+            "VAT_DEPOSIT"
+          ],
+          "usedBy": [
+            "OrganizationBankAccount.accountType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "UserRole",
+          "values": [
+            "OWNER",
+            "ADMIN",
+            "ACCOUNTANT",
+            "USER",
+            "PROCUREMENT",
+            "AUDITOR",
+            "WAREHOUSE_KEEPER",
+            "HR_OFFICER",
+            "HR_MANAGER",
+            "DEPARTMENT_HEAD",
+            "DIRECTOR",
+            "PARTNER"
+          ],
+          "usedBy": [
+            "OrganizationMembership.role",
+            "OrganizationInvite.role",
+            "Role.legacyEnumRole?",
+            "ApprovalPolicy.approverRoles[]",
+            "ApprovalStep.assignedRole"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "PermissionCategory",
+          "values": [
+            "CORE",
+            "BILLING",
+            "ACCOUNTING",
+            "SALES",
+            "PURCHASES",
+            "INVENTORY",
+            "HR",
+            "PSA",
+            "CUSTOMS",
+            "ADMIN",
+            "REPORTING",
+            "INTEGRATIONS"
+          ],
+          "usedBy": [
+            "Permission.category"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "UnitOfMeasureKind",
+          "values": [
+            "COUNT",
+            "WEIGHT",
+            "LENGTH",
+            "AREA",
+            "VOLUME",
+            "PACK",
+            "TIME"
+          ],
+          "usedBy": [
+            "UnitOfMeasure.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "TaxRateKind",
+          "values": [
+            "VAT",
+            "EXCISE",
+            "INCOME",
+            "SOCIAL"
+          ],
+          "usedBy": [
+            "TaxRate.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "SystemProductKind",
+          "values": [
+            "SERVICE",
+            "GOODS"
+          ],
+          "usedBy": [
+            "SystemProductTemplate.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "AccountType",
+          "values": [
+            "ASSET",
+            "LIABILITY",
+            "EQUITY",
+            "REVENUE",
+            "EXPENSE"
+          ],
+          "usedBy": [
+            "TemplateAccount.accountType",
+            "Account.type",
+            "ChartOfAccountsEntry.accountType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "CounterpartyKind",
+          "values": [
+            "INDIVIDUAL",
+            "LEGAL_ENTITY"
+          ],
+          "usedBy": [
+            "Counterparty.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CounterpartyRole",
+          "values": [
+            "CUSTOMER",
+            "SUPPLIER",
+            "BOTH",
+            "OTHER"
+          ],
+          "usedBy": [
+            "Counterparty.role"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "CounterpartyLegalForm",
+          "values": [
+            "INDIVIDUAL",
+            "LLC",
+            "CJSC",
+            "OJSC",
+            "PUBLIC_LEGAL_ENTITY",
+            "STATE_AGENCY",
+            "NGO",
+            "BRANCH",
+            "HOA"
+          ],
+          "usedBy": [
+            "Counterparty.legalForm",
+            "GlobalCounterparty.legalForm?"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "InvoiceStatus",
+          "values": [
+            "DRAFT",
+            "SENT",
+            "PAID",
+            "CANCELLED",
+            "PARTIALLY_PAID",
+            "LOCKED_BY_SIGNATURE"
+          ],
+          "usedBy": [
+            "Invoice.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SignatureProvider",
+          "values": [
+            "ASAN_IMZA",
+            "SIMA"
+          ],
+          "usedBy": [
+            "DigitalSignatureLog.provider"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "DigitalSignatureStatus",
+          "values": [
+            "PENDING_MOBILE",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "usedBy": [
+            "DigitalSignatureLog.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SignedDocumentKind",
+          "values": [
+            "INVOICE",
+            "RECONCILIATION_ACT"
+          ],
+          "usedBy": [
+            "DigitalSignatureLog.documentKind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EqaimeStatus",
+          "values": [
+            "DRAFT",
+            "SUBMITTED",
+            "ACCEPTED",
+            "REJECTED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "Invoice.eqaimeStatus?"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "VatDepositLedgerKind",
+          "values": [
+            "INCOMING_ROUTE",
+            "REMITTANCE",
+            "ADJUSTMENT"
+          ],
+          "usedBy": [
+            "VatDepositLedgerEntry.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "BankStatementLineType",
+          "values": [
+            "INFLOW",
+            "OUTFLOW"
+          ],
+          "usedBy": [
+            "BankStatementLine.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "BankStatementChannel",
+          "values": [
+            "BANK",
+            "CASH"
+          ],
+          "usedBy": [
+            "BankStatement.channel"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "BankStatementLineOrigin",
+          "values": [
+            "FILE_IMPORT",
+            "DIRECT_SYNC",
+            "WEBHOOK",
+            "INVOICE_PAYMENT_SYSTEM",
+            "MANUAL_CASH_OUT",
+            "MANUAL_BANK_ENTRY"
+          ],
+          "usedBy": [
+            "BankStatementLine.origin"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PayrollRunStatus",
+          "values": [
+            "DRAFT",
+            "POSTED"
+          ],
+          "usedBy": [
+            "PayrollRun.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SalaryRegistryStatus",
+          "values": [
+            "DRAFT",
+            "SENT",
+            "PAID"
+          ],
+          "usedBy": [
+            "SalaryRegistry.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BankPaymentDraftStatus",
+          "values": [
+            "PENDING",
+            "SENT",
+            "REJECTED",
+            "COMPLETED"
+          ],
+          "usedBy": [
+            "BankPaymentDraft.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SalaryPayoutFormat",
+          "values": [
+            "ABB_XML",
+            "UNIVERSAL_XLSX"
+          ],
+          "usedBy": [
+            "SalaryRegistry.payoutFormat"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "EmployeeKind",
+          "values": [
+            "EMPLOYEE",
+            "CONTRACTOR"
+          ],
+          "usedBy": [
+            "Employee.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TaxResidencyStatus",
+          "values": [
+            "RESIDENT",
+            "NON_RESIDENT"
+          ],
+          "usedBy": [
+            "Employee.taxResidencyStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "EmployeeEmploymentStatus",
+          "values": [
+            "ACTIVE",
+            "TERMINATED"
+          ],
+          "usedBy": [
+            "Employee.employmentStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TimesheetStatus",
+          "values": [
+            "DRAFT",
+            "APPROVED"
+          ],
+          "usedBy": [
+            "Timesheet.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TimesheetEntryType",
+          "values": [
+            "WORK",
+            "VACATION",
+            "SICK",
+            "OFF",
+            "BUSINESS_TRIP"
+          ],
+          "usedBy": [
+            "TimesheetEntry.type"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "StockMovementType",
+          "values": [
+            "IN",
+            "OUT",
+            "TRANSFER"
+          ],
+          "usedBy": [
+            "StockMovement.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "StockMovementReason",
+          "values": [
+            "SALE",
+            "PURCHASE",
+            "ADJUSTMENT",
+            "RECEIPT",
+            "SHIPMENT",
+            "TRANSFER",
+            "MANUFACTURING"
+          ],
+          "usedBy": [
+            "StockMovement.reason"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "InventoryAuditStatus",
+          "values": [
+            "DRAFT",
+            "COUNTING",
+            "REVIEW",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "InventoryAudit.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InventoryDiscrepancyKind",
+          "values": [
+            "NONE",
+            "SURPLUS",
+            "SHORTAGE_WRITEOFF",
+            "SHORTAGE_EMPLOYEE"
+          ],
+          "usedBy": [
+            "InventoryAuditLine.discrepancyKind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "InventoryAdjustmentStatus",
+          "values": [
+            "DRAFT",
+            "POSTED"
+          ],
+          "usedBy": [
+            "InventoryAdjustment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InventoryAdjustmentDocType",
+          "values": [
+            "WRITE_OFF",
+            "SURPLUS"
+          ],
+          "usedBy": [
+            "InventoryAdjustment.docType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "LedgerType",
+          "values": [
+            "NAS",
+            "IFRS"
+          ],
+          "usedBy": [
+            "AccountBalance.ledgerType",
+            "Account.ledgerType",
+            "JournalEntry.ledgerType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TariffTier",
+          "values": [
+            "TIER_0",
+            "TIER_1",
+            "TIER_2",
+            "TIER_3"
+          ],
+          "usedBy": [
+            "OrganizationSubscription.currentTier"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "SubscriptionInvoiceStatus",
+          "values": [
+            "DRAFT",
+            "ISSUED",
+            "PAID",
+            "OVERDUE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "SubscriptionInvoice.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BillingStatus",
+          "values": [
+            "ACTIVE",
+            "SOFT_BLOCK",
+            "HARD_BLOCK"
+          ],
+          "usedBy": [],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PricingKind",
+          "values": [
+            "FOUNDATION",
+            "MODULE",
+            "QUOTA"
+          ],
+          "usedBy": [
+            "Pricing.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AccessRequestStatus",
+          "values": [
+            "PENDING",
+            "ACCEPTED",
+            "DECLINED"
+          ],
+          "usedBy": [
+            "AccessRequest.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InviteStatus",
+          "values": [
+            "PENDING",
+            "ACCEPTED",
+            "DECLINED"
+          ],
+          "usedBy": [
+            "OrganizationInvite.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "FixedAssetDepreciationMethod",
+          "values": [
+            "STRAIGHT_LINE",
+            "REDUCING_BALANCE",
+            "UNITS_OF_PRODUCTION"
+          ],
+          "usedBy": [
+            "FixedAsset.depreciationMethod",
+            "IntangibleAsset.depreciationMethod"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "FixedAssetStatus",
+          "values": [
+            "ACTIVE",
+            "DISPOSED"
+          ],
+          "usedBy": [
+            "FixedAsset.status",
+            "IntangibleAsset.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SubcontoKind",
+          "values": [
+            "COUNTERPARTY",
+            "PROJECT",
+            "COST_CENTER",
+            "ITEM",
+            "EMPLOYEE",
+            "CUSTOM"
+          ],
+          "usedBy": [
+            "SubcontoType.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "FixedAssetLifecycleEventType",
+          "values": [
+            "ACQUISITION",
+            "MODERNIZATION",
+            "REVALUATION",
+            "DISPOSAL"
+          ],
+          "usedBy": [
+            "FixedAssetLifecycleEvent.eventType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TaxDeclarationType",
+          "values": [
+            "SIMPLIFIED_TAX",
+            "VAT",
+            "PROFIT_TAX",
+            "PAYROLL_WITHHOLDING",
+            "PROPERTY_TAX"
+          ],
+          "usedBy": [
+            "TaxDeclarationExport.taxType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TaxDeclarationExportStatus",
+          "values": [
+            "GENERATED",
+            "UPLOADED",
+            "CONFIRMED_BY_TAX"
+          ],
+          "usedBy": [
+            "TaxDeclarationExport.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PaymentOrderStatus",
+          "values": [
+            "PENDING",
+            "PAID",
+            "FAILED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PaymentOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CashOrderKind",
+          "values": [
+            "KMO",
+            "KXO"
+          ],
+          "usedBy": [
+            "CashOrder.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CashOrderStatus",
+          "values": [
+            "DRAFT",
+            "POSTED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "CashOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CashOrderPkoSubtype",
+          "values": [
+            "INCOME_FROM_CUSTOMER",
+            "RETURN_FROM_ACCOUNTABLE",
+            "WITHDRAWAL_FROM_BANK",
+            "OTHER"
+          ],
+          "usedBy": [
+            "CashOrder.pkoSubtype?"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "CashOrderRkoSubtype",
+          "values": [
+            "SALARY",
+            "SUPPLIER_PAYMENT",
+            "ACCOUNTABLE_ISSUE",
+            "BANK_DEPOSIT",
+            "OTHER"
+          ],
+          "usedBy": [
+            "CashOrder.rkoSubtype?"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "AdvanceReportStatus",
+          "values": [
+            "DRAFT",
+            "POSTED"
+          ],
+          "usedBy": [],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TradeContext",
+          "values": [
+            "DOMESTIC",
+            "EXPORT",
+            "IMPORT"
+          ],
+          "usedBy": [
+            "Transaction.tradeContext",
+            "Invoice.tradeContext"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PickListStatus",
+          "values": [
+            "DRAFT",
+            "IN_PROGRESS",
+            "DONE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PickList.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "StatReportPeriodKind",
+          "values": [
+            "YEAR",
+            "QUARTER",
+            "MONTH"
+          ],
+          "usedBy": [
+            "StatReportDefinition.periodKind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "StatReportExportStatus",
+          "values": [
+            "GENERATED",
+            "UPLOADED"
+          ],
+          "usedBy": [
+            "StatReportExport.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "AbsencePayFormula",
+          "values": [
+            "LABOR_LEAVE_304",
+            "SICK_LEAVE_STAJ",
+            "UNPAID_RECORD"
+          ],
+          "usedBy": [
+            "AbsenceType.formula"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "AbsenceSource",
+          "values": [
+            "CP_EVENT",
+            "LEGACY_MANUAL"
+          ],
+          "usedBy": [
+            "Absence.source"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "DepartmentSource",
+          "values": [
+            "CP_EVENT",
+            "LEGACY_MANUAL"
+          ],
+          "usedBy": [
+            "Department.source",
+            "JobPosition.source"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "IntegrationSyncStatus",
+          "values": [
+            "NOT_SYNCED",
+            "IN_PROGRESS",
+            "SYNCED",
+            "ERROR"
+          ],
+          "usedBy": [
+            "Employee.emasSyncStatus",
+            "Invoice.dvxSyncStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "IntegrationPortal",
+          "values": [
+            "DVX",
+            "EMAS",
+            "CUSTOMS"
+          ],
+          "usedBy": [
+            "IntegrationSyncRun.portal"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "IntegrationTransport",
+          "values": [
+            "RPA_WIDGET",
+            "EXCEL_IMPORT"
+          ],
+          "usedBy": [
+            "IntegrationSyncRun.transport"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "OcrJobStatus",
+          "values": [
+            "PENDING",
+            "RUNNING",
+            "DONE",
+            "ERROR"
+          ],
+          "usedBy": [
+            "OcrJob.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ContractType",
+          "values": [
+            "SUPPLY",
+            "SERVICE",
+            "FRAMEWORK",
+            "LEASE",
+            "CONSTRUCTION",
+            "INTERCOMPANY",
+            "OTHER"
+          ],
+          "usedBy": [
+            "Contract.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ContractStatus",
+          "values": [
+            "DRAFT",
+            "ACTIVE",
+            "SUSPENDED",
+            "CLOSED",
+            "EXPIRED"
+          ],
+          "usedBy": [
+            "Contract.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BudgetYearStatus",
+          "values": [
+            "DRAFT",
+            "APPROVED",
+            "AMENDED"
+          ],
+          "usedBy": [
+            "BudgetYear.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "BusinessTrip",
+          "field": "status",
+          "default": "DRAFT",
+          "documented": null,
+          "line": 1673
+        },
+        {
+          "model": "IndustryReplenishmentSuggestion",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 5007
+        },
+        {
+          "model": "IndustryCodSettlement",
+          "field": "status",
+          "default": "SETTLED",
+          "documented": null,
+          "line": 5053
+        }
+      ]
+    },
+    {
+      "app": "era-orchestrator",
+      "path": "era-orchestrator/packages/database/prisma/schema.prisma",
+      "count": 42,
+      "enums": [
+        {
+          "name": "TariffTier",
+          "values": [
+            "TIER_0",
+            "TIER_1",
+            "TIER_2",
+            "TIER_3"
+          ],
+          "usedBy": [
+            "TenantBilling.currentCreditTier?",
+            "OrganizationSubscription.currentTier",
+            "Organization.currentCreditTier?"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "BillingStatus",
+          "values": [
+            "ACTIVE",
+            "SOFT_BLOCK",
+            "HARD_BLOCK"
+          ],
+          "usedBy": [
+            "TenantBilling.billingStatus",
+            "Organization.billingStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SubscriptionInvoiceStatus",
+          "values": [
+            "DRAFT",
+            "ISSUED",
+            "PAID",
+            "OVERDUE",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "SubscriptionInvoice.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PricingKind",
+          "values": [
+            "FOUNDATION",
+            "MODULE",
+            "QUOTA"
+          ],
+          "usedBy": [
+            "Pricing.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PricingCatalogKind",
+          "values": [
+            "SATELLITE",
+            "MODULE",
+            "ADDON"
+          ],
+          "usedBy": [
+            "PricingModule.catalogKind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "PaymentOrderStatus",
+          "values": [
+            "PENDING",
+            "PAID",
+            "FAILED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PaymentOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ReferralCommissionStatus",
+          "values": [
+            "ACCRUED",
+            "PAID",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ReferralCommission.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "AccessRequestStatus",
+          "values": [
+            "PENDING",
+            "ACCEPTED",
+            "DECLINED"
+          ],
+          "usedBy": [
+            "AccessRequest.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InviteStatus",
+          "values": [
+            "PENDING",
+            "ACCEPTED",
+            "DECLINED"
+          ],
+          "usedBy": [
+            "OrganizationInvite.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "UserRole",
+          "values": [
+            "OWNER",
+            "ADMIN",
+            "ACCOUNTANT",
+            "USER",
+            "PROCUREMENT",
+            "AUDITOR",
+            "WAREHOUSE_KEEPER",
+            "HR_OFFICER",
+            "HR_MANAGER",
+            "DEPARTMENT_HEAD",
+            "DIRECTOR",
+            "PARTNER"
+          ],
+          "usedBy": [
+            "Role.legacyEnumRole?",
+            "OrganizationMembership.role",
+            "OrganizationInvite.role"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "DisputeStatus",
+          "values": [
+            "EVIDENCE_REQUIRED",
+            "EVIDENCE_REVIEW",
+            "INCUMBENT_NOTIFIED",
+            "COOLDOWN",
+            "APPROVED",
+            "REJECTED",
+            "EXECUTED",
+            "REVERTED"
+          ],
+          "usedBy": [
+            "OwnershipDispute.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "DisputeSeverity",
+          "values": [
+            "SOFT",
+            "HARD"
+          ],
+          "usedBy": [
+            "OwnershipDispute.severity"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "SecurityMode",
+          "values": [
+            "NORMAL",
+            "DISPUTE",
+            "POST_TRANSFER_LOCK",
+            "ROLLBACK_IN_PROGRESS",
+            "HARD_BLOCK_PLATFORM"
+          ],
+          "usedBy": [
+            "OrganizationSecurityState.mode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "NotificationMessageClass",
+          "values": [
+            "FINANCIAL",
+            "TRANSACTIONAL",
+            "LIFECYCLE",
+            "MARKETING"
+          ],
+          "usedBy": [
+            "NotificationTemplate.messageClass",
+            "NotificationOutbox.messageClass"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "NotificationChannel",
+          "values": [
+            "EMAIL",
+            "WHATSAPP",
+            "SMS"
+          ],
+          "usedBy": [
+            "NotificationTemplate.channel",
+            "NotificationOutbox.channel",
+            "NotificationDeliveryLog.channel"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "NotificationOutboxStatus",
+          "values": [
+            "PENDING",
+            "SENT",
+            "FAILED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "NotificationDeliveryLog.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PlatformPaymentLinkStatus",
+          "values": [
+            "PENDING",
+            "PAID",
+            "EXPIRED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PlatformPaymentLink.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PlatformPortalLinkStatus",
+          "values": [
+            "ACTIVE",
+            "REVOKED",
+            "EXPIRED"
+          ],
+          "usedBy": [
+            "PlatformPortalLink.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "BookingAppointmentStatus",
+          "values": [
+            "PENDING",
+            "CONFIRMED",
+            "CANCELLED",
+            "COMPLETED"
+          ],
+          "usedBy": [
+            "BookingAppointment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PlatformPromotionDiscountType",
+          "values": [
+            "PERCENT",
+            "FIXED_AZN"
+          ],
+          "usedBy": [
+            "PlatformPromotion.discountType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PlatformPromotionStatus",
+          "values": [
+            "ACTIVE",
+            "DISABLED"
+          ],
+          "usedBy": [
+            "PlatformPromotion.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PlatformCustomDomainStatus",
+          "values": [
+            "PENDING_DNS",
+            "ACTIVE",
+            "DISABLED"
+          ],
+          "usedBy": [
+            "PlatformCustomDomain.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PlatformShipmentStatus",
+          "values": [
+            "CREATED",
+            "IN_TRANSIT",
+            "DELIVERED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "PlatformShipment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PermissionCategory",
+          "values": [
+            "CORE",
+            "BILLING",
+            "ACCOUNTING",
+            "SALES",
+            "PURCHASES",
+            "INVENTORY",
+            "HR",
+            "PSA",
+            "CUSTOMS",
+            "ADMIN",
+            "REPORTING",
+            "INTEGRATIONS"
+          ],
+          "usedBy": [
+            "Permission.category"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "WorkforceAssignmentStatus",
+          "values": [
+            "ACTIVE",
+            "INACTIVE"
+          ],
+          "usedBy": [
+            "WorkforceAssignment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "WorkforceEmploymentStatus",
+          "values": [
+            "ACTIVE",
+            "TERMINATED"
+          ],
+          "usedBy": [
+            "WorkforceEmployment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "WorkforceAbsenceKind",
+          "values": [
+            "VACATION",
+            "SICK",
+            "UNPAID",
+            "SOCIAL_LEAVE",
+            "EDUCATIONAL_LEAVE",
+            "BUSINESS_TRIP",
+            "ADMINISTRATIVE"
+          ],
+          "usedBy": [
+            "WorkforceAbsence.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "WorkforceAbsenceStatus",
+          "values": [
+            "DRAFT",
+            "SUBMITTED",
+            "APPROVED",
+            "REJECTED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "WorkforceAbsence.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "WorkforceTimesheetEntryStatus",
+          "values": [
+            "DRAFT",
+            "APPROVED"
+          ],
+          "usedBy": [
+            "WorkforceTimesheetEntry.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "WorkforceVacationPlanStatus",
+          "values": [
+            "DRAFT",
+            "SUBMITTED",
+            "APPROVED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "WorkforceVacationPlan.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "WorkforcePersonnelOrderType",
+          "values": [
+            "HIRE",
+            "TRANSFER",
+            "TERMINATE"
+          ],
+          "usedBy": [
+            "WorkforcePersonnelOrder.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "WorkforcePersonnelOrderStatus",
+          "values": [
+            "DRAFT",
+            "ISSUED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "WorkforcePersonnelOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "StaffScheduleRevisionStatus",
+          "values": [
+            "DRAFT",
+            "SUBMITTED",
+            "APPROVED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "StaffScheduleRevision.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "OrgUnitStatus",
+          "values": [
+            "ACTIVE",
+            "ARCHIVED"
+          ],
+          "usedBy": [
+            "OrgUnit.status",
+            "WorkforcePosition.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "OrgCommercialLinkMode",
+          "values": [
+            "SCOPE_ROOT",
+            "SUBTREE"
+          ],
+          "usedBy": [
+            "OrgUnitCommercialLink.linkMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RoleBindingSource",
+          "values": [
+            "TEMPLATE",
+            "MANUAL_GRANT",
+            "HIRE_DEFAULT"
+          ],
+          "usedBy": [
+            "WorkforceRoleBinding.source"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RoleBindingStatus",
+          "values": [
+            "ACTIVE",
+            "REVOKED"
+          ],
+          "usedBy": [
+            "WorkforceRoleBinding.status",
+            "WorkforceSeatAllocation.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "OrgOperatingMode",
+          "values": [
+            "STANDALONE",
+            "DEPARTMENT"
+          ],
+          "usedBy": [
+            "Organization.operatingMode"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "OrgRouting",
+          "values": [
+            "OWN",
+            "PARENT"
+          ],
+          "usedBy": [
+            "Organization.fiscalRouting",
+            "Organization.revenueRouting"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "HoldingAccessRole",
+          "values": [
+            "OWNER",
+            "ADMIN",
+            "ACCOUNTANT",
+            "VIEWER"
+          ],
+          "usedBy": [
+            "HoldingMembership.role"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "EarlyAccessModuleKey",
+          "values": [
+            "RETAIL_ECOM",
+            "LOGISTICS_CUSTOMS",
+            "CONSTRUCTION",
+            "CRM_WHATSAPP",
+            "AUTO_STO",
+            "CLINIC",
+            "WHOLESALE",
+            "HOTEL_PMS",
+            "FB_POS"
+          ],
+          "usedBy": [
+            "EarlyAccessEvent.moduleKey",
+            "EarlyAccessSignup.moduleKey",
+            "EarlyAccessThresholdAlert.moduleKey"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "EarlyAccessEventType",
+          "values": [
+            "VIEW_CLICK",
+            "MODAL_OPEN",
+            "MODAL_CLOSE",
+            "CTA_CLICK",
+            "SURVEY_SUBMIT"
+          ],
+          "usedBy": [
+            "EarlyAccessEvent.eventType"
+          ],
+          "kind": "system constant"
+        }
+      ],
+      "stringLike": []
+    },
+    {
+      "app": "era-orchestrator/mdm",
+      "path": "era-orchestrator/packages/mdm-database/prisma/schema.prisma",
+      "count": 8,
+      "enums": [
+        {
+          "name": "PersonAccessRequestStatus",
+          "values": [
+            "PENDING",
+            "GRANTED",
+            "DENIED"
+          ],
+          "usedBy": [
+            "PersonAccessRequest.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PersonIdentifierType",
+          "values": [
+            "AZ_FIN",
+            "PASSPORT",
+            "RESIDENCE_PERMIT",
+            "NATIONAL_ID",
+            "ERA_SURROGATE"
+          ],
+          "usedBy": [
+            "PersonIdentifier.type"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "IdentifierTrust",
+          "values": [
+            "SELF_DECLARED",
+            "DOCUMENT_SCANNED",
+            "GOVERNMENT_VERIFIED"
+          ],
+          "usedBy": [
+            "PersonIdentifier.trust"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "PersonSegment",
+          "values": [
+            "CITIZEN",
+            "FOREIGNER",
+            "UNVERIFIED"
+          ],
+          "usedBy": [
+            "GlobalNaturalPerson.personSegment"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "BloodGroup",
+          "values": [
+            "A_POS",
+            "A_NEG",
+            "B_POS",
+            "B_NEG",
+            "AB_POS",
+            "AB_NEG",
+            "O_POS",
+            "O_NEG",
+            "UNKNOWN"
+          ],
+          "usedBy": [
+            "PersonHrProfile.bloodGroup"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "MaritalStatus",
+          "values": [
+            "SINGLE",
+            "MARRIED",
+            "DIVORCED",
+            "WIDOWED",
+            "OTHER"
+          ],
+          "usedBy": [
+            "PersonHrProfile.maritalStatus?"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PersonAddressKind",
+          "values": [
+            "REGISTRATION",
+            "ACTUAL"
+          ],
+          "usedBy": [
+            "PersonAddress.kind"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "StatisticalCategory",
+          "values": [
+            "REFUGEE",
+            "IDP",
+            "MARTYR_FAMILY",
+            "VETERAN"
+          ],
+          "usedBy": [
+            "PersonHrProfile.statisticalCategories[]"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        }
+      ],
+      "stringLike": []
+    },
+    {
+      "app": "era-bank",
+      "path": "era-bank/prisma/schema.prisma",
+      "count": 1,
+      "enums": [
+        {
+          "name": "OpsUserStatus",
+          "values": [
+            "ACTIVE",
+            "SUSPENDED",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "OpsUser.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": []
+    },
+    {
+      "app": "era-bank-core",
+      "path": "era-bank-core/packages/database/prisma/schema.prisma",
+      "count": 40,
+      "enums": [
+        {
+          "name": "GlAccountType",
+          "values": [
+            "ASSET",
+            "LIABILITY",
+            "EQUITY",
+            "INCOME",
+            "EXPENSE",
+            "OFF_BALANCE"
+          ],
+          "usedBy": [
+            "GlAccount.type"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "BranchStatus",
+          "values": [
+            "ACTIVE",
+            "SUSPENDED",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "Branch.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CustomerType",
+          "values": [
+            "NATURAL",
+            "LEGAL"
+          ],
+          "usedBy": [
+            "BankCustomer.customerType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "RiskRating",
+          "values": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "usedBy": [
+            "BankCustomer.riskRating"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "KycStatus",
+          "values": [
+            "PENDING",
+            "VERIFIED",
+            "REJECTED",
+            "REVIEW"
+          ],
+          "usedBy": [
+            "BankCustomer.kycStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TrustTier",
+          "values": [
+            "SELF_DECLARED",
+            "DOCUMENT_SCANNED",
+            "GOVERNMENT_VERIFIED"
+          ],
+          "usedBy": [
+            "BankCustomer.kycTrustTier"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CustomerStatus",
+          "values": [
+            "ACTIVE",
+            "SUSPENDED",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "BankCustomer.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "AccountStatus",
+          "values": [
+            "ACTIVE",
+            "DORMANT",
+            "BLOCKED",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "Account.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "HoldReason",
+          "values": [
+            "CARD_AUTH",
+            "LEGAL_ARREST",
+            "MANUAL",
+            "PAYMENT_PENDING"
+          ],
+          "usedBy": [
+            "AccountHold.reason"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "HoldStatus",
+          "values": [
+            "ACTIVE",
+            "RELEASED",
+            "CAPTURED"
+          ],
+          "usedBy": [
+            "AccountHold.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TxnType",
+          "values": [
+            "DEPOSIT",
+            "WITHDRAWAL",
+            "TRANSFER",
+            "INTERBRANCH",
+            "INTEREST",
+            "FEE",
+            "FX",
+            "PAYMENT",
+            "REVERSAL",
+            "OPENING"
+          ],
+          "usedBy": [
+            "JournalTransaction.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "TxnStatus",
+          "values": [
+            "PENDING",
+            "POSTED",
+            "REJECTED",
+            "REVERSED"
+          ],
+          "usedBy": [
+            "JournalTransaction.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ProductKind",
+          "values": [
+            "CURRENT",
+            "TERM_DEPOSIT",
+            "SAVINGS",
+            "LOAN_ANNUITY",
+            "LOAN_DIFF",
+            "CARD"
+          ],
+          "usedBy": [
+            "ProductTemplate.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ProductStatus",
+          "values": [
+            "DRAFT",
+            "ACTIVE",
+            "RETIRED"
+          ],
+          "usedBy": [
+            "ProductTemplate.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "EodStatus",
+          "values": [
+            "RUNNING",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "usedBy": [
+            "EodRun.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PaymentRail",
+          "values": [
+            "INTERNAL",
+            "AZIPS",
+            "XOHKS",
+            "AOS",
+            "SWIFT"
+          ],
+          "usedBy": [
+            "PaymentOrder.rail",
+            "PaymentRailMessage.rail"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "PaymentOrderStatus",
+          "values": [
+            "DRAFT",
+            "PENDING_APPROVAL",
+            "APPROVED",
+            "SUBMITTED",
+            "SETTLED",
+            "REJECTED",
+            "FAILED"
+          ],
+          "usedBy": [
+            "PaymentOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "DepositStatus",
+          "values": [
+            "ACTIVE",
+            "MATURED",
+            "CLOSED",
+            "EARLY_CLOSED"
+          ],
+          "usedBy": [
+            "DepositContract.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "LoanStatus",
+          "values": [
+            "DRAFT",
+            "APPROVED",
+            "DISBURSED",
+            "ACTIVE",
+            "OVERDUE",
+            "CLOSED",
+            "WRITTEN_OFF"
+          ],
+          "usedBy": [
+            "LoanContract.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InstallmentStatus",
+          "values": [
+            "SCHEDULED",
+            "DUE",
+            "PAID",
+            "OVERDUE",
+            "WAIVED"
+          ],
+          "usedBy": [
+            "LoanScheduleInstallment.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "AmlAlertStatus",
+          "values": [
+            "OPEN",
+            "UNDER_REVIEW",
+            "CLOSED",
+            "ESCALATED"
+          ],
+          "usedBy": [
+            "AmlAlert.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "AmlSeverity",
+          "values": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "usedBy": [
+            "AmlAlert.severity"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "FmnReportStatus",
+          "values": [
+            "DRAFT",
+            "FILED",
+            "REJECTED"
+          ],
+          "usedBy": [
+            "FmnReport.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "RegReportStatus",
+          "values": [
+            "GENERATED",
+            "VALIDATED",
+            "EXPORTED"
+          ],
+          "usedBy": [
+            "RegReportRun.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "FatcaCrsClass",
+          "values": [
+            "US_PERSON",
+            "REPORTABLE",
+            "NON_REPORTABLE"
+          ],
+          "usedBy": [
+            "FatcaCrsClassification.classification"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CredentialStatus",
+          "values": [
+            "ACTIVE",
+            "LOCKED",
+            "DISABLED"
+          ],
+          "usedBy": [
+            "DboCustomerCredential.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SignatoryRole",
+          "values": [
+            "PRIMARY",
+            "SECONDARY"
+          ],
+          "usedBy": [
+            "CorporateSignatory.role"
+          ],
+          "kind": "role/permission"
+        },
+        {
+          "name": "SignatoryStatus",
+          "values": [
+            "ACTIVE",
+            "REVOKED"
+          ],
+          "usedBy": [
+            "CorporateSignatory.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CardScheme",
+          "values": [
+            "VISA",
+            "MASTERCARD",
+            "LOCAL"
+          ],
+          "usedBy": [
+            "CardProduct.scheme"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "CardType",
+          "values": [
+            "DEBIT",
+            "CREDIT_PREPAID"
+          ],
+          "usedBy": [
+            "CardProduct.cardType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "CardStatus",
+          "values": [
+            "ACTIVE",
+            "BLOCKED",
+            "EXPIRED",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "Card.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CardTxnType",
+          "values": [
+            "AUTH",
+            "CAPTURE",
+            "REVERSAL",
+            "REFUND"
+          ],
+          "usedBy": [
+            "CardTransaction.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "CardTxnStatus",
+          "values": [
+            "APPROVED",
+            "DECLINED",
+            "PENDING",
+            "SETTLED",
+            "REVERSED"
+          ],
+          "usedBy": [
+            "CardTransaction.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CounterpartyType",
+          "values": [
+            "BANK",
+            "CBAR",
+            "BROKER_STUB"
+          ],
+          "usedBy": [
+            "TreasuryCounterparty.type"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "ActiveStatus",
+          "values": [
+            "ACTIVE",
+            "INACTIVE"
+          ],
+          "usedBy": [
+            "TreasuryCounterparty.status",
+            "NostroVostroAccount.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "NostroDirection",
+          "values": [
+            "NOSTRO",
+            "VOSTRO"
+          ],
+          "usedBy": [
+            "NostroVostroAccount.direction"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "FxDealType",
+          "values": [
+            "SPOT",
+            "FORWARD_STUB"
+          ],
+          "usedBy": [
+            "FxDeal.dealType"
+          ],
+          "kind": "system constant"
+        },
+        {
+          "name": "FxDealStatus",
+          "values": [
+            "BOOKED",
+            "SETTLED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "FxDeal.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PlacementStatus",
+          "values": [
+            "ACTIVE",
+            "MATURED",
+            "BROKEN"
+          ],
+          "usedBy": [
+            "InterbankPlacement.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PositionStatus",
+          "values": [
+            "ACTIVE",
+            "MATURED",
+            "SOLD"
+          ],
+          "usedBy": [
+            "GovSecurityPosition.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": []
+    },
+    {
+      "app": "era-bank-dbo",
+      "path": "era-bank-dbo/prisma/schema.prisma",
+      "count": 3,
+      "enums": [
+        {
+          "name": "DboChannel",
+          "values": [
+            "RETAIL",
+            "CORPORATE"
+          ],
+          "usedBy": [
+            "CustomerSession.channel"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "ApiKeyStatus",
+          "values": [
+            "ACTIVE",
+            "REVOKED",
+            "EXPIRED"
+          ],
+          "usedBy": [
+            "CorporateApiKey.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "SignStatus",
+          "values": [
+            "PENDING",
+            "SIGNED",
+            "REJECTED",
+            "EXPIRED"
+          ],
+          "usedBy": [
+            "PaymentSignRequest.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": []
+    },
+    {
+      "app": "era-fnb-pos",
+      "path": "era-fnb-pos/prisma/schema.prisma",
+      "count": 4,
+      "enums": [
+        {
+          "name": "TableStatus",
+          "values": [
+            "FREE",
+            "OCCUPIED",
+            "RESERVED",
+            "DIRTY"
+          ],
+          "usedBy": [
+            "PosTable.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TicketStatus",
+          "values": [
+            "OPEN",
+            "HELD",
+            "PENDING_HUB",
+            "CLOSED",
+            "VOID"
+          ],
+          "usedBy": [
+            "Ticket.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "TicketLineKitchenStatus",
+          "values": [
+            "NEW",
+            "FIRED",
+            "IN_PREP",
+            "DONE",
+            "VOID"
+          ],
+          "usedBy": [
+            "TicketLine.kitchenStatus"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "PosShiftStatus",
+          "values": [
+            "OPEN",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "PosShift.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "DeliveryInboxOrder",
+          "field": "status",
+          "default": "NEW",
+          "documented": null,
+          "line": 63
+        },
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 270
+        }
+      ]
+    },
+    {
+      "app": "era-crm",
+      "path": "era-crm/prisma/schema.prisma",
+      "count": 6,
+      "enums": [
+        {
+          "name": "LeadStage",
+          "values": [
+            "NEW",
+            "CONTACTED",
+            "QUALIFIED",
+            "PROPOSAL",
+            "WON",
+            "LOST"
+          ],
+          "usedBy": [
+            "Lead.stage",
+            "LeadStageHistory.fromStage?",
+            "LeadStageHistory.toStage",
+            "PipelineRule.triggerStage?",
+            "PipelineRule.targetStage"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "LeadChannel",
+          "values": [],
+          "usedBy": [
+            "Lead.channel"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "PartyKind",
+          "values": [
+            "INDIVIDUAL",
+            "LEGAL_ENTITY"
+          ],
+          "usedBy": [
+            "Lead.partyKind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ProspectType",
+          "values": [
+            "CUSTOMER",
+            "PARTNER",
+            "OTHER"
+          ],
+          "usedBy": [
+            "Lead.prospectType"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "ImportBatchStatus",
+          "values": [
+            "PENDING",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "usedBy": [
+            "ImportBatch.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "InboxChannel",
+          "values": [],
+          "usedBy": [
+            "InboxThread.channel"
+          ],
+          "kind": "integration protocol"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 166
+        }
+      ]
+    },
+    {
+      "app": "era-retail-pos",
+      "path": "era-retail-pos/prisma/schema.prisma",
+      "count": 3,
+      "enums": [
+        {
+          "name": "ShiftStatus",
+          "values": [
+            "OPEN",
+            "CLOSED"
+          ],
+          "usedBy": [
+            "Shift.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ReceiptStatus",
+          "values": [
+            "OPEN",
+            "PAID",
+            "VOID"
+          ],
+          "usedBy": [
+            "Receipt.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "ReceiptLineStatus",
+          "values": [
+            "ACTIVE",
+            "VOID"
+          ],
+          "usedBy": [
+            "ReceiptLine.lineStatus"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 148
+        },
+        {
+          "model": "OfflineReceiptQueue",
+          "field": "status",
+          "default": "PENDING",
+          "documented": null,
+          "line": 158
+        }
+      ]
+    },
+    {
+      "app": "era-logistics",
+      "path": "era-logistics/prisma/schema.prisma",
+      "count": 1,
+      "enums": [
+        {
+          "name": "TripStatus",
+          "values": [
+            "PLANNED",
+            "IN_TRANSIT",
+            "DELIVERED",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "Trip.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "TripPoint",
+          "field": "status",
+          "default": "PENDING",
+          "documented": null,
+          "line": 79
+        },
+        {
+          "model": "CrossDockScan",
+          "field": "status",
+          "default": "SCANNED",
+          "documented": null,
+          "line": 104
+        },
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 128
+        }
+      ]
+    },
+    {
+      "app": "era-wholesale",
+      "path": "era-wholesale/prisma/schema.prisma",
+      "count": 3,
+      "enums": [
+        {
+          "name": "B2BOrderStatus",
+          "values": [
+            "DRAFT",
+            "CONFIRMED",
+            "SHIPPED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "B2BOrder.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "OrderChannel",
+          "values": [
+            "B2B",
+            "COUNTER"
+          ],
+          "usedBy": [
+            "B2BOrder.channel"
+          ],
+          "kind": "integration protocol"
+        },
+        {
+          "name": "ImportPurchaseOrderStatus",
+          "values": [
+            "DRAFT",
+            "CONFIRMED",
+            "CANCELLED"
+          ],
+          "usedBy": [
+            "ImportPurchaseOrder.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "PickList",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 99
+        },
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 135
+        }
+      ]
+    },
+    {
+      "app": "era-auto-service",
+      "path": "era-auto-service/prisma/schema.prisma",
+      "count": 1,
+      "enums": [
+        {
+          "name": "WorkOrderStatus",
+          "values": [
+            "OPEN",
+            "IN_PROGRESS",
+            "COMPLETED"
+          ],
+          "usedBy": [
+            "WorkOrder.status"
+          ],
+          "kind": "status lifecycle"
+        }
+      ],
+      "stringLike": [
+        {
+          "model": "WorkOrder",
+          "field": "partsStatus",
+          "default": "NONE",
+          "documented": null,
+          "line": 60
+        },
+        {
+          "model": "Appointment",
+          "field": "status",
+          "default": "SCHEDULED",
+          "documented": null,
+          "line": 144
+        },
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 190
+        }
+      ]
+    },
+    {
+      "app": "era-construction",
+      "path": "era-construction/prisma/schema.prisma",
+      "count": 0,
+      "enums": [],
+      "stringLike": [
+        {
+          "model": "TimesheetEntry",
+          "field": "source",
+          "default": "CSV",
+          "documented": null,
+          "line": 91
+        },
+        {
+          "model": "PunchListItem",
+          "field": "status",
+          "default": "OPEN",
+          "documented": null,
+          "line": 117
+        },
+        {
+          "model": "SubcontractorClaim",
+          "field": "status",
+          "default": "DRAFT",
+          "documented": null,
+          "line": 130
+        },
+        {
+          "model": "MaterialRequisition",
+          "field": "status",
+          "default": "DRAFT",
+          "documented": null,
+          "line": 158
+        },
+        {
+          "model": "ProgressAct",
+          "field": "status",
+          "default": "DRAFT",
+          "documented": null,
+          "line": 170
+        },
+        {
+          "model": "User",
+          "field": "status",
+          "default": "ACTIVE",
+          "documented": null,
+          "line": 195
+        }
+      ]
+    },
+    {
+      "app": "era-data-hub",
+      "path": "era-data-hub/packages/database/prisma/schema.prisma",
+      "count": 4,
+      "enums": [
+        {
+          "name": "CbarRateStatus",
+          "values": [
+            "PRELIMINARY",
+            "FINAL"
+          ],
+          "usedBy": [
+            "CbarOfficialRate.status"
+          ],
+          "kind": "status lifecycle"
+        },
+        {
+          "name": "CounterpartyLegalForm",
+          "values": [
+            "LLC",
+            "JSC",
+            "INDIVIDUAL_ENTREPRENEUR",
+            "BRANCH",
+            "REPRESENTATION",
+            "OTHER"
+          ],
+          "usedBy": [
+            "GlobalCompanyDirectory.legalForm?"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "UnitOfMeasureKind",
+          "values": [
+            "PIECE",
+            "WEIGHT",
+            "LENGTH",
+            "VOLUME",
+            "AREA",
+            "TIME",
+            "OTHER"
+          ],
+          "usedBy": [
+            "UnitOfMeasure.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        },
+        {
+          "name": "TaxRateKind",
+          "values": [
+            "VAT",
+            "EXCISE",
+            "SIMPLIFIED",
+            "OTHER"
+          ],
+          "usedBy": [
+            "TaxRate.kind"
+          ],
+          "kind": "business catalog (admin-managed candidate)"
+        }
+      ],
+      "stringLike": []
+    }
+  ],
+  "migrationCreateTypeCount": 302,
+  "uniqueMigrationEnums": 301,
+  "migrationOnlyOrLikelyDropped": [
+    {
+      "app": "era-clinic",
+      "name": "ProcedureOrderStatus_new",
+      "values": [
+        "SCHEDULED",
+        "CHECKED_IN",
+        "COMPLETED",
+        "NO_SHOW",
+        "CANCELLED"
+      ],
+      "migration": "era-clinic/prisma/migrations/20260714120000_procedure_day_ops/migration.sql"
+    },
+    {
+      "app": "era-finance-core",
+      "name": "CbarRateStatus",
+      "values": [
+        "PRELIMINARY",
+        "FINAL"
+      ],
+      "migration": "era-finance-core/packages/database/prisma/migrations/20250101120000_squashed_schema/migration.sql"
+    },
+    {
+      "app": "era-finance-core",
+      "name": "SubscriptionTier",
+      "values": [
+        "STARTER",
+        "BUSINESS",
+        "ENTERPRISE"
+      ],
+      "migration": "era-finance-core/packages/database/prisma/migrations/20250101120000_squashed_schema/migration.sql"
+    },
+    {
+      "app": "era-finance-core",
+      "name": "HoldingAccessRole",
+      "values": [
+        "OWNER",
+        "ADMIN",
+        "ACCOUNTANT",
+        "VIEWER"
+      ],
+      "migration": "era-finance-core/packages/database/prisma/migrations/20250101120000_squashed_schema/migration.sql"
+    },
+    {
+      "app": "era-finance-core",
+      "name": "CreditTier",
+      "values": [
+        "TIER_1",
+        "TIER_2",
+        "TIER_3",
+        "TIER_4"
+      ],
+      "migration": "era-finance-core/packages/database/prisma/migrations/20260524120000_credit_tier_postpaid/migration.sql"
+    }
+  ]
+}

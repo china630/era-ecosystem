@@ -6,6 +6,7 @@ import {
   platformSuperAdminBootstrapPassword,
   platformSuperAdminEmails,
 } from "@era/satellite-kit";
+import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
 
 const prisma = new PrismaClient();
 
@@ -93,10 +94,18 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
         create: {
           code: serviceCode,
           description: tpl.title.en,
+          descriptionAz: tpl.title.az ?? null,
+          descriptionRu: tpl.title.ru ?? null,
+          descriptionEn: tpl.title.en ?? null,
           amount: 0,
+          kind: "DIAGNOSTIC",
         },
         update: {
           description: tpl.title.en,
+          descriptionAz: tpl.title.az ?? null,
+          descriptionRu: tpl.title.ru ?? null,
+          descriptionEn: tpl.title.en ?? null,
+          kind: "DIAGNOSTIC",
           syncedAt: new Date(),
         },
       });
@@ -133,10 +142,18 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
       create: {
         code: serviceCode,
         description: panel.title.en,
+        descriptionAz: panel.title.az ?? null,
+        descriptionRu: panel.title.ru ?? null,
+        descriptionEn: panel.title.en ?? null,
         amount: 0,
+        kind: "LAB",
       },
       update: {
         description: panel.title.en,
+        descriptionAz: panel.title.az ?? null,
+        descriptionRu: panel.title.ru ?? null,
+        descriptionEn: panel.title.en ?? null,
+        kind: "LAB",
         syncedAt: new Date(),
       },
     });
@@ -193,10 +210,18 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
       create: {
         code: pkg.code,
         description: pkg.title.en,
+        descriptionAz: pkg.title.az ?? null,
+        descriptionRu: pkg.title.ru ?? null,
+        descriptionEn: pkg.title.en ?? null,
         amount: 0,
+        kind: "OTHER",
       },
       update: {
         description: pkg.title.en,
+        descriptionAz: pkg.title.az ?? null,
+        descriptionRu: pkg.title.ru ?? null,
+        descriptionEn: pkg.title.en ?? null,
+        kind: "OTHER",
         syncedAt: new Date(),
       },
     });
@@ -335,6 +360,46 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
+  // ROOM resources linked to cabinets (Pattern A/B physical locations)
+  const cabinetRooms = await prisma.room.findMany({
+    where: { code: { in: ["CAB-101", "CAB-102"] } },
+  });
+  for (const room of cabinetRooms) {
+    await prisma.resource.upsert({
+      where: { code: room.code },
+      update: { roomId: room.id, kind: "ROOM", name: room.name },
+      create: {
+        code: room.code,
+        name: room.name,
+        kind: "ROOM",
+        capacity: 1,
+        roomId: room.id,
+      },
+    });
+  }
+
+  const seededPractitioners = await prisma.practitioner.findMany({
+    select: { id: true },
+  });
+  const seededProcedureTypes = await prisma.procedureType.findMany({
+    select: { id: true },
+  });
+  if (seededPractitioners.length > 0 && seededProcedureTypes.length > 0) {
+    await prisma.practitionerSkill.createMany({
+      data: seededPractitioners.flatMap((p) =>
+        seededProcedureTypes.map((pt) => ({
+          practitionerId: p.id,
+          procedureTypeId: pt.id,
+          active: true,
+        })),
+      ),
+      skipDuplicates: true,
+    });
+  }
+  for (const pt of seededProcedureTypes) {
+    await ensureDefaultRequirements(pt.id);
+  }
 
   await prisma.procedureRule.createMany({
     data: [

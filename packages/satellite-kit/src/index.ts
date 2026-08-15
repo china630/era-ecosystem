@@ -3,11 +3,33 @@ export {
   satelliteOrganizationId,
   type OrchestratorGatewayResult,
 } from "./orchestrator-gateway";
+export {
+  createOrganizationBindHandlers,
+  type OrganizationBindHandlerOptions,
+} from "./tenancy/organization-bind";
+export {
+  applyOrganizationBind,
+  resolveSatelliteOrganizationId,
+  setRuntimeOrganizationId,
+  hydrateOrganizationBindFromDb,
+  type OrgBindPrisma,
+  type OrganizationBindSource,
+} from "./tenancy/organization-bind-core";
 
+export {
+  assertEnvServiceToken,
+  assertBridgeSecret,
+  type ServiceTokenAssertResult,
+} from "./auth/assert-service-token";
 export {
   buildSsoPayload,
   verifySsoSignature,
+  resolveVerifiedSsoFinanceRole,
 } from "./auth/sso-verify";
+export {
+  consumeSsoSignatureOnce,
+  resetSsoReplayStoreForTests,
+} from "./auth/sso-replay";
 export {
   signSatelliteSsoPayload,
   buildSatelliteSsoLaunchUrl,
@@ -63,6 +85,7 @@ export {
   isBusinessOwnerRole,
   mapFinanceRoleToSatellite,
   sessionHasRole,
+  sessionIsPlatformSuperAdmin,
   type SatelliteRoleCode,
 } from "./auth/roles";
 export {
@@ -88,6 +111,7 @@ export {
   createCustomDomain,
   createShipment,
   getSubscriptionMe,
+  getSubscriptionSnapshotInternal,
   type SendNotificationInput,
   type PlatformCallOptions,
 } from "./integration/control-plane-platform.client";
@@ -134,6 +158,8 @@ export {
   mdmHealthCheck,
   lookupGlobalPersonByFin,
   lookupLegalEntityByVoen,
+  fetchControlPlaneOrganizationName,
+  fetchControlPlaneOrganizationDetails,
   resolvePersonIdentity,
   mergePersonRecords,
   linkPersonIdentity,

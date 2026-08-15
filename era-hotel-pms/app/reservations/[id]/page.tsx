@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { PageHeader } from '@era/satellite-kit/ui';
-import AppShell from '@/components/layout/AppShell';
 import { ReservationCardEditor } from '@/components/reservation-card/ReservationCardEditor';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -20,22 +19,18 @@ export default function ReservationPage() {
 
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return (
-      <AppShell maxWidthClass="max-w-[min(96vw,1400px)]">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
-      </AppShell>
+      <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
     );
   }
 
   if (!id) {
     return (
-      <AppShell maxWidthClass="max-w-[min(96vw,1400px)]">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('loadError')}</p>
-      </AppShell>
+      <p className="text-[13px] text-[#7F8C8D]">{tc('loadError')}</p>
     );
   }
 
   return (
-    <AppShell maxWidthClass="max-w-[min(96vw,1400px)]">
+    <>
       <PageHeader
         title={tb('reservationCardTitle')}
         actions={
@@ -50,6 +45,6 @@ export default function ReservationPage() {
         reservationId={id}
         onClose={() => router.push('/')}
       />
-    </AppShell>
+    </>
   );
 }

@@ -1,29 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
-import {
-  LayoutDashboard,
-  Stethoscope,
-  Calendar,
-  FlaskConical,
-  HeartPulse,
-  Settings,
-  UserRound,
-  Syringe,
-  ListOrdered,
-  Wallet,
-  BedDouble,
-  FileSpreadsheet,
-  GitBranch,
-  Users,
-  Database,
-  BookOpen,
-  ScrollText,
-  Shield,
-  Star,
-} from "lucide-react";
 import {
   EraAppRouteShell,
   HeaderOrganization,
@@ -31,88 +11,42 @@ import {
   SatelliteHeaderLocale,
   SatelliteNotificationBell,
   SATELLITE_NOTIFICATION_LABELS_EN,
-  type EraOpsNavItem,
-  type EraOpsNavSection,
   type HeaderProfileMenuItem,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PRESET, type ClinicPresetCode } from "@/domain/presets/clinic-presets";
+import { buildClinicNav, CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
+
+const ALL_NAV_HREFS = [...CLINIC_TOP_NAV, ...CLINIC_NAV].map((entry) => entry.href);
+
+export function resolveClinicActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (pathname === href) return true;
+  if (!pathname.startsWith(`${href}/`)) return false;
+  const hasLongerMatch = ALL_NAV_HREFS.some(
+    (other) =>
+      other !== href &&
+      other.startsWith(`${href}/`) &&
+      (pathname === other || pathname.startsWith(`${other}/`)),
+  );
+  return !hasLongerMatch;
+}
 
 export default function ClinicOpsShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? "";
   const t = useTranslations("nav");
   const tMeta = useTranslations("meta");
   const locale = useLocale() as Locale;
   const { auth } = useClinicAuth();
   const canAdmin = auth?.canViewClinicAdmin === true;
+  const seesAll = canAdmin || auth?.isPlatformSuperAdmin === true;
+  const role = auth?.role ?? "";
   const enabledPresets = auth?.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT];
 
-  function presetEnabled(code: ClinicPresetCode): boolean {
-    return enabledPresets.includes(code);
-  }
-
-  const navSections: EraOpsNavSection[] = useMemo(() => {
-    const opsItems: EraOpsNavItem[] = [
-      { href: "/", label: t("home"), icon: LayoutDashboard },
-      { href: "/appointments", label: t("appointments"), icon: Stethoscope },
-      { href: "/patients", label: t("patients"), icon: Users },
-      { href: "/reception/queue", label: t("queue"), icon: ListOrdered },
-      { href: "/scheduling", label: t("scheduling"), icon: Calendar },
-      { href: "/lab-orders", label: t("labOrders"), icon: FlaskConical },
-    ];
-    if (presetEnabled(CLINIC_PRESET.INPATIENT_DAY)) {
-      opsItems.push({ href: "/inpatient", label: t("inpatient"), icon: BedDouble });
-    }
-    if (presetEnabled(CLINIC_PRESET.SANATORIUM_CLINICAL)) {
-      opsItems.push({ href: "/sanatorium", label: t("sanatorium"), icon: HeartPulse });
-    }
-    opsItems.push(
-      { href: "/doctor", label: t("doctor"), icon: UserRound },
-      { href: "/nurse", label: t("nurse"), icon: Syringe },
-      { href: "/cashier", label: t("cashier"), icon: Wallet },
-    );
-
-    const sections: EraOpsNavSection[] = [
-      {
-        id: "clinic_ops",
-        title: t("sectionOps"),
-        icon: Stethoscope,
-        items: opsItems,
-      },
-    ];
-
-    if (canAdmin) {
-      sections.push({
-        id: "clinic_admin",
-        title: t("sectionAdmin"),
-        icon: Shield,
-        items: [
-          {
-            href: "/admin/master-data",
-            label: t("masterData"),
-            icon: Database,
-          },
-          { href: "/admin/wards", label: t("inpatient"), icon: BedDouble },
-          { href: "/admin/catalog", label: t("catalog"), icon: BookOpen },
-          { href: "/admin/catalog-favorites", label: t("catalogFavorites"), icon: Star },
-          { href: "/admin/templates", label: t("templates"), icon: FileSpreadsheet },
-          {
-            href: "/admin/lis-profiles",
-            label: t("lisProfiles"),
-            icon: FlaskConical,
-          },
-          {
-            href: "/admin/procedure-rules",
-            label: t("procedureRules"),
-            icon: GitBranch,
-          },
-          { href: "/admin/audit", label: t("audit"), icon: ScrollText },
-          { href: "/admin/settings", label: t("settings"), icon: Settings },
-        ],
-      });
-    }
-
-    return sections;
-  }, [canAdmin, enabledPresets, t]);
+  const { topItems, sections } = useMemo(() => {
+    const presetEnabled = (code: ClinicPresetCode) => enabledPresets.includes(code);
+    return buildClinicNav({ role, seesAll, presetEnabled }, (key) => t(key as "home"));
+  }, [role, seesAll, enabledPresets, t]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -123,10 +57,16 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
     ? [{ label: t("masterData"), href: "/admin/master-data" }]
     : [{ label: t("settings"), href: "/help" }];
 
+  if (pathname.startsWith("/print")) {
+    return <>{children}</>;
+  }
+
   return (
     <EraAppRouteShell
       brandTitle={tMeta("title")}
-      navSections={navSections}
+      navItems={topItems}
+      navSections={sections}
+      resolveActive={resolveClinicActive}
       profile={
         <HeaderProfileMenu
           displayName={auth?.displayName ?? tMeta("title")}

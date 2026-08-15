@@ -73,7 +73,7 @@ curl -X POST http://localhost:3303/api/inbox \
 - [ ] Open `/leads/[id]` — party block, stage history, visits
 - [ ] Move lead to QUALIFIED (requires VÖEN for legal entity) → PROPOSAL → **Convert**
 - [ ] Finance: counterparty auto-created (`handleCrmLead`); draft invoice if `estimatedAmount` set
-- [ ] `/admin/import` — upload `data/legal-entities/azerbaijan-legal-entities.csv` sample; verify import report
+- [ ] `/admin/import` — upload sample slice of `data/legal-entities/azerbaijan-companies-with-voen.csv`; verify import report
 
 ### v3.0 curl smoke (`:3207` local dev)
 

@@ -19,10 +19,11 @@ Configure via `HotelProfile.integrationSettingsJson`:
 
 ## Flow
 
-1. Applied deposits (H-BL-10) reduce balance before settlement.
+1. Applied deposits (H-BL-10/41) reduce balance before settlement — apply on check-in **and** settle/checkout (`DEPOSIT` method). See [ADR](../../docs/adr/hotel-city-ledger-and-fo-money.md).
 2. CARD lines may capture pre-auth (H-BL-02) via `authorizationId`.
 3. LOYALTY_POINTS burns orchestrator ledger (`POST platform/loyalty/v1/points/burn`).
-4. Checkout blocked until folio balance ≤ 0 after settlement.
+4. Checkout blocked until **guest** folio balance ≤ 0 — COMPANY/AGENCY may leave-on-CL when gate passes (**H-BL-40**).
+5. Payment refunds after settle = **H-BL-42** (mock fiscal; not void charge).
 
 ## API
 

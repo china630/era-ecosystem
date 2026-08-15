@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 
 const patchSchema = z.object({
@@ -14,6 +15,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const profile = await prisma.lisFileProfile.findUnique({ where: { id } });
     if (!profile) return jsonError("Profile not found", 404);
@@ -28,6 +31,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const guard = await assertClinicAdminWrite();
+    if (guard.error) return guard.error;
     const { id } = await params;
     const body = patchSchema.parse(await req.json());
     const profile = await prisma.lisFileProfile.update({
@@ -52,6 +57,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const guard = await assertClinicAdminWrite();
+    if (guard.error) return guard.error;
     const { id } = await params;
     await prisma.lisFileProfile.delete({ where: { id } });
     return jsonOk({ deleted: true });

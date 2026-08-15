@@ -1,0 +1,45 @@
+---
+description: Accept implemented work only after documentation status is updated
+alwaysApply: true
+---
+
+# Task acceptance via documentation
+
+Implemented work is accepted only after its status is updated in docs.
+Code without an updated status is NOT done.
+
+**Canon:** [`docs/products/Product-Acceptance-Standard.md`](docs/products/Product-Acceptance-Standard.md)
+
+## Which product to update
+
+<!-- Replace rows with your products (see acceptance-kit/kit-config.yaml). -->
+
+| Product | Acceptance-System | **Product Readiness** | **AC Matrix (BE)** | Evidence |
+|---------|-------------------|-----------------------|--------------------|----------|
+| Product A | `docs/products/ProductA-Acceptance-System.md` | `docs/ProductA-Product-Readiness-Matrix.md` | `docs/ProductA-Implementation-Matrix.md` | `docs/ProductA-Evidence-Rules.md` |
+| Product B | `docs/products/ProductB-Acceptance-System.md` | `docs/ProductB-Product-Readiness-Matrix.md` | `docs/ProductB-Implementation-Matrix.md` | `docs/ProductB-Evidence-Rules.md` |
+
+## Request routing (mandatory)
+
+| User asks | Answer from |
+|-----------|-------------|
+| «матрица готовности» / readiness / sell/show / «UI готов?» | **Product-Readiness-Matrix** (Gate, BE, UI, Demo/TE, Pilot, Edition, Sell) |
+| Scaffold / AC / backend matrix | Implementation-Matrix |
+
+**Forbidden:** answering readiness with Implementation-Matrix alone (that is BE-only).
+
+## Closeout steps
+
+1. **Gate / backlog:** Index → `gate[x]` with a log.
+2. **Implementation-Matrix:** Scaffold ✅ only per canon §3.2; else 🟡; Pilot-ready separate.
+3. **Product-Readiness-Matrix:** update BE/UI/Demo/Pilot when visible readiness changes; rollup = worst layers.
+4. MVP-Spec / Index headers copy **Readiness** rollup — never «all ✅» while 🟡/❌.
+5. `editions-*.yaml` (or equivalent) is the only SSOT for `ga`.
+6. `.\scripts\check-acceptance-consistency.ps1`.
+7. Skills `acceptance-closeout` / `quality-gates` when AuthZ/security or PR-ready.
+8. ADR — if a decision changed.
+
+## Status markers
+
+- Gate: `gate[x]` · AC Scaffold: ✅/🟡 · Readiness UI/Demo: ✅/🟡/❌ · Pilot: `[x]`/`[ ]`/⏸
+- **Scaffold-Green ≠ product acceptance.** **mvp ≠ UI ready ≠ ga.**

@@ -1,0 +1,1486 @@
+[
+ {
+  "code": "AG-1001-KURORT-LEISURE",
+  "name": "1001 kurort leisure",
+  "group": "1001 kurort",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-1001-KURORT-MEDICAL",
+  "name": "1001 kurort medical",
+  "group": "1001 kurort",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ABV",
+  "name": "ABV",
+  "group": "ABV",
+  "rateCode": "BANQUET",
+  "greyList": false
+ },
+ {
+  "code": "AG-ABV-MMC-LEISURE",
+  "name": "ABV MMC leisure",
+  "group": "ABV MMC",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-ABV-MMC-MEDICAL",
+  "name": "ABV MMC medical",
+  "group": "ABV MMC",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ADA-TRAVEL-MEDICAL",
+  "name": "Ada Travel medical",
+  "group": "Ada Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-AKMARAL-SAYAHAT-MEDICAL",
+  "name": "Akmaral Sayahat medical",
+  "group": "Akmaral Sayahat medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-ALEAN-COMPANY-LEISURE",
+  "name": "Alean company leisure",
+  "group": "Alean company",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-ALEAN-COMPANY-MEDICAL",
+  "name": "Alean Company medical",
+  "group": "Alean Company",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ALINE-GROUP",
+  "name": "Aline Group",
+  "group": "Aline Group MMC",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-AMBULATOR",
+  "name": "AMBULATOR",
+  "group": "AMBULATOR",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-ANAMA-MEDICAL",
+  "name": "Anama medical",
+  "group": "Anama",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ARK-TRAVELS-MEDICAL",
+  "name": "Ark travels medical",
+  "group": "Ark travels",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ASMAN-TOUR-LEISURE",
+  "name": "Asman Tour leisure",
+  "group": "Asman Tour",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-ASMAN-TOUR-MEDICAL",
+  "name": "Asman Tour medical",
+  "group": "Asman Tour",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-AZE-COMPANY",
+  "name": "AZE COMPANY",
+  "group": "AZE COMPANY",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-AZE-TURIZM-MEDICAL",
+  "name": "AZE turizm medical",
+  "group": "AZE turizm",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-AZELKO-MMC",
+  "name": "AZELKO MMC",
+  "group": "AZELKO MMC",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-AZESTOUR-ESTONIYA",
+  "name": "Azestour Estoniya",
+  "group": "Azestour Estoniya",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-BAKU-ELECTRONICS",
+  "name": "Baku Electronics",
+  "group": "Baku Electronics",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-BAKU-HOLIDAY-TRAVEL-MEDICAL",
+  "name": "Baku Holiday travel medical",
+  "group": "Baku Holiday travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-BAKU-TOUR-MEDICAL",
+  "name": "Baku tour medical",
+  "group": "Baku tour medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-BAKU-WORLD-TRAVEL-MEDICAL",
+  "name": "Baku World Travel medical",
+  "group": "Baku World Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-BILALOV-MUSTAFA",
+  "name": "Bilalov Mustafa",
+  "group": "Bilalov Mustafa",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-BOOKING-COM",
+  "name": "Booking.com",
+  "group": "Booking.com",
+  "rateCode": "Booking.com",
+  "greyList": false
+ },
+ {
+  "code": "AG-CLASNATRAVEL-MEDICAL",
+  "name": "Clasnatravel medical",
+  "group": "Clasnatravel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-CONTINENT-TRAVEL-MEDICAL",
+  "name": "Continent travel medical",
+  "group": "Continent travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-CRUISE-TRAVEL-LEISURE",
+  "name": "Cruise Travel leisure",
+  "group": "Cruise Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-CRUISE-TRAVEL-MEDICAL",
+  "name": "Cruise Travel medical",
+  "group": "Cruise Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-DAVIDOV-TOURS-MEDICAL",
+  "name": "Davidov tours medical",
+  "group": "Davidov tours medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-MEDICAL-TOURS",
+  "name": "Dermo Medical tours",
+  "group": "Dermo Medical tours",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-NAFDAN-TRAVEL",
+  "name": "Dermo Nafdan travel",
+  "group": "Dermo Nafdan travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-NAFTALAN-BOOKING",
+  "name": "Dermo Naftalan booking",
+  "group": "Dermo Naftalan booking",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-NAFTALAN-KAMEL",
+  "name": "Dermo Naftalan Kamel",
+  "group": "Dermo Naftalan Kamel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-NAFTALAN-MED-MEDICAL",
+  "name": "Dermo Naftalan Med medical",
+  "group": "Dermo Naftalan Med medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-NAFTALANIUM-MEDICAL",
+  "name": "Dermo Naftalanium medical",
+  "group": "Dermo Naftalanium medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-PAKET-WALKIN",
+  "name": "Dermo paket Walkin",
+  "group": "Dermo paket Walkin",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-RN-TRAVEL",
+  "name": "Dermo RN travel",
+  "group": "Dermo RN travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-SANATORIUMS-BOOKING",
+  "name": "Dermo sanatoriums booking",
+  "group": "Dermo sanatoriums booking",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-VITA-TRAVEL",
+  "name": "Dermo Vita travel",
+  "group": "Dermo Vita travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DERMO-VIVA-TRAVEL",
+  "name": "Dermo Vİva travel",
+  "group": "Dermo Vİva travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-DETOX-PAKET-WALKIN",
+  "name": "Detox paket Walkin",
+  "group": "Detox paket Walkin",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-EKVATOR-TOURISM-LEISURE",
+  "name": "Ekvator Tourism leisure",
+  "group": "Ekvator Tourism",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-EKVATOR-TOURISM-MEDICAL",
+  "name": "Ekvator Tourism medical",
+  "group": "Ekvator Tourism",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ELM-TRAVEL-MEDICAL",
+  "name": "Elm Travel medical",
+  "group": "Elm Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-EMIL-BABAYEV-MEDICAL",
+  "name": "Emil Babayev medical",
+  "group": "Emil Babayev medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-EMPIRE-CAUCASUS-LEISURE",
+  "name": "Empire Caucasus leisure",
+  "group": "Empire Caucasus",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-ENJOY-HOLIDAY-LEISURE",
+  "name": "Enjoy Holiday leisure",
+  "group": "Enjoy Holiday",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-ESTONIYA-TUR",
+  "name": "Estoniya tur",
+  "group": "Estoniya tur",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-EXPEDIA",
+  "name": "Expedia",
+  "group": "Expedia",
+  "rateCode": "Booking.com",
+  "greyList": false
+ },
+ {
+  "code": "AG-EXSPESS-MEDICAL",
+  "name": "Exspess medical",
+  "group": "Exspess MMC",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-FACEBOOK-MEDICAL",
+  "name": "Facebook  medical",
+  "group": "Fecebook medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-FACEBOOK-KUPON",
+  "name": "Facebook kupon",
+  "group": "Facebook kupon",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-FALCON-TRAVEL-MEDICAL",
+  "name": "Falcon Travel medical",
+  "group": "Falcon travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-FECEBOOK-DERMO-PAKET",
+  "name": "Fecebook Dermo paket",
+  "group": "Fecebook Dermo paket",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-FECEBOOK-MEDICAL",
+  "name": "Fecebook medical",
+  "group": "Fecebook medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-FLYKHIVA-MEDICAL",
+  "name": "Flykhiva medical",
+  "group": "Flykhiva medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-GINZA-TRAVEL-LEISURE",
+  "name": "Ginza Travel leisure",
+  "group": "Ginza Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-GO-SANATORIUM-MEDICAL",
+  "name": "Go Sanatorium medical",
+  "group": "Go Sanatorium",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-GRANIT-AS-MEDICAL",
+  "name": "Granit As medical",
+  "group": "Granit AS medical",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-GREENWICH-MEDICAL",
+  "name": "Greenwich medical",
+  "group": "Greenwich medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-HALALBOOKING",
+  "name": "HalalBooking",
+  "group": "HalalBooking",
+  "rateCode": "HalalBooking",
+  "greyList": false
+ },
+ {
+  "code": "AG-HAPPY-TRIPS-LEISURE",
+  "name": "Happy Trips leisure",
+  "group": "Happy Trips",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-HAPPY-TRIPS-MEDICAL",
+  "name": "Happy Trips medical",
+  "group": "Happy Trips",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-HEALTH-TOUR-NAFTALAN-LEISURE",
+  "name": "Health Tour-Naftalan leisure",
+  "group": "Health Tour-Naftalan",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-HEALTH-TOUR-NAFTALAN-MEDICAL",
+  "name": "Health Tour-Naftalan medical",
+  "group": "Health Tour-Naftalan",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-HEALTHY-SANATORIUMS-LEISURE",
+  "name": "Healthy Sanatoriums leisure",
+  "group": "Healthy Sanatoriums",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-HEALTHY-SANATORIUMS-MEDICAL",
+  "name": "Healthy Sanatoriums medical",
+  "group": "Healthy  Sanatoriums",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-HEMKARLAR",
+  "name": "Həmkarlar",
+  "group": "Həmkarlar İttifaqı",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-HEMKARLAR-ITTIFAQI-KONFEDERASIYASI",
+  "name": "Həmkarlar İttifaqı  Konfederasiyası",
+  "group": "Həmkarlar İttifaqı Konfederasiyasi",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-INSTAGRAM-LEISURE",
+  "name": "İnstagram leisure",
+  "group": "İnstagram",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-INSTAGRAM-MEDICAL",
+  "name": "İnstagram medical",
+  "group": "İnstagram",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-INSAAT-KOMMERSIYA-MEDICAL",
+  "name": "İnşaat-kommersiya medical",
+  "group": "İnşaat -kommersiya medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-IZZ-TRAVEL-LEISURE",
+  "name": "İZZ Travel leisure",
+  "group": "İZZ Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-KAMRANZADEH-TURIZM-LEISURE",
+  "name": "Kamranzadeh Turizm leisure",
+  "group": "Kamran Zadeh",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-KURORT-TRAVEL-MEDICAL",
+  "name": "Kurort  Travel medical",
+  "group": "Kurort Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-LIK-LILI-MEDICAL",
+  "name": "Lik Lili medical",
+  "group": "Lik Lili medilcal",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-LONDON-TRAVEL-LEISURE",
+  "name": "London Travel leisure",
+  "group": "London Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-LUCKY-HOLIDAYS",
+  "name": "Lucky Holidays",
+  "group": "Lucky Holidays",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-LUCKY-TRAVEL-LEISURE",
+  "name": "Lucky Travel leisure",
+  "group": "Lucky Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-LUCKYHOLIDAYS-MEDICAL",
+  "name": "LuckyHolidays Medical",
+  "group": "Lucky Holiday",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-LUINO-TRAVEL-LEISURE",
+  "name": "Luino Travel leisure",
+  "group": "Luino Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-LUNA-TRAVEL",
+  "name": "Luna Travel",
+  "group": "Luna Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-LZ-MIRACLE-LEISURE",
+  "name": "Lz Miracle leisure",
+  "group": "Lz Miracle",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-MARI-TRAVEL-MEDICAL",
+  "name": "Mari travel medical",
+  "group": "Mari travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-MED-ECO-TOUR-MEDICAL",
+  "name": "Med Eco Tour medical",
+  "group": "Med Eco Tour",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-MEDICAL-TOURS-MEDICAL",
+  "name": "Medical Tours medical",
+  "group": "Medical Tours MMC",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-MUROV-SANATORIYA",
+  "name": "Murov sanatoriya",
+  "group": "Murov sanatoriya",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-MY-SANATORIUM-LEISURE",
+  "name": "My Sanatorium leisure",
+  "group": "My Sanatorium",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-MY-SANATORIUM-MEDICAL",
+  "name": "My Sanatorium medical",
+  "group": "My Sanatorium",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFDAN-TRAVEL-MEDICAL",
+  "name": "Nafdan Travel medical",
+  "group": "Nafdan Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFT-MED-TOUR-LEISURE",
+  "name": "Naft Med Tour leisure",
+  "group": "Naft Med Tour",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFT-MED-TOUR-MEDICAL",
+  "name": "Naft Med Tour medical",
+  "group": "Naft Med Tour",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTA-HOD",
+  "name": "Nafta HOD",
+  "group": "Nafta Sanatoriya",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-BOOKING-LEISURE",
+  "name": "Naftalan booking leisure",
+  "group": "Naftalan booking",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-BOOKING-MEDICAL",
+  "name": "Naftalan booking medical",
+  "group": "Naftalan booking",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-CITY-LEISURE",
+  "name": "Naftalan City leisure",
+  "group": "Naftalan City",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-KAMEL-LEISURE",
+  "name": "Naftalan Kamel leisure",
+  "group": "Naftalan Kamel tourism",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-KAMEL-MEDICAL",
+  "name": "Naftalan Kamel medical",
+  "group": "Naftalan Kamel tourism",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-MED-MEDICAL",
+  "name": "Naftalan Med Medical",
+  "group": "Naftalan Med",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-MED-TUR-MEDICAL",
+  "name": "Naftalan Med Tur Medical",
+  "group": "Naftalan Med Tur",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-MEDICAL-LEISURE",
+  "name": "Naftalan Medical leisure",
+  "group": "Naftalan Medical",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-MEDICAL-MEDICAL",
+  "name": "Naftalan Medical medical",
+  "group": "Naftalan Medical",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-THERAPY-MEDICAL",
+  "name": "Naftalan Therapy Medical",
+  "group": "Naftalan Therapy",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALAN-WELLNESS",
+  "name": "Naftalan Wellness",
+  "group": "Naftalan Wellness",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTALANIUM-MEDICAL",
+  "name": "Naftalanium medical",
+  "group": "Naftalanium medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTAMED-TRAVEL",
+  "name": "NaftaMed Travel",
+  "group": "NaftaMed Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-NAFTAVITA-MEDICAL",
+  "name": "Naftavita medical",
+  "group": "Naftavita medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-OLD-NAFTALAN-MEDICAL",
+  "name": "Old Naftalan medical",
+  "group": "Old Naftalan",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-ONLINE",
+  "name": "ONLINE",
+  "group": "ONLINE Naftalan Hotel",
+  "rateCode": "Booking.com",
+  "greyList": false
+ },
+ {
+  "code": "AG-ORGANIC-NAFTALAN-OIL-MEDICAL",
+  "name": "Organic Naftalan Oil medical",
+  "group": "Organic Naftalan Oil",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-OSTROVOK-RU",
+  "name": "Ostrovok.ru",
+  "group": "Ostrovok.ru",
+  "rateCode": "Ostrovok.ru",
+  "greyList": false
+ },
+ {
+  "code": "AG-P-M",
+  "name": "P.M",
+  "group": "P.M",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PEGAS-INCOMING-TRAVEL-MEDICAL",
+  "name": "Pegas incoming Travel Medical",
+  "group": "Pegas İncoming MMC",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-AKMARAL-SAYAHAT-MEDICAL",
+  "name": "Premium Akmaral Sayahat Medical",
+  "group": "Premium Akmaral Sayahat",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-FACEBOOK",
+  "name": "Premium Facebook",
+  "group": "Premium Facebook",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-MEDICAL-TOURS",
+  "name": "Premium Medical tours",
+  "group": "Premium Medical tours",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-NAFDAN-TRAVEL",
+  "name": "Premium Nafdan travel",
+  "group": "Premium Nafdan travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-NAFTALAN-BOOKING",
+  "name": "Premium Naftalan booking",
+  "group": "Premium Naftalan booking",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-NAFTALAN-KAMEL",
+  "name": "Premium Naftalan Kamel",
+  "group": "Premium Naftalan Kamel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-NAFTALAN-MED-MEDICAL",
+  "name": "Premium Naftalan Med medical",
+  "group": "Premium Naftalan Med medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-PAKET-WALKIN",
+  "name": "Premium paket Walkin",
+  "group": "Premium paket Walkin",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-RN-TRAVEL",
+  "name": "Premium RN travel",
+  "group": "Premium RN travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-SANATORIUMS-BOOKING",
+  "name": "Premium Sanatoriums booking",
+  "group": "Premium Sanatoriums booking",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-SULTAN-TRAVEL-MEDICAL",
+  "name": "Premium Sultan Travel medical",
+  "group": "Premium Sultan Travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-VITA-TRAVEL",
+  "name": "Premium Vita travel",
+  "group": "Premium Vİta travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PREMIUM-VIVA-TRAVEL",
+  "name": "Premium Viva travel",
+  "group": "Premium Viva travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-PRESTIGE-TRAVEL-MEDICAL",
+  "name": "Prestige travel medical",
+  "group": "Prestige travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-RADIO-WALKIN-MEDICAL",
+  "name": "Radio walkin medical",
+  "group": "Radio walkin medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-RAFN-GROUP-AZERTOUR",
+  "name": "Rafn Group-Azərtour",
+  "group": "Rafn Group-Azərtourv",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-RANTOUR-MEDICAL",
+  "name": "Rantour medical",
+  "group": "Mehti Guliyev",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-RAYDA-MEDICAL",
+  "name": "Rayda medical",
+  "group": "Rayda medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-REHILE-SIRINOVA",
+  "name": "Rəhilə Şirinova",
+  "group": "Rəhilə Şirinova",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-RENA-KENGERLI",
+  "name": "Rena Kəngərli",
+  "group": "Rena Kəngərli",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-RN-TRAVEL-MEDICAL",
+  "name": "RN travel medical",
+  "group": "RN travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-RUSTAR-MEDICAL",
+  "name": "Rustar medical",
+  "group": "Rustar",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SANAL-FOLYO",
+  "name": "Sanal Folyo",
+  "group": "Sanal Folyo",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SANATORIUMS-BOOKING-LEISURE",
+  "name": "Sanatoriums booking leisure",
+  "group": "Sanatoriums booking",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-SANATORIUMS-BOOKING-MEDICAL",
+  "name": "Sanatoriums Booking medical",
+  "group": "Sanatoriums Booking",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-SANATORIUMS-COM-MEDICAL",
+  "name": "Sanatoriums.com medical",
+  "group": "Sanatoriums.com",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-SAVTOUR-AZ-MEDICAL",
+  "name": "Savtour .az medical",
+  "group": "Savtour .az medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SAVTOUR-MEDICAL",
+  "name": "Savtour medical",
+  "group": "Savtour medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SHOOW-TRAVEL-MEDICAL",
+  "name": "Shoow travel medical",
+  "group": "Shoow travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-SILKROW-TRAVEL",
+  "name": "Silkrow travel",
+  "group": "Silkrow travel",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SIS-TRAVEL-MEDICAL",
+  "name": "Sis travel medical",
+  "group": "Sis travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SMILE-TOUR",
+  "name": "Smile tour",
+  "group": "Smile tour",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SULTAN-TRAVEL-MEDICAL",
+  "name": "Sultan travel medical",
+  "group": "Sultan travel medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-SUMMER-TRAVEL-MEDICAL",
+  "name": "Summer Travel Medical",
+  "group": "Summer Travel Medical",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-SERAFET-QURBANOVA",
+  "name": "Şərafət Qurbanova",
+  "group": "Şərafət Qurbanova",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ASLAN-ISMAYILOV",
+  "name": "Taksi Aslan Ismayılov",
+  "group": "Taksi Aslan İsmayılov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-AZER-QENBEROV",
+  "name": "Taksi Azər Qənbərov",
+  "group": "Taksi Azər medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-BAYRAM-EMINOV",
+  "name": "Taksi Bayram Eminov",
+  "group": "Taksi Bayram Eminov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-DEMIROV-NAMIK",
+  "name": "Taksi Dəmirov Namik",
+  "group": "Dəmirov Namik",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-EDALET-ISMAYILOV",
+  "name": "Taksi Ədalət İsmayılov",
+  "group": "Ədalət İsmayılov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-EFLATUN-HUSEYNOV",
+  "name": "Taksi Əflatun Hüseynov",
+  "group": "Taksi Əflatun Hüseynov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ELBRUS-ABBASOV",
+  "name": "Taksi Elbrus Abbasov",
+  "group": "Elbrus Abbasov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ELI-ELIYEV",
+  "name": "Taksi Əli Əliyev",
+  "group": "Əli Əliyev",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ELI-RUSTEMOV",
+  "name": "Taksi Əli Rüstəmov",
+  "group": "Taksi Əli Rüstəmov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ELIHUSEYN-ISMAYILOV-MEDICAL",
+  "name": "Taksi Əlihüseyn İsmayılov medical",
+  "group": "Əlihüseyn İsmayılov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ELIZADE-KENAN",
+  "name": "Taksi Əlizadə Kənan",
+  "group": "Əlizadə Kənan",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ENVER-AXUNDOV",
+  "name": "Taksi Ənvər Axundov",
+  "group": "Ənvər Axundov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-FIKRET-PASAYEV",
+  "name": "Taksi Fikret Pasayev",
+  "group": "Taksi Fikret Pasayev",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ILHAM-MUSAYEV",
+  "name": "Taksi İlham Musayev",
+  "group": "İlham Musayev",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-MAHIR-QULUZADE",
+  "name": "Taksi Mahir Quluzadə",
+  "group": "Taksi Mahir Quluzadə",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-MEHRELIYEV-IKRAM",
+  "name": "Taksi Mehrəliyev İkram",
+  "group": "Taksi Mehrəliyev İkram",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-MESUD-SEMEDOV-MEDICAL",
+  "name": "Taksi Məsud Səmədov medical",
+  "group": "Məsud Səmədov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-MURAD-HESENOV",
+  "name": "Taksi Murad Həsənov",
+  "group": "Murad Həsənov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-NATIQ-ISMAYILOV",
+  "name": "Taksi Natiq İsmayılov",
+  "group": "Natiq İsmayılov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-NESIRI",
+  "name": "Taksi Nəsiri",
+  "group": "Nəsiri",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-NEZER-YUSIFOV",
+  "name": "Taksi Nəzər Yusifov",
+  "group": "Nəzər Yusifov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-NURU-MEMMEDOV",
+  "name": "Taksi Nuru Məmmədov",
+  "group": "Nuru Məmmədov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-QAFAR-VELIYEV",
+  "name": "Taksi Qafar Vəliyev",
+  "group": "Qafar Vəliyev",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ROVSEN-ADIGOZELOV-MEDICAL",
+  "name": "Taksi Rövşən Adıgözəlov medical",
+  "group": "Taksi Rövşən Adıgözələv medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ROVSEN-ISMAYILOV",
+  "name": "Taksi Rövşən İsmayılov",
+  "group": "Rövşən İsmayılov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-RUSLAN-VERDIYEV",
+  "name": "Taksi Ruslan Verdiyev",
+  "group": "Ruslan Verdiyev",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-SAMEDDIN-MEDICAL",
+  "name": "Taksi Saməddin medical",
+  "group": "Taksi Saməddin Nəzərov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-SEBUHI-MEMMEDOV",
+  "name": "Taksi Səbuhi Məmmədov",
+  "group": "Səbuhi Məmmədov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-SEYIDI-ELCIN",
+  "name": "Taksi Seyidi Elçin",
+  "group": "Seyidi Elçin",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-SEHRUZ-RUSTEMOV",
+  "name": "Taksi Şəhruz Rüstəmov",
+  "group": "Taksi Şəhruz Rüstəmov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-TOFIQ-NESIBOV",
+  "name": "Taksi Tofiq Nəsibov",
+  "group": "Taksi Tofiq Nəsibov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-VASIF-CEFEROV",
+  "name": "Taksi Vasif Cəfərov",
+  "group": "Vasif Cəfərov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-VEKIL-MIRZEYEV",
+  "name": "Taksi Vəkil Mirzəyev",
+  "group": "Vəkil Mirzəyev",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-VELI-ABBASOV",
+  "name": "Taksi Vəli Abbasov",
+  "group": "Vəli Abbasov",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-VUSAL-MEDICAL",
+  "name": "Taksi Vüsal medical",
+  "group": "Taksi Vüsal",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-XALIQ-YUSIFOV",
+  "name": "Taksi Xaliq Yusifov",
+  "group": "Taksi Xaliq Yusifov",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-XALLI",
+  "name": "Taksi Xallı",
+  "group": "Taksi Xallı",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TAKSI-ZEYNALOV-MIKAYIL",
+  "name": "Taksi Zeynalov Mikayıl",
+  "group": "Zeynalov Mikayl",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TEATRAL-TRAVEL-LEISURE",
+  "name": "Teatral Travel leisure",
+  "group": "Teatral Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-TELEGRAM-MEDICAL",
+  "name": "Telegram Medical",
+  "group": "Telegram",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TERRA-TRAVEL-MEDICAL",
+  "name": "Terra Travel medical",
+  "group": "Terra Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-TEST-QONAQ-MEDIKAL",
+  "name": "Test Qonaq Medikal",
+  "group": "Test Qonaq Medikal",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TOUROTDIH-MEDICAL",
+  "name": "Tourotdıh medical",
+  "group": "Tourotdıh medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-TURCHU-AZ-LEISURE",
+  "name": "Turchu.az leisure",
+  "group": "Turchu.az",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-VALENTINA-TUR-MEDICAL",
+  "name": "Valentina tur medical",
+  "group": "Valentina tur medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-VEGAS-TRAVEL",
+  "name": "Vegas Travel",
+  "group": "Vegas Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-VELOSIPED-YARISI",
+  "name": "Velosiped yarişi",
+  "group": "Velosiped yarişi",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-VEYSELOGLU-MMC",
+  "name": "Veysəloglu MMC",
+  "group": "Veysəloglu MMC",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-VITA-TRAVEL-LEISURE",
+  "name": "Vita Travel leisure",
+  "group": "Vita Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-VITA-TRAVEL-MEDICAL",
+  "name": "Vita Travel medical",
+  "group": "Vita Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-VIVA-NAFTALAN-LEISURE",
+  "name": "Viva Naftalan leisure",
+  "group": "Viva Naftalan Tour",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-VIVA-NAFTALAN-MEDICAL",
+  "name": "Viva Naftalan medical",
+  "group": "Viva Naftalan Tour",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-VIYEN-HOLIDAY-MEDICAL",
+  "name": "Viyen Holiday medical",
+  "group": "Viyen Holiday medical",
+  "rateCode": null,
+  "greyList": false
+ },
+ {
+  "code": "AG-VOYAGE-TOUR-MEDICAL",
+  "name": "Voyage Tour Medical",
+  "group": "Voyage Tour",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-WALKIN-KUPON",
+  "name": "Walkin kupon",
+  "group": "Walkin kupon",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-WALKIN-LEISURE",
+  "name": "Walkin leisure",
+  "group": "Walkin Naftalan Hotel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-WALKIN-MEDICAL",
+  "name": "Walkin medical",
+  "group": "walkin medical",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-WALLNESS-TRAVEL",
+  "name": "Wallness Travel",
+  "group": "Naftalan Wallness Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-WIDE-TRAVEL-LEISURE",
+  "name": "Wide Travel leisure",
+  "group": "Wide Travel",
+  "rateCode": "Daily rates",
+  "greyList": false
+ },
+ {
+  "code": "AG-WIDE-TRAVEL-MEDICAL",
+  "name": "Wide Travel Medical",
+  "group": "Wide Travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-WULKAN-TRAVEL-MEDICAL",
+  "name": "Wulkan travel medical",
+  "group": "Wulkan travel",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-XAN-TURIZM-MEDICAL",
+  "name": "Xan Turizm medical",
+  "group": "Xan Turizm",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ },
+ {
+  "code": "AG-YURD-FM",
+  "name": "Yurd FM",
+  "group": "Yurd FM",
+  "rateCode": "Medical Rates (medikal +FB)",
+  "greyList": false
+ }
+]

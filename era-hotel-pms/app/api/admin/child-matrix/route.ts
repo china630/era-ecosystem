@@ -10,6 +10,9 @@ const schema = z.object({
   ageFrom: z.number().int().min(0),
   ageTo: z.number().int().min(0),
   discountPercent: z.number().min(0).max(100),
+  amountOverride: z.number().min(0).nullable().optional(),
+  freeCount: z.number().int().min(0).optional(),
+  active: z.boolean().optional(),
 });
 
 export async function GET() {

@@ -9,12 +9,24 @@ export function getProductGlCode(
   paramsJson: unknown,
   key: ProductGlKey,
 ): string {
+  const value = tryProductGlCode(paramsJson, key);
+  if (!value) {
+    throw new Error(`Product template paramsJson.${key} is required`);
+  }
+  return value;
+}
+
+/** Optional product GL code; returns null when missing (caller may fall back to SystemGl). */
+export function tryProductGlCode(
+  paramsJson: unknown,
+  key: ProductGlKey,
+): string | null {
   if (!paramsJson || typeof paramsJson !== "object" || Array.isArray(paramsJson)) {
-    throw new Error(`Product template paramsJson missing or invalid; required ${key}`);
+    return null;
   }
   const value = (paramsJson as Record<string, unknown>)[key];
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(`Product template paramsJson.${key} is required`);
+    return null;
   }
   return value.trim();
 }

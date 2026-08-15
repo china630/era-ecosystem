@@ -1,11 +1,11 @@
 import {
   authCookieName,
-  buildSsoPayload,
+  consumeSsoSignatureOnce,
   mapFinanceRoleToSatellite,
+  resolveVerifiedSsoFinanceRole,
   SATELLITE_ROLE,
   signSatelliteSession,
   ssoExchangeBodySchema,
-  verifySsoSignature,
 } from "@era/satellite-kit";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
@@ -26,16 +26,22 @@ export async function POST(request: Request) {
       return jsonError("Organization mismatch", 403);
     }
 
-    const payload = buildSsoPayload(
-      body.email,
-      body.organizationId,
-      body.expiresAt,
-    );
-    if (!verifySsoSignature(payload, body.signature)) {
+    const financeRole = resolveVerifiedSsoFinanceRole({
+      email: body.email,
+      organizationId: body.organizationId,
+      expiresAt: body.expiresAt,
+      signature: body.signature,
+      financeRole: body.financeRole,
+      jti: body.jti,
+    });
+    if (!financeRole) {
       return jsonError("Invalid SSO signature", 401);
     }
+    if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
+      return jsonError("SSO ticket already used", 401);
+    }
 
-    const satelliteRole = mapFinanceRoleToSatellite(body.financeRole ?? "USER");
+    const satelliteRole = mapFinanceRoleToSatellite(financeRole);
     const roleName =
       satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER
         ? "Business Owner"

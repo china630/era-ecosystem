@@ -18,6 +18,8 @@ export interface PostingRequest {
   branchId?: string;
   legs: PostingLegInput[];
   autoApprove?: boolean;
+  /** Internal EOD / system steps may post while EodRun is RUNNING. */
+  allowDuringEod?: boolean;
 }
 
 export interface ApprovePostingRequest {

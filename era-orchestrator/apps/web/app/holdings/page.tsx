@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Building2, Plus, Trash2, Unlink } from "lucide-react";
@@ -245,19 +244,14 @@ export default function HoldingsPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <div className="flex flex-wrap gap-2">
-            <Link href="/organizations" className={SECONDARY_BUTTON_CLASS}>
-              {t("backToOrgs")}
-            </Link>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              {t("create")}
-            </button>
-          </div>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            {t("create")}
+          </button>
         }
       />
 
@@ -268,10 +262,12 @@ export default function HoldingsPage() {
       ) : null}
 
       {holdings.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} mx-auto max-w-lg p-8 text-center`}>
-          <Building2 className="mx-auto h-10 w-10 text-[#95A5A6]" aria-hidden />
+        <div
+          className={`${CARD_CONTAINER_CLASS} flex min-h-[16rem] w-full flex-col items-center justify-center p-8 text-center`}
+        >
+          <Building2 className="h-10 w-10 text-[#95A5A6]" aria-hidden />
           <h2 className="mt-4 text-lg font-semibold text-[#34495E]">{t("emptyTitle")}</h2>
-          <p className="mt-2 text-sm text-[#7F8C8D]">{t("emptyHint")}</p>
+          <p className="mt-2 max-w-md text-sm text-[#7F8C8D]">{t("emptyHint")}</p>
           <button
             type="button"
             className={`${PRIMARY_BUTTON_CLASS} mt-6`}

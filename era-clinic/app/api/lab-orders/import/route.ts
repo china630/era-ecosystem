@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { createImportedLabOrder } from "@/domain/lab/lab-order-write.service";
 
 const bodySchema = z.object({
   profileId: z.string(),
@@ -64,15 +65,16 @@ export async function POST(req: Request) {
 
     const orders = [];
     for (const [testCode, results] of grouped) {
-      const order = await prisma.labOrder.create({
-        data: {
-          patientRefId: body.patientRefId,
-          visitId: body.visitId,
-          testCode,
-          status: "RESULT_READY",
-          resultJson: JSON.stringify(results),
-          publishedAt: new Date(),
-        },
+      const order = await createImportedLabOrder({
+        patientRefId: body.patientRefId,
+        visitId: body.visitId,
+        code: testCode,
+        results: results as Array<{
+          analyte?: string;
+          value: string;
+          refMin?: number;
+          refMax?: number;
+        }>,
       });
       orders.push(order);
     }

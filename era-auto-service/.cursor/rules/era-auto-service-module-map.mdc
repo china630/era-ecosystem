@@ -9,6 +9,8 @@ alwaysApply: false
 
 # Auto Service module map
 
+**Acceptance SSOT:** [Auto-Acceptance-System](../../../docs/acceptance/Auto-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Auto-Product-Readiness-Matrix.md) · edition [`docs/editions/auto.yaml`](../../../docs/editions/auto.yaml)
+
 | Domain | API prefix | Notes |
 |--------|------------|-------|
 | Auth / SSO | `app/api/auth/` | local + SSO |

@@ -10,6 +10,7 @@ export type OpsMe = {
   branchId: string;
   canApprove: boolean;
   limitsJson: Record<string, unknown>;
+  isPlatformSuperAdmin?: boolean;
 };
 
 export function useOpsMe() {

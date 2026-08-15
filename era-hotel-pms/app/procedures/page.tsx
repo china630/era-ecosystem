@@ -1,19 +1,23 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
-  FORM_FIELD_GROUP_CLASS,
+  CARD_CONTAINER_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  useDebouncedValue,
+  Field,
+  FieldSelect,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  PageHeader,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -49,8 +53,10 @@ export default function ProceduresPage() {
   const [serviceId, setServiceId] = useState('');
   const [staffName, setStaffName] = useState('Dr. Hasanova');
   const [placeCode, setPlaceCode] = useState('SPA-1');
-  const [startAt, setStartAt] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('10:00');
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -68,34 +74,41 @@ export default function ProceduresPage() {
   }, [serviceId]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   function openBookModal() {
     setReservationId('');
     setStaffName('Dr. Hasanova');
     setPlaceCode('SPA-1');
-    setStartAt('');
+    setStartDate('');
+    setStartTime('10:00');
     if (services[0]?.id) setServiceId(services[0].id);
     setModalOpen(true);
   }
 
-  if (!can(PERMISSIONS.MEDICAL_MANAGE)) {
-    return (
-      <AppShell>
-        <p className="text-sm text-red-600">{tc('accessDenied')}</p>
-      </AppShell>
+  const visibleAppointments = useMemo(() => {
+    const q = debouncedQ.trim().toLowerCase();
+    if (!q) return appointments;
+    return appointments.filter((a) =>
+      `${a.reservation.guest.fullName} ${a.service.name} ${a.staffName ?? ''} ${a.status}`
+        .toLowerCase()
+        .includes(q),
     );
+  }, [appointments, debouncedQ]);
+
+  if (!can(PERMISSIONS.MEDICAL_MANAGE)) {
+    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
   async function book(e: React.FormEvent) {
     e.preventDefault();
-    if (!reservationId || !serviceId || !startAt) {
-      setMsg(t('missingFields'));
+    if (!reservationId || !serviceId || !startDate || !startTime) {
+      showApiError({ error: t('missingFields') });
       return;
     }
     setBusy(true);
-    const start = new Date(startAt);
+    const start = new Date(`${startDate}T${startTime}`);
     const svc = services.find((s) => s.id === serviceId);
     const end = new Date(start.getTime() + (svc?.durationMin ?? 30) * 60000);
     const res = await fetch('/api/procedures/appointments', {
@@ -112,11 +125,13 @@ export default function ProceduresPage() {
     });
     const data = await res.json();
     setBusy(false);
-    setMsg(res.ok ? t('booked') : data.error ?? tc('error'));
-    if (res.ok) {
-      setModalOpen(false);
-      await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
     }
+    showSuccess(t('booked'));
+    setModalOpen(false);
+    await load();
   }
 
   async function finish(id: string, action: 'finish' | 'no_show') {
@@ -126,20 +141,22 @@ export default function ProceduresPage() {
       body: JSON.stringify({ action }),
     });
     const data = await res.json();
-    setMsg(
-      res.ok
-        ? action === 'finish'
-          ? data.includedInPackage
-            ? t('finishedIncluded')
-            : t('finishedExtra')
-          : t('noShow')
-        : data.error ?? tc('error'),
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
+    }
+    showSuccess(
+      action === 'finish'
+        ? data.includedInPackage
+          ? t('finishedIncluded')
+          : t('finishedExtra')
+        : t('noShow'),
     );
-    if (res.ok) await load();
+    await load();
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -150,9 +167,20 @@ export default function ProceduresPage() {
           </button>
         }
       />
-      <StatusMessage>{msg}</StatusMessage>
 
-      <PageSection>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setQ('')}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
+
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('schedule')}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
@@ -167,14 +195,16 @@ export default function ProceduresPage() {
               </tr>
             </thead>
             <tbody>
-              {appointments.map((a) => (
+              {visibleAppointments.map((a) => (
                 <tr key={a.id} className="border-b border-[#ECF0F1]">
                   <td className="py-2 pr-3">{new Date(a.startAt).toLocaleString()}</td>
                   <td className="py-2 pr-3">
                     {a.reservation.guest.fullName} · {a.reservation.room?.roomNumber ?? '—'}
                   </td>
                   <td className="py-2 pr-3">{a.service.name}</td>
-                  <td className="py-2 pr-3">{a.staffName ?? '—'} / {a.placeCode ?? '—'}</td>
+                  <td className="py-2 pr-3">
+                    {a.staffName ?? '—'} / {a.placeCode ?? '—'}
+                  </td>
                   <td className="py-2 pr-3">{a.status}</td>
                   <td className="py-2 space-x-2">
                     {a.status === 'BOOKED' && (
@@ -201,7 +231,7 @@ export default function ProceduresPage() {
             </tbody>
           </table>
         </div>
-      </PageSection>
+      </section>
 
       <EraModal
         open={modalOpen}
@@ -217,54 +247,57 @@ export default function ProceduresPage() {
         }
       >
         <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('guestStay')}</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={reservationId}
-              onChange={(e) => setReservationId(e.target.value)}
-              required
-            >
-              <option value="">{tc('select')}</option>
-              {reservations.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('service')}</label>
-            <select className={MODAL_INPUT_CLASS} value={serviceId} onChange={(e) => setServiceId(e.target.value)} required>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.code} — {s.name}
-                </option>
-              ))}
-            </select>
+          <FieldSelect
+            label={t('guestStay')}
+            preset="selectWide"
+            value={reservationId}
+            onChange={(e) => setReservationId(e.target.value)}
+            required
+          >
+            <option value="">{tc('select')}</option>
+            {reservations.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldSelect
+            label={t('service')}
+            preset="selectWide"
+            value={serviceId}
+            onChange={(e) => setServiceId(e.target.value)}
+            required
+          >
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.code} — {s.name}
+              </option>
+            ))}
+          </FieldSelect>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('staff')} preset="longText" value={staffName} onChange={(e) => setStaffName(e.target.value)} />
+            <Field label={t('place')} preset="code" value={placeCode} onChange={(e) => setPlaceCode(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('staff')}</label>
-              <input className={MODAL_INPUT_CLASS} value={staffName} onChange={(e) => setStaffName(e.target.value)} />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('place')}</label>
-              <input className={MODAL_INPUT_CLASS} value={placeCode} onChange={(e) => setPlaceCode(e.target.value)} />
-            </div>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('startAt')}</label>
-            <input
-              type="datetime-local"
-              className={MODAL_INPUT_CLASS}
-              value={startAt}
-              onChange={(e) => setStartAt(e.target.value)}
+            <DatePicker
+              label={t('startAt')}
+              value={startDate}
+              onChange={setStartDate}
+              placeholder={tc('datePlaceholder')}
+              openCalendarLabel={tc('openCalendar')}
+              required
+            />
+            <Field
+              label={tc('time')}
+              preset="time"
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
               required
             />
           </div>
         </form>
       </EraModal>
-    </AppShell>
+    </>
   );
 }

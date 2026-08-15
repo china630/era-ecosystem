@@ -1,13 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CatalogField,
+  Field,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
 import { useOpsMe } from "@/components/ops/useOpsMe";
-import { AmountInput, OpsError, OpsField, OpsResult, StatusBadge } from "@/components/ops-ui";
+import { OpsError, OpsResult, StatusBadge } from "@/components/ops-ui";
 import { PostingLegsTable } from "@/components/PostingLegsTable";
+import {
+  loadAccountOptions,
+  loadBranchOptions,
+  majorToMinor,
+  type LookupOption,
+  withOrphanOption,
+} from "@/lib/bank-lookups";
 
 type OpKind = "cash-deposit" | "cash-withdrawal" | "internal-transfer" | "cross-branch";
 
@@ -37,10 +49,42 @@ type PostingCreateModalProps = {
 export function PostingCreateModal({ open, onClose, onCreated }: PostingCreateModalProps) {
   const t = useTranslations("pages.postings");
   const [kind, setKind] = useState<OpKind>("cash-deposit");
+  const [accounts, setAccounts] = useState<LookupOption[]>([]);
+  const [branches, setBranches] = useState<LookupOption[]>([]);
+  const [accountId, setAccountId] = useState("");
+  const [fromAccountId, setFromAccountId] = useState("");
+  const [toAccountId, setToAccountId] = useState("");
+  const [serviceBranchId, setServiceBranchId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState("");
   const [busy, setBusy] = useState(false);
   const formId = "posting-create-form";
+
+  const opKindOptions = useMemo(
+    () => [
+      { value: "cash-deposit", label: t("cashDeposit") },
+      { value: "cash-withdrawal", label: t("cashWithdrawal") },
+      { value: "internal-transfer", label: t("internalTransfer") },
+      { value: "cross-branch", label: t("crossBranch") },
+    ],
+    [t],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    void Promise.all([loadAccountOptions(), loadBranchOptions()]).then(
+      ([a, b]) => {
+        setAccounts(a);
+        setBranches(b);
+      },
+    );
+    setAccountId("");
+    setFromAccountId("");
+    setToAccountId("");
+    setServiceBranchId("");
+    setError(null);
+    setResult("");
+  }, [open]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,6 +92,9 @@ export function PostingCreateModal({ open, onClose, onCreated }: PostingCreateMo
     setError(null);
     setResult("");
     const form = new FormData(e.currentTarget);
+    const amountMinor = String(
+      majorToMinor(String(form.get("amountMajor") ?? "0")),
+    );
     const idempotencyKey = crypto.randomUUID();
     let path = `/api/postings/${kind}`;
     let body: Record<string, unknown> = {
@@ -56,25 +103,40 @@ export function PostingCreateModal({ open, onClose, onCreated }: PostingCreateMo
     };
 
     if (kind === "internal-transfer") {
+      if (!fromAccountId || !toAccountId) {
+        setError("Accounts required");
+        setBusy(false);
+        return;
+      }
       body = {
-        fromAccountId: form.get("fromAccountId"),
-        toAccountId: form.get("toAccountId"),
-        amountMinor: String(form.get("amountMinor")),
+        fromAccountId,
+        toAccountId,
+        amountMinor,
         idempotencyKey,
       };
     } else if (kind === "cross-branch") {
+      if (!accountId || !serviceBranchId) {
+        setError("Account and service branch required");
+        setBusy(false);
+        return;
+      }
       path = "/api/branches/cross-branch-withdrawal";
       body = {
-        customerAccountId: form.get("accountId"),
-        serviceBranchId: form.get("serviceBranchId"),
-        amountMinor: String(form.get("amountMinor")),
+        customerAccountId: accountId,
+        serviceBranchId,
+        amountMinor,
         currency: "AZN",
         idempotencyKey,
       };
     } else {
+      if (!accountId) {
+        setError("Account required");
+        setBusy(false);
+        return;
+      }
       body = {
-        accountId: form.get("accountId"),
-        amountMinor: String(form.get("amountMinor")),
+        accountId,
+        amountMinor,
         currency: "AZN",
         idempotencyKey,
       };
@@ -117,33 +179,84 @@ export function PostingCreateModal({ open, onClose, onCreated }: PostingCreateMo
       maxWidthClass="max-w-2xl"
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-[12px] text-muted-foreground">{t("operation")}</span>
-          <select
-            className="w-full rounded border px-3 py-2 text-sm"
-            value={kind}
-            onChange={(e) => setKind(e.target.value as OpKind)}
-          >
-            <option value="cash-deposit">{t("cashDeposit")}</option>
-            <option value="cash-withdrawal">{t("cashWithdrawal")}</option>
-            <option value="internal-transfer">{t("internalTransfer")}</option>
-            <option value="cross-branch">{t("crossBranch")}</option>
-          </select>
-        </label>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("operation")}
+          className="sm:col-span-2"
+          options={opKindOptions}
+          value={kind}
+          onChange={(next) =>
+            setKind((Array.isArray(next) ? next[0] : next) as OpKind)
+          }
+          required
+        />
         {kind === "internal-transfer" ? (
           <>
-            <OpsField name="fromAccountId" label={t("fromAccount")} defaultValue="demo-retail-acc-1" />
-            <OpsField name="toAccountId" label={t("toAccount")} defaultValue="demo-retail-acc-2" />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("fromAccount")}
+              options={withOrphanOption(accounts, fromAccountId)}
+              value={fromAccountId}
+              onChange={(next) =>
+                setFromAccountId(Array.isArray(next) ? next[0] ?? "" : next)
+              }
+              required
+            />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("toAccount")}
+              options={withOrphanOption(accounts, toAccountId)}
+              value={toAccountId}
+              onChange={(next) =>
+                setToAccountId(Array.isArray(next) ? next[0] ?? "" : next)
+              }
+              required
+            />
           </>
         ) : kind === "cross-branch" ? (
           <>
-            <OpsField name="accountId" label={t("accountId")} defaultValue="demo-retail-acc-1" />
-            <OpsField name="serviceBranchId" label={t("serviceBranch")} defaultValue="demo-branch-a" />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("accountId")}
+              options={withOrphanOption(accounts, accountId)}
+              value={accountId}
+              onChange={(next) =>
+                setAccountId(Array.isArray(next) ? next[0] ?? "" : next)
+              }
+              required
+            />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("serviceBranch")}
+              options={withOrphanOption(branches, serviceBranchId)}
+              value={serviceBranchId}
+              onChange={(next) =>
+                setServiceBranchId(Array.isArray(next) ? next[0] ?? "" : next)
+              }
+              required
+            />
           </>
         ) : (
-          <OpsField name="accountId" label={t("accountId")} defaultValue="demo-retail-acc-1" />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("accountId")}
+            className="sm:col-span-2"
+            options={withOrphanOption(accounts, accountId)}
+            value={accountId}
+            onChange={(next) =>
+              setAccountId(Array.isArray(next) ? next[0] ?? "" : next)
+            }
+            required
+          />
         )}
-        <AmountInput name="amountMinor" label={t("amount")} defaultMinor={100000} />
+        <Field
+          name="amountMajor"
+          label={t("amount")}
+          preset="amount"
+          type="number"
+          step="0.01"
+          required
+        />
         <div className="sm:col-span-2">
           <OpsError message={error} />
           <OpsResult text={result} />

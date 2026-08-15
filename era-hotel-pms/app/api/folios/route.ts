@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 const chargeSchema = z.object({
   reservationId: z.string().uuid(),
   revenueCodeId: z.string().uuid(),
-  amount: z.number().positive(),
+  amount: z.number(), // allow negative for DISCOUNT posts via API if needed
   qty: z.number().int().positive().optional(),
   description: z.string().min(1),
 });
@@ -28,8 +28,16 @@ const chargeSchema = z.object({
 const paymentSchema = z.object({
   folioId: z.string().uuid(),
   amount: z.number().positive(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT', 'LOYALTY_POINTS']),
+  paymentMethod: z.enum([
+    'CASH',
+    'CARD',
+    'COMPANY_ACCOUNT',
+    'LOYALTY_POINTS',
+    'DEPOSIT',
+    'BANK_TRANSFER',
+  ]),
   registerRef: z.string().optional(),
+  bankReference: z.string().max(120).optional(),
 });
 
 export async function POST(request: Request) {

@@ -1,5 +1,5 @@
 import { listPersonIdentifiers } from "@era/satellite-kit";
-import type { PatientBloodGroup, PatientSex } from "@prisma/client";
+import type { PatientBloodGroup, PatientSex, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { linkPatientGlobalPerson } from "@/lib/patient-identity";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
@@ -12,6 +12,13 @@ export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN, passport, or MDM") {
     super(message);
     this.name = "PatientMdmRequiredError";
+  }
+}
+
+export class PatientAnamnesisRequiredError extends Error {
+  constructor(message = "Anamnesis text is required when updating clinical demographics") {
+    super(message);
+    this.name = "PatientAnamnesisRequiredError";
   }
 }
 
@@ -29,6 +36,18 @@ export type PatientClinicalDemographicsInput = {
   bloodGroup?: PatientBloodGroup;
   emergencyContactName?: string | null;
   emergencyContactPhone?: string | null;
+  anamnesisText?: string | null;
+};
+
+export type ListPatientsQuery = {
+  q?: string;
+  sex?: PatientSex;
+  bloodGroup?: PatientBloodGroup;
+  hasMdm?: 0 | 1;
+  ageMin?: number;
+  ageMax?: number;
+  page?: number;
+  pageSize?: number;
 };
 
 function demographicsWriteData(data: PatientClinicalDemographicsInput) {
@@ -43,6 +62,12 @@ function demographicsWriteData(data: PatientClinicalDemographicsInput) {
     bloodGroup: data.bloodGroup,
     emergencyContactName: data.emergencyContactName,
     emergencyContactPhone: data.emergencyContactPhone,
+    ...(data.anamnesisText !== undefined
+      ? {
+          anamnesisText: data.anamnesisText?.trim() || null,
+          anamnesisUpdatedAt: data.anamnesisText?.trim() ? new Date() : null,
+        }
+      : {}),
   };
 }
 
@@ -53,22 +78,78 @@ function withDerivedDemographics<T extends { birthDate?: Date | null }>(row: T) 
   };
 }
 
+function birthDateRangeForAge(ageMin?: number, ageMax?: number): { gte?: Date; lte?: Date } | undefined {
+  if (ageMin == null && ageMax == null) return undefined;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const out: { gte?: Date; lte?: Date } = {};
+  if (ageMax != null) {
+    const oldest = new Date(today);
+    oldest.setFullYear(oldest.getFullYear() - ageMax - 1);
+    oldest.setDate(oldest.getDate() + 1);
+    out.gte = oldest;
+  }
+  if (ageMin != null) {
+    const youngest = new Date(today);
+    youngest.setFullYear(youngest.getFullYear() - ageMin);
+    out.lte = youngest;
+  }
+  return out;
+}
+
+function clinicalFieldsTouched(data: PatientClinicalDemographicsInput): boolean {
+  return (
+    data.nationality !== undefined ||
+    data.sex !== undefined ||
+    data.birthDate !== undefined ||
+    data.bloodGroup !== undefined ||
+    data.emergencyContactName !== undefined ||
+    data.emergencyContactPhone !== undefined
+  );
+}
+
 export async function listPatients(query?: string) {
-  const where = query?.trim()
-    ? {
-        OR: [
-          { fullName: { contains: query.trim(), mode: "insensitive" as const } },
-          { refCode: { contains: query.trim(), mode: "insensitive" as const } },
-          { phone: { contains: query.trim(), mode: "insensitive" as const } },
-        ],
-      }
-    : undefined;
-  const rows = await prisma.patientRef.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
-  return rows.map(withDerivedDemographics);
+  const result = await listPatientsPaged({ q: query });
+  return result.items;
+}
+
+export async function listPatientsPaged(input: ListPatientsQuery = {}) {
+  const page = Math.max(1, input.page ?? 1);
+  const pageSize = Math.min(100, Math.max(10, input.pageSize ?? 25));
+  const where: Prisma.PatientRefWhereInput = {};
+
+  if (input.q?.trim()) {
+    const q = input.q.trim();
+    where.OR = [
+      { fullName: { contains: q, mode: "insensitive" } },
+      { refCode: { contains: q, mode: "insensitive" } },
+      { phone: { contains: q, mode: "insensitive" } },
+    ];
+  }
+  if (input.sex) where.sex = input.sex;
+  if (input.bloodGroup) where.bloodGroup = input.bloodGroup;
+  if (input.hasMdm === 1) where.globalPersonId = { not: null };
+  if (input.hasMdm === 0) where.globalPersonId = null;
+
+  const birthRange = birthDateRangeForAge(input.ageMin, input.ageMax);
+  if (birthRange) where.birthDate = birthRange;
+
+  const [rows, total] = await Promise.all([
+    prisma.patientRef.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.patientRef.count({ where }),
+  ]);
+
+  return {
+    items: rows.map(withDerivedDemographics),
+    total,
+    page,
+    pageSize,
+  };
 }
 
 export async function getPatient(id: string) {
@@ -102,6 +183,7 @@ export async function createPatient(data: {
   finCode?: string;
   passportNumber?: string;
   issuingCountry?: string;
+  anamnesisText?: string | null;
 }) {
   if (!patientHasMdmIdentifier(data)) {
     throw new PatientMdmRequiredError(
@@ -121,6 +203,8 @@ export async function createPatient(data: {
       bloodGroup: demo.bloodGroup,
       emergencyContactName: demo.emergencyContactName ?? undefined,
       emergencyContactPhone: demo.emergencyContactPhone ?? undefined,
+      anamnesisText: demo.anamnesisText ?? undefined,
+      anamnesisUpdatedAt: demo.anamnesisUpdatedAt ?? undefined,
     },
   });
 
@@ -160,8 +244,13 @@ export async function updatePatient(
     finCode?: string | null;
     passportNumber?: string | null;
     issuingCountry?: string | null;
+    anamnesisText?: string | null;
   },
 ) {
+  if (clinicalFieldsTouched(data) && !data.anamnesisText?.trim()) {
+    throw new PatientAnamnesisRequiredError();
+  }
+
   const identityInput: PatientIdentifierInput = {
     finCode: data.finCode ?? undefined,
     passportNumber: data.passportNumber ?? undefined,
@@ -186,6 +275,12 @@ export async function updatePatient(
       bloodGroup: demo.bloodGroup,
       emergencyContactName: demo.emergencyContactName,
       emergencyContactPhone: demo.emergencyContactPhone,
+      ...(data.anamnesisText !== undefined
+        ? {
+            anamnesisText: demo.anamnesisText,
+            anamnesisUpdatedAt: demo.anamnesisUpdatedAt,
+          }
+        : {}),
     },
   });
 

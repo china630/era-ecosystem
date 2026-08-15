@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  CHIP_ACTIVE_CLASS,
+  CHIP_CLASS,
+  LINK_ACCENT_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
+} from "@era/satellite-kit/ui";
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 
@@ -117,9 +124,7 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
             <button
               key={f}
               type="button"
-              className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-1 text-[11px] ${
-                filter === f ? "!border-[#2980B9] !bg-blue-50 !text-[#2980B9]" : ""
-              }`}
+              className={`${filter === f ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !px-2 !py-1 text-[11px]`}
               onClick={() => setFilter(f)}
             >
               {t(`filters.${f}`)}
@@ -130,11 +135,11 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
 
       <div className={`${CARD_CONTAINER_CLASS} p-4 sm:p-6`}>
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
         ) : error ? (
-          <p className="text-[13px] text-red-600">{error}</p>
+          <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p>
         ) : days.length === 0 ? (
-          <p className="text-[13px] text-[#7F8C8D]">{t("empty")}</p>
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("empty")}</p>
         ) : (
           <ol className="relative space-y-8 border-l-2 border-slate-200 pl-4 sm:pl-6">
             {days.map((day) => (
@@ -161,7 +166,7 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
                             {ev.href ? (
                               <Link
                                 href={ev.href}
-                                className="font-medium text-[#2980B9] hover:underline"
+                                className={`font-medium ${LINK_ACCENT_CLASS}`}
                               >
                                 {eventTitle(ev)}
                               </Link>
@@ -171,12 +176,12 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
                             <span className="text-[11px] uppercase tracking-wide text-slate-500">
                               {ev.status}
                               {ev.hasCritical ? (
-                                <span className="ml-2 text-red-600">{t("critical")}</span>
+                                <span className={`ml-2 ${TEXT_DANGER_CLASS}`}>{t("critical")}</span>
                               ) : null}
                             </span>
                           </div>
                           {ev.subtitle ? (
-                            <p className="mt-0.5 text-[12px] text-[#7F8C8D]">{ev.subtitle}</p>
+                            <p className={`mt-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>{ev.subtitle}</p>
                           ) : null}
                           {ev.resultSummary && ev.resultSummary.length > 0 ? (
                             <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3">
@@ -207,7 +212,7 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
             ))}
           </ol>
         )}
-        <p className="mt-4 text-[11px] text-[#7F8C8D]">{t("tzHint")}</p>
+        <p className={`mt-4 text-[11px] ${TEXT_MUTED_CLASS}`}>{t("tzHint")}</p>
       </div>
     </section>
   );

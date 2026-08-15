@@ -1,11 +1,19 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PageHeader, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { OpsDataTable, useOpsModal } from "@/components/ops";
+import {
+  EraListFilterBar,
+  Field,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  showApiError,
+  useDebouncedValue,
+} from "@era/satellite-kit/ui";
+import { BankDataGrid } from "@/components/BankDataGrid";
+import { useOpsModal } from "@/components/ops";
 import { AccountDetailModal, AccountOpenModal } from "@/components/ops/modals/AccountModals";
-import { OpsError, StatusBadge, formatAznMinor, maskIban } from "@/components/ops-ui";
+import { StatusBadge, formatAznMinor, maskIban } from "@/components/ops-ui";
 
 type Account = {
   id: string;
@@ -26,93 +34,117 @@ function AccountsPageContent() {
   const modal = useOpsModal();
   const [customerId, setCustomerId] = useState("");
   const [iban, setIban] = useState("");
+  const debouncedCustomer = useDebouncedValue(customerId, 300);
+  const debouncedIban = useDebouncedValue(iban, 300);
   const [rows, setRows] = useState<Account[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     const params = new URLSearchParams();
-    if (customerId.trim()) params.set("customerId", customerId.trim());
-    if (iban.trim()) params.set("iban", iban.trim());
+    if (debouncedCustomer.trim()) params.set("customerId", debouncedCustomer.trim());
+    if (debouncedIban.trim()) params.set("iban", debouncedIban.trim());
     try {
       const res = await fetch(`/api/accounts?${params}`, { cache: "no-store" });
       if (!res.ok) {
-        setError(`${tCommon("error")} (${res.status})`);
+        showApiError(tCommon("error"));
+        setRows([]);
         return;
       }
       setRows((await res.json()) as Account[]);
     } catch {
-      setError(tCommon("error"));
+      showApiError(tCommon("error"));
+      setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [customerId, iban, tCommon]);
+  }, [debouncedCustomer, debouncedIban, tCommon]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const gridRows = useMemo(
+    () => rows as Array<Account & Record<string, unknown>>,
+    [rows],
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-3`}>
-        <input
-          className="rounded border px-3 py-2 text-sm"
-          placeholder={t("filterCustomer")}
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => modal.open("create")}
+          >
+            {t("openAccount")}
+          </button>
+        }
+      />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setCustomerId("");
+          setIban("");
+        }}
+      >
+        <Field
+          label={t("filterCustomer")}
+          preset="longText"
           value={customerId}
           onChange={(e) => setCustomerId(e.target.value)}
         />
-        <input
-          className="rounded border px-3 py-2 text-sm"
-          placeholder={t("filterIban")}
+        <Field
+          label={t("filterIban")}
+          preset="longText"
           value={iban}
           onChange={(e) => setIban(e.target.value)}
         />
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
-          {tCommon("refresh")}
-        </button>
-      </div>
-      <OpsError message={error} />
-      <div className={CARD_CONTAINER_CLASS}>
-        {loading ? <p className="text-sm text-muted-foreground">{tCommon("loading")}</p> : null}
-        {!loading ? (
-          <OpsDataTable
-            rows={rows}
-            addLabel={t("openAccount")}
-            onAdd={() => modal.open("create")}
-            emptyLabel={tCommon("empty")}
-            onRowClick={(row) => modal.open("detail", row.id)}
-            columns={[
-              {
-                key: "iban",
-                label: "IBAN",
-                render: (row) => (
-                  <span className="text-primary">
-                    {row.iban ? maskIban(row.iban) : row.id.slice(0, 10)}
-                  </span>
-                ),
-              },
-              {
-                key: "status",
-                label: "Status",
-                render: (row) => (row.status ? <StatusBadge status={row.status} /> : "—"),
-              },
-              {
-                key: "ledgerBalanceMinor",
-                label: "Balance",
-                render: (row) => formatAznMinor(row.ledgerBalanceMinor ?? row.balanceMinor),
-              },
-              {
-                key: "availableBalanceMinor",
-                label: "Available",
-                render: (row) => formatAznMinor(row.availableBalanceMinor ?? row.availableMinor),
-              },
-            ]}
-          />
-        ) : null}
-      </div>
+      </EraListFilterBar>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      ) : (
+        <BankDataGrid
+          columns={[
+            {
+              key: "iban",
+              header: t("colIban"),
+              render: (row) => (
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => modal.open("detail", String(row.id))}
+                >
+                  {row.iban ? maskIban(String(row.iban)) : String(row.id).slice(0, 10)}
+                </button>
+              ),
+            },
+            {
+              key: "status",
+              header: t("colStatus"),
+              render: (row) =>
+                row.status ? <StatusBadge status={String(row.status)} /> : "—",
+            },
+            {
+              key: "ledgerBalanceMinor",
+              header: t("colBalance"),
+              render: (row) =>
+                formatAznMinor(row.ledgerBalanceMinor ?? row.balanceMinor),
+            },
+            {
+              key: "availableBalanceMinor",
+              header: t("colAvailable"),
+              render: (row) =>
+                formatAznMinor(row.availableBalanceMinor ?? row.availableMinor),
+            },
+          ]}
+          rows={gridRows}
+          emptyLabel={tCommon("empty")}
+        />
+      )}
       <AccountOpenModal
         open={modal.mode === "create"}
         onClose={modal.close}
@@ -134,7 +166,11 @@ function AccountsPageContent() {
 export default function AccountsPage() {
   const tCommon = useTranslations("common");
   return (
-    <Suspense fallback={<p className="text-sm text-muted-foreground">{tCommon("loading")}</p>}>
+    <Suspense
+      fallback={
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      }
+    >
       <AccountsPageContent />
     </Suspense>
   );

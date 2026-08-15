@@ -47,6 +47,7 @@
     "paymentMethod": "Ödəniş üsulu",
     "cash": "Nağd",
     "card": "Kart",
+    "transfer": "Köçürmə",
     "openShift": "Növbə aç",
     "addReceipt": "Çek əlavə et",
     "pay": "Ödə",

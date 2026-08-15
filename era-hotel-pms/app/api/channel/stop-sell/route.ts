@@ -9,6 +9,7 @@ import {
   listStopSells,
   removeStopSell,
 } from '@/lib/services/channel.service';
+import { maybeAutoPushAfterStopSell } from '@/lib/channel/ota-push.service';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
 const createSchema = z.object({
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       roomTypeId: body.roomTypeId,
       note: body.note,
     });
+    await maybeAutoPushAfterStopSell();
     return jsonOk(serialize(row), 201);
   } catch (err) {
     return handleRouteError(err);
@@ -60,6 +62,7 @@ export async function DELETE(request: Request) {
     const id = new URL(request.url).searchParams.get('id');
     if (!id) throw new Error('id query param required');
     await removeStopSell(id);
+    await maybeAutoPushAfterStopSell();
     return jsonOk({ deleted: true });
   } catch (err) {
     return handleRouteError(err);

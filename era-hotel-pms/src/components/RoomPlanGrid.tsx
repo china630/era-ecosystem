@@ -125,11 +125,7 @@ function TimelineCells({
           >
             <RoomPlanBar
               bar={bar}
-              shape={{
-                turnoverStart: cell.turnoverStart,
-                turnoverEnd: cell.turnoverEnd,
-                sameDayStay: cell.sameDayStay,
-              }}
+              shape={cell.shape}
               selected={selectedId === bar.id}
               draggable={Boolean(onResizeEnd || onMoveReservation)}
               onSelect={() => onSelect(selectedId === bar.id ? null : bar.id)}

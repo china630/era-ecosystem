@@ -5,50 +5,79 @@ globs: era-clinic/**/*
 
 # era-clinic module map
 
-Architecture: [doc/ARCHITECTURE.md](../../doc/ARCHITECTURE.md) · ADR: [clinic-product-lines-and-presets.md](../../../docs/adr/clinic-product-lines-and-presets.md)
+Architecture: [doc/ARCHITECTURE.md](../../doc/ARCHITECTURE.md) · ADR: [clinic-product-lines-and-presets.md](../../../docs/adr/clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](../../../docs/adr/clinic-multi-resource-scheduling.md)
+
+**Acceptance SSOT:** [Clinic-Acceptance-System](../../../docs/acceptance/Clinic-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Clinic-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Clinic-Implementation-Matrix.md) · edition [`docs/editions/clinic.yaml`](../../../docs/editions/clinic.yaml)
+
+## Sidebar navigation (role + preset lens)
+
+Built by [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) → [ClinicOpsShell.tsx](../../src/components/ClinicOpsShell.tsx).
+
+| Group | Visibility | Routes |
+|-------|------------|--------|
+| Flat top | all authenticated | `/` (Home — full-width; shared date toolbar; for owner/`canViewExecutive`, `ExecutiveDashboard` first block above ops summary), `/patients` |
+| Front desk | `RECEPTION` (+ admin/owner) | `/appointments` (practitioner day matrix), `/reception/queue`, `/cashier` |
+| Clinical | `DOCTOR` / `NURSE` (+ admin/owner) | `/doctor` (DOCTOR), `/nurse` (NURSE), `/lab-orders` |
+| Sanatorium | preset `sanatorium_clinical` | `/sanatorium` (RECEPTION, DOCTOR), `/sanatorium/resources` (RECEPTION) |
+| Inpatient | preset `inpatient_day` | `/inpatient`, `/inpatient/census`, `/admin/wards` (admin-only) |
+| Wellness | preset `wellness` | placeholder (no routes yet — section auto-hides) |
+| Catalogs | admin/owner | `/admin/catalog` (service prices), `/admin/diagnostic-catalog` (modalities/services/analytes/**favorites** tab), `/admin/templates` |
+| Rules & data | admin/owner | `/admin/procedure-rules`, `/admin/lis-profiles`, `/admin/master-data` |
+| Platform | admin/owner | `/admin/audit`, `/admin/settings` |
+
+Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`.
+
+Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-favorites` (now a tab on `/admin/diagnostic-catalog`). Both routes deleted — no redirect.
+
+**List UX (CLI-37):** `EraListFilterBar` = instant filters (no Apply; Reset inline; text search `useDebouncedValue` 300ms). Tables: name/title column first; row actions = Lucide icons + `TABLE_ROW_ICON_BTN_CLASS`. Home `/` full-width with one shared date for executive + ops.
+
+`seesAll` = `canViewClinicAdmin || isPlatformSuperAdmin`. Nav is presentational; middleware + route guards remain authoritative.
 
 ## Ops (preset `outpatient`)
 
 | Route | API |
 |-------|-----|
-| `/` | — |
-| `/appointments` | `/api/appointments` |
-| `/patients` | `/api/patients` — register + list (sex, age in columns) |
-| `/patients/[id]` | `/api/patients/[id]` PATCH; clinical demographics (sex, DOB→age, blood, emergency contact); contraindications; now/next + pending labs; results/plan previews + history/plan modals (`?panel=history|plan`) |
+| `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
+| `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
+| `/patients` | `/api/patients` — paginated list (`q`, sex, blood, MDM, age) + register; modal card via `PatientCardModal` |
+| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody` |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |
-| `/scheduling` | `/api/scheduling/slots` |
-| `/lab-orders` | `/api/lab-orders`, `/api/diagnostic-catalog` (picker + favorites sort) |
+| `/appointments` | Practitioner **day matrix** (`GET /api/appointments/calendar`); create/reschedule/check-in/cancel. CLI-36: off-shift slots `blocked` (offShift); create + reschedule reject off-shift (409) |
+| `/lab-orders` | `GET /api/lab-orders` (paged `{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo filters; items+results+modality include), `/api/diagnostic-catalog` (picker + favorites sort); row opens **LabOrderWorkflowModal** |
+| `/lab-orders/[id]` | Redirect → `/lab-orders?order=` + same modal (`GET /api/lab-orders/[id]`, collect/results/publish/complete) |
 | `/reception/queue` | `/api/queue/*` |
-| `/doctor`, `/nurse`, `/cashier` | role-guarded; `/cashier` disabled when `deferWalkInToHub` |
-| `/executive` | `/api/executive/summary?date=&practitionerId=` (client `ExecutiveDashboard`; OrgOwner) |
+| `/doctor`, `/nurse` | role-guarded |
+| `/cashier` | Queue / history / over-quota tabs; shift open+close (X/Z); settle modal by channel (`LOCAL` / `HOTEL_FOLIO` / `SETTLEMENT_HUB`); `GET /api/cashier/queue`, `…/shifts/current`, `…/shifts/[id]/close|report`, `…/bills/[visitId]` (+ settle), `…/receipts` (+ void/reprint), `…/over-quota` (+ settle); hub banner informational |
+| Executive (`GET /api/executive/summary?date=&practitionerId=`) | client `ExecutiveDashboard`; OrgOwner (`canViewExecutive`); rendered on Home `/` (no standalone `/executive` route) |
 
 ## Preset `sanatorium_clinical`
 
 | Route | API |
 |-------|-----|
-| `/sanatorium` | `/api/sanatorium/episodes`, `POST ?action=complete-checkup`, walk-in POST |
-| `/nurse` | `POST /api/nurse/qr-scan`, `GET /api/nurse/overdue`; `POST /api/procedures/[id]/check-in\|complete\|no-show` |
-| `/sanatorium/resources` | `GET …/calendar` matrix; `GET …/available-slots`; reception DnD / move / cancel |
+| `/sanatorium` | Table of open courses (`EraListFilterBar` + row actions: chart / procedures / patient modal); walk-in modal (sex required M/F, DatePicker, program select, lab catalog); `/api/sanatorium/episodes`, `GET /api/sanatorium/program-templates`, `POST ?action=complete-checkup` |
+| `/nurse` | Agenda (prev→EOD) + kanban; check-in while window open (endsAt +gap if next free); no nurse No-show; `GET /api/procedures?mine=1` |
+| `/sanatorium/resources` | Location **day matrix board** (`ResourceDayMatrix`) + optional **fullscreen** overlay; horizon (rest/+1h/+3h) + patient filter; `GET …/calendar` uses Tenant working hours; DnD / move / cancel |
 
 ## Preset `inpatient_day`
 
 | Route | API |
 |-------|-----|
-| `/inpatient` | `/api/inpatient`, `/api/inpatient/admissions` |
+| `/inpatient` | Ward tiles (occupied/free); expand beds; `/api/inpatient` admit/transfer/discharge |
+| `/inpatient/census` | `GET /api/inpatient?view=census` — EraDataGrid of ADMITTED rows |
 
 ## SatAdmin (`CLINIC_ADMIN` / `BUSINESS_OWNER` / platform super-admin)
 
 | Route | API |
 |-------|-----|
-| `/admin/master-data` | `/api/admin/practitioners` (**403 POST** when `cp_workforce`; ops PATCH specialty/slots); `GET /api/admin/workforce-policy`; rooms, resources, procedure-types; link → `/admin/wards`; hire → orchestrator `/workspace/workforce` |
+| `/admin/master-data` | `/api/admin/practitioners` (**403 POST** when `cp_workforce`; ops PATCH specialty/slots); `GET /api/admin/workforce-policy`; rooms, resources (PATCH roomId); practitioners/[id]/skills GET/PUT; practitioners/[id]/**schedule** GET/PUT (CLI-36 shift rules + exceptions, replace-all, audited); **Shifts** modal; procedure-types (+requirements, _count.skills); procedure-types/[id]/requirements GET/PUT; link → `/admin/wards`; hire → orchestrator `/workspace/workforce` |
 | `/admin/wards` | `/api/admin/wards`, `/api/admin/wards/[id]`, `/api/admin/beds/[id]` (modal CRUD) |
-| `/admin/catalog` | `/api/admin/catalog`, `/api/catalog/sync` |
-| `/admin/catalog-favorites` | `/api/admin/catalog-favorites` — favorite modalities/categories (`first` \| `only`) |
+| `/admin/catalog` | `/api/admin/catalog`, `/api/catalog/sync`, `POST /api/admin/catalog/import-nafta` |
+| `/admin/diagnostic-catalog` (tab `favorites`) | `/api/admin/catalog-favorites` — favorite modalities/categories (`first` \| `only`); no standalone `/admin/catalog-favorites` route |
 | `/admin/templates` | `/api/admin/clinical-templates`, program-templates (+ PATCH `[id]`) — seed pack: `prisma/seed-data/diagnostic-lab-catalog.json` ([DIAGNOSTIC_AND_LAB_CATALOG](../../doc/DIAGNOSTIC_AND_LAB_CATALOG.md)) |
-| `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`) |
-| `/admin/settings` | `/api/admin/settings` (name + **enabledPresets**) |
+| `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`), `/api/admin/procedure-rotation-rules` (+ `[id]`), `/api/admin/procedure-substitution-rules` (+ `[id]`) |
+| `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, card limits) |
 | `/admin/audit` | `/api/audit` |
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |
 
@@ -60,15 +89,28 @@ Architecture: [doc/ARCHITECTURE.md](../../doc/ARCHITECTURE.md) · ADR: [clinic-p
 | `/api/integration/staff-provision` | bridge secret |
 | `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback |
 | `/api/billing/context` | session — `deferWalkInToHub` for cashier gate |
+| `/api/procedures/confirm` | session **DOCTOR** (+ admin) — confirm `PROPOSED` → `placeConfirmedProcedures` FIFO |
+| `/api/procedures/bulk-cancel` | session **RECEPTION** (+ admin) — bulk cancel + optional replace code |
+| `PATCH /api/procedures/[id]` | session doctor/reception — edit proposed/scheduled line (code, bodyPart, etc.) |
 | `/api/procedures/[id]/reschedule` | session **RECEPTION** (+ admin) — matrix slot move (`resourceId` optional) |
 | `/api/procedures/[id]/cancel` | session **RECEPTION** |
-| `/api/procedures/[id]/check-in` | session NURSE — guest QR (or doctor/admin override+reason); grace window |
-| `/api/procedures/[id]/no-show` | session NURSE |
-| `/api/procedures/[id]/complete` | session NURSE — only from `CHECKED_IN` |
+| `/api/procedures/[id]/check-in` | session NURSE — QR / MANUAL (`checkInRequiresQr=false`) / override; channel-aware window; **atomic → `CHECKED_IN`** (no auto-complete) |
+| `/api/procedures/[id]/start` | alias of check-in |
+| `/api/procedures/[id]/complete` | session NURSE — stuck `CHECKED_IN` fallback only (happy path = auto by `endsAt`) |
 | `/api/nurse/qr-scan` | session NURSE — verifyGuestQrToken; returns `qrToken` for check-in |
+| `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED` |
+| `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota) |
+| `/api/procedures/[id]/no-show` | session NURSE — burns quota + may charge folio |
 | `/api/sanatorium/resources/available-slots` | session RECEPTION — free inventory (exhausted omitted) |
 | `/api/capacity/summary` | bridge secret — GET remaining%/risk; POST evaluate+publish `CAPACITY_CHANGED` |
 
 ## Preset gating
 
-Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav [ClinicOpsShell.tsx](../../src/components/ClinicOpsShell.tsx)
+Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav registry [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) · shell [ClinicOpsShell.tsx](../../src/components/ClinicOpsShell.tsx)
+
+## Print / diagnostic catalog extensions
+
+- GET|POST /api/admin/diagnostic-catalog/imaging-phrases, PATCH|DELETE .../[id]
+- GET /api/imaging-phrases (ops phrase picker)
+- Analyte section / valueType / AnalyteValueOption via analytes admin API
+- ADR: docs/adr/clinic-print-forms.md

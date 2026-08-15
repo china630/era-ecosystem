@@ -15,6 +15,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { VatDepositService } from "../accounting/vat-deposit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 import { InventoryService } from "../inventory/inventory.service";
 import {
   STORAGE_SERVICE,
@@ -153,13 +154,16 @@ export class InvoicesService {
 
   async list(
     organizationId: string,
-    opts?: { page?: number; pageSize?: number },
+    opts?: { page?: number; pageSize?: number; counterpartyId?: string },
   ) {
     const page = Math.max(1, opts?.page ?? 1);
     const pageSize = Math.min(200, Math.max(1, opts?.pageSize ?? 25));
     const skip = (page - 1) * pageSize;
 
-    const where = { organizationId };
+    const where = {
+      organizationId,
+      ...(opts?.counterpartyId ? { counterpartyId: opts.counterpartyId } : {}),
+    };
 
     const [rows, total] = await Promise.all([
       this.prisma.invoice.findMany({
@@ -692,6 +696,15 @@ export class InvoicesService {
     assertUserMayMutateInvoiceInPaidStatus(role, head.status);
 
     const councilTrigger = await this.prisma.$transaction(async (tx) => {
+      // SEC-FIN-07: serialize payments on the same invoice
+      const locked = await lockOrgRowForUpdate(
+        tx,
+        "invoices",
+        invoiceId,
+        organizationId,
+      );
+      if (!locked) throw new NotFoundException("Invoice not found");
+
       const existing = await tx.invoice.findFirst({
         where: { id: invoiceId, organizationId },
         include: {
@@ -1605,7 +1618,7 @@ export class InvoicesService {
   private portalTokenSecret(): string {
     return (
       this.config.get<string>("INVOICE_PORTAL_TOKEN_SECRET") ??
-      this.config.getOrThrow<string>("JWT_SECRET")
+      this.config.getOrThrow<string>("ERA_JWT_SECRET")
     );
   }
 

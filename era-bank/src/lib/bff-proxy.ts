@@ -74,6 +74,7 @@ async function proxyRequest(
     body,
     idempotencyKey,
     entitlementModule: options.entitlementModule,
+    opsUserId: session.sub,
   });
 
   if (request.method !== "GET" && request.method !== "HEAD" && res.ok) {

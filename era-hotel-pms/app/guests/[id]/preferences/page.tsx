@@ -7,15 +7,17 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.preferencesTitle"
       apiPath={(gid) => `/api/guests/${gid}/preferences`}
-      onAdd={async (guestId) => {
-        const preference = window.prompt('Preference');
-        if (!preference?.trim()) return;
-        await fetch(`/api/guests/${guestId}/preferences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ preference: preference.trim(), importance: 'HIGH' }),
-        });
-      }}
+      addFields={[
+        { name: 'preference', label: 'Preference', required: true, preset: 'longText' },
+        { name: 'importance', label: 'Importance', defaultValue: 'HIGH', preset: 'shortText' },
+        { name: 'note', label: 'Note', multiline: true },
+      ]}
+      buildBody={(v) => ({
+        preference: v.preference.trim(),
+        importance: v.importance.trim() || 'HIGH',
+        note: v.note.trim() || undefined,
+      })}
+      searchKeys={['preference', 'importance', 'note']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           <strong>{String(r.preference)}</strong>

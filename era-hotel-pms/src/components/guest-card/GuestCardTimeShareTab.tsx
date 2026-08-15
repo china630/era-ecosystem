@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { EraDataGrid } from '@era/satellite-kit/ui';
+import { HotelDataGrid } from "@/components/HotelDataGrid";
 
 export type TimeShareFilter = 'ALL' | 'QUOTATION' | 'AGREEMENT' | 'CANCELLED';
 
@@ -50,7 +50,7 @@ export function GuestCardTimeShareTab({
           </button>
         ))}
       </div>
-      <EraDataGrid
+      <HotelDataGrid
         rows={filtered as Array<Record<string, unknown>>}
         columns={[
           { key: 'contractNo', header: t('timeShare.contract') },
@@ -60,6 +60,7 @@ export function GuestCardTimeShareTab({
         ]}
         rowKey={(r) => String(r.id)}
         emptyMessage={t('timeShare.empty')}
+        pagination={false}
       />
       {guestId ? (
         <button

@@ -18,6 +18,8 @@ Cross-satellite **auth** (SSO exchange, session, login-user), **operating mode**
 
 **Form field system (shipped):** `field-presets.ts`, `field.tsx` (`Field`, `FieldSelect`, `FieldTextarea`, `FieldRow`), `field-section.tsx` (`FieldSection`). New satellite modal CRUD must use these with explicit `preset` — see root `DESIGN.md` § Field width taxonomy.
 
+**Managed pick-lists (mandatory):** `catalog-field-kind.ts` + `catalog-field.tsx` — `CatalogField` / `resolveCatalogControl` / `CatalogFieldKind`. Do not use `Field` shortText for taxonomy/tender/channel lists — see root `.cursor/rules/era-managed-list-controls.mdc` and ADR `docs/adr/managed-lists-vs-enums.md`.
+
 Put here: behavior needed by **2+ satellites** or orchestrator integration. Do not duplicate in each app's `src/lib`.
 
 Workforce MDM helpers (Plan D): `packages/satellite-kit/src/integration/workforce-person.client.ts` — `linkWorkforcePersonIdentity`, `fetchWorkforcePersonOpsBatch`, `buildWorkforceDisplayRow`.
@@ -41,3 +43,10 @@ Shared `messages/common.{az,ru,en}.json` for satellite chrome. App-specific stri
 - [ ] New satellite event? → `era-contracts` + orchestrator ingest + finance worker (if accounting).
 - [ ] New SSO/auth helper? → `satellite-kit` first.
 - [ ] Breaking change? → update `docs/INTEGRATION_SSO_EVENTS.md` and consuming apps.
+
+## Design tokens (3-tier hybrid)
+
+Source: `satellite-kit/src/ui/tokens/` — L1 `primitives.ts`, L2 `semantic.ts`, L3 `components.ts`.
+Automation: `resolveField`, `columnFilters`. ADR: `docs/adr/era-design-tokens-3tier.md`.
+Lint: `npm run lint:token-layers`. Do not author new hex outside L1; align L3 literals after L1 changes.
+

@@ -3,7 +3,14 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export type OpsModalMode = "create" | "detail" | "edit" | null;
+export type OpsModalMode =
+  | "create"
+  | "detail"
+  | "edit"
+  | "inbound"
+  | "view"
+  | "linkTariff"
+  | null;
 
 export function useOpsModal(paramId = "id", paramMode = "modal") {
   const router = useRouter();
@@ -12,7 +19,15 @@ export function useOpsModal(paramId = "id", paramMode = "modal") {
 
   const mode = useMemo((): OpsModalMode => {
     const m = searchParams.get(paramMode);
-    if (m === "create" || m === "detail" || m === "edit") return m;
+    if (
+      m === "create" ||
+      m === "detail" ||
+      m === "edit" ||
+      m === "inbound" ||
+      m === "view" ||
+      m === "linkTariff"
+    )
+      return m;
     if (searchParams.get(paramId)) return "detail";
     return null;
   }, [searchParams, paramId, paramMode]);

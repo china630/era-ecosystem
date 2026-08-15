@@ -27,11 +27,17 @@ Finance consumer: `workforce-absence-sync.service.ts` — no-op without `hr_full
 
 ## Kind → Finance formula (consumer mapping)
 
+Kind set expanded (2026-07) to the full TK AZ leave list:
+
 | CP `kind` | `AbsenceType.code` / formula |
 |-----------|------------------------------|
-| `VACATION` | `LABOR_LEAVE` / `LABOR_LEAVE_304` |
+| `VACATION` (əmək məzuniyyəti) | `LABOR_LEAVE` / `LABOR_LEAVE_304` |
 | `SICK` | `SICK_LEAVE` / `SICK_LEAVE_STAJ` |
 | `UNPAID` | `UNPAID_LEAVE` / `UNPAID_RECORD` |
+| `SOCIAL_LEAVE` (maternity) | `SOCIAL_LEAVE` / `LABOR_LEAVE_304` |
+| `EDUCATIONAL_LEAVE` | `EDUCATIONAL_LEAVE` / `LABOR_LEAVE_304` |
+| `ADMINISTRATIVE` | `UNPAID_LEAVE` / `UNPAID_RECORD` |
+| `BUSINESS_TRIP` (ezamiyyət) | **no Finance mirror** — attendance record, employee stays paid; sync skips |
 
 ## API surface
 

@@ -6,10 +6,13 @@ import {
   IsEmail,
   IsEnum,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
+  Min,
 } from "class-validator";
 
 export class UpdateCounterpartyDto {
@@ -63,4 +66,14 @@ export class UpdateCounterpartyDto {
   @IsString()
   @IsIn(["az", "ru", "en"])
   portalLocale?: "az" | "ru" | "en";
+
+  @ApiPropertyOptional({
+    description: "Срок оплаты (дней) для dueDate по умолчанию; null clears",
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(365)
+  paymentTermsDays?: number | null;
 }

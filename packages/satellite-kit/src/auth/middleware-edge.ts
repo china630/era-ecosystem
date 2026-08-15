@@ -92,6 +92,8 @@ export type EdgeSessionPayload = {
   login: string;
   role: string;
   fullName: string;
+  /** Present when issued at login/SSO — used for platform super-admin gates. */
+  email?: string;
   organizationId?: string;
 };
 
@@ -107,6 +109,7 @@ export async function verifySatelliteSession(
     login: String(payload.login ?? ""),
     role: String(payload.role ?? ""),
     fullName: String(payload.fullName ?? ""),
+    email: payload.email != null ? String(payload.email) : undefined,
     organizationId:
       payload.organizationId != null
         ? String(payload.organizationId)

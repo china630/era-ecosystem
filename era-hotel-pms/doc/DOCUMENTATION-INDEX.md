@@ -28,6 +28,9 @@
 | [ELEKTRAWEB-IMPORT-UI-AUDIT.md](ELEKTRAWEB-IMPORT-UI-AUDIT.md) | `doc/ELEKTRAWEB-IMPORT-UI-AUDIT.md` | hotel-pms | stable |
 | [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) | `doc/FRONT-OFFICE-ELECTRAWEB.md` | hotel-pms | stable |
 | [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md) | `doc/FRONT-OFFICE-STATUS.md` | hotel-pms | stable |
+| [MENU-IA-CANON.md](MENU-IA-CANON.md) | `doc/MENU-IA-CANON.md` | hotel-pms | stable |
+| [MENU-IA-PRIMARY-FILL-AUDIT.md](MENU-IA-PRIMARY-FILL-AUDIT.md) | `doc/MENU-IA-PRIMARY-FILL-AUDIT.md` | hotel-pms | stable |
+| [MENU-IA-DEEPEN-AUDIT.md](MENU-IA-DEEPEN-AUDIT.md) | `doc/MENU-IA-DEEPEN-AUDIT.md` | hotel-pms | stable |
 | [GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md) | `doc/GUEST-CRM-ELECTRAWEB.md` | hotel-pms | stable |
 | [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md) | `doc/reference/` | hotel-pms | stable |
 | [i18n.md](i18n.md) | `doc/i18n.md` | hotel-pms | stable |

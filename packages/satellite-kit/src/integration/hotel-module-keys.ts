@@ -48,26 +48,38 @@ export function isHotelModuleActive(
   return set.has(canonical);
 }
 
-/** Route prefix → required hotel module key (9-key taxonomy). */
+/**
+ * Route prefix → required hotel module key (9-key taxonomy).
+ * Canon: era-hotel-pms/doc/MENU-IA-CANON.md — FO=/fo, HK=/hk, etc.
+ */
 export const HOTEL_MODULE_BY_ROUTE: Record<string, string> = {
   "/": "hotel_core",
+  "/fo": "hotel_core",
   "/bookings": "hotel_core",
+  "/folio": "hotel_core",
+  "/front-cash": "hotel_core",
+  "/night-audit": "hotel_core",
+  // legacy FO / NA (redirect targets still resolve during cutover)
+  "/availability": "hotel_core",
   "/room-plan": "hotel_core",
   "/in-house": "hotel_core",
-  "/folio": "hotel_core",
   "/operations": "hotel_core",
   "/reports/reservations": "hotel_core",
   "/reports/inhouse-daily": "hotel_core",
   "/reports/end-of-day-logs": "hotel_core",
-  "/housekeeping": "hotel_housekeeping",
   "/hk": "hotel_housekeeping",
+  "/housekeeping": "hotel_housekeeping",
   "/service": "hotel_service",
   "/migration": "hotel_migration_pro",
+  "/distribution": "hotel_distribution",
   "/channel": "hotel_distribution",
   "/admin/contract-pricing": "hotel_distribution",
+  "/admin/contracts": "hotel_distribution",
+  "/admin/allotment-blocks": "hotel_distribution",
   "/admin/promotion-codes": "hotel_distribution",
   "/admin/travel-agencies": "hotel_distribution",
   "/admin/child-matrix": "hotel_distribution",
+  "/admin/yield-rules": "hotel_distribution",
   "/medical": "hotel_medical_sanatorium",
   "/procedures": "hotel_spa_scheduling",
   "/spa": "hotel_spa_scheduling",
@@ -75,7 +87,14 @@ export const HOTEL_MODULE_BY_ROUTE: Record<string, string> = {
   "/transfers/airport": "hotel_transfers",
   "/banquets": "hotel_banquets",
   "/guests": "hotel_guest_experience",
+  "/settings": "hotel_setup_advanced",
   "/admin/master-data": "hotel_setup_advanced",
+  "/admin/bar-calendar": "hotel_setup_advanced",
+  "/admin/users": "hotel_setup_advanced",
+  "/admin/integration": "hotel_setup_advanced",
+  "/admin/audit": "hotel_setup_advanced",
+  "/admin/stock": "hotel_setup_advanced",
+  "/admin/import": "hotel_setup_advanced",
 };
 
 export function resolveHotelModuleForPathname(pathname: string): string | null {

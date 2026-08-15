@@ -16,10 +16,18 @@ export function assertInternalServiceToken(
   envKey = "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN",
   xServiceToken?: string,
 ): void {
-  const expected =
-    process.env[envKey]?.trim() ??
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
-  if (!expected) return;
+  // SEC-TOK-03: in production require the named env — no shared-token alias
+  let expected = process.env[envKey]?.trim();
+  if (!expected && process.env.NODE_ENV !== "production") {
+    expected = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
+  }
+  // SEC-TOK-01: fail closed in production when token env is unset
+  if (!expected) {
+    if (process.env.NODE_ENV === "production") {
+      throw new UnauthorizedException("Internal service token not configured");
+    }
+    return;
+  }
   const token = extractServiceToken(authorization, xServiceToken);
   if (!token || token !== expected) {
     throw new UnauthorizedException("Invalid internal service token");

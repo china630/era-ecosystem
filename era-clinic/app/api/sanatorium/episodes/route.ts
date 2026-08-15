@@ -7,6 +7,10 @@ const walkInSchema = z.object({
   fin: z.string().optional(),
   passport: z.string().optional(),
   phone: z.string().optional(),
+  sex: z.enum(["MALE", "FEMALE"]),
+  birthDate: z.string().optional(),
+  nationality: z.string().optional(),
+  issuingCountry: z.string().optional(),
   globalPersonId: z.string().optional(),
   programCode: z.string().optional(),
 });
@@ -34,6 +38,10 @@ export async function POST(req: Request) {
       fin: body.fin,
       passport: body.passport,
       phone: body.phone,
+      sex: body.sex,
+      birthDate: body.birthDate,
+      nationality: body.nationality,
+      issuingCountry: body.issuingCountry,
       globalPersonId: body.globalPersonId,
       programCode: body.programCode,
     });

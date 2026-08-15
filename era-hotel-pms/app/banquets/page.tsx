@@ -1,19 +1,27 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
+  CARD_CONTAINER_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  useDebouncedValue,
+  Field,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
   MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
+
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
+
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -52,7 +60,8 @@ export default function BanquetsPage() {
   const [pax, setPax] = useState('50');
   const [advanceAmount, setAdvanceAmount] = useState('500');
   const [contactName, setContactName] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -89,18 +98,22 @@ export default function BanquetsPage() {
     setModalOpen(true);
   }
 
-  if (!can(PERMISSIONS.RESERVATIONS_READ)) {
-    return (
-      <AppShell>
-        <p className="text-sm text-red-600">{tc('accessDenied')}</p>
-      </AppShell>
+  const visibleEvents = useMemo(() => {
+    const q = debouncedQ.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter((ev) =>
+      `${ev.eventName} ${ev.saloon.name} ${ev.status}`.toLowerCase().includes(q),
     );
+  }, [events, debouncedQ]);
+
+  if (!can(PERMISSIONS.RESERVATIONS_READ)) {
+    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
   async function createBeo(e: React.FormEvent) {
     e.preventDefault();
     if (!eventName || !saloonId || !eventDate || !pax) {
-      setMsg(t('missingFields'));
+      showApiError({ error: t('missingFields') });
       return;
     }
     setBusy(true);
@@ -120,12 +133,14 @@ export default function BanquetsPage() {
     });
     const data = await res.json();
     setBusy(false);
-    setMsg(res.ok ? t('created') : data.error ?? tc('error'));
-    if (res.ok) {
-      setModalOpen(false);
-      setEventName('');
-      await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
     }
+    showSuccess(t('created'));
+    setModalOpen(false);
+    setEventName('');
+    await load();
   }
 
   async function confirm(id: string) {
@@ -135,12 +150,16 @@ export default function BanquetsPage() {
       body: JSON.stringify({ action: 'confirm' }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('confirmed') : data.error ?? tc('error'));
-    if (res.ok) await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
+    }
+    showSuccess(t('confirmed'));
+    await load();
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -153,9 +172,20 @@ export default function BanquetsPage() {
           ) : undefined
         }
       />
-      <StatusMessage>{msg}</StatusMessage>
+      
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setQ('')}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
 
-      <PageSection>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('list')}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
@@ -172,7 +202,7 @@ export default function BanquetsPage() {
               </tr>
             </thead>
             <tbody>
-              {events.map((ev) => (
+              {visibleEvents.map((ev) => (
                 <tr key={ev.id} className="border-b border-[#ECF0F1]">
                   <td className="py-2 pr-3">{new Date(ev.eventDate).toLocaleDateString()}</td>
                   <td className="py-2 pr-3">{ev.eventName}</td>
@@ -203,7 +233,7 @@ export default function BanquetsPage() {
             </tbody>
           </table>
         </div>
-      </PageSection>
+      </section>
 
       <EraModal
         open={modalOpen}
@@ -269,16 +299,14 @@ export default function BanquetsPage() {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('eventDate')}</label>
-              <input
-                type="date"
-                className={MODAL_INPUT_CLASS}
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
-                required
-              />
-            </div>
+            <DatePicker
+              label={t('eventDate')}
+              value={eventDate}
+              onChange={setEventDate}
+              placeholder={tc('datePlaceholder')}
+              openCalendarLabel={tc('openCalendar')}
+              required
+            />
             <div className={FORM_FIELD_GROUP_CLASS}>
               <label className={MODAL_FIELD_LABEL_CLASS}>{t('pax')}</label>
               <input
@@ -313,6 +341,6 @@ export default function BanquetsPage() {
           </div>
         </form>
       </EraModal>
-    </AppShell>
+    </>
   );
 }

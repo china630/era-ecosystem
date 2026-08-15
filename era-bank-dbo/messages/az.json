@@ -11,7 +11,9 @@
     "transfers": "Köçürmə",
     "approve": "Təsdiq",
     "more": "Daha çox",
-    "logout": "Çıxış"
+    "logout": "Çıxış",
+    "standingOrders": "SO",
+    "pfm": "PFM"
   },
   "login": {
     "title": "Daxil ol",
@@ -24,7 +26,8 @@
     "otpCode": "OTP kodu",
     "asanLogin": "ASAN İmza (stub)",
     "asanComplete": "ASAN təsdiqi",
-    "devHint": "Dev OTP: 123456"
+    "devHint": "Dev OTP: 123456",
+    "asanStubBadge": "ASAN İmza / SİMA stub rejimindədir — canlı dövlət imzası deyil (canlı = sertifikasiya)."
   },
   "dashboard": {
     "title": "Əsas",
@@ -78,5 +81,30 @@
     "back": "Geri",
     "save": "Saxla",
     "cancel": "Ləğv et"
+  },
+  "standingOrders": {
+    "title": "Daimi tapşırıqlar",
+    "fromAccount": "Hesabdan",
+    "toIban": "IBAN",
+    "amount": "Məbləğ (AZN)",
+    "create": "Yarat",
+    "pause": "Dayandır"
+  },
+  "loanApply": {
+    "title": "Kredit müraciəti",
+    "product": "Məhsul ID",
+    "amount": "Məbləğ (AZN)",
+    "create": "Qaralama",
+    "submit": "Göndər"
+  },
+  "threeDs": {
+    "title": "3DS",
+    "subtitle": "Kart 3DS çağırışlarını təsdiqləyin",
+    "approve": "Təsdiq",
+    "deny": "Rədd"
+  },
+  "islamic": {
+    "title": "İslami məhsullar",
+    "subtitle": "Yalnız oxuma (aktivasiya ops-da)"
   }
 }

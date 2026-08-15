@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
-import type { ConciergeOrderStatus, ConciergeProductCategory } from '@prisma/client';
+import type { ConciergeOrderStatus } from '@prisma/client';
 
 export async function listConciergeProducts(activeOnly = true) {
   return prisma.conciergeProduct.findMany({
@@ -13,7 +13,7 @@ export async function listConciergeProducts(activeOnly = true) {
 export async function createConciergeProduct(input: {
   code: string;
   name: string;
-  category?: ConciergeProductCategory;
+  category?: string;
   price: number;
   supplierName?: string;
   commissionPct?: number;

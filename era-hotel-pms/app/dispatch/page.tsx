@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { PageHeader } from '@era/satellite-kit/ui';
+import {
+  CARD_CONTAINER_CLASS,
+  PageHeader } from '@era/satellite-kit/ui';
 import { MODAL_INPUT_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
 
 type Request = {
   id: string;
@@ -53,16 +54,16 @@ export default function DispatchPage() {
   }
 
   return (
-    <AppShell maxWidthClass="max-w-3xl">
+    <>
       <PageHeader title="Guest dispatch" />
-      <PageSection className="mb-4 flex flex-wrap gap-2">
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-4 flex flex-wrap gap-2`}>
         <input className={MODAL_INPUT_CLASS} placeholder="From" value={from} onChange={(e) => setFrom(e.target.value)} />
         <input className={MODAL_INPUT_CLASS} placeholder="To" value={to} onChange={(e) => setTo(e.target.value)} />
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void createRequest()}>
           Queue request
         </button>
-      </PageSection>
-      <PageSection>
+      </section>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <ul className="space-y-2 text-[13px]">
           {requests.map((r) => (
             <li key={r.id} className="rounded border border-[#ECEFF1] p-2">
@@ -80,7 +81,7 @@ export default function DispatchPage() {
             </li>
           ))}
         </ul>
-      </PageSection>
-    </AppShell>
+      </section>
+    </>
   );
 }

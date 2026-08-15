@@ -1,0 +1,4 @@
+product: bank-dbo
+status: mvp
+pilot_ready: false
+notes: "DBO channel lab-pilot over Bank CBS; SO/loan-apply/3DS + islamic read-only; ASAN stub; parent CAP-* OUT not included. Live ASAN/rails ⏸. Not ga."

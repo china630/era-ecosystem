@@ -191,6 +191,16 @@ export class MdmController {
     return this.mdm.lookupOrganizationByVoen(body.taxId ?? "");
   }
 
+  @Get("organizations/:orgId/details")
+  orgDetails(
+    @Param("orgId") orgId: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    return this.mdm.getOrganizationDetails(orgId);
+  }
+
   @Post("organizations/link")
   linkOrg(
     @Body()

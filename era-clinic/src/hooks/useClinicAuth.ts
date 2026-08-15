@@ -11,6 +11,7 @@ export type ClinicAuthState = {
   canViewClinicAdmin: boolean;
   isPlatformSuperAdmin: boolean;
   enabledPresets: ClinicPresetCode[];
+  checkInRequiresQr: boolean;
 };
 
 type AuthMePayload = {
@@ -22,6 +23,8 @@ type AuthMePayload = {
   canViewClinicAdmin?: boolean;
   isPlatformSuperAdmin?: boolean;
   enabledPresets?: ClinicPresetCode[];
+  checkInRequiresQr?: boolean;
+  data?: AuthMePayload;
 };
 
 export function useClinicAuth(): {
@@ -35,8 +38,9 @@ export function useClinicAuth(): {
     let cancelled = false;
     void fetch("/api/auth/me")
       .then(async (res) => (res.ok ? ((await res.json()) as AuthMePayload) : null))
-      .then((data) => {
-        if (cancelled || !data) return;
+      .then((raw) => {
+        if (cancelled || !raw) return;
+        const data = raw.data ?? raw;
         const displayName =
           data.fullName?.trim() ||
           data.login?.trim() ||
@@ -53,6 +57,7 @@ export function useClinicAuth(): {
           enabledPresets: Array.isArray(data.enabledPresets)
             ? data.enabledPresets
             : ["outpatient"],
+          checkInRequiresQr: data.checkInRequiresQr !== false,
         });
       })
       .catch(() => {

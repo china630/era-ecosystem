@@ -6,9 +6,22 @@ import { rescheduleProcedureOrder } from "@/lib/procedure-scheduling.service";
 import {
   addMinutes,
   isWithinCheckInWindow,
+  isWithinDynamicCheckInWindow,
+  resolveCheckInDeadline,
 } from "@/domain/procedure/procedure-check-in-window";
+import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import {
+  resolveProcedureCharge,
+  postProcedureFolioCharge,
+  logProcedureCharge,
+} from "@/domain/procedure/procedure-charge.service";
 
-export { isWithinCheckInWindow, addMinutes } from "@/domain/procedure/procedure-check-in-window";
+export {
+  isWithinCheckInWindow,
+  addMinutes,
+  resolveCheckInDeadline,
+  isWithinDynamicCheckInWindow,
+} from "@/domain/procedure/procedure-check-in-window";
 
 export class ProcedureAttendanceError extends Error {
   constructor(
@@ -38,20 +51,134 @@ async function getGrace() {
     return {
       beforeMin: tenant?.procedureCheckInGraceBeforeMin ?? 5,
       afterMin: tenant?.procedureCheckInGraceAfterMin ?? 15,
+      checkInRequiresQr: tenant?.checkInRequiresQr ?? true,
     };
   } catch {
-    return { beforeMin: 5, afterMin: 15 };
+    return { beforeMin: 5, afterMin: 15, checkInRequiresQr: true };
   }
 }
 
-export async function assertCheckInWindow(scheduledAt: Date, now = new Date()) {
-  const { beforeMin, afterMin } = await getGrace();
-  if (!isWithinCheckInWindow(scheduledAt, now, beforeMin, afterMin)) {
+/** Effective endsAt for an order (fallback: scheduledAt + type duration). */
+export async function resolveOrderEndsAt(order: {
+  id: string;
+  scheduledAt: Date;
+  endsAt: Date | null;
+  procedureTypeId?: string | null;
+}): Promise<Date> {
+  if (order.endsAt) return order.endsAt;
+  let durationMin = 15;
+  if (order.procedureTypeId) {
+    const pt = await prisma.procedureType.findUnique({
+      where: { id: order.procedureTypeId },
+      select: { durationMin: true },
+    });
+    if (pt?.durationMin) durationMin = pt.durationMin;
+  }
+  return addMinutes(order.scheduledAt, durationMin);
+}
+
+/**
+ * True when an active booking overlaps (endsAt, endsAt+gap] on this resource
+ * (the planned turnover gap into the next slot).
+ */
+export async function isNextGapOccupied(
+  resourceId: string | null | undefined,
+  endsAt: Date,
+  gapMinutes: number,
+  excludeOrderId?: string,
+): Promise<boolean> {
+  if (!resourceId || gapMinutes <= 0) return false;
+  const gapEnd = addMinutes(endsAt, gapMinutes);
+  const hit = await prisma.resourceBooking.findFirst({
+    where: {
+      resourceId,
+      startsAt: { lt: gapEnd },
+      endsAt: { gt: endsAt },
+      ...(excludeOrderId ? { procedureOrderId: { not: excludeOrderId } } : {}),
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+    },
+    select: { id: true },
+  });
+  return Boolean(hit);
+}
+
+/**
+ * Unified check-in window for QR / MANUAL / OVERRIDE:
+ * scheduledAt - beforeMin ... endsAt, plus gap grace only when next resource slot is free.
+ */
+export async function assertCheckInWindow(
+  order: {
+    id: string;
+    scheduledAt: Date;
+    endsAt: Date | null;
+    resourceId?: string | null;
+    procedureTypeId?: string | null;
+  },
+  _channel: ProcedureCheckInChannel,
+  now = new Date(),
+) {
+  const { beforeMin } = await getGrace();
+  const settings = await getSchedulingSettings();
+  const gap = settings.defaultProcedureGapMinutes ?? 5;
+  const endsAt = await resolveOrderEndsAt(order);
+  const nextOccupied = await isNextGapOccupied(
+    order.resourceId,
+    endsAt,
+    gap,
+    order.id,
+  );
+  if (
+    !isWithinDynamicCheckInWindow(
+      order.scheduledAt,
+      endsAt,
+      now,
+      beforeMin,
+      gap,
+      nextOccupied,
+    )
+  ) {
+    const deadline = resolveCheckInDeadline(endsAt, gap, nextOccupied);
     throw new ProcedureAttendanceError(
-      `Check-in only allowed from ${beforeMin} min before to ${afterMin} min after scheduled time`,
+      `Check-in only allowed from ${beforeMin} min before start until ${deadline.toISOString()} (endsAt${nextOccupied ? "" : ` + ${gap}m gap`})`,
       "NOT_IN_CHECKIN_WINDOW",
     );
   }
+}
+
+/** Client/API helper: whether check-in is still open for this order. */
+export async function getCheckInOpenState(
+  order: {
+    id: string;
+    scheduledAt: Date;
+    endsAt: Date | null;
+    resourceId?: string | null;
+    procedureTypeId?: string | null;
+    status: string;
+  },
+  now = new Date(),
+): Promise<{ open: boolean; deadline: Date; endsAt: Date }> {
+  const { beforeMin } = await getGrace();
+  const settings = await getSchedulingSettings();
+  const gap = settings.defaultProcedureGapMinutes ?? 5;
+  const endsAt = await resolveOrderEndsAt(order);
+  const nextOccupied = await isNextGapOccupied(
+    order.resourceId,
+    endsAt,
+    gap,
+    order.id,
+  );
+  const deadline = resolveCheckInDeadline(endsAt, gap, nextOccupied);
+  const open =
+    order.status === "SCHEDULED" &&
+    isWithinDynamicCheckInWindow(
+      order.scheduledAt,
+      endsAt,
+      now,
+      beforeMin,
+      gap,
+      nextOccupied,
+    );
+  return { open, deadline, endsAt };
 }
 
 async function resolvePatientFromQr(qrToken: string): Promise<string> {
@@ -101,10 +228,9 @@ export async function checkInProcedureOrder(
     );
   }
 
-  await assertCheckInWindow(order.scheduledAt);
-
   let channel: ProcedureCheckInChannel;
   let overrideReason: string | null = null;
+  const grace = await getGrace();
 
   if (input.overrideReason?.trim()) {
     if (!actor.canOverrideCheckIn) {
@@ -124,6 +250,8 @@ export async function checkInProcedureOrder(
       );
     }
     channel = "QR";
+  } else if (!grace.checkInRequiresQr) {
+    channel = "MANUAL";
   } else {
     throw new ProcedureAttendanceError(
       "Guest QR required for check-in (or override with reason)",
@@ -131,6 +259,7 @@ export async function checkInProcedureOrder(
     );
   }
 
+  await assertCheckInWindow(order, channel);
   await assertResourceFreeForCheckIn(order);
 
   const now = new Date();
@@ -154,7 +283,7 @@ export async function checkInProcedureOrder(
     {
       before: { status: order.status },
       after: {
-        status: updated.status,
+        status: "CHECKED_IN",
         checkInChannel: channel,
         checkInOverrideReason: overrideReason,
       },
@@ -165,7 +294,10 @@ export async function checkInProcedureOrder(
 }
 
 export async function markProcedureNoShow(orderId: string, actor: AttendanceActor) {
-  const order = await prisma.procedureOrder.findUnique({ where: { id: orderId } });
+  const order = await prisma.procedureOrder.findUnique({
+    where: { id: orderId },
+    include: { patientRef: true },
+  });
   if (!order) throw new ProcedureAttendanceError("Procedure not found", "NOT_FOUND");
   if (order.status !== "SCHEDULED") {
     throw new ProcedureAttendanceError(
@@ -174,21 +306,19 @@ export async function markProcedureNoShow(orderId: string, actor: AttendanceActo
     );
   }
 
+  const charge = await resolveProcedureCharge(order);
+
   const now = new Date();
-  const updated = await prisma.$transaction(async (tx) => {
-    const row = await tx.procedureOrder.update({
-      where: { id: orderId },
-      data: {
-        status: "NO_SHOW",
-        noShowAt: now,
-        noShowByUserId: actor.userId,
-      },
-      include: { patientRef: true, resourceBooking: true },
-    });
-    if (row.resourceBooking) {
-      await tx.resourceBooking.delete({ where: { id: row.resourceBooking.id } });
-    }
-    return row;
+  // Keep ResourceBooking — NO_SHOW stays visible on the matrix as evidence.
+  const updated = await prisma.procedureOrder.update({
+    where: { id: orderId },
+    data: {
+      status: "NO_SHOW",
+      noShowAt: now,
+      noShowByUserId: actor.userId,
+      amountNet: charge.amountNet,
+    },
+    include: { patientRef: true, resourceBooking: true },
   });
 
   await recordClinicAudit(
@@ -196,10 +326,49 @@ export async function markProcedureNoShow(orderId: string, actor: AttendanceActo
     "ProcedureOrder",
     orderId,
     "PROCEDURE_NO_SHOW",
-    { before: { status: "SCHEDULED" }, after: { status: "NO_SHOW" } },
+    {
+      before: { status: "SCHEDULED" },
+      after: {
+        status: "NO_SHOW",
+        overQuota: charge.overQuota,
+        amountNet: charge.amountNet,
+      },
+    },
   );
 
-  return updated;
+  const ticketId = `clinic-noshow-${order.id}`;
+  if (charge.shouldChargeFolio && order.reservationId) {
+    await postProcedureFolioCharge({
+      reservationId: order.reservationId,
+      amount: charge.amountNet,
+      description: charge.overQuota
+        ? `Over-quota procedure no-show ${order.procedureCode}`
+        : `Procedure no-show ${order.procedureCode}`,
+      externalTicketId: ticketId,
+    });
+  }
+
+  const settings = await getSchedulingSettings();
+  const logChannel = charge.shouldChargeFolio
+    ? "HOTEL_FOLIO"
+    : settings.procedureOverQuotaPolicy === "BLOCK"
+      ? "BLOCKED"
+      : charge.overQuota || charge.amountNet > 0
+        ? "LOCAL"
+        : "WARN_ONLY";
+  await logProcedureCharge({
+    procedureOrderId: order.id,
+    patientRefId: order.patientRefId,
+    reservationId: order.reservationId,
+    procedureCode: order.procedureCode,
+    procedureName: order.procedureName,
+    amountNet: charge.amountNet,
+    overQuota: charge.overQuota,
+    channel: logChannel,
+    externalTicketId: charge.shouldChargeFolio ? ticketId : null,
+  });
+
+  return { ...updated, overQuota: charge.overQuota, folioCharged: charge.shouldChargeFolio };
 }
 
 export async function cancelProcedureOrder(
@@ -305,3 +474,8 @@ export async function listOverdueScheduledProcedures(now = new Date()) {
     take: 100,
   });
 }
+
+export const SYSTEM_ATTENDANCE_ACTOR: AttendanceActor = {
+  userId: "system:cron",
+  canOverrideCheckIn: false,
+};

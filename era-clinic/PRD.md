@@ -51,6 +51,8 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 **Sanatorium business:** orchestrator entitlements `industry_hotel_pms` + `industry_clinic` (+ optional retail), not a standalone sanatorium satellite.
 
+**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md).
+
 **Code packaging:** domain logic migrates to `era-clinic/src/domain/`; extract to `packages/clinic-domain` only after inpatient ADT API stabilizes (ADR D5).
 
 ---
@@ -91,6 +93,8 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 | M1 | Patient registry (ref, не полная EMR) | **SHIPPED** (registry UI) | Counterparty / patient ref sync |
 | M2 | Practitioners, rooms, schedule | **SHIPPED** (master-data admin) | — |
 | M3 | Appointment & check-in | **DONE** | — |
+| M3b | Sanatorium nurse day-ops | **SHIPPED** | Check-in → `CHECKED_IN`; auto-complete at `endsAt`; `NO_SHOW` burns quota; event at complete |
+| M3c | Doctor-confirmed procedure planning | **SHIPPED** | Package/program lines create `PROPOSED` orders; doctor confirms before FIFO resource placement (`placeConfirmedProcedures`); see ADR clinic-doctor-confirmed-fifo-planning |
 | M4 | Visit card & clinical services | **DONE** | `VISIT_COMPLETED` |
 | M5 | **Laboratory orders & results** | **DONE** | `LAB_ORDER_COMPLETED`; portal on publish |
 | M5 (extend) | **Critical lab result flag** | LIS alert | **DONE** | `enrichResultLines` + `criticalOnly` filter |
@@ -197,9 +201,40 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 |------|------|
 | 2026-05-24 | PRD v1.0 |
 | 2026-05-24 | v1.1: M5 lab, personas, BUSINESS_OWNER, расширенные stories K-06…K-15 |
+| 2026-07-21 | CLI-32: diagnostic catalog in DB + LabOrderItem/LabResult; /lab-orders table registry |
+| 2026-07-22 | CLI-33: cashier ops — queue, shifts X/Z, multi-channel settle, over-quota |
+| 2026-07-22 | CLI-05: `/appointments` practitioner day matrix; legacy `/scheduling` + `/api/scheduling/slots` + `getAvailableSlots` removed (no redirect) |
+| 2026-07-22 | CLI-37: global instant filters (`EraListFilterBar`); clinic home shared date + full width; name-first tables + icon actions |
 | 2026-05-25 | SP2: lab orders UI + scheduling slots stub API |
 | 2026-05-25 | SW3/K2-K3: full lab lifecycle, discount audit, executive summary |
 | 2026-05-28 | Enrichment W1: M5 critical flag, M6 price cache |
 | 2026-06-16 | §1.4 product lines & presets; out-of-scope clarified (full HIS vs inpatient_day); M13 → PARTIAL |
 | 2026-07-14 | Standard diagnostic + lab template catalog (USG/CT/ECG/panels) — seed JSON + K-12 link |
 | 2026-07-14 | Catalog v1.1 P0+P1: 85 studies, 45 lab panels, 13 visits, 7 packages |
+
+
+### 2026-07-22 — CLI-34 print forms
+
+Trilingual print routes (lab/USM/checkup/procedures), tenant branding, qualitative analyte options, ImagingPhrase library, PrintLanguageDialog on patient card and lab workflow.
+
+### 2026-07-22 — CLI-35 sidebar cleanup
+
+Setup group split into **Catalogs** and **Rules & data**; `/admin/wards` moved under the Inpatient module (admin-only, URL unchanged); `/executive` merged into Home `/` as the first block for owners (`canViewExecutive`) and the standalone route deleted; `/admin/catalog-favorites` merged into a **Favorites** tab on `/admin/diagnostic-catalog` and the standalone route deleted; catalog labels disambiguated (Service prices vs Diagnostic catalog).
+
+### 2026-07-22 — CLI-36 practitioner shift rotation
+
+Doctors in private clinics rotate shifts. New rule-based shift engine
+(`PractitionerScheduleRule` + `PractitionerScheduleException`) supporting weekly,
+even/odd week, even/odd day-of-month and arbitrary N-day cycle patterns, each with
+its own working hours, plus date exceptions (day off / extra shift / custom hours).
+The `/appointments` matrix blocks off-shift slots and appointment create/reschedule
+reject off-shift bookings. Managed via the **Shifts** modal on `/admin/master-data`.
+Practitioners with no rules stay unrestricted (back-compatible). See ADR
+`docs/adr/clinic-practitioner-shifts.md`.
+
+### 2026-07-22 — CLI-37 UI list/filter standard
+
+Global `EraListFilterBar`: instant apply (no Apply button), Reset on the same row as
+fields, text search via `useDebouncedValue` (300ms). Clinic home is full-width with one
+shared date for executive + ops dashboards. List/admin tables: name/title column first;
+row actions are Lucide icons + `TABLE_ROW_ICON_BTN_CLASS`.

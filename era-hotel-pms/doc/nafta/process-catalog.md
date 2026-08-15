@@ -2,6 +2,18 @@
 
 Source: NotebookLM export 2026-05-25. E2E processes for ERA mapping — not per-screen specs.
 
+**ERA status (2026-08-03):** MVP/core mapped below ≠ Opera-depth. FO money + City Ledger gaps = backlog **P5** (`H-BL-40…48`) · [ADR](../../../docs/adr/hotel-city-ledger-and-fo-money.md) · [COVERAGE_MATRIX](../../../docs/COVERAGE_MATRIX.md) `HOT-CASH-*` / `HOT-CL-*`.
+
+| process_id | ERA note |
+| :--- | :--- |
+| PROC-02 Check-out | Guest zero-balance; COMPANY/AGENCY leave-on-CL **SHIPPED** (H-BL-40) |
+| PROC-03 Night Audit | Core SHIPPED (HOT-NA-01); polish **SHIPPED** (H-BL-44) |
+| PROC-08…10 Transfers | MVP SHIPPED (HOT-XFER-01) |
+| PROC-11…14 Banquets | MVP SHIPPED (HOT-BEO-01) |
+| PROC-21 Agency Ledger | Ops snapshot + settlement SHIPPED; Finance aging/match **SHIPPED** (H-BL-48) |
+| PROC-25 Deposit | Apply@check-in + settle/checkout offset **SHIPPED** (H-BL-41) |
+| PROC-26 Routing | Revenue-code rules SHIPPED; stay payment instructions thin |
+
 | process_id | name | trigger | actors | main_screens | era_apps | priority | wave |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | PROC-01 | Guest Check-in | Guest arrives | Receptionist | Front Office Control Panel, Reservation | hotel-pms | P0 | 3 |

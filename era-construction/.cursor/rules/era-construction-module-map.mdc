@@ -9,6 +9,8 @@ alwaysApply: false
 
 # Construction module map
 
+**Acceptance SSOT:** [Construction-Acceptance-System](../../../docs/acceptance/Construction-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Construction-Product-Readiness-Matrix.md) · edition [`docs/editions/construction.yaml`](../../../docs/editions/construction.yaml)
+
 | Domain | API prefix | Notes |
 |--------|------------|-------|
 | Auth / SSO | `app/api/auth/` | local + SSO |

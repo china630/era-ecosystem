@@ -2,15 +2,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldSelect,
+  FORM_STACK_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
 type Bed = { id: string; code: string; status: string };
@@ -174,7 +180,7 @@ export default function WardsAdminPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <>
       <PageHeader
         title={t("wards")}
         subtitle={t("subtitle")}
@@ -184,36 +190,42 @@ export default function WardsAdminPage() {
               ← {tNav("masterData")}
             </Link>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateWard}>
-              {tc("add")} ward
+              {t("addWard")}
             </button>
           </>
         }
       />
-      {msg ? <p className="mb-3 text-[13px] text-[#C0392B]">{msg}</p> : null}
+      {msg ? <p className={`mb-3 text-[13px] ${TEXT_DANGER_CLASS}`}>{msg}</p> : null}
       <div className="space-y-4">
         {wards.map((ward) => (
           <section key={ward.id} className={`${CARD_CONTAINER_CLASS} p-4`}>
             <header className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="font-semibold">{ward.name}</h2>
-                <p className="text-xs text-[#7F8C8D]">
+                <p className={`text-xs ${TEXT_MUTED_CLASS}`}>
                   {ward.code}
                   {ward.dailyChargeCode ? ` · ${ward.dailyChargeCode}` : ""}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openEditWard(ward)}>
-                  {tc("edit")}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("edit")}
+                  onClick={() => openEditWard(ward)}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
                 </button>
                 <button
                   type="button"
-                  className="text-[13px] text-[#C0392B]"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("delete")}
                   onClick={() => setConfirm({ type: "ward", id: ward.id, label: ward.name })}
                 >
-                  {tc("delete")}
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
                 <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openCreateBed(ward.id)}>
-                  {tc("add")} bed
+                  {t("addBed")}
                 </button>
               </div>
             </header>
@@ -223,19 +235,25 @@ export default function WardsAdminPage() {
                   <span>
                     {bed.code} · {bed.status}
                   </span>
-                  <button type="button" className="text-[#2980B9]" onClick={() => openEditBed(ward.id, bed)}>
-                    {tc("edit")}
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={tc("edit")}
+                    onClick={() => openEditBed(ward.id, bed)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
                   </button>
                   <button
                     type="button"
-                    className="text-[#C0392B]"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={tc("delete")}
                     onClick={() => setConfirm({ type: "bed", id: bed.id, label: bed.code })}
                   >
-                    {tc("delete")}
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
                   </button>
                 </li>
               ))}
-              {ward.beds.length === 0 ? <li className="text-[#7F8C8D]">{t("noBeds")}</li> : null}
+              {ward.beds.length === 0 ? <li className={TEXT_MUTED_CLASS}>{t("noBeds")}</li> : null}
             </ul>
           </section>
         ))}
@@ -246,24 +264,24 @@ export default function WardsAdminPage() {
         title={editingWardId ? t("editWard") : t("wards")}
         onClose={() => setWardOpen(false)}
       >
-        <div className="space-y-2">
+        <div className={FORM_STACK_CLASS}>
           {!editingWardId ? (
-            <input
-              className={MODAL_INPUT_CLASS}
-              placeholder={t("wardCode")}
+            <Field
+              label={t("wardCode")}
+              preset="code"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
             />
           ) : null}
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("wardName")}
+          <Field
+            label={t("wardName")}
+            preset="shortText"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("dailyChargeCode")}
+          <Field
+            label={t("dailyChargeCode")}
+            preset="code"
             value={form.dailyChargeCode}
             onChange={(e) => setForm({ ...form, dailyChargeCode: e.target.value })}
           />
@@ -276,23 +294,24 @@ export default function WardsAdminPage() {
         title={editingBedId ? t("editBed") : t("bedCode")}
         onClose={() => setBedOpen(false)}
       >
-        <div className="space-y-2">
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("bedCode")}
+        <div className={FORM_STACK_CLASS}>
+          <Field
+            label={t("bedCode")}
+            preset="code"
             value={form.bedCode}
             onChange={(e) => setForm({ ...form, bedCode: e.target.value })}
           />
           {editingBedId ? (
-            <select
-              className={MODAL_INPUT_CLASS}
+            <FieldSelect
+              label={tc("status")}
+              preset="select"
               value={form.bedStatus}
               onChange={(e) => setForm({ ...form, bedStatus: e.target.value })}
             >
               <option value="AVAILABLE">AVAILABLE</option>
               <option value="OCCUPIED">OCCUPIED</option>
               <option value="MAINTENANCE">MAINTENANCE</option>
-            </select>
+            </FieldSelect>
           ) : null}
         </div>
         <ModalFooter onCancel={() => setBedOpen(false)} onSubmit={() => void saveBed()} submitLabel={tc("save")} />
@@ -306,6 +325,6 @@ export default function WardsAdminPage() {
           submitLabel={tc("delete")}
         />
       </ModalShell>
-    </div>
+    </>
   );
 }

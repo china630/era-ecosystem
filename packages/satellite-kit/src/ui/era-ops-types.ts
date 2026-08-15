@@ -64,6 +64,13 @@ export type EraDataGridColumn<T> = {
   className?: string;
 };
 
+export type EraDataGridPaginationLabels = {
+  rowsPerPage: string;
+  pageOf: string;
+  prev: string;
+  next: string;
+};
+
 export type EraDataGridProps<T extends Record<string, unknown>> = {
   title?: string;
   columns: EraDataGridColumn<T>[];
@@ -73,4 +80,11 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   addLabel?: string;
   emptyMessage?: string;
   toolbar?: ReactNode;
+  /**
+   * Client-side pagination (default on). Footer uses ListPaginationFooter.
+   * Pass translated labels from the host app when available.
+   */
+  pagination?: boolean;
+  paginationLabels?: EraDataGridPaginationLabels;
+  defaultPageSize?: number;
 };

@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
     "/api/integration/hotel-lifecycle",
     "/api/integration/settlement-confirmed",
     "/api/booking",
+    "/api/cron",
   ];
   if (pathname.startsWith("/api")) {
     if (isPublicApiPath(pathname, clinicPublicApi)) {
@@ -78,29 +79,20 @@ export async function middleware(request: NextRequest) {
   }
   try {
     const session = await verifySatelliteSession(token);
-    if (
-      pathname === "/doctor" ||
-      pathname.startsWith("/doctor/")
-    ) {
-      if (
-        !sessionHasClinicRole(session.role, [
-          CLINIC_ROLE.DOCTOR,
-          CLINIC_ROLE.CLINIC_ADMIN,
-        ])
-      ) {
+    if (pathname === "/doctor" || pathname.startsWith("/doctor/")) {
+      // DOCTOR workspace; SatAdmin / BUSINESS_OWNER may open for oversight (same as /admin gate).
+      const doctorOk =
+        sessionHasClinicRole(session.role, [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.CLINIC_ADMIN]) ||
+        hasClinicAdminAccess(session);
+      if (!doctorOk) {
         return roleGuardResponse(request, reqHeaders);
       }
     }
-    if (
-      pathname === "/nurse" ||
-      pathname.startsWith("/nurse/")
-    ) {
-      if (
-        !sessionHasClinicRole(session.role, [
-          CLINIC_ROLE.NURSE,
-          CLINIC_ROLE.CLINIC_ADMIN,
-        ])
-      ) {
+    if (pathname === "/nurse" || pathname.startsWith("/nurse/")) {
+      const nurseOk =
+        sessionHasClinicRole(session.role, [CLINIC_ROLE.NURSE, CLINIC_ROLE.CLINIC_ADMIN]) ||
+        hasClinicAdminAccess(session);
+      if (!nurseOk) {
         return roleGuardResponse(request, reqHeaders);
       }
     }

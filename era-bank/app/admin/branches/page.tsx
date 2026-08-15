@@ -1,65 +1,125 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PageHeader, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { OpsDataTable, useOpsModal } from "@/components/ops";
+import {
+  EraListFilterBar,
+  Field,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  showApiError,
+  useDebouncedValue,
+} from "@era/satellite-kit/ui";
+import { BankDataGrid } from "@/components/BankDataGrid";
+import { useOpsModal } from "@/components/ops";
 import { BranchCreateModal } from "@/components/ops/modals/BranchModals";
-import { OpsError } from "@/components/ops-ui";
 
-type Branch = { id: string; code?: string; name?: string; status?: string };
+type Branch = {
+  id: string;
+  code?: string;
+  name?: string;
+  status?: string;
+  isHeadOffice?: boolean;
+};
 
 function BranchesAdminPageContent() {
   const t = useTranslations("pages.branches");
   const tCommon = useTranslations("common");
   const modal = useOpsModal();
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q, 300);
   const [rows, setRows] = useState<Branch[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setError(null);
+    setLoading(true);
     try {
       const res = await fetch("/api/branches", { cache: "no-store" });
       if (!res.ok) {
-        setError(`${tCommon("error")} (${res.status})`);
+        showApiError(tCommon("error"));
+        setRows([]);
         return;
       }
-      setRows((await res.json()) as Branch[]);
+      const data = (await res.json()) as Branch[];
+      const needle = debouncedQ.trim().toLowerCase();
+      setRows(
+        needle
+          ? data.filter(
+              (r) =>
+                (r.code ?? "").toLowerCase().includes(needle) ||
+                (r.name ?? "").toLowerCase().includes(needle) ||
+                r.id.toLowerCase().includes(needle),
+            )
+          : data,
+      );
     } catch {
-      setError(tCommon("error"));
+      showApiError(tCommon("error"));
+      setRows([]);
+    } finally {
+      setLoading(false);
     }
-  }, [tCommon]);
+  }, [debouncedQ, tCommon]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const gridRows = useMemo(
+    () => rows as Array<Branch & Record<string, unknown>>,
+    [rows],
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <OpsError message={error} />
-      <div className={CARD_CONTAINER_CLASS}>
-        <div className="mb-3 flex justify-end">
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
-            {tCommon("refresh")}
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => modal.open("create")}
+          >
+            {t("create")}
           </button>
-        </div>
-        <OpsDataTable
-          rows={rows}
-          addLabel={t("create")}
-          onAdd={() => modal.open("create")}
-          emptyLabel={tCommon("empty")}
+        }
+      />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setQ("")}
+      >
+        <Field
+          label={t("searchLabel")}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+        />
+      </EraListFilterBar>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      ) : (
+        <BankDataGrid
           columns={[
-            { key: "code", label: "Code" },
-            { key: "name", label: "Name" },
+            { key: "code", header: t("colCode") },
+            { key: "name", header: t("colName") },
+            {
+              key: "isHeadOffice",
+              header: t("colHeadOffice"),
+              render: (row) => (row.isHeadOffice ? t("yes") : t("no")),
+            },
             {
               key: "id",
-              label: "ID",
-              render: (row) => <span className="font-mono text-[11px]">{row.id}</span>,
+              header: t("colId"),
+              render: (row) => (
+                <span className="font-mono text-[11px]">{row.id}</span>
+              ),
             },
           ]}
+          rows={gridRows}
+          emptyLabel={tCommon("empty")}
         />
-      </div>
+      )}
       <BranchCreateModal
         open={modal.mode === "create"}
         onClose={modal.close}
@@ -72,7 +132,11 @@ function BranchesAdminPageContent() {
 export default function BranchesAdminPage() {
   const tCommon = useTranslations("common");
   return (
-    <Suspense fallback={<p className="text-sm text-muted-foreground">{tCommon("loading")}</p>}>
+    <Suspense
+      fallback={
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      }
+    >
       <BranchesAdminPageContent />
     </Suspense>
   );

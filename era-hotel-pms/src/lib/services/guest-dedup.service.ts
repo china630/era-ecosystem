@@ -125,10 +125,16 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
 export async function resolveCreditLimitAzn(reservationId: string): Promise<number | null> {
   const res = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    select: { creditLimitAzn: true },
+    select: {
+      creditLimitAzn: true,
+      agency: { select: { creditLimitAzn: true } },
+    },
   });
   if (res?.creditLimitAzn != null) {
     return decimalToNumber(res.creditLimitAzn);
+  }
+  if (res?.agency?.creditLimitAzn != null) {
+    return decimalToNumber(res.agency.creditLimitAzn);
   }
   const profile = await prisma.hotelProfile.findFirst({
     orderBy: { createdAt: 'asc' },

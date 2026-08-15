@@ -5,15 +5,17 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
-  FORM_FIELD_GROUP_CLASS,
+  CARD_CONTAINER_CLASS,
+  DatePicker,
+  Field,
+  FieldSelect,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -28,7 +30,6 @@ export default function BanquetDetailPage() {
   const [event, setEvent] = useState<Record<string, unknown> | null>(null);
   const [settlement, setSettlement] = useState<Record<string, unknown> | null>(null);
   const [staff, setStaff] = useState<Array<Record<string, unknown>>>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [lineDesc, setLineDesc] = useState('');
   const [lineQty, setLineQty] = useState('1');
   const [linePrice, setLinePrice] = useState('100');
@@ -37,8 +38,13 @@ export default function BanquetDetailPage() {
   const [saloons, setSaloons] = useState<Array<{ id: string; code: string; name: string }>>([]);
   const [resourceSaloonId, setResourceSaloonId] = useState('');
   const [resourceLabel, setResourceLabel] = useState('');
-  const [resourceStart, setResourceStart] = useState('');
-  const [resourceEnd, setResourceEnd] = useState('');
+  const [resourceStartDate, setResourceStartDate] = useState('');
+  const [resourceStartTime, setResourceStartTime] = useState('10:00');
+  const [resourceEndDate, setResourceEndDate] = useState('');
+  const [resourceEndTime, setResourceEndTime] = useState('12:00');
+  const [preferredFolioType, setPreferredFolioType] = useState<'GUEST' | 'COMPANY' | 'AGENCY'>(
+    'GUEST',
+  );
 
   const load = useCallback(async () => {
     const id = params.id;
@@ -62,11 +68,7 @@ export default function BanquetDetailPage() {
   }, [can, load]);
 
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
-    return (
-      <AppShell>
-        <p className="text-sm text-red-600">{tc('accessDenied')}</p>
-      </AppShell>
-    );
+    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
   async function addLine(e: React.FormEvent) {
@@ -82,11 +84,13 @@ export default function BanquetDetailPage() {
       }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('lineAdded') : data.error ?? tc('error'));
-    if (res.ok) {
-      setLineDesc('');
-      await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
     }
+    showSuccess(t('lineAdded'));
+    setLineDesc('');
+    await load();
   }
 
   async function addStaff(e: React.FormEvent) {
@@ -97,17 +101,19 @@ export default function BanquetDetailPage() {
       body: JSON.stringify({ role: staffRole, staffName }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('staffAdded') : data.error ?? tc('error'));
-    if (res.ok) {
-      setStaffName('');
-      await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
     }
+    showSuccess(t('staffAdded'));
+    setStaffName('');
+    await load();
   }
 
   async function addResource(e: React.FormEvent) {
     e.preventDefault();
-    if (!resourceStart || !resourceEnd) {
-      setMsg(t('resourceMissingTimes'));
+    if (!resourceStartDate || !resourceStartTime || !resourceEndDate || !resourceEndTime) {
+      showApiError({ error: t('resourceMissingTimes') });
       return;
     }
     const res = await fetch(`/api/banquets/${params.id}/resources`, {
@@ -116,33 +122,100 @@ export default function BanquetDetailPage() {
       body: JSON.stringify({
         saloonId: resourceSaloonId || undefined,
         label: resourceLabel || undefined,
-        startAt: new Date(resourceStart).toISOString(),
-        endAt: new Date(resourceEnd).toISOString(),
+        startAt: new Date(`${resourceStartDate}T${resourceStartTime}`).toISOString(),
+        endAt: new Date(`${resourceEndDate}T${resourceEndTime}`).toISOString(),
       }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('resourceAdded') : data.error ?? tc('error'));
-    if (res.ok) {
-      setResourceLabel('');
-      await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
     }
+    showSuccess(t('resourceAdded'));
+    setResourceLabel('');
+    await load();
   }
 
   async function confirmEvent() {
     const res = await fetch(`/api/banquets/${params.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'confirm' }),
+      body: JSON.stringify({ action: 'confirm', preferredFolioType }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('confirmed') : data.error ?? tc('error'));
-    if (res.ok) await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
+    }
+    showSuccess(t('confirmed'));
+    await load();
+  }
+
+  function printDaySheetHtml(data: Record<string, unknown>) {
+    const lines = (data.lines as Array<Record<string, unknown>> | undefined) ?? [];
+    const resources = (data.resources as Array<Record<string, unknown>> | undefined) ?? [];
+    const staff = (data.staff as Array<Record<string, unknown>> | undefined) ?? [];
+    const esc = (v: unknown) =>
+      String(v ?? '—')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    const lineRows = lines
+      .map(
+        (l) =>
+          `<tr><td>${esc(l.description)}</td><td>${esc(l.qty)}</td><td>${esc(l.unitPrice)}</td><td>${esc(l.kind)}</td></tr>`,
+      )
+      .join('');
+    const resourceRows = resources
+      .map(
+        (r) =>
+          `<tr><td>${esc(r.label)}</td><td>${esc(r.startAt && new Date(String(r.startAt)).toLocaleString())}</td><td>${esc(r.endAt && new Date(String(r.endAt)).toLocaleString())}</td><td>${esc(r.notes)}</td></tr>`,
+      )
+      .join('');
+    const staffRows = staff
+      .map(
+        (s) =>
+          `<tr><td>${esc(s.role)}</td><td>${esc(s.staffName)}</td><td>${esc(s.notes)}</td></tr>`,
+      )
+      .join('');
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html><head><title>${esc(data.eventName)} — BEO</title>
+      <style>
+        body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#222;max-width:900px;margin:0 auto}
+        h1{font-size:20px;margin:0 0 4px} .meta{font-size:13px;color:#555;margin-bottom:16px}
+        h2{font-size:14px;margin:18px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+        th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+        th{background:#f5f5f5}
+        .folio{margin-top:12px;font-size:12px}
+        @media print{button{display:none}}
+      </style></head><body>
+      <h1>${esc(data.eventName)}</h1>
+      <div class="meta">
+        ${esc(data.referenceNo)} · ${esc(data.eventDate && new Date(String(data.eventDate)).toLocaleDateString())}
+        · ${esc(data.status)} · pax ${esc(data.pax)} · ${esc(data.saloon)}
+        · contact ${esc(data.contactName)}
+      </div>
+      <h2>${t('tab.lines')}</h2>
+      <table><thead><tr><th>${t('lineDescription')}</th><th>${t('lineQty')}</th><th>${t('linePrice')}</th><th>Kind</th></tr></thead>
+      <tbody>${lineRows || '<tr><td colspan="4">—</td></tr>'}</tbody></table>
+      <h2>${t('tab.resources')}</h2>
+      <table><thead><tr><th>${t('resourceLabel')}</th><th>${t('resourceStart')}</th><th>${t('resourceEnd')}</th><th>${t('notes')}</th></tr></thead>
+      <tbody>${resourceRows || '<tr><td colspan="4">—</td></tr>'}</tbody></table>
+      <h2>${t('tab.staff')}</h2>
+      <table><thead><tr><th>Role</th><th>Name</th><th>${t('notes')}</th></tr></thead>
+      <tbody>${staffRows || '<tr><td colspan="3">—</td></tr>'}</tbody></table>
+      <div class="folio">${t('masterFolio')}: ${esc(data.masterFolioId)} · reservation ${esc(data.reservationId)}</div>
+      <script>window.onload=()=>window.print()</script>
+      </body></html>`);
+    w.document.close();
   }
 
   const orderLines = (event?.orderLines as Array<Record<string, unknown>>) ?? [];
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={(event?.eventName as string) ?? t('detail')}
         subtitle={event?.eventDate ? new Date(String(event.eventDate)).toLocaleDateString() : ''}
@@ -151,15 +224,47 @@ export default function BanquetDetailPage() {
             <Link href="/banquets" className={SECONDARY_BUTTON_CLASS}>
               {tc('back')}
             </Link>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/banquets/${params.id}/day-sheet`);
+                  const data = await res.json();
+                  if (!res.ok) {
+                    showApiError(data, tc('error'));
+                    return;
+                  }
+                  printDaySheetHtml(data as Record<string, unknown>);
+                } catch (e) {
+                  showApiError({ error: e instanceof Error ? e.message : tc('error') });
+                }
+              }}
+            >
+              {t('printDaySheet')}
+            </button>
             {event?.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={confirmEvent}>
-                {t('confirm')}
-              </button>
+              <>
+                <FieldSelect
+                  label={t('preferredFolio')}
+                  preset="select"
+                  value={preferredFolioType}
+                  onChange={(e) =>
+                    setPreferredFolioType(e.target.value as 'GUEST' | 'COMPANY' | 'AGENCY')
+                  }
+                >
+                  <option value="GUEST">GUEST</option>
+                  <option value="COMPANY">COMPANY</option>
+                  <option value="AGENCY">AGENCY</option>
+                </FieldSelect>
+                <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={confirmEvent}>
+                  {t('confirm')}
+                </button>
+              </>
             )}
           </div>
         }
       />
-      <StatusMessage>{msg}</StatusMessage>
 
       <div className="mb-4 flex gap-2 border-b border-[#ECF0F1]">
         {(['lines', 'resources', 'staff', 'settlement'] as Tab[]).map((key) => (
@@ -175,7 +280,7 @@ export default function BanquetDetailPage() {
       </div>
 
       {tab === 'lines' && (
-        <PageSection>
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
           <table className="mb-4 w-full text-[13px]">
             <thead>
               <tr className="border-b text-left text-[#7F8C8D]">
@@ -196,30 +301,39 @@ export default function BanquetDetailPage() {
           </table>
           {event?.status === 'DRAFT' && (
             <form onSubmit={addLine} className={`${FORM_STACK_CLASS} max-w-md`}>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('lineDescription')}</label>
-                <input className={MODAL_INPUT_CLASS} value={lineDesc} onChange={(e) => setLineDesc(e.target.value)} required />
-              </div>
+              <Field
+                label={t('lineDescription')}
+                preset="longText"
+                value={lineDesc}
+                onChange={(e) => setLineDesc(e.target.value)}
+                required
+              />
               <div className="grid grid-cols-2 gap-3">
-                <div className={FORM_FIELD_GROUP_CLASS}>
-                  <label className={MODAL_FIELD_LABEL_CLASS}>{t('lineQty')}</label>
-                  <input type="number" className={MODAL_INPUT_CLASS} value={lineQty} onChange={(e) => setLineQty(e.target.value)} />
-                </div>
-                <div className={FORM_FIELD_GROUP_CLASS}>
-                  <label className={MODAL_FIELD_LABEL_CLASS}>{t('linePrice')}</label>
-                  <input type="number" className={MODAL_INPUT_CLASS} value={linePrice} onChange={(e) => setLinePrice(e.target.value)} />
-                </div>
+                <Field
+                  label={t('lineQty')}
+                  preset="count"
+                  type="number"
+                  value={lineQty}
+                  onChange={(e) => setLineQty(e.target.value)}
+                />
+                <Field
+                  label={t('linePrice')}
+                  preset="amount"
+                  type="number"
+                  value={linePrice}
+                  onChange={(e) => setLinePrice(e.target.value)}
+                />
               </div>
               <button type="submit" className={PRIMARY_BUTTON_CLASS}>
                 {t('addLine')}
               </button>
             </form>
           )}
-        </PageSection>
+        </section>
       )}
 
       {tab === 'resources' && (
-        <PageSection>
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
           <p className="text-sm text-[#7F8C8D]">{t('resourcesHint')}</p>
           <Link href="/banquets/calendar" className="mt-3 inline-block text-sm text-[#3498DB] underline">
             {t('openCalendar')}
@@ -235,61 +349,71 @@ export default function BanquetDetailPage() {
           </ul>
           {event?.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
             <form onSubmit={addResource} className={`${FORM_STACK_CLASS} mt-6 max-w-md`}>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('saloon')}</label>
-                <select
-                  className={MODAL_INPUT_CLASS}
-                  value={resourceSaloonId}
-                  onChange={(e) => setResourceSaloonId(e.target.value)}
-                >
-                  {saloons.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.code} — {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('resourceLabel')}</label>
-                <input
-                  className={MODAL_INPUT_CLASS}
-                  value={resourceLabel}
-                  onChange={(e) => setResourceLabel(e.target.value)}
-                  placeholder={t('resourceLabelPlaceholder')}
+              <FieldSelect
+                label={t('saloon')}
+                preset="selectWide"
+                value={resourceSaloonId}
+                onChange={(e) => setResourceSaloonId(e.target.value)}
+              >
+                {saloons.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.code} — {s.name}
+                  </option>
+                ))}
+              </FieldSelect>
+              <Field
+                label={t('resourceLabel')}
+                preset="longText"
+                value={resourceLabel}
+                onChange={(e) => setResourceLabel(e.target.value)}
+                placeholder={t('resourceLabelPlaceholder')}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <DatePicker
+                  label={t('resourceStart')}
+                  value={resourceStartDate}
+                  onChange={setResourceStartDate}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                  required
+                />
+                <Field
+                  label={tc('time')}
+                  preset="time"
+                  type="time"
+                  value={resourceStartTime}
+                  onChange={(e) => setResourceStartTime(e.target.value)}
+                  required
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className={FORM_FIELD_GROUP_CLASS}>
-                  <label className={MODAL_FIELD_LABEL_CLASS}>{t('resourceStart')}</label>
-                  <input
-                    type="datetime-local"
-                    className={MODAL_INPUT_CLASS}
-                    value={resourceStart}
-                    onChange={(e) => setResourceStart(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className={FORM_FIELD_GROUP_CLASS}>
-                  <label className={MODAL_FIELD_LABEL_CLASS}>{t('resourceEnd')}</label>
-                  <input
-                    type="datetime-local"
-                    className={MODAL_INPUT_CLASS}
-                    value={resourceEnd}
-                    onChange={(e) => setResourceEnd(e.target.value)}
-                    required
-                  />
-                </div>
+                <DatePicker
+                  label={t('resourceEnd')}
+                  value={resourceEndDate}
+                  onChange={setResourceEndDate}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                  required
+                />
+                <Field
+                  label={tc('time')}
+                  preset="time"
+                  type="time"
+                  value={resourceEndTime}
+                  onChange={(e) => setResourceEndTime(e.target.value)}
+                  required
+                />
               </div>
               <button type="submit" className={PRIMARY_BUTTON_CLASS}>
                 {t('addResource')}
               </button>
             </form>
           )}
-        </PageSection>
+        </section>
       )}
 
       {tab === 'staff' && (
-        <PageSection>
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
           <ul className="mb-4 space-y-2 text-sm">
             {staff.map((s) => (
               <li key={String(s.id)}>
@@ -299,24 +423,30 @@ export default function BanquetDetailPage() {
           </ul>
           {event?.status === 'DRAFT' && (
             <form onSubmit={addStaff} className={`${FORM_STACK_CLASS} max-w-md`}>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('staffRole')}</label>
-                <input className={MODAL_INPUT_CLASS} value={staffRole} onChange={(e) => setStaffRole(e.target.value)} />
-              </div>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('staffName')}</label>
-                <input className={MODAL_INPUT_CLASS} value={staffName} onChange={(e) => setStaffName(e.target.value)} required />
-              </div>
+              <Field
+                label={t('staffRole')}
+                preset="shortText"
+                value={staffRole}
+                onChange={(e) => setStaffRole(e.target.value)}
+              />
+              <Field
+                label={t('staffName')}
+                preset="longText"
+                value={staffName}
+                onChange={(e) => setStaffName(e.target.value)}
+                required
+              />
               <button type="submit" className={PRIMARY_BUTTON_CLASS}>
                 {t('addStaff')}
               </button>
             </form>
           )}
-        </PageSection>
+        </section>
       )}
 
       {tab === 'settlement' && settlement && (
-        <PageSection>
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+          <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('settlementVsFolioHint')}</p>
           <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
             <dt className="text-[#7F8C8D]">{t('plannedRevenue')}</dt>
             <dd>{String(settlement.plannedRevenue)} AZN</dd>
@@ -327,8 +457,8 @@ export default function BanquetDetailPage() {
             <dt className="text-[#7F8C8D]">{t('posPolicy')}</dt>
             <dd>{String(settlement.extrasPolicy)}</dd>
           </dl>
-        </PageSection>
+        </section>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -7,6 +7,7 @@ Accepted — 2026-06-16
 ## Related
 
 - [sanatorium-vnext.md](./sanatorium-vnext.md) (SV6 single clinical engine, SV8 wellness preset)
+- [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) (Pattern A sanatorium / Pattern B outpatient)
 - [workforce-identity-and-hr-provisioning.md](./workforce-identity-and-hr-provisioning.md)
 - [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md)
 - [era-clinic/PRD.md](../../era-clinic/PRD.md) · [CLINIC-FULL-IMPLEMENTATION-PLAN.md](../../era-clinic/doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)

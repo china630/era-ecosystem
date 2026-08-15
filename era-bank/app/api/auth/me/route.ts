@@ -1,3 +1,4 @@
+import { sessionIsPlatformSuperAdmin } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { getRouteSession, jsonError } from "@/lib/api-utils";
 
@@ -12,6 +13,8 @@ export async function GET() {
   if (!user) return jsonError("User not found", 404);
 
   const limits = (user.opsRole.limitsJson ?? {}) as Record<string, unknown>;
+  // Platform super-admins always have full bank ops access (incl. approvals).
+  const isPlatformSuperAdmin = sessionIsPlatformSuperAdmin(session);
 
   return Response.json({
     id: user.id,
@@ -19,8 +22,9 @@ export async function GET() {
     fullName: user.fullName,
     role: user.opsRole.code,
     branchId: user.branchId,
-    canApprove: limits.canApprove === true,
+    canApprove: isPlatformSuperAdmin || limits.canApprove === true,
     limitsJson: limits,
+    isPlatformSuperAdmin,
     organizationName: process.env.ERA_BANK_ORGANIZATION_NAME ?? "ERA Bank",
   });
 }

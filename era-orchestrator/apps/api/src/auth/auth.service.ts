@@ -302,22 +302,42 @@ export class AuthService {
     });
   }
 
+  private readonly usedSsoSignatures = new Map<string, number>();
+
+  private consumeSsoSignature(signature: string, expiresAtSec: number): void {
+    const now = Math.floor(Date.now() / 1000);
+    for (const [sig, exp] of this.usedSsoSignatures) {
+      if (exp < now) this.usedSsoSignatures.delete(sig);
+    }
+    const key = signature.trim().toLowerCase();
+    if (!key || expiresAtSec < now || this.usedSsoSignatures.has(key)) {
+      throw new UnauthorizedException("SSO ticket already used or expired");
+    }
+    this.usedSsoSignatures.set(key, expiresAtSec);
+  }
+
   async ssoExchange(dto: SsoExchangeDto) {
     const secret = this.config.get<string>("ERA_SSO_SHARED_SECRET");
     if (!secret) {
       throw new UnauthorizedException("SSO not configured");
     }
-    const payload = `${dto.email}|${dto.organizationId}|${dto.expiresAt}`;
+    const expiresAtSec =
+      dto.expiresAt > 1e12
+        ? Math.floor(dto.expiresAt / 1000)
+        : dto.expiresAt;
+    const payload = `${dto.email}|${dto.organizationId}|${expiresAtSec}`;
     const expected = createHmac("sha256", secret).update(payload).digest("hex");
     const sigBuf = Buffer.from(dto.signature, "hex");
     const expBuf = Buffer.from(expected, "hex");
     if (
       sigBuf.length !== expBuf.length ||
       !timingSafeEqual(sigBuf, expBuf) ||
-      Date.now() > dto.expiresAt
+      Math.floor(Date.now() / 1000) > expiresAtSec
     ) {
       throw new UnauthorizedException("Invalid SSO signature");
     }
+    // SEC-SSO-01: one-time consume
+    this.consumeSsoSignature(dto.signature, expiresAtSec);
 
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
@@ -338,7 +358,8 @@ export class AuthService {
       throw new UnauthorizedException("Organization access denied");
     }
 
-    const role = (dto.role as UserRole | undefined) ?? m.role;
+    // SEC-SSO-02: never trust client role — membership is source of truth
+    const role = m.role;
     const claims = await this.buildClaims({
       sub: user.id,
       email: user.email,
@@ -348,6 +369,58 @@ export class AuthService {
     });
     const accessToken = await this.issueAccessToken(claims);
     return { accessToken, claims, financeRole: role };
+  }
+
+  /**
+   * SEC-SSO-02 / SEC-SSO-03: mint only for active membership; HMAC covers financeRole (v2).
+   */
+  async createSatelliteSsoTicket(input: {
+    userId: string;
+    email: string;
+    organizationId: string | null;
+  }): Promise<{
+    email: string;
+    fullName: string;
+    organizationId: string;
+    expiresAt: number;
+    signature: string;
+    financeRole: string;
+    jti: string;
+  }> {
+    const secret = this.config.get<string>("ERA_SSO_SHARED_SECRET");
+    if (!secret) {
+      throw new UnauthorizedException("SSO not configured");
+    }
+    if (!input.organizationId) {
+      throw new UnauthorizedException("No active organization for SSO launch");
+    }
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: {
+        userId: input.userId,
+        organizationId: input.organizationId,
+        deletedAt: null,
+      },
+    });
+    if (!membership) {
+      throw new UnauthorizedException(
+        "Not a member of the requested organization",
+      );
+    }
+    const financeRole = String(membership.role);
+    const expiresAt = Math.floor(Date.now() / 1000) + 300;
+    const jti = randomUUID().replace(/-/g, "");
+    // SEC-SSO-01: HMAC v3 includes jti
+    const payload = `${input.email}|${input.organizationId}|${expiresAt}|${financeRole}|${jti}`;
+    const signature = createHmac("sha256", secret).update(payload).digest("hex");
+    return {
+      email: input.email,
+      fullName: input.email.split("@")[0] ?? "User",
+      organizationId: input.organizationId,
+      expiresAt,
+      signature,
+      financeRole,
+      jti,
+    };
   }
 
   verifyAccessToken(token: string): Promise<EraJwtPayload> {

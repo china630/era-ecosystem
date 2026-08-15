@@ -23,6 +23,7 @@ export type RackRoomDto = {
   roomNumber: string;
   status: string;
   floor: number;
+  roomTypeId: string;
   roomType: { code: string; name: string };
   reservations: RackReservationSummary[];
 };
@@ -59,6 +60,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
     roomNumber: room.roomNumber,
     status: room.status,
     floor: room.floor,
+    roomTypeId: room.roomTypeId,
     roomType: { code: room.roomType.code, name: room.roomType.name },
     reservations: room.reservations.map((r) => {
       let balance = 0;

@@ -15,6 +15,7 @@ import { RolesGuard } from "../common/guards/roles.guard";
 import type { EraJwtPayload } from "../auth/jwt-payload.type";
 import {
   ApproveAccessDto,
+  CreateInviteDto,
   JoinOrgDto,
   TransferOwnershipDto,
 } from "./dto/organization.dto";
@@ -30,6 +31,21 @@ export class OrganizationController {
     return this.org.requestJoinByTaxId(user.sub, dto.taxId, dto.message);
   }
 
+  @Get("v1/invites/pending")
+  @UseGuards(JwtAuthGuard)
+  listPendingInvites(@CurrentUser() user: EraJwtPayload) {
+    return this.org.listPendingInvitesForEmail(user.email);
+  }
+
+  @Post("v1/invites/:id/accept")
+  @UseGuards(JwtAuthGuard)
+  acceptInvite(
+    @CurrentUser() user: EraJwtPayload,
+    @Param("id") inviteId: string,
+  ) {
+    return this.org.acceptInvite(user.sub, user.email, inviteId);
+  }
+
   @Get("team/access-requests")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
@@ -38,6 +54,57 @@ export class OrganizationController {
       throw new ForbiddenException("Organization context required");
     }
     return this.org.listPendingAccessRequests(user.organizationId);
+  }
+
+  @Get("team/members")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  listMembers(@CurrentUser() user: EraJwtPayload) {
+    if (!user.organizationId) {
+      throw new ForbiddenException("Organization context required");
+    }
+    return this.org.listMembers(user.organizationId);
+  }
+
+  @Get("team/invites")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  listOrgInvites(@CurrentUser() user: EraJwtPayload) {
+    if (!user.organizationId) {
+      throw new ForbiddenException("Organization context required");
+    }
+    return this.org.listOrgInvites(user.organizationId);
+  }
+
+  @Post("team/invites")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  createInvite(
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: CreateInviteDto,
+  ) {
+    if (!user.organizationId) {
+      throw new ForbiddenException("Organization context required");
+    }
+    return this.org.createInvite(
+      user.organizationId,
+      user.sub,
+      dto.email,
+      dto.role ?? UserRole.USER,
+    );
+  }
+
+  @Post("team/invites/:id/revoke")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  revokeInvite(
+    @CurrentUser() user: EraJwtPayload,
+    @Param("id") inviteId: string,
+  ) {
+    if (!user.organizationId) {
+      throw new ForbiddenException("Organization context required");
+    }
+    return this.org.revokeInvite(user.organizationId, inviteId);
   }
 
   @Post("team/access-requests/:id/approve")

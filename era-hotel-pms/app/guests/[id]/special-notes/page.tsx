@@ -7,15 +7,11 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.specialNotesTitle"
       apiPath={(gid) => `/api/guests/${gid}/special-notes`}
-      onAdd={async (guestId) => {
-        const text = window.prompt('Special note (min 5 chars)');
-        if (!text || text.trim().length < 5) return;
-        await fetch(`/api/guests/${guestId}/special-notes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.trim() }),
-        });
-      }}
+      addFields={[
+        { name: 'text', label: 'Special note', required: true, multiline: true, placeholder: 'Min 5 characters' },
+      ]}
+      buildBody={(v) => ({ text: v.text.trim() })}
+      searchKeys={['text']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-rose-300 bg-rose-50/80 p-3 text-rose-900">
           {String(r.text)}

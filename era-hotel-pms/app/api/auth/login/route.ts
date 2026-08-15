@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       login: user.login,
       role: user.role.code,
       fullName: user.fullName,
+      email: user.email ?? undefined,
     });
 
     const res = jsonOk({

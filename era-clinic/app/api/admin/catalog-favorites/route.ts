@@ -17,7 +17,7 @@ export async function GET() {
     const guard = await assertClinicAdminRead();
     if (guard.error) return guard.error;
     const favorites = await getCatalogFavorites();
-    const catalog = getDiagnosticCatalog();
+    const catalog = await getDiagnosticCatalog();
     return jsonOk({
       ...favorites,
       groups: catalog.groups,

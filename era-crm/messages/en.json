@@ -178,7 +178,7 @@
   "import": {
     "title": "Prospect import",
     "subtitle": "CSV/XLSX from e-taxes enriched registry",
-    "hint": "Upload azerbaijan-legal-entities.csv or compatible export. Max 5000 rows.",
+    "hint": "Upload azerbaijan-companies-with-voen.csv sample (max 5000 rows).",
     "fileLabel": "File",
     "fileRequired": "Select a file",
     "mode": "Import mode",

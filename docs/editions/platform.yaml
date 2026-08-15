@@ -1,0 +1,4 @@
+product: platform
+status: mvp
+pilot_ready: false
+notes: "Control plane + MDM + billing + workforce; field pilot open"

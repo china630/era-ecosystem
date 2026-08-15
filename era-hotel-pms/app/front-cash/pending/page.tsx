@@ -1,16 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
+  EraListFilterBar,
+  useDebouncedValue,
+  Field,
   MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -33,19 +37,29 @@ export default function FrontCashPendingPage() {
   const tc = useTranslations('common');
   const [rows, setRows] = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [payTarget, setPayTarget] = useState<PendingRow | null>(null);
   const [voidTarget, setVoidTarget] = useState<PendingRow | null>(null);
   const [voidReason, setVoidReason] = useState('');
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/settlement/pending?status=PENDING');
-    const data = await res.json();
-    setRows(Array.isArray(data) ? data : []);
-    setLoading(false);
-  }, []);
+    try {
+      const res = await fetch('/api/settlement/pending?status=PENDING');
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, tc('loadError'));
+        return;
+      }
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+    } finally {
+      setLoading(false);
+    }
+  }, [tc]);
 
   useEffect(() => {
     void load();
@@ -54,56 +68,79 @@ export default function FrontCashPendingPage() {
   async function pay(method: 'CASH' | 'CARD') {
     if (!payTarget) return;
     setBusy(true);
-    setMsg(null);
-    const res = await fetch(`/api/settlement/pending/${payTarget.id}/pay`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentMethod: method }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setMsg(data.error ?? t('payFailed'));
-      return;
+    try {
+      const res = await fetch(`/api/settlement/pending/${payTarget.id}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod: method }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, t('payFailed'));
+        return;
+      }
+      setPayTarget(null);
+      showSuccess(t('paySuccess'));
+      void load();
+    } finally {
+      setBusy(false);
     }
-    setPayTarget(null);
-    setMsg(t('paySuccess'));
-    void load();
   }
 
   async function voidPending() {
     if (!voidTarget || voidReason.trim().length < 3) return;
     setBusy(true);
-    setMsg(null);
-    const res = await fetch(`/api/settlement/pending/${voidTarget.id}/void`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason: voidReason.trim() }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setMsg(data.error ?? t('voidFailed'));
-      return;
+    try {
+      const res = await fetch(`/api/settlement/pending/${voidTarget.id}/void`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: voidReason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, t('voidFailed'));
+        return;
+      }
+      setVoidTarget(null);
+      setVoidReason('');
+      showSuccess(t('voidSuccess'));
+      void load();
+    } finally {
+      setBusy(false);
     }
-    setVoidTarget(null);
-    setVoidReason('');
-    setMsg(t('voidSuccess'));
-    void load();
   }
 
   const canPay = can(PERMISSIONS.FOLIO_PAYMENT);
   const canVoid = can(PERMISSIONS.FOLIO_VOID);
+  const visibleRows = useMemo(() => {
+    const q = debouncedQ.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) =>
+      `${row.sourceSystem} ${row.sourceRef} ${row.payerLabel ?? ''} ${row.description}`
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [rows, debouncedQ]);
 
   return (
-    <AppShell>
+    <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      {msg && <StatusMessage>{msg}</StatusMessage>}
-      <PageSection>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setQ('')}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto p-4`}>
           {loading ? (
             <p className="text-sm text-gray-500">{tc('loading')}</p>
-          ) : rows.length === 0 ? (
+          ) : visibleRows.length === 0 ? (
             <p className="text-sm text-gray-600">{t('empty')}</p>
           ) : (
             <table className="w-full text-sm">
@@ -118,7 +155,7 @@ export default function FrontCashPendingPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
+                {visibleRows.map((row) => (
                   <tr key={row.id} className="border-b last:border-0">
                     <td className="py-2 pr-3">{row.sourceSystem}</td>
                     <td className="py-2 pr-3 font-mono text-xs">{row.sourceRef.slice(0, 12)}</td>
@@ -156,7 +193,7 @@ export default function FrontCashPendingPage() {
             </table>
           )}
         </div>
-      </PageSection>
+      </section>
 
       <EraModal
         open={Boolean(payTarget)}
@@ -220,6 +257,6 @@ export default function FrontCashPendingPage() {
           />
         </label>
       </EraModal>
-    </AppShell>
+    </>
   );
 }

@@ -35,17 +35,42 @@ async function main() {
   try {
     const glAccounts = [
       { code: "1000101", name: "Cash in vault", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "1000201", name: "Teller till", type: GlAccountType.ASSET, currency: "AZN" },
       { code: "2200101", name: "Customer current accounts", type: GlAccountType.LIABILITY, currency: "AZN" },
       { code: "2200201", name: "Term deposits", type: GlAccountType.LIABILITY, currency: "AZN" },
       { code: "1300101", name: "Loan portfolio", type: GlAccountType.ASSET, currency: "AZN" },
       { code: "2990101", name: "Inter-branch settlement MFR", type: GlAccountType.LIABILITY, currency: "AZN" },
       { code: "1610101", name: "Interbank placements", type: GlAccountType.ASSET, currency: "AZN" },
       { code: "1620101", name: "FX position transit", type: GlAccountType.ASSET, currency: null },
+      { code: "1620111", name: "FX revaluation gain clearing", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "4100601", name: "FX revaluation gain", type: GlAccountType.INCOME, currency: "AZN" },
+      { code: "5100401", name: "FX revaluation loss", type: GlAccountType.EXPENSE, currency: "AZN" },
       { code: "2550201", name: "Nostro accounts", type: GlAccountType.ASSET, currency: null },
       { code: "2550301", name: "Vostro accounts", type: GlAccountType.LIABILITY, currency: null },
       { code: "1620201", name: "Government securities", type: GlAccountType.ASSET, currency: "AZN" },
       { code: "4100101", name: "Interest income", type: GlAccountType.INCOME, currency: "AZN" },
       { code: "5100101", name: "Interest expense", type: GlAccountType.EXPENSE, currency: "AZN" },
+      { code: "5100201", name: "Loan loss expense", type: GlAccountType.EXPENSE, currency: "AZN" },
+      { code: "1390101", name: "Loan loss allowance", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "4100201", name: "Fee income", type: GlAccountType.INCOME, currency: "AZN" },
+      { code: "1300201", name: "Fee receivable", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "2990201", name: "Fee suspense", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "9100101", name: "Trade contingent asset", type: GlAccountType.OFF_BALANCE, currency: "AZN" },
+      { code: "9200101", name: "Trade contingent liability", type: GlAccountType.OFF_BALANCE, currency: "AZN" },
+      { code: "1300301", name: "Trade margin", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "4100301", name: "Trade commission income", type: GlAccountType.INCOME, currency: "AZN" },
+      { code: "2990301", name: "Trade settlement", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "1300401", name: "NPL workout", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "4100401", name: "Recovery income", type: GlAccountType.INCOME, currency: "AZN" },
+      { code: "2990401", name: "Virtual account clearing", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "2200301", name: "Escrow liability", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "2990501", name: "Standing order clearing", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "2990601", name: "Direct debit clearing", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "1300501", name: "Islamic asset", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "2200401", name: "Islamic liability", type: GlAccountType.LIABILITY, currency: "AZN" },
+      { code: "4100501", name: "Islamic income", type: GlAccountType.INCOME, currency: "AZN" },
+      { code: "5100301", name: "Islamic expense", type: GlAccountType.EXPENSE, currency: "AZN" },
+      { code: "2990701", name: "Card dispute suspense", type: GlAccountType.LIABILITY, currency: "AZN" },
     ];
 
     for (const gl of glAccounts) {
@@ -106,7 +131,13 @@ async function main() {
         kind: ProductKind.TERM_DEPOSIT,
         name: "TERM_6M_12PCT",
         currency: "AZN",
-        paramsJson: { termMonths: 6, rateAnnual: 0.12, glLiabilityCode: "2200201", adifEligible: true },
+        paramsJson: {
+          termMonths: 6,
+          rateAnnual: 0.12,
+          glLiabilityCode: "2200201",
+          glInterestExpenseCode: "5100101",
+          adifEligible: true,
+        },
       },
       {
         moduleKey: "banking_loans",
@@ -157,14 +188,38 @@ async function main() {
 
     const systemGlMappings: Array<{ key: string; glCode: string }> = [
       { key: "CASH_VAULT", glCode: "1000101" },
+      { key: "TELLER_TILL", glCode: "1000201" },
       { key: "MFR_SETTLEMENT", glCode: "2990101" },
       { key: "INTERBANK_PLACEMENT", glCode: "1610101" },
       { key: "FX_TRANSIT", glCode: "1620101" },
+      { key: "FX_REVAL_GAIN", glCode: "4100601" },
+      { key: "FX_REVAL_LOSS", glCode: "5100401" },
       { key: "NOSTRO", glCode: "2550201" },
       { key: "VOSTRO", glCode: "2550301" },
       { key: "GOV_SECURITIES", glCode: "1620201" },
       { key: "INTEREST_INCOME", glCode: "4100101" },
       { key: "INTEREST_EXPENSE", glCode: "5100101" },
+      { key: "LOAN_LOSS_EXPENSE", glCode: "5100201" },
+      { key: "LOAN_LOSS_ALLOWANCE", glCode: "1390101" },
+      { key: "FEE_INCOME", glCode: "4100201" },
+      { key: "FEE_RECEIVABLE", glCode: "1300201" },
+      { key: "FEE_SUSPENSE", glCode: "2990201" },
+      { key: "TRADE_CONTINGENT_ASSET", glCode: "9100101" },
+      { key: "TRADE_CONTINGENT_LIABILITY", glCode: "9200101" },
+      { key: "TRADE_MARGIN", glCode: "1300301" },
+      { key: "TRADE_COMMISSION_INCOME", glCode: "4100301" },
+      { key: "TRADE_SETTLEMENT", glCode: "2990301" },
+      { key: "NPL_WORKOUT", glCode: "1300401" },
+      { key: "RECOVERY_INCOME", glCode: "4100401" },
+      { key: "VIRTUAL_ACCOUNT_CLEARING", glCode: "2990401" },
+      { key: "ESCROW_LIABILITY", glCode: "2200301" },
+      { key: "STANDING_ORDER_CLEARING", glCode: "2990501" },
+      { key: "DIRECT_DEBIT_CLEARING", glCode: "2990601" },
+      { key: "ISLAMIC_ASSET", glCode: "1300501" },
+      { key: "ISLAMIC_LIABILITY", glCode: "2200401" },
+      { key: "ISLAMIC_INCOME", glCode: "4100501" },
+      { key: "ISLAMIC_EXPENSE", glCode: "5100301" },
+      { key: "CARD_DISPUTE_SUSPENSE", glCode: "2990701" },
     ];
     for (const mapping of systemGlMappings) {
       await prisma.systemGlConfig.upsert({
@@ -393,6 +448,50 @@ async function main() {
       });
       console.info("[bank-core:seed] treasury nostro: AZ21DEMO00000000009999 (1000000.00 AZN cached)");
     }
+
+    const quoteDay = new Date(now.toISOString().slice(0, 10));
+    await prisma.rateIndexQuote.upsert({
+      where: {
+        bankOrgId_indexKey_asOfDate: {
+          bankOrgId,
+          indexKey: "CBAR_REF",
+          asOfDate: quoteDay,
+        },
+      },
+      create: {
+        bankOrgId,
+        indexKey: "CBAR_REF",
+        asOfDate: quoteDay,
+        rateAnnual: 0.075,
+        source: "STUB",
+      },
+      update: { rateAnnual: 0.075, source: "STUB" },
+    });
+
+    await prisma.eclParameterSet.upsert({
+      where: { bankOrgId_version: { bankOrgId, version: "lab-v1" } },
+      create: {
+        bankOrgId,
+        version: "lab-v1",
+        asOfDate: quoteDay,
+        active: true,
+        paramsJson: {
+          pdByStage: { "1": 0.01, "2": 0.05, "3": 0.25 },
+          pdLowScoreUplift: 0.02,
+          lgdUnsecured: 0.45,
+          lgdSecuredFloor: 0.1,
+        },
+      },
+      update: {
+        active: true,
+        paramsJson: {
+          pdByStage: { "1": 0.01, "2": 0.05, "3": 0.25 },
+          pdLowScoreUplift: 0.02,
+          lgdUnsecured: 0.45,
+          lgdSecuredFloor: 0.1,
+        },
+      },
+    });
 
     console.info(`[bank-core:seed] done for bankOrgId=${bankOrgId}`);
   } finally {

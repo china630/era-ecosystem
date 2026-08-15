@@ -13,10 +13,7 @@ function toBase64Url(input: Buffer): string {
 export class PiiCryptoService {
   constructor(private readonly config: ConfigService) {}
 
-  private resolveKey(
-    primaryName: string,
-    fallbackSecretName: string = "JWT_SECRET",
-  ): Buffer {
+  private resolveKey(primaryName: string): Buffer {
     const raw = this.config.get<string>(primaryName)?.trim();
     if (raw) {
       // Accept either base64 / base64url or plain text secret.
@@ -24,8 +21,9 @@ export class PiiCryptoService {
       if (asB64.length >= 32) return createHash("sha256").update(asB64).digest();
       return createHash("sha256").update(raw).digest();
     }
-    const fallback = this.config.get<string>(fallbackSecretName) ?? "erafinance-dev-fallback";
-    return createHash("sha256").update(`${primaryName}:${fallback}`).digest();
+    throw new Error(
+      `${primaryName} is required (dedicated PII key; JWT_SECRET fallback removed)`,
+    );
   }
 
   normalizeVoen(value: string): string {

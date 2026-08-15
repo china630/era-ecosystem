@@ -11,7 +11,22 @@ Living matrix for **era-bank-core** (headless CBS) + **era-bank** (ops satellite
 | **N/A** | Documented out-of-scope for this delivery wave |
 | **Partial** | Two layers OK; third incomplete |
 
-**Last audit:** 2026-06-14 (matrix gaps closure wave)
+**Last audit:** 2026-08-05 (Ops UI playbook waves W0–W7 + honesty closeout)
+
+---
+
+## 2026-08-05 honesty delta (playbook + domain depth)
+
+| Area | Prior claim | Now |
+|------|-------------|-----|
+| Ops UI = playbook / GA | Modal wave marked as ops pilot GA | **UI 🟡** — kit chrome in progress (`BankDataGrid`, `navSections`, `CatalogField`); **not** sell/show GA |
+| Edition | notes implied ops ready | `docs/editions/bank.yaml` stays **`mvp` / `pilot_ready: false`** |
+| Payment staff approve | **N/A** — no engine | **Partial** — `PENDING_APPROVAL` + `POST …/approve|reject` SoD + ops queue filter |
+| Loan bureau / collateral / NPL / IFRS9 | **N/A** — no engine | **Partial** — stub bureau, collateral JSON, DPD→stage, `/risk/*` scaffold |
+| GL ops page | executive only | `/gl` trial balance list in Core nav |
+| Risk hub | missing | `/risk` dashboard + portfolio/collateral/ecl |
+
+**Forbidden:** UI ✅ / edition `ga` / `pilot_ready: true` without signed lab UAT.
 
 ---
 
@@ -57,7 +72,7 @@ Living matrix for **era-bank-core** (headless CBS) + **era-bank** (ops satellite
 | Payments | `/payments/new`, `/payments/[id]` pages | modals + **Register inbound** modal | redirect |
 | Deposits | `/deposits/new`, `/deposits/[id]` pages | modals + **ADİF badge** | redirect |
 | Loans | `/loans/new`, `/loans/[id]` pages | modals + schedule + **restructure** tab | redirect |
-| Product factory | raw create form only | template **list** + create modal | — |
+| Product factory | raw create form only | kind forms + activate/retire + apply-on-originate | — |
 | AML rules | ❌ no screen | `/aml/rules` table + edit modal | new route |
 | AML alerts | PATCH-only workflow | detail modal + **POST escalate** | — |
 | FATCA/CRS | read-only grid | grid + **Edit classification** modal | — |
@@ -108,15 +123,16 @@ Living matrix for **era-bank-core** (headless CBS) + **era-bank** (ops satellite
 | `docs/ECOSYSTEM_URLS.md` | GL BFF note |
 | `era-bank/.cursor/rules/era-bank-ui.mdc` | **new** — no `/new` ops pages rule |
 
-### Explicit out-of-scope (unchanged — documented N/A)
+### Explicit out-of-scope / partial (honesty)
 
 | Area | Status | Where |
 |------|--------|-------|
-| Loan bureau / collateral / NPL / IFRS9 | **N/A** | PRD §3 — no engine |
-| Payment staff approve queue | **N/A** | no engine `approve` endpoint |
-| DBO screens in `era-bank` | **HEADLESS** | → `era-bank-dbo` `:3211` |
+| Loan bureau / collateral / NPL / IFRS9 | **Partial** | Stub bureau + collateral + DPD staging; live AKB/ECL cert **N/A** |
+| Payment staff approve queue | **Partial** | Engine SoD + ops Approve/Reject; threshold rules still coarse |
+| DBO screens in `era-bank` | **HEADLESS** | → `era-bank-dbo` `:3211` (UX out of this wave) |
 | Teller drawer reconciliation | **N/A** | `TELLER-DRAWER.md` vNext |
 | Production certification | **N/A** | `CERTIFICATION-TRACK.md` |
+| Live CBAR/AKB/ƏMDK connectors | **N/A** | certification track |
 
 ### Verification (Wave 7)
 
@@ -140,7 +156,7 @@ Living matrix for **era-bank-core** (headless CBS) + **era-bank** (ops satellite
 | Modal CRUD playbook | 100% create/detail/workflow in modals | **100%** |
 | GL BFF (`/api/gl/*`) | Green | **OK** |
 
-**Ops pilot GA:** yes — teller day via modals only ([UAT-SMOKE.md](../era-bank/doc/UAT-SMOKE.md)).
+**Ops pilot GA:** **no** — playbook UI 🟡; lab UAT unsigned. Prior “ops pilot GA via modals” claim retired (2026-08-05).
 
 **Production/regulatory:** not yet — see [CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md).
 
@@ -196,7 +212,7 @@ Legacy `/new`, `/[id]` routes redirect to index with query params (bookmarks pre
 | ADİF badge | PRD display | `adifTagged` field | list + detail badge | **OK** |
 | Loan originate/disburse/repay | P3 | loans API | modals | **OK** |
 | Loan restructure | P3 | `POST .../restructure` | detail modal tab | **OK** |
-| Product factory | P3 | GET/POST templates | list + create modal | **OK** |
+| Product factory | P3 | GET/PATCH/activate/retire + params contract | list + kind authoring + lifecycle | **OK** (UI 🟡 depth, not ga) |
 | Bureau/collateral/NPL/IFRS9 | PRD §3 | — | — | **N/A** |
 
 ---

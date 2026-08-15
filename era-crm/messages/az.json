@@ -108,7 +108,7 @@
   "import": {
     "title": "Prospect import",
     "subtitle": "e-taxes CSV/XLSX",
-    "hint": "azerbaijan-legal-entities.csv və ya uyğun fayl. Maks 5000 sətir.",
+    "hint": "azerbaijan-companies-with-voen.csv nümunəsi. Maks 5000 sətir.",
     "fileLabel": "Fayl",
     "fileRequired": "Fayl seçin",
     "mode": "Rejim",

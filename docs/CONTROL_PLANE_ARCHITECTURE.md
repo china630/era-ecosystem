@@ -65,7 +65,8 @@ Two **independent** money flows per organization (VÖEN):
 | **Trial** | 3 calendar months from signup (`trialExpiresAt`, Asia/Baku) |
 | **During trial** | Base ERP + trial bundle modules; **no** monthly platform invoice for modules |
 | **After trial** | **Post-paid:** usage in month **M** → platform invoice on **1st of M+1** for full month M |
-| **What is billed** | ERA Core (Foundation) + active `organization_modules` (ERP modules, `industry_*` satellites, platform add-ons) + bundle discounts |
+| **What is billed** | ERA Core (Foundation) + ERA Banking Core (Foundation, only when `industry_banking` is connected) + active `organization_modules` (ERP modules, `industry_*` satellites, platform add-ons) + bundle discounts |
+| **OCR** | Included pages via tier `maxOcrPagesPerMonth`; overlimit metered at `pricePerOcrPageAzn` (no separate hard-cap on OCR jobs) |
 | **Deactivation** | Module stays active until end of calendar month (`pendingDeactivation`) |
 
 ### 2. Metered quotas — tier spend ceiling (real-time accumulation)

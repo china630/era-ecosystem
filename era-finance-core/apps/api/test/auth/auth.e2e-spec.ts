@@ -26,8 +26,11 @@ describe("AuthService (JWT: login + switch-org)", () => {
           isGlobal: true,
           load: [
             () => ({
-              JWT_SECRET: "test-jwt-secret-for-auth-spec",
+              ERA_JWT_SECRET: "test-jwt-secret-for-auth-spec",
               JWT_REFRESH_SECRET: "test-refresh-secret-for-auth-spec",
+              PII_ENCRYPTION_KEY: "test-pii-encryption-key-32chars!!",
+              PII_BLIND_INDEX_KEY: "test-pii-blind-index-key-32chars!",
+              AUDIT_HASH_SECRET: "test-audit-hash-secret-min-32-chars",
             }),
           ],
         }),

@@ -14,8 +14,13 @@ export type HeaderTierUsageBarProps = {
   quotas: HeaderTierQuota[];
   /** Optional badges after tier (trial, read-only). */
   tierSuffix?: ReactNode;
+  /** Legacy: separate "Manage" link. Prefer `href` (whole box clickable). */
   manageHref?: string;
   manageLabel?: string;
+  /** When set, the entire bar becomes a link (no separate Manage link). */
+  href?: string;
+  /** Accessible label for the whole-box link. */
+  ariaLabel?: string;
   className?: string;
 };
 
@@ -62,18 +67,15 @@ export function HeaderTierUsageBar({
   tierSuffix,
   manageHref,
   manageLabel,
+  href,
+  ariaLabel,
   className = "",
 }: HeaderTierUsageBarProps) {
   const visible = quotas.filter((q) => q.max != null || q.current > 0);
   if (visible.length === 0 && !tier) return null;
 
-  return (
-    <div
-      className={[
-        "hidden min-w-0 max-w-[min(100%,420px)] items-center gap-2 sm:flex",
-        className,
-      ].join(" ")}
-    >
+  const inner = (
+    <>
       <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[#2980B9]/15 bg-[#EBEDF0] px-2 py-1 text-[11px] font-semibold uppercase text-[#34495E]">
         {tier}
         {tierSuffix}
@@ -83,7 +85,7 @@ export function HeaderTierUsageBar({
           <QuotaBar key={q.key} quota={q} />
         ))}
       </div>
-      {manageHref && manageLabel ? (
+      {!href && manageHref && manageLabel ? (
         <a
           href={manageHref}
           className="shrink-0 text-[11px] font-medium text-[#2980B9] hover:underline"
@@ -91,6 +93,29 @@ export function HeaderTierUsageBar({
           {manageLabel}
         </a>
       ) : null}
-    </div>
+    </>
   );
+
+  const baseClass = [
+    "hidden min-w-0 max-w-[min(100%,420px)] items-center gap-2 sm:flex",
+    className,
+  ].join(" ");
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        aria-label={ariaLabel}
+        title={ariaLabel}
+        className={[
+          baseClass,
+          "rounded-md px-1 -mx-1 transition hover:bg-[#2980B9]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2980B9]/40",
+        ].join(" ")}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return <div className={baseClass}>{inner}</div>;
 }

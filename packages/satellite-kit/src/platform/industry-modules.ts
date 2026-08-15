@@ -185,9 +185,39 @@ export function industryItemByVertical(
   return INDUSTRY_NAV_ITEMS.find((i) => i.vertical === normalized);
 }
 
+/**
+ * Static NEXT_PUBLIC_* reads. The Next.js/webpack compiler only inlines direct
+ * `process.env.NEXT_PUBLIC_X` member expressions into the client bundle; indirect
+ * access (`const e = process.env; e[key]`) is NOT replaced and resolves to
+ * `undefined` in the browser. Enumerate every launcher key here so the values
+ * survive into the client bundle. Server-side, real `process.env` is merged on
+ * top so `ERA_*_ORIGIN` fallbacks keep working.
+ */
+function staticPublicEnv(): Record<string, string | undefined> {
+  return {
+    NEXT_PUBLIC_SATELLITE_RETAIL_URL: process.env.NEXT_PUBLIC_SATELLITE_RETAIL_URL,
+    NEXT_PUBLIC_SATELLITE_LOGISTICS_URL: process.env.NEXT_PUBLIC_SATELLITE_LOGISTICS_URL,
+    NEXT_PUBLIC_SATELLITE_CONSTRUCTION_URL:
+      process.env.NEXT_PUBLIC_SATELLITE_CONSTRUCTION_URL,
+    NEXT_PUBLIC_SATELLITE_CRM_URL: process.env.NEXT_PUBLIC_SATELLITE_CRM_URL,
+    NEXT_PUBLIC_SATELLITE_AUTO_URL: process.env.NEXT_PUBLIC_SATELLITE_AUTO_URL,
+    NEXT_PUBLIC_SATELLITE_CLINIC_URL: process.env.NEXT_PUBLIC_SATELLITE_CLINIC_URL,
+    NEXT_PUBLIC_SATELLITE_WHOLESALE_URL: process.env.NEXT_PUBLIC_SATELLITE_WHOLESALE_URL,
+    NEXT_PUBLIC_SATELLITE_HOTEL_URL: process.env.NEXT_PUBLIC_SATELLITE_HOTEL_URL,
+    NEXT_PUBLIC_SATELLITE_FNB_POS_URL: process.env.NEXT_PUBLIC_SATELLITE_FNB_POS_URL,
+    NEXT_PUBLIC_SATELLITE_FB_POS_URL: process.env.NEXT_PUBLIC_SATELLITE_FB_POS_URL,
+    NEXT_PUBLIC_SATELLITE_BANK_URL: process.env.NEXT_PUBLIC_SATELLITE_BANK_URL,
+    NEXT_PUBLIC_FINANCE_WEB_URL: process.env.NEXT_PUBLIC_FINANCE_WEB_URL,
+  };
+}
+
 function readEnvRecord(): Record<string, string | undefined> {
-  if (typeof process === "undefined" || !process.env) return {};
-  return process.env as Record<string, string | undefined>;
+  const staticEnv = staticPublicEnv();
+  const isServer = typeof window === "undefined";
+  if (isServer && typeof process !== "undefined" && process.env) {
+    return { ...staticEnv, ...(process.env as Record<string, string | undefined>) };
+  }
+  return staticEnv;
 }
 
 export function satelliteUrlForItem(

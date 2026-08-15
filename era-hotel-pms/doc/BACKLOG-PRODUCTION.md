@@ -60,7 +60,7 @@ Local UAT uses **mock**. Production cutover requires certified adapter (not bloc
 
 ### Remaining (Wave C+)
 
-- OTA live connectors (Booking.com, etc.)
+- OTA live connectors (Booking.com, Expedia, Exely) — adapter shells exist; **not live** without vendor creds (HOT-CH-02 / H-BL-25)
 - e-qaimə production adapter
 - ~1243 screen manifest — optional merge from NotebookLM
 - OpenAPI ERP hardening (already stubbed — mark DELIVERY stale `[ ]` as done)
@@ -70,7 +70,8 @@ Local UAT uses **mock**. Production cutover requires certified adapter (not bloc
 | Domain | Action |
 |--------|--------|
 | Sales invoices | Keep operational list; accounting in Finance |
-| Agency GL / aging | Keep city ledger snapshot; reconciliation in Finance |
+| Agency GL / aging / invoice matching | Keep city ledger **ops** snapshot + transfer handoff; aging/match in Finance (**H-BL-48**) |
+| Payment terms master | Finance (or contract mirror); hotel enforces at checkout-to-CL |
 | Purchases | Remove from hotel scope; link only |
 | Warehouse | Local consumption MVP only; master stock in Finance |
 
@@ -100,7 +101,25 @@ Source: hospitality business-process review vs ecosystem readiness (hotel + fb +
 | H-BL-07 | **Guest Intelligence pilot** | hotel-pms + MDM | **Done** | [NAFTA-GUEST-INTELLIGENCE.md](./NAFTA-GUEST-INTELLIGENCE.md), `/reports/guest-dedup` |
 | H-BL-08 | **Dynamic pricing Stage 25 completion** | hotel-pms | **Done** | BAR API/UI, `quoteReservationStay`, NA/recalc wired |
 | H-BL-09 | **Early / late check-in-out charges** | hotel-pms | **Done** | Policy JSON, preview API, post on check-in/out; **UI:** reservation card left panel — early/late fee preview on time change |
-| H-BL-10 | **Prepayment / deposit full lifecycle** | hotel-pms | **Done** | `FolioDeposit`, deposits API, apply on check-in |
+| H-BL-10 | **Prepayment / deposit full lifecycle** | hotel-pms | **Done** | HELD/APPLIED@check-in/settle/checkout/REFUNDED; see H-BL-41 |
+
+### P5 — FO money close + City Ledger (2026-08-03)
+
+Honest audit vs Opera-like CL. ADR: [docs/adr/hotel-city-ledger-and-fo-money.md](../../docs/adr/hotel-city-ledger-and-fo-money.md). Coverage: `HOT-CASH-*` / `HOT-CL-*` / `HOT-CO-*` / `HOT-NA-*` in [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md).
+
+| ID | Task | Primary owner | Status | Notes |
+|----|------|---------------|--------|-------|
+| H-BL-40 | **Transfer to City Ledger at checkout** | hotel-pms | **Done** | PENDING_AR → TRANSFERRED_AR; contract + credit-limit gate; guest ledger cannot leave balance |
+| H-BL-41 | **Deposit apply / offset at settle & checkout** | hotel-pms | **Done** | Extend H-BL-10; DEPOSIT settle lines; checkout auto-apply |
+| H-BL-42 | **Folio payment refunds** | hotel-pms (+ fiscal) | **Done** | `refundFolioPayment`; mock fiscal; agency path via settlement |
+| H-BL-43 | **Checkout discounts (manual + automatic)** | hotel-pms | **Done** | DISCOUNT charge at settle/checkout; promo/`discountPct` |
+| H-BL-44 | **Night Audit polish** | hotel-pms | **Done** | Exceptions, auto no-show, trial preview on `/operations` |
+| H-BL-45 | **Selective / per-guest folio close** | hotel-pms | **Done** | `POST /api/folios/[id]/close` + folio UI |
+| H-BL-46 | **Agency prepaid/postpaid settlement + commission** | hotel-pms + Finance | **Done (ops)** | Hotel apply on TRANSFERRED_AR; commission accrual; bank match in Finance |
+| H-BL-47 | **List filter enrichment (HOT UI standard)** | hotel-pms | **Done** | EraListFilterBar depth on FO lists + allotment/reservations |
+| H-BL-48 | **Finance AR: terms, aging, invoice matching** | era-finance-core | **Done** | `paymentTermsDays`; aging; `/sales/invoices/allocate` |
+
+**Already MVP (do not re-scope as greenfield):** transfers `HOT-XFER-01`, banquets `HOT-BEO-01`, settle `HOT-CASH-01`, agency CL snapshot `HOT-CL-03`, NA core `HOT-NA-01`.
 
 ### P3 — Future / optional parity
 
@@ -111,7 +130,7 @@ Source: hospitality business-process review vs ecosystem readiness (hotel + fb +
 | H-BL-22 | Guest dispatch | hotel-pms | **Done** | `DispatchVehicle/Request`, `/dispatch` board |
 | H-BL-23 | KBS / AZ tourism registry | compliance gateway | **Done (mock+live stub)** | `tourism-registry.service`, ADR, submit API |
 | H-BL-24 | e-qaimə production adapter | Finance + hotel | **Stub** | `eqaime.service`, fiscal read-only fields, ADR — prod cert pending |
-| H-BL-25 | OTA Booking.com / Expedia live | hotel-pms channel | **Done (adapters)** | `booking-com.adapter`, `expedia.adapter`, BAR push |
+| H-BL-25 | OTA Booking.com / Expedia live | hotel-pms channel | **Partial (adapters STUB/dry-run)** | Adapter shells + webhook/ARI push exist; **live vendor sync not done** until credentials + certification. See HOT-CH-02. |
 | H-BL-26 | Guest CRM P2/P3 buttons | hotel-pms | **Done** | [GUEST-CRM-ELECTRAWEB.md](./GUEST-CRM-ELECTRAWEB.md), extension pages |
 | H-BL-27 | Loyalty redeem at checkout | orchestrator + hotel | **Done** | `GET /api/loyalty/balance`, settlement burn (P2) |
 | H-BL-28 | Procedure compatibility rules | era-clinic | **Done** | `ProcedureCompatibilityRule`, clinic + hotel validate |
@@ -121,7 +140,7 @@ Source: hospitality business-process review vs ecosystem readiness (hotel + fb +
 | ID | Task | Primary owner | Notes |
 |----|------|---------------|-------|
 | H-BL-30 | **B2B contract management / agency sales** | hotel distribution | **Done** — `SalesContract`, `ContractAllotment`, `/admin/contracts`, reservation `salesContractId`, ADR |
-| H-BL-31 | **Full MICE / Sales & Catering** | hotel-pms + era-fnb-pos | **Done** — `EventOrderLine`, resource/staff, master folio settlement, profitability report |
+| H-BL-31 | **Full MICE / Sales & Catering** | hotel-pms + era-fnb-pos | **Done (MVP)** — BEO lines/resources/staff/settlement/P&L (HOT-BEO-01); not full Opera S&C |
 
 **Guest CRM boundary:** operational guest profile = **hotel-pms** (`hotel_guest_experience`). **`era-crm`** = field sales leads only — not for 7k guest DB ([ELEKTRAWEB-PARITY § Glossary](./ELEKTRAWEB-PARITY.md)).
 

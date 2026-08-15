@@ -4,10 +4,8 @@ import { BillingMeterService } from "../billing/billing-meter.service";
 import { bakuMonthBounds, billingPeriodKeyBaku } from "../billing/baku-billing.util";
 import { TARIFF_TIER_LIMITS } from "../billing/tariff-limits";
 import { resolveOrganizationUuid } from "../common/organization-id.util";
-import type { TierQuotas } from "../constants/quotas";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
-import { QuotaExceededException } from "./quota-exceeded.exception";
 
 @Injectable()
 export class QuotaService {
@@ -129,19 +127,6 @@ export class QuotaService {
 
   async assertInvoiceMonthlyQuota(organizationId: string): Promise<void> {
     return this.assertInvoiceQuota(organizationId);
-  }
-
-  async assertOcrJobsPerMonth(organizationId: string): Promise<void> {
-    const orgId = resolveOrganizationUuid(organizationId);
-    if (!orgId) return;
-    const limit = await this.systemConfig.getOcrJobsPerOrgMonthLimit();
-    const tier = await this.getSubscriptionTier(orgId);
-    if (tier === TariffTier.TIER_3) return;
-    // ERP ocrJob table is not on control plane — quota enforced in Finance via internal API.
-    const count = 0;
-    if (count >= limit) {
-      throw new QuotaExceededException("maxOcrJobsPerMonth", limit, count);
-    }
   }
 
   async addStorageUsage(organizationId: string, additionalBytes: number): Promise<void> {

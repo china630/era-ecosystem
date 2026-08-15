@@ -1,0 +1,4 @@
+product: bank
+status: mvp
+pilot_ready: false
+notes: "Full commercial CBS: Phase 0+FC-1…7+XO lab scaffolds done; YC-E mode adapters ready. pilot_ready:false until YC-E7 field evidence (partner creds ⏸). Not ga. CAP-RSK-CERT DECLARED (lab pack only)."

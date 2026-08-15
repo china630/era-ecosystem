@@ -57,7 +57,6 @@ export type PublicPricingResponse = {
   pricingBundles: PublicPricingBundle[];
   meterUnitPricing: MeterUnitPricing;
   tierSpendCeilings: Partial<Record<string, number>>;
-  ocrJobsPerOrgMonth: number | null;
   standardModules?: PublicStandardModule[];
   premiumModules?: PublicPremiumModule[];
   bundles?: PublicBundleStorefront[];

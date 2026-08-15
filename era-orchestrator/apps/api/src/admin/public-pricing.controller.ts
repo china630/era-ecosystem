@@ -36,7 +36,6 @@ export class PublicPricingController {
         tierLegacyPricePerMonthAzn: {},
         tierQuotasIncluded: {},
         quotaUnitPricing: null,
-        ocrJobsPerOrgMonth: null,
         unavailable: true as const,
       };
     }

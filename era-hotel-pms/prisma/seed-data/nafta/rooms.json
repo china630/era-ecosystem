@@ -1,0 +1,704 @@
+[
+ {
+  "roomNumber": "1001",
+  "typeCode": "DLX",
+  "floor": 10,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "1002",
+  "typeCode": "STD-DBL",
+  "floor": 10,
+  "status": "CLEAN",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "1003",
+  "typeCode": "JS",
+  "floor": 10,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "1004",
+  "typeCode": "STD-DBL",
+  "floor": 10,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "1005",
+  "typeCode": "JS",
+  "floor": 10,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "1006",
+  "typeCode": "STD-DBL",
+  "floor": 10,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "1007",
+  "typeCode": "JS",
+  "floor": 10,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "201",
+  "typeCode": "STD-TWN",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "202",
+  "typeCode": "STD-TRP",
+  "floor": 2,
+  "status": "CLEAN",
+  "bedType": "TRP",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "203",
+  "typeCode": "STD-DBL",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "204",
+  "typeCode": "STD-TWN",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "205",
+  "typeCode": "STD-TWN",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "206",
+  "typeCode": "STD-TWN",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "207",
+  "typeCode": "STD-DBL",
+  "floor": 2,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "209",
+  "typeCode": "JS",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "301",
+  "typeCode": "DLX",
+  "floor": 3,
+  "status": "CLEAN",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "302",
+  "typeCode": "STD-TWN",
+  "floor": 3,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "303",
+  "typeCode": "STD-TWN",
+  "floor": 3,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "304",
+  "typeCode": "STD-TWN",
+  "floor": 3,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "305",
+  "typeCode": "STD-DBL",
+  "floor": 3,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "306",
+  "typeCode": "STD-TWN",
+  "floor": 3,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "307",
+  "typeCode": "STD-TWN",
+  "floor": 3,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "309",
+  "typeCode": "STD-DBL",
+  "floor": 3,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "311",
+  "typeCode": "JS",
+  "floor": 3,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "401",
+  "typeCode": "DLX",
+  "floor": 4,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "402",
+  "typeCode": "STD-TWN",
+  "floor": 4,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "403",
+  "typeCode": "STD-TWN",
+  "floor": 4,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "404",
+  "typeCode": "STD-TWN",
+  "floor": 4,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "405",
+  "typeCode": "STD-DBL",
+  "floor": 4,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "406",
+  "typeCode": "STD-TWN",
+  "floor": 2,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "407",
+  "typeCode": "STD-TWN",
+  "floor": 4,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "409",
+  "typeCode": "STD-DBL",
+  "floor": 4,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "411",
+  "typeCode": "JS",
+  "floor": 4,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "501",
+  "typeCode": "DLX",
+  "floor": 5,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "502",
+  "typeCode": "STD-TWN",
+  "floor": 5,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "503",
+  "typeCode": "STD-TWN",
+  "floor": 5,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "504",
+  "typeCode": "STD-TWN",
+  "floor": 5,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "505",
+  "typeCode": "STD-DBL",
+  "floor": 5,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "506",
+  "typeCode": "STD-TWN",
+  "floor": 5,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "507",
+  "typeCode": "STD-TWN",
+  "floor": 5,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "509",
+  "typeCode": "STD-DBL",
+  "floor": 0,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "511",
+  "typeCode": "JS",
+  "floor": 5,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "601",
+  "typeCode": "DLX",
+  "floor": 6,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "602",
+  "typeCode": "STD-TWN",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "603",
+  "typeCode": "STD-TWN",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "604",
+  "typeCode": "STD-TWN",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "605",
+  "typeCode": "STD-DBL",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "606",
+  "typeCode": "STD-TWN",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "607",
+  "typeCode": "STD-TWN",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "609",
+  "typeCode": "STD-DBL",
+  "floor": 6,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "611",
+  "typeCode": "JS",
+  "floor": 6,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "701",
+  "typeCode": "DLX",
+  "floor": 7,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "702",
+  "typeCode": "STD-TRP",
+  "floor": 7,
+  "status": "CLEAN",
+  "bedType": "TRP",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "703",
+  "typeCode": "STD-TWN",
+  "floor": 7,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "704",
+  "typeCode": "STD-TWN",
+  "floor": 7,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "705",
+  "typeCode": "STD-DBL",
+  "floor": 7,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "706",
+  "typeCode": "STD-TWN",
+  "floor": 7,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "707",
+  "typeCode": "STD-TWN",
+  "floor": 7,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "709",
+  "typeCode": "STD-DBL",
+  "floor": 7,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "711",
+  "typeCode": "JS",
+  "floor": 7,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "801",
+  "typeCode": "DLX",
+  "floor": 8,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "802",
+  "typeCode": "STD-TRP",
+  "floor": 8,
+  "status": "CLEAN",
+  "bedType": "TRP",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "803",
+  "typeCode": "STD-TWN",
+  "floor": 8,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "804",
+  "typeCode": "STD-TWN",
+  "floor": 8,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "805",
+  "typeCode": "STD-DBL",
+  "floor": 8,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "806",
+  "typeCode": "STD-TWN",
+  "floor": 8,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "807",
+  "typeCode": "STD-TWN",
+  "floor": 8,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "809",
+  "typeCode": "STD-DBL",
+  "floor": 8,
+  "status": "DIRTY",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "811",
+  "typeCode": "JS",
+  "floor": 8,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "901",
+  "typeCode": "DLX",
+  "floor": 9,
+  "status": "DIRTY",
+  "bedType": "KNG",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "902",
+  "typeCode": "STD-TRP",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "TRP",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "903",
+  "typeCode": "STD-TWN",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "904",
+  "typeCode": "STD-TWN",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "905",
+  "typeCode": "STD-DBL",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "906",
+  "typeCode": "STD-TWN",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "907",
+  "typeCode": "STD-TWN",
+  "floor": 9,
+  "status": "DIRTY",
+  "bedType": "TWN",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "909",
+  "typeCode": "STD-DBL",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ },
+ {
+  "roomNumber": "911",
+  "typeCode": "JS",
+  "floor": 9,
+  "status": "CLEAN",
+  "bedType": "DBL",
+  "deleted": false,
+  "disabled": false
+ }
+]

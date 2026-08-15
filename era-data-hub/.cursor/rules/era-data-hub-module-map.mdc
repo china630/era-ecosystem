@@ -8,6 +8,8 @@ alwaysApply: false
 
 # Data Hub module map
 
+**Acceptance SSOT:** [Data-Hub-Acceptance-System](../../../docs/acceptance/Data-Hub-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Data-Hub-Product-Readiness-Matrix.md) · edition [`docs/editions/data-hub.yaml`](../../../docs/editions/data-hub.yaml)
+
 | Module | Path | Role |
 |--------|------|------|
 | Auth | `apps/api/src/auth/` | Service-to-service auth |

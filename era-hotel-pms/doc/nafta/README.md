@@ -3,6 +3,7 @@
 Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full screen dump omitted; see clone-spec and reference catalogs.
 
 **Import file checklist (hotel wizard + clinic/FnB data packs):** [IMPORT_FILE_CHECKLIST.md](./IMPORT_FILE_CHECKLIST.md)  
+**BAR accounting base vs package sell:** [BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md) · [ADR](../../../docs/adr/hotel-bar-accounting-vs-package-sell.md) · costing ref [reference/hotel-costing-and-pricing-usali.md](./reference/hotel-costing-and-pricing-usali.md)  
 **Live dual-run (post-Excel mirror via browser plugin):** [ELEKTRAWEB-LIVE-BRIDGE.md](../ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](../../../docs/adr/hotel-elektraweb-live-bridge.md)
 
 ## P0 modules → implementation
@@ -20,11 +21,17 @@ Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full s
 
 Stock / purchasing, full CRM surveys, loyalty, LIS/HL7, SPA recipes → stock, citizen portal UI.
 
-**Post-W3 product backlog (gaps not in sibling satellites):** [BACKLOG-PRODUCTION.md § Product gaps](../BACKLOG-PRODUCTION.md#product-gaps--not-covered-by-other-satellites-2026-06-14) — P2 items H-BL-01…10 (split settlement, meal gate, guest intelligence, …); P4 H-BL-30 B2B contract mgmt (future).
+**Post-W3 product backlog (gaps not in sibling satellites):** [BACKLOG-PRODUCTION.md § Product gaps](../BACKLOG-PRODUCTION.md#product-gaps--not-covered-by-other-satellites-2026-06-14).
 
-**Wave 4 (done):** transfers (HN-7), banquets (HN-8).
+| Priority | Status |
+|----------|--------|
+| P2 H-BL-01…10 | Mostly done; H-BL-10 deposit **Partial** → H-BL-41 |
+| P4 H-BL-30/31 | Contracts + BEO **MVP done** |
+| **P5 H-BL-40…48** | **Done** — FO money close + City Ledger ops vs Finance AR ([ADR](../../../docs/adr/hotel-city-ledger-and-fo-money.md)) |
 
-**Wave 5 (done):** finance GL bridge (NW-1), invoice/agency (NW-2), contract pricing (NW-3) — manifest [screens-manifest-v2-wave5-must.json](./screens-manifest-v2-wave5-must.json).
+**Wave 4 (done MVP):** transfers (HN-7), banquets (HN-8).
+
+**Wave 5 (done ops):** finance GL bridge (NW-1), invoice/agency **ops snapshot** (NW-2 — not full AR), contract pricing (NW-3) — manifest [screens-manifest-v2-wave5-must.json](./screens-manifest-v2-wave5-must.json).
 
 ## Wave 5 screens (WA_ACC_01 … WA_CHAN_02)
 

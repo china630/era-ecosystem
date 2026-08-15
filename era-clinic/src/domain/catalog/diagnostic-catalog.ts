@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { prisma } from "@/lib/prisma";
 import type {
   CatalogAnalyteDef,
   CatalogFieldDef,
@@ -23,164 +22,164 @@ export {
   expandPackageCodes,
 } from "@/domain/catalog/diagnostic-catalog-shared";
 
-type RawCatalog = {
-  version?: string;
-  commonMetaFields?: CatalogFieldDef[];
-  modalities: Array<{
-    code: string;
-    kind: string;
-    title: L10n;
-    templates: Array<{
-      code: string;
-      category: string;
-      title: L10n;
-      serviceCode?: string;
-      fields: CatalogFieldDef[];
-    }>;
-  }>;
-  labPanels: Array<{
-    code: string;
-    category: string;
-    title: L10n;
-    serviceCode?: string;
-    analytes: CatalogAnalyteDef[];
-  }>;
-  visitTemplates?: Array<{
-    code: string;
-    specialty: string;
-    title: L10n;
-    fields: CatalogFieldDef[];
-  }>;
-  packages?: Array<{
-    code: string;
-    title: L10n;
-    includes: string[];
-  }>;
-};
+/** Static catalog schema version; bump when the seed data shape changes materially. */
+const CATALOG_VERSION = "1.1.0";
 
-let cached: {
+type DiagnosticCatalog = {
   version: string;
   metaFields: CatalogFieldDef[];
   items: DiagnosticCatalogItem[];
   groups: DiagnosticCatalogGroup[];
-} | null = null;
+};
 
-function catalogPath(): string {
-  return join(process.cwd(), "prisma", "seed-data", "diagnostic-lab-catalog.json");
+let cached: DiagnosticCatalog | null = null;
+let inflight: Promise<DiagnosticCatalog> | null = null;
+
+export function invalidateDiagnosticCatalogCache(): void {
+  cached = null;
+  inflight = null;
 }
 
-export function loadDiagnosticCatalogRaw(): RawCatalog {
-  return JSON.parse(readFileSync(catalogPath(), "utf8")) as RawCatalog;
+function ensureGroup(
+  groupMap: Map<string, DiagnosticCatalogGroup>,
+  key: string,
+  modality: string,
+  category: string | null,
+  kind: string,
+  title: L10n,
+): DiagnosticCatalogGroup {
+  let g = groupMap.get(key);
+  if (!g) {
+    g = { key, modality, category, kind, title, itemCodes: [] };
+    groupMap.set(key, g);
+  }
+  return g;
 }
 
-export function getDiagnosticCatalog() {
-  if (cached) return cached;
-  const raw = loadDiagnosticCatalogRaw();
+async function loadDiagnosticCatalogFromDb(): Promise<DiagnosticCatalog> {
+  const [modalities, metaFieldRows] = await Promise.all([
+    prisma.modality.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        services: {
+          where: { active: true },
+          orderBy: { sortOrder: "asc" },
+          include: { analytes: { orderBy: { sortOrder: "asc" }, include: { valueOptions: { orderBy: { sortOrder: "asc" } } } } },
+        },
+      },
+    }),
+    prisma.diagnosticMetaField.findMany({ orderBy: { sortOrder: "asc" } }),
+  ]);
+
   const items: DiagnosticCatalogItem[] = [];
   const groupMap = new Map<string, DiagnosticCatalogGroup>();
 
-  function ensureGroup(
-    key: string,
-    modality: string,
-    category: string | null,
-    kind: string,
-    title: L10n,
-  ) {
-    let g = groupMap.get(key);
-    if (!g) {
-      g = { key, modality, category, kind, title, itemCodes: [] };
-      groupMap.set(key, g);
-    }
-    return g;
-  }
+  for (const modality of modalities) {
+    const modTitle: L10n = { en: modality.titleEn, ru: modality.titleRu, az: modality.titleAz };
+    const isLabKind = modality.kind === "lab_panel";
+    const isGroupless = modality.kind === "package" || modality.kind === "visit";
 
-  for (const modality of raw.modalities) {
-    const modGroup = ensureGroup(
-      `mod:${modality.code}`,
-      modality.code,
-      null,
-      modality.kind,
-      modality.title,
-    );
-    for (const tpl of modality.templates) {
-      items.push({
-        code: tpl.code,
-        kind: modality.kind,
+    const modGroup =
+      !isLabKind && !isGroupless
+        ? ensureGroup(groupMap, `mod:${modality.code}`, modality.code, null, modality.kind, modTitle)
+        : null;
+
+    for (const svc of modality.services) {
+      const title: L10n = { en: svc.titleEn, ru: svc.titleRu, az: svc.titleAz };
+      const item: DiagnosticCatalogItem = {
+        code: svc.code,
+        kind: svc.kind,
         modality: modality.code,
-        category: tpl.category,
-        title: tpl.title,
-        serviceCode: tpl.serviceCode ?? tpl.code,
-        fields: tpl.fields,
-      });
-      modGroup.itemCodes.push(tpl.code);
-      const catKey = `mod:${modality.code}:${tpl.category}`;
-      const catGroup = ensureGroup(catKey, modality.code, tpl.category, modality.kind, {
-        en: `${modality.title.en} · ${tpl.category}`,
-        ru: `${modality.title.ru} · ${tpl.category}`,
-        az: `${modality.title.az} · ${tpl.category}`,
-      });
-      catGroup.itemCodes.push(tpl.code);
+        category: svc.category,
+        title,
+        serviceCode: svc.serviceCode,
+      };
+      if (svc.fieldsJson) {
+        item.fields = JSON.parse(svc.fieldsJson) as CatalogFieldDef[];
+      }
+      if (svc.includesJson) {
+        item.includes = JSON.parse(svc.includesJson) as string[];
+      }
+      if (svc.analytes.length > 0) {
+        item.analytes = svc.analytes.map((a): CatalogAnalyteDef => ({
+          code: a.code,
+          unit: a.unit ?? undefined,
+          label: { en: a.labelEn, ru: a.labelRu, az: a.labelAz },
+          refMin: a.refMin ?? undefined,
+          refMax: a.refMax ?? undefined,
+          section: a.section ?? undefined,
+          valueType: a.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
+          valueOptions: (a.valueOptions ?? []).map((o) => ({
+            code: o.code,
+            label: { en: o.labelEn, ru: o.labelRu, az: o.labelAz },
+          })),
+        }));
+      }
+      items.push(item);
+
+      if (isLabKind) {
+        const labMod = ensureGroup(groupMap, "mod:LAB", modality.code, null, svc.kind, modTitle);
+        labMod.itemCodes.push(svc.code);
+        const labCat = ensureGroup(groupMap, `lab:${svc.category}`, modality.code, svc.category, svc.kind, {
+          en: svc.category,
+          ru: svc.category,
+          az: svc.category,
+        });
+        labCat.itemCodes.push(svc.code);
+      } else if (!isGroupless && modGroup) {
+        modGroup.itemCodes.push(svc.code);
+        const catGroup = ensureGroup(
+          groupMap,
+          `mod:${modality.code}:${svc.category}`,
+          modality.code,
+          svc.category,
+          svc.kind,
+          {
+            en: `${modTitle.en} · ${svc.category}`,
+            ru: `${modTitle.ru} · ${svc.category}`,
+            az: `${modTitle.az} · ${svc.category}`,
+          },
+        );
+        catGroup.itemCodes.push(svc.code);
+      }
     }
   }
 
-  for (const panel of raw.labPanels) {
-    items.push({
-      code: panel.code,
-      kind: "lab_panel",
-      modality: "LAB",
-      category: panel.category,
-      title: panel.title,
-      serviceCode: panel.serviceCode ?? panel.code,
-      analytes: panel.analytes,
-    });
-    const labMod = ensureGroup("mod:LAB", "LAB", null, "lab_panel", {
-      en: "Laboratory",
-      ru: "Лаборатория",
-      az: "Laboratoriya",
-    });
-    labMod.itemCodes.push(panel.code);
-    const labCat = ensureGroup(`lab:${panel.category}`, "LAB", panel.category, "lab_panel", {
-      en: panel.category,
-      ru: panel.category,
-      az: panel.category,
-    });
-    labCat.itemCodes.push(panel.code);
-  }
+  const metaFields: CatalogFieldDef[] = metaFieldRows.map((f) => ({
+    key: f.key,
+    type: f.fieldType,
+    label: { en: f.labelEn, ru: f.labelRu, az: f.labelAz },
+    unit: f.unit ?? undefined,
+    options: f.optionsJson ? (JSON.parse(f.optionsJson) as string[]) : undefined,
+    required: f.required,
+  }));
 
-  for (const pkg of raw.packages ?? []) {
-    items.push({
-      code: pkg.code,
-      kind: "package",
-      modality: "PACKAGE",
-      category: "checkup",
-      title: pkg.title,
-      serviceCode: pkg.code,
-      includes: pkg.includes,
-    });
-  }
-
-  for (const visit of raw.visitTemplates ?? []) {
-    items.push({
-      code: visit.code,
-      kind: "visit",
-      modality: "VISIT",
-      category: visit.specialty,
-      title: visit.title,
-      serviceCode: visit.code,
-      fields: visit.fields,
-    });
-  }
-
-  cached = {
-    version: raw.version ?? "1.0.0",
-    metaFields: raw.commonMetaFields ?? [],
+  return {
+    version: CATALOG_VERSION,
+    metaFields,
     items,
     groups: [...groupMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
   };
-  return cached;
 }
 
-export function findCatalogItem(code: string): DiagnosticCatalogItem | undefined {
+export async function getDiagnosticCatalog(): Promise<DiagnosticCatalog> {
+  if (cached) return cached;
+  if (!inflight) {
+    inflight = loadDiagnosticCatalogFromDb()
+      .then((result) => {
+        cached = result;
+        return result;
+      })
+      .finally(() => {
+        inflight = null;
+      });
+  }
+  return inflight;
+}
+
+export async function findCatalogItem(code: string): Promise<DiagnosticCatalogItem | undefined> {
   const primary = code.split(",")[0]?.trim() ?? code;
-  return getDiagnosticCatalog().items.find((i) => i.code === primary || i.serviceCode === primary);
+  const catalog = await getDiagnosticCatalog();
+  return catalog.items.find((i) => i.code === primary || i.serviceCode === primary);
 }

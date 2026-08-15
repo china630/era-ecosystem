@@ -105,6 +105,23 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 40, ttl: 60_000 } })
+  @Post("cp-provision")
+  @ApiOperation({
+    summary:
+      "Control-plane SSO ingress: mint a Finance-local session from an Orchestrator access token (provisions local user + org)",
+  })
+  async cpProvision(
+    @Headers("authorization") authorization: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const out = await this.auth.provisionFromControlPlane(authorization);
+    this.auth.setRefreshCookie(res, out.refreshToken);
+    const { refreshToken: _r, ...body } = out;
+    return body;
+  }
+
+  @Public()
   @Throttle({ default: { limit: 120, ttl: 60_000 } })
   @Post("extension/refresh")
   @ApiOperation({

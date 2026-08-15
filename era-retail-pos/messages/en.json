@@ -79,6 +79,7 @@
     "paymentMethod": "Payment method",
     "cash": "Cash",
     "card": "Card",
+    "transfer": "Transfer",
     "openShift": "Open shift",
     "addReceipt": "Add receipt",
     "pay": "Pay",

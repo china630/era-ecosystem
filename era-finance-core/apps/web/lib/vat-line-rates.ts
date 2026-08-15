@@ -1,7 +1,8 @@
 import { apiFetch } from "./api-client";
 
 /**
- * Default ƏDV line options when `GET /api/system/invoice-vat-rates` is unavailable.
+ * Offline-only fallback when `GET /api/system/invoice-vat-rates` fails.
+ * Ops UI must prefer TaxRate-driven rates from the API (ADR A6).
  */
 export const DEFAULT_INVOICE_VAT_RATES = [-1, 0, 2, 8, 18] as const;
 

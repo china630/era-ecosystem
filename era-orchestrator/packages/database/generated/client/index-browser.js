@@ -496,6 +496,7 @@ exports.Prisma.PricingBundleScalarFieldEnum = {
   isTrialDefault: 'isTrialDefault',
   trialDurationDays: 'trialDurationDays',
   trialQuotas: 'trialQuotas',
+  archivedAt: 'archivedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1035,7 +1036,11 @@ exports.WorkforceEmploymentStatus = exports.$Enums.WorkforceEmploymentStatus = {
 exports.WorkforceAbsenceKind = exports.$Enums.WorkforceAbsenceKind = {
   VACATION: 'VACATION',
   SICK: 'SICK',
-  UNPAID: 'UNPAID'
+  UNPAID: 'UNPAID',
+  SOCIAL_LEAVE: 'SOCIAL_LEAVE',
+  EDUCATIONAL_LEAVE: 'EDUCATIONAL_LEAVE',
+  BUSINESS_TRIP: 'BUSINESS_TRIP',
+  ADMINISTRATIVE: 'ADMINISTRATIVE'
 };
 
 exports.WorkforceAbsenceStatus = exports.$Enums.WorkforceAbsenceStatus = {

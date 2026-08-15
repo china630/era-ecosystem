@@ -113,6 +113,7 @@ export async function completeTransfer(id: string) {
     const transferCode = await prisma.revenueCode.findUnique({ where: { code: 'TRANSFER' } });
     if (!transferCode) throw new Error('Revenue code TRANSFER not configured');
     const directionLabel = order.direction === 'IN' ? 'Airport pickup' : 'Airport drop-off';
+    // postCharge resolves stay override → property FolioRoutingRule → default
     await postCharge({
       reservationId: order.reservationId,
       revenueCodeId: transferCode.id,
@@ -126,6 +127,44 @@ export async function completeTransfer(id: string) {
   return prisma.transferOrder.update({
     where: { id },
     data: { status: 'DONE', folioCharged },
+    include: {
+      vehicle: true,
+      reservation: { include: { guest: true, room: true } },
+    },
+  });
+}
+
+/** Cancel before complete. If already charged, voids the matching TRANSFER charge when possible. */
+export async function cancelTransfer(id: string, reason?: string) {
+  const order = await prisma.transferOrder.findUnique({ where: { id } });
+  if (!order) throw new Error('Transfer order not found');
+  if (order.status === 'CANCELLED') return order;
+  if (order.status === 'DONE' && order.folioCharged) {
+    const transferCode = await prisma.revenueCode.findUnique({ where: { code: 'TRANSFER' } });
+    if (transferCode) {
+      const charge = await prisma.folioCharge.findFirst({
+        where: {
+          revenueCodeId: transferCode.id,
+          folio: { reservationId: order.reservationId },
+          description: { contains: order.flightNo ?? (order.direction === 'IN' ? 'pickup' : 'drop-off') },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (charge) {
+        const { voidCharge } = await import('@/lib/services/folio.service');
+        await voidCharge(charge.id);
+      }
+    }
+  }
+
+  return prisma.transferOrder.update({
+    where: { id },
+    data: {
+      status: 'CANCELLED',
+      notes: reason
+        ? `${order.notes ? `${order.notes} | ` : ''}CANCEL: ${reason}`
+        : order.notes,
+    },
     include: {
       vehicle: true,
       reservation: { include: { guest: true, room: true } },

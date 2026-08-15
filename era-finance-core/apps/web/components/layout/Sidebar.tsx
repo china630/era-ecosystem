@@ -202,8 +202,8 @@ function CollapsibleNavSection({
           "flex w-full items-center gap-2 px-3 py-2 rounded-lg border transition",
           layoutCollapsed ? "lg:justify-center lg:px-2" : "",
           headerOn
-            ? "bg-white border-primary text-gray-900 shadow-md"
-            : "bg-transparent border-transparent text-gray-600 hover:border-gray-200 hover:bg-white/70",
+            ? "bg-[#EBF5FB] border-[#2980B9]/30 text-[#34495E] shadow-sm"
+            : "bg-transparent border-transparent text-[#7F8C8D] hover:bg-[#E2E5E9]",
         ].join(" ")}
       >
         <Icon
@@ -275,12 +275,12 @@ function SideNavItem(props: {
         props.onNavClick?.();
       }}
       className={[
-        "flex items-center rounded-lg border group",
+        "flex items-center rounded-lg group transition",
         props.nested ? "gap-2 px-2 py-1.5 text-sm" : "gap-3 px-3 py-2",
         layoutCollapsed && !props.nested ? "lg:justify-center lg:px-2 lg:gap-0" : "",
         props.isActive
-          ? "bg-white border-primary text-gray-900 shadow-md"
-          : "bg-transparent border-transparent text-gray-600 hover:border-gray-200 hover:bg-white/70",
+          ? "bg-[#2980B9]/10 text-[#2980B9]"
+          : "bg-transparent text-[#34495E] hover:bg-[#E2E5E9]",
         props.locked ? "opacity-90" : "",
       ].join(" ")}
     >
@@ -299,7 +299,8 @@ function SideNavItem(props: {
       )}
       <span
         className={[
-          "min-w-0 flex-1 truncate text-sm font-medium",
+          "min-w-0 flex-1 truncate text-sm",
+          props.isActive ? "font-semibold" : "font-medium",
           layoutCollapsed && !props.nested ? "lg:sr-only" : "",
         ].join(" ")}
       >
@@ -650,9 +651,19 @@ export function MainSidebar({
           <SideNavItem
             href="/sales/invoices"
             label={t("nav.invoices")}
-            isActive={pathname.startsWith("/sales/invoices")}
+            isActive={
+              pathname.startsWith("/sales/invoices") &&
+              !pathname.startsWith("/sales/invoices/allocate")
+            }
             icon={FileText}
             nested
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/sales/invoices/allocate"
+            label={t("nav.invoiceAllocate", { defaultValue: "Invoice matching" })}
+            isActive={pathname.startsWith("/sales/invoices/allocate")}
+            icon={Wallet}
             onNavClick={onNavClick}
           />
           <SideNavSubItem

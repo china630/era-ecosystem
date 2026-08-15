@@ -1,0 +1,32 @@
+# Copy to kit-config.yaml and edit for your repo.
+# Used by scripts/install-acceptance-kit.ps1 and optionally by check-acceptance-consistency.ps1
+
+canon_path: docs/products/Product-Acceptance-Standard.md
+docs_roots:
+  - docs
+  - reports
+
+# Products: used to generate required SSOT paths and task-acceptance table rows
+products:
+  - id: product-a
+    name: Product A
+    acceptance_system: docs/products/ProductA-Acceptance-System.md
+    readiness_matrix: docs/ProductA-Product-Readiness-Matrix.md
+    implementation_matrix: docs/ProductA-Implementation-Matrix.md
+    evidence_rules: docs/ProductA-Evidence-Rules.md
+  - id: product-b
+    name: Product B
+    acceptance_system: docs/products/ProductB-Acceptance-System.md
+    readiness_matrix: docs/ProductB-Product-Readiness-Matrix.md
+    implementation_matrix: docs/ProductB-Implementation-Matrix.md
+    evidence_rules: docs/ProductB-Evidence-Rules.md
+
+# Edition YAML files that must NOT contain bare `status: ga` until pilot-ready
+forbid_bare_ga_in:
+  - editions-product-a.yaml
+  - editions-product-b.yaml
+
+# Extra markdown files excluded from banned-phrase scan (honesty audits, the canon itself)
+exclude_md_names:
+  - Product-Acceptance-Standard.md
+  - Acceptance-Honesty-Audit.md

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   FORM_INPUT_CLASS,
   MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -122,6 +123,7 @@ export default function RoomRackView({
   loading,
 }: RoomRackViewProps) {
   const t = useTranslations('roomRack');
+  const tc = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
   const tRes = useTranslations('reservationStatus');
   const tPay = useTranslations('rackPayStatus');
@@ -283,15 +285,13 @@ export default function RoomRackView({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 gap-4">
       <aside className={`${CARD_CONTAINER_CLASS} w-60 shrink-0 space-y-4 p-4 text-[13px]`}>
-        <div>
-          <label className="mb-1 block font-semibold text-[#34495E]">{t('filterDate')}</label>
-          <input
-            type="date"
-            className={FORM_INPUT_CLASS}
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-          />
-        </div>
+        <DatePicker
+          label={t('filterDate')}
+          value={filterDate}
+          onChange={setFilterDate}
+          placeholder={tc('datePlaceholder')}
+          preset="date"
+        />
         <div>
           <label className="mb-1 block font-semibold text-[#34495E]">{t('searchRoom')}</label>
           <input

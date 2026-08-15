@@ -1,6 +1,6 @@
 # Teller cash drawer (vNext)
 
-**Status:** Document-only for Ops UX GA. Physical drawer reconciliation is **not** implemented in this release.
+**Status:** Document-only for ops-mvp. Physical drawer reconciliation is **not** implemented in this release.
 
 ## Intended model
 

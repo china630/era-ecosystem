@@ -23,9 +23,25 @@ export async function relinkGuestGlobalPerson(
   return updateGuestIdentity(guestId, input);
 }
 
-export async function listGuests() {
-  const rows = await prisma.guest.findMany({ orderBy: { fullName: 'asc' } });
-  return rows;
+export async function listGuests(q?: string) {
+  const query = q?.trim();
+  if (!query) {
+    return prisma.guest.findMany({ orderBy: { fullName: 'asc' } });
+  }
+  return prisma.guest.findMany({
+    where: {
+      OR: [
+        { fullName: { contains: query, mode: 'insensitive' } },
+        { firstName: { contains: query, mode: 'insensitive' } },
+        { lastName: { contains: query, mode: 'insensitive' } },
+        { phone: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
+        { documents: { some: { docNumber: { contains: query, mode: 'insensitive' } } } },
+      ],
+    },
+    orderBy: { fullName: 'asc' },
+    take: 50,
+  });
 }
 
 export async function createGuest(input: CreateGuestInput) {

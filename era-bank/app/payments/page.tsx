@@ -1,16 +1,30 @@
 "use client";
 
-import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
+  CatalogField,
+  EraListFilterBar,
+  Field,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
+import { BankDataGrid } from "@/components/BankDataGrid";
 import { OpsModalShell, useOpsModal } from "@/components/ops";
-import { OpsError, OpsField, StatusBadge, formatAznMinor } from "@/components/ops-ui";
+import { useOpsMe } from "@/components/ops/useOpsMe";
+import {
+  PaymentCreateModal,
+  PaymentDetailModal,
+} from "@/components/ops/modals/PaymentModals";
+import { StatusBadge, formatAznMinor } from "@/components/ops-ui";
+import {
+  CURRENCY_OPTIONS,
+  PAYMENT_STATUS_OPTIONS,
+  majorToMinor,
+} from "@/lib/bank-lookups";
 
 type Payment = {
   id: string;
@@ -19,31 +33,44 @@ type Payment = {
   amountMinor?: unknown;
   currency?: string;
   rail?: string;
-  narrative?: string;
+  createdByUserId?: string;
 };
 
 function PaymentsPageInner() {
   const t = useTranslations("pages.payments");
   const tCommon = useTranslations("common");
-  const { mode, open, close, isOpen } = useOpsModal();
+  const searchParams = useSearchParams();
+  const me = useOpsMe();
+  const { mode, open, close, entityId } = useOpsModal();
   const [status, setStatus] = useState("");
   const [rows, setRows] = useState<Payment[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [inboundCurrency, setInboundCurrency] = useState("AZN");
+  const canApprove = me?.canApprove === true;
+
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id) open("detail", id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once from query
+  }, [searchParams]);
 
   const load = useCallback(async () => {
-    setError(null);
+    setLoading(true);
     try {
-      const res = await fetch("/api/payments/orders", { cache: "no-store" });
+      const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+      const res = await fetch(`/api/payments/orders${qs}`, { cache: "no-store" });
       if (!res.ok) {
-        setError(`${tCommon("error")} (${res.status})`);
+        showApiError(tCommon("error"));
+        setRows([]);
         return;
       }
-      let list = (await res.json()) as Payment[];
-      if (status) list = list.filter((r) => r.status === status);
-      setRows(list);
+      setRows((await res.json()) as Payment[]);
     } catch {
-      setError(tCommon("error"));
+      showApiError(tCommon("error"));
+      setRows([]);
+    } finally {
+      setLoading(false);
     }
   }, [status, tCommon]);
 
@@ -54,110 +81,253 @@ function PaymentsPageInner() {
   async function registerInbound(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
-    setError(null);
     const form = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/payments/inbound", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idempotencyKey: form.get("idempotencyKey") ?? `inbound-ui-${Date.now()}`,
+          idempotencyKey:
+            form.get("idempotencyKey") ?? `inbound-ui-${Date.now()}`,
           creditorIban: form.get("creditorIban"),
-          amountMinor: String(form.get("amountMinor") ?? 100000),
-          currency: form.get("currency") ?? "AZN",
+          amountMinor: String(
+            majorToMinor(String(form.get("amountMajor") ?? "0")),
+          ),
+          currency: inboundCurrency,
         }),
       });
       if (!res.ok) {
-        setError(`${tCommon("error")} (${res.status})`);
+        showApiError(tCommon("error"));
         return;
       }
       close();
       await load();
     } catch {
-      setError(tCommon("error"));
+      showApiError(tCommon("error"));
     } finally {
       setBusy(false);
     }
   }
 
+  async function approveOrReject(id: string, action: "approve" | "reject") {
+    const row = rows.find((r) => r.id === id);
+    if (
+      row?.createdByUserId &&
+      me?.id &&
+      row.createdByUserId === me.id
+    ) {
+      showApiError(t("makerCannotApprove"));
+      return;
+    }
+    let reason: string | undefined;
+    if (action === "reject") {
+      const entered = window.prompt(t("rejectReason"));
+      reason = (entered ?? "").trim();
+      if (!reason) {
+        showApiError(t("rejectReasonRequired"));
+        return;
+      }
+    }
+    const res = await fetch(`/api/payments/orders/${id}/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body:
+        action === "reject" ? JSON.stringify({ reason }) : undefined,
+    });
+    if (!res.ok) {
+      showApiError(await res.text());
+      return;
+    }
+    await load();
+  }
+
+  const gridRows = useMemo(
+    () => rows as Array<Payment & Record<string, unknown>>,
+    [rows],
+  );
+
+  const statusOptions = useMemo(
+    () => [{ value: "", label: t("allStatuses") }, ...PAYMENT_STATUS_OPTIONS],
+    [t],
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-3`}>
-        <select
-          className="rounded border px-3 py-2 text-sm"
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => open("inbound")}
+            >
+              {t("registerInbound")}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => open("create")}
+            >
+              {t("newPayment")}
+            </button>
+          </div>
+        }
+      />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setStatus("")}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("statusFilter")}
+          options={statusOptions}
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">{t("allStatuses")}</option>
-          <option value="DRAFT">DRAFT</option>
-          <option value="SETTLED">SETTLED</option>
-          <option value="REJECTED">REJECTED</option>
-        </select>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
-          {tCommon("refresh")}
-        </button>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => open("create")}>
-          Register inbound
-        </button>
-        <Link href="/payments/new" className={PRIMARY_BUTTON_CLASS}>
-          {t("newPayment")}
-        </Link>
-      </div>
-      <OpsError message={error} />
-      <div className={CARD_CONTAINER_CLASS}>
-        {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{tCommon("empty")}</p>
-        ) : (
-          <table className="min-w-full text-left text-[12px]">
-            <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-3 py-2">ID</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Beneficiary</th>
-                <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Rail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b">
-                  <td className="px-3 py-2">
-                    <Link href={`/payments/${row.id}`} className="text-primary underline">
-                      {row.id.slice(0, 10)}…
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">
-                    {row.status ? <StatusBadge status={row.status} /> : "—"}
-                  </td>
-                  <td className="px-3 py-2">{row.creditorIban ?? "—"}</td>
-                  <td className="px-3 py-2">{formatAznMinor(row.amountMinor)}</td>
-                  <td className="px-3 py-2">{row.rail ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+          onChange={(next) =>
+            setStatus(Array.isArray(next) ? next[0] ?? "" : next)
+          }
+          emptyLabel={null}
+        />
+      </EraListFilterBar>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      ) : (
+        <BankDataGrid
+          columns={[
+            {
+              key: "id",
+              header: t("colId"),
+              render: (row) => (
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => open("detail", String(row.id))}
+                >
+                  {String(row.id).slice(0, 10)}…
+                </button>
+              ),
+            },
+            {
+              key: "status",
+              header: t("colStatus"),
+              render: (row) =>
+                row.status ? <StatusBadge status={String(row.status)} /> : "—",
+            },
+            { key: "creditorIban", header: t("colBeneficiary") },
+            {
+              key: "amountMinor",
+              header: t("colAmount"),
+              render: (row) => formatAznMinor(row.amountMinor),
+            },
+            { key: "rail", header: t("colRail") },
+            {
+              key: "actions",
+              header: t("colActions"),
+              render: (row) => {
+                const isMaker =
+                  Boolean(row.createdByUserId) &&
+                  me?.id === String(row.createdByUserId);
+                if (
+                  row.status !== "PENDING_APPROVAL" ||
+                  !canApprove ||
+                  isMaker
+                ) {
+                  return isMaker && row.status === "PENDING_APPROVAL" ? (
+                    <span className="text-xs text-muted-foreground">
+                      {t("makerCannotApprove")}
+                    </span>
+                  ) : (
+                    "—"
+                  );
+                }
+                const id = String(row.id);
+                return (
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      className={PRIMARY_BUTTON_CLASS}
+                      onClick={() => void approveOrReject(id, "approve")}
+                    >
+                      {t("approve")}
+                    </button>
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      onClick={() => void approveOrReject(id, "reject")}
+                    >
+                      {t("reject")}
+                    </button>
+                  </div>
+                );
+              },
+            },
+          ]}
+          rows={gridRows}
+          emptyLabel={tCommon("empty")}
+        />
+      )}
+
+      <PaymentCreateModal
+        open={mode === "create"}
+        onClose={close}
+        onCreated={(id) => {
+          void load();
+          open("detail", id);
+        }}
+      />
+      <PaymentDetailModal
+        open={mode === "detail"}
+        paymentId={entityId}
+        onClose={close}
+        onUpdated={() => void load()}
+      />
 
       <OpsModalShell
-        open={isOpen && mode === "create"}
-        title="Register inbound payment"
-        subtitle="Credit customer account from external rail"
+        open={mode === "inbound"}
+        title={t("inboundTitle")}
+        subtitle={t("inboundSubtitle")}
         onClose={close}
         formId="inbound-payment-form"
-        submitLabel="Register inbound"
+        submitLabel={t("registerInbound")}
         busy={busy}
       >
-        <form id="inbound-payment-form" onSubmit={(e) => void registerInbound(e)} className="grid gap-3">
-          <OpsField
+        <form
+          id="inbound-payment-form"
+          onSubmit={(e) => void registerInbound(e)}
+          className="grid gap-3"
+        >
+          <Field
             name="idempotencyKey"
-            label="Idempotency key"
+            label={t("idempotencyKey")}
+            preset="code"
             defaultValue={`inbound-ui-${Date.now()}`}
           />
-          <OpsField name="creditorIban" label="Creditor IBAN" defaultValue="AZ00DEMO00000000000001" />
-          <OpsField name="amountMinor" label="Amount (minor)" type="number" defaultValue={100000} />
-          <OpsField name="currency" label="Currency" defaultValue="AZN" />
+          <Field
+            name="creditorIban"
+            label={t("creditorIban")}
+            preset="longText"
+            required
+            defaultValue=""
+          />
+          <Field
+            name="amountMajor"
+            label={t("amountMajor")}
+            preset="amount"
+            type="number"
+            step="0.01"
+            min={0}
+            defaultValue={1000}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("currency")}
+            options={CURRENCY_OPTIONS}
+            value={inboundCurrency}
+            onChange={(next) =>
+              setInboundCurrency(Array.isArray(next) ? next[0] ?? "AZN" : next)
+            }
+          />
         </form>
       </OpsModalShell>
     </div>
@@ -167,7 +337,11 @@ function PaymentsPageInner() {
 export default function PaymentsPage() {
   const tCommon = useTranslations("common");
   return (
-    <Suspense fallback={<p className="text-sm text-muted-foreground">{tCommon("loading")}</p>}>
+    <Suspense
+      fallback={
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      }
+    >
       <PaymentsPageInner />
     </Suspense>
   );

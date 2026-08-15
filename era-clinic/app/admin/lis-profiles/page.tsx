@@ -1,15 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  MODAL_INPUT_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  Field,
+  FieldSelect,
+  FORM_STACK_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
 type LisProfile = {
@@ -166,89 +176,93 @@ export default function LisProfilesAdminPage() {
       />
 
       {msg ? (
-        <p className="mb-4 text-[13px] text-[#2C3E50]">{msg}</p>
+        <p className="mb-4 text-[13px]">{msg}</p>
       ) : null}
 
-      <div className={`${CARD_CONTAINER_CLASS} mb-6 overflow-x-auto p-4`}>
-        <table className="w-full text-left text-[13px]">
+      <div className={`${CARD_CONTAINER_CLASS} mb-6 space-y-3 p-4`}>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
           <thead>
-            <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
-              <th className="p-2">{tc("name")}</th>
-              <th className="p-2">{t("format")}</th>
-              <th className="p-2">{t("delimiter")}</th>
-              <th className="p-2 text-right">{tc("actions")}</th>
+            <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("name")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("format")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("delimiter")}</th>
+              <th className={`${DATA_TABLE_TH_LEFT_CLASS} text-right`}>{tc("actions")}</th>
             </tr>
           </thead>
           <tbody>
             {profiles.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="p-4 text-[#7F8C8D]">
+              <tr className={DATA_TABLE_TR_CLASS}>
+                <td colSpan={4} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
                   {t("empty")}
                 </td>
               </tr>
             ) : (
               profiles.map((p) => (
-                <tr key={p.id} className="border-b border-[#ECEFF1]">
-                  <td className="p-2 font-medium">{p.name}</td>
-                  <td className="p-2">{p.format}</td>
-                  <td className="p-2">{p.delimiter}</td>
-                  <td className="p-2 text-right space-x-2">
-                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openEdit(p)}>
-                      {tc("edit")}
-                    </button>
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      onClick={() => void deleteProfile(p.id)}
-                    >
-                      {t("delete")}
-                    </button>
+                <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{p.name}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{p.format}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{p.delimiter}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={tc("edit")}
+                        onClick={() => openEdit(p)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={t("delete")}
+                        onClick={() => void deleteProfile(p.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold">{t("importTitle")}</h2>
-        <p className="mb-4 text-[13px] text-[#7F8C8D]">{t("importHint")}</p>
-        <form onSubmit={(e) => void runImport(e)} className="flex flex-wrap gap-3 items-end text-[13px]">
-          <label className="flex flex-col gap-1">
-            {t("selectProfile")}
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={importProfileId}
-              onChange={(e) => setImportProfileId(e.target.value)}
-              required
-            >
-              <option value="">{tc("select")}</option>
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            {t("patientRefId")}
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={importPatientRefId}
-              onChange={(e) => setImportPatientRefId(e.target.value)}
-              placeholder="cuid…"
-              required
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            {t("visitIdOptional")}
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={importVisitId}
-              onChange={(e) => setImportVisitId(e.target.value)}
-            />
-          </label>
+        <p className={`mb-4 text-[13px] ${TEXT_MUTED_CLASS}`}>{t("importHint")}</p>
+        <form onSubmit={(e) => void runImport(e)} className="flex flex-wrap items-end gap-3 text-[13px]">
+          <FieldSelect
+            label={t("selectProfile")}
+            preset="select"
+            value={importProfileId}
+            onChange={(e) => setImportProfileId(e.target.value)}
+            required
+          >
+            <option value="">{tc("select")}</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </FieldSelect>
+          <Field
+            label={t("patientRefId")}
+            preset="code"
+            value={importPatientRefId}
+            onChange={(e) => setImportPatientRefId(e.target.value)}
+            placeholder="cuid…"
+            required
+          />
+          <Field
+            label={t("visitIdOptional")}
+            preset="code"
+            value={importVisitId}
+            onChange={(e) => setImportVisitId(e.target.value)}
+          />
           <label className="flex flex-col gap-1">
             {t("csvFile")}
             <input
@@ -270,53 +284,46 @@ export default function LisProfilesAdminPage() {
         title={editingId ? t("editProfile") : t("addProfile")}
         onClose={() => setModalOpen(false)}
       >
-        <div className="space-y-3 text-[13px]">
-          <label className="block">
-            {tc("name")}
-            <input
-              className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-          </label>
-          <label className="block">
-            {t("format")}
-            <select
-              className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
-              value={form.format}
-              onChange={(e) =>
-                setForm({ ...form, format: e.target.value as LisProfile["format"] })
-              }
-            >
-              <option value="CSV">CSV</option>
-              <option value="HL7_FRAGMENT">HL7_FRAGMENT</option>
-            </select>
-          </label>
-          <label className="block">
-            {t("delimiter")}
-            <input
-              className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
-              value={form.delimiter}
-              onChange={(e) => setForm({ ...form, delimiter: e.target.value })}
-            />
-          </label>
+        <div className={FORM_STACK_CLASS}>
+          <Field
+            label={tc("name")}
+            preset="shortText"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+          <FieldSelect
+            label={t("format")}
+            preset="select"
+            value={form.format}
+            onChange={(e) =>
+              setForm({ ...form, format: e.target.value as LisProfile["format"] })
+            }
+          >
+            <option value="CSV">CSV</option>
+            <option value="HL7_FRAGMENT">HL7_FRAGMENT</option>
+          </FieldSelect>
+          <Field
+            label={t("delimiter")}
+            preset="code"
+            value={form.delimiter}
+            onChange={(e) => setForm({ ...form, delimiter: e.target.value })}
+          />
           <fieldset className="space-y-2">
-            <legend className="font-medium">{t("columnMapping")}</legend>
+            <legend className="text-[13px] font-semibold">{t("columnMapping")}</legend>
             {MAPPING_KEYS.map((key) => (
-              <label key={key} className="flex items-center gap-2">
-                <span className="w-24 text-[#7F8C8D]">{key}</span>
-                <input
-                  className={`flex-1 ${MODAL_INPUT_CLASS}`}
-                  value={form.columnMapping[key] ?? ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      columnMapping: { ...form.columnMapping, [key]: e.target.value },
-                    })
-                  }
-                />
-              </label>
+              <Field
+                key={key}
+                label={key}
+                preset="shortText"
+                value={form.columnMapping[key] ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    columnMapping: { ...form.columnMapping, [key]: e.target.value },
+                  })
+                }
+              />
             ))}
           </fieldset>
         </div>

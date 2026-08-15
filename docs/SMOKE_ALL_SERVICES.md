@@ -265,7 +265,7 @@ Finance worker idempotency: table `satellite_events_processed` — replay same `
 | Logistics L2 | `GET/PATCH /api/trips/:id`, `GET/POST /api/trips/:id/pod`, `GET/POST /api/trips/:id/fuel-report`, `GET /api/reports/fuel?from=&to=` |
 | Clinic K1 | `POST /api/appointments` → visit complete |
 | Clinic K2 | `POST /api/lab-orders/:id/complete`, `GET /api/lab-orders?status=` |
-| Clinic K3 | `GET /api/scheduling/slots` |
+| Clinic K3 | `GET /api/appointments/calendar` |
 | Construction C1 | `POST /api/acts/:id/approve` |
 | Construction C2 | `GET/POST /api/material-requisitions`, `GET /api/projects/:id/plan-vs-actual` |
 | Auto A1 | `POST /api/work-orders/:id/complete` |

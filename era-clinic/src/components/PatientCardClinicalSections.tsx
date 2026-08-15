@@ -5,13 +5,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  MODAL_INPUT_CLASS,
+  CatalogField,
+  FieldSelect,
+  LINK_ACCENT_CLASS,
+  MODAL_CHECKBOX_CLASS,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
+  type CatalogOption,
 } from "@era/satellite-kit/ui";
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 
 type TimelineEvent = {
   id: string;
@@ -67,7 +74,26 @@ type CardSummary = {
   };
   resultsPreview: TimelineEvent[];
   planPreview: TimelineEvent[];
+  proposedPreview?: TimelineEvent[];
 };
+
+const BODY_PARTS_FALLBACK = [
+  "HEAD",
+  "NECK",
+  "CHEST",
+  "BACK",
+  "ABDOMEN",
+  "ARM_LEFT",
+  "ARM_RIGHT",
+  "LEG_LEFT",
+  "LEG_RIGHT",
+  "FULL_BODY",
+] as const;
+
+function orderIdFromEvent(ev: TimelineEvent): string | null {
+  if (!ev.id.startsWith("procedure:")) return null;
+  return ev.id.slice("procedure:".length) || null;
+}
 
 function eventTitle(ev: TimelineEvent, locale: string): string {
   if (ev.titleL10n) return pickL10n(ev.titleL10n, locale);
@@ -111,6 +137,8 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(panel === "history");
   const [planOpen, setPlanOpen] = useState(panel === "plan");
+  const [printHref, setPrintHref] = useState<string | null>(null);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const [histTypes, setHistTypes] = useState("lab_order");
   const [labFilter, setLabFilter] = useState<"results" | "pending" | "all">("all");
@@ -124,14 +152,89 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
   const [planOffset, setPlanOffset] = useState(0);
   const [planHasMore, setPlanHasMore] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
+  const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
+  const [bodyPartById, setBodyPartById] = useState<Record<string, string>>({});
+  const [bodyPartOptions, setBodyPartOptions] = useState<CatalogOption[]>(
+    BODY_PARTS_FALLBACK.map((bp) => ({ value: bp, label: bp })),
+  );
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/lookups?kind=BODY_PART&activeOnly=1");
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        if (rows.length > 0) {
+          setBodyPartOptions(
+            rows.map((r: { code: string; name: string }) => ({
+              value: r.code,
+              label: r.name || r.code,
+            })),
+          );
+        }
+      } catch {
+        /* keep fallback */
+      }
+    })();
+  }, []);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
     const res = await fetch(`/api/patients/${patientRefId}/card-summary`);
     const data = await res.json();
-    setSummary((data.data ?? data) as CardSummary);
+    const row = (data.data ?? data) as CardSummary;
+    setSummary(row);
+    const codes = new Set(bodyPartOptions.map((o) => o.value));
+    const nextBody: Record<string, string> = {};
+    for (const ev of row.proposedPreview ?? []) {
+      const oid = orderIdFromEvent(ev);
+      if (!oid) continue;
+      const part = (ev.subtitle ?? "").split(" · ").find((p) => codes.has(p));
+      if (part) nextBody[oid] = part;
+    }
+    setBodyPartById((prev) => ({ ...nextBody, ...prev }));
     setLoading(false);
-  }, [patientRefId]);
+  }, [patientRefId, bodyPartOptions]);
+
+  async function patchBodyPart(orderId: string, bodyPart: string) {
+    setBodyPartById((prev) => ({ ...prev, [orderId]: bodyPart }));
+    await fetch(`/api/procedures/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bodyPart: bodyPart || null }),
+    });
+  }
+
+  async function confirmOrders(orderIds: string[]) {
+    if (orderIds.length === 0) return;
+    setConfirmBusy(true);
+    setConfirmMsg(null);
+    const res = await fetch("/api/procedures/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderIds }),
+    });
+    setConfirmBusy(false);
+    if (!res.ok) {
+      setConfirmMsg(t("confirmFailed", { defaultValue: "Confirm failed" }));
+      return;
+    }
+    setSelectedProposed(new Set());
+    setConfirmMsg(t("confirmOk", { defaultValue: "Plan confirmed" }));
+    await loadSummary();
+    if (planOpen) await loadPlan(true);
+  }
+
+  function toggleProposed(orderId: string) {
+    setSelectedProposed((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  }
 
   useEffect(() => {
     void loadSummary();
@@ -203,11 +306,29 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
   }, [planOpen]);
 
   if (loading || !summary) {
-    return <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>;
+    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
+  }
+
+  function openPrint(href: string) {
+    setPrintHref(href);
+    setPrintOpen(true);
+  }
+
+  function labPrintHref(ev: TimelineEvent): string | null {
+    const m = (ev.href || "").match(/lab-orders\/([^/?#]+)/);
+    if (!m) return null;
+    const id = m[1];
+    const title = (ev.titleL10n ? pickL10n(ev.titleL10n, "en") : ev.title).toLowerCase();
+    if (/usg|usm|ultrasound|abdomen/.test(title)) return `/print/usm/${id}`;
+    return `/print/lab-order/${id}`;
   }
 
   const { nowNext, resultsPreview, planPreview } = summary;
+  const proposedPreview = summary.proposedPreview ?? [];
   const pending = nowNext.pendingLabs;
+  const allProposedIds = proposedPreview
+    .map(orderIdFromEvent)
+    .filter((id): id is string => Boolean(id));
 
   return (
     <div className="space-y-6">
@@ -219,7 +340,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
         !nowNext.activeEpisode &&
         !nowNext.nextProcedure &&
         pending.count === 0 ? (
-          <p className="text-[13px] text-[#7F8C8D]">{t("nowNextEmpty")}</p>
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("nowNextEmpty")}</p>
         ) : (
           <ul className="space-y-2 text-[13px]">
             {nowNext.nextAppointment ? (
@@ -227,7 +348,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
                 <span className="font-medium">{t("nextAppointment")}: </span>
                 {nowNext.nextAppointment.practitionerName} ·{" "}
                 {new Date(nowNext.nextAppointment.at).toLocaleString()} ({nowNext.nextAppointment.status})
-                <Link href={nowNext.nextAppointment.href} className="ml-2 text-[#2980B9] hover:underline">
+                <Link href={nowNext.nextAppointment.href} className={`ml-2 ${LINK_ACCENT_CLASS}`}>
                   {t("open")}
                 </Link>
               </li>
@@ -239,7 +360,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
                 {nowNext.activeEpisode.roomNumber
                   ? ` · ${t("room")} ${nowNext.activeEpisode.roomNumber}`
                   : ""}
-                <Link href={nowNext.activeEpisode.href} className="ml-2 text-[#2980B9] hover:underline">
+                <Link href={nowNext.activeEpisode.href} className={`ml-2 ${LINK_ACCENT_CLASS}`}>
                   {t("openDayPlan")}
                 </Link>
               </li>
@@ -306,10 +427,17 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           >
             {t("openHistory")}
           </button>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => openPrint(`/print/checkup/${patientRefId}`)}
+          >
+            {t("printCheckup", { defaultValue: "Print check-up" })}
+          </button>
         </div>
         <div className={`${CARD_CONTAINER_CLASS} p-4`}>
           {resultsPreview.length === 0 ? (
-            <p className="text-[13px] text-[#7F8C8D]">{t("resultsEmpty")}</p>
+            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsEmpty")}</p>
           ) : (
             <ul className="space-y-2">
               {resultsPreview.map((ev) => (
@@ -317,21 +445,100 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
                   <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
                   <div className="min-w-0 flex-1">
                     {ev.href ? (
-                      <Link href={ev.href} className="font-medium text-[#2980B9] hover:underline">
+                      <Link href={ev.href} className={`font-medium ${LINK_ACCENT_CLASS}`}>
                         {eventTitle(ev, locale)}
                       </Link>
                     ) : (
                       <span className="font-medium">{eventTitle(ev, locale)}</span>
                     )}
-                    <p className="text-[12px] text-[#7F8C8D]">
+                    <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {ev.subtitle} · {ev.status}
                       {ev.hasCritical ? (
-                        <span className="ml-2 text-red-600">{t("critical")}</span>
+                        <span className={`ml-2 ${TEXT_DANGER_CLASS}`}>{t("critical")}</span>
                       ) : null}
                     </p>
                   </div>
+                  {labPrintHref(ev) ? (
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      onClick={() => openPrint(labPrintHref(ev)!)}
+                    >
+                      {t("print", { defaultValue: "Print" })}
+                    </button>
+                  ) : null}
                 </li>
               ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+            {t("proposedPlanTitle", { defaultValue: "Proposed plan" })}
+          </h2>
+          {allProposedIds.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={confirmBusy || selectedProposed.size === 0}
+                onClick={() => void confirmOrders([...selectedProposed])}
+              >
+                {t("confirmSelected", { defaultValue: "Confirm selected" })}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={confirmBusy}
+                onClick={() => void confirmOrders(allProposedIds)}
+              >
+                {t("confirmAll", { defaultValue: "Confirm all" })}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {confirmMsg ? <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{confirmMsg}</p> : null}
+        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+          {proposedPreview.length === 0 ? (
+            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+              {t("proposedEmpty", { defaultValue: "No proposed procedures awaiting confirmation." })}
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {proposedPreview.map((ev) => {
+                const oid = orderIdFromEvent(ev);
+                if (!oid) return null;
+                return (
+                  <li
+                    key={ev.id}
+                    className="flex flex-wrap items-start gap-2 rounded border border-amber-200 bg-amber-50/50 px-3 py-2 text-[13px]"
+                  >
+                    <input
+                      type="checkbox"
+                      className={`mt-1 ${MODAL_CHECKBOX_CLASS}`}
+                      checked={selectedProposed.has(oid)}
+                      onChange={() => toggleProposed(oid)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium">{eventTitle(ev, locale)}</span>
+                      <p className="text-[12px] text-amber-800">
+                        {ev.subtitle} · {t("statusProposed", { defaultValue: "PROPOSED" })}
+                      </p>
+                      <CatalogField
+                        kind="CLOSED_MEDIUM"
+                        label={t("bodyPart", { defaultValue: "Body part" })}
+                        className="mt-1 max-w-xs"
+                        value={bodyPartById[oid] ?? ""}
+                        onChange={(v) => void patchBodyPart(oid, String(v))}
+                        options={bodyPartOptions}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -345,18 +552,28 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPlanOpen(true)}>
             {t("openPlan")}
           </button>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => openPrint(`/print/procedures/${patientRefId}`)}
+          >
+            {t("printProcedures", { defaultValue: "Print schedule" })}
+          </button>
         </div>
         <div className={`${CARD_CONTAINER_CLASS} p-4`}>
           {planPreview.length === 0 ? (
-            <p className="text-[13px] text-[#7F8C8D]">{t("planEmpty")}</p>
+            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("planEmpty")}</p>
           ) : (
             <ul className="space-y-2">
               {planPreview.map((ev) => (
-                <li key={ev.id} className="flex items-start gap-2 text-[13px]">
+                <li
+                  key={ev.id}
+                  className="flex items-start gap-2 rounded border border-emerald-100 bg-emerald-50/40 px-3 py-2 text-[13px]"
+                >
                   <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
                   <div>
                     <span className="font-medium">{eventTitle(ev, locale)}</span>
-                    <p className="text-[12px] text-[#7F8C8D]">
+                    <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {ev.subtitle} · {ev.status}
                     </p>
                   </div>
@@ -374,8 +591,9 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
         closeLabel={tc("close")}
       >
         <div className="mb-3 flex flex-wrap gap-2 text-[12px]">
-          <select
-            className={MODAL_INPUT_CLASS}
+          <FieldSelect
+            label={t("filterLab")}
+            preset="select"
             value={histTypes}
             onChange={(e) => setHistTypes(e.target.value)}
           >
@@ -384,18 +602,20 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             <option value="visit">{t("filterVisit")}</option>
             <option value="appointment">{t("filterAppointment")}</option>
             <option value="lab_order,visit,appointment">{t("filterAllTypes")}</option>
-          </select>
-          <select
-            className={MODAL_INPUT_CLASS}
+          </FieldSelect>
+          <FieldSelect
+            label={t("labAll")}
+            preset="select"
             value={labFilter}
             onChange={(e) => setLabFilter(e.target.value as "results" | "pending" | "all")}
           >
             <option value="all">{t("labAll")}</option>
             <option value="results">{t("labResults")}</option>
             <option value="pending">{t("labPending")}</option>
-          </select>
-          <select
-            className={MODAL_INPUT_CLASS}
+          </FieldSelect>
+          <FieldSelect
+            label={t("period7")}
+            preset="select"
             value={period}
             onChange={(e) => setPeriod(e.target.value as "7" | "30" | "90" | "all")}
           >
@@ -403,7 +623,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             <option value="30">{t("period30")}</option>
             <option value="90">{t("period90")}</option>
             <option value="all">{t("periodAll")}</option>
-          </select>
+          </FieldSelect>
         </div>
         <DayTimeline
           days={histDays}
@@ -424,7 +644,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             {t("loadMore")}
           </button>
         ) : null}
-        <p className="mt-2 text-[11px] text-[#7F8C8D]">{t("tzHint")}</p>
+        <p className={`mt-2 text-[11px] ${TEXT_MUTED_CLASS}`}>{t("tzHint")}</p>
       </ModalShell>
 
       <ModalShell
@@ -435,11 +655,39 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       >
         {nowNext.activeEpisode ? (
           <p className="mb-3 text-[13px]">
-            <Link href={nowNext.activeEpisode.href} className="text-[#2980B9] hover:underline">
+            <Link href={nowNext.activeEpisode.href} className={LINK_ACCENT_CLASS}>
               {t("openDayPlan")}
             </Link>
           </p>
         ) : null}
+        {(() => {
+          const modalProposed = planDays
+            .flatMap((d) => d.events)
+            .filter((ev) => ev.status === "PROPOSED")
+            .map(orderIdFromEvent)
+            .filter((id): id is string => Boolean(id));
+          if (modalProposed.length === 0) return null;
+          return (
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={confirmBusy || selectedProposed.size === 0}
+                onClick={() => void confirmOrders([...selectedProposed])}
+              >
+                {t("confirmSelected", { defaultValue: "Confirm selected" })}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={confirmBusy}
+                onClick={() => void confirmOrders(modalProposed)}
+              >
+                {t("confirmAll", { defaultValue: "Confirm all" })}
+              </button>
+            </div>
+          );
+        })()}
         <DayTimeline
           days={planDays}
           locale={dayLocale}
@@ -448,6 +696,14 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           empty={t("planEmpty")}
           loading={planLoading}
           loadingLabel={tc("loading")}
+          selectableProposed
+          selectedProposed={selectedProposed}
+          onToggleProposed={toggleProposed}
+          bodyPartById={bodyPartById}
+          onBodyPartChange={(id, part) => void patchBodyPart(id, part)}
+          bodyPartOptions={bodyPartOptions}
+          bodyPartLabel={t("bodyPart", { defaultValue: "Body part" })}
+          proposedLabel={t("statusProposed", { defaultValue: "PROPOSED" })}
         />
         {planHasMore ? (
           <button
@@ -460,6 +716,11 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           </button>
         ) : null}
       </ModalShell>
+      <PrintLanguageDialog
+        open={printOpen}
+        onClose={() => setPrintOpen(false)}
+        href={printHref}
+      />
     </div>
   );
 }
@@ -489,6 +750,14 @@ function DayTimeline({
   empty,
   loading,
   loadingLabel,
+  selectableProposed,
+  selectedProposed,
+  onToggleProposed,
+  bodyPartById,
+  onBodyPartChange,
+  bodyPartOptions,
+  bodyPartLabel,
+  proposedLabel,
 }: {
   days: TimelineDay[];
   locale: string;
@@ -497,12 +766,20 @@ function DayTimeline({
   empty: string;
   loading: boolean;
   loadingLabel: string;
+  selectableProposed?: boolean;
+  selectedProposed?: Set<string>;
+  onToggleProposed?: (orderId: string) => void;
+  bodyPartById?: Record<string, string>;
+  onBodyPartChange?: (orderId: string, bodyPart: string) => void;
+  bodyPartOptions?: CatalogOption[];
+  bodyPartLabel?: string;
+  proposedLabel?: string;
 }) {
   if (loading && days.length === 0) {
-    return <p className="text-[13px] text-[#7F8C8D]">{loadingLabel}</p>;
+    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{loadingLabel}</p>;
   }
   if (days.length === 0) {
-    return <p className="text-[13px] text-[#7F8C8D]">{empty}</p>;
+    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{empty}</p>;
   }
   return (
     <ol className="max-h-[60vh] space-y-6 overflow-y-auto border-l-2 border-slate-200 pl-4">
@@ -512,35 +789,68 @@ function DayTimeline({
             {formatDay(day.date, locale, todayWord, day.labelHint === "today")}
           </h3>
           <ul className="space-y-2">
-            {day.events.map((ev) => (
-              <li key={ev.id} className="rounded border p-2 text-[13px]">
-                <div className="flex items-start gap-2">
-                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
-                  <div className="min-w-0 flex-1">
-                    {ev.href ? (
-                      <Link href={ev.href} className="font-medium text-[#2980B9] hover:underline">
-                        {eventTitle(ev, uiLocale)}
-                      </Link>
+            {day.events.map((ev) => {
+              const oid = orderIdFromEvent(ev);
+              const isProposed = ev.status === "PROPOSED";
+              return (
+                <li
+                  key={ev.id}
+                  className={`rounded border p-2 text-[13px] ${
+                    isProposed
+                      ? "border-amber-200 bg-amber-50/50"
+                      : "border-emerald-100 bg-emerald-50/30"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {selectableProposed && isProposed && oid ? (
+                      <input
+                        type="checkbox"
+                        className={`mt-1 ${MODAL_CHECKBOX_CLASS}`}
+                        checked={selectedProposed?.has(oid) ?? false}
+                        onChange={() => onToggleProposed?.(oid)}
+                      />
                     ) : (
-                      <span className="font-medium">{eventTitle(ev, uiLocale)}</span>
+                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
                     )}
-                    <p className="text-[12px] text-[#7F8C8D]">
-                      {ev.subtitle} · {ev.status}
-                    </p>
-                    {ev.resultSummary && ev.resultSummary.length > 0 ? (
-                      <dl className="mt-1 grid grid-cols-2 gap-1 text-[11px] sm:grid-cols-3">
-                        {ev.resultSummary.map((line) => (
-                          <div key={`${ev.id}-${line.code}`}>
-                            <span className="text-slate-500">{line.code}: </span>
-                            <span className="font-medium">{line.value}</span>
-                          </div>
-                        ))}
-                      </dl>
-                    ) : null}
+                    <div className="min-w-0 flex-1">
+                      {ev.href ? (
+                        <Link href={ev.href} className={`font-medium ${LINK_ACCENT_CLASS}`}>
+                          {eventTitle(ev, uiLocale)}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{eventTitle(ev, uiLocale)}</span>
+                      )}
+                      <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        {ev.subtitle} · {isProposed ? proposedLabel ?? ev.status : ev.status}
+                      </p>
+                      {selectableProposed && isProposed && oid ? (
+                        <CatalogField
+                          kind="CLOSED_MEDIUM"
+                          label={bodyPartLabel ?? ""}
+                          className="mt-1 max-w-xs"
+                          value={bodyPartById?.[oid] ?? ""}
+                          onChange={(v) => onBodyPartChange?.(oid, String(v))}
+                          options={
+                            bodyPartOptions ??
+                            BODY_PARTS_FALLBACK.map((bp) => ({ value: bp, label: bp }))
+                          }
+                        />
+                      ) : null}
+                      {ev.resultSummary && ev.resultSummary.length > 0 ? (
+                        <dl className="mt-1 grid grid-cols-2 gap-1 text-[11px] sm:grid-cols-3">
+                          {ev.resultSummary.map((line) => (
+                            <div key={`${ev.id}-${line.code}`}>
+                              <span className="text-slate-500">{line.code}: </span>
+                              <span className="font-medium">{line.value}</span>
+                            </div>
+                          ))}
+                        </dl>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </li>
       ))}

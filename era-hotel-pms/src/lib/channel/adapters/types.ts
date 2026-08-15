@@ -23,9 +23,14 @@ export type OtaReservationPayload = {
 
 export type AvailabilityPushRow = {
   date: string;
+  channelCode?: string;
   otaRoomCode: string;
+  /** OTA rate plan code from ChannelRateMapping (ARI — not room-only). */
+  otaRateCode?: string;
+  ratePlanCode?: string;
   available: number;
   price?: number;
+  /** True when ChannelStopSell covers this room type / date. */
   stopSell?: boolean;
 };
 

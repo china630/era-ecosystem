@@ -151,6 +151,7 @@ export class BillingToggleService {
             data: {
               cancelledAt: null,
               accessUntil: null,
+              pendingDeactivation: false,
             },
           });
         });

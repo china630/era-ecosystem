@@ -12,6 +12,10 @@ const schema = z.object({
   medicalFlag: z.boolean().optional(),
   roomTypeId: z.string().uuid().optional(),
   mealPlanId: z.string().uuid().optional(),
+  baseOccupancy: z.number().int().min(1).max(10).optional(),
+  extraAdultAmount: z.number().min(0).nullable().optional(),
+  thirdAdultAmount: z.number().min(0).nullable().optional(),
+  extraBedAmount: z.number().min(0).nullable().optional(),
 });
 
 export async function GET() {

@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { PaymentRail } from "@era/bank-core-database";
+import { PaymentOrderStatus, PaymentRail } from "@era/bank-core-database";
 import { IsEnum, IsOptional, IsString } from "class-validator";
 import { BankAuthGuard, type BankAuthRequest } from "../../auth/bank-auth.guard";
 import { PaymentsService } from "./payments.service";
@@ -44,6 +53,12 @@ class InboundPaymentDto {
   currency!: string;
 }
 
+class RejectPaymentDto {
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
+
 @ApiTags("payments")
 @ApiBearerAuth("service-token")
 @UseGuards(BankAuthGuard)
@@ -52,8 +67,8 @@ export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
   @Get("orders")
-  list() {
-    return this.payments.listOrders();
+  list(@Query("status") status?: PaymentOrderStatus) {
+    return this.payments.listOrders(status);
   }
 
   @Post("orders")
@@ -73,6 +88,20 @@ export class PaymentsController {
   @Post("orders/:id/submit")
   submit(@Param("id") id: string) {
     return this.payments.submitOrder(id);
+  }
+
+  @Post("orders/:id/approve")
+  approve(@Param("id") id: string, @Req() req: BankAuthRequest) {
+    return this.payments.approveOrder(id, req.userId ?? "service");
+  }
+
+  @Post("orders/:id/reject")
+  reject(
+    @Param("id") id: string,
+    @Body() dto: RejectPaymentDto,
+    @Req() req: BankAuthRequest,
+  ) {
+    return this.payments.rejectOrder(id, req.userId ?? "service", dto.reason);
   }
 
   @Post("inbound")

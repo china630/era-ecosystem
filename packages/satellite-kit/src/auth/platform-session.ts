@@ -2,6 +2,7 @@ import {
   FINANCE_CROSS_SYSTEM_ROLES,
   FINANCE_OWNER_ROLES,
   SATELLITE_ROLE,
+  sessionIsPlatformSuperAdmin,
   type SatelliteRoleCode,
 } from "./roles";
 import type { SatelliteSessionPayload } from "./session";
@@ -21,13 +22,15 @@ export type PlatformCapabilities = {
 export function resolvePlatformCapabilities(
   session: Pick<
     SatelliteSessionPayload,
-    "role" | "financeRole" | "isOwner" | "organizationId"
+    "role" | "financeRole" | "isOwner" | "organizationId" | "email" | "login"
   >,
 ): PlatformCapabilities {
   const financeRole = session.financeRole?.trim().toUpperCase();
   const isPlatformSession = Boolean(financeRole && session.organizationId);
+  const superAdmin = sessionIsPlatformSuperAdmin(session);
 
   const isOwner =
+    superAdmin ||
     session.isOwner === true ||
     session.role === SATELLITE_ROLE.BUSINESS_OWNER ||
     (financeRole
@@ -63,7 +66,7 @@ export function isLocalOperationalSession(
 export function hasPlatformCapability(
   session: Pick<
     SatelliteSessionPayload,
-    "role" | "financeRole" | "isOwner" | "organizationId"
+    "role" | "financeRole" | "isOwner" | "organizationId" | "email" | "login"
   >,
   cap: keyof Pick<
     PlatformCapabilities,

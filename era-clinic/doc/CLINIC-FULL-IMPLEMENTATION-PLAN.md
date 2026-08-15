@@ -134,7 +134,7 @@ Preset gate: sanatorium nav hidden unless `sanatorium_clinical` or bundle entitl
 |----|------|---------------|
 | P5-01 | HL7/file LIS adapter interface | STUB → API |
 | P5-02 | Orchestrator ICD-10 AZ subset (read-only API) | new platform API |
-| P5-03 | `clinic_*` module keys on orchestrator pricing | CP seed |
+| P5-03 | `clinic_*` module keys on orchestrator pricing | **DONE** (seed M0–M14) |
 | P5-04 | `wellness` preset (SV8) | SHIPPED minimal |
 | P5-05 | NBC fiscal via `@era/fiscal` prod provider | STUB until cert |
 | P5-06 | Workforce clock / staff roster display | HR events |

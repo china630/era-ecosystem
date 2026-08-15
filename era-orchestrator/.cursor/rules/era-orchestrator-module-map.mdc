@@ -10,11 +10,13 @@ globs:
 
 # ERA Orchestrator — module map (web)
 
+**Acceptance SSOT (Platform):** [Platform-Acceptance-System](../../../docs/acceptance/Platform-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Platform-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Platform-Implementation-Matrix.md) · edition [`docs/editions/platform.yaml`](../../../docs/editions/platform.yaml)
+
 ## Public / auth
 
 | Route | File | Notes |
 |-------|------|-------|
-| `/login` | `app/login/page.tsx` | AuthLoginCard; redirect → `/organizations` or `/workspace` |
+| `/login` | `app/login/page.tsx` | AuthLoginCard; post-login 0/1/N routing (0 → onboarding gate, 1 → `/workspace`, N → `/organizations` picker on every login) |
 | `/register` | `app/register/page.tsx` | User signup → `/organizations` |
 | `/register-org` | `app/register-org/page.tsx` | Fallback org registration (modal preferred) |
 | `/pricing` | `app/pricing/**` | Public storefront |
@@ -23,24 +25,40 @@ globs:
 
 ## Post-login IA (workspace launcher)
 
+Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization (organizations, holdings, team) → Workforce (employments, org-structure, positions, absences, security, export) → Resources (pricing, help) → Settings (settings, subscription) → Platform admin (super-admin only: nested Billing + MDM, Early access, Security).
+
 | Route | File | Notes |
 |-------|------|-------|
 | `/` | `app/page.tsx` | Redirect only |
-| `/organizations` | `app/organizations/page.tsx` | Org hub; `CreateOrganizationModal`; link to `/holdings` |
+| `/organizations` | `app/organizations/page.tsx` | Org hub; `CreateOrganizationModal`; company-less onboarding gate auto-opens create modal; lists pending invites with Accept; link to `/holdings` |
 | `/holdings` | `app/holdings/page.tsx` | Holding SoT: create, attach/detach orgs, report-access members; API `v1/holdings/*` |
-| `/workspace` | `app/workspace/page.tsx` | Connect / Open / Renew cards; module modal; `POST connect-satellite`, `POST billing/toggle-module` |
+| `/workspace` | `app/workspace/page.tsx` | Satellite cards: Open + per-satellite Modules modal + ⚙ Settings on active cards; concrete active-modules price; "+ Add" opens all-satellites modal; `POST connect-satellite`, `POST billing/toggle-module` |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
 | `/settings/team` | `app/settings/team/page.tsx` | Access requests |
 | `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + module chips |
 | `/super-admin/**` | `app/super-admin/**` | Platform admin |
+| `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, departments, satellite endpoints, **Sync satellite bindings** → `POST /v1/admin/orgs/:id/sync-satellite-bindings` |
+
+## Super-admin billing / MDM
+
+| Route | File | Notes |
+|-------|------|-------|
+| `/super-admin/billing/pricing` | `app/super-admin/billing/pricing/page.tsx` | Modules (core + satellites); filters + premium/standard/free |
+| `/super-admin/billing/pricing/addons` | `app/super-admin/billing/pricing/addons/page.tsx` | Platform add-ons catalog |
+| `/super-admin/billing/quotas` | `app/super-admin/billing/quotas/page.tsx` | Tier matrix + unit pricing modal |
+| `/super-admin/billing/packages` | `app/super-admin/billing/packages/page.tsx` | Bundles CRUD; soft-archive (no delete) |
+| `/super-admin/billing/settings` | `app/super-admin/billing/settings/page.tsx` | ERA Core + Banking foundations + yearly discount + default trial days |
+| `/super-admin/billing/trial-allowlist` | `app/super-admin/billing/trial-allowlist/page.tsx` | Trial-eligible modules per core/satellite |
+| `/super-admin/mdm` | `app/super-admin/mdm/page.tsx` | MDM health overview |
+| `/super-admin/mdm/companies` | `app/super-admin/mdm/companies/page.tsx` | Legal entities |
+| `/super-admin/mdm/persons` | `app/super-admin/mdm/persons/page.tsx` | Natural persons |
 
 ## Super-admin trial
 
 | Route | File | Notes |
 |-------|------|-------|
 | `/super-admin/orgs/[orgId]/subscription` | `app/super-admin/orgs/[orgId]/subscription/page.tsx` | Org trial tree, +1 month, Nafta preset |
-| `/super-admin/billing/trial-allowlist` | `app/super-admin/billing/trial-allowlist/page.tsx` | Platform `trialEligibleInTrial` checkboxes |
 
 ## Shared web components
 
@@ -48,6 +66,7 @@ globs:
 |-----------|------|
 | App shell (Finance-aligned) | `components/control-plane-shell.tsx` |
 | Sidebar | `components/layout/orch-sidebar.tsx` |
+| List pagination | `@era/satellite-kit/ui` `ListPaginationFooter` (25/50/100) |
 | Header | `components/layout/orch-header.tsx` |
 | Notification bell | `components/notifications/orch-notification-bell.tsx` |
 | Workspace module modal | `components/workspace/workspace-satellite-modules-modal.tsx` |
@@ -63,6 +82,8 @@ globs:
 | `GET /memberships` | `membership.controller.ts` |
 | `POST /auth/register-organization` | `auth.controller.ts` — provisions org-only trial |
 | `POST /auth/switch-organization` | `membership.controller.ts` |
+| `GET /v1/invites/pending` | `organization.controller.ts` — pending invites for current user email (company-less onboarding) |
+| `POST /v1/invites/:id/accept` | `organization.controller.ts` — accept invite → create membership |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |
 | `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable |
@@ -96,11 +117,19 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET/PUT/DELETE /platform/v1/workforce/role-templates/*` | `workforce-role-templates.controller.ts` |
 | `GET/POST /platform/v1/workforce/manual-grants/*` | `workforce-manual-grants.controller.ts` |
 | `GET /platform/v1/workforce/security/*` | `workforce-security.controller.ts` |
-| Web `/workspace/workforce/security` | `apps/web/app/workspace/workforce/security/page.tsx` |
+| `GET /platform/v1/workforce/export/*` | `workforce-export.controller.ts` |
+| `POST /platform/v1/workforce/import/roster` | `workforce-import.controller.ts` — CSV hire (dryRun); `fin`+`fullName` or `globalPersonId` |
+| `POST /platform/v1/workforce/import/absences` | `workforce-import.controller.ts` — CSV absences (dryRun); `staffCode`/`globalPersonId` |
+| `POST /platform/v1/workforce/import/absences` | `workforce-import.controller.ts` — CSV absences (dryRun) |
+| Web `/workspace/workforce/security` | matrix + seats |
+| Web `/workspace/workforce/security/grants` | manual grants |
+| Web `/workspace/workforce/security/bindings` | effective bindings |
+| Web `/workspace/workforce/security/audit` | audit log |
 | Web `/workspace/workforce/org-structure` | `apps/web/app/workspace/workforce/org-structure/page.tsx` |
 | Web `/workspace/workforce/positions` | `apps/web/app/workspace/workforce/positions/page.tsx` |
-| Web `/workspace/workforce/employments` | `apps/web/app/workspace/workforce/employments/page.tsx` |
-| Web `/workspace/workforce/absences` (+ `/new`, `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
+| Web `/workspace/workforce/employments` | hire modal + filters |
+| Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
+| Web `/workspace/workforce/export` | export + import two-column UI |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` |
 | `POST /internal/v1/mdm/persons/ops-profile/batch` | `mdm.controller.ts` — workforce batch display (+ `hrProfile` when grant allows) |

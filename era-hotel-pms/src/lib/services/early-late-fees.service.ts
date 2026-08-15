@@ -3,34 +3,13 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
+import {
+  getHotelPolicy,
+  type EarlyLatePolicy,
+} from '@/lib/services/hotel-policy.service';
 
-export type EarlyLatePolicy = {
-  standardCheckInTime: string;
-  standardCheckOutTime: string;
-  earlyCheckInFeeMode: 'FIXED' | 'PERCENT_OF_NIGHT' | 'HOURLY';
-  earlyCheckInFeeAmount: number;
-  lateCheckOutFeeMode: 'FIXED' | 'PERCENT_OF_NIGHT' | 'HOURLY';
-  lateCheckOutFeeAmount: number;
-};
-
-const DEFAULT_POLICY: EarlyLatePolicy = {
-  standardCheckInTime: '14:00',
-  standardCheckOutTime: '12:00',
-  earlyCheckInFeeMode: 'PERCENT_OF_NIGHT',
-  earlyCheckInFeeAmount: 50,
-  lateCheckOutFeeMode: 'PERCENT_OF_NIGHT',
-  lateCheckOutFeeAmount: 50,
-};
-
-export async function getHotelPolicy(): Promise<EarlyLatePolicy> {
-  const profile = await prisma.hotelProfile.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (!profile?.policyJson) return DEFAULT_POLICY;
-  try {
-    return { ...DEFAULT_POLICY, ...JSON.parse(profile.policyJson) };
-  } catch {
-    return DEFAULT_POLICY;
-  }
-}
+export type { EarlyLatePolicy };
+export { getHotelPolicy };
 
 function parseTimeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);

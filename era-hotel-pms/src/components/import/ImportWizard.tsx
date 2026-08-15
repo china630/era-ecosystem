@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
+  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { ImportStepRow } from '@/components/import/ImportStepRow';
@@ -32,6 +33,7 @@ type Props = {
 export function ImportWizard({ entities }: Props) {
   const t = useTranslations('elektrawebImport');
   const [statuses, setStatuses] = useState<ImportWizardStorage>({});
+  const [phaseIndex, setPhaseIndex] = useState(0);
 
   useEffect(() => {
     setStatuses(loadImportStepStatuses());
@@ -41,6 +43,23 @@ export function ImportWizard({ entities }: Props) {
     () => new Map(entities.map((e) => [e.entity, e])),
     [entities],
   );
+
+  const phasesWithEntities = useMemo(
+    () =>
+      IMPORT_PHASES.map((phase) => ({
+        phase,
+        entities: phase.entities
+          .map((slug) => entityBySlug.get(slug))
+          .filter((e): e is ImportEntity => Boolean(e)),
+      })).filter((p) => p.entities.length > 0),
+    [entityBySlug],
+  );
+
+  useEffect(() => {
+    if (phaseIndex >= phasesWithEntities.length && phasesWithEntities.length > 0) {
+      setPhaseIndex(phasesWithEntities.length - 1);
+    }
+  }, [phaseIndex, phasesWithEntities.length]);
 
   const rowLabels = useMemo(
     () => ({
@@ -81,14 +100,18 @@ export function ImportWizard({ entities }: Props) {
       .map((slug) => entityBySlug.get(slug)?.label ?? slug);
   }
 
-  let stepCounter = 0;
+  const current = phasesWithEntities[phaseIndex];
+  const totalPhases = phasesWithEntities.length;
+  let stepCounter = phasesWithEntities
+    .slice(0, phaseIndex)
+    .reduce((sum, p) => sum + p.entities.length, 0);
 
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-[#7F8C8D]">{t('intro')}</p>
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/master-data" className={`${SECONDARY_BUTTON_CLASS} text-sm`}>
+          <Link href="/settings/master-data" className={`${SECONDARY_BUTTON_CLASS} text-sm`}>
             {t('verifyMasterData')}
           </Link>
           <button
@@ -98,6 +121,7 @@ export function ImportWizard({ entities }: Props) {
               if (window.confirm(t('resetConfirm'))) {
                 clearAllImportStepStatuses();
                 setStatuses({});
+                setPhaseIndex(0);
                 window.location.reload();
               }
             }}
@@ -107,43 +131,64 @@ export function ImportWizard({ entities }: Props) {
         </div>
       </div>
 
-      {IMPORT_PHASES.map((phase) => {
-        const phaseEntities = phase.entities
-          .map((slug) => entityBySlug.get(slug))
-          .filter((e): e is ImportEntity => Boolean(e));
+      {totalPhases > 0 ? (
+        <p className="text-[13px] font-medium text-[#34495E]">
+          {t('phaseProgress', { current: phaseIndex + 1, total: totalPhases })}
+        </p>
+      ) : null}
 
-        if (phaseEntities.length === 0) return null;
+      {current ? (
+        <section key={current.phase.id}>
+          <header className="mb-4">
+            <h2 className="text-base font-semibold text-[#34495E]">
+              {t(`phase.${current.phase.id}.title`)}
+            </h2>
+            <p className="mt-1 text-[13px] text-[#7F8C8D]">
+              {t(`phase.${current.phase.id}.hint`)}
+            </p>
+          </header>
+          <div className="space-y-3">
+            {current.entities.map((meta, idx) => {
+              stepCounter += 1;
+              return (
+                <ImportStepRow
+                  key={meta.entity}
+                  stepNumber={stepCounter}
+                  entity={meta.entity}
+                  label={meta.label}
+                  templateHint={meta.templateHint}
+                  fileless={meta.fileless}
+                  strictOrder={current.phase.strictOrder}
+                  isLastInPhase={idx === current.entities.length - 1}
+                  storedStatus={statuses[meta.entity] ?? null}
+                  missingPriorLabels={missingPriorLabels(meta.entity)}
+                  labels={rowLabels}
+                  onStatusChange={handleStatusChange}
+                />
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
-        return (
-          <section key={phase.id}>
-            <header className="mb-4">
-              <h2 className="text-base font-semibold text-[#34495E]">{t(`phase.${phase.id}.title`)}</h2>
-              <p className="mt-1 text-[13px] text-[#7F8C8D]">{t(`phase.${phase.id}.hint`)}</p>
-            </header>
-            <div className="space-y-3">
-              {phaseEntities.map((meta, idx) => {
-                stepCounter += 1;
-                return (
-                  <ImportStepRow
-                    key={meta.entity}
-                    stepNumber={stepCounter}
-                    entity={meta.entity}
-                    label={meta.label}
-                    templateHint={meta.templateHint}
-                    fileless={meta.fileless}
-                    strictOrder={phase.strictOrder}
-                    isLastInPhase={idx === phaseEntities.length - 1}
-                    storedStatus={statuses[meta.entity] ?? null}
-                    missingPriorLabels={missingPriorLabels(meta.entity)}
-                    labels={rowLabels}
-                    onStatusChange={handleStatusChange}
-                  />
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={phaseIndex <= 0}
+          onClick={() => setPhaseIndex((i) => Math.max(0, i - 1))}
+        >
+          {t('prevPhase')}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={phaseIndex >= totalPhases - 1}
+          onClick={() => setPhaseIndex((i) => Math.min(totalPhases - 1, i + 1))}
+        >
+          {t('nextPhase')}
+        </button>
+      </div>
 
       <p className="rounded border border-[#D5DADF] bg-[#F8F9FA] p-3 text-[13px] text-[#7F8C8D]">
         {t('coaNote')}

@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
 import { getRouteSession, jsonError } from "@/lib/api-utils";
-import { fetchSubscriptionSnapshot, hasActiveModule } from "@era/satellite-kit";
+import { hasActiveModule } from "@era/satellite-kit";
+import { loadBankSubscriptionSnapshot } from "@/lib/engine-client";
 
 const BANK_ORG_ID =
   process.env.ERA_BANK_ORGANIZATION_ID ??
@@ -17,6 +17,7 @@ const BANKING_MODULES = [
   "banking_cards",
   "banking_treasury",
   "banking_regreporting",
+  "banking_risk",
 ] as const;
 
 export async function GET() {
@@ -27,11 +28,19 @@ export async function GET() {
     return Response.json({ modules: [...BANKING_MODULES] });
   }
 
-  const snapshot = await fetchSubscriptionSnapshot(BANK_ORG_ID);
+  const snapshot = await loadBankSubscriptionSnapshot();
   if (!snapshot) {
-    return Response.json({ modules: ["industry_banking"] });
+    return Response.json({ modules: [...BANKING_MODULES] });
   }
 
   const modules = BANKING_MODULES.filter((m) => hasActiveModule(snapshot, m));
+  // Empty / gate-only: expose L2 banking modules for ops nav (matches assertBankingEntitlement).
+  if (
+    modules.length === 0 ||
+    (hasActiveModule(snapshot, "industry_banking") &&
+      !modules.some((m) => m.startsWith("banking_")))
+  ) {
+    return Response.json({ modules: [...BANKING_MODULES] });
+  }
   return Response.json({ modules });
 }

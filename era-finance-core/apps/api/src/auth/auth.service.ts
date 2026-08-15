@@ -33,6 +33,7 @@ import { PiiCryptoService } from "../security/pii-crypto.service";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
 import { ControlPlaneClient } from "../control-plane/control-plane.client";
 import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
+import { verifyControlPlaneAccessToken } from "../common/utils/verify-control-plane-jwt";
 import {
   decodeOrganizationTaxId,
   decryptText,
@@ -95,7 +96,7 @@ export class AuthService {
   private inviteTokenSecret(): string {
     return (
       this.config.get<string>("INVITE_TOKEN_SECRET") ??
-      this.config.getOrThrow<string>("JWT_SECRET")
+      this.config.getOrThrow<string>("ERA_JWT_SECRET")
     );
   }
 
@@ -123,14 +124,14 @@ export class AuthService {
   private get refreshSecret(): string {
     return (
       this.config.get<string>("JWT_REFRESH_SECRET") ??
-      this.config.getOrThrow<string>("JWT_SECRET")
+      this.config.getOrThrow<string>("ERA_JWT_SECRET")
     );
   }
 
   private get extRefreshSecret(): string {
     return (
       this.config.get<string>("EXT_REFRESH_SECRET") ??
-      this.config.getOrThrow<string>("JWT_SECRET")
+      this.config.getOrThrow<string>("ERA_JWT_SECRET")
     );
   }
 
@@ -552,6 +553,193 @@ export class AuthService {
       user: this.toPublicUser(user, org.id, UserRole.OWNER),
       organizations: orgs,
     };
+  }
+
+  /**
+   * Control-plane SSO ingress (Finance-as-satellite). The browser lands on
+   * `/auth/cp-handoff`, redeems a one-time ticket at the Orchestrator, then hands
+   * the resulting Orchestrator access token here. We DO NOT reuse that token for
+   * the Finance API (Orchestrator and Finance are separate identity stores with
+   * divergent user/org ids). Instead we resolve-or-provision the Finance-local
+   * user + organization by trusted identity (email + VÖEN) and mint a
+   * Finance-local session token. See ADR control-plane-billing-migration / phase 4.
+   */
+  async provisionFromControlPlane(authorization?: string) {
+    const token = authorization?.startsWith("Bearer ")
+      ? authorization.slice(7).trim()
+      : authorization?.trim();
+    if (!token) {
+      throw new UnauthorizedException("Missing control-plane token");
+    }
+    const claims = await verifyControlPlaneAccessToken(token, this.config);
+    if (!claims) {
+      throw new UnauthorizedException("Invalid control-plane token");
+    }
+    const email = claims.email?.toLowerCase().trim();
+    if (!email) {
+      throw new UnauthorizedException("Control-plane token missing email");
+    }
+
+    // 1) Resolve or provision the Finance-local user by email. SSO users carry
+    //    a sentinel passwordHash and cannot local-login (matches satellite law).
+    let user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash: "sso:no-password",
+          isSuperAdmin: Boolean(claims.isSuperAdmin),
+        },
+      });
+    }
+
+    const controlPlaneOrgId = claims.organizationId ?? null;
+    if (!controlPlaneOrgId) {
+      const tokens = await this.signTokenPairWithoutOrg(user.id);
+      const orgs = await this.listOrganizationsForUser(user.id);
+      return {
+        ...tokens,
+        user: this.toPublicUserNoOrg(user),
+        organizations: orgs,
+      };
+    }
+
+    // 2) Resolve or provision the Finance-local organization for this tenant.
+    const role = (claims.role as UserRole) ?? UserRole.OWNER;
+    const org = await this.resolveOrProvisionControlPlaneOrg(
+      controlPlaneOrgId,
+      user.id,
+      role,
+    );
+
+    const tokens = await this.signTokenPair(user.id, org.id);
+    const fresh = await this.prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+    });
+    const orgs = await this.listOrganizationsForUser(user.id);
+    return {
+      ...tokens,
+      user: this.toPublicUser(fresh, org.id, role),
+      organizations: orgs,
+    };
+  }
+
+  /**
+   * Find (by control-plane id or VÖEN) or provision a Finance-local organization
+   * mirroring a control-plane tenant, and ensure the user's membership. New rows
+   * keep the control-plane org id so the tenant identity stays aligned end-to-end.
+   */
+  private async resolveOrProvisionControlPlaneOrg(
+    controlPlaneOrgId: string,
+    userId: string,
+    role: UserRole,
+  ): Promise<{ id: string; name: string; currency: string }> {
+    let org = await this.prisma.organization.findUnique({
+      where: { id: controlPlaneOrgId },
+      select: { id: true, name: true, currency: true },
+    });
+
+    const details = await this.controlPlane.fetchOrganizationDetails(
+      controlPlaneOrgId,
+    );
+
+    if (!org && details?.taxId) {
+      const blind = this.piiCrypto.blindIndexForVoen(details.taxId.trim());
+      org = await this.prisma.organization.findFirst({
+        where: { taxIdBlindIndex: blind },
+        select: { id: true, name: true, currency: true },
+      });
+    }
+
+    if (!org) {
+      if (!details?.name || !details?.taxId) {
+        throw new BadRequestException(
+          "Cannot provision Finance organization: control-plane details unavailable",
+        );
+      }
+      const normalizedTaxId = details.taxId.trim();
+      const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
+      const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);
+      const kind = OrganizationKind.COMMERCIAL;
+      const orgName = details.name.trim();
+      // Commit the org + trial first so downstream provisioning (which resolves
+      // posting roles via a non-transactional client) can see the committed row.
+      const created = await this.prisma.$transaction(async (tx) => {
+        const o = await tx.organization.create({
+          data: {
+            id: controlPlaneOrgId,
+            name: orgName,
+            taxIdBlindIndex,
+            taxIdCipher,
+            currency: "AZN",
+            subscriptionPlan: "mvp",
+            activeModules: [...DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES],
+            kind,
+            settings: {
+              templateGroup:
+                organizationKindToPayrollSettingsTemplateGroup(kind),
+            },
+          },
+        });
+        const trial = await resolveNewOrganizationTrialSubscription(
+          tx,
+          o.createdAt,
+        );
+        await tx.organization.update({
+          where: { id: o.id },
+          data: { activeModules: trial.activeModules },
+        });
+        return o;
+      });
+      // Best-effort provisioning: a partial failure must not block the SSO
+      // session — the org + membership are enough to sign in; accounting setup
+      // can be re-run by admin tooling if needed.
+      try {
+        await this.prisma.$transaction((tx) =>
+          this.organizations.provisionChartOfAccountsFromTemplate(
+            tx,
+            created.id,
+            kind,
+          ),
+        );
+        await this.orgStructure.ensureDefaultDepartmentAndPosition(created.id);
+      } catch (e) {
+        this.logger.warn(
+          `Finance provisioning partial for control-plane org ${created.id}: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      }
+      await this.controlPlane.linkOrganizationMdm({
+        organizationId: created.id,
+        name: orgName,
+        taxId: normalizedTaxId,
+      });
+      org = { id: created.id, name: created.name, currency: created.currency };
+    }
+
+    const membership = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId: org.id },
+      },
+    });
+    if (!membership) {
+      await this.prisma.organizationMembership.create({
+        data: { userId, organizationId: org.id, role },
+      });
+    } else if (membership.deletedAt) {
+      await this.prisma.organizationMembership.update({
+        where: { userId_organizationId: { userId, organizationId: org.id } },
+        data: {
+          deletedAt: null,
+          deletedByUserId: null,
+          deletedReason: null,
+          role,
+        },
+      });
+    }
+
+    return org;
   }
 
   async login(dto: LoginDto) {

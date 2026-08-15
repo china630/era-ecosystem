@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
@@ -10,19 +11,23 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  PageHeader,
+  showApiError,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function ReconciliationPage() {
   const { can } = useAuth();
   const t = useTranslations('reports');
   const tc = useTranslations('common');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayIso);
   const [report, setReport] = useState<{
     matched: boolean;
     totalDelta: number;
@@ -31,32 +36,46 @@ export default function ReconciliationPage() {
     lines: { revenueCode: string; folioAmount: number; e1Amount: number; delta: number }[];
   } | null>(null);
 
-  async function load() {
-    const res = await fetch(`/api/reports/reconciliation?businessDate=${date}`);
-    if (res.ok) setReport(await res.json());
-  }
+  const load = useCallback(async (forDate: string) => {
+    try {
+      const res = await fetch(`/api/reports/reconciliation?businessDate=${forDate}`);
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, tc('loadError'));
+        return;
+      }
+      setReport(data);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+    }
+  }, [tc]);
+
+  useEffect(() => {
+    void load(date);
+  }, [date, load]);
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
-    return (
-      <AppShell maxWidthClass="max-w-3xl">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
-      </AppShell>
-    );
+    return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
   return (
-    <AppShell maxWidthClass="max-w-3xl">
-      <PageHeader
-        title={t('reconciliationTitle')}
-        leading={
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={MODAL_INPUT_CLASS} />
-        }
-        actions={
-          <button type="button" onClick={load} className={PRIMARY_BUTTON_CLASS}>
-            {tc('compare')}
-          </button>
-        }
-      />
+    <>
+      <PageHeader title={t('reconciliationTitle')} />
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setDate(todayIso());
+          setReport(null);
+        }}
+      >
+        <DatePicker
+          label={tc('date')}
+          value={date}
+          onChange={setDate}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+      </EraListFilterBar>
 
       {report && (
         <>
@@ -67,7 +86,7 @@ export default function ReconciliationPage() {
               delta: report.totalDelta.toFixed(2),
             })}
           </p>
-          <PageSection className="p-0">
+          <section className={`${CARD_CONTAINER_CLASS} p-4 p-0`}>
             <div className={DATA_TABLE_VIEWPORT_CLASS}>
               <table className={DATA_TABLE_CLASS}>
                 <thead>
@@ -90,9 +109,9 @@ export default function ReconciliationPage() {
                 </tbody>
               </table>
             </div>
-          </PageSection>
+          </section>
         </>
       )}
-    </AppShell>
+    </>
   );
 }

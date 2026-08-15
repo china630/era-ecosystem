@@ -7,15 +7,15 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.allergensTitle"
       apiPath={(gid) => `/api/guests/${gid}/allergens`}
-      onAdd={async (guestId) => {
-        const allergen = window.prompt('Allergen');
-        if (!allergen?.trim()) return;
-        await fetch(`/api/guests/${guestId}/allergens`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ allergen: allergen.trim() }),
-        });
-      }}
+      addFields={[
+        { name: 'allergen', label: 'Allergen', required: true, preset: 'longText' },
+        { name: 'note', label: 'Note', multiline: true },
+      ]}
+      buildBody={(v) => ({
+        allergen: v.allergen.trim(),
+        note: v.note.trim() || undefined,
+      })}
+      searchKeys={['allergen', 'note']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-rose-200 bg-rose-50 p-3">
           <strong>{String(r.allergen)}</strong>

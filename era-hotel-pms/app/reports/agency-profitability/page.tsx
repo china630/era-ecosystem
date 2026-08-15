@@ -3,16 +3,18 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
+  showApiError,
 } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -27,7 +29,8 @@ function AgencyProfitContent() {
   const { can } = useAuth();
   const t = useTranslations('reports');
   const tc = useTranslations('common');
-  const [range, setRange] = useState(defaultRange);
+  const defaults = defaultRange();
+  const [range, setRange] = useState(defaults);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<{
     totalRevenue: number;
@@ -45,53 +48,53 @@ function AgencyProfitContent() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const q = `from=${range.from}&to=${range.to}`;
-    const res = await fetch(`/api/reports/agency-profitability?${q}`);
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? tc('loadError'));
-    setData(json);
-    setLoading(false);
+    try {
+      const q = `from=${range.from}&to=${range.to}`;
+      const res = await fetch(`/api/reports/agency-profitability?${q}`);
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('loadError'));
+        return;
+      }
+      setData(json);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+    } finally {
+      setLoading(false);
+    }
   }, [range.from, range.to, tc]);
 
   useEffect(() => {
-    void load().catch(() => setLoading(false));
+    void load();
   }, [load]);
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
-    return (
-      <AppShell maxWidthClass="max-w-5xl">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
-      </AppShell>
-    );
+    return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
   return (
-    <AppShell maxWidthClass="max-w-6xl">
+    <>
       <PageHeader title={t('agencyProfitTitle')} subtitle={t('agencyProfitSubtitle')} />
-      <PageSection>
-        <div className="mb-4 flex flex-wrap items-end gap-3">
-          <label className="text-[12px] text-[#7F8C8D]">
-            {tc('from')}
-            <input
-              type="date"
-              className="ml-2 rounded border border-[#D5DADF] px-2 py-1 text-[13px]"
-              value={range.from}
-              onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-            />
-          </label>
-          <label className="text-[12px] text-[#7F8C8D]">
-            {tc('to')}
-            <input
-              type="date"
-              className="ml-2 rounded border border-[#D5DADF] px-2 py-1 text-[13px]"
-              value={range.to}
-              onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-            />
-          </label>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void load()}>
-            {tc('load')}
-          </button>
-        </div>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setRange(defaultRange())}
+      >
+        <DatePicker
+          label={tc('from')}
+          value={range.from}
+          onChange={(from) => setRange((r) => ({ ...r, from }))}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+        <DatePicker
+          label={tc('to')}
+          value={range.to}
+          onChange={(to) => setRange((r) => ({ ...r, to }))}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+      </EraListFilterBar>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         {loading ? <p>{tc('loading')}</p> : null}
         {data ? (
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
@@ -125,8 +128,8 @@ function AgencyProfitContent() {
             </table>
           </div>
         ) : null}
-      </PageSection>
-    </AppShell>
+      </section>
+    </>
   );
 }
 

@@ -12,6 +12,7 @@ import {
 import { assertContractAllotmentAvailable, getAvailabilityWithContractAllotment } from '@/lib/services/contract-allotment.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
+import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
 export async function listReservations(status?: ReservationStatus, guestId?: string) {
@@ -83,13 +84,30 @@ export async function createReservation(input: {
   sourceId?: string;
   agencyId?: string;
   salesContractId?: string;
+  /** Booking envelope (ReservationGroup) — multi-stay under one group. */
+  groupId?: string;
   checkInDate: Date;
   checkOutDate: Date;
   paymentMethod: PaymentMethod;
+  adults?: number;
+  children11_6?: number;
+  children5_2?: number;
+  children1_0?: number;
+  partyBillingMode?: 'PRIMARY' | 'EQUAL';
+  booker?: string;
+  guestRep?: string;
+  paidBy?: string;
+  contractRef?: string;
+  /**
+   * When false (group hold / extra rooms), keep pax first/last empty so names-incomplete
+   * gate applies and the same booker is not treated as a named claim on every stay.
+   */
+  copyGuestNameToPax?: boolean;
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
   let salesContractId = input.salesContractId;
+  const partyBillingMode = input.partyBillingMode ?? 'PRIMARY';
 
   if (salesContractId) {
     const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
@@ -134,6 +152,17 @@ export async function createReservation(input: {
   if (!ratePlan) throw new Error('Rate plan not found');
   assertActiveForNewUse(`Rate plan ${ratePlan.code}`, ratePlan.active);
 
+  const guestMaster = await prisma.guest.findUnique({ where: { id: input.guestId } });
+  if (!guestMaster) throw new Error('Guest not found');
+  const copyNames = input.copyGuestNameToPax !== false;
+  const guestNameParts = guestMaster.fullName.trim().split(/\s+/).filter(Boolean);
+  const paxFirstName = copyNames ? guestNameParts[0] || undefined : undefined;
+  const paxLastName = copyNames
+    ? guestNameParts.length > 1
+      ? guestNameParts.slice(1).join(' ')
+      : undefined
+    : undefined;
+
   if (agencyId) {
     const agency = await prisma.agency.findUnique({ where: { id: agencyId } });
     if (!agency) throw new Error('Agency not found');
@@ -168,14 +197,40 @@ export async function createReservation(input: {
       sourceId: input.sourceId,
       agencyId,
       salesContractId,
+      groupId: input.groupId,
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
       paymentMethod: input.paymentMethod,
       totalAmount,
-      contractRef: salesContractId
-        ? (await prisma.salesContract.findUnique({ where: { id: salesContractId }, select: { code: true } }))?.code
-        : undefined,
+      /** Variant A: one Reservation = one room stay */
+      roomCount: 1,
+      adults: input.adults ?? 1,
+      children11_6: input.children11_6 ?? 0,
+      children5_2: input.children5_2 ?? 0,
+      children1_0: input.children1_0 ?? 0,
+      partyBillingMode,
+      booker: input.booker,
+      guestRep: input.guestRep,
+      paidBy: input.paidBy,
+      contractRef:
+        input.contractRef ||
+        (salesContractId
+          ? (await prisma.salesContract.findUnique({ where: { id: salesContractId }, select: { code: true } }))
+              ?.code
+          : undefined),
       status: 'CONFIRMED',
+      paxGuests: {
+        create: [
+          {
+            guestId: input.guestId,
+            firstName: paxFirstName,
+            lastName: paxLastName,
+            isPrimary: true,
+            ownsFolio: true,
+            sortOrder: 0,
+          },
+        ],
+      },
     },
     include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
   });
@@ -196,17 +251,39 @@ export async function createReservation(input: {
 }
 
 export async function assignRoom(reservationId: string, roomId: string) {
-  const reservation = await getReservation(reservationId);
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: {
+      guest: true,
+      paxGuests: { orderBy: { sortOrder: 'asc' } },
+    },
+  });
+  if (!reservation) throw new Error('Reservation not found');
   if (!['CONFIRMED', 'OPTION'].includes(reservation.status)) {
     throw new Error('Assign is only allowed for CONFIRMED or OPTION reservations');
+  }
+
+  const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
+  if (
+    reservationNamesIncomplete({
+      guestFullName: reservation.guest.fullName,
+      adults: reservation.adults,
+      pax: reservation.paxGuests,
+    })
+  ) {
+    throw new Error('Guest names incomplete — fill real names before assign');
   }
 
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) throw new Error('Room not found');
   if (room.roomTypeId !== reservation.roomTypeId) throw new Error('Room type mismatch');
   if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
-    throw new Error('Room must be AVAILABLE, CLEAN, or INSPECTED to assign');
+    throw new Error(
+      `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
+    );
   }
+  await assertRoomFree(roomId, reservation.checkInDate, reservation.checkOutDate, reservationId);
+  await assertNamedGuestsFreeOnStay(reservationId);
 
   return prisma.reservation.update({
     where: { id: reservationId },
@@ -243,8 +320,11 @@ export async function checkInReservation(id: string) {
 
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
   if (!room || !['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
-    throw new Error('Room must be AVAILABLE, CLEAN, or INSPECTED for check-in');
+    throw new Error(
+      `Room ${room?.roomNumber ?? ''} is ${room?.status ?? 'missing'}; must be AVAILABLE, CLEAN, or INSPECTED for check-in`,
+    );
   }
+  await assertNamedGuestsFreeOnStay(id);
 
   const revenueRoom = await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } });
 
@@ -336,6 +416,84 @@ export async function cancelReservation(id: string, noShow = false) {
 
 const SCHEDULABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 const BLOCKED_ROOM_STATUSES = ['OOO', 'OOS'] as const;
+
+/** Guest ids that are a real named claim on this stay (not TBA / empty pax). */
+export function namedGuestIdsOnStay(input: {
+  guestId: string;
+  guestFullName?: string | null;
+  adults: number;
+  pax: Array<{
+    guestId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  }>;
+}): string[] {
+  const ids = new Set<string>();
+  for (const row of input.pax) {
+    if (row.guestId && paxHasRealName(row)) ids.add(row.guestId);
+  }
+  if (
+    !reservationNamesIncomplete({
+      guestFullName: input.guestFullName,
+      adults: input.adults,
+      pax: input.pax,
+    })
+  ) {
+    ids.add(input.guestId);
+  }
+  return [...ids];
+}
+
+/**
+ * Block the same named guest on overlapping stays (any booking / room).
+ * TBA booker holds (incomplete names) do not claim the person.
+ */
+export async function assertNamedGuestsFreeOnStay(reservationId: string) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { guest: true, paxGuests: true, room: true },
+  });
+  if (!stay) throw new Error('Reservation not found');
+
+  const claimed = namedGuestIdsOnStay({
+    guestId: stay.guestId,
+    guestFullName: stay.guest.fullName,
+    adults: stay.adults,
+    pax: stay.paxGuests,
+  });
+  if (claimed.length === 0) return;
+
+  for (const guestId of claimed) {
+    const conflict = await prisma.reservation.findFirst({
+      where: {
+        id: { not: reservationId },
+        status: { in: [...SCHEDULABLE_STATUSES] },
+        checkInDate: { lt: stay.checkOutDate },
+        checkOutDate: { gt: stay.checkInDate },
+        OR: [{ guestId }, { paxGuests: { some: { guestId } } }],
+      },
+      include: {
+        guest: true,
+        room: true,
+        paxGuests: true,
+      },
+    });
+    if (!conflict) continue;
+
+    const otherClaimed = namedGuestIdsOnStay({
+      guestId: conflict.guestId,
+      guestFullName: conflict.guest.fullName,
+      adults: conflict.adults,
+      pax: conflict.paxGuests,
+    });
+    if (!otherClaimed.includes(guestId)) continue;
+
+    const door = conflict.room?.roomNumber ?? 'TBA';
+    throw new Error(
+      `Guest already named on overlapping stay (room ${door}, ${conflict.checkInDate.toISOString().slice(0, 10)} – ${conflict.checkOutDate.toISOString().slice(0, 10)})`,
+    );
+  }
+}
 
 export async function assertRoomFree(
   roomId: string,
@@ -449,3 +607,4 @@ export async function addQuickCharge(
   }
   return postCharge({ reservationId, ...input });
 }
+

@@ -7,24 +7,34 @@ import {
   type SatelliteWorkforceAbsenceCancelledEvent,
   type SatelliteWorkforceAbsenceUpdatedEvent,
 } from "@era/contracts";
-import { AbsencePayFormula, AbsenceSource } from "@erafinance/database";
+import { AbsenceSource } from "@erafinance/database";
 import { AbsenceTypesService } from "../hr/absence-types.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 
-type WorkforceKind = "VACATION" | "SICK" | "UNPAID";
+type WorkforceKind =
+  | "VACATION"
+  | "SICK"
+  | "UNPAID"
+  | "SOCIAL_LEAVE"
+  | "EDUCATIONAL_LEAVE"
+  | "BUSINESS_TRIP"
+  | "ADMINISTRATIVE";
 
-const KIND_TO_FORMULA: Record<WorkforceKind, AbsencePayFormula> = {
-  VACATION: AbsencePayFormula.LABOR_LEAVE_304,
-  SICK: AbsencePayFormula.SICK_LEAVE_STAJ,
-  UNPAID: AbsencePayFormula.UNPAID_RECORD,
-};
-
-const FORMULA_TO_CODE: Record<AbsencePayFormula, string> = {
-  [AbsencePayFormula.LABOR_LEAVE_304]: "LABOR_LEAVE",
-  [AbsencePayFormula.SICK_LEAVE_STAJ]: "SICK_LEAVE",
-  [AbsencePayFormula.UNPAID_RECORD]: "UNPAID_LEAVE",
+/**
+ * Orchestrator absence kind → Finance AbsenceType.code (seeded by AbsenceTypesService,
+ * TK AZ set). ADMINISTRATIVE is unpaid leave, so it reuses UNPAID_LEAVE. BUSINESS_TRIP
+ * is an attendance record (employee stays paid, off-site), not a payroll leave, so it has
+ * no Finance mirror and is intentionally omitted (see upsertMirror skip).
+ */
+const KIND_TO_CODE: Partial<Record<WorkforceKind, string>> = {
+  VACATION: "LABOR_LEAVE",
+  SICK: "SICK_LEAVE",
+  UNPAID: "UNPAID_LEAVE",
+  SOCIAL_LEAVE: "SOCIAL_LEAVE",
+  EDUCATIONAL_LEAVE: "EDUCATIONAL_LEAVE",
+  ADMINISTRATIVE: "UNPAID_LEAVE",
 };
 
 function parseDateOnly(iso: string): Date {
@@ -131,9 +141,17 @@ export class WorkforceAbsenceSyncService {
       return { meta: { skipped: true, reason: "employee_not_found" } };
     }
 
+    if (!KIND_TO_CODE[payload.kind as WorkforceKind]) {
+      this.logger.log(
+        `Skip ${event.type} cpAbsence=${payload.cpAbsenceId}: kind ${payload.kind} is not a payroll leave`,
+      );
+      return {
+        meta: { skipped: true, reason: "kind_not_payroll_leave", kind: payload.kind },
+      };
+    }
     const absenceTypeId = await this.resolveAbsenceTypeId(
       organizationId,
-      payload.kind,
+      payload.kind as WorkforceKind,
     );
     const startDate = parseDateOnly(payload.startDate);
     const endDate = parseDateOnly(payload.endDate);
@@ -186,8 +204,10 @@ export class WorkforceAbsenceSyncService {
     organizationId: string,
     kind: WorkforceKind,
   ): Promise<string> {
-    const formula = KIND_TO_FORMULA[kind];
-    const code = FORMULA_TO_CODE[formula];
+    const code = KIND_TO_CODE[kind];
+    if (!code) {
+      throw new Error(`Absence kind ${kind} has no Finance mapping`);
+    }
     const types = await this.absenceTypes.listOrSeed(organizationId);
     const match = types.find((t) => t.code === code);
     if (!match) {

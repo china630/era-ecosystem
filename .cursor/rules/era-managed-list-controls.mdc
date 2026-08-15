@@ -1,0 +1,57 @@
+---
+description: Ban plain-text UI for pick-lists; CatalogFieldKind auto-picks Select/Multi/Chips/Autocomplete
+globs:
+  - "**/*.{tsx,ts}"
+  - "**/messages/*.json"
+alwaysApply: true
+---
+
+# Managed list UI controls (mandatory)
+
+**Canon:** [docs/adr/managed-lists-vs-enums.md](../../docs/adr/managed-lists-vs-enums.md)  
+**Kit:** `@era/satellite-kit/ui` — `CatalogFieldKind`, `resolveCatalogControl`, `CatalogField`, `inferCatalogFieldKind`  
+**Plans:** `.cursor/plans/managed-lists-roadmap.plan.md`
+
+## Hard ban
+
+For any **pick-list / taxonomy / tender / channel / status-filter / catalog code** field on create/edit/ops forms:
+
+- **Do not** use `Field` with `preset="shortText"` / `code` / `longText`, raw `<input type="text">`, or `<datalist>` as the permanent control.
+- **Do not** invent a parallel one-off Select without a `CatalogFieldKind`.
+- Plain text is allowed **only** when the field is explicitly `kind="FREE_TEXT"` (names, phones, document numbers, free notes).
+
+Lifecycle **status advance** may use action buttons (T3); status **filters** use Select. Never free-type a status string in ops UI.
+
+## Auto-assign control from list class
+
+When adding or migrating a list field:
+
+1. Choose or infer `CatalogFieldKind` (prefer explicit):
+
+| Kind | When | Control (from `resolveCatalogControl`) |
+|------|------|----------------------------------------|
+| `CLOSED_SMALL` | ≤12 exclusive values | `select` |
+| `CLOSED_MEDIUM` | 13–40 exclusive | `selectWide` |
+| `MULTI` | multi-value taxonomy | `multi` (checkboxes) |
+| `SEARCHABLE` | large / filterable codes | `autocomplete` |
+| `ENTITY_REF` | FK to entity API | `autocomplete` |
+| `OPS_HOT` | ≤4 hot ops actions (pay, channel) | `radioChips` |
+| `FREE_TEXT` | intentionally free | `text` only |
+
+2. Heuristic helper: `inferCatalogFieldKind({ optionCount, multi, searchable, entityRef, opsHot, freeText })`.
+3. Render **`CatalogField`** with that `kind` + `options` (from API/catalog). Do not hand-pick `Field` vs `FieldSelect` for catalog-shaped data — the kind decides.
+4. Options source must be catalog/API when T1/T2 exists; hardcoded arrays are transitional only (`select-hardcoded` → wire in the matching managed-lists phase).
+
+## Agent checklist (before claiming UI done)
+
+- [ ] New/changed pick-list uses `CatalogField` + `CatalogFieldKind` (or `resolveCatalogControl` + matching kit control).
+- [ ] No `shortText`/`code` for market, segment, VIP, channel, tender, body part, legal form, subtype, currency, etc.
+- [ ] No `<datalist>` for inventory codes (use strict Select / ENTITY_REF).
+- [ ] Multi-value → `MULTI`, not comma-separated text.
+- [ ] ADR UI debt matrix row updated if clearing a known `text` / `missing` / `datalist` cell.
+
+## Related
+
+- Field width taxonomy still applies via `CatalogField` → underlying `FieldSelect` presets.
+- Retire/active catalogs: [hotel-master-data-retire-policy.md](../../docs/adr/hotel-master-data-retire-policy.md)
+- Global catalogs SoR: [reference-data-ecosystem.md](../../docs/adr/reference-data-ecosystem.md)

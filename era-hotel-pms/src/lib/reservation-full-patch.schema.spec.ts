@@ -18,13 +18,18 @@ describe('reservationFullPatchSchema', () => {
           firstName: 'Ali',
           lastName: 'Mammadov',
           isPrimary: true,
+          ownsFolio: true,
+          guestId: '550e8400-e29b-41d4-a716-446655440001',
         },
       ],
+      partyBillingMode: 'PRIMARY',
       notes: { RES_NOTE: 'VIP arrival' },
     });
     expect(parsed.roomCount).toBe(2);
     expect(parsed.dailyRates).toHaveLength(1);
     expect(parsed.paxGuests?.[0].firstName).toBe('Ali');
+    expect(parsed.partyBillingMode).toBe('PRIMARY');
+    expect(parsed.paxGuests?.[0].ownsFolio).toBe(true);
   });
 
   it('rejects invalid uuid for sourceId', () => {

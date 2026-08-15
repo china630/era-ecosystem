@@ -114,7 +114,7 @@ PET/CT, nuclear medicine, full genetic NGS, newborn screening pack, IVF advanced
 - [x] UI: modality/category order picker (`/lab-orders` + `DiagnosticCatalogPicker`)
 - [x] UI: result form renderer (`TemplateResultForm` on `/lab-orders/[id]`)
 - [x] UI: package → expand to child order codes on create
-- [x] SatAdmin favorites: `/admin/catalog-favorites` (`first` | `only`)
+- [x] SatAdmin favorites: `/admin/diagnostic-catalog` favorites tab (`first` | `only`)
 - [x] Patient card: now/next + pending labs + results/plan (`/patients/[id]` + card-summary/feed)
 - [ ] Finance price-list rows per `serviceCode`
 

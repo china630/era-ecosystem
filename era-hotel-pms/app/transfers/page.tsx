@@ -1,20 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
-  FORM_FIELD_GROUP_CLASS,
+  CARD_CONTAINER_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  useDebouncedValue,
+  Field,
+  FieldSelect,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  PageHeader,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -65,11 +70,14 @@ export default function TransfersPage() {
   const [reservationId, setReservationId] = useState('');
   const [direction, setDirection] = useState<'IN' | 'OUT'>('IN');
   const [flightNo, setFlightNo] = useState('');
-  const [pickupAt, setPickupAt] = useState('');
+  const [pickupDate, setPickupDate] = useState('');
+  const [pickupTime, setPickupTime] = useState('12:00');
   const [price, setPrice] = useState('35');
   const [notes, setNotes] = useState('');
   const [assignVehicleId, setAssignVehicleId] = useState<Record<string, string>>({});
-  const [msg, setMsg] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
+  const [boardDate, setBoardDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [modalOpen, setModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -91,31 +99,80 @@ export default function TransfersPage() {
   }, [guestIdFilter]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   function openBookModal() {
     setReservationId('');
     setDirection('IN');
     setFlightNo('');
-    setPickupAt('');
+    setPickupDate('');
+    setPickupTime('12:00');
     setPrice('35');
     setNotes('');
     setModalOpen(true);
   }
 
-  if (!can(PERMISSIONS.RESERVATIONS_WRITE)) {
-    return (
-      <AppShell>
-        <p className="text-sm text-red-600">{tc('accessDenied')}</p>
-      </AppShell>
+  const visibleOrders = useMemo(() => {
+    let list = orders;
+    if (boardDate) {
+      list = list.filter((o) => o.pickupAt.slice(0, 10) === boardDate);
+    }
+    const q = debouncedQ.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((o) =>
+      `${o.reservation.guest.fullName} ${o.flightNo ?? ''} ${o.status} ${o.direction}`
+        .toLowerCase()
+        .includes(q),
     );
+  }, [orders, debouncedQ, boardDate]);
+
+  function printDriverSheet() {
+    const rows = visibleOrders
+      .filter((o) => o.status !== 'CANCELLED')
+      .map(
+        (o) =>
+          `<tr>
+            <td>${new Date(o.pickupAt).toLocaleString()}</td>
+            <td>${o.reservation.guest.fullName}</td>
+            <td>${o.reservation.room?.roomNumber ?? '—'}</td>
+            <td>${o.direction === 'IN' ? 'IN' : 'OUT'}</td>
+            <td>${o.flightNo ?? '—'}</td>
+            <td>${o.vehicle ? `${o.vehicle.code} / ${o.vehicle.driverName ?? '—'}` : '—'}</td>
+            <td>${o.status}</td>
+          </tr>`,
+      )
+      .join('');
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html><head><title>${t('driverSheetTitle')}</title>
+      <style>
+        body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#222}
+        h1{font-size:18px;margin:0 0 4px} h2{font-size:13px;font-weight:normal;color:#666;margin:0 0 16px}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+        th{background:#f5f5f5}
+        @media print{button{display:none}}
+      </style></head><body>
+      <h1>${t('driverSheetTitle')}</h1>
+      <h2>${boardDate}</h2>
+      <table><thead><tr>
+        <th>${t('pickupAt')}</th><th>${t('guest')}</th><th>Room</th>
+        <th>${t('direction')}</th><th>${t('flightNo')}</th><th>${t('vehicle')}</th><th>${tc('status')}</th>
+      </tr></thead><tbody>${rows || `<tr><td colspan="7">${t('empty')}</td></tr>`}</tbody></table>
+      <script>window.onload=()=>window.print()</script>
+      </body></html>`);
+    w.document.close();
+  }
+
+  if (!can(PERMISSIONS.RESERVATIONS_WRITE)) {
+    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
   async function book(e: React.FormEvent) {
     e.preventDefault();
-    if (!reservationId || !pickupAt || !price) {
-      setMsg(t('missingFields'));
+    if (!reservationId || !pickupDate || !pickupTime || !price) {
+      showApiError({ error: t('missingFields') });
       return;
     }
     setBusy(true);
@@ -126,24 +183,26 @@ export default function TransfersPage() {
         reservationId,
         direction,
         flightNo: flightNo || undefined,
-        pickupAt: new Date(pickupAt).toISOString(),
+        pickupAt: new Date(`${pickupDate}T${pickupTime}`).toISOString(),
         price: Number(price),
         notes: notes || undefined,
       }),
     });
     const data = await res.json();
     setBusy(false);
-    setMsg(res.ok ? t('booked') : data.error ?? tc('error'));
-    if (res.ok) {
-      setModalOpen(false);
-      await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
     }
+    showSuccess(t('booked'));
+    setModalOpen(false);
+    await load();
   }
 
   async function assign(orderId: string) {
     const vehicleId = assignVehicleId[orderId];
     if (!vehicleId) {
-      setMsg(t('selectVehicle'));
+      showApiError({ error: t('selectVehicle') });
       return;
     }
     const res = await fetch(`/api/transfers/${orderId}`, {
@@ -152,8 +211,12 @@ export default function TransfersPage() {
       body: JSON.stringify({ action: 'assign', vehicleId }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('assigned') : data.error ?? tc('error'));
-    if (res.ok) await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
+    }
+    showSuccess(t('assigned'));
+    await load();
   }
 
   async function complete(orderId: string) {
@@ -163,25 +226,55 @@ export default function TransfersPage() {
       body: JSON.stringify({ action: 'complete' }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('completed') : data.error ?? tc('error'));
-    if (res.ok) await load();
+    if (!res.ok) {
+      showApiError(data, tc('error'));
+      return;
+    }
+    showSuccess(t('completed'));
+    await load();
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={t('title')}
         subtitle={t('subtitle')}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openBookModal}>
-            <Plus className="h-4 w-4" aria-hidden />
-            {t('book')}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={printDriverSheet}>
+              {t('printDriverSheet')}
+            </button>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openBookModal}>
+              <Plus className="h-4 w-4" aria-hidden />
+              {t('book')}
+            </button>
+          </div>
         }
       />
-      <StatusMessage>{msg}</StatusMessage>
 
-      <PageSection>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setQ('');
+          setBoardDate(new Date().toISOString().slice(0, 10));
+        }}
+      >
+        <DatePicker
+          label={t('boardDate')}
+          value={boardDate}
+          onChange={setBoardDate}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
+
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('schedule')}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
@@ -198,7 +291,7 @@ export default function TransfersPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => (
+              {visibleOrders.map((o) => (
                 <tr key={o.id} className="border-b border-[#ECF0F1]">
                   <td className="py-2 pr-3">{new Date(o.pickupAt).toLocaleString()}</td>
                   <td className="py-2 pr-3">
@@ -241,13 +334,36 @@ export default function TransfersPage() {
                         {t('complete')}
                       </button>
                     )}
+                    {['BOOKED', 'CONFIRMED', 'DONE'].includes(o.status) && (
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        onClick={async () => {
+                          if (!confirm(t('confirmCancel'))) return;
+                          const res = await fetch(`/api/transfers/${o.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'cancel' }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) {
+                            showApiError(data, tc('error'));
+                            return;
+                          }
+                          showSuccess(t('cancelled'));
+                          await load();
+                        }}
+                      >
+                        {t('cancel')}
+                      </button>
+                    )}
                     {o.folioCharged && o.status === 'DONE' && (
                       <span className="text-[#7F8C8D]">{t('charged')}</span>
                     )}
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {visibleOrders.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-4 text-[#7F8C8D]">
                     {t('empty')}
@@ -257,7 +373,7 @@ export default function TransfersPage() {
             </tbody>
           </table>
         </div>
-      </PageSection>
+      </section>
 
       <EraModal
         open={modalOpen}
@@ -273,69 +389,63 @@ export default function TransfersPage() {
         }
       >
         <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('guestStay')}</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={reservationId}
-              onChange={(e) => setReservationId(e.target.value)}
-              required
+          <FieldSelect
+            label={t('guestStay')}
+            preset="selectWide"
+            value={reservationId}
+            onChange={(e) => setReservationId(e.target.value)}
+            required
+          >
+            <option value="">{tc('select')}</option>
+            {reservations.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
+              </option>
+            ))}
+          </FieldSelect>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldSelect
+              label={t('direction')}
+              preset="select"
+              value={direction}
+              onChange={(e) => setDirection(e.target.value as 'IN' | 'OUT')}
             >
-              <option value="">{tc('select')}</option>
-              {reservations.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-                </option>
-              ))}
-            </select>
+              <option value="IN">{t('directionIn')}</option>
+              <option value="OUT">{t('directionOut')}</option>
+            </FieldSelect>
+            <Field label={t('flightNo')} preset="code" value={flightNo} onChange={(e) => setFlightNo(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('direction')}</label>
-              <select
-                className={MODAL_INPUT_CLASS}
-                value={direction}
-                onChange={(e) => setDirection(e.target.value as 'IN' | 'OUT')}
-              >
-                <option value="IN">{t('directionIn')}</option>
-                <option value="OUT">{t('directionOut')}</option>
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('flightNo')}</label>
-              <input className={MODAL_INPUT_CLASS} value={flightNo} onChange={(e) => setFlightNo(e.target.value)} />
-            </div>
+            <DatePicker
+              label={t('pickupAt')}
+              value={pickupDate}
+              onChange={setPickupDate}
+              placeholder={tc('datePlaceholder')}
+              openCalendarLabel={tc('openCalendar')}
+              required
+            />
+            <Field
+              label={tc('time')}
+              preset="time"
+              type="time"
+              value={pickupTime}
+              onChange={(e) => setPickupTime(e.target.value)}
+              required
+            />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('pickupAt')}</label>
-              <input
-                type="datetime-local"
-                className={MODAL_INPUT_CLASS}
-                value={pickupAt}
-                onChange={(e) => setPickupAt(e.target.value)}
-                required
-              />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('price')}</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={MODAL_INPUT_CLASS}
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('notes')}</label>
-            <input className={MODAL_INPUT_CLASS} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
+          <Field
+            label={t('price')}
+            preset="amount"
+            type="number"
+            min={0}
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+          <Field label={t('notes')} preset="longText" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </form>
       </EraModal>
-    </AppShell>
+    </>
   );
 }

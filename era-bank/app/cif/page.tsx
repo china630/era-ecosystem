@@ -1,11 +1,18 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PageHeader, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { OpsDataTable, useOpsModal } from "@/components/ops";
+import {
+  EraListFilterBar,
+  Field,
+  PageHeader,
+  showApiError,
+  useDebouncedValue,
+} from "@era/satellite-kit/ui";
+import { BankDataGrid } from "@/components/BankDataGrid";
+import { useOpsModal } from "@/components/ops";
 import { CifCreateModal, CifDetailModal } from "@/components/ops/modals/CifModals";
-import { OpsError, StatusBadge } from "@/components/ops-ui";
+import { StatusBadge } from "@/components/ops-ui";
 
 type Customer = {
   id: string;
@@ -22,89 +29,101 @@ function CifPageContent() {
   const tCommon = useTranslations("common");
   const modal = useOpsModal();
   const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q, 300);
   const [rows, setRows] = useState<Customer[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+      const qs = debouncedQ.trim()
+        ? `?q=${encodeURIComponent(debouncedQ.trim())}`
+        : "";
       const res = await fetch(`/api/cif/customers${qs}`, { cache: "no-store" });
       if (!res.ok) {
-        setError(`${tCommon("error")} (${res.status})`);
+        showApiError(tCommon("error"));
+        setRows([]);
         return;
       }
       setRows((await res.json()) as Customer[]);
     } catch {
-      setError(tCommon("error"));
+      showApiError(tCommon("error"));
+      setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [q, tCommon]);
+  }, [debouncedQ, tCommon]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const gridRows = useMemo(
+    () => rows as Array<Customer & Record<string, unknown>>,
+    [rows],
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-3`}>
-        <label className="min-w-[240px] flex-1">
-          <span className="mb-1 block text-[12px] text-muted-foreground">{t("searchLabel")}</span>
-          <input
-            className="w-full rounded border px-3 py-2 text-sm"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t("searchPlaceholder")}
-          />
-        </label>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
-          {tCommon("refresh")}
-        </button>
-      </div>
-      <OpsError message={error} />
-      <div className={CARD_CONTAINER_CLASS}>
-        {loading ? <p className="text-sm text-muted-foreground">{tCommon("loading")}</p> : null}
-        {!loading ? (
-          <OpsDataTable
-            rows={rows}
-            addLabel={t("newCustomer")}
-            onAdd={() => modal.open("create")}
-            emptyLabel={tCommon("empty")}
-            onRowClick={(row) => modal.open("detail", row.id)}
-            columns={[
-              {
-                key: "id",
-                label: "ID",
-                render: (row) => <span className="text-primary">{row.id.slice(0, 12)}…</span>,
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setQ("")}
+      >
+        <Field
+          label={t("searchLabel")}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+        />
+      </EraListFilterBar>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      ) : (
+        <BankDataGrid
+          columns={[
+            {
+              key: "id",
+              header: t("colId"),
+              render: (row) => (
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => modal.open("detail", row.id)}
+                >
+                  {row.id.slice(0, 12)}…
+                </button>
+              ),
+            },
+            { key: "customerType", header: t("colType") },
+            {
+              key: "kycStatus",
+              header: t("colKyc"),
+              render: (row) =>
+                row.kycStatus ? <StatusBadge status={row.kycStatus} /> : "—",
+            },
+            {
+              key: "voen",
+              header: t("colIdentity"),
+              render: (row) => {
+                if (row.voen) return row.voen;
+                if (row.globalPersonId) {
+                  const id = row.globalPersonId;
+                  return id.length > 12 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
+                }
+                return "—";
               },
-              { key: "customerType", label: "Type" },
-              {
-                key: "kycStatus",
-                label: "KYC",
-                render: (row) =>
-                  row.kycStatus ? <StatusBadge status={row.kycStatus} /> : "—",
-              },
-              {
-                key: "voen",
-                label: "VÖEN / Person",
-                render: (row) => {
-                  if (row.voen) return row.voen;
-                  if (row.globalPersonId) {
-                    const id = row.globalPersonId;
-                    return id.length > 12 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
-                  }
-                  return "—";
-                },
-              },
-              { key: "homeBranchId", label: "Branch" },
-            ]}
-          />
-        ) : null}
-      </div>
+            },
+            { key: "homeBranchId", header: t("colBranch") },
+          ]}
+          rows={gridRows}
+          rowKey={(r) => r.id}
+          addLabel={t("newCustomer")}
+          onAdd={() => modal.open("create")}
+          emptyMessage={tCommon("empty")}
+        />
+      )}
       <CifCreateModal
         open={modal.mode === "create"}
         onClose={modal.close}

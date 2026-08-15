@@ -7,15 +7,15 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.membershipTitle"
       apiPath={(gid) => `/api/guests/${gid}/time-shares`}
-      onAdd={async (guestId) => {
-        const contractNo = window.prompt('Contract number');
-        if (!contractNo?.trim()) return;
-        await fetch(`/api/guests/${guestId}/time-shares`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contractNo: contractNo.trim(), status: 'ACTIVE' }),
-        });
-      }}
+      addFields={[
+        { name: 'contractNo', label: 'Contract number', required: true, preset: 'code' },
+        { name: 'status', label: 'Status', defaultValue: 'ACTIVE', preset: 'shortText' },
+      ]}
+      buildBody={(v) => ({
+        contractNo: v.contractNo.trim(),
+        status: v.status.trim() || 'ACTIVE',
+      })}
+      searchKeys={['contractNo', 'unitCode', 'status']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           <strong>{String(r.contractNo)}</strong>

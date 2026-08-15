@@ -8,14 +8,19 @@ import {
 import {
   admitPatient,
   dischargeAdmission,
+  listInpatientCensus,
   listWardsWithPatients,
   transferAdmission,
 } from "@/domain/inpatient/adt.service";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
+    const view = new URL(req.url).searchParams.get("view");
+    if (view === "census") {
+      return jsonOk({ items: await listInpatientCensus() });
+    }
     const wards = await listWardsWithPatients();
     return jsonOk({ wards });
   } catch (err) {

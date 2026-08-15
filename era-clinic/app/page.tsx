@@ -1,43 +1,24 @@
-import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS, PageHeader } from "@era/satellite-kit/ui";
+import { cookies } from "next/headers";
+import {
+  authCookieName,
+  hasPlatformCapability,
+  verifySatelliteSession,
+} from "@era/satellite-kit";
+import { ClinicHomeClient } from "@/components/ClinicHomeClient";
+
+async function canViewExecutive(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(authCookieName())?.value;
+  if (!token) return false;
+  try {
+    const session = await verifySatelliteSession(token);
+    return hasPlatformCapability(session, "canViewExecutive");
+  } catch {
+    return false;
+  }
+}
 
 export default async function HomePage() {
-  const t = await getTranslations("home");
-
-  return (
-    <>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-6`}>
-        <p className="text-[13px] text-[#7F8C8D]">MVP operational shell aligned with DESIGN.md.</p>
-<ul className="space-y-2 text-[13px]">
-          <li>
-            <Link href="/api/health" className="font-medium text-[#2980B9] hover:underline">
-              Health API
-            </Link>
-          </li>
-          <li>
-            <Link href="/appointments" className={PRIMARY_BUTTON_CLASS}>
-              Open main screen
-            </Link>
-          </li>
-          <li>
-            <Link href="/lab-orders" className="font-medium text-[#2980B9] hover:underline">
-              Laboratory orders (K2)
-            </Link>
-          </li>
-          <li>
-            <Link href="/scheduling" className="font-medium text-[#2980B9] hover:underline">
-              Day schedule (K3)
-            </Link>
-          </li>
-          <li>
-            <Link href="/executive" className="font-medium text-[#2980B9] hover:underline">
-              Executive summary (K-14)
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </>
-  );
+  const showExecutive = await canViewExecutive();
+  return <ClinicHomeClient showExecutive={showExecutive} />;
 }

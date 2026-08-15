@@ -161,33 +161,48 @@ export async function resolveSyncError(id: string) {
   });
 }
 
-export async function handleOtaCancel(otaReference: string) {
-  const error = await prisma.channelSyncError.findFirst({
-    where: { otaReference, status: 'OPEN' },
-    include: { reservation: true },
-  });
+/**
+ * Cancel an OTA-linked reservation by explicit identity only.
+ * No "latest OTA reservation" fallback — missing ref fails.
+ */
+export async function handleOtaCancel(input: {
+  externalRef?: string;
+  otaReference?: string;
+  reservationId?: string;
+}) {
+  const externalRef = (input.externalRef ?? input.otaReference)?.trim() || undefined;
+  const reservationId = input.reservationId?.trim() || undefined;
 
-  if (error?.reservationId) {
-    await prisma.reservation.update({
-      where: { id: error.reservationId },
-      data: { status: 'CANCELLED' },
-    });
-    await resolveSyncError(error.id);
-    return { cancelled: true, reservationId: error.reservationId };
+  if (!externalRef && !reservationId) {
+    throw new Error('externalRef or reservationId required for OTA cancel');
   }
 
-  const reservation = await prisma.reservation.findFirst({
-    where: { source: { code: 'OTA' } },
-    orderBy: { createdAt: 'desc' },
-  });
+  const reservation = reservationId
+    ? await prisma.reservation.findUnique({ where: { id: reservationId } })
+    : await prisma.reservation.findUnique({ where: { externalRef: externalRef! } });
 
-  if (reservation) {
-    await prisma.reservation.update({
-      where: { id: reservation.id },
-      data: { status: 'CANCELLED' },
-    });
-    return { cancelled: true, reservationId: reservation.id };
+  if (!reservation) {
+    throw new Error('Reservation not found for OTA cancel');
   }
 
-  return { cancelled: false };
+  await prisma.reservation.update({
+    where: { id: reservation.id },
+    data: { status: 'CANCELLED' },
+  });
+
+  const openErrors = await prisma.channelSyncError.findMany({
+    where: {
+      status: 'OPEN',
+      OR: [
+        ...(externalRef ? [{ otaReference: externalRef }] : []),
+        { reservationId: reservation.id },
+        ...(reservation.externalRef ? [{ otaReference: reservation.externalRef }] : []),
+      ],
+    },
+  });
+  for (const err of openErrors) {
+    await resolveSyncError(err.id);
+  }
+
+  return { cancelled: true, reservationId: reservation.id, externalRef: reservation.externalRef };
 }

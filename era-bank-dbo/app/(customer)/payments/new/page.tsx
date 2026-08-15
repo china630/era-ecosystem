@@ -125,7 +125,22 @@ export default function NewPaymentPage() {
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>
-        <input type="hidden" value={debitAccountId} readOnly />
+        <div>
+          <label className="mb-1 block text-xs text-dbo-muted">{t("debitAccount")}</label>
+          <select
+            required
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            value={debitAccountId}
+            onChange={(e) => setDebitAccountId(e.target.value)}
+          >
+            <option value="">{tc("select")}</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.iban ?? a.id}
+              </option>
+            ))}
+          </select>
+        </div>
         {!orderId ? (
           <button
             type="submit"

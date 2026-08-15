@@ -1,9 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { PageHeader, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
+import {
+  CARD_CONTAINER_CLASS,
+  EraListFilterBar,
+  useDebouncedValue,
+  Field,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from '@era/satellite-kit/ui';
 
 type ServiceRow = {
   id: string;
@@ -18,20 +27,27 @@ type ServiceRow = {
 
 export default function ServicePage() {
   const t = useTranslations('service');
+  const tc = useTranslations('common');
   const [rows, setRows] = useState<ServiceRow[]>([]);
   const [title, setTitle] = useState('');
   const [roomNumber, setRoomNumber] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/service/requests');
-    if (!res.ok) {
-      setMsg('Failed to load');
-      return;
+    try {
+      const res = await fetch('/api/service/requests');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc('loadError'));
+        return;
+      }
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     }
-    setRows(await res.json());
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     void load();
@@ -40,7 +56,6 @@ export default function ServicePage() {
   async function createRequest() {
     if (!title.trim()) return;
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch('/api/service/requests', {
         method: 'POST',
@@ -51,41 +66,73 @@ export default function ServicePage() {
           source: 'STAFF',
         }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc('failed'));
+        return;
+      }
       setTitle('');
       setRoomNumber('');
       await load();
-      setMsg(t('created'));
+      showSuccess(t('created'));
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Error');
+      showApiError({ error: e instanceof Error ? e.message : tc('failed') });
     } finally {
       setBusy(false);
     }
   }
 
   async function setStatus(id: string, status: 'IN_PROGRESS' | 'DONE') {
-    await fetch(`/api/service/requests/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    await load();
+    try {
+      const res = await fetch(`/api/service/requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc('failed'));
+        return;
+      }
+      await load();
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('failed') });
+    }
   }
 
+  const filtered = useMemo(() => {
+    const q = debouncedQ.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      `${r.title} ${r.room?.roomNumber ?? ''} ${r.status} ${r.source}`.toLowerCase().includes(q),
+    );
+  }, [rows, debouncedQ]);
+
   return (
-    <AppShell>
+    <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <PageSection>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setQ('')}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <div className="mb-4 flex flex-wrap gap-2">
-          <input
-            className="rounded border px-2 py-1 text-sm"
-            placeholder={t('requestTitle')}
+          <Field
+            label={t('requestTitle')}
+            preset="longText"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
-          <input
-            className="rounded border px-2 py-1 text-sm w-28"
-            placeholder={t('room')}
+          <Field
+            label={t('room')}
+            preset="shortText"
             value={roomNumber}
             onChange={(e) => setRoomNumber(e.target.value)}
           />
@@ -93,7 +140,6 @@ export default function ServicePage() {
             {t('add')}
           </button>
         </div>
-        {msg ? <StatusMessage>{msg}</StatusMessage> : null}
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left border-b">
@@ -105,7 +151,7 @@ export default function ServicePage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {filtered.map((r) => (
               <tr key={r.id} className="border-b">
                 <td className="py-2">{r.title}</td>
                 <td>{r.room?.roomNumber ?? r.location ?? '—'}</td>
@@ -127,7 +173,7 @@ export default function ServicePage() {
             ))}
           </tbody>
         </table>
-      </PageSection>
-    </AppShell>
+      </section>
+    </>
   );
 }

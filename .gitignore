@@ -5,6 +5,9 @@ era-finance-core/D*/
 .env.local
 .env*.local
 *.log
+# Stage-gate raw logs (commit *-signoff.md only)
+reports/*.log
+reports/*-e2e.log
 .DS_Store
 dist/
 **/.next/
@@ -17,11 +20,21 @@ tmp/era-local-credentials.md
 # Docker persistent data (never commit)
 docker-data/
 
+# Satellite runtime org bind file cache
+**/.data/
+
 # IDE / local plans (skills + rules under .cursor/ are tracked)
 .cursor/plans/
 
-# Legal entity enrichment cache (local scrape; never commit)
+# Legal entity enrichment cache + master DB (local; never commit — backup to D:\ERA-BACKUP)
 data/legal-entities/.cache/
+data/legal-entities/azerbaijan-companies-with-voen.csv
+data/legal-entities/azerbaijan-companies-without-voen.csv
+data/legal-entities/.companies-master-stats.json
+data/legal-entities/.token-seeds-*.json
+data/legal-entities/.token-seeds.lock
+data/legal-entities/.trigram-sweep*.json
+data/legal-entities/.trigram-sweep.lock
 
 # Elektraweb bridge HAR / PII captures (LoginToken + guest data — never commit)
 **/*.har
@@ -30,4 +43,16 @@ era-hotel-pms/doc/nafta/bridge-har/*.json
 
 # Local port/reference scratch (never commit)
 .cursor/port-refs/
+
+
+# Local git worktrees (never commit as gitlinks)
+.wt-*/
+
+# Local-only JWT signing material (generate per env; never commit private d)
+**/dev-rs256-jwk.json
+**/dev-*-jwk.json
+
+# Local e-taxes enrichment scratch (never commit)
+data/legal-entities/.etaxes-token-hypotheses.json
+data/legal-entities/.token-seeds-*.json
 

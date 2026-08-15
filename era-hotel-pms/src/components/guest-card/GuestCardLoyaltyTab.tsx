@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { EraDataGrid } from '@era/satellite-kit/ui';
+import { HotelDataGrid } from "@/components/HotelDataGrid";
 
 export function GuestCardLoyaltyTab({
   loyaltyTier,
@@ -31,7 +31,7 @@ export function GuestCardLoyaltyTab({
       <p>
         {t('loyalty.tier')}: <strong>{loyaltyTier || '—'}</strong>
       </p>
-      <EraDataGrid
+      <HotelDataGrid
         rows={cards as Array<Record<string, unknown>>}
         columns={[
           { key: 'cardNumber', header: t('loyalty.cardNumber') },
@@ -41,6 +41,7 @@ export function GuestCardLoyaltyTab({
         ]}
         rowKey={(r) => String(r.id)}
         emptyMessage={t('loyalty.empty')}
+        pagination={false}
       />
       {guestId ? (
         <button
@@ -61,7 +62,7 @@ export function GuestCardLoyaltyTab({
         </button>
       ) : null}
       <h3 className="font-semibold text-[#34495E]">{t('loyalty.pointsHistory')}</h3>
-      <EraDataGrid
+      <HotelDataGrid
         rows={pointEntries as Array<Record<string, unknown>>}
         columns={[
           { key: 'entryDate', header: t('loyalty.entryDate'), render: (r) => String(r.entryDate).slice(0, 10) },
@@ -71,6 +72,7 @@ export function GuestCardLoyaltyTab({
         ]}
         rowKey={(r) => String(r.id)}
         emptyMessage={t('loyalty.pointsEmpty')}
+        pagination={false}
       />
       {guestId ? (
         <button

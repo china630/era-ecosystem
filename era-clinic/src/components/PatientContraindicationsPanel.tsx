@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  MODAL_INPUT_CLASS,
+  Field,
   ModalFooter,
   ModalShell,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { BodySilhouette } from "./BodySilhouette";
 
@@ -68,12 +69,12 @@ export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: 
     await load();
   }
 
-  if (loading) return <p className="text-sm text-slate-500">{tc("loading")}</p>;
+  if (loading) return <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
 
   return (
     <div className="space-y-3">
       <BodySilhouette blocked={blocked} onToggle={onZoneClick} />
-      <ul className="text-sm text-slate-600">
+      <ul className={`text-sm ${TEXT_MUTED_CLASS}`}>
         {rows.length === 0 ? (
           <li>{t("empty")}</li>
         ) : (
@@ -88,8 +89,9 @@ export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: 
 
       <ModalShell open={addOpen} title={t("addTitle")} onClose={() => setAddOpen(false)}>
         <p className="mb-2 text-[13px]">{pendingPart}</p>
-        <input
-          className={MODAL_INPUT_CLASS}
+        <Field
+          label={t("noteOptional")}
+          preset="shortText"
           placeholder={t("noteOptional")}
           value={note}
           onChange={(e) => setNote(e.target.value)}
