@@ -3,7 +3,7 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =

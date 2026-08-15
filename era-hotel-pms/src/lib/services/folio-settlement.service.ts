@@ -4,7 +4,7 @@ import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import type { PaymentMethod } from '@prisma/client';
 import { captureAuthorization } from '@/lib/services/card-auth.service';
 import { applyHeldDepositsToFolio } from '@/lib/services/folio-deposit.service';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =

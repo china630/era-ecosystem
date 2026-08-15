@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { resolveSatelliteOrganizationId } from "./tenancy/organization-bind";
+import { resolveSatelliteOrganizationId } from "./tenancy/organization-bind-core";
 
 export type OrchestratorGatewayResult = {
   ok: boolean;

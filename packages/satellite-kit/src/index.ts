@@ -5,14 +5,16 @@ export {
 } from "./orchestrator-gateway";
 export {
   createOrganizationBindHandlers,
+  type OrganizationBindHandlerOptions,
+} from "./tenancy/organization-bind";
+export {
   applyOrganizationBind,
   resolveSatelliteOrganizationId,
   setRuntimeOrganizationId,
   hydrateOrganizationBindFromDb,
   type OrgBindPrisma,
   type OrganizationBindSource,
-  type OrganizationBindHandlerOptions,
-} from "./tenancy/organization-bind";
+} from "./tenancy/organization-bind-core";
 
 export {
   assertEnvServiceToken,

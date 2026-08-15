@@ -19,7 +19,7 @@ import {
   envelopeToCityLedgerSnapshotEvent,
   publishToOrchestratorGateway,
 } from './orchestrator-gateway';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import type {
   IntegrationEnvelope,
   DispatchResult,
