@@ -35,6 +35,10 @@ The **PricingEngine** (`pricing-engine-core.ts` + `pricing-engine.service.ts`) a
 - Booking/reservation/folio flows still use legacy `quoteBookingRate` until wired to `quoteStay`.
 - Admin UI for BAR calendar and add-on catalog not yet built.
 
+## Related (2026-08)
+
+Nafta: BAR = accounting base / floor recommendation; medical **package sell** is manual and need not equal BAR — [hotel-bar-accounting-vs-package-sell.md](./hotel-bar-accounting-vs-package-sell.md).
+
 ## Constraints
 
 - Derived plans must reference a BASE plan directly (no derived→derived chains).

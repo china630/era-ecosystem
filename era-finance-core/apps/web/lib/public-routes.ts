@@ -9,6 +9,9 @@ export function isPublicWebPath(pathname: string): boolean {
   if (pathname.startsWith("/verify/")) return true;
   if (pathname.startsWith("/portal")) return true;
   if (pathname.startsWith("/api/")) return true;
+  // Reverse proxy to the orchestrator control plane; it enforces its own Bearer auth.
+  // The finance edge middleware must not intercept it (e.g. pre-session SSO handoff redeem).
+  if (pathname.startsWith("/cp/")) return true;
   return false;
 }
 

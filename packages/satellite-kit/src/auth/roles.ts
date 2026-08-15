@@ -1,3 +1,5 @@
+import { isPlatformSuperAdminUser } from "./platform-super-admin";
+
 /** Finance/orchestrator roles that map to satellite BUSINESS_OWNER. */
 export const FINANCE_OWNER_ROLES = ["OWNER", "DIRECTOR"] as const;
 
@@ -49,10 +51,33 @@ export function isBusinessOwnerRole(role: string): boolean {
   return role === SATELLITE_ROLE.BUSINESS_OWNER;
 }
 
+/**
+ * Platform super-admin gate shared by every satellite: identified by the
+ * allowlist (`PLATFORM_SUPER_ADMIN_EMAILS`). Matches by email or login so it
+ * works for both SSO (`email`) and local (`login`) sessions.
+ */
+export function sessionIsPlatformSuperAdmin(session: {
+  login?: string | null;
+  email?: string | null;
+}): boolean {
+  if (!session.login && !session.email) return false;
+  return isPlatformSuperAdminUser({
+    login: session.login ?? "",
+    email: session.email ?? null,
+  });
+}
+
 export function sessionHasRole(
-  session: { role: string; roles?: string[] },
+  session: {
+    role: string;
+    roles?: string[];
+    login?: string | null;
+    email?: string | null;
+  },
   required: string,
 ): boolean {
   if (session.role === required) return true;
-  return session.roles?.includes(required) ?? false;
+  if (session.roles?.includes(required)) return true;
+  // Platform super-admins satisfy every satellite role.
+  return sessionIsPlatformSuperAdmin(session);
 }

@@ -200,8 +200,10 @@ async function main() {
     ],
   });
 
-  const mealHB = await prisma.mealPlan.create({ data: { code: 'HB', name: 'Half board' } });
+  const mealFB = await prisma.mealPlan.create({ data: { code: 'FB', name: 'Full board (3 meals)' } });
   const mealBB = await prisma.mealPlan.create({ data: { code: 'BB', name: 'Breakfast' } });
+  // HB rare at Nafta — kept for master-data demos only
+  const mealHB = await prisma.mealPlan.create({ data: { code: 'HB', name: 'Half board (rare)' } });
 
   const typeStd = await prisma.roomType.create({
     data: { code: 'STWN', name: 'Standard Twin', baseQuota: 40, adultCapacity: 2 },
@@ -210,30 +212,63 @@ async function main() {
     data: { code: 'DLX', name: 'Deluxe', baseQuota: 20, adultCapacity: 2 },
   });
   const typeSuite = await prisma.roomType.create({
-    data: { code: 'SUITE', name: 'Suite', baseQuota: 8, adultCapacity: 3 },
+    data: { code: 'SUITE', name: 'Junior Suite', baseQuota: 8, adultCapacity: 3 },
   });
 
-  const rateStd = await prisma.ratePlan.create({
-    data: { code: 'STANDARD', name: 'Standard rate', pricePerNight: 120, roomTypeId: typeStd.id, mealPlanId: mealBB.id },
-  });
-  const rateMedical = await prisma.ratePlan.create({
+  // Non-package BAR walk-in (no medical) — Nafta accounting: BB includes breakfast;
+  // canteen sell B=L=D=25 AZN; FB = BB + lunch + dinner (see doc/nafta/BAR_DERIVED_2026.md).
+  const rateBarBb = await prisma.ratePlan.create({
     data: {
-      code: 'MEDICAL',
-      name: 'Medical package',
-      pricePerNight: 180,
-      medicalFlag: true,
-      roomTypeId: typeDlx.id,
-      mealPlanId: mealHB.id,
+      code: 'BAR-BB',
+      name: 'BAR — Bed & breakfast (no medical package)',
+      type: 'BASE',
+      pricePerNight: 80,
+      roomTypeId: typeStd.id,
+      mealPlanId: mealBB.id,
+    },
+  });
+  const rateStd = await prisma.ratePlan.create({
+    data: {
+      code: 'BAR-FB',
+      name: 'BAR — Full board (no medical package)',
+      type: 'BASE',
+      pricePerNight: 130,
+      roomTypeId: typeStd.id,
+      mealPlanId: mealFB.id,
     },
   });
 
-  await prisma.ratePlanPackageLine.createMany({
-    data: [
-      { ratePlanId: rateMedical.id, revenueCodeId: revRoom.id, amount: 90, sortOrder: 1 },
-      { ratePlanId: rateMedical.id, revenueCodeId: revTreatment.id, amount: 60, sortOrder: 2 },
-      { ratePlanId: rateMedical.id, revenueCodeId: revBoard.id, amount: 30, sortOrder: 3 },
-    ],
-  });
+  // Nafta 2026 commercial packages (PDF) — medicalFlag → EOD package split + clinic program
+  const naftaPackages = [
+    { code: 'PKG-STANDART', name: 'Standart müalicə paketi', price: 139, roomTypeId: typeStd.id },
+    { code: 'PKG-PREMIUM', name: 'Premium paket', price: 193, roomTypeId: typeDlx.id },
+    { code: 'PKG-DERMO', name: 'Dermo paket', price: 180, roomTypeId: typeDlx.id },
+    { code: 'PKG-DETOKS', name: 'Detoks paket', price: 178, roomTypeId: typeSuite.id },
+  ] as const;
+
+  const createdPkgs = [];
+  for (const p of naftaPackages) {
+    const rp = await prisma.ratePlan.create({
+      data: {
+        code: p.code,
+        name: p.name,
+        type: 'DERIVED',
+        pricePerNight: p.price,
+        medicalFlag: true,
+        roomTypeId: p.roomTypeId,
+        mealPlanId: mealFB.id,
+      },
+    });
+    createdPkgs.push(rp);
+    await prisma.ratePlanPackageLine.createMany({
+      data: [
+        { ratePlanId: rp.id, revenueCodeId: revRoom.id, amount: Math.round(p.price * 0.5), sortOrder: 1 },
+        { ratePlanId: rp.id, revenueCodeId: revTreatment.id, amount: Math.round(p.price * 0.33), sortOrder: 2 },
+        { ratePlanId: rp.id, revenueCodeId: revBoard.id, amount: Math.round(p.price * 0.17), sortOrder: 3 },
+      ],
+    });
+  }
+  const rateMedical = createdPkgs[0]!; // PKG-STANDART — default for FO demo medical stays
 
   const svcMassage = await prisma.procedureService.create({
     data: { code: 'MASSAGE', name: 'Therapeutic massage', durationMin: 45, defaultAmount: 50 },
@@ -267,7 +302,11 @@ async function main() {
   });
 
   const sourceWalkin = await prisma.bookingSource.create({ data: { code: 'WALKIN', name: 'Walk-in' } });
-  const sourceOta = await prisma.bookingSource.create({ data: { code: 'OTA', name: 'OTA channels' } });
+  const sourceAgency = await prisma.bookingSource.create({ data: { code: 'AGENCY', name: 'Agency' } });
+  const sourceBooking = await prisma.bookingSource.create({
+    data: { code: 'BOOKING', name: 'Booking / OTA' },
+  });
+  void sourceAgency;
 
   const rooms = await Promise.all(
     [
@@ -355,11 +394,11 @@ async function main() {
     typeSuite,
     rateStd,
     rateMedical,
-    mealHB,
-    mealBB,
+    mealHB: mealFB,
+    mealBB: mealFB,
     agency,
     sourceWalkin,
-    sourceOta,
+    sourceOta: sourceBooking,
     revRoom,
     revFood,
     deptAcc,

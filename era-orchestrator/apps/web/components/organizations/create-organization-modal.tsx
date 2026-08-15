@@ -70,6 +70,7 @@ export function CreateOrganizationModal({
       }
       const data = (await res.json()) as {
         accessToken: string;
+        refreshToken?: string;
         claims: {
           sub: string;
           email: string;
@@ -89,7 +90,7 @@ export function CreateOrganizationModal({
         organizationId: data.claims.organizationId,
         role: data.claims.role,
         isSuperAdmin: data.claims.isSuperAdmin,
-      });
+      }, data.refreshToken);
       onClose();
       router.push("/workspace");
     } finally {

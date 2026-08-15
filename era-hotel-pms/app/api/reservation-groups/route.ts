@@ -11,6 +11,11 @@ const createSchema = z.object({
   code: z.string().min(1).max(32),
   name: z.string().optional(),
   agencyId: z.string().uuid().optional(),
+  folioMode: z.enum(['INDIVIDUAL', 'MASTER', 'SPLIT']).optional(),
+  allotmentBlockId: z.string().uuid().optional(),
+  checkInDate: z.coerce.date().optional(),
+  checkOutDate: z.coerce.date().optional(),
+  notes: z.string().optional(),
 });
 
 export async function GET() {
@@ -33,6 +38,11 @@ export async function POST(request: Request) {
         code: body.code,
         name: body.name,
         agencyId: body.agencyId,
+        folioMode: body.folioMode ?? 'INDIVIDUAL',
+        allotmentBlockId: body.allotmentBlockId,
+        checkInDate: body.checkInDate,
+        checkOutDate: body.checkOutDate,
+        notes: body.notes,
       },
     });
     return jsonOk(serialize(group), 201);

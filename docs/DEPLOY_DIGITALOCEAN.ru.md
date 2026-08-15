@@ -225,17 +225,26 @@ curl -sS -o /dev/null -w "%{http_code}\n" http://hotel-pms.era-365.online/login
 
 **Клиенту показать:** `https://app.era-365.online` → login → industry launcher → Hotel / Finance.
 
+### Привязка org UUID к сателлитам (без правки `.env`)
+
+1. Super-admin → org hub → создать org / departments (F&B, Clinic).
+2. Connect satellites + сохранить **Satellite endpoints** (HTTPS base URLs hotel/fnb/clinic).
+3. Кнопка **Sync satellite bindings** → Orchestrator шлёт `POST /api/internal/v1/organization/bind` на каждый enabled industry endpoint.
+4. Hotel получает UUID родителя; F&B/Clinic — UUID department по имени (или endpoint, зарегистрированный на department).
+
+Не нужно вручную прописывать `ERA_SATELLITE_ORGANIZATION_ID` в compose после Sync (см. ADR `satellite-organization-bind`). Требуются образы с bind-route.
+
 ---
 
 ## 8. HTTPS (Let's Encrypt)
 
-Сейчас Traefik маршрутизирует **HTTP :80** (`traefik/dynamic.yml`, entryPoint `web`). Для HTTPS:
+Traefik ACME (`certificatesResolvers.letsencrypt`, HTTP-01 on entryPoint `web`) выдаёт сертификаты в `docker-data/letsencrypt/acme.json`.
 
-1. Установить certbot **или** включить ACME в Traefik (отдельная задача в репо).
-2. Проксировать 443 → traefik `websecure` и добавить TLS routers в `dynamic.yml`.
-3. После TLS все `ERA_*_ORIGIN` должны быть `https://`.
+**Не** включайте глобальный redirect `web` → `websecure` в `traefik.yml` — он ломает HTTP-01 (остаётся `TRAEFIK DEFAULT CERT` в браузере). Redirect HTTP→HTTPS — middleware `http-to-https` в `traefik/dynamic.yml` с исключением `/.well-known/acme-challenge/`.
 
-Временное демо без TLS: клиент открывает `http://app.era-365.online` (DNS уже на дроплет).
+После wipe `docker-data` сертификаты нужно выписать заново: `docker compose … up -d traefik`, затем открыть `https://app.…` / дождаться ACME в логах (`docker logs era-traefik`).
+
+Все `ERA_*_ORIGIN` в prod — `https://`.
 
 ---
 

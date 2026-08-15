@@ -7,7 +7,15 @@ import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
-const schema = z.object({ otaReference: z.string().min(1) });
+const schema = z
+  .object({
+    otaReference: z.string().min(1).optional(),
+    externalRef: z.string().min(1).optional(),
+    reservationId: z.string().uuid().optional(),
+  })
+  .refine((b) => Boolean(b.otaReference || b.externalRef || b.reservationId), {
+    message: 'externalRef, otaReference, or reservationId required',
+  });
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +23,7 @@ export async function POST(request: Request) {
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
     await requireHotelModule('hotel_distribution');
     const body = schema.parse(await request.json());
-    return jsonOk(serialize(await handleOtaCancel(body.otaReference)));
+    return jsonOk(serialize(await handleOtaCancel(body)));
   } catch (err) {
     return handleRouteError(err);
   }

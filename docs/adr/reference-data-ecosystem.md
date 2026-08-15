@@ -35,4 +35,5 @@ Global read-only catalogs (FX, calendar, HS, banks, VÖEN directory, geo, UoM, t
 - [fx-rates-ecosystem.md](./fx-rates-ecosystem.md)
 - [production-calendar-ecosystem.md](./production-calendar-ecosystem.md)
 - [era-mdm-natural-person-identity.md](./era-mdm-natural-person-identity.md)
+- [managed-lists-vs-enums.md](./managed-lists-vs-enums.md) — tenant/platform **operational** pick-lists vs Prisma enums (Wave A/B); does not replace hub SoR for FX/calendar/VÖEN
 - Audit: [REFERENCE_DATA_CONSUMER_AUDIT.md](../REFERENCE_DATA_CONSUMER_AUDIT.md)

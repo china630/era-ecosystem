@@ -1,4 +1,5 @@
 import { createPrivateKey, createPublicKey } from "crypto";
+import { readFileSync } from "fs";
 import type { ConfigService } from "@nestjs/config";
 
 export type JwtSigningMode = "hs256" | "rs256" | "dual";
@@ -12,6 +13,16 @@ export function resolveJwtSigningMode(config: ConfigService): JwtSigningMode {
 }
 
 export function parseRs256Jwk(config: ConfigService): Record<string, unknown> | null {
+  const filePath = config.get<string>("ERA_JWT_RS256_JWK_FILE")?.trim();
+  if (filePath) {
+    try {
+      const raw = readFileSync(filePath, "utf8").trim();
+      const key = JSON.parse(raw) as Record<string, unknown>;
+      return key.kty && key.kid ? key : null;
+    } catch {
+      return null;
+    }
+  }
   const raw = config.get<string>("ERA_JWT_RS256_JWK")?.trim();
   if (!raw) return null;
   try {

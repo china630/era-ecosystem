@@ -1,0 +1,35 @@
+---
+description: Quality gates, Cursor hooks and scanners (ERA + acceptance-kit)
+alwaysApply: true
+---
+
+# Quality tooling (agent)
+
+Canon: `docs/products/ERA-Acceptance-Standard.md` § Tooling.
+
+## Before «done» / PR
+
+1. `npm run check:acceptance` (strict: `npm run check:acceptance:strict`)
+2. On MDM / hub / workforce / reference contracts: `npm run audit:integration:strict`
+3. Design tokens (if UI): `npm run lint:design-tokens` + `npm run lint:token-layers`
+4. Bundle: `npm run run:quality-gates`
+5. Matrix: no Scaffold ✅ without negative path; no false `all ✅`; no edition `ga` without Pilot-ready
+6. Pick-list UI: no new `shortText`/`code` for catalog-shaped fields — use `CatalogField` + `CatalogFieldKind` (`era-managed-list-controls.mdc`)
+
+## Shell bans (also in hooks)
+
+- `git push --force`, `git reset --hard`, `git clean -f` without explicit user request
+- `git stash` without explicit user request (legal-entities / unrelated WIP)
+- Emergency reset of a core to `origin/dev` for CI green — forbidden (`era-no-emergency-reset`)
+- DROP/TRUNCATE DB; wipe volumes on `*prod*` compose
+
+## Artifacts
+
+| What | Where |
+|------|-------|
+| Hooks | `.cursor/hooks.json` |
+| Skills | `.cursor/skills/acceptance-closeout`, `quality-gates` |
+| Consistency | `scripts/check-acceptance-consistency.mjs` |
+| Config | `kit-config.yaml` |
+
+Do not add phone-home telemetry to product runtime. Scanners stay offline/local/CI.

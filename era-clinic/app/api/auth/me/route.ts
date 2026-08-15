@@ -16,6 +16,8 @@ import {
 
 import { prisma } from "@/lib/prisma";
 
+import { fetchControlPlaneOrganizationName } from "@era/satellite-kit";
+
 
 
 export async function GET() {
@@ -45,12 +47,24 @@ export async function GET() {
 
 
     const tenant = await prisma.tenant.findFirst({
-
       where: { code: "default" },
-
-      select: { name: true },
-
+      select: { name: true, checkInRequiresQr: true },
     });
+
+
+
+    // Company name is owned by the orchestrator (control plane); fall back to
+    // the local tenant name if the control plane is unreachable.
+
+    const controlPlaneName = process.env.ERA_SATELLITE_ORGANIZATION_ID
+
+      ? await fetchControlPlaneOrganizationName(
+
+          process.env.ERA_SATELLITE_ORGANIZATION_ID,
+
+        )
+
+      : null;
 
 
 
@@ -82,14 +96,13 @@ export async function GET() {
 
       role: user.role.code,
 
-      organizationName: tenant?.name ?? null,
+      organizationName: controlPlaneName ?? tenant?.name ?? null,
 
       canViewClinicAdmin: hasClinicAdminAccess(mergedSession),
 
       isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
-
       enabledPresets,
-
+      checkInRequiresQr: tenant?.checkInRequiresQr ?? true,
     });
 
     res.cookies.set(PRESETS_COOKIE, serializePresetsCookie(enabledPresets), {

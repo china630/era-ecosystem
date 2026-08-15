@@ -1,0 +1,10 @@
+-- AlterTable Tenant working hours
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "day_start_hour" INTEGER NOT NULL DEFAULT 9;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "day_end_hour" INTEGER NOT NULL DEFAULT 18;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "lunch_start_hour" INTEGER NOT NULL DEFAULT 13;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "lunch_end_hour" INTEGER NOT NULL DEFAULT 14;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "closed_weekdays" INTEGER[] DEFAULT ARRAY[0]::INTEGER[];
+
+-- AlterTable PatientRef anamnesis
+ALTER TABLE "PatientRef" ADD COLUMN IF NOT EXISTS "anamnesis_text" TEXT;
+ALTER TABLE "PatientRef" ADD COLUMN IF NOT EXISTS "anamnesis_updated_at" TIMESTAMP(3);

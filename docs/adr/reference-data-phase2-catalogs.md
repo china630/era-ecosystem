@@ -29,3 +29,7 @@ Proposed — backlog only; **no SHIPPED tags** until API exists.
 ## Rule
 
 Phase 2 items are documented here only. COVERAGE_MATRIX rows appear when hub exposes `/registry/v1` routes and finance/bank consumers exist.
+
+## Related
+
+- [managed-lists-vs-enums.md](./managed-lists-vs-enums.md) — Wave B unifies legal-form / UoM-kind / tax-kind value sets with hub; tenant ops catalogs are out of this Phase 2 shelf.

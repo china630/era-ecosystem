@@ -34,7 +34,7 @@ export const ROLE_CODES = {
 
 export type RoleCode = (typeof ROLE_CODES)[keyof typeof ROLE_CODES];
 
-const ALL_PERMISSIONS = Object.values(PERMISSIONS);
+export const ALL_PERMISSIONS = Object.values(PERMISSIONS);
 
 export const ROLE_PERMISSIONS: Record<RoleCode, Permission[]> = {
   [ROLE_CODES.HOTEL_ADMIN]: [...ALL_PERMISSIONS],

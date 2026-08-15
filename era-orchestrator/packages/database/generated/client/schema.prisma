@@ -425,6 +425,10 @@ enum WorkforceAbsenceKind {
   VACATION
   SICK
   UNPAID
+  SOCIAL_LEAVE
+  EDUCATIONAL_LEAVE
+  BUSINESS_TRIP
+  ADMINISTRATIVE
 }
 
 enum WorkforceAbsenceStatus {
@@ -826,11 +830,13 @@ model PricingBundle {
   isTrialDefault      Boolean              @default(false) @map("is_trial_default")
   trialDurationDays   Int?                 @map("trial_duration_days")
   trialQuotas         Json?                @map("trial_quotas")
+  archivedAt          DateTime?            @map("archived_at")
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
   organizationBundles OrganizationBundle[]
 
   @@index([isTrialDefault])
+  @@index([archivedAt])
   @@map("pricing_bundles")
 }
 

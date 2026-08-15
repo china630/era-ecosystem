@@ -241,9 +241,9 @@ Catalog SoR (T1/T2) is incomplete without the correct ops control. **SHIPPED for
 
 | Screen / file | Field | UI now | Target control | Wave |
 |---------------|-------|--------|----------------|------|
-| Bank CIF / Payment / Product / Hold / IFRS9 | party type, rail, product, reason, stage | `select-hardcoded` | keep Select; align rails to core | B4 |
-| Bank AccountOpen / Product / inbound | currency | `text` | Select | scaffold → B4 |
-| Bank modals | customerId, branchId, glAccountId, … | `text` | Autocomplete | scaffold |
+| Bank CIF / Payment / Product / Hold / IFRS9 | party type, rail, product, reason, stage | `CatalogField` on CIF/Payment/Product/Hold/IFRS9 (+ Posting op kind) | keep Select; align rails to core | B4 ✅ |
+| Bank AccountOpen / Product / inbound | currency | `CatalogField` CLOSED_SMALL | Select | B4 ✅ partial |
+| Bank modals | customerId, branchId, accountId, product | `ENTITY_REF` via `bank-lookups` (CIF branch, Posting accounts/branch — no `demo-*` defaults) | Autocomplete | B4 ✅ |
 | Orch absences / holdings / early-access | kind, role, industry | `select-hardcoded` | Select ← catalog / pricing | B3 / B5 |
 | Bank DBO transfers | from/to account | `select-api` | keep | — |
 | Bank DBO `payments/new` | debit account | `missing` (hidden first) | Select | P1 fix |

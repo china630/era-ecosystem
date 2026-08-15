@@ -13,7 +13,10 @@ export function EraModal({
   onClose,
   children,
   footer,
+  headerActions,
   maxWidthClass,
+  bodyClassName,
+  footerClassName,
 }: {
   open: boolean;
   title: string;
@@ -21,7 +24,10 @@ export function EraModal({
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  headerActions?: ReactNode;
   maxWidthClass?: string;
+  bodyClassName?: string;
+  footerClassName?: string;
 }) {
   const tc = useTranslations('common');
   const [mounted, setMounted] = useState(false);
@@ -37,7 +43,10 @@ export function EraModal({
       subtitle={subtitle}
       onClose={onClose}
       footer={footer}
+      headerActions={headerActions}
       maxWidthClass={maxWidthClass}
+      bodyClassName={bodyClassName}
+      footerClassName={footerClassName}
       closeLabel={tc('close')}
     >
       {children}

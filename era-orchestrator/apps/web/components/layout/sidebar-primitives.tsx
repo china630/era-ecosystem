@@ -71,8 +71,8 @@ export function CollapsibleNavSection({
           "flex w-full items-center gap-2 rounded-lg border px-3 py-2 transition",
           layoutCollapsed ? "lg:justify-center lg:px-2" : "",
           sectionActive
-            ? "border-primary bg-white text-gray-900 shadow-md"
-            : "border-transparent text-gray-600 hover:border-gray-200 hover:bg-white/70",
+            ? "border-[#2980B9]/30 bg-[#EBF5FB] text-[#34495E] shadow-sm"
+            : "border-transparent text-[#7F8C8D] hover:bg-[#E2E5E9]",
         ].join(" ")}
       >
         <Icon
@@ -145,12 +145,12 @@ export function SideNavItem({
         onNavClick?.();
       }}
       className={[
-        "group flex items-center rounded-lg border",
+        "group flex items-center rounded-lg transition",
         nested ? "gap-2 px-2 py-1.5 text-sm" : "gap-3 px-3 py-2",
         layoutCollapsed && !nested ? "lg:justify-center lg:gap-0 lg:px-2" : "",
         isActive
-          ? "border-primary bg-white text-gray-900 shadow-md"
-          : "border-transparent bg-transparent text-gray-600 hover:border-gray-200 hover:bg-white/70",
+          ? "bg-[#2980B9]/10 text-[#2980B9]"
+          : "bg-transparent text-[#34495E] hover:bg-[#E2E5E9]",
       ].join(" ")}
     >
       {Icon ? (
@@ -168,7 +168,8 @@ export function SideNavItem({
       )}
       <span
         className={[
-          "min-w-0 flex-1 truncate text-sm font-medium",
+          "min-w-0 flex-1 truncate text-sm",
+          isActive ? "font-semibold" : "font-medium",
           layoutCollapsed && !nested ? "lg:sr-only" : "",
         ].join(" ")}
       >

@@ -7,15 +7,11 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.reclaimsTitle"
       apiPath={(gid) => `/api/guests/${gid}/reclaims`}
-      onAdd={async (guestId) => {
-        const comment = window.prompt('Reclaim comment');
-        if (!comment?.trim()) return;
-        await fetch(`/api/guests/${guestId}/reclaims`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ comment: comment.trim() }),
-        });
-      }}
+      addFields={[
+        { name: 'comment', label: 'Reclaim comment', required: true, multiline: true },
+      ]}
+      buildBody={(v) => ({ comment: v.comment.trim() })}
+      searchKeys={['comment']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-amber-200 bg-amber-50 p-3">
           {String(r.comment)}

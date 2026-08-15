@@ -3,6 +3,18 @@ export {
   satelliteOrganizationId,
   type OrchestratorGatewayResult,
 } from "./orchestrator-gateway";
+export {
+  createOrganizationBindHandlers,
+  type OrganizationBindHandlerOptions,
+} from "./tenancy/organization-bind";
+export {
+  applyOrganizationBind,
+  resolveSatelliteOrganizationId,
+  setRuntimeOrganizationId,
+  hydrateOrganizationBindFromDb,
+  type OrgBindPrisma,
+  type OrganizationBindSource,
+} from "./tenancy/organization-bind-core";
 
 export {
   assertEnvServiceToken,
@@ -73,6 +85,7 @@ export {
   isBusinessOwnerRole,
   mapFinanceRoleToSatellite,
   sessionHasRole,
+  sessionIsPlatformSuperAdmin,
   type SatelliteRoleCode,
 } from "./auth/roles";
 export {
@@ -98,6 +111,7 @@ export {
   createCustomDomain,
   createShipment,
   getSubscriptionMe,
+  getSubscriptionSnapshotInternal,
   type SendNotificationInput,
   type PlatformCallOptions,
 } from "./integration/control-plane-platform.client";
@@ -144,6 +158,8 @@ export {
   mdmHealthCheck,
   lookupGlobalPersonByFin,
   lookupLegalEntityByVoen,
+  fetchControlPlaneOrganizationName,
+  fetchControlPlaneOrganizationDetails,
   resolvePersonIdentity,
   mergePersonRecords,
   linkPersonIdentity,

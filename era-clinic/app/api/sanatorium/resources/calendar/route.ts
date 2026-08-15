@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url);
     const dateParam = url.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
-    const date = new Date(`${dateParam}T00:00:00`);
+    const date = new Date(`${dateParam}T00:00:00+04:00`);
     return jsonOk(await getResourceDayMatrix(date));
   } catch (err) {
     return handleRouteError(err);

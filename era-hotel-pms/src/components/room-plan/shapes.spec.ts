@@ -26,28 +26,28 @@ function bar(
 }
 
 describe('room plan bar shapes', () => {
-  it('uses pointed end on standard multi-night bar', () => {
-    const path = barSvgPath({ turnoverStart: false, turnoverEnd: false, sameDayStay: false });
+  it('uses pointed arrow tip on a normal departure edge', () => {
+    const path = barSvgPath({ leftConcave: false, rightStyle: 'arrow' });
+    expect(path).toBe('M 0 0 L 88 0 L 100 10 L 88 20 L 0 20 L 0 0 Z');
+    expect(path).toContain('L 100 10');
+  });
+
+  it('uses a concave notch on a turnover check-in (left edge only)', () => {
+    const path = barSvgPath({ leftConcave: true, rightStyle: 'arrow' });
+    expect(path).toContain('L 12 10 L 0 0');
+    expect(path).toMatch(/^M 0 0/);
+  });
+
+  it('uses a pointed tip whenever checkout is in-window (incl. turnover depart)', () => {
+    const path = barSvgPath({ leftConcave: false, rightStyle: 'arrow' });
     expect(path).toContain('L 100 10');
     expect(path).toMatch(/^M 0 0/);
   });
 
-  it('uses concave inward start only on turnover check-in', () => {
-    const path = barSvgPath({ turnoverStart: true, turnoverEnd: false, sameDayStay: false });
-    expect(path).toMatch(/^M 18 0/);
-    expect(path).toContain('Q 30 10');
-  });
-
-  it('uses flat end on turnover checkout (no arrow into next stay)', () => {
-    const path = barSvgPath({ turnoverStart: false, turnoverEnd: true, sameDayStay: false });
-    expect(path).toBe('M 0 0 L 100 0 L 100 20 L 0 20 Z');
+  it('uses a flat edge only when the stay is clipped by the window (continues)', () => {
+    const path = barSvgPath({ leftConcave: false, rightStyle: 'flat' });
+    expect(path).toBe('M 0 0 L 100 0 L 100 20 L 0 20 L 0 0 Z');
     expect(path).not.toContain('L 100 10');
-  });
-
-  it('does not use flat rectangle for same-day stay (arrow shape)', () => {
-    const path = barSvgPath({ turnoverStart: false, turnoverEnd: false, sameDayStay: true });
-    expect(path).toContain('L 100 10');
-    expect(path).not.toBe('M 0 0 L 100 0 L 100 20 L 0 20 Z');
   });
 
   it('detects turnover when prior checkout day equals check-in', () => {
@@ -89,7 +89,9 @@ describe('room plan bar shapes', () => {
     const inB = placed.find((p) => p.reservation.id === 'b')!;
     expect(outA.turnoverEnd).toBe(true);
     expect(inB.turnoverStart).toBe(true);
-    expect(outA.colStart + outA.span - 1).toBe(inB.colStart);
+    expect(outA.shape.rightStyle).toBe('arrow');
+    expect(inB.shape.leftConcave).toBe(true);
+    expect(outA.colStart + outA.span).toBe(inB.colStart);
   });
 
   it('203 chain: turnover bars end at checkout noon, not next day column', () => {

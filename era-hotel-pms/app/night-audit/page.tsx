@@ -1,0 +1,456 @@
+'use client';
+
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import {
+  CARD_CONTAINER_CLASS,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { useAuth } from '@/hooks/useAuth';
+import { PERMISSIONS } from '@/lib/auth/permissions';
+
+interface Reservation {
+  id: string;
+  status: string;
+  checkInDate: string;
+  guest: { fullName: string };
+  room: { roomNumber: string } | null;
+}
+
+interface CashShift {
+  id: string;
+  cashier: string;
+  registerId: string;
+  status: string;
+  openedAt: string;
+  closedAt: string | null;
+}
+
+interface NightAuditStatus {
+  openShift: CashShift | null;
+  inHouseCount?: number;
+  businessDay: { date: string; status: string } | null;
+  businessDate?: {
+    currentBusinessDate: string;
+    wallClockDate: string;
+    lagDays: number;
+    locked: boolean;
+    strictGate: boolean;
+  };
+  pendingSettlement?: {
+    count: number;
+    policy: 'BLOCK' | 'WARN';
+  };
+  lastRun: {
+    status: string;
+    stepsJson: string;
+    errorsJson: string | null;
+    completedAt: string | null;
+  } | null;
+  polishPreview?: {
+    unassignedArrivals: number;
+    noShowCandidates: number;
+  };
+}
+
+interface NightAuditRunRow {
+  id: string;
+  status: string;
+  stepsJson: string;
+  errorsJson: string | null;
+  createdAt: string;
+  businessDay: { date: string };
+}
+
+export default function OperationsPage() {
+  const { can } = useAuth();
+  const t = useTranslations('operations');
+  const tc = useTranslations('common');
+  const [status, setStatus] = useState<NightAuditStatus | null>(null);
+  const [runs, setRuns] = useState<NightAuditRunRow[]>([]);
+  const [noShows, setNoShows] = useState<Reservation[]>([]);
+  const [cashier, setCashier] = useState('');
+  const [registerId, setRegisterId] = useState('REG-01');
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [shiftModalOpen, setShiftModalOpen] = useState(false);
+
+  const openShiftFormId = 'open-cash-shift-form';
+  const [tourismFailed, setTourismFailed] = useState<
+    { id: string; eventKind: string; errorMessage: string | null; reservation: { guest: { fullName: string } } }[]
+  >([]);
+
+  const loadNoShows = useCallback(async () => {
+    const res = await fetch('/api/reservations?status=CONFIRMED');
+    if (!res.ok) return;
+    const all: Reservation[] = await res.json();
+    const today = new Date().toISOString().slice(0, 10);
+    setNoShows(all.filter((r) => !r.room && r.checkInDate.slice(0, 10) < today));
+  }, []);
+
+  const loadStatus = useCallback(async () => {
+    const res = await fetch('/api/night-audit/status');
+    if (res.ok) setStatus(await res.json());
+  }, []);
+
+  const loadRuns = useCallback(async () => {
+    const res = await fetch('/api/night-audit/runs?limit=5');
+    if (res.ok) setRuns(await res.json());
+  }, []);
+
+  const loadTourism = useCallback(async () => {
+    const res = await fetch('/api/tourism/failed');
+    if (res.ok) setTourismFailed(await res.json());
+  }, []);
+
+  useEffect(() => {
+    loadStatus();
+    loadRuns();
+    loadTourism();
+    if (can(PERMISSIONS.RESERVATIONS_CANCEL)) loadNoShows();
+  }, [loadStatus, loadRuns, loadTourism, loadNoShows, can]);
+
+  async function retryTourism(id: string) {
+    const res = await fetch(`/api/tourism/${id}/retry`, { method: 'POST' });
+    setMsg(res.ok ? t('tourismRetrySent') : t('retryFailed'));
+    await loadTourism();
+  }
+
+  const hasOpenShift = status?.openShift?.status === 'OPEN';
+  const pendingCount = status?.pendingSettlement?.count ?? 0;
+  const pendingBlocksNa =
+    pendingCount > 0 && status?.pendingSettlement?.policy === 'BLOCK';
+  const naBlocked = hasOpenShift || pendingBlocksNa;
+
+  async function openShift(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/cash/shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cashier: cashier || 'Cashier', registerId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? tc('failed'));
+      setMsg(t('shiftOpened'));
+      setShiftModalOpen(false);
+      await loadStatus();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : tc('error'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function closeShift() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/cash/shifts?action=close', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? tc('failed'));
+      setMsg(t('shiftClosed'));
+      await loadStatus();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : tc('error'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runNightAudit() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/night-audit/run', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? tc('failed'));
+      setMsg(t('nightAuditResult', { status: data.run?.status ?? 'done' }));
+      await loadStatus();
+      await loadRuns();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : tc('error'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function retryEvents() {
+    const res = await fetch('/api/integration/retry', { method: 'POST' });
+    const data = await res.json();
+    setMsg(t('retryQueue', { count: data.sent }));
+  }
+
+  async function markNoShow(id: string) {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${id}/cancel`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noShow: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? tc('failed'));
+      setMsg(t('noShowMarked', { name: data.guest?.fullName ?? id }));
+      await loadNoShows();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : tc('error'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function parseSteps(json: string): string[] {
+    try {
+      const arr = JSON.parse(json);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  const lastSteps = status?.lastRun ? parseSteps(status.lastRun.stepsJson) : [];
+
+  return (
+    <>
+      <PageHeader title={t('title')} />
+      {msg ? (
+        <p className="mb-4 rounded-lg border border-[#D5DADF] bg-white px-4 py-2 text-[13px] text-[#34495E]">
+          {msg}
+        </p>
+      ) : null}
+
+      {status?.businessDate && (
+        <section
+          className={`${CARD_CONTAINER_CLASS} p-4 mb-6 text-[13px] ${
+            status.businessDate.lagDays > 0
+              ? 'border-amber-200 bg-amber-50 text-amber-900'
+              : 'border-[#2980B9]/30 bg-[#F8FAFC] text-[#34495E]'
+          }`}>
+
+          Business date: <strong>{status.businessDate.currentBusinessDate}</strong>
+          {' · '}
+          Wall clock: {status.businessDate.wallClockDate}
+          {status.businessDate.lagDays > 0 && (
+            <> · Lag: {status.businessDate.lagDays} day(s) — run night audit</>
+          )}
+          {status.businessDate.locked && <> · Locked (NA running)</>}
+        </section>
+      )}
+
+      {can(PERMISSIONS.CASH_SHIFT) && (
+        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('cashShift')}</h2>
+          {hasOpenShift && status?.openShift ? (
+            <div className="mb-3 text-[13px] text-amber-800">
+              {t('openShiftDetail', {
+                cashier: status.openShift.cashier,
+                register: status.openShift.registerId,
+                time: new Date(status.openShift.openedAt).toLocaleString(),
+              })}
+            </div>
+          ) : (
+            <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('noOpenShift')}</p>
+          )}
+          {!hasOpenShift && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setShiftModalOpen(true)}
+              className={PRIMARY_BUTTON_CLASS}
+            >
+              {t('openShift')}
+            </button>
+          )}
+          {hasOpenShift && (
+            <button type="button" disabled={busy} onClick={closeShift} className={SECONDARY_BUTTON_CLASS}>
+              {t('closeShift')}
+            </button>
+          )}
+        </section>
+      )}
+
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('nightAudit')}</h2>
+          <Link href="/night-audit/logs" className="text-[13px] text-[#2980B9] hover:underline">
+            {t('viewEodLogs')}
+          </Link>
+        </div>
+        <ul className="mb-4 space-y-1 text-[13px] text-[#7F8C8D]">
+          <li>
+            {t('inHouse')} {status?.inHouseCount ?? tc('dash')}
+          </li>
+          <li>
+            {t('businessDay')} {status?.businessDay?.date?.slice(0, 10) ?? tc('dash')} (
+            {status?.businessDay?.status ?? tc('dash')})
+          </li>
+          <li>
+            {t('cashShiftStatus')}{' '}
+            {hasOpenShift ? t('cashShiftOpenBlock') : t('cashShiftOk')}
+          </li>
+          {status?.polishPreview ? (
+            <li className="mt-2 rounded-lg border border-[#D5DADF] bg-[#F8FAFC] px-3 py-2">
+              <p className="m-0 mb-1 text-[12px] font-semibold text-[#34495E]">
+                {t('polishPreviewTitle')}
+              </p>
+              <p className="m-0 mb-2 text-[11px] text-[#7F8C8D]">{t('polishPreviewHint')}</p>
+              <ul className="m-0 list-disc space-y-0.5 pl-4">
+                <li>
+                  {t('unassignedArrivals', {
+                    count: status.polishPreview.unassignedArrivals,
+                  })}
+                </li>
+                <li>
+                  {t('noShowCandidatesCount', {
+                    count: status.polishPreview.noShowCandidates,
+                  })}
+                </li>
+              </ul>
+            </li>
+          ) : null}
+          {pendingCount > 0 && (
+            <li className={pendingBlocksNa ? 'text-rose-600 font-medium' : 'text-amber-700'}>
+              {t('pendingSettlementCount', { count: pendingCount })}
+              {' — '}
+              <Link href="/front-cash/pending" className="text-[#2980B9] hover:underline">
+                {t('viewPendingQueue')}
+              </Link>
+            </li>
+          )}
+        </ul>
+        {hasOpenShift && <p className="mb-3 text-[13px] text-rose-600">{t('closeShiftsBeforeNa')}</p>}
+        {pendingBlocksNa && (
+          <p className="mb-3 text-[13px] text-rose-600">{t('pendingSettlementBlock')}</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={busy || naBlocked}
+            onClick={runNightAudit}
+            className={PRIMARY_BUTTON_CLASS}
+          >
+            {t('runNightAudit')}
+          </button>
+          <button type="button" onClick={retryEvents} className={SECONDARY_BUTTON_CLASS}>
+            {t('processRetry')}
+          </button>
+        </div>
+        {lastSteps.length > 0 && (
+          <ol className="mt-4 list-decimal space-y-1 pl-5 text-[13px] text-[#34495E]">
+            {lastSteps.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      {runs.length > 0 && (
+        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
+          <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recentRuns')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#7F8C8D]">
+            {runs.map((r) => (
+              <li key={r.id}>
+                {r.businessDay.date.slice(0, 10)} — {r.status} ({new Date(r.createdAt).toLocaleString()})
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {tourismFailed.length > 0 && (
+        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 border-amber-200 bg-amber-50`}>
+          <h2 className="mb-3 text-sm font-semibold text-amber-900">{t('tourismRegistry')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#34495E]">
+            {tourismFailed.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-center gap-2">
+                <span>
+                  {row.reservation.guest.fullName} — {row.eventKind}:{' '}
+                  {row.errorMessage ?? tc('failedStatus')}
+                </span>
+                <button type="button" onClick={() => retryTourism(row.id)} className={SECONDARY_BUTTON_CLASS}>
+                  {tc('retry')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {can(PERMISSIONS.RESERVATIONS_CANCEL) && (
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('noShowCandidates')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#34495E]">
+            {noShows.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-2">
+                <span>
+                  {r.guest.fullName} — {t('due')} {r.checkInDate.slice(0, 10)}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => markNoShow(r.id)}
+                  className={SECONDARY_BUTTON_CLASS}
+                >
+                  {t('markNoShow')}
+                </button>
+              </li>
+            ))}
+            {noShows.length === 0 && <li className="text-[#7F8C8D]">{tc('none')}</li>}
+          </ul>
+        </section>
+      )}
+
+      <EraModal
+        open={shiftModalOpen}
+        title={t('openShift')}
+        onClose={() => setShiftModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={openShiftFormId}
+            onCancel={() => setShiftModalOpen(false)}
+            busy={busy}
+            submitLabel={t('openShift')}
+          />
+        }
+      >
+        <form id={openShiftFormId} onSubmit={openShift} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-cashier">
+              {t('cashierPlaceholder')}
+            </label>
+            <input
+              id="shift-cashier"
+              placeholder={t('cashierPlaceholder')}
+              className={MODAL_INPUT_CLASS}
+              value={cashier}
+              onChange={(e) => setCashier(e.target.value)}
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-register">
+              {t('registerPlaceholder')}
+            </label>
+            <input
+              id="shift-register"
+              placeholder={t('registerPlaceholder')}
+              className={MODAL_INPUT_CLASS}
+              value={registerId}
+              onChange={(e) => setRegisterId(e.target.value)}
+            />
+          </div>
+        </form>
+      </EraModal>
+    </>
+  );
+}

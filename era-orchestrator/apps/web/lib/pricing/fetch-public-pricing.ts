@@ -29,7 +29,6 @@ function unavailablePricingSnapshot(): PublicPricingResponse {
       pricePerOcrPageAzn: 0,
     },
     tierSpendCeilings: {},
-    ocrJobsPerOrgMonth: null,
     unavailable: true,
   };
 }

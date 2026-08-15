@@ -48,9 +48,9 @@
 - **Модель ресурсов:** врач + кабинет + оборудование (ограничение «один УЗИ на три кабинета»). Новые сущности `Resource`/`ResourceType`/`ResourceBooking` (или расширить `Practitioner`/`Bed` паттерн).
   - `era-clinic/prisma/schema.prisma`
 - **Слоты по реальной доступности** вместо stub-грида 9:00–17:00.
-  - заменить `era-clinic/app/api/scheduling/slots/route.ts:10-60`
+  - done via `/appointments` practitioner day matrix (`GET /api/appointments/calendar`); legacy `/api/scheduling/slots` removed
 - **Drag-перенос в UI** (сейчас текстовая заглушка).
-  - `era-clinic/app/scheduling/page.tsx` (см. `:105`), `era-clinic/app/api/appointments/[id]/reschedule/route.ts`
+  - done on `/appointments` matrix + `era-clinic/app/api/appointments/[id]/reschedule/route.ts`
 - **Статусы визита + реальный check-in** (`SCHEDULED → CHECKED_IN → IN_PROGRESS → COMPLETED → NO_SHOW`).
   - `Appointment.status` сейчас только `SCHEDULED` (`era-clinic/prisma/schema.prisma:66`)
 

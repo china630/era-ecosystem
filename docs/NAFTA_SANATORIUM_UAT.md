@@ -93,7 +93,7 @@ Buttons on operational screens (next to **+**), gated by `ERA_EXCEL_IMPORT_ENABL
 | A1 | Orch register + module tiles | SSO opens hotel, fb, clinic |
 | A2 | ElectraWeb import — rooms, guests, in-house reservations | room plan + in-house list |
 | A3 | Check-in → clinic episode | episode OPEN; procedures only after **complete checkup** (`AFTER_CHECKUP`) |
-| A4 | Clinic procedure IN_HOUSE → folio charge | nurse QR → complete → `MEDICAL` folio; over-quota `CHARGE_FOLIO` |
+| A4 | Clinic procedure IN_HOUSE → folio charge | nurse QR check-in auto-completes → `MEDICAL` folio; over-quota `CHARGE_FOLIO` |
 | A5 | F&B walk-in → reception | `Send to reception` → `/front-cash/pending` → pay + mock KKM → ticket CLOSED |
 | A5b | Clinic walk-in visit | pending → Front Cash pay → visit settled + finance event after callback |
 | A6 | F&B in-house room charge | folio line, pay blocked at FB |

@@ -1,0 +1,277 @@
+[
+ {
+  "code": "LAB-AF-GENITAL",
+  "name": "AF Genital",
+  "price": 65.0
+ },
+ {
+  "code": "LAB-AFP",
+  "name": "AFP",
+  "price": 25.0
+ },
+ {
+  "code": "LAB-ALAT",
+  "name": "ALAT",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-ALP",
+  "name": "ALP",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-ANTI-TPO",
+  "name": "Anti-TPO",
+  "price": 27.0
+ },
+ {
+  "code": "LAB-ASAT",
+  "name": "ASAT",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-ASO",
+  "name": "ASO",
+  "price": 35.0
+ },
+ {
+  "code": "LAB-BOYREK-PANELI-CA-CREA-GLU-UA-TCO2-PH",
+  "name": "Böyrək paneli Ca, Crea, GLU, UA, tCO2, PHOS, UREA",
+  "price": 30.0
+ },
+ {
+  "code": "LAB-C-REACTIVE-PROTEIN-CRP",
+  "name": "C-Reactive Protein (CRP)",
+  "price": 22.0
+ },
+ {
+  "code": "LAB-CHOLESTEROL",
+  "name": "Cholesterol",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-CREATININ",
+  "name": "Creatinin",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-D-DIMER",
+  "name": "D-dimer",
+  "price": 30.0
+ },
+ {
+  "code": "LAB-ELEKTROLIT-PANELI-CA-CL-K-NA-PHOS-MG",
+  "name": "Elektrolit paneli Ca,Cl, K, Na, PHOS, Mg, tCO2",
+  "price": 28.0
+ },
+ {
+  "code": "LAB-ESTRADIOL-E2-DIAGNOSTIC-KIT",
+  "name": "Estradiol (E2) Diagnostic Kit",
+  "price": 27.0
+ },
+ {
+  "code": "LAB-FREE-PROSTATE-SPECIFIC-ANTIGEN-F-PSA",
+  "name": "Free Prostate Specific Antigen (f-PSA)",
+  "price": 35.0
+ },
+ {
+  "code": "LAB-FREE-THYROXINE-FT4",
+  "name": "Free Thyroxine (fT4)",
+  "price": 25.0
+ },
+ {
+  "code": "LAB-FREE-TRIIODOTHYRONINE-FT3",
+  "name": "Free Triiodothyronine (fT3)",
+  "price": 25.0
+ },
+ {
+  "code": "LAB-GEPATIT-C-CARD-TEST",
+  "name": "Gepatit C card test",
+  "price": 20.0
+ },
+ {
+  "code": "LAB-HBA1C-GLYCOSYLATED-HEMOGLOBIN",
+  "name": "HbA1c- Glycosylated Hemoglobin",
+  "price": 22.0
+ },
+ {
+  "code": "LAB-HBSAG",
+  "name": "HBsAg",
+  "price": 10.0
+ },
+ {
+  "code": "LAB-HCV",
+  "name": "HCV",
+  "price": 10.0
+ },
+ {
+  "code": "LAB-HDL-XOLESTEROL",
+  "name": "HDL Xolesterol",
+  "price": 14.0
+ },
+ {
+  "code": "LAB-INSULIN-INS",
+  "name": "Insulin (INS)",
+  "price": 35.0
+ },
+ {
+  "code": "LAB-KALSIUM",
+  "name": "Kalsium",
+  "price": 14.0
+ },
+ {
+  "code": "LAB-KAQULOQRAMMA-APTT-FIB-PT-TT-INR",
+  "name": "Kaquloqramma APTT、Fib 、PT、TT、INR*",
+  "price": 50.0
+ },
+ {
+  "code": "LAB-KARDIAL-PANEL-AST-LDH-HBDH-CK-CK-MB",
+  "name": "Kardial panel AST, LDH, HBDH, CK, CK-MB",
+  "price": 28.0
+ },
+ {
+  "code": "LAB-LDL-XOLESTEROL",
+  "name": "LDL Xolesterol",
+  "price": 14.0
+ },
+ {
+  "code": "LAB-LEYKOFORMULA",
+  "name": "Leykoformula",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-MAU-URINARY-MICROALBUMIN",
+  "name": "MAU-Urinary Microalbumin",
+  "price": 20.0
+ },
+ {
+  "code": "LAB-PROLACTIN-PRL",
+  "name": "Prolactin (PRL)",
+  "price": 27.0
+ },
+ {
+  "code": "LAB-PROSTATE-SPECIFIC-ANTIGEN-PSA",
+  "name": "Prostate Specific Antigen (PSA)",
+  "price": 35.0
+ },
+ {
+  "code": "LAB-PROTROMBIN",
+  "name": "Protrombin",
+  "price": 14.0
+ },
+ {
+  "code": "LAB-QAN-ZERDABINDA-SEKER",
+  "name": "Qan zərdabında şəkər",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-QANIN-UMUMI-ANALIZI-18-PARAMENTR-ECS",
+  "name": "Qanın ümumi analizi (18 paramentr+EÇS)",
+  "price": 12.0
+ },
+ {
+  "code": "LAB-QARA-CIYER-PANELI-ALB-ALP-ALT-AST-DB",
+  "name": "Qara ciyər paneli ALB, ALP, ALT, AST, DB, GGT, TB, TP, A/G*, GLOB*, IBIL",
+  "price": 30.0
+ },
+ {
+  "code": "LAB-QEPATIT-KART-TEST",
+  "name": "Qepatit kart test",
+  "price": 25.0
+ },
+ {
+  "code": "LAB-REVMTIK-FAKTOR",
+  "name": "Revmtik faktor",
+  "price": 22.0
+ },
+ {
+  "code": "LAB-SIDIK-COVHERI",
+  "name": "Sidik cövhəri",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-SIDIK-TURSUSU",
+  "name": "Sidik turşusu",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-SIDIYIN-UMUMI-ANALIZI",
+  "name": "Sidiyin ümumi analizi",
+  "price": 12.0
+ },
+ {
+  "code": "LAB-SPERMOGRAM",
+  "name": "Spermogram",
+  "price": 24.0
+ },
+ {
+  "code": "LAB-SYPHILIS",
+  "name": "Syphilis",
+  "price": 10.0
+ },
+ {
+  "code": "LAB-TEST",
+  "name": "test",
+  "price": 5.0
+ },
+ {
+  "code": "LAB-TESTOSTERONE-TSTO",
+  "name": "Testosterone (TSTO)",
+  "price": 22.0
+ },
+ {
+  "code": "LAB-THYROID-STIMULATING-HORMONE-TSH",
+  "name": "Thyroid Stimulating Hormone (TSH)",
+  "price": 27.0
+ },
+ {
+  "code": "LAB-THYROXINE-T4",
+  "name": "Thyroxine (T4)",
+  "price": 22.0
+ },
+ {
+  "code": "LAB-TOTAL-IMMUNOGLOBULIN-E-TOTAL-IGE",
+  "name": "Total Immunoglobulin E (Total IgE)",
+  "price": 25.0
+ },
+ {
+  "code": "LAB-TRIIODOTHYRONINE-T3",
+  "name": "Triiodothyronine (T3)",
+  "price": 22.0
+ },
+ {
+  "code": "LAB-TRIQLISERIDLER",
+  "name": "Triqliseridlər",
+  "price": 15.0
+ },
+ {
+  "code": "LAB-UMUMI-MUAYINE-PANELI-UREA-CREA-GLU-A",
+  "name": "Ümumi müayinə paneli Urea, Crea, GLU, ALT, AST, UA, HDL, TC, TG, LDL*",
+  "price": 30.0
+ },
+ {
+  "code": "LAB-URETRAL-VAGINAL-YAXMA",
+  "name": "Uretral\\vaginal yaxma",
+  "price": 14.0
+ },
+ {
+  "code": "LAB-VITAMIN-B12-VB12",
+  "name": "Vitamin B12 (VB12)",
+  "price": 48.0
+ },
+ {
+  "code": "LAB-VITAMIN-D-25-OH-D",
+  "name": "Vitamin D -25-OH-D",
+  "price": 40.0
+ },
+ {
+  "code": "LAB-VLDL-XOLESTEROL",
+  "name": "VLDL Xolesterol",
+  "price": 14.0
+ },
+ {
+  "code": "LAB-YAXMA-MIKROSKOPIYASI",
+  "name": "Yaxma mikroskopiyası",
+  "price": 14.0
+ }
+]

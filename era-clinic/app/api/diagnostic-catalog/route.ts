@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       applyFavorites: url.searchParams.get("applyFavorites") ?? undefined,
     });
 
-    const catalog = getDiagnosticCatalog();
+    const catalog = await getDiagnosticCatalog();
     const favorites = await getCatalogFavorites();
     const kinds = query.kinds
       ? query.kinds.split(",").map((k) => k.trim()).filter(Boolean)

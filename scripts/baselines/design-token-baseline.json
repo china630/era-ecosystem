@@ -1,40 +1,46 @@
 {
-  "generatedAt": "2026-07-03T18:11:24.070Z",
+  "generatedAt": "2026-08-15T07:24:05.989Z",
   "totals": {
     "forbidden-radius": 0,
     "forbidden-input-height": 0,
-    "raw-input-no-token": 395
+    "raw-input-no-token": 361
   },
   "byApp": {
     "packages/satellite-kit": {
       "forbidden-radius": 0,
       "forbidden-input-height": 0,
-      "raw-input-no-token": 2,
-      "files": 1
+      "raw-input-no-token": 7,
+      "files": 3
     },
     "era-finance-core": {
       "forbidden-radius": 0,
       "forbidden-input-height": 0,
-      "raw-input-no-token": 345,
-      "files": 108
+      "raw-input-no-token": 309,
+      "files": 101
     },
     "era-bank": {
       "forbidden-radius": 0,
       "forbidden-input-height": 0,
-      "raw-input-no-token": 11,
-      "files": 7
+      "raw-input-no-token": 9,
+      "files": 6
+    },
+    "era-clinic": {
+      "forbidden-radius": 0,
+      "forbidden-input-height": 0,
+      "raw-input-no-token": 1,
+      "files": 1
     },
     "era-fnb-pos": {
       "forbidden-radius": 0,
       "forbidden-input-height": 0,
-      "raw-input-no-token": 9,
-      "files": 4
+      "raw-input-no-token": 11,
+      "files": 5
     },
     "era-hotel-pms": {
       "forbidden-radius": 0,
       "forbidden-input-height": 0,
-      "raw-input-no-token": 26,
-      "files": 12
+      "raw-input-no-token": 22,
+      "files": 15
     },
     "era-logistics": {
       "forbidden-radius": 0,

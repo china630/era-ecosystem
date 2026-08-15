@@ -38,8 +38,12 @@ const ENDPOINT_PRESETS = [
   "industry_hotel_pms",
   "industry_fnb_pos",
   "industry_clinic",
-  "industry_retail_pos",
-  "industry_banking",
+  "industry_retail",
+  "industry_logistics",
+  "industry_construction",
+  "industry_crm",
+  "industry_auto_service",
+  "industry_wholesale",
   "finance_core",
 ];
 
@@ -55,6 +59,7 @@ export default function SuperAdminOrgHubPage() {
   const [parentOrgId, setParentOrgId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   const reload = useCallback(async () => {
     if (!token || !orgId) return;
@@ -156,6 +161,43 @@ export default function SuperAdminOrgHubPage() {
     setMessage(`Copied ${id}`);
   }
 
+  async function syncSatelliteBindings() {
+    if (!token || !orgId) return;
+    setSyncing(true);
+    setMessage("");
+    try {
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/sync-satellite-bindings`, {
+        token,
+        method: "POST",
+      });
+      if (!res.ok) {
+        setMessage(`Sync bindings failed (${res.status})`);
+        return;
+      }
+      const body = (await res.json()) as {
+        results?: Array<{ satelliteKey: string; ok: boolean; organizationId: string; error?: string }>;
+      };
+      const results = body.results ?? [];
+      const ok = results.filter((r) => r.ok).length;
+      const fail = results.filter((r) => !r.ok);
+      if (results.length === 0) {
+        setMessage("No enabled industry endpoints to sync — save hotel/fnb/clinic URLs first");
+        return;
+      }
+      if (fail.length === 0) {
+        setMessage(`Synced ${ok} satellite binding(s)`);
+        return;
+      }
+      setMessage(
+        `Synced ${ok}/${results.length}. Failed: ${fail
+          .map((f) => `${f.satelliteKey}${f.error ? ` (${f.error.slice(0, 80)})` : ""}`)
+          .join("; ")}`,
+      );
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -168,6 +210,14 @@ export default function SuperAdminOrgHubPage() {
         <h1 className="text-lg font-semibold text-[#34495E]">Organization hub</h1>
         <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => copyUuid(orgId)}>
           Copy org UUID
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={syncing || !token}
+          onClick={() => void syncSatelliteBindings()}
+        >
+          {syncing ? "Syncing…" : "Sync satellite bindings"}
         </button>
       </div>
 
@@ -228,6 +278,11 @@ export default function SuperAdminOrgHubPage() {
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <h2 className="font-medium text-[#34495E]">Satellite endpoints</h2>
+        <p className="text-xs text-[#7F8C8D]">
+          After saving enabled base URLs, use <strong>Sync satellite bindings</strong> to push this org
+          (or matching department) UUID into each satellite — no manual{" "}
+          <code>ERA_SATELLITE_ORGANIZATION_ID</code> edit. See ADR satellite-organization-bind.
+        </p>
         {ENDPOINT_PRESETS.map((key) => (
           <div key={key} className="flex flex-wrap items-center gap-2 border-b border-[#ECF0F1] py-2 text-sm">
             <span className="w-40 font-mono text-xs">{key}</span>

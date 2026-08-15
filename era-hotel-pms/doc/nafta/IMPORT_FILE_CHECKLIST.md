@@ -51,15 +51,20 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 |-------|------|
 | Board | **FB only** (3 meals). No room-only sale. HB (2 meals) extremely rare — not a product matrix. |
 | Package vs à-la-carte | Package includes **pension board only**, not à-la-carte restaurant. |
-| Price unit | **Per person** (`nəfər üçün`). |
+| Price unit | **Per person** (`nəfər üçün`). PDF has **single / double** columns — do not ×2 the single rate. |
 | Standart paket | Guest **chooses** room category (Standart / Junior / Deluxe / Triple per PDF matrix + season). |
 | Premium / Dermo / Detoks | **Independent medical packages** by indication (e.g. Dermo = skin). Hotel **assigns** room; only **Deluxe or Junior** (higher categories). Price is flat package rate — **no** Junior/Deluxe surcharge on top of PDF. |
 | Season | Standart: low/high in PDF. Premium / Dermo / Detoks: **no** seasonal split. |
 | Children (board) | Under **6**: **1st child free**, **2nd paid**; meals same as adult portions. (Align with PDF child/extra-bed rows when seeding.) |
 | Blackout / holidays | **Surcharge** (extra fee), not a different room/board product. |
 | Agency / corporate | **FB applies the same** as public package rules. |
+| BAR role | **Accounting base** + recommended floor (folio/night-audit split). May be market-dictated; composition `RO + serviceFee×N + meals×N`. See [ADR](../../../docs/adr/hotel-bar-accounting-vs-package-sell.md). |
+| Service fee | **6 AZN / person / night** (sell); COGS historically ~5. Versioned setting + history (planned). |
+| Extra adult | Only **service fee + meals** (BB +31, FB +81). RO is shared — not doubled. |
+| Package sell | **Manual** (sales). **Not required** to equal BAR. Store **cost floor** + **sell** with history/audit (planned). |
+| Costing reference | USALI-oriented note in [reference/hotel-costing-and-pricing-usali.md](./reference/hotel-costing-and-pricing-usali.md) (CPOR, floor, future auto-min BAR). |
 
-**PMS implication:** sellable rate plans = Standart×roomType×season + Premium/Dermo/Detoks (room class constrained to DLX/JUNIOR). Empty `BAR` from wizard is not enough — use derived ladder in [BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md) after hotel confirmation; folio split may use BAR BB + board sell (+ residual medical) and/or COGS (16 / 5 / 20).
+**PMS implication:** sell SKUs = Standart×roomType×season + Premium/Dermo/Detoks (JR/DLX). BAR calendar = accounting ladder ([BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md)). Folio: split via BAR/components; Σ postings = package/reservation sell.
 
 ---
 

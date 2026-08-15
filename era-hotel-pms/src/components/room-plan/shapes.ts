@@ -3,16 +3,33 @@ import type { RoomPlanReservationBar } from './types';
 /** Hotel property calendar (matches seed/API noon Baku stored as 08:00 UTC). */
 export const HOTEL_TIME_ZONE = 'Asia/Baku';
 
+/**
+ * Right (departure) edge style of a stay bar:
+ * - `arrow`   check-out ends inside the visible window (always a pointed tip);
+ * - `flat`    stay continues past the right edge of the window (clipped);
+ * - `concave` reserved (arrival notch is leftConcave only).
+ *
+ * Same-day turnover: departing bar keeps the arrow tip; arriving bar gets
+ * leftConcave. Flat is never used for an in-window departure.
+ */
+export type BarEdgeStyle = 'arrow' | 'concave' | 'flat';
+
 export type BarShapeFlags = {
-  turnoverStart: boolean;
-  turnoverEnd: boolean;
-  sameDayStay: boolean;
+  /** Concave notch on the arrival (left) edge for a same-day turnover check-in. */
+  leftConcave: boolean;
+  rightStyle: BarEdgeStyle;
 };
 
 export type PlacedBar = {
   reservation: RoomPlanReservationBar;
   colStart: number;
+  /** Nights inside the visible window (clipped). */
   span: number;
+  /** Left offset of the bar box as a % of the full timeline width. */
+  leftPct: number;
+  /** Width of the bar box as a % of the full timeline width. */
+  widthPct: number;
+  shape: BarShapeFlags;
   turnoverStart: boolean;
   turnoverEnd: boolean;
   sameDayStay: boolean;
@@ -20,9 +37,9 @@ export type PlacedBar = {
   clippedAtEnd: boolean;
 };
 
-const NOTCH_EDGE_X = 18;
-const NOTCH_CTRL_X = 30;
-const TIP_X = 88;
+/** SVG geometry constants (viewBox 0 0 100 20, stretched to the bar box). */
+const ARROW_SHOULDER_X = 88;
+const CONCAVE_DEPTH_X = 12;
 
 export function calendarDateKey(iso: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
@@ -43,10 +60,6 @@ export function parseCalendarDate(iso: string): Date {
 
 function daysBetween(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / 86400000);
-}
-
-function nightCount(checkIn: Date, checkOut: Date): number {
-  return Math.max(1, daysBetween(checkIn, checkOut));
 }
 
 /** True overlap (double booking), not adjacent checkout/check-in turnover. */
@@ -95,47 +108,44 @@ export function hasSameDayTurnoverEnd(
   });
 }
 
+/**
+ * Build the bar outline. The path is drawn clockwise:
+ * top-left → top-right → right edge (down) → bottom-left → left edge (up) → close.
+ *
+ * Right edge encodes the departure semantics; the left edge is blunt for a
+ * normal/clipped arrival and concave for a same-day turnover check-in. Clipped
+ * ends are flat so the bar visibly bleeds to the window boundary ("continues").
+ */
 export function barSvgPath(flags: BarShapeFlags): string {
-  if (flags.turnoverStart) {
-    return `M ${NOTCH_EDGE_X} 0 L ${TIP_X} 0 L 100 10 L ${TIP_X} 20 L ${NOTCH_EDGE_X} 20 Q ${NOTCH_CTRL_X} 10 ${NOTCH_EDGE_X} 0 Z`;
+  const topRightX = flags.rightStyle === 'arrow' ? ARROW_SHOULDER_X : 100;
+
+  let rightEdge: string;
+  switch (flags.rightStyle) {
+    case 'arrow':
+      rightEdge = `L 100 10 L ${ARROW_SHOULDER_X} 20`;
+      break;
+    case 'concave':
+      rightEdge = `L ${100 - CONCAVE_DEPTH_X} 10 L 100 20`;
+      break;
+    default:
+      rightEdge = `L 100 20`;
+      break;
   }
-  if (flags.turnoverEnd) {
-    return `M 0 0 L 100 0 L 100 20 L 0 20 Z`;
-  }
-  return `M 0 0 L ${TIP_X} 0 L 100 10 L ${TIP_X} 20 L 0 20 Z`;
+
+  const leftEdge = flags.leftConcave ? `L ${CONCAVE_DEPTH_X} 10 L 0 0` : `L 0 0`;
+
+  return `M 0 0 L ${topRightX} 0 ${rightEdge} L 0 20 ${leftEdge} Z`;
 }
 
-/** @deprecated use barSvgPath */
-export function barClipPath(flags: BarShapeFlags): string {
-  return barSvgPath(flags);
-}
-
+/**
+ * Layout is fully precomputed in {@link computePlacedBars}; this reads the
+ * stored box offset (kept as a function for call-site/back-compat + tests).
+ */
 export function barLayoutOffset(
-  days: number,
-  cell: Pick<
-    PlacedBar,
-    'turnoverStart' | 'turnoverEnd' | 'sameDayStay' | 'colStart' | 'span' | 'clippedAtStart'
-  >,
+  _days: number,
+  cell: Pick<PlacedBar, 'leftPct' | 'widthPct'>,
 ): { leftPct: number; widthPct: number } {
-  const half = (0.5 / days) * 100;
-  const colPct = (cell.colStart / days) * 100;
-  const spanPct = (cell.span / days) * 100;
-
-  if (cell.sameDayStay) {
-    if (cell.turnoverStart) {
-      return { leftPct: colPct + half, widthPct: half };
-    }
-    if (cell.turnoverEnd) {
-      return { leftPct: colPct, widthPct: half };
-    }
-    return { leftPct: colPct + half, widthPct: half };
-  }
-
-  // Noon check-in/out: start +½ cell, end −½ cell. Turnover only changes SVG shape, not column math.
-  const leftPct = colPct + (cell.clippedAtStart ? 0 : half);
-  const widthPct = spanPct - (cell.clippedAtStart ? half : half) - half;
-
-  return { leftPct, widthPct: Math.max(widthPct, half * 0.5) };
+  return { leftPct: cell.leftPct, widthPct: cell.widthPct };
 }
 
 export function computePlacedBars(
@@ -151,33 +161,48 @@ export function computePlacedBars(
     const coKey = calendarDateKey(r.checkOutDate);
     const sameDayStay = ciKey === coKey;
 
+    // Column of the check-in day and of the check-out (departure) day.
     const rawColStart = daysBetween(from, ci);
-    const clippedAtStart = rawColStart < 0;
-    let colStart = Math.max(0, rawColStart);
-    let span = nightCount(ci, co);
-    if (clippedAtStart) {
-      span += rawColStart;
-    }
-    if (colStart >= days || span < 1) continue;
-
     const checkoutCol = daysBetween(from, co);
+
+    const clippedAtStart = rawColStart < 0;
     const clippedAtEnd = checkoutCol >= days;
+    const colStart = Math.max(0, rawColStart);
+
+    // Drop stays that fall entirely outside the visible window.
+    if (colStart >= days) continue;
+    if (!sameDayStay && checkoutCol <= 0) continue;
+
+    // Nights inside the window (informational; column math uses edges below).
+    const visEndCol = clippedAtEnd ? days : checkoutCol;
+    const span = Math.max(1, visEndCol - colStart);
 
     const turnoverStart = hasSameDayTurnoverStart(r, roomBars, { clippedAtStart });
     const turnoverEnd = hasSameDayTurnoverEnd(r, roomBars, { clippedAtEnd });
 
-    if (!sameDayStay) {
-      if (checkoutCol >= colStart && checkoutCol < days) {
-        span = checkoutCol - colStart + 1;
-      }
+    // Half-day (noon) offset model: a stay occupies from mid check-in column to
+    // mid check-out column. Clipped edges snap to the window boundary.
+    const half = 0.5 / days;
+    let leftFrac: number;
+    let rightFrac: number;
+    if (sameDayStay) {
+      // Day-use / 0-night booking: a small centered chip inside its day.
+      leftFrac = (colStart + 0.25) / days;
+      rightFrac = (colStart + 0.75) / days;
     } else {
-      span = 1;
+      leftFrac = clippedAtStart ? 0 : (colStart + 0.5) / days;
+      rightFrac = clippedAtEnd ? 1 : (checkoutCol + 0.5) / days;
     }
+    const widthFrac = Math.max(rightFrac - leftFrac, half * 0.5);
 
-    span = Math.min(span, days - colStart);
-    if (span < 1) continue;
+    // Right tip whenever checkout is in-window (incl. turnover). Flat only if clipped.
+    const rightStyle: BarEdgeStyle = clippedAtEnd ? 'flat' : 'arrow';
+    const leftConcave = !clippedAtStart && !sameDayStay && turnoverStart;
 
     out.push({
+      leftPct: leftFrac * 100,
+      widthPct: widthFrac * 100,
+      shape: { leftConcave, rightStyle },
       reservation: r,
       colStart,
       span,

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function ContractPricingRedirectPage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/admin/contracts');
+    router.replace('/distribution/contracts');
   }, [router]);
   return null;
 }

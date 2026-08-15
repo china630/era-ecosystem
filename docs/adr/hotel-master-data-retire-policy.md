@@ -54,3 +54,7 @@ Use **entity-specific retire strategies**. No `DELETE` HTTP routes on master/imp
 
 - **Hard delete with FK cascade** — rejected; destroys folio/reservation integrity.
 - **Single `deletedAt` on all tables** — rejected; room inventory needs `disabled` vs `deleted`; dictionaries only need boolean `active`.
+
+## Related
+
+- [managed-lists-vs-enums.md](./managed-lists-vs-enums.md) — Wave A adds Market / Segment / VIP / Loyalty / Visa / note-type catalogs under the same retire (`active`) rules.

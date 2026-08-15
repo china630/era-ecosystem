@@ -614,7 +614,11 @@ export type WorkforceEmploymentStatus = (typeof WorkforceEmploymentStatus)[keyof
 export const WorkforceAbsenceKind: {
   VACATION: 'VACATION',
   SICK: 'SICK',
-  UNPAID: 'UNPAID'
+  UNPAID: 'UNPAID',
+  SOCIAL_LEAVE: 'SOCIAL_LEAVE',
+  EDUCATIONAL_LEAVE: 'EDUCATIONAL_LEAVE',
+  BUSINESS_TRIP: 'BUSINESS_TRIP',
+  ADMINISTRATIVE: 'ADMINISTRATIVE'
 };
 
 export type WorkforceAbsenceKind = (typeof WorkforceAbsenceKind)[keyof typeof WorkforceAbsenceKind]
@@ -2226,7 +2230,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -42404,6 +42408,7 @@ export namespace Prisma {
     discountPercent: Decimal | null
     isTrialDefault: boolean | null
     trialDurationDays: number | null
+    archivedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -42415,6 +42420,7 @@ export namespace Prisma {
     discountPercent: Decimal | null
     isTrialDefault: boolean | null
     trialDurationDays: number | null
+    archivedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -42428,6 +42434,7 @@ export namespace Prisma {
     isTrialDefault: number
     trialDurationDays: number
     trialQuotas: number
+    archivedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -42451,6 +42458,7 @@ export namespace Prisma {
     discountPercent?: true
     isTrialDefault?: true
     trialDurationDays?: true
+    archivedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -42462,6 +42470,7 @@ export namespace Prisma {
     discountPercent?: true
     isTrialDefault?: true
     trialDurationDays?: true
+    archivedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -42475,6 +42484,7 @@ export namespace Prisma {
     isTrialDefault?: true
     trialDurationDays?: true
     trialQuotas?: true
+    archivedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -42575,6 +42585,7 @@ export namespace Prisma {
     isTrialDefault: boolean
     trialDurationDays: number | null
     trialQuotas: JsonValue | null
+    archivedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: PricingBundleCountAggregateOutputType | null
@@ -42607,6 +42618,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: boolean
     trialQuotas?: boolean
+    archivedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organizationBundles?: boolean | PricingBundle$organizationBundlesArgs<ExtArgs>
@@ -42622,6 +42634,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: boolean
     trialQuotas?: boolean
+    archivedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["pricingBundle"]>
@@ -42635,6 +42648,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: boolean
     trialQuotas?: boolean
+    archivedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["pricingBundle"]>
@@ -42648,11 +42662,12 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: boolean
     trialQuotas?: boolean
+    archivedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PricingBundleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "name" | "discountPercent" | "moduleKeys" | "isTrialDefault" | "trialDurationDays" | "trialQuotas" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingBundle"]>
+  export type PricingBundleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "name" | "discountPercent" | "moduleKeys" | "isTrialDefault" | "trialDurationDays" | "trialQuotas" | "archivedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingBundle"]>
   export type PricingBundleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organizationBundles?: boolean | PricingBundle$organizationBundlesArgs<ExtArgs>
     _count?: boolean | PricingBundleCountOutputTypeDefaultArgs<ExtArgs>
@@ -42674,6 +42689,7 @@ export namespace Prisma {
       isTrialDefault: boolean
       trialDurationDays: number | null
       trialQuotas: Prisma.JsonValue | null
+      archivedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["pricingBundle"]>
@@ -43108,6 +43124,7 @@ export namespace Prisma {
     readonly isTrialDefault: FieldRef<"PricingBundle", 'Boolean'>
     readonly trialDurationDays: FieldRef<"PricingBundle", 'Int'>
     readonly trialQuotas: FieldRef<"PricingBundle", 'Json'>
+    readonly archivedAt: FieldRef<"PricingBundle", 'DateTime'>
     readonly createdAt: FieldRef<"PricingBundle", 'DateTime'>
     readonly updatedAt: FieldRef<"PricingBundle", 'DateTime'>
   }
@@ -85786,6 +85803,7 @@ export namespace Prisma {
     isTrialDefault: 'isTrialDefault',
     trialDurationDays: 'trialDurationDays',
     trialQuotas: 'trialQuotas',
+    archivedAt: 'archivedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -89525,6 +89543,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFilter<"PricingBundle"> | boolean
     trialDurationDays?: IntNullableFilter<"PricingBundle"> | number | null
     trialQuotas?: JsonNullableFilter<"PricingBundle">
+    archivedAt?: DateTimeNullableFilter<"PricingBundle"> | Date | string | null
     createdAt?: DateTimeFilter<"PricingBundle"> | Date | string
     updatedAt?: DateTimeFilter<"PricingBundle"> | Date | string
     organizationBundles?: OrganizationBundleListRelationFilter
@@ -89539,6 +89558,7 @@ export namespace Prisma {
     isTrialDefault?: SortOrder
     trialDurationDays?: SortOrderInput | SortOrder
     trialQuotas?: SortOrderInput | SortOrder
+    archivedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organizationBundles?: OrganizationBundleOrderByRelationAggregateInput
@@ -89556,6 +89576,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFilter<"PricingBundle"> | boolean
     trialDurationDays?: IntNullableFilter<"PricingBundle"> | number | null
     trialQuotas?: JsonNullableFilter<"PricingBundle">
+    archivedAt?: DateTimeNullableFilter<"PricingBundle"> | Date | string | null
     createdAt?: DateTimeFilter<"PricingBundle"> | Date | string
     updatedAt?: DateTimeFilter<"PricingBundle"> | Date | string
     organizationBundles?: OrganizationBundleListRelationFilter
@@ -89570,6 +89591,7 @@ export namespace Prisma {
     isTrialDefault?: SortOrder
     trialDurationDays?: SortOrderInput | SortOrder
     trialQuotas?: SortOrderInput | SortOrder
+    archivedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PricingBundleCountOrderByAggregateInput
@@ -89591,6 +89613,7 @@ export namespace Prisma {
     isTrialDefault?: BoolWithAggregatesFilter<"PricingBundle"> | boolean
     trialDurationDays?: IntNullableWithAggregatesFilter<"PricingBundle"> | number | null
     trialQuotas?: JsonNullableWithAggregatesFilter<"PricingBundle">
+    archivedAt?: DateTimeNullableWithAggregatesFilter<"PricingBundle"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PricingBundle"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PricingBundle"> | Date | string
   }
@@ -95176,6 +95199,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organizationBundles?: OrganizationBundleCreateNestedManyWithoutBundleInput
@@ -95190,6 +95214,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organizationBundles?: OrganizationBundleUncheckedCreateNestedManyWithoutBundleInput
@@ -95204,6 +95229,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFieldUpdateOperationsInput | boolean
     trialDurationDays?: NullableIntFieldUpdateOperationsInput | number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organizationBundles?: OrganizationBundleUpdateManyWithoutBundleNestedInput
@@ -95218,6 +95244,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFieldUpdateOperationsInput | boolean
     trialDurationDays?: NullableIntFieldUpdateOperationsInput | number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organizationBundles?: OrganizationBundleUncheckedUpdateManyWithoutBundleNestedInput
@@ -95232,6 +95259,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -95245,6 +95273,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFieldUpdateOperationsInput | boolean
     trialDurationDays?: NullableIntFieldUpdateOperationsInput | number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -95258,6 +95287,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFieldUpdateOperationsInput | boolean
     trialDurationDays?: NullableIntFieldUpdateOperationsInput | number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -100747,6 +100777,7 @@ export namespace Prisma {
     isTrialDefault?: SortOrder
     trialDurationDays?: SortOrder
     trialQuotas?: SortOrder
+    archivedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -100763,6 +100794,7 @@ export namespace Prisma {
     discountPercent?: SortOrder
     isTrialDefault?: SortOrder
     trialDurationDays?: SortOrder
+    archivedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -100774,6 +100806,7 @@ export namespace Prisma {
     discountPercent?: SortOrder
     isTrialDefault?: SortOrder
     trialDurationDays?: SortOrder
+    archivedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -109829,6 +109862,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -109842,6 +109876,7 @@ export namespace Prisma {
     isTrialDefault?: boolean
     trialDurationDays?: number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -109871,6 +109906,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFieldUpdateOperationsInput | boolean
     trialDurationDays?: NullableIntFieldUpdateOperationsInput | number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -109884,6 +109920,7 @@ export namespace Prisma {
     isTrialDefault?: BoolFieldUpdateOperationsInput | boolean
     trialDurationDays?: NullableIntFieldUpdateOperationsInput | number | null
     trialQuotas?: NullableJsonNullValueInput | InputJsonValue
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

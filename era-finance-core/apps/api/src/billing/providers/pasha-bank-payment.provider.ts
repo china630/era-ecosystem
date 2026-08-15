@@ -174,7 +174,9 @@ export class PashaBankPaymentProvider {
   private requireWebhookSecret(): string {
     const s = this.config.get<string>("PAYMENT_WEBHOOK_SECRET", "")?.trim();
     if (!s) {
-      return this.config.get<string>("JWT_SECRET", "dev-insecure") ?? "dev";
+      return (
+        this.config.get<string>("ERA_JWT_SECRET", "dev-insecure") ?? "dev"
+      );
     }
     return s;
   }

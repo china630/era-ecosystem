@@ -37,12 +37,16 @@ export function useAuth() {
     refresh();
   }, [refresh]);
 
+  const isPlatformSuperAdmin = user?.isPlatformSuperAdmin === true;
+
   const can = useCallback(
-    (permission: string) => user?.permissions.includes(permission) ?? false,
-    [user],
+    (permission: string) => {
+      if (isPlatformSuperAdmin) return true;
+      return user?.permissions.includes(permission) ?? false;
+    },
+    [user, isPlatformSuperAdmin],
   );
 
-  const isPlatformSuperAdmin = user?.isPlatformSuperAdmin === true;
   const canRunElektrawebImport = user?.canRunElektrawebImport === true;
 
   return { user, loading, can, isPlatformSuperAdmin, canRunElektrawebImport, refresh };

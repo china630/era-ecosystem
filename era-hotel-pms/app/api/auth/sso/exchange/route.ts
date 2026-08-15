@@ -2,15 +2,36 @@ import {
   consumeSsoSignatureOnce,
   resolveVerifiedSsoFinanceRole,
   ssoExchangeBodySchema,
+  satelliteOrganizationId,
 } from '@era/satellite-kit';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { signToken } from '@/lib/auth/jwt';
 import { prisma } from '@/lib/prisma';
-import { ROLE_CODES } from '@/lib/auth/permissions';
-import { permissionsForRole } from '@/lib/auth/permissions';
+import {
+  ROLE_CODES,
+  permissionsForRole,
+  serializePermissions,
+} from '@/lib/auth/permissions';
+import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'era_session';
 
+async function ensureRole(code: string) {
+  const existing = await prisma.role.findUnique({ where: { code } });
+  if (existing) return existing;
+  return prisma.role.create({
+    data: {
+      code,
+      name: code.replace(/_/g, ' '),
+      permissionsJson: serializePermissions(permissionsForRole(code)),
+    },
+  });
+}
+
+/**
+ * SEC-SSO-02/01: Orchestrator mints HMAC (v2/v3); replay guard via consumeSsoSignatureOnce.
+ * SEC-SSO-05: ticket org must match satelliteOrganizationId() when bound.
+ */
 export async function POST(request: Request) {
   try {
     const body = ssoExchangeBodySchema.parse(await request.json());
@@ -33,25 +54,25 @@ export async function POST(request: Request) {
       return jsonError('SSO ticket already used', 401);
     }
 
-    const deployOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
-    if (deployOrg && body.organizationId !== deployOrg) {
+    const deployOrg = satelliteOrganizationId();
+    if (deployOrg && deployOrg !== 'demo-org' && body.organizationId !== deployOrg) {
       return jsonError('SSO organization mismatch', 401);
     }
 
-    let role = await prisma.role.findUnique({
-      where: { code: ROLE_CODES.FINANCIAL_AUDITOR },
+    const email = body.email.trim().toLowerCase();
+    const isPlatformSuperAdmin = isPlatformSuperAdminUser({
+      email,
+      login: email,
     });
-    if (!role) {
-      role = await prisma.role.create({
-        data: {
-          code: ROLE_CODES.FINANCIAL_AUDITOR,
-          name: 'Financial Auditor',
-          permissionsJson: JSON.stringify(permissionsForRole(ROLE_CODES.FINANCIAL_AUDITOR)),
-        },
-      });
-    }
 
-    const login = `sso_${body.email.split('@')[0]}`;
+    // Platform super-admins get full hotel ops; other launcher SSO users stay
+    // on Financial_Auditor (exec / read-oriented) until role mapping is expanded.
+    const roleCode = isPlatformSuperAdmin
+      ? ROLE_CODES.HOTEL_ADMIN
+      : ROLE_CODES.FINANCIAL_AUDITOR;
+    const role = await ensureRole(roleCode);
+
+    const login = `sso_${email.split('@')[0]}`;
     let user = await prisma.user.findUnique({
       where: { login },
       include: { role: true },
@@ -60,7 +81,7 @@ export async function POST(request: Request) {
       user = await prisma.user.create({
         data: {
           login,
-          email: body.email,
+          email,
           fullName: body.fullName,
           passwordHash: 'sso:no-password',
           roleId: role.id,
@@ -72,7 +93,13 @@ export async function POST(request: Request) {
     } else {
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { lastLoginAt: new Date(), fullName: body.fullName },
+        data: {
+          lastLoginAt: new Date(),
+          fullName: body.fullName,
+          email,
+          // Re-assert role on every SSO so PSA is never stuck on read-only.
+          roleId: role.id,
+        },
         include: { role: true },
       });
     }
@@ -82,6 +109,7 @@ export async function POST(request: Request) {
       login: user.login,
       role: user.role.code,
       fullName: user.fullName,
+      email,
     });
 
     const res = jsonOk({
@@ -90,6 +118,8 @@ export async function POST(request: Request) {
         login: user.login,
         fullName: user.fullName,
         role: user.role.code,
+        isPlatformSuperAdmin,
+        financeRole,
       },
       token,
     });

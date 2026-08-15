@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import { resolveSatelliteOrganizationId } from "./tenancy/organization-bind-core";
 
 export type OrchestratorGatewayResult = {
   ok: boolean;
@@ -43,9 +44,5 @@ export async function publishToOrchestratorGateway(
 }
 
 export function satelliteOrganizationId(): string {
-  return (
-    process.env.ERA_SATELLITE_ORGANIZATION_ID ??
-    process.env.ORGANIZATION_ID ??
-    "demo-org"
-  );
+  return resolveSatelliteOrganizationId().organizationId;
 }

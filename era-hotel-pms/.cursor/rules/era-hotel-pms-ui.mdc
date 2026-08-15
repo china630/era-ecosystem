@@ -10,6 +10,55 @@ alwaysApply: false
 
 Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestCardModal`, reservation cards, ElektraWeb-era layouts).
 
-- Use `@era/satellite-kit/ui` primitives where available (`EraDataGrid`, `MODAL_INPUT_CLASS`, etc.).
+- Use `@era/satellite-kit/ui` primitives where available (`MODAL_INPUT_CLASS`, etc.).
+- List grids: `HotelDataGrid` (wraps kit `EraDataGrid` with i18n `ListPaginationFooter`) — not bare `EraDataGrid`.
 - Guest identity: support AZ FIN and foreign passport (`GuestCardIdentityTab`).
 - If UX conflicts with playbook, follow playbook or ask the user.
+
+## List screens (required)
+
+- Every table/grid page: `PageHeader` -> `EraListFilterBar` (Field*/DatePicker) -> `HotelDataGrid` (or shell+scroll table).
+- Pagination: client footer on by default (25/50/100); pass `pagination={false}` only for tiny modal lists.
+- Table chrome: `DATA_TABLE_SHELL_CLASS` + `DATA_TABLE_SCROLL_CLASS` (or legacy `DATA_TABLE_VIEWPORT_CLASS` with clip-path) so sticky thead keeps rounded corners.
+- CRUD add via modal (`ModalShell` + `Field*`), never `window.prompt`.
+- Errors: `showApiError` toast — not inline `text-red-*` / StatusMessage for API failures.
+- 3-tier tokens: `docs/adr/era-design-tokens-3tier.md` + `resolveField` / `columnFilters`.
+- Guest CRM subpages: `GuestCrmPromptListPage` + `GuestCrmSubnav` layout under `/guests/[id]`.
+
+## Modals (global kit rule)
+
+- `ModalShell` / `EraModal`: backdrop does **not** close on click; no Esc dismiss. Exit only via Close / Cancel / footer buttons.
+- While open: `document.body` scroll locked; overlay `pt-10` (not `pt-24`) so near-fullscreen cards fit without page scroll.
+- FO cards use `MODAL_FULL_CLASS` (`max-h-[90vh]`).
+
+## Reservation card (near-fullscreen modal)
+
+- **One source** for create and edit: `ReservationCardEditor` via `ReservationCardModal` (`reservationId` null = create). Same panels/tabs always; post-save actions disabled with `availableAfterSave` tooltip.
+- One chrome only: `ModalShell` title + `subtitle` (guest · status · id). Do **not** nest a second title/Close toolbar.
+- Secondary actions (Menu / Print / Attach / Lightning) → `headerActions`; Save / Check-in → `footer` via `ReservationCardActions`.
+- Max width: `MODAL_FULL_CLASS` (~98vw / 1600px). Layout: **50/50** `lg:grid-cols-2` — left form · right collection tabs.
+- FO header actions: **Room booking** (single stay card) + **Group booking** (multi-stay wizard). Screen chain (RTA / list / rack / plan) stays in the sidebar, not as header chips.
+- Left rail: Stay · Product (room type + Package/rate + meal) · Pax · Classification · Commercial · Assignment (CONFIRMED+) · Additional. No `roomCount` on single card (1 stay = 1 room).
+- Right (~60%): tabs Guests · Pricing · Folio · Notes.
+- Guests tab = primary/companions grid + party billing PRIMARY/EQUAL. Pricing / Folio / Notes stay as collection tabs.
+- Create = edit same chrome; Assignment block hidden on create / pre-arrival OPTION.
+- Tabs: kit `TAB_STRIP_CLASS` / `TAB_ITEM_*`; folio subtabs: `CHIP_*`.
+- Stay dates: kit `DatePicker` + `common.datePlaceholder` (never native `type="date"` alone).
+- Folio grid: `HotelDataGrid`. No raw hex buttons — `SUCCESS_BUTTON_CLASS` / `DANGER_BUTTON_CLASS` / `SECONDARY_BUTTON_CLASS`.
+
+## Guest card (same FO chrome)
+
+- **One source** for create and edit: `GuestCardModal` (`guestId` null = create). Same 50/50 + stats strip (zeros until saved) + left panels + right tabs.
+- Same `MODAL_FULL_CLASS` + **50/50** grid. Stats strip above the split.
+- Left: static `FieldPanel` groups — Identity · Classification · Documents & MDM · Other. Scalars live left; MDM lookup/merge in Documents panel.
+- Right tabs: Identity/Contact (docs/contacts/addresses/consents) · CRM · Reservations · Loyalty · Time share. No separate Details tab.
+- Dates via `DatePicker`; fields via kit `Field` / `FieldRow`.
+
+## FO screen chain
+
+Priority: **Room type availability** `/availability` → reservation list → rack `/` → room plan. See `docs/adr/hotel-fo-screen-chain.md`. Empty plan/rack cells = free doors, not sellable Avl.
+
+## Room plan
+
+- Room plan (`/room-plan`): `EraListFilterBar` Tarix (`DatePicker` → API `from`) + Otaq/Qonaq client filters; grouping/period stay as `FilterMenuButton`; fullscreen overlay like clinic resource matrix (Esc exits).
+- Room plan bars (`room-plan/shapes.ts`): half-day (noon) model — box spans mid check-in column → mid check-out column. Right edge = `arrow` whenever checkout is in-window (including same-day turnover depart); `flat` only when clipped past the window. Left edge concave only on same-day turnover check-in. Geometry is precomputed in `computePlacedBars`; `barSvgPath` only maps `BarShapeFlags`. Data is single-lane (no overlap stacking) — per-room overlaps must be prevented at seed/import, not painted on top of each other.

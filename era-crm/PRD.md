@@ -207,8 +207,8 @@ Primary template aligned with [data/legal-entities/README.md](../data/legal-enti
 
 | File | Use |
 |------|-----|
-| `azerbaijan-legal-entities.csv` | Main enriched registry |
-| `azerbaijan-donors-no-tax-match.csv` | Import with `needsVoenReview` flag |
+| `azerbaijan-companies-with-voen.csv` | Main companies master (local; use a ≤5000-row sample for CRM import) |
+| `azerbaijan-companies-without-voen.csv` | Donors still needing VÖEN review |
 | Custom CSV/XLSX | Column mapper UI **DEFERRED** — fixed template v3.0 |
 
 Minimum import columns: `voen` or `donor_phones`, name column, optional `donor_sectors`, `donor_emails`, `tax_legal_address`.

@@ -16,7 +16,6 @@ export async function PlatformSessionBarServer() {
       <PlatformAccountBar
         capabilities={capabilities}
         organizationId={session.organizationId}
-        className="mb-4"
       />
     );
   } catch {

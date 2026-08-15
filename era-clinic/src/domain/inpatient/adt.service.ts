@@ -87,6 +87,40 @@ export async function dischargeAdmission(admissionId: string) {
   });
 }
 
+export async function listInpatientCensus() {
+  const admissions = await prisma.inpatientAdmission.findMany({
+    where: { status: "ADMITTED" },
+    orderBy: { admittedAt: "desc" },
+    include: {
+      patient: { select: { id: true, refCode: true, fullName: true } },
+      assignments: {
+        where: { dischargedAt: null },
+        take: 1,
+        include: {
+          patient: { select: { id: true, refCode: true, fullName: true } },
+          bed: { include: { ward: true } },
+        },
+      },
+    },
+  });
+
+  return admissions.map((admission) => {
+    const assignment = admission.assignments[0];
+    return {
+      admissionId: admission.id,
+      patientRefId: admission.patientRefId,
+      patientName:
+        assignment?.patient?.fullName ?? admission.patient?.fullName ?? admission.patientRefId,
+      patientRefCode:
+        assignment?.patient?.refCode ?? admission.patient?.refCode ?? "",
+      wardCode: assignment?.bed?.ward?.code ?? "—",
+      wardName: assignment?.bed?.ward?.name ?? "—",
+      bedCode: assignment?.bed?.code ?? "—",
+      admittedAt: admission.admittedAt.toISOString(),
+    };
+  });
+}
+
 export async function listWardsWithPatients() {
   const wards = await prisma.ward.findMany({
     orderBy: { code: "asc" },

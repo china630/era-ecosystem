@@ -3,18 +3,28 @@
 ## Single-writer EOD
 
 - One `EodRun` row per `bankOrgId` + `businessDate`.
-- EOD steps: FX revaluation stub, inter-branch netting, trial balance verification.
+- EOD steps (working day): FX revaluation stub, treasury liquidity gap snapshot, inter-branch netting stub, card auth hold expiry / settlement count, **deposit interest accrual** (`steps.depositInterestAccrual`), trial balance verification.
 - Status `COMPLETED` only when Σ Dr = Σ Cr.
+
+## Deposit interest accrual (MVP)
+
+- Day-count: **ACT_365 | ACT_360 | THIRTY_360** via `interest-daycount.util` (contract `dayCountConvention`).
+- `DepositContract.rateAnnual` locked at `open()`; FLOATING products resolve index+spread from `RateIndexQuote`.
+- Posting: **Dr** product `glInterestExpenseCode` (fallback `SystemGlKey.INTEREST_EXPENSE`) · **Cr** `glLiabilityCode`.
+- Idempotency key: `dep-accrual-{contractId}-{yyyy-mm-dd}`; `lastAccrualDate` skips re-accrual.
+- Accrual posts use `allowDuringEod: true` (external mutations remain blocked while `EodRun` is `RUNNING`).
+- Close pays **principal + accruedInterestMinor**; rollover **capitalizes** accrued into principal.
+- EOD also records `steps.floatingRateReset`, `steps.lcr` (risk-owned).
 
 ## Degraded mode (MVP)
 
 | Mode | Reads | Writes |
 |------|-------|--------|
 | Normal | OK | OK |
-| EOD RUNNING | OK | 423 Locked (planned enforcement) |
+| EOD RUNNING | OK | Blocked except EOD-internal posts (`allowDuringEod`) |
 | EOD FAILED | OK | Ops review required |
 
-MVP implements EOD run + snapshot; write lock during RUNNING is documented for certification hardening.
+MVP implements EOD run + snapshot; external mutations while RUNNING return **HTTP 423 Locked** (aligned with DBO). EOD-internal posts pass `allowDuringEod: true`.
 
 ## HA (future)
 
@@ -25,5 +35,5 @@ MVP implements EOD run + snapshot; write lock during RUNNING is documented for c
 ## Recovery
 
 1. Fix underlying imbalance (posting reversal).
-2. Re-run EOD for business date (idempotent upsert).
+2. Re-run EOD for business date (idempotent upsert; deposit accrual keys prevent double interest).
 3. Run `node tools/audit/replay-day.mjs <date>` — exit 0 before sign-off.

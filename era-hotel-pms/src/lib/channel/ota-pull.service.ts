@@ -1,16 +1,40 @@
 import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
 import { upsertOtaReservation } from '@/lib/channel/ota-ingest.service';
 import { logSyncError } from '@/lib/services/channel.service';
+import { prisma } from '@/lib/prisma';
+
+async function recordPullEvent(
+  adapter: string,
+  payload: Record<string, unknown>,
+  ok: boolean,
+  lastError?: string,
+) {
+  try {
+    await prisma.outboundEventLog.create({
+      data: {
+        eventType: 'channel.pull',
+        payloadJson: JSON.stringify({ adapter, ...payload }),
+        status: ok ? 'SENT' : 'FAILED',
+        attempts: 1,
+        lastError: lastError ?? null,
+      },
+    });
+  } catch (err) {
+    console.error('OutboundEventLog channel pull write failed', err);
+  }
+}
 
 export async function pullOtaReservations(since?: Date) {
   const adapter = resolveChannelAdapter();
   if (!adapter.pullReservations) {
-    return {
+    const result = {
       ok: true,
       adapter: adapter.code,
       pulled: 0,
       message: 'Adapter does not support pull',
     };
+    await recordPullEvent(adapter.code, result, true);
+    return result;
   }
 
   const sinceDate = since ?? new Date(Date.now() - 24 * 3600 * 1000);
@@ -39,7 +63,7 @@ export async function pullOtaReservations(since?: Date) {
     }
   }
 
-  return {
+  const result = {
     ok: errors.length === 0,
     adapter: adapter.code,
     pulled: items.length,
@@ -48,4 +72,13 @@ export async function pullOtaReservations(since?: Date) {
     cancelled,
     errors,
   };
+
+  await recordPullEvent(
+    adapter.code,
+    { pulled: result.pulled, created, updated, cancelled },
+    result.ok,
+    result.ok ? undefined : errors.join('; '),
+  );
+
+  return result;
 }

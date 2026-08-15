@@ -1,12 +1,11 @@
 /**
- * Build master company files from e-taxes cache (+ donor overlay from existing master).
+ * Build master company files from existing master + e-taxes cache merge.
  *
- * Outputs:
- *   azerbaijan-companies-with-voen.csv      — dedup by VÖEN
- *   azerbaijan-companies-without-voen.csv  — unchanged unless legal-entities.csv present
+ * Default (safe): append-only — scan cache for new VÖEN and append CSV rows.
+ * Never loads the full ~400MB master into memory.
  *
- * Usage:
  *   node tools/build-azerbaijan-companies-master.mjs
+ *   node tools/build-azerbaijan-companies-master.mjs --full   # memory-heavy; avoid
  */
 
 import fs from "node:fs";
@@ -22,6 +21,7 @@ const LEGAL_CSV = path.join(OUT_DIR, "azerbaijan-legal-entities.csv");
 const WITH_VOEN_CSV = path.join(OUT_DIR, "azerbaijan-companies-with-voen.csv");
 const WITHOUT_VOEN_CSV = path.join(OUT_DIR, "azerbaijan-companies-without-voen.csv");
 const STATS_FILE = path.join(OUT_DIR, ".companies-master-stats.json");
+const FULL_REWRITE = process.argv.includes("--full");
 
 const HEADER = [
   "match_status",
@@ -89,50 +89,35 @@ function parseCsv(text) {
       if (text[i] === ",") i++;
       return field;
     }
-    while (i < len && text[i] !== "," && text[i] !== "\n" && text[i] !== "\r") field += text[i++];
+    while (i < len && text[i] !== "," && text[i] !== "\n" && text[i] !== "\r") {
+      field += text[i++];
+    }
     if (text[i] === ",") i++;
     return field;
   };
-  const headers = [];
-  while (i < len && text[i] !== "\n" && text[i] !== "\r") headers.push(readField());
-  while (text[i] === "\n" || text[i] === "\r") i++;
   while (i < len) {
+    if (text[i] === "\r") i++;
+    if (text[i] === "\n") {
+      i++;
+      continue;
+    }
     const row = {};
-    for (const h of headers) row[h] = i < len ? readField() : "";
+    for (const h of HEADER) {
+      if (i >= len || text[i] === "\n" || text[i] === "\r") {
+        row[h] = "";
+        continue;
+      }
+      row[h] = readField();
+    }
     rows.push(row);
-    while (i < len && (text[i] === "\n" || text[i] === "\r")) i++;
+    while (i < len && text[i] !== "\n") i++;
+    if (text[i] === "\n") i++;
   }
   return rows;
 }
 
 function parseHeaderLine(line) {
-  let i = 0;
-  const len = line.length;
-  const headers = [];
-  const readField = () => {
-    let field = "";
-    if (line[i] === '"') {
-      i++;
-      while (i < len) {
-        if (line[i] === '"') {
-          if (line[i + 1] === '"') {
-            field += '"';
-            i += 2;
-          } else {
-            i++;
-            break;
-          }
-        } else field += line[i++];
-      }
-      if (line[i] === ",") i++;
-      return field;
-    }
-    while (i < len && line[i] !== ",") field += line[i++];
-    if (line[i] === ",") i++;
-    return field;
-  };
-  while (i < len) headers.push(readField());
-  return headers;
+  return line.split(",").map((h) => h.trim());
 }
 
 function parseDataRow(headers, recordLine) {
@@ -165,7 +150,70 @@ function parseDataRow(headers, recordLine) {
   return row;
 }
 
-function ingestFromCache(byVoen, stats) {
+function emptyDonorFields() {
+  return {
+    donor_sectors: "",
+    donor_ids: "",
+    donor_search_names: "",
+    donor_names: "",
+    donor_cities: "",
+    donor_addresses: "",
+    donor_phones: "",
+    donor_emails: "",
+    donor_websites: "",
+    donor_voens: "",
+    donor_categories: "",
+    donor_extra_json: "",
+  };
+}
+
+function rowFromTaxpayer(tp, q) {
+  const flat = flattenTaxpayer(tp, q);
+  const voen = String(flat.voen ?? "").trim();
+  if (!isAzVoen(voen)) return null;
+  return {
+    match_status: "tax_registry",
+    source_queries: q,
+    search_query: q,
+    ...flat,
+    ...emptyDonorFields(),
+  };
+}
+
+function rowToCsvLine(r) {
+  return HEADER.map((h) => {
+    if (h === "search_query" && !r.search_query) return csvEscape(r.source_queries ?? "");
+    return csvEscape(r[h]);
+  }).join(",");
+}
+
+async function loadKnownVoensOnly() {
+  const voens = new Set();
+  if (!fs.existsSync(WITH_VOEN_CSV)) return voens;
+  const rl = readline.createInterface({
+    input: fs.createReadStream(WITH_VOEN_CSV, { encoding: "utf8" }),
+    crlfDelay: Infinity,
+  });
+  let headers = null;
+  for await (const line of rl) {
+    if (!line.trim()) continue;
+    if (!headers) {
+      headers = parseHeaderLine(line);
+      continue;
+    }
+    const raw = parseDataRow(headers, line);
+    const v = String(raw.voen ?? "").trim();
+    if (isAzVoen(v)) voens.add(v);
+  }
+  return voens;
+}
+
+function collectNewFromCache(knownVoens, stats) {
+  const newByVoen = new Map();
+  if (!fs.existsSync(CACHE_DIR)) {
+    console.log("  cache dir missing — nothing to append");
+    return newByVoen;
+  }
   for (const file of fs.readdirSync(CACHE_DIR)) {
     if (!file.endsWith(".json")) continue;
     stats.cache_files++;
@@ -182,83 +230,53 @@ function ingestFromCache(byVoen, stats) {
     }
     const q = data.query ?? "";
     for (const tp of data.taxpayers ?? []) {
-      const flat = flattenTaxpayer(tp, q);
-      const voen = String(flat.voen ?? "").trim();
-      if (!isAzVoen(voen)) continue;
+      const row = rowFromTaxpayer(tp, q);
+      if (!row) continue;
       stats.taxpayer_hits++;
-      if (!byVoen.has(voen)) {
-        byVoen.set(voen, {
-          match_status: "tax_registry",
-          source_queries: q,
-          search_query: q,
-          ...flat,
-          donor_sectors: "",
-          donor_ids: "",
-          donor_search_names: "",
-          donor_names: "",
-          donor_cities: "",
-          donor_addresses: "",
-          donor_phones: "",
-          donor_emails: "",
-          donor_websites: "",
-          donor_voens: "",
-          donor_categories: "",
-          donor_extra_json: "",
-        });
-      } else {
-        const ex = byVoen.get(voen);
-        if (!ex.tax_name && flat.tax_name) Object.assign(ex, flat);
-        if (ex.source_queries && q && !ex.source_queries.includes(q)) {
+      if (knownVoens.has(row.voen) || newByVoen.has(row.voen)) {
+        const ex = newByVoen.get(row.voen);
+        if (ex && q && ex.source_queries && !String(ex.source_queries).includes(q)) {
           ex.source_queries = `${ex.source_queries} | ${q}`;
           ex.search_query = ex.source_queries;
-        } else if (!ex.source_queries) {
-          ex.source_queries = q;
-          ex.search_query = q;
         }
+        continue;
       }
+      newByVoen.set(row.voen, row);
     }
+  }
+  return newByVoen;
+}
+
+function ensureTrailingNewline(filePath) {
+  const fd = fs.openSync(filePath, "r+");
+  try {
+    const st = fs.fstatSync(fd);
+    if (st.size === 0) return;
+    const buf = Buffer.alloc(1);
+    fs.readSync(fd, buf, 0, 1, st.size - 1);
+    if (buf[0] !== 0x0a) fs.writeSync(fd, "\n", st.size);
+  } finally {
+    fs.closeSync(fd);
   }
 }
 
-async function loadDonorOverlayFromMaster() {
-  const overlay = new Map();
-  if (!fs.existsSync(WITH_VOEN_CSV)) return overlay;
-
+async function countCsvDataRows(filePath) {
+  if (!fs.existsSync(filePath)) return 0;
   const rl = readline.createInterface({
-    input: fs.createReadStream(WITH_VOEN_CSV, { encoding: "utf8" }),
+    input: fs.createReadStream(filePath, { encoding: "utf8" }),
     crlfDelay: Infinity,
   });
-  let headers = null;
+  let n = 0;
+  let header = false;
   for await (const line of rl) {
     if (!line.trim()) continue;
-    if (!headers) {
-      headers = parseHeaderLine(line);
+    if (!header) {
+      header = true;
       continue;
     }
-    const raw = parseDataRow(headers, line);
-    if (!raw.donor_ids?.trim()) continue;
-    const voen = String(raw.voen ?? "").trim();
-    if (!isAzVoen(voen)) continue;
-    overlay.set(voen, raw);
+    n++;
   }
-  return overlay;
-}
-
-function mergeDonorOverlay(byVoen, donorByVoen) {
-  for (const [voen, donor] of donorByVoen) {
-    if (!byVoen.has(voen)) {
-      byVoen.set(voen, {
-        ...donor,
-        source_queries: donor.source_queries || donor.search_query || "",
-        search_query: donor.search_query || donor.source_queries || "",
-      });
-      continue;
-    }
-    const row = byVoen.get(voen);
-    for (const [k, v] of Object.entries(donor)) {
-      if (v && (!row[k] || k.startsWith("donor_") || k === "match_status")) row[k] = v;
-    }
-  }
+  return n;
 }
 
 function buildWithoutVoenFromLegal() {
@@ -288,37 +306,82 @@ function buildWithoutVoenFromLegal() {
   );
 }
 
+async function fullRewrite(stats) {
+  console.warn("WARNING: --full loads entire master into memory (may OOM on ~400MB files).");
+  const byVoen = new Map();
+  if (fs.existsSync(WITH_VOEN_CSV)) {
+    const rl = readline.createInterface({
+      input: fs.createReadStream(WITH_VOEN_CSV, { encoding: "utf8" }),
+      crlfDelay: Infinity,
+    });
+    let headers = null;
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+      if (!headers) {
+        headers = parseHeaderLine(line);
+        continue;
+      }
+      const raw = parseDataRow(headers, line);
+      const voen = String(raw.voen ?? "").trim();
+      if (!isAzVoen(voen)) continue;
+      byVoen.set(voen, {
+        ...raw,
+        source_queries: raw.source_queries || raw.search_query || "",
+        search_query: raw.search_query || raw.source_queries || "",
+      });
+    }
+  }
+  stats.base_voen = byVoen.size;
+  const known = new Set(byVoen.keys());
+  const neu = collectNewFromCache(known, stats);
+  for (const [voen, row] of neu) byVoen.set(voen, row);
+
+  const withVoen = [...byVoen.values()].sort((a, b) =>
+    (a.tax_name || a.donor_names || a.voen).localeCompare(b.tax_name || b.donor_names || b.voen, "az"),
+  );
+  const csvLines = [HEADER.join(","), ...withVoen.map(rowToCsvLine)];
+  fs.writeFileSync(WITH_VOEN_CSV, `${csvLines.join("\n")}\n`, "utf8");
+  return withVoen.length;
+}
+
 async function main() {
   const stats = {
     cache_files: 0,
     cache_errors: 0,
     cache_parse_errors: 0,
     taxpayer_hits: 0,
+    base_voen: 0,
+    appended: 0,
+    mode: FULL_REWRITE ? "full" : "append",
   };
 
-  console.log("Loading donor overlay from existing master...");
-  const donorOverlay = await loadDonorOverlayFromMaster();
-  console.log(`  donor overlay rows: ${donorOverlay.size}`);
+  let withVoenCount = 0;
 
-  const byVoen = new Map();
-  console.log("Ingesting e-taxes cache...");
-  ingestFromCache(byVoen, stats);
-  mergeDonorOverlay(byVoen, donorOverlay);
+  if (FULL_REWRITE) {
+    withVoenCount = await fullRewrite(stats);
+  } else {
+    console.log("Append-only merge (existing master + new cache VÖEN)...");
+    const known = await loadKnownVoensOnly();
+    stats.base_voen = known.size;
+    console.log(`  existing VÖEN: ${known.size}`);
 
-  const withVoen = [...byVoen.values()].sort((a, b) =>
-    (a.tax_name || a.donor_names || a.voen).localeCompare(b.tax_name || b.donor_names || b.voen, "az"),
-  );
+    const neu = collectNewFromCache(known, stats);
+    console.log(`  new VÖEN from cache: ${neu.size}`);
 
-  const csvLines = [
-    HEADER.join(","),
-    ...withVoen.map((r) =>
-      HEADER.map((h) => {
-        if (h === "search_query" && !r.search_query) return csvEscape(r.source_queries ?? "");
-        return csvEscape(r[h]);
-      }).join(","),
-    ),
-  ];
-  fs.writeFileSync(WITH_VOEN_CSV, `${csvLines.join("\n")}\n`, "utf8");
+    if (!fs.existsSync(WITH_VOEN_CSV)) {
+      const lines = [HEADER.join(","), ...[...neu.values()].map(rowToCsvLine)];
+      fs.writeFileSync(WITH_VOEN_CSV, `${lines.join("\n")}\n`, "utf8");
+      stats.appended = neu.size;
+    } else if (neu.size > 0) {
+      ensureTrailingNewline(WITH_VOEN_CSV);
+      const chunk = [...neu.values()].map(rowToCsvLine).join("\n") + "\n";
+      fs.appendFileSync(WITH_VOEN_CSV, chunk, "utf8");
+      stats.appended = neu.size;
+    } else {
+      console.log("  nothing to append");
+    }
+    withVoenCount = known.size + stats.appended;
+  }
 
   let withoutVoenCount = 0;
   const withoutFromLegal = buildWithoutVoenFromLegal();
@@ -331,14 +394,13 @@ async function main() {
     withoutVoenCount = withoutFromLegal.length;
     console.log("Rebuilt without-voen from legal-entities.csv");
   } else if (fs.existsSync(WITHOUT_VOEN_CSV)) {
-    withoutVoenCount = Math.max(0, fs.readFileSync(WITHOUT_VOEN_CSV, "utf8").split("\n").length - 2);
+    withoutVoenCount = await countCsvDataRows(WITHOUT_VOEN_CSV);
     console.log("Kept existing without-voen file");
   }
 
   const outStats = {
     ...stats,
-    with_voen: withVoen.length,
-    with_donor_ids: withVoen.filter((r) => r.donor_ids).length,
+    with_voen: withVoenCount,
     without_voen: withoutVoenCount,
     finished_at: new Date().toISOString(),
   };

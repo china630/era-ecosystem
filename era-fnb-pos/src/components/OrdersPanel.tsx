@@ -135,7 +135,7 @@ export default function OrdersPanel() {
     await load();
   }
 
-  async function pay(method: "CASH" | "CARD") {
+  async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (!selected) return;
     setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}/pay`, {
@@ -525,6 +525,13 @@ export default function OrdersPanel() {
                     onClick={() => void pay("CARD")}
                   >
                     {t("payCard")}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
+                    onClick={() => void pay("TRANSFER")}
+                  >
+                    {t("payTransfer")}
                   </button>
                 </>
               )}

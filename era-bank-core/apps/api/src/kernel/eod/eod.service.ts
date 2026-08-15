@@ -6,6 +6,14 @@ import { OrchestratorEventsPublisher } from "../../integration/orchestrator-even
 import { LedgerService } from "../ledger/ledger.service";
 import { DataHubClient } from "../../integration/data-hub.client";
 import { TreasuryService } from "../../modules/treasury/treasury.service";
+import { DepositsService } from "../../modules/deposits/deposits.service";
+import { LoansService } from "../../modules/loans/loans.service";
+import { RiskService } from "../../modules/risk/risk.service";
+import { StandingOrdersService } from "../../modules/payments/standing-orders.service";
+import { CashService } from "../../modules/cash/cash.service";
+import { CollectionsService } from "../../modules/collections/collections.service";
+import { TradeService } from "../../modules/trade/trade.service";
+import { BranchService } from "../branch/branch.service";
 
 @Injectable()
 export class EodService {
@@ -16,6 +24,14 @@ export class EodService {
     private readonly dataHub: DataHubClient,
     private readonly events: OrchestratorEventsPublisher,
     private readonly treasury: TreasuryService,
+    private readonly deposits: DepositsService,
+    private readonly loans: LoansService,
+    private readonly risk: RiskService,
+    private readonly standingOrders: StandingOrdersService,
+    private readonly cash: CashService,
+    private readonly collections: CollectionsService,
+    private readonly trade: TradeService,
+    private readonly branch: BranchService,
   ) {}
 
   getByDate(date: Date) {
@@ -33,7 +49,10 @@ export class EodService {
   async run(businessDate: Date) {
     await this.prisma.eodRun.upsert({
       where: {
-        bankOrgId_businessDate: { bankOrgId: this.bankOrg.bankOrgId, businessDate },
+        bankOrgId_businessDate: {
+          bankOrgId: this.bankOrg.bankOrgId,
+          businessDate,
+        },
       },
       create: {
         bankOrgId: this.bankOrg.bankOrgId,
@@ -45,11 +64,25 @@ export class EodService {
 
     const fxRate = await this.dataHub.getFxRate("USD", businessDate);
 
+    const fxRevaluation = await this.treasury.runFxRevaluation({
+      asOfDate: businessDate,
+      makerUserId: "eod-system",
+      idempotencyKey: `eod-fx-reval-${businessDate.toISOString().slice(0, 10)}`,
+    });
+
+    const mfrReconcile = await this.branch.reconcileMfr(
+      businessDate,
+      "eod-system",
+    );
+
     const working = await this.dataHub.isWorkingDay(businessDate);
     if (!working) {
       return this.prisma.eodRun.update({
         where: {
-          bankOrgId_businessDate: { bankOrgId: this.bankOrg.bankOrgId, businessDate },
+          bankOrgId_businessDate: {
+            bankOrgId: this.bankOrg.bankOrgId,
+            businessDate,
+          },
         },
         data: {
           status: EodStatus.COMPLETED,
@@ -85,6 +118,34 @@ export class EodService {
       },
     });
 
+    const floatingResets = {
+      deposits: await this.deposits.resetFloatingRates(businessDate),
+      loans: await this.loans.resetDueFloatingRates(businessDate),
+    };
+
+    const depositInterestAccrual =
+      await this.deposits.accrueDailyInterest(businessDate);
+
+    const standingOrders = await this.standingOrders.runDue(
+      businessDate,
+      "eod-system",
+    );
+    const sdbRent = await this.cash.countSdbRentDue(businessDate);
+    const collectionsAging = await this.collections.agingSnapshot();
+    const tradeContingentReval =
+      await this.trade.contingentRevalStub(businessDate);
+    const adifSnapshot = {
+      stub: true,
+      adifTaggedDeposits: await this.prisma.depositContract.count({
+        where: {
+          bankOrgId: this.bankOrg.bankOrgId,
+          status: "ACTIVE",
+        },
+      }),
+    };
+
+    const lcr = await this.risk.lcr(businessDate);
+
     const trialBalance = await this.ledger.trialBalance(businessDate);
     let totalDebit = 0n;
     let totalCredit = 0n;
@@ -106,22 +167,38 @@ export class EodService {
 
     const run = await this.prisma.eodRun.update({
       where: {
-        bankOrgId_businessDate: { bankOrgId: this.bankOrg.bankOrgId, businessDate },
+        bankOrgId_businessDate: {
+          bankOrgId: this.bankOrg.bankOrgId,
+          businessDate,
+        },
       },
       data: {
         status: balanced ? EodStatus.COMPLETED : EodStatus.FAILED,
         balancedAt: balanced ? new Date() : null,
         steps: {
-          fxRevaluation: { usdRate: fxRate },
+          fxRevaluation: { usdRate: fxRate, ...fxRevaluation },
           treasury: {
             gapSnapshotId: gapSnapshot.id,
             lcrRatioStub:
-              (gapSnapshot.bucketsJson as { lcrRatioStub?: number | null })?.lcrRatioStub ?? null,
+              (gapSnapshot.bucketsJson as { lcrRatioStub?: number | null })
+                ?.lcrRatioStub ?? null,
           },
-          interbranchNetting: { status: "reconciled" },
+          interbranchNetting: mfrReconcile,
           cardSettlement: {
             expiredAuthHolds: expiredHolds.count,
             settledTxnCount: cardSettlementCount,
+          },
+          floatingRateReset: floatingResets,
+          depositInterestAccrual,
+          standingOrders,
+          sdbRent: { dueCount: sdbRent },
+          collectionsAging,
+          tradeContingentReval,
+          adifSnapshot,
+          lcr: {
+            owner: "banking_risk",
+            lcrRatio: lcr.lcrRatio,
+            gapSnapshotId: lcr.gapSnapshotId ?? null,
           },
           trialBalance: {
             totalDebit: totalDebit.toString(),
@@ -139,7 +216,10 @@ export class EodService {
       });
       await this.prisma.eodRun.update({
         where: {
-          bankOrgId_businessDate: { bankOrgId: this.bankOrg.bankOrgId, businessDate },
+          bankOrgId_businessDate: {
+            bankOrgId: this.bankOrg.bankOrgId,
+            businessDate,
+          },
         },
         data: {
           steps: {
@@ -158,5 +238,25 @@ export class EodService {
     }
 
     return run;
+  }
+
+  /** EOM: ECL calc (pending provision approval) + RWA/CAR snapshots. */
+  async runEom(asOfDate: Date) {
+    const ecl = await this.risk.runEcl({
+      asOfDate,
+      runStagingFirst: true,
+      methodology: "PD_LGD",
+      makerUserId: "eom-system",
+    });
+    const capital = await this.risk.runCapital(asOfDate);
+    return {
+      asOfDate: asOfDate.toISOString().slice(0, 10),
+      eclRunId: ecl.id,
+      eclStatus: ecl.status,
+      rwaId: capital.rwa.id,
+      carId: capital.car.id,
+      carRatio: capital.car.carRatio,
+      note: "EOM lab batch — ECL provision requires checker approve",
+    };
   }
 }

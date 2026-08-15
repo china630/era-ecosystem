@@ -13,6 +13,7 @@ const createSchema = z.object({
   kind: z.enum(["ROOM", "EQUIPMENT"]).default("EQUIPMENT"),
   capacity: z.number().int().positive().optional(),
   roomId: z.string().nullable().optional(),
+  extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
 });
 
 export async function GET() {

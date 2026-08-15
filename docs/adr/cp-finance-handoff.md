@@ -12,7 +12,7 @@ Orchestrator is the single platform entry (`:3000` web, `:4000` API). Finance re
 1. Orch stores the CP `accessToken` in `localStorage` (`era_orch_access_token`).
 2. Orch web calls `POST /auth/finance-handoff` → one-time `ticket` (60s TTL).
 3. Finance tile opens `{FINANCE_WEB}/auth/cp-handoff?ticket=...` (legacy `?token=` deprecated).
-4. Finance web redeems ticket via `POST /auth/finance-handoff/redeem` → access token → session.
+4. Finance web redeems ticket via `POST /auth/finance-handoff/redeem` → stores CP access/refresh → `POST /auth/cp-provision` → Finance-local session. Billing/subscription UI calls use the CP token via `/cp/*`; ERP calls use the Finance token.
 4. Unauthenticated `/login` on Finance redirects to `{ORCH_WEB}/login?next=finance`.
 
 ## Security

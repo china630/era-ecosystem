@@ -2,8 +2,8 @@
 
 **App:** `era-bank` — the operational banking **satellite** (carries the `industry_banking` commercial gate).
 **Role:** the UI / workflow / channel-for-staff layer that consumes the headless engine **`era-bank-core`**. See ADR [docs/adr/era-bank-core.md](../docs/adr/era-bank-core.md) D9.
-**Status:** Proposed / pre-development.
-**Companion docs:** [TZ.md](./TZ.md) · engine [era-bank-core/PRD.md](../era-bank-core/PRD.md) (product-line lead) · [era-bank-core/TZ.md](../era-bank-core/TZ.md)
+**Status:** Lab-pilot / ops-mvp (`docs/editions/bank.yaml` = `mvp`). Not product ga.
+**Companion docs:** [TZ.md](./TZ.md) · engine [era-bank-core/PRD.md](../era-bank-core/PRD.md) (product-line lead) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) · scope [Bank-Capability-Inventory.md](../docs/acceptance/Bank-Capability-Inventory.md) · [Bank-Acceptance-System.md](../docs/acceptance/Bank-Acceptance-System.md)
 **Language law:** product chat — Russian; this repo doc — English.
 
 ---
@@ -100,8 +100,26 @@ Aligned with engine phases ([era-bank-core/PRD.md](../era-bank-core/PRD.md) §7)
 | UX | Ecosystem satellite shell + UI playbook compliance |
 | Resilience | Degraded read during engine EOD window; clear posting-locked UX |
 
+## §8.1 Scope honesty
+
+UI modules mirror declared `banking_*` keys only (including lab L2: cash/fees, collections, trade, islamic, wealth + payments tails SO/VA/cheque/sweep, loans-deep, AML cases, card disputes/3DS). Capabilities marked **OUT** in [Bank-Capability-Inventory.md](../docs/acceptance/Bank-Capability-Inventory.md) (derivatives FO, own ATM/scheme, private banking suite, certified Basel, …) have **no** ops screens and must not be sold as included. Live rails/cards/ASAN/SWIFT remain certification-track stubs.
+
+## §8.2 Ops UI surfaces (lab)
+
+| Path | Module |
+|------|--------|
+| `/cash`, `/fees` | `banking_cash` / fees+SDB |
+| `/payments`, `/payments/extras` | `banking_payments` |
+| `/collections` | `banking_collections` |
+| `/trade` | `banking_trade` (SWIFT stub) |
+| `/islamic`, `/wealth` | `banking_islamic`, `banking_wealth` |
+| `/loans`, `/loans/applications`, `/loans/credit-lines` | `banking_loans` |
+| `/aml/*`, `/cards/disputes`, `/cards/3ds` | `banking_aml`, `banking_cards` |
+
 ## §9. Changelog
 
 | Date | Change |
 |------|--------|
 | 2026-06-08 | Initial PRD: operational satellite for `industry_banking`; consumes headless `era-bank-core`; per-module screens, ops personas, phases. Split from engine per ADR D9. |
+| 2026-08-06 | Status lab-pilot/mvp; §8.1 scope honesty + Capability Inventory link. |
+| 2026-08-06 | UI waves: §8.2 ops surfaces for Deep L2 modules; selective DBO (SO / loan apply / 3DS). |

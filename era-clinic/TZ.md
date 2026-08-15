@@ -28,7 +28,7 @@ Tenant → Practitioner → Room → Appointment → Visit → VisitServiceLine
 | POST | `/api/lab-orders/:id/results` | K-09 |
 | POST | `/api/lab-orders/:id/publish` | K-10 |
 | POST | `/api/lab-orders/:id/complete` | K-11 |
-| GET | `/api/scheduling/slots` | K-05 |
+| GET | `/api/appointments/calendar` | K-05 / CLI-05 practitioner day matrix |
 | GET | `/api/executive/summary` | K-14 |
 | POST | `/api/events/dispatch` | platform |
 

@@ -23,14 +23,17 @@ PRD: [../PRD.md](../PRD.md)
 - [x] K-09 — `POST /api/lab-orders/[id]/results`
 - [x] K-10 — `POST /api/lab-orders/[id]/publish`
 - [x] K-11 — `POST /api/lab-orders/[id]/complete` → `SATELLITE_CLINIC_LAB_ORDER_COMPLETED`
-- [x] K-06…K-11 UI — `/lab-orders/[id]` stepper workflow
-- [x] Lab orders list — `GET /api/lab-orders?status=`
+- [x] K-06…K-11 UI — `/lab-orders/[id]` stepper workflow; step chips carry role hints (nurse/lab tech/doctor/cashier); structural results table (`items[].results`, fallback `resultJson`) replaces raw JSON dump; Print stub
+- [x] Lab orders list — `GET /api/lab-orders` paged (`{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo); DATA_TABLE columns (services, patient, modality, status, amount, created); `GET /api/lab-orders/[id]` for the detail page
 
 ## K3
 
-- [x] Scheduling day view stub — `/scheduling` + `GET /api/scheduling/slots`
+- [x] CLI-05 practitioner day matrix — `/appointments` + `GET /api/appointments/calendar`; legacy `/scheduling` page + `GET /api/scheduling/slots` + `getAvailableSlots` **removed** (no redirect stub)
+- [x] CLI-35 sidebar cleanup — Setup split into **Catalogs** / **Rules & data**; `/admin/wards` moved under Inpatient module; `/executive` merged into Home for owners (`canViewExecutive`) and route deleted; `/admin/catalog-favorites` merged into `/admin/diagnostic-catalog` favorites tab and route deleted; catalog labels disambiguated (Service prices vs Diagnostic catalog)
+- [x] CLI-36 practitioner shift rotation — `PractitionerScheduleRule`/`PractitionerScheduleException`; rule engine (WEEKLY / WEEK_PARITY / MONTH_DAY_PARITY / CYCLE) + per-day hours + exceptions; matrix blocks off-shift slots; create/reschedule guard (409 off-shift); SatAdmin **Shifts** modal on `/admin/master-data` (`GET/PUT /api/admin/practitioners/[id]/schedule`); ADR [clinic-practitioner-shifts.md](../../docs/adr/clinic-practitioner-shifts.md)
+- [x] CLI-37 UI list/filter standard — global `EraListFilterBar` instant filters (no Apply; Reset inline; `useDebouncedValue` 300ms); clinic home full-width + shared date; ops/SatAdmin tables name-first + Lucide icon row actions; DESIGN + UI_PLAYBOOK updated
 - [x] Discount audit (K-13) — API + visit card modal UI
-- [x] Executive dashboard (K-14) — `/executive` + `GET /api/executive/summary` (`BUSINESS_OWNER`)
+- [x] Executive dashboard (K-14) — `ExecutiveDashboard` on Home `/` for owners (`canViewExecutive`) + `GET /api/executive/summary` (`BUSINESS_OWNER`); standalone `/executive` route removed (nav cleanup)
 - [x] Multi-room schedule (drag reschedule) — см. Product modules M9 (v1.0)
 
 ## K4
@@ -81,7 +84,7 @@ Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 - [x] `/admin/master-data` — practitioners ops catalog (specialty, slots); hire via CP Workforce when `cp_workforce` (`GET /platform/v1/workforce/policy`); POST practitioners **403** when CP hire active
 - [x] `/admin/wards` — ward/bed create+edit+delete modals
 - [x] `/patients` — registry list + create modal (M1)
-- [x] `/admin/catalog` — service cache + Finance sync (M6)
+- [x] `/admin/catalog` — service cache + Finance sync + Nafta price import (`POST /api/admin/catalog/import-nafta`, `packageIncluded` / department filters)
 - [x] `/admin/templates` — clinical + program templates
 - [x] `/admin/procedure-rules` — compatibility + FIFO sequence rules (modal)
 - [x] `/admin/audit` — satellite audit log viewer
@@ -92,7 +95,7 @@ Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 
 Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
-- [x] M6: Service catalog cache API + SatAdmin `/admin/catalog` + sync
+- [x] M6: Service catalog cache API + SatAdmin `/admin/catalog` + sync + Nafta import; catalog-driven procedure pricing on create/complete (`resolveProcedureAmount`); `ServiceCatalogKind` (PROCEDURE/DIAGNOSTIC/LAB/VISIT/OTHER) — procedure-type picker uses `kind=PROCEDURE` only
 - [x] M5: Critical lab flag UI on publish (beyond refMin/refMax)
 - [x] M9: Multi-room drag reschedule
 - [x] M14: Telehealth / portal deep link on lab publish
@@ -101,15 +104,21 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
 - [x] M10: EHR templates / CPOE lite
 - [x] M10 pack: standard diagnostic + lab templates v1.1 — [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md) + `prisma/seed-data/diagnostic-lab-catalog.json` (85 studies, 45 lab panels, 13 visits, 7 packages → `ClinicalTemplate` + `ServiceCatalogCache`)
-- [x] Diagnostic catalog UI — picker on `/lab-orders`, template result form on `/lab-orders/[id]`, favorites admin `/admin/catalog-favorites` (`Tenant.catalogFavoriteCodes` + mode)
+- [x] Diagnostic catalog UI — picker on `/lab-orders`, template result form on `/lab-orders/[id]`, favorites tab on `/admin/diagnostic-catalog` (`Tenant.catalogFavoriteCodes` + mode; standalone `/admin/catalog-favorites` route removed)
+- [x] Diagnostic catalog **DB source of truth** (CLI-32) - Modality/DiagnosticService/DiagnosticAnalyte; seed from JSON; SatAdmin `/admin/diagnostic-catalog` CRUD - ADR [clinic-diagnostic-catalog-db.md](../../docs/adr/clinic-diagnostic-catalog-db.md)
+- [x] Lab order normalization (CLI-32) - `LabOrderItem` + `LabResult`; dual-write legacy `testCode`/`resultJson`; backfill; results read-only after PUBLISHED; `/lab-orders` DATA_TABLE + filters/pagination
 - [x] Patient card clinical sections — `/patients/[id]`: contraindications → now/next (incl. pending labs ORDERED/COLLECTED/IN_PROGRESS) → results preview → plan preview; history/plan modals; `GET /api/patients/:id/card-summary` + `…/card-feed`; admin card limits in settings
 - [x] Patient clinical demographics — sex, birthDate→age, blood group, emergency contact on `PatientRef` ops cache; register + card UI (CLI-28 / ADR clinic-patient-clinical-demographics)
+- [x] Ops home (Ana səhifə) — `/` day dashboard + `GET /api/ops/day-summary` (appointments, procedures by status/type, queue, labs, overdue; inpatient beds when preset) (CLI-29)
 - [x] Patient clinical timeline API (legacy feed) — `GET /api/patients/:id/timeline` (Baku day groups; still available)
-- [x] Procedure day-ops (CLI-26) — ADR [clinic-procedure-day-ops.md](../../docs/adr/clinic-procedure-day-ops.md): statuses `CHECKED_IN`/`NO_SHOW`; reception matrix DnD + available-slots; nurse QR check-in (grace −5/+15); complete only after check-in
+- [x] Procedure day-ops (CLI-26) — ADR [clinic-procedure-day-ops.md](../../docs/adr/clinic-procedure-day-ops.md): check-in → `CHECKED_IN`; auto-complete by `endsAt`; `NO_SHOW` burns quota + may charge; MANUAL channel + `checkInRequiresQr`; cron auto-complete / no-show sweep; nurse agenda+kanban; bonus = `checkedInAt` + status in CHECKED_IN/COMPLETED
+- [x] Multi-resource scheduling (CLI-30) — ADR [clinic-multi-resource-scheduling.md](../../docs/adr/clinic-multi-resource-scheduling.md): Pattern A sanatorium (`ProcedureTypeRequirement` + `PractitionerSkill` + `ProcedureAllocation`); Pattern B outpatient optional `Appointment.resourceId`; SatAdmin skills/requirements on `/admin/master-data` (Add+Edit: resource + STAFF HARD/SOFT; backfill missing reqs); planner honors SOFT (shared nurse pool)
+- [x] Doctor-confirmed FIFO planning (CLI-31) — ADR [clinic-doctor-confirmed-fifo-planning.md](../../docs/adr/clinic-doctor-confirmed-fifo-planning.md): package → `PROPOSED`; doctor `POST /api/procedures/confirm` → `placeConfirmedProcedures`; incremental context from existing orders; `bodyPart` + rotation/substitution rules; peak `extendedEndHour`; seed `prisma/seed-planning-rules.cjs`; bulk-cancel+replace; external lab >90d block; fasting next-morning labs
 - [x] Clinic→hotel capacity foresight (CLI-27) — ADR [clinic-hotel-capacity-foresight.md](../../docs/adr/clinic-hotel-capacity-foresight.md): remaining% slot inventory; warn ≤15% / critical blocks medical booking; `SATELLITE_CLINIC_CAPACITY_CHANGED`
 - [x] M11: LIS analyzer import
 - [x] M12: Insurance / DMS eligibility
-- [x] M13: Inpatient / bed management — **SHIPPED** (ADT-light + `/admin/wards` modal CRUD + daily charge cron)
+- [x] Ops UX wave (2026-07-19) — Tenant working hours in `/admin/settings`; patient registry paginated filters + anamnesis gate; inpatient ward tiles + `/inpatient/census`; matrix horizon/patient filters
+- [x] M13: Inpatient / bed management — **SHIPPED** (ADT-light + `/admin/wards` modal CRUD + daily charge cron + census grid)
 
 ## vNext — Clinic + shared fiscal (2026-06)
 
@@ -128,10 +137,12 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 
 ### Clinic UX
 
-- [x] Resource-aware `GET /api/scheduling/slots` (includes `appointmentId` on busy slots); id-based drag reschedule UI
+- [x] Appointment create/reschedule conflict check (`detectSchedulingConflict`); id-based drag reschedule on `/appointments` matrix
 - [x] Procedure inventory matrix — `/sanatorium/resources` + `available-slots` (hotel-like free/blocked)
+- [x] Reception Location matrix UX + nurse mine filter — sticky day board (`ResourceDayMatrix`), calendar `endsAt`/status/procedureCode; `GET /api/procedures?mine=1` STAFF allocation filter on nurse queue
 - [x] Visit card + CPOE on `/appointments`; ICD catalog `GET /api/icd`
 - [x] `/doctor`, `/nurse`, `/cashier` + nav; clinic role guards
+- [x] CLI-33 cashier ops — queue + shift X/Z + unified bill settle (LOCAL/FOLIO/HUB) + receipt history VOID/reprint + over-quota tab (`ProcedureChargeLog`); fiscal remains `[s]` CLI-24
 - [x] Catalog sync — Finance URL with local fallback
 - [x] Portal token scope; public `/portal`, `/booking`
 - [x] Web booking widget → orchestrator `createBookingAppointment` + local appointment
@@ -149,9 +160,19 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 - [x] `programCode` from `ratePlan.code` when `medicalFlag`
 - [x] `SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED` — early program FIFO on medical reservation (not only check-in)
 - [x] `ProcedureType` / `ProcedureRule` / `PatientContraindication`; FIFO `treatment-planner.service`; `useProcedureQuota` on procedure complete
-- [x] Capacity risk: `GET /api/capacity/summary`, `/executive` band 120–125 guest-equiv/week
+- [x] Capacity risk: `GET /api/capacity/summary`, Home executive band 120–125 guest-equiv/week
 - [x] Patient card `/patients/[id]` — body-map contraindications UI
+
+## UI / design tokens (Wave C)
+
+- [x] 3-tier design tokens (L1/L2/L3) + Field* sweep — SatAdmin, patient/lab, sanatorium, ops chrome, remainder ([FIELD_SYSTEM_MODAL_WAVES.md](../../docs/FIELD_SYSTEM_MODAL_WAVES.md) wave **C**; ADR [era-design-tokens-3tier.md](../../docs/adr/era-design-tokens-3tier.md))
+- [x] `lint:design-tokens` — era-clinic `raw-input-no-token` = 0
 
 ### Env (prod example)
 
 - `ERA_FISCAL_PROVIDER`, `CLINIC_API_URL`, `CLINIC_BRIDGE_SECRET`, `POS_BRIDGE_SECRET`, `HOTEL_PMS_URL`, `RETAIL_POS_URL`, `ORCHESTRATOR_EVENT_URL`, `ERA_GUEST_QR_SECRET`
+
+
+### 2026-07-22 — CLI-34 print forms
+
+Trilingual print routes (lab/USM/checkup/procedures), tenant branding, qualitative analyte options, ImagingPhrase library, PrintLanguageDialog on patient card and lab workflow.

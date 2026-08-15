@@ -313,6 +313,19 @@ export class SatelliteEventDispatchService {
     return d.toISOString().slice(0, 10);
   }
 
+  private async resolvePaymentTermsDays(
+    organizationId: string,
+    counterpartyId: string | null | undefined,
+  ): Promise<number> {
+    if (!counterpartyId) return 30;
+    const row = await this.prisma.counterparty.findFirst({
+      where: { id: counterpartyId, organizationId },
+      select: { paymentTermsDays: true },
+    });
+    const days = row?.paymentTermsDays;
+    return typeof days === "number" && days >= 0 ? days : 30;
+  }
+
   private async createDraftInvoice(
     organizationId: string,
     counterpartyId: string,
@@ -320,9 +333,10 @@ export class SatelliteEventDispatchService {
     description: string,
     reference: string,
   ): Promise<string> {
+    const terms = await this.resolvePaymentTermsDays(organizationId, counterpartyId);
     const inv = await this.invoices.create(organizationId, {
       counterpartyId,
-      dueDate: this.dueDateIso(),
+      dueDate: this.dueDateIso(terms),
       items: [
         {
           description: `${description} (${reference})`,
@@ -358,9 +372,13 @@ export class SatelliteEventDispatchService {
         },
       };
     }
+    const terms = await this.resolvePaymentTermsDays(organizationId, counterpartyId);
+    const issue = new Date(`${event.payload.issueDate}T00:00:00.000Z`);
+    issue.setUTCDate(issue.getUTCDate() + terms);
+    const dueDate = issue.toISOString().slice(0, 10);
     const invoiceId = await this.invoices.create(organizationId, {
       counterpartyId,
-      dueDate: event.payload.issueDate,
+      dueDate,
       items: event.payload.lines.map((line: { description: string; qty: number; amount: number; vatRate?: number }) => ({
         description: `${line.description} (${event.payload.invoiceNumber})`,
         quantity: line.qty,
@@ -376,6 +394,7 @@ export class SatelliteEventDispatchService {
         folioId: event.payload.folioId,
         invoiceNumber: event.payload.invoiceNumber,
         total,
+        paymentTermsDays: terms,
       },
     };
   }

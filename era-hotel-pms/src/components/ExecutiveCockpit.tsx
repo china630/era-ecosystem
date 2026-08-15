@@ -395,11 +395,11 @@ export default function ExecutiveCockpit({ data }: { data: CockpitData }) {
           <BedDouble className="mr-1.5 inline h-4 w-4" aria-hidden />
           {t('drill.rack')}
         </Link>
-        <Link href="/in-house" className={SECONDARY_BUTTON_CLASS}>
+        <Link href="/fo/in-house" className={SECONDARY_BUTTON_CLASS}>
           <Users className="mr-1.5 inline h-4 w-4" aria-hidden />
           {t('drill.inHouse')}
         </Link>
-        <Link href="/operations" className={SECONDARY_BUTTON_CLASS}>
+        <Link href="/night-audit" className={SECONDARY_BUTTON_CLASS}>
           <DoorClosed className="mr-1.5 inline h-4 w-4" aria-hidden />
           {t('drill.operations')}
         </Link>

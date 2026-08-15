@@ -22,11 +22,22 @@ Port **3210**. Ops satellite — **no ledger in `era_bank` DB**.
 | `/accounts` | `/api/accounts/*` |
 | `/postings/queue` | `/api/postings/*` |
 | `/payments` | `/api/payments/*` |
-| `/deposits`, `/loans` | module proxies |
+| `/deposits`, `/loans` | module proxies (`?pendingPricing=1` queue; pricing-approve/reject) |
+| `/risk`, `/risk/portfolio`, `/risk/collateral`, `/risk/ecl`, `/risk/capital` | `/api/risk/*` |
 | `/aml/alerts` | `/api/aml/*` |
 | `/reports/cbar` | `/api/reports/*` |
 | `/cards`, `/card-txns` | `/api/cards/*`, `/api/card-txns/*` |
 | `/treasury` | `/api/treasury/*` |
 | `/admin/branches`, `/admin/product-factory`, `/admin/eod` | admin proxies |
+| `/cash` | `/api/cash/*` (`banking_cash`) |
+| `/fees` | `/api/fees/*` (tariffs / SDB / packages) |
+| `/payments/extras` | `/api/payments/standing-orders|virtual-accounts|cheques|sweep-rules` |
+| `/collections` | `/api/collections/*` (`banking_collections`) |
+| `/trade` | `/api/trade/*` (`banking_trade`) |
+| `/islamic` | `/api/islamic/*` (`banking_islamic`) |
+| `/wealth` | `/api/wealth/*` (`banking_wealth`) |
+| `/loans/applications`, `/loans/credit-lines` | `/api/loans/applications`, `/api/loans/credit-lines` |
+| `/aml/cases` | `/api/aml/cases` |
+| `/cards/disputes`, `/cards/3ds` | `/api/cards/disputes*`, `/api/cards/3ds/*` |
 
 Entitlement gate: `industry_banking` + per-module `banking_*`.

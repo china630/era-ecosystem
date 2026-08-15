@@ -2,9 +2,9 @@
 
 **Product line:** Core Banking System (CBS). This is the **product-line lead doc**.
 **Apps:** `era-bank-core` (headless regulated engine) + `era-bank` (operational satellite, `industry_banking` gate) + future `era-bank-dbo` (customer channels). See ADR D9.
-**Status:** Proposed / pre-development. This document is the development-ready product spec.
-**Audience:** mid-size universal/retail bank in Azerbaijan (CBAR / AMB regulated).
-**Companion docs:** [TZ.md](./TZ.md) (engine technical spec) · satellite [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) · ADR [docs/adr/era-bank-core.md](../docs/adr/era-bank-core.md)
+**Status:** Lab-pilot / ops-mvp (`docs/editions/bank.yaml` = `mvp`, `pilot_ready: false`). Not product ga.
+**Audience:** Full commercial universal/retail CBS for banks in Azerbaijan (CBAR / AMB regulated). Product depth targets commercial ABS capability coverage (see Capability Inventory); live/cert partners remain YC-E gated.
+**Companion docs:** [TZ.md](./TZ.md) (engine technical spec) · satellite [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) · ADR [docs/adr/era-bank-core.md](../docs/adr/era-bank-core.md) · scope boundary [Bank-Capability-Inventory.md](../docs/acceptance/Bank-Capability-Inventory.md) · acceptance [Bank-Acceptance-System.md](../docs/acceptance/Bank-Acceptance-System.md)
 **Language law:** product chat — Russian; this repo doc — English.
 
 > **Topology (ADR D9):** `era-bank-core` is **headless** — it owns the regulated ledger, ACID posting engine, CIF, EOD, and the product engines, exposed only via API. The operational UI (teller/back-office/risk/compliance screens, workflow, local ops users) lives in the **`era-bank`** satellite, which consumes the engine. No money or ledger state exists outside `era-bank-core`. This PRD covers the whole product line; the satellite's UI scope is detailed in [era-bank/PRD.md](../era-bank/PRD.md).
@@ -80,13 +80,19 @@ Module IDs are the commercial `banking_*` keys. **`banking_core` is mandatory**;
 | Module key | Module | Core capability | AZ specifics |
 |------------|--------|-----------------|--------------|
 | `banking_deposits` | Deposits / savings | Term/savings products, simple & compound interest, capitalization, early termination, rollover | **ADİF** insured-deposit tagging & reporting |
-| `banking_loans` | Lending / loan origination | Disbursement, annuity/differentiated schedules, accruals, overdue/NPL, restructuring, collateral | **AKB / Mərkəzi Kredit Reyestri**, **ƏMDK** collateral, **IFRS 9** ECL staging |
-| `banking_cards` | Cards | Card lifecycle, limits, card transactions; issuing/acquiring via gateway | **AzeriCard / MilliKart** processing; Visa/Mastercard |
-| `banking_payments` | Payments hub | Internal, then interbank routing; payment orders; statements | **AZIPS** (RTGS), **XÖHKS** (clearing), **AÖS** (instant), **SWIFT / ISO 20022** |
-| `banking_aml` | AML / CFT / KYC | Transaction monitoring, sanction screening, suspicious-tx workflow | **FMN** reporting; OFAC/EU/UN lists (via data-hub shelf C) |
+| `banking_loans` | Lending / loan origination | Disbursement, annuity/differentiated schedules, accruals, overdue/NPL, restructuring, collateral; Lite+ credit lines / application WF / score rules | **AKB / Mərkəzi Kredit Reyestri**, **ƏMDK** collateral, **IFRS 9** ECL staging (lab) |
+| `banking_cards` | Cards | Card lifecycle, limits, card transactions; issuing/acquiring via gateway; dispute/3DS stubs | **AzeriCard / MilliKart** processing; Visa/Mastercard |
+| `banking_payments` | Payments hub | Internal, then interbank routing; payment orders; standing orders / VA / cheque / sweep (BE waves) | **AZIPS** (RTGS), **XÖHKS** (clearing), **AÖS** (instant), **SWIFT / ISO 20022** |
+| `banking_aml` | AML / CFT / KYC | Transaction monitoring, sanction screening, suspicious-tx workflow; case + RTF score lab | **FMN** reporting; OFAC/EU/UN lists (via data-hub shelf C) |
 | `banking_treasury` | Treasury / ALM | Liquidity, FX dealing, interbank, securities (GS), GAP analysis | AZ government-securities market; Nostro/Vostro |
-| `banking_dbo` | Digital banking (ДБО) | Mobile bank (retail), internet bank (corporate B2B), Open API | **AÖS** overlay, **ASAN İmza / SİMA** auth/sign |
+| `banking_dbo` | Digital banking (ДБО) | Mobile bank (retail), internet bank (corporate B2B), Open API; H2H file jobs | **AÖS** overlay, **ASAN İmza / SİMA** auth/sign |
 | `banking_regreporting` | Regulatory reporting | Prudential reporting, statutory GL exports | **CBAR** templates; **FATCA / CRS** |
+| `banking_risk` | Risk management | ECL lab, RWA/CAR/LCR, IRRBB/OpRisk inputs (lab) | Not certified until YC-E4 |
+| `banking_trade` | Trade finance | LC / BG / DC / SCF / SWIFT outbox (lab) | Contigent GL; live SWIFT YC-E |
+| `banking_collections` | Collections / recovery | Cases, PTP, write-off / recovery SoD | NPL workout GL |
+| `banking_cash` | Cash & vault ops | Till/vault/CIT movements, inventory, branch queue | System GL till/vault |
+| `banking_islamic` | Islamic window | Murabaha / Mudarabah contracts (lab) | Separate ISLAMIC_* system GL |
+| `banking_wealth` | Custody / safekeeping (thin) | Safekeeping accounts + positions (no FO) | No DvP market FO |
 
 ### 4.3. Cross-cutting (delivered by kernel + orchestrator)
 
@@ -181,14 +187,29 @@ Reuses orchestrator pricing taxonomy (ADR D3, [CONTROL_PLANE_ARCHITECTURE.md](..
 | Auditability | Every posting and CIF change reconstructable; replay-safe |
 | Performance | Posting engine sized for the bank's peak TPS; EOD within regulatory window |
 
-## §11. Out of scope (initial product)
+## §11. Scope — Full commercial CBS program
 
-- In-house card scheme / switch (use external processor integration first).
-- Capital markets front-office trading beyond treasury basics.
-- Non-AZ regulatory regimes (parametrized later via L3/reference data).
+SSOT: [Bank-Capability-Inventory.md](../docs/acceptance/Bank-Capability-Inventory.md).  
+Program tracker: [Bank-Full-CBS-Roadmap.md](../docs/acceptance/Bank-Full-CBS-Roadmap.md).
+
+### 11.1 Product envelope
+
+ERA Bank targets a **full commercial CBS** for Azerbaijan: deepen all PARTIAL capabilities to product IN, and bring former OUT lines (ATM/scheme, markets FO, CSD/AM/brokerage, PFM, pension/PSA, multi-entity, MIS/BPM/DMS, certified risk) onto DECLARED→IN waves.
+
+### 11.2 Still partner / field gated (YC-E)
+
+Live rails, cards gateway, ASAN/SİMA, AKB + certified ECL, FMN/CBAR submit, sanctions feed, pentest/HA, Pilot field / `pilot_ready` — [CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md).
+
+### 11.3 ADR constraints until revised
+
+- One **deployment** = one bank license (ADR D5) until CAP-CORE-MENT wave revises multi-entity holding.
+- Money remains ACID in `era-bank-core`; corporate ERP stays in finance-core.
 
 ## §12. Changelog
 
 | Date | Change |
 |------|--------|
 | 2026-06-08 | Initial PRD: kernel `banking_core`, modules `banking_*`, AZ regulatory map, phases P0–P7, commercial model, finance boundary. Companion to ADR `era-bank-core.md` and `TZ.md`. |
+| 2026-08-06 | Status → lab-pilot/mvp honesty; §11 expanded with Capability Inventory OUT/DECLARED; link Acceptance SSOT. |
+| 2026-08-06 | BE Lite→Deep: §4 new L2 keys (trade/collections/cash/islamic/wealth/risk); §11 split vNext lab vs true OUT. |
+| 2026-08-06 | Full commercial CBS program (Phase 0): audience + §11 rewrite; OUT→DECLARED roadmap. |

@@ -26,8 +26,8 @@ PRD: [../PRD.md](../PRD.md) · TZ: [../TZ.md](../TZ.md)
 ## P3 — Products
 
 - [x] Product factory templates
-- [x] Deposits module
-- [x] Loans module
+- [x] Deposits module (open/close/rollover + EOD ACT/365 accrual; rate locked on contract)
+- [x] Loans module (schedule waterfall repay: interest then principal; paid* fields; outstanding ↓ by principal only)
 
 ## P4 — Compliance
 
@@ -64,51 +64,51 @@ PRD: [../PRD.md](../PRD.md) · TZ: [../TZ.md](../TZ.md)
 - [x] On-prem ref-data snapshot bundle (`ERA_DATA_HUB_ONPREM=true`)
 - [x] SECURITY-CHECKLIST + EOD-HA docs
 
-## P8 — Risk (`banking_risk`) — PROPOSED
+## P8 — Risk (`banking_risk`) — PARTIAL scaffold
 
-Spec: [../TZ.md](../TZ.md) §12 · ADR [../../docs/adr/era-bank-risk-and-audit.md](../../docs/adr/era-bank-risk-and-audit.md). Status **PROPOSED / pre-development** — all items open. Rule: risk computes read-models; provisions post through the kernel posting engine (no parallel ledger).
+Spec: [../TZ.md](../TZ.md) §12 · ADR [../../docs/adr/era-bank-risk-and-audit.md](../../docs/adr/era-bank-risk-and-audit.md). Lab ECL/RWA/CAR MVP landed; **certified** methodology + capital ops UI remain yellow-clear (YC-A5/B2/E4). Scaffold landed 2026-08-05.
 
 ### Data model & module scaffold
 
-- [ ] Prisma risk read-models (`RiskExposure`, `EclCalculationRun`, `EclResult`, `CollateralItem`, `CollateralValuation`, `RwaSnapshot`, `CapitalAdequacySnapshot`, `LargeExposure`, `RiskLimit`, `RiskLimitBreach`) + migration
-- [ ] Loan-loss allowance/expense GL codes added to CBAR seed
-- [ ] `modules/risk` module wired; imports kernel `PostingEngineService` only (boundary lint green)
-- [ ] `banking_risk` orchestrator pricing seed + `banking_bundle_universal` inclusion
+- [x] Prisma risk read-models (`EclCalculationRun`, `EclResult`, `RwaSnapshot`, `CapitalAdequacySnapshot`, `EclParameterSet`) + migrations
+- [x] Loan-loss allowance/expense GL codes added to CBAR seed (`LOAN_LOSS_EXPENSE` / `LOAN_LOSS_ALLOWANCE`)
+- [x] `modules/risk` routes: dashboard|exposures|collateral|staging|ecl|lcr|nsfr|rwa|capital|large-exposures
+- [x] `banking_risk` orchestrator pricing seed + `banking_bundle_universal` inclusion
 
 ### Credit risk & IFRS 9 ECL
 
-- [ ] `staging.engine.ts` (pure): `stageFromDpd`, `isSicr`, `isNpl` + unit tests
-- [ ] `ecl.engine.ts` (pure): `pd`/`lgd`/`ead`/`eclAmount` + unit tests
-- [ ] `credit-risk.service`: `runStaging(asOfDate)` updates `RiskExposure.stage`/NPL from DPD
-- [ ] `runEclBatch(asOfDate)` writes `EclResult`; `postProvisions(runId)` posts balanced allowance/expense txn via kernel (idempotent on `runId`, maker-checker)
-- [ ] Collateral valuation + haircut feeding LGD (`valuateCollateral`)
-- [ ] Bureau score consumed from `banking_loans` origination (replace `akbScore: 720` stub)
+- [x] DPD → stage helper + unit tests (`loan-risk.util.ts`)
+- [~] `ecl.engine.ts`: STAGE_FLAT + PD_LGD matrices — **lab MVP, not certified** ([ecl-lab-methodology-signoff.md](./reports/ecl-lab-methodology-signoff.md))
+- [~] `runStaging` on loans via `/risk/staging/run`
+- [~] `runEcl` → `PENDING_PROVISION_APPROVAL` + `provision-approve` SoD (not auto-post)
+- [~] Collateral JSON on `collateralRef` + loan/risk list APIs (full `CollateralItem` model open)
+- [~] Bureau stub + `LiveAkbAdapter` behind `BANK_BUREAU_MODE=live` (fail-closed)
 
 ### Capital, liquidity ratios & limits
 
-- [ ] `capital.service`: `computeRwa` → `RwaSnapshot`; `capitalAdequacy` → CAR/Tier-1 snapshot
-- [ ] `largeExposures` concentration register
+- [~] `capital.service`: `computeRwa` → `RwaSnapshot`; `capitalAdequacy` → CAR/Tier-1 (MVP weights)
+- [~] `largeExposures` concentration register (top N vs capital %)
 - [ ] `market-risk.service`: repricing gap + FX open position + sensitivity
-- [ ] `liquidity-ratio.service`: LCR/NSFR (reads treasury `LiquidityGapSnapshot`; own the ratio, treasury keeps GAP)
+- [~] `liquidity-ratio.service`: LCR/NSFR (reads treasury `LiquidityGapSnapshot`; risk owns ratio)
 - [ ] `risk-limits.service`: `evaluateBreaches(asOfDate)` + `RiskLimitBreach`
 
 ### Integration & events
 
-- [ ] EOD daily steps (staging, breach eval, LCR) recorded in `EodRun.steps`
-- [ ] EOM steps (ECL run + post-provisions, RWA + CAR snapshot)
+- [~] EOD daily step `lcr` + floating rate reset recorded in `EodRun.steps`
+- [~] EOM `POST /eod/eom` — ECL (pending provision) + RWA/CAR
 - [ ] Post-commit hook: recompute affected exposure on posting
 - [ ] `SATELLITE_BANK_RISK_STAGE_CHANGED` + `SATELLITE_BANK_RISK_LIMIT_BREACHED` (non-money) contracts + guards
-- [ ] CAR/ECL outputs consumed by `banking_regreporting`
+- [~] CAR/LCR consumed by `banking_regreporting` stubs (`CBAR_CAR_STUB` / LCR from risk)
 
 ### API & satellite UI
 
-- [ ] Engine routes `/api/v1/risk/*` (exposures, staging, ecl, collateral, rwa, capital-adequacy, lcr, nsfr, limits, dashboard)
-- [ ] `era-bank` BFF proxy + screens (`risk/portfolio|ecl|collateral|capital|alm|limits|dashboard`), role `Risk / credit officer`
-- [ ] i18n en/az/ru for risk screens
+- [~] Engine routes `/api/v1/risk/*` (exposures, staging, ecl, collateral, rwa, capital-adequacy, lcr, nsfr, large-exposures, dashboard) — limits open
+- [~] `era-bank` BFF + screens (portfolio|ecl|collateral|dashboard); capital/ALM snippets partial
+- [~] i18n en (+ az/ru partial) for risk screens
 
 ### DoD
 
-- [ ] EOM ECL run posts a balanced provision transaction (Σ Dr=Σ Cr) with maker-checker + immutable audit
-- [ ] CAR snapshot feeds a `banking_regreporting` template
+- [~] EOM ECL + maker-checker provision path (lab) — external methodology signoff still required for certified claim
+- [~] CAR snapshot feeds `CBAR_CAR_STUB` regreporting template
 - [ ] UAT-SMOKE UI path (`doc/UAT-SMOKE.md`) for the risk officer flow
 - [ ] Docs updated: COVERAGE_MATRIX / READINESS_MATRIX rows; MODULES_CATALOG status → MVP

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   ALL_CLINIC_PRESETS,
@@ -10,13 +11,19 @@ import {
 } from "@/domain/presets/clinic-presets";
 import {
   CARD_CONTAINER_CLASS,
-  MODAL_INPUT_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  Field,
+  FORM_STACK_CLASS,
+  MODAL_CHECKBOX_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
+import { PrintSettingsPanel } from "@/components/print/PrintSettingsPanel";
 
 const PRESET_LABELS: Record<ClinicPresetCode, string> = {
   [CLINIC_PRESET.OUTPATIENT]: "Outpatient",
@@ -32,12 +39,42 @@ type CardLimits = {
   patientCardPlanPageSize: number;
 };
 
+type WorkHours = {
+  dayStartHour: number;
+  dayEndHour: number;
+  lunchStartHour: number;
+  lunchEndHour: number;
+  closedWeekdays: number[];
+};
+
+type SchedulingDefaults = {
+  defaultProcedureGapMinutes: number;
+  peakModeEnabled: boolean;
+  peakDayEndHour: number;
+};
+
 const CARD_DEFAULTS: CardLimits = {
   patientCardResultsPreview: 5,
   patientCardPlanPreview: 15,
   patientCardHistoryPageSize: 25,
   patientCardPlanPageSize: 25,
 };
+
+const WORK_DEFAULTS: WorkHours = {
+  dayStartHour: 9,
+  dayEndHour: 18,
+  lunchStartHour: 13,
+  lunchEndHour: 14,
+  closedWeekdays: [0],
+};
+
+const SCHED_DEFAULTS: SchedulingDefaults = {
+  defaultProcedureGapMinutes: 5,
+  peakModeEnabled: false,
+  peakDayEndHour: 22,
+};
+
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 export default function ClinicAdminSettingsPage() {
   const t = useTranslations("adminSettings");
@@ -48,12 +85,16 @@ export default function ClinicAdminSettingsPage() {
     CLINIC_PRESET.OUTPATIENT,
   ]);
   const [cardLimits, setCardLimits] = useState<CardLimits>(CARD_DEFAULTS);
+  const [workHours, setWorkHours] = useState<WorkHours>(WORK_DEFAULTS);
+  const [schedDefaults, setSchedDefaults] = useState<SchedulingDefaults>(SCHED_DEFAULTS);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [draftPresets, setDraftPresets] = useState<ClinicPresetCode[]>([
     CLINIC_PRESET.OUTPATIENT,
   ]);
   const [draftCard, setDraftCard] = useState<CardLimits>(CARD_DEFAULTS);
+  const [draftWork, setDraftWork] = useState<WorkHours>(WORK_DEFAULTS);
+  const [draftSched, setDraftSched] = useState<SchedulingDefaults>(SCHED_DEFAULTS);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,6 +120,23 @@ export default function ClinicAdminSettingsPage() {
         };
         setCardLimits(limits);
         setDraftCard(limits);
+        const hours: WorkHours = {
+          dayStartHour: row.dayStartHour ?? WORK_DEFAULTS.dayStartHour,
+          dayEndHour: row.dayEndHour ?? WORK_DEFAULTS.dayEndHour,
+          lunchStartHour: row.lunchStartHour ?? WORK_DEFAULTS.lunchStartHour,
+          lunchEndHour: row.lunchEndHour ?? WORK_DEFAULTS.lunchEndHour,
+          closedWeekdays: row.closedWeekdays ?? WORK_DEFAULTS.closedWeekdays,
+        };
+        setWorkHours(hours);
+        setDraftWork(hours);
+        const sched: SchedulingDefaults = {
+          defaultProcedureGapMinutes:
+            row.defaultProcedureGapMinutes ?? SCHED_DEFAULTS.defaultProcedureGapMinutes,
+          peakModeEnabled: Boolean(row.peakModeEnabled ?? SCHED_DEFAULTS.peakModeEnabled),
+          peakDayEndHour: row.peakDayEndHour ?? SCHED_DEFAULTS.peakDayEndHour,
+        };
+        setSchedDefaults(sched);
+        setDraftSched(sched);
       });
   }, []);
 
@@ -92,6 +150,15 @@ export default function ClinicAdminSettingsPage() {
     });
   }
 
+  function toggleClosedWeekday(day: number) {
+    setDraftWork((prev) => {
+      const set = new Set(prev.closedWeekdays);
+      if (set.has(day)) set.delete(day);
+      else set.add(day);
+      return { ...prev, closedWeekdays: [...set].sort((a, b) => a - b) };
+    });
+  }
+
   async function save() {
     const res = await fetch("/api/admin/settings", {
       method: "PATCH",
@@ -100,6 +167,8 @@ export default function ClinicAdminSettingsPage() {
         clinicName: draft.trim() || clinicName,
         enabledPresets: draftPresets,
         ...draftCard,
+        ...draftWork,
+        ...draftSched,
       }),
     });
     if (res.ok) {
@@ -115,6 +184,19 @@ export default function ClinicAdminSettingsPage() {
           row.patientCardHistoryPageSize ?? draftCard.patientCardHistoryPageSize,
         patientCardPlanPageSize: row.patientCardPlanPageSize ?? draftCard.patientCardPlanPageSize,
       });
+      setWorkHours({
+        dayStartHour: row.dayStartHour ?? draftWork.dayStartHour,
+        dayEndHour: row.dayEndHour ?? draftWork.dayEndHour,
+        lunchStartHour: row.lunchStartHour ?? draftWork.lunchStartHour,
+        lunchEndHour: row.lunchEndHour ?? draftWork.lunchEndHour,
+        closedWeekdays: row.closedWeekdays ?? draftWork.closedWeekdays,
+      });
+      setSchedDefaults({
+        defaultProcedureGapMinutes:
+          row.defaultProcedureGapMinutes ?? draftSched.defaultProcedureGapMinutes,
+        peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
+        peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
+      });
       setOpen(false);
       setMsg(tc("saved"));
       window.location.reload();
@@ -123,8 +205,12 @@ export default function ClinicAdminSettingsPage() {
     }
   }
 
+  const closedLabel = workHours.closedWeekdays
+    .map((d) => t(`weekday_${WEEKDAY_KEYS[d]}`))
+    .join(", ");
+
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <>
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
@@ -137,28 +223,31 @@ export default function ClinicAdminSettingsPage() {
       {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
-          <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
-            <th className="p-3">{tc("field")}</th>
-            <th className="p-3">{tc("value")}</th>
-            <th className="p-3 text-right">{tc("actions")}</th>
+          <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+            <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("field")}</th>
+            <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("value")}</th>
+            <th className={`${DATA_TABLE_TH_LEFT_CLASS} text-right`}>{tc("actions")}</th>
           </tr>
         </thead>
         <tbody>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("clinicName")}</td>
             <td className="p-3">{clinicName}</td>
-            <td className="p-3 text-right" rowSpan={6}>
+            <td className="p-3 text-right" rowSpan={13}>
               <button
                 type="button"
-                className={PRIMARY_BUTTON_CLASS}
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("edit")}
                 onClick={() => {
                   setDraft(clinicName);
                   setDraftPresets(enabledPresets);
                   setDraftCard(cardLimits);
+                  setDraftWork(workHours);
+                  setDraftSched(schedDefaults);
                   setOpen(true);
                 }}
               >
-                {tc("edit")}
+                <Pencil className="h-3.5 w-3.5" aria-hidden />
               </button>
             </td>
           </tr>
@@ -167,6 +256,36 @@ export default function ClinicAdminSettingsPage() {
             <td className="p-3">
               {enabledPresets.map((p) => PRESET_LABELS[p] ?? p).join(", ")}
             </td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("dayStartHour")}</td>
+            <td className="p-3">{workHours.dayStartHour}:00</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("dayEndHour")}</td>
+            <td className="p-3">{workHours.dayEndHour}:00</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("lunchHours")}</td>
+            <td className="p-3">
+              {workHours.lunchStartHour}:00 – {workHours.lunchEndHour}:00
+            </td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("closedWeekdays")}</td>
+            <td className="p-3">{closedLabel || "—"}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("defaultProcedureGapMinutes")}</td>
+            <td className="p-3">{schedDefaults.defaultProcedureGapMinutes} min</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("peakModeEnabled")}</td>
+            <td className="p-3">{schedDefaults.peakModeEnabled ? "Yes" : "No"}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("peakDayEndHour")}</td>
+            <td className="p-3">{schedDefaults.peakDayEndHour}:00</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("cardResultsPreview")}</td>
@@ -187,44 +306,126 @@ export default function ClinicAdminSettingsPage() {
         </tbody>
       </table>
       <ModalShell open={open} title={t("editClinic")} onClose={() => setOpen(false)}>
-        <label className="mb-3 block text-[13px]">
-          {t("clinicName")}
-          <input
-            className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
+        <div className={FORM_STACK_CLASS}>
+          <Field
+            label={t("clinicName")}
+            preset="shortText"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
           />
-        </label>
-        <fieldset className="mb-4 space-y-2 text-[13px]">
-          <legend className="font-medium">{t("enabledPresets")}</legend>
-          {ALL_CLINIC_PRESETS.map((code) => (
-            <label key={code} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={draftPresets.includes(code)}
-                onChange={() => togglePreset(code)}
+          <fieldset className="space-y-2 text-[13px]">
+            <legend className={MODAL_FIELD_LABEL_CLASS}>{t("enabledPresets")}</legend>
+            {ALL_CLINIC_PRESETS.map((code) => (
+              <label key={code} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={draftPresets.includes(code)}
+                  onChange={() => togglePreset(code)}
+                />
+                {PRESET_LABELS[code] ?? code}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
+            <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("workingHoursTitle")}</legend>
+            {(
+              [
+                ["dayStartHour", "dayStartHour"],
+                ["dayEndHour", "dayEndHour"],
+                ["lunchStartHour", "lunchStartHour"],
+                ["lunchEndHour", "lunchEndHour"],
+              ] as const
+            ).map(([key, labelKey]) => (
+              <Field
+                key={key}
+                label={t(labelKey)}
+                preset="count"
+                type="number"
+                min={0}
+                max={23}
+                value={draftWork[key]}
+                onChange={(e) =>
+                  setDraftWork((prev) => ({
+                    ...prev,
+                    [key]: Number(e.target.value) || prev[key],
+                  }))
+                }
               />
-              {PRESET_LABELS[code] ?? code}
-            </label>
-          ))}
-        </fieldset>
-        <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
-          <legend className="mb-1 font-medium sm:col-span-2">{t("cardLimitsTitle")}</legend>
-          {(
-            [
-              ["patientCardResultsPreview", "cardResultsPreview"],
-              ["patientCardPlanPreview", "cardPlanPreview"],
-              ["patientCardHistoryPageSize", "cardHistoryPageSize"],
-              ["patientCardPlanPageSize", "cardPlanPageSize"],
-            ] as const
-          ).map(([key, labelKey]) => (
-            <label key={key} className="block">
-              {t(labelKey)}
-              <input
+            ))}
+            <div className="sm:col-span-2">
+              <p className={`${MODAL_FIELD_LABEL_CLASS} mb-2`}>{t("closedWeekdays")}</p>
+              <div className="flex flex-wrap gap-3">
+                {WEEKDAY_KEYS.map((key, idx) => (
+                  <label key={key} className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className={MODAL_CHECKBOX_CLASS}
+                      checked={draftWork.closedWeekdays.includes(idx)}
+                      onChange={() => toggleClosedWeekday(idx)}
+                    />
+                    {t(`weekday_${key}`)}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </fieldset>
+          <Field
+            label={t("defaultProcedureGapMinutes")}
+            preset="count"
+            type="number"
+            min={0}
+            max={240}
+            value={draftSched.defaultProcedureGapMinutes}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                defaultProcedureGapMinutes: Number(e.target.value) || prev.defaultProcedureGapMinutes,
+              }))
+            }
+          />
+          <label className="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              checked={draftSched.peakModeEnabled}
+              onChange={(e) =>
+                setDraftSched((prev) => ({ ...prev, peakModeEnabled: e.target.checked }))
+              }
+            />
+            {t("peakModeEnabled")}
+          </label>
+          <Field
+            label={t("peakDayEndHour")}
+            preset="count"
+            type="number"
+            min={1}
+            max={24}
+            value={draftSched.peakDayEndHour}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                peakDayEndHour: Number(e.target.value) || prev.peakDayEndHour,
+              }))
+            }
+          />
+          <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
+            <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("cardLimitsTitle")}</legend>
+            {(
+              [
+                ["patientCardResultsPreview", "cardResultsPreview"],
+                ["patientCardPlanPreview", "cardPlanPreview"],
+                ["patientCardHistoryPageSize", "cardHistoryPageSize"],
+                ["patientCardPlanPageSize", "cardPlanPageSize"],
+              ] as const
+            ).map(([key, labelKey]) => (
+              <Field
+                key={key}
+                label={t(labelKey)}
+                preset="count"
                 type="number"
                 min={key.includes("Page") ? 10 : 1}
                 max={key.includes("Page") ? 100 : 50}
-                className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
                 value={draftCard[key]}
                 onChange={(e) =>
                   setDraftCard((prev) => ({
@@ -233,11 +434,12 @@ export default function ClinicAdminSettingsPage() {
                   }))
                 }
               />
-            </label>
-          ))}
-        </fieldset>
+            ))}
+          </fieldset>
+        </div>
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />
       </ModalShell>
-    </div>
+      <PrintSettingsPanel />
+    </>
   );
 }

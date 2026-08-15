@@ -107,12 +107,30 @@ export class SubscriptionController {
           fiscalRouting: "OWN",
           settings: {},
         });
+
+    const connectedSatelliteKeys = [
+      ...new Set(satelliteEntitlements.map((s) => s.satelliteKey)),
+    ];
+    let activeModules = [...snapshot.activeModules];
+    if (connectedSatelliteKeys.length > 0) {
+      const freeModules = await this.prisma.pricingModule.findMany({
+        where: {
+          satelliteKey: { in: connectedSatelliteKeys },
+          pricePerMonth: { lte: 0 },
+        },
+        select: { key: true },
+      });
+      activeModules = [
+        ...new Set([...activeModules, ...freeModules.map((m) => m.key)]),
+      ];
+    }
+
     return {
       tier: snapshot.tier,
-      activeModules: snapshot.activeModules,
+      activeModules,
       customConfig: snapshot.customConfig,
       modules: snapshot.modules,
-      hotelModules: buildHotelModuleEntitlements(snapshot.activeModules),
+      hotelModules: buildHotelModuleEntitlements(activeModules),
       satelliteEntitlements: satelliteEntitlements.map((s) => ({
         satelliteKey: s.satelliteKey,
         trialExpiresAt: s.trialExpiresAt?.toISOString() ?? null,

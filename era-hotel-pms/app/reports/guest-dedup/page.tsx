@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
+import {
+  CARD_CONTAINER_CLASS,
+  PageHeader } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -38,14 +39,12 @@ export default function GuestDedupReportPage() {
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
     return (
-      <AppShell>
-        <p className="text-[13px] text-[#7F8C8D]">Reports permission required.</p>
-      </AppShell>
+      <p className="text-[13px] text-[#7F8C8D]">Reports permission required.</p>
     );
   }
 
   return (
-    <AppShell maxWidthClass="max-w-4xl">
+    <>
       <PageHeader
         title="Guest deduplication"
         leading={
@@ -55,15 +54,15 @@ export default function GuestDedupReportPage() {
         }
       />
       {summary && (
-        <PageSection className="mb-4 grid grid-cols-2 gap-3 text-[13px] md:grid-cols-3">
+        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-4 grid grid-cols-2 gap-3 text-[13px] md:grid-cols-3`}>
           <div>Total guests: <strong>{summary.totalGuests}</strong></div>
           <div>Without globalPersonId: <strong>{summary.withoutGlobalPersonId}</strong></div>
           <div>Without MDM link: <strong>{summary.withoutMdmLink}</strong></div>
           <div>Duplicate groups: <strong>{summary.suspectedDuplicateGroups}</strong></div>
           <div>Guests in dup groups: <strong>{summary.suspectedDuplicateGuests}</strong></div>
-        </PageSection>
+        </section>
       )}
-      <PageSection>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-2 font-semibold text-[#34495E]">Suspected duplicates</h2>
         <ul className="space-y-2 text-[13px]">
           {groups.map((g) => (
@@ -76,7 +75,7 @@ export default function GuestDedupReportPage() {
         <p className="mt-4 text-[12px] text-[#7F8C8D]">
           See <code>doc/NAFTA-GUEST-INTELLIGENCE.md</code> for merge workflow via orchestrator MDM.
         </p>
-      </PageSection>
-    </AppShell>
+      </section>
+    </>
   );
 }

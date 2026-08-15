@@ -1,28 +1,32 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { showApiError } from '@era/satellite-kit/ui';
 
 export function useGuestCrmList(apiUrl: string) {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setMsg(typeof data.error === 'string' ? data.error : 'Load failed');
-      return;
+    try {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, 'Load failed');
+        return;
+      }
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : 'Load failed' });
+    } finally {
+      setLoading(false);
     }
-    setMsg(null);
-    setRows(Array.isArray(data) ? data : []);
   }, [apiUrl]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  return { rows, msg, loading, reload: load };
+  return { rows, loading, reload: load };
 }

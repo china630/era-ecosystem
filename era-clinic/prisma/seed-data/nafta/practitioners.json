@@ -1,0 +1,47 @@
+[
+ {
+  "code": "DR-01",
+  "fullName": "Rəna Kəngərli",
+  "specialty": "Baş həkim"
+ },
+ {
+  "code": "DR-02",
+  "fullName": "Kəmaləddin Şahmuradov",
+  "specialty": "Terapevt"
+ },
+ {
+  "code": "DR-03",
+  "fullName": "Azadə Mustafayeva",
+  "specialty": "Terapevt"
+ },
+ {
+  "code": "DR-04",
+  "fullName": "Turxan Cəfərov",
+  "specialty": "Terapevt"
+ },
+ {
+  "code": "DR-05",
+  "fullName": "Salman Sadiqi",
+  "specialty": "Terapevt"
+ },
+ {
+  "code": "DR-06",
+  "fullName": "Leyla Həşimova",
+  "specialty": "Terapevt"
+ },
+ {
+  "code": "DR-07",
+  "fullName": "Rafiq Hüseynov",
+  "specialty": "Fizioterapevt"
+ },
+ {
+  "code": "NR-01",
+  "fullName": "Leyla Qasımova",
+  "specialty": "Senior Nurse"
+ },
+ {
+  "code": "CS-01",
+  "fullName": "Turanə Məmmədzadə",
+  "specialty": "Kosmetoloq"
+ }
+]

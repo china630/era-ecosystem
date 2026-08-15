@@ -1,0 +1,56 @@
+---
+description: Accept implemented work only after documentation status is updated (ERA Acceptance)
+alwaysApply: true
+---
+
+# Task acceptance via documentation
+
+Implemented work is accepted only after its status is updated in docs.
+Code without an updated status is NOT done.
+
+**Canon:** [`docs/products/ERA-Acceptance-Standard.md`](docs/products/ERA-Acceptance-Standard.md)  
+**Index:** [`docs/acceptance/README.md`](docs/acceptance/README.md)
+
+## Which product to update
+
+| Product | Acceptance-System | **Product Readiness** | **AC Matrix (BE)** | Evidence |
+|---------|-------------------|-----------------------|--------------------|----------|
+| Platform | `docs/acceptance/Platform-Acceptance-System.md` | `docs/acceptance/Platform-Product-Readiness-Matrix.md` | `docs/acceptance/Platform-Implementation-Matrix.md` | `docs/acceptance/Platform-Evidence-Rules.md` |
+| Clinic | `docs/acceptance/Clinic-Acceptance-System.md` | `docs/acceptance/Clinic-Product-Readiness-Matrix.md` | `docs/acceptance/Clinic-Implementation-Matrix.md` | `docs/acceptance/Clinic-Evidence-Rules.md` |
+| Hotel | `docs/acceptance/Hotel-Acceptance-System.md` | `docs/acceptance/Hotel-Product-Readiness-Matrix.md` | `docs/acceptance/Hotel-Implementation-Matrix.md` | `docs/acceptance/Hotel-Evidence-Rules.md` |
+| Finance | `docs/acceptance/Finance-Acceptance-System.md` | `docs/acceptance/Finance-Product-Readiness-Matrix.md` | `docs/acceptance/Finance-Implementation-Matrix.md` | `docs/acceptance/Finance-Evidence-Rules.md` |
+| Bank | `docs/acceptance/Bank-Acceptance-System.md` | `docs/acceptance/Bank-Product-Readiness-Matrix.md` | `docs/acceptance/Bank-Implementation-Matrix.md` (+ [Capability Inventory](docs/acceptance/Bank-Capability-Inventory.md)) | `docs/acceptance/Bank-Evidence-Rules.md` |
+| Bank DBO | `docs/acceptance/Bank-DBO-Acceptance-System.md` | `docs/acceptance/Bank-DBO-Product-Readiness-Matrix.md` | `docs/acceptance/Bank-DBO-Implementation-Matrix.md` | `docs/acceptance/Bank-DBO-Evidence-Rules.md` |
+| F&B / Retail / CRM | `docs/acceptance/*-Acceptance-System.md` | matching Product-Readiness | matching Implementation | matching Evidence |
+| Logistics / Wholesale / Construction / Auto / Data Hub | `docs/acceptance/*-Acceptance-System.md` | matching Product-Readiness | matching Implementation | matching Evidence |
+
+Also update [`docs/COVERAGE_MATRIX.md`](docs/COVERAGE_MATRIX.md) capability rows (Doc/API/actors).
+
+## Request routing (mandatory)
+
+| User asks | Answer from |
+|-----------|-------------|
+| «можно показывать / пилот / продавать / Product Readiness» | **Product-Readiness-Matrix** (Gate, BE, UI, Demo/TE, Pilot, Edition, Sell) |
+| Scaffold / AC / backend matrix | Implementation-Matrix |
+| «полный банк / чего нет / trade / custody / OUT» | [`Bank-Capability-Inventory.md`](docs/acceptance/Bank-Capability-Inventory.md) + Readiness «Not in this edition» |
+| «матрица готовности API / §4 / consumer / обнови READINESS» | [`docs/READINESS_MATRIX.md`](docs/READINESS_MATRIX.md) + skill `era-readiness-matrix` |
+
+**Forbidden:** answering sell/show with Implementation-Matrix or COVERAGE SHIPPED alone.  
+**Forbidden:** treating MODULES_CATALOG DONE as edition `ga`.  
+**Forbidden:** narrating Bank AC all ✅ as full commercial ABS while Capability Inventory has OUT rows.
+
+## Closeout steps
+
+1. **COVERAGE_MATRIX** actor row(s) for touched capabilities.
+2. **Implementation-Matrix:** Scaffold ✅ only per canon §3.2; else 🟡; Pilot-ready separate.
+3. **Product-Readiness-Matrix:** update BE/UI/Demo/Pilot; rollup = worst layers.
+4. **Bank Capability Inventory** if scope boundary changed (IN/PARTIAL/DECLARED/OUT).
+5. Sprint-Index / editions yaml if gate or sell claim changed.
+6. `npm run check:acceptance` (PR: `npm run check:acceptance:strict`).
+7. Skills `acceptance-closeout` / `quality-gates` when AuthZ/security or PR-ready.
+8. ADR — if a decision changed.
+
+## Status markers
+
+- Gate: `gate[x]` · AC Scaffold: ✅/🟡 · Readiness UI/Demo: ✅/🟡/❌ · Pilot: `[x]`/`[ ]`/⏸
+- **Scaffold-Green ≠ product acceptance.** **mvp ≠ UI ready ≠ ga.** **SHIPPED ≠ Pilot-ready.**

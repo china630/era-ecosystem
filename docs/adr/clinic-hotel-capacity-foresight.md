@@ -42,7 +42,7 @@ Env: `CLINIC_CAPACITY_WARN_PCT=15`, `CLINIC_CAPACITY_CRITICAL_PCT=0`.
 
 ### Non-goals
 
-Per-room “95 beds” mapping; biometrics; blocking walk-in appointments on `/scheduling`.
+Per-room “95 beds” mapping; biometrics; blocking walk-in appointments on `/appointments`.
 
 ## Consequences
 

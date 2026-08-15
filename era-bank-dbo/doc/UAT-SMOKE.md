@@ -32,12 +32,19 @@ Open `http://127.0.0.1:3211/login`
 5. **`/accounts/[id]`** — account detail.
 6. **`/transfers`** — internal transfer between own accounts (100 AZN smoke).
 7. **`/payments/new`** — create external payment → sign → submit → listed on **`/payments`**.
+8. **`/standing-orders`** — create SO from owned account → listed; **Pause** → status PAUSED.
+9. **`/loans/apply`** — create draft → **Submit** → status SUBMITTED (no book in DBO).
+10. **`/cards/3ds`** — complete PENDING challenge (Approve/Deny) after ops created challenge.
+11. **`/islamic`** — read-only contract list (activate stays in ops).
 
-## ASAN stub (UI)
+## Negative paths (lab)
 
-1. **`/login`** — enter FIN/VÖEN, click **ASAN İmza (stub)**.
-2. Return via redirect with `asanTx` query → **ASAN təsdiqi**.
-3. Session established; engine should set `kycTrustTier = GOVERNMENT_VERIFIED` (engine UAT).
+- [ ] Bad OTP code → error shown; session not created
+- [ ] Transfer amount > available balance → engine/BFF error surfaced in UI
+- [ ] Corporate dual-sign: second signatory rejects / does not complete → order stays PENDING (not POSTED)
+- [ ] ASAN stub badge visible on `/login`
+- [ ] Standing order create without session / wrong account → 401 / forbidden surfaced
+- [ ] Loan apply submit for another CIF → not visible / forbidden
 
 ## Corporate signatory (UI)
 

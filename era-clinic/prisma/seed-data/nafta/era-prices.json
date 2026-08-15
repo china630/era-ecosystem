@@ -1,0 +1,942 @@
+[
+  {
+    "code": "SVC-TERAPEVT",
+    "descriptionAz": "Terapevt",
+    "descriptionRu": "Терапевт",
+    "description": "Терапевт",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Прием врача",
+    "descriptionEn": "Internist / therapist consultation"
+  },
+  {
+    "code": "SVC-UROLOQ",
+    "descriptionAz": "Uroloq",
+    "descriptionRu": "Уролог",
+    "description": "Уролог",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Прием врача",
+    "descriptionEn": "Urologist consultation"
+  },
+  {
+    "code": "SVC-GINEKOLOQ",
+    "descriptionAz": "Ginekoloq",
+    "descriptionRu": "Гинеколог",
+    "description": "Гинеколог",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Прием врача",
+    "descriptionEn": "Gynecologist consultation"
+  },
+  {
+    "code": "SVC-DERMATOLOQ-BAS-H-KIM",
+    "descriptionAz": "Dermatoloq (Baş həkim)",
+    "descriptionRu": "Дерматолог (Главный врач)",
+    "description": "Дерматолог (Главный врач)",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Прием врача",
+    "descriptionEn": "Dermatologist (Chief physician)"
+  },
+  {
+    "code": "SVC-OZONTERAPIYA",
+    "descriptionAz": "Ozonterapiya",
+    "descriptionRu": "Озонотерапия",
+    "description": "Озонотерапия",
+    "amount": 17,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Ozone therapy"
+  },
+  {
+    "code": "SVC-VENADAXILI-INFUZIYA-D-RMAN-DAXIL",
+    "descriptionAz": "Venadaxili infuziya (dərman daxil)",
+    "descriptionRu": "Внутривенные инфузии (включая лекарственные препараты)",
+    "description": "Внутривенные инфузии (включая лекарственные препараты)",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "IV infusion (including medications)"
+  },
+  {
+    "code": "SVC-VENADAXILI-INFUZIYA-D-RMAN-XARIC",
+    "descriptionAz": "Venadaxili infuziya (dərman xaric)",
+    "descriptionRu": "Внутривенные инфузии (без лекарственных препаратов)",
+    "description": "Внутривенные инфузии (без лекарственных препаратов)",
+    "amount": 5,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "IV infusion (excluding medications)"
+  },
+  {
+    "code": "SVC-VENADAXILI-INYEKSIYA",
+    "descriptionAz": "Venadaxili inyeksiya",
+    "descriptionRu": "Внутривенные инъекции",
+    "description": "Внутривенные инъекции",
+    "amount": 3,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Intravenous injection"
+  },
+  {
+    "code": "SVC-Z-L-DAXILI-INYEKSIYA",
+    "descriptionAz": "Əzələdaxili inyeksiya",
+    "descriptionRu": "Внутримышечные инъекции",
+    "description": "Внутримышечные инъекции",
+    "amount": 2,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Intramuscular injection"
+  },
+  {
+    "code": "SVC-UROLOJI-VIBRO-LAZER",
+    "descriptionAz": "Uroloji Vibro lazer",
+    "descriptionRu": "Урологический вибролазер",
+    "description": "Урологический вибролазер",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Urological vibrolaser therapy"
+  },
+  {
+    "code": "SVC-UROLOJI-MIKROKLIZMA",
+    "descriptionAz": "Uroloji mikroklizma",
+    "descriptionRu": "Урологическая микроклизма",
+    "description": "Урологическая микроклизма",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Urological microenema"
+  },
+  {
+    "code": "SVC-INQALYASIYA",
+    "descriptionAz": "İnqalyasiya",
+    "descriptionRu": "Ингаляции",
+    "description": "Ингаляции",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Inhalation therapy"
+  },
+  {
+    "code": "SVC-GINEKOLOJI-TAMPON",
+    "descriptionAz": "Ginekoloji tampon",
+    "descriptionRu": "Гинекологический тампон",
+    "description": "Гинекологический тампон",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Gynecological tampon"
+  },
+  {
+    "code": "SVC-KARBOKSITERAPIYA",
+    "descriptionAz": "Karboksiterapiya",
+    "descriptionRu": "Карбокситерапия",
+    "description": "Карбокситерапия",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Carboxytherapy"
+  },
+  {
+    "code": "SVC-KOSMETOLOJI-PROSEDURLAR",
+    "descriptionAz": "Kosmetoloji prosedurlar",
+    "descriptionRu": "Косметологические процедуры",
+    "description": "Косметологические процедуры",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Cosmetic procedures"
+  },
+  {
+    "code": "SVC-PLASENTAR-TERAPIYA",
+    "descriptionAz": "Plasentar terapiya",
+    "descriptionRu": "Плацентарная терапия",
+    "description": "Плацентарная терапия",
+    "amount": 89,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Placental therapy"
+  },
+  {
+    "code": "SVC-METABOLIK-INFUZIYA",
+    "descriptionAz": "Metabolik infuziya",
+    "descriptionRu": "Метаболические инфузии",
+    "description": "Метаболические инфузии",
+    "amount": 75,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Metabolic infusion"
+  },
+  {
+    "code": "SVC-UFB-TERAPIYA",
+    "descriptionAz": "UFB terapiya",
+    "descriptionRu": "УФБ-терапия",
+    "description": "УФБ-терапия",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "UVB phototherapy"
+  },
+  {
+    "code": "SVC-BUKM",
+    "descriptionAz": "Bükmə",
+    "descriptionRu": "Обеатывание",
+    "description": "Обеатывание",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Body wrap"
+  },
+  {
+    "code": "SVC-TURUNDA-BURUN-V-QULAQ",
+    "descriptionAz": "Turunda (burun və qulaq)",
+    "descriptionRu": "Турунды (носовые и ухо)",
+    "description": "Турунды (носовые и ухо)",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Поликлиника",
+    "descriptionEn": "Nasal and ear turunda"
+  },
+  {
+    "code": "SVC-LAZERTERAPIYA",
+    "descriptionAz": "Lazerterapiya",
+    "descriptionRu": "Лазеротерапия",
+    "description": "Лазеротерапия",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Laser therapy"
+  },
+  {
+    "code": "SVC-MAQNITOTERAPIYA",
+    "descriptionAz": "Maqnitoterapiya",
+    "descriptionRu": "Магнитотерапия",
+    "description": "Магнитотерапия",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Magnetic field therapy"
+  },
+  {
+    "code": "SVC-ULTRAFONOFOREZ",
+    "descriptionAz": "Ultrafonoforez",
+    "descriptionRu": "Ультрафонофорез",
+    "description": "Ультрафонофорез",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Ultraphonophoresis"
+  },
+  {
+    "code": "SVC-DARSONVAL",
+    "descriptionAz": "Darsonval",
+    "descriptionRu": "Дарсонваль",
+    "description": "Дарсонваль",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Darsonvalization"
+  },
+  {
+    "code": "SVC-AMPLIPULS",
+    "descriptionAz": "Amplipuls",
+    "descriptionRu": "Амплипульстерапия",
+    "description": "Амплипульстерапия",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Amplipulse therapy"
+  },
+  {
+    "code": "SVC-INFRAQ-RM-Z",
+    "descriptionAz": "İnfraqırmızı",
+    "descriptionRu": "Инфракрасное излучение",
+    "description": "Инфракрасное излучение",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Infrared therapy"
+  },
+  {
+    "code": "SVC-ELEKTROTERAPIYA",
+    "descriptionAz": "Elektroterapiya",
+    "descriptionRu": "Электротерапия",
+    "description": "Электротерапия",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Electrotherapy"
+  },
+  {
+    "code": "SVC-SOLLYUKS",
+    "descriptionAz": "Sollyuks",
+    "descriptionRu": "Соллюкс",
+    "description": "Соллюкс",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Sollux lamp therapy"
+  },
+  {
+    "code": "SVC-SUPER-INDUCTIVE-SYSTEM-TERAPIYAS",
+    "descriptionAz": "Super Inductive system terapiyası",
+    "descriptionRu": "Супериндуктивная система терапии",
+    "description": "Супериндуктивная система терапии",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Super Inductive System therapy"
+  },
+  {
+    "code": "SVC-HIDROKOLONOTERAPIYA",
+    "descriptionAz": "Hidrokolonoterapiya",
+    "descriptionRu": "Гидроколонотерапия",
+    "description": "Гидроколонотерапия",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Colon hydrotherapy"
+  },
+  {
+    "code": "SVC-HIDROKOLONOTERAPIYA-BITKI-CAY-IL",
+    "descriptionAz": "Hidrokolonoterapiya (Bitki çayı ilə)",
+    "descriptionRu": "Гидроколонотерапия (с травяным чаем)",
+    "description": "Гидроколонотерапия (с травяным чаем)",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Colon hydrotherapy (with herbal tea)"
+  },
+  {
+    "code": "SVC-KLASIK-MASSAJ-15-D-QIQ",
+    "descriptionAz": "Klasik massaj (15 dəqiqə)",
+    "descriptionRu": "Классический массаж (15 минут)",
+    "description": "Классический массаж (15 минут)",
+    "amount": 16,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Classic massage (15 minutes)"
+  },
+  {
+    "code": "SVC-KLASIK-MASSAJ-30-D-QIQ",
+    "descriptionAz": "Klasik massaj (30 dəqiqə)",
+    "descriptionRu": "Классический массаж (30 минут)",
+    "description": "Классический массаж (30 минут)",
+    "amount": 19,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Classic massage (30 minutes)"
+  },
+  {
+    "code": "SVC-PARAFINOTERAPIYA-BOYUN-KUR-K",
+    "descriptionAz": "Parafinoterapiya (boyun kürək)",
+    "descriptionRu": "Парафинотерапия (шея и спина)",
+    "description": "Парафинотерапия (шея и спина)",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Paraffin therapy (neck and back)"
+  },
+  {
+    "code": "SVC-PARAFINOTERAPIYA-ASAG-TRAF",
+    "descriptionAz": "Parafinoterapiya (aşağı ətraf)",
+    "descriptionRu": "Парафинотерапия (нижние конечности)",
+    "description": "Парафинотерапия (нижние конечности)",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Paraffin therapy (lower limbs)"
+  },
+  {
+    "code": "SVC-PARAFINOTERAPIYA-YUXAR-TRAF",
+    "descriptionAz": "Parafinoterapiya (yuxarı ətraf)",
+    "descriptionRu": "Парафинотерапия (верхние конечности)",
+    "description": "Парафинотерапия (верхние конечности)",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Paraffin therapy (upper limbs)"
+  },
+  {
+    "code": "SVC-PARAFINOTERAPIYA-BUTUN-B-D-N",
+    "descriptionAz": "Parafinoterapiya (bütün bədən)",
+    "descriptionRu": "Парафинотерапия (все тело)",
+    "description": "Парафинотерапия (все тело)",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Paraffin therapy (full body)"
+  },
+  {
+    "code": "SVC-LIMFODRENAJ",
+    "descriptionAz": "Limfodrenaj",
+    "descriptionRu": "Лимфодренаж",
+    "description": "Лимфодренаж",
+    "amount": 16,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Lymphatic drainage"
+  },
+  {
+    "code": "SVC-Z-RB-DALGA-TERAPIYA",
+    "descriptionAz": "Zərbə dalğa terapiya",
+    "descriptionRu": "Ударно-волновая терапия",
+    "description": "Ударно-волновая терапия",
+    "amount": 24,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Extracorporeal shock wave therapy"
+  },
+  {
+    "code": "SVC-SPELEOTERAPIYA-DUZ-OTAG",
+    "descriptionAz": "Speleoterapiya ( duz otağı )",
+    "descriptionRu": "Спелеотерапия (соляная комната)",
+    "description": "Спелеотерапия (соляная комната)",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Speleotherapy (salt room)"
+  },
+  {
+    "code": "SVC-Q-SA-DALGA-TERAPIYA-UVC",
+    "descriptionAz": "Qısa dalğa terapiya UVÇ",
+    "descriptionRu": "Коротковолновая терапия УВЧ",
+    "description": "Коротковолновая терапия УВЧ",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Short-wave diathermy (UHF)"
+  },
+  {
+    "code": "SVC-SAD-UZ-MASAJ-15-D-Q",
+    "descriptionAz": "Sadə üz masajı 15 dəq",
+    "descriptionRu": "Простой массаж лица (15 минут)",
+    "description": "Простой массаж лица (15 минут)",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Simple facial massage (15 minutes)"
+  },
+  {
+    "code": "SVC-VAKUUMTERAPIYA",
+    "descriptionAz": "Vakuumterapiya",
+    "descriptionRu": "Вакуумная терапия",
+    "description": "Вакуумная терапия",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Vacuum therapy"
+  },
+  {
+    "code": "SVC-FITO-TERAPIYA-BOCKA",
+    "descriptionAz": "Fito terapiya (boçka)",
+    "descriptionRu": "Фитотерапия (бочка)",
+    "description": "Фитотерапия (бочка)",
+    "amount": 16,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Herbal steam barrel (phytotherapy)"
+  },
+  {
+    "code": "SVC-TAM-B-D-N-NAFTALAN-VANNAS",
+    "descriptionAz": "Tam bədən naftalan vannası",
+    "descriptionRu": "Нафталановая ванна общая",
+    "description": "Нафталановая ванна общая",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "Full-body Naftalan bath"
+  },
+  {
+    "code": "SVC-OTURARQ-B-D-N-NAFTALAN-VANNAS",
+    "descriptionAz": "Oturarq bədən naftalan vannası",
+    "descriptionRu": "Нафталановая ванна сидячая",
+    "description": "Нафталановая ванна сидячая",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "Seated Naftalan bath"
+  },
+  {
+    "code": "SVC-4-KAMERAL-NAFTALAN-VANNAS",
+    "descriptionAz": "4 kameralı naftalan vannası",
+    "descriptionRu": "Нафталановая ванна 4-х камерная",
+    "description": "Нафталановая ванна 4-х камерная",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "4-chamber Naftalan bath"
+  },
+  {
+    "code": "SVC-YOD-BROM-VANNAS",
+    "descriptionAz": "Yod brom vannası",
+    "descriptionRu": "Йодобромная ванна",
+    "description": "Йодобромная ванна",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "Iodine-bromine bath"
+  },
+  {
+    "code": "SVC-4-KAMERAL-HIDROQALVANIZASIYA",
+    "descriptionAz": "4 kameralı hidroqalvanizasiya",
+    "descriptionRu": "Гидрогальванизация 4-х камерная",
+    "description": "Гидрогальванизация 4-х камерная",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "4-chamber hydrogalvanic therapy"
+  },
+  {
+    "code": "SVC-HIDROMASAJ-VANNAS",
+    "descriptionAz": "Hidromasaj vannası",
+    "descriptionRu": "Гидромассажная ванна",
+    "description": "Гидромассажная ванна",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "Hydromassage bath"
+  },
+  {
+    "code": "SVC-IS-Q-VANNAS",
+    "descriptionAz": "İşıq vannası",
+    "descriptionRu": "Световая ванна",
+    "description": "Световая ванна",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "Light bath"
+  },
+  {
+    "code": "SVC-KARBON-VANNAS",
+    "descriptionAz": "Karbon vannası",
+    "descriptionRu": "Карбон (Углекислая) ванна",
+    "description": "Карбон (Углекислая) ванна",
+    "amount": 19,
+    "packageIncluded": false,
+    "department": "Ванное отделение",
+    "descriptionEn": "Carbonic acid bath"
+  },
+  {
+    "code": "SVC-OSTEOPATIYA",
+    "descriptionAz": "Osteopatiya",
+    "descriptionRu": "Остеопатия",
+    "description": "Остеопатия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Osteopathy"
+  },
+  {
+    "code": "SVC-MANUAL-TERAPIYA",
+    "descriptionAz": "Manual terapiya",
+    "descriptionRu": "Мануальная терапия",
+    "description": "Мануальная терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Manual therapy"
+  },
+  {
+    "code": "SVC-VISSERAL-TERAPIYA",
+    "descriptionAz": "Visseral terapiya",
+    "descriptionRu": "Висцеральная терапия",
+    "description": "Висцеральная терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Visceral therapy"
+  },
+  {
+    "code": "SVC-REFLEKSO-TERAPIYA-IYN-BAT-RMA",
+    "descriptionAz": "Reflekso terapiya (iynə batırma)",
+    "descriptionRu": "Рефлексотерапия (иглоукалывание)",
+    "description": "Рефлексотерапия (иглоукалывание)",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Acupuncture reflexology"
+  },
+  {
+    "code": "SVC-TRIQQEZONALAR-IL-ISL-M",
+    "descriptionAz": "Triqqezonalar ilə işləmə",
+    "descriptionRu": "Работа с триггерными зонами",
+    "description": "Работа с триггерными зонами",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Trigger-point therapy"
+  },
+  {
+    "code": "SVC-MIOFASSIAL-TERAPIYA",
+    "descriptionAz": "Miofassial terapiya",
+    "descriptionRu": "Миофасциальная терапия",
+    "description": "Миофасциальная терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Myofascial therapy"
+  },
+  {
+    "code": "SVC-QUA-SA-TERAPIYA",
+    "descriptionAz": "QUA-SA terapiya",
+    "descriptionRu": "Гуаша-терапия",
+    "description": "Гуаша-терапия",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Gua sha therapy"
+  },
+  {
+    "code": "SVC-BASIN-REFLEKSOTERAPIYAS",
+    "descriptionAz": "Basin Refleksoterapiyası",
+    "descriptionRu": "Рефлексотерапия головы",
+    "description": "Рефлексотерапия головы",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Cranial reflexology"
+  },
+  {
+    "code": "SVC-AYAQLAR-N-REFLEKSO-TERAPIYAS",
+    "descriptionAz": "Ayaqların Reflekso-terapiyası",
+    "descriptionRu": "Рефлексотерапия стоп",
+    "description": "Рефлексотерапия стоп",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Foot reflexology"
+  },
+  {
+    "code": "SVC-KINEZIOTERAPIYA",
+    "descriptionAz": "Kinezioterapiya",
+    "descriptionRu": "Кинезиотерапия",
+    "description": "Кинезиотерапия",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Kinesiotherapy"
+  },
+  {
+    "code": "SVC-MUALIC-VI-BLOKADA",
+    "descriptionAz": "Müalicəvi blokada",
+    "descriptionRu": "Лечебная блокада",
+    "description": "Лечебная блокада",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Мануальная терапия",
+    "descriptionEn": "Therapeutic nerve block"
+  },
+  {
+    "code": "SVC-PRP-TERAPIYA",
+    "descriptionAz": "PRP terapiya",
+    "descriptionRu": "PRP-терапия",
+    "description": "PRP-терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "PRP therapy"
+  },
+  {
+    "code": "SVC-BIOREVITALIZASIYA",
+    "descriptionAz": "Biorevitalizasiya",
+    "descriptionRu": "Биоревитализация",
+    "description": "Биоревитализация",
+    "amount": 160,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Biorevitalization"
+  },
+  {
+    "code": "SVC-MEZOTERAPIYA-UZ",
+    "descriptionAz": "Mezoterapiya (üz)",
+    "descriptionRu": "Мезотерапия лица",
+    "description": "Мезотерапия лица",
+    "amount": 75,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Facial mesotherapy"
+  },
+  {
+    "code": "SVC-MEZOTERAPIYA-SAC",
+    "descriptionAz": "Mezoterapiya (saç)",
+    "descriptionRu": "Мезотерапия волос",
+    "description": "Мезотерапия волос",
+    "amount": 75,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Hair mesotherapy"
+  },
+  {
+    "code": "SVC-UZUN-D-RIN-T-MIZL-NM-SI-CISTKA",
+    "descriptionAz": "Üzün dərin təmizlənməsi (Çistka)",
+    "descriptionRu": "Глубокая чистка лица",
+    "description": "Глубокая чистка лица",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Deep facial cleansing"
+  },
+  {
+    "code": "SVC-ULTRAS-S",
+    "descriptionAz": "Ultrasəs",
+    "descriptionRu": "Ультразвуковая терапия",
+    "description": "Ультразвуковая терапия",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Ultrasound therapy"
+  },
+  {
+    "code": "SVC-PILINQ-UZ",
+    "descriptionAz": "Pilinq (üz)",
+    "descriptionRu": "Пилинг лица",
+    "description": "Пилинг лица",
+    "amount": 70,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Facial peel"
+  },
+  {
+    "code": "SVC-DOLGU-1QR",
+    "descriptionAz": "Dolğu 1qr",
+    "descriptionRu": "Филлеры 1 мл",
+    "description": "Филлеры 1 мл",
+    "amount": 220,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Dermal filler 1 ml"
+  },
+  {
+    "code": "SVC-FULL-BOTOKS-1-PROSEDURU",
+    "descriptionAz": "Full botoks 1 proseduru",
+    "descriptionRu": "Полный ботокс (1 процедура)",
+    "description": "Полный ботокс (1 процедура)",
+    "amount": 200,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Full-face botulinum toxin (1 session)"
+  },
+  {
+    "code": "SVC-XALLAR-N-KOAQULYASIYAS",
+    "descriptionAz": "Xalların koaqulyasiyası",
+    "descriptionRu": "Коагуляция родинок",
+    "description": "Коагуляция родинок",
+    "amount": 5,
+    "packageIncluded": false,
+    "department": "Косметолог",
+    "descriptionEn": "Mole coagulation"
+  },
+  {
+    "code": "SVC-CHECK-UP-MUAYIN",
+    "descriptionAz": "Check-up müayinə",
+    "descriptionRu": "Контрольный осмотр",
+    "description": "Контрольный осмотр",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Check-up examination"
+  },
+  {
+    "code": "SVC-UMUMI-QAN-ANALIZI",
+    "descriptionAz": "Ümumi qan analizi",
+    "descriptionRu": "Общий анализ крови",
+    "description": "Общий анализ крови",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Complete blood count"
+  },
+  {
+    "code": "SVC-BIOKIMY-VI-ANALIZ",
+    "descriptionAz": "Biokimyəvi analiz",
+    "descriptionRu": "Биохимический анализ",
+    "description": "Биохимический анализ",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Biochemical blood panel"
+  },
+  {
+    "code": "SVC-SIDIYIN-UMUMI-ANALIZI",
+    "descriptionAz": "Sidiyin ümumi analizi",
+    "descriptionRu": "Общий анализ мочи",
+    "description": "Общий анализ мочи",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Complete urinalysis"
+  },
+  {
+    "code": "SVC-NAFTALAN-VANNAS",
+    "descriptionAz": "Naftalan vannası",
+    "descriptionRu": "Нафталиновые ванны",
+    "description": "Нафталиновые ванны",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Naftalan bath"
+  },
+  {
+    "code": "SVC-YOD-BROM-VANNAS",
+    "descriptionAz": "Yod brom vannası",
+    "descriptionRu": "Йодобромные ванны",
+    "description": "Йодобромные ванны",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Iodine-bromine bath"
+  },
+  {
+    "code": "SVC-PARAFIN",
+    "descriptionAz": "Parafin",
+    "descriptionRu": "Парафинотерапия",
+    "description": "Парафинотерапия",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Paraffin therapy"
+  },
+  {
+    "code": "SVC-LAZERTERAPIYA",
+    "descriptionAz": "Lazerterapiya",
+    "descriptionRu": "Лазеротерапия",
+    "description": "Лазеротерапия",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Laser therapy"
+  },
+  {
+    "code": "SVC-MAQNITOTERAPIYA",
+    "descriptionAz": "Maqnitoterapiya",
+    "descriptionRu": "Магниттерапия",
+    "description": "Магниттерапия",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Magnetic field therapy"
+  },
+  {
+    "code": "SVC-ULTRAFONOFOREZ",
+    "descriptionAz": "Ultrafonoforez",
+    "descriptionRu": "Ультрафонофорез",
+    "description": "Ультрафонофорез",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Ultraphonophoresis"
+  },
+  {
+    "code": "SVC-SOLYUKS",
+    "descriptionAz": "Solyuks",
+    "descriptionRu": "Солюкс",
+    "description": "Солюкс",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Sollux lamp therapy"
+  },
+  {
+    "code": "SVC-AMPLIPULS",
+    "descriptionAz": "Amplipuls",
+    "descriptionRu": "Амплипульс",
+    "description": "Амплипульс",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Amplipulse therapy"
+  },
+  {
+    "code": "SVC-DARSANVAL",
+    "descriptionAz": "Darsanval",
+    "descriptionRu": "Дарсанваль",
+    "description": "Дарсанваль",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Darsonvalization"
+  },
+  {
+    "code": "SVC-ELEKTROFOREZ",
+    "descriptionAz": "Elektroforez",
+    "descriptionRu": "Электрофорез",
+    "description": "Электрофорез",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Electrophoresis"
+  },
+  {
+    "code": "SVC-Q-SADALGATERAPIYA",
+    "descriptionAz": "Qısadalğaterapiya",
+    "descriptionRu": "СВЧ-терапия",
+    "description": "СВЧ-терапия",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Microwave therapy"
+  },
+  {
+    "code": "SVC-INFRAQ-RM-Z",
+    "descriptionAz": "İnfraqırmızı",
+    "descriptionRu": "Инфракрасная терапия",
+    "description": "Инфракрасная терапия",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Infrared therapy"
+  },
+  {
+    "code": "SVC-SAUNA",
+    "descriptionAz": "Sauna",
+    "descriptionRu": "Сауна",
+    "description": "Сауна",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Sauna"
+  },
+  {
+    "code": "SVC-IDMAN-ZAL",
+    "descriptionAz": "İdman zalı",
+    "descriptionRu": "Тренажерный зал",
+    "description": "Тренажерный зал",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Gym / exercise hall"
+  },
+  {
+    "code": "SVC-MUALIC-VI-IDMAN-QRUP-S-KLIND",
+    "descriptionAz": "Müalicəvi idman qrup şəklində",
+    "descriptionRu": "Групповая лечебная физкультура",
+    "description": "Групповая лечебная физкультура",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Group therapeutic exercise"
+  },
+  {
+    "code": "SVC-SPELEOTERAPIYA-DUZ-OTAG",
+    "descriptionAz": "Speleoterapiya ( duz otağı )",
+    "descriptionRu": "Спелеотерапия (соляная комната)",
+    "description": "Спелеотерапия (соляная комната)",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Speleotherapy (salt room)"
+  },
+  {
+    "code": "SVC-H-KIM-T-YINAT-IL-FIZIOTERAPIYAN-N-3-PROSEDURAS-P",
+    "descriptionAz": "Həkim təyinatı ilə fizioterapiyanın 3 prosedurası pulsuzdur.",
+    "descriptionRu": "Физиотерапия по назначению врача 3 процедуры бесплатно.",
+    "description": "Физиотерапия по назначению врача 3 процедуры бесплатно.",
+    "amount": 0,
+    "packageIncluded": true,
+    "department": "Пакет услуг",
+    "descriptionEn": "Physician-prescribed physiotherapy (3 sessions complimentary)"
+  }
+]

@@ -27,6 +27,7 @@ import {
   computeLcrRatioStub,
   dayOffsetFrom,
 } from "./liquidity-gap.engine";
+import { fxRevalEmptyResult } from "../../common/fc1-core.util";
 
 @Injectable()
 export class TreasuryService {
@@ -556,6 +557,307 @@ export class TreasuryService {
   async suggestedFxRate(baseCurrency: string, asOf: Date) {
     if (baseCurrency === "AZN") return 1;
     return this.dataHub.getFxRate(baseCurrency, asOf);
+  }
+
+  async runFxRevaluation(input: {
+    asOfDate: Date;
+    makerUserId: string;
+    idempotencyKey: string;
+  }) {
+    const fcAccounts = await this.prisma.account.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        currency: { not: "AZN" },
+        ledgerBalanceMinor: { not: 0n },
+      },
+      select: { currency: true, ledgerBalanceMinor: true },
+    });
+
+    if (fcAccounts.length === 0) {
+      return fxRevalEmptyResult();
+    }
+
+    const currencies = [...new Set(fcAccounts.map((a) => a.currency))];
+    const fxTransit = await this.systemGl.resolve(SystemGlKey.FX_TRANSIT);
+    const gainGl = await this.systemGl.resolve(SystemGlKey.FX_REVAL_GAIN);
+    const lossGl = await this.systemGl.resolve(SystemGlKey.FX_REVAL_LOSS);
+    const branch = await this.headOfficeBranch();
+
+    let posted = 0;
+    let totalPnl = 0n;
+    const details: Array<{
+      currency: string;
+      rate: number;
+      balanceMinor: string;
+      pnlMinor: string;
+    }> = [];
+
+    for (const currency of currencies) {
+      let rate = 1;
+      try {
+        rate = await this.dataHub.getFxRate(currency, input.asOfDate);
+      } catch {
+        rate = 1;
+      }
+
+      const balanceMinor = fcAccounts
+        .filter((a) => a.currency === currency)
+        .reduce((sum, a) => sum + a.ledgerBalanceMinor, 0n);
+
+      const pnlMinor = BigInt(
+        Math.round(Number(balanceMinor) * (rate - 1)),
+      );
+      if (pnlMinor === 0n) continue;
+
+      const isGain = pnlMinor > 0n;
+      const absPnl = pnlMinor < 0n ? -pnlMinor : pnlMinor;
+
+      await this.postingEngine.post({
+        reference: `FX-REVAL-${currency}-${input.asOfDate.toISOString().slice(0, 10)}`,
+        idempotencyKey: `${input.idempotencyKey}-${currency}`,
+        valueDate: input.asOfDate,
+        type: TxnType.FX,
+        makerUserId: input.makerUserId,
+        branchId: branch.id,
+        autoApprove: true,
+        legs: isGain
+          ? [
+              {
+                glAccountId: fxTransit.id,
+                branchId: branch.id,
+                debitMinor: absPnl,
+                creditMinor: 0n,
+                currency: "AZN",
+              },
+              {
+                glAccountId: gainGl.id,
+                branchId: branch.id,
+                debitMinor: 0n,
+                creditMinor: absPnl,
+                currency: "AZN",
+              },
+            ]
+          : [
+              {
+                glAccountId: lossGl.id,
+                branchId: branch.id,
+                debitMinor: absPnl,
+                creditMinor: 0n,
+                currency: "AZN",
+              },
+              {
+                glAccountId: fxTransit.id,
+                branchId: branch.id,
+                debitMinor: 0n,
+                creditMinor: absPnl,
+                currency: "AZN",
+              },
+            ],
+      });
+
+      posted += 1;
+      totalPnl += pnlMinor;
+      details.push({
+        currency,
+        rate,
+        balanceMinor: balanceMinor.toString(),
+        pnlMinor: pnlMinor.toString(),
+      });
+    }
+
+    return {
+      posted,
+      currencies,
+      pnlMinor: totalPnl.toString(),
+      details,
+    };
+  }
+
+  listMoneyMarket() {
+    return this.prisma.moneyMarketPlacement.findMany({
+      where: { bankOrgId: this.bankOrg.bankOrgId },
+      orderBy: { startDate: "desc" },
+    });
+  }
+
+  async placeMoneyMarket(input: {
+    counterpartyId: string;
+    nostroAccountId: string;
+    principalMinor: bigint;
+    currency: string;
+    rateAnnual: number;
+    startDate: Date;
+    maturityDate: Date;
+    bookGlCode: string;
+    bookedByUserId: string;
+    idempotencyKey: string;
+  }) {
+    const existing = await this.prisma.moneyMarketPlacement.findUnique({
+      where: { idempotencyKey: input.idempotencyKey },
+    });
+    if (existing) return existing;
+
+    const branch = await this.headOfficeBranch();
+    const bookGl = await this.glByCode(input.bookGlCode);
+    const nostro = await this.nostroById(input.nostroAccountId);
+
+    const posting = await this.postingEngine.post({
+      reference: `MM-OPEN-${input.idempotencyKey}`,
+      idempotencyKey: `mm-open-${input.idempotencyKey}`,
+      valueDate: input.startDate,
+      type: TxnType.TRANSFER,
+      makerUserId: input.bookedByUserId,
+      branchId: branch.id,
+      autoApprove: true,
+      legs: [
+        {
+          glAccountId: bookGl.id,
+          branchId: branch.id,
+          debitMinor: input.principalMinor,
+          creditMinor: 0n,
+          currency: input.currency,
+        },
+        {
+          glAccountId: nostro.glAccountId,
+          branchId: branch.id,
+          debitMinor: 0n,
+          creditMinor: input.principalMinor,
+          currency: input.currency,
+        },
+      ],
+    });
+
+    return this.prisma.moneyMarketPlacement.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        counterpartyId: input.counterpartyId,
+        nostroAccountId: input.nostroAccountId,
+        principalMinor: input.principalMinor,
+        currency: input.currency,
+        rateAnnual: input.rateAnnual,
+        startDate: input.startDate,
+        maturityDate: input.maturityDate,
+        bookGlCode: input.bookGlCode,
+        status: PlacementStatus.ACTIVE,
+        openPostingTxnId: posting.id,
+        idempotencyKey: input.idempotencyKey,
+      },
+    });
+  }
+
+  async matureMoneyMarket(id: string, maturedByUserId: string) {
+    const placement = await this.prisma.moneyMarketPlacement.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!placement) throw new NotFoundException("MM placement not found");
+    if (placement.status !== PlacementStatus.ACTIVE) {
+      throw new BadRequestException("Placement not active");
+    }
+
+    const branch = await this.headOfficeBranch();
+    const bookGl = await this.glByCode(placement.bookGlCode);
+    const nostro = await this.nostroById(placement.nostroAccountId);
+    const incomeGl = await this.systemGl.resolve(SystemGlKey.INTEREST_INCOME);
+    const days =
+      (placement.maturityDate.getTime() - placement.startDate.getTime()) / 86400000;
+    const interestMinor = BigInt(
+      Math.round(
+        Number(placement.principalMinor) *
+          Number(placement.rateAnnual) *
+          (days / 365),
+      ),
+    );
+    const totalReturn = placement.principalMinor + interestMinor;
+
+    const posting = await this.postingEngine.post({
+      reference: `MM-MATURE-${placement.id}`,
+      idempotencyKey: `mm-mature-${placement.id}`,
+      valueDate: new Date(),
+      type: TxnType.TRANSFER,
+      makerUserId: maturedByUserId,
+      branchId: branch.id,
+      autoApprove: true,
+      legs: [
+        {
+          glAccountId: nostro.glAccountId,
+          branchId: branch.id,
+          debitMinor: totalReturn,
+          creditMinor: 0n,
+          currency: placement.currency,
+        },
+        {
+          glAccountId: bookGl.id,
+          branchId: branch.id,
+          debitMinor: 0n,
+          creditMinor: placement.principalMinor,
+          currency: placement.currency,
+        },
+        {
+          glAccountId: incomeGl.id,
+          branchId: branch.id,
+          debitMinor: 0n,
+          creditMinor: interestMinor,
+          currency: placement.currency,
+        },
+      ],
+    });
+
+    return this.prisma.moneyMarketPlacement.update({
+      where: { id },
+      data: {
+        status: PlacementStatus.MATURED,
+        closePostingTxnId: posting.id,
+      },
+    });
+  }
+
+  async nostroCorrespondentPayment(input: {
+    nostroAccountId: string;
+    amountMinor: bigint;
+    reference: string;
+    makerUserId: string;
+    idempotencyKey: string;
+  }) {
+    const nostro = await this.nostroById(input.nostroAccountId);
+    const branch = await this.headOfficeBranch();
+    const nostroGl = await this.prisma.glAccount.findFirst({
+      where: { id: nostro.glAccountId },
+    });
+    if (!nostroGl) throw new NotFoundException("Nostro GL missing");
+    const transit = await this.systemGl.resolve(SystemGlKey.FX_TRANSIT);
+
+    const posting = await this.postingEngine.post({
+      reference: input.reference,
+      idempotencyKey: input.idempotencyKey,
+      valueDate: new Date(),
+      type: TxnType.PAYMENT,
+      makerUserId: input.makerUserId,
+      branchId: branch.id,
+      autoApprove: true,
+      legs: [
+        {
+          glAccountId: transit.id,
+          branchId: branch.id,
+          debitMinor: input.amountMinor,
+          creditMinor: 0n,
+          currency: nostro.currency,
+        },
+        {
+          glAccountId: nostroGl.id,
+          branchId: branch.id,
+          debitMinor: 0n,
+          creditMinor: input.amountMinor,
+          currency: nostro.currency,
+        },
+      ],
+    });
+
+    await this.prisma.nostroVostroAccount.update({
+      where: { id: nostro.id },
+      data: { ledgerBalanceMinor: { decrement: input.amountMinor } },
+    });
+
+    return { postingId: posting.id, nostroId: nostro.id };
   }
 
   private async glByCode(code: string) {

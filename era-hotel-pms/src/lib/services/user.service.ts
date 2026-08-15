@@ -1,7 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
-import { parsePermissions } from '@/lib/auth/permissions';
-import { ROLE_CODES } from '@/lib/auth/permissions';
+import {
+  ALL_PERMISSIONS,
+  parsePermissions,
+  ROLE_CODES,
+  type Permission,
+} from '@/lib/auth/permissions';
+import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 import { checkSeatQuota } from '@/lib/licensing/client';
 
 export async function listUsers() {
@@ -53,6 +58,55 @@ export async function createUser(input: {
   });
 }
 
+export async function updateUser(
+  id: string,
+  input: {
+    fullName?: string;
+    password?: string;
+    roleId?: string;
+    email?: string | null;
+    department?: string | null;
+    status?: 'ACTIVE' | 'DISABLED';
+  },
+) {
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    include: { role: true },
+  });
+  if (!existing) throw new Error('User not found');
+  if (existing.passwordHash === 'sso:no-password' && input.password) {
+    throw new Error('Cannot set local password for SSO user');
+  }
+
+  if (input.roleId && input.roleId !== existing.roleId) {
+    const role = await prisma.role.findUnique({ where: { id: input.roleId } });
+    if (!role) throw new Error('Role not found');
+  }
+
+  const data: {
+    fullName?: string;
+    passwordHash?: string;
+    roleId?: string;
+    email?: string | null;
+    department?: string | null;
+    status?: 'ACTIVE' | 'DISABLED';
+  } = {};
+  if (input.fullName != null) data.fullName = input.fullName;
+  if (input.roleId != null) data.roleId = input.roleId;
+  if (input.email !== undefined) data.email = input.email;
+  if (input.department !== undefined) data.department = input.department;
+  if (input.status != null) data.status = input.status;
+  if (input.password && input.password.length >= 6) {
+    data.passwordHash = await hashPassword(input.password);
+  }
+
+  return prisma.user.update({
+    where: { id },
+    data,
+    include: { role: true },
+  });
+}
+
 export async function getUserByLogin(credential: string) {
   const id = credential.trim();
   if (!id) return null;
@@ -64,6 +118,13 @@ export async function getUserByLogin(credential: string) {
   });
 }
 
-export function userPermissions(user: { role: { permissionsJson: string } }) {
+export function userPermissions(user: {
+  email?: string | null;
+  login: string;
+  role: { permissionsJson: string };
+}): Permission[] {
+  if (isPlatformSuperAdminUser(user)) {
+    return [...ALL_PERMISSIONS];
+  }
   return parsePermissions(user.role.permissionsJson);
 }

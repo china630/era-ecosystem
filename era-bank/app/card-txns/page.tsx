@@ -83,7 +83,7 @@ function CardTxnsPageInner() {
           cardToken: form.get("cardToken") || undefined,
           amountMinor: String(form.get("amountMinor") ?? 10000),
           currency: form.get("currency") ?? "AZN",
-          processorRef: form.get("processorRef") ?? `demo-auth-${Date.now()}`,
+          processorRef: form.get("processorRef") ?? `auth-${Date.now()}`,
           merchantName: form.get("merchantName") || undefined,
           mcc: form.get("mcc") || undefined,
         }),
@@ -218,7 +218,7 @@ function CardTxnsPageInner() {
           <OpsField name="cardToken" label="Card token" />
           <OpsField name="amountMinor" label="Amount (minor)" type="number" defaultValue={10000} />
           <OpsField name="currency" label="Currency" defaultValue="AZN" />
-          <OpsField name="processorRef" label="Processor ref" defaultValue={`demo-auth-${Date.now()}`} />
+          <OpsField name="processorRef" label="Processor ref" defaultValue={`auth-${Date.now()}`} />
           <OpsField name="merchantName" label="Merchant" defaultValue="Demo Merchant" />
           <OpsField name="mcc" label="MCC" defaultValue="5411" />
         </form>

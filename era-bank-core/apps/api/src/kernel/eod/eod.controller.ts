@@ -21,6 +21,11 @@ export class EodController {
     return this.eod.run(new Date(dto.businessDate));
   }
 
+  @Post("eom")
+  eom(@Body() dto: RunEodDto) {
+    return this.eod.runEom(new Date(dto.businessDate));
+  }
+
   @Get(":date")
   get(@Param("date") date: string) {
     return this.eod.getByDate(new Date(date));

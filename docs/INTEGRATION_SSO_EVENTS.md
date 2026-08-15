@@ -12,7 +12,7 @@ Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_
 - **Payload v3 (preferred):** `email|organizationId|expiresAt|financeRole|jti` signed with `ERA_SSO_SHARED_SECRET`.
 - **Payload v2:** `email|organizationId|expiresAt|financeRole` (still accepted).
 - **Payload v1 (legacy):** `email|organizationId|expiresAt` — still verifies, but satellites **force** `financeRole=USER` (unsigned query role is ignored). See [SECURITY_HYGIENE_PROGRAM.md](./SECURITY_HYGIENE_PROGRAM.md) SEC-SSO-02.
-- **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` + `consumeSsoSignatureOnce` (SEC-SSO-01 process-local replay guard; Redis planned for multi-instance). When `ERA_SATELLITE_ORGANIZATION_ID` is set, ticket org must match (SEC-SSO-05).
+- **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` + `consumeSsoSignatureOnce` (SEC-SSO-01 process-local replay guard; Redis planned for multi-instance). When deployment org is bound (`ERA_SATELLITE_ORGANIZATION_ID` or runtime bind via `satelliteOrganizationId()`), ticket org must match (SEC-SSO-05). See ADR [`satellite-organization-bind.md`](adr/satellite-organization-bind.md).
 
 - **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`, `POST /auth/finance-handoff`)
 - **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` and `provisionFromControlPlane` both use `verifyControlPlaneAccessToken` (`ERA_JWT_SECRET` / JWKS, `iss`, `aud`)
@@ -139,6 +139,8 @@ Hot + FB: гибрид — local login для ops; SSO для владельца
 Local dev stub: each industry app exposes `POST /api/events/dispatch` (forwards to orchestrator when configured).
 
 Env: see root `.env.example` (`SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID`, etc.).
+
+**Organization bind (appliance / on-prem):** after Connect + saving `SatelliteEndpoint` base URLs, Super-admin **Sync satellite bindings** calls `POST /v1/admin/orgs/:orgId/sync-satellite-bindings`, which fan-outs to each satellite `POST /api/internal/v1/organization/bind` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`). Persistence: runtime + DB table `_era_organization_bind` + `.data/organization-bind.json`. ADR: [`docs/adr/satellite-organization-bind.md`](adr/satellite-organization-bind.md).
 
 ### All 13 ingress event types — worker status
 

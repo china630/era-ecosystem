@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { PageHeader } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  PageHeader,
+  TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
+} from "@era/satellite-kit/ui";
 
 export default function DoctorPage() {
   const t = useTranslations("doctor");
@@ -57,18 +62,22 @@ export default function DoctorPage() {
               <span>
                 {v.patientRef.fullName} — {v.status}
                 {v.scheduledAt ? (
-                  <span className="block text-xs text-slate-500">
+                  <span className={`block text-xs ${TEXT_MUTED_CLASS}`}>
                     {new Date(v.scheduledAt).toLocaleString()}
                     {v.practitioner ? ` · ${v.practitioner.fullName}` : ""}
                   </span>
                 ) : null}
               </span>
-              <Link href={`/visits/${v.id}`} className={PRIMARY_BUTTON_CLASS}>
-                {t("openVisit")}
+              <Link
+                href={`/visits/${v.id}`}
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={t("openVisit")}
+              >
+                <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
               </Link>
             </li>
           ))}
-          {visits.length === 0 && <li className="text-slate-500">{t("empty")}</li>}
+          {visits.length === 0 && <li className={TEXT_MUTED_CLASS}>{t("empty")}</li>}
         </ul>
       </div>
     </>

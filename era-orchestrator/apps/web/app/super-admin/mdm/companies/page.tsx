@@ -45,9 +45,18 @@ export default function MdmCompaniesPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{t("title")}</h1>
       <p className="text-sm text-[#7F8C8D]">{t("hint")}</p>
+      <p className="rounded-lg border border-[#E1E5EA] bg-[#F8F9FA] p-3 text-xs text-[#7F8C8D]">
+        {t("readOnlyNote")}
+      </p>
       <SuperAdminDataTable
         loading={loading}
         columns={["name", "taxId", "organizationId", "updatedAt"]}
+        headers={{
+          name: t("colName"),
+          taxId: t("colTaxId"),
+          organizationId: t("colOrg"),
+          updatedAt: t("colUpdated"),
+        }}
         rows={items}
       />
       <div className="flex items-center gap-2 text-sm">

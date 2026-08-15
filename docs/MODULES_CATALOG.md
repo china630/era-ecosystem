@@ -6,6 +6,8 @@ Functional modules per application. **Finance** = source of truth for GL, sales/
 
 **Full readiness (Doc / API / UI / actors):** [COVERAGE_MATRIX.md](./COVERAGE_MATRIX.md). Module **DONE** here = minimum API + DELIVERY checkbox; actor UI may still be `[~]` until COVERAGE_MATRIX row is **SHIPPED**.
 
+**Sell / show / pilot:** DONE ≠ edition `ga`. Commercial honesty → [`docs/acceptance/`](./acceptance/README.md) Product-Readiness + [`docs/editions/`](./editions/) ([ERA-Acceptance-Standard](./products/ERA-Acceptance-Standard.md)).
+
 **Architecture:** [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · **Platform add-ons:** [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md)
 
 Industry Solutions entitlements (Finance sidebar): see [industry-satellite-sync.md](../era-finance-core/docs/industry-satellite-sync.md).
@@ -133,7 +135,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | Module key | Human name | Typical bundle |
 |------------|------------|----------------|
 | `industry_hotel_pms` | Hotel PMS (satellite gate) | — |
-| `hotel_core` | PMS Core (FO, Front Cash, Night Audit) — **Wave B FO screens live** (see ELEKTRAWEB-PARITY) | City+ |
+| `hotel_core` | PMS Core (FO, Front Cash, Night Audit) — Wave B FO live; **P5 FO money / CL ops open** ([ADR](./adr/hotel-city-ledger-and-fo-money.md)) | City+ |
 | `hotel_housekeeping` | Housekeeping & Room Rack | City+ |
 | `hotel_distribution` | Distribution (Channel + Contracts) | Resort |
 | `hotel_guest_experience` | Guest Profiles & Tasks | Resort |
@@ -151,17 +153,23 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 
 | Feature area | Scope | Status |
 |--------------|-------|--------|
-| PMS Core | book, folio, NA, HK, channel | **DONE** |
+| PMS Core | book, folio, NA, HK, channel | **DONE** (ops core) |
+| Front cash settle | multi-method + hub pending | **DONE** |
+| City Ledger ops snapshot | agency ledger + Finance event | **DONE** (ops; not AR) |
+| Transfer to AR / deposit@CO / refunds / CO discounts | P5 H-BL-40…43 | **OPEN** |
+| Night Audit | EOD core | **DONE**; polish H-BL-44 **OPEN** |
 | POS bridge | fb-pos room charge | **DONE** |
 | Sanatorium / medical | clinic bridge | **DONE** |
 | Stock MVP | `/admin/stock` | **DONE** |
-| Banquets BEO | `/banquets` | **DONE** |
+| Banquets BEO | `/banquets` | **DONE** (MVP) |
+| Transfers | `/transfers` | **DONE** (MVP) |
+| Agency contracts | `/admin/contracts` | **DONE**; prepaid/postpaid settlement H-BL-46 **OPEN** |
 | Yield management | Dynamic BAR | **DONE** |
 | Guest loyalty | Platform hook | **DONE** + PLATFORM |
 | Room service QR | fb-pos bridge | **DONE** |
 | Maintenance WO | HK → engineering | **DONE** |
 
-**Backlog:** [era-hotel-pms/doc/BACKLOG-PRODUCTION.md](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md) · [era-hotel-pms/doc/ELEKTRAWEB-PARITY.md](../era-hotel-pms/doc/ELEKTRAWEB-PARITY.md)
+**Backlog:** [era-hotel-pms/doc/BACKLOG-PRODUCTION.md](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md) § P5 · [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.md) · [ELEKTRAWEB-PARITY](../era-hotel-pms/doc/ELEKTRAWEB-PARITY.md)
 
 ---
 
@@ -310,27 +318,29 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 
 Product lines & presets: [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-presets.md) · [CLINIC-FULL-IMPLEMENTATION-PLAN.md](../era-clinic/doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)
 
-| Module | Since | Notes |
-|--------|-------|-------|
-| M0 Shell | — | **DONE** |
-| M1 Patient ref | — | **DONE** |
-| M2 Practitioners / rooms | — | **DONE** |
-| M3 Appointments | — | **DONE** |
-| M4 Visit card | — | **DONE** |
-| M5 Lab (+ critical flag) | v1.0 | Critical flags on results | **DONE** |
-| M6 Price cache | v1.0 | Finance price list | **DONE** |
-| M7 Notifications | v2.0 | → platform pack | **DONE** |
-| M8 Patient portal | v2.0 | `/portal` session | **DONE** |
-| M9 Multi-room drag schedule | v1.0 | Reschedule API | **DONE** |
-| M10 EHR / CPOE lite | v1.1 | visit CPOE | **DONE** |
-| M11 LIS HL7 import | v1.1 | `/api/lab/import` | **DONE** |
-| M12 Insurance eligibility | v1.1 | FINANCE proxy | **DONE** |
-| M13 Inpatient beds | v1.1 | ward-lite stub → preset `inpatient_day` | **PARTIAL** |
-| M14 Telehealth + portal | v1.0 | — | **DONE** |
-| K5 Sanatorium bridge | — | **DONE** |
-| Presets | 2026-06 | outpatient / sanatorium / inpatient_day / wellness | **PLANNED** |
-| Events | — | visit + lab completed |
-| Growth | — | DELIVERY K6 |
+| Module | Since | Notes | Pricing key |
+|--------|-------|-------|--------------|
+| M0 Shell | — | **DONE** | `clinic_shell` |
+| M1 Patient ref | — | **DONE** | `clinic_patients` |
+| M2 Practitioners / rooms | — | **DONE** | `clinic_schedule` |
+| M3 Appointments | — | **DONE** | `clinic_appointments` |
+| M4 Visit card | — | **DONE** | `clinic_visit` |
+| M5 Lab (+ critical flag) | v1.0 | Critical flags on results — **DONE** | `clinic_lab` |
+| M6 Price cache | v1.0 | Finance price list — **DONE** | `clinic_service_catalog` |
+| M7 Notifications | v2.0 | → platform pack — **DONE** | `clinic_notifications` |
+| M8 Patient portal | v2.0 | `/portal` session — **DONE** | `clinic_portal` |
+| M9 Multi-room drag schedule | v1.0 | Reschedule API — **DONE** | `clinic_reschedule` |
+| M10 EHR / CPOE lite | v1.1 | visit CPOE — **DONE** | `clinic_ehr` |
+| M11 LIS HL7 import | v1.1 | `/api/lab/import` — **DONE** | `clinic_lis_import` |
+| M12 Insurance eligibility | v1.1 | FINANCE proxy — **DONE** | `clinic_insurance` |
+| M13 Inpatient beds | v1.1 | ward-lite stub → preset `inpatient_day` — **PARTIAL** | `clinic_inpatient` |
+| M14 Telehealth + portal | v1.0 | **DONE** | `clinic_telehealth` |
+| K5 Sanatorium bridge | — | **DONE** | — |
+| Presets | 2026-06 | outpatient / sanatorium / inpatient_day / wellness — **PLANNED** | — |
+| Events | — | visit + lab completed | — |
+| Growth | — | DELIVERY K6 | — |
+
+Satellite gate: `industry_clinic`. Clinic module keys live in orchestrator `pricing_modules` (`satelliteKey = industry_clinic`), default free.
 
 ---
 
@@ -385,26 +395,33 @@ ADR: [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md) · [fx-rat
 
 ## Banking (Core Banking System — `industry_banking`)
 
-Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS, second core — owns the banking ledger, ACID posting, EOD, product engines; API only, no UI); **`era-bank`** = operational satellite carrying the `industry_banking` gate (UI/workflow client of the engine, holds no money). Licensed per bank (one deployment = one bank, on-prem capable). Bank's corporate back-office (opex/payroll/FA/procurement/VAT) stays in **finance-core**. Status: **PROPOSED / pre-development**.
+Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS); **`era-bank`** = operational satellite (`industry_banking`); **`era-bank-dbo`** = customer channel. Licensed per bank (one deployment = one bank). Bank's corporate ERP stays in **finance-core**.
 
-**Docs:** engine [era-bank-core/PRD.md](../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) · satellite [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) · ADR [era-bank-core.md](./adr/era-bank-core.md) · rule [era-bank-core-module-map.mdc](../.cursor/rules/era-bank-core-module-map.mdc).
+**Product envelope:** Full commercial AZ CBS (PRD §4 + FC/XO roadmap) — **mvp** until product-depth + Pilot field; not ga. SSOT: [Bank-Capability-Inventory.md](./acceptance/Bank-Capability-Inventory.md) · [Bank-Full-CBS-Roadmap.md](./acceptance/Bank-Full-CBS-Roadmap.md). Live/cert: [CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md).
+
+**Docs:** [era-bank-core/PRD.md](../era-bank-core/PRD.md) · [TZ.md](../era-bank-core/TZ.md) · [era-bank/PRD.md](../era-bank/PRD.md) · ADR [era-bank-core.md](./adr/era-bank-core.md) · [Bank-Acceptance-System](./acceptance/Bank-Acceptance-System.md).
 
 | Module key | Module | Layer | Status |
 |------------|--------|-------|--------|
-| `banking_core` | Kernel: ledger (CBAR COA), ACID posting engine, CIF, balances/holds, EOD/EOM, Product Factory, `Branch`/МФР, audit | L1 mandatory | **PLANNED** |
-| `banking_deposits` | Deposits/savings (+ADİF) | L2 | **PLANNED** |
-| `banking_loans` | Loans (scoring, AKB/credit registry, ƏMDK, IFRS 9 ECL) | L2 | **PLANNED** |
-| `banking_cards` | Cards (AzeriCard/MilliKart) | L2 | **MVP** |
-| `banking_payments` | Payments hub (AZIPS/XÖHKS/AÖS/SWIFT, ISO 20022) | L2 | **PLANNED** |
-| `banking_aml` | AML/CFT/KYC + FMN reporting | L2 | **PLANNED** |
-| `banking_treasury` | Treasury / ALM / liquidity | L2 | **MVP** |
-| `banking_dbo` | Digital banking + ASAN İmza/SİMA | L2 | **MVP** (`era-bank-dbo` :3211) |
-| `banking_regreporting` | CBAR prudential + FATCA/CRS | L2 | **PLANNED** |
-| `banking_risk` | Risk management: IFRS 9 ECL/provisioning, RWA/capital adequacy, IRRBB, LCR/NSFR, risk-appetite limits (ADR [era-bank-risk-and-audit.md](./adr/era-bank-risk-and-audit.md)) | L2 | **PROPOSED** |
+| `banking_core` | Kernel: CBAR GL, posting, CIF, accounts/holds, EOD/EOM, Product Factory, Branch/МФР, audit | L1 mandatory | **MVP (lab)** |
+| `banking_deposits` | Deposits/savings (+ADİF tagging) | L2 | **MVP (lab)** |
+| `banking_loans` | Loans + schedule/repay; lines/app WF; AKB/ƏMDK/ECL paths | L2 | **MVP (lab)** — live AKB/certified ECL DECLARED |
+| `banking_cards` | Cards issuing/limits; processor gateway; 3DS/dispute stubs | L2 | **MVP** — mock gateway; live YC-E2 |
+| `banking_payments` | Payments hub + SO/VA/cheque/sweep | L2 | **MVP (lab)** — stub rails; live YC-E1 |
+| `banking_aml` | AML/CFT/KYC + FMN + case/RTF lab | L2 | **MVP (lab)** — seed screen; live sanctions BLOCKED |
+| `banking_treasury` | Treasury / ALM / liquidity GAP | L2 | **MVP (lab)** — not full markets FO |
+| `banking_dbo` | Digital banking + H2H/OB + ASAN/SİMA | L2 | **MVP (lab)** — ASAN stub; live YC-E3 |
+| `banking_regreporting` | CBAR prudential + FATCA/CRS | L2 | **MVP (lab)** — stub templates; live YC-E5 |
+| `banking_risk` | ECL/RWA/CAR/LCR + IRRBB/OpRisk inputs | L2 | **MVP (lab)** — not certified |
+| `banking_trade` | LC / BG / DC / SCF / SWIFT outbox | L2 | **MVP (lab)** — ops `/trade`; SWIFT stub |
+| `banking_collections` | Collections / recovery SoD | L2 | **MVP (lab)** — ops `/collections` |
+| `banking_cash` | Vault/till/CIT + inventory + queue | L2 | **MVP (lab)** — ops `/cash` + `/fees` |
+| `banking_islamic` | Murabaha/Mudarabah window | L2 | **MVP (lab)** — ops `/islamic` |
+| `banking_wealth` | Safekeeping positions (thin) | L2 | **MVP (lab)** — ops `/wealth`; no FO/CSD |
 
-A `banking_*` module **spans both apps**: regulated math/API in `era-bank-core` + operational UI in `era-bank` (the commercial key gates both). `banking_dbo` customer channels run in **`era-bank-dbo`** (:3211). `banking_risk` computes risk read-models and posts provisions through the kernel posting engine (no parallel ledger); AML/CFT stays in `banking_aml`.
+**Still OUT (do not sell):** derivatives FO, own ATM/scheme, pension/PSA, enterprise MIS/BPM/DMS, multi-entity holding — see Capability Inventory. Do not mark MODULES **DONE** as edition ga.
 
-**Architecture laws:** money is ACID (no money over event bus); engine headless / satellite holds no money; thin kernel (no bank/product logic in L1); branches = internal dimension (not orgs); MDM shared (store `globalPersonId` only). Phases P0–P7 (MVP) + P8 Risk (PROPOSED) in PRD §7 / TZ §14; `banking_risk` spec in TZ §12, ADR [era-bank-risk-and-audit.md](./adr/era-bank-risk-and-audit.md).
+A `banking_*` module spans engine + ops UI (except `banking_dbo` → `era-bank-dbo`). Money is ACID; no parallel ledger in risk. Phases P0–P7 + risk lab in PRD §7 / TZ §12–§14.
 
 ---
 

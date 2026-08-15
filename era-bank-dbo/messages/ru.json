@@ -11,7 +11,8 @@
     "transfers": "Переводы",
     "approve": "Подпись",
     "more": "Ещё",
-    "logout": "Выход"
+    "logout": "Выход",
+    "standingOrders": "ПО"
   },
   "login": {
     "title": "Вход",
@@ -24,7 +25,8 @@
     "otpCode": "Код OTP",
     "asanLogin": "ASAN İmza (stub)",
     "asanComplete": "Подтвердить ASAN",
-    "devHint": "Dev OTP: 123456"
+    "devHint": "Dev OTP: 123456",
+    "asanStubBadge": "ASAN İmza / SİMA в режиме stub — не живая господпись (live = трек сертификации)."
   },
   "dashboard": {
     "title": "Главная",
@@ -78,5 +80,30 @@
     "back": "Назад",
     "save": "Сохранить",
     "cancel": "Отмена"
+  },
+  "standingOrders": {
+    "title": "Постоянные поручения",
+    "fromAccount": "Со счёта",
+    "toIban": "IBAN",
+    "amount": "Сумма (AZN)",
+    "create": "Создать",
+    "pause": "Пауза"
+  },
+  "loanApply": {
+    "title": "Заявка на кредит",
+    "product": "ID продукта",
+    "amount": "Сумма (AZN)",
+    "create": "Черновик",
+    "submit": "Отправить"
+  },
+  "threeDs": {
+    "title": "3DS",
+    "subtitle": "Подтвердите 3DS challenge",
+    "approve": "Одобрить",
+    "deny": "Отклонить"
+  },
+  "islamic": {
+    "title": "Исламские продукты",
+    "subtitle": "Только просмотр (активация в ops)"
   }
 }

@@ -22,7 +22,8 @@ export type EraAppHeaderProps = {
 
 /**
  * Fixed app header — ERA / Finance order (read right→left): Profile → Org → Bell → Locale → TierBar.
- * DOM (LTR): locale, notifications, organization, profile, tierBar.
+ * DOM (LTR): tierBar, locale, notifications, organization, profile.
+ * TierBar (trial/quota) sits left of the language panel and is clickable.
  */
 export function EraAppHeader({
   sidebarCollapsed = false,
@@ -66,11 +67,11 @@ export function EraAppHeader({
         </div>
 
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+          {tierBar}
           {locale}
           {notifications}
           {organization}
           {profile}
-          {tierBar}
         </div>
       </div>
     </header>

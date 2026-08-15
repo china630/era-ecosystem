@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Field, FieldSelect, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { Field, CatalogField, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
 import {
@@ -12,6 +12,13 @@ import {
   formatAznMinor,
   maskIban,
 } from "@/components/ops-ui";
+import {
+  loadBranchOptions,
+  loadCustomerOptions,
+  loadProductTemplateOptions,
+  type LookupOption,
+  withOrphanOption,
+} from "@/lib/bank-lookups";
 
 type AccountDetail = {
   id: string;
@@ -44,28 +51,33 @@ type AccountOpenModalProps = {
 
 export function AccountOpenModal({ open, onClose, onCreated }: AccountOpenModalProps) {
   const t = useTranslations("pages.accounts");
-  const [glId, setGlId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [customers, setCustomers] = useState<LookupOption[]>([]);
+  const [branches, setBranches] = useState<LookupOption[]>([]);
+  const [products, setProducts] = useState<LookupOption[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [branchId, setBranchId] = useState("");
+  const [productTemplateId, setProductTemplateId] = useState("");
   const formId = "account-open-form";
 
   useEffect(() => {
     if (!open) return;
-    fetch("/api/gl/accounts")
-      .then((r) => r.json())
-      .then((rows: Array<{ id: string; code: string }>) => {
-        const current = rows.find((g) => g.code === "2200101");
-        if (current) setGlId(current.id);
-        else if (rows[0]) setGlId(rows[0].id);
-      })
-      .catch(() => undefined);
+    void Promise.all([
+      loadCustomerOptions(),
+      loadBranchOptions(),
+      loadProductTemplateOptions("CURRENT"),
+    ]).then(([c, b, p]) => {
+      setCustomers(c);
+      setBranches(b);
+      setProducts(p);
+    });
   }, [open]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const form = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/accounts", {
         method: "POST",
@@ -74,10 +86,9 @@ export function AccountOpenModal({ open, onClose, onCreated }: AccountOpenModalP
           "Idempotency-Key": crypto.randomUUID(),
         },
         body: JSON.stringify({
-          customerId: form.get("customerId"),
-          branchId: form.get("branchId"),
-          glAccountId: form.get("glAccountId") || glId,
-          currency: form.get("currency") ?? "AZN",
+          customerId,
+          branchId,
+          productTemplateId,
           idempotencyKey: `acc-${Date.now()}`,
         }),
       });
@@ -105,10 +116,36 @@ export function AccountOpenModal({ open, onClose, onCreated }: AccountOpenModalP
       busy={busy}
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <Field name="customerId" label={t("customerId")} preset="code" defaultValue="demo-retail-customer" />
-        <Field name="branchId" label={t("branchId")} preset="code" defaultValue="demo-branch-hq" />
-        <Field name="glAccountId" label="GL account id" preset="code" defaultValue={glId} />
-        <Field name="currency" label={t("currency")} preset="code" defaultValue="AZN" />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("customerId")}
+          options={withOrphanOption(customers, customerId)}
+          value={customerId}
+          onChange={(next) =>
+            setCustomerId(Array.isArray(next) ? next[0] ?? "" : next)
+          }
+          required
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("branchId")}
+          options={withOrphanOption(branches, branchId)}
+          value={branchId}
+          onChange={(next) =>
+            setBranchId(Array.isArray(next) ? next[0] ?? "" : next)
+          }
+          required
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("productTemplate")}
+          options={withOrphanOption(products, productTemplateId)}
+          value={productTemplateId}
+          onChange={(next) =>
+            setProductTemplateId(Array.isArray(next) ? next[0] ?? "" : next)
+          }
+          required
+        />
         <div className="sm:col-span-2">
           <OpsError message={error} />
         </div>
@@ -228,6 +265,8 @@ export function AccountDetailModal({
       body: JSON.stringify({
         amountMinor: String(form.get("amountMinor")),
         reason: form.get("reason") ?? "MANUAL",
+        reference: form.get("reference") || undefined,
+        authorityCode: form.get("authorityCode") || undefined,
       }),
     });
     const text = await res.text();
@@ -376,8 +415,11 @@ export function AccountDetailModal({
               <select name="reason" className="w-full rounded border px-3 py-2 text-sm" defaultValue="MANUAL">
                 <option value="MANUAL">Manual compliance hold</option>
                 <option value="PAYMENT_PENDING">Payment pending</option>
+                <option value="LEGAL_ARREST">{t("legalArrest")}</option>
               </select>
             </label>
+            <Field name="reference" label={t("holdReference")} preset="shortText" />
+            <Field name="authorityCode" label={t("holdAuthority")} preset="code" />
             <div className="sm:col-span-2">
               <button
                 type="submit"

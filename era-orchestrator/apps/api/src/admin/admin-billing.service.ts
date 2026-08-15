@@ -87,6 +87,8 @@ function serializePricingModule(m: {
   pricePerMonth: unknown;
   sortOrder: number;
   isPremium: boolean;
+  satelliteKey?: string | null;
+  catalogKind?: string | null;
 }) {
   return {
     id: m.id,
@@ -95,6 +97,8 @@ function serializePricingModule(m: {
     pricePerMonth: Number(m.pricePerMonth),
     sortOrder: m.sortOrder,
     isPremium: m.isPremium,
+    satelliteKey: m.satelliteKey ?? null,
+    catalogKind: m.catalogKind ?? "MODULE",
   };
 }
 
@@ -106,6 +110,7 @@ function serializePricingBundle(b: {
   isTrialDefault?: boolean;
   trialDurationDays?: number | null;
   trialQuotas?: unknown;
+  archivedAt?: Date | null;
 }) {
   const keys = b.moduleKeys;
   return {
@@ -119,6 +124,7 @@ function serializePricingBundle(b: {
       b.trialQuotas != null && typeof b.trialQuotas === "object"
         ? (b.trialQuotas as Record<string, unknown>)
         : null,
+    archivedAt: b.archivedAt ? b.archivedAt.toISOString() : null,
   };
 }
 
@@ -216,20 +222,23 @@ export class AdminBillingService {
       meterUnitPricing,
       tierSpendCeilings,
       pricingBundles,
-      ocrJobsPerOrgMonth,
+      bankingFoundationMonthlyAzn,
+      trialPeriodDays,
     ] = await Promise.all([
       this.systemConfig.getYearlyDiscountPercent(),
       this.systemConfig.getQuotaUnitPricing(),
       this.systemConfig.getMeterUnitPricing(),
       this.getTierSpendCeilings(),
       this.prisma.pricingBundle.findMany({ orderBy: { updatedAt: "desc" } }),
-      this.systemConfig.getOcrJobsPerOrgMonthLimit(),
+      this.systemConfig.getBankingFoundationMonthlyAzn(),
+      this.systemConfig.getTrialPeriodDays(),
     ]);
     return {
       prices,
       quotas,
-      ocrJobsPerOrgMonth,
       foundationMonthlyAzn: constructorData.basePrice,
+      bankingFoundationMonthlyAzn,
+      trialPeriodDays,
       yearlyDiscountPercent,
       quotaPricing,
       meterUnitPricing,
@@ -243,6 +252,8 @@ export class AdminBillingService {
           pricePerMonth: m.pricePerMonth,
           sortOrder: m.sortOrder,
           isPremium: m.isPremium,
+          satelliteKey: m.satelliteKey,
+          catalogKind: m.catalogKind,
         }),
       ),
       pricingBundles: pricingBundles.map(serializePricingBundle),
@@ -275,7 +286,9 @@ export class AdminBillingService {
       isPremium: m.isPremium,
       satelliteKey: m.satelliteKey ?? null,
     }));
-    const pricingBundles = config.pricingBundles.map((b) => ({
+    const pricingBundles = config.pricingBundles
+      .filter((b) => !b.archivedAt)
+      .map((b) => ({
       name: b.name,
       discountPercent: b.discountPercent,
       moduleKeys: b.moduleKeys,
@@ -297,7 +310,6 @@ export class AdminBillingService {
       pricingBundles,
       meterUnitPricing: config.meterUnitPricing,
       tierSpendCeilings: config.tierSpendCeilings,
-      ocrJobsPerOrgMonth: config.ocrJobsPerOrgMonth,
       standardModules: storefront.standardModules,
       premiumModules: storefront.premiumModules,
       bundles: storefront.bundles,
@@ -356,6 +368,8 @@ export class AdminBillingService {
           pricePerMonth: m.pricePerMonth,
           sortOrder: m.sortOrder,
           isPremium: m.isPremium,
+          satelliteKey: m.satelliteKey,
+          catalogKind: m.catalogKind,
         }),
       ),
     };
@@ -364,6 +378,11 @@ export class AdminBillingService {
   async patchFoundation(dto: PatchFoundationDto) {
     await this.systemConfig.setFoundationMonthlyAzn(dto.amountAzn);
     return { ok: true, foundationMonthlyAzn: dto.amountAzn };
+  }
+
+  async patchBankingFoundation(dto: PatchFoundationDto) {
+    await this.systemConfig.setBankingFoundationMonthlyAzn(dto.amountAzn);
+    return { ok: true, bankingFoundationMonthlyAzn: dto.amountAzn };
   }
 
   async patchBillingPricingCatalog(dto: PatchBillingPricingCatalogDto) {
@@ -433,6 +452,11 @@ export class AdminBillingService {
     return { ok: true, yearlyDiscountPercent: dto.percent };
   }
 
+  async patchTrialPeriodDays(dto: { days: number }) {
+    await this.systemConfig.setTrialPeriodDays(dto.days);
+    return { ok: true, trialPeriodDays: dto.days };
+  }
+
   async patchQuotaUnitPricing(dto: PatchQuotaUnitPricingDto) {
     const quotaPricing = await this.systemConfig.setQuotaUnitPricing(dto);
     return { ok: true, quotaPricing };
@@ -444,10 +468,25 @@ export class AdminBillingService {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         raw,
       );
+    const data: {
+      pricePerMonth?: number;
+      name?: string;
+      isPremium?: boolean;
+      sortOrder?: number;
+    } = {};
+    if (dto.pricePerMonth !== undefined) data.pricePerMonth = dto.pricePerMonth;
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.isPremium !== undefined) data.isPremium = dto.isPremium;
+    if (dto.sortOrder !== undefined) data.sortOrder = dto.sortOrder;
     const row = await this.prisma.pricingModule.update({
       where: looksLikeUuid ? { id: raw } : { key: raw },
-      data: { pricePerMonth: dto.pricePerMonth },
+      data,
     });
+    // Premium flag changes must be reflected in the cached premium-module set
+    // used by trial-lock checks.
+    if (dto.isPremium !== undefined) {
+      await this.pricing.refreshPremiumModuleKeys();
+    }
     return serializePricingModule(row);
   }
 
@@ -532,8 +571,11 @@ export class AdminBillingService {
   }
 
   async deletePricingBundle(id: string) {
-    await this.prisma.pricingBundle.delete({ where: { id } });
-    return { ok: true };
+    const row = await this.prisma.pricingBundle.update({
+      where: { id },
+      data: { archivedAt: new Date(), isTrialDefault: false },
+    });
+    return serializePricingBundle(row);
   }
 
   async setBillingPrice(dto: SetBillingPriceDto) {

@@ -8,6 +8,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 
 const patchSchema = z.object({
   action: z.enum(['confirm']),
+  preferredFolioType: z.enum(['GUEST', 'COMPANY', 'AGENCY']).optional(),
 });
 
 export async function GET(
@@ -35,7 +36,13 @@ export async function PATCH(
     const body = patchSchema.parse(await req.json());
 
     if (body.action === 'confirm') {
-      return jsonOk(serialize(await confirmBanquetEvent(id)));
+      return jsonOk(
+        serialize(
+          await confirmBanquetEvent(id, {
+            preferredFolioType: body.preferredFolioType,
+          }),
+        ),
+      );
     }
 
     return jsonOk(serialize(await getBanquetEvent(id)));

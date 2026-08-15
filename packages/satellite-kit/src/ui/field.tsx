@@ -30,13 +30,17 @@ function FieldShell({
 }: Omit<FieldHintProps, "preset"> & { children: ReactNode }) {
   return (
     <div className={`${FORM_FIELD_GROUP_CLASS} ${className ?? ""}`.trim()}>
-      <label className={MODAL_FIELD_LABEL_CLASS} htmlFor={htmlFor}>
+      <label className={MODAL_FIELD_LABEL_CLASS} htmlFor={htmlFor} title={hint || undefined}>
         {label}
         {required ? <span className="text-[#E74C3C]"> *</span> : null}
+        {hint ? (
+          <span className="ml-1 cursor-help text-[#95A5A6]" title={hint} aria-label={hint}>
+            ?
+          </span>
+        ) : null}
       </label>
       {children}
       {error ? <p className="text-xs text-[#E74C3C]">{error}</p> : null}
-      {!error && hint ? <p className="text-xs text-[#7F8C8D]">{hint}</p> : null}
     </div>
   );
 }

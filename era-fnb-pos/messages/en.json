@@ -151,6 +151,7 @@
     "fireKitchen": "Fire kitchen",
     "payCash": "Pay cash",
     "payCard": "Pay card",
+    "payTransfer": "Pay transfer",
     "sendToReception": "Send to reception",
     "deferSuccess": "Sent to hotel Front Cash — table released",
     "deferFailed": "Could not defer to reception",

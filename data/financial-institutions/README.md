@@ -20,4 +20,4 @@ Licensed insurers and non-bank credit organizations from the Central Bank public
 npm run scrape:cbar-financial
 ```
 
-Insurers are merged into `data/legal-entities/azerbaijan-legal-entities.csv` via `npm run merge:voen-donors` (VÖEN known). BOKT rows go through e-taxes name search in `npm run enrich:etaxes`.
+Insurers are merged into `data/legal-entities/azerbaijan-companies-with-voen.csv` via donor/master enrich waves (VÖEN known). BOKT rows go through e-taxes name search in `npm run enrich:etaxes`.

@@ -74,14 +74,49 @@ export async function addReservationTask(
 }
 
 export async function getReservationFolioRouting(reservationId: string) {
-  const folios = await prisma.folio.findMany({
-    where: { reservationId },
-    include: {
-      charges: { include: { revenueCode: { include: { routingRule: true } } } },
-    },
+  const [folios, rules, overrides, revenueCodes] = await Promise.all([
+    prisma.folio.findMany({
+      where: { reservationId },
+      include: {
+        charges: { include: { revenueCode: { include: { routingRule: true } } } },
+      },
+    }),
+    prisma.folioRoutingRule.findMany({
+      include: { revenueCode: true },
+      orderBy: { revenueCode: { code: 'asc' } },
+    }),
+    prisma.reservationFolioRoutingOverride.findMany({
+      where: { reservationId },
+      include: { revenueCode: true },
+      orderBy: { revenueCode: { code: 'asc' } },
+    }),
+    prisma.revenueCode.findMany({
+      where: { active: true },
+      orderBy: { code: 'asc' },
+      select: { id: true, code: true, name: true },
+    }),
+  ]);
+  return { folios, rules, overrides, revenueCodes };
+}
+
+export async function upsertReservationFolioRouting(
+  reservationId: string,
+  rows: Array<{ revenueCodeId: string; targetFolioType: 'GUEST' | 'COMPANY' | 'AGENCY' }>,
+) {
+  const res = await prisma.reservation.findUnique({ where: { id: reservationId } });
+  if (!res) throw new Error('Reservation not found');
+
+  await prisma.$transaction(async (tx) => {
+    await tx.reservationFolioRoutingOverride.deleteMany({ where: { reservationId } });
+    if (rows.length === 0) return;
+    await tx.reservationFolioRoutingOverride.createMany({
+      data: rows.map((r) => ({
+        reservationId,
+        revenueCodeId: r.revenueCodeId,
+        targetFolioType: r.targetFolioType,
+      })),
+    });
   });
-  const rules = await prisma.folioRoutingRule.findMany({
-    include: { revenueCode: true },
-  });
-  return { folios, rules };
+
+  return getReservationFolioRouting(reservationId);
 }

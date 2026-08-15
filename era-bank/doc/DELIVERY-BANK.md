@@ -2,9 +2,9 @@
 
 PRD: [../PRD.md](../PRD.md) · TZ: [../TZ.md](../TZ.md)
 
-Ops UX GA — teller back-office over `era-bank-core` (engine P0–P7 MVP + ops workflow UI).
+Ops UX **ops-mvp / lab-pilot** — teller back-office over `era-bank-core`. Kit chrome: `BankOpsShell` navSections + `BankDataGrid` / `CatalogField`. Edition SSOT: [`docs/editions/bank.yaml`](../../docs/editions/bank.yaml) (`mvp`, `pilot_ready: false`). Acceptance: [`Bank-Acceptance-System`](../../docs/acceptance/Bank-Acceptance-System.md) · scope boundary [`Bank-Capability-Inventory`](../../docs/acceptance/Bank-Capability-Inventory.md) (OUT modules not delivered here).
 
-**UI pattern:** all CRUD and workflow actions in modals on index routes ([UI_PLAYBOOK_SATELLITES.md](../../docs/UI_PLAYBOOK_SATELLITES.md)). Audit matrix: [BANK_DOC_API_UI_AUDIT.md](../../docs/BANK_DOC_API_UI_AUDIT.md).
+**UI pattern:** list kit (`PageHeader` → `EraListFilterBar` → `BankDataGrid`) + modals; no false UI ✅ / ga without signed UAT. Audit: [BANK_DOC_API_UI_AUDIT.md](../../docs/BANK_DOC_API_UI_AUDIT.md).
 
 ## P0 — Platform shell
 
@@ -17,12 +17,14 @@ Ops UX GA — teller back-office over `era-bank-core` (engine P0–P7 MVP + ops 
 - [x] CIF/account/posting maker-checker **SHIPPED** (engine + modal workflow)
 - [x] EOD console **SHIPPED** (engine run + lock banner + confirm modal)
 - [x] Ops platform: `OpsModalShell`, `EodLockProvider`, `useOpsModal`, `GET /api/entitlements`
+- [x] Playbook foundations: `navSections` hubs, `BankHeaderTierBar`, `SatelliteNotificationBell`, `BankDataGrid`, `/gl`, `/risk` stubs
 
 ## P1 — Core banking UI
 
 - [x] `/cif` — search + create/detail **modals** (legacy `/new`, `/[id]` redirect)
 - [x] `/accounts` — list + open/detail modals (statement, holds, **close account**)
 - [x] `/postings/queue` — queue + create/detail modals (approve/reject/reverse)
+- [x] `/gl` — trial balance list (read-only)
 - [x] `/admin/branches` — list + create modal
 - [x] `/admin/eod` — status panel + run confirm modal
 - [x] BFF `/api/gl/*` → engine GL (trial balance, chart)
@@ -31,12 +33,17 @@ Ops UX GA — teller back-office over `era-bank-core` (engine P0–P7 MVP + ops 
 
 - [x] `/payments` — list + create/detail **modals**
 - [x] Inbound payment register modal → `POST /api/payments/inbound`
+- [x] Staff approve queue — filter `PENDING_APPROVAL` + Approve/Reject (SoD list+detail; checker ≠ maker; reject reason required)
 
 ## P3 — Deposits & loans
 
 - [x] `/deposits` — open/close/rollover modals + **ADİF badge**
 - [x] `/loans` — originate/disburse/repay/**restructure** modals
-- [x] `/admin/product-factory` — template list + create modal
+- [x] Loan bureau stub pull + collateral fields + NPL/stage badges
+- [x] `/admin/product-factory` — kind-specific authoring, activate/retire, ACTIVE apply-on-originate (params contract ADR)
+- [~] `/risk/*` hub — dashboard/exposures/collateral/staging/ecl (lab); capital UI + EOD step console = YC-B2; ECL production cert = YC-E4
+- [x] Exception pricing ops queue (engine `PENDING_PRICING_APPROVAL` + UI filter/approve/reject)
+- [x] Payment list SoD + reject reason polish
 
 ## P4 — AML & reg reporting
 

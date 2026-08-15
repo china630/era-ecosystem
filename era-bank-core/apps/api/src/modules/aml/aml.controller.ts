@@ -20,7 +20,7 @@ import {
   IsOptional,
   IsString,
 } from "class-validator";
-import { AmlAlertStatus, AmlSeverity } from "@era/bank-core-database";
+import { AmlAlertStatus, AmlCaseStatus, AmlSeverity } from "@era/bank-core-database";
 import type { Response } from "express";
 import { BankAuthGuard } from "../../auth/bank-auth.guard";
 import { BankingModuleGuard, RequireBankingModule } from "../../auth/banking-module.guard";
@@ -86,6 +86,71 @@ class UpdateRuleDto {
   paramsJson?: Record<string, unknown>;
 }
 
+class CreateCaseDto {
+  @IsOptional()
+  @IsString()
+  alertId?: string;
+
+  @IsOptional()
+  @IsString()
+  customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  sarDraft?: string;
+}
+
+class UpdateCaseDto {
+  @IsEnum(AmlCaseStatus)
+  status!: AmlCaseStatus;
+
+  @IsOptional()
+  @IsString()
+  sarDraft?: string;
+
+  @IsOptional()
+  @IsObject()
+  sarDraftFields?: Record<string, unknown>;
+}
+
+class BatchScreenDto {
+  @IsArray()
+  @IsString({ each: true })
+  names!: string[];
+
+  @IsOptional()
+  @IsString()
+  listSource?: string;
+}
+
+class PepFlagDto {
+  @IsBoolean()
+  pepFlag!: boolean;
+}
+
+class FraudScoreDto {
+  @IsString()
+  reference!: string;
+
+  @IsString()
+  channel!: string;
+
+  @IsString()
+  amountMinor!: string;
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  muleSuspectFlag?: boolean;
+}
+
 @ApiTags("aml")
 @ApiBearerAuth("service-token")
 @UseGuards(BankAuthGuard, BankingModuleGuard)
@@ -134,6 +199,21 @@ export class AmlController {
     return this.aml.updateRule(code, dto);
   }
 
+  @Post("screen/batch")
+  screenBatch(@Body() dto: BatchScreenDto) {
+    return this.aml.screenBatch(dto.names, dto.listSource);
+  }
+
+  @Patch("customers/:customerId/pep")
+  updatePep(@Param("customerId") customerId: string, @Body() dto: PepFlagDto) {
+    return this.aml.updatePepFlag(customerId, dto.pepFlag);
+  }
+
+  @Post("customers/:customerId/ml-score/refresh")
+  refreshMl(@Param("customerId") customerId: string) {
+    return this.aml.refreshMlScore(customerId);
+  }
+
   @Post("screen")
   screen(@Body() dto: ScreenDto) {
     return this.aml.screen(dto);
@@ -158,6 +238,43 @@ export class AmlController {
     return this.aml.exportFmnReport(id, format).then(({ contentType, body }) => {
       res.setHeader("Content-Type", contentType);
       res.send(body);
+    });
+  }
+
+  @Get("cases")
+  cases(@Query("status") status?: AmlCaseStatus) {
+    return this.aml.listCases(status);
+  }
+
+  @Get("cases/:id")
+  caseDetail(@Param("id") id: string) {
+    return this.aml.getCase(id);
+  }
+
+  @Post("cases")
+  createCase(@Body() dto: CreateCaseDto) {
+    return this.aml.createCase(dto);
+  }
+
+  @Patch("cases/:id")
+  patchCase(@Param("id") id: string, @Body() dto: UpdateCaseDto) {
+    return this.aml.updateCaseStatus(
+      id,
+      dto.status,
+      dto.sarDraft,
+      dto.sarDraftFields,
+    );
+  }
+
+  @Post("fraud/score")
+  fraudScore(@Body() dto: FraudScoreDto) {
+    return this.aml.scoreFraud({
+      reference: dto.reference,
+      channel: dto.channel,
+      amountMinor: BigInt(dto.amountMinor),
+      currency: dto.currency,
+      deviceId: dto.deviceId,
+      muleSuspectFlag: dto.muleSuspectFlag,
     });
   }
 }

@@ -39,9 +39,7 @@ export async function verifyControlPlaneAccessToken(
     config.get<string>("ERA_JWT_ISSUER") ?? "era-orchestrator";
   const audience =
     config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ?? "era-finance-core";
-  const secret =
-    config.get<string>("ERA_JWT_SECRET") ??
-    config.get<string>("JWT_SECRET");
+  const secret = config.get<string>("ERA_JWT_SECRET");
   const mode = (config.get<string>("ERA_JWT_VERIFY_MODE") ?? "dual")
     .trim()
     .toLowerCase();

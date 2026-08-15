@@ -762,6 +762,33 @@ export class MdmService {
     };
   }
 
+  /**
+   * Internal org profile for satellite provisioning (e.g. Finance SSO ingress
+   * provisions a local org row). Returns the decrypted VÖEN so the satellite can
+   * key its local organization by the same legal identity. Service-token only.
+   */
+  async getOrganizationDetails(organizationId: string) {
+    const id = organizationId.trim();
+    if (!id) {
+      throw new BadRequestException("organizationId required");
+    }
+    const org = await this.controlPlane.organization.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+    if (!org) {
+      throw new NotFoundException("Organization not found");
+    }
+    const legalEntity = await this.mdm.globalLegalEntity.findFirst({
+      where: { organizationId: id },
+      select: { taxIdCipher: true },
+    });
+    const taxId = legalEntity?.taxIdCipher
+      ? decryptText(legalEntity.taxIdCipher)
+      : null;
+    return { organizationId: org.id, name: org.name, taxId };
+  }
+
   async healthCheck() {
     const count = await this.mdm.globalLegalEntity.count();
     return { ok: true, legalEntityCount: count };

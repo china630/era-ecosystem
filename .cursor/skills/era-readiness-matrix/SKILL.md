@@ -5,12 +5,17 @@ description: Refresh ERA readiness matrix from DELIVERY checkboxes and code-leve
 
 # ERA readiness matrix refresh
 
+> **Disclaimer:** This skill updates **engineering** [`docs/READINESS_MATRIX.md`](docs/READINESS_MATRIX.md) (API levels, DELIVERY %, consumer hooks).  
+> For **sell / show / pilot / Product Readiness** use skill `acceptance-closeout` and `docs/acceptance/*-Product-Readiness-Matrix.md` — not this skill.
+
 ## Triggers
 
-- «обнови матрицу готовности»
+- «обнови матрицу готовности API» / «обнови READINESS_MATRIX» / consumer hooks
 - `READINESS_MATRIX.md`
-- `refresh readiness matrix`
+- `refresh readiness matrix` (engineering)
 - After completing a DELIVERY wave (platform CP-B*, satellite hooks)
+
+**Not for:** «можно продавать?» / Product Readiness / edition `ga` → `acceptance-closeout`.
 
 ## Steps
 

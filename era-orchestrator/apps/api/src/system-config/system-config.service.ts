@@ -14,10 +14,12 @@ const BILLING_PRICE_KEYS: Record<TariffTier, string> = {
 const QUOTA_KEY = (tier: TariffTier) => `quota.tier.${tier}`;
 
 const FOUNDATION_MONTHLY_KEY = "billing.foundation_monthly_azn";
+const BANKING_FOUNDATION_MONTHLY_KEY = "billing.banking_foundation_monthly_azn";
 const YEARLY_DISCOUNT_KEY = "billing.yearly_discount_percent";
+const TRIAL_PERIOD_DAYS_KEY = "billing.trial_period_days";
 const QUOTA_UNIT_PRICING_KEY = "billing.quota_unit_pricing_v1";
 const METER_UNIT_PRICING_KEY = "billing.meter_unit_pricing_v1";
-/** Positive integer: max OCR jobs created per organization per UTC month (`trade_pro` flows). */
+/** @deprecated OCR hard-cap retired — use tier maxOcrPagesPerMonth + meter unit price. */
 const OCR_JOBS_PER_ORG_MONTH_KEY = "quota.ocr_jobs_per_org_month_v1";
 
 /** FX dashboard rows (CBAR vs AZN); override via `system_config.fx.dashboard_currency_codes`. */
@@ -200,6 +202,16 @@ export class SystemConfigService {
     await this.setJson(FOUNDATION_MONTHLY_KEY, amountAzn);
   }
 
+  async getBankingFoundationMonthlyAzn(): Promise<number> {
+    const raw = await this.getJson(BANKING_FOUNDATION_MONTHLY_KEY);
+    const n = toPositiveNum(raw, 0);
+    return n;
+  }
+
+  async setBankingFoundationMonthlyAzn(amountAzn: number): Promise<void> {
+    await this.setJson(BANKING_FOUNDATION_MONTHLY_KEY, amountAzn);
+  }
+
   async getYearlyDiscountPercent(): Promise<number> {
     const raw = await this.getJson(YEARLY_DISCOUNT_KEY);
     const n = toPositiveNum(raw, 20);
@@ -208,6 +220,20 @@ export class SystemConfigService {
 
   async setYearlyDiscountPercent(percent: number): Promise<void> {
     await this.setJson(YEARLY_DISCOUNT_KEY, percent);
+  }
+
+  async getTrialPeriodDays(): Promise<number> {
+    const raw = await this.getJson(TRIAL_PERIOD_DAYS_KEY);
+    const n = Math.floor(toPositiveNum(raw, 90));
+    return Math.min(730, Math.max(1, n));
+  }
+
+  async setTrialPeriodDays(days: number): Promise<void> {
+    const n = Math.floor(Number(days));
+    if (!Number.isFinite(n) || n < 1 || n > 730) {
+      throw new BadRequestException("trialPeriodDays must be 1–730");
+    }
+    await this.setJson(TRIAL_PERIOD_DAYS_KEY, n);
   }
 
   async getQuotaUnitPricing(): Promise<QuotaUnitPricing> {
@@ -365,11 +391,25 @@ export class SystemConfigService {
         valueKind: "positive_number",
       },
       {
+        key: BANKING_FOUNDATION_MONTHLY_KEY,
+        description: "ERA Banking Core foundation monthly price (AZN)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "positive_number",
+      },
+      {
         key: YEARLY_DISCOUNT_KEY,
         description: "Yearly billing discount (percent 0–100)",
         allowReset: true,
         allowPut: true,
         valueKind: "percent_0_100",
+      },
+      {
+        key: TRIAL_PERIOD_DAYS_KEY,
+        description: "Default org trial period in days (applies to new trials only)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "positive_int",
       },
       {
         key: QUOTA_UNIT_PRICING_KEY,
@@ -426,17 +466,25 @@ export class SystemConfigService {
               : await this.getFxCbarCheckCurrencyCodes();
           break;
         case "positive_int":
-          defaultValue =
-            def.key === OCR_JOBS_PER_ORG_MONTH_KEY ? 200 : 0;
-          effectiveValue =
-            def.key === OCR_JOBS_PER_ORG_MONTH_KEY
-              ? await this.getOcrJobsPerOrgMonthLimit()
-              : await this.getTranslationCacheVersion();
+          if (def.key === TRIAL_PERIOD_DAYS_KEY) {
+            defaultValue = 90;
+            effectiveValue = await this.getTrialPeriodDays();
+          } else {
+            defaultValue =
+              def.key === OCR_JOBS_PER_ORG_MONTH_KEY ? 200 : 0;
+            effectiveValue =
+              def.key === OCR_JOBS_PER_ORG_MONTH_KEY
+                ? await this.getOcrJobsPerOrgMonthLimit()
+                : await this.getTranslationCacheVersion();
+          }
           break;
         case "positive_number":
           if (def.key === FOUNDATION_MONTHLY_KEY) {
             defaultValue = 29;
             effectiveValue = await this.getFoundationMonthlyAzn();
+          } else if (def.key === BANKING_FOUNDATION_MONTHLY_KEY) {
+            defaultValue = 0;
+            effectiveValue = await this.getBankingFoundationMonthlyAzn();
           } else if (def.key.startsWith("billing.price.")) {
             const tier = def.key.replace("billing.price.", "") as TariffTier;
             defaultValue = this.defaultPrice(tier);

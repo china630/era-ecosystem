@@ -2,10 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Field, FieldSelect, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CatalogField,
+  Field,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
+import { useOpsMe } from "@/components/ops/useOpsMe";
 import { OpsError, StatusBadge, formatAznMinor } from "@/components/ops-ui";
+import {
+  CURRENCY_OPTIONS,
+  PAYMENT_RAIL_OPTIONS,
+  loadAccountOptions,
+  majorToMinor,
+  type LookupOption,
+  withOrphanOption,
+} from "@/lib/bank-lookups";
 
 type PaymentDetail = {
   id: string;
@@ -16,10 +30,11 @@ type PaymentDetail = {
   currency?: string;
   rail?: string;
   narrative?: string;
+  createdByUserId?: string;
   railMessages?: Array<{ id: string; payloadJson?: unknown; createdAt?: string }>;
 };
 
-const FLOW = ["DRAFT", "SUBMITTED", "SETTLED"];
+const FLOW = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "SETTLED"];
 
 type PaymentCreateModalProps = {
   open: boolean;
@@ -27,11 +42,24 @@ type PaymentCreateModalProps = {
   onCreated: (id: string) => void;
 };
 
-export function PaymentCreateModal({ open, onClose, onCreated }: PaymentCreateModalProps) {
+export function PaymentCreateModal({
+  open,
+  onClose,
+  onCreated,
+}: PaymentCreateModalProps) {
   const t = useTranslations("pages.payments");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rail, setRail] = useState("AZIPS");
+  const [currency, setCurrency] = useState("AZN");
+  const [accountOpts, setAccountOpts] = useState<LookupOption[]>([]);
+  const [debtorAccountId, setDebtorAccountId] = useState("");
   const formId = "payment-create-form";
+
+  useEffect(() => {
+    if (!open) return;
+    void loadAccountOptions().then(setAccountOpts);
+  }, [open]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,11 +74,11 @@ export function PaymentCreateModal({ open, onClose, onCreated }: PaymentCreateMo
           "Idempotency-Key": crypto.randomUUID(),
         },
         body: JSON.stringify({
-          debtorAccountId: form.get("debtorAccountId"),
+          debtorAccountId: debtorAccountId || undefined,
           creditorIban: form.get("creditorIban"),
-          amountMinor: String(form.get("amountMinor")),
-          currency: "AZN",
-          rail: form.get("rail") ?? "STUB",
+          amountMinor: String(majorToMinor(String(form.get("amountMajor") ?? "0"))),
+          currency,
+          rail,
           idempotencyKey: `pay-${Date.now()}`,
           narrative: form.get("narrative"),
         }),
@@ -80,22 +108,56 @@ export function PaymentCreateModal({ open, onClose, onCreated }: PaymentCreateMo
       maxWidthClass="max-w-2xl"
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <Field name="debtorAccountId" label={t("debitAccount")} preset="code" defaultValue="demo-retail-acc-1" />
-        <Field name="creditorIban" label={t("beneficiaryIban")} preset="longText" defaultValue="AZ00BANK00000000000001" />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("debitAccount")}
+          options={withOrphanOption(accountOpts, debtorAccountId)}
+          value={debtorAccountId}
+          onChange={(next) =>
+            setDebtorAccountId(Array.isArray(next) ? next[0] ?? "" : next)
+          }
+        />
         <Field
-          name="amountMinor"
-          label={t("amount")}
+          name="creditorIban"
+          label={t("beneficiaryIban")}
+          preset="longText"
+          required
+          defaultValue=""
+        />
+        <Field
+          name="amountMajor"
+          label={t("amountMajor")}
           preset="amount"
           type="number"
-          min={1}
-          defaultValue={250000}
-          placeholder="Amount in qepik (minor units)"
+          step="0.01"
+          min={0}
+          required
+          defaultValue={2500}
         />
-        <FieldSelect name="rail" label={t("rail")} preset="selectWide" defaultValue="AZIPS">
-          <option value="AZIPS">AZIPS (stub sandbox)</option>
-          <option value="INTERNAL">INTERNAL</option>
-        </FieldSelect>
-        <Field name="narrative" label={t("purpose")} preset="shortText" className="sm:col-span-2" />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("currency")}
+          options={CURRENCY_OPTIONS}
+          value={currency}
+          onChange={(next) =>
+            setCurrency(Array.isArray(next) ? next[0] ?? "AZN" : next)
+          }
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("rail")}
+          options={PAYMENT_RAIL_OPTIONS}
+          value={rail}
+          onChange={(next) =>
+            setRail(Array.isArray(next) ? next[0] ?? "AZIPS" : next)
+          }
+        />
+        <Field
+          name="narrative"
+          label={t("purpose")}
+          preset="shortText"
+          className="sm:col-span-2"
+        />
         <div className="sm:col-span-2">
           <OpsError message={error} />
         </div>
@@ -120,14 +182,19 @@ export function PaymentDetailModal({
   const t = useTranslations("pages.payments");
   const tCommon = useTranslations("common");
   const { mutationsDisabled } = useEodLock();
+  const me = useOpsMe();
+  const canApprove = me?.canApprove === true;
   const [data, setData] = useState<PaymentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const load = useCallback(async () => {
     if (!paymentId) return;
     setError(null);
     try {
-      const res = await fetch(`/api/payments/orders/${paymentId}`, { cache: "no-store" });
+      const res = await fetch(`/api/payments/orders/${paymentId}`, {
+        cache: "no-store",
+      });
       if (!res.ok) {
         setError(`${tCommon("error")} (${res.status})`);
         return;
@@ -140,14 +207,18 @@ export function PaymentDetailModal({
 
   useEffect(() => {
     if (open && paymentId) void load();
-    if (!open) setData(null);
+    if (!open) {
+      setData(null);
+      setRejectReason("");
+    }
   }, [open, paymentId, load]);
 
-  async function submit() {
+  async function postAction(path: string, body?: object) {
     if (!paymentId) return;
-    const res = await fetch(`/api/payments/orders/${paymentId}/submit`, {
+    const res = await fetch(`/api/payments/orders/${paymentId}/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
     });
     if (!res.ok) setError(await res.text());
     await load();
@@ -155,6 +226,7 @@ export function PaymentDetailModal({
   }
 
   const currentIdx = data?.status ? FLOW.indexOf(data.status) : -1;
+  const isMaker = data?.createdByUserId && me?.id === data.createdByUserId;
 
   return (
     <OpsModalShell
@@ -170,16 +242,24 @@ export function PaymentDetailModal({
         <div className="space-y-4">
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              Status: {data.status ? <StatusBadge status={data.status} /> : "—"}
+              {t("colStatus")}:{" "}
+              {data.status ? <StatusBadge status={data.status} /> : "—"}
             </div>
-            <div>Amount: {formatAznMinor(data.amountMinor)}</div>
-            <div>Debit: {data.debtorAccountId ?? "—"}</div>
-            <div>Beneficiary: {data.creditorIban ?? "—"}</div>
             <div>
-              Rail: {data.rail ?? "—"}
-              {data.rail === "AZIPS" || data.rail === "SWIFT" ? " (stub sandbox)" : ""}
+              {t("colAmount")}: {formatAznMinor(data.amountMinor)}
             </div>
-            <div>Purpose: {data.narrative ?? "—"}</div>
+            <div>
+              {t("debitAccount")}: {data.debtorAccountId ?? "—"}
+            </div>
+            <div>
+              {t("colBeneficiary")}: {data.creditorIban ?? "—"}
+            </div>
+            <div>
+              {t("rail")}: {data.rail ?? "—"}
+            </div>
+            <div>
+              {t("purpose")}: {data.narrative ?? "—"}
+            </div>
           </div>
           <div>
             <h3 className="mb-2 font-medium">{t("timeline")}</h3>
@@ -200,16 +280,56 @@ export function PaymentDetailModal({
               ))}
             </ol>
           </div>
-          {data.status === "DRAFT" ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={mutationsDisabled}
-              onClick={() => void submit()}
-            >
-              {t("submit")}
-            </button>
-          ) : null}
+          <div className="flex flex-wrap gap-2">
+            {data.status === "DRAFT" ? (
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={mutationsDisabled}
+                onClick={() => void postAction("submit")}
+              >
+                {t("submit")}
+              </button>
+            ) : null}
+            {data.status === "PENDING_APPROVAL" && canApprove && !isMaker ? (
+              <div className="flex w-full flex-col gap-2">
+                <Field
+                  name="rejectReason"
+                  label={t("rejectReason")}
+                  preset="longText"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={PRIMARY_BUTTON_CLASS}
+                    disabled={mutationsDisabled}
+                    onClick={() => void postAction("approve")}
+                  >
+                    {t("approve")}
+                  </button>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    disabled={mutationsDisabled || !rejectReason.trim()}
+                    onClick={() =>
+                      void postAction("reject", {
+                        reason: rejectReason.trim(),
+                      })
+                    }
+                  >
+                    {t("reject")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {data.status === "PENDING_APPROVAL" && isMaker ? (
+              <p className="text-sm text-muted-foreground">
+                {t("makerCannotApprove")}
+              </p>
+            ) : null}
+          </div>
           {data.railMessages?.length ? (
             <div>
               <h3 className="mb-2 font-medium">{t("railMessages")}</h3>

@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 // Kernel L1 — must not import from modules/* (see eslint.config.mjs + BOUNDARY.md).
 import { AccountStatus, EodStatus, TxnStatus, TxnType } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -39,11 +45,16 @@ export class PostingEngineService {
     const bookingDate = new Date();
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const eodLock = await tx.eodRun.findFirst({
-        where: { bankOrgId: this.bankOrg.bankOrgId, status: EodStatus.RUNNING },
-      });
-      if (eodLock) {
-        throw new BadRequestException("Posting blocked while EOD is RUNNING");
+      if (!request.allowDuringEod) {
+        const eodLock = await tx.eodRun.findFirst({
+          where: { bankOrgId: this.bankOrg.bankOrgId, status: EodStatus.RUNNING },
+        });
+        if (eodLock) {
+          throw new HttpException(
+            "EOD is running — mutations blocked",
+            HttpStatus.LOCKED,
+          );
+        }
       }
 
       for (const leg of request.legs) {

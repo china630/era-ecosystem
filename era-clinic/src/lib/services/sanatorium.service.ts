@@ -72,21 +72,44 @@ export async function registerWalkInEpisode(input: {
   fin?: string;
   passport?: string;
   phone?: string;
+  sex: "MALE" | "FEMALE";
+  birthDate?: string;
+  nationality?: string;
+  issuingCountry?: string;
   globalPersonId?: string | null;
   programCode?: string;
 }) {
   const key = input.fin?.trim() || input.passport?.trim();
-  if (!key) throw new Error('FIN or passport required');
+  if (!key) throw new Error("FIN or passport required");
   const refCode = walkInRefCode(key);
 
   let patient = await prisma.patientRef.findUnique({ where: { refCode } });
+  const birthDate = input.birthDate?.trim()
+    ? new Date(`${input.birthDate.trim()}T00:00:00.000Z`)
+    : undefined;
+
   if (!patient) {
     patient = await prisma.patientRef.create({
       data: {
         refCode,
         fullName: input.fullName,
         phone: input.phone ?? null,
+        nationality: input.nationality?.trim() || "AZ",
+        sex: input.sex,
+        birthDate: birthDate ?? null,
         globalPersonId: input.globalPersonId ?? null,
+      },
+    });
+  } else {
+    patient = await prisma.patientRef.update({
+      where: { id: patient.id },
+      data: {
+        fullName: input.fullName,
+        ...(input.phone !== undefined ? { phone: input.phone || null } : {}),
+        ...(input.nationality?.trim() ? { nationality: input.nationality.trim() } : {}),
+        sex: input.sex,
+        ...(birthDate !== undefined ? { birthDate } : {}),
+        ...(input.globalPersonId ? { globalPersonId: input.globalPersonId } : {}),
       },
     });
   }
@@ -96,9 +119,9 @@ export async function registerWalkInEpisode(input: {
       patientRefId: patient.id,
       globalPersonId: input.globalPersonId ?? patient.globalPersonId,
       organizationId: input.organizationId,
-      patientOrigin: 'WALK_IN',
+      patientOrigin: "WALK_IN",
       programCode: input.programCode ?? null,
-      status: 'OPEN',
+      status: "OPEN",
     },
     include: { patientRef: true },
   });
@@ -200,14 +223,45 @@ export async function createEpisodeLabOrder(episodeId: string, testCode: string)
     include: { patientRef: true },
   });
   if (!episode?.patientRefId) throw new Error('Episode patient not found');
+  const patientRefId = episode.patientRefId;
 
-  return prisma.labOrder.create({
-    data: {
-      patientRefId: episode.patientRefId,
-      clinicalEpisodeId: episodeId,
-      testCode,
-      status: 'ORDERED',
-    },
+  // Fasting labs: schedule collection for next working morning (Asia/Baku ~08:00)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(8, 0, 0, 0);
+  // Skip Sunday (0)
+  if (tomorrow.getDay() === 0) {
+    tomorrow.setDate(tomorrow.getDate() + 1);
+  }
+
+  const service = await prisma.diagnosticService.findFirst({
+    where: { OR: [{ code: testCode }, { serviceCode: testCode }] },
+  });
+
+  const orderId = await prisma.$transaction(async (tx) => {
+    const order = await tx.labOrder.create({
+      data: {
+        patientRefId,
+        clinicalEpisodeId: episodeId,
+        testCode,
+        status: 'ORDERED',
+        fasting: true,
+        scheduledCollectionAt: tomorrow,
+        source: 'IN_HOUSE',
+      },
+    });
+    await tx.labOrderItem.create({
+      data: {
+        labOrderId: order.id,
+        diagnosticServiceId: service?.id,
+        serviceCode: testCode,
+      },
+    });
+    return order.id;
+  });
+
+  return prisma.labOrder.findUniqueOrThrow({
+    where: { id: orderId },
     include: { patientRef: true },
   });
 }
@@ -229,18 +283,35 @@ export async function getEpisode(id: string) {
   });
 }
 
-export async function getEpisodeSchedule(episodeId: string, from: Date, to: Date) {
+export async function getEpisodeSchedule(
+  episodeId: string,
+  from: Date,
+  to: Date,
+  locale = "en",
+) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
     select: { patientRefId: true },
   });
   if (!episode?.patientRefId) return [];
 
-  return prisma.procedureOrder.findMany({
+  const orders = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: episode.patientRefId,
       scheduledAt: { gte: from, lt: to },
     },
-    orderBy: { scheduledAt: 'asc' },
+    orderBy: { scheduledAt: "asc" },
   });
+
+  const { loadCatalogDisplayNameMap, resolveOrderDisplayName } = await import(
+    "@/domain/catalog/catalog-display-name.service"
+  );
+  const catalogNames = await loadCatalogDisplayNameMap(
+    orders.map((o) => o.procedureCode),
+    locale,
+  );
+  return orders.map((o) => ({
+    ...o,
+    procedureName: resolveOrderDisplayName(o, catalogNames),
+  }));
 }

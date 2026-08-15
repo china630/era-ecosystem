@@ -2,7 +2,7 @@ import { createEngineProxyRoute } from "@/lib/bff-proxy";
 
 const proxy = createEngineProxyRoute({
   enginePrefix: "product-templates",
-  entitlementModule: "banking_deposits",
+  entitlementModule: "banking_core",
   logAction: "PRODUCT_TEMPLATES_PROXY",
 });
 

@@ -1,6 +1,8 @@
 # Field system — modal migration waves (F)
 
-Ordered migration of SatAdmin modal CRUD to `Field*` + explicit `preset`. See `DESIGN.md` § Field width taxonomy.
+Ordered migration of SatAdmin modal CRUD to `Field*` + explicit `preset`. See `DESIGN.md` Field width taxonomy.
+
+Token layers (L1/L2/L3) + `resolveField` / `columnFilters`: [`docs/adr/era-design-tokens-3tier.md`](./adr/era-design-tokens-3tier.md).
 
 ## Wave status
 
@@ -13,6 +15,7 @@ Ordered migration of SatAdmin modal CRUD to `Field*` + explicit `preset`. See `D
 | **F4** | era-crm, era-auto-service, era-wholesale | leads, admin/import wizard, settings/WO/appointments, import-orders | Done |
 | **F5** | era-clinic, era-bank | AppointmentCreateModal, patients/[id] edit, Cif/Payment/Account modals | Done |
 | **F6** | era-finance-core | CreateCounterpartyModal, employee-modal | Done |
+| **C** | era-clinic | Hex→L3 token sweep (admin, patient/lab, sanatorium, ops chrome, remainder); Field*/DatePicker on remaining modals | Done |
 
 ## Per-app priority (reference)
 
@@ -35,3 +38,7 @@ Ordered migration of SatAdmin modal CRUD to `Field*` + explicit `preset`. See `D
 ## Enforcement (post-F)
 
 When `raw-input-no-token` total < 50, new files under `era-*/src/components/**` should use `Field*` (ops canvases allowlisted). Run `npm run lint:design-tokens` before merge; `--update-baseline` only when intentionally shrinking debt.
+
+## Wave C — clinic 3-tier token rebuild
+
+Ordered hex→L3 + Field* sweep for era-clinic (C1 SatAdmin → C2 Patient/Lab → C3 Sanatorium → C4 Ops canvases chrome → C5 remainder). Spec: [adr/era-design-tokens-3tier.md](./adr/era-design-tokens-3tier.md). Ops canvases keep layout; colors/buttons via kit. Baseline: `era-clinic` `raw-input-no-token` shrunk to 0 (lint scans `src/`; checkboxes use `MODAL_CHECKBOX_CLASS`).

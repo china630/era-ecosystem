@@ -25,8 +25,9 @@ function normalize(raw: Partial<BillingPayload>): BillingPayload {
   return {
     prices: raw.prices ?? {},
     quotas: raw.quotas ?? {},
-    ocrJobsPerOrgMonth: raw.ocrJobsPerOrgMonth ?? 200,
     foundationMonthlyAzn: raw.foundationMonthlyAzn ?? 29,
+    bankingFoundationMonthlyAzn: raw.bankingFoundationMonthlyAzn ?? 0,
+    trialPeriodDays: raw.trialPeriodDays ?? 90,
     yearlyDiscountPercent: raw.yearlyDiscountPercent ?? 20,
     quotaPricing: raw.quotaPricing ?? {
       employeeBlockSize: 10,
@@ -34,6 +35,8 @@ function normalize(raw: Partial<BillingPayload>): BillingPayload {
       documentPackSize: 1000,
       pricePerDocumentPackAzn: 5,
     },
+    meterUnitPricing: raw.meterUnitPricing,
+    tierSpendCeilings: raw.tierSpendCeilings,
     pricingModules: raw.pricingModules ?? [],
     pricingBundles: raw.pricingBundles ?? [],
   };

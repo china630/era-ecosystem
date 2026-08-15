@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
+  CARD_CONTAINER_CLASS,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -13,7 +14,6 @@ import {
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -140,18 +140,20 @@ export default function MedicalPage() {
 
   if (!can(PERMISSIONS.MEDICAL_MANAGE)) {
     return (
-      <AppShell maxWidthClass="max-w-3xl">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionMedical')}</p>
-      </AppShell>
+      <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionMedical')}</p>
     );
   }
 
   return (
-    <AppShell maxWidthClass="max-w-3xl">
+    <>
       <PageHeader title={t('title')} />
-      <StatusMessage>{msg}</StatusMessage>
+      {msg ? (
+        <p className="mb-4 rounded-lg border border-[#D5DADF] bg-white px-4 py-2 text-[13px] text-[#34495E]">
+          {msg}
+        </p>
+      ) : null}
 
-      <PageSection className="mb-6">
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('alerts')}</h2>
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setAlertModalOpen(true)}>
@@ -167,9 +169,9 @@ export default function MedicalPage() {
             </li>
           ))}
         </ul>
-      </PageSection>
+      </section>
 
-      <PageSection className="mb-6">
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('orderLab')}</h2>
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setLabModalOpen(true)}>
@@ -177,14 +179,14 @@ export default function MedicalPage() {
             {t('createOrderLab')}
           </button>
         </div>
-      </PageSection>
+      </section>
 
-      <PageSection>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('procedureFolio')}</h2>
         <button type="button" onClick={postProcedure} className={PRIMARY_BUTTON_CLASS}>
           {t('postProcedure')}
         </button>
-      </PageSection>
+      </section>
 
       <EraModal
         open={alertModalOpen}
@@ -280,6 +282,6 @@ export default function MedicalPage() {
           </div>
         </form>
       </EraModal>
-    </AppShell>
+    </>
   );
 }

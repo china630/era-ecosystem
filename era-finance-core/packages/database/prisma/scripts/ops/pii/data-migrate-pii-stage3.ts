@@ -4,15 +4,16 @@ import { closePrismaPool, createPrismaClient } from "../../../prisma-client";
 const ALG = "aes-256-gcm";
 const VERSION = "v1";
 
-function resolveKey(primaryName: string, fallbackName = "JWT_SECRET"): Buffer {
+function resolveKey(primaryName: string): Buffer {
   const raw = process.env[primaryName]?.trim();
   if (raw) {
     const asB64 = Buffer.from(raw, "base64");
     if (asB64.length >= 32) return createHash("sha256").update(asB64).digest();
     return createHash("sha256").update(raw).digest();
   }
-  const fallback = process.env[fallbackName] ?? "erafinance-dev-fallback";
-  return createHash("sha256").update(`${primaryName}:${fallback}`).digest();
+  throw new Error(
+    `${primaryName} is required (dedicated PII key; JWT_SECRET fallback removed)`,
+  );
 }
 
 function normalizeVoen(value: string): string {

@@ -2,13 +2,32 @@
 
 Entitlement keys: `hotel_distribution`, `hotel_banquets` (see `docs/adr/hotel-module-taxonomy.md`).
 
+**Acceptance SSOT:** [Hotel-Acceptance-System](../../../docs/acceptance/Hotel-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Hotel-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Hotel-Implementation-Matrix.md) · edition [`docs/editions/hotel.yaml`](../../../docs/editions/hotel.yaml)
+
+## Menu IA canon
+
+SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/hk/*`, Cash=`/front-cash/*`, NA=`/night-audit/*`, Distribution=`/distribution/*`, Settings=`/settings/*`.
+
+## Front office chain
+
+| Route | API | Role |
+|-------|-----|------|
+| /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
+| /fo/reservations | reservations grid | Stay list / arrivals |
+| /fo/rack | rack | Door tiles |
+| /fo/room-plan | room-plan API | Timeline bars |
+
 ## hotel_distribution (H-BL-30)
 
 | Route | API | Role |
 |-------|-----|------|
-| `/admin/contracts` | `GET/POST /api/admin/contracts`, `GET/PATCH /api/admin/contracts/:id`, `?utilization=1` | B2B sales contract CRUD + pick-up |
-| `/admin/contracts` allotments | `POST /api/admin/contracts/:id/allotments` | Nightly quota grid |
-| Reservation card | `salesContractId` on `POST /api/reservations`, `PATCH …/full` | Tag booking under contract |
+| `/distribution/contracts` | `GET/POST /api/admin/contracts`, `GET/PATCH /api/admin/contracts/:id`, `?utilization=1` | B2B sales contract CRUD + pick-up |
+| `/distribution/allotment-blocks` | `GET/POST /api/admin/allotment-blocks`, `GET/PATCH …/:id` (+`?pickup=1`), `POST …/:id/pickup` | Corporate blocks + pickup to booking |
+| `/distribution/channel` | `GET/POST/DELETE /api/channel/*`, `GET /api/channel/health`, `POST /api/channel/ota-cancel`, sync push/pull | Local CM (HOT-CH-01); live OTA STUB (HOT-CH-02) |
+| Groups / booking envelope | `GET/POST /api/reservation-groups`, `POST /api/reservation-groups/book`, `GET/PATCH/POST /api/reservation-groups/:id` | Booking = group; `/book` = envelope + N stays; POST id = add RoomStay |
+| Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
+| Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff |
+| Reservation card | `salesContractId` on `POST /api/reservations`, `PATCH …/full` | Tag booking under contract; StaysBar + names-incomplete gate |
 | `/admin/contract-pricing` | 410 redirect | Legacy — use `/admin/contracts` |
 | `/reports/agency-ledger`, `/reports/agency-profitability` | Finance city ledger reports | Agency AR boundary |
 
@@ -42,6 +61,7 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | Route | API | Role |
 |-------|-----|------|
 | (event consumer) | `POST /api/integration/staff-provision` | Upsert `User` keyed on `cpEmploymentId`; map `satelliteRole` → local RBAC |
+| (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
 
 Policy: hire master = orchestrator CP; hotel admin user create remains secondary seat guard only.
 
@@ -50,13 +70,68 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | Route | API | Role |
 |-------|-----|------|
 | `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Reception queue for department walk-in charges |
-| `/operations` | pending count badge + NA pre-check | `pendingSettlementNaPolicy` BLOCK/WARN |
+| `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal + shift filter + Z summary + close (HOT-CASH-06) |
+| `/front-cash/agency-ledger` | agency ledger + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL ops + Finance re-push (HOT-CL-03/04) |
+| `/folio/[reservationId]` | `POST /api/folios/settle`, deposits, void charge, BANK_TRANSFER | Guest folio settle (HOT-CASH-01) |
+| `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); polish H-BL-44 |
+| `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD reports pack (HOT-NA-03) |
+| `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
+| `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Filters + CSV (HOT-NA-04) |
+| `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Staged — ADR `hotel-year-end-calendar`; HOT-NA-05 STUB |
+| `/night-audit/logs` | `GET /api/reports/night-audit-runs` | End of day logs |
+| `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
 | Bridge in | `POST /api/settlement/pending` | fb-pos / clinic create pending (`POS_BRIDGE_SECRET`) |
 
 Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/adr/unified-settlement-hub.md`.
+
+## hotel_transfers / hotel_banquets (MVP)
+
+| Route | Status |
+|-------|--------|
+| `/transfers`, `/transfers/airport` | SHIPPED — folio routing charge, cancel/void, day-board print (HOT-XFER-01) |
+| `/banquets*` | SHIPPED — BEO + printable day sheet + preferred folio (HOT-BEO-01); not full Opera S&C |
+| Reservation card folio routing | `GET/PUT /api/reservations/[id]/folio-routing` | Stay overrides (HOT-CL-01) |
+
+## FO money / City Ledger (P5 — shipped 2026-08-03)
+
+| Capability | Coverage | Backlog |
+|------------|----------|---------|
+| Transfer to CL at checkout | HOT-CO-02 | H-BL-40 |
+| Deposit settle / checkout | HOT-CASH-03 | H-BL-41 |
+| Payment refunds | HOT-CASH-04 | H-BL-42 |
+| Discounts at settle/CO | HOT-CASH-05 | H-BL-43 |
+| NA polish | HOT-NA-02 | H-BL-44 |
+| Per-guest folio close | HOT-CO-03 | H-BL-45 |
+| Agency settlement ops | HOT-AG-02 | H-BL-46 |
+| List filters | HOT-UI-01 | H-BL-47 |
+| Finance AR terms/aging/match | HOT-CL-05 | H-BL-48 |
+
+**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`), `POST /api/folios/settle` (DEPOSIT/discount), `POST /api/folios/payments/[id]/refund`, `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: `/folio/[reservationId]`, chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`.
+
+**UAT:** `doc/UAT-SMOKE.md` §27 P5 FO money.
+
+ADR: `docs/adr/hotel-city-ledger-and-fo-money.md`. Boundary: `docs/HOSPITALITY_FINANCE_BOUNDARY.md`.
+See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CASH/CO/CL/NA/AG/UI.
+
+## Pricing components / BAR accounting base (2026-08)
+
+| Route | API | Role |
+|-------|-----|------|
+| `/settings/pricing-policy` | `GET/PATCH /api/admin/pricing-policy` | Feature flags: occupancy / load yield / child absolute |
+| `/settings/pricing-components` | `GET /api/admin/pricing-components`, `POST …/[code]/versions` | Versioned service fee, meals, COGS (+ history/audit) |
+| `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell + costFloor versions |
+| `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
+| `/distribution/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount) |
+| `/distribution/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON) |
+| `/executive/unit-economics` | `GET /api/executive/unit-economics` | HOT-UE-01 Phase A proxy CPOR + floor risk |
+
+ADR: `docs/adr/hotel-bar-accounting-vs-package-sell.md`, `docs/adr/hotel-occupancy-and-load-pricing-flags.md` · Nafta: `doc/nafta/BAR_DERIVED_2026.md`
 
 ## Related docs
 
 - `doc/nafta/B2B-GATE.md` — Nafta P4 gate defaults
 - `docs/adr/hotel-b2b-sales-contracts.md` — contract + allotment ADR
-- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts)
+- `docs/adr/hotel-city-ledger-and-fo-money.md` — FO money + CL ops vs Finance AR
+- `docs/adr/hotel-bar-accounting-vs-package-sell.md` — BAR vs package sell
+- `doc/BACKLOG-PRODUCTION.md` § P5
+- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money)

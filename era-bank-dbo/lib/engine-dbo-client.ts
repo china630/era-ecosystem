@@ -4,6 +4,28 @@ export type EngineDboError = {
   body?: unknown;
 };
 
+/** Nest often returns `{ message, error: "Bad Request" }` — prefer `message`. */
+function extractEngineErrorMessage(parsed: unknown, status: number): string {
+  if (parsed && typeof parsed === "object") {
+    const body = parsed as { message?: unknown; error?: unknown };
+    if (typeof body.message === "string" && body.message.trim()) {
+      return body.message;
+    }
+    if (Array.isArray(body.message) && body.message.length > 0) {
+      return String(body.message[0]);
+    }
+    if (
+      typeof body.error === "string" &&
+      body.error.trim() &&
+      body.error !== "Bad Request" &&
+      body.error !== "Unauthorized"
+    ) {
+      return body.error;
+    }
+  }
+  return `Engine request failed (${status})`;
+}
+
 export type EngineDboFetchOptions = Omit<RequestInit, "headers"> & {
   customerJwt?: string;
   headers?: Record<string, string>;
@@ -60,13 +82,7 @@ export async function engineDboFetch<T = unknown>(
   }
 
   if (!res.ok) {
-    const message =
-      parsed &&
-      typeof parsed === "object" &&
-      "error" in parsed &&
-      typeof (parsed as { error: unknown }).error === "string"
-        ? (parsed as { error: string }).error
-        : `Engine request failed (${res.status})`;
+    const message = extractEngineErrorMessage(parsed, res.status);
     const err: EngineDboError = { status: res.status, message, body: parsed };
     throw err;
   }
@@ -105,4 +121,14 @@ export const dboPaths = {
   cards: "/api/v1/dbo/cards",
   card: (id: string) => `/api/v1/dbo/cards/${id}`,
   cardTemporaryBlock: (id: string) => `/api/v1/dbo/cards/${id}/temporary-block`,
+  standingOrders: "/api/v1/dbo/standing-orders",
+  standingOrderPause: (id: string) => `/api/v1/dbo/standing-orders/${id}/pause`,
+  loanApplications: "/api/v1/dbo/loans/applications",
+  loanApplication: (id: string) => `/api/v1/dbo/loans/applications/${id}`,
+  loanApplicationSubmit: (id: string) =>
+    `/api/v1/dbo/loans/applications/${id}/submit`,
+  threeDsChallenges: "/api/v1/dbo/cards/3ds/challenges",
+  threeDsComplete: (id: string) =>
+    `/api/v1/dbo/cards/3ds/challenges/${id}/complete`,
+  islamicContracts: "/api/v1/dbo/islamic/contracts",
 } as const;

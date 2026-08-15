@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./orchestrator-gateway": {
+      "types": "./dist/orchestrator-gateway.d.ts",
+      "default": "./dist/orchestrator-gateway.js"
+    },
     "./ui": {
       "types": "./dist/ui/index.d.ts",
       "default": "./dist/ui/index.js"

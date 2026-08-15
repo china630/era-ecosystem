@@ -53,6 +53,7 @@ export async function middleware(request: NextRequest) {
       headers.set('x-user-role', session.role);
       headers.set('x-user-login', session.login);
       headers.set('x-user-fullname', session.fullName);
+      if (session.email) headers.set('x-user-email', session.email);
       return NextResponse.next({ request: { headers } });
     } catch {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });

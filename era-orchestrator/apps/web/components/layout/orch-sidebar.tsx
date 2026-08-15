@@ -61,9 +61,12 @@ export function OrchSidebar({
       organization:
         pathname.startsWith("/organizations") ||
         pathname.startsWith("/holdings") ||
-        pathname === "/settings" ||
-        pathname.startsWith("/settings/"),
+        pathname.startsWith("/settings/team"),
+      workforce: pathname.startsWith("/workspace/workforce"),
       resources: pathname === "/pricing" || pathname.startsWith("/help"),
+      settings:
+        pathname === "/settings" ||
+        pathname.startsWith("/settings/subscription"),
       platform: pathname.startsWith("/super-admin"),
     }),
     [pathname],
@@ -137,27 +140,93 @@ export function OrchSidebar({
             nested
             onNavClick={onNavClick}
           />
+        </CollapsibleNavSection>
+
+        <CollapsibleNavSection
+          sectionKey="workforce"
+          title={t("sectionWorkforce")}
+          icon={Users}
+          sectionActive={sections.workforce}
+        >
           <SideNavItem
-            href="/settings"
-            label={t("settings")}
-            isActive={pathname === "/settings"}
-            icon={Settings}
-            nested
-            onNavClick={onNavClick}
-          />
-          <SideNavItem
-            href="/settings/team"
-            label={t("team")}
-            isActive={pathname.startsWith("/settings/team")}
+            href="/workspace/workforce/employments"
+            label={t("wfEmployments")}
+            isActive={pathname.startsWith("/workspace/workforce/employments")}
             icon={Users}
             nested
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/settings/subscription"
-            label={t("subscription")}
-            isActive={pathname.startsWith("/settings/subscription")}
-            icon={CreditCard}
+            href="/workspace/workforce/org-structure"
+            label={t("wfOrgStructure")}
+            isActive={pathname.startsWith("/workspace/workforce/org-structure")}
+            icon={Building2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/positions"
+            label={t("wfPositions")}
+            isActive={pathname.startsWith("/workspace/workforce/positions")}
+            icon={Tags}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/absences"
+            label={t("wfAbsences")}
+            isActive={pathname.startsWith("/workspace/workforce/absences")}
+            icon={CalendarClock}
+            nested
+            onNavClick={onNavClick}
+          />
+          <CollapsibleNavSection
+            sectionKey="workforce-security"
+            title={t("wfSecurity")}
+            icon={ShieldAlert}
+            sectionActive={pathname.startsWith("/workspace/workforce/security")}
+          >
+            <SideNavItem
+              href="/workspace/workforce/security"
+              label={t("wfSecurityMatrix")}
+              isActive={
+                pathname === "/workspace/workforce/security" ||
+                pathname === "/workspace/workforce/security/"
+              }
+              icon={ShieldAlert}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href="/workspace/workforce/security/grants"
+              label={t("wfSecurityGrants")}
+              isActive={pathname.startsWith("/workspace/workforce/security/grants")}
+              icon={Shield}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href="/workspace/workforce/security/bindings"
+              label={t("wfSecurityBindings")}
+              isActive={pathname.startsWith("/workspace/workforce/security/bindings")}
+              icon={Users}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href="/workspace/workforce/security/audit"
+              label={t("wfSecurityAudit")}
+              isActive={pathname.startsWith("/workspace/workforce/security/audit")}
+              icon={ShieldAlert}
+              nested
+              onNavClick={onNavClick}
+            />
+          </CollapsibleNavSection>
+          <SideNavItem
+            href="/workspace/workforce/export"
+            label={t("wfExport")}
+            isActive={pathname.startsWith("/workspace/workforce/export")}
+            icon={Package}
             nested
             onNavClick={onNavClick}
           />
@@ -187,6 +256,30 @@ export function OrchSidebar({
           />
         </CollapsibleNavSection>
 
+        <CollapsibleNavSection
+          sectionKey="settings"
+          title={t("sectionSettings")}
+          icon={Settings}
+          sectionActive={sections.settings}
+        >
+          <SideNavItem
+            href="/settings/subscription"
+            label={t("subscription")}
+            isActive={pathname.startsWith("/settings/subscription")}
+            icon={CreditCard}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/settings/team"
+            label={t("team")}
+            isActive={pathname.startsWith("/settings/team")}
+            icon={Users}
+            nested
+            onNavClick={onNavClick}
+          />
+        </CollapsibleNavSection>
+
         {isSuperAdmin ? (
           <CollapsibleNavSection
             sectionKey="platform"
@@ -194,70 +287,95 @@ export function OrchSidebar({
             icon={Shield}
             sectionActive={sections.platform}
           >
-            <SideNavItem
-              href="/super-admin"
-              label={t("platformHub")}
-              isActive={pathname === "/super-admin"}
-              icon={Shield}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/billing/pricing"
-              label={t("platformBillingPricing")}
-              isActive={pathname.startsWith("/super-admin/billing/pricing")}
-              icon={Tags}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/billing/quotas"
-              label={t("platformBillingQuotas")}
-              isActive={pathname.startsWith("/super-admin/billing/quotas")}
-              icon={Gauge}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/billing/packages"
-              label={t("platformBillingPackages")}
-              isActive={pathname.startsWith("/super-admin/billing/packages")}
-              icon={Package}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/billing/trial-allowlist"
-              label={t("platformTrialAllowlist")}
-              isActive={pathname.startsWith("/super-admin/billing/trial-allowlist")}
-              icon={CalendarClock}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/mdm"
-              label={t("platformMdm")}
-              isActive={pathname === "/super-admin/mdm"}
+            <CollapsibleNavSection
+              sectionKey="platform-billing"
+              title={t("platformBilling")}
+              icon={CreditCard}
+              sectionActive={pathname.startsWith("/super-admin/billing")}
+            >
+              <SideNavItem
+                href="/super-admin/billing/pricing"
+                label={t("platformBillingModules")}
+                isActive={
+                  pathname.startsWith("/super-admin/billing/pricing") &&
+                  !pathname.startsWith("/super-admin/billing/pricing/addons")
+                }
+                icon={Tags}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/billing/pricing/addons"
+                label={t("platformBillingAddons")}
+                isActive={pathname.startsWith("/super-admin/billing/pricing/addons")}
+                icon={Tags}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/billing/quotas"
+                label={t("platformBillingQuotas")}
+                isActive={pathname.startsWith("/super-admin/billing/quotas")}
+                icon={Gauge}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/billing/packages"
+                label={t("platformBillingPackages")}
+                isActive={pathname.startsWith("/super-admin/billing/packages")}
+                icon={Package}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/billing/trial-allowlist"
+                label={t("platformTrialAllowlist")}
+                isActive={pathname.startsWith("/super-admin/billing/trial-allowlist")}
+                icon={CalendarClock}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/billing/settings"
+                label={t("platformBillingSettings")}
+                isActive={pathname.startsWith("/super-admin/billing/settings")}
+                icon={Settings}
+                nested
+                onNavClick={onNavClick}
+              />
+            </CollapsibleNavSection>
+            <CollapsibleNavSection
+              sectionKey="platform-mdm"
+              title={t("platformMdm")}
               icon={Database}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/mdm/companies"
-              label={t("platformMdmCompanies")}
-              isActive={pathname.startsWith("/super-admin/mdm/companies")}
-              icon={Building2}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/mdm/persons"
-              label={t("platformMdmPersons")}
-              isActive={pathname.startsWith("/super-admin/mdm/persons")}
-              icon={Building2}
-              nested
-              onNavClick={onNavClick}
-            />
+              sectionActive={pathname.startsWith("/super-admin/mdm")}
+            >
+              <SideNavItem
+                href="/super-admin/mdm"
+                label={t("platformMdmOverview")}
+                isActive={pathname === "/super-admin/mdm"}
+                icon={Database}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/mdm/companies"
+                label={t("platformMdmCompanies")}
+                isActive={pathname.startsWith("/super-admin/mdm/companies")}
+                icon={Building2}
+                nested
+                onNavClick={onNavClick}
+              />
+              <SideNavItem
+                href="/super-admin/mdm/persons"
+                label={t("platformMdmPersons")}
+                isActive={pathname.startsWith("/super-admin/mdm/persons")}
+                icon={Users}
+                nested
+                onNavClick={onNavClick}
+              />
+            </CollapsibleNavSection>
             <SideNavItem
               href="/super-admin/early-access"
               label={t("platformEarlyAccess")}

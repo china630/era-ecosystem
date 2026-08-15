@@ -7,16 +7,15 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.specialDatesTitle"
       apiPath={(gid) => `/api/guests/${gid}/special-dates`}
-      onAdd={async (guestId) => {
-        const dateType = window.prompt('Date type (Anniversary, Birthday…)');
-        const eventDate = window.prompt('Date (YYYY-MM-DD)');
-        if (!dateType?.trim() || !eventDate?.trim()) return;
-        await fetch(`/api/guests/${guestId}/special-dates`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dateType: dateType.trim(), eventDate }),
-        });
-      }}
+      addFields={[
+        { name: 'dateType', label: 'Date type', required: true, preset: 'shortText', placeholder: 'Anniversary, Birthday…' },
+        { name: 'eventDate', label: 'Date', required: true, preset: 'date', placeholder: 'YYYY-MM-DD' },
+      ]}
+      buildBody={(v) => ({
+        dateType: v.dateType.trim(),
+        eventDate: v.eventDate.trim(),
+      })}
+      searchKeys={['dateType', 'eventDate']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           {String(r.dateType)} — {String(r.eventDate).slice(0, 10)}

@@ -1,0 +1,4 @@
+product: logistics
+status: mvp
+pilot_ready: false
+notes: "Inherits COVERAGE until acceptance wave filled"

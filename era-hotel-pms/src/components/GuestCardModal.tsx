@@ -2,12 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { showApiError, showSuccess } from '@era/satellite-kit/ui';
+import {
+  MODAL_FULL_CLASS,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
+  showApiError,
+  showSuccess,
+} from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
 import { GuestCardToolbar } from '@/components/GuestCardToolbar';
 import { GuestCardLeftPanel } from '@/components/guest-card/GuestCardLeftPanel';
 import { GuestCardIdentityTab } from '@/components/guest-card/GuestCardIdentityTab';
-import { GuestCardDetailsTab } from '@/components/guest-card/GuestCardDetailsTab';
 import { GuestCardLoyaltyTab } from '@/components/guest-card/GuestCardLoyaltyTab';
 import { GuestCardTimeShareTab } from '@/components/guest-card/GuestCardTimeShareTab';
 import { GuestCardActionGrid } from '@/components/guest-card/GuestCardActionGrid';
@@ -26,6 +32,25 @@ const STAT_COLORS = [
   'text-indigo-600',
 ];
 
+const DETAIL_FIELD_KEYS = [
+  'birthDate',
+  'birthPlace',
+  'occupation',
+  'visaType',
+  'visaNumber',
+  'visaExpiry',
+  'maritalStatus',
+  'fatherName',
+  'motherName',
+  'verificationStatus',
+  'registrationNumber',
+  'vehiclePlate',
+  'hotelName',
+  'voen',
+  'marriageDate',
+  'bonusPercent',
+] as const;
+
 export default function GuestCardModal({
   open,
   guestId,
@@ -35,7 +60,10 @@ export default function GuestCardModal({
   open: boolean;
   guestId: string | null;
   onClose: () => void;
-  onCreated?: (guestId: string) => void;
+  onCreated?: (
+    guestId: string,
+    meta?: { fullName: string; firstName: string; lastName: string },
+  ) => void;
 }) {
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
@@ -208,7 +236,7 @@ export default function GuestCardModal({
     if (!guestId) {
       setLoading(false);
       setStats(null);
-      setTab('details');
+      setTab('identity');
       setGlobalPersonId(null);
       setTransientIdentity({ nationalIdFin: '', passportNumber: '' });
       setMdmProfile(null);
@@ -219,6 +247,36 @@ export default function GuestCardModal({
 
   const crmActions = crmTabButtons(guestId, crmBadges);
   const resActions = reservationDetailsButtons(guestId, crmBadges);
+
+  function handleLeftPanelChange(patch: Record<string, string | boolean>) {
+    if ('fullName' in patch) setFullName(String(patch.fullName));
+    if ('firstName' in patch) setFirstName(String(patch.firstName));
+    if ('lastName' in patch) setLastName(String(patch.lastName));
+    if ('title' in patch) setTitle(String(patch.title));
+    if ('gender' in patch) setGender(String(patch.gender));
+    if ('nationality' in patch) setNationality(String(patch.nationality));
+    if ('vipType' in patch) setVipType(String(patch.vipType));
+    if ('loyaltyTier' in patch) setLoyaltyTier(String(patch.loyaltyTier));
+    if ('greyList' in patch) setGreyList(Boolean(patch.greyList));
+    if ('problematic' in patch) setProblematic(Boolean(patch.problematic));
+    if ('phone' in patch) {
+      const v = String(patch.phone);
+      setPhone(v);
+      setDetailFields((f) => ({ ...f, phone: v }));
+    }
+    if ('email' in patch) {
+      const v = String(patch.email);
+      setEmail(v);
+      setDetailFields((f) => ({ ...f, email: v }));
+    }
+    const detailPatch: Record<string, string> = {};
+    for (const key of DETAIL_FIELD_KEYS) {
+      if (key in patch) detailPatch[key] = String(patch[key]);
+    }
+    if (Object.keys(detailPatch).length > 0) {
+      setDetailFields((f) => ({ ...f, ...detailPatch }));
+    }
+  }
 
   async function saveCreate() {
     setBusy(true);
@@ -245,7 +303,13 @@ export default function GuestCardModal({
       }
       showSuccess(tc('success'));
       if (onCreated && json.id) {
-        onCreated(json.id);
+        const full =
+          fullName.trim() || `${firstName} ${lastName}`.trim() || String(json.fullName ?? '');
+        onCreated(json.id, {
+          fullName: full,
+          firstName: firstName || String(json.firstName ?? ''),
+          lastName: lastName || String(json.lastName ?? ''),
+        });
         onClose();
       } else {
         onClose();
@@ -320,26 +384,26 @@ export default function GuestCardModal({
 
   if (!open) return null;
 
-  const statItems =
-    !isCreate && stats
-      ? [
-          { key: 'totalVisit', value: stats.totalVisit },
-          { key: 'totalNights', value: stats.totalNights },
-          { key: 'totalRevenue', value: stats.totalRevenue.toFixed(2) },
-          { key: 'avgRate', value: stats.avgRate.toFixed(2) },
-          { key: 'bonus', value: stats.bonus.toFixed(2) },
-          { key: 'surveys', value: stats.surveysAverage },
-          { key: 'comments', value: stats.comments },
-          { key: 'preferences', value: stats.preferences },
-        ]
-      : [];
+  const statItems = [
+    { key: 'totalVisit', value: stats?.totalVisit ?? 0 },
+    { key: 'totalNights', value: stats?.totalNights ?? 0 },
+    { key: 'totalRevenue', value: (stats?.totalRevenue ?? 0).toFixed(2) },
+    { key: 'avgRate', value: (stats?.avgRate ?? 0).toFixed(2) },
+    { key: 'bonus', value: (stats?.bonus ?? 0).toFixed(2) },
+    { key: 'surveys', value: stats?.surveysAverage ?? 0 },
+    { key: 'comments', value: stats?.comments ?? 0 },
+    { key: 'preferences', value: stats?.preferences ?? 0 },
+  ];
+
+  const rightTabs: GuestTabId[] = ['identity', 'crm', 'reservations', 'loyalty', 'timeshare'];
 
   return (
     <EraModal
       open={open}
       title={t('title')}
       onClose={onClose}
-      maxWidthClass="max-w-[min(96vw,1400px)] w-full max-h-[92vh] overflow-hidden flex flex-col"
+      maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
+      bodyClassName="mt-4 min-h-0 flex-1 overflow-hidden flex flex-col"
       footer={null}
     >
       <GuestCardToolbar
@@ -371,23 +435,21 @@ export default function GuestCardModal({
         <p className="py-8 text-center text-[13px] text-[#7F8C8D]">{tc('loading')}</p>
       ) : (
         <>
-          {statItems.length > 0 ? (
-            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-              {statItems.map((s, i) => (
-                <div
-                  key={s.key}
-                  className="rounded-lg border border-[#D5DADF] bg-white p-2 text-center shadow-sm"
-                >
-                  <p className={`text-[10px] font-medium uppercase ${STAT_COLORS[i % STAT_COLORS.length]}`}>
-                    {t(`stats.${s.key}` as 'stats.totalVisit')}
-                  </p>
-                  <p className="text-lg font-bold text-[#34495E]">{s.value}</p>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+            {statItems.map((s, i) => (
+              <div
+                key={s.key}
+                className="rounded-lg border border-[#D5DADF] bg-white p-2 text-center shadow-sm"
+              >
+                <p className={`text-[10px] font-medium uppercase ${STAT_COLORS[i % STAT_COLORS.length]}`}>
+                  {t(`stats.${s.key}` as 'stats.totalVisit')}
+                </p>
+                <p className="text-lg font-bold text-[#34495E]">{s.value}</p>
+              </div>
+            ))}
+          </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(260px,30%)_1fr]">
+          <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-2">
             <GuestCardLeftPanel
               fullName={fullName}
               firstName={firstName}
@@ -395,126 +457,126 @@ export default function GuestCardModal({
               title={title}
               gender={gender}
               nationality={nationality}
+              birthDate={detailFields.birthDate ?? ''}
+              birthPlace={detailFields.birthPlace ?? ''}
+              phone={detailFields.phone ?? phone}
+              email={detailFields.email ?? email}
               vipType={vipType}
+              loyaltyTier={loyaltyTier}
+              verificationStatus={detailFields.verificationStatus ?? ''}
               greyList={greyList}
               problematic={problematic}
+              phoneVerified={phoneVerified}
+              emailVerified={emailVerified}
+              voen={detailFields.voen ?? ''}
+              visaType={detailFields.visaType ?? ''}
+              visaNumber={detailFields.visaNumber ?? ''}
+              visaExpiry={detailFields.visaExpiry ?? ''}
+              registrationNumber={detailFields.registrationNumber ?? ''}
+              vehiclePlate={detailFields.vehiclePlate ?? ''}
+              occupation={detailFields.occupation ?? ''}
+              maritalStatus={detailFields.maritalStatus ?? ''}
+              fatherName={detailFields.fatherName ?? ''}
+              motherName={detailFields.motherName ?? ''}
+              marriageDate={detailFields.marriageDate ?? ''}
+              bonusPercent={detailFields.bonusPercent ?? ''}
+              hotelName={detailFields.hotelName ?? ''}
+              transientIdentity={transientIdentity}
+              mdmProfile={mdmProfile}
+              profileLoading={profileLoading}
+              guestId={guestId}
+              globalPersonId={globalPersonId}
               allergenCount={crmBadges.allergens}
               onIdReader={() => setIdReaderOpen(true)}
-              onChange={(patch) => {
-                if ('fullName' in patch) setFullName(String(patch.fullName));
-                if ('firstName' in patch) setFirstName(String(patch.firstName));
-                if ('lastName' in patch) setLastName(String(patch.lastName));
-                if ('title' in patch) setTitle(String(patch.title));
-                if ('gender' in patch) setGender(String(patch.gender));
-                if ('nationality' in patch) setNationality(String(patch.nationality));
-                if ('vipType' in patch) setVipType(String(patch.vipType));
-                if ('greyList' in patch) setGreyList(Boolean(patch.greyList));
-                if ('problematic' in patch) setProblematic(Boolean(patch.problematic));
+              onChange={handleLeftPanelChange}
+              onTransientChange={(key, value) =>
+                setTransientIdentity((f) => ({ ...f, [key]: value }))
+              }
+              onVerified={(key, value) => {
+                if (key === 'phoneVerified') setPhoneVerified(value);
+                else setEmailVerified(value);
               }}
+              onGlobalPersonIdChange={setGlobalPersonId}
+              onReload={() => (guestId ? void load() : undefined)}
             />
 
-            <div>
-              <div className="mb-2 flex flex-wrap gap-1 border-b border-[#D5DADF]">
-                {(['identity', 'crm', 'reservations', 'details', 'loyalty', 'timeshare'] as GuestTabId[]).map(
-                  (id) => (
-                    <button
-                      key={id}
-                      type="button"
-                      className={`px-2 py-1.5 text-[12px] ${tab === id ? 'border-b-2 border-[#2980B9] text-[#2980B9]' : 'text-[#7F8C8D]'}`}
-                      onClick={() => setTab(id)}
-                    >
+            <div className="flex min-h-0 min-w-0 flex-col">
+              <div className={TAB_STRIP_CLASS} role="tablist">
+                {rightTabs.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === id}
+                    className={tab === id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
+                    onClick={() => setTab(id)}
+                  >
+                    {
                       {
-                        {
-                          identity: t('tabIdentity'),
-                          crm: t('tabCrm'),
-                          reservations: t('tabReservations'),
-                          details: t('tabDetails'),
-                          loyalty: t('tabLoyalty'),
-                          timeshare: t('tabTimeShare'),
-                        }[id]
-                      }
-                    </button>
-                  ),
-                )}
+                        identity: t('tabIdentity'),
+                        crm: t('tabCrm'),
+                        reservations: t('tabReservations'),
+                        loyalty: t('tabLoyalty'),
+                        timeshare: t('tabTimeShare'),
+                      }[id]
+                    }
+                  </button>
+                ))}
               </div>
 
-              {tab === 'identity' && (
-                <GuestCardIdentityTab
-                  guestId={guestId}
-                  documents={documents}
-                  contacts={contacts}
-                  addresses={addresses}
-                  phone={detailFields.phone ?? phone}
-                  email={detailFields.email ?? email}
-                  gdprConfirmed={gdprConfirmed}
-                  smsConsent={smsConsent}
-                  whatsappConsent={whatsappConsent}
-                  phoneConsent={phoneConsent}
-                  emailConsent={emailConsent}
-                  callBack={callBack}
-                  onConsent={(key, value) => {
-                    const m: Record<string, (v: boolean) => void> = {
-                      gdprConfirmed: setGdprConfirmed,
-                      smsConsent: setSmsConsent,
-                      whatsappConsent: setWhatsappConsent,
-                      phoneConsent: setPhoneConsent,
-                      emailConsent: setEmailConsent,
-                      callBack: setCallBack,
-                    };
-                    m[key]?.(value);
-                  }}
-                  onReload={() => (guestId ? void loadAux(guestId) : undefined)}
-                />
-              )}
-              {tab === 'crm' && <GuestCardActionGrid actions={crmActions} />}
-              {tab === 'reservations' && <GuestCardActionGrid actions={resActions} />}
-              {tab === 'details' && (
-                <GuestCardDetailsTab
-                  fields={detailFields}
-                  transientIdentity={transientIdentity}
-                  mdmProfile={mdmProfile}
-                  profileLoading={profileLoading}
-                  phoneVerified={phoneVerified}
-                  emailVerified={emailVerified}
-                  fullName={fullName || `${firstName} ${lastName}`.trim()}
-                  nationality={nationality}
-                  guestId={guestId}
-                  globalPersonId={globalPersonId}
-                  onGlobalPersonIdChange={setGlobalPersonId}
-                  onReload={() => (guestId ? void load() : undefined)}
-                  onChange={(key, value) => setDetailFields((f) => ({ ...f, [key]: value }))}
-                  onTransientChange={(key, value) =>
-                    setTransientIdentity((f) => ({ ...f, [key]: value }))
-                  }
-                  onVerified={(key, value) => {
-                    if (key === 'phoneVerified') setPhoneVerified(value);
-                    else setEmailVerified(value);
-                  }}
-                />
-              )}
-              {tab === 'loyalty' && (
-                <GuestCardLoyaltyTab
-                  loyaltyTier={loyaltyTier}
-                  cards={loyaltyCards}
-                  pointEntries={loyaltyPoints}
-                  guestId={guestId}
-                  onReload={() => (guestId ? void loadAux(guestId) : undefined)}
-                  onReloadPoints={() =>
-                    guestId
-                      ? void fetch(`/api/guests/${guestId}/loyalty/points`)
-                          .then((r) => r.json())
-                          .then((list) => setLoyaltyPoints(Array.isArray(list) ? list : []))
-                      : undefined
-                  }
-                />
-              )}
-              {tab === 'timeshare' && (
-                <GuestCardTimeShareTab
-                  rows={timeShares}
-                  guestId={guestId}
-                  onReload={() => (guestId ? void loadAux(guestId) : undefined)}
-                />
-              )}
+              <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+                {tab === 'identity' && (
+                  <GuestCardIdentityTab
+                    guestId={guestId}
+                    documents={documents}
+                    contacts={contacts}
+                    addresses={addresses}
+                    gdprConfirmed={gdprConfirmed}
+                    smsConsent={smsConsent}
+                    whatsappConsent={whatsappConsent}
+                    phoneConsent={phoneConsent}
+                    emailConsent={emailConsent}
+                    callBack={callBack}
+                    onConsent={(key, value) => {
+                      const m: Record<string, (v: boolean) => void> = {
+                        gdprConfirmed: setGdprConfirmed,
+                        smsConsent: setSmsConsent,
+                        whatsappConsent: setWhatsappConsent,
+                        phoneConsent: setPhoneConsent,
+                        emailConsent: setEmailConsent,
+                        callBack: setCallBack,
+                      };
+                      m[key]?.(value);
+                    }}
+                    onReload={() => (guestId ? void loadAux(guestId) : undefined)}
+                  />
+                )}
+                {tab === 'crm' && <GuestCardActionGrid actions={crmActions} />}
+                {tab === 'reservations' && <GuestCardActionGrid actions={resActions} />}
+                {tab === 'loyalty' && (
+                  <GuestCardLoyaltyTab
+                    loyaltyTier={loyaltyTier}
+                    cards={loyaltyCards}
+                    pointEntries={loyaltyPoints}
+                    guestId={guestId}
+                    onReload={() => (guestId ? void loadAux(guestId) : undefined)}
+                    onReloadPoints={() =>
+                      guestId
+                        ? void fetch(`/api/guests/${guestId}/loyalty/points`)
+                            .then((r) => r.json())
+                            .then((list) => setLoyaltyPoints(Array.isArray(list) ? list : []))
+                        : undefined
+                    }
+                  />
+                )}
+                {tab === 'timeshare' && (
+                  <GuestCardTimeShareTab
+                    rows={timeShares}
+                    guestId={guestId}
+                    onReload={() => (guestId ? void loadAux(guestId) : undefined)}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </>

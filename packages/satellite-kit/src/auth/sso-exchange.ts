@@ -1,4 +1,5 @@
 import { SATELLITE_ROLE, mapFinanceRoleToSatellite } from "./roles";
+import { isPlatformSuperAdminUser } from "./platform-super-admin";
 import { signSatelliteSession } from "./session";
 import type { SsoExchangeBody } from "./sso-exchange-schema";
 
@@ -73,7 +74,15 @@ export async function executeSatelliteSsoExchange(
   prisma: SsoExchangePrisma,
 ): Promise<SsoExchangeResult> {
   const financeRole = body.financeRole ?? "USER";
-  const satelliteRole = mapFinanceRoleToSatellite(financeRole);
+  // Platform super-admins get full satellite access everywhere (BUSINESS_OWNER),
+  // regardless of their finance membership role.
+  const isPlatformSuperAdmin = isPlatformSuperAdminUser({
+    email: body.email,
+    login: body.email,
+  });
+  const satelliteRole = isPlatformSuperAdmin
+    ? SATELLITE_ROLE.BUSINESS_OWNER
+    : mapFinanceRoleToSatellite(financeRole);
   const isOwner = satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER;
   const roleCodes = [
     satelliteRole,

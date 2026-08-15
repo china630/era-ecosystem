@@ -1,4 +1,4 @@
-export type GuestTabId = 'identity' | 'crm' | 'reservations' | 'details' | 'loyalty' | 'timeshare';
+export type GuestTabId = 'identity' | 'crm' | 'reservations' | 'loyalty' | 'timeshare';
 
 export type GuestStats = {
   totalVisit: number;

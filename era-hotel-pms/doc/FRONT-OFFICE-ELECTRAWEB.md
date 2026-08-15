@@ -2,7 +2,21 @@
 
 > Operational guide for FO screens in **era-hotel-pms** (Wave A–D).  
 > Legacy AZ spec (`Electraweb/front office.md`) merged here and into [FRONT-OFFICE-STATUS.md](./FRONT-OFFICE-STATUS.md) (2026-06-04).  
-> **Line-by-line status (Done / Partial / Planned):** [FRONT-OFFICE-STATUS.md](./FRONT-OFFICE-STATUS.md).
+> **Line-by-line status (Done / Partial / Planned):** [FRONT-OFFICE-STATUS.md](./FRONT-OFFICE-STATUS.md).  
+> **Menu / URL canon (2026-08-07):** [MENU-IA-CANON.md](./MENU-IA-CANON.md) — all FO routes under `/fo/*`.
+
+
+## FO screen chain (2026-07-27)
+
+Operational priority (Electra-aligned) — see [ADR hotel-fo-screen-chain](../../docs/adr/hotel-fo-screen-chain.md):
+
+1. **Room type availability** `/fo/availability` — sellable Avl/Occ (unassigned stays occupy inventory).
+2. **Reservation list** `/fo/reservations` — stays queue; assign / check-in.
+3. **Room rack** `/fo/rack` — door tiles for the shift (HK + in-house).
+4. **Room plan** `/fo/room-plan` — timeline bars after roomId.
+5. Groups / allotment blocks — booking envelopes and corporate holds.
+
+Empty rack/plan cells = free **doors**, not sellable type inventory. Create form shows sellable preview and links to RTA when Avl = 0.
 
 ## Wave C — Core navigation order
 
@@ -10,6 +24,7 @@
 |---|--------|-------|--------|
 | 1 | **Əsas** (Executive cockpit / Daily Flash) | `/executive` | Cockpit: fact/plan occupancy, ADR/RevPAR compare, revenue MTD/YTD, receivables, status |
 | 1b | **Forecast** | `/executive/forecast` | Occupancy forecast 7 / 14 / 30 / 90 days |
+| 1c | **Unit economics** (planned) | `/executive/unit-economics` | CPOR / BEP / service-fee·food·medical COGS trends + below-floor risks — [ADR](../../docs/adr/hotel-bar-accounting-vs-package-sell.md) `HOT-UE-01` |
 | 2 | Room rack | `/` | Wave C — enriched tiles + DnD relocate |
 | 3 | Room plan | `/room-plan` | Wave C+ — split room column, arrow bars, hover tooltip, full width |
 | 4 | Reservation list | `/reports/reservations` | Wave C — notes column + filter |
@@ -33,9 +48,12 @@
 | Rack DnD relocate | `POST /api/reservations/:id/relocate` | C |
 | Room plan grouping/period dropdowns | `FilterMenuButton` | C |
 | Room plan layout | Fixed **room column** + scrollable timeline; full page width | C+ |
-| Room plan bars | Arrow tip on depart; **concave inward** start/end when checkout = check-in same cell | C+ |
+| Room plan bars | Half-day model; **arrow tip whenever checkout is in-window** (incl. turnover); concave notch only on next arrival left edge; flat right = clipped/continues past window (`room-plan/shapes.ts`) | C+ |
 | Room plan hover | Tooltip portal with res/guest/dates/agency/payment | C+ |
 | Unified reservation card create/edit | `ReservationCardModal` + `ReservationCardToolbar` | C |
+| Reservation card near-fullscreen | `MODAL_FULL_CLASS`; 50/50; Phase 0 panels Stay/Product/Pax/Class/Commercial + Assignment (stage) + Additional; create=edit | C+ |
+| Guest card FO parity | Same chrome; left FieldPanels (Identity/Classification/Documents+MDM/Other); right collections; no Details tab; create=edit | C+ |
+| Modal dismiss (kit) | Backdrop / Esc do not close; body scroll lock; overlay `pt-10` | C+ |
 | Guest card CRM grids | `GuestCardModal` tabs CRM / Res. details | C |
 | Notes in reservation list | `/api/reports/reservations-grid` | C |
 | Header AZ/RU/EN → org → bell → profile | `satellite-kit` + `HotelOpsShell` | A/B (D1: DOM = Locale → Bell → Org → Profile) |
@@ -58,7 +76,7 @@
 | Details tab editable fields | `GuestCardDetailsTab` + guest PATCH | D2 |
 | Loyalty / time-share grids | `GuestLoyaltyCard`, `GuestTimeShareAgreement` | D2 |
 | CRM notes/tasks routes | `/guests/:id/notes`, `/guests/:id/tasks` | D2 |
-| Group page UX | `GroupCreateModal`, `ReservationCardModal` from row | D2 |
+| Group page UX | `GroupBookingModal`, `ReservationCardModal` from code/guest | D2 |
 | Credit card / packages / tasks / routing | `ReservationCardSubModals` + APIs | D2 |
 
 ## Reservation Card

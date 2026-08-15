@@ -17,6 +17,7 @@ import { InAppNotificationBell } from "../components/notifications/in-app-notifi
 import { ExternalAuditEngagementBanner } from "../components/audit-hub/ExternalAuditEngagementBanner";
 import { AuditEngagementSessionProvider } from "../lib/audit-engagement-session";
 import { CompanySelectBlockingModal } from "../components/companies/company-select-blocking-modal";
+import { APP_MAIN_CONTENT_CLASS } from "@era/satellite-kit/ui";
 
 const quickActionItemClass =
   "block px-3 py-2 text-sm text-gray-700 hover:bg-action/10 hover:text-primary rounded-md mx-1";
@@ -570,7 +571,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           riskIndicator={<ComplianceRiskIndicator />}
         />
 
-        <main className="app-shell-main w-full min-w-0 px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8">
+        <main className={APP_MAIN_CONTENT_CLASS}>
           {ready && token ? <TrialBanner /> : null}
           {ready && token ? <ExternalAuditEngagementBanner /> : null}
           {ready && token && billingBanner ? (

@@ -123,3 +123,15 @@ export function createShipment(body: Record<string, unknown>, opts?: PlatformCal
 export function getSubscriptionMe(opts?: PlatformCallOptions) {
   return platformGet<Record<string, unknown>>("/v1/subscription/me", opts);
 }
+
+/**
+ * Server-side snapshot via internal service token (not user JWT).
+ * Prefer this from satellite BFFs / workers.
+ */
+export function getSubscriptionSnapshotInternal(opts: PlatformCallOptions & { organizationId: string }) {
+  const q = encodeURIComponent(opts.organizationId);
+  return platformGet<Record<string, unknown>>(
+    `/internal/v1/subscription/snapshot?organizationId=${q}`,
+    opts,
+  );
+}

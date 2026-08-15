@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, CreditCard, Home, LogOut, Send, ShieldCheck, Wallet } from "lucide-react";
+import { Building2, CreditCard, Home, LogOut, PieChart, Repeat, Send, ShieldCheck, Wallet } from "lucide-react";
 
 type Props = {
   children: React.ReactNode;
@@ -15,7 +15,8 @@ const retailItems = [
   { href: "/accounts", labelKey: "accounts" as const, icon: CreditCard },
   { href: "/cards", labelKey: "cards" as const, icon: Wallet },
   { href: "/payments", labelKey: "pay" as const, icon: Send },
-  { href: "/transfers", labelKey: "transfers" as const, icon: Building2 },
+  { href: "/pfm", labelKey: "pfm" as const, icon: PieChart },
+  { href: "/standing-orders", labelKey: "standingOrders" as const, icon: Repeat },
 ];
 
 const corporateExtra = { href: "/payments/approve", labelKey: "approve" as const, icon: ShieldCheck };
@@ -52,7 +53,7 @@ export default function DboShell({ children, channel = "RETAIL" }: Props) {
       <main className="flex-1 overflow-y-auto px-4 py-4 pb-24">{children}</main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-10 mx-auto max-w-lg border-t border-slate-200 bg-white">
-        <ul className="grid grid-cols-5 gap-1 px-2 py-2">
+        <ul className="grid grid-cols-6 gap-1 px-2 py-2">
           {navItems.map(({ href, labelKey, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (

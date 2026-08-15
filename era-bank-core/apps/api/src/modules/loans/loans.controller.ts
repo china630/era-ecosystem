@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { IsNumber, IsString } from "class-validator";
-import { BankAuthGuard } from "../../auth/bank-auth.guard";
+import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
+import { BankAuthGuard, type BankAuthRequest } from "../../auth/bank-auth.guard";
 import { LoansService } from "./loans.service";
 
 class OriginateLoanDto {
@@ -14,14 +14,37 @@ class OriginateLoanDto {
   @IsString()
   principalMinor!: string;
 
+  @IsOptional()
   @IsString()
-  currency!: string;
+  currency?: string;
 
+  @IsOptional()
   @IsNumber()
-  termMonths!: number;
+  termMonths?: number;
 
+  @IsOptional()
   @IsNumber()
-  rateAnnual!: number;
+  rateAnnual?: number;
+
+  @IsOptional()
+  @IsString()
+  collateralDescription?: string;
+
+  @IsOptional()
+  @IsString()
+  collateralAmountMinor?: string;
+
+  @IsOptional()
+  @IsString()
+  collateralType?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  pricingException?: boolean;
+
+  @IsOptional()
+  @IsString()
+  exceptionReason?: string;
 }
 
 class DisburseDto {
@@ -39,6 +62,27 @@ class RestructureDto {
   ifrs9Stage!: number;
 }
 
+class CollateralDto {
+  @IsString()
+  description!: string;
+
+  @IsString()
+  amountMinor!: string;
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
+}
+
+class BureauPullDto {
+  @IsString()
+  customerId!: string;
+}
+
 @ApiTags("loans")
 @ApiBearerAuth("service-token")
 @UseGuards(BankAuthGuard)
@@ -47,16 +91,54 @@ export class LoansController {
   constructor(private readonly loans: LoansService) {}
 
   @Get()
-  list() {
+  list(@Query("pendingPricing") pendingPricing?: string) {
+    if (pendingPricing === "1" || pendingPricing === "true") {
+      return this.loans.listPendingPricing();
+    }
     return this.loans.list();
   }
 
   @Post()
-  originate(@Body() dto: OriginateLoanDto) {
+  originate(@Body() dto: OriginateLoanDto, @Req() req: BankAuthRequest) {
     return this.loans.originate({
-      ...dto,
+      customerId: dto.customerId,
+      productTemplateId: dto.productTemplateId,
       principalMinor: BigInt(dto.principalMinor),
+      currency: dto.currency,
+      termMonths: dto.termMonths,
+      rateAnnual: dto.rateAnnual,
+      makerUserId: req.userId ?? "service",
+      pricingException: dto.pricingException,
+      exceptionReason: dto.exceptionReason,
+      collateral: dto.collateralDescription
+        ? {
+            description: dto.collateralDescription,
+            amountMinor: dto.collateralAmountMinor ?? "0",
+            currency: dto.currency || "AZN",
+            type: dto.collateralType,
+          }
+        : undefined,
     });
+  }
+
+  @Post(":id/pricing-approve")
+  pricingApprove(@Param("id") id: string, @Req() req: BankAuthRequest) {
+    return this.loans.pricingApprove(id, req.userId ?? "service");
+  }
+
+  @Post(":id/pricing-reject")
+  pricingReject(@Param("id") id: string, @Req() req: BankAuthRequest) {
+    return this.loans.pricingReject(id, req.userId ?? "service");
+  }
+
+  @Post(":id/rate-reset")
+  rateReset(@Param("id") id: string) {
+    return this.loans.resetFloatingRate(id);
+  }
+
+  @Post("bureau/pull")
+  bureauPull(@Body() dto: BureauPullDto) {
+    return this.loans.pullBureau(dto.customerId);
   }
 
   @Get(":id/schedule")
@@ -67,6 +149,16 @@ export class LoansController {
   @Get(":id")
   get(@Param("id") id: string) {
     return this.loans.getById(id);
+  }
+
+  @Post(":id/collateral")
+  setCollateral(@Param("id") id: string, @Body() dto: CollateralDto) {
+    return this.loans.setCollateral(id, {
+      description: dto.description,
+      amountMinor: dto.amountMinor,
+      currency: dto.currency ?? "AZN",
+      type: dto.type,
+    });
   }
 
   @Post(":id/disburse")
@@ -80,7 +172,11 @@ export class LoansController {
   }
 
   @Post(":id/restructure")
-  restructure(@Param("id") id: string, @Body() dto: RestructureDto) {
-    return this.loans.restructure(id, dto.ifrs9Stage);
+  restructure(
+    @Param("id") id: string,
+    @Body() dto: RestructureDto,
+    @Req() req: BankAuthRequest,
+  ) {
+    return this.loans.restructure(id, dto.ifrs9Stage, req.userId ?? "service");
   }
 }

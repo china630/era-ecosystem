@@ -85,6 +85,7 @@ enum TxnType {
   PAYMENT
   REVERSAL
   OPENING
+  CONTINGENT
 }
 
 enum TxnStatus {
@@ -101,6 +102,18 @@ enum ProductKind {
   LOAN_ANNUITY
   LOAN_DIFF
   CARD
+  CALL_DEPOSIT
+  STRUCTURED_DEPOSIT
+  LOAN_LINE
+  LOAN_MORTGAGE
+  LOAN_LEASE
+  LOAN_FACTORING
+  LOAN_MFI
+  LOAN_TRADE
+  LOAN_SYNDICATED
+  LOAN_PROJECT
+  MURABAHA
+  MUDARABAH
 }
 
 enum ProductStatus {
@@ -142,6 +155,7 @@ enum DepositStatus {
   MATURED
   CLOSED
   EARLY_CLOSED
+  PENDING_PRICING_APPROVAL
 }
 
 enum LoanStatus {
@@ -152,6 +166,7 @@ enum LoanStatus {
   OVERDUE
   CLOSED
   WRITTEN_OFF
+  PENDING_PRICING_APPROVAL
 }
 
 enum InstallmentStatus {
@@ -338,21 +353,38 @@ model Branch {
   @@map("branches")
 }
 
+model BranchLimit {
+  id          String   @id @default(cuid())
+  bankOrgId   String   @map("bank_org_id")
+  branchId    String   @map("branch_id")
+  limitCode   String   @map("limit_code")
+  amountMinor BigInt   @map("amount_minor")
+  currency    String   @default("AZN")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, branchId, limitCode])
+  @@index([bankOrgId, branchId])
+  @@map("branch_limits")
+}
+
 model BankCustomer {
-  id             String         @id @default(cuid())
-  bankOrgId      String         @map("bank_org_id")
-  globalPersonId String?        @map("global_person_id")
-  voen           String?
-  customerType   CustomerType   @map("customer_type")
-  riskRating     RiskRating     @default(LOW) @map("risk_rating")
-  pepFlag        Boolean        @default(false) @map("pep_flag")
-  kycStatus      KycStatus      @default(PENDING) @map("kyc_status")
-  kycTrustTier   TrustTier      @default(SELF_DECLARED) @map("kyc_trust_tier")
-  sourceOfFunds  String?        @map("source_of_funds")
-  homeBranchId   String         @map("home_branch_id")
-  status         CustomerStatus @default(ACTIVE)
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+  id                 String         @id @default(cuid())
+  bankOrgId          String         @map("bank_org_id")
+  globalPersonId     String?        @map("global_person_id")
+  voen               String?
+  customerType       CustomerType   @map("customer_type")
+  riskRating         RiskRating     @default(LOW) @map("risk_rating")
+  pepFlag            Boolean        @default(false) @map("pep_flag")
+  /// CAP-AML-ML placeholder score (lab only).
+  mlScorePlaceholder Int?           @map("ml_score_placeholder")
+  kycStatus          KycStatus      @default(PENDING) @map("kyc_status")
+  kycTrustTier       TrustTier      @default(SELF_DECLARED) @map("kyc_trust_tier")
+  sourceOfFunds      String?        @map("source_of_funds")
+  homeBranchId       String         @map("home_branch_id")
+  status             CustomerStatus @default(ACTIVE)
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
 
   beneficialOwners BeneficialOwner[]
 
@@ -389,6 +421,7 @@ model Account {
   ledgerBalanceMinor    BigInt        @default(0) @map("ledger_balance_minor")
   availableBalanceMinor BigInt        @default(0) @map("available_balance_minor")
   overdraftLimitMinor   BigInt        @default(0) @map("overdraft_limit_minor")
+  dailyDebitLimitMinor  BigInt        @default(0) @map("daily_debit_limit_minor")
   createdAt             DateTime      @default(now()) @map("created_at")
   updatedAt             DateTime      @updatedAt @map("updated_at")
 
@@ -401,15 +434,17 @@ model Account {
 }
 
 model AccountHold {
-  id          String     @id @default(cuid())
-  bankOrgId   String     @map("bank_org_id")
-  accountId   String     @map("account_id")
-  amountMinor BigInt     @map("amount_minor")
-  reason      HoldReason
-  status      HoldStatus @default(ACTIVE)
-  expiresAt   DateTime?  @map("expires_at")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  id            String     @id @default(cuid())
+  bankOrgId     String     @map("bank_org_id")
+  accountId     String     @map("account_id")
+  amountMinor   BigInt     @map("amount_minor")
+  reason        HoldReason
+  status        HoldStatus @default(ACTIVE)
+  reference     String?
+  authorityCode String?    @map("authority_code")
+  expiresAt     DateTime?  @map("expires_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
   account Account @relation(fields: [accountId], references: [id])
 
@@ -547,66 +582,207 @@ model PaymentRailMessage {
 // ─── Deposits L2 ────────────────────────────────────────────────────────────
 
 model DepositContract {
-  id                   String        @id @default(cuid())
-  bankOrgId            String        @map("bank_org_id")
-  accountId            String        @map("account_id")
-  customerId           String        @map("customer_id")
-  productTemplateId    String        @map("product_template_id")
-  principalMinor       BigInt        @map("principal_minor")
-  accruedInterestMinor BigInt        @default(0) @map("accrued_interest_minor")
-  currency             String        @default("AZN")
-  openedAt             DateTime      @map("opened_at")
-  maturityDate         DateTime?     @map("maturity_date")
-  status               DepositStatus @default(ACTIVE)
-  adifTagged           Boolean       @default(false) @map("adif_tagged")
-  createdAt            DateTime      @default(now()) @map("created_at")
-  updatedAt            DateTime      @updatedAt @map("updated_at")
+  id                     String        @id @default(cuid())
+  bankOrgId              String        @map("bank_org_id")
+  accountId              String        @map("account_id")
+  customerId             String        @map("customer_id")
+  productTemplateId      String        @map("product_template_id")
+  principalMinor         BigInt        @map("principal_minor")
+  accruedInterestMinor   BigInt        @default(0) @map("accrued_interest_minor")
+  /// Contract rate locked at open (annual fraction). EOD accrual uses this, not live product params.
+  rateAnnual             Decimal       @default(0) @map("rate_annual") @db.Decimal(9, 6)
+  dayCountConvention     String        @default("ACT_365") @map("day_count_convention")
+  rateType               String        @default("FIXED") @map("rate_type")
+  indexKey               String?       @map("index_key")
+  spreadBps              Int?          @map("spread_bps")
+  nextResetDate          DateTime?     @map("next_reset_date")
+  lastAccrualDate        DateTime?     @map("last_accrual_date")
+  currency               String        @default("AZN")
+  openedAt               DateTime      @map("opened_at")
+  maturityDate           DateTime?     @map("maturity_date")
+  status                 DepositStatus @default(ACTIVE)
+  adifTagged             Boolean       @default(false) @map("adif_tagged")
+  indexLinkKey           String?       @map("index_link_key")
+  callNoticeDays         Int?          @map("call_notice_days")
+  makerUserId            String?       @map("maker_user_id")
+  pricingExceptionReason String?       @map("pricing_exception_reason")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
 
   @@index([bankOrgId, customerId])
   @@index([accountId])
+  @@index([bankOrgId, status])
   @@map("deposit_contracts")
 }
 
 // ─── Loans L2 ───────────────────────────────────────────────────────────────
 
 model LoanContract {
-  id                String     @id @default(cuid())
-  bankOrgId         String     @map("bank_org_id")
-  customerId        String     @map("customer_id")
-  accountId         String?    @map("account_id")
-  productTemplateId String     @map("product_template_id")
-  principalMinor    BigInt     @map("principal_minor")
-  outstandingMinor  BigInt     @map("outstanding_minor")
-  currency          String     @default("AZN")
-  status            LoanStatus @default(DRAFT)
-  ifrs9Stage        Int        @default(1) @map("ifrs9_stage")
-  akbScore          Int?       @map("akb_score")
-  collateralRef     String?    @map("collateral_ref")
-  disbursedAt       DateTime?  @map("disbursed_at")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
+  id                     String     @id @default(cuid())
+  bankOrgId              String     @map("bank_org_id")
+  customerId             String     @map("customer_id")
+  accountId              String?    @map("account_id")
+  productTemplateId      String     @map("product_template_id")
+  principalMinor         BigInt     @map("principal_minor")
+  outstandingMinor       BigInt     @map("outstanding_minor")
+  rateAnnual             Decimal    @default(0) @map("rate_annual") @db.Decimal(9, 6)
+  dayCountConvention     String     @default("ACT_365") @map("day_count_convention")
+  rateType               String     @default("FIXED") @map("rate_type")
+  indexKey               String?    @map("index_key")
+  spreadBps              Int?       @map("spread_bps")
+  nextResetDate          DateTime?  @map("next_reset_date")
+  termMonths             Int?       @map("term_months")
+  currency               String     @default("AZN")
+  status                 LoanStatus @default(DRAFT)
+  ifrs9Stage             Int        @default(1) @map("ifrs9_stage")
+  akbScore               Int?       @map("akb_score")
+  collateralRef          String?    @map("collateral_ref")
+  assetRef               String?    @map("asset_ref")
+  invoiceRef             String?    @map("invoice_ref")
+  tradeRef               String?    @map("trade_ref")
+  projectRef             String?    @map("project_ref")
+  participationPct       Decimal?   @map("participation_pct") @db.Decimal(7, 4)
+  leadBankName           String?    @map("lead_bank_name")
+  disbursedAt            DateTime?  @map("disbursed_at")
+  makerUserId            String?    @map("maker_user_id")
+  pricingExceptionReason String?    @map("pricing_exception_reason")
+  createdAt              DateTime   @default(now()) @map("created_at")
+  updatedAt              DateTime   @updatedAt @map("updated_at")
 
   installments LoanScheduleInstallment[]
 
   @@index([bankOrgId, customerId])
+  @@index([bankOrgId, status])
   @@map("loan_contracts")
 }
 
 model LoanScheduleInstallment {
-  id             String            @id @default(cuid())
-  bankOrgId      String            @map("bank_org_id")
-  loanId         String            @map("loan_id")
-  sequenceNo     Int               @map("sequence_no")
-  dueDate        DateTime          @map("due_date")
-  principalMinor BigInt            @map("principal_minor")
-  interestMinor  BigInt            @map("interest_minor")
-  status         InstallmentStatus @default(SCHEDULED)
-  paidAt         DateTime?         @map("paid_at")
+  id                 String            @id @default(cuid())
+  bankOrgId          String            @map("bank_org_id")
+  loanId             String            @map("loan_id")
+  sequenceNo         Int               @map("sequence_no")
+  dueDate            DateTime          @map("due_date")
+  principalMinor     BigInt            @map("principal_minor")
+  interestMinor      BigInt            @map("interest_minor")
+  paidPrincipalMinor BigInt            @default(0) @map("paid_principal_minor")
+  paidInterestMinor  BigInt            @default(0) @map("paid_interest_minor")
+  status             InstallmentStatus @default(SCHEDULED)
+  paidAt             DateTime?         @map("paid_at")
 
   loan LoanContract @relation(fields: [loanId], references: [id])
 
   @@unique([loanId, sequenceNo])
   @@map("loan_schedule_installments")
+}
+
+// ─── Risk ECL L2 (stage flat-rate MVP — not certified IFRS 9) ────────────────
+
+enum EclRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PENDING_PROVISION_APPROVAL
+}
+
+model EclCalculationRun {
+  id                  String       @id @default(cuid())
+  bankOrgId           String       @map("bank_org_id")
+  asOfDate            DateTime     @map("as_of_date")
+  status              EclRunStatus @default(RUNNING)
+  totalEadMinor       BigInt       @default(0) @map("total_ead_minor")
+  totalEclMinor       BigInt       @default(0) @map("total_ecl_minor")
+  provisionDeltaMinor BigInt       @default(0) @map("provision_delta_minor")
+  postingTxnId        String?      @map("posting_txn_id")
+  makerUserId         String?      @map("maker_user_id")
+  checkerUserId       String?      @map("checker_user_id")
+  methodology         String       @default("STAGE_FLAT") @map("methodology")
+  note                String?
+  createdAt           DateTime     @default(now()) @map("created_at")
+  completedAt         DateTime?    @map("completed_at")
+
+  results EclResult[]
+
+  @@index([bankOrgId, asOfDate])
+  @@index([bankOrgId, status])
+  @@map("ecl_calculation_runs")
+}
+
+model EclResult {
+  id              String @id @default(cuid())
+  bankOrgId       String @map("bank_org_id")
+  runId           String @map("run_id")
+  loanId          String @map("loan_id")
+  stage           Int
+  eadMinor        BigInt @map("ead_minor")
+  eclMinor        BigInt @map("ecl_minor")
+  stageRate       Float  @map("stage_rate")
+  pd              Float? @map("pd")
+  lgd             Float? @map("lgd")
+  collateralMinor BigInt @default(0) @map("collateral_minor")
+
+  run EclCalculationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([bankOrgId, loanId])
+  @@map("ecl_results")
+}
+
+model RateIndexQuote {
+  id         String   @id @default(cuid())
+  bankOrgId  String   @map("bank_org_id")
+  indexKey   String   @map("index_key")
+  asOfDate   DateTime @map("as_of_date")
+  rateAnnual Decimal  @map("rate_annual") @db.Decimal(9, 6)
+  source     String   @default("STUB")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([bankOrgId, indexKey, asOfDate])
+  @@index([bankOrgId, indexKey])
+  @@map("rate_index_quotes")
+}
+
+model RwaSnapshot {
+  id             String   @id @default(cuid())
+  bankOrgId      String   @map("bank_org_id")
+  asOfDate       DateTime @map("as_of_date")
+  totalRwaMinor  BigInt   @map("total_rwa_minor")
+  creditRwaMinor BigInt   @default(0) @map("credit_rwa_minor")
+  detailsJson    Json?    @map("details_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, asOfDate])
+  @@map("rwa_snapshots")
+}
+
+model CapitalAdequacySnapshot {
+  id                String   @id @default(cuid())
+  bankOrgId         String   @map("bank_org_id")
+  asOfDate          DateTime @map("as_of_date")
+  tier1CapitalMinor BigInt   @map("tier1_capital_minor")
+  totalCapitalMinor BigInt   @map("total_capital_minor")
+  rwaMinor          BigInt   @map("rwa_minor")
+  carRatio          Float    @map("car_ratio")
+  tier1Ratio        Float    @map("tier1_ratio")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, asOfDate])
+  @@map("capital_adequacy_snapshots")
+}
+
+/// Versioned PD/LGD matrices for certified-oriented ECL (lab seed).
+model EclParameterSet {
+  id         String   @id @default(cuid())
+  bankOrgId  String   @map("bank_org_id")
+  version    String
+  asOfDate   DateTime @map("as_of_date")
+  /// JSON: { "pdByStage": { "1": 0.01, ... }, "lgdUnsecured": 0.45, "lgdSecuredFloor": 0.1 }
+  paramsJson Json     @map("params_json")
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([bankOrgId, version])
+  @@index([bankOrgId, active])
+  @@map("ecl_parameter_sets")
 }
 
 // ─── AML L2 ─────────────────────────────────────────────────────────────────
@@ -929,4 +1105,1253 @@ model LiquidityGapSnapshot {
 
   @@index([bankOrgId, asOfDate])
   @@map("liquidity_gap_snapshots")
+}
+
+// ─── BE-Lite / Deep extensions (trade, collections, cash, fees, …) ──────────
+
+enum FeeTariffStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum SafeDepositBoxStatus {
+  AVAILABLE
+  RENTED
+  CLOSED
+}
+
+enum CashMovementKind {
+  TILL_TO_VAULT
+  VAULT_TO_TILL
+  CIT_IN
+  CIT_OUT
+  TELLER_IN
+  TELLER_OUT
+}
+
+enum CashMovementStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum InventoryItemKind {
+  BLANK_FORM
+  CARD_STOCK
+  CHEQUEBOOK
+  OTHER
+}
+
+enum BranchQueueStatus {
+  WAITING
+  SERVING
+  DONE
+  CANCELLED
+}
+
+enum LoanApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  BOOKED
+}
+
+enum CreditLineStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+}
+
+enum DrawdownStatus {
+  REQUESTED
+  APPROVED
+  DISBURSED
+  REJECTED
+}
+
+enum ForbearanceStage {
+  NONE
+  WATCH
+  PAYMENT_HOLIDAY
+  TERM_EXTENSION
+  RESTRUCTURE
+}
+
+enum ScfProgramStatus {
+  DRAFT
+  ACTIVE
+  FUNDED
+  CLOSED
+}
+
+enum CollectionCaseStatus {
+  OPEN
+  ASSIGNED
+  PTP
+  LEGAL
+  CLOSED
+  WRITTEN_OFF
+}
+
+enum StandingOrderStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  COMPLETED
+}
+
+enum DirectDebitMandateStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum VirtualAccountStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum ChequeStatus {
+  ISSUED
+  PRESENTED
+  CLEARED
+  BOUNCED
+  CANCELLED
+}
+
+enum SweepRuleStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum TradeInstrumentStatus {
+  DRAFT
+  ISSUED
+  ADVISED
+  AMENDED
+  DOCUMENTS_PRESENTED
+  PAID
+  REFUSED
+  RELEASED
+  CANCELLED
+  CLAIMED
+}
+
+enum TradeSwiftMessageStatus {
+  QUEUED
+  SENT_STUB
+  ACKED_STUB
+  FAILED
+}
+
+enum CardDisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  WON
+  LOST
+  WRITTEN_OFF
+}
+
+enum ThreeDsChallengeStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum CustodyPositionStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum IslamicContractStatus {
+  DRAFT
+  ACTIVE
+  MATURED
+  CLOSED
+}
+
+enum H2hJobStatus {
+  RECEIVED
+  PARSED
+  APPLIED
+  FAILED
+}
+
+enum ObConsentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum AmlCaseStatus {
+  OPEN
+  INVESTIGATING
+  SAR_DRAFT
+  SAR_FILED
+  CLOSED
+}
+
+enum OpRiskEventStatus {
+  OPEN
+  CLOSED
+}
+
+model FeeTariff {
+  id          String          @id @default(cuid())
+  bankOrgId   String          @map("bank_org_id")
+  code        String
+  name        String
+  currency    String          @default("AZN")
+  amountMinor BigInt          @map("amount_minor")
+  glIncomeKey String          @default("FEE_INCOME") @map("gl_income_key")
+  status      FeeTariffStatus @default(DRAFT)
+  paramsJson  Json            @default("{}") @map("params_json")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, code])
+  @@index([bankOrgId, status])
+  @@map("fee_tariffs")
+}
+
+model RelationshipPackage {
+  id         String   @id @default(cuid())
+  bankOrgId  String   @map("bank_org_id")
+  code       String
+  name       String
+  paramsJson Json     @default("{}") @map("params_json")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  links   RelationshipPackageLink[]
+  tariffs RelationshipPackageTariff[]
+
+  @@unique([bankOrgId, code])
+  @@map("relationship_packages")
+}
+
+model RelationshipPackageTariff {
+  id          String   @id @default(cuid())
+  bankOrgId   String   @map("bank_org_id")
+  packageId   String   @map("package_id")
+  tariffCode  String   @map("tariff_code")
+  waiverType  String   @map("waiver_type")
+  waiverValue BigInt?  @map("waiver_value")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  package RelationshipPackage @relation(fields: [packageId], references: [id])
+
+  @@unique([packageId, tariffCode])
+  @@index([bankOrgId, packageId])
+  @@map("relationship_package_tariffs")
+}
+
+model RelationshipPackageLink {
+  id         String   @id @default(cuid())
+  bankOrgId  String   @map("bank_org_id")
+  packageId  String   @map("package_id")
+  customerId String   @map("customer_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  package RelationshipPackage @relation(fields: [packageId], references: [id])
+
+  @@unique([packageId, customerId])
+  @@index([bankOrgId, customerId])
+  @@map("relationship_package_links")
+}
+
+model SafeDepositBox {
+  id           String               @id @default(cuid())
+  bankOrgId    String               @map("bank_org_id")
+  branchId     String               @map("branch_id")
+  boxNumber    String               @map("box_number")
+  customerId   String?              @map("customer_id")
+  rentMinor    BigInt               @default(0) @map("rent_minor")
+  currency     String               @default("AZN")
+  status       SafeDepositBoxStatus @default(AVAILABLE)
+  rentedAt     DateTime?            @map("rented_at")
+  nextRentDate DateTime?            @map("next_rent_date")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, branchId, boxNumber])
+  @@index([bankOrgId, status])
+  @@map("safe_deposit_boxes")
+}
+
+model CashMovement {
+  id             String             @id @default(cuid())
+  bankOrgId      String             @map("bank_org_id")
+  branchId       String             @map("branch_id")
+  kind           CashMovementKind
+  amountMinor    BigInt             @map("amount_minor")
+  currency       String             @default("AZN")
+  status         CashMovementStatus @default(DRAFT)
+  reference      String?
+  idempotencyKey String             @unique @map("idempotency_key")
+  journalTxnId   String?            @map("journal_txn_id")
+  makerUserId    String?            @map("maker_user_id")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, branchId, status])
+  @@map("cash_movements")
+}
+
+model InventoryItem {
+  id        String            @id @default(cuid())
+  bankOrgId String            @map("bank_org_id")
+  branchId  String            @map("branch_id")
+  kind      InventoryItemKind
+  sku       String
+  name      String
+  quantity  Int               @default(0)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  movements InventoryMovement[]
+
+  @@unique([bankOrgId, branchId, sku])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id           String   @id @default(cuid())
+  bankOrgId    String   @map("bank_org_id")
+  itemId       String   @map("item_id")
+  deltaQty     Int      @map("delta_qty")
+  reason       String
+  makerUserId  String?  @map("maker_user_id")
+  journalTxnId String?  @map("journal_txn_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  item InventoryItem @relation(fields: [itemId], references: [id])
+
+  @@index([bankOrgId, itemId])
+  @@map("inventory_movements")
+}
+
+model BranchQueueTicket {
+  id             String            @id @default(cuid())
+  bankOrgId      String            @map("bank_org_id")
+  branchId       String            @map("branch_id")
+  ticketNo       Int               @map("ticket_no")
+  customerId     String?           @map("customer_id")
+  serviceKey     String            @default("GENERAL") @map("service_key")
+  assigneeUserId String?           @map("assignee_user_id")
+  crmNotes       Json              @default("[]") @map("crm_notes")
+  status         BranchQueueStatus @default(WAITING)
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, branchId, ticketNo])
+  @@index([bankOrgId, branchId, status])
+  @@map("branch_queue_tickets")
+}
+
+model CollateralValuation {
+  id          String   @id @default(cuid())
+  bankOrgId   String   @map("bank_org_id")
+  loanId      String   @map("loan_id")
+  amountMinor BigInt   @map("amount_minor")
+  currency    String   @default("AZN")
+  valuedAt    DateTime @map("valued_at")
+  valuerNote  String?  @map("valuer_note")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, loanId])
+  @@map("collateral_valuations")
+}
+
+model LienRegister {
+  id           String    @id @default(cuid())
+  bankOrgId    String    @map("bank_org_id")
+  loanId       String    @map("loan_id")
+  lienRef      String    @map("lien_ref")
+  description  String
+  amountMinor  BigInt    @map("amount_minor")
+  currency     String    @default("AZN")
+  registeredAt DateTime  @map("registered_at")
+  releasedAt   DateTime? @map("released_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@unique([bankOrgId, lienRef])
+  @@index([bankOrgId, loanId])
+  @@map("lien_registers")
+}
+
+model CreditDecisionRequest {
+  id            String   @id @default(cuid())
+  bankOrgId     String   @map("bank_org_id")
+  customerId    String   @map("customer_id")
+  applicationId String?  @map("application_id")
+  rulesJson     Json     @map("rules_json")
+  score         Int?
+  decision      String?
+  reasonCodes   Json     @default("[]") @map("reason_codes")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, customerId])
+  @@map("credit_decision_requests")
+}
+
+model LoanApplication {
+  id                String                @id @default(cuid())
+  bankOrgId         String                @map("bank_org_id")
+  customerId        String                @map("customer_id")
+  productTemplateId String                @map("product_template_id")
+  requestedMinor    BigInt                @map("requested_minor")
+  currency          String                @default("AZN")
+  status            LoanApplicationStatus @default(DRAFT)
+  loanId            String?               @map("loan_id")
+  makerUserId       String?               @map("maker_user_id")
+  checkerUserId     String?               @map("checker_user_id")
+  rejectReason      String?               @map("reject_reason")
+  forbearanceReason String?               @map("forbearance_reason")
+  forbearanceStage  ForbearanceStage      @default(NONE) @map("forbearance_stage")
+  watchlist         Boolean               @default(false)
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, customerId, status])
+  @@map("loan_applications")
+}
+
+model CreditPolicyRule {
+  id        String   @id @default(cuid())
+  bankOrgId String   @map("bank_org_id")
+  code      String
+  name      String
+  rulesJson Json     @map("rules_json")
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, code])
+  @@index([bankOrgId, enabled])
+  @@map("credit_policy_rules")
+}
+
+model CreditLine {
+  id                String           @id @default(cuid())
+  bankOrgId         String           @map("bank_org_id")
+  customerId        String           @map("customer_id")
+  productTemplateId String           @map("product_template_id")
+  limitMinor        BigInt           @map("limit_minor")
+  drawnMinor        BigInt           @default(0) @map("drawn_minor")
+  currency          String           @default("AZN")
+  status            CreditLineStatus @default(ACTIVE)
+  participationPct  Decimal?         @map("participation_pct") @db.Decimal(7, 4)
+  leadBankName      String?          @map("lead_bank_name")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  drawdowns CreditLineDrawdown[]
+
+  @@index([bankOrgId, customerId, status])
+  @@map("credit_lines")
+}
+
+model CreditLineDrawdown {
+  id             String         @id @default(cuid())
+  bankOrgId      String         @map("bank_org_id")
+  creditLineId   String         @map("credit_line_id")
+  amountMinor    BigInt         @map("amount_minor")
+  accountId      String?        @map("account_id")
+  status         DrawdownStatus @default(REQUESTED)
+  loanId         String?        @map("loan_id")
+  journalTxnId   String?        @map("journal_txn_id")
+  idempotencyKey String         @unique @map("idempotency_key")
+  makerUserId    String?        @map("maker_user_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  creditLine CreditLine @relation(fields: [creditLineId], references: [id])
+
+  @@index([bankOrgId, creditLineId])
+  @@map("credit_line_drawdowns")
+}
+
+model CollectionCase {
+  id               String               @id @default(cuid())
+  bankOrgId        String               @map("bank_org_id")
+  loanId           String               @map("loan_id")
+  customerId       String               @map("customer_id")
+  status           CollectionCaseStatus @default(OPEN)
+  assigneeUserId   String?              @map("assignee_user_id")
+  outstandingMinor BigInt               @map("outstanding_minor")
+  currency         String               @default("AZN")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  promises CollectionPromiseToPay[]
+
+  @@index([bankOrgId, status])
+  @@index([bankOrgId, loanId])
+  @@map("collection_cases")
+}
+
+model CollectionPromiseToPay {
+  id          String   @id @default(cuid())
+  bankOrgId   String   @map("bank_org_id")
+  caseId      String   @map("case_id")
+  amountMinor BigInt   @map("amount_minor")
+  dueDate     DateTime @map("due_date")
+  kept        Boolean?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  case CollectionCase @relation(fields: [caseId], references: [id])
+
+  @@index([bankOrgId, caseId])
+  @@map("collection_promises_to_pay")
+}
+
+model StandingOrder {
+  id             String              @id @default(cuid())
+  bankOrgId      String              @map("bank_org_id")
+  customerId     String              @map("customer_id")
+  fromAccountId  String              @map("from_account_id")
+  toIban         String              @map("to_iban")
+  amountMinor    BigInt              @map("amount_minor")
+  currency       String              @default("AZN")
+  cronExpr       String              @default("0 9 * * 1") @map("cron_expr")
+  nextRunAt      DateTime            @map("next_run_at")
+  status         StandingOrderStatus @default(ACTIVE)
+  lastRunAt      DateTime?           @map("last_run_at")
+  idempotencyKey String              @unique @map("idempotency_key")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status, nextRunAt])
+  @@map("standing_orders")
+}
+
+model DirectDebitMandate {
+  id             String                   @id @default(cuid())
+  bankOrgId      String                   @map("bank_org_id")
+  customerId     String                   @map("customer_id")
+  accountId      String                   @map("account_id")
+  creditorName   String                   @map("creditor_name")
+  creditorRef    String                   @map("creditor_ref")
+  maxAmountMinor BigInt?                  @map("max_amount_minor")
+  status         DirectDebitMandateStatus @default(ACTIVE)
+  expiresAt      DateTime?                @map("expires_at")
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, creditorRef])
+  @@index([bankOrgId, customerId])
+  @@map("direct_debit_mandates")
+}
+
+model VirtualAccount {
+  id              String               @id @default(cuid())
+  bankOrgId       String               @map("bank_org_id")
+  customerId      String               @map("customer_id")
+  parentAccountId String               @map("parent_account_id")
+  virtualIban     String               @map("virtual_iban")
+  status          VirtualAccountStatus @default(ACTIVE)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, virtualIban])
+  @@index([bankOrgId, customerId])
+  @@map("virtual_accounts")
+}
+
+model CashPoolSweepRule {
+  id              String          @id @default(cuid())
+  bankOrgId       String          @map("bank_org_id")
+  masterAccountId String          @map("master_account_id")
+  childAccountId  String          @map("child_account_id")
+  targetMinor     BigInt          @default(0) @map("target_minor")
+  status          SweepRuleStatus @default(ACTIVE)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("cash_pool_sweep_rules")
+}
+
+model ChequeInstrument {
+  id           String       @id @default(cuid())
+  bankOrgId    String       @map("bank_org_id")
+  accountId    String       @map("account_id")
+  chequeNumber String       @map("cheque_number")
+  amountMinor  BigInt       @map("amount_minor")
+  currency     String       @default("AZN")
+  payeeName    String       @map("payee_name")
+  status       ChequeStatus @default(ISSUED)
+  presentedAt  DateTime?    @map("presented_at")
+  clearedAt    DateTime?    @map("cleared_at")
+  journalTxnId String?      @map("journal_txn_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, chequeNumber])
+  @@index([bankOrgId, accountId, status])
+  @@map("cheque_instruments")
+}
+
+model LetterOfCredit {
+  id              String                @id @default(cuid())
+  bankOrgId       String                @map("bank_org_id")
+  customerId      String                @map("customer_id")
+  direction       String                @default("IMPORT")
+  reference       String
+  amountMinor     BigInt                @map("amount_minor")
+  currency        String                @default("AZN")
+  status          TradeInstrumentStatus @default(DRAFT)
+  beneficiaryName String?               @map("beneficiary_name")
+  docsChecklist   Json                  @default("[]") @map("docs_checklist")
+  marginMinor     BigInt                @default(0) @map("margin_minor")
+  journalTxnId    String?               @map("journal_txn_id")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  amendments TradeLcAmendment[]
+
+  @@unique([bankOrgId, reference])
+  @@index([bankOrgId, status])
+  @@map("letters_of_credit")
+}
+
+model TradeLcAmendment {
+  id        String   @id @default(cuid())
+  bankOrgId String   @map("bank_org_id")
+  lcId      String   @map("lc_id")
+  seqNo     Int      @map("seq_no")
+  note      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lc LetterOfCredit @relation(fields: [lcId], references: [id])
+
+  @@unique([lcId, seqNo])
+  @@map("trade_lc_amendments")
+}
+
+model BankGuarantee {
+  id              String                @id @default(cuid())
+  bankOrgId       String                @map("bank_org_id")
+  customerId      String                @map("customer_id")
+  reference       String
+  amountMinor     BigInt                @map("amount_minor")
+  currency        String                @default("AZN")
+  kind            String                @default("BG")
+  status          TradeInstrumentStatus @default(DRAFT)
+  beneficiaryName String?               @map("beneficiary_name")
+  journalTxnId    String?               @map("journal_txn_id")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, reference])
+  @@index([bankOrgId, status])
+  @@map("bank_guarantees")
+}
+
+model DocumentaryCollection {
+  id          String                @id @default(cuid())
+  bankOrgId   String                @map("bank_org_id")
+  customerId  String                @map("customer_id")
+  reference   String
+  amountMinor BigInt                @map("amount_minor")
+  currency    String                @default("AZN")
+  status      TradeInstrumentStatus @default(DRAFT)
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, reference])
+  @@map("documentary_collections")
+}
+
+model ScfProgram {
+  id            String           @id @default(cuid())
+  bankOrgId     String           @map("bank_org_id")
+  code          String
+  name          String
+  anchorBuyerId String?          @map("anchor_buyer_id")
+  status        ScfProgramStatus @default(DRAFT)
+  fundedMinor   BigInt           @default(0) @map("funded_minor")
+  paramsJson    Json             @default("{}") @map("params_json")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, code])
+  @@map("scf_programs")
+}
+
+model MoneyMarketPlacement {
+  id                String          @id @default(cuid())
+  bankOrgId         String          @map("bank_org_id")
+  counterpartyId    String          @map("counterparty_id")
+  nostroAccountId   String          @map("nostro_account_id")
+  principalMinor    BigInt          @map("principal_minor")
+  currency          String          @default("AZN")
+  rateAnnual        Decimal         @map("rate_annual") @db.Decimal(9, 6)
+  startDate         DateTime        @map("start_date")
+  maturityDate      DateTime        @map("maturity_date")
+  bookGlCode        String          @map("book_gl_code")
+  status            PlacementStatus @default(ACTIVE)
+  openPostingTxnId  String?         @map("open_posting_txn_id")
+  closePostingTxnId String?         @map("close_posting_txn_id")
+  idempotencyKey    String          @unique @map("idempotency_key")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("money_market_placements")
+}
+
+model AcquiringMerchant {
+  id           String       @id @default(cuid())
+  bankOrgId    String       @map("bank_org_id")
+  merchantCode String       @map("merchant_code")
+  name         String
+  mcc          String?
+  status       ActiveStatus @default(ACTIVE)
+  authToken    String       @map("auth_token")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, merchantCode])
+  @@map("acquiring_merchants")
+}
+
+model TradeSwiftMessage {
+  id         String                  @id @default(cuid())
+  bankOrgId  String                  @map("bank_org_id")
+  mtType     String                  @map("mt_type")
+  body       String
+  relatedRef String?                 @map("related_ref")
+  status     TradeSwiftMessageStatus @default(QUEUED)
+  createdAt  DateTime                @default(now()) @map("created_at")
+  updatedAt  DateTime                @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("trade_swift_messages")
+}
+
+model CardDisputeCase {
+  id                String            @id @default(cuid())
+  bankOrgId         String            @map("bank_org_id")
+  cardTransactionId String            @map("card_transaction_id")
+  amountMinor       BigInt            @map("amount_minor")
+  currency          String            @default("AZN")
+  reasonCode        String            @map("reason_code")
+  status            CardDisputeStatus @default(OPEN)
+  journalTxnId      String?           @map("journal_txn_id")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("card_dispute_cases")
+}
+
+model ThreeDsChallenge {
+  id          String                 @id @default(cuid())
+  bankOrgId   String                 @map("bank_org_id")
+  cardId      String                 @map("card_id")
+  amountMinor BigInt                 @map("amount_minor")
+  currency    String                 @default("AZN")
+  status      ThreeDsChallengeStatus @default(PENDING)
+  completedAt DateTime?              @map("completed_at")
+  createdAt   DateTime               @default(now()) @map("created_at")
+
+  @@index([bankOrgId, cardId, status])
+  @@map("three_ds_challenges")
+}
+
+model SafekeepingAccount {
+  id           String   @id @default(cuid())
+  bankOrgId    String   @map("bank_org_id")
+  customerId   String   @map("customer_id")
+  accountNo    String   @map("account_no")
+  csdAccountNo String?  @map("csd_account_no")
+  currency     String   @default("AZN")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  positions CustodyPosition[]
+
+  @@unique([bankOrgId, accountNo])
+  @@map("safekeeping_accounts")
+}
+
+model CustodyPosition {
+  id                   String                @id @default(cuid())
+  bankOrgId            String                @map("bank_org_id")
+  safekeepingAccountId String                @map("safekeeping_account_id")
+  isin                 String
+  quantity             Decimal               @db.Decimal(18, 6)
+  status               CustodyPositionStatus @default(ACTIVE)
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+
+  account       SafekeepingAccount      @relation(fields: [safekeepingAccountId], references: [id])
+  ledgerEntries CustodyPositionLedger[]
+
+  @@index([bankOrgId, isin])
+  @@map("custody_positions")
+}
+
+model CustodyPositionLedger {
+  id                String   @id @default(cuid())
+  bankOrgId         String   @map("bank_org_id")
+  custodyPositionId String   @map("custody_position_id")
+  direction         String
+  quantity          Decimal  @db.Decimal(18, 6)
+  reference         String
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  position CustodyPosition @relation(fields: [custodyPositionId], references: [id])
+
+  @@index([bankOrgId, custodyPositionId])
+  @@map("custody_position_ledger")
+}
+
+model InsuranceProduct {
+  id            String       @id @default(cuid())
+  bankOrgId     String       @map("bank_org_id")
+  code          String
+  name          String
+  partnerName   String       @map("partner_name")
+  commissionBps Int          @default(0) @map("commission_bps")
+  status        ActiveStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  policies InsurancePolicyLink[]
+
+  @@unique([bankOrgId, code])
+  @@map("insurance_products")
+}
+
+model InsurancePolicyLink {
+  id                 String   @id @default(cuid())
+  bankOrgId          String   @map("bank_org_id")
+  customerId         String   @map("customer_id")
+  insuranceProductId String   @map("insurance_product_id")
+  policyRef          String   @map("policy_ref")
+  premiumMinor       BigInt   @map("premium_minor")
+  currency           String   @default("AZN")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  product InsuranceProduct @relation(fields: [insuranceProductId], references: [id])
+
+  @@unique([bankOrgId, policyRef])
+  @@index([bankOrgId, customerId])
+  @@map("insurance_policy_links")
+}
+
+model IslamicContract {
+  id                String                @id @default(cuid())
+  bankOrgId         String                @map("bank_org_id")
+  customerId        String                @map("customer_id")
+  productTemplateId String                @map("product_template_id")
+  kind              String
+  principalMinor    BigInt                @map("principal_minor")
+  profitMinor       BigInt                @default(0) @map("profit_minor")
+  currency          String                @default("AZN")
+  status            IslamicContractStatus @default(DRAFT)
+  journalTxnId      String?               @map("journal_txn_id")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, customerId, status])
+  @@map("islamic_contracts")
+}
+
+model DboH2hFileJob {
+  id         String       @id @default(cuid())
+  bankOrgId  String       @map("bank_org_id")
+  fileName   String       @map("file_name")
+  payload    String
+  status     H2hJobStatus @default(RECEIVED)
+  resultJson Json?        @map("result_json")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("dbo_h2h_file_jobs")
+}
+
+model OpenBankingConsent {
+  id         String          @id @default(cuid())
+  bankOrgId  String          @map("bank_org_id")
+  customerId String          @map("customer_id")
+  scopes     Json            @default("[]")
+  status     ObConsentStatus @default(ACTIVE)
+  expiresAt  DateTime?       @map("expires_at")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, customerId])
+  @@map("open_banking_consents")
+}
+
+model AmlCase {
+  id             String        @id @default(cuid())
+  bankOrgId      String        @map("bank_org_id")
+  alertId        String?       @map("alert_id")
+  customerId     String?       @map("customer_id")
+  status         AmlCaseStatus @default(OPEN)
+  sarDraft       String?       @map("sar_draft")
+  sarDraftFields Json          @default("{}") @map("sar_draft_fields")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("aml_cases")
+}
+
+model FraudScoreRequest {
+  id              String   @id @default(cuid())
+  bankOrgId       String   @map("bank_org_id")
+  reference       String
+  channel         String
+  amountMinor     BigInt   @map("amount_minor")
+  currency        String   @default("AZN")
+  deviceId        String?  @map("device_id")
+  muleSuspectFlag Boolean  @default(false) @map("mule_suspect_flag")
+  score           Int
+  reasonCodes     Json     @default("[]") @map("reason_codes")
+  holdPayment     Boolean  @default(false) @map("hold_payment")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, reference])
+  @@map("fraud_score_requests")
+}
+
+model IrrbbInput {
+  id          String   @id @default(cuid())
+  bankOrgId   String   @map("bank_org_id")
+  asOfDate    DateTime @map("as_of_date")
+  bucketKey   String   @map("bucket_key")
+  amountMinor BigInt   @map("amount_minor")
+  rateBps     Int      @map("rate_bps")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, asOfDate])
+  @@map("irrbb_inputs")
+}
+
+model OpRiskLossEvent {
+  id          String            @id @default(cuid())
+  bankOrgId   String            @map("bank_org_id")
+  eventDate   DateTime          @map("event_date")
+  amountMinor BigInt            @map("amount_minor")
+  currency    String            @default("AZN")
+  category    String
+  description String
+  status      OpRiskEventStatus @default(OPEN)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, status])
+  @@map("oprisk_loss_events")
+}
+
+model InsuranceAffiliateCommission {
+  id          String   @id @default(cuid())
+  bankOrgId   String   @map("bank_org_id")
+  customerId  String   @map("customer_id")
+  policyRef   String   @map("policy_ref")
+  amountMinor BigInt   @map("amount_minor")
+  currency    String   @default("AZN")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, customerId])
+  @@map("insurance_affiliate_commissions")
+}
+
+// ─── Full CBS XO scaffolds (Phase 2) ──────────────────────────────────────
+
+enum AtmTerminalStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum AtmTxnStatus {
+  PENDING
+  AUTHORIZED
+  DECLINED
+  SETTLED
+}
+
+enum SchemeOutboxStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum MarketsBookStatus {
+  DRAFT
+  BOOKED
+  CANCELLED
+}
+
+enum BrokerageOrderStatus {
+  DRAFT
+  SUBMITTED
+  FILLED
+  CANCELLED
+}
+
+enum CsdAccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MetalPositionStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum PensionContributionStatus {
+  PENDING
+  POSTED
+}
+
+enum PsaAccountStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum AgencyLinkStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MisReportJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum BpmProcessStatus {
+  DRAFT
+  ACTIVE
+}
+
+enum DmsDocumentStatus {
+  DRAFT
+  ARCHIVED
+}
+
+model AtmTerminal {
+  id           String            @id @default(cuid())
+  bankOrgId    String            @map("bank_org_id")
+  terminalId   String            @map("terminal_id")
+  branchId     String            @map("branch_id")
+  locationName String            @map("location_name")
+  status       AtmTerminalStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  transactions AtmTxn[]
+
+  @@unique([bankOrgId, terminalId])
+  @@index([bankOrgId, status])
+  @@map("atm_terminals")
+}
+
+model AtmTxn {
+  id            String       @id @default(cuid())
+  bankOrgId     String       @map("bank_org_id")
+  atmTerminalId String       @map("atm_terminal_id")
+  cardId        String?      @map("card_id")
+  amountMinor   BigInt       @map("amount_minor")
+  currency      String       @default("AZN")
+  txnType       String       @map("txn_type")
+  status        AtmTxnStatus @default(PENDING)
+  authCode      String?      @map("auth_code")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  terminal AtmTerminal @relation(fields: [atmTerminalId], references: [id])
+
+  @@index([bankOrgId, status])
+  @@map("atm_txns")
+}
+
+model SchemeMessageOutbox {
+  id          String             @id @default(cuid())
+  bankOrgId   String             @map("bank_org_id")
+  messageType String             @map("message_type")
+  direction   String
+  payloadJson Json               @map("payload_json")
+  status      SchemeOutboxStatus @default(QUEUED)
+  sentAt      DateTime?          @map("sent_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  @@index([bankOrgId, status])
+  @@map("scheme_message_outbox")
+}
+
+model DerivativeContract {
+  id            String            @id @default(cuid())
+  bankOrgId     String            @map("bank_org_id")
+  contractRef   String            @map("contract_ref")
+  productType   String            @map("product_type")
+  notionalMinor BigInt            @map("notional_minor")
+  currency      String            @default("AZN")
+  status        MarketsBookStatus @default(DRAFT)
+  bookedAt      DateTime?         @map("booked_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, contractRef])
+  @@index([bankOrgId, status])
+  @@map("derivative_contracts")
+}
+
+model BondPosition {
+  id             String            @id @default(cuid())
+  bankOrgId      String            @map("bank_org_id")
+  isin           String
+  faceValueMinor BigInt            @map("face_value_minor")
+  currency       String            @default("AZN")
+  status         MarketsBookStatus @default(DRAFT)
+  bookedAt       DateTime?         @map("booked_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, isin])
+  @@map("bond_positions")
+}
+
+model CsdAccount {
+  id           String           @id @default(cuid())
+  bankOrgId    String           @map("bank_org_id")
+  customerId   String           @map("customer_id")
+  csdAccountNo String           @map("csd_account_no")
+  status       CsdAccountStatus @default(ACTIVE)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, csdAccountNo])
+  @@map("csd_accounts")
+}
+
+model BrokerageOrder {
+  id              String               @id @default(cuid())
+  bankOrgId       String               @map("bank_org_id")
+  customerId      String               @map("customer_id")
+  isin            String
+  side            String
+  quantity        Decimal              @db.Decimal(18, 6)
+  limitPriceMinor BigInt?              @map("limit_price_minor")
+  status          BrokerageOrderStatus @default(DRAFT)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, customerId, status])
+  @@map("brokerage_orders")
+}
+
+model MetalPosition {
+  id          String              @id @default(cuid())
+  bankOrgId   String              @map("bank_org_id")
+  customerId  String              @map("customer_id")
+  metalCode   String              @map("metal_code")
+  weightGrams Decimal             @map("weight_grams") @db.Decimal(18, 6)
+  status      MetalPositionStatus @default(ACTIVE)
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  @@index([bankOrgId, customerId])
+  @@map("metal_positions")
+}
+
+model PensionContribution {
+  id          String                    @id @default(cuid())
+  bankOrgId   String                    @map("bank_org_id")
+  customerId  String                    @map("customer_id")
+  employerRef String                    @map("employer_ref")
+  amountMinor BigInt                    @map("amount_minor")
+  currency    String                    @default("AZN")
+  periodMonth String                    @map("period_month")
+  status      PensionContributionStatus @default(PENDING)
+  createdAt   DateTime                  @default(now()) @map("created_at")
+
+  @@index([bankOrgId, periodMonth])
+  @@map("pension_contributions")
+}
+
+model PsaTsaAccount {
+  id           String           @id @default(cuid())
+  bankOrgId    String           @map("bank_org_id")
+  agencyCode   String           @map("agency_code")
+  accountNo    String           @map("account_no")
+  treasuryCode String           @map("treasury_code")
+  status       PsaAccountStatus @default(ACTIVE)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, accountNo])
+  @@map("psa_tsa_accounts")
+}
+
+model AgencyLink {
+  id            String           @id @default(cuid())
+  bankOrgId     String           @map("bank_org_id")
+  peerBankOrgId String           @map("peer_bank_org_id")
+  agencyType    String           @map("agency_type")
+  status        AgencyLinkStatus @default(ACTIVE)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, peerBankOrgId, agencyType])
+  @@map("agency_links")
+}
+
+model MisReportJob {
+  id          String             @id @default(cuid())
+  bankOrgId   String             @map("bank_org_id")
+  reportCode  String             @map("report_code")
+  paramsJson  Json               @default("{}") @map("params_json")
+  status      MisReportJobStatus @default(QUEUED)
+  resultJson  Json?              @map("result_json")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  completedAt DateTime?          @map("completed_at")
+
+  @@index([bankOrgId, status])
+  @@map("mis_report_jobs")
+}
+
+model BpmProcessStub {
+  id          String           @id @default(cuid())
+  bankOrgId   String           @map("bank_org_id")
+  processCode String           @map("process_code")
+  name        String
+  status      BpmProcessStatus @default(DRAFT)
+  stepsJson   Json             @default("[]") @map("steps_json")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, processCode])
+  @@map("bpm_process_stubs")
+}
+
+model DmsDocumentMeta {
+  id           String            @id @default(cuid())
+  bankOrgId    String            @map("bank_org_id")
+  documentRef  String            @map("document_ref")
+  category     String
+  title        String
+  status       DmsDocumentStatus @default(DRAFT)
+  metadataJson Json              @default("{}") @map("metadata_json")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, documentRef])
+  @@map("dms_document_meta")
 }

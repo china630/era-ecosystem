@@ -1,15 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldTextarea,
+  FORM_STACK_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
 type ClinicalTemplate = {
@@ -174,14 +179,24 @@ export default function TemplatesAdminPage() {
           clinical.map((row) => (
             <div key={row.id} className="mb-2 flex justify-between border-b pb-2 text-[13px]">
               <span>
-                {row.code} — {row.title}
+                {row.title} · {row.code}
               </span>
-              <span className="space-x-2">
-                <button type="button" className="text-[#2980B9]" onClick={() => openEditClinical(row)}>
-                  {tc("edit")}
+              <span className="flex gap-1">
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("edit")}
+                  onClick={() => openEditClinical(row)}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
                 </button>
-                <button type="button" className="text-[#C0392B]" onClick={() => setDeleteId(row.id)}>
-                  {tc("delete")}
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("delete")}
+                  onClick={() => setDeleteId(row.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
               </span>
             </div>
@@ -190,43 +205,91 @@ export default function TemplatesAdminPage() {
           programs.map((row) => (
             <div key={row.id} className="mb-2 flex justify-between border-b pb-2 text-[13px]">
               <span>
-                {row.code} — {row.name} ({row.durationDays}d, {row.procedures.length} proc)
+                {row.name} · {row.code} ({row.durationDays}d, {row.procedures.length} proc)
               </span>
-              <span className="space-x-2">
-                <button type="button" className="text-[#2980B9]" onClick={() => openEditProgram(row)}>
-                  {tc("edit")}
+              <span className="flex gap-1">
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("edit")}
+                  onClick={() => openEditProgram(row)}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
                 </button>
-                <button type="button" className="text-[#C0392B]" onClick={() => setDeleteId(row.id)}>
-                  {tc("delete")}
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("delete")}
+                  onClick={() => setDeleteId(row.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
               </span>
             </div>
           ))}
       </div>
       <ModalShell open={open} title={editingId ? tc("edit") : tc("add")} onClose={() => setOpen(false)}>
-        <div className="space-y-2">
+        <div className={FORM_STACK_CLASS}>
           {!editingId ? (
-            <input className={MODAL_INPUT_CLASS} placeholder={t("code")} value={form.code ?? ""} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+            <Field
+              label={t("code")}
+              preset="code"
+              value={form.code ?? ""}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+            />
           ) : null}
           {tab === "clinical" ? (
             <>
-              <input className={MODAL_INPUT_CLASS} placeholder={t("titleField")} value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-              <input className={MODAL_INPUT_CLASS} placeholder={t("specialty")} value={form.specialty ?? ""} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
-              <textarea
-                className={MODAL_INPUT_CLASS}
-                placeholder={t("bodyJson")}
+              <Field
+                label={t("titleField")}
+                preset="shortText"
+                value={form.title ?? ""}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+              <Field
+                label={t("specialty")}
+                preset="shortText"
+                value={form.specialty ?? ""}
+                onChange={(e) => setForm({ ...form, specialty: e.target.value })}
+              />
+              <FieldTextarea
+                label={t("bodyJson")}
                 rows={4}
                 value={form.bodyJson ?? "{}"}
                 onChange={(e) => setForm({ ...form, bodyJson: e.target.value })}
-              />
-            </>
+              />            </>
           ) : (
             <>
-              <input className={MODAL_INPUT_CLASS} placeholder={t("name")} value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <input className={MODAL_INPUT_CLASS} placeholder={t("durationDays")} value={form.durationDays ?? "7"} onChange={(e) => setForm({ ...form, durationDays: e.target.value })} />
-              <input className={MODAL_INPUT_CLASS} placeholder={t("procedureCode")} value={form.procedureCode ?? ""} onChange={(e) => setForm({ ...form, procedureCode: e.target.value })} />
-              <input className={MODAL_INPUT_CLASS} placeholder={t("procedureName")} value={form.procedureName ?? ""} onChange={(e) => setForm({ ...form, procedureName: e.target.value })} />
-              <input className={MODAL_INPUT_CLASS} placeholder={t("quotaTotal")} value={form.quotaTotal ?? "1"} onChange={(e) => setForm({ ...form, quotaTotal: e.target.value })} />
+              <Field
+                label={t("name")}
+                preset="shortText"
+                value={form.name ?? ""}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <Field
+                label={t("durationDays")}
+                preset="count"
+                value={form.durationDays ?? "7"}
+                onChange={(e) => setForm({ ...form, durationDays: e.target.value })}
+              />
+              <Field
+                label={t("procedureCode")}
+                preset="code"
+                value={form.procedureCode ?? ""}
+                onChange={(e) => setForm({ ...form, procedureCode: e.target.value })}
+              />
+              <Field
+                label={t("procedureName")}
+                preset="shortText"
+                value={form.procedureName ?? ""}
+                onChange={(e) => setForm({ ...form, procedureName: e.target.value })}
+              />
+              <Field
+                label={t("quotaTotal")}
+                preset="count"
+                value={form.quotaTotal ?? "1"}
+                onChange={(e) => setForm({ ...form, quotaTotal: e.target.value })}
+              />
             </>
           )}
         </div>

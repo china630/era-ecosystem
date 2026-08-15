@@ -91,4 +91,22 @@ export class RegReportingController {
   ) {
     return this.regReporting.upsertFatcaClassification(customerId, dto);
   }
+
+  @Post("fatca-crs/classifications/:customerId/advance")
+  advanceFatca(
+    @Param("customerId") customerId: string,
+    @Body() dto: FatcaClassificationDto,
+  ) {
+    return this.regReporting.advanceFatcaWorkflow(
+      customerId,
+      dto.classification,
+    );
+  }
+
+  @Post("large-exposures/generate")
+  largeExposures(@Query("asOf") asOf?: string) {
+    return this.regReporting.largeExposureReport(
+      asOf ? new Date(asOf) : new Date(),
+    );
+  }
 }

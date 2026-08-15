@@ -3,16 +3,18 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
+  showApiError,
 } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -30,9 +32,9 @@ function AnalyticsContent() {
   const { can } = useAuth();
   const t = useTranslations('reports');
   const tc = useTranslations('common');
-  const [range, setRange] = useState(defaultRange);
+  const defaults = defaultRange();
+  const [range, setRange] = useState(defaults);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [sources, setSources] = useState<{
     totalRevenue: number;
     rows: Array<{ code: string; name: string; revenue: number; reservations: number; sharePct: number }>;
@@ -50,7 +52,6 @@ function AnalyticsContent() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     const q = `from=${range.from}&to=${range.to}`;
     try {
       const [sRes, cRes, dRes] = await Promise.all([
@@ -59,14 +60,23 @@ function AnalyticsContent() {
         fetch(`/api/reports/guest-demographics?${q}`),
       ]);
       const [sData, cData, dData] = await Promise.all([sRes.json(), cRes.json(), dRes.json()]);
-      if (!sRes.ok) throw new Error(sData.error ?? tc('loadError'));
-      if (!cRes.ok) throw new Error(cData.error ?? tc('loadError'));
-      if (!dRes.ok) throw new Error(dData.error ?? tc('loadError'));
+      if (!sRes.ok) {
+        showApiError(sData, tc('loadError'));
+        return;
+      }
+      if (!cRes.ok) {
+        showApiError(cData, tc('loadError'));
+        return;
+      }
+      if (!dRes.ok) {
+        showApiError(dData, tc('loadError'));
+        return;
+      }
       setSources(sData);
       setCancellations(cData);
       setDemographics(dData);
     } catch (e) {
-      setError(e instanceof Error ? e.message : tc('error'));
+      showApiError({ error: e instanceof Error ? e.message : tc('error') });
     } finally {
       setLoading(false);
     }
@@ -77,51 +87,37 @@ function AnalyticsContent() {
   }, [load]);
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
-    return (
-      <AppShell maxWidthClass="max-w-6xl">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionReports')}</p>
-      </AppShell>
-    );
+    return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionReports')}</p>;
   }
 
   return (
-    <AppShell maxWidthClass="max-w-6xl">
-      <PageHeader
-        title={t('analyticsTitle')}
-        subtitle={t('analyticsSubtitle')}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void load()}>
-            {tc('load')}
-          </button>
-        }
-      />
+    <>
+      <PageHeader title={t('analyticsTitle')} subtitle={t('analyticsSubtitle')} />
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setRange(defaultRange())}
+      >
+        <DatePicker
+          label={t('dateFrom')}
+          value={range.from}
+          onChange={(from) => setRange((r) => ({ ...r, from }))}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+        <DatePicker
+          label={t('dateTo')}
+          value={range.to}
+          onChange={(to) => setRange((r) => ({ ...r, to }))}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+      </EraListFilterBar>
 
-      <div className="mb-6 flex flex-wrap gap-3">
-        <label className="text-[13px] text-[#34495E]">
-          {t('dateFrom')}
-          <input
-            type="date"
-            className="ml-2 rounded border px-2 py-1"
-            value={range.from}
-            onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-          />
-        </label>
-        <label className="text-[13px] text-[#34495E]">
-          {t('dateTo')}
-          <input
-            type="date"
-            className="ml-2 rounded border px-2 py-1"
-            value={range.to}
-            onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-          />
-        </label>
-      </div>
-
-      {error && <p className="mb-4 text-[13px] text-rose-600">{error}</p>}
       {loading && <p className="text-[13px] text-[#7F8C8D]">{tc('loading')}</p>}
 
       {!loading && sources && (
-        <PageSection title={t('bookingSourcesTitle')} className="mb-6">
+        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('bookingSourcesTitle')}</h2>
           <p className="mb-3 text-[13px] text-[#7F8C8D]">
             {t('totalRevenue')}: {sources.totalRevenue.toFixed(2)} AZN
           </p>
@@ -147,11 +143,12 @@ function AnalyticsContent() {
               </tbody>
             </table>
           </div>
-        </PageSection>
+        </section>
       )}
 
       {!loading && cancellations && (
-        <PageSection title={t('cancellationsTitle')} className="mb-6">
+        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('cancellationsTitle')}</h2>
           <p className="mb-3 text-[13px] text-[#7F8C8D]">
             {t('totalCancelled')}: {cancellations.totalCancelled}
           </p>
@@ -162,11 +159,12 @@ function AnalyticsContent() {
               </li>
             ))}
           </ul>
-        </PageSection>
+        </section>
       )}
 
       {!loading && demographics && (
-        <PageSection title={t('demographicsTitle')}>
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('demographicsTitle')}</h2>
           <p className="mb-3 text-[13px] text-[#7F8C8D]">
             {t('adults')}: {demographics.adults} · {t('childBand0_6')}: {demographics.childBand0_6} ·{' '}
             {t('childBand7_11')}: {demographics.childBand7_11}
@@ -191,9 +189,9 @@ function AnalyticsContent() {
               </tbody>
             </table>
           </div>
-        </PageSection>
+        </section>
       )}
-    </AppShell>
+    </>
   );
 }
 

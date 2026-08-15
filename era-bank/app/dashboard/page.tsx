@@ -15,17 +15,20 @@ export default async function DashboardPage() {
     { href: "/cif", label: tNav("cif") },
     { href: "/accounts", label: tNav("accounts") },
     { href: "/postings/queue", label: tNav("postings") },
+    { href: "/gl", label: tNav("gl") },
     { href: "/payments", label: tNav("payments") },
     { href: "/deposits", label: tNav("deposits") },
     { href: "/loans", label: tNav("loans") },
-    { href: "/aml/alerts", label: tNav("aml") },
-    { href: "/reports/cbar", label: tNav("reports") },
     { href: "/cards", label: tNav("cards") },
     { href: "/card-txns", label: tNav("cardTxns") },
+    { href: "/aml/alerts", label: tNav("aml") },
+    { href: "/reports/cbar", label: tNav("reportsCbar") },
     { href: "/treasury", label: tNav("treasury") },
+    { href: "/risk", label: tNav("riskDashboard") },
     { href: "/admin/branches", label: tNav("branches") },
     { href: "/admin/product-factory", label: tNav("productFactory") },
     { href: "/admin/eod", label: tNav("eod") },
+    { href: "/admin/audit", label: tNav("audit") },
   ];
 
   return (
@@ -42,11 +45,6 @@ export default async function DashboardPage() {
             </li>
           ))}
         </ul>
-        <p className="text-[12px] text-[#7F8C8D]">
-          <Link href="/api/health" className="text-[#2980B9] hover:underline">
-            Health API
-          </Link>
-        </p>
       </div>
     </>
   );

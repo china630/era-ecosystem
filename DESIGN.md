@@ -6,6 +6,47 @@ Code tokens: `apps/web/lib/design-system.ts`, `apps/web/lib/form-styles.ts`, `ap
 
 ---
 
+## Three-tier design tokens (hybrid)
+
+**Canonical implementation:** `packages/satellite-kit/src/ui/tokens/`  
+**ADR (do not delete without replacement):** [`docs/adr/era-design-tokens-3tier.md`](docs/adr/era-design-tokens-3tier.md)
+
+ERA uses a **3-tier Design Tokens** model so authors do not set size/color/placement
+per control by hand. Format: **hybrid TypeScript** (L1/L2 values + L3 static
+Tailwind class strings for JIT). Not DTCG JSON yet.
+
+| Tier | File | May contain raw hex? | Purpose |
+|------|------|----------------------|---------|
+| **L1 Primitives** | `tokens/primitives.ts` | **Yes (only here for values)** | Palette, type scale, radii, spacing, field `ch` widths |
+| **L2 Semantic** | `tokens/semantic.ts` | **No** | Role aliases: `text.primary`, `surface.card`, `action.fill`, … |
+| **L3 Components** | `tokens/components.ts` | Yes, but **must match L1** | Exported `*_CLASS` strings (`PRIMARY_BUTTON_CLASS`, …) |
+
+**Facade:** `packages/satellite-kit/src/ui/design-system.ts` re-exports L3 (no new hex).  
+**Import:** `@era/satellite-kit/ui`.
+
+### Automation (data type -> placement)
+
+| API | Role |
+|-----|------|
+| `resolveField(dataType, elementType?, context?)` | preset, widthClass, align, format, `filterControl` |
+| `resolveColumns` / `columnFilters` | table column schema -> cell align + `EraListFilterBar` filter specs |
+
+**Rule:** every list/table screen should expose filters derived from column
+`dataType` (search, select, date range, amount range as appropriate) via
+`EraListFilterBar` between `PageHeader` and the table.
+
+### Enforcement
+
+```bash
+npm run lint:token-layers      # L2 no hex; L3 hex subset of L1; facade clean
+npm run lint:design-tokens    # baseline: raw inputs / forbidden radii in apps
+```
+
+**Change process:** edit L1 -> L2 aliases -> align L3 class strings -> run both lints
+-> rebuild `@era/satellite-kit`. Never emergency-reset the kit to green CI.
+
+---
+
 ## Corner radius — modern SaaS (tokens in `apps/web/lib/design-system.ts`)
 
 Use **Tailwind scale radii** for a softer, contemporary shell. **Do not** default to near-square **`rounded-[2px]`** on outer chrome, fields, or buttons.
@@ -42,6 +83,13 @@ Applies to all single-line and multi-line **data entry** controls unless TZ stat
 - **Background:** **`bg-white`**; disabled: muted fill per tokens (e.g. `#F4F5F7`).
 
 **Multiline** (`Textarea`): same radius, border, and focus; height follows content (`min-h` per token), not forced `h-9`.
+
+**Dates (canonical):** use **`DatePicker`** from `@era/satellite-kit/ui` — **not** a bare native `<input type="date">` as the only control. Chromium has no `az` locale for the native date placeholder and falls back to Russian glyphs. Rules:
+
+- Form **value** is always ISO **`YYYY-MM-DD`** (empty string when unset).
+- **Display** is **`DD.MM.YYYY`**; **placeholder** comes from i18n (`common.datePlaceholder`, e.g. `gg.aa.iiii` / `дд.мм.гггг` / `dd.mm.yyyy`).
+- Optional calendar affordance may open a native picker for selection only; the visible field remains the i18n text control.
+- Do not rely on browser/`lang` for date placeholder text.
 
 ---
 
@@ -132,8 +180,13 @@ Semantic widths live in `@era/satellite-kit/ui` — **`field-presets.ts`** (`FIE
 
 ## Page chrome & navigation
 
-- **`PageHeader`** (`apps/web/components/layout/page-header.tsx`) is for **full pages only** — title (line 1, left), optional subtitle, **`PageHeader.actions`** (line 2, right: filters, period, primary actions). **Do not** use `PageHeader` inside modals; modals follow § Modal & dialog standards.
-- **Registry / list screens:** list filters and page-level actions live **only** in **`PageHeader.actions`** — no duplicate filter strip above the table unless TZ excepts.
+- **App main content padding (canonical):** under the fixed header, every shell uses **`APP_MAIN_CONTENT_PADDED_CLASS`** from `@era/satellite-kit/ui` (`px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8`). Orchestrator and Finance wrap with **`APP_MAIN_CONTENT_CLASS`** (`app-shell-main` + padded); satellites use **`EraOpsContent`** (same padded token). **Do not** invent alternate top padding per app.
+- **`PageHeader`** (`@era/satellite-kit/ui` / Finance `page-header.tsx`) is for **full pages only** — title (line 1, left), optional subtitle, **`PageHeader.actions`** inline on the same row (primary actions such as `+ Add`). **Do not** use `PageHeader` inside modals; modals follow § Modal & dialog standards.
+- **Cross-module / in-app section links:** **sidebar only** — do not duplicate left-nav destinations as `PageHeader` buttons (Home, sibling boards).
+- **List filters (canonical):**
+  - **1–3 compact toggles** (period, grouping, horizon): `FilterMenuButton` / compact controls in **`PageHeader.actions`** or an ops toolbar.
+  - **2+ fields** (search, selects, ranges): **`EraListFilterBar`** from `@era/satellite-kit/ui` — separate card **between** `PageHeader` and the table. Labels **on top** via `Field` / `FieldSelect` only. **Instant apply** (selects/dates on change; text search via `useDebouncedValue(..., 300)`). **Reset** on the same row as fields — **no Apply button**.
+  - **Do not** put bare `<input type="search">` or left-of-field labels on list screens.
 - **Cross-module links:** **sidebar only** (PRD §10.1) — no horizontal “app switcher” strip above content.
 - **Headings:** page titles **`#34495E`**; primary actions **`#2980B9`**.
 - **Contrast:** controls must read clearly on `#EBEDF0`.

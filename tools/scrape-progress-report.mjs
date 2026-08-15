@@ -191,7 +191,7 @@ function etenderEtaxesWaveProgress() {
   const completePath = path.join(DATA, "legal-entities", ".etender-etaxes-wave-complete.json");
   const cpPath = path.join(DATA, "legal-entities", ".etender-etaxes-wave-checkpoint.json");
   const lockPath = path.join(DATA, "legal-entities", ".etender-etaxes-wave.lock");
-  const expandedRows = countCsvRows("legal-entities/azerbaijan-tax-registry-expanded.csv");
+  const expandedRows = countCsvRows("legal-entities/azerbaijan-companies-with-voen.csv");
 
   if (fs.existsSync(completePath)) {
     const done = JSON.parse(fs.readFileSync(completePath, "utf8"));
@@ -223,20 +223,20 @@ function etenderEtaxesWaveProgress() {
 }
 
 function expandedRegistryProgress() {
-  const statsPath = path.join(DATA, "legal-entities", ".expanded-rebuild-stats.json");
-  const rows = countCsvRows("legal-entities/azerbaijan-tax-registry-expanded.csv");
+  const statsPath = path.join(DATA, "legal-entities", ".companies-master-stats.json");
+  const rows = countCsvRows("legal-entities/azerbaijan-companies-with-voen.csv");
   if (fs.existsSync(statsPath)) {
     const s = JSON.parse(fs.readFileSync(statsPath, "utf8"));
     return {
       status: "complete",
       pct: 100,
-      detail: `${s.unique_voen ?? rows ?? "?"} VOEN (${s.with_donor_ids ?? "?"} with donors, ${s.tax_registry ?? "?"} registry-only)`,
+      detail: `master with_voen=${s.with_voen ?? rows ?? "?"} (cache_files=${s.cache_files ?? "?"})`,
     };
   }
   if (rows != null && rows > 0) {
-    return { status: "unknown", pct: null, detail: `${rows} rows (no rebuild stats)` };
+    return { status: "unknown", pct: null, detail: `${rows} master rows (no stats)` };
   }
-  return { status: "not_started", pct: 0, detail: "awaiting cache + rebuild" };
+  return { status: "not_started", pct: 0, detail: "awaiting master CSV" };
 }
 
 function etenderProgress() {
@@ -317,9 +317,9 @@ function buildReport() {
       ...etenderWave,
     },
     {
-      id: "tax-registry-expanded",
-      site: "cache rebuild",
-      task: "Expanded tax registry CSV (all cache hits)",
+      id: "companies-master",
+      site: "cache + master merge",
+      task: "Companies master CSV (with VÖEN)",
       ...expandedRegistry,
     },
     {

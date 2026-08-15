@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Plus, Settings, SlidersHorizontal } from "lucide-react";
 import {
   SANATORIUM_SYSTEM_KEYS,
   WORKSPACE_SYSTEMS,
@@ -10,18 +11,20 @@ import {
 } from "@era/satellite-kit/platform/workspace-system-catalog";
 import type { IndustryModuleKey } from "@era/satellite-kit/platform/industry-modules";
 import { satelliteUrlForItem } from "@era/satellite-kit/platform/industry-modules";
-import {
-  buildSatelliteSsoLaunchUrl,
-  defaultSsoExpiresAt,
-} from "@era/satellite-kit/auth/sso-launch";
+import { buildSatelliteSsoLaunchUrlFromTicket } from "@era/satellite-kit/auth/sso-launch";
 import {
   CARD_CONTAINER_CLASS,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { EARLY_ACCESS_MODULES } from "../../components/early-access/modules.config";
-import { buildFinanceHandoffUrl, getOrchAccessToken } from "../../lib/open-finance";
+import {
+  buildFinanceHandoffUrl,
+  fetchSatelliteSsoTicket,
+  getOrchAccessToken,
+} from "../../lib/open-finance";
 import type { PublicPricingResponse } from "../../lib/public-pricing-types";
 import { fetchPublicPricingSnapshot } from "../../lib/pricing/fetch-public-pricing";
 import { useAuth } from "../../lib/auth-context";
@@ -34,8 +37,13 @@ import {
   workspaceSystemStatus,
   type WorkspaceSystemStatus,
 } from "../../lib/workspace-access";
+import {
+  catalogModulesForSatellite,
+  isModuleActive,
+} from "../../lib/workspace-satellite-modules";
 import { orchFetch } from "../../lib/orch-api";
 import { WorkspaceSatelliteModulesModal } from "../../components/workspace/workspace-satellite-modules-modal";
+import { WorkspaceSatelliteSettingsModal } from "../../components/workspace/workspace-satellite-settings-modal";
 import { WorkspaceDepartmentsPanel } from "../../components/workspace/workspace-departments-panel";
 import { WorkforceHubCard } from "../../components/workspace/workforce-hub-card";
 
@@ -58,24 +66,56 @@ function priceForModule(
   return fallback?.priceAzn ?? null;
 }
 
+/**
+ * Concrete monthly total for an active satellite = sum of the prices of the
+ * modules the org has actually turned on for that satellite. Returns null when
+ * pricing is unavailable or nothing billable is enabled (e.g. included-only).
+ */
+function activeSatellitePriceAzn(
+  pricing: PublicPricingResponse | null,
+  activeModules: string[] | undefined,
+  systemKey: WorkspaceSystemKey,
+): number | null {
+  if (!pricing || pricing.unavailable) return null;
+  const satelliteKey = workspaceSatelliteKey(systemKey);
+  if (!satelliteKey) return null;
+  const base = catalogModulesForSatellite(pricing.pricingModules, satelliteKey);
+  const hospitality =
+    satelliteKey === "industry_hotel_pms" ? (pricing.hospitalityModules ?? []) : [];
+  const seen = new Set<string>();
+  let total = 0;
+  for (const mod of [...base, ...hospitality]) {
+    if (seen.has(mod.key)) continue;
+    seen.add(mod.key);
+    if (mod.pricePerMonth > 0 && isModuleActive(activeModules, mod.key)) {
+      total += mod.pricePerMonth;
+    }
+  }
+  return total > 0 ? total : null;
+}
+
 function SystemCard({
   systemKey,
   pricingModuleKey,
   status,
   priceAzn,
+  activePriceAzn,
   trialDaysLeft,
   onConnect,
   connecting,
   onManageModules,
+  onSettings,
 }: {
   systemKey: WorkspaceSystemKey;
   pricingModuleKey: string;
   status: WorkspaceSystemStatus;
   priceAzn: number | null;
+  activePriceAzn: number | null;
   trialDaysLeft: number | null;
   onConnect?: () => void;
   connecting?: boolean;
   onManageModules?: () => void;
+  onSettings?: () => void;
 }) {
   const t = useTranslations("workspace");
   const tSys = useTranslations(`workspace.systems.${WORKSPACE_SYSTEMS.find((s) => s.key === systemKey)?.i18nKey ?? "finance"}`);
@@ -95,10 +135,24 @@ function SystemCard({
 
   function openActive() {
     if (systemKey === "FINANCE") {
-      const token = getOrchAccessToken();
-      if (!token) return;
-      void buildFinanceHandoffUrl(token).then((url) => {
-        if (url) window.location.href = url;
+      // Open in a new tab for parity with satellite launches.
+      const popup = window.open("", "_blank");
+      void buildFinanceHandoffUrl().then((result) => {
+        if (!result.ok) {
+          popup?.close();
+          if (result.reason === "needs_relogin") {
+            window.location.assign("/login?reason=session_expired");
+            return;
+          }
+          window.alert(
+            result.reason === "finance_unavailable"
+              ? "Finance URL is not configured."
+              : "Finance handoff failed. Try again or re-login.",
+          );
+          return;
+        }
+        if (popup) popup.location.href = result.url;
+        else window.open(result.url, "_blank", "noopener,noreferrer");
       });
       return;
     }
@@ -109,14 +163,20 @@ function SystemCard({
       window.open(workspaceOpenHref(systemKey) ?? "/industry", "_blank");
       return;
     }
-    const url = buildSatelliteSsoLaunchUrl(base, {
-      email: user.email,
-      fullName: user.email.split("@")[0] ?? "User",
-      organizationId: user.organizationId,
-      expiresAt: defaultSsoExpiresAt(),
-      financeRole: user.role ?? "OWNER",
+    const token = getOrchAccessToken();
+    if (!token) return;
+    // Open the tab synchronously to avoid popup blockers, then redirect once signed.
+    const popup = window.open("", "_blank");
+    const organizationId = user.organizationId;
+    void fetchSatelliteSsoTicket(token, organizationId).then((ticket) => {
+      if (!ticket) {
+        popup?.close();
+        return;
+      }
+      const url = buildSatelliteSsoLaunchUrlFromTicket(base, ticket);
+      if (popup) popup.location.href = url;
+      else window.open(url, "_blank", "noopener,noreferrer");
     });
-    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   const badge =
@@ -153,16 +213,43 @@ function SystemCard({
           ))}
         </ul>
       ) : null}
-      {priceAzn != null ? (
+      {status === "active" ? (
+        activePriceAzn != null ? (
+          <p className="mt-3 text-xs text-[#475569]">
+            {t("priceActive", { price: activePriceAzn })}
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-[#7F8C8D]">{t("priceIncluded")}</p>
+        )
+      ) : priceAzn != null ? (
         <p className="mt-3 text-xs text-[#475569]">
           {t("priceFrom", { price: priceAzn })}
         </p>
       ) : null}
       <div className="mt-auto pt-4">
         {status === "active" ? (
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openActive}>
-            {t("open")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openActive}>
+              {t("open")}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={onManageModules}
+            >
+              <SlidersHorizontal className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("manageModules")}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              aria-label={t("satelliteSettings")}
+              title={t("satelliteSettings")}
+              onClick={onSettings}
+            >
+              <Settings className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
         ) : status === "read_only" ? (
           <Link href="/settings/subscription" className={PRIMARY_BUTTON_CLASS}>
             {t("renew")}
@@ -196,22 +283,17 @@ export default function WorkspacePage() {
   const t = useTranslations("workspace");
   const tHome = useTranslations("home");
   const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
-  const [showAllModules, setShowAllModules] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addingWorkforce, setAddingWorkforce] = useState(false);
   const [connectingKey, setConnectingKey] = useState<WorkspaceSystemKey | null>(null);
   const [modulesModalKey, setModulesModalKey] = useState<WorkspaceSystemKey | null>(null);
+  const [settingsModalKey, setSettingsModalKey] = useState<WorkspaceSystemKey | null>(null);
 
   useEffect(() => {
     void fetchPublicPricingSnapshot().then(setPricing);
   }, []);
 
   const primaryKeys = SANATORIUM_SYSTEM_KEYS;
-  const secondaryKeys = useMemo(
-    () =>
-      WORKSPACE_SYSTEMS.map((s) => s.key).filter(
-        (k) => !SANATORIUM_SYSTEM_KEYS.includes(k),
-      ),
-    [],
-  );
 
   const trialDaysLeft =
     snapshot?.isTrial && snapshot.trialDaysLeft != null ? snapshot.trialDaysLeft : null;
@@ -236,6 +318,23 @@ export default function WorkspacePage() {
         </Link>
       </>
     );
+  }
+
+  async function enableWorkforce() {
+    const token = getOrchAccessToken();
+    if (!token) return;
+    setAddingWorkforce(true);
+    try {
+      const res = await orchFetch("/v1/billing/toggle-module", {
+        token,
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
+      });
+      if (res.ok) await refresh();
+    } finally {
+      setAddingWorkforce(false);
+    }
   }
 
   function renderSystem(key: WorkspaceSystemKey) {
@@ -266,10 +365,12 @@ export default function WorkspacePage() {
         pricingModuleKey={meta.pricingModuleKey}
         status={workspaceSystemStatus(snapshot, key)}
         priceAzn={priceForModule(pricing, meta.pricingModuleKey, key)}
+        activePriceAzn={activeSatellitePriceAzn(pricing, snapshot?.activeModules, key)}
         trialDaysLeft={trialDaysLeft}
         onConnect={() => void connectSatellite()}
         connecting={connectingKey === key}
         onManageModules={() => setModulesModalKey(key)}
+        onSettings={() => setSettingsModalKey(key)}
       />
     );
   }
@@ -284,45 +385,70 @@ export default function WorkspacePage() {
         <div className={`${CARD_CONTAINER_CLASS} mb-6 border-amber-200 bg-amber-50 p-4`}>
           <p className="text-[13px] font-semibold text-amber-900">{tHome("hotelUpsellTitle")}</p>
           <p className="mt-1 text-[13px] text-[#7F8C8D]">{tHome("hotelUpsellHint")}</p>
-          <Link
-            href="/pricing#hospitality"
+          <button
+            type="button"
             className="mt-2 inline-block text-[13px] font-medium text-[#2980B9] hover:underline"
+            onClick={() => setModulesModalKey("HOTEL_PMS")}
           >
             {tHome("hotelUpsellCta")} →
-          </Link>
+          </button>
         </div>
       ) : null}
       <WorkspaceDepartmentsPanel />
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("workforceSection")}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
-          <WorkforceHubCard snapshot={snapshot} />
+          <WorkforceHubCard
+            snapshot={snapshot}
+            adding={addingWorkforce}
+            onAdd={() => void enableWorkforce()}
+          />
         </div>
       </section>
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("sanatoriumSection")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">{primaryKeys.map(renderSystem)}</div>
-      </section>
-      {secondaryKeys.length > 0 ? (
-        <section className="mt-8">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-[#34495E]">{t("sanatoriumSection")}</h2>
           <button
             type="button"
-            className="mb-3 text-sm font-medium text-[#2980B9] hover:underline"
-            onClick={() => setShowAllModules((v) => !v)}
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => setAddOpen(true)}
           >
-            {showAllModules ? t("hideAllModules") : t("showAllModules")}
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            {t("addSatellite")}
           </button>
-          {showAllModules ? (
-            <div className="grid gap-4 sm:grid-cols-2">{secondaryKeys.map(renderSystem)}</div>
-          ) : null}
-        </section>
-      ) : null}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">{primaryKeys.map(renderSystem)}</div>
+      </section>
+      <ModalShell
+        open={addOpen}
+        title={t("addSatelliteTitle")}
+        subtitle={t("addSatelliteSubtitle")}
+        onClose={() => setAddOpen(false)}
+        closeLabel={t("close")}
+        maxWidthClass="max-w-3xl"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          {WORKSPACE_SYSTEMS.map((s) => s.key).map(renderSystem)}
+        </div>
+      </ModalShell>
       <WorkspaceSatelliteModulesModal
         open={modulesModalKey != null}
         systemKey={modulesModalKey}
         pricing={pricing}
         onClose={() => setModulesModalKey(null)}
         onUpdated={refresh}
+      />
+      <WorkspaceSatelliteSettingsModal
+        open={settingsModalKey != null}
+        systemKey={settingsModalKey}
+        snapshot={snapshot}
+        pricing={pricing}
+        onClose={() => setSettingsModalKey(null)}
+        onManageModules={() => {
+          const key = settingsModalKey;
+          setSettingsModalKey(null);
+          setModulesModalKey(key);
+        }}
       />
     </>
   );

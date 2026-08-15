@@ -1,18 +1,19 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =
   process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
   process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
-const ORG_ID = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
 
 async function callPlatformAuth(
   path: string,
   method: 'POST',
   body?: Record<string, unknown>,
 ): Promise<{ externalAuthId: string } | null> {
-  if (!CP_URL || !CP_TOKEN || !ORG_ID) {
+  const orgId = satelliteOrganizationId();
+  if (!CP_URL || !CP_TOKEN || !orgId || orgId === 'demo-org') {
     return { externalAuthId: `mock-auth-${Date.now()}` };
   }
   try {
@@ -21,7 +22,7 @@ async function callPlatformAuth(
       headers: {
         Authorization: `Bearer ${CP_TOKEN}`,
         'Content-Type': 'application/json',
-        'X-Organization-Id': ORG_ID,
+        'X-Organization-Id': orgId,
       },
       body: body ? JSON.stringify(body) : undefined,
     });

@@ -1,0 +1,4 @@
+product: data-hub
+status: mvp
+pilot_ready: false
+notes: "HEADLESS-heavy; inherits COVERAGE until wave filled"

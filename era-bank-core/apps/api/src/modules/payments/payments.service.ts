@@ -1,9 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   PaymentOrderStatus,
   PaymentRail,
   Prisma,
   TxnType,
+  type PaymentOrder,
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
@@ -14,6 +20,18 @@ import {
 } from "../../kernel/ledger/system-gl-config.service";
 import { InternalRailAdapter } from "./internal-rail.adapter";
 import { StubRailAdapter } from "./stub-rail.adapter";
+import { AmlService } from "../aml/aml.service";
+
+const EXTERNAL_RAILS: PaymentRail[] = [
+  PaymentRail.AZIPS,
+  PaymentRail.XOHKS,
+  PaymentRail.AOS,
+  PaymentRail.SWIFT,
+];
+
+function requiresStaffApproval(rail: PaymentRail): boolean {
+  return EXTERNAL_RAILS.includes(rail);
+}
 
 @Injectable()
 export class PaymentsService {
@@ -24,11 +42,15 @@ export class PaymentsService {
     private readonly systemGl: SystemGlConfigService,
     private readonly internalRail: InternalRailAdapter,
     private readonly stubRail: StubRailAdapter,
+    private readonly aml: AmlService,
   ) {}
 
-  listOrders() {
+  listOrders(status?: PaymentOrderStatus) {
     return this.prisma.paymentOrder.findMany({
-      where: { bankOrgId: this.bankOrg.bankOrgId },
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        ...(status ? { status } : {}),
+      },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -66,18 +88,16 @@ export class PaymentsService {
     });
   }
 
-  private async settleToLedger(
-    order: {
-      id: string;
-      debtorAccountId: string | null;
-      creditorIban: string;
-      amountMinor: bigint;
-      currency: string;
-      rail: PaymentRail;
-      createdByUserId: string;
-      idempotencyKey: string;
-    },
-  ) {
+  private async settleToLedger(order: {
+    id: string;
+    debtorAccountId: string | null;
+    creditorIban: string;
+    amountMinor: bigint;
+    currency: string;
+    rail: PaymentRail;
+    createdByUserId: string;
+    idempotencyKey: string;
+  }) {
     if (!order.debtorAccountId) {
       throw new BadRequestException("debtorAccountId required for settlement posting");
     }
@@ -143,12 +163,7 @@ export class PaymentsService {
     });
   }
 
-  async submitOrder(id: string) {
-    const order = await this.prisma.paymentOrder.findFirst({
-      where: { id, bankOrgId: this.bankOrg.bankOrgId },
-    });
-    if (!order) throw new NotFoundException("Payment order not found");
-
+  private async executeRail(order: PaymentOrder) {
     const adapter =
       order.rail === PaymentRail.INTERNAL ? this.internalRail : this.stubRail;
     const result = await adapter.submit(order);
@@ -177,6 +192,113 @@ export class PaymentsService {
     return this.prisma.paymentOrder.update({
       where: { id: order.id },
       data: { status: nextStatus },
+    });
+  }
+
+  /**
+   * Maker submit:
+   * - EXTERNAL rails: DRAFT → PENDING_APPROVAL (staff checker required)
+   * - INTERNAL: DRAFT → rail immediately
+   * - DBO path: APPROVED → rail (customer already signed)
+   */
+  async submitOrder(id: string) {
+    const order = await this.prisma.paymentOrder.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!order) throw new NotFoundException("Payment order not found");
+
+    const fraud = await this.aml.scoreFraud({
+      reference: order.id,
+      channel: "PAYMENT_SUBMIT",
+      amountMinor: order.amountMinor,
+      currency: order.currency,
+    });
+    if (fraud.holdPayment) {
+      throw new BadRequestException({
+        code: "FRAUD_HOLD",
+        message: "Payment held by fraud score hook",
+        score: fraud.score,
+        reasonCodes: fraud.reasonCodes,
+      });
+    }
+
+    if (order.status === PaymentOrderStatus.APPROVED) {
+      return this.executeRail(order);
+    }
+
+    if (order.status !== PaymentOrderStatus.DRAFT) {
+      throw new BadRequestException(
+        `Cannot submit payment in status ${order.status}`,
+      );
+    }
+
+    if (requiresStaffApproval(order.rail)) {
+      return this.prisma.paymentOrder.update({
+        where: { id: order.id },
+        data: { status: PaymentOrderStatus.PENDING_APPROVAL },
+      });
+    }
+
+    return this.executeRail(order);
+  }
+
+  async approveOrder(id: string, checkerUserId: string) {
+    const order = await this.prisma.paymentOrder.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!order) throw new NotFoundException("Payment order not found");
+    if (order.status !== PaymentOrderStatus.PENDING_APPROVAL) {
+      throw new BadRequestException(
+        `Cannot approve payment in status ${order.status}`,
+      );
+    }
+    if (order.createdByUserId === checkerUserId) {
+      throw new ForbiddenException(
+        "Maker cannot approve own payment order (segregation of duties)",
+      );
+    }
+
+    await this.prisma.paymentOrder.update({
+      where: { id: order.id },
+      data: { status: PaymentOrderStatus.APPROVED },
+    });
+
+    return this.executeRail(order);
+  }
+
+  async rejectOrder(id: string, checkerUserId: string, reason?: string) {
+    const order = await this.prisma.paymentOrder.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!order) throw new NotFoundException("Payment order not found");
+    if (order.status !== PaymentOrderStatus.PENDING_APPROVAL) {
+      throw new BadRequestException(
+        `Cannot reject payment in status ${order.status}`,
+      );
+    }
+    if (order.createdByUserId === checkerUserId) {
+      throw new ForbiddenException(
+        "Maker cannot reject own payment order (segregation of duties)",
+      );
+    }
+
+    await this.prisma.paymentRailMessage.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        paymentOrderId: order.id,
+        direction: "INTERNAL",
+        rail: order.rail,
+        payloadJson: {
+          action: "REJECTED_BY_CHECKER",
+          checkerUserId,
+          reason: reason ?? "Rejected by checker",
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return this.prisma.paymentOrder.update({
+      where: { id: order.id },
+      data: { status: PaymentOrderStatus.REJECTED },
     });
   }
 

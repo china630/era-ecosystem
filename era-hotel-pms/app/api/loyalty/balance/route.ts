@@ -3,12 +3,12 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =
   process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
   process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
-const ORG_ID = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     const customerRef = new URL(request.url).searchParams.get('customerRef');
     if (!customerRef) throw new Error('customerRef required');
 
-    if (!CP_URL || !CP_TOKEN || !ORG_ID) {
+    const orgId = satelliteOrganizationId();
+    if (!CP_URL || !CP_TOKEN || !orgId || orgId === 'demo-org') {
       return jsonOk({ balance: 0, maxRedeemableAzn: 0, mode: 'mock', pointsPerAzn: 100 });
     }
 
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
       {
         headers: {
           Authorization: `Bearer ${CP_TOKEN}`,
-          'X-Organization-Id': ORG_ID,
+          'X-Organization-Id': orgId,
         },
       },
     );

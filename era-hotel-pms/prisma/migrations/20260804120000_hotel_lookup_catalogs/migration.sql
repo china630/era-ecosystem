@@ -1,22 +1,26 @@
--- CreateEnum
-CREATE TYPE "HotelLookupKind" AS ENUM (
-  'MARKET',
-  'SEGMENT',
-  'VIP_TYPE',
-  'LOYALTY_TIER',
-  'VISA_TYPE',
-  'TITLE',
-  'GENDER',
-  'MARITAL_STATUS',
-  'TRIP_REASON',
-  'ACCOM_TYPE',
-  'RECORD_TYPE',
-  'SPECIAL_STATE',
-  'VERIFICATION_STATUS'
-);
+-- CreateEnum (idempotent: type may already exist from partial apply)
+DO $$ BEGIN
+  CREATE TYPE "HotelLookupKind" AS ENUM (
+    'MARKET',
+    'SEGMENT',
+    'VIP_TYPE',
+    'LOYALTY_TIER',
+    'VISA_TYPE',
+    'TITLE',
+    'GENDER',
+    'MARITAL_STATUS',
+    'TRIP_REASON',
+    'ACCOM_TYPE',
+    'RECORD_TYPE',
+    'SPECIAL_STATE',
+    'VERIFICATION_STATUS'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
-CREATE TABLE "HotelLookup" (
+CREATE TABLE IF NOT EXISTS "HotelLookup" (
     "id" TEXT NOT NULL,
     "kind" "HotelLookupKind" NOT NULL,
     "code" TEXT NOT NULL,
@@ -29,7 +33,7 @@ CREATE TABLE "HotelLookup" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "HotelLookup_kind_code_key" ON "HotelLookup"("kind", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "HotelLookup_kind_code_key" ON "HotelLookup"("kind", "code");
 
 -- CreateIndex
-CREATE INDEX "HotelLookup_kind_active_sortOrder_idx" ON "HotelLookup"("kind", "active", "sortOrder");
+CREATE INDEX IF NOT EXISTS "HotelLookup_kind_active_sortOrder_idx" ON "HotelLookup"("kind", "active", "sortOrder");

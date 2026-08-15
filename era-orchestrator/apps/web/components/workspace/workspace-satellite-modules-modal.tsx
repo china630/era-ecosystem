@@ -74,6 +74,9 @@ export function WorkspaceSatelliteModulesModal({
         : [];
     const merged = new Map<string, PublicPricingModule>();
     for (const m of [...base, ...hospitality]) merged.set(m.key, m);
+    // The satellite gate itself is not an add-on module — connecting/disconnecting
+    // the satellite is handled by the workspace card, not a checkbox here.
+    merged.delete(satelliteKey);
     return [...merged.values()].sort((a, b) => a.sortOrder - b.sortOrder);
   }, [pricing, satelliteKey]);
 
@@ -191,7 +194,7 @@ export function WorkspaceSatelliteModulesModal({
             const active = isModuleActive(snapshot?.activeModules, mod.key);
             const pending = pendingByKey.get(mod.key) ?? false;
             const checked = active && !pending;
-            const disabled = busyKey != null;
+            const disabled = busyKey === mod.key;
 
             return (
               <li

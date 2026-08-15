@@ -1,0 +1,4 @@
+product: finance
+status: mvp
+pilot_ready: false
+notes: "GL/events MVP; many FIN-* still API-only; field open"

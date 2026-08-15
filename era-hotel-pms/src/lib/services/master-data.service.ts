@@ -44,11 +44,26 @@ export async function createRatePlan(input: {
   medicalFlag?: boolean;
   roomTypeId?: string;
   mealPlanId?: string;
+  baseOccupancy?: number;
+  extraAdultAmount?: number | null;
+  thirdAdultAmount?: number | null;
+  extraBedAmount?: number | null;
 }) {
   return prisma.ratePlan.create({
     data: {
-      ...input,
+      code: input.code,
+      name: input.name,
+      medicalFlag: input.medicalFlag,
+      roomTypeId: input.roomTypeId,
+      mealPlanId: input.mealPlanId,
       pricePerNight: toDecimal(input.pricePerNight),
+      baseOccupancy: input.baseOccupancy ?? 1,
+      extraAdultAmount:
+        input.extraAdultAmount == null ? null : toDecimal(input.extraAdultAmount),
+      thirdAdultAmount:
+        input.thirdAdultAmount == null ? null : toDecimal(input.thirdAdultAmount),
+      extraBedAmount:
+        input.extraBedAmount == null ? null : toDecimal(input.extraBedAmount),
     },
     include: { roomType: true, mealPlan: true },
   });
@@ -63,14 +78,41 @@ export async function updateRatePlan(
     roomTypeId?: string | null;
     mealPlanId?: string | null;
     active?: boolean;
+    baseOccupancy?: number;
+    extraAdultAmount?: number | null;
+    thirdAdultAmount?: number | null;
+    extraBedAmount?: number | null;
   },
 ) {
-  const data: Record<string, unknown> = { ...input };
+  const data: Record<string, unknown> = {
+    name: input.name,
+    medicalFlag: input.medicalFlag,
+    active: input.active,
+    baseOccupancy: input.baseOccupancy,
+  };
   if (input.pricePerNight != null) {
     data.pricePerNight = toDecimal(input.pricePerNight);
   }
   if (input.roomTypeId === null) data.roomTypeId = null;
+  else if (input.roomTypeId !== undefined) data.roomTypeId = input.roomTypeId;
   if (input.mealPlanId === null) data.mealPlanId = null;
+  else if (input.mealPlanId !== undefined) data.mealPlanId = input.mealPlanId;
+  if (input.extraAdultAmount !== undefined) {
+    data.extraAdultAmount =
+      input.extraAdultAmount == null ? null : toDecimal(input.extraAdultAmount);
+  }
+  if (input.thirdAdultAmount !== undefined) {
+    data.thirdAdultAmount =
+      input.thirdAdultAmount == null ? null : toDecimal(input.thirdAdultAmount);
+  }
+  if (input.extraBedAmount !== undefined) {
+    data.extraBedAmount =
+      input.extraBedAmount == null ? null : toDecimal(input.extraBedAmount);
+  }
+  // Drop undefined keys so Prisma does not receive them
+  for (const key of Object.keys(data)) {
+    if (data[key] === undefined) delete data[key];
+  }
   return prisma.ratePlan.update({
     where: { id },
     data,

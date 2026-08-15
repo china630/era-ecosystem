@@ -68,10 +68,17 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
     },
     {
         key: "hr_full",
-        name: "HR",
+        name: "HR & Payroll",
         pricePerMonth: 19,
         sortOrder: 3,
         satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "platform_workforce",
+        name: "Workforce Hub (CP)",
+        pricePerMonth: 0,
+        sortOrder: 3,
         trialEligibleInTrial: true,
     },
     {
@@ -232,6 +239,142 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         isPremium: false,
         satelliteKey: "industry_hotel_pms",
     },
+    // Clinic modules (MODULES_CATALOG M0–M14) — default free
+    {
+        key: "clinic_shell",
+        name: "M0 Platform shell, SSO",
+        pricePerMonth: 0,
+        sortOrder: 200,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_patients",
+        name: "M1 Patient registry",
+        pricePerMonth: 0,
+        sortOrder: 201,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_schedule",
+        name: "M2 Practitioners, rooms, schedule",
+        pricePerMonth: 0,
+        sortOrder: 202,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_appointments",
+        name: "M3 Appointment & check-in",
+        pricePerMonth: 0,
+        sortOrder: 203,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_visit",
+        name: "M4 Visit card & clinical services",
+        pricePerMonth: 0,
+        sortOrder: 204,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_lab",
+        name: "M5 Laboratory orders & results",
+        pricePerMonth: 0,
+        sortOrder: 205,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_service_catalog",
+        name: "M6 Service catalog cache",
+        pricePerMonth: 0,
+        sortOrder: 206,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_notifications",
+        name: "M7 Notifications (SMS/email)",
+        pricePerMonth: 0,
+        sortOrder: 207,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: false,
+    },
+    {
+        key: "clinic_portal",
+        name: "M8 Patient portal",
+        pricePerMonth: 0,
+        sortOrder: 208,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_reschedule",
+        name: "M9 Multi-room drag reschedule",
+        pricePerMonth: 0,
+        sortOrder: 209,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_ehr",
+        name: "M10 EHR templates / CPOE lite",
+        pricePerMonth: 0,
+        sortOrder: 210,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_lis_import",
+        name: "M11 LIS analyzer import",
+        pricePerMonth: 0,
+        sortOrder: 211,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_insurance",
+        name: "M12 Insurance / DMS eligibility",
+        pricePerMonth: 0,
+        sortOrder: 212,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_inpatient",
+        name: "M13 Inpatient / bed management",
+        pricePerMonth: 0,
+        sortOrder: 213,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "clinic_telehealth",
+        name: "M14 Telehealth + patient portal",
+        pricePerMonth: 0,
+        sortOrder: 214,
+        isPremium: false,
+        satelliteKey: "industry_clinic",
+        trialEligibleInTrial: true,
+    },
     {
         key: "banking_core",
         name: "Bank Core (kernel)",
@@ -304,6 +447,54 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         isPremium: true,
         satelliteKey: "industry_banking",
     },
+    {
+        key: "banking_risk",
+        name: "Risk management",
+        pricePerMonth: 39,
+        sortOrder: 129,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_trade",
+        name: "Trade finance",
+        pricePerMonth: 39,
+        sortOrder: 130,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_collections",
+        name: "Collections / recovery",
+        pricePerMonth: 29,
+        sortOrder: 131,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_cash",
+        name: "Cash / vault ops",
+        pricePerMonth: 19,
+        sortOrder: 132,
+        isPremium: false,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_islamic",
+        name: "Islamic banking window",
+        pricePerMonth: 39,
+        sortOrder: 133,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_wealth",
+        name: "Custody / safekeeping (thin)",
+        pricePerMonth: 29,
+        sortOrder: 134,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
 ];
 async function ensureSatellites(prisma) {
     await prisma.satellite.upsert({
@@ -346,9 +537,11 @@ function moduleSeedData(m) {
     let satelliteKey = m.satelliteKey ??
         (m.key.startsWith("hotel_")
             ? "industry_hotel_pms"
-            : m.key.startsWith("banking_")
-                ? "industry_banking"
-                : null);
+            : m.key.startsWith("clinic_")
+                ? "industry_clinic"
+                : m.key.startsWith("banking_")
+                    ? "industry_banking"
+                    : null);
     if (!satelliteKey && FINANCE_TRIAL_ELIGIBLE.has(m.key)) {
         satelliteKey = "finance_core";
     }

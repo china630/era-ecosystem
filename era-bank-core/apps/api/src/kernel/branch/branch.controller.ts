@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { IsBoolean, IsOptional, IsString } from "class-validator";
 import { BankAuthGuard, type BankAuthRequest } from "../../auth/bank-auth.guard";
@@ -40,6 +40,22 @@ class CrossBranchWithdrawalDto {
   @IsString()
   reference?: string;
 }
+
+class UpsertBranchLimitDto {
+  @IsString()
+  branchId!: string;
+
+  @IsString()
+  limitCode!: string;
+
+  @IsString()
+  amountMinor!: string;
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
+}
+
 @ApiTags("branches")
 @ApiBearerAuth("service-token")
 @UseGuards(BankAuthGuard)
@@ -55,6 +71,30 @@ export class BranchController {
   @Post()
   create(@Body() dto: CreateBranchDto) {
     return this.branchService.create(dto);
+  }
+
+  @Get("limits")
+  listLimits(@Query("branchId") branchId?: string) {
+    return this.branchService.listLimits(branchId);
+  }
+
+  @Post("limits")
+  upsertLimit(@Body() dto: UpsertBranchLimitDto) {
+    return this.branchService.upsertLimit({
+      branchId: dto.branchId,
+      limitCode: dto.limitCode,
+      amountMinor: BigInt(dto.amountMinor),
+      currency: dto.currency,
+    });
+  }
+
+  @Post("mfr/reconcile")
+  reconcileMfr(
+    @Body() body: { asOf?: string },
+    @Req() req: BankAuthRequest,
+  ) {
+    const asOf = body.asOf ? new Date(body.asOf) : new Date();
+    return this.branchService.reconcileMfr(asOf, req.userId ?? "service");
   }
 
   @Post("cross-branch-withdrawal")

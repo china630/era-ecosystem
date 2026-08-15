@@ -62,6 +62,7 @@ function RegisterForm() {
       }
       const data = (await res.json()) as {
         accessToken: string;
+        refreshToken?: string;
         user: { id: string; email: string; organizationId: string | null };
         claims?: { isSuperAdmin?: boolean };
       };
@@ -70,7 +71,7 @@ function RegisterForm() {
         email: data.user.email,
         organizationId: null,
         isSuperAdmin: data.claims?.isSuperAdmin,
-      });
+      }, data.refreshToken);
       router.replace("/organizations");
     } finally {
       setBusy(false);

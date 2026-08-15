@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Field, showApiError } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
-import { OpsError, OpsField } from "@/components/ops-ui";
+import { OpsError } from "@/components/ops-ui";
 
 type BranchCreateModalProps = {
   open: boolean;
@@ -11,8 +12,13 @@ type BranchCreateModalProps = {
   onCreated: () => void;
 };
 
-export function BranchCreateModal({ open, onClose, onCreated }: BranchCreateModalProps) {
+export function BranchCreateModal({
+  open,
+  onClose,
+  onCreated,
+}: BranchCreateModalProps) {
   const t = useTranslations("pages.branches");
+  const tCommon = useTranslations("common");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const formId = "branch-create-form";
@@ -40,7 +46,8 @@ export function BranchCreateModal({ open, onClose, onCreated }: BranchCreateModa
       onCreated();
       onClose();
     } catch {
-      setError("Request failed");
+      showApiError(tCommon("error"));
+      setError(tCommon("error"));
     } finally {
       setBusy(false);
     }
@@ -57,8 +64,20 @@ export function BranchCreateModal({ open, onClose, onCreated }: BranchCreateModa
       busy={busy}
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <OpsField name="code" label={t("code")} defaultValue="" />
-        <OpsField name="name" label={t("name")} defaultValue="" />
+        <Field
+          name="code"
+          label={t("code")}
+          preset="code"
+          required
+          defaultValue=""
+        />
+        <Field
+          name="name"
+          label={t("name")}
+          preset="longText"
+          required
+          defaultValue=""
+        />
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input type="checkbox" name="isHeadOffice" />
           {t("headOffice")}

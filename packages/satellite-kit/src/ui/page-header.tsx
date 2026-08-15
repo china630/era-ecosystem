@@ -15,21 +15,21 @@ export function PageHeader({
 }) {
   return (
     <header className="mb-6 space-y-3">
-      <div>
-        <h1 className="m-0 text-left text-2xl font-semibold text-[#34495E]">{title}</h1>
-        {subtitle != null && subtitle !== "" ? (
-          <div className="mt-2 text-left text-sm text-[#7F8C8D]">{subtitle}</div>
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0">
+          <h1 className="m-0 text-left text-2xl font-semibold text-[#34495E]">{title}</h1>
+          {subtitle != null && subtitle !== "" ? (
+            <div className="mt-1 text-left text-sm text-[#7F8C8D]">{subtitle}</div>
+          ) : null}
+        </div>
+        {actions ? (
+          <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
+            {actions}
+          </div>
         ) : null}
       </div>
       {leading != null && leading !== "" ? (
-        <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">{leading}</div>
-          {actions ? (
-            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>
-          ) : null}
-        </div>
-      ) : actions ? (
-        <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2">{leading}</div>
       ) : null}
     </header>
   );
