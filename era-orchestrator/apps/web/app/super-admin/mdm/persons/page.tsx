@@ -5,11 +5,19 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   GHOST_BUTTON_CLASS,
+  ListPaginationFooter,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { cpAdminFetch } from "../../../../lib/cp-admin-fetch";
+import { useListPagination } from "../../../../lib/use-list-pagination";
 
 type LookupResult = {
   found: boolean;
@@ -32,6 +40,7 @@ type IdentifiersResult = {
 
 export default function SuperAdminMdmPersonsPage() {
   const t = useTranslations("superAdmin.mdmPersons");
+  const tCommon = useTranslations("common");
   const [fin, setFin] = useState("");
   const [lookup, setLookup] = useState<LookupResult | null>(null);
   const [identifiers, setIdentifiers] = useState<IdentifiersResult | null>(null);
@@ -44,6 +53,10 @@ export default function SuperAdminMdmPersonsPage() {
 
   const [mergeSource, setMergeSource] = useState("");
   const [mergeTarget, setMergeTarget] = useState("");
+
+  const idRows = identifiers?.identifiers ?? [];
+  const { page, pageSize, setPage, setPageSize, paged, total } =
+    useListPagination(idRows, identifiers?.globalPersonId);
 
   async function doLookup() {
     setBusy(true);
@@ -138,19 +151,64 @@ export default function SuperAdminMdmPersonsPage() {
             {t("lookupBtn")}
           </button>
         </div>
-        {lookup && (
-          <pre className="overflow-auto rounded bg-[#FAFBFC] p-3 text-xs">
-            {JSON.stringify(lookup, null, 2)}
-          </pre>
-        )}
-        {identifiers && (
-          <>
-            <p className="text-xs font-medium text-[#7F8C8D]">{t("identifiers")}</p>
-            <pre className="overflow-auto rounded bg-[#FAFBFC] p-3 text-xs">
-              {JSON.stringify(identifiers, null, 2)}
-            </pre>
-          </>
-        )}
+        {lookup && !lookup.found ? (
+          <p className="rounded-lg bg-[#FAFBFC] p-3 text-sm text-[#7F8C8D]">{t("notFound")}</p>
+        ) : null}
+        {lookup && lookup.found ? (
+          <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1.5 rounded-lg bg-[#FAFBFC] p-3 text-[13px]">
+            <dt className="text-[#7F8C8D]">{t("personId")}</dt>
+            <dd className="font-mono text-[#34495E]">{lookup.globalPersonId ?? "—"}</dd>
+            <dt className="text-[#7F8C8D]">{t("fullName")}</dt>
+            <dd className="text-[#34495E]">{lookup.fullName ?? "—"}</dd>
+            <dt className="text-[#7F8C8D]">{t("phone")}</dt>
+            <dd className="text-[#34495E]">{lookup.phone ?? "—"}</dd>
+            {lookup.masked ? (
+              <>
+                <dt className="text-[#7F8C8D]">{t("masked")}</dt>
+                <dd className="text-amber-800">{t("maskedYes")}</dd>
+              </>
+            ) : null}
+          </dl>
+        ) : null}
+        {identifiers && identifiers.identifiers.length > 0 ? (
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("idType")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("idCountry")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("idPrimary")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("idTrust")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paged.map((id) => (
+                  <tr key={id.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{id.type}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{id.issuingCountry}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {id.isPrimary ? t("primaryYes") : "—"}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{id.trust}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <ListPaginationFooter
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              labels={{
+                rowsPerPage: tCommon("paginationRowsPerPage"),
+                pageOf: tCommon("paginationPageOf"),
+                prev: tCommon("paginationPrev"),
+                next: tCommon("paginationNext"),
+              }}
+            />
+          </div>
+        ) : null}
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

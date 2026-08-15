@@ -11,10 +11,15 @@ import type { SubscriptionSnapshot } from "../../lib/subscription-context";
 
 export function WorkforceHubCard({
   snapshot,
+  onAdd,
+  adding,
 }: {
   snapshot: SubscriptionSnapshot | null;
+  onAdd?: () => void;
+  adding?: boolean;
 }) {
   const t = useTranslations("workspace.workforceHub");
+  const tCommon = useTranslations("common");
   const status = workforceHubStatus(snapshot);
 
   const badge =
@@ -43,6 +48,15 @@ export function WorkforceHubCard({
           <Link href="/workspace/workforce/employments" className={PRIMARY_BUTTON_CLASS}>
             {t("open")}
           </Link>
+        ) : onAdd ? (
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={adding}
+            onClick={onAdd}
+          >
+            {adding ? tCommon("loading") : t("addModule")}
+          </button>
         ) : (
           <Link href="/pricing#platform_workforce" className={PRIMARY_BUTTON_CLASS}>
             {t("addModule")}

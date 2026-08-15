@@ -54,6 +54,10 @@ import { WorkforceExportController } from "./workforce-export.controller";
 
 import { WorkforceExportService } from "./workforce-export.service";
 
+import { WorkforceImportController } from "./workforce-import.controller";
+
+import { WorkforceImportService } from "./workforce-import.service";
+
 import { WorkforceTimesheetsController } from "./workforce-timesheets.controller";
 
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
@@ -110,6 +114,8 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
 
     WorkforceExportController,
 
+    WorkforceImportController,
+
     WorkforceTimesheetsController,
 
     WorkforceVacationPlansController,
@@ -153,6 +159,8 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
     WorkforceSecurityService,
 
     WorkforceExportService,
+
+    WorkforceImportService,
 
     WorkforceTimesheetsService,
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BANKING_PRICING_MODULE_KEYS = exports.INDUSTRY_SATELLITE_MODULE_KEYS = exports.HOTEL_PRICING_BUNDLE_KEYS = exports.HOTEL_LEGACY_MODULE_KEYS = exports.HOTEL_MODULE_KEY_ALIASES = exports.HOTEL_PRICING_MODULE_KEYS = void 0;
+exports.CLINIC_PRICING_MODULE_KEYS = exports.BANKING_PRICING_MODULE_KEYS = exports.INDUSTRY_SATELLITE_MODULE_KEYS = exports.HOTEL_PRICING_BUNDLE_KEYS = exports.HOTEL_LEGACY_MODULE_KEYS = exports.HOTEL_MODULE_KEY_ALIASES = exports.HOTEL_PRICING_MODULE_KEYS = void 0;
 exports.resolveHotelModuleKey = resolveHotelModuleKey;
 exports.consolidateHotelModuleKeys = consolidateHotelModuleKeys;
 exports.isHotelModuleActive = isHotelModuleActive;
@@ -58,6 +58,30 @@ exports.BANKING_PRICING_MODULE_KEYS = [
     "banking_treasury",
     "banking_dbo",
     "banking_regreporting",
+    "banking_risk",
+    "banking_trade",
+    "banking_collections",
+    "banking_cash",
+    "banking_islamic",
+    "banking_wealth",
+];
+/** Clinic modules (MODULES_CATALOG M0–M14). */
+exports.CLINIC_PRICING_MODULE_KEYS = [
+    "clinic_shell",
+    "clinic_patients",
+    "clinic_schedule",
+    "clinic_appointments",
+    "clinic_visit",
+    "clinic_lab",
+    "clinic_service_catalog",
+    "clinic_notifications",
+    "clinic_portal",
+    "clinic_reschedule",
+    "clinic_ehr",
+    "clinic_lis_import",
+    "clinic_insurance",
+    "clinic_inpatient",
+    "clinic_telehealth",
 ];
 /** Resolve canonical hotel module key (handles legacy slugs). */
 function resolveHotelModuleKey(moduleKey) {
@@ -82,6 +106,8 @@ function isHotelModuleActive(activeModules, moduleKey) {
 }
 function isPassThroughCatalogModuleKey(moduleKey) {
     return (moduleKey.startsWith("hotel_") ||
+        moduleKey.startsWith("clinic_") ||
+        moduleKey.startsWith("banking_") ||
         moduleKey.startsWith("industry_") ||
         moduleKey.startsWith("platform_"));
 }

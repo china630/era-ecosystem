@@ -32,7 +32,13 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException("Bearer token required");
     }
     const token = header.slice(7);
-    req.user = await this.auth.verifyAccessToken(token);
+    try {
+      req.user = await this.auth.verifyAccessToken(token);
+    } catch {
+      // Expired / malformed JWT must be 401 (not 500) so the web client
+      // can clear the session and redirect to login.
+      throw new UnauthorizedException("Invalid or expired token");
+    }
     return true;
   }
 }

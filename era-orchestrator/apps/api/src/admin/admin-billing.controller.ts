@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -27,6 +26,7 @@ import { PatchPricingModulePriceDto } from "./dto/patch-pricing-module-price.dto
 import { PatchOcrJobsPerOrgMonthDto } from "./dto/patch-ocr-jobs-per-org-month.dto";
 import { PatchQuotaUnitPricingDto } from "./dto/patch-quota-unit-pricing.dto";
 import { PatchYearlyDiscountDto } from "./dto/patch-yearly-discount.dto";
+import { PatchTrialPeriodDaysDto } from "./dto/patch-trial-period-days.dto";
 import { SetBillingPriceDto } from "./dto/set-billing-price.dto";
 import { PatchMeterUnitPricingDto } from "./dto/patch-meter-unit-pricing.dto";
 import { PatchTierSpendCeilingsDto } from "./dto/patch-tier-spend-ceilings.dto";
@@ -95,6 +95,11 @@ export class AdminBillingController {
     return this.admin.patchFoundation(dto);
   }
 
+  @Patch("config/billing/banking-foundation")
+  patchBankingFoundation(@Body() dto: PatchFoundationDto) {
+    return this.admin.patchBankingFoundation(dto);
+  }
+
   @Patch("config/billing/pricing-catalog")
   patchBillingPricingCatalog(@Body() dto: PatchBillingPricingCatalogDto) {
     return this.admin.patchBillingPricingCatalog(dto);
@@ -108,6 +113,11 @@ export class AdminBillingController {
   @Patch("config/billing/yearly-discount")
   patchYearlyDiscount(@Body() dto: PatchYearlyDiscountDto) {
     return this.admin.patchYearlyDiscount(dto);
+  }
+
+  @Patch("config/billing/trial-days")
+  patchTrialPeriodDays(@Body() dto: PatchTrialPeriodDaysDto) {
+    return this.admin.patchTrialPeriodDays(dto);
   }
 
   @Patch("config/billing/quota-pricing")
@@ -154,8 +164,8 @@ export class AdminBillingController {
     return this.admin.patchPricingBundleTrialConfig(id, dto);
   }
 
-  @Delete("pricing-bundles/:id")
-  deletePricingBundle(@Param("id", ParseUUIDPipe) id: string) {
+  @Patch("pricing-bundles/:id/archive")
+  archivePricingBundle(@Param("id", ParseUUIDPipe) id: string) {
     return this.admin.deletePricingBundle(id);
   }
 

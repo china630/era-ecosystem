@@ -1,12 +1,26 @@
 import type { PrismaClient } from "../../../generated/client";
 import { Prisma } from "../../../generated/client";
 import { PRICING_MODULE_CASH_BANK_PRO } from "./pricing-module-keys";
+import { BANKING_PRICING_MODULE_KEYS } from "./hotel-module-keys";
 
 export type PricingBundleSeedRow = {
   name: string;
   discountPercent: number;
   moduleKeys: readonly string[];
+  /** Commercial slug when set (e.g. banking_bundle_universal). */
+  slug?: string;
 };
+
+/** Retail banking pack — no treasury/regreporting/risk by default (ADR R6). */
+const BANKING_BUNDLE_RETAIL_KEYS = [
+  "banking_core",
+  "banking_deposits",
+  "banking_loans",
+  "banking_cards",
+  "banking_payments",
+  "banking_dbo",
+  "banking_aml",
+] as const;
 
 export const PRICING_BUNDLE_SEED_DEFAULTS: ReadonlyArray<PricingBundleSeedRow> = [
   {
@@ -58,7 +72,29 @@ export const PRICING_BUNDLE_SEED_DEFAULTS: ReadonlyArray<PricingBundleSeedRow> =
       "hotel_medical_sanatorium",
     ],
   },
+  {
+    name: "Banking Retail",
+    slug: "banking_bundle_retail",
+    discountPercent: 12,
+    moduleKeys: BANKING_BUNDLE_RETAIL_KEYS,
+  },
+  {
+    name: "Banking Universal",
+    slug: "banking_bundle_universal",
+    discountPercent: 15,
+    moduleKeys: BANKING_PRICING_MODULE_KEYS,
+  },
 ];
+
+function bundleCreateData(b: PricingBundleSeedRow) {
+  return {
+    name: b.name,
+    slug: b.slug ?? null,
+    discountPercent: new Prisma.Decimal(b.discountPercent),
+    moduleKeys: [...b.moduleKeys],
+    isTrialDefault: false,
+  };
+}
 
 export async function seedPricingBundleDefaultsIfEmpty(
   prisma: PrismaClient,
@@ -67,12 +103,7 @@ export async function seedPricingBundleDefaultsIfEmpty(
   if (n === 0) {
     for (const b of PRICING_BUNDLE_SEED_DEFAULTS) {
       await prisma.pricingBundle.create({
-        data: {
-          name: b.name,
-          discountPercent: new Prisma.Decimal(b.discountPercent),
-          moduleKeys: [...b.moduleKeys],
-          isTrialDefault: false,
-        },
+        data: bundleCreateData(b),
       });
     }
     return;
@@ -82,23 +113,25 @@ export async function seedPricingBundleDefaultsIfEmpty(
 
 export async function ensureMissingPricingBundles(prisma: PrismaClient): Promise<void> {
   for (const b of PRICING_BUNDLE_SEED_DEFAULTS) {
-    const existing = await prisma.pricingBundle.findFirst({
-      where: { name: b.name },
-    });
+    const existing = b.slug
+      ? await prisma.pricingBundle.findFirst({
+          where: { OR: [{ slug: b.slug }, { name: b.name }] },
+        })
+      : await prisma.pricingBundle.findFirst({
+          where: { name: b.name },
+        });
     if (existing) {
       await prisma.pricingBundle.update({
         where: { id: existing.id },
-        data: { moduleKeys: [...b.moduleKeys] },
+        data: {
+          moduleKeys: [...b.moduleKeys],
+          ...(b.slug ? { slug: b.slug } : {}),
+        },
       });
       continue;
     }
     await prisma.pricingBundle.create({
-      data: {
-        name: b.name,
-        discountPercent: new Prisma.Decimal(b.discountPercent),
-        moduleKeys: [...b.moduleKeys],
-        isTrialDefault: false,
-      },
+      data: bundleCreateData(b),
     });
   }
 }

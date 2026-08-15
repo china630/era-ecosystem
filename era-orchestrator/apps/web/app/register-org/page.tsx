@@ -71,6 +71,7 @@ export default function RegisterOrgPage() {
       }
       const data = (await res.json()) as {
         accessToken: string;
+        refreshToken?: string;
         claims: {
           sub: string;
           email: string;
@@ -90,7 +91,7 @@ export default function RegisterOrgPage() {
         organizationId: data.claims.organizationId,
         role: data.claims.role,
         isSuperAdmin: data.claims.isSuperAdmin,
-      });
+      }, data.refreshToken);
       router.replace("/workspace");
     } finally {
       setBusy(false);

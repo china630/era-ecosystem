@@ -8,6 +8,7 @@ import { ReferralsModule } from "../referrals/referrals.module";
 import { SubscriptionTrialModule } from "../subscription/subscription-trial.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { HandoffTicketStore } from "./handoff-ticket.store";
 import { WellKnownController } from "./well-known.controller";
 
 @Global()
@@ -22,7 +23,6 @@ import { WellKnownController } from "./well-known.controller";
       useFactory: (config: ConfigService) => ({
         secret:
           config.get<string>("ERA_JWT_SECRET") ??
-          config.get<string>("JWT_SECRET") ??
           "dev-era-jwt-secret-change-me",
         signOptions: { algorithm: "HS256" },
       }),
@@ -30,7 +30,7 @@ import { WellKnownController } from "./well-known.controller";
     }),
   ],
   controllers: [AuthController, WellKnownController],
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, HandoffTicketStore, JwtAuthGuard],
   exports: [AuthService, JwtModule, JwtAuthGuard],
 })
 export class AuthModule {}

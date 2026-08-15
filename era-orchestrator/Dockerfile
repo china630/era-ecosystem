@@ -28,10 +28,20 @@ ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Baked into the Next.js client bundle — use public HTTPS hosts for GHCR/prod builds.
+# Industry launcher deep-link URLs must also be baked here; runtime env is ignored for
+# NEXT_PUBLIC_* client bundles. Local UAT overrides these via docker-compose build args.
 ARG NEXT_PUBLIC_ORCH_API_URL=https://api.era-365.online
 ARG NEXT_PUBLIC_FINANCE_WEB_URL=https://finance-core.era-365.online
+ARG NEXT_PUBLIC_SATELLITE_HOTEL_URL=https://hotel-pms.era-365.online
+ARG NEXT_PUBLIC_SATELLITE_FNB_POS_URL=https://fnb-pos.era-365.online
+ARG NEXT_PUBLIC_SATELLITE_CLINIC_URL=https://clinic.era-365.online
+ARG NEXT_PUBLIC_SATELLITE_RETAIL_URL=https://retail-pos.era-365.online
 ENV NEXT_PUBLIC_ORCH_API_URL=${NEXT_PUBLIC_ORCH_API_URL}
 ENV NEXT_PUBLIC_FINANCE_WEB_URL=${NEXT_PUBLIC_FINANCE_WEB_URL}
+ENV NEXT_PUBLIC_SATELLITE_HOTEL_URL=${NEXT_PUBLIC_SATELLITE_HOTEL_URL}
+ENV NEXT_PUBLIC_SATELLITE_FNB_POS_URL=${NEXT_PUBLIC_SATELLITE_FNB_POS_URL}
+ENV NEXT_PUBLIC_SATELLITE_CLINIC_URL=${NEXT_PUBLIC_SATELLITE_CLINIC_URL}
+ENV NEXT_PUBLIC_SATELLITE_RETAIL_URL=${NEXT_PUBLIC_SATELLITE_RETAIL_URL}
 
 RUN npm ci
 RUN npm run build

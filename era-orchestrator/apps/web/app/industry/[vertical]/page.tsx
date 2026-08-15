@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  buildSatelliteSsoLaunchUrl,
-  defaultSsoExpiresAt,
-} from "@era/satellite-kit/auth/sso-launch";
+import { buildSatelliteSsoLaunchUrlFromTicket } from "@era/satellite-kit/auth/sso-launch";
 import {
   hasIndustryModuleAccess,
   industryItemByVertical,
@@ -21,6 +18,7 @@ import { useAuth } from "../../../lib/auth-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useSubscription } from "../../../lib/subscription-context";
 import { workspacePricingHref } from "../../../lib/workspace-access";
+import { fetchSatelliteSsoTicket, getOrchAccessToken } from "../../../lib/open-finance";
 
 export default function IndustryVerticalPage() {
   const { vertical } = useParams<{ vertical: string }>();
@@ -45,14 +43,20 @@ export default function IndustryVerticalPage() {
 
   function openSatellite() {
     if (!satelliteUrl || !user?.email || !user.organizationId) return;
-    const url = buildSatelliteSsoLaunchUrl(satelliteUrl, {
-      email: user.email,
-      fullName: user.email.split("@")[0] ?? "User",
-      organizationId: user.organizationId,
-      expiresAt: defaultSsoExpiresAt(),
-      financeRole: user.role ?? "OWNER",
+    const token = getOrchAccessToken();
+    if (!token) return;
+    const base = satelliteUrl;
+    const organizationId = user.organizationId;
+    const popup = window.open("", "_blank");
+    void fetchSatelliteSsoTicket(token, organizationId).then((ticket) => {
+      if (!ticket) {
+        popup?.close();
+        return;
+      }
+      const url = buildSatelliteSsoLaunchUrlFromTicket(base, ticket);
+      if (popup) popup.location.href = url;
+      else window.open(url, "_blank", "noopener,noreferrer");
     });
-    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (

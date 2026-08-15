@@ -1,5 +1,6 @@
 import { Global, Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
+import { SystemConfigModule } from "../system-config/system-config.module";
 import { DepartmentProvisionService } from "./department-provision.service";
 import { SatelliteConnectService } from "./satellite-connect.service";
 import { TrialCatalogService } from "./trial-catalog.service";
@@ -10,7 +11,7 @@ import { TrialSyncService } from "./trial-sync.service";
 /** Trial hierarchy services — no AdminModule import (avoids circular DI). */
 @Global()
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, SystemConfigModule],
   providers: [
     TrialProvisionService,
     TrialCatalogService,

@@ -5,6 +5,17 @@ exports.seedPricingBundleDefaultsIfEmpty = seedPricingBundleDefaultsIfEmpty;
 exports.ensureMissingPricingBundles = ensureMissingPricingBundles;
 const client_1 = require("../../generated/client");
 const pricing_module_keys_1 = require("./pricing-module-keys");
+const hotel_module_keys_1 = require("./hotel-module-keys");
+/** Retail banking pack — no treasury/regreporting/risk by default (ADR R6). */
+const BANKING_BUNDLE_RETAIL_KEYS = [
+    "banking_core",
+    "banking_deposits",
+    "banking_loans",
+    "banking_cards",
+    "banking_payments",
+    "banking_dbo",
+    "banking_aml",
+];
 exports.PRICING_BUNDLE_SEED_DEFAULTS = [
     {
         name: "Cash & warehouse",
@@ -55,18 +66,34 @@ exports.PRICING_BUNDLE_SEED_DEFAULTS = [
             "hotel_medical_sanatorium",
         ],
     },
+    {
+        name: "Banking Retail",
+        slug: "banking_bundle_retail",
+        discountPercent: 12,
+        moduleKeys: BANKING_BUNDLE_RETAIL_KEYS,
+    },
+    {
+        name: "Banking Universal",
+        slug: "banking_bundle_universal",
+        discountPercent: 15,
+        moduleKeys: hotel_module_keys_1.BANKING_PRICING_MODULE_KEYS,
+    },
 ];
+function bundleCreateData(b) {
+    return {
+        name: b.name,
+        slug: b.slug ?? null,
+        discountPercent: new client_1.Prisma.Decimal(b.discountPercent),
+        moduleKeys: [...b.moduleKeys],
+        isTrialDefault: false,
+    };
+}
 async function seedPricingBundleDefaultsIfEmpty(prisma) {
     const n = await prisma.pricingBundle.count();
     if (n === 0) {
         for (const b of exports.PRICING_BUNDLE_SEED_DEFAULTS) {
             await prisma.pricingBundle.create({
-                data: {
-                    name: b.name,
-                    discountPercent: new client_1.Prisma.Decimal(b.discountPercent),
-                    moduleKeys: [...b.moduleKeys],
-                    isTrialDefault: false,
-                },
+                data: bundleCreateData(b),
             });
         }
         return;
@@ -75,23 +102,25 @@ async function seedPricingBundleDefaultsIfEmpty(prisma) {
 }
 async function ensureMissingPricingBundles(prisma) {
     for (const b of exports.PRICING_BUNDLE_SEED_DEFAULTS) {
-        const existing = await prisma.pricingBundle.findFirst({
-            where: { name: b.name },
-        });
+        const existing = b.slug
+            ? await prisma.pricingBundle.findFirst({
+                where: { OR: [{ slug: b.slug }, { name: b.name }] },
+            })
+            : await prisma.pricingBundle.findFirst({
+                where: { name: b.name },
+            });
         if (existing) {
             await prisma.pricingBundle.update({
                 where: { id: existing.id },
-                data: { moduleKeys: [...b.moduleKeys] },
+                data: {
+                    moduleKeys: [...b.moduleKeys],
+                    ...(b.slug ? { slug: b.slug } : {}),
+                },
             });
             continue;
         }
         await prisma.pricingBundle.create({
-            data: {
-                name: b.name,
-                discountPercent: new client_1.Prisma.Decimal(b.discountPercent),
-                moduleKeys: [...b.moduleKeys],
-                isTrialDefault: false,
-            },
+            data: bundleCreateData(b),
         });
     }
 }

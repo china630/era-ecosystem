@@ -55,6 +55,20 @@ export class AuthController {
     });
   }
 
+  @Post("satellite-sso-ticket")
+  @UseGuards(JwtAuthGuard)
+  createSatelliteSsoTicket(
+    @CurrentUser() user: EraJwtPayload,
+    @Body() body: { organizationId?: string },
+  ) {
+    return this.auth.createSatelliteSsoTicket({
+      userId: user.sub,
+      email: user.email,
+      organizationId: body.organizationId ?? user.organizationId ?? null,
+      role: user.role ? String(user.role) : null,
+    });
+  }
+
   @Public()
   @Post("finance-handoff/redeem")
   redeemFinanceHandoff(@Body() body: { ticket: string }) {

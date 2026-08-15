@@ -3,9 +3,21 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PageHeader, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  ListPaginationFooter,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+} from "@era/satellite-kit/ui";
 import { getOrchAccessToken } from "../../../../../lib/orch-api";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
+import { useListPagination } from "../../../../../lib/use-list-pagination";
 
 type AuditRow = {
   id: string;
@@ -29,10 +41,14 @@ async function wfFetch(path: string) {
 export default function WorkforceSecurityAuditPage() {
   const { ready } = useRequireAuth();
   const t = useTranslations("workforceAudit");
+  const tCommon = useTranslations("common");
   const [action, setAction] = useState("");
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [items, setItems] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const { page, pageSize, setPage, setPageSize, paged, total } =
+    useListPagination(items);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,34 +101,49 @@ export default function WorkforceSecurityAuditPage() {
           </button>
         </div>
       </div>
-      <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto p-4`}>
-        <table className="w-full text-left text-xs">
+      <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        <table className={DATA_TABLE_CLASS}>
           <thead>
-            <tr className="border-b text-[#475569]">
-              <th className="py-2 pr-2">{t("colTime")}</th>
-              <th className="py-2 pr-2">{t("colAction")}</th>
-              <th className="py-2 pr-2">{t("colEntity")}</th>
-              <th className="py-2 pr-2">{t("colPerson")}</th>
+            <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTime")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colAction")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEntity")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((row) => (
-              <tr key={row.id} className="border-b border-[#EBEDF0]">
-                <td className="py-2 pr-2">{new Date(row.createdAt).toLocaleString()}</td>
-                <td className="py-2 pr-2 font-medium">{row.action}</td>
-                <td className="py-2 pr-2">
+            {paged.map((row) => (
+              <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                <td className={DATA_TABLE_TD_CLASS}>
+                  {new Date(row.createdAt).toLocaleString()}
+                </td>
+                <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{row.action}</td>
+                <td className={DATA_TABLE_TD_CLASS}>
                   {row.entityType} / {row.entityId.slice(0, 8)}…
                 </td>
-                <td className="py-2 pr-2 font-mono text-[11px]">
+                <td className={`${DATA_TABLE_TD_CLASS} font-mono text-[11px]`}>
                   {row.globalPersonId?.slice(0, 8) ?? "—"}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {items.length === 0 && !loading ? (
-          <p className="py-4 text-sm text-[#7F8C8D]">{t("empty")}</p>
+        {total === 0 && !loading ? (
+          <p className="px-4 py-4 text-sm text-[#7F8C8D]">{t("empty")}</p>
         ) : null}
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          labels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
       </div>
     </>
   );

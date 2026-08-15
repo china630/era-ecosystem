@@ -6,7 +6,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
-import { createHmac, randomUUID, timingSafeEqual } from "crypto";
+import { createHmac, createPublicKey, randomUUID, timingSafeEqual } from "crypto";
 import { UserRole } from "@era365/database";
 import { MdmService } from "../mdm/mdm.service";
 import { ControlPlanePrismaService } from "../prisma/control-plane-prisma.service";
@@ -21,7 +21,10 @@ import { resolvePermissionsForRole } from "./role-permissions";
 import {
   accessTokenSignOptions,
   jwksPublicKeys,
+  parseRs256Jwk,
+  resolveJwtSigningMode,
 } from "./jwt-signing.util";
+import { HandoffTicketStore } from "./handoff-ticket.store";
 
 @Injectable()
 export class AuthService {
@@ -32,6 +35,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly referrals: ReferralsService,
     private readonly trialProvision: TrialProvisionService,
+    private readonly handoffTickets: HandoffTicketStore,
   ) {}
 
   async login(dto: LoginDto) {
@@ -350,17 +354,54 @@ export class AuthService {
     return { accessToken, claims, financeRole: role };
   }
 
-  verifyAccessToken(token: string): Promise<EraJwtPayload> {
+  async verifyAccessToken(token: string): Promise<EraJwtPayload> {
     const issuer =
       this.config.get<string>("ERA_JWT_ISSUER") ?? "era-orchestrator";
     const audience =
       this.config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ??
       "era-finance-core";
-    return this.jwt.verifyAsync<EraJwtPayload>(token, {
-      issuer,
-      audience,
-      algorithms: ["HS256"],
-    });
+    const mode = resolveJwtSigningMode(this.config);
+    const opts = { issuer, audience } as const;
+
+    if (mode !== "rs256") {
+      const secret =
+        this.config.get<string>("ERA_JWT_SECRET") ??
+        this.config.get<string>("JWT_SECRET") ??
+        "";
+      if (secret) {
+        try {
+          return await this.jwt.verifyAsync<EraJwtPayload>(token, {
+            ...opts,
+            algorithms: ["HS256"],
+            secret,
+          });
+        } catch (err) {
+          if (mode === "hs256") throw err;
+        }
+      } else if (mode === "hs256") {
+        throw new UnauthorizedException("JWT secret not configured");
+      }
+    }
+
+    const jwk = parseRs256Jwk(this.config);
+    if (!jwk) {
+      throw new UnauthorizedException("Invalid or expired token");
+    }
+    try {
+      // Nest JwtService maps signing/verify material from `secret`; `publicKey`
+      // on options is ignored and HS256 module secret is used → RS256 verify 401.
+      const publicKeyPem = createPublicKey({ key: jwk, format: "jwk" }).export({
+        type: "spki",
+        format: "pem",
+      });
+      return await this.jwt.verifyAsync<EraJwtPayload>(token, {
+        ...opts,
+        algorithms: ["RS256"],
+        secret: publicKeyPem,
+      });
+    } catch {
+      throw new UnauthorizedException("Invalid or expired token");
+    }
   }
 
   private async buildClaims(input: {
@@ -406,13 +447,19 @@ export class AuthService {
     const expiresIn = (this.config.get<string>("ERA_JWT_ACCESS_EXPIRES") ??
       "12h") as `${number}h`;
     if (sign.algorithm === "RS256" && sign.privateKey) {
+      // Nest JwtService reads the signing material from `secret`; KeyObject in
+      // `privateKey` is ignored and the HS256 module secret is used → RS256 fails.
+      const privateKeyPem = sign.privateKey.export({
+        type: "pkcs8",
+        format: "pem",
+      });
       return this.jwt.signAsync(
         { ...claims },
         {
           issuer,
           audience,
           algorithm: "RS256",
-          privateKey: sign.privateKey,
+          secret: privateKeyPem,
           keyid: sign.keyid,
           expiresIn,
         },
@@ -459,30 +506,76 @@ export class AuthService {
     };
   }
 
-  private readonly handoffTickets = new Map<
-    string,
-    { userId: string; organizationId: string | null; expiresAt: number }
-  >();
-
-  createFinanceHandoffTicket(input: {
+  async createFinanceHandoffTicket(input: {
     userId: string;
     organizationId: string | null;
-  }): { ticket: string; expiresAt: string } {
+  }): Promise<{ ticket: string; expiresAt: string }> {
     const ticket = `fh_${randomUUID().replace(/-/g, "")}`;
     const expiresAt = Date.now() + 60_000;
-    this.handoffTickets.set(ticket, { ...input, expiresAt });
+    await this.handoffTickets.put(ticket, {
+      userId: input.userId,
+      organizationId: input.organizationId,
+    });
     return { ticket, expiresAt: new Date(expiresAt).toISOString() };
+  }
+
+  /**
+   * Mint a signed satellite SSO launch ticket. The HMAC secret stays server-side;
+   * the launcher only assembles the `/sso/callback` URL from these fields. Mirrors
+   * the payload verified by each satellite's `POST /api/auth/sso/exchange`.
+   */
+  /**
+   * SEC-SSO-02 / SEC-SSO-03: mint only for active membership; HMAC covers financeRole (v2).
+   */
+  async createSatelliteSsoTicket(input: {
+    userId: string;
+    email: string;
+    organizationId: string | null;
+    role: string | null;
+  }): Promise<{
+    email: string;
+    fullName: string;
+    organizationId: string;
+    expiresAt: number;
+    signature: string;
+    financeRole: string;
+  }> {
+    const secret = this.config.get<string>("ERA_SSO_SHARED_SECRET");
+    if (!secret) {
+      throw new UnauthorizedException("SSO not configured");
+    }
+    if (!input.organizationId) {
+      throw new UnauthorizedException("No active organization for SSO launch");
+    }
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: {
+        userId: input.userId,
+        organizationId: input.organizationId,
+      },
+    });
+    if (!membership) {
+      throw new UnauthorizedException("Not a member of the requested organization");
+    }
+    const financeRole = String(membership.role);
+    const expiresAt = Math.floor(Date.now() / 1000) + 300;
+    // v2 payload includes role so satellites cannot escalate via query rewrite
+    const payload = `${input.email}|${input.organizationId}|${expiresAt}|${financeRole}`;
+    const signature = createHmac("sha256", secret).update(payload).digest("hex");
+    return {
+      email: input.email,
+      fullName: input.email.split("@")[0] ?? "User",
+      organizationId: input.organizationId,
+      expiresAt,
+      signature,
+      financeRole,
+    };
   }
 
   async redeemFinanceHandoffTicket(ticket: string): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
-    const row = this.handoffTickets.get(ticket);
-    this.handoffTickets.delete(ticket);
-    if (!row || row.expiresAt < Date.now()) {
-      throw new UnauthorizedException("Handoff ticket invalid or expired");
-    }
+    const row = await this.handoffTickets.take(ticket);
     const user = await this.prisma.user.findUnique({
       where: { id: row.userId },
     });

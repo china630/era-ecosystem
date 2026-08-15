@@ -277,6 +277,29 @@ export class BillingMonthlyService {
       });
     }
 
+    if (!trialCoversPeriod) {
+      const bankingConnected =
+        (await this.prisma.organizationSatelliteEntitlement.findUnique({
+          where: {
+            organizationId_satelliteKey: {
+              organizationId,
+              satelliteKey: "industry_banking",
+            },
+          },
+          select: { organizationId: true },
+        })) != null;
+      if (bankingConnected) {
+        const bankingFoundationAzn =
+          await this.systemConfig.getBankingFoundationMonthlyAzn();
+        if (bankingFoundationAzn > 0) {
+          lines.push({
+            description: `ERA Banking Core (Foundation) — ${orgName} (VÖEN ${taxId})`,
+            amountAzn: bankingFoundationAzn,
+          });
+        }
+      }
+    }
+
     if (meteredSpendAzn > 0) {
       lines.push({
         description: `Metered usage — ${orgName} (VÖEN ${taxId})`,

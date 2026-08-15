@@ -415,7 +415,7 @@ export class WorkforceAbsencesService {
       ...(absence.employment.financeEmployeeId
         ? { financeEmployeeId: absence.employment.financeEmployeeId }
         : {}),
-      kind: absence.kind as "VACATION" | "SICK" | "UNPAID",
+      kind: absence.kind,
       startDate: isoDay(absence.startDate),
       endDate: isoDay(absence.endDate),
       note: absence.note || undefined,

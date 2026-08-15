@@ -9,7 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ORCH_TOKEN_KEY, orchFetch } from "./orch-api";
+import {
+  ORCH_TOKEN_KEY,
+  clearOrchTokens,
+  orchFetch,
+  setOrchTokens,
+} from "./orch-api";
 
 export type OrchUser = {
   id: string;
@@ -31,7 +36,11 @@ type AuthContextValue = {
   token: string | null;
   user: OrchUser | null;
   memberships: MembershipRow[];
-  login: (accessToken: string, user: OrchUser) => void;
+  login: (
+    accessToken: string,
+    user: OrchUser,
+    refreshToken?: string | null,
+  ) => void;
   logout: () => void;
   switchOrganization: (organizationId: string) => Promise<void>;
 };
@@ -76,19 +85,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setReady(true);
       void loadMemberships(stored).then(setMemberships).catch(() => {
-        localStorage.removeItem(ORCH_TOKEN_KEY);
+        clearOrchTokens();
         setToken(null);
         setUser(null);
       });
     } catch {
-      localStorage.removeItem(ORCH_TOKEN_KEY);
+      clearOrchTokens();
       setReady(true);
     }
   }, [loadMemberships]);
 
   const login = useCallback(
-    (accessToken: string, nextUser: OrchUser) => {
-      localStorage.setItem(ORCH_TOKEN_KEY, accessToken);
+    (
+      accessToken: string,
+      nextUser: OrchUser,
+      refreshToken?: string | null,
+    ) => {
+      setOrchTokens(accessToken, refreshToken);
       setToken(accessToken);
       setUser(nextUser);
       void loadMemberships(accessToken).then(setMemberships);
@@ -97,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(ORCH_TOKEN_KEY);
+    clearOrchTokens();
     setToken(null);
     setUser(null);
     setMemberships([]);
@@ -114,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error("Switch organization failed");
       const data = (await res.json()) as {
         accessToken: string;
+        refreshToken?: string;
         claims: {
           sub: string;
           email: string;
@@ -129,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: data.claims.role,
         isSuperAdmin: data.claims.isSuperAdmin,
       };
-      login(data.accessToken, nextUser);
+      login(data.accessToken, nextUser, data.refreshToken);
     },
     [token, login],
   );

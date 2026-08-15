@@ -29,6 +29,10 @@ export function OrchestratorHeaderTierBar() {
   const trialEndIso = snapshot.isTrial ? snapshot.expiresAt : null;
   const showTrialUntil =
     trialEndIso != null && new Date(trialEndIso).getTime() > Date.now();
+  const trialDaysLeft =
+    snapshot.isTrial && snapshot.trialDaysLeft != null && snapshot.trialDaysLeft >= 0
+      ? snapshot.trialDaysLeft
+      : null;
 
   const employees = snapshot.quotas?.employees;
   const invoices = snapshot.quotas?.invoicesThisMonth;
@@ -38,7 +42,17 @@ export function OrchestratorHeaderTierBar() {
       tier={tier}
       tierSuffix={
         <>
-          {showTrialUntil && trialEndIso ? (
+          {trialDaysLeft != null ? (
+            <span className="font-normal normal-case text-amber-800">
+              ·{" "}
+              {showTrialUntil && trialEndIso
+                ? t("trialDaysLeftUntil", {
+                    days: trialDaysLeft,
+                    date: formatTrialEnd(trialEndIso, locale),
+                  })
+                : t("trialDaysLeft", { days: trialDaysLeft })}
+            </span>
+          ) : showTrialUntil && trialEndIso ? (
             <span className="font-normal normal-case text-amber-800">
               · {t("trialUntil", { date: formatTrialEnd(trialEndIso, locale) })}
             </span>
@@ -64,8 +78,8 @@ export function OrchestratorHeaderTierBar() {
           max: employees?.max ?? null,
         },
       ]}
-      manageHref="/settings/subscription"
-      manageLabel={t("manage")}
+      href="/settings/subscription"
+      ariaLabel={t("manage")}
     />
   );
 }
