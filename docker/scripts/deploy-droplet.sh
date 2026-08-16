@@ -70,6 +70,8 @@ if [ -z "$services" ]; then
   node scripts/ecosystem-smoke-all.mjs || echo "WARN: ecosystem-smoke-all failed (non-blocking)"
 else
   # Do not --remove-orphans or prune — that would stop/delete other satellites.
+  # --no-deps: scoped IMAGE_TAG only exists for the rebuilt service; pulling
+  # depends_on siblings (e.g. finance-web → finance-core) 404s on GHCR.
   # shellcheck disable=SC2086
-  "${COMPOSE[@]}" up -d $services
+  "${COMPOSE[@]}" up -d --no-deps $services
 fi
