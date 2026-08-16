@@ -14,6 +14,7 @@ on:
         default: finance
         options:
           - finance
+          - finance-core
           - orchestrator
           - data-hub
           - hotel

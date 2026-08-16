@@ -106,6 +106,30 @@ export class ControlPlaneClient {
     }
   }
 
+  /** Verify email+password against Orchestrator so SSO users can use the Finance login form. */
+  async loginWithPassword(
+    email: string,
+    password: string,
+  ): Promise<string | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { accessToken?: string };
+      return data.accessToken?.trim() || null;
+    } catch (err) {
+      this.logger.warn(
+        `Orchestrator password login failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      return null;
+    }
+  }
+
   /**
    * Fetch control-plane org profile (name + decrypted VÖEN) so Finance can
    * provision a local organization row on SSO ingress. Service-token protected.

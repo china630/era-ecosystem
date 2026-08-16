@@ -600,7 +600,7 @@ export class AuthService {
       });
     }
 
-    const role = (claims.role as UserRole) ?? UserRole.OWNER;
+    const role = this.financeRoleFromClaim(claims.role);
     let controlPlaneOrgId = claims.organizationId ?? null;
 
     // Super-admin (and any SSO user) must land in an org — the Finance shell
@@ -631,11 +631,33 @@ export class AuthService {
       };
     }
 
-    const org = await this.resolveOrProvisionControlPlaneOrg(
-      controlPlaneOrgId,
-      user.id,
-      role,
-    );
+    let org: { id: string; name: string; currency: string };
+    try {
+      org = await this.resolveOrProvisionControlPlaneOrg(
+        controlPlaneOrgId,
+        user.id,
+        role,
+      );
+    } catch (e) {
+      this.logger.error(
+        `SSO org provision failed for ${controlPlaneOrgId}: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+      const fallback = await this.prisma.organization.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true, currency: true },
+      });
+      if (!fallback) {
+        throw new BadRequestException(
+          e instanceof Error
+            ? e.message
+            : "Cannot provision Finance organization",
+        );
+      }
+      org = fallback;
+      await this.ensureOrgMembership(user.id, org.id, role);
+    }
 
     const tokens = await this.signTokenPair(user.id, org.id);
     const fresh = await this.prisma.user.findUniqueOrThrow({
@@ -690,7 +712,9 @@ export class AuthService {
       const kind = OrganizationKind.COMMERCIAL;
       // Commit the org + trial first so downstream provisioning (which resolves
       // posting roles via a non-transactional client) can see the committed row.
-      const created = await this.prisma.$transaction(async (tx) => {
+      let created: { id: string; name: string; currency: string; createdAt: Date };
+      try {
+      created = await this.prisma.$transaction(async (tx) => {
         const o = await tx.organization.create({
           data: {
             id: controlPlaneOrgId,
@@ -717,6 +741,14 @@ export class AuthService {
         });
         return o;
       });
+      } catch (e) {
+        const raced = await this.prisma.organization.findUnique({
+          where: { id: controlPlaneOrgId },
+          select: { id: true, name: true, currency: true, createdAt: true },
+        });
+        if (!raced) throw e;
+        created = raced;
+      }
       // Best-effort provisioning: a partial failure must not block the SSO
       // session — the org + membership are enough to sign in; accounting setup
       // can be re-run by admin tooling if needed.
@@ -746,18 +778,39 @@ export class AuthService {
       org = { id: created.id, name: created.name, currency: created.currency };
     }
 
+    await this.ensureOrgMembership(userId, org.id, role);
+    return org;
+  }
+
+  private financeRoleFromClaim(role: unknown): UserRole {
+    if (
+      typeof role === "string" &&
+      (Object.values(UserRole) as string[]).includes(role)
+    ) {
+      return role as UserRole;
+    }
+    return UserRole.OWNER;
+  }
+
+  private async ensureOrgMembership(
+    userId: string,
+    organizationId: string,
+    role: UserRole,
+  ): Promise<void> {
     const membership = await this.prisma.organizationMembership.findUnique({
       where: {
-        userId_organizationId: { userId, organizationId: org.id },
+        userId_organizationId: { userId, organizationId },
       },
     });
     if (!membership) {
       await this.prisma.organizationMembership.create({
-        data: { userId, organizationId: org.id, role },
+        data: { userId, organizationId, role },
       });
-    } else if (membership.deletedAt) {
+      return;
+    }
+    if (membership.deletedAt) {
       await this.prisma.organizationMembership.update({
-        where: { userId_organizationId: { userId, organizationId: org.id } },
+        where: { userId_organizationId: { userId, organizationId } },
         data: {
           deletedAt: null,
           deletedByUserId: null,
@@ -766,26 +819,31 @@ export class AuthService {
         },
       });
     }
-
-    return org;
   }
 
   async login(dto: LoginDto) {
+    const email = dto.email.toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+      where: { email },
     });
-    if (!user) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-    if (user.passwordHash === "sso:no-password") {
-      throw new UnauthorizedException(
-        user.isSuperAdmin
-          ? "Super-admin: open Finance from https://app.era-365.online workspace (SSO). Local Finance password is not set."
-          : "This account uses Orchestrator login — open Finance from the workspace",
+    const hasLocalPassword =
+      !!user && user.passwordHash !== "sso:no-password";
+    if (hasLocalPassword) {
+      const ok = await bcrypt.compare(dto.password, user.passwordHash);
+      if (!ok) {
+        throw new UnauthorizedException("Invalid credentials");
+      }
+    } else {
+      const orchToken = await this.controlPlane.loginWithPassword(
+        email,
+        dto.password,
       );
+      if (!orchToken) {
+        throw new UnauthorizedException("Invalid credentials");
+      }
+      return this.provisionFromControlPlane(`Bearer ${orchToken}`);
     }
-    const ok = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!ok) {
+    if (!user) {
       throw new UnauthorizedException("Invalid credentials");
     }
     const memberships = await this.prisma.organizationMembership.findMany({

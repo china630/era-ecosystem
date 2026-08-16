@@ -27,6 +27,7 @@ services=""
 case "$scope" in
   all) services="" ;;
   finance) services="orchestrator finance-core finance-web" ;;
+  finance-core) services="finance-core" ;;
   orchestrator) services="orchestrator" ;;
   data-hub) services="data-hub" ;;
   hotel) services="hotel-pms" ;;

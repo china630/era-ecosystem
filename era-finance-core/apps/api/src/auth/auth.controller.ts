@@ -8,6 +8,7 @@ import {
   Post,
   Req,
   Res,
+  HttpException,
   UnauthorizedException,
   UseGuards,
 } from "@nestjs/common";
@@ -115,10 +116,17 @@ export class AuthController {
     @Headers("authorization") authorization: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const out = await this.auth.provisionFromControlPlane(authorization);
-    this.auth.setRefreshCookie(res, out.refreshToken);
-    const { refreshToken: _r, ...body } = out;
-    return body;
+    try {
+      const out = await this.auth.provisionFromControlPlane(authorization);
+      this.auth.setRefreshCookie(res, out.refreshToken);
+      const { refreshToken: _r, ...body } = out;
+      return body;
+    } catch (e) {
+      if (e instanceof HttpException) throw e;
+      throw new BadRequestException(
+        e instanceof Error ? e.message : "SSO provision failed",
+      );
+    }
   }
 
   @Public()
