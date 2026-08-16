@@ -601,27 +601,77 @@ export class AuthService {
     }
 
     const role = this.financeRoleFromClaim(claims.role);
-    let controlPlaneOrgId = claims.organizationId ?? null;
 
-    // Super-admin (and any SSO user) must land in an org — the Finance shell
-    // blocks with "No company" and then /login, which SSO accounts cannot use.
-    if (!controlPlaneOrgId) {
-      const existing = await this.prisma.organizationMembership.findFirst({
-        where: { userId: user.id, deletedAt: null },
-        orderBy: { joinedAt: "asc" },
-        select: { organizationId: true },
+    // Attach to a Finance-local company first. Do not clone an Orchestrator
+    // org id into Finance when a local company already exists — that path
+    // was creating a new row and dying on currencies FK when AZN was unseeded.
+    const existingMembership = await this.prisma.organizationMembership.findFirst({
+      where: { userId: user.id, deletedAt: null },
+      orderBy: { joinedAt: "asc" },
+      select: { organizationId: true },
+    });
+    const localByCpId = claims.organizationId
+      ? await this.prisma.organization.findUnique({
+          where: { id: claims.organizationId },
+          select: { id: true, name: true, currency: true },
+        })
+      : null;
+    const anyLocalOrg =
+      existingMembership || localByCpId
+        ? null
+        : await this.prisma.organization.findFirst({
+            orderBy: { createdAt: "asc" },
+            select: { id: true, name: true, currency: true },
+          });
+
+    let org: { id: string; name: string; currency: string } | null = localByCpId;
+    if (!org && existingMembership) {
+      org = await this.prisma.organization.findUnique({
+        where: { id: existingMembership.organizationId },
+        select: { id: true, name: true, currency: true },
       });
-      controlPlaneOrgId = existing?.organizationId ?? null;
     }
-    if (!controlPlaneOrgId && claims.isSuperAdmin) {
-      const anyOrg = await this.prisma.organization.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      controlPlaneOrgId =
-        anyOrg?.id ?? "00000000-0000-4000-8000-0000000000ea";
+    if (!org && anyLocalOrg) {
+      org = anyLocalOrg;
     }
-    if (!controlPlaneOrgId) {
+
+    if (!org && claims.organizationId) {
+      try {
+        org = await this.resolveOrProvisionControlPlaneOrg(
+          claims.organizationId,
+          user.id,
+          role,
+        );
+      } catch (e) {
+        this.logger.error(
+          `SSO org provision failed for ${claims.organizationId}: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+        org = await this.prisma.organization.findFirst({
+          orderBy: { createdAt: "asc" },
+          select: { id: true, name: true, currency: true },
+        });
+      }
+    }
+
+    if (!org && claims.isSuperAdmin) {
+      try {
+        org = await this.resolveOrProvisionControlPlaneOrg(
+          claims.organizationId ?? "00000000-0000-4000-8000-0000000000ea",
+          user.id,
+          role,
+        );
+      } catch (e) {
+        this.logger.error(
+          `SSO placeholder org provision failed: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      }
+    }
+
+    if (!org) {
       const tokens = await this.signTokenPairWithoutOrg(user.id);
       const orgs = await this.listOrganizationsForUser(user.id);
       return {
@@ -631,33 +681,7 @@ export class AuthService {
       };
     }
 
-    let org: { id: string; name: string; currency: string };
-    try {
-      org = await this.resolveOrProvisionControlPlaneOrg(
-        controlPlaneOrgId,
-        user.id,
-        role,
-      );
-    } catch (e) {
-      this.logger.error(
-        `SSO org provision failed for ${controlPlaneOrgId}: ${
-          e instanceof Error ? e.message : String(e)
-        }`,
-      );
-      const fallback = await this.prisma.organization.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, currency: true },
-      });
-      if (!fallback) {
-        throw new BadRequestException(
-          e instanceof Error
-            ? e.message
-            : "Cannot provision Finance organization",
-        );
-      }
-      org = fallback;
-      await this.ensureOrgMembership(user.id, org.id, role);
-    }
+    await this.ensureOrgMembership(user.id, org.id, role);
 
     const tokens = await this.signTokenPair(user.id, org.id);
     const fresh = await this.prisma.user.findUniqueOrThrow({
@@ -710,6 +734,7 @@ export class AuthService {
         ? this.piiCrypto.encryptVoen(normalizedTaxId)
         : null;
       const kind = OrganizationKind.COMMERCIAL;
+      const currency = await this.ensureDefaultCurrencyCode();
       // Commit the org + trial first so downstream provisioning (which resolves
       // posting roles via a non-transactional client) can see the committed row.
       let created: { id: string; name: string; currency: string; createdAt: Date };
@@ -721,7 +746,7 @@ export class AuthService {
             name: orgName,
             taxIdBlindIndex,
             taxIdCipher,
-            currency: "AZN",
+            currency,
             subscriptionPlan: "mvp",
             activeModules: [...DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES],
             kind,
@@ -780,6 +805,34 @@ export class AuthService {
 
     await this.ensureOrgMembership(userId, org.id, role);
     return org;
+  }
+
+  /** `organizations.currency` FK → `currencies.code`. Staging can miss seed. */
+  private async ensureDefaultCurrencyCode(): Promise<string> {
+    const azn = await this.prisma.currency.findUnique({
+      where: { code: "AZN" },
+      select: { code: true },
+    });
+    if (azn) return azn.code;
+    const any = await this.prisma.currency.findFirst({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { code: true },
+    });
+    if (any) return any.code;
+    await this.prisma.currency.create({
+      data: {
+        code: "AZN",
+        symbol: "₼",
+        decimals: 2,
+        nameAz: "Azərbaycan manatı",
+        nameRu: "Азербайджанский манат",
+        nameEn: "Azerbaijani manat",
+        sortOrder: 0,
+        isActive: true,
+      },
+    });
+    return "AZN";
   }
 
   private financeRoleFromClaim(role: unknown): UserRole {

@@ -123,9 +123,7 @@ export class AuthController {
       return body;
     } catch (e) {
       if (e instanceof HttpException) throw e;
-      throw new BadRequestException(
-        e instanceof Error ? e.message : "SSO provision failed",
-      );
+      throw new BadRequestException("Cannot open Finance session");
     }
   }
 
