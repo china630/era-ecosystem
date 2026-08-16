@@ -15,6 +15,7 @@ on:
         options:
           - finance
           - finance-core
+          - finance-web
           - orchestrator
           - data-hub
           - hotel
