@@ -128,7 +128,7 @@ export class BankIntegrationService {
   getPublicApiBaseUrl(): string {
     const raw = this.config.get<string>("API_PUBLIC_BASE_URL");
     if (raw?.trim()) return raw.replace(/\/$/, "");
-    const port = this.config.get<string>("API_PORT", "4000");
+    const port = this.config.get<string>("API_PORT", "4100");
     return `http://127.0.0.1:${port}`;
   }
 

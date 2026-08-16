@@ -7,6 +7,21 @@ import type { AuthUser, OrgSummary } from "../../../lib/auth-context";
 import { apiFetch } from "../../../lib/api-client";
 import { setControlPlaneTokens } from "../../../lib/session-keys";
 
+async function readHandoffError(
+  res: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const body = (await res.json()) as { message?: string | string[] };
+    const raw = body.message;
+    const message = Array.isArray(raw) ? raw.join("; ") : raw;
+    if (message?.trim()) return `${fallback}: ${message.trim()}`;
+  } catch {
+    /* ignore non-JSON */
+  }
+  return `${fallback} (HTTP ${res.status})`;
+}
+
 function HandoffInner() {
   const searchParams = useSearchParams();
   const { login, ready } = useAuth();
@@ -29,7 +44,12 @@ function HandoffInner() {
             body: JSON.stringify({ ticket }),
           });
           if (!res.ok) {
-            setError("Handoff ticket invalid or expired");
+            setError(
+              await readHandoffError(
+                res,
+                "Handoff ticket invalid or expired — re-open Finance from Orchestrator",
+              ),
+            );
             return;
           }
           const redeemed = (await res.json()) as {
@@ -39,7 +59,9 @@ function HandoffInner() {
           orchAccessToken = redeemed.accessToken;
           orchRefreshToken = redeemed.refreshToken ?? null;
         } catch {
-          setError("Handoff ticket invalid or expired");
+          setError(
+            "Cannot reach Orchestrator handoff (/cp). Check NEXT_PUBLIC_CONTROL_PLANE_URL=:4000",
+          );
           return;
         }
         // Mint Finance-local session first; keep CP tokens for billing proxies
@@ -51,11 +73,18 @@ function HandoffInner() {
             headers: { Authorization: `Bearer ${orchAccessToken}` },
           });
         } catch {
-          setError("Session invalid — use Orchestrator login");
+          setError(
+            "Cannot reach Finance API (/api/auth/cp-provision). Check NEXT_PUBLIC_API_URL=:4100",
+          );
           return;
         }
         if (!provRes.ok) {
-          setError("Session invalid — use Orchestrator login");
+          setError(
+            await readHandoffError(
+              provRes,
+              "Session invalid — use Orchestrator login",
+            ),
+          );
           return;
         }
         const data = (await provRes.json()) as {
@@ -102,11 +131,18 @@ function HandoffInner() {
           headers: { Authorization: `Bearer ${legacyToken}` },
         });
       } catch {
-        setError("Session invalid — use Orchestrator login");
+        setError(
+          "Cannot reach Finance API (/api/auth/cp-provision). Check NEXT_PUBLIC_API_URL=:4100",
+        );
         return;
       }
       if (!provRes.ok) {
-        setError("Session invalid — use Orchestrator login");
+        setError(
+          await readHandoffError(
+            provRes,
+            "Session invalid — use Orchestrator login",
+          ),
+        );
         return;
       }
       const data = (await provRes.json()) as {
