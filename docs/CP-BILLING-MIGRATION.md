@@ -115,7 +115,7 @@ Super-Admin **UI** может временно остаться на Finance web
 | `/pricing` (public) | Orch web page → `GET /v1/public/pricing`; Finance `/pricing` **redirect** |
 | `subscription-context.tsx` | Snapshot с orchestrator |
 
-**Реализация (2026-05):** `era-finance-core/apps/web/lib/api-client.ts` — `resolveApiUrl()` автоматически маршрутизирует `/api/subscription|billing|partner|early-access|admin/config/billing|…` на orchestrator. В браузере — rewrite `/cp/v1/*` → `NEXT_PUBLIC_CONTROL_PLANE_URL` (см. `next.config.ts`). ERP auth и остальной `/api/*` по-прежнему на Finance API :4000.
+**Реализация (2026-05):** `era-finance-core/apps/web/lib/api-client.ts` — `resolveApiUrl()` автоматически маршрутизирует `/api/subscription|billing|partner|early-access|admin/config/billing|…` на orchestrator. В браузере — rewrite `/cp/v1/*` → `NEXT_PUBLIC_CONTROL_PLANE_URL` (см. `next.config.ts`). ERP auth и остальной `/api/*` по-прежнему на Finance API :4100.
 
 ### G. Satellites & orchestrator entitlements
 

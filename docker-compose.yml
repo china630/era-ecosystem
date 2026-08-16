@@ -98,7 +98,7 @@ services:
       WEB_PORT: "3000"
       FINANCE_CORE_URL: http://finance-core:4100
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
-      ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-dev-control-plane-token}
+      ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}}
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
       ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
@@ -179,6 +179,7 @@ services:
       API_PORT: "4100"
       CONTROL_PLANE_URL: http://orchestrator:4000
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
+      ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}}
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
       ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
@@ -256,6 +257,8 @@ services:
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-legacy}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_HOTEL_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
+      PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-chingiz@era.com,shirinov.chingiz@gmail.com,inaram84@gmail.com}
+      PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: ${PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD:-}
     ports:
       - "3201:3201"
     depends_on:
@@ -290,6 +293,8 @@ services:
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_FB_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+      PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-chingiz@era.com,shirinov.chingiz@gmail.com,inaram84@gmail.com}
+      PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: ${PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD:-}
     ports:
       - "3202:3202"
     depends_on:
@@ -501,6 +506,7 @@ services:
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       RUN_SEED: ${CLINIC_RUN_SEED:-true}
       PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-chingiz@era.com,shirinov.chingiz@gmail.com,inaram84@gmail.com}
+      PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: ${PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD:-}
     ports:
       - "3203:3203"
     depends_on:
