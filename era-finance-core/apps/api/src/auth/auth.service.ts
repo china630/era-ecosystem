@@ -573,7 +573,9 @@ export class AuthService {
     }
     const claims = await verifyControlPlaneAccessToken(token, this.config);
     if (!claims) {
-      throw new UnauthorizedException("Invalid control-plane token");
+      throw new UnauthorizedException(
+        "Invalid control-plane token (issuer/audience/secret/JWKS mismatch)",
+      );
     }
     const email = claims.email?.toLowerCase().trim();
     if (!email) {
@@ -591,6 +593,11 @@ export class AuthService {
           isSuperAdmin: Boolean(claims.isSuperAdmin),
         },
       });
+    } else if (claims.isSuperAdmin && !user.isSuperAdmin) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isSuperAdmin: true },
+      });
     }
 
     const controlPlaneOrgId = claims.organizationId ?? null;
@@ -606,11 +613,30 @@ export class AuthService {
 
     // 2) Resolve or provision the Finance-local organization for this tenant.
     const role = (claims.role as UserRole) ?? UserRole.OWNER;
-    const org = await this.resolveOrProvisionControlPlaneOrg(
-      controlPlaneOrgId,
-      user.id,
-      role,
-    );
+    let org: { id: string; name: string; currency: string };
+    try {
+      org = await this.resolveOrProvisionControlPlaneOrg(
+        controlPlaneOrgId,
+        user.id,
+        role,
+      );
+    } catch (e) {
+      if (claims.isSuperAdmin) {
+        this.logger.warn(
+          `Super-admin SSO: org ${controlPlaneOrgId} not provisioned (${
+            e instanceof Error ? e.message : String(e)
+          }) — signing in without org context`,
+        );
+        const tokens = await this.signTokenPairWithoutOrg(user.id);
+        const orgs = await this.listOrganizationsForUser(user.id);
+        return {
+          ...tokens,
+          user: this.toPublicUserNoOrg(user),
+          organizations: orgs,
+        };
+      }
+      throw e;
+    }
 
     const tokens = await this.signTokenPair(user.id, org.id);
     const fresh = await this.prisma.user.findUniqueOrThrow({
@@ -654,7 +680,7 @@ export class AuthService {
     if (!org) {
       if (!details?.name || !details?.taxId) {
         throw new BadRequestException(
-          "Cannot provision Finance organization: control-plane details unavailable",
+          "Cannot provision Finance organization: control-plane details unavailable (check CONTROL_PLANE_URL=:4000, CONTROL_PLANE_SERVICE_TOKEN, and org VÖEN in MDM)",
         );
       }
       const normalizedTaxId = details.taxId.trim();
@@ -748,6 +774,11 @@ export class AuthService {
     });
     if (!user) {
       throw new UnauthorizedException("Invalid credentials");
+    }
+    if (user.passwordHash === "sso:no-password") {
+      throw new UnauthorizedException(
+        "This account uses Orchestrator login — open Finance from the workspace",
+      );
     }
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {

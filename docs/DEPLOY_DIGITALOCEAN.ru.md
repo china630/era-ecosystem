@@ -136,6 +136,7 @@ POSTGRES_PASSWORD=<strong-random>
 ERA_JWT_SECRET=<min-32-chars-random>
 ERA_SSO_SHARED_SECRET=<random>
 CONTROL_PLANE_SERVICE_TOKEN=<random>
+ORCHESTRATOR_INTERNAL_SERVICE_TOKEN=<same-value-as-CONTROL_PLANE_SERVICE_TOKEN>
 SATELLITE_EVENT_SERVICE_TOKEN=<random>
 AUTH_JWT_SECRET=<min-32-chars>
 POS_BRIDGE_SECRET=<random>
@@ -254,9 +255,17 @@ Traefik ACME (`certificatesResolvers.letsencrypt`, HTTP-01 on entryPoint `web`) 
 cd /opt/era-ecosystem
 git pull
 docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
+# Finance SSO: обязательно пересобрать эти три сервиса
+docker compose up -d --build orchestrator finance-core finance-web
 docker compose up -d --build
 # при новых миграциях:
 npm run bootstrap:local -- --skip-finance  # или полный bootstrap по ситуации
+```
+
+В `.env` на дроплете `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN` должен совпадать с `CONTROL_PLANE_SERVICE_TOKEN`. Затем:
+
+```bash
+docker compose up -d orchestrator finance-core finance-web
 ```
 
 ---
@@ -277,6 +286,7 @@ tar czf /root/era-docker-data.tgz -C /opt/era-ecosystem docker-data
 | 502 / connection refused | `docker compose logs traefik orchestrator` |
 | OOM при build | увеличить droplet или `DOCKER_BUILDKIT=1` и сборка по одному сервису |
 | Login 401 | повторить `npm run bootstrap:local:demo` |
+| Finance `Session invalid — use Orchestrator login` | `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN` = `CONTROL_PLANE_SERVICE_TOKEN` в `.env`; пересобрать `orchestrator` + `finance-core` + `finance-web`. Вход только с `https://app.era-365.online` → workspace → Open Finance. |
 | Hotel Prisma errors | `docker exec era-hotel-pms` логи; `npx prisma migrate deploy` с хоста |
 | Старые данные после «очистки» | убедиться что удалён `docker-data/` и `docker compose down -v` |
 

@@ -142,7 +142,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup("docs", app, document);
 
-  const port = process.env.API_PORT ?? "4000";
+  const port = process.env.API_PORT ?? "4100";
   await app.listen(Number(port), "0.0.0.0");
   logger.log(
     `API http://0.0.0.0:${port}  health GET /api/health (legacy GET /health)  Swagger http://0.0.0.0:${port}/api/docs`,
