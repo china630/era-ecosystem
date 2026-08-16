@@ -29,7 +29,7 @@ git push -u origin feature/my-change
 | [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
 | [`design-regression.yml`](../.github/workflows/design-regression.yml) | Cron 02:00 UTC, manual | Bootstrap hotel+clinic; Playwright **smoke** (structure only). Pixel snapshots are local (`npm run test:design-regression:update`) |
-| [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images** on `dev`, or manual | SSH pull + migrate + `up -d` on staging droplet |
+| [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images** on `dev` (`scope=all`), or manual | SSH pull + migrate + `up -d`. Manual `scope`: `finance` (orch+finance), one satellite, or `all` |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | Manual only | Prod deploy + environment approval |
 
 Deprecated: [`ecosystem-smoke.yml`](../.github/workflows/ecosystem-smoke.yml) (noop). Finance-only CI moved from `era-finance-core/.github/workflows/ci.yml` to root `ci.yml`.
@@ -81,7 +81,8 @@ After each successful [`build-images.yml`](../.github/workflows/build-images.yml
 2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=dev-<sha>`  
 3. `docker login` GHCR → `compose pull` → `migrate-all.sh` → `up -d`  
 
-Manual: Actions → **Deploy staging** → `workflow_dispatch` (default tag `dev`).  
+Manual: Actions → **Deploy staging** → `workflow_dispatch` (default **scope `finance`**, tag `dev`).  
+Choose `hotel` / `clinic` / … for one satellite, or `all` for the full stack.  
 Production stays **manual** (`deploy-production.yml`).
 
 `ENV_FILE` is base64-packed on the runner and decoded on the droplet — do **not** expand a multi-line secret into the SSH `script:` body when `script_stop: true` (appleboy injects exit checks between lines and corrupts `.env`).

@@ -61,7 +61,7 @@ Configure environment **staging** secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_
 1. Merge to **`dev`** → **Build and push images** runs automatically  
 2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `pull` → migrate → `up -d` with `IMAGE_TAG=dev-<sha>`  
 
-Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`).  
+Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`, **scope default `finance`**). Use `all` only when the whole stack must move.  
 Production: **Deploy production** remains manual only.
 
 Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW Anywhere is fine for staging).

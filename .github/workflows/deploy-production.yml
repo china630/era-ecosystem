@@ -26,9 +26,10 @@ jobs:
           set -euo pipefail
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           {
-            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=)' || true
+            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=|ERA_JWT_JWKS_URL=)' || true
             echo "IMAGE_TAG=${{ inputs.image_tag }}"
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
+            echo "ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json"
           } > "${GITHUB_WORKSPACE}/era.droplet.env"
 
       - name: Copy env to droplet

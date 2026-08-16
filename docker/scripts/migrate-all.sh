@@ -19,9 +19,27 @@ else
   COMPOSE=(docker compose "${COMPOSE_ARGS[@]}")
 fi
 
+# Optional space-separated filter (set by deploy-droplet.sh). Empty = all.
+should_migrate() {
+  local svc="$1"
+  if [ -z "${DEPLOY_SERVICES:-}" ]; then
+    return 0
+  fi
+  local s
+  for s in $DEPLOY_SERVICES; do
+    if [ "$s" = "$svc" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 run_migrate() {
   local service="$1"
   local cmd="$2"
+  if ! should_migrate "$service"; then
+    return 0
+  fi
   echo "==> migrate: $service"
   if "${COMPOSE[@]}" ps -q "$service" 2>/dev/null | grep -q .; then
     "${COMPOSE[@]}" exec -T "$service" sh -lc "$cmd"

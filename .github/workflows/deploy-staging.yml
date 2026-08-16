@@ -7,6 +7,26 @@ on:
         description: GHCR tag (e.g. dev-abc1234 or dev)
         required: false
         default: dev
+      scope:
+        description: What to pull and restart (finance = orch + finance-core + finance-web)
+        type: choice
+        required: false
+        default: finance
+        options:
+          - finance
+          - orchestrator
+          - data-hub
+          - hotel
+          - clinic
+          - fnb
+          - retail
+          - logistics
+          - construction
+          - crm
+          - auto
+          - wholesale
+          - bank
+          - all
   workflow_run:
     workflows: ["Build and push images"]
     branches: [dev, master]
@@ -47,6 +67,15 @@ jobs:
             echo "value=${branch}-${short}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Resolve deploy scope
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.scope }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=all" >> "$GITHUB_OUTPUT"
+          fi
+
       # Write .env on the runner and scp it — do not pass the file through SSH envs
       # (huge ERA_ENV_B64 was logged and can truncate sibling vars like the GHCR token).
       - name: Write droplet env file
@@ -56,9 +85,10 @@ jobs:
           set -euo pipefail
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           {
-            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=)' || true
+            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=|ERA_JWT_JWKS_URL=)' || true
             echo "IMAGE_TAG=${{ steps.tag.outputs.value }}"
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
+            echo "ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json"
           } > "${GITHUB_WORKSPACE}/era.droplet.env"
 
       - name: Copy env to droplet
@@ -81,6 +111,7 @@ jobs:
           GHCR_PULL_TOKEN: ${{ github.token }}
           GIT_SHA: ${{ steps.sha.outputs.value }}
           GH_ACTOR: ${{ github.actor }}
+          DEPLOY_SCOPE: ${{ steps.scope.outputs.value }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -89,11 +120,10 @@ jobs:
           timeout: 60s
           command_timeout: 30m
           script_stop: false
-          envs: GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
+          envs: GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR,DEPLOY_SCOPE
           script: |
             set -euo pipefail
             cd /opt/era-ecosystem
-            docker image prune -af || true
             git fetch origin
             git reset --hard "$GIT_SHA"
             if [ ! -f era.droplet.env ]; then
