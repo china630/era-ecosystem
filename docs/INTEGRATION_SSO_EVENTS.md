@@ -12,6 +12,7 @@ Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_
 - **Payload v3 (preferred):** `email|organizationId|expiresAt|financeRole|jti` signed with `ERA_SSO_SHARED_SECRET`.
 - **Payload v2:** `email|organizationId|expiresAt|financeRole` (still accepted).
 - **Payload v1 (legacy):** `email|organizationId|expiresAt` — still verifies, but satellites **force** `financeRole=USER` (unsigned query role is ignored). See [SECURITY_HYGIENE_PROGRAM.md](./SECURITY_HYGIENE_PROGRAM.md) SEC-SSO-02.
+- **Browser callback:** kit `SsoCallbackPage` (`/sso/callback`) must forward query `jti` (and `financeRole`) into `POST /api/auth/sso/exchange`. Dropping `jti` makes v3 HMAC fail as “Invalid SSO signature” even when secrets match.
 - **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` + `consumeSsoSignatureOnce` (SEC-SSO-01 process-local replay guard; Redis planned for multi-instance). When deployment org is bound (`ERA_SATELLITE_ORGANIZATION_ID` or runtime bind via `satelliteOrganizationId()`), ticket org must match (SEC-SSO-05). See ADR [`satellite-organization-bind.md`](adr/satellite-organization-bind.md).
 
 - **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`, `POST /auth/finance-handoff`)
