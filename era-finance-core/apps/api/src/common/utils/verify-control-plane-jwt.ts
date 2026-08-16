@@ -9,14 +9,34 @@ let jwksCache: JwksCache | null = null;
 
 const DEFAULT_JWKS_URL = "http://127.0.0.1:4000/.well-known/jwks.json";
 
+function isLoopbackUrl(url: string): boolean {
+  return /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(url);
+}
+
+/** JWKS endpoint: explicit URL, else CONTROL_PLANE_URL, never a leftover host loopback in Docker. */
+export function resolveControlPlaneJwksUrl(config: ConfigService): string {
+  const explicit = config.get<string>("ERA_JWT_JWKS_URL")?.trim() ?? "";
+  const cp = (
+    config.get<string>("CONTROL_PLANE_URL")?.trim() ||
+    config.get<string>("ORCHESTRATOR_INTERNAL_URL")?.trim() ||
+    ""
+  ).replace(/\/$/, "");
+  if (explicit && !isLoopbackUrl(explicit)) {
+    return explicit.replace(/\/$/, "");
+  }
+  if (cp && !isLoopbackUrl(cp)) {
+    return `${cp}/.well-known/jwks.json`;
+  }
+  if (explicit) return explicit.replace(/\/$/, "");
+  return DEFAULT_JWKS_URL;
+}
+
 export function resetControlPlaneJwksCache(): void {
   jwksCache = null;
 }
 
 async function loadJwks(config: ConfigService): Promise<Record<string, unknown>[]> {
-  const uri = (
-    config.get<string>("ERA_JWT_JWKS_URL")?.trim() || DEFAULT_JWKS_URL
-  ).replace(/\/$/, "");
+  const uri = resolveControlPlaneJwksUrl(config);
   const ttlMs = 300_000;
   if (jwksCache && Date.now() - jwksCache.fetchedAt < ttlMs) {
     return jwksCache.keys;
