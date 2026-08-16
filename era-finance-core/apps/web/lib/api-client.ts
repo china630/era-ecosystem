@@ -17,7 +17,7 @@ export function apiBaseUrl(): string {
   if (typeof window !== "undefined") {
     return "";
   }
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4100";
 }
 
 /** Control plane (era-orchestrator) — billing, subscription, referrals, early-access. */
@@ -28,7 +28,7 @@ export function controlPlaneBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_CONTROL_PLANE_URL ??
     process.env.CONTROL_PLANE_URL ??
-    "http://127.0.0.1:4100"
+    "http://127.0.0.1:4000"
   ).replace(/\/$/, "");
 }
 
@@ -248,9 +248,13 @@ export function apiFetch(
       method === "POST" &&
       (normalizedPath === "/api/auth/login" ||
         normalizedPath.endsWith("/api/auth/login"));
+    const isCpProvisionPost =
+      method === "POST" &&
+      (normalizedPath === "/api/auth/cp-provision" ||
+        normalizedPath.endsWith("/api/auth/cp-provision"));
 
     if (res.status === 401 && typeof window !== "undefined") {
-      if (isAuthLoginPost) {
+      if (isAuthLoginPost || isCpProvisionPost) {
         // Wrong password / invalid credentials — do not redirect (user is already on /login).
         sessionStorage.removeItem(ACCESS_TOKEN_KEY);
         sessionStorage.removeItem(USER_KEY);

@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-const apiDest = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000").replace(
+const apiDest = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4100").replace(
   /\/$/,
   "",
 );
@@ -9,7 +9,7 @@ const apiDest = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000").rep
 const controlPlaneDest = (
   process.env.NEXT_PUBLIC_CONTROL_PLANE_URL ??
   process.env.CONTROL_PLANE_URL ??
-  "http://127.0.0.1:4100"
+  "http://127.0.0.1:4000"
 ).replace(/\/$/, "");
 
 /** Проксирование событий через тот же origin (обход adblock / фильтров по ingest.sentry.io). См. tunnel.js в @sentry/nextjs. */

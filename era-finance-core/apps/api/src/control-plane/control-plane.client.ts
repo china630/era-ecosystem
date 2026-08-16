@@ -10,9 +10,15 @@ export class ControlPlaneClient {
 
   constructor(config: ConfigService) {
     this.baseUrl = (
-      config.get<string>("CONTROL_PLANE_URL") ?? "http://127.0.0.1:4100"
+      config.get<string>("CONTROL_PLANE_URL") ??
+      config.get<string>("ORCHESTRATOR_INTERNAL_URL") ??
+      "http://127.0.0.1:4000"
     ).replace(/\/$/, "");
-    this.serviceToken = config.get<string>("CONTROL_PLANE_SERVICE_TOKEN");
+    this.serviceToken =
+      config.get<string>("CONTROL_PLANE_SERVICE_TOKEN")?.trim() ||
+      config.get<string>("ORCHESTRATOR_INTERNAL_SERVICE_TOKEN")?.trim() ||
+      config.get<string>("ORCHESTRATOR_SERVICE_TOKEN")?.trim() ||
+      undefined;
   }
 
   get rbacProxyEnabled(): boolean {
