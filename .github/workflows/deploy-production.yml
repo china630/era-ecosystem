@@ -49,7 +49,8 @@ jobs:
             set -euo pipefail
             cd /opt/era-ecosystem
             git fetch origin
-            git checkout "$GIT_SHA"
+            # Droplet may have local traefik edits; deploy is pull-only and must not abort.
+            git reset --hard "$GIT_SHA"
             printf '%s' "$ERA_ENV_B64" | base64 -d > .env
             echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
             docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env pull
