@@ -266,7 +266,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     !!token &&
     !!user &&
     !user.organizationId &&
-    !(user.isSuperAdmin && pathname.startsWith("/admin/data"));
+    !user.isSuperAdmin;
 
   /**
    * Замки только после загрузки снимка подписки. Пока snapshot === null,

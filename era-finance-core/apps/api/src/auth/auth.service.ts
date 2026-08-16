@@ -600,7 +600,27 @@ export class AuthService {
       });
     }
 
-    const controlPlaneOrgId = claims.organizationId ?? null;
+    const role = (claims.role as UserRole) ?? UserRole.OWNER;
+    let controlPlaneOrgId = claims.organizationId ?? null;
+
+    // Super-admin (and any SSO user) must land in an org — the Finance shell
+    // blocks with "No company" and then /login, which SSO accounts cannot use.
+    if (!controlPlaneOrgId) {
+      const existing = await this.prisma.organizationMembership.findFirst({
+        where: { userId: user.id, deletedAt: null },
+        orderBy: { joinedAt: "asc" },
+        select: { organizationId: true },
+      });
+      controlPlaneOrgId = existing?.organizationId ?? null;
+    }
+    if (!controlPlaneOrgId && claims.isSuperAdmin) {
+      const anyOrg = await this.prisma.organization.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      });
+      controlPlaneOrgId =
+        anyOrg?.id ?? "00000000-0000-4000-8000-0000000000ea";
+    }
     if (!controlPlaneOrgId) {
       const tokens = await this.signTokenPairWithoutOrg(user.id);
       const orgs = await this.listOrganizationsForUser(user.id);
@@ -611,32 +631,11 @@ export class AuthService {
       };
     }
 
-    // 2) Resolve or provision the Finance-local organization for this tenant.
-    const role = (claims.role as UserRole) ?? UserRole.OWNER;
-    let org: { id: string; name: string; currency: string };
-    try {
-      org = await this.resolveOrProvisionControlPlaneOrg(
-        controlPlaneOrgId,
-        user.id,
-        role,
-      );
-    } catch (e) {
-      if (claims.isSuperAdmin) {
-        this.logger.warn(
-          `Super-admin SSO: org ${controlPlaneOrgId} not provisioned (${
-            e instanceof Error ? e.message : String(e)
-          }) — signing in without org context`,
-        );
-        const tokens = await this.signTokenPairWithoutOrg(user.id);
-        const orgs = await this.listOrganizationsForUser(user.id);
-        return {
-          ...tokens,
-          user: this.toPublicUserNoOrg(user),
-          organizations: orgs,
-        };
-      }
-      throw e;
-    }
+    const org = await this.resolveOrProvisionControlPlaneOrg(
+      controlPlaneOrgId,
+      user.id,
+      role,
+    );
 
     const tokens = await this.signTokenPair(user.id, org.id);
     const fresh = await this.prisma.user.findUniqueOrThrow({
@@ -678,16 +677,17 @@ export class AuthService {
     }
 
     if (!org) {
-      if (!details?.name || !details?.taxId) {
-        throw new BadRequestException(
-          "Cannot provision Finance organization: control-plane details unavailable (check CONTROL_PLANE_URL=:4000, CONTROL_PLANE_SERVICE_TOKEN, and org VÖEN in MDM)",
-        );
-      }
-      const normalizedTaxId = details.taxId.trim();
-      const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
-      const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);
+      const orgName =
+        details?.name?.trim() ||
+        `Organization ${controlPlaneOrgId.slice(0, 8)}`;
+      const normalizedTaxId = details?.taxId?.trim() || null;
+      const taxIdBlindIndex = normalizedTaxId
+        ? this.piiCrypto.blindIndexForVoen(normalizedTaxId)
+        : null;
+      const taxIdCipher = normalizedTaxId
+        ? this.piiCrypto.encryptVoen(normalizedTaxId)
+        : null;
       const kind = OrganizationKind.COMMERCIAL;
-      const orgName = details.name.trim();
       // Commit the org + trial first so downstream provisioning (which resolves
       // posting roles via a non-transactional client) can see the committed row.
       const created = await this.prisma.$transaction(async (tx) => {
@@ -736,11 +736,13 @@ export class AuthService {
           }`,
         );
       }
-      await this.controlPlane.linkOrganizationMdm({
-        organizationId: created.id,
-        name: orgName,
-        taxId: normalizedTaxId,
-      });
+      if (normalizedTaxId) {
+        await this.controlPlane.linkOrganizationMdm({
+          organizationId: created.id,
+          name: orgName,
+          taxId: normalizedTaxId,
+        });
+      }
       org = { id: created.id, name: created.name, currency: created.currency };
     }
 
@@ -777,7 +779,9 @@ export class AuthService {
     }
     if (user.passwordHash === "sso:no-password") {
       throw new UnauthorizedException(
-        "This account uses Orchestrator login — open Finance from the workspace",
+        user.isSuperAdmin
+          ? "Super-admin: open Finance from https://app.era-365.online workspace (SSO). Local Finance password is not set."
+          : "This account uses Orchestrator login — open Finance from the workspace",
       );
     }
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
