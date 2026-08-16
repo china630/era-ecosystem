@@ -537,13 +537,27 @@ export class AuthService {
     { userId: string; organizationId: string | null; expiresAt: number }
   >();
 
-  createFinanceHandoffTicket(input: {
+  async createFinanceHandoffTicket(input: {
     userId: string;
     organizationId: string | null;
-  }): { ticket: string; expiresAt: string } {
+  }): Promise<{ ticket: string; expiresAt: string }> {
+    const organizationId =
+      input.organizationId ??
+      (
+        await this.prisma.organizationMembership.findFirst({
+          where: { userId: input.userId, deletedAt: null },
+          orderBy: { joinedAt: "asc" },
+          select: { organizationId: true },
+        })
+      )?.organizationId ??
+      null;
     const ticket = `fh_${randomUUID().replace(/-/g, "")}`;
     const expiresAt = Date.now() + 60_000;
-    this.handoffTickets.set(ticket, { ...input, expiresAt });
+    this.handoffTickets.set(ticket, {
+      userId: input.userId,
+      organizationId,
+      expiresAt,
+    });
     return { ticket, expiresAt: new Date(expiresAt).toISOString() };
   }
 
@@ -560,11 +574,22 @@ export class AuthService {
       where: { id: row.userId },
     });
     if (!user) throw new UnauthorizedException("User not found");
-    const membership = row.organizationId
+    let organizationId = row.organizationId;
+    if (!organizationId) {
+      organizationId =
+        (
+          await this.prisma.organizationMembership.findFirst({
+            where: { userId: row.userId, deletedAt: null },
+            orderBy: { joinedAt: "asc" },
+            select: { organizationId: true },
+          })
+        )?.organizationId ?? null;
+    }
+    const membership = organizationId
       ? await this.prisma.organizationMembership.findFirst({
           where: {
             userId: row.userId,
-            organizationId: row.organizationId,
+            organizationId,
             deletedAt: null,
           },
         })
@@ -572,15 +597,12 @@ export class AuthService {
     const claims = await this.buildClaims({
       sub: user.id,
       email: user.email,
-      organizationId: row.organizationId,
+      organizationId,
       role: membership?.role ?? null,
       isSuperAdmin: user.isSuperAdmin,
     });
     const accessToken = await this.issueAccessToken(claims);
-    const refreshToken = await this.issueRefreshToken(
-      user.id,
-      row.organizationId,
-    );
+    const refreshToken = await this.issueRefreshToken(user.id, organizationId);
     return { accessToken, refreshToken };
   }
 }
