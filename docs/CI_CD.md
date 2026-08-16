@@ -26,7 +26,7 @@ git push -u origin feature/my-change
 | Workflow | Trigger | Role |
 |----------|---------|------|
 | [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, orchestrator/finance tests, satellite build+jest |
-| [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR |
+| [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR. Manual `services` can limit to e.g. `orchestrator,finance-core,finance-web` |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
 | [`design-regression.yml`](../.github/workflows/design-regression.yml) | Cron 02:00 UTC, manual | Bootstrap hotel+clinic; Playwright **smoke** (structure only). Pixel snapshots are local (`npm run test:design-regression:update`) |
 | [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images** on `dev` (`scope=all`), or manual | SSH pull + migrate + `up -d`. Manual `scope`: `finance` (orch+finance), one satellite, or `all` |

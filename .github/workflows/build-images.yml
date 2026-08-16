@@ -4,6 +4,11 @@ on:
   push:
     branches: [dev, master]
   workflow_dispatch:
+    inputs:
+      services:
+        description: "Comma-separated services (empty = all). Example: orchestrator,finance-core,finance-web"
+        required: false
+        default: ""
 
 concurrency:
   group: build-images-${{ github.ref }}
@@ -61,6 +66,7 @@ jobs:
 
   build:
     needs: build-packages-base
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.services == '' || contains(format(',{0},', inputs.services), format(',{0},', matrix.service)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -154,6 +160,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.owner }}/era-ecosystem/${{ matrix.service }}
           tags: |
             type=sha,prefix=${{ github.ref_name }}-,format=short
+            type=sha,format=short
             type=raw,value=${{ github.ref_name }},enable=${{ github.ref_name == 'dev' || github.ref_name == 'master' }}
 
       - uses: docker/build-push-action@v6
