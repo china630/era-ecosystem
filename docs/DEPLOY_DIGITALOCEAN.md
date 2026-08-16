@@ -78,7 +78,7 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 
 | Issue | Check |
 |-------|--------|
-| Pull 401 / `ghcr.io/v2/: denied` | `GHCR_PULL_TOKEN` (or Actions `GITHUB_TOKEN` fallback), package visibility, `GHCR_IMAGE_PREFIX` lowercase owner. Login runs in `docker/scripts/deploy-droplet.sh` — do not put pipe characters in the appleboy SSH `script` (drone-ssh drops those lines). |
+| Pull 401 / `ghcr.io/v2/: denied` | Actions deploy logs in with the job `github.token` (not a stale `GHCR_PULL_TOKEN` PAT). Manual pull still needs a PAT with `read:packages`. `.env` is scp'd; login/pull run in `docker/scripts/deploy-droplet.sh`. |
 | Migrate fails | Container running? `DATABASE_URL` in `.env`, postgres healthy |
 | OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |

@@ -99,7 +99,7 @@ Environment **`staging`** (and **`production`** for prod):
 | `SSH_PRIVATE_KEY` | Deploy key |
 | `SSH_PORT` | Optional; default `22` |
 | `ENV_FILE` | Full production `.env` body |
-| `GHCR_PULL_TOKEN` | PAT with `read:packages` for droplet `docker login`. If unset, deploy workflows fall back to `github.token` (`packages: read`). Login + compose pull run via `docker/scripts/deploy-droplet.sh` (appleboy/ssh-action drops `|` lines from inline `script`). |
+| `GHCR_PULL_TOKEN` | Optional PAT for **manual** `docker login` on the droplet. Actions deploy uses the job `github.token` (`packages: read`) and scp of `.env` — do not pass the env file through SSH `envs` (size + log leak). Login + compose pull: `docker/scripts/deploy-droplet.sh`. |
 
 ## CI notes
 

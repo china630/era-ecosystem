@@ -47,9 +47,9 @@ jobs:
             echo "value=${branch}-${short}" >> "$GITHUB_OUTPUT"
           fi
 
-      # Pack ENV_FILE as one base64 line — never expand multi-line secrets into SSH script.
-      - name: Pack remote .env (base64)
-        id: envpack
+      # Write .env on the runner and scp it — do not pass the file through SSH envs
+      # (huge ERA_ENV_B64 was logged and can truncate sibling vars like the GHCR token).
+      - name: Write droplet env file
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
@@ -59,18 +59,28 @@ jobs:
             printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=)' || true
             echo "IMAGE_TAG=${{ steps.tag.outputs.value }}"
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
-          } | base64 -w0 > /tmp/era-env.b64
-          b64=$(cat /tmp/era-env.b64)
-          echo "::add-mask::$b64"
-          echo "b64=$b64" >> "$GITHUB_OUTPUT"
+          } > "${GITHUB_WORKSPACE}/era.droplet.env"
+
+      - name: Copy env to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 22 }}
+          source: era.droplet.env
+          target: /opt/era-ecosystem
+          overwrite: true
+          timeout: 60s
 
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
-          ERA_ENV_B64: ${{ steps.envpack.outputs.b64 }}
-          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN || github.token }}
+          # Always the job token — a stale GHCR_PULL_TOKEN PAT would win over github.token
+          # and fail with `ghcr.io/v2/: denied`.
+          GHCR_PULL_TOKEN: ${{ github.token }}
           GIT_SHA: ${{ steps.sha.outputs.value }}
-          GH_ACTOR: ${{ github.repository_owner }}
+          GH_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -78,17 +88,17 @@ jobs:
           port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 22 }}
           timeout: 60s
           command_timeout: 30m
-          # script_stop injects lines between every script line — keep script single-line-safe
-          # and rely on set -e instead.
           script_stop: false
-          envs: ERA_ENV_B64,GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
+          envs: GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
           script: |
             set -euo pipefail
             cd /opt/era-ecosystem
-            # Free unused images before git fetch/pull — full disk breaks both (No space left on device).
             docker image prune -af || true
             git fetch origin
-            # Droplet may have local traefik edits; deploy is pull-only and must not abort.
             git reset --hard "$GIT_SHA"
-            # Pipes must live in deploy-droplet.sh — drone-ssh drops `|` lines.
+            if [ ! -f era.droplet.env ]; then
+              echo "era.droplet.env missing after scp" >&2
+              exit 1
+            fi
+            mv -f era.droplet.env .env
             bash docker/scripts/deploy-droplet.sh
