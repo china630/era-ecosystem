@@ -18,6 +18,8 @@ export function SsoCallbackPage() {
     const expiresAtRaw = searchParams.get("expiresAt");
     const signature = searchParams.get("signature");
     const financeRole = searchParams.get("financeRole") ?? undefined;
+    // SEC-SSO-01 / HMAC v3: orch mints with jti; exchange must receive it or verify fails as v2.
+    const jti = searchParams.get("jti") ?? undefined;
 
     if (!email || !fullName || !organizationId || !expiresAtRaw || !signature) {
       setError("Missing SSO parameters");
@@ -44,6 +46,7 @@ export function SsoCallbackPage() {
           expiresAt,
           signature,
           financeRole,
+          jti,
         }),
       });
       if (cancelled) return;
