@@ -51,6 +51,10 @@ export default function HoldingsPage() {
   const [attachOrgId, setAttachOrgId] = useState("");
   const [memberUserId, setMemberUserId] = useState("");
   const [memberRole, setMemberRole] = useState("VIEWER");
+  const [linkOrgId, setLinkOrgId] = useState("");
+  const [linkScopeId, setLinkScopeId] = useState("");
+  const [linkOrgUnitId, setLinkOrgUnitId] = useState("");
+  const [linkMsg, setLinkMsg] = useState<string | null>(null);
 
   const token = getOrchAccessToken();
   const selected = holdings.find((h) => h.id === selectedId) ?? null;
@@ -229,6 +233,34 @@ export default function HoldingsPage() {
       }
       setSelectedId(null);
       await loadHoldings();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveCommercialLink() {
+    if (!linkOrgId || !linkScopeId.trim()) return;
+    setBusy(true);
+    setError(null);
+    setLinkMsg(null);
+    try {
+      const { workforceFetch } = await import("../../lib/workforce-fetch");
+      const res = await workforceFetch(
+        `commercial-links/${encodeURIComponent(linkOrgId)}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            workforceScopeId: linkScopeId.trim(),
+            orgUnitId: linkOrgUnitId.trim() || null,
+            linkMode: "SCOPE_ROOT",
+          }),
+        },
+      );
+      if (!res.ok) {
+        setError(parseApiError(await res.text().catch(() => null), t("commercialLinkFailed")));
+        return;
+      }
+      setLinkMsg(t("commercialLinkOk"));
     } finally {
       setBusy(false);
     }
@@ -451,6 +483,48 @@ export default function HoldingsPage() {
           ) : null}
         </div>
       )}
+
+      <div className={`${CARD_CONTAINER_CLASS} mt-6 space-y-3 p-4`}>
+        <h2 className="text-sm font-semibold text-[#34495E]">{t("commercialLinkTitle")}</h2>
+        <p className="text-xs text-[#7F8C8D]">{t("commercialLinkHint")}</p>
+        <div className="flex flex-wrap gap-2">
+          <select
+            className={FORM_INPUT_CLASS}
+            value={linkOrgId}
+            onChange={(e) => setLinkOrgId(e.target.value)}
+          >
+            <option value="">{t("commercialLinkPickOrg")}</option>
+            {memberships
+              .filter((m) => m.role === "OWNER" || m.isOwner)
+              .map((m) => (
+                <option key={m.organizationId} value={m.organizationId}>
+                  {m.organizationName ?? m.organizationId}
+                </option>
+              ))}
+          </select>
+          <input
+            className={FORM_INPUT_CLASS}
+            placeholder={t("commercialLinkScope")}
+            value={linkScopeId}
+            onChange={(e) => setLinkScopeId(e.target.value)}
+          />
+          <input
+            className={FORM_INPUT_CLASS}
+            placeholder={t("commercialLinkOrgUnit")}
+            value={linkOrgUnitId}
+            onChange={(e) => setLinkOrgUnitId(e.target.value)}
+          />
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={!linkOrgId || !linkScopeId.trim() || busy}
+            onClick={() => void saveCommercialLink()}
+          >
+            {t("commercialLinkSave")}
+          </button>
+        </div>
+        {linkMsg ? <p className="text-sm text-emerald-700">{linkMsg}</p> : null}
+      </div>
 
       <ModalShell
         open={createOpen}

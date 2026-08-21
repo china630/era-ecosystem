@@ -22,6 +22,7 @@ import {
 import { EARLY_ACCESS_MODULES } from "../../components/early-access/modules.config";
 import {
   buildFinanceHandoffUrl,
+  fetchSatelliteLaunchUrl,
   fetchSatelliteSsoTicket,
   getOrchAccessToken,
 } from "../../lib/open-finance";
@@ -158,17 +159,23 @@ function SystemCard({
     }
     const item = industryNavItemForKey(systemKey);
     if (!item || !user?.email || !user.organizationId) return;
-    const base = satelliteUrlForItem(item);
-    if (!base) {
-      window.open(workspaceOpenHref(systemKey) ?? "/industry", "_blank");
-      return;
-    }
     const token = getOrchAccessToken();
     if (!token) return;
+    const satelliteKey = workspaceSatelliteKey(systemKey);
     // Open the tab synchronously to avoid popup blockers, then redirect once signed.
     const popup = window.open("", "_blank");
     const organizationId = user.organizationId;
-    void fetchSatelliteSsoTicket(token, organizationId).then((ticket) => {
+    void (async () => {
+      const fromRegistry = satelliteKey
+        ? await fetchSatelliteLaunchUrl(token, satelliteKey)
+        : null;
+      const base = fromRegistry?.baseUrl ?? satelliteUrlForItem(item);
+      if (!base) {
+        popup?.close();
+        window.open(workspaceOpenHref(systemKey) ?? "/industry", "_blank");
+        return;
+      }
+      const ticket = await fetchSatelliteSsoTicket(token, organizationId);
       if (!ticket) {
         popup?.close();
         return;
@@ -176,7 +183,7 @@ function SystemCard({
       const url = buildSatelliteSsoLaunchUrlFromTicket(base, ticket);
       if (popup) popup.location.href = url;
       else window.open(url, "_blank", "noopener,noreferrer");
-    });
+    })();
   }
 
   const badge =

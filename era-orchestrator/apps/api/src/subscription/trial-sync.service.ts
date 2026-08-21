@@ -3,6 +3,12 @@ import { Prisma } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteConnectService } from "./satellite-connect.service";
 import { TrialCatalogService } from "./trial-catalog.service";
+import { SystemConfigService } from "../system-config/system-config.service";
+import {
+  licenseProvisionPlan,
+  shiftLicenseDate,
+  type DeploymentTopologyCode,
+} from "./license-defaults";
 
 function maxDate(a: Date | null | undefined, b: Date | null | undefined): Date | null {
   if (!a) return b ?? null;
@@ -16,18 +22,31 @@ export class TrialSyncService {
     private readonly prisma: PrismaService,
     private readonly catalog: TrialCatalogService,
     private readonly connect: SatelliteConnectService,
+    private readonly systemConfig: SystemConfigService,
   ) {}
 
   async patchOrgTrial(
     organizationId: string,
-    input: { trialExpiresAt?: Date | null; isTrial?: boolean },
+    input: {
+      trialExpiresAt?: Date | null;
+      isTrial?: boolean;
+      neverExpires?: boolean;
+      shiftMonths?: number;
+    },
   ) {
     const sub = await this.prisma.organizationSubscription.findUnique({
       where: { organizationId },
     });
     if (!sub) throw new NotFoundException("Subscription not found");
 
-    const newDate = input.trialExpiresAt;
+    let newDate = input.trialExpiresAt;
+    let isTrial = input.isTrial;
+    if (input.neverExpires === true) {
+      newDate = null;
+      if (isTrial === undefined) isTrial = false;
+    } else if (input.shiftMonths != null && input.shiftMonths !== 0) {
+      newDate = shiftLicenseDate(sub.trialExpiresAt ?? sub.expiresAt ?? null, input.shiftMonths);
+    }
     await this.prisma.$transaction(async (tx) => {
       await tx.organizationSubscription.update({
         where: { organizationId },
@@ -35,7 +54,7 @@ export class TrialSyncService {
           ...(newDate !== undefined
             ? { trialExpiresAt: newDate, expiresAt: newDate }
             : {}),
-          ...(input.isTrial !== undefined ? { isTrial: input.isTrial } : {}),
+          ...(isTrial !== undefined ? { isTrial } : {}),
         },
       });
 
@@ -55,7 +74,7 @@ export class TrialSyncService {
           });
         }
         const mods = await tx.organizationModule.findMany({
-          where: { organizationId, trialOverridden: false, trialExpiresAt: { not: null } },
+          where: { organizationId, trialOverridden: false },
         });
         for (const m of mods) {
           await tx.organizationModule.update({
@@ -74,10 +93,38 @@ export class TrialSyncService {
     return this.getTrialTree(organizationId);
   }
 
+  async patchDeploymentTopology(
+    organizationId: string,
+    topology: DeploymentTopologyCode,
+    applyLicenseDefault = false,
+  ) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true, createdAt: true },
+    });
+    if (!org) throw new NotFoundException("Organization not found");
+
+    await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: { deploymentTopology: topology },
+    });
+
+    if (applyLicenseDefault) {
+      const days = await this.systemConfig.getTrialPeriodDays();
+      const plan = licenseProvisionPlan(topology, org.createdAt, days);
+      await this.patchOrgTrial(organizationId, {
+        trialExpiresAt: plan.expiresAt,
+        isTrial: plan.isTrial,
+      });
+    }
+
+    return this.getTrialTree(organizationId);
+  }
+
   async patchSatelliteTrial(
     organizationId: string,
     satelliteKey: string,
-    trialExpiresAt: Date,
+    trialExpiresAt: Date | null,
   ) {
     await this.prisma.organizationSatelliteEntitlement.upsert({
       where: {
@@ -117,7 +164,7 @@ export class TrialSyncService {
   async patchModuleTrial(
     organizationId: string,
     moduleKey: string,
-    trialExpiresAt: Date,
+    trialExpiresAt: Date | null,
   ) {
     await this.prisma.organizationModule.upsert({
       where: { organizationId_moduleKey: { organizationId, moduleKey } },
@@ -173,7 +220,7 @@ export class TrialSyncService {
       where: { organizationId },
       include: {
         organization: {
-          select: { id: true, name: true },
+          select: { id: true, name: true, deploymentTopology: true },
         },
       },
     });
@@ -198,6 +245,7 @@ export class TrialSyncService {
         isTrial: sub.isTrial,
         trialExpiresAt: sub.trialExpiresAt?.toISOString() ?? null,
         expiresAt: sub.expiresAt?.toISOString() ?? null,
+        deploymentTopology: sub.organization.deploymentTopology,
         activeModules: sub.activeModules,
         quotaOverrides: sub.quotaOverrides ?? null,
       },

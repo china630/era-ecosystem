@@ -56,4 +56,38 @@ describe("SatelliteEndpointRegistryService", () => {
     const r = await svc({}).resolveEndpoint("org-1", SATELLITE_KEY_CLINIC);
     expect(r).toBeNull();
   });
+
+  it("resolveLaunchBaseUrl prefers registry over env", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue({
+      enabled: true,
+      baseUrl: "https://clinic.customer.example/",
+      secretCipher: null,
+    });
+    const r = await svc({
+      NEXT_PUBLIC_SATELLITE_CLINIC_URL: "http://127.0.0.1:3203",
+    }).resolveLaunchBaseUrl("org-1", SATELLITE_KEY_CLINIC);
+    expect(r).toEqual({
+      baseUrl: "https://clinic.customer.example",
+      source: "registry",
+      satelliteKey: SATELLITE_KEY_CLINIC,
+    });
+  });
+
+  it("resolveLaunchBaseUrl falls back to NEXT_PUBLIC_* when no row", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue(null);
+    const r = await svc({
+      NEXT_PUBLIC_SATELLITE_HOTEL_URL: "http://127.0.0.1:3201/",
+    }).resolveLaunchBaseUrl("org-1", "industry_hotel_pms");
+    expect(r).toEqual({
+      baseUrl: "http://127.0.0.1:3201",
+      source: "env",
+      satelliteKey: "industry_hotel_pms",
+    });
+  });
+
+  it("resolveLaunchBaseUrl returns null for unknown satelliteKey", async () => {
+    const r = await svc().resolveLaunchBaseUrl("org-1", "not_a_satellite");
+    expect(r).toBeNull();
+    expect(prisma.satelliteEndpoint.findUnique).not.toHaveBeenCalled();
+  });
 });

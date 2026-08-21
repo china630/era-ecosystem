@@ -74,6 +74,11 @@ export type OrganizationSatelliteEntitlement = $Result.DefaultSelection<Prisma.$
  */
 export type SatelliteEndpoint = $Result.DefaultSelection<Prisma.$SatelliteEndpointPayload>
 /**
+ * Model PlacementJob
+ * 
+ */
+export type PlacementJob = $Result.DefaultSelection<Prisma.$PlacementJobPayload>
+/**
  * Model WorkforceAssignment
  * Cross-org workforce registry — no PII, only MDM person reference.
  */
@@ -595,6 +600,22 @@ export const PermissionCategory: {
 export type PermissionCategory = (typeof PermissionCategory)[keyof typeof PermissionCategory]
 
 
+export const PlacementJobStatus: {
+  PENDING: 'PENDING',
+  FREEZE: 'FREEZE',
+  EXPORT: 'EXPORT',
+  PROVISION: 'PROVISION',
+  BIND: 'BIND',
+  CUTOVER: 'CUTOVER',
+  SMOKE: 'SMOKE',
+  DONE: 'DONE',
+  FAILED: 'FAILED',
+  REJECTED: 'REJECTED'
+};
+
+export type PlacementJobStatus = (typeof PlacementJobStatus)[keyof typeof PlacementJobStatus]
+
+
 export const WorkforceAssignmentStatus: {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE'
@@ -720,6 +741,15 @@ export const OrgOperatingMode: {
 };
 
 export type OrgOperatingMode = (typeof OrgOperatingMode)[keyof typeof OrgOperatingMode]
+
+
+export const DeploymentTopology: {
+  SHARED: 'SHARED',
+  DEDICATED: 'DEDICATED',
+  ONPREM: 'ONPREM'
+};
+
+export type DeploymentTopology = (typeof DeploymentTopology)[keyof typeof DeploymentTopology]
 
 
 export const OrgRouting: {
@@ -863,6 +893,10 @@ export type PermissionCategory = $Enums.PermissionCategory
 
 export const PermissionCategory: typeof $Enums.PermissionCategory
 
+export type PlacementJobStatus = $Enums.PlacementJobStatus
+
+export const PlacementJobStatus: typeof $Enums.PlacementJobStatus
+
 export type WorkforceAssignmentStatus = $Enums.WorkforceAssignmentStatus
 
 export const WorkforceAssignmentStatus: typeof $Enums.WorkforceAssignmentStatus
@@ -918,6 +952,10 @@ export const RoleBindingStatus: typeof $Enums.RoleBindingStatus
 export type OrgOperatingMode = $Enums.OrgOperatingMode
 
 export const OrgOperatingMode: typeof $Enums.OrgOperatingMode
+
+export type DeploymentTopology = $Enums.DeploymentTopology
+
+export const DeploymentTopology: typeof $Enums.DeploymentTopology
 
 export type OrgRouting = $Enums.OrgRouting
 
@@ -1175,6 +1213,16 @@ export class PrismaClient<
     * ```
     */
   get satelliteEndpoint(): Prisma.SatelliteEndpointDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.placementJob`: Exposes CRUD operations for the **PlacementJob** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlacementJobs
+    * const placementJobs = await prisma.placementJob.findMany()
+    * ```
+    */
+  get placementJob(): Prisma.PlacementJobDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.workforceAssignment`: Exposes CRUD operations for the **WorkforceAssignment** model.
@@ -2161,6 +2209,7 @@ export namespace Prisma {
     Satellite: 'Satellite',
     OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
     SatelliteEndpoint: 'SatelliteEndpoint',
+    PlacementJob: 'PlacementJob',
     WorkforceAssignment: 'WorkforceAssignment',
     WorkforceScope: 'WorkforceScope',
     OrgUnit: 'OrgUnit',
@@ -2230,7 +2279,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3119,6 +3168,80 @@ export namespace Prisma {
           count: {
             args: Prisma.SatelliteEndpointCountArgs<ExtArgs>
             result: $Utils.Optional<SatelliteEndpointCountAggregateOutputType> | number
+          }
+        }
+      }
+      PlacementJob: {
+        payload: Prisma.$PlacementJobPayload<ExtArgs>
+        fields: Prisma.PlacementJobFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlacementJobFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlacementJobFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>
+          }
+          findFirst: {
+            args: Prisma.PlacementJobFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlacementJobFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>
+          }
+          findMany: {
+            args: Prisma.PlacementJobFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>[]
+          }
+          create: {
+            args: Prisma.PlacementJobCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>
+          }
+          createMany: {
+            args: Prisma.PlacementJobCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlacementJobCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>[]
+          }
+          delete: {
+            args: Prisma.PlacementJobDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>
+          }
+          update: {
+            args: Prisma.PlacementJobUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlacementJobDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlacementJobUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlacementJobUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlacementJobUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementJobPayload>
+          }
+          aggregate: {
+            args: Prisma.PlacementJobAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlacementJob>
+          }
+          groupBy: {
+            args: Prisma.PlacementJobGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlacementJobGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlacementJobCountArgs<ExtArgs>
+            result: $Utils.Optional<PlacementJobCountAggregateOutputType> | number
           }
         }
       }
@@ -7238,6 +7361,7 @@ export namespace Prisma {
     satellite?: SatelliteOmit
     organizationSatelliteEntitlement?: OrganizationSatelliteEntitlementOmit
     satelliteEndpoint?: SatelliteEndpointOmit
+    placementJob?: PlacementJobOmit
     workforceAssignment?: WorkforceAssignmentOmit
     workforceScope?: WorkforceScopeOmit
     orgUnit?: OrgUnitOmit
@@ -7946,6 +8070,7 @@ export namespace Prisma {
     platformIdempotencyRecords: number
     platformLoyaltyLedger: number
     satelliteEndpoints: number
+    placementJobs: number
     satelliteEntitlements: number
     workforceAssignments: number
     workforceEmployments: number
@@ -7976,6 +8101,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: boolean | OrganizationCountOutputTypeCountPlatformIdempotencyRecordsArgs
     platformLoyaltyLedger?: boolean | OrganizationCountOutputTypeCountPlatformLoyaltyLedgerArgs
     satelliteEndpoints?: boolean | OrganizationCountOutputTypeCountSatelliteEndpointsArgs
+    placementJobs?: boolean | OrganizationCountOutputTypeCountPlacementJobsArgs
     satelliteEntitlements?: boolean | OrganizationCountOutputTypeCountSatelliteEntitlementsArgs
     workforceAssignments?: boolean | OrganizationCountOutputTypeCountWorkforceAssignmentsArgs
     workforceEmployments?: boolean | OrganizationCountOutputTypeCountWorkforceEmploymentsArgs
@@ -8146,6 +8272,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountSatelliteEndpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SatelliteEndpointWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlacementJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementJobWhereInput
   }
 
   /**
@@ -22165,6 +22298,1149 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SatelliteEndpointInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PlacementJob
+   */
+
+  export type AggregatePlacementJob = {
+    _count: PlacementJobCountAggregateOutputType | null
+    _min: PlacementJobMinAggregateOutputType | null
+    _max: PlacementJobMaxAggregateOutputType | null
+  }
+
+  export type PlacementJobMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    fromTopology: $Enums.DeploymentTopology | null
+    toTopology: $Enums.DeploymentTopology | null
+    status: $Enums.PlacementJobStatus | null
+    errorMessage: string | null
+    targetBaseUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlacementJobMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    fromTopology: $Enums.DeploymentTopology | null
+    toTopology: $Enums.DeploymentTopology | null
+    status: $Enums.PlacementJobStatus | null
+    errorMessage: string | null
+    targetBaseUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlacementJobCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    satelliteKey: number
+    fromTopology: number
+    toTopology: number
+    status: number
+    errorMessage: number
+    sliceMeta: number
+    targetBaseUrl: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlacementJobMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    fromTopology?: true
+    toTopology?: true
+    status?: true
+    errorMessage?: true
+    targetBaseUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlacementJobMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    fromTopology?: true
+    toTopology?: true
+    status?: true
+    errorMessage?: true
+    targetBaseUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlacementJobCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    fromTopology?: true
+    toTopology?: true
+    status?: true
+    errorMessage?: true
+    sliceMeta?: true
+    targetBaseUrl?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlacementJobAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlacementJob to aggregate.
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementJobs to fetch.
+     */
+    orderBy?: PlacementJobOrderByWithRelationInput | PlacementJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlacementJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlacementJobs
+    **/
+    _count?: true | PlacementJobCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlacementJobMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlacementJobMaxAggregateInputType
+  }
+
+  export type GetPlacementJobAggregateType<T extends PlacementJobAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlacementJob]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlacementJob[P]>
+      : GetScalarType<T[P], AggregatePlacementJob[P]>
+  }
+
+
+
+
+  export type PlacementJobGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementJobWhereInput
+    orderBy?: PlacementJobOrderByWithAggregationInput | PlacementJobOrderByWithAggregationInput[]
+    by: PlacementJobScalarFieldEnum[] | PlacementJobScalarFieldEnum
+    having?: PlacementJobScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlacementJobCountAggregateInputType | true
+    _min?: PlacementJobMinAggregateInputType
+    _max?: PlacementJobMaxAggregateInputType
+  }
+
+  export type PlacementJobGroupByOutputType = {
+    id: string
+    organizationId: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status: $Enums.PlacementJobStatus
+    errorMessage: string | null
+    sliceMeta: JsonValue | null
+    targetBaseUrl: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PlacementJobCountAggregateOutputType | null
+    _min: PlacementJobMinAggregateOutputType | null
+    _max: PlacementJobMaxAggregateOutputType | null
+  }
+
+  type GetPlacementJobGroupByPayload<T extends PlacementJobGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlacementJobGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlacementJobGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlacementJobGroupByOutputType[P]>
+            : GetScalarType<T[P], PlacementJobGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlacementJobSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    sliceMeta?: boolean
+    targetBaseUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["placementJob"]>
+
+  export type PlacementJobSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    sliceMeta?: boolean
+    targetBaseUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["placementJob"]>
+
+  export type PlacementJobSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    sliceMeta?: boolean
+    targetBaseUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["placementJob"]>
+
+  export type PlacementJobSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    sliceMeta?: boolean
+    targetBaseUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlacementJobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKey" | "fromTopology" | "toTopology" | "status" | "errorMessage" | "sliceMeta" | "targetBaseUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["placementJob"]>
+  export type PlacementJobInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlacementJobIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlacementJobIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PlacementJobPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlacementJob"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      satelliteKey: string
+      fromTopology: $Enums.DeploymentTopology
+      toTopology: $Enums.DeploymentTopology
+      status: $Enums.PlacementJobStatus
+      errorMessage: string | null
+      /**
+       * Metadata from exportSlice stub (not a full dump).
+       */
+      sliceMeta: Prisma.JsonValue | null
+      /**
+       * Optional target URL for cutoverEndpoint.
+       */
+      targetBaseUrl: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["placementJob"]>
+    composites: {}
+  }
+
+  type PlacementJobGetPayload<S extends boolean | null | undefined | PlacementJobDefaultArgs> = $Result.GetResult<Prisma.$PlacementJobPayload, S>
+
+  type PlacementJobCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlacementJobFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlacementJobCountAggregateInputType | true
+    }
+
+  export interface PlacementJobDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlacementJob'], meta: { name: 'PlacementJob' } }
+    /**
+     * Find zero or one PlacementJob that matches the filter.
+     * @param {PlacementJobFindUniqueArgs} args - Arguments to find a PlacementJob
+     * @example
+     * // Get one PlacementJob
+     * const placementJob = await prisma.placementJob.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlacementJobFindUniqueArgs>(args: SelectSubset<T, PlacementJobFindUniqueArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlacementJob that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlacementJobFindUniqueOrThrowArgs} args - Arguments to find a PlacementJob
+     * @example
+     * // Get one PlacementJob
+     * const placementJob = await prisma.placementJob.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlacementJobFindUniqueOrThrowArgs>(args: SelectSubset<T, PlacementJobFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlacementJob that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobFindFirstArgs} args - Arguments to find a PlacementJob
+     * @example
+     * // Get one PlacementJob
+     * const placementJob = await prisma.placementJob.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlacementJobFindFirstArgs>(args?: SelectSubset<T, PlacementJobFindFirstArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlacementJob that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobFindFirstOrThrowArgs} args - Arguments to find a PlacementJob
+     * @example
+     * // Get one PlacementJob
+     * const placementJob = await prisma.placementJob.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlacementJobFindFirstOrThrowArgs>(args?: SelectSubset<T, PlacementJobFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlacementJobs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlacementJobs
+     * const placementJobs = await prisma.placementJob.findMany()
+     * 
+     * // Get first 10 PlacementJobs
+     * const placementJobs = await prisma.placementJob.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const placementJobWithIdOnly = await prisma.placementJob.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlacementJobFindManyArgs>(args?: SelectSubset<T, PlacementJobFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlacementJob.
+     * @param {PlacementJobCreateArgs} args - Arguments to create a PlacementJob.
+     * @example
+     * // Create one PlacementJob
+     * const PlacementJob = await prisma.placementJob.create({
+     *   data: {
+     *     // ... data to create a PlacementJob
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlacementJobCreateArgs>(args: SelectSubset<T, PlacementJobCreateArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlacementJobs.
+     * @param {PlacementJobCreateManyArgs} args - Arguments to create many PlacementJobs.
+     * @example
+     * // Create many PlacementJobs
+     * const placementJob = await prisma.placementJob.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlacementJobCreateManyArgs>(args?: SelectSubset<T, PlacementJobCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlacementJobs and returns the data saved in the database.
+     * @param {PlacementJobCreateManyAndReturnArgs} args - Arguments to create many PlacementJobs.
+     * @example
+     * // Create many PlacementJobs
+     * const placementJob = await prisma.placementJob.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlacementJobs and only return the `id`
+     * const placementJobWithIdOnly = await prisma.placementJob.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlacementJobCreateManyAndReturnArgs>(args?: SelectSubset<T, PlacementJobCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlacementJob.
+     * @param {PlacementJobDeleteArgs} args - Arguments to delete one PlacementJob.
+     * @example
+     * // Delete one PlacementJob
+     * const PlacementJob = await prisma.placementJob.delete({
+     *   where: {
+     *     // ... filter to delete one PlacementJob
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlacementJobDeleteArgs>(args: SelectSubset<T, PlacementJobDeleteArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlacementJob.
+     * @param {PlacementJobUpdateArgs} args - Arguments to update one PlacementJob.
+     * @example
+     * // Update one PlacementJob
+     * const placementJob = await prisma.placementJob.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlacementJobUpdateArgs>(args: SelectSubset<T, PlacementJobUpdateArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlacementJobs.
+     * @param {PlacementJobDeleteManyArgs} args - Arguments to filter PlacementJobs to delete.
+     * @example
+     * // Delete a few PlacementJobs
+     * const { count } = await prisma.placementJob.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlacementJobDeleteManyArgs>(args?: SelectSubset<T, PlacementJobDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlacementJobs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlacementJobs
+     * const placementJob = await prisma.placementJob.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlacementJobUpdateManyArgs>(args: SelectSubset<T, PlacementJobUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlacementJobs and returns the data updated in the database.
+     * @param {PlacementJobUpdateManyAndReturnArgs} args - Arguments to update many PlacementJobs.
+     * @example
+     * // Update many PlacementJobs
+     * const placementJob = await prisma.placementJob.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlacementJobs and only return the `id`
+     * const placementJobWithIdOnly = await prisma.placementJob.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlacementJobUpdateManyAndReturnArgs>(args: SelectSubset<T, PlacementJobUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlacementJob.
+     * @param {PlacementJobUpsertArgs} args - Arguments to update or create a PlacementJob.
+     * @example
+     * // Update or create a PlacementJob
+     * const placementJob = await prisma.placementJob.upsert({
+     *   create: {
+     *     // ... data to create a PlacementJob
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlacementJob we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlacementJobUpsertArgs>(args: SelectSubset<T, PlacementJobUpsertArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlacementJobs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobCountArgs} args - Arguments to filter PlacementJobs to count.
+     * @example
+     * // Count the number of PlacementJobs
+     * const count = await prisma.placementJob.count({
+     *   where: {
+     *     // ... the filter for the PlacementJobs we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlacementJobCountArgs>(
+      args?: Subset<T, PlacementJobCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlacementJobCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlacementJob.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlacementJobAggregateArgs>(args: Subset<T, PlacementJobAggregateArgs>): Prisma.PrismaPromise<GetPlacementJobAggregateType<T>>
+
+    /**
+     * Group by PlacementJob.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementJobGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlacementJobGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlacementJobGroupByArgs['orderBy'] }
+        : { orderBy?: PlacementJobGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlacementJobGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlacementJobGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlacementJob model
+   */
+  readonly fields: PlacementJobFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlacementJob.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlacementJobClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlacementJob model
+   */
+  interface PlacementJobFieldRefs {
+    readonly id: FieldRef<"PlacementJob", 'String'>
+    readonly organizationId: FieldRef<"PlacementJob", 'String'>
+    readonly satelliteKey: FieldRef<"PlacementJob", 'String'>
+    readonly fromTopology: FieldRef<"PlacementJob", 'DeploymentTopology'>
+    readonly toTopology: FieldRef<"PlacementJob", 'DeploymentTopology'>
+    readonly status: FieldRef<"PlacementJob", 'PlacementJobStatus'>
+    readonly errorMessage: FieldRef<"PlacementJob", 'String'>
+    readonly sliceMeta: FieldRef<"PlacementJob", 'Json'>
+    readonly targetBaseUrl: FieldRef<"PlacementJob", 'String'>
+    readonly createdAt: FieldRef<"PlacementJob", 'DateTime'>
+    readonly updatedAt: FieldRef<"PlacementJob", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlacementJob findUnique
+   */
+  export type PlacementJobFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementJob to fetch.
+     */
+    where: PlacementJobWhereUniqueInput
+  }
+
+  /**
+   * PlacementJob findUniqueOrThrow
+   */
+  export type PlacementJobFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementJob to fetch.
+     */
+    where: PlacementJobWhereUniqueInput
+  }
+
+  /**
+   * PlacementJob findFirst
+   */
+  export type PlacementJobFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementJob to fetch.
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementJobs to fetch.
+     */
+    orderBy?: PlacementJobOrderByWithRelationInput | PlacementJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlacementJobs.
+     */
+    cursor?: PlacementJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementJobs.
+     */
+    distinct?: PlacementJobScalarFieldEnum | PlacementJobScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementJob findFirstOrThrow
+   */
+  export type PlacementJobFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementJob to fetch.
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementJobs to fetch.
+     */
+    orderBy?: PlacementJobOrderByWithRelationInput | PlacementJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlacementJobs.
+     */
+    cursor?: PlacementJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementJobs.
+     */
+    distinct?: PlacementJobScalarFieldEnum | PlacementJobScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementJob findMany
+   */
+  export type PlacementJobFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementJobs to fetch.
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementJobs to fetch.
+     */
+    orderBy?: PlacementJobOrderByWithRelationInput | PlacementJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlacementJobs.
+     */
+    cursor?: PlacementJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementJobs.
+     */
+    distinct?: PlacementJobScalarFieldEnum | PlacementJobScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementJob create
+   */
+  export type PlacementJobCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlacementJob.
+     */
+    data: XOR<PlacementJobCreateInput, PlacementJobUncheckedCreateInput>
+  }
+
+  /**
+   * PlacementJob createMany
+   */
+  export type PlacementJobCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlacementJobs.
+     */
+    data: PlacementJobCreateManyInput | PlacementJobCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlacementJob createManyAndReturn
+   */
+  export type PlacementJobCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlacementJobs.
+     */
+    data: PlacementJobCreateManyInput | PlacementJobCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlacementJob update
+   */
+  export type PlacementJobUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlacementJob.
+     */
+    data: XOR<PlacementJobUpdateInput, PlacementJobUncheckedUpdateInput>
+    /**
+     * Choose, which PlacementJob to update.
+     */
+    where: PlacementJobWhereUniqueInput
+  }
+
+  /**
+   * PlacementJob updateMany
+   */
+  export type PlacementJobUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlacementJobs.
+     */
+    data: XOR<PlacementJobUpdateManyMutationInput, PlacementJobUncheckedUpdateManyInput>
+    /**
+     * Filter which PlacementJobs to update
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * Limit how many PlacementJobs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlacementJob updateManyAndReturn
+   */
+  export type PlacementJobUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * The data used to update PlacementJobs.
+     */
+    data: XOR<PlacementJobUpdateManyMutationInput, PlacementJobUncheckedUpdateManyInput>
+    /**
+     * Filter which PlacementJobs to update
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * Limit how many PlacementJobs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlacementJob upsert
+   */
+  export type PlacementJobUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlacementJob to update in case it exists.
+     */
+    where: PlacementJobWhereUniqueInput
+    /**
+     * In case the PlacementJob found by the `where` argument doesn't exist, create a new PlacementJob with this data.
+     */
+    create: XOR<PlacementJobCreateInput, PlacementJobUncheckedCreateInput>
+    /**
+     * In case the PlacementJob was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlacementJobUpdateInput, PlacementJobUncheckedUpdateInput>
+  }
+
+  /**
+   * PlacementJob delete
+   */
+  export type PlacementJobDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    /**
+     * Filter which PlacementJob to delete.
+     */
+    where: PlacementJobWhereUniqueInput
+  }
+
+  /**
+   * PlacementJob deleteMany
+   */
+  export type PlacementJobDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlacementJobs to delete
+     */
+    where?: PlacementJobWhereInput
+    /**
+     * Limit how many PlacementJobs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlacementJob without action
+   */
+  export type PlacementJobDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
   }
 
 
@@ -50155,6 +51431,7 @@ export namespace Prisma {
     subscriptionPlan: string | null
     billingStatus: $Enums.BillingStatus | null
     operatingMode: $Enums.OrgOperatingMode | null
+    deploymentTopology: $Enums.DeploymentTopology | null
     parentOrgId: string | null
     holdingId: string | null
     fiscalRouting: $Enums.OrgRouting | null
@@ -50181,6 +51458,7 @@ export namespace Prisma {
     subscriptionPlan: string | null
     billingStatus: $Enums.BillingStatus | null
     operatingMode: $Enums.OrgOperatingMode | null
+    deploymentTopology: $Enums.DeploymentTopology | null
     parentOrgId: string | null
     holdingId: string | null
     fiscalRouting: $Enums.OrgRouting | null
@@ -50207,6 +51485,7 @@ export namespace Prisma {
     subscriptionPlan: number
     billingStatus: number
     operatingMode: number
+    deploymentTopology: number
     parentOrgId: number
     holdingId: number
     fiscalRouting: number
@@ -50251,6 +51530,7 @@ export namespace Prisma {
     subscriptionPlan?: true
     billingStatus?: true
     operatingMode?: true
+    deploymentTopology?: true
     parentOrgId?: true
     holdingId?: true
     fiscalRouting?: true
@@ -50277,6 +51557,7 @@ export namespace Prisma {
     subscriptionPlan?: true
     billingStatus?: true
     operatingMode?: true
+    deploymentTopology?: true
     parentOrgId?: true
     holdingId?: true
     fiscalRouting?: true
@@ -50303,6 +51584,7 @@ export namespace Prisma {
     subscriptionPlan?: true
     billingStatus?: true
     operatingMode?: true
+    deploymentTopology?: true
     parentOrgId?: true
     holdingId?: true
     fiscalRouting?: true
@@ -50418,6 +51700,7 @@ export namespace Prisma {
     subscriptionPlan: string | null
     billingStatus: $Enums.BillingStatus
     operatingMode: $Enums.OrgOperatingMode
+    deploymentTopology: $Enums.DeploymentTopology
     parentOrgId: string | null
     holdingId: string | null
     fiscalRouting: $Enums.OrgRouting
@@ -50465,6 +51748,7 @@ export namespace Prisma {
     subscriptionPlan?: boolean
     billingStatus?: boolean
     operatingMode?: boolean
+    deploymentTopology?: boolean
     parentOrgId?: boolean
     holdingId?: boolean
     fiscalRouting?: boolean
@@ -50505,6 +51789,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: boolean | Organization$platformIdempotencyRecordsArgs<ExtArgs>
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
     satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
+    placementJobs?: boolean | Organization$placementJobsArgs<ExtArgs>
     satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
@@ -50525,6 +51810,7 @@ export namespace Prisma {
     subscriptionPlan?: boolean
     billingStatus?: boolean
     operatingMode?: boolean
+    deploymentTopology?: boolean
     parentOrgId?: boolean
     holdingId?: boolean
     fiscalRouting?: boolean
@@ -50556,6 +51842,7 @@ export namespace Prisma {
     subscriptionPlan?: boolean
     billingStatus?: boolean
     operatingMode?: boolean
+    deploymentTopology?: boolean
     parentOrgId?: boolean
     holdingId?: boolean
     fiscalRouting?: boolean
@@ -50587,6 +51874,7 @@ export namespace Prisma {
     subscriptionPlan?: boolean
     billingStatus?: boolean
     operatingMode?: boolean
+    deploymentTopology?: boolean
     parentOrgId?: boolean
     holdingId?: boolean
     fiscalRouting?: boolean
@@ -50606,7 +51894,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "operatingMode" | "parentOrgId" | "holdingId" | "fiscalRouting" | "revenueRouting" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "operatingMode" | "deploymentTopology" | "parentOrgId" | "holdingId" | "fiscalRouting" | "revenueRouting" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
   export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     usageMeterEvents?: boolean | Organization$usageMeterEventsArgs<ExtArgs>
     earlyAccessEvents?: boolean | Organization$earlyAccessEventsArgs<ExtArgs>
@@ -50631,6 +51919,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: boolean | Organization$platformIdempotencyRecordsArgs<ExtArgs>
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
     satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
+    placementJobs?: boolean | Organization$placementJobsArgs<ExtArgs>
     satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
@@ -50678,6 +51967,7 @@ export namespace Prisma {
       platformIdempotencyRecords: Prisma.$PlatformIdempotencyRecordPayload<ExtArgs>[]
       platformLoyaltyLedger: Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>[]
       satelliteEndpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
+      placementJobs: Prisma.$PlacementJobPayload<ExtArgs>[]
       satelliteEntitlements: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>[]
       workforceAssignments: Prisma.$WorkforceAssignmentPayload<ExtArgs>[]
       workforceEmployments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
@@ -50696,6 +51986,10 @@ export namespace Prisma {
       subscriptionPlan: string | null
       billingStatus: $Enums.BillingStatus
       operatingMode: $Enums.OrgOperatingMode
+      /**
+       * Placement for license defaults. Per-endpoint mix is a later PlacementJob.
+       */
+      deploymentTopology: $Enums.DeploymentTopology
       parentOrgId: string | null
       /**
        * Holding grouping for multi-entity consolidation — distinct from parentOrgId/DEPARTMENT money routing.
@@ -51133,6 +52427,7 @@ export namespace Prisma {
     platformIdempotencyRecords<T extends Organization$platformIdempotencyRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformIdempotencyRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformIdempotencyRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     platformLoyaltyLedger<T extends Organization$platformLoyaltyLedgerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformLoyaltyLedgerArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     satelliteEndpoints<T extends Organization$satelliteEndpointsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEndpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    placementJobs<T extends Organization$placementJobsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$placementJobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     satelliteEntitlements<T extends Organization$satelliteEntitlementsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEntitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceAssignments<T extends Organization$workforceAssignmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceEmployments<T extends Organization$workforceEmploymentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceEmploymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -51178,6 +52473,7 @@ export namespace Prisma {
     readonly subscriptionPlan: FieldRef<"Organization", 'String'>
     readonly billingStatus: FieldRef<"Organization", 'BillingStatus'>
     readonly operatingMode: FieldRef<"Organization", 'OrgOperatingMode'>
+    readonly deploymentTopology: FieldRef<"Organization", 'DeploymentTopology'>
     readonly parentOrgId: FieldRef<"Organization", 'String'>
     readonly holdingId: FieldRef<"Organization", 'String'>
     readonly fiscalRouting: FieldRef<"Organization", 'OrgRouting'>
@@ -52140,6 +53436,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.placementJobs
+   */
+  export type Organization$placementJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    where?: PlacementJobWhereInput
+    orderBy?: PlacementJobOrderByWithRelationInput | PlacementJobOrderByWithRelationInput[]
+    cursor?: PlacementJobWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlacementJobScalarFieldEnum | PlacementJobScalarFieldEnum[]
   }
 
   /**
@@ -85516,6 +86836,23 @@ export namespace Prisma {
   export type SatelliteEndpointScalarFieldEnum = (typeof SatelliteEndpointScalarFieldEnum)[keyof typeof SatelliteEndpointScalarFieldEnum]
 
 
+  export const PlacementJobScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    satelliteKey: 'satelliteKey',
+    fromTopology: 'fromTopology',
+    toTopology: 'toTopology',
+    status: 'status',
+    errorMessage: 'errorMessage',
+    sliceMeta: 'sliceMeta',
+    targetBaseUrl: 'targetBaseUrl',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlacementJobScalarFieldEnum = (typeof PlacementJobScalarFieldEnum)[keyof typeof PlacementJobScalarFieldEnum]
+
+
   export const WorkforceAssignmentScalarFieldEnum: {
     id: 'id',
     globalPersonId: 'globalPersonId',
@@ -85899,6 +87236,7 @@ export namespace Prisma {
     subscriptionPlan: 'subscriptionPlan',
     billingStatus: 'billingStatus',
     operatingMode: 'operatingMode',
+    deploymentTopology: 'deploymentTopology',
     parentOrgId: 'parentOrgId',
     holdingId: 'holdingId',
     fiscalRouting: 'fiscalRouting',
@@ -86555,6 +87893,34 @@ export namespace Prisma {
    * Reference to a field of type 'PricingCatalogKind[]'
    */
   export type ListEnumPricingCatalogKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PricingCatalogKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DeploymentTopology'
+   */
+  export type EnumDeploymentTopologyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeploymentTopology'>
+    
+
+
+  /**
+   * Reference to a field of type 'DeploymentTopology[]'
+   */
+  export type ListEnumDeploymentTopologyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeploymentTopology[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlacementJobStatus'
+   */
+  export type EnumPlacementJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlacementJobStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlacementJobStatus[]'
+   */
+  export type ListEnumPlacementJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlacementJobStatus[]'>
     
 
 
@@ -88019,6 +89385,91 @@ export namespace Prisma {
     enabled?: BoolWithAggregatesFilter<"SatelliteEndpoint"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
+  }
+
+  export type PlacementJobWhereInput = {
+    AND?: PlacementJobWhereInput | PlacementJobWhereInput[]
+    OR?: PlacementJobWhereInput[]
+    NOT?: PlacementJobWhereInput | PlacementJobWhereInput[]
+    id?: UuidFilter<"PlacementJob"> | string
+    organizationId?: UuidFilter<"PlacementJob"> | string
+    satelliteKey?: StringFilter<"PlacementJob"> | string
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
+    sliceMeta?: JsonNullableFilter<"PlacementJob">
+    targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
+    createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type PlacementJobOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    sliceMeta?: SortOrderInput | SortOrder
+    targetBaseUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type PlacementJobWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PlacementJobWhereInput | PlacementJobWhereInput[]
+    OR?: PlacementJobWhereInput[]
+    NOT?: PlacementJobWhereInput | PlacementJobWhereInput[]
+    organizationId?: UuidFilter<"PlacementJob"> | string
+    satelliteKey?: StringFilter<"PlacementJob"> | string
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
+    sliceMeta?: JsonNullableFilter<"PlacementJob">
+    targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
+    createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id">
+
+  export type PlacementJobOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    sliceMeta?: SortOrderInput | SortOrder
+    targetBaseUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlacementJobCountOrderByAggregateInput
+    _max?: PlacementJobMaxOrderByAggregateInput
+    _min?: PlacementJobMinOrderByAggregateInput
+  }
+
+  export type PlacementJobScalarWhereWithAggregatesInput = {
+    AND?: PlacementJobScalarWhereWithAggregatesInput | PlacementJobScalarWhereWithAggregatesInput[]
+    OR?: PlacementJobScalarWhereWithAggregatesInput[]
+    NOT?: PlacementJobScalarWhereWithAggregatesInput | PlacementJobScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlacementJob"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlacementJob"> | string
+    satelliteKey?: StringWithAggregatesFilter<"PlacementJob"> | string
+    fromTopology?: EnumDeploymentTopologyWithAggregatesFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyWithAggregatesFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusWithAggregatesFilter<"PlacementJob"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
+    sliceMeta?: JsonNullableWithAggregatesFilter<"PlacementJob">
+    targetBaseUrl?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PlacementJob"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PlacementJob"> | Date | string
   }
 
   export type WorkforceAssignmentWhereInput = {
@@ -90033,6 +91484,7 @@ export namespace Prisma {
     subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFilter<"Organization"> | $Enums.DeploymentTopology
     parentOrgId?: UuidNullableFilter<"Organization"> | string | null
     holdingId?: UuidNullableFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
@@ -90073,6 +91525,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordListRelationFilter
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
     satelliteEndpoints?: SatelliteEndpointListRelationFilter
+    placementJobs?: PlacementJobListRelationFilter
     satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
@@ -90092,6 +91545,7 @@ export namespace Prisma {
     subscriptionPlan?: SortOrderInput | SortOrder
     billingStatus?: SortOrder
     operatingMode?: SortOrder
+    deploymentTopology?: SortOrder
     parentOrgId?: SortOrderInput | SortOrder
     holdingId?: SortOrderInput | SortOrder
     fiscalRouting?: SortOrder
@@ -90132,6 +91586,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordOrderByRelationAggregateInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerOrderByRelationAggregateInput
     satelliteEndpoints?: SatelliteEndpointOrderByRelationAggregateInput
+    placementJobs?: PlacementJobOrderByRelationAggregateInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementOrderByRelationAggregateInput
     workforceAssignments?: WorkforceAssignmentOrderByRelationAggregateInput
     workforceEmployments?: WorkforceEmploymentOrderByRelationAggregateInput
@@ -90155,6 +91610,7 @@ export namespace Prisma {
     subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFilter<"Organization"> | $Enums.DeploymentTopology
     parentOrgId?: UuidNullableFilter<"Organization"> | string | null
     holdingId?: UuidNullableFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
@@ -90194,6 +91650,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordListRelationFilter
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
     satelliteEndpoints?: SatelliteEndpointListRelationFilter
+    placementJobs?: PlacementJobListRelationFilter
     satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
@@ -90213,6 +91670,7 @@ export namespace Prisma {
     subscriptionPlan?: SortOrderInput | SortOrder
     billingStatus?: SortOrder
     operatingMode?: SortOrder
+    deploymentTopology?: SortOrder
     parentOrgId?: SortOrderInput | SortOrder
     holdingId?: SortOrderInput | SortOrder
     fiscalRouting?: SortOrder
@@ -90249,6 +91707,7 @@ export namespace Prisma {
     subscriptionPlan?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusWithAggregatesFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeWithAggregatesFilter<"Organization"> | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyWithAggregatesFilter<"Organization"> | $Enums.DeploymentTopology
     parentOrgId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
     holdingId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingWithAggregatesFilter<"Organization"> | $Enums.OrgRouting
@@ -93532,6 +94991,103 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PlacementJobCreateInput = {
+    id?: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlacementJobsInput
+  }
+
+  export type PlacementJobUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementJobUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlacementJobsNestedInput
+  }
+
+  export type PlacementJobUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementJobCreateManyInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementJobUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementJobUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type WorkforceAssignmentCreateInput = {
     id?: string
     globalPersonId: string
@@ -95740,6 +97296,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -95778,6 +97335,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -95797,6 +97355,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -95837,6 +97396,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -95852,6 +97412,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -95890,6 +97451,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -95909,6 +97471,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -95949,6 +97512,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -95965,6 +97529,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -95992,6 +97557,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -96018,6 +97584,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -99541,6 +101108,80 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type EnumDeploymentTopologyFilter<$PrismaModel = never> = {
+    equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    not?: NestedEnumDeploymentTopologyFilter<$PrismaModel> | $Enums.DeploymentTopology
+  }
+
+  export type EnumPlacementJobStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementJobStatusFilter<$PrismaModel> | $Enums.PlacementJobStatus
+  }
+
+  export type PlacementJobCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    sliceMeta?: SortOrder
+    targetBaseUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlacementJobMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    targetBaseUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlacementJobMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    targetBaseUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumDeploymentTopologyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    not?: NestedEnumDeploymentTopologyWithAggregatesFilter<$PrismaModel> | $Enums.DeploymentTopology
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+    _max?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+  }
+
+  export type EnumPlacementJobStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementJobStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlacementJobStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+  }
+
   export type EnumWorkforceAssignmentStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceAssignmentStatus | EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
@@ -101242,6 +102883,12 @@ export namespace Prisma {
     none?: PlatformLoyaltyLedgerWhereInput
   }
 
+  export type PlacementJobListRelationFilter = {
+    every?: PlacementJobWhereInput
+    some?: PlacementJobWhereInput
+    none?: PlacementJobWhereInput
+  }
+
   export type WorkforceAssignmentListRelationFilter = {
     every?: WorkforceAssignmentWhereInput
     some?: WorkforceAssignmentWhereInput
@@ -101345,6 +102992,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type PlacementJobOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type WorkforceAssignmentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -101362,6 +103013,7 @@ export namespace Prisma {
     subscriptionPlan?: SortOrder
     billingStatus?: SortOrder
     operatingMode?: SortOrder
+    deploymentTopology?: SortOrder
     parentOrgId?: SortOrder
     holdingId?: SortOrder
     fiscalRouting?: SortOrder
@@ -101397,6 +103049,7 @@ export namespace Prisma {
     subscriptionPlan?: SortOrder
     billingStatus?: SortOrder
     operatingMode?: SortOrder
+    deploymentTopology?: SortOrder
     parentOrgId?: SortOrder
     holdingId?: SortOrder
     fiscalRouting?: SortOrder
@@ -101423,6 +103076,7 @@ export namespace Prisma {
     subscriptionPlan?: SortOrder
     billingStatus?: SortOrder
     operatingMode?: SortOrder
+    deploymentTopology?: SortOrder
     parentOrgId?: SortOrder
     holdingId?: SortOrder
     fiscalRouting?: SortOrder
@@ -103542,6 +105196,28 @@ export namespace Prisma {
     update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutEndpointsInput, SatelliteUpdateWithoutEndpointsInput>, SatelliteUncheckedUpdateWithoutEndpointsInput>
   }
 
+  export type OrganizationCreateNestedOneWithoutPlacementJobsInput = {
+    create?: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlacementJobsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumDeploymentTopologyFieldUpdateOperationsInput = {
+    set?: $Enums.DeploymentTopology
+  }
+
+  export type EnumPlacementJobStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PlacementJobStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlacementJobsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlacementJobsInput
+    upsert?: OrganizationUpsertWithoutPlacementJobsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlacementJobsInput, OrganizationUpdateWithoutPlacementJobsInput>, OrganizationUncheckedUpdateWithoutPlacementJobsInput>
+  }
+
   export type OrganizationCreateNestedOneWithoutWorkforceAssignmentsInput = {
     create?: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
     connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput
@@ -105398,6 +107074,13 @@ export namespace Prisma {
     connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
   }
 
+  export type PlacementJobCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlacementJobCreateWithoutOrganizationInput, PlacementJobUncheckedCreateWithoutOrganizationInput> | PlacementJobCreateWithoutOrganizationInput[] | PlacementJobUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutOrganizationInput | PlacementJobCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlacementJobCreateManyOrganizationInputEnvelope
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+  }
+
   export type OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput> | OrganizationSatelliteEntitlementCreateWithoutOrganizationInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput[]
@@ -105609,6 +107292,13 @@ export namespace Prisma {
     connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutOrganizationInput | SatelliteEndpointCreateOrConnectWithoutOrganizationInput[]
     createMany?: SatelliteEndpointCreateManyOrganizationInputEnvelope
     connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+  }
+
+  export type PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlacementJobCreateWithoutOrganizationInput, PlacementJobUncheckedCreateWithoutOrganizationInput> | PlacementJobCreateWithoutOrganizationInput[] | PlacementJobUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutOrganizationInput | PlacementJobCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlacementJobCreateManyOrganizationInputEnvelope
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
   }
 
   export type OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -105983,6 +107673,20 @@ export namespace Prisma {
     update?: SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput | SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type PlacementJobUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlacementJobCreateWithoutOrganizationInput, PlacementJobUncheckedCreateWithoutOrganizationInput> | PlacementJobCreateWithoutOrganizationInput[] | PlacementJobUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutOrganizationInput | PlacementJobCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlacementJobUpsertWithWhereUniqueWithoutOrganizationInput | PlacementJobUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlacementJobCreateManyOrganizationInputEnvelope
+    set?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    disconnect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    delete?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    update?: PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput | PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlacementJobUpdateManyWithWhereWithoutOrganizationInput | PlacementJobUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
   }
 
   export type OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput = {
@@ -106401,6 +108105,20 @@ export namespace Prisma {
     update?: SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput | SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlacementJobCreateWithoutOrganizationInput, PlacementJobUncheckedCreateWithoutOrganizationInput> | PlacementJobCreateWithoutOrganizationInput[] | PlacementJobUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutOrganizationInput | PlacementJobCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlacementJobUpsertWithWhereUniqueWithoutOrganizationInput | PlacementJobUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlacementJobCreateManyOrganizationInputEnvelope
+    set?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    disconnect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    delete?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    update?: PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput | PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlacementJobUpdateManyWithWhereWithoutOrganizationInput | PlacementJobUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
   }
 
   export type OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -108141,6 +109859,40 @@ export namespace Prisma {
     _max?: NestedEnumPricingCatalogKindFilter<$PrismaModel>
   }
 
+  export type NestedEnumDeploymentTopologyFilter<$PrismaModel = never> = {
+    equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    not?: NestedEnumDeploymentTopologyFilter<$PrismaModel> | $Enums.DeploymentTopology
+  }
+
+  export type NestedEnumPlacementJobStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementJobStatusFilter<$PrismaModel> | $Enums.PlacementJobStatus
+  }
+
+  export type NestedEnumDeploymentTopologyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    not?: NestedEnumDeploymentTopologyWithAggregatesFilter<$PrismaModel> | $Enums.DeploymentTopology
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+    _max?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlacementJobStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementJobStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlacementJobStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+  }
+
   export type NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceAssignmentStatus | EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
@@ -108872,6 +110624,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -108909,6 +110662,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -108928,6 +110682,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -108967,6 +110722,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -108998,6 +110754,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -109035,6 +110792,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -109054,6 +110812,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -109093,6 +110852,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -109346,6 +111106,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -109383,6 +111144,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -109402,6 +111164,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -109441,6 +111204,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -109515,6 +111279,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -109552,6 +111317,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -109571,6 +111337,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -109610,6 +111377,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -109625,6 +111393,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -109662,6 +111431,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -109681,6 +111451,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -109720,6 +111491,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -109751,6 +111523,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -109788,6 +111561,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -109807,6 +111581,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -109846,6 +111621,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -110176,6 +111952,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -110214,6 +111991,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
@@ -110232,6 +112010,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -110272,6 +112051,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
@@ -110329,6 +112109,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -110367,6 +112148,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
@@ -110385,6 +112167,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -110425,6 +112208,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -110472,6 +112256,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -110509,6 +112294,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -110528,6 +112314,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -110567,6 +112354,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -110625,6 +112413,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -110662,6 +112451,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -110681,6 +112471,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -110720,6 +112511,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -110760,7 +112552,7 @@ export namespace Prisma {
     entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
-  export type OrganizationCreateWithoutWorkforceAssignmentsInput = {
+  export type OrganizationCreateWithoutPlacementJobsInput = {
     id?: string
     name: string
     taxIdBlindIndex?: string | null
@@ -110768,6 +112560,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -110807,6 +112600,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
@@ -110815,7 +112609,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
-  export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
+  export type OrganizationUncheckedCreateWithoutPlacementJobsInput = {
     id?: string
     name: string
     ownerId?: string | null
@@ -110824,6 +112618,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -110865,28 +112660,29 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
-  export type OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput = {
+  export type OrganizationCreateOrConnectWithoutPlacementJobsInput = {
     where: OrganizationWhereUniqueInput
-    create: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+    create: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
   }
 
-  export type OrganizationUpsertWithoutWorkforceAssignmentsInput = {
-    update: XOR<OrganizationUpdateWithoutWorkforceAssignmentsInput, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
-    create: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+  export type OrganizationUpsertWithoutPlacementJobsInput = {
+    update: XOR<OrganizationUpdateWithoutPlacementJobsInput, OrganizationUncheckedUpdateWithoutPlacementJobsInput>
+    create: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
     where?: OrganizationWhereInput
   }
 
-  export type OrganizationUpdateToOneWithWhereWithoutWorkforceAssignmentsInput = {
+  export type OrganizationUpdateToOneWithWhereWithoutPlacementJobsInput = {
     where?: OrganizationWhereInput
-    data: XOR<OrganizationUpdateWithoutWorkforceAssignmentsInput, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
+    data: XOR<OrganizationUpdateWithoutPlacementJobsInput, OrganizationUncheckedUpdateWithoutPlacementJobsInput>
   }
 
-  export type OrganizationUpdateWithoutWorkforceAssignmentsInput = {
+  export type OrganizationUpdateWithoutPlacementJobsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
@@ -110894,6 +112690,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -110933,6 +112730,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
@@ -110941,7 +112739,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
-  export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
+  export type OrganizationUncheckedUpdateWithoutPlacementJobsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -110950,6 +112748,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -110990,6 +112789,251 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationCreateWithoutWorkforceAssignmentsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+  }
+
+  export type OrganizationUpsertWithoutWorkforceAssignmentsInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceAssignmentsInput, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
+    create: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceAssignmentsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceAssignmentsInput, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceAssignmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -112083,6 +114127,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -112121,6 +114166,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -112139,6 +114185,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -112179,6 +114226,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -112283,6 +114331,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -112321,6 +114370,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -112339,6 +114389,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -112379,6 +114430,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -113289,6 +115341,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -113327,6 +115380,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
@@ -113345,6 +115399,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -113385,6 +115440,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
@@ -113813,6 +115869,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -113851,6 +115908,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
@@ -113869,6 +115927,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -113909,6 +115968,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -115172,6 +117232,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -115209,6 +117270,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -115228,6 +117290,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -115267,6 +117330,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -115379,6 +117443,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -115416,6 +117481,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -115435,6 +117501,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -115474,6 +117541,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -116533,6 +118601,42 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PlacementJobCreateWithoutOrganizationInput = {
+    id?: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementJobUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementJobCreateOrConnectWithoutOrganizationInput = {
+    where: PlacementJobWhereUniqueInput
+    create: XOR<PlacementJobCreateWithoutOrganizationInput, PlacementJobUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlacementJobCreateManyOrganizationInputEnvelope = {
+    data: PlacementJobCreateManyOrganizationInput | PlacementJobCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrganizationSatelliteEntitlementCreateWithoutOrganizationInput = {
     trialExpiresAt?: Date | string | null
     trialOverridden?: boolean
@@ -116726,6 +118830,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -116764,6 +118869,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -116782,6 +118888,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -116822,6 +118929,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -116841,6 +118949,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -116879,6 +118988,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -116897,6 +119007,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
@@ -116936,6 +119047,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -117671,6 +119783,39 @@ export namespace Prisma {
     data: XOR<SatelliteEndpointUpdateManyMutationInput, SatelliteEndpointUncheckedUpdateManyWithoutOrganizationInput>
   }
 
+  export type PlacementJobUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlacementJobWhereUniqueInput
+    update: XOR<PlacementJobUpdateWithoutOrganizationInput, PlacementJobUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlacementJobCreateWithoutOrganizationInput, PlacementJobUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlacementJobWhereUniqueInput
+    data: XOR<PlacementJobUpdateWithoutOrganizationInput, PlacementJobUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlacementJobUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlacementJobScalarWhereInput
+    data: XOR<PlacementJobUpdateManyMutationInput, PlacementJobUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlacementJobScalarWhereInput = {
+    AND?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+    OR?: PlacementJobScalarWhereInput[]
+    NOT?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+    id?: UuidFilter<"PlacementJob"> | string
+    organizationId?: UuidFilter<"PlacementJob"> | string
+    satelliteKey?: StringFilter<"PlacementJob"> | string
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
+    sliceMeta?: JsonNullableFilter<"PlacementJob">
+    targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
+    createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
+  }
+
   export type OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: OrganizationSatelliteEntitlementWhereUniqueInput
     update: XOR<OrganizationSatelliteEntitlementUpdateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedUpdateWithoutOrganizationInput>
@@ -117816,6 +119961,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -117854,6 +120000,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -117872,6 +120019,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -117912,6 +120060,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -117946,6 +120095,7 @@ export namespace Prisma {
     subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFilter<"Organization"> | $Enums.DeploymentTopology
     parentOrgId?: UuidNullableFilter<"Organization"> | string | null
     holdingId?: UuidNullableFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
@@ -118148,6 +120298,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -118186,6 +120337,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -118203,6 +120355,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -118243,6 +120396,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -118521,6 +120675,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -118559,6 +120714,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -118577,6 +120733,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
@@ -118616,6 +120773,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -118905,6 +121063,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -118942,6 +121101,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -118961,6 +121121,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -119000,6 +121161,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -119076,6 +121238,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119113,6 +121276,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -119132,6 +121296,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -119171,6 +121336,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -119499,6 +121665,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -119536,6 +121703,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -119555,6 +121723,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -119594,6 +121763,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -119664,6 +121834,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119701,6 +121872,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -119720,6 +121892,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -119759,6 +121932,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -119819,6 +121993,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -119856,6 +122031,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -119875,6 +122051,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -119914,6 +122091,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -119984,6 +122162,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -120021,6 +122200,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -120040,6 +122220,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -120079,6 +122260,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -120139,6 +122321,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -120176,6 +122359,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -120195,6 +122379,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -120234,6 +122419,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -120304,6 +122490,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -120341,6 +122528,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -120360,6 +122548,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -120399,6 +122588,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -120459,6 +122649,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -120496,6 +122687,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -120515,6 +122707,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -120554,6 +122747,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -120631,6 +122825,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -120668,6 +122863,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -120687,6 +122883,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -120726,6 +122923,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -120757,6 +122955,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -120794,6 +122993,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -120813,6 +123013,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -120852,6 +123053,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -120944,6 +123146,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -120981,6 +123184,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -121000,6 +123204,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -121039,6 +123244,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -121148,6 +123354,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -121185,6 +123392,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -121204,6 +123412,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -121243,6 +123452,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -121321,6 +123531,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -121358,6 +123569,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -121377,6 +123589,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -121416,6 +123629,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -121431,6 +123645,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -121468,6 +123683,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -121487,6 +123703,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -121526,6 +123743,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -121596,6 +123814,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -121633,6 +123852,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -121652,6 +123872,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -121691,6 +123912,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -121751,6 +123973,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -121788,6 +124011,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -121807,6 +124031,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -121846,6 +124071,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -121877,6 +124103,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -121914,6 +124141,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -121933,6 +124161,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -121972,6 +124201,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -121987,6 +124217,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -122024,6 +124255,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -122043,6 +124275,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -122082,6 +124315,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -122181,6 +124415,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -122218,6 +124453,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -122237,6 +124473,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -122276,6 +124513,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -122323,6 +124561,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -122360,6 +124599,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -122379,6 +124619,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -122418,6 +124659,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -122510,6 +124752,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -122547,6 +124790,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -122566,6 +124810,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -122605,6 +124850,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -122667,6 +124913,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -122704,6 +124951,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -122723,6 +124971,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -122762,6 +125011,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -122845,6 +125095,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -122882,6 +125133,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -122901,6 +125153,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -122940,6 +125193,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -123019,6 +125273,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -123056,6 +125311,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -123075,6 +125331,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -123114,6 +125371,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -123145,6 +125403,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -123182,6 +125441,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -123201,6 +125461,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -123240,6 +125501,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -123255,6 +125517,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -123292,6 +125555,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -123311,6 +125575,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -123350,6 +125615,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -123381,6 +125647,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -123418,6 +125685,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -123437,6 +125705,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -123476,6 +125745,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -123491,6 +125761,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -123528,6 +125799,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -123547,6 +125819,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -123586,6 +125859,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -123617,6 +125891,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -123654,6 +125929,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -123673,6 +125949,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -123712,6 +125989,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -123727,6 +126005,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -123764,6 +126043,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -123783,6 +126063,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -123822,6 +126103,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -123853,6 +126135,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -123890,6 +126173,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -123909,6 +126193,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -123948,6 +126233,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -123963,6 +126249,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -124000,6 +126287,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -124019,6 +126307,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -124058,6 +126347,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -124089,6 +126379,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -124126,6 +126417,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -124145,6 +126437,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -124184,6 +126477,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -124199,6 +126493,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -124236,6 +126531,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
@@ -124255,6 +126551,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -124294,6 +126591,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
@@ -124325,6 +126623,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -124362,6 +126661,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -124381,6 +126681,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -124420,6 +126721,7 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -126295,6 +128597,19 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type PlacementJobCreateManyOrganizationInput = {
+    id?: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrganizationSatelliteEntitlementCreateManyOrganizationInput = {
     satelliteKey: string
     trialExpiresAt?: Date | string | null
@@ -126349,6 +128664,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
@@ -127137,6 +129453,45 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PlacementJobUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementJobUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementJobUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationSatelliteEntitlementUpdateWithoutOrganizationInput = {
     trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     trialOverridden?: BoolFieldUpdateOperationsInput | boolean
@@ -127296,6 +129651,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -127334,6 +129690,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -127352,6 +129709,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -127391,6 +129749,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -127407,6 +129766,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -127483,6 +129843,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
@@ -127676,6 +130037,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -127714,6 +130076,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -127731,6 +130094,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -127771,6 +130135,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -127786,6 +130151,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -127872,6 +130238,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
     parentOrgId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
@@ -127916,6 +130283,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -127954,6 +130322,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
@@ -127972,6 +130341,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
@@ -128011,6 +130381,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -128027,6 +130398,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting

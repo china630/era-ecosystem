@@ -260,6 +260,20 @@ exports.Prisma.SatelliteEndpointScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PlacementJobScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  satelliteKey: 'satelliteKey',
+  fromTopology: 'fromTopology',
+  toTopology: 'toTopology',
+  status: 'status',
+  errorMessage: 'errorMessage',
+  sliceMeta: 'sliceMeta',
+  targetBaseUrl: 'targetBaseUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforceAssignmentScalarFieldEnum = {
   id: 'id',
   globalPersonId: 'globalPersonId',
@@ -571,6 +585,7 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   subscriptionPlan: 'subscriptionPlan',
   billingStatus: 'billingStatus',
   operatingMode: 'operatingMode',
+  deploymentTopology: 'deploymentTopology',
   parentOrgId: 'parentOrgId',
   holdingId: 'holdingId',
   fiscalRouting: 'fiscalRouting',
@@ -1002,6 +1017,25 @@ exports.PricingCatalogKind = exports.$Enums.PricingCatalogKind = {
   ADDON: 'ADDON'
 };
 
+exports.DeploymentTopology = exports.$Enums.DeploymentTopology = {
+  SHARED: 'SHARED',
+  DEDICATED: 'DEDICATED',
+  ONPREM: 'ONPREM'
+};
+
+exports.PlacementJobStatus = exports.$Enums.PlacementJobStatus = {
+  PENDING: 'PENDING',
+  FREEZE: 'FREEZE',
+  EXPORT: 'EXPORT',
+  PROVISION: 'PROVISION',
+  BIND: 'BIND',
+  CUTOVER: 'CUTOVER',
+  SMOKE: 'SMOKE',
+  DONE: 'DONE',
+  FAILED: 'FAILED',
+  REJECTED: 'REJECTED'
+};
+
 exports.WorkforceAssignmentStatus = exports.$Enums.WorkforceAssignmentStatus = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE'
@@ -1274,6 +1308,7 @@ exports.Prisma.ModelName = {
   Satellite: 'Satellite',
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
+  PlacementJob: 'PlacementJob',
   WorkforceAssignment: 'WorkforceAssignment',
   WorkforceScope: 'WorkforceScope',
   OrgUnit: 'OrgUnit',

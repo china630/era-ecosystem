@@ -49,7 +49,7 @@ export class OrgDepartmentsService {
   ): Promise<DepartmentOrgView> {
     const parent = await this.prisma.organization.findUnique({
       where: { id: parentOrgId },
-      select: { id: true, operatingMode: true, ownerId: true },
+      select: { id: true, operatingMode: true, ownerId: true, deploymentTopology: true },
     });
     if (!parent) throw new NotFoundException("Parent organization not found");
     if (parent.operatingMode === "DEPARTMENT") {
@@ -61,6 +61,7 @@ export class OrgDepartmentsService {
         name: dto.name.trim(),
         ownerId: parent.ownerId,
         operatingMode: "STANDALONE",
+        deploymentTopology: parent.deploymentTopology,
         fiscalRouting: "OWN",
         revenueRouting: "OWN",
       },

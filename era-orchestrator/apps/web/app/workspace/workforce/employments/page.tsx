@@ -117,6 +117,12 @@ export default function WorkforceEmploymentsPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [hireOpen, setHireOpen] = useState(false);
+  const [actionEmp, setActionEmp] = useState<EmploymentRow | null>(null);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferOrgUnitId, setTransferOrgUnitId] = useState("");
+  const [transferPositionId, setTransferPositionId] = useState("");
+  const [hrOpen, setHrOpen] = useState(false);
+  const [hrJson, setHrJson] = useState("");
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [resolveFin, setResolveFin] = useState("");
   const [resolveName, setResolveName] = useState("");
@@ -329,6 +335,97 @@ export default function WorkforceEmploymentsPage() {
     setBusy(false);
   }
 
+  async function terminateEmployment(emp: EmploymentRow) {
+    if (!window.confirm(t("terminateConfirm"))) return;
+    setBusy(true);
+    setError(null);
+    const res = await workforceFetch(`employments/${emp.id}/terminate`, {
+      method: "POST",
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    await load();
+  }
+
+  async function reprovisionEmployment(emp: EmploymentRow) {
+    setBusy(true);
+    setError(null);
+    const res = await workforceFetch(`employments/${emp.id}/reprovision`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    await load();
+  }
+
+  async function submitTransfer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!actionEmp || !transferOrgUnitId || !transferPositionId) return;
+    setBusy(true);
+    setError(null);
+    const res = await workforceFetch(`employments/${actionEmp.id}/transfer`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        orgUnitId: transferOrgUnitId,
+        positionId: transferPositionId,
+      }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    setTransferOpen(false);
+    setActionEmp(null);
+    await load();
+  }
+
+  async function openHrProfile(emp: EmploymentRow) {
+    setActionEmp(emp);
+    setHrOpen(true);
+    setHrJson("");
+    setBusy(true);
+    const res = await mdmWorkforceFetch(`${emp.globalPersonId}/hr-profile`);
+    setBusy(false);
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    setHrJson(JSON.stringify(await res.json(), null, 2));
+  }
+
+  async function saveHrProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!actionEmp) return;
+    setBusy(true);
+    setError(null);
+    let body: unknown;
+    try {
+      body = JSON.parse(hrJson);
+    } catch {
+      setError(t("hrInvalidJson"));
+      setBusy(false);
+      return;
+    }
+    const res = await mdmWorkforceFetch(`${actionEmp.globalPersonId}/hr-profile`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    setHrOpen(false);
+  }
+
   async function enableWorkforce() {
     setEnabling(true);
     const token = getOrchAccessToken();
@@ -491,6 +588,7 @@ export default function WorkforceEmploymentsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHireDate")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -511,6 +609,47 @@ export default function WorkforceEmploymentsPage() {
                     {String(r.hireDate).slice(0, 10)}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.status}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={busy || r.status === "TERMINATED"}
+                        onClick={() => {
+                          setActionEmp(r);
+                          setTransferOrgUnitId(r.orgUnitId ?? r.orgUnit?.id ?? "");
+                          setTransferPositionId(r.positionId ?? r.position?.id ?? "");
+                          setTransferOpen(true);
+                        }}
+                      >
+                        {t("transfer")}
+                      </button>
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={busy || r.status === "TERMINATED"}
+                        onClick={() => void terminateEmployment(r)}
+                      >
+                        {t("terminate")}
+                      </button>
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={busy}
+                        onClick={() => void reprovisionEmployment(r)}
+                      >
+                        {t("reprovision")}
+                      </button>
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={busy}
+                        onClick={() => void openHrProfile(r)}
+                      >
+                        {t("hrProfile")}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -666,6 +805,92 @@ export default function WorkforceEmploymentsPage() {
               disabled={busy || !orgUnitId || !positionId || !globalPersonId}
             >
               {busy ? t("busy") : t("hire")}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+
+      <ModalShell
+        open={transferOpen}
+        title={t("transferTitle")}
+        onClose={() => !busy && setTransferOpen(false)}
+        closeLabel={tCommon("close")}
+      >
+        <form onSubmit={(e) => void submitTransfer(e)} className="grid gap-3">
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("orgUnit")}
+            <select
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              value={transferOrgUnitId}
+              onChange={(e) => {
+                setTransferOrgUnitId(e.target.value);
+                setTransferPositionId("");
+              }}
+              required
+            >
+              <option value="">{t("selectOrgUnit")}</option>
+              {orgUnits.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("position")}
+            <select
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              value={transferPositionId}
+              onChange={(e) => setTransferPositionId(e.target.value)}
+              required
+            >
+              <option value="">{t("selectPosition")}</option>
+              {positions
+                .filter((p) => p.orgUnitId === transferOrgUnitId)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setTransferOpen(false)}
+            >
+              {tCommon("cancel")}
+            </button>
+            <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
+              {t("transfer")}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+
+      <ModalShell
+        open={hrOpen}
+        title={t("hrProfileTitle")}
+        onClose={() => !busy && setHrOpen(false)}
+        closeLabel={tCommon("close")}
+      >
+        <form onSubmit={(e) => void saveHrProfile(e)} className="grid gap-3">
+          <textarea
+            className="min-h-[12rem] w-full rounded-lg border border-[#D5DADF] p-2 font-mono text-xs"
+            value={hrJson}
+            onChange={(e) => setHrJson(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setHrOpen(false)}
+            >
+              {tCommon("cancel")}
+            </button>
+            <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
+              {t("hrSave")}
             </button>
           </div>
         </form>
