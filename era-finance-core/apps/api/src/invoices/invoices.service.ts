@@ -7,7 +7,7 @@ import {
   Optional,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InvoiceStatus, Prisma, TradeContext, type UserRole } from "@erafinance/database";
+import { InvoiceStatus, InvoicePaymentKind, Prisma, TradeContext, TransactionKind, isNasBankLedgerCode, isNasCashDeskCode, type UserRole } from "@erafinance/database";
 import { InvoicePrefillSchema, type InvoicePrefill } from "@erafinance/api-contracts";
 import { assertUserMayMutateInvoiceInPaidStatus } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "../accounting/accounting.service";
@@ -42,9 +42,19 @@ import { createInvoicePaymentMirrorLine } from "../banking/banking-registry.help
 import { CashOrderService } from "../kassa/cash-order.service";
 import { IntegrationSyncRunService } from "../integrations/integration-sync-run.service";
 import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
+import {
+  CreateInvoiceCreditAdjustmentDto,
+  InvoiceCreditOffset,
+} from "./dto/create-invoice-credit-adjustment.dto";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
 import { NetworkDocumentService } from "../network/network-document.service";
+import { MANUAL_ADJUSTMENT_REASON_MIN } from "../accounting/manual-adjustment.constants";
+import { parseOrgIsVatPayer } from "../common/org-vat-payer.util";
+import {
+  computeInvoiceVatTotals,
+  splitCreditAdjustmentVat,
+} from "./invoice-vat-split.util";
 import { PriceListsService } from "../products/price-lists.service";
 
 type Decimal = Prisma.Decimal;
@@ -106,15 +116,15 @@ export class InvoicesService {
     organizationId: string,
     dto: CreateInvoiceDto,
   ): Promise<{ debitAccountCode: string; currency: string }> {
-    const [cashAzn, mainBank] = await Promise.all([
-      this.posting.resolveAccountCode(organizationId, "CASH_AZN"),
+    const [kind, mainBank] = await Promise.all([
+      this.posting.getOrganizationKind(organizationId),
       this.posting.resolveAccountCode(organizationId, "MAIN_BANK"),
     ]);
     let debitAccountCode =
       dto.debitAccountCode?.trim() ||
       (await this.posting.resolveAccountCode(organizationId, "CASH_AZN"));
-    const isCash = this.accountMatchesRoot(debitAccountCode, cashAzn);
-    const isBank = this.accountMatchesRoot(debitAccountCode, mainBank);
+    const isCash = isNasCashDeskCode(kind, debitAccountCode);
+    const isBank = isNasBankLedgerCode(kind, debitAccountCode);
     if (!isCash && !isBank) {
       throw new BadRequestException(
         "debitAccountCode must be an organization cash or bank NAS account",
@@ -126,7 +136,7 @@ export class InvoicesService {
     }
     if (!dto.bankAccountId?.trim()) {
       throw new BadRequestException(
-        "bankAccountId is required when payment account is bank (221*)",
+        "bankAccountId is required when payment account is a bank settlement NAS account",
       );
     }
     const bank = await this.prisma.organizationBankAccount.findFirst({
@@ -822,6 +832,184 @@ export class InvoicesService {
   }
 
   /**
+   * Внутренняя кредит-корректировка остатка инвойса (без PDF-кредит-ноты).
+   * Новая проводка Дт 601/731 — Кт 211 + InvoicePayment.kind=CREDIT_ADJUSTMENT.
+   */
+  async applyCreditAdjustment(
+    organizationId: string,
+    invoiceId: string,
+    dto: CreateInvoiceCreditAdjustmentDto,
+    role: UserRole,
+  ) {
+    const reason = dto.reason.trim();
+    if (reason.length < MANUAL_ADJUSTMENT_REASON_MIN) {
+      throw new BadRequestException(
+        `reason must be at least ${MANUAL_ADJUSTMENT_REASON_MIN} characters`,
+      );
+    }
+
+    const amount = new Decimal(dto.amount);
+    if (amount.lte(0)) {
+      throw new BadRequestException("amount must be positive");
+    }
+
+    let adjDate: Date;
+    try {
+      adjDate = parseIsoDateOnly(dto.date);
+    } catch {
+      throw new BadRequestException("Invalid date (expected YYYY-MM-DD)");
+    }
+
+    const head = await this.prisma.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
+      select: { status: true },
+    });
+    if (!head) throw new NotFoundException("Invoice not found");
+    assertUserMayMutateInvoiceInPaidStatus(role, head.status);
+
+    await this.prisma.$transaction(async (tx) => {
+      const locked = await lockOrgRowForUpdate(tx, "invoices", invoiceId, organizationId);
+      if (!locked) throw new NotFoundException("Invoice not found");
+
+      const existing = await tx.invoice.findFirst({
+        where: { id: invoiceId, organizationId },
+        include: { items: true },
+      });
+      if (!existing) throw new NotFoundException("Invoice not found");
+      if (existing.status === InvoiceStatus.CANCELLED) {
+        throw new BadRequestException("Cancelled invoice cannot be credit-adjusted");
+      }
+      if (existing.status === InvoiceStatus.LOCKED_BY_SIGNATURE) {
+        throw new BadRequestException(
+          "Invoice is locked by digital signature and cannot be credit-adjusted",
+        );
+      }
+      if (!existing.revenueRecognized) {
+        throw new BadRequestException(
+          "Invoice must be revenue-recognized before credit adjustment",
+        );
+      }
+
+      const remaining = this.remainingForInvoice(
+        existing.totalAmount,
+        existing.paidAmount ?? new Decimal(0),
+      );
+      if (remaining.lte(0)) {
+        throw new BadRequestException(
+          "Invoice has no remaining balance; use /accounting/adjustments for overpayment refund",
+        );
+      }
+      if (amount.gt(remaining)) {
+        throw new BadRequestException(
+          `amount exceeds remaining balance ${remaining.toFixed(4)}`,
+        );
+      }
+
+      const debitRole =
+        dto.offset === InvoiceCreditOffset.EXPENSE
+          ? "MISC_OPERATING_EXPENSE"
+          : "SALES_REVENUE";
+
+      const orgRow = await tx.organization.findUnique({
+        where: { id: organizationId },
+        select: { settings: true },
+      });
+      const orgIsVatPayer = parseOrgIsVatPayer(orgRow?.settings);
+
+      const journalLines: Array<{ accountCode: string; debit: string; credit: string }> = [];
+
+      if (dto.offset === InvoiceCreditOffset.EXPENSE) {
+        const [expenseCode, receivableCode] = await Promise.all([
+          this.posting.resolveAccountCode(organizationId, debitRole, tx),
+          this.posting.resolveAccountCode(organizationId, "TRADE_RECEIVABLE", tx),
+        ]);
+        journalLines.push(
+          { accountCode: expenseCode, debit: amount.toString(), credit: "0" },
+          { accountCode: receivableCode, debit: "0", credit: amount.toString() },
+        );
+      } else {
+        const vatTotals = computeInvoiceVatTotals(existing.items, orgIsVatPayer);
+        const { net, vat } =
+          orgIsVatPayer && vatTotals.vatTotal.gt(0)
+            ? splitCreditAdjustmentVat(amount, existing.totalAmount, vatTotals.vatTotal)
+            : { net: amount, vat: new Decimal(0) };
+
+        const roleCodes = await Promise.all([
+          this.posting.resolveAccountCode(organizationId, "SALES_REVENUE", tx),
+          vat.gt(0)
+            ? this.posting.resolveAccountCode(organizationId, "VAT_OUTPUT", tx)
+            : Promise.resolve(null),
+          this.posting.resolveAccountCode(organizationId, "TRADE_RECEIVABLE", tx),
+        ]);
+        const [revenueCode, vatCode, receivableCode] = roleCodes;
+        journalLines.push({
+          accountCode: revenueCode,
+          debit: net.toString(),
+          credit: "0",
+        });
+        if (vat.gt(0) && vatCode) {
+          journalLines.push({
+            accountCode: vatCode,
+            debit: vat.toString(),
+            credit: "0",
+          });
+        }
+        journalLines.push({
+          accountCode: receivableCode,
+          debit: "0",
+          credit: amount.toString(),
+        });
+      }
+
+      const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+        organizationId,
+        date: adjDate,
+        reference: `${existing.number}-CRADJ`,
+        description: reason.slice(0, 200),
+        reason,
+        kind: TransactionKind.MANUAL_ADJUSTMENT,
+        isFinal: true,
+        counterpartyId: existing.counterpartyId,
+        basisInvoiceId: existing.id,
+        lines: journalLines,
+      });
+
+      await tx.invoicePayment.create({
+        data: {
+          organizationId,
+          invoiceId: existing.id,
+          amount,
+          date: adjDate,
+          kind: InvoicePaymentKind.CREDIT_ADJUSTMENT,
+          transactionId,
+        },
+      });
+
+      await tx.invoice.update({
+        where: { id: existing.id },
+        data: { paidAmount: { increment: amount } },
+      });
+
+      const refreshed = await tx.invoice.findFirstOrThrow({
+        where: { id: existing.id },
+        select: { totalAmount: true, paidAmount: true, status: true },
+      });
+      const paidSum = refreshed.paidAmount ?? new Decimal(0);
+      const { nextStatus, paymentReceived } = this.derivePaymentState(
+        refreshed.totalAmount,
+        paidSum,
+        refreshed.status,
+      );
+      await tx.invoice.update({
+        where: { id: existing.id },
+        data: { status: nextStatus, paymentReceived },
+      });
+    });
+
+    return this.getOne(organizationId, invoiceId);
+  }
+
+  /**
    * Один платёж -> несколько инвойсов контрагента (FIFO по dueDate/recognizedAt/createdAt).
    */
   async allocatePaymentAcrossInvoices(
@@ -846,7 +1034,14 @@ export class InvoicesService {
       dto.debitAccountCode?.trim() ||
       (await this.posting.resolveAccountCode(organizationId, "MAIN_BANK"));
 
-    return this.prisma.$transaction(async (tx) => {
+    const hotelPaymentCallbacks: Array<{
+      folioId: string;
+      invoiceId: string;
+      amountAzn: number;
+      fullyPaid: boolean;
+    }> = [];
+
+    const result = await this.prisma.$transaction(async (tx) => {
       const candidateInvoices = await tx.invoice.findMany({
         where: {
           organizationId,
@@ -877,6 +1072,7 @@ export class InvoicesService {
         invoiceId: string;
         invoiceNumber: string;
         allocatedAmount: Decimal;
+        sourceFolioId: string | null;
       }> = [];
       let remainingPayment = amount;
 
@@ -891,6 +1087,7 @@ export class InvoicesService {
           invoiceId: inv.id,
           invoiceNumber: inv.number,
           allocatedAmount: alloc,
+          sourceFolioId: inv.sourceFolioId ?? null,
         });
         remainingPayment = remainingPayment.sub(alloc);
       }
@@ -935,6 +1132,7 @@ export class InvoicesService {
             status: true,
             totalAmount: true,
             paidAmount: true,
+            sourceFolioId: true,
           },
         });
         await tx.paymentAllocation.create({
@@ -971,6 +1169,16 @@ export class InvoicesService {
             paymentReceived,
           },
         });
+
+        if (invoice.sourceFolioId) {
+          hotelPaymentCallbacks.push({
+            folioId: invoice.sourceFolioId,
+            invoiceId: invoice.id,
+            amountAzn: Number(b.allocatedAmount.toFixed(4)),
+            fullyPaid: nextStatus === InvoiceStatus.PAID,
+          });
+        }
+
         resultAllocations.push({
           invoiceId: invoice.id,
           invoiceNumber: invoice.number,
@@ -986,6 +1194,51 @@ export class InvoicesService {
         allocations: resultAllocations,
       };
     });
+
+    // Fire-and-forget hotel callbacks; do not roll back or fail the allocation.
+    if (hotelPaymentCallbacks.length) {
+      const base = process.env.ERA_HOTEL_PMS_INTERNAL_URL?.replace(/\/$/, '').trim();
+      const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
+
+      if (base && token) {
+        void Promise.all(
+          hotelPaymentCallbacks.map((cb) =>
+            fetch(`${base}/api/internal/v1/city-ledger/payment-applied`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                folioId: cb.folioId,
+                invoiceId: cb.invoiceId,
+                paymentId: result.transactionId,
+                amount: cb.amountAzn,
+                currency: 'AZN',
+                fullyPaid: cb.fullyPaid,
+              }),
+            }).then(async (res) => {
+              if (!res.ok) {
+                const detail = await res.text().catch(() => '');
+                this.logger.warn(
+                  `Hotel payment callback failed: HTTP ${res.status} ${detail}`.slice(0, 400),
+                );
+              }
+            }),
+          ),
+        ).catch((e) => {
+          this.logger.warn(
+            `Hotel payment callback fan-out failed: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        });
+      } else {
+        this.logger.warn(
+          'ERA_HOTEL_PMS_INTERNAL_URL and/or SATELLITE_EVENT_SERVICE_TOKEN are not configured; skipping hotel payment-applied callbacks',
+        );
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -1181,6 +1434,7 @@ export class InvoicesService {
         invoiceId: inv.id,
         amount,
         date: paymentDate,
+        kind: InvoicePaymentKind.PAYMENT,
         transactionId,
       },
     });

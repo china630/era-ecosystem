@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -21,9 +22,10 @@ type LifecycleEvent = {
   portion?: unknown;
   note?: string | null;
   createdAt: string;
+  transaction?: { id: string; reference: string | null; date?: string } | null;
 };
 
-type CreditSource = "SUPPLIER" | "BANK";
+type CreditSource = "SUPPLIER" | "BANK" | "DONATION";
 
 function LifecycleFormModal({
   title,
@@ -160,6 +162,18 @@ export function FixedAssetLifecyclePanel({
               {e.portion != null ? ` · ${String(e.portion)}` : ""}
               {" · "}
               {String(e.createdAt).slice(0, 10)}
+              {e.transaction?.reference ? (
+                <>
+                  {" · "}
+                  <Link
+                    href="/accounting/adjustments"
+                    className="text-[#2980B9] hover:underline"
+                    title={e.transaction.id}
+                  >
+                    {e.transaction.reference}
+                  </Link>
+                </>
+              ) : null}
               {e.note ? ` — ${e.note}` : ""}
             </li>
           ))}
@@ -173,6 +187,10 @@ export function FixedAssetLifecyclePanel({
         busy={busy}
         onSubmit={(e) => {
           e.preventDefault();
+          if (creditSource === "DONATION" && note.trim().length < 10) {
+            toast.error(t("fixedAssets.lifecycleDonationNoteRequired"));
+            return;
+          }
           void postAction("acquire", {
             creditSource,
             counterpartyId: creditSource === "SUPPLIER" ? counterpartyId.trim() || undefined : undefined,
@@ -190,7 +208,7 @@ export function FixedAssetLifecyclePanel({
           setAmount={setAmount}
           amountLabel={t("fixedAssets.lifecycleAmountOptional")}
         />
-        <NoteField note={note} setNote={setNote} />
+        <NoteField note={note} setNote={setNote} required={creditSource === "DONATION"} multiline={creditSource === "DONATION"} />
       </LifecycleFormModal>
 
       <LifecycleFormModal
@@ -341,6 +359,7 @@ function CreditFields({
         >
           <option value="BANK">{t("fixedAssets.lifecycleBank")}</option>
           <option value="SUPPLIER">{t("fixedAssets.lifecycleSupplier")}</option>
+          <option value="DONATION">{t("fixedAssets.lifecycleDonation")}</option>
         </select>
       </label>
       {creditSource === "SUPPLIER" ? (
@@ -367,16 +386,37 @@ function CreditFields({
   );
 }
 
-function NoteField({ note, setNote }: { note: string; setNote: (v: string) => void }) {
+function NoteField({
+  note,
+  setNote,
+  required,
+  multiline,
+}: {
+  note: string;
+  setNote: (v: string) => void;
+  required?: boolean;
+  multiline?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <label className={MODAL_FIELD_LABEL_CLASS}>
       {t("fixedAssets.lifecycleNote")}
-      <input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-      />
+      {required ? " *" : ""}
+      {multiline ? (
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={3}
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+          placeholder={t("fixedAssets.lifecycleDonationNotePh")}
+        />
+      ) : (
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+        />
+      )}
     </label>
   );
 }

@@ -46,8 +46,8 @@ const PAYROLL_PAYABLE = "533";
 const PAYROLL_TAX = "521";
 const RECEIVABLE = "211";
 const REVENUE = "601";
-const MAIN_BANK = "221";
-const CASH_OP = "101.01";
+const MAIN_BANK = "223";
+const CASH_OP = "221.01";
 const MISC_EXP = "731";
 
 const f = faker;

@@ -7,6 +7,8 @@ import {
 } from "@erafinance/database";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
+import { CronModuleGateService } from "../subscription/cron-module-gate.service";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import {
   computeVacationBalance,
   extraDaysFromSeniority,
@@ -20,7 +22,10 @@ const Decimal = Prisma.Decimal;
 export class VacationBalanceService {
   private readonly logger = new Logger(VacationBalanceService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cronGate: CronModuleGateService,
+  ) {}
 
   /**
    * Ежедневно 01:00 Asia/Baku: пересчёт `vacationDaysBalance` для штатников в статусе ACTIVE.
@@ -54,8 +59,17 @@ export class VacationBalanceService {
     }
 
     const orgIds = [...new Set(employees.map((e) => e.organizationId))];
+    const entitledOrgs = new Set(
+      await this.cronGate.filterEntitledOrgs(orgIds, ModuleEntitlement.HR_FULL),
+    );
+    const entitledEmployees = employees.filter((e) =>
+      entitledOrgs.has(e.organizationId),
+    );
+    if (entitledEmployees.length === 0) {
+      return { updated: 0 };
+    }
     const seniorityRules = await this.prisma.vacationSeniorityRule.findMany({
-      where: { organizationId: { in: orgIds } },
+      where: { organizationId: { in: [...entitledOrgs] } },
       select: {
         organizationId: true,
         yearsFrom: true,
@@ -72,7 +86,7 @@ export class VacationBalanceService {
       rulesByOrg.set(r.organizationId, list);
     }
 
-    const ids = employees.map((e) => e.id);
+    const ids = entitledEmployees.map((e) => e.id);
     const absences = await this.prisma.absence.findMany({
       where: {
         approved: true,
@@ -95,8 +109,8 @@ export class VacationBalanceService {
 
     let updated = 0;
     const chunkSize = 50;
-    for (let i = 0; i < employees.length; i += chunkSize) {
-      const slice = employees.slice(i, i + chunkSize);
+    for (let i = 0; i < entitledEmployees.length; i += chunkSize) {
+      const slice = entitledEmployees.slice(i, i + chunkSize);
       await this.prisma.$transaction(
         slice.map((emp) => {
           const used = usedByEmployee.get(emp.id) ?? new Decimal(0);

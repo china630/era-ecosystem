@@ -1,4 +1,4 @@
-import { Prisma, type PostingRole } from "@erafinance/database";
+import { OrganizationKind, Prisma, type PostingRole } from "@erafinance/database";
 import type { PostingAccountResolver } from "../../src/accounting/posting/posting-account-resolver.service";
 import { getPostingSchema } from "../../src/accounting/posting/posting-schema-registry";
 import type { PostingJournalBuilder } from "../../src/accounting/posting/posting-journal-builder.service";
@@ -17,8 +17,8 @@ const COMMERCIAL_BY_ROLE: Partial<Record<PostingRole, string>> = {
   PAYROLL_EXPENSE: "721",
   PAYROLL_PAYABLE: "533",
   PAYROLL_TAX_PAYABLE: "521",
-  CASH_AZN: "101.01",
-  CASH_FOREIGN: "102.01",
+  CASH_AZN: "221.01",
+  CASH_FOREIGN: "221.11",
   MISC_OPERATING_EXPENSE: "731",
   INVENTORY_SURPLUS_INCOME: "631",
   FINISHED_GOODS: "204",
@@ -30,10 +30,10 @@ const COMMERCIAL_BY_ROLE: Partial<Record<PostingRole, string>> = {
   FX_GAIN: "662",
   FX_LOSS: "762",
   TRANSIT_TRANSFER: "231",
-  CASH_IN_TRANSIT: "251",
+  CASH_IN_TRANSIT: "222",
   FOUNDER_FUNDS: "561",
-  MAIN_BANK: "221",
-  BANK_SETTLEMENT: "221",
+  MAIN_BANK: "223",
+  BANK_SETTLEMENT: "223",
   DEPRECIATION_EXPENSE: "713",
   ACCUMULATED_DEPRECIATION: "112",
   WIP_MANUFACTURING: "203",
@@ -48,7 +48,7 @@ export function createMockPostingResolver(): PostingAccountResolver {
       if (!code) throw new Error(`mock posting: missing role ${role}`);
       return code;
     }),
-    getOrganizationKind: jest.fn(),
+    getOrganizationKind: jest.fn().mockResolvedValue(OrganizationKind.COMMERCIAL),
     resolveMany: jest.fn(),
     commercialPresetCode: jest.fn((role: PostingRole) => {
       const code = COMMERCIAL_BY_ROLE[role];

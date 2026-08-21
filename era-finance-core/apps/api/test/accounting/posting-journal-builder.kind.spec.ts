@@ -79,7 +79,7 @@ describe("PostingJournalBuilder per kind", () => {
     const posted: Array<{ lines: { accountCode: string }[] }> = [];
     const ngoCodes = {
       ...BUDGET_CODES,
-      BANK_SETTLEMENT: "221",
+      BANK_SETTLEMENT: "223",
       GRANT_REVENUE: "603",
     };
     const resolver = {
@@ -103,6 +103,6 @@ describe("PostingJournalBuilder per kind", () => {
       description: "grant",
     });
 
-    expect(posted[0]?.lines.map((l) => l.accountCode).sort()).toEqual(["221", "603"]);
+    expect(posted[0]?.lines.map((l) => l.accountCode).sort()).toEqual(["223", "603"]);
   });
 });

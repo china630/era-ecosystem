@@ -2,6 +2,7 @@ import { createPublicKey } from "crypto";
 import { verify } from "jsonwebtoken";
 import type { ConfigService } from "@nestjs/config";
 import type { ControlPlaneJwtPayload } from "../types/control-plane-jwt-payload";
+import { resolveOrchestratorInternalUrl } from "../../control-plane/control-plane-credentials";
 
 type JwksCache = { keys: Record<string, unknown>[]; fetchedAt: number };
 
@@ -13,14 +14,13 @@ function isLoopbackUrl(url: string): boolean {
   return /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(url);
 }
 
-/** JWKS endpoint: explicit URL, else CONTROL_PLANE_URL, never a leftover host loopback in Docker. */
+/**
+ * JWKS endpoint: explicit non-loopback ERA_JWT_JWKS_URL, else orchestrator base
+ * (runtime-config → CONTROL_PLANE_URL bootstrap), never a leftover host loopback in Docker.
+ */
 export function resolveControlPlaneJwksUrl(config: ConfigService): string {
   const explicit = config.get<string>("ERA_JWT_JWKS_URL")?.trim() ?? "";
-  const cp = (
-    config.get<string>("CONTROL_PLANE_URL")?.trim() ||
-    config.get<string>("ORCHESTRATOR_INTERNAL_URL")?.trim() ||
-    ""
-  ).replace(/\/$/, "");
+  const cp = resolveOrchestratorInternalUrl(config);
   if (explicit && !isLoopbackUrl(explicit)) {
     return explicit.replace(/\/$/, "");
   }

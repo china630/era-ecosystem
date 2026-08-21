@@ -8,9 +8,12 @@ import {
   AccountType,
   FixedAssetStatus,
   InvoiceStatus,
+  isNasBankLedgerCode,
+  isNasCashDeskCode,
   LedgerType,
   OrganizationKind,
   Prisma,
+  TransactionKind,
   UserRole,
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
@@ -106,6 +109,12 @@ export class AccountingService {
       departmentId?: string | null;
       ledgerType?: LedgerType;
       lines: PostTransactionLine[];
+      kind?: TransactionKind;
+      reason?: string | null;
+      manualTemplate?: string | null;
+      basisInvoiceId?: string | null;
+      basisFixedAssetId?: string | null;
+      reversesTransactionId?: string | null;
       /** System year-end close may post into an already closed calendar month. */
       skipClosedPeriodGuard?: boolean;
     },
@@ -120,6 +129,12 @@ export class AccountingService {
       departmentId,
       ledgerType = LedgerType.NAS,
       lines,
+      kind = TransactionKind.SYSTEM,
+      reason,
+      manualTemplate,
+      basisInvoiceId,
+      basisFixedAssetId,
+      reversesTransactionId,
       skipClosedPeriodGuard = false,
     } = params;
     this.validateBalance(lines);
@@ -187,6 +202,12 @@ export class AccountingService {
         counterpartyId: counterpartyId ?? null,
         departmentId:
           departmentId != null && departmentId !== "" ? departmentId : null,
+        kind,
+        reason: reason?.trim() ? reason.trim() : null,
+        manualTemplate: manualTemplate?.trim() ? manualTemplate.trim() : null,
+        basisInvoiceId: basisInvoiceId ?? null,
+        basisFixedAssetId: basisFixedAssetId ?? null,
+        reversesTransactionId: reversesTransactionId ?? null,
       },
     });
 
@@ -264,6 +285,12 @@ export class AccountingService {
     departmentId?: string | null;
     ledgerType?: LedgerType;
     lines: PostTransactionLine[];
+    kind?: TransactionKind;
+    reason?: string | null;
+    manualTemplate?: string | null;
+    basisInvoiceId?: string | null;
+    basisFixedAssetId?: string | null;
+    reversesTransactionId?: string | null;
     /** Ручная проводка (UI): проверка политики USER. */
     actingUserRole?: UserRole;
   }): Promise<{ transactionId: string }> {
@@ -323,19 +350,25 @@ export class AccountingService {
       },
     });
 
-    const cashAccounts = await this.prisma.account.findMany({
-      where: {
-        organizationId,
-        ledgerType: LedgerType.NAS,
-        OR: [
-          { code: { startsWith: "101" } },
-          { code: { startsWith: "221" } },
-          { code: { startsWith: "222" } },
-          { code: { startsWith: "223" } },
-          { code: { startsWith: "224" } },
-        ],
-      },
+    const kind = await this.posting.getOrganizationKind(organizationId);
+    const nasAccounts = await this.prisma.account.findMany({
+      where: { organizationId, ledgerType: LedgerType.NAS },
       select: { id: true, code: true },
+    });
+    const cashAccounts = nasAccounts.filter((a) => {
+      if (isNasCashDeskCode(kind, a.code) || isNasBankLedgerCode(kind, a.code)) {
+        return true;
+      }
+      const c = a.code.trim();
+      if (kind === OrganizationKind.BUDGET) {
+        return c === "102" || c.startsWith("102.");
+      }
+      return (
+        c === "222" ||
+        c.startsWith("222.") ||
+        c === "225" ||
+        c.startsWith("225.")
+      );
     });
     const cashAgg = cashAccounts.length
       ? await this.prisma.journalEntry.groupBy({

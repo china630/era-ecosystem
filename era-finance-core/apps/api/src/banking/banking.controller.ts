@@ -73,7 +73,7 @@ export class BankingController {
   @Get("account-cards")
   @ApiOperation({
     summary:
-      "Карточки по счетам кассы (101*) и банка (221–224) — сальдо по ОСВ",
+      "Карточки кассы и банка по плану NAS организации (Q-01: 221/223; NAS-GOV: 101/103) — сальдо по ОСВ",
   })
   accountCards(
     @OrganizationId() organizationId: string,

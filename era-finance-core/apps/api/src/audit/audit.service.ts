@@ -169,7 +169,12 @@ export class AuditService {
     const path = this.normalizeApiPath(req.path ?? req.url ?? "");
     const method = req.method;
 
-    if (path === "/accounting/quick-expense" && method === "POST" && organizationId) {
+    if (
+      (path === "/accounting/quick-expense" ||
+        path === "/accounting/manual-adjustments") &&
+      method === "POST" &&
+      organizationId
+    ) {
       const rid = (responseBody as { transactionId?: string } | null)?.transactionId;
       if (!rid) {
         return serializeForAudit(responseBody);
@@ -303,7 +308,11 @@ export class AuditService {
     let oldValues: unknown = null;
     let newValues: unknown = null;
 
-    if (path === "/accounting/quick-expense" && method === "POST") {
+    if (
+      (path === "/accounting/quick-expense" ||
+        path === "/accounting/manual-adjustments") &&
+      method === "POST"
+    ) {
       entityType = "JournalEntry";
       const rid = (responseBody as { transactionId?: string } | null)?.transactionId;
       entityId = rid ?? entityId;

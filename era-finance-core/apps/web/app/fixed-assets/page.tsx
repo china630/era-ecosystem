@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Building2, Pencil, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api-client";
 import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
@@ -56,6 +57,8 @@ type Fa = {
 
 function FixedAssetsPageContent() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { token, ready } = useRequireAuth();
   const { user } = useAuth();
   const hideDestructive = isRestrictedUserRole(user?.role ?? undefined);
@@ -92,6 +95,14 @@ function FixedAssetsPageContent() {
     if (!ready || !token) return;
     void load();
   }, [load, ready, token]);
+
+  const assetFromUrl = searchParams.get("asset");
+  useEffect(() => {
+    if (!assetFromUrl) return;
+    setFaEditId(assetFromUrl);
+    setFaModalMode("edit");
+    setFaModalOpen(true);
+  }, [assetFromUrl]);
 
   useEffect(() => {
     const onOnline = () => {
@@ -413,7 +424,12 @@ function FixedAssetsPageContent() {
         open={faModalOpen}
         mode={faModalMode}
         assetId={faEditId}
-        onClose={() => setFaModalOpen(false)}
+        onClose={() => {
+          setFaModalOpen(false);
+          if (searchParams.get("asset")) {
+            router.replace("/fixed-assets", { scroll: false });
+          }
+        }}
         onSaved={() => void load()}
       />
     </div>

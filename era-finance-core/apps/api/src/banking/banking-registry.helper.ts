@@ -3,14 +3,12 @@ import {
   BankStatementLineOrigin,
   BankStatementLineType,
   Decimal,
+  isNasCashDeskCode,
+  OrganizationKind,
   type Prisma,
 } from "@erafinance/database";
 
 type Tx = Prisma.TransactionClient;
-
-function isCashDebitAccount(accountCode: string): boolean {
-  return accountCode === "101" || accountCode.startsWith("101.");
-}
 
 /**
  * Зеркальная строка реестра при оплате инвойса из UI (не при bank match).
@@ -28,7 +26,12 @@ export async function createInvoicePaymentMirrorLine(
     paymentId: string;
   },
 ): Promise<void> {
-  const channel = isCashDebitAccount(params.debitAccountCode)
+  const org = await tx.organization.findUnique({
+    where: { id: organizationId },
+    select: { kind: true },
+  });
+  const kind = org?.kind ?? OrganizationKind.COMMERCIAL;
+  const channel = isNasCashDeskCode(kind, params.debitAccountCode)
     ? BankStatementChannel.CASH
     : BankStatementChannel.BANK;
 
