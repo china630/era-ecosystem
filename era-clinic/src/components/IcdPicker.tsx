@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CatalogField, FieldSelect, useDebouncedValue } from "@era/satellite-kit/ui";
+import { CatalogField, Field, FieldSelect, useDebouncedValue } from "@era/satellite-kit/ui";
 
 export type IcdPickerItem = {
   id: string;
@@ -102,13 +102,13 @@ export function IcdPicker({
           ))}
         </FieldSelect>
       ) : null}
-      <input
+      <Field
+        label={t("searchPlaceholder")}
+        preset="shortText"
         type="search"
-        className="w-full rounded border border-[#BDC3C7] px-2 py-1.5 text-[13px]"
         placeholder={t("searchPlaceholder")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        aria-label={t("searchPlaceholder")}
       />
       <CatalogField
         kind="SEARCHABLE"
