@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import { logSyncError } from '@/lib/services/channel.service';
 import type { OtaReservationPayload } from '@/lib/channel/adapters/types';

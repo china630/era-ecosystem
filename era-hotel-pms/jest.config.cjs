@@ -4,6 +4,7 @@ module.exports = {
   testMatch: ["**/__tests__/**/*.spec.ts"],
   modulePathIgnorePatterns: ["<rootDir>/.next/"],
   moduleNameMapper: {
+    "^@era/satellite-kit$": "<rootDir>/__tests__/mocks/satellite-kit.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {
