@@ -606,6 +606,17 @@ cd ../era-hotel-pms && npm install
 
 ## 11. Проверка работоспособности
 
+### Перед `git push` / PR (не Docker)
+
+`docker compose ps` healthy **не** заменяет GitHub CI. Перед пушем из корня:
+
+```powershell
+npm run ship:prepush
+node scripts/install-era-git-hooks.mjs   # once: .git/hooks/pre-push → same script
+```
+
+Скрипт гоняет `run:quality-gates` и `npm test` / `npm run build` только в тронутых `era-*` (finance — NAS + integration). Фраза агенту: **«сделай шип + пуш на гит»**. Merge на `dev`/`master` — только после зелёного Actions.
+
 ### Docker stack
 
 ```bash

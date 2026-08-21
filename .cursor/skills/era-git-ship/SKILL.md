@@ -3,8 +3,9 @@ name: era-git-ship
 description: >-
   Ordered git commits and PR workflow for ERA ecosystem (orchestrator → data-hub → MDM → rest),
   plus per-core and per-satellite commits. Use when the user says полный коммит, коммит всех
-  сателлит, коммит оркестратор/data-hub/mdm/finance/hotel/clinic, PR на dev, merge master,
-  or era-git-ship.
+  сателлит, сделай шип, шип и пуш, шип + пуш, пуш на гит, коммит оркестратор/data-hub/mdm/finance/hotel/clinic,
+  PR на dev, merge master, or era-git-ship. Before every push: local ship gates
+  (`npm run ship:prepush`); on FAIL fix and do not push.
 ---
 
 # ERA git-ship — ordered commit + PR workflow
@@ -13,17 +14,19 @@ description: >-
 
 | User says | Action |
 |-----------|--------|
-| **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + push + PR → dev → merge + PR dev → master → merge |
+| **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + **local ship gates** + push + PR → dev → wait CI green → merge + PR dev → master → wait CI → merge |
+| **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит**, **ship and push** | Same as full wave if there are uncommitted changes; if tree is already committed, **gates then PublishDev** (and master after CI) |
 | **коммит оркестратор** / **orch commit** | Single scope `orchestrator` + optional publish |
 | **коммит data-hub** / **дата-хаб** | Single scope `data-hub` |
 | **коммит mdm** / **мдм** | Single scope `mdm` |
 | **коммит finance** / **финансы** | Single scope `finance` |
 | **коммит bank** / **bank-core** | Scopes `bank` or `bank-core` |
 | **коммит hotel** / **clinic** / **wholesale** / … | Named satellite scope (see manifests) |
-| **pr на dev** / **merge dev** | Publish only (after commits exist) |
-| **pr на master** / **promote master** | PR dev → master + merge |
+| **pr на dev** / **merge dev** | **Gates**, then publish only (after commits exist) |
+| **pr на master** / **promote master** | Quality-gates only, then PR dev → master + merge after CI |
 
 Always read [manifests.yaml](manifests.yaml) for path buckets.
+Always read [quality-gates](../quality-gates/SKILL.md) before any `git push`.
 
 ## Preconditions
 
@@ -34,6 +37,40 @@ Always read [manifests.yaml](manifests.yaml) for path buckets.
 5. **gh auth:** `git push` uses Git Credential Manager; `gh` needs `GH_TOKEN`. If unset, run `Ensure-GhAuth` pattern from [docs/GH_CLI_SETUP.md](../../../docs/GH_CLI_SETUP.md) (auto in `era-ship.ps1`). Past chat tokens are **not** persisted across agent sessions.
 6. **PowerShell:** use `;` not `&&`. Commit messages: `-m "title" -m "body"` (no HEREDOC on Windows).
 7. **No emergency reset:** never `git checkout origin/dev -- <app>/` (or equivalent) to discard a conflicting wave so CI goes green. Fix cleanly or split into a separate PR. See `.cursor/rules/era-no-emergency-reset.mdc`.
+8. **Local ship gates before every push** (not before each commit). Prisma migrate / `docker compose` health is **not** a substitute. See [Local ship gates](#local-ship-gates-before-push) below. Never pass `-SkipGates` / `ERA_SHIP_SKIP_GATES=1` unless the user explicitly asked to skip gates.
+
+## Local ship gates (before push)
+
+**When:** immediately before `git push`, `-PublishDev`, or `-PublishMaster`. **Not** on every `git commit` in a multi-commit wave.
+
+**Command (repo root):**
+
+```powershell
+npm run ship:prepush
+# strict acceptance (SHIPPED / PR):
+npm run ship:prepush:strict
+```
+
+This runs:
+
+1. `npm run run:quality-gates` (acceptance, satellite raw SQL, integration audit, design tokens).
+2. Rebuild dirty `packages/*` in CI order if the diff touches them.
+3. **Scoped** checks from `git diff origin/dev...HEAD` (+ working tree):
+   - each touched `era-hotel-pms` / clinic / … / `era-bank` / `era-bank-dbo`: `prisma generate` (if schema), `npm test`, `npm run build`
+   - `era-finance-core`: `validate:no-nas-literals` + `test:integration -w @erafinance/api -- --ci`
+   - `era-orchestrator`: `db:generate` + `test:api`
+   - `era-data-hub`: `test -w @era/data-hub-api`
+   - `era-bank-core`: `npm test -- --ci` + `npm run build`
+
+**On FAIL:** do **not** push. Fix the code, make a **new** commit (no amend unless user git rules allow), re-run `npm run ship:prepush`, then push. Repeat until PASS.
+
+**Does not replace GitHub CI.** After push, wait for Actions green, then `gh pr merge --merge`. Local gates will not catch every Ubuntu-only failure; they catch the class that burned PR #85 (tokens, NAS literals, satellite Jest/`next build`).
+
+**Hooks:** `node scripts/install-era-git-hooks.mjs` copies `.githooks/pre-push` → `.git/hooks/pre-push`. `era-ship.ps1 -PublishDev` installs this if missing. Raw `git push` then runs the same script. Do not set `git config` (user rule).
+
+**Skip:** only if the user said so: `-SkipGates` on `era-ship.ps1` or `ERA_SHIP_SKIP_GATES=1`. After a successful `Invoke-ShipPrepush`, the script sets `ERA_SHIP_GATES_DONE=1` so the git hook does not run the same gates twice.
+
+**Master promote:** `node scripts/era-ship-prepush.mjs --quality-only` (no scoped `next build` of the entire `dev` vs `master` delta).
 
 ## Full wave — commit order
 
@@ -53,6 +90,7 @@ git checkout -b integration/ecosystem-wave-<slug>   # if not already on feature 
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -Wave -Subject "ecosystem integration wave" -Body "See COVERAGE_MATRIX and audit scripts."
 
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishDev -Head (git branch --show-current) -Title "feat: ecosystem integration wave" -Body "Ordered: orchestrator, data-hub, MDM, satellites."
+# PublishDev runs npm run ship:prepush first (quality-gates + scoped tests). On FAIL it does not push.
 
 # After dev PR merged and CI green:
 git checkout dev; git pull origin dev
@@ -72,6 +110,8 @@ Dry-run: add `-DryRun` to any command.
    - **rest commit:** remaining kit/orchestrator/session/platform exports.
 5. Skip empty buckets (no matching changed files).
 6. Verify `git status` clean.
+7. **Local ship gates:** `npm run ship:prepush`. FAIL → fix → new commit → re-run. Do not push until PASS.
+8. Push + PR (PublishDev). Wait for **GitHub CI** green, then merge. Then PublishMaster after that CI is green.
 
 ## Single scope commit
 
@@ -89,11 +129,21 @@ List all: `era-ship.ps1 -ListScopes`
 
 ## PR → dev → merge
 
-```powershell
-git push -u origin HEAD
-gh pr create --base dev --head <branch> --title "..." --body "..."
-gh pr merge --merge --auto    # or wait for CI then: gh pr merge <n> --merge
 ```
+git push -u origin HEAD
+```
+
+**Required first:** `npm run ship:prepush` (or `era-ship.ps1 -PublishDev`, which runs it). FAIL → no push.
+
+Then:
+
+```powershell
+gh pr create --base dev --head <branch> --title "..." --body "..."
+# Wait until gh pr checks <n> is all pass, then:
+gh pr merge <n> --merge
+```
+
+`--auto` is optional; this repo may reject `enablePullRequestAutoMerge`. Never merge a red PR.
 
 PR body should mention:
 - commit order (orchestrator → data-hub → MDM → rest)
@@ -158,18 +208,21 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 - [ ] Commit 3 mdm (if changed)
 - [ ] Commit 4 rest (remaining)
 - [ ] Working tree clean
+- [ ] `npm run ship:prepush` PASS (or FAIL → fix → new commit → re-run)
 - [ ] git push -u origin <branch>
 - [ ] gh auth OK
 - [ ] PR → dev created
-- [ ] PR → dev merged (CI green)
+- [ ] PR → dev merged (**GitHub CI green** — local gates are not enough)
 - [ ] PR dev → master created
-- [ ] PR → master merged
+- [ ] PR → master merged (CI green)
 ```
 
 ## Failure handling
 
 | Error | Action |
 |-------|--------|
+| Local `ship:prepush` FAIL | Fix; **new** commit; re-run gates; do not push |
+| GitHub CI red after push | Diagnose job logs; fix; **new** commit; push; wait again. No emergency reset. |
 | `gh auth login` required | Stop; user must authenticate; give PR compare URL |
 | `push declined` branch rules | Never push to dev/master directly; use PR |
 | Empty scope bucket | Skip commit for that bucket |
@@ -179,5 +232,7 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 ## Related docs
 
 - Path buckets: [manifests.yaml](manifests.yaml)
+- Quality gates: [quality-gates SKILL](../quality-gates/SKILL.md)
 - Ports/env: [docs/ECOSYSTEM_URLS.md](../../../docs/ECOSYSTEM_URLS.md)
 - Coverage honesty: [era-coverage-definition.mdc](../../rules/era-coverage-definition.mdc)
+- Local runbook: [docs/SETUP_AND_RUN.md](../../../docs/SETUP_AND_RUN.md) §11

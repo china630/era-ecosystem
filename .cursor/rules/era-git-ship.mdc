@@ -1,5 +1,5 @@
 ---
-description: Trigger ERA ordered git commit + PR workflow (полный коммит, per-core/satellite commits)
+description: Trigger ERA ordered git commit + PR workflow (полный коммит, шип + пуш, per-core/satellite commits)
 alwaysApply: false
 ---
 
@@ -13,14 +13,14 @@ When the user asks for **git commit + PR workflow**, read and follow:
 
 | Phrase | Skill action |
 |--------|----------------|
-| **полный коммит**, **коммит всех сателлит**, **full commit** | Full wave: orchestrator → data-hub → mdm → rest; then PR dev → merge → PR master → merge |
+| **полный коммит**, **коммит всех сателлит**, **full commit**, **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит** | Full wave: orchestrator → data-hub → mdm → rest; **`npm run ship:prepush`**; then PR dev → wait CI → merge → PR master → merge |
 | **коммит оркестратор** | Scope `orchestrator` only |
 | **коммит data-hub**, **коммит дата-хаб** | Scope `data-hub` |
 | **коммит mdm**, **коммит мдм** | Scope `mdm` |
 | **коммит finance**, **коммит bank**, **коммит bank-core** | Matching core scope |
 | **коммит hotel**, **clinic**, **wholesale**, **logistics**, **construction**, **crm**, **auto**, **fnb**, **retail** | Matching satellite scope |
-| **pr на dev**, **merge dev** | PublishDev step only |
-| **pr на master**, **promote master** | PublishMaster step only |
+| **pr на dev**, **merge dev** | Gates (`ship:prepush`), then PublishDev (after commits exist) |
+| **pr на master**, **promote master** | Quality-gates only, then PublishMaster after GitHub CI green |
 
 ## Hard rules
 
@@ -28,5 +28,6 @@ When the user asks for **git commit + PR workflow**, read and follow:
 - Never push directly to `dev` or `master` — branch protection requires PR.
 - Require `gh auth` before PR/merge. If `gh auth status` fails, bootstrap `GH_TOKEN` from git credential (see `docs/GH_CLI_SETUP.md`) — same token as `git push`, not a new login.
 - PowerShell: use `era-ship.ps1` from `.cursor/skills/era-git-ship/scripts/`.
+- **Before `git push` / `-PublishDev`:** `npm run ship:prepush` (quality-gates + scoped `test`/`build`). Not before each commit. Docker/Prisma health is not a substitute. On FAIL: fix, new commit, do not push. Never `-SkipGates` unless the user said so.
 
 Path buckets: `.cursor/skills/era-git-ship/manifests.yaml`
