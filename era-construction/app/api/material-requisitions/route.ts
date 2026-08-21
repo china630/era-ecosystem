@@ -1,6 +1,8 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { createShipment } from "@/integration/control-plane-platform.client";
+import { materialRequisitionDenied } from "@/lib/material-gates";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -27,8 +29,10 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
     const project = await prisma.project.findUnique({
-      where: { code: body.projectCode },
+      where: { code: body.projectCode } as never,
     });
+    const denied = materialRequisitionDenied(project);
+    if (denied) return jsonError(denied, 404);
     if (!project) return jsonError("Project not found", 404);
 
     const requisition = await prisma.materialRequisition.create({
@@ -41,7 +45,7 @@ export async function POST(req: Request) {
       include: { project: true },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const organizationId = satelliteOrganizationId();
     if (organizationId) {
       try {
         await createShipment(

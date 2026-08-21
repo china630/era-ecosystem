@@ -48,6 +48,15 @@
   "projects": {
     "title": "ERA Construction",
     "subtitle": "C2 — layihələr, plan faktiki, tələblər",
+    "addProject": "Layihə əlavə et",
+    "createProject": "Layihə yarat",
+    "projectCode": "Layihə kodu",
+    "projectName": "Layihə adı",
+    "amountNet": "İlkin məbləğ (AZN)",
+    "boqItemCode": "BOQ maddə kodu",
+    "boqDescription": "BOQ sətir təsviri",
+    "boqQty": "BOQ miqdarı",
+    "created": "{code} layihəsi yaradıldı",
     "requisitions": "Tələblər",
     "empty": "Layihə yoxdur — demo üçün POST /api/projects.",
     "progressActs": "{count} tərəqqi aktı"
