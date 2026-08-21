@@ -27,7 +27,7 @@
 
 - [ ] `POST /api/trips` with `vehiclePlate`, `freightAmount` â†’ 201
 - [ ] `POST /api/trips/:id/complete` â†’ status `COMPLETED`, event dispatched
-- [ ] `/trips` list shows trips
+- [ ] `/trips` → **Add trip** modal → create trip and verify row appears in list
 
 ## L2 (SW4)
 
@@ -51,4 +51,13 @@
 - [x] M10: `POST /api/shipments/:id/rate` tariff quote
 - [x] M11: COD settle API (`/api/cod`)
 - [x] M12: hub scan (`/api/hub`)
+
+## Green Scaffold deny paths (BE Wave 1)
+
+Automated proof: `npm test` in `era-logistics` (`__tests__/log-*-negative.spec.ts`).
+
+- [ ] AC-LOG-TRIP: module inactive → `GET /api/trips` 403; invalid status transition → 400; COMPLETED status change → 409; unknown complete → 404
+- [ ] AC-LOG-POD: POD without recipient → 400; unknown trip POD/fuel → 404; liters ≤ 0 → 400
+- [ ] AC-LOG-REF: HS code &lt; 4 → 400; Finance HS/FX failure → 500 with explicit error (not silent success)
+- [ ] AC-LOG-PLAT: `POST /api/events/dispatch` without service token → 401
 
