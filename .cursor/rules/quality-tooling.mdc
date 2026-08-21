@@ -16,6 +16,16 @@ Canon: `docs/products/ERA-Acceptance-Standard.md` § Tooling.
 5. Matrix: no Scaffold ✅ without negative path; no false `all ✅`; no edition `ga` without Pilot-ready
 6. Pick-list UI: no new `shortText`/`code` for catalog-shaped fields — use `CatalogField` + `CatalogFieldKind` (`era-managed-list-controls.mdc`)
 
+## Before `git push` (ship)
+
+**Not on every commit.** Immediately before push / `era-ship.ps1 -PublishDev`:
+
+```powershell
+npm run ship:prepush
+```
+
+Runs `run:quality-gates` plus scoped `npm test` / `npm run build` for touched `era-*` (finance: NAS literals + integration tests). Skill: `era-git-ship`. Prisma / `docker compose` healthy does **not** replace this. On FAIL: fix, new commit, re-run; do not push. GitHub CI still required before merge to `dev`/`master`.
+
 ## Shell bans (also in hooks)
 
 - `git push --force`, `git reset --hard`, `git clean -f` without explicit user request
@@ -28,7 +38,8 @@ Canon: `docs/products/ERA-Acceptance-Standard.md` § Tooling.
 | What | Where |
 |------|-------|
 | Hooks | `.cursor/hooks.json` |
-| Skills | `.cursor/skills/acceptance-closeout`, `quality-gates` |
+| Skills | `.cursor/skills/acceptance-closeout`, `quality-gates`, `era-git-ship` |
+| Ship pre-push | `scripts/era-ship-prepush.mjs` (`npm run ship:prepush`) |
 | Consistency | `scripts/check-acceptance-consistency.mjs` |
 | Config | `kit-config.yaml` |
 

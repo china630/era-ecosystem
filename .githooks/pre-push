@@ -1,0 +1,14 @@
+#!/bin/sh
+# Local ship gates before push. Not full GitHub CI.
+# Install: node scripts/install-era-git-hooks.mjs
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+if [ -n "$ERA_SHIP_SKIP_GATES" ]; then
+  echo "ERA_SHIP_SKIP_GATES set — skipping local pre-push gates"
+  exit 0
+fi
+if [ "$ERA_SHIP_GATES_DONE" = "1" ]; then
+  echo "ERA_SHIP_GATES_DONE=1 — gates already ran in this ship session"
+  exit 0
+fi
+exec node scripts/era-ship-prepush.mjs

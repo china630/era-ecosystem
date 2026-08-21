@@ -3,8 +3,8 @@
 #   .\era-ship.ps1 -ListScopes
 #   .\era-ship.ps1 -Scope orchestrator -Subject "pricing seeds" [-Branch integration/my-wave]
 #   .\era-ship.ps1 -Wave full -Subject "ecosystem integration wave" [-Branch integration/ecosystem-wave]
-#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."]
-#   .\era-ship.ps1 -PublishMaster -Head dev
+#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates]
+#   .\era-ship.ps1 -PublishMaster -Head dev [-SkipGates]
 
 param(
     [switch]$ListScopes,
@@ -19,13 +19,44 @@ param(
     [switch]$PublishMaster,
     [string]$Head = "",
     [string]$Title = "",
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$SkipGates
 )
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = (git rev-parse --show-toplevel 2>$null)
 if (-not $RepoRoot) { throw "Not inside a git repository." }
 Set-Location $RepoRoot
+
+function Install-EraGitHook {
+    $install = Join-Path $RepoRoot "scripts\install-era-git-hooks.mjs"
+    if (-not (Test-Path $install)) { return }
+    if ($DryRun) { Write-Host "[dry-run] node scripts/install-era-git-hooks.mjs"; return }
+    node $install
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Could not install .git/hooks/pre-push" }
+}
+
+function Invoke-ShipPrepush {
+    param([switch]$QualityOnly)
+    if ($SkipGates -or $env:ERA_SHIP_SKIP_GATES -eq "1") {
+        Write-Warning "SkipGates / ERA_SHIP_SKIP_GATES — not running local ship gates."
+        return
+    }
+    $script = Join-Path $RepoRoot "scripts\era-ship-prepush.mjs"
+    if (-not (Test-Path $script)) { throw "Missing scripts/era-ship-prepush.mjs" }
+    $gateArgs = @($script)
+    if ($QualityOnly) { $gateArgs += "--quality-only" }
+    if ($DryRun) {
+        Write-Host "[dry-run] node $($gateArgs -join ' ')"
+        return
+    }
+    Write-Host "==> local ship gates (quality-gates + scoped test/build)"
+    node @gateArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Local ship gates FAILED — not pushing. Fix, new commit, re-run. Do not skip unless the user explicitly said SkipGates."
+    }
+    $env:ERA_SHIP_GATES_DONE = "1"
+}
 
 function Ensure-GhAuth {
     if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) { return }
@@ -284,10 +315,13 @@ function Invoke-PublishDev {
     gh auth status 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "gh not authenticated. Set GH_TOKEN or run: gh auth login" }
 
+    Install-EraGitHook
+    Invoke-ShipPrepush
+
     if ($DryRun) {
         Write-Host "[dry-run] git push -u origin $HeadBranch"
         Write-Host "[dry-run] gh pr create --base dev --head $HeadBranch ..."
-        Write-Host "[dry-run] gh pr merge --merge --auto"
+        Write-Host "[dry-run] gh pr merge --merge (after CI green; --auto if repo allows)"
         return
     }
     git push -u origin $HeadBranch
@@ -307,9 +341,11 @@ function Invoke-PublishMaster {
 
     git fetch origin dev master | Out-Null
     $title = "release: promote dev to master"
+    Install-EraGitHook
+    Invoke-ShipPrepush -QualityOnly
     if ($DryRun) {
         Write-Host "[dry-run] gh pr create --base master --head $HeadBranch --title '$title'"
-        Write-Host "[dry-run] gh pr merge --merge"
+        Write-Host "[dry-run] gh pr merge --merge (after CI green)"
         return
     }
     $prUrl = gh pr create --base master --head $HeadBranch --title $title --body "Promote integrated dev branch to master after CI green."
