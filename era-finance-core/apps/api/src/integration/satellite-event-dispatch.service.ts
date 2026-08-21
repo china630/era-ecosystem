@@ -939,6 +939,28 @@ export class SatelliteEventDispatchService {
       return { writtenOff: 0, skipped: lines.length, warnings, warehouseId: null };
     }
 
+    const warehouse = await this.prisma.warehouse.findFirst({
+      where: { id: warehouseId, organizationId },
+      select: { inventoryAccountCode: true },
+    });
+    if (!warehouse?.inventoryAccountCode) {
+      warnings.push("Warehouse missing inventory account — TTK write-off skipped");
+      this.logger.warn(
+        `Clinic TTK skip (no inventory account) org=${organizationId} corr=${event.correlationId}`,
+      );
+      return { writtenOff: 0, skipped: lines.length, warnings, warehouseId };
+    }
+    const inventoryAccountCode = warehouse.inventoryAccountCode;
+    if (inventoryAccountCode !== "201" && inventoryAccountCode !== "204") {
+      warnings.push(
+        `Warehouse inventory account ${inventoryAccountCode} is not a stock account — TTK write-off skipped`,
+      );
+      this.logger.warn(
+        `Clinic TTK skip (inventory account ${inventoryAccountCode}) org=${organizationId} corr=${event.correlationId}`,
+      );
+      return { writtenOff: 0, skipped: lines.length, warnings, warehouseId };
+    }
+
     let writtenOff = 0;
     let skipped = 0;
     for (const line of lines) {
@@ -970,7 +992,7 @@ export class SatelliteEventDispatchService {
           productId: product.id,
           quantity: line.qty,
           type: "OUT",
-          inventoryAccountCode: "201",
+          inventoryAccountCode,
           forceAllowNegative: true,
         });
         writtenOff += 1;
