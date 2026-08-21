@@ -18,22 +18,28 @@ Related: [`orchestrator-satellite-vs-module.md`](./orchestrator-satellite-vs-mod
 
 ## Decision
 
-### 1. Trial end date (WHEN at register)
+### 1. License / trial clock (WHEN at register)
 
-At org registration set `trialExpiresAt` and `expiresAt` (equal while `isTrial`):
+Defaults follow **deployment topology** (`Organization.deploymentTopology`, axis B — not DEPARTMENT). Super-admin may always override (shrink, extend, perpetual).
 
-**End of calendar month `(registration month + 3)` at 23:59:59.999 Asia/Baku.**
+| Topology | First provision | Super-admin |
+|----------|-----------------|-------------|
+| **SHARED** | System trial (`trialPeriodDays` / trial package → `computeTrialExpiresAtUtc`) | Same as today + perpetual checkbox (`expiresAt` / `trialExpiresAt` = null) |
+| **DEDICATED** | No trial (`isTrial=false`), no expiry (`null`) | May grant a trial, set a contract end, or leave perpetual |
+| **ONPREM** | Same as DEDICATED (perpetual paid/contract) | Same controls when the **cloud** control plane is SoR (tunnel). Air-gap is not a remote kill switch — contract / offline lease |
 
-Example: register 2026-06-10 → trial ends **2026-09-30 23:59:59.999 Baku**.
+Self-serve register defaults to **SHARED**. Changing topology does **not** rewrite dates unless super-admin checks “apply topology license default”.
 
-Implementation: `computeTrialExpiresEndOfMonthBaku()` in `trial-date.util.ts`.
+**Perpetual** = `trialExpiresAt` and `expiresAt` are `null`. Entitlement resolver already treats `until == null` as not expired.
+
+Implementation: `licenseProvisionPlan()` in `license-defaults.ts`. Legacy end-of-month helper remains in `trial-date.util.ts` for older snapshots.
 
 ### 2. Org-only provision at register (WHAT)
 
 On register create **only** `organization_subscriptions`:
 
-- `isTrial: true`
-- `trialExpiresAt`, `expiresAt` (same)
+- SHARED: `isTrial: true` and snapshotted `trialExpiresAt` / `expiresAt`
+- DEDICATED / ONPREM: `isTrial: false`, both dates `null` (perpetual until admin sets a term)
 - `activeModules: []` (no auto industry gates)
 - No `organization_satellite_entitlements` or module trial rows
 
@@ -93,7 +99,7 @@ Independent of trial dates. Super-admin may assign free quota overrides per org 
 ## Consequences
 
 - Workspace: not connected → **Connect**; connected in trial → **Open**; expired → **Renew**
-- Nafta pilot: owner connects Hotel/Clinic/FB; ops extends via super-admin org subscription UI
+- Nafta pilot: owner connects Hotel/Clinic/FB; ops sets topology (typically ONPREM/DEDICATED) and license on `/super-admin/orgs/{id}/subscription` (perpetual, ± months, or a date)
 - Migration backfills satellite rows from existing `activeModules` industry gates
 
 ## References

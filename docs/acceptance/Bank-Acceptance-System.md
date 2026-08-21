@@ -22,6 +22,8 @@
 
 See PRD [`era-bank-core/PRD.md`](../../era-bank-core/PRD.md) §4 and Capability Inventory §1–5, §8–10 for CAP-* **IN/PARTIAL/DECLARED**.
 
+Placement: same ladder as other satellites (`SHARED` / `DEDICATED` / `ONPREM`) is **DECLARED** (CAP-NFR-TOPO). This edition ships DEDICATED/ONPREM only — no SHARED bank pool. AC-BANK-TENANT is 🟡 (organizationId + kit filter landed; not Scaffold ✅; pool not enabled).
+
 ### Out of scope (explicit — not sold with Bank mvp)
 
 Tracked as CAP-* **OUT** in [`Bank-Capability-Inventory.md`](./Bank-Capability-Inventory.md), including at least:

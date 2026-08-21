@@ -1,4 +1,4 @@
 product: platform
 status: mvp
 pilot_ready: false
-notes: "Control plane + MDM + billing + workforce; field pilot open"
+notes: "Control plane + MDM + billing + workforce; field pilot open. Topology waves 0–18: bind + runtime-config Sync + PlacementJob API scaffold (host agent poll, SHARED↔ONPREM reject, slice metadata stub) + SHARED-ready schema/kit filter + two-org UAT outline are API/docs only. License defaults follow deploymentTopology (CP-LIC-01). Green Scaffold BE: AUTH/BILL/MDM/WF/SA/INT/BIND/CFG ✅; AC-CP-TOPO stays in BE rollup as Scaffold 🟡 (PlacementJob ≠ live hop/pool). Live SHARED pool ops and automated migrate product not built — do not sell as SaaS pool. Edition stays mvp; pilot_ready false. Return: docs/acceptance/BE-OPEN-AND-TOPO-RETURN.md."

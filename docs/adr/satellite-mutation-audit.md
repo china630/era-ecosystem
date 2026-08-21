@@ -13,7 +13,7 @@ Clinic already has domain-specific `VisitDiscountAudit`; hotel/FB had no unified
 ## Decision
 
 1. Shared helper in `@era/satellite-kit`: `recordSatelliteAudit`, `redactAuditChanges`, `SatelliteAuditInput`.
-2. Identical Prisma model `SatelliteAuditLog` in each satellite DB (deployment = one org; no `organizationId` column).
+2. Identical Prisma model `SatelliteAuditLog` in each satellite DB. Tenant roots + audit carry `organizationId` (CP-TENANT-01 API). Kit filter is **fail-closed** (no `unbound` default). Live SHARED pool / field two-org UAT still open.
 3. Wire on first wave: folio charge void, ticket line void, visit discount, master-data DELETE/PATCH retire.
 4. Read API: `GET /api/audit?entityType=&entityId=` (authenticated, reports permission).
 

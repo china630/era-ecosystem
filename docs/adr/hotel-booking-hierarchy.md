@@ -17,7 +17,7 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 | Allotment block | AllotmentBlock + lines | TENTATIVE/DEFINITE/CANCELLED/RELEASED; cutoff soft-release |
 | Booking | ReservationGroup | folioMode, allotmentBlockId, envelope dates |
 | RoomStay | Reservation | roomCount=1 on create; optional roomId |
-| Assignment | roomId + Stay | Physical room at check-in |
+| Assignment | roomId + share pool + shareBedIndex + Stay | Physical door; share pool for union twin — see [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
 | Master guest | ReservationGuest.isPrimary | Folio owner per stay (PRIMARY mode) |
 | Party billing | Reservation.partyBillingMode | PRIMARY (one owner) / EQUAL (each ownsFolio → personal GUEST folio) |
 | Folio mode | ReservationGroup.folioMode | INDIVIDUAL / MASTER / SPLIT |

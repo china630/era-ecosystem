@@ -18,6 +18,8 @@ Extends [QUARTET_UAT.md](./QUARTET_UAT.md) with clinic, pharmacy retail, and **p
 
 Parent flags for departments: `revenueRouting=PARENT`, `fiscalRouting=PARENT`.
 
+This table is **axis A** (`STANDALONE` / `DEPARTMENT`). **Placement** for the droplet is **ONPREM/DEDICATED** (one org per satellite DB), not SHARED. Do not read DEPARTMENT as “own VM”.
+
 **Mixed F&B:** in-house → room charge → folio; walk-in → **hotel Front Cash pending queue** when `settlementHub=HOTEL_FRONT_CASH` ([ADR unified-settlement-hub](./adr/unified-settlement-hub.md)); else local pay + KKM ([ADR fb-mixed-settlement-routing](./adr/fb-mixed-settlement-routing.md)).
 
 ---
@@ -136,7 +138,7 @@ Pre-merge: `era-hotel-pms/scripts/merge-*.js` — see [ELEKTRAWEB-IMPORT.md](../
 | Guest registry | Full | Guest Cards merged (**7 383**) + MDM passport link |
 | Reservations | **2026+ only** (+ in-house/future at cutover) | FOCP merged; filter `Arrival >= 2026-01-01` or active statuses |
 | Folio charges | **Open / in-house at cutover** + optional 2026 YTD for reconciliation | Folio Transactions merged 2026; **not** 2025 archive |
-| Clinic | Randevular 2026 + WebOnly guests | Already collected |
+| Clinic | Randevular 2026 + WebOnly guests + **live card + calendar API dump** | Excel pack already collected; refresh via `dump-webonly-patient-cards.cjs` + `dump-webonly-clinic-calendar.cjs` → `D:\ERA-BACKUP\NAFTA-START\clinic\dump` (PII, not in git) |
 | Loyalty `visitCount` | Seed from Guest Cards `Repeat Count` | Do not recompute from 2025 folio |
 
 **Point-zero reports to pull from Elektraweb (if available):**
@@ -223,10 +225,27 @@ ADR: [workforce-external-payroll-and-1c-export.md](./adr/workforce-external-payr
 
 ---
 
+## 7b. Known gaps (product debt)
+
+| ID | Gap | Impact | Intended fix |
+|----|-----|--------|--------------|
+| **SSO-OWNER-01** | Orch org **OWNER** does not become hotel/clinic/F&B admin on SSO. Non-PSA users land as `Financial_Auditor` (hotel). Elektraweb import / ops admin UI missing for the customer who created the org. | Nafta owner cannot run migration/import without ERA PSA allowlist | Map CP `OWNER`/`ADMIN` → satellite `Hotel_Admin` (or local OWNER); keep `PLATFORM_SUPER_ADMIN_EMAILS` for ERA operators only. See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md). |
+| **PSA-ENV-01** | Historically compose-only `PLATFORM_SUPER_ADMIN_EMAILS` per satellite. **Mitigated (Wave 2):** Super-admin Sync pushes PSA via `…/runtime-config` (env remains override). First boot before Sync still needs compose/env or bind+config. | SSO “works” but import/admin gates stay off until Sync or compose | Run **Sync satellite bindings** after deploy; keep compose PSA as bootstrap fallback. |
+| **TOPO-01** | This appliance is **ONPREM/DEDICATED** (one org per satellite DB), not a SHARED SaaS pool. Demo wipe ≠ production sync. Waves 3–5: SHARED-ready schema + kit filter — still one org in DB. | Do not sell Nafta as multi-tenant SaaS | Topology ladder + mix rules: [deployment-topology.md](./adr/deployment-topology.md) |
+| **TTK-01** | ~~Dummy PROC-*~~ **Mitigated (CLI-47 API):** BOM + Finance write-off warn+post; UAT sign-off open for SHIPPED. | Warehouse tracks cabin consumption when BOM configured | [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md) |
+| **CO-EARLY-01** | ~~Checkout did not refund unused nights~~ **Mitigated (HOT-CO-04):** unused nights net of VAT, default CASH; all folios. | Early leave cash now matches Nafta practice | [hotel-early-checkout-unused-nights.md](./adr/hotel-early-checkout-unused-nights.md) |
+
+**Workaround (ops):** set `PLATFORM_SUPER_ADMIN_EMAILS=shirinov.chingiz@gmail.com` (comma-list OK) in droplet `.env`, recreate hotel/clinic/fnb; enter satellite via **workspace SSO** (not local `/login` with orch password).
+
+---
+
 ## 8. Related docs
 
 - [QUARTET_UAT.md](./QUARTET_UAT.md) — base quartet smoke
 - [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md)
 - [tenancy-and-outlet-boundaries.md](./adr/tenancy-and-outlet-boundaries.md)
+- [deployment-topology.md](./adr/deployment-topology.md) — SHARED / DEDICATED / ONPREM (Nafta = appliance, not SHARED pool)
+- [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md) — procedure TTK → Finance (CLI-47 STUB)
+- [hotel-early-checkout-unused-nights.md](./adr/hotel-early-checkout-unused-nights.md) — unused nights refund (HOT-CO-04 STUB)
 - [fb-mixed-settlement-routing.md](./adr/fb-mixed-settlement-routing.md)
 - [unified-settlement-hub.md](./adr/unified-settlement-hub.md)

@@ -12,6 +12,8 @@
 
 ## Scope
 
+- **Declared, not this edition:** SHARED multi-tenant pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). CP-TENANT-01 schema+filter / AC-CON-TENANT 🟡; appliance remains one-org DEDICATED/ONPREM. Do not sell SHARED Construction.
+
 - In scope: Projects, BOQ stub, progress acts, material requisitions, plan vs actual, platform hooks
 - Out of scope: Full CDE/partner field certification
 

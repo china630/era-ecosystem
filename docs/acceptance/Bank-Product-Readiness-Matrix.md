@@ -58,6 +58,8 @@ Same columns as the line. Use **this** table when asking readiness of a module �
 
 ## UI (short)
 
+**UI class rollup:** SHOW (lab) — BANK-REF-01 snapshot is **HEADLESS** — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+
 | Surface | Path | Level |
 |---------|------|-------|
 | Teller / ops | `era-bank` ops | ✅ lab |
@@ -110,3 +112,4 @@ Line **Pilot lab** = [x] for **lab** full envelope only — not Pilot field / no
 - Edition column copies `docs/editions/bank.yaml` (`mvp`, `pilot_ready: false` until E7).
 - Answer «готовность модуля» from **Modules × layers**; «готовность продукта / линии» from **Line summary**.
 - Forbidden: «полная АБС» / «100% задач банка» / «GA» / certified risk / live rails / live SWIFT.
+- Forbidden: claiming a live **SHARED SaaS pool** (bank or any satellite) — CAP-NFR-TOPO DECLARED; AC-BANK-TENANT 🟡 (schema+filter ≠ live pool). Same honesty as hotel/clinic TENANT. Current typical deploy = DEDICATED/ONPREM (D8 implementation).

@@ -12,6 +12,8 @@
 
 ## Scope
 
+- **Declared, not this edition:** SHARED multi-tenant pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). CP-TENANT-01 schema+filter / AC-WS-TENANT 🟡; appliance remains one-org DEDICATED/ONPREM. Do not sell SHARED Wholesale.
+
 - In scope: B2B orders, pick lists, credit limit, TTN/pick waves, platform commerce hooks
 - Out of scope: Full EDI partner certification without field
 

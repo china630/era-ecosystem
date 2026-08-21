@@ -15,7 +15,7 @@ This replaces the Elektraweb pattern where ACC screens mixed operational folio w
 | **Agency city ledger / CL (ops)** | **Hotel** folios + snapshot + checkout transfer-to-AR (P5 H-BL-40) | Routing, credit gate, `PENDING_AR`/`TRANSFERRED_AR` handoff; snapshot `/reports/agency-ledger` |
 | **Agency AR / aging / invoice matching** | **Finance** counterparty reconciliation | Deep link `/crm/counterparties`; bank apply / matching (**H-BL-48**) — not duplicated in PMS |
 | **Purchases / PO** | **Finance** `/purchases` | Not implemented in hotel (Wave 6+) |
-| **Inventory / stock** | **Finance** `/inventory/*` | Local MVP `/admin/stock` for HK/consumption only; **deep link** to Finance warehouse |
+| **Inventory / stock** | **Finance** `/inventory/*` | Local MVP `/admin/stock` for HK/consumption only; **deep link** to Finance warehouse. Clinic procedure TTK write-off: [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md) via `SATELLITE_CLINIC_PROCEDURE_COMPLETED` → `adjustStock` (warn+post). Not hotel `/admin/stock`, not retail POS. |
 | POS tickets, KDS, shifts | fb-pos | Full CRUD; room charge → hotel bridge |
 | Banquet BEO | Hotel + fb-pos | Hotel confirms BEO; fb-pos outlet `BANQUET` |
 | Fiscal KKM (guest receipt) | fb-pos / hotel folio | Stub today; real NBC/Cybernet Wave 6+ |

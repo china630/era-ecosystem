@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-06-05  
-**Related:** [org-operating-mode.md](./org-operating-mode.md)
+**Related:** [org-operating-mode.md](./org-operating-mode.md) · [deployment-topology.md](./deployment-topology.md) (SHARED / DEDICATED / ONPREM — **different axis**)
 
 ## Context
 
@@ -43,3 +43,4 @@ ERA deployments span multiple legal entities, department satellites, and multipl
 
 - New satellites with multiple POS surfaces should add `Outlet` first; do not create a second org for the same VOEN.
 - Department deployments must register `SatelliteEndpoint` on the orchestrator and honor parent routing helpers on every B2C pay path.
+- **Do not** use `DEPARTMENT` or `STANDALONE` to mean “own VM”. Placement is [deployment-topology.md](./deployment-topology.md). A DEPARTMENT clinic may live in a SHARED clinic pool.

@@ -95,8 +95,8 @@
 | 2.3 | Обобщить `room-charge` под любой сателлит-источник (gateway `POST_FOLIO_CHARGE`) | `era-hotel-pms/app/api/pos/room-charge/route.ts` |
 | 2.4 | **Sanatorium Scheduler** — авто-раскладка программы по слотам с ограничениями («массаж не сразу после обеда», не ставить УЗИ на ужин — блокаторы) | `era-clinic` (новый сервис планирования) |
 | 2.5 | **Program Templates + квота/баланс процедур** (Ф.2); инстанцирование по `programCode` из lifecycle-события | `era-clinic` + `RatePlan.programCode` в `era-hotel-pms` |
-| 2.6 | **Retail reserve** (`PRESCRIPTION_ISSUED` → корзина/бронь, request-reply) | `era-clinic` + `era-retail-pos` + gateway |
-| 2.7 | **Retail write-off** (`PROCEDURE_COMPLETED` → списание расходников по образцу FB) | `era-clinic` + `era-retail-pos` (`packages/era-contracts/src/events/fb.events.ts` как образец) |
+| 2.6 | **Retail reserve** (`PRESCRIPTION_ISSUED` → корзина/бронь, request-reply) | `era-clinic` + `era-retail-pos` + gateway — **deferred** (pharmacy not connected) |
+| 2.7 | **Procedure TTK write-off** (`PROCEDURE_COMPLETED` → Finance warehouse, clinic BOM) | `era-clinic` + `era-finance-core` — ADR [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md); **not** retail POS |
 | 2.8 | Единый QR в деле (ресепшен/медсестра/F&B) | потребители `globalPersonId` |
 | 2.9 | Мигрировать `notifyClinicCheckIn` (прямой HTTP) на lifecycle-событие шины | `era-hotel-pms/src/lib/services/reservation.service.ts:229-257` |
 

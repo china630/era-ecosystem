@@ -34,7 +34,13 @@ Source: [AZ budget organization instruction](https://frameworks.e-qanun.az/11/c_
 
 ## Consequences
 
-- COMMERCIAL behaviour remains 1:1 with former `ledger.constants.ts` via `posting-roles-commercial.json`.
+## v1.2 (2026-08-21) — official commercial cash/bank
+
+Commercial catalog is **Q-01** (e-qanun 34909): **221 kassa**, **222 transit**, **223 bank settlement**. Do not rewrite the official chart onto NAS-GOV 101. `PostingRole` keys stay stable; `posting-roles-commercial.json` maps `CASH_AZN`→`221.01`, `MAIN_BANK`→`223`.
+
+BUDGET remains NAS-GOV: kassa **101**, bank **103**. NGO İ-05: kassa **221**, bank **223**.
+
+- COMMERCIAL Q-01 cash/bank mapping is in `posting-roles-commercial.json` (not a rewrite of the official chart).
 - BUDGET/NGO auto-postings use kind-appropriate codes.
 - Contract test: `validatePostingRolesAgainstCharts()` in CI (`packages/database/prisma/scripts/validate-posting-roles.ts`).
 

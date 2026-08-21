@@ -12,6 +12,8 @@
 
 ## Scope
 
+- **Declared, not this edition:** SHARED multi-tenant pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). CP-TENANT-01 schema+filter / AC-AUTO-TENANT 🟡; appliance remains one-org DEDICATED/ONPREM. Do not sell SHARED Auto Service.
+
 - In scope: Work orders, appointments, service-due cron, platform commerce hooks
 - Out of scope: VIN catalogue vendor field certification
 

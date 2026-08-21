@@ -8,12 +8,21 @@ Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_
 
 ### Satellite launch HMAC (industry apps)
 
+- **Launch base URL (Wave 8):** owner Open resolves `baseUrl` from orchestrator `SatelliteEndpoint` via `GET /v1/satellites/launch-url?satelliteKey=…` (JWT + org context). Registry row wins; if missing/disabled, API falls back to `NEXT_PUBLIC_SATELLITE_*` / `ERA_*_ORIGIN` (local-dev). Client `satelliteUrlForItem()` remains a last-resort webpack-inlined fallback only — not production SoR. Super-admin still CRUD endpoints at `v1/admin/orgs/:orgId/satellite-endpoints`.
 - **Mint:** `POST /auth/satellite-sso-ticket` (JWT required) — only for an **active membership** of the caller; `financeRole` comes from membership (not client default `OWNER`); includes one-time `jti`.
 - **Payload v3 (preferred):** `email|organizationId|expiresAt|financeRole|jti` signed with `ERA_SSO_SHARED_SECRET`.
 - **Payload v2:** `email|organizationId|expiresAt|financeRole` (still accepted).
 - **Payload v1 (legacy):** `email|organizationId|expiresAt` — still verifies, but satellites **force** `financeRole=USER` (unsigned query role is ignored). See [SECURITY_HYGIENE_PROGRAM.md](./SECURITY_HYGIENE_PROGRAM.md) SEC-SSO-02.
 - **Browser callback:** kit `SsoCallbackPage` (`/sso/callback`) must forward query `jti` (and `financeRole`) into `POST /api/auth/sso/exchange`. Dropping `jti` makes v3 HMAC fail as “Invalid SSO signature” even when secrets match.
 - **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` + `consumeSsoSignatureOnce` (SEC-SSO-01 process-local replay guard; Redis planned for multi-instance). When deployment org is bound (`ERA_SATELLITE_ORGANIZATION_ID` or runtime bind via `satelliteOrganizationId()`), ticket org must match (SEC-SSO-05). See ADR [`satellite-organization-bind.md`](adr/satellite-organization-bind.md).
+
+### Agency portal SSO (hotel B2B extranet)
+
+- **ADR:** [`hotel-agency-portal.md`](adr/hotel-agency-portal.md). Identity SoR = orchestrator `AgencyPortalAccount` + `AgencyPropertyGrant` (not `OrganizationMembership`).
+- **Mint:** orchestrator after agency password login + property pick — HMAC with `ERA_SSO_SHARED_SECRET`.
+- **Payload:** `agency|{email}|{organizationId}|{agencyId}|{expiresAt}` (+ optional `|jti`). Distinct from owner/staff satellite launch.
+- **Exchange:** hotel `POST /api/auth/agency-sso/exchange` → cookie `era_agency_session`. Must **not** map into `Hotel_Admin` / staff roles.
+- **Scope:** `/agency/*` and `/api/agency/*` only; FO inbox uses staff session.
 
 - **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`, `POST /auth/finance-handoff`)
 - **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` and `provisionFromControlPlane` both use `verifyControlPlaneAccessToken` (`ERA_JWT_SECRET` / JWKS, `iss`, `aud`)
@@ -143,7 +152,15 @@ Local dev stub: each industry app exposes `POST /api/events/dispatch` (forwards 
 
 Env: see root `.env.example` (`SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID`, etc.).
 
-**Organization bind (appliance / on-prem):** after Connect + saving `SatelliteEndpoint` base URLs, Super-admin **Sync satellite bindings** calls `POST /v1/admin/orgs/:orgId/sync-satellite-bindings`, which fan-outs to each satellite `POST /api/internal/v1/organization/bind` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`). Persistence: runtime + DB table `_era_organization_bind` + `.data/organization-bind.json`. ADR: [`docs/adr/satellite-organization-bind.md`](adr/satellite-organization-bind.md).
+**Organization bind (appliance / on-prem):** after Connect + saving `SatelliteEndpoint` base URLs, Super-admin **Sync satellite bindings** calls `POST /v1/admin/orgs/:orgId/sync-satellite-bindings`, which fan-outs to each industry key in `INDUSTRY_SATELLITE_KEYS` (includes `industry_banking`) plus `finance_core` → `POST /api/internal/v1/organization/bind` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`). Bank surfaces: `era-bank`, `era-bank-dbo`, `era-bank-core` (Nest path excluded from `/api/v1` prefix so Sync URL matches). Persistence: runtime + DB table `_era_organization_bind` + `.data/organization-bind.json`. Boot: `onSatelliteBoot({ prisma })` hydrates bind (+ runtime config) before first request. Production refuses silent `demo-org`. **Deny:** missing/wrong Bearer → **401** (`assertEnvServiceToken`). ADR: [`docs/adr/satellite-organization-bind.md`](adr/satellite-organization-bind.md).
+
+**Desired-state runtime config (industry API — Wave 2+6):** same Sync also POSTs `POST /api/internal/v1/runtime-config` (event URL, public base URL, PSA emails, SSO shared secret ≥16, event token, `activeModules` / optional `hotelModules`, optional `deploymentTopology` + `edition`). Receivers: hotel/clinic/fnb + thin industry (retail/crm/auto/construction/wholesale/logistics) + bank/dbo + Finance Nest + bank-core Nest (absolute `/api/internal/v1/*`, excluded from `/api/v1` prefix). Kit store: `_era_runtime_config` + `.data/runtime-config.json`; env = bootstrap override. Finance Nest resolves orch URL via `@era/satellite-kit` `resolveOrchestratorBaseUrl()` (memory first; `CONTROL_PLANE_URL` install bootstrap). `deploymentTopology` is informational — never skip tenant filter. Boot: Next `instrumentation.ts` / Nest bootstrap via `onSatelliteBoot`. **Deny:** missing Bearer → **401**; `ssoSharedSecret` shorter than 16 → **400** (Zod / class-validator); orch Sync omits secrets `<16` rather than pushing them.
+
+**Entitlement fail-closed (Wave 9):** satellites use `*-module-gate.ts` / `requireSatelliteModule` — inactive module → 403 (ops) or cron skip. Kit `ERA_DEV_UNLOCK_ALL_MODULES=1` is ignored when `NODE_ENV=production` (prod refuses DEV unlock). Spot-check: retail + CRM main ops routes call `assert*Entitled`. AC entitlement notes stay 🟡 (not Scaffold ✅).
+
+**PlacementJob API (Waves 11–15):** Super-admin `POST/GET /v1/admin/orgs/:orgId/placement-jobs`, `POST /v1/admin/placement-jobs/:id/advance`. Host agent `GET /v1/placement-agent/jobs` + `scripts/era-placement-agent.mjs` (logs only; host applies). Direct SHARED↔ONPREM → status `REJECTED`. Slice export = metadata stub (`exportOrgSlice` / orch mirror). **Not** live dump/migrate. Live SHARED pool ops still open. ADR: [`docs/adr/deployment-topology.md`](adr/deployment-topology.md).
+
+**Finance → Orchestrator credentials (canonical names):** prefer `CONTROL_PLANE_SERVICE_TOKEN`; accept alias `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN` (same value). Base URL: kit runtime-config → `ORCHESTRATOR_INTERNAL_URL` / `CONTROL_PLANE_URL` / `ORCHESTRATOR_URL` bootstrap. Health `GET /api/health` reports booleans only (`controlPlane.*Configured`, `pii*Configured`) — never secret values. Industry satellites resolve deployment org via `satelliteOrganizationId()` (bind Sync), not module-level `process.env.ERA_SATELLITE_ORGANIZATION_ID`.
 
 ### All 13 ingress event types — worker status
 
@@ -172,7 +189,7 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 **Shipped v3.0 (2026-07-02):** `SATELLITE_CRM_LEAD_CONVERTED` payload includes `partyKind`, `taxId`, `companyName`, contact fields, `activitySector`, `prospectType`; Finance `handleCrmLead` calls `findOrCreateByVoen` / `findOrCreateIndividualForCrm`. ADR [crm-lead-party-model-and-prospect-import.md](./adr/crm-lead-party-model-and-prospect-import.md).
 | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-service | `handleAutoSto` | GL + draft invoice |
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice |
-| `SATELLITE_CLINIC_PROCEDURE_COMPLETED` | era-clinic (auto-complete at `endsAt`, not at check-in) | procedure / folio dispatch | Stock write-off + optional hotel folio |
+| `SATELLITE_CLINIC_PROCEDURE_COMPLETED` | era-clinic (auto-complete at `endsAt`, not at check-in) | procedure / folio dispatch | Tariff → folio/Accounting; **TTK lines → Finance inventory** (ADR [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md)). `correlationId` = procedure order id. Empty `lines` = no stock. Retail HTTP write-off **retired**. |
 | `SATELLITE_CLINIC_WARD_DAY_CHARGE` | era-clinic cron | `handleClinicWardDayCharge` | GL + draft invoice (inpatient day) |
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | era-wholesale | `handleWholesaleOrder` | GL + draft invoice |
@@ -226,6 +243,7 @@ Internal ERA apps consume **era-data-hub** via service token (`DATA_HUB_SERVICE_
 | Production calendar | `/registry/v1/calendar/*` | finance HR, bank EOD | Orchestrator `GET /platform/v1/catalog/calendar/*` via satellite-kit; hotel auto-BAR bulk |
 | HS tariffs | `/registry/v1/hs/*` | finance customs | Finance deep link only |
 | VÖEN directory | `/registry/v1/companies/:voen` | finance voen-preview | Orchestrator `GET /platform/v1/catalog/companies/:voen` via satellite-kit |
+| ICD-10 (WHO 2019) | — (not on data-hub) | clinic | Orchestrator `GET /platform/v1/catalog/icd10` **in-process** from shared generator (`platformIcd10Search`); clinic local `IcdCode` + optional sync. **Not** a data-hub proxy |
 
 ### Workforce policy (platform read — Wave 3)
 

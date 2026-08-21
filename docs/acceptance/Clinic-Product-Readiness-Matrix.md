@@ -16,20 +16,29 @@
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Clinic** | ✅ | 🟡 | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — fiscal/HL7 STUB; pilot open |
+| **Clinic** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — fiscal/HL7 STUB; pilot open |
 
 ---
 
 ## UI (short)
 
+**UI class rollup:** SCREEN — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+
 | Surface | Path | Level |
 |---------|------|-------|
 | Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 |
+| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | 🟡 |
+| МКБ санаторий | `/sanatorium` | 🟡 |
+| МКБ карточка пациента | `/patients/[id]` (after contraindications) | 🟡 |
+| МКБ визит/стационар | `/visits/[id]`, `/inpatient` | 🟡 |
+| МКБ отчёт | `/reports/diagnoses` | 🟡 |
+| ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
 | Cashier | `/cashier` | 🟡 |
 | Print | `/print/*` | 🟡 |
+| Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
 
-**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off.
+**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA).
 
 ---
 
@@ -48,3 +57,4 @@
 - Edition column copies `docs/editions/clinic.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
+- Forbidden: «SHARED / multi-tenant clinic SaaS» — AC-CLI-TENANT 🟡 (schema+filter on Nafta ≠ live pool); Nafta remains one-org appliance.

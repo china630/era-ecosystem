@@ -30,3 +30,15 @@ reports/logistics-pilot-lab-signoff.md
 ```
 
 UAT source: `era-logistics/doc/UAT-SMOKE.md`
+
+## Green Scaffold BE Wave 1 (2026-08-17)
+
+| Claim | Proof |
+|-------|--------|
+| AC-LOG-TRIP / POD / REF / PLAT Scaffold ✅ | `__tests__/log-*-negative.spec.ts` (jest) |
+| AC-LOG-TENANT | Remains 🟡; **out of BE rollup** |
+| Scaffold BE Product-Readiness ✅ | In-scope AC rollup only; UI/Demo/Pilot unchanged |
+
+### UAT-SMOKE deny steps (lab)
+
+See `era-logistics/doc/UAT-SMOKE.md` § Green Scaffold deny paths.

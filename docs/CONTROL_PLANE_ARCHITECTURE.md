@@ -11,7 +11,11 @@ ERA started as **Finance-only** — identity, subscription, billing, and entitle
 | v1 | Finance core only | Inside Finance API/DB |
 | v2 (target) | **Orchestrator** (launcher + SSO) | Orchestrator API/DB; Finance = accounting satellite |
 
-**Rule:** anything **cross-tenant, cross-satellite, or commercial** (billing, entitlements, platform add-ons, public pricing) → **orchestrator**. Finance keeps **ledger, documents, inventory, tax, and GL dispatch** for accounting events.
+**Rule:** anything **cross-tenant, cross-satellite, or commercial** (billing, entitlements, platform add-ons, public pricing, **deployment topology / placement**) → **orchestrator**. Finance keeps **ledger, documents, inventory, tax, and GL dispatch** for accounting events.
+
+**Placement:** `SHARED` / `DEDICATED` / `ONPREM` is a control-plane attribute per org (and later per `SatelliteEndpoint`), orthogonal to `operatingMode` (`STANDALONE` / `DEPARTMENT`). Schema stays multi-tenant; topology is packaging. Orchestrator owns desired runtime config: org bind + industry/Finance `runtime-config` Sync (SSO/PSA/event URL+token, optional `deploymentTopology` + `edition`) landed; Finance Nest treats `CONTROL_PLANE_URL` as install bootstrap and re-resolves orch URL from kit memory after Sync. **PlacementJob API scaffold** (create/list/advance + host agent poll + SHARED↔ONPREM reject) landed — not live migrate / not SaaS pool. Host GitOps applies compose — orch does not SSH-edit droplets. ADR: [deployment-topology.md](./adr/deployment-topology.md).
+
+**Owner launcher URLs (Wave 8):** production SoR is `SatelliteEndpoint.baseUrl` per `(organizationId, satelliteKey)`, resolved by `GET /v1/satellites/launch-url` before SSO ticket mint. `NEXT_PUBLIC_SATELLITE_*` / `ERA_*_ORIGIN` remain local-dev / webpack-inline fallbacks only — not ten compose vars as the multi-tenant registry.
 
 ### Commercial taxonomy (satellite vs module vs tier vs add-on)
 
@@ -62,7 +66,7 @@ Two **independent** money flows per organization (VÖEN):
 
 | Aspect | Rule |
 |--------|------|
-| **Trial** | 3 calendar months from signup (`trialExpiresAt`, Asia/Baku) |
+| **Trial / license** | SHARED: system trial days at signup. DEDICATED/ONPREM: no trial, perpetual until super-admin sets a date. Super-admin may shrink, extend, or clear the clock (`null` = perpetual). See ADR platform-trial-hierarchy §1. |
 | **During trial** | Base ERP + trial bundle modules; **no** monthly platform invoice for modules |
 | **After trial** | **Post-paid:** usage in month **M** → platform invoice on **1st of M+1** for full month M |
 | **What is billed** | ERA Core (Foundation) + ERA Banking Core (Foundation, only when `industry_banking` is connected) + active `organization_modules` (ERP modules, `industry_*` satellites, platform add-ons) + bundle discounts |
@@ -163,6 +167,7 @@ Orchestrator CP schema (`era-orchestrator/packages/database`) already mirrors bi
 | `/platform/notifications/*` | Orchestrator | Finance, all satellites |
 | `/platform/booking/*` | Orchestrator | Clinic, auto-sto, retail, hotel spa |
 | `/platform/portal/*` | Orchestrator | All customer-facing portals |
+| `/platform/v1/catalog/icd10` | Orchestrator (in-process WHO ICD-10 generator; **not** data-hub) | Clinic (optional sync) |
 | `/internal/v1/satellite-events` | Orchestrator | Satellites |
 | `/api/*` accounting | Finance | Finance web only (+ auditor SSO) |
 

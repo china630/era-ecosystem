@@ -7,12 +7,20 @@
 | Claim | Minimum proof |
 |-------|----------------|
 | `gate[x]` | Stage-gate script exit 0 + `reports/auto-stage-*-signoff.md` |
-| Scaffold ✅ | Test/golden covering AC **including negative path** |
+| Scaffold ✅ | Test/golden covering AC **including negative path** — see `__tests__/auto-*-negative.spec.ts` |
 | Scaffold 🟡 | Partial proof / stub with explicit mode / open residual |
 | Pilot lab `[x]` | UAT-SMOKE lab RT signed + linked artifact |
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (or HEADLESS + ADR) |
+
+## Negative-path suites (Green Scaffold BE)
+
+| AC | Spec | UAT deny |
+|----|------|----------|
+| AC-AUTO-WO | `era-auto-service/__tests__/auto-wo-negative.spec.ts` | UAT-SMOKE § Deny |
+| AC-AUTO-APPT | `era-auto-service/__tests__/auto-appt-negative.spec.ts` | UAT-SMOKE § Deny |
+| AC-AUTO-PLAT | `era-auto-service/__tests__/auto-plat-negative.spec.ts` | UAT-SMOKE § Deny |
 
 ## Forbidden as sole proof
 

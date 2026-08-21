@@ -182,7 +182,7 @@
 |----|------------|--------|-------|
 | CAP-DBO-UI | Retail/corp DBO + dual-sign | IN | Lab |
 | CAP-DBO-ASAN | ASAN/SİMA **live** | DECLARED | Stub → YC-E3 |
-| CAP-DBO-OB | Open Banking AIS/PIS suite | IN | AIS `/dbo/open/accounts` + PIS orders (lab) |
+| CAP-DBO-OB | Open Banking AIS/PIS suite | IN | AIS `/dbo/open/accounts` + PIS orders (lab). Stretch: AC-DBO-OPEN Scaffold 🟡 curl-only — **in BE rollup** (paints DBO Scaffold BE 🟡). Close: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md). AC ✅ ≠ full ABS / full Open Banking GA |
 | CAP-DBO-PFM | PFM / chat / voice banking | IN | XO-4 DBO `/pfm` stub BFF (lab) |
 | CAP-DBO-H2H | Corporate H2H file exchange | IN | DboH2hFileJob |
 
@@ -216,6 +216,7 @@
 |----|------------|--------|-------|
 | CAP-NFR-HA | HA EOD / DR / pentest | DECLARED | YC-E6 |
 | CAP-NFR-ONP | On-prem ref-data / air-gap | PARTIAL | |
+| CAP-NFR-TOPO | Same topology ladder as satellites (SHARED / DEDICATED / ONPREM) | DECLARED | Owner: bank is not a special snowflake. Live SHARED pool **not built** (same as hotel/clinic AC-*-TENANT 🟡) — not a product ban. `organizationId` + fail-closed kit filter (AC-BANK-TENANT 🟡). Bind HTTP + Sync `industry_banking` + runtime-config (CP-BIND-01 / CP-CFG-01) landed — bind+cfg ≠ pool. ADR [deployment-topology](../adr/deployment-topology.md) |
 | CAP-NFR-MIS | Full MIS / data mart / BI | IN | XO-7 metadata stub (lab) |
 | CAP-NFR-BPM | Enterprise BPM | IN | XO-7 process stub (lab) |
 | CAP-NFR-DMS | Document management / e-archive | IN | XO-7 document meta stub (lab) |
@@ -239,6 +240,8 @@
 
 | Date | Change |
 |------|--------|
+| 2026-08-21 | Fail-closed tenant filter + phone unique per org; CAP-NFR-TOPO wording: same ladder as hotel, pool not built (not a bank-only ban) |
+| 2026-08-17 | B7: organizationId + kit filter on bank/dbo/core (AC-BANK-TENANT 🟡); CAP-NFR-TOPO stays DECLARED — SHARED pool still not IN |
+| 2026-08-17 | CAP-NFR-TOPO DECLARED — same placement ladder as satellites; SHARED bank pool not this edition |
 | 2026-08-06 | FC-2…FC-7 PARTIAL→IN (see fc2-fc7-signoff) |
-
 | 2026-08-06 | XO-1…7 IN (lab); YC-E adapter scaffolds; CAP-RSK-CERT pack ready, stays DECLARED |

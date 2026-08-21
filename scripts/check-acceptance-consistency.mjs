@@ -125,6 +125,7 @@ function loadKitConfig() {
   if (current) products.push(current);
 
   required.add(path.join(".cursor", "rules", "task-acceptance.mdc"));
+  required.add(path.join("docs", "acceptance", "UI-COVERAGE-BOARD.md"));
 
   for (const p of products) {
     if (productFilter && p.id !== productFilter) continue;
@@ -333,6 +334,34 @@ function checkCoverageShipped(cfg) {
   }
 }
 
+/** Derived UI board must exist; each Product-Readiness must link it. */
+function checkUiCoverageBoard(cfg) {
+  const boardRel = path.join("docs", "acceptance", "UI-COVERAGE-BOARD.md");
+  const boardAbs = path.join(repoRoot, boardRel);
+  if (!fs.existsSync(boardAbs)) {
+    fail("missing docs/acceptance/UI-COVERAGE-BOARD.md");
+    return;
+  }
+  const board = readText(boardAbs);
+  if (!/## 1\. Product rollup/.test(board) || !/## 2\. Work queue/.test(board)) {
+    fail("UI-COVERAGE-BOARD.md must keep ## 1. Product rollup and ## 2. Work queue");
+  }
+  for (const token of ["NONE", "SCREEN", "SHOW", "PARTIAL", "HEADLESS", "VENDOR"]) {
+    if (!board.includes(token)) {
+      fail(`UI-COVERAGE-BOARD.md missing class token ${token}`);
+    }
+  }
+  for (const p of cfg.products) {
+    if (productFilter && p.id !== productFilter) continue;
+    if (!p.readiness_matrix) continue;
+    const rp = path.join(repoRoot, p.readiness_matrix.replace(/\//g, path.sep));
+    if (!fs.existsSync(rp)) continue;
+    if (!/UI-COVERAGE-BOARD\.md/.test(readText(rp))) {
+      fail(`${p.readiness_matrix} must link UI-COVERAGE-BOARD.md`);
+    }
+  }
+}
+
 function checkSellProseVsEditions() {
   // Bank docs often say Ops UX GA — warn in strict
   if (!strict) return;
@@ -368,6 +397,7 @@ function main() {
   checkEditionVsReadiness(cfg);
   checkReadinessSellHonesty(cfg);
   checkCoverageShipped(cfg);
+  checkUiCoverageBoard(cfg);
   checkSellProseVsEditions();
 
   if (warnings.length) {

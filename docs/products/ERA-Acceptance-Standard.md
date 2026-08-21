@@ -131,6 +131,10 @@ Ask «Scaffold / AC / backend matrix»
 Ask «матрица готовности API / §4 / consumer / обнови READINESS»
   → docs/READINESS_MATRIX.md + skill era-readiness-matrix
   (engineering — NOT sell/show)
+
+Ask «есть ли экран у API / UI class NONE·SCREEN·SHOW»
+  → docs/acceptance/UI-COVERAGE-BOARD.md
+  (derived join; NOT sell/show)
 ```
 
 **Product Readiness — required columns:**

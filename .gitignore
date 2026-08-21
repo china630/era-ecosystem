@@ -57,3 +57,6 @@ era-hotel-pms/doc/nafta/bridge-har/*.json
 data/legal-entities/.etaxes-token-hypotheses.json
 data/legal-entities/.token-seeds-*.json
 
+# WebOnly clinic cutover dumps (patient PII — never commit; keep under D:\ERA-BACKUP)
+data/nafta-webonly-dumps/
+

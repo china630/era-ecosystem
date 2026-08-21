@@ -144,19 +144,19 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 | **Fin** | **Done** | **Done** | **Done** | **Done** (reference) |
 | **Orch web** | **Partial** | **Partial** (early-access modal) | **Done** (`APP_SHELL_CLASS`, header nav) | **Partial** |
 | **Hot** | **Done** | **Done** (`EraModal`) | **Done** (`EraAppRouteShell`) | **Partial** (strong PMS, not ERP clone) |
-| **FB** | **Partial** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** (floor/KDS ops) |
-| **Ret** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
-| **Log** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
-| **Con** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
-| **CRM** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
-| **Auto** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **FB** | **Partial** | **Done** (`/admin/menu`, `/admin/tables`, `/admin/settings`, `/admin/daily-menu`) | **Done** (`EraAppRouteShell`) | **Partial** (floor/KDS ops) |
+| **Ret** | **Done** | **Done** (`/admin/replenishment`, `/admin/supplier-match`, `/settings`, `/stock-check`) | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Log** | **Done** | **Done** (`/trips` create modal, `/trips/[id]` modals, `/admin/settings`) | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Con** | **Done** | **Done** (`/projects` create modal, `/projects/[id]` claim modal, `/material-requisitions`, `/admin/settings`) | **Done** (`EraAppRouteShell`) | **Partial** |
+| **CRM** | **Done** | **Done** (`/leads` create modal, `/admin/import` modal, `/admin/settings`) | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Auto** | **Done** | **Done** (`/admin/settings`, `/appointments`, `/work-orders`) | **Done** (`EraAppRouteShell`) | **Partial** |
 | **Cli** | **Done** | **Done** (admin master-data, modal CRUD) | **Done** (`EraAppRouteShell`) | **Partial** (inpatient ward codes) |
-| **Who** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Who** | **Done** | **Done** (`/admin/import-orders`, `/pick-lists`, `/admin/settings`) | **Done** (`EraAppRouteShell`) | **Partial** |
 
 **Gaps (ecosystem-wide UI program)**
 
 - [x] UI playbook doc: [`UI_PLAYBOOK_SATELLITES.md`](./UI_PLAYBOOK_SATELLITES.md) (P6)
-- [ ] Audit each app admin routes: replace full-page forms with modals where Finance does (P06 in progress)
+- [x] Audit each app admin routes: replace full-page forms with modals where Finance does (P06 closed — thin-industry modal CRUD wave)
 - [x] Orch web: `APP_SHELL_CLASS` + header nav + early-access modal
 - [x] Finance + satellites: **`EraAppRouteShell`** — profile → org → bell → locale → tier bar ([`DESIGN.md`](../DESIGN.md) § App shell)
 - [ ] Finance sidebar: long AZ/RU labels — vertical scroll only (no horizontal scroll)

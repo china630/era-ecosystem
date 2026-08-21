@@ -13,10 +13,10 @@ ERA CP commercial layers: satellite gate → modules → tiers → platform add-
 ## Decision
 
 1. **`industry_hotel_pms`** — satellite gate (opens Hotel PMS app).
-2. **9 `hotel_*` keys** in `pricing_modules` — billable functional modules inside the satellite.
+2. **`hotel_*` keys** in `pricing_modules` — billable functional modules inside the satellite (see table; includes optional Agency Portal SKU).
 3. **Legacy key aliases** — dual-read for migration (`hotel_front_office` → `hotel_core`, etc.).
 4. **`platform_*`** — word **add-on** in UI/docs only for cross-product services.
-5. **Bundles:** City / Resort / Sanatorium use consolidated keys.
+5. **Bundles:** City / Resort / Sanatorium use consolidated keys — **`hotel_agency_portal` is not included by default** (sold separately).
 
 ## Hotel module keys (canonical)
 
@@ -29,14 +29,17 @@ ERA CP commercial layers: satellite gate → modules → tiers → platform add-
 | `hotel_transfers` | Transfers | — |
 | `hotel_spa_scheduling` | SPA & Scheduling | — |
 | `hotel_distribution` | Distribution (Channel Manager & Contracts) | `hotel_channel_ota`, `hotel_contracts_yield` |
+| `hotel_agency_portal` | Agency Portal (B2B extranet) | — |
 | `hotel_guest_experience` | Guest Profiles & Tasks | — |
 | `hotel_banquets` | Banquets & BEO | — |
 | `hotel_medical_sanatorium` | Medical & Sanatorium | — |
 | `hotel_setup_advanced` | Advanced master data | — |
 
+See [hotel-agency-portal.md](./hotel-agency-portal.md).
+
 ## Consequences
 
-- Orchestrator `/pricing` Hospitality section: gate + 9 submodules + bundles.
+- Orchestrator `/pricing` Hospitality section: gate + hotel submodules + bundles.
 - Hotel routes map to required `hotel_*` key via `org-entitlement-gate` / `requireHotelModule`.
 - Nav sections in `HotelOpsShell` use section `id` = module key.
 - Source of truth: `era-orchestrator/packages/database/prisma/lib/core/hotel-module-keys.ts` (mirrored in `@era/satellite-kit`).

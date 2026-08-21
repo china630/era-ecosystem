@@ -4,7 +4,9 @@
 
 Accepted — 2026-07-21
 
-Related: [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-procedure-day-ops.md](./clinic-procedure-day-ops.md) · [sanatorium-vnext.md](./sanatorium-vnext.md)
+Related: [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-procedure-day-ops.md](./clinic-procedure-day-ops.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [sanatorium-vnext.md](./sanatorium-vnext.md)
+
+Amended 2026-08-21 — consecutive patient gap is layer 3 (patient rest), not cabin turnover.
 
 ## Context
 
@@ -29,7 +31,7 @@ Sanatorium program instantiation used to place procedures onto resources immedia
 
 1. When placing newly confirmed orders, the planner loads existing patient orders in `SCHEDULED` / `CHECKED_IN` / `COMPLETED` as **context**.
 2. Rotation, compatibility, and gap rules treat that history as fixed; the engine does **not** move already-placed orders.
-3. New slots are found forward from work hours, respecting gaps and resource/staff availability.
+3. New slots are found forward from work hours, respecting **resource** availability (occupancy + per-type resource gap tail), **staff** HARD/SOFT, and **patient** rest after the guest’s previous procedure the same day. Pairwise `ProcedureRule` `SEQUENCE_GAP` stays a fourth layer. See [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md).
 
 ### Body part on all procedures
 

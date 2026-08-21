@@ -16,7 +16,7 @@
 
 | Поток | Правило |
 |-------|---------|
-| **Trial** | End of calendar month `(reg month + 3)` 23:59 Asia/Baku at org register; satellites/modules on owner **Connect** — see [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md) |
+| **Trial / license** | SHARED: system trial days at register. DEDICATED/ONPREM: no trial, perpetual (`null` dates) until super-admin sets a term. Satellites/modules on owner **Connect**. See [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md) §1 |
 | **Модули / сателлиты / add-ons** | Post-paid: использование в месяце **M** → платформенный счёт **1-го числа M+1** |
 | **Metered квоты** | Tier задаёт included + spend ceiling; overlimit → unit price → `accumulatedBalance` **в текущем периоде** |
 | **Deactivation** | `pendingDeactivation` до конца календарного месяца |

@@ -24,14 +24,22 @@
 
 ## UI (short)
 
+**UI class rollup:** SHOW — HOT-06 Elektraweb bridge is **HEADLESS** (extension) — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+
 | Surface | Path | Level |
 |---------|------|-------|
 | FO / front desk | chessboard, card, `/availability`, `/reports/reservations` | ✅ |
+| Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30) |
 | Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ |
+| Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
+| Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
 | HK / admin | HK flows, `/admin/*` | ✅ |
+| Management reports catalog / nightly ZIP | `/reports/*` hubs + nightly pack + cubes (HOT-RPT W1–W3) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
 
-Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab still requires UAT-SMOKE §27 artifact.
+Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab still requires UAT-SMOKE §27 artifact.  
+HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW rollup only if Demo-TE not refreshed; does not claim GA.
+
 
 ---
 
@@ -51,3 +59,4 @@ Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab
 - Sell text must not contradict the worst layer above (Pilot lab/field still open → not GA).
 - Forbidden: «ready» / «GA» while Pilot field open.
 - Allowed show language: «FO + City Ledger MVP showable (UI/Demo green; pilot open)» — not certified / not GA.
+- Forbidden: «SHARED hotel SaaS pool» / «automated on-prem migrate» — not this edition ([deployment-topology.md](../adr/deployment-topology.md)). Schema+filter 🟡 ≠ live pool (AC-HOT-TENANT stays out of BE rollup).

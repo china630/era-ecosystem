@@ -16,16 +16,20 @@
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Construction** | ✅ | 🟡 | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
+| **Construction** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
 
 ---
 
 ## UI (short)
 
+**UI class rollup:** SCREEN — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+
 | Surface | Path | Level |
 |---------|------|-------|
 | Projects | `/projects` | 🟡 |
 | Plan vs actual | `/projects/[id]` | 🟡 |
+
+Project create and subcontractor-claim flows now follow the modal CRUD playbook; Demo/TE stays 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. HEADLESS lines use `n/a` with reason.
 
@@ -46,3 +50,4 @@
 - Edition column copies `docs/editions/construction.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
+- Forbidden: «SHARED / multi-tenant Construction SaaS pool» — AC-CON-TENANT 🟡 (schema+filter ≠ live pool); stays out of BE rollup.

@@ -29,6 +29,7 @@ Architecture already splits planes ([HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITA
 | Agency CL snapshot | SHIPPED (ops) | Ledger + settlement against TRANSFERRED_AR; Finance owns AR match |
 | Payment terms / aging / invoice matching | SHIPPED (Finance) | Counterparty `paymentTermsDays`; `/reporting/aging`; `/sales/invoices/allocate` |
 | Folio payment refunds | SHIPPED (mock fiscal) | `POST /api/folios/payments/[id]/refund`; `FolioPayment.kind=REFUND` |
+| Early unused-nights refund | SHIPPED | ADR hotel-early-checkout-unused-nights; HOT-CO-04; apply before CL transfer |
 | Checkout discounts | SHIPPED | Negative `DISCOUNT` charge at settle/checkout + promo/`discountPct` |
 | Transfers / Banquets | SHIPPED (MVP) | unchanged |
 | Agency settlement ops | SHIPPED (ops) | Hotel postpaid apply; commission accrual note; bank match in Finance |
@@ -76,8 +77,9 @@ Tracked in [BACKLOG-PRODUCTION.md](../../era-hotel-pms/doc/BACKLOG-PRODUCTION.md
 | H-BL-46 | Agency prepaid/postpaid settlement + commission |
 | H-BL-47 | List filter enrichment standard (HOT parity with CLI-37) |
 | H-BL-48 | Finance AR: terms, aging, invoice matching (Finance owner) |
+| H-BL-49 | Unused-nights refund at early checkout — **not P5**; [hotel-early-checkout-unused-nights.md](./hotel-early-checkout-unused-nights.md) |
 
-Coverage rows: `HOT-CL-*`, `HOT-CASH-*`, `HOT-NA-01`, `HOT-AG-*`, `HOT-XFER-01`, `HOT-BEO-01` in [COVERAGE_MATRIX.md](../COVERAGE_MATRIX.md).
+Coverage rows: `HOT-CL-*`, `HOT-CASH-*`, `HOT-CO-04` (STUB), `HOT-NA-01`, `HOT-AG-*`, `HOT-XFER-01`, `HOT-BEO-01` in [COVERAGE_MATRIX.md](../COVERAGE_MATRIX.md).
 
 ### D4 — Honesty rule
 

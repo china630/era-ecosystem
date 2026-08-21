@@ -27,6 +27,19 @@
 reports/finance-stage-<wave>.log
 reports/finance-stage-<wave>-signoff.md
 reports/finance-pilot-lab-signoff.md
+reports/finance-be-negative-signoff.md
 ```
 
-UAT source: `era-finance-core/doc/` UAT notes; payroll depth UAT pending
+UAT source: [`era-finance-core/doc/UAT-SMOKE.md`](../../era-finance-core/doc/UAT-SMOKE.md)
+
+## Green Scaffold BE Wave 6 (2026-08-17)
+
+| Claim | Proof |
+|-------|--------|
+| AC-FIN-GL / ARAP / INV / EVT / CFG / HR / TAX / FA Scaffold ✅ | `apps/api/__tests__/fin-*-negative.spec.ts` (jest) |
+| Scaffold BE Product-Readiness ✅ | In-scope AC rollup; UI 🟡 / Demo ❌ / Pilot unchanged |
+| Signoff | [`reports/finance-be-negative-signoff.md`](../../reports/finance-be-negative-signoff.md) |
+
+### UAT-SMOKE deny steps (lab)
+
+See `era-finance-core/doc/UAT-SMOKE.md` § Green Scaffold deny paths.

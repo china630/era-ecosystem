@@ -5,7 +5,7 @@
 **AC Matrix:** [`Auto-Implementation-Matrix.md`](./Auto-Implementation-Matrix.md)
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
-Current rollup: Gate ✅ (scaffold only) · BE 🟡 · UI 🟡 · Sell: do not claim GA — pilot open
+Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not claim GA — pilot open
 
 ---
 
@@ -13,8 +13,8 @@ Current rollup: Gate ✅ (scaffold only) · BE 🟡 · UI 🟡 · Sell: do not c
 
 | Wave | Gate | AC rollup (from Matrix) | Pilot-ready | Notes / log |
 |------|------|-------------------------|-------------|-------------|
-| W0 baseline | gate[x] | 🟡 | [ ] | `reports/auto-stage-W0-signoff.md` scaffold-gate-pass |
-| W1 honesty | gate[ ] | 🟡 | [ ] | UAT lab signoff; close P0 residuals |
+| W0 baseline | gate[x] | ✅ | [ ] | `reports/auto-stage-W0-signoff.md` scaffold-gate-pass; Green-BE negative specs |
+| W1 honesty | gate[ ] | ✅ | [ ] | UAT lab signoff; close P0 residuals |
 
 ## Backlog
 

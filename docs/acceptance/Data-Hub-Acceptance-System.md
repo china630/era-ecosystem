@@ -14,6 +14,7 @@
 
 - In scope: Reference data registry API (FX, banks/IBAN, VÖEN, HS, catalogs); service-token auth; HEADLESS consumers
 - Out of scope: Public end-user UI; live e-taxes without BLOCKED clearance
+- **Wave 8:** AC-DH-VOEN stays Scaffold 🟡 (e-taxes BLOCKED / External) and is **out of Scaffold BE rollup** (Hotel INT) — Scaffold BE ✅ ≠ live VÖEN e-taxes
 
 ## Definition of Done (soft / scaffold)
 
