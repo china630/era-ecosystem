@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { DatePicker, isoDateToDisplay, SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  DatePicker,
+  isoDateToDisplay,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
 import { resolveDateMode, resolvePreset, type PeriodPreset } from '@/lib/reports/period';
 
 type ReportDateMode = 'business_date' | 'month_to_closed' | 'year_to_closed' | 'range';
@@ -48,6 +53,7 @@ export function ReportFilterBar({
 }: ReportFilterBarProps) {
   const locale = useLocale();
   const t = useTranslations('reports');
+  const tp = useTranslations('reportsPdf');
   const tc = useTranslations('common');
 
   const businessDay = useMemo(() => isoToLocalDate(businessDate), [businessDate]);
@@ -135,21 +141,18 @@ export function ReportFilterBar({
   return (
     <div className="flex w-full flex-col gap-4 rounded-md border border-gray-200 bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 flex-1 space-y-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {presetOptions.map((p) => (
-            <label key={p.id} className="flex cursor-pointer items-center gap-2 text-sm text-[#34495E]">
-              <input
-                type="radio"
-                name={`report-period-${dateMode}`}
-                value={p.id}
-                checked={preset === p.id}
-                disabled={presetsDisabled}
-                onChange={() => setPreset(p.id)}
-              />
-              <span className={presetsDisabled ? 'text-gray-400' : undefined}>{p.label}</span>
-            </label>
-          ))}
-        </div>
+        <CatalogField
+          kind="CLOSED_MEDIUM"
+          label={tp('period')}
+          value={preset}
+          disabled={presetsDisabled}
+          emptyLabel={null}
+          options={presetOptions.map((p) => ({ value: p.id, label: p.label }))}
+          onChange={(v) => {
+            const next = (Array.isArray(v) ? v[0] : v) as PresetChoice;
+            if (next) setPreset(next);
+          }}
+        />
 
         {dateMode === 'business_date' ? (
           <DatePicker

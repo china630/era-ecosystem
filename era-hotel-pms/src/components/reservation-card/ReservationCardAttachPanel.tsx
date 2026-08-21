@@ -34,7 +34,7 @@ export function ReservationCardAttachPanel({
         <input
           ref={inputRef}
           type="file"
-          className="hidden"
+          className={`hidden ${MODAL_INPUT_CLASS}`}
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) onUpload(f);

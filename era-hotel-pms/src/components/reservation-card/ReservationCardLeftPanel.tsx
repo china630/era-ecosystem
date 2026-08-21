@@ -13,6 +13,7 @@ import {
   FieldSection,
   FieldSelect,
   hotelTenderOptions,
+  MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_DANGER_CLASS,
@@ -566,6 +567,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
                 <input
                   type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
                   checked={props.shareEligible}
                   disabled={disabled || Number(props.adults) !== 1}
                   onChange={(e) => onChange({ shareEligible: e.target.checked ? 'true' : 'false' })}
