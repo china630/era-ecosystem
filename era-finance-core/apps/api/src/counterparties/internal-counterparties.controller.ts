@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, Post, Query, UnauthorizedException, Not
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { z } from "zod";
 import { assertEnvServiceToken } from "@era/satellite-kit";
+import { Public } from "../auth/decorators/public.decorator";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 import { CounterpartiesService } from "./counterparties.service";
@@ -18,6 +19,7 @@ const findOrCreateBodySchema = z.object({
 
 @ApiTags("internal")
 @Controller("internal/v1/counterparties")
+@Public()
 export class InternalCounterpartiesController {
   constructor(
     private readonly prisma: PrismaService,
