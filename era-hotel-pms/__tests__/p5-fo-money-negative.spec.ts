@@ -50,9 +50,21 @@ jest.mock('@/lib/services/card-auth.service', () => ({
   captureAuthorization: jest.fn(),
 }));
 
+jest.mock('@/lib/services/hotel-policy.service', () => ({
+  getHotelPolicy: jest.fn(async () => ({
+    cityLedgerMissingCounterparty: 'DEFER_HANDOFF',
+  })),
+}));
+
 describe('P5 FO money negative paths (AC-HOT-CASH)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+      text: async () => '',
+    }) as unknown as typeof fetch;
   });
 
   it('rejects City Ledger transfer without ACTIVE sales contract', async () => {
