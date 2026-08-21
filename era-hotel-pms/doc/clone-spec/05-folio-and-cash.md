@@ -121,6 +121,7 @@
 
 - Отрицательный payment или void payment.  
 - Только manager + причина.
+- **Ранний выезд (Nafta, planned):** непрожитые сутки → возврат **нетто** (gross / 1.18), НДС 18% не возвращается; касса по умолчанию **наличные**. Не путать с early/late **hour** fee (H-BL-09) и refund существующего платежа (H-BL-42). ADR: [hotel-early-checkout-unused-nights.md](../../docs/adr/hotel-early-checkout-unused-nights.md).
 
 ---
 

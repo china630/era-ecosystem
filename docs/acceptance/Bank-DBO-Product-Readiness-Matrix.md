@@ -10,17 +10,21 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-08-18):** AC-DBO-OPEN is **in** Scaffold BE rollup → **BE 🟡**. Code stretch (curl-only), not vendor. Return checklist: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md). Sell unchanged — ≠ full digital bank; edition `mvp` / `pilot_ready: false`.
+
 ---
 
 ## Line summary (SSOT readiness)
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Bank DBO** | ✅ | ✅ | ✅ | ✅ | [x] | [ ] | `mvp` (`pilot_ready: false`) | lab-pilot **channel** over Bank CBS; ASAN stub; ≠ full digital bank suite |
+| **Bank DBO** | ✅ | 🟡 | ✅ | ✅ | [x] | [ ] | `mvp` (`pilot_ready: false`) | lab-pilot **channel** over Bank CBS; ASAN stub; ≠ full digital bank; OPEN in BE rollup (curl-only) |
 
 ---
 
 ## UI (short)
+
+**UI class rollup:** SHOW (lab) — Open API keys now **SCREEN** (`/open-api`) — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
 
 | Surface | Path | Level |
 |---------|------|-------|
@@ -31,6 +35,9 @@
 | 3DS challenge | `/cards/3ds` | ✅ lab |
 | Islamic (read-only) | `/islamic` | ✅ lab thin |
 | Corporate approve | `/payments/approve` | ✅ lab |
+| Open API keys (corporate) | `/open-api` | 🟡 SCREEN — create/revoke; Scaffold BE still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
+
+Retail/corporate screens are lab-green. Open API keys are **SCREEN** (not in the UI ✅ sell claim). Scaffold BE stays 🟡.
 
 ---
 
@@ -60,3 +67,4 @@
 
 - Edition column copies `docs/editions/bank-dbo.yaml`.
 - Forbidden: «GA» / live gov-sign / implying full CBS modules while channel mvp and parent OUT inventory stand.
+- Forbidden: «SHARED bank SaaS pool» — AC-BANK-TENANT 🟡; CAP-NFR-TOPO DECLARED (parent).

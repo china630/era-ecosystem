@@ -12,6 +12,9 @@ WORKDIR /workspace
 
 COPY packages/era-contracts packages/era-contracts
 COPY packages/era-storage packages/era-storage
+COPY packages/i18n-common packages/i18n-common
+COPY packages/era-fiscal packages/era-fiscal
+COPY packages/satellite-kit packages/satellite-kit
 COPY era-orchestrator/packages/database ./era-orchestrator/packages/database
 
 COPY era-finance-core/package.json era-finance-core/package-lock.json ./era-finance-core/
@@ -31,8 +34,11 @@ COPY era-finance-core/apps/web/lib/i18n/resources.ts ./era-finance-core/apps/web
 
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 
-RUN cd /workspace/packages/era-contracts && npm install && npm run build \
+RUN cd /workspace/packages/i18n-common && npm install && npm run build \
+  && cd /workspace/packages/era-contracts && npm install && npm run build \
   && cd /workspace/packages/era-storage && npm install && npm run build \
+  && cd /workspace/packages/era-fiscal && npm install && npm run build \
+  && cd /workspace/packages/satellite-kit && npm install && npm run build \
   && cd /workspace/era-orchestrator/packages/database && npm install --include=dev --ignore-scripts && npm run build
 
 WORKDIR /workspace/era-finance-core
@@ -58,6 +64,9 @@ COPY era-finance-core/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh && sed -i 's/\r$//' /app/docker-entrypoint.sh
 COPY --from=builder --chown=nestjs:nodejs /workspace/packages/era-contracts /packages/era-contracts
 COPY --from=builder --chown=nestjs:nodejs /workspace/packages/era-storage /packages/era-storage
+COPY --from=builder --chown=nestjs:nodejs /workspace/packages/i18n-common /packages/i18n-common
+COPY --from=builder --chown=nestjs:nodejs /workspace/packages/era-fiscal /packages/era-fiscal
+COPY --from=builder --chown=nestjs:nodejs /workspace/packages/satellite-kit /packages/satellite-kit
 COPY --from=builder --chown=nestjs:nodejs /workspace/era-orchestrator/packages/database /era-orchestrator/packages/database
 
 # @era365/database ships a TS entry; Nest CJS runtime needs a concrete JS export path.

@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  InvoicePaymentKind,
   InvoiceStatus,
   LedgerType,
   Prisma,
@@ -162,6 +163,7 @@ export class NettingService {
           invoiceId: inv.id,
           amount: alloc,
           date: paymentDate,
+          kind: InvoicePaymentKind.NETTING,
           transactionId: nettingTransactionId,
         },
       });

@@ -7,6 +7,10 @@ function dateOnly(d: Date): Date {
 }
 
 import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
+import {
+  countDoorsUsedOnNight,
+  loadShareSlicesForType,
+} from '@/lib/services/share-assignment.service';
 
 function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
@@ -103,14 +107,9 @@ export async function getChannelAvailability(from: Date, to: Date) {
     const rows = [];
     for (const night of nights) {
       const stopSell = await isStopSellForDate(night, rt.id);
-      const overlapping = await prisma.reservation.count({
-        where: {
-          roomTypeId: rt.id,
-          status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
-          checkInDate: { lt: new Date(night.getTime() + 86400000) },
-          checkOutDate: { gt: night },
-        },
-      });
+      const nightEnd = new Date(night.getTime() + 86400000);
+      const slices = await loadShareSlicesForType(rt.id, night, nightEnd);
+      const overlapping = countDoorsUsedOnNight(slices, night, rt.adultCapacity ?? 2);
       const contractQuota = await getContractAllotmentQuota(rt.id, night);
       const contractBooked = await prisma.reservation.count({
         where: {
@@ -179,7 +178,7 @@ export async function handleOtaCancel(input: {
 
   const reservation = reservationId
     ? await prisma.reservation.findUnique({ where: { id: reservationId } })
-    : await prisma.reservation.findUnique({ where: { externalRef: externalRef! } });
+    : await prisma.reservation.findFirst({ where: { externalRef: externalRef! } });
 
   if (!reservation) {
     throw new Error('Reservation not found for OTA cancel');

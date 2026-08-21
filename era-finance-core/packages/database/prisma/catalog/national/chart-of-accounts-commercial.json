@@ -1,18 +1,10 @@
 {
   "meta": {
     "kind": "COMMERCIAL",
-    "source": "docs",
+    "source": "e-qanun-34909",
     "locale": "az+ru"
   },
   "accounts": [
-    {
-      "code": "100",
-      "nameAz": "Nağd vəsaitlər və pul sənədləri",
-      "nameRu": "Наличные средства и денежные документы",
-      "nameEn": "Cash and cash equivalents",
-      "type": "ASSET",
-      "parentCode": null
-    },
     {
       "code": "111",
       "nameAz": "Əsas vəsaitlər",
@@ -55,9 +47,9 @@
     },
     {
       "code": "220",
-      "nameAz": "Banklardakı pul vəsaitləri",
-      "nameRu": "Денежные средства на счетах в банках",
-      "nameEn": "Cash at bank",
+      "nameAz": "Pul vəsaitləri və onların ekvivalentləri",
+      "nameRu": "Денежные средства и их эквиваленты",
+      "nameEn": "Cash and cash equivalents",
       "type": "ASSET",
       "parentCode": null
     },
@@ -102,54 +94,6 @@
       "parentCode": null
     },
     {
-      "code": "101",
-      "nameAz": "Milli valyutada nağd pul",
-      "nameRu": "Наличные деньги в национальной валюте",
-      "nameEn": "Cash in local currency",
-      "type": "ASSET",
-      "parentCode": "100"
-    },
-    {
-      "code": "101.01",
-      "nameAz": "Kassa (əməliyyat)",
-      "nameRu": "Касса (операционная)",
-      "nameEn": "Cash desk (operating)",
-      "type": "ASSET",
-      "parentCode": "101"
-    },
-    {
-      "code": "101.02",
-      "nameAz": "Kassa (filial)",
-      "nameRu": "Касса (филиал)",
-      "nameEn": "Cash desk (branch)",
-      "type": "ASSET",
-      "parentCode": "101"
-    },
-    {
-      "code": "102",
-      "nameAz": "Xarici valyutada nağd pul",
-      "nameRu": "Наличные деньги в иностранной валюте",
-      "nameEn": "Cash in foreign currency",
-      "type": "ASSET",
-      "parentCode": "100"
-    },
-    {
-      "code": "102.01",
-      "nameAz": "Kassa (xarici valyuta)",
-      "nameRu": "Касса (иностранная валюта)",
-      "nameEn": "Cash desk (foreign currency)",
-      "type": "ASSET",
-      "parentCode": "102"
-    },
-    {
-      "code": "103",
-      "nameAz": "Pul sənədləri",
-      "nameRu": "Денежные документы",
-      "nameEn": "Monetary documents",
-      "type": "ASSET",
-      "parentCode": "100"
-    },
-    {
       "code": "112",
       "nameAz": "Əsas vəsaitlərin yığılmış amortizasiyası",
       "nameRu": "Накопленная амортизация основных средств",
@@ -179,7 +123,7 @@
       "nameRu": "Расходы будущих периодов",
       "nameEn": "Prepaid expenses",
       "type": "ASSET",
-      "parentCode": "100"
+      "parentCode": "290"
     },
     {
       "code": "201",
@@ -279,33 +223,33 @@
     },
     {
       "code": "221",
-      "nameAz": "Banklarda cari hesablar",
-      "nameRu": "Расчётные счета в банках",
-      "nameEn": "Bank current accounts",
+      "nameAz": "Kassa",
+      "nameRu": "Касса",
+      "nameEn": "Cash on hand",
       "type": "ASSET",
       "parentCode": "220"
     },
     {
       "code": "222",
-      "nameAz": "Banklarda cari valyuta hesabları",
-      "nameRu": "Текущие валютные счета в банках",
-      "nameEn": "Foreign currency bank accounts",
+      "nameAz": "Yolda olan pul köçürmələri",
+      "nameRu": "Денежные переводы в пути",
+      "nameEn": "Cash in transit",
       "type": "ASSET",
       "parentCode": "220"
     },
     {
       "code": "223",
-      "nameAz": "Banklarda xüsusi hesablar",
-      "nameRu": "Специальные счета в банках",
-      "nameEn": "Special bank accounts",
+      "nameAz": "Bank hesablaşma hesabları",
+      "nameRu": "Расчётные счета в банках",
+      "nameEn": "Bank settlement accounts",
       "type": "ASSET",
       "parentCode": "220"
     },
     {
       "code": "224",
-      "nameAz": "Akkreditivlər",
-      "nameRu": "Аккредитивы",
-      "nameEn": "Letters of credit",
+      "nameAz": "Tələblərə əsasən açılan digər bank hesabları",
+      "nameRu": "Прочие банковские счета до востребования",
+      "nameEn": "Other demand bank accounts",
       "type": "ASSET",
       "parentCode": "220"
     },
@@ -812,6 +756,38 @@
       "nameEn": "Allowance / doubtful debt adjustments",
       "type": "ASSET",
       "parentCode": "210"
+    },
+    {
+      "code": "221.01",
+      "nameAz": "Kassa (əməliyyat)",
+      "nameRu": "Касса (операционная)",
+      "nameEn": "Cash desk (operating)",
+      "type": "ASSET",
+      "parentCode": "221"
+    },
+    {
+      "code": "221.02",
+      "nameAz": "Kassa (filial)",
+      "nameRu": "Касса (филиал)",
+      "nameEn": "Cash desk (branch)",
+      "type": "ASSET",
+      "parentCode": "221"
+    },
+    {
+      "code": "221.11",
+      "nameAz": "Kassa (xarici valyuta)",
+      "nameRu": "Касса (иностранная валюта)",
+      "nameEn": "Cash desk (foreign currency)",
+      "type": "ASSET",
+      "parentCode": "221"
+    },
+    {
+      "code": "225",
+      "nameAz": "Pul vəsaitlərinin ekvivalentləri",
+      "nameRu": "Эквиваленты денежных средств",
+      "nameEn": "Cash equivalents",
+      "type": "ASSET",
+      "parentCode": "220"
     }
   ]
 }

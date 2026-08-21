@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-20
 
 ---
 
@@ -53,7 +53,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-03 | Resources (equipment) | vNext | Y | — | Y | — | — | SHIPPED | — |
 | CLI-04 | Procedure types | vNext | Y | — | Y Add+Edit reqs (resource + STAFF mode) | — | — | SHIPPED | Backfill missing requirements on SatAdmin list |
 | CLI-05 | Appointment create + practitioner day matrix | PRD K-01 / Pattern B | Y calendar + create/reschedule/cancel/check-in | Y `/appointments` matrix (rows=doctors) | — | — | — | SHIPPED | Legacy `/scheduling` + `/api/scheduling/slots` removed |
-| CLI-06 | Patient registry (M1) | PRD | Y paginated filters | Y `/patients` grid + modal card | — | — | — | SHIPPED | Anamnesis required on demographics PATCH |
+| CLI-06 | Patient registry (M1) | PRD | Y paginated filters | Y `/patients` grid + modal card | — | — | — | SHIPPED | Anamnesis required on demographics PATCH; hotel room filter when `sanatorium_clinical` |
 | CLI-07 | Service catalog (M6) | PRD | Y | — | Y `/admin/catalog` grid + kind/paid/package filters + Nafta import | — | — | SHIPPED | `ServiceCatalogKind`; procedure picker = PROCEDURE only; prices → `amountNet` by `code` |
 | CLI-08 | Procedure compatibility rules | M11 | Y | — | Y modal | — | — | SHIPPED | — |
 | CLI-09 | Procedure sequence rules (FIFO) | vNext | Y | — | Y modal | — | — | SHIPPED | — |
@@ -73,8 +73,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-23 | HL7 LIS prod | PRD deferred | STUB | — | — | — | — | STUB | vendor |
 | CLI-24 | Real NBC fiscal | ADR | STUB | Y cashier mock | — | — | — | STUB | external |
 | CLI-25 | Patient card clinical sections (now/next, results, plan) | PRD M1/M5 | Y `/api/patients/:id/card-summary`, `…/card-feed` | Y `/patients/[id]` | Y settings limits | — | — | SHIPPED | Pending labs (ORDERED…) in Now/next; results preview = with results only; history filter pending |
-| CLI-26 | Procedure day-ops (reception matrix + nurse attendance) | ADR clinic-procedure-day-ops | Y check-in→CHECKED_IN; auto-complete by endsAt; no-show burns quota; MANUAL channel; cron sweeps; procedures?mine=1 | Y `/nurse` agenda+kanban; `/sanatorium/resources` + fullscreen; `/sanatorium` courses table | — | — | — | SHIPPED | Check-in atomic; COMPLETED at endsAt; bonus = checkedInAt + CHECKED_IN/COMPLETED |
-| CLI-30 | Multi-resource scheduling (A sanatorium / B outpatient) | ADR clinic-multi-resource-scheduling | Y allocations/skills/requirements; planner+slots honor STAFF HARD/SOFT; Appt.resourceId | Y `/admin/master-data` Add+Edit reqs + backfill | — | — | — | SHIPPED | SOFT = shared nurse pool; physical capacity still scarce |
+| CLI-26 | Procedure day-ops (reception matrix + nurse attendance) | ADR clinic-procedure-day-ops + clinic-scheduling-time-layers | Y check-in→CHECKED_IN; auto-complete by endsAt; no-show burns quota; MANUAL channel; cron sweeps; procedures?mine=1; per-type resourceGap on check-in grace | Y `/nurse` agenda+kanban; `/sanatorium/resources` + fullscreen; `/sanatorium` courses table | Y procedure type duration/resourceGap/patientRest | — | — | SHIPPED | Check-in atomic; COMPLETED at endsAt; bonus = checkedInAt + CHECKED_IN/COMPLETED |
+| CLI-30 | Multi-resource scheduling (A sanatorium / B outpatient) | ADR clinic-multi-resource-scheduling + clinic-scheduling-time-layers | Y allocations/skills/requirements; planner+slots honor STAFF HARD/SOFT + occupying-tail resource gap; Appt.resourceId | Y `/admin/master-data` Add+Edit reqs + backfill + time-layer fields | — | — | — | SHIPPED | SOFT = shared nurse pool; physical capacity still scarce; SOFT does not inherit cabin resource gap |
 | CLI-31 | Doctor-confirm FIFO planning (PROPOSED → place) | ADR clinic-doctor-confirmed-fifo-planning | Y confirm, bulk-cancel, PATCH procedure; rotation/substitution; labs 90d/fasting | Y doctor/reception: patient card confirm; sanatorium bulk cancel+replace | Y `/admin/procedure-rules` rotation+substitution; peak settings | — | — | SHIPPED | Package → PROPOSED; doctor confirm places; incremental context |
 | CLI-32 | Diagnostic catalog DB + normalized lab orders | ADR clinic-diagnostic-catalog-db | Y LabOrderItem/LabResult; paged list filters; dual-write legacy | Y /lab-orders table+filters; detail blank read-only after publish | Y /admin/diagnostic-catalog CRUD | — | — | SHIPPED | Catalog SoT in DB; print via CLI-34 |
 | CLI-34 | Print forms (lab/USM/checkup/procedures) + branding | ADR clinic-print-forms | Y print loaders; qualitative options; ImagingPhrase | Y /print/* + language dialog on card/lab | Y print branding settings; phrase/analyte options | — | — | SHIPPED | Lang at print time; logo data URL |
@@ -84,6 +84,12 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-29 | Ops home day dashboard (Ana səhifə) | PRD ops | Y `/api/ops/day-summary` | Y `/` KPI + by-type | — | — | — | SHIPPED | Asia/Baku day; appointments/procedures/queue/labs/overdue; preset inpatient beds |
 | CLI-36 | Practitioner shift rotation | ADR clinic-practitioner-shifts | Y rule engine (weekly/week-parity/month-parity/cycle) + exceptions; matrix off-shift block; booking guard 409 | Y `/appointments` off-shift slots blocked | Y `/admin/master-data` **Shifts** modal + `GET/PUT …/[id]/schedule` | — | — | SHIPPED | Unrestricted when no rules (back-compat); outpatient appts only |
 | CLI-37 | UI list/filter standard (3-tier) | DESIGN + UI_PLAYBOOK | — | Y instant `EraListFilterBar`; name-first; icon row actions; home full-width + shared date | Y same on SatAdmin lists | — | — | SHIPPED | Global kit: no Apply; Reset inline; `useDebouncedValue` 300ms |
+| CLI-38 | Staff kind + monthly nurse/lab duty roster | ADR clinic-staff-duty-roster | Y roster GET/PUT/approve; absences; planner uses APPROVED posting; calendar = DOCTOR only | Y `/sanatorium/nurse-roster` month matrix + absence modal | Y master-data `staffKind` + link | Y | — | SHIPPED | Skill ≠ duty; CLI-36 = hours; Finance HR vacation sync later |
+| CLI-39 | Sanatorium ICD-10 search/picker | ADR clinic-icd10-catalog | Y `GET /api/icd`; episode diagnosis; `GET/POST/DELETE /api/patients/[id]/diagnoses` | Y `/sanatorium` IcdPicker (SEARCHABLE); patient card after contraindications | — | — | — | SHIPPED | UAT-SMOKE ICD; selectable CATEGORY/LEAF only; card write needs OPEN episode |
+| CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
+| CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
+| CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
+| CLI-47 | Procedure TTK (consumable BOM) → Finance stock | ADR clinic-procedure-consumable-ttk | Y consumables CRUD; resolve on COMPLETED; event lines; finance product proxy | — | Y `/admin/master-data` TTK BOM | — | — | API | Retail HTTP retired; Finance write-off W2; no UAT → not SHIPPED |
 
 ### MDM natural-person identity
 
@@ -104,9 +110,10 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | FIN-WH-FORM-01 | Forma-5 / Forma-2 statutory warehouse prints | TZ | Y | Y inventory | Y | — | — | API | WS6 |
 | FIN-PROC-01 | ProcurementProtocol + Bid + AP aging + creditor plan | TZ | Y | Y `/procurement/protocols`, `/reporting/ap-aging` | Y | Y | — | API | WS6 |
 | FIN-SUBCONTO-01 | Subconto + BRANCH multi-branch valueRef | ADR | Y | — | Y | Y | — | API | `ERA_SUBCONTO_ENABLED`; [ADR](./adr/subconto-branch-dimension.md) |
-| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | Y | — | — | Y workspace | — | API | [ADR](./adr/cp-personnel-orders.md) |
-| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | Y | — | — | Y workspace | — | API | occupied/vacant slots |
-| CP-WF-VAC-01 | Vacation plan submit/approve + event | TZ | Y | — | — | Y | — | API | Finance mirror HEADLESS |
+| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | Y | — | — | Y `/workspace/workforce/personnel-orders` | — | API | [ADR](./adr/cp-personnel-orders.md) |
+| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | Y | — | — | Y `/workspace/workforce/staff-schedule` | — | API | occupied/vacant slots |
+| CP-WF-VAC-01 | Vacation plan submit/approve + event | TZ | Y | — | — | Y `/workspace/workforce/vacation-plans` | — | API | Finance mirror HEADLESS |
+| CP-WF-TS-01 | Timesheet draft approve | ADR | Y | — | — | Y `/workspace/workforce/timesheets` | — | API | CP timesheets approve |
 | CP-WF-PII-01 | Workforce employments/absences MDM batch display + hire resolve | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | masked FIN default |
 | FIN-CP-MDM-01 | Counterparty ИП FIN → globalPersonId | ADR | Y | — | Y modal | Y | — | SHIPPED | — |
 | BANK-MDM-01 | CIF natural + UBO resolve | ADR D4 | Y | Y CIF modal | Y API | — | — | SHIPPED | — |
@@ -153,13 +160,14 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-03 | Guest notify H-BL-06 | Y | send pages | STUB | Twilio/SendGrid |
 | HOT-04 | e-qaimé H-BL-24 | stub | folio read-only | STUB | prod cert |
 | HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin only `/admin/import` |
-| HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | API | Login+ingest+MV3 ext; tenant=`ERA_SATELLITE_ORGANIZATION_ID`+`ELEKTRAWEB_HOTEL_ID`; [ADR](./adr/hotel-elektraweb-live-bridge.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
+| HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | HEADLESS | Extension options + ingest/health API; no SatAdmin card (owner 2026-08-18). [ADR](./adr/hotel-elektraweb-live-bridge.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
 | HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | — |
 | HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
 | HOT-BOOK-01 | Booking hierarchy (Block→Booking→RoomStay) | Y | Y card + `/admin/allotment-blocks` | SHIPPED | [ADR](./adr/hotel-booking-hierarchy.md); pickup UI; MASTER folio routing |
 | HOT-BOOK-02 | Reservation card Phase 0 agency-first layout | Y | Y ReservationCardEditor | SHIPPED | Assignment by stage; Additional collapsed |
 | HOT-FO-01 | Room type availability (Avl/Occ) | Y | Y /availability | SHIPPED | FO chain ADR; Occ includes unassigned |
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; block save when Avl=0 |
+| HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door inventory; UAT-SMOKE §30 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
 
 ### Hotel FO money / City Ledger / adjacent (2026-08-03 audit)
@@ -177,6 +185,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-CO-01 | Checkout close guest folios (zero balance) | clone-spec 05 | Y checkout | Y card / folio | — | — | — | SHIPPED | UAT-SMOKE §5/§27; guest must settle |
 | HOT-CO-02 | Transfer balance to City Ledger at checkout | ADR CL | Y gate+PENDING_AR | Y folio+chessboard confirm | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-40 |
 | HOT-CO-03 | Selective / per-guest folio close | ADR CL | Y closeFolio | Y folio Close | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-45 |
+| HOT-CO-04 | Early checkout unused-nights refund (net of 18% VAT, default CASH) | ADR hotel-early-checkout-unused-nights | Y preview + apply on check-out | Y folio + chessboard checkout modal | — | — | — | SHIPPED | UAT-SMOKE §33; all folios reverse; guest cash net VAT; H-BL-49 |
 | HOT-CL-01 | Folio routing rules + stay overrides (revenue → GUEST/COMPANY/AGENCY) | ADR CL | Y stay PUT | Y card routing table | Y master data | — | — | SHIPPED | Stay overrides > property FolioRoutingRule on postCharge |
 | HOT-CL-02 | Credit limit on stay / room charge | H-BL-03 | Y | Y Billing field | — | — | — | SHIPPED | UAT-SMOKE card billing; CL gate uses limit |
 | HOT-CL-03 | Agency City Ledger ops snapshot | Stage 23 | Y ledger+settle | Y `/front-cash/agency-ledger` | — | — | — | SHIPPED | UAT-SMOKE §27 agency settle; legacy `/reports/agency-ledger` redirects |
@@ -184,13 +193,18 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-CL-05 | Payment terms + aging + invoice matching | ADR CL D2 | — | — | terms on CP | Y aging+allocate | — | SHIPPED | Finance UAT aging+allocate; hotel handoff only |
 | HOT-NA-01 | Night Audit EOD (post room/package, roll day, E1) | clone-spec 07 | Y `/api/night-audit/*` | Y `/night-audit` | — | — | — | SHIPPED | UAT-SMOKE §6; legacy `/operations` redirects |
 | HOT-NA-02 | Night Audit polish (exceptions, auto no-show, trial) | ADR CL | Y polish steps | Y `/night-audit` preview | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-44 |
-| HOT-NA-03 | EOD reports hub + P1 grids (+ no-show / room-move / VIP + CSV) | MENU-IA + ADR | Y `/api/night-audit/eod-reports` | Y `/night-audit/reports*` | — | — | — | SHIPPED | UAT-SMOKE §28; not full EW 01–22 archive |
+| HOT-NA-03 | EOD reports hub + P1 grids (+ no-show / room-move / VIP + CSV) | MENU-IA + ADR | Y `/api/night-audit/eod-reports` | Y `/night-audit/reports*` | — | — | — | SHIPPED | UAT-SMOKE §28; Management PDF catalog is HOT-RPT-01/02 (API, not SHIPPED) |
 | HOT-NA-04 | Reservation updates (action filter + CSV) | MENU-IA | Y `…/reservation-updates` | Y UI filter+CSV | — | — | — | SHIPPED | UAT-SMOKE §28; classify heuristics on audit text |
 | HOT-NA-05 | End of year close / open | ADR year-end | Y preview API | Y `/night-audit/year-end` | — | — | — | STUB | ADR `hotel-year-end-calendar`; POST `YEAR_END_NOT_ENABLED` |
+| HOT-RPT-01 | Management reports catalog + `/reports` category hubs (EW WA0058/59) | [catalog](../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) | Y `/api/reports/{slug}` | Y `/reports/{analysis,occupancy,daily,financial,agency,booking}` + cubes | — | — | — | API | W1–W3 screens + PDF; email cron HEADLESS; no UAT evidence → not SHIPPED |
+| HOT-RPT-02 | Configurable nightly management pack + ZIP | catalog §6 | Y `/api/reports/pack/download` | Y `/reports/nightly-pack` + NA deep link | Y `/settings/report-pack` | — | — | API | ZIP + SatAdmin; cron sends ZIP link (HEADLESS); not SHIPPED |
 | HOT-XFER-01 | Transfers (airport / fleet → folio + cancel + routing) | module map | Y | Y `/transfers` | — | — | — | SHIPPED | Charge via postCharge routing; cancel/void; UAT transfers |
 | HOT-BEO-01 | Banquets / BEO MVP + day sheet print | H-BL-31 | Y day-sheet | Y `/banquets*` | — | — | — | SHIPPED | UAT-SMOKE §15; not full Opera S&C |
 | HOT-AG-01 | Tour agency contracts + commission % | H-BL-30 | Y | Y `/admin/contracts` | Y | — | — | SHIPPED | UAT-SMOKE §18 |
 | HOT-AG-02 | Agency prepaid/postpaid settlement + refunds | ADR CL | Y settlement API | Y agency-ledger | — | Finance match | — | SHIPPED | UAT-SMOKE §27; bank match Finance |
+| HOT-AGP-01 | Agency portal book (contract allotment + isolation) | [ADR agency portal](./adr/hotel-agency-portal.md) | Y `/api/agency/*` | Y `/agency/*` (extranet) | Y invite | — | — | API | P0–P1; multi-hotel grant on CP; AUTO default OFF → OPTION |
+| HOT-AGP-02 | FO agency inbox confirm / decline | ADR agency portal | Y `/api/fo/agency-inbox` | Y `/fo/agency-inbox` | — | — | — | API | Confirm → CONFIRMED; decline → CANCELLED |
+| HOT-AGP-03 | Optional passport scan on agency booking | ADR agency portal | Y attachment upload | Y card + agency UI | — | — | — | API | Not KBS; storage key org-scoped |
 | HOT-UI-01 | List/filter enrichment (EraListFilterBar parity) | CLI-37 pattern | — | Y FO lists | allotment | — | — | SHIPPED | UAT list filters; H-BL-47 |
 | HOT-PC-01 | Pricing components (service fee / meals / COGS versions + history) | [ADR bar vs package](./adr/hotel-bar-accounting-vs-package-sell.md) | Y `/api/admin/pricing-components` | Y `/settings/pricing-components` | Y | — | — | SHIPPED | Seeds Nafta defaults; audit on version create |
 | HOT-OCC-01 | Occupancy / load / child pricing feature flags + 2nd/3rd adult + extra bed + child matrix CRUD | [ADR occupancy flags](./adr/hotel-occupancy-and-load-pricing-flags.md) | Y `/api/admin/pricing-policy`, child-matrix, yield | Y `/settings/pricing-policy`, master-data rate plans, `/distribution/child-matrix` | Y | — | — | SHIPPED | Flags default OFF; yield only when load flag ON |
@@ -220,13 +234,16 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | ID | Capability | SatAdmin | Status | Blocker |
 |----|------------|----------|--------|---------|
 | FIN-01 | GL / documents ERP | Y web | SHIPPED | — |
+| FIN-GL-02 | Manual adjusting journal (əl ilə tənzimləmə) | Y `/accounting/adjustments` | SHIPPED | ADR wave 3: preview/PDF/reverse/copy; reason required; USER 403; UAT-SMOKE § Manual adjusting journal |
+| FIN-AR-CRADJ-01 | Invoice credit adjustment (internal remaining) | Y `ViewInvoiceModal` | SHIPPED | VAT split REVENUE 601/545/211; `CREDIT_ADJUSTMENT` + reversal; overpayment CTA; UAT-SMOKE § Invoice credit adjustment |
+| FIN-FA-DON-01 | FA in-kind donation (capitalization) | Y `/fixed-assets` lifecycle | SHIPPED | `creditSource=DONATION`; note ≥10; UAT-SMOKE § FA donation |
 | FIN-02 | Satellite event worker | — | HEADLESS | by design |
 | FIN-03 | e-qaimé | stub modal | STUB | prod cert |
 | FIN-EQAIME-01 | e-Qaimə S2S submit + invoice eqaime status | Y `/sales/invoices` | STUB/API | `ERA_EQAIME_S2S_ENABLED`; 503 `RPA_FALLBACK` — [ADR](./adr/eqaime-s2s-submission.md) |
 | FIN-EQAIME-02 | EQF registry by debtor | Y `/reporting/eqf-registry` | API | tax/reporting |
 | FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
 | FIN-EQAIME-IN-01 | Incoming e-qaimə compare + ingest | Y network-inbox | API | amount/VÖEN MATCH/MISMATCH |
-| FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | — |
+| FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | Q-01 commercial kassa **221** / bank **223**; NAS-GOV **101/103**; İ-05 **221/223** |
 | FIN-TAX-01 | Tax declarations (simplified / profit / payroll); property = aggregate/preview | Y `/reporting/tax-export`, `/reporting/property-tax/preview` | API | tax_pro; property declaration-file export pending; UAT-SMOKE pending |
 | FIN-TAX-02 | Profit tax adjustments + preview | Y API + tax-export | API | tax_pro |
 | FIN-STAT-01 | Goskomstat engine (1-müəssisə, 1/4-əmək, 1-İKT) | Y `/reporting/statforms` | API | compliance_pro or tax_pro |
@@ -268,7 +285,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | FC-DH-011 | ISO currency catalog (hub SoR) | ADR hub | Y `/system/currencies` | SHIPPED | FK cache; admin read-only |
 | FC-DH-COA | PostingRole de-hardcode CI | TZ §28.3 | — | HEADLESS | `lint-nas-literals.mjs` |
 | LOG-REF-01 | Logistics HS/FX preview via Finance | Y `/customs` | Y | SHIPPED | — |
-| BANK-REF-01 | Bank multi-catalog hub + snapshot | — | Y | API | on-prem snapshot |
+| BANK-REF-01 | Bank multi-catalog hub + snapshot | — | Y | HEADLESS | on-prem `ref-data-snapshot` + DataHubClient; not a teller screen (owner 2026-08-18) |
 | ORCH-RD-01 | B2B reference-data API keys | — | Y | SHIPPED | orchestrator |
 
 ---
@@ -357,15 +374,38 @@ ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-p
 | ORCH-05 | Login onboarding 0/1/N + company-less gate | Y | — | SHIPPED |
 | ORCH-06 | Pending invites accept (invited accountant) | Y | — | SHIPPED |
 
+### Deployment topology (declared — not a live SaaS pool)
+
+Canon: [deployment-topology.md](./adr/deployment-topology.md). **Do not mark SHIPPED.** Axis A (`STANDALONE` / `DEPARTMENT` / `Outlet`) is separate.
+
+| ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status |
+|----|------------|-----|-----|-------|----------|----------|------------|--------|
+| CP-TOPO-01 | Vocabulary SHARED / DEDICATED / ONPREM + mixed endpoints | ADR deployment-topology | — | — | — | — | — | Doc |
+| CP-LIC-01 | License defaults by topology + super-admin perpetual / ± term | ADR platform-trial-hierarchy §1 | `PATCH …/subscription/trial`, `PATCH …/deployment-topology`; provision reads `Organization.deploymentTopology` | — | — | — | Y `/super-admin/orgs/{id}/subscription` (+ sat/module trial, quotas, block/tier) | API |
+| CP-SA-ORGS-01 | Super-admin org catalog + hub | — | `GET /v1/admin/organizations` | — | — | — | Y `/super-admin/orgs` | API |
+| CP-SA-REF-01 | Referral partners admin | — | `/v1/admin/referrals/partners` | — | — | — | Y `/super-admin/referrals` | API |
+| CP-SA-LAND-01 | Landing marketing admin | — | `/v1/admin/landing-modules` | — | — | — | Y `/super-admin/landing` | API |
+| CP-BILL-OWNER-01 | Owner billing constructor + invoices/orders | CP-BILLING | `/v1/billing/*`, `select-plan` | — | — | Y `/settings/subscription|invoices|orders` | — | API |
+| CP-BIND-01 | Satellite org UUID bind + Super-admin sync | ADR satellite-organization-bind | `POST/GET …/organization/bind`, Sync; kit boot on hotel/clinic/fnb + bank/dbo/bank-core; `industry_banking` in Sync keys | — | — | — | Y | API |
+| CP-CFG-01 | Desired-state runtime config (SSO, event token, edition, topology) | ADR satellite-organization-bind §8 + deployment-topology §4 | `POST/GET …/runtime-config` + Sync fan-out — hotel/clinic/fnb/finance + thin industry + bank/dbo/bank-core; payload may include `deploymentTopology` + `edition` (informational; never skip tenant filter). Finance orch URL = kit memory after Sync (`CONTROL_PLANE_URL` bootstrap only) | — | — | — | Y | API |
+| CP-LAUNCH-01 | Owner launcher base URL from SatelliteEndpoint (env fallback) | INTEGRATION_SSO_EVENTS; ECOSYSTEM_URLS | `GET /v1/satellites/launch-url`; workspace + `/industry/[vertical]` prefer registry | — | — | Y | — | API |
+| CP-PLACE-01 | PlacementJob: freeze, org slice, endpoint cutover, hop SHARED⇄DEDICATED⇄ONPREM | ADR deployment-topology §4–§5 | `POST/GET /v1/admin/orgs/:orgId/placement-jobs`, `POST …/placement-jobs/:id/advance`, `GET /v1/placement-agent/jobs`; host agent `scripts/era-placement-agent.mjs`; kit `exportOrgSlice` metadata stub; SHARED↔ONPREM → REJECTED | — | — | — | Y `/super-admin/orgs/{id}/placement` | API |
+| CP-TENANT-01 | `organizationId` on industry satellite ops rows + composite uniques | ADR deployment-topology §2 | Clinic/hotel/fnb/retail/crm/auto/construction/wholesale/logistics/bank/dbo/bank-core + **fail-closed** kit Prisma tenant extension (no `unbound` default; stamp+mismatch reject); staff `User.phone` unique per org; `runCronForEachTenant`; CI mergeWhere + `check:satellite-raw-sql`; clinic UAT-SMOKE two-org outline (pending field) | — | — | — | — | API |
+
+Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool and automated migrate are **not** sellable. Waves 3–5 + remaining-satellite wave: tenant roots + composite uniques + kit Prisma filter + CI mergeWhere isolation. AC-*-TENANT stay 🟡 and out of BE rollup (no live two-org pool / field UAT). **Bank:** same ladder as other satellites (CAP-NFR-TOPO DECLARED = pool not built, not a special ban). Nafta entitlement gate: fail-closed `requireSatelliteModule` / cron skip (hotel/clinic/fnb/finance + thin industry module-gates) + Sync pushes `activeModules` into runtime-config; kit `ERA_DEV_UNLOCK_ALL_MODULES` refused when `NODE_ENV=production`.
+
 ---
 
 ## era-orchestrator CP workforce (Plan A)
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
-| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments` | — | — | Y | — | Workspace → employments → hire by globalPersonId + orgUnit + position |
+| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments` | — | — | Y | — | Workspace → employments → hire; transfer/terminate/reprovision/HR profile modals (API UI, no UAT-SMOKE yet) |
 | CP-WF-ABS-01 | Absence workflow (7 TK AZ kinds, modal CRUD) | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | create/edit via modal on `/workspace/workforce/absences`; kinds: VACATION/SICK/UNPAID/SOCIAL_LEAVE/EDUCATIONAL_LEAVE/BUSINESS_TRIP/ADMINISTRATIVE |
-| CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y API | — | UI deferred; emits `WORKFORCE_VACATION_PLAN_APPROVED` |
+| CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | UI landed; status API until UAT-SMOKE |
+| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | UI landed; status API until UAT-SMOKE |
+| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | UI landed; status API until UAT-SMOKE |
+| CP-WF-TS-01 | Timesheet draft approve | ADR | `GET/POST …/timesheets/*` | — | — | Y `/workspace/workforce/timesheets` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*` | — | — | Y | — | bootstrap scope → create tree on `/workspace/workforce/org-structure` |
 | CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` | — | — | Y | — | create position on `/workspace/workforce/positions` |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Split UI: `/security` matrix (neutral No access), `/security/grants`, `/security/bindings`, `/security/audit` |
@@ -407,6 +447,26 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-21 | Fail-closed tenant filter (no unbound default; stamp+mismatch reject); User.phone unique per org; runCronForEachTenant; check:satellite-raw-sql. Bank CAP-NFR-TOPO: same ladder as hotel (pool not built, not a special ban). CP-TENANT-01 stays API; AC-*-TENANT stay 🟡 |
+| 2026-08-21 | Clinic scheduling time layers ADR: occupancy vs per-type resource gap vs patient rest vs pair rules; UFF gel 5/0/15; SOFT nurse ≠ cabin gap. CLI-26/30 stay SHIPPED; schema split not built |
+| 2026-08-21 | Clinic time layers shipped: ProcedureType.resourceGapMinutes/patientRestMinutes; occupying-tail; SVC-ULTRAFONOFOREZ-GEL; SatAdmin three numbers |
+| 2026-08-18 | UI waves A–C: DBO `/open-api` + orch placement page (NONE→SCREEN); HOT-06 + BANK-REF-01 HEADLESS; thin-satellite MDM re-audit. Demo/TE unchanged. |
+| 2026-08-18 | UI Coverage Board: `docs/acceptance/UI-COVERAGE-BOARD.md` joins PRM UI + COVERAGE actors + NONE holes. Status=`API` + actor Y = SCREEN (not «no UI»). Sell still Product-Readiness only. |
+| 2026-08-18 | Green Scaffold BE Wave 8: vendor leftovers (FISCAL / WA / VOEN) stay out of their product BE rollup (Hotel INT). Same-day owner revert: AC-DBO-OPEN + AC-CP-TOPO stay **in** Bank DBO / Platform BE rollup as 🟡 — playbook `docs/acceptance/BE-OPEN-AND-TOPO-RETURN.md`. No SHIPPED / no edition ga / no SaaS pool sell |
+| 2026-08-17 | Green Scaffold BE Wave 7 (Platform): AUTH/BILL/MDM/WF/SA/INT/BIND/CFG Scaffold ✅ + `cp-*-negative.spec.ts`; AC-CP-TOPO stays 🟡; Platform Product-Readiness Scaffold BE stays 🟡; edition `mvp` / no SHARED pool sell |
+| 2026-08-17 | Wave 0 Green BE residual registers + DBO Readiness honesty (no Scaffold flips) |
+| 2026-08-17 | Waves 9–18 topology closeout: fail-closed module gates + prod refuses ERA_DEV_UNLOCK; CRM ops assertEntitled spot-check; clinic two-org UAT outline + pending signoff stub; PlacementJob Prisma+admin API+host agent+slice stub (CP-PLACE-01 → API); SHARED↔ONPREM REJECTED negative test; bank CAP-NFR-TOPO stays DECLARED; live SHARED pool ops Not built; AC-CP-TOPO 🟡 not Scaffold ✅; edition platform mvp; no false SHIPPED |
+| 2026-08-17 | Wave 8 launcher URLs: `GET /v1/satellites/launch-url` prefers SatelliteEndpoint; NEXT_PUBLIC_* local-dev fallback only; CP-LAUNCH-01 API (not SHIPPED; no UAT) |
+| 2026-08-17 | Waves 5–7 topology: Finance Nest orch URL/token via kit (CONTROL_PLANE_URL bootstrap-only); Sync pushes optional deploymentTopology+edition into runtime-config; docs/compose hygiene; CP-CFG-01 stays API; CP-PLACE-01 / AC-CP-TOPO unchanged; no SHIPPED / no edition ga |
+| 2026-08-17 | Wave 3 topology: product call sites use `satelliteOrganizationId()` / `resolveSatelliteOrganizationId()` (SSO, billing-snapshot, bank BFF, kit clients); drop hotel/clinic env aliases in kit; CP-BIND/CP-TENANT stay API; AC-*-TENANT stay 🟡 |
+| 2026-08-17 | Wave 2 topology runtime-config: thin industry (retail/crm/auto/construction/wholesale/logistics) + bank/dbo/bank-core Nest `POST/GET …/runtime-config` + instrumentation boot; CP-CFG-01 stays API (not SHIPPED) |
+| 2026-08-17 | Wave 1 topology env: bank/dbo/bank-core bind HTTP + Sync `industry_banking` in INDUSTRY_SATELLITE_KEYS; CP-BIND-01 API; CAP-NFR-TOPO stays DECLARED |
+| 2026-08-17 | Tenancy + Nafta gates wave: remaining satellites organizationId (retail/crm/auto/construction/wholesale/logistics/bank); fail-closed entitlement + cron skip on Nafta (hotel/clinic/fnb/finance); Sync activeModules in runtime-config; AC-*-TENANT 🟡; no SHARED pool / Placement |
+| 2026-08-17 | B7 bank tenancy: CP-TENANT-01 covers bank/dbo/bank-core organizationId + kit filter; AC-BANK-TENANT 🟡; SHARED bank pool still forbidden |
+| 2026-08-17 | Orch missing-screens wave: SuperAdmin org catalog/referrals/landing; owner billing invoices/orders; workforce vacation/orders/ştat/timesheets UI (status API, not SHIPPED) |
+| 2026-08-17 | CP-LIC-01: topology license defaults (SHARED trial / DEDICATED+ONPREM perpetual) + super-admin perpetual / ± months; PlacementJob still Doc |
+| 2026-08-17 | Topology waves 0–5: CP-BIND/CFG/TENANT → API (kit boot, Sync runtime-config industry+finance, SHARED-ready schema + kit filter); CP-PLACE/TOPO vocabulary still Doc; SHARED pool not sellable |
+| 2026-08-17 | CP-TOPO/BIND/CFG/PLACE/TENANT: deployment topology declared; SHARED pool and placement not built |
 | 2026-06-15 | Initial honest matrix; clinic CLI-* green target; cross-app highlights |
 | 2026-06-16 | CLI-PRESET-* product lines per clinic ADR |
 | 2026-06-15 | DH-FX / FC-FX / BK-FX / LG-FX coverage rows (CBAR ecosystem refactor) |
@@ -431,6 +491,9 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-07-22 | CLI-35 sidebar cleanup: Setup→Catalogs/Rules; wards under Inpatient; `/executive` merged into Home (owners); `/admin/catalog-favorites` merged into diagnostic-catalog favorites tab; both routes removed |
 | 2026-07-22 | CLI-36 practitioner shift rotation: rule engine (weekly/parity/cycle) + exceptions; matrix off-shift block; booking guard; Shifts admin modal |
 | 2026-07-22 | CLI-37 UI list/filter standard: EraListFilterBar instant+inline Reset; clinic home shared date; name-first + icon actions |
+| 2026-08-19 | HOT-RPT-01/02 Hotel Management Reports W1–W3 (P0 ZIP + P1 catalog + cubes/3-year + email ZIP link HEADLESS); STUB → API — not SHIPPED (no UAT evidence) |
+| 2026-08-20 | HOT-AGP-01/02/03 Agency portal P0–P1 (CP grants + hotel book + FO inbox + passport scan); Status=API; AC-HOT-AGP 🟡; SKU `hotel_agency_portal` |
+| 2026-08-17 | CLI-38 staff kind + monthly nurse/lab duty roster (`/sanatorium/nurse-roster`); clinic-local absences; planner honors approved posting |
 | 2026-08-03 | Hotel FO money / City Ledger audit: HOT-CASH/CO/CL/NA/XFER/BEO/AG/UI rows + ADR hotel-city-ledger-and-fo-money; P5 backlog H-BL-40…48 |
 | 2026-08-03 | P5 ship: HOT-CO-02/CASH-03..05/CL-05/NA-02/AG-02/UI-01 → SHIPPED; Finance allocate UI + paymentTermsDays |
 | 2026-08-04 | Hotel acceptance closeout: IM/PRM/Sprint/edition synced; Product Readiness remains mvp/🟡 (Scaffold/UI/Pilot open) |

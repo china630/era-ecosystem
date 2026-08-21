@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertLogisticsEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -11,6 +11,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    await assertLogisticsEntitled();
     const trips = await prisma.trip.findMany({
       include: { vehicle: true },
       orderBy: { createdAt: "desc" },
@@ -26,13 +27,14 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
     let vehicle = await prisma.vehicle.findUnique({
-      where: { plate: body.vehiclePlate },
+      where: { plate: body.vehiclePlate } as never,
     });
     if (!vehicle) {
       vehicle = await prisma.vehicle.create({
         data: { plate: body.vehiclePlate, model: body.vehicleModel },
       });
     }
+    if (!vehicle) throw new Error("Vehicle missing after ensure");
 
     const trip = await prisma.trip.create({
       data: {

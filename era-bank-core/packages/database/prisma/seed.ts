@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { createHash } from "crypto";
 import {
+  Prisma,
   PrismaClient,
   GlAccountType,
   BranchStatus,
@@ -19,6 +20,7 @@ import {
 } from "../generated/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { createSatelliteTenantExtension } from "@era/satellite-kit/tenancy";
 
 const bankOrgId = process.env.ERA_BANK_ORGANIZATION_ID ?? "demo-bank-org-001";
 
@@ -30,7 +32,10 @@ async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is required for seed");
   const pool = new Pool({ connectionString: url });
-  const prisma = new PrismaClient({ adapter: new PrismaPg(pool as unknown as never) });
+  process.env.ERA_BANK_ORGANIZATION_ID = bankOrgId;
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg(pool as unknown as never),
+  }).$extends(createSatelliteTenantExtension(Prisma as never) as never) as unknown as PrismaClient;
 
   try {
     const glAccounts = [

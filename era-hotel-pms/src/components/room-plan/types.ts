@@ -22,6 +22,11 @@ export interface RoomPlanRoom {
   floor: number;
   status: RoomStatus;
   roomType: { code: string };
+  sharePool?: {
+    gender: string;
+    occupied: number;
+    capacity: number;
+  } | null;
 }
 
 export interface RoomPlanReservationBar {
@@ -32,8 +37,21 @@ export interface RoomPlanReservationBar {
   checkOutDate: string;
   status: ReservationStatus;
   paymentMethod?: string | null;
+  paidBy?: string | null;
   totalAmount?: number | string | null;
+  dailyRate?: number | null;
+  guestBalance?: number | null;
+  agencyBalance?: number | null;
   adults?: number | null;
+  children11_6?: number | null;
+  children5_2?: number | null;
+  children1_0?: number | null;
+  mealPlanCode?: string | null;
+  voucherNo?: string | null;
+  note?: string | null;
+  shareEligible?: boolean;
+  shareGender?: string | null;
+  shareBedIndex?: number | null;
   guest: { fullName: string };
   roomType: { code: string };
   room?: { roomNumber: string } | null;

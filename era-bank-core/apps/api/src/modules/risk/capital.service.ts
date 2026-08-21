@@ -84,7 +84,8 @@ export class CapitalService {
     }
     const tier1 = this.tier1CapitalMinor();
     const total = tier1;
-    const carRatio = rwa > 0n ? Number(total) / Number(rwa) : 0;
+    const carRwa = rwa ?? 0n;
+    const carRatio = carRwa > 0n ? Number(total) / Number(carRwa) : 0;
     const tier1Ratio = carRatio;
 
     return this.prisma.capitalAdequacySnapshot.create({
@@ -93,7 +94,7 @@ export class CapitalService {
         asOfDate,
         tier1CapitalMinor: tier1,
         totalCapitalMinor: total,
-        rwaMinor: rwa,
+        rwaMinor: carRwa,
         carRatio,
         tier1Ratio,
       },

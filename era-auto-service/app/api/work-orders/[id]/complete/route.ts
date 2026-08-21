@@ -1,3 +1,4 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { SATELLITE_AUTO_WORK_ORDER_COMPLETED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
@@ -49,7 +50,7 @@ export async function POST(
       },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const organizationId = satelliteOrganizationId();
     const amountAzn =
       Number(completed.laborAmount) + Number(completed.partsAmount);
     let payUrl: string | undefined;

@@ -10,6 +10,9 @@ import {
   Field,
   FieldRow,
   FieldSelect,
+  FORM_STACK_CLASS,
+  ModalFooter,
+  ModalShell,
   PRIMARY_BUTTON_CLASS,
   VoenLookupField,
   PageHeader,
@@ -73,6 +76,8 @@ const FALLBACK_PROSPECT: CatalogOption[] = [
   { value: "PARTNER", label: "Partner" },
   { value: "OTHER", label: "Other" },
 ];
+
+const createLeadFormId = "crm-create-lead-form";
 
 function PipelineFallback() {
   const t = useTranslations("leads");
@@ -243,6 +248,17 @@ function LeadsPipelineContent() {
       if (!res.ok) throw new Error(data.error ?? "Create failed");
       setMessage(t("leadCreated", { id: data.id.slice(0, 8) }));
       setShowCreate(false);
+      setFormTitle("");
+      setFormTaxId("");
+      setFormCompanyName("");
+      setFormPhone("");
+      setFormEmail("");
+      setFormProspectType("CUSTOMER");
+      setFormSector("");
+      setFormChannel("phone");
+      setFormAmount("");
+      setFormFin("");
+      setFormGlobalPersonId(null);
       await loadLeads(myLeadsOnly, prospectFilter);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
@@ -385,9 +401,29 @@ function LeadsPipelineContent() {
           <p className="text-[13px] text-[#2980B9]">{prefillNotice}</p>
         )}
 
-        {showCreate && (
-          <div className="rounded border border-[#D5DBDB] bg-[#FAFBFC] p-4 space-y-3 max-w-lg">
-            <h3 className="text-[14px] font-semibold">{t("createLead")}</h3>
+        <ModalShell
+          open={showCreate}
+          title={t("createLead")}
+          onClose={() => setShowCreate(false)}
+          closeLabel={tc("cancel")}
+          footer={
+            <ModalFooter
+              formId={createLeadFormId}
+              onCancel={() => setShowCreate(false)}
+              busy={creating}
+              submitLabel={creating ? tc("loading") : tc("save")}
+              cancelLabel={tc("cancel")}
+            />
+          }
+        >
+          <form
+            id={createLeadFormId}
+            className={`${FORM_STACK_CLASS} max-w-lg`}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void createLead();
+            }}
+          >
             <FieldSelect
               label={t("partyKind")}
               preset="selectWide"
@@ -494,25 +530,8 @@ function LeadsPipelineContent() {
                 onChange={(e) => setFormAmount(e.target.value)}
               />
             </FieldRow>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={creating}
-                onClick={() => void createLead()}
-              >
-                {creating ? tc("loading") : tc("save")}
-              </button>
-              <button
-                type="button"
-                className="rounded border px-3 py-1 text-[13px]"
-                onClick={() => setShowCreate(false)}
-              >
-                {tc("cancel")}
-              </button>
-            </div>
-          </div>
-        )}
+          </form>
+        </ModalShell>
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           {grouped.map(({ stage, items }) => (

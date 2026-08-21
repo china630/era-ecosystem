@@ -2765,12 +2765,30 @@ model TemplateIFRSMapping {
   @@map("template_ifrs_mappings")
 }
 
+/// Origin of a GL transaction. SYSTEM = posted by a domain document (invoice, bank, payroll…).
+/// MANUAL_ADJUSTMENT = accountant journal voucher (əl ilə tənzimləmə); never mutates prior entries.
+enum TransactionKind {
+  SYSTEM
+  MANUAL_ADJUSTMENT
+}
+
 model Transaction {
   id                           String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId               String                        @map("organization_id") @db.Uuid
   date                         DateTime                      @db.Date
   reference                    String?
   description                  String?
+  kind                         TransactionKind               @default(SYSTEM)
+  /// Required for MANUAL_ADJUSTMENT — what and why (audit). Null for SYSTEM.
+  reason                       String?
+  /// UX template code (FREEFORM, AR_OVERCOLLECTION_REFUND, …); not a separate entity.
+  manualTemplate               String?                       @map("manual_template")
+  /// Optional link to an existing invoice; the invoice itself is not mutated.
+  basisInvoiceId               String?                       @map("basis_invoice_id") @db.Uuid
+  /// Optional link to a fixed asset card (in-kind donation); card lines are not mutated.
+  basisFixedAssetId            String?                       @map("basis_fixed_asset_id") @db.Uuid
+  /// When set, this MANUAL_ADJUSTMENT reverses another (mirror lines); original SENT is never touched.
+  reversesTransactionId        String?                       @unique @map("reverses_transaction_id") @db.Uuid
   createdAt                    DateTime                      @default(now()) @map("created_at")
   updatedAt                    DateTime                      @updatedAt @map("updated_at")
   /// *
@@ -2820,6 +2838,7 @@ model Transaction {
   @@index([organizationId, createdAt])
   @@index([organizationId, date, isLocked])
   @@index([departmentId])
+  @@index([organizationId, kind, date])
   @@map("transactions")
 }
 
@@ -3573,6 +3592,11 @@ model Invoice {
   eqaimeStatus               EqaimeStatus?         @map("eqaime_status")
   eqaimeSubmittedAt          DateTime?             @map("eqaime_submitted_at") @db.Timestamptz(6)
   projectId                  String?               @map("project_id") @db.Uuid
+  /**
+   * Hotel PMS source: used for idempotent processing of
+   * `SATELLITE_HOTEL_INVOICE_ISSUED` (retry-safe when hotel re-emits the event).
+   */
+  sourceFolioId              String?               @map("source_folio_id") @db.Uuid
   matchedBankLines           BankStatementLine[]   @relation("InvoiceBankMatch")
   cashOrders                 CashOrder[]
   items                      InvoiceItem[]
@@ -3592,6 +3616,7 @@ model Invoice {
   deletedReason              String?               @map("deleted_reason")
 
   @@unique([organizationId, number])
+  @@unique([organizationId, sourceFolioId], map: "invoice_source_folio_id_org_uidx")
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
   @@index([organizationId, counterpartyId])
@@ -3823,15 +3848,24 @@ model StatReportExport {
   @@map("stat_report_exports")
 }
 
+enum InvoicePaymentKind {
+  PAYMENT
+  NETTING
+  CREDIT_ADJUSTMENT
+  CREDIT_ADJUSTMENT_REVERSAL
+}
+
 /// *
 ///  * Оплата инвойса (частичная или полная); сумма проводок Дт касса/банк — Кт 211 = amount.
+///  * CREDIT_ADJUSTMENT — внутренняя корректировка остатка (Дт 601/731 Кт 211), не денежный платёж.
 model InvoicePayment {
-  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId  String       @map("organization_id") @db.Uuid
-  invoiceId       String       @map("invoice_id") @db.Uuid
-  amount          Decimal      @db.Decimal(19, 4)
-  date            DateTime     @db.Date
-  transactionId   String?      @map("transaction_id") @db.Uuid
+  id              String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String             @map("organization_id") @db.Uuid
+  invoiceId       String             @map("invoice_id") @db.Uuid
+  amount          Decimal            @db.Decimal(19, 4)
+  date            DateTime           @db.Date
+  kind            InvoicePaymentKind @default(PAYMENT)
+  transactionId   String?            @map("transaction_id") @db.Uuid
   createdAt       DateTime     @default(now()) @map("created_at")
   invoice         Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

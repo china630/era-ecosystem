@@ -78,7 +78,7 @@ All clinical and billing references must resolve through moderated catalogs — 
 | Tier | Owner | Examples |
 |------|-------|----------|
 | **Platform MDM** | Orchestrator `era_mdm` | `GlobalNaturalPerson`, FIN/passport, org VÖEN |
-| **Shared clinical reference** (read-only, future) | Orchestrator or Data Hub subset | ICD-10 AZ subset, lab analyte dictionary |
+| **Shared clinical reference** | Orchestrator platform catalog + local clinic `IcdCode` | Full WHO ICD-10 (2019) in clinic DB now; orch `GET /platform/v1/catalog/icd10` gateway sync (W3, in-process generator, **not** data-hub); lab analyte dictionary remains satellite |
 | **Operational master data** | Satellite admin | Practitioners, rooms, resources, procedure types, wards/beds |
 | **Commercial** | Finance + cache in clinic | Service codes, prices, insurance contracts |
 

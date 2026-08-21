@@ -11,6 +11,7 @@ export type ClinicAuthState = {
   canViewClinicAdmin: boolean;
   isPlatformSuperAdmin: boolean;
   enabledPresets: ClinicPresetCode[];
+  checkInMode?: "QR" | "CODE" | "MANUAL";
   checkInRequiresQr: boolean;
 };
 
@@ -23,6 +24,7 @@ type AuthMePayload = {
   canViewClinicAdmin?: boolean;
   isPlatformSuperAdmin?: boolean;
   enabledPresets?: ClinicPresetCode[];
+  checkInMode?: "QR" | "CODE" | "MANUAL";
   checkInRequiresQr?: boolean;
   data?: AuthMePayload;
 };
@@ -57,7 +59,15 @@ export function useClinicAuth(): {
           enabledPresets: Array.isArray(data.enabledPresets)
             ? data.enabledPresets
             : ["outpatient"],
-          checkInRequiresQr: data.checkInRequiresQr !== false,
+          checkInMode:
+            data.checkInMode ??
+            ((data.checkInRequiresQr === false ? "MANUAL" : "QR") as
+              | "QR"
+              | "CODE"
+              | "MANUAL"),
+          checkInRequiresQr:
+            (data.checkInMode ??
+              (data.checkInRequiresQr === false ? "MANUAL" : "QR")) === "QR",
         });
       })
       .catch(() => {

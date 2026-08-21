@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { toDecimal } from '@/lib/decimal';
 import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
 import {
@@ -8,6 +9,12 @@ import {
   str,
 } from '@/lib/integration/elektraweb-bridge/normalize';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
+import {
+  applyElektrawebSharePair,
+  elektrawebShareSignalsFromRow,
+  isElektrawebShareSecond,
+  physicalRoomNumber,
+} from '@/lib/integration/elektraweb-share-map';
 import {
   dispatchGuestCheckedIn,
   dispatchGuestCheckedOut,
@@ -29,13 +36,14 @@ async function resolveGuestId(row: Record<string, unknown>): Promise<string> {
     str(row.CONTACTGUESTID) ??
     str(row.GUESTID);
   if (guestExt) {
-    const byRef = await prisma.guest.findUnique({ where: { externalRef: guestExt } });
+    const byRef = await prisma.guest.findFirst({ where: { externalRef: guestExt } });
     if (byRef) return byRef.id;
     const name =
       str(row.GUESTNAMES) ??
       ([str(row.NAME), str(row.LNAME)].filter(Boolean).join(' ') || `Guest ${guestExt}`);
     const created = await prisma.guest.create({
       data: {
+        organizationId: satelliteOrganizationId(),
         externalRef: guestExt,
         fullName: name,
         firstName: str(row.NAME) ?? undefined,
@@ -112,7 +120,8 @@ export async function upsertReservationFromElektrawebRow(
   }
 
   const { status } = mapElektrawebReservationStatus(row);
-  const roomNumber = str(row.ROOMNO) ?? str(row.ROOMID_ROOMNO);
+  const rawRoomNumber = str(row.ROOMNO) ?? str(row.ROOMID_ROOMNO);
+  const doorNumber = physicalRoomNumber(rawRoomNumber);
   const guestId = await resolveGuestId(row);
   const roomTypeId = await resolveRoomTypeId(row);
   const ratePlanId = await resolveRatePlanId(row);
@@ -127,17 +136,25 @@ export async function upsertReservationFromElektrawebRow(
   }
 
   let roomId: string | undefined;
-  if (roomNumber) {
-    const room = await prisma.room.findUnique({ where: { roomNumber } });
+  if (doorNumber) {
+    const room = await prisma.room.findFirst({ where: { roomNumber: doorNumber } });
     roomId = room?.id;
   }
 
-  const existing = await prisma.reservation.findUnique({
+  const shareSignals = elektrawebShareSignalsFromRow({
+    ...row,
+    rawRoomNumber,
+  });
+  const shareNo =
+    str(row.SHARENO) ?? str(row.SHARE_NO) ?? str(row.ShareNo) ?? undefined;
+
+  const existing = await prisma.reservation.findFirst({
     where: { externalRef },
     include: { room: true, guest: true, ratePlan: true },
   });
 
   const data = {
+    organizationId: satelliteOrganizationId(),
     externalRef,
     roomTypeId,
     roomId,
@@ -152,10 +169,11 @@ export async function upsertReservationFromElektrawebRow(
     adults: num(row.ADULT) ?? num(row.TOTALADULT) ?? 1,
     children11_6: num(row.TCHD) ?? num(row.TOTALCHILD) ?? 0,
     voucherNo: str(row.VOUCHERNO) ?? undefined,
+    shareNo: shareNo ?? undefined,
   };
 
   const reservation = await prisma.reservation.upsert({
-    where: { externalRef },
+    where: { externalRef } as never,
     create: data,
     update: {
       roomTypeId: data.roomTypeId,
@@ -170,6 +188,8 @@ export async function upsertReservationFromElektrawebRow(
       children11_6: data.children11_6,
       voucherNo: data.voucherNo,
       totalAmount: data.totalAmount,
+      shareNo: data.shareNo,
+      // Never clear shareEligible when EW flips SHARE → NORMAL after first-out.
     },
     include: { room: true, guest: true, ratePlan: true },
   });
@@ -177,14 +197,26 @@ export async function upsertReservationFromElektrawebRow(
   const folios = await prisma.folio.findMany({ where: { reservationId: reservation.id } });
   if (folios.length === 0) {
     await prisma.folio.create({
-      data: { reservationId: reservation.id, type: 'GUEST', status: 'OPEN' },
+      data: {
+        organizationId: satelliteOrganizationId(),
+        reservationId: reservation.id,
+        type: 'GUEST',
+        status: 'OPEN',
+      },
     });
   }
+
+  const isSecond = isElektrawebShareSecond(shareSignals);
+  await applyElektrawebSharePair(prisma, {
+    reservationId: reservation.id,
+    isSecond,
+    shareNo: shareNo ?? null,
+  });
 
   const events: string[] = [];
   const prevStatus = existing?.status;
   const prevRoom = existing?.room?.roomNumber ?? null;
-  const newRoom = reservation.room?.roomNumber ?? roomNumber ?? null;
+  const newRoom = reservation.room?.roomNumber ?? doorNumber ?? null;
   const programCode = reservation.ratePlan.medicalFlag
     ? reservation.ratePlan.code
     : undefined;

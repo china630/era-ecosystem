@@ -9,6 +9,7 @@ import {
   EqaimeStatus,
   InvoiceStatus,
   LedgerType,
+  OrganizationKind,
   pickAccountDisplayName,
   Prisma,
   SignedDocumentKind,
@@ -94,24 +95,12 @@ export class ReportingService {
   private async cashBankCodePrefixes(
     organizationId: string,
   ): Promise<{ cashPrefixes: string[]; bankPrefixes: string[] }> {
-    const [cashAzn, cashFx, mainBank, bankSettlement] = await Promise.all([
-      this.posting.resolveAccountCode(organizationId, "CASH_AZN"),
-      this.posting.resolveAccountCode(organizationId, "CASH_FOREIGN"),
-      this.posting.resolveAccountCode(organizationId, "MAIN_BANK"),
-      this.posting.resolveAccountCode(organizationId, "BANK_SETTLEMENT"),
-    ]);
-    const root3 = (code: string) => code.split(".")[0].slice(0, 3);
-    const cashPrefixes = [...new Set([root3(cashAzn), root3(cashFx)])];
-    // Bank class: 221–224 family via 2-digit stem of MAIN_BANK when commercial (22x)
-    const bankStem = root3(mainBank).slice(0, 2);
-    const bankPrefixes = [
-      ...new Set([
-        root3(mainBank),
-        root3(bankSettlement),
-        ...(bankStem.length === 2 ? [`${bankStem}1`, `${bankStem}2`, `${bankStem}3`, `${bankStem}4`] : []),
-      ]),
-    ];
-    return { cashPrefixes, bankPrefixes };
+    const kind = await this.posting.getOrganizationKind(organizationId);
+    if (kind === OrganizationKind.BUDGET) {
+      return { cashPrefixes: ["101"], bankPrefixes: ["103", "104"] };
+    }
+    // Q-01 / İ-05: 221 kassa, 223–224 bank. Do not expand 22x (221 is cash).
+    return { cashPrefixes: ["221"], bankPrefixes: ["223", "224"] };
   }
 
   private async cashBankAccountWhere(

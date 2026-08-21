@@ -25,10 +25,10 @@ async function ensureProductGroup(
 ): Promise<string | null> {
   if (!name) return null;
   const code = slugCode(name);
-  const existing = await tx.productGroup.findUnique({ where: { code } });
+  const existing = await tx.productGroup.findFirst({ where: { code } });
   if (dryRun && !existing) return null;
   const group = await tx.productGroup.upsert({
-    where: { code },
+    where: { code } as never,
     create: { code, name },
     update: { name },
   });
@@ -76,7 +76,7 @@ function buildProductAdapter(
     }),
     upsert: async (tx, row, dryRun) => {
       const groupId = await ensureProductGroup(tx, row.groupName, dryRun);
-      const existing = await tx.product.findUnique({ where: { code: row.code } });
+      const existing = await tx.product.findFirst({ where: { code: row.code } });
       const data = {
         name: row.name,
         productType,
@@ -90,7 +90,7 @@ function buildProductAdapter(
       };
       if (dryRun) return existing ? 'updated' : 'created';
       await tx.product.upsert({
-        where: { code: row.code },
+        where: { code: row.code } as never,
         create: { code: row.code, ...data },
         update: data,
       });

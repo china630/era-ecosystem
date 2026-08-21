@@ -110,7 +110,7 @@ export async function postStockMovement(input: {
 }
 
 export async function consumeRecipeForProduct(productCode: string, portions = 1) {
-  const product = await prisma.product.findUnique({
+  const product = await prisma.product.findFirst({
     where: { code: productCode },
     include: { recipe: { include: { lines: true } } },
   });

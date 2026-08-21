@@ -6,11 +6,16 @@ import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
 
 import { listPractitioners } from "@/lib/services/clinic-master-data.service";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    return jsonOk(await listPractitioners());
+    const staffKind = new URL(req.url).searchParams.get("staffKind");
+    const kind =
+      staffKind === "DOCTOR" || staffKind === "NURSE" || staffKind === "LAB"
+        ? staffKind
+        : undefined;
+    return jsonOk(await listPractitioners(kind));
   } catch (err) {
     return handleRouteError(err);
   }

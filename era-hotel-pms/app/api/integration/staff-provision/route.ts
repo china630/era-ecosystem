@@ -58,7 +58,7 @@ export async function POST(request: Request) {
             },
           })
         : await prisma.user.upsert({
-            where: { login },
+            where: { login } as never,
             create: {
               login,
               fullName: p.fullName,

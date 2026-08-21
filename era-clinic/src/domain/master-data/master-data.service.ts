@@ -15,8 +15,11 @@ import {
   isDurationAlignedToSlot,
 } from "@/domain/settings/scheduling-settings";
 
-export async function listPractitioners() {
-  return prisma.practitioner.findMany({ orderBy: { code: "asc" } });
+export async function listPractitioners(staffKind?: "DOCTOR" | "NURSE" | "LAB") {
+  return prisma.practitioner.findMany({
+    where: staffKind ? { staffKind } : undefined,
+    orderBy: { code: "asc" },
+  });
 }
 
 export async function updatePractitionerOpsCatalog(
@@ -24,6 +27,7 @@ export async function updatePractitionerOpsCatalog(
   data: {
     specialty?: string | null;
     defaultSlotMinutes?: number;
+    staffKind?: "DOCTOR" | "NURSE" | "LAB";
   },
 ) {
   return prisma.practitioner.update({ where: { id }, data });
@@ -130,6 +134,7 @@ export async function listProcedureTypes(locale = "en") {
     orderBy: { code: "asc" },
     include: {
       requirements: true,
+      consumableLines: { orderBy: { sku: "asc" } },
       _count: { select: { skills: true } },
     },
   });
@@ -161,6 +166,8 @@ export async function createProcedureType(data: {
   code: string;
   name: string;
   durationMin?: number;
+  resourceGapMinutes?: number;
+  patientRestMinutes?: number;
   resourceKind?: ResourceKind | null;
   resourceCode?: string | null;
   bodyPart?: string | null;
@@ -180,14 +187,24 @@ export async function createProcedureType(data: {
       `durationMin must be a multiple of ${settings.schedulingSlotMinutes} minutes (got ${data.durationMin})`,
     );
   }
+  const resourceGapMinutes =
+    data.resourceGapMinutes != null
+      ? Math.min(240, Math.max(0, Math.floor(data.resourceGapMinutes)))
+      : settings.defaultProcedureGapMinutes ?? 5;
+  const patientRestMinutes =
+    data.patientRestMinutes != null
+      ? Math.min(240, Math.max(0, Math.floor(data.patientRestMinutes)))
+      : 15;
+  const { resourceGapMinutes: _rg, patientRestMinutes: _pr, ...rest } = data;
   const row = await prisma.procedureType.create({
-    data: { ...data, durationMin },
+    data: { ...rest, durationMin, resourceGapMinutes, patientRestMinutes },
   });
   await ensureDefaultRequirements(row.id);
   return prisma.procedureType.findUniqueOrThrow({
     where: { id: row.id },
     include: {
       requirements: true,
+      consumableLines: { orderBy: { sku: "asc" } },
       _count: { select: { skills: true } },
     },
   });
@@ -198,6 +215,8 @@ export async function updateProcedureType(
   data: {
     name?: string;
     durationMin?: number;
+    resourceGapMinutes?: number;
+    patientRestMinutes?: number;
     resourceKind?: ResourceKind | null;
     resourceCode?: string | null;
     bodyPart?: string | null;
@@ -221,6 +240,22 @@ export async function updateProcedureType(
           durationMin: alignDurationToSlotMinutes(
             data.durationMin,
             settings.schedulingSlotMinutes,
+          ),
+        }
+      : {}),
+    ...(data.resourceGapMinutes != null
+      ? {
+          resourceGapMinutes: Math.min(
+            240,
+            Math.max(0, Math.floor(data.resourceGapMinutes)),
+          ),
+        }
+      : {}),
+    ...(data.patientRestMinutes != null
+      ? {
+          patientRestMinutes: Math.min(
+            240,
+            Math.max(0, Math.floor(data.patientRestMinutes)),
           ),
         }
       : {}),
@@ -293,6 +328,102 @@ export async function replaceProcedureTypeRequirements(
     }
   });
   return listProcedureTypeRequirements(procedureTypeId);
+}
+
+export type ProcedureConsumableLineInput = {
+  sku: string;
+  financeProductId?: string | null;
+  qtyPerSession?: number;
+  wasteFactor?: number;
+};
+
+export async function listProcedureConsumableLines(procedureTypeId: string) {
+  return prisma.procedureConsumableLine.findMany({
+    where: { procedureTypeId },
+    orderBy: { sku: "asc" },
+  });
+}
+
+/** Replace all TTK / consumable BOM lines for a procedure type. */
+export async function replaceProcedureConsumableLines(
+  procedureTypeId: string,
+  lines: ProcedureConsumableLineInput[],
+) {
+  const type = await prisma.procedureType.findUnique({ where: { id: procedureTypeId } });
+  if (!type) throw new Error("Procedure type not found");
+
+  const cleaned = lines
+    .map((l) => ({
+      sku: l.sku.trim(),
+      financeProductId: l.financeProductId?.trim() || null,
+      qtyPerSession: l.qtyPerSession ?? 1,
+      wasteFactor: l.wasteFactor ?? 0,
+    }))
+    .filter((l) => l.sku.length > 0);
+
+  const skus = cleaned.map((l) => l.sku);
+  if (new Set(skus).size !== skus.length) {
+    throw new Error("Duplicate SKU in consumable BOM");
+  }
+  for (const l of cleaned) {
+    if (!(l.qtyPerSession > 0)) {
+      throw new Error(`qtyPerSession must be positive for SKU ${l.sku}`);
+    }
+    if (l.wasteFactor < 0) {
+      throw new Error(`wasteFactor must be >= 0 for SKU ${l.sku}`);
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.procedureConsumableLine.deleteMany({ where: { procedureTypeId } });
+    if (cleaned.length > 0) {
+      await tx.procedureConsumableLine.createMany({
+        data: cleaned.map((l) => ({
+          procedureTypeId,
+          organizationId: type.organizationId,
+          sku: l.sku,
+          financeProductId: l.financeProductId,
+          qtyPerSession: l.qtyPerSession,
+          wasteFactor: l.wasteFactor,
+        })),
+      });
+    }
+  });
+  return listProcedureConsumableLines(procedureTypeId);
+}
+
+/**
+ * Resolve consumable lines for a completed procedure session.
+ * Empty BOM → [] (no stock movement; never invent PROC-{code}).
+ */
+export async function resolveProcedureConsumableLines(opts: {
+  procedureTypeId?: string | null;
+  procedureCode?: string;
+}): Promise<Array<{ sku: string; qty: number; description?: string; financeProductId?: string }>> {
+  let typeId = opts.procedureTypeId ?? null;
+  if (!typeId && opts.procedureCode) {
+    const byCode = await prisma.procedureType.findFirst({
+      where: { code: opts.procedureCode },
+      select: { id: true },
+    });
+    typeId = byCode?.id ?? null;
+  }
+  if (!typeId) return [];
+
+  const rows = await prisma.procedureConsumableLine.findMany({
+    where: { procedureTypeId: typeId },
+    orderBy: { sku: "asc" },
+  });
+
+  return rows.map((r) => {
+    const qty = Number(r.qtyPerSession) * (1 + Number(r.wasteFactor));
+    return {
+      sku: r.sku,
+      qty: Math.round(qty * 10000) / 10000,
+      description: r.sku,
+      ...(r.financeProductId ? { financeProductId: r.financeProductId } : {}),
+    };
+  });
 }
 
 export async function auditMasterChange(

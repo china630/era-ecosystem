@@ -33,12 +33,17 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/organizations` | `app/organizations/page.tsx` | Org hub; `CreateOrganizationModal`; company-less onboarding gate auto-opens create modal; lists pending invites with Accept; link to `/holdings` |
 | `/holdings` | `app/holdings/page.tsx` | Holding SoT: create, attach/detach orgs, report-access members; API `v1/holdings/*` |
 | `/workspace` | `app/workspace/page.tsx` | Satellite cards: Open + per-satellite Modules modal + ⚙ Settings on active cards; concrete active-modules price; "+ Add" opens all-satellites modal; `POST connect-satellite`, `POST billing/toggle-module` |
-| `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch; not entitled → pricing link |
+| `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
-| `/settings/team` | `app/settings/team/page.tsx` | Access requests |
-| `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + module chips |
+| `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership |
+| `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + modules + billing constructor (checkout/bundles/premium) |
+| `/settings/invoices` | `app/settings/invoices/page.tsx` | Platform subscription invoices + PDF |
+| `/settings/orders` | `app/settings/orders/page.tsx` | Payment orders registry |
 | `/super-admin/**` | `app/super-admin/**` | Platform admin |
-| `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, departments, satellite endpoints, **Sync satellite bindings** → `POST /v1/admin/orgs/:id/sync-satellite-bindings` |
+| `/super-admin/orgs` | `app/super-admin/orgs/page.tsx` | Org catalog (search name/UUID/VÖEN) |
+| `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, detach, departments, satellite endpoints, Sync bindings |
+| `/super-admin/referrals` | `app/super-admin/referrals/page.tsx` | Referral partners CRUD + QR |
+| `/super-admin/landing` | `app/super-admin/landing/page.tsx` | Landing module marketing copy |
 
 ## Super-admin billing / MDM
 
@@ -58,7 +63,8 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 
 | Route | File | Notes |
 |-------|------|-------|
-| `/super-admin/orgs/[orgId]/subscription` | `app/super-admin/orgs/[orgId]/subscription/page.tsx` | Org trial tree, +1 month, Nafta preset |
+| `/super-admin/orgs/[orgId]/subscription` | `app/super-admin/orgs/[orgId]/subscription/page.tsx` | Topology + license (perpetual / date / ±1 month), Nafta preset |
+| `/super-admin/orgs/[orgId]/placement` | `app/super-admin/orgs/[orgId]/placement/page.tsx` | PlacementJob create/list/advance (lab hop; not SaaS pool) |
 
 ## Shared web components
 
@@ -85,17 +91,25 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `GET /v1/invites/pending` | `organization.controller.ts` — pending invites for current user email (company-less onboarding) |
 | `POST /v1/invites/:id/accept` | `organization.controller.ts` — accept invite → create membership |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
+| `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint (env fallback) |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |
 | `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable |
 | `GET /v1/billing/module-states` | `billing.controller.ts` — pending deactivation flags |
 | `GET /v1/admin/mdm/companies` | `admin-mdm.controller.ts` — legal entities (name decrypt + org fallback) |
+| `GET /v1/admin/organizations` | `admin-organizations.controller.ts` — list/search |
 | `GET /v1/admin/organizations/:id/subscription-tree` | `admin-billing.controller.ts` |
+| `PATCH /v1/admin/organizations/:id/subscription/trial` | `admin-billing.controller.ts` — date / perpetual / ± months |
+| `PATCH /v1/admin/organizations/:id/deployment-topology` | `admin-billing.controller.ts` — SHARED/DEDICATED/ONPREM; optional applyLicenseDefault |
 | `PATCH /v1/admin/config/trial-allowlist` | `admin-billing.controller.ts` |
 | `POST /v1/admin/organizations/:id/connect-preset/sanatorium` | `admin-billing.controller.ts` |
+| `POST /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` — create PlacementJob (SHARED↔ONPREM → REJECTED) |
+| `GET /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` |
+| `POST /v1/admin/placement-jobs/:id/advance` | `placement-job.controller.ts` — freeze/exportSlice/…/complete stubs |
+| `GET /v1/placement-agent/jobs` | `placement-agent.controller.ts` — host poll PENDING/PROVISION (Bearer host token) |
 
 ## Platform catalog gateway (API — industry satellites)
 
-Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE_SERVICE_TOKEN`) + `X-Organization-Id`. Entitlement: `platform_reference_data` (skip locally: `REFERENCE_DATA_SKIP_ENTITLEMENT=1`). Proxies to data-hub `/registry/v1/*`.
+Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE_SERVICE_TOKEN`) + `X-Organization-Id`. Entitlement: `platform_reference_data` (skip locally: `REFERENCE_DATA_SKIP_ENTITLEMENT=1`). Calendar / FX / VÖEN proxy to data-hub `/registry/v1/*`. **ICD-10 is not proxied** — served in-process from `packages/satellite-kit/icd10`.
 
 | Endpoint | Handler |
 |----------|---------|
@@ -104,6 +118,7 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET /platform/v1/catalog/calendar/:country/is-working-day` | `catalog-calendar.controller.ts` |
 | `GET /platform/v1/catalog/calendar/:country/add-business-days` | `catalog-calendar.controller.ts` |
 | `GET /platform/v1/catalog/fx/convert` | `catalog-fx.controller.ts` |
+| `GET /platform/v1/catalog/icd10` | `catalog-icd10.controller.ts` — WHO ICD-10 in-process (not data-hub) |
 | `GET /platform/v1/workforce/policy` | `workforce-policy.controller.ts` |
 | `GET/POST /platform/v1/workforce/employments` | `workforce-employments.controller.ts` |
 | `GET/POST/PATCH /platform/v1/workforce/absences/*` | `workforce-absences.controller.ts` |
@@ -129,6 +144,10 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/positions` | `apps/web/app/workspace/workforce/positions/page.tsx` |
 | Web `/workspace/workforce/employments` | hire modal + filters |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
+| Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
+| Web `/workspace/workforce/personnel-orders` | create/issue/PDF |
+| Web `/workspace/workforce/staff-schedule` | revisions submit/approve/PDF |
+| Web `/workspace/workforce/timesheets` | draft approve |
 | Web `/workspace/workforce/export` | export + import two-column UI |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` |

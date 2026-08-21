@@ -16,6 +16,7 @@ import { isCpWorkforceHireModeActive } from "@/lib/workforce-policy";
 const opsUpdateSchema = z.object({
   specialty: z.string().nullable().optional(),
   defaultSlotMinutes: z.number().int().min(5).max(240).optional(),
+  staffKind: z.enum(["DOCTOR", "NURSE", "LAB"]).optional(),
 });
 
 function isProvisionedPractitioner(row: {

@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
-import { hasProcedureSameDay, nextWorkSlot, skipLunch } from "@/lib/treatment-planner.service";
+import {
+  hasProcedureSameDay,
+  nextWorkSlot,
+  skipLunch,
+  validatePatientConsecutiveGap,
+} from "@/lib/treatment-planner.service";
+import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
 
 const LUNCH_END_HOUR = 14;
 
@@ -56,18 +62,16 @@ export async function rescheduleProcedureOrder(
   }
 
   if (targetResourceId) {
-    const bookings = await prisma.resourceBooking.findMany({
-      where: {
-        resourceId: targetResourceId,
-        startsAt: { lt: slotEnd },
-        endsAt: { gt: slotStart },
-        NOT: order.resourceBooking ? { id: order.resourceBooking.id } : undefined,
-      },
-    });
+    const used = await countResourceAllocations(
+      targetResourceId,
+      slotStart,
+      slotEnd,
+      order.id,
+    );
     const resource = await prisma.resource.findUnique({
       where: { id: targetResourceId },
     });
-    if (resource && bookings.length >= resource.capacity) {
+    if (resource && used >= resource.capacity) {
       throw new Error("Resource conflict at selected time");
     }
   }
@@ -98,6 +102,15 @@ export async function rescheduleProcedureOrder(
   if (compatViolations.length > 0) {
     throw new Error(compatViolations.map((v) => v.message).join("; "));
   }
+
+  const gapErr = await validatePatientConsecutiveGap({
+    patientRefId: order.patientRefId,
+    startAt: slotStart,
+    endAt: slotEnd,
+    excludeOrderId: order.id,
+    candidatePatientRestMinutes: order.procedureType?.patientRestMinutes ?? 15,
+  });
+  if (gapErr) throw new Error(gapErr);
 
   const updated = await prisma.procedureOrder.update({
     where: { id: orderId },

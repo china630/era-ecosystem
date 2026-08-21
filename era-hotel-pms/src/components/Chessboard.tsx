@@ -47,6 +47,10 @@ interface Reservation {
   totalAmount: number;
   checkInDate?: string;
   checkOutDate?: string;
+  shareEligible?: boolean;
+  shareGender?: string | null;
+  shareBedIndex?: number | null;
+  adults?: number;
 }
 
 interface Room {
@@ -54,16 +58,42 @@ interface Room {
   roomNumber: string;
   status: RoomStatus;
   floor: number;
-  roomType: { code: string; name: string };
+  roomType: { code: string; name: string; adultCapacity?: number };
+  maxBed?: number | null;
+  sharePool?: { gender: string; occupied: number; capacity: number } | null;
   reservations: Reservation[];
 }
 
 interface Arrival {
   id: string;
-  guest: Guest;
+  guest: Guest & { gender?: string | null };
   roomType: { code: string };
   room: { roomNumber: string } | null;
   status: ReservationStatus;
+  shareEligible?: boolean;
+  shareGender?: string | null;
+  adults?: number;
+  checkInDate?: string;
+  checkOutDate?: string;
+}
+
+function roomAssignableForArrival(room: Room, arrival: Arrival): boolean {
+  if (['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return true;
+  if (room.status !== 'OCCUPIED') return false;
+  const shareOk =
+    arrival.shareEligible &&
+    (arrival.adults ?? 1) === 1 &&
+    Boolean(arrival.shareGender);
+  if (!shareOk) return false;
+  const pool = room.sharePool;
+  if (!pool) {
+    // OCCUPIED without derived pool — allow only if no exclusive conflict (API will gate)
+    return true;
+  }
+  const g = (arrival.shareGender ?? '').toUpperCase().startsWith('F') ? 'F' : 'M';
+  const poolG = pool.gender.toUpperCase().startsWith('F') ? 'F' : 'M';
+  if (g !== poolG) return false;
+  return pool.occupied < pool.capacity;
 }
 
 export default function Chessboard() {
@@ -89,6 +119,14 @@ export default function Chessboard() {
     balance: number;
   } | null>(null);
   const [checkoutLeaveOnCl, setCheckoutLeaveOnCl] = useState(true);
+  const [earlyCheckout, setEarlyCheckout] = useState<{
+    applicable: boolean;
+    unusedNights: number;
+    unusedSellGross: number;
+    vatWithheld: number;
+    guestCashRefund: number;
+  } | null>(null);
+  const [unusedNightsRefundMethod, setUnusedNightsRefundMethod] = useState<'CASH' | 'CARD'>('CASH');
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -236,12 +274,16 @@ export default function Chessboard() {
                     {rooms
                       .filter((r) => r.roomType.code === a.roomType.code)
                       .map((r) => {
-                        const assignable = ['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(r.status);
+                        const assignable = roomAssignableForArrival(r, a);
+                        const shareHint =
+                          r.sharePool && assignable && r.status === 'OCCUPIED'
+                            ? ` · share ${r.sharePool.occupied}/${r.sharePool.capacity}`
+                            : '';
                         return (
                           <option key={r.id} value={r.id} disabled={!assignable}>
                             {r.roomNumber}
                             {assignable
-                              ? ` (${roomStatusLabel(r.status)})`
+                              ? ` (${roomStatusLabel(r.status)}${shareHint})`
                               : ` — ${roomStatusLabel(r.status)} (${t('dirtyNotAssignable')})`}
                           </option>
                         );
@@ -307,11 +349,28 @@ export default function Chessboard() {
         onCheckOut={(id) => {
           const res = selected?.reservations.find((r) => r.id === id);
           setCheckoutLeaveOnCl(true);
+          setUnusedNightsRefundMethod('CASH');
+          setEarlyCheckout(null);
           setCheckoutPrompt({
             id,
             guest: res?.guest.fullName ?? '',
             balance: Number(res?.totalAmount ?? 0),
           });
+          void fetch(`/api/reservations/${id}/early-checkout-preview`)
+            .then((r) => r.json())
+            .then((data) => {
+              const payload = data.data ?? data;
+              if (payload?.applicable) {
+                setEarlyCheckout({
+                  applicable: true,
+                  unusedNights: Number(payload.unusedNights) || 0,
+                  unusedSellGross: Number(payload.unusedSellGross) || 0,
+                  vatWithheld: Number(payload.vatWithheld) || 0,
+                  guestCashRefund: Number(payload.guestCashRefund) || 0,
+                });
+              }
+            })
+            .catch(() => undefined);
         }}
         onAddCharge={(id, revenueCodeId) =>
           runAction(`/api/reservations/${id}/extras`, 'POST', {
@@ -342,7 +401,12 @@ export default function Chessboard() {
               setCheckoutPrompt(null);
               void runAction(`/api/reservations/${id}/check-out`, 'POST', {
                 transferToCityLedger: checkoutLeaveOnCl,
+                unusedNightsRefundMethod:
+                  earlyCheckout?.applicable && earlyCheckout.guestCashRefund > 0
+                    ? unusedNightsRefundMethod
+                    : undefined,
               });
+              setEarlyCheckout(null);
             }}
             submitLabel={t('confirmCheckout')}
           />
@@ -355,6 +419,38 @@ export default function Chessboard() {
               amount: (checkoutPrompt?.balance ?? 0).toFixed(2),
             })}
           </p>
+          {earlyCheckout?.applicable ? (
+            <div className="space-y-1 rounded border border-[#BDC3C7] bg-[#F8F9F9] p-2">
+              <p className="m-0 font-medium">{t('earlyCheckoutTitle')}</p>
+              <p className="m-0">
+                {t('earlyCheckoutNights', { count: earlyCheckout.unusedNights })}
+              </p>
+              <p className="m-0">
+                {t('earlyCheckoutGross', { amount: earlyCheckout.unusedSellGross.toFixed(2) })}
+              </p>
+              <p className="m-0">
+                {t('earlyCheckoutVat', { amount: earlyCheckout.vatWithheld.toFixed(2) })}
+              </p>
+              <p className="m-0">
+                {t('earlyCheckoutCash', { amount: earlyCheckout.guestCashRefund.toFixed(2) })}
+              </p>
+              {earlyCheckout.guestCashRefund > 0 ? (
+                <label className="flex items-center gap-2">
+                  <span>{t('earlyCheckoutTender')}</span>
+                  <select
+                    value={unusedNightsRefundMethod}
+                    onChange={(e) =>
+                      setUnusedNightsRefundMethod(e.target.value as 'CASH' | 'CARD')
+                    }
+                    className="rounded border border-[#BDC3C7] px-2 py-1"
+                  >
+                    <option value="CASH">CASH</option>
+                    <option value="CARD">CARD</option>
+                  </select>
+                </label>
+              ) : null}
+            </div>
+          ) : null}
           <div className="space-y-2">
             <label className="flex items-start gap-2">
               <input

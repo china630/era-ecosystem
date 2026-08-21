@@ -16,28 +16,31 @@ function sumAgencyFolioActivity(
   folios: FolioSlice[],
   from: Date,
   to: Date,
-): { newCharges: number; payments: number; cashPaid: number } {
+): { opening: number; newCharges: number; payments: number; cashPaid: number } {
   let newCharges = 0;
   let payments = 0;
   let cashPaid = 0;
+  let openingCharges = 0;
+  let openingPayments = 0;
 
   for (const folio of folios) {
     if (folio.type !== 'COMPANY' && folio.type !== 'AGENCY') continue;
     for (const c of folio.charges) {
-      if (c.businessDate >= from && c.businessDate <= to) {
-        newCharges += decimalToNumber(c.amount) * c.qty;
-      }
+      const amt = decimalToNumber(c.amount) * c.qty;
+      if (c.businessDate < from) openingCharges += amt;
+      else if (c.businessDate >= from && c.businessDate <= to) newCharges += amt;
     }
     for (const p of folio.payments) {
-      if (p.createdAt >= from && p.createdAt <= to) {
-        const amt = decimalToNumber(p.amount);
+      const amt = decimalToNumber(p.amount);
+      if (p.createdAt < from) openingPayments += amt;
+      else if (p.createdAt >= from && p.createdAt <= to) {
         payments += amt;
         if (p.paymentMethod === 'CASH') cashPaid += amt;
       }
     }
   }
 
-  return { newCharges, payments, cashPaid };
+  return { opening: openingCharges - openingPayments, newCharges, payments, cashPaid };
 }
 
 export async function getAgencyLedger(agencyId: string, from: Date, to: Date) {
@@ -59,13 +62,11 @@ export async function getAgencyLedger(agencyId: string, from: Date, to: Date) {
     },
   });
 
-  const { newCharges, payments, cashPaid } = sumAgencyFolioActivity(
+  const { opening, newCharges, payments, cashPaid } = sumAgencyFolioActivity(
     reservations.flatMap((r) => r.folios),
     from,
     to,
   );
-
-  const opening = 0;
   const closing = opening + newCharges - payments;
   const netAmount = newCharges - payments;
 

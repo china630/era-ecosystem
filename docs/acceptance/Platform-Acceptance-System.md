@@ -12,8 +12,9 @@
 
 ## Scope
 
-- In scope: SSO/launcher, org/billing, entitlements, MDM, workforce hub, super-admin
-- Out of scope: Industry ops screens (live on satellites)
+- In scope: SSO/launcher, org/billing, entitlements, MDM, workforce hub, super-admin, **deployment topology program** (desired-state config, placement — ADR `deployment-topology`)
+- Out of scope: Industry ops screens (live on satellites); **selling** SHARED pool or automated on-prem migrate until AC-CP-TOPO is Scaffold ✅ + Pilot-ready
+- **Landed (API, not sell):** Nafta bind + kit resolver (AC-CP-BIND ✅ Scaffold BE), Sync runtime-config to industry + Finance Nest (AC-CP-CFG ✅ Scaffold BE), SHARED-ready `organizationId` + kit filter (CP-TENANT-01), topology license defaults + super-admin perpetual/± term (CP-LIC-01), PlacementJob admin API + host agent poll + SHARED↔ONPREM reject (CP-PLACE-01 API / AC-CP-TOPO 🟡 not Scaffold ✅). Green Scaffold BE Wave 7: AUTH/BILL/MDM/WF/SA/INT/BIND/CFG negatives. **AC-CP-TOPO** stays Scaffold 🟡 **in** BE rollup (PlacementJob API ≠ live hop) → Product-Readiness Scaffold BE **🟡**. Playbook: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md). SHARED pool / migrate still not sellable. Orch missing-screens wave: org catalog / owner billing invoices-orders / WF vacation-orders-ştat-timesheets / referrals+landing (UI present, not UAT-SMOKE / not SHIPPED). Live SHARED pool ops still open.
 
 ## Definition of Done (soft / scaffold)
 

@@ -254,7 +254,7 @@ describe("BankingService treasury operations", () => {
     });
     tx.account.findMany = jest
       .fn()
-      .mockResolvedValue([{ code: "221.01" }, { code: "251" }]);
+      .mockResolvedValue([{ code: "221.01" }, { code: "222" }]);
     const { service, accounting } = makeService(tx);
 
     await service.createCashDeposit("org-1", {
@@ -266,7 +266,7 @@ describe("BankingService treasury operations", () => {
     const payload = accounting.postJournalInTransaction.mock.calls[0][1];
     expect(payload.lines).toEqual([
       { accountCode: "221.01", debit: "500", credit: "0" },
-      { accountCode: "251", debit: "0", credit: "500" },
+      { accountCode: "222", debit: "0", credit: "500" },
     ]);
   });
 });

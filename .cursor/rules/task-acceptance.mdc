@@ -34,6 +34,7 @@ Also update [`docs/COVERAGE_MATRIX.md`](docs/COVERAGE_MATRIX.md) capability rows
 | Scaffold / AC / backend matrix | Implementation-Matrix |
 | «полный банк / чего нет / trade / custody / OUT» | [`Bank-Capability-Inventory.md`](docs/acceptance/Bank-Capability-Inventory.md) + Readiness «Not in this edition» |
 | «матрица готовности API / §4 / consumer / обнови READINESS» | [`docs/READINESS_MATRIX.md`](docs/READINESS_MATRIX.md) + skill `era-readiness-matrix` |
+| «есть ли экран / UI покрывает API / класс NONE·SCREEN·SHOW» | [`docs/acceptance/UI-COVERAGE-BOARD.md`](docs/acceptance/UI-COVERAGE-BOARD.md) (derived; sell still Product-Readiness) |
 
 **Forbidden:** answering sell/show with Implementation-Matrix or COVERAGE SHIPPED alone.  
 **Forbidden:** treating MODULES_CATALOG DONE as edition `ga`.  

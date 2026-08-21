@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
+  CARD_CONTAINER_CLASS,
   Field,
   FORM_STACK_CLASS,
   ModalFooter,
   ModalShell,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 
 const formId = "supplier-match-form";
 
 export default function SupplierMatchPage() {
+  const t = useTranslations("admin.supplierMatch");
+  const tc = useTranslations("common");
   const [invoiceRef, setInvoiceRef] = useState("");
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -32,39 +39,48 @@ export default function SupplierMatchPage() {
   }
 
   return (
-    <main className="mx-auto max-w-lg p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Supplier match (M16)</h1>
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setModalOpen(true)}>
-          Match invoice
-        </button>
-      </div>
+    <main className="mx-auto max-w-3xl p-6">
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setModalOpen(true)}>
+              {t("matchInvoice")}
+            </button>
+            <Link href="/admin/replenishment" className={SECONDARY_BUTTON_CLASS}>
+              {t("replenishment")}
+            </Link>
+          </div>
+        }
+      />
       {result && (
-        <pre className="mt-4 overflow-auto rounded bg-gray-100 p-3 text-sm">
+        <pre className={`${CARD_CONTAINER_CLASS} mt-4 overflow-auto p-3 text-sm`}>
           {JSON.stringify(result, null, 2)}
         </pre>
       )}
 
       <ModalShell
         open={modalOpen}
-        title="Supplier match"
+        title={t("modalTitle")}
         onClose={() => setModalOpen(false)}
         footer={
           <ModalFooter
             formId={formId}
             onCancel={() => setModalOpen(false)}
             busy={busy}
-            submitLabel="Match"
+            submitLabel={t("match")}
+            cancelLabel={tc("cancel")}
           />
         }
       >
         <form id={formId} onSubmit={onSubmit} className={FORM_STACK_CLASS}>
           <Field
-            label="Invoice ref"
+            label={t("invoiceRef")}
             preset="code"
             value={invoiceRef}
             onChange={(e) => setInvoiceRef(e.target.value)}
-            placeholder="Invoice ref"
+            placeholder={t("invoiceRefPlaceholder")}
             required
           />
         </form>

@@ -42,6 +42,28 @@ export async function getReservationFull(id: string) {
     if (notesMap[nt] === undefined) notesMap[nt] = '';
   }
 
+  let shareNeighbors: Array<{
+    id: string;
+    guestName: string;
+    checkInDate: Date;
+    checkOutDate: Date;
+  }> = [];
+  if (reservation.roomId && reservation.shareEligible) {
+    const { listShareNeighborsOnDoor } = await import('@/lib/services/share-assignment.service');
+    const neighbors = await listShareNeighborsOnDoor({
+      roomId: reservation.roomId,
+      checkIn: reservation.checkInDate,
+      checkOut: reservation.checkOutDate,
+      excludeReservationId: id,
+    });
+    shareNeighbors = neighbors.map((n) => ({
+      id: n.id,
+      guestName: n.guest.fullName,
+      checkInDate: n.checkInDate,
+      checkOutDate: n.checkOutDate,
+    }));
+  }
+
   return {
     ...reservation,
     totalAmount: decimalToNumber(reservation.totalAmount),
@@ -63,6 +85,7 @@ export async function getReservationFull(id: string) {
     })),
     attachments: reservation.attachments,
     notesMap,
+    shareNeighbors,
   };
 }
 
@@ -100,6 +123,7 @@ export async function patchReservationFull(
     colorCode?: string | null;
     resNo?: string | null;
     shareNo?: string | null;
+    shareEligible?: boolean;
     optionDate?: Date | null;
     optionState?: string | null;
     salesProject?: string | null;
@@ -149,8 +173,60 @@ export async function patchReservationFull(
   });
   if (!existing) throw new Error('Reservation not found');
 
-  const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, ...data } = input;
+  const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, shareEligible, ...data } =
+    input;
 
+  const nextShareEligible = shareEligible ?? existing.shareEligible;
+  let nextShareGender = existing.shareGender;
+  if (shareEligible !== undefined) {
+    if (!nextShareEligible) {
+      if (existing.shareEligible && existing.roomId) {
+        const { listShareNeighborsOnDoor } = await import(
+          '@/lib/services/share-assignment.service'
+        );
+        const neighbors = await listShareNeighborsOnDoor({
+          roomId: existing.roomId,
+          checkIn: existing.checkInDate,
+          checkOut: existing.checkOutDate,
+          excludeReservationId: id,
+        });
+        if (neighbors.length > 0) {
+          throw new Error(
+            `Cannot break share while roommate remains (${neighbors[0]!.guest.fullName}) — relocate first`,
+          );
+        }
+      }
+      nextShareGender = null;
+    } else {
+      const guestForGender =
+        data.guestId != null
+          ? await prisma.guest.findUnique({ where: { id: data.guestId } })
+          : existing.guest;
+      const { syncShareGenderFromGuest, validateShareCandidate, reservationIsOta } = await import(
+        '@/lib/services/share-assignment.service'
+      );
+      nextShareGender = syncShareGenderFromGuest(true, guestForGender?.gender);
+      validateShareCandidate({
+        shareEligible: true,
+        shareGender: nextShareGender,
+        adults: data.adults ?? existing.adults,
+        isOta: await reservationIsOta(id),
+      });
+    }
+  }
+
+  const checkIn = data.checkInDate ?? existing.checkInDate;
+  const checkOut = data.checkOutDate ?? existing.checkOutDate;
+  const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
+  await assertShareInventory(existing.roomTypeId, checkIn, checkOut, {
+    id,
+    shareEligible: nextShareEligible,
+    shareGender: nextShareGender,
+    adults: data.adults ?? existing.adults,
+    roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
+  });
+
+  let assignShareBedIndex: number | null | undefined;
   if (data.roomId !== undefined && data.roomId !== null && data.roomId !== '') {
     const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
     const paxForGate = paxGuests ?? existing.paxGuests;
@@ -165,25 +241,47 @@ export async function patchReservationFull(
       throw new Error('Guest names incomplete — fill real names before assign');
     }
 
-    const { assertRoomFree } = await import('@/lib/services/reservation.service');
+    const { assertRoomShareAssignable, roomStatusAllowedForShareAssign, reservationIsOta } =
+      await import('@/lib/services/share-assignment.service');
     const room = await prisma.room.findUnique({ where: { id: data.roomId } });
     if (!room) throw new Error('Room not found');
     const typeId = data.roomTypeId ?? existing.roomTypeId;
     if (room.roomTypeId !== typeId) throw new Error('Room type mismatch');
-    if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
+    const candidate = {
+      shareEligible: nextShareEligible,
+      shareGender: nextShareGender,
+      adults: data.adults ?? existing.adults,
+      isOta: await reservationIsOta(id),
+    };
+    const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
+      roomId: data.roomId,
+      checkIn,
+      checkOut,
+      excludeReservationId: id,
+      candidate,
+    });
+    assignShareBedIndex = shareBedIndex;
+    if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
       throw new Error(
         `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
       );
     }
-    const checkIn = data.checkInDate ?? existing.checkInDate;
-    const checkOut = data.checkOutDate ?? existing.checkOutDate;
-    await assertRoomFree(data.roomId, checkIn, checkOut, id);
+  } else if (data.roomId === null) {
+    assignShareBedIndex = null;
   }
 
   await prisma.reservation.update({
     where: { id },
     data: {
       ...data,
+      ...(shareEligible !== undefined
+        ? {
+            shareEligible: nextShareEligible,
+            shareGender: nextShareGender,
+            ...(nextShareEligible ? {} : { shareBedIndex: null }),
+          }
+        : {}),
+      ...(assignShareBedIndex !== undefined ? { shareBedIndex: assignShareBedIndex } : {}),
       manualDailyRate:
         manualDailyRate === undefined
           ? undefined

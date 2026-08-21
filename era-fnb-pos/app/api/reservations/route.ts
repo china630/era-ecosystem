@@ -1,8 +1,10 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
+  await assertFnbEntitled();
   const date = new URL(request.url).searchParams.get("date");
   const dayStart = date ? new Date(`${date}T00:00:00`) : new Date();
   dayStart.setHours(0, 0, 0, 0);
@@ -26,6 +28,7 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const body = createSchema.parse(await request.json());
   const row = await prisma.tableReservation.create({
     data: {

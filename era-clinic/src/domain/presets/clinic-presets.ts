@@ -14,6 +14,7 @@ export const ALL_CLINIC_PRESETS: ClinicPresetCode[] = Object.values(CLINIC_PRESE
 export const PRESET_ROUTE_GUARDS: Record<string, ClinicPresetCode> = {
   "/sanatorium": CLINIC_PRESET.SANATORIUM_CLINICAL,
   "/sanatorium/resources": CLINIC_PRESET.SANATORIUM_CLINICAL,
+  "/sanatorium/nurse-roster": CLINIC_PRESET.SANATORIUM_CLINICAL,
   "/inpatient": CLINIC_PRESET.INPATIENT_DAY,
 };
 

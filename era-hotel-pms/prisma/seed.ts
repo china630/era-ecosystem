@@ -1,4 +1,5 @@
-import { PrismaClient, PaymentMethod } from '@prisma/client';
+import { Prisma, PrismaClient, PaymentMethod } from '@prisma/client';
+import { createSatelliteTenantExtension } from '@era/satellite-kit/tenancy';
 import {
   ROLE_CODES,
   ROLE_PERMISSIONS,
@@ -11,7 +12,9 @@ import {
 } from '../src/lib/auth/platform-super-admin';
 import { seedFoDemo } from './seed-fo-demo';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as PrismaClient;
 
 async function main() {
   await prisma.user.deleteMany();

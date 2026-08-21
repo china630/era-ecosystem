@@ -9,10 +9,13 @@ datasource db {
 
 model Tenant {
   id        String   @id @default(cuid())
-  code      String   @unique
+  organizationId String @map("organization_id")
+  code String
   name      String
   createdAt DateTime @default(now())
   outlets   Outlet[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 enum TripStatus {
@@ -25,6 +28,7 @@ enum TripStatus {
 
 model Outlet {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   tenantId  String
   code      String
   name      String
@@ -33,21 +37,26 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+  @@index([organizationId])
 }
 
 model Vehicle {
   id                   String    @id @default(cuid())
-  plate                String    @unique
+  organizationId String @map("organization_id")
+  plate String
   model                String?
   insuranceExpiresAt   DateTime?
   inspectionExpiresAt  DateTime?
   permitExpiresAt      DateTime?
   trips                Trip[]
   createdAt            DateTime  @default(now())
+  @@unique([organizationId, plate])
+  @@index([organizationId])
 }
 
 model Trip {
   id            String     @id @default(cuid())
+  organizationId String @map("organization_id")
   vehicleId     String
   status        TripStatus @default(PLANNED)
   routeCode     String?
@@ -65,14 +74,17 @@ model Trip {
   fuelCost      Decimal?   @db.Decimal(12, 2)
   vehicle       Vehicle    @relation(fields: [vehicleId], references: [id])
   points        TripPoint[]
-  trackingToken String?    @unique
+  trackingToken String?
   createdAt     DateTime   @default(now())
 
   @@index([vehicleId, status])
+  @@unique([organizationId, trackingToken])
+  @@index([organizationId])
 }
 
 model TripPoint {
   id            String    @id @default(cuid())
+  organizationId String @map("organization_id")
   tripId        String
   sequence      Int
   addressLabel  String
@@ -86,18 +98,23 @@ model TripPoint {
 
   @@unique([tripId, sequence])
   @@index([tripId, status])
+  @@index([organizationId])
 }
 
 model Role {
   id              String   @id @default(cuid())
-  code            String   @unique
+  organizationId String @map("organization_id")
+  code String
   name            String
   permissionsJson String   @default("[]")
   users           User[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model CrossDockScan {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   barcode   String
   hubCode   String   @default("HUB1")
   tripId    String?
@@ -105,22 +122,26 @@ model CrossDockScan {
   scannedAt DateTime @default(now())
 
   @@index([hubCode, scannedAt])
+  @@index([organizationId])
 }
 
 model TariffQuoteLog {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   tripId    String?
   weightKg  Decimal  @db.Decimal(10, 2)
   amount    Decimal  @db.Decimal(12, 2)
   currency  String   @default("AZN")
   createdAt DateTime @default(now())
+  @@index([organizationId])
 }
 
 model User {
   id              String    @id @default(cuid())
-  login           String    @unique
+  organizationId String @map("organization_id")
+  login String
   email           String?
-  phone           String?   @unique
+  phone           String?   
   fullName        String
   passwordHash    String
   roleId          String
@@ -129,4 +150,7 @@ model User {
   isCrossSystem   Boolean   @default(false) @map("is_cross_system")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }

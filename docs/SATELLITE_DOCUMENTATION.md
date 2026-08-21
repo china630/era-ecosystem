@@ -20,6 +20,8 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Implementation plans index | [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) |
 | In-app user help (policy) | [USER_DOCUMENTATION.md](./USER_DOCUMENTATION.md) |
 | Control plane architecture | [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) |
+| Deployment topology (SHARED / DEDICATED / ONPREM) | [adr/deployment-topology.md](./adr/deployment-topology.md) — bind + runtime-config + PlacementJob **API scaffold** + host agent stub; **not** live SaaS pool / automated migrate sell |
+| Satellite org bind + boot hydrate | [adr/satellite-organization-bind.md](./adr/satellite-organization-bind.md) — Wave 3: request-time `satelliteOrganizationId()` (no import-time env for product handlers) |
 | CP-BILLING migration (archive) | [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) |
 | Platform add-ons | [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |
 | Local UAT gaps | [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) |
@@ -162,7 +164,7 @@ Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-r
 
 - **SoR:** Orchestrator `era_mdm` — store **`globalPersonId` only** in satellite DBs.
 - **Client:** `@era/satellite-kit` `linkPersonIdentity` (lookup FIN → resolve-or-create).
-- **Clinic:** `PatientRef`, `Practitioner` — strict; `/api/mdm/person-lookup`, `/api/mdm/person-merge`.
+- **Clinic:** `PatientRef`, `Practitioner` — strict; `/api/mdm/person-lookup`, `/api/mdm/person-merge`. WHO ICD-10 (2019) local `IcdCode` catalog + optional orchestrator `GET /platform/v1/catalog/icd10` sync (not data-hub).
 - **Hotel:** `Guest` — **strong + ops cache (W4)**; identity MDM-only (`globalPersonId`); masked ops-profile on guest card; transient FIN/passport at intake.
 - **Finance:** `Employee`, `Counterparty` (ИП) — `OrchestratorMdmClientService`.
 - **Bank:** CIF natural + `POST /cif/customers/:id/beneficial-owners` (API).
@@ -200,6 +202,8 @@ UI: [`@era/satellite-kit/ui`](../packages/satellite-kit/ui) (DESIGN.md tokens, P
 | era-crm | [PRD](../era-crm/PRD.md) | [DELIVERY-CRM](../era-crm/doc/DELIVERY-CRM.md) | 3207 | crm.era-365.online |
 | era-auto-service | [PRD](../era-auto-service/PRD.md) | [DELIVERY-AUTO](../era-auto-service/doc/DELIVERY-AUTO.md) | 3208 | auto-service.era-365.online |
 | era-wholesale | [PRD](../era-wholesale/PRD.md) | [DELIVERY-WHOLESALE](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 3209 | wholesale.era-365.online |
-| era-clinic | [PRD](../era-clinic/PRD.md) | [DELIVERY-CLINIC](../era-clinic/doc/DELIVERY-CLINIC.md) | 3203 | clinic.era-365.online |
+| era-clinic | [PRD](../era-clinic/PRD.md) | [DELIVERY-CLINIC](../era-clinic/doc/DELIVERY-CLINIC.md) (ICD-10 catalog) | 3203 | clinic.era-365.online |
 
 **Hotel Elektraweb migration (Stage 26):** [ELEKTRAWEB-IMPORT.md](../era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md) · ADR [hotel-elektraweb-import.md](./adr/hotel-elektraweb-import.md)
+
+**Hotel Management Reports (W1–W3 API):** [MANAGEMENT-REPORTS-CATALOG.md](../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) — classifier A0–E, `/reports` home, Nafta nightly ZIP, P1 catalog, pivot cubes (not OLAP), 3-year, email ZIP link HEADLESS (HOT-RPT-01/02 API/SCREEN — not SHIPPED, no UAT evidence).

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { toDecimal } from '@/lib/decimal';
 import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
@@ -52,7 +53,7 @@ export async function upsertFolioFromElektrawebRow(
   const amount = num(row.MCTOTAL) ?? num(row.CTOTAL) ?? num(row.MCTOTALNET);
   if (amount == null) throw new Error(`Folio ${externalRef} missing amount (CTOTAL/MCTOTAL)`);
 
-  const reservation = await prisma.reservation.findUnique({
+  const reservation = await prisma.reservation.findFirst({
     where: { externalRef: reservationExternalRef },
     include: { folios: true },
   });
@@ -66,9 +67,16 @@ export async function upsertFolioFromElektrawebRow(
   let folio = reservation.folios.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
   if (!folio) {
     folio = await prisma.folio.create({
-      data: { reservationId: reservation.id, type: 'GUEST', status: 'OPEN' },
+      data: {
+        organizationId: satelliteOrganizationId(),
+        reservationId: reservation.id,
+        type: 'GUEST',
+        status: 'OPEN',
+      },
     });
   }
+
+  if (!folio) throw new Error('Open folio missing after ensure');
 
   const businessDate = parseElektrawebDate(row.TDATE) ?? new Date();
   const description =

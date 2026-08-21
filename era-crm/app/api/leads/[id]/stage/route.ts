@@ -1,6 +1,7 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { z } from "zod";
 import { LeadStage } from "@prisma/client";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { validatePartyForStage } from "@/lib/lead-party";
 import { prisma } from "@/lib/prisma";
 import { applyPipelineRules } from "@/lib/pipeline-rules";
@@ -14,6 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertCrmEntitled();
     const { id } = await params;
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) return jsonError("Lead not found", 404);
@@ -34,7 +36,7 @@ export async function PATCH(
 
     if (process.env.WHATSAPP_BUSINESS_MODE === "live" && updated.contactRef) {
       const orch = process.env.ORCHESTRATOR_API_URL?.replace(/\/$/, "");
-      const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID;
+      const orgId = satelliteOrganizationId();
       if (orch && orgId) {
         await fetch(`${orch}/platform/notifications/v1/send`, {
           method: "POST",

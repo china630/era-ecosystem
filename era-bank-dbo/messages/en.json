@@ -13,7 +13,8 @@
     "more": "More",
     "logout": "Log out",
     "standingOrders": "SO",
-    "pfm": "PFM"
+    "pfm": "PFM",
+    "openApi": "API"
   },
   "login": {
     "title": "Sign in",
@@ -108,6 +109,14 @@
   "islamic": {
     "title": "Islamic products",
     "subtitle": "Read-only contract status (activate in ops)"
+  },
+  "openApi": {
+    "title": "Open API keys",
+    "subtitle": "Partner keys for /dbo/open. Raw secret is shown once. Lab only — not Open Banking GA.",
+    "permissions": "Permissions",
+    "create": "Create key",
+    "revoke": "Revoke",
+    "shownOnce": "Copy now — shown once"
   },
   "pfm": {
     "title": "Personal finance",

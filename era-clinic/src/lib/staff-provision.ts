@@ -7,6 +7,7 @@ import {
 } from "@era/contracts";
 import { prisma } from "@/lib/prisma";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { staffKindFromSatelliteRole } from "@/domain/staff/staff-kind";
 
 function hashPassword(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -15,6 +16,9 @@ function hashPassword(value: string): string {
 const ROLE_CODES: Record<string, string> = {
   DOCTOR: CLINIC_ROLE.DOCTOR,
   NURSE: CLINIC_ROLE.NURSE,
+  FLOOR: CLINIC_ROLE.FLOOR,
+  LAB_TECH: CLINIC_ROLE.LAB_TECH,
+  LAB: CLINIC_ROLE.LAB_TECH,
   CLINIC_ADMIN: CLINIC_ROLE.CLINIC_ADMIN,
   RECEPTION: CLINIC_ROLE.RECEPTION,
   ADMIN: CLINIC_ROLE.CLINIC_ADMIN,
@@ -28,6 +32,7 @@ async function ensureRole(roleCode: string) {
       data: { code: roleCode, name: roleCode.replace(/_/g, " ") },
     });
   }
+  if (!role) throw new Error(`Failed to ensure role: ${roleCode}`);
   return role;
 }
 
@@ -45,7 +50,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const cpEmploymentId = p.cpEmploymentId;
 
     const byCp = await prisma.user.findFirst({ where: { cpEmploymentId } });
-    const existingUser = byCp ?? (await prisma.user.findUnique({ where: { login } }));
+    const existingUser = byCp ?? (await prisma.user.findFirst({ where: { login } }));
     let userId: string;
     if (existingUser) {
       await prisma.user.update({
@@ -76,9 +81,11 @@ export async function handleStaffProvisionEvent(event: unknown) {
       userId = user.id;
     }
 
+    const staffKind = staffKindFromSatelliteRole(p.satelliteRole);
     const practitionerBase = {
       code: p.staffCode,
       fullName: p.fullName,
+      staffKind,
       globalPersonId,
       cpEmploymentId,
       userId,
@@ -91,6 +98,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
       create: practitionerBase,
       update: {
         fullName: p.fullName,
+        staffKind,
         globalPersonId,
         userId,
         active: true,

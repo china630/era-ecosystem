@@ -155,3 +155,50 @@ Apply to shared PostgreSQL (or `npx prisma db push` in `packages/database`):
 2. `POST http://127.0.0.1:4000/platform/reference-data/v1/validate-key` with `Authorization: Bearer <CONTROL_PLANE_SERVICE_TOKEN>` and body `{ "apiKey": "dev-data-hub-key" }` — expect `{ valid: true, organizationId, metered: true }`.
 3. Data hub `PLATFORM_REFERENCE_DATA_MODE=live` + same key — `GET http://127.0.0.1:4200/registry/v1/fx/rates?symbols=USD` with `X-Api-Key` — 200.
 4. Invalid key — 401 from validate-key; hub returns `INVALID_API_KEY`.
+
+## Deny (Green Scaffold BE Wave 7)
+
+Proof suites: `era-orchestrator/apps/api/src/**/cp-*-negative.spec.ts` (BILL/MDM/WF/SA/INT/BIND/CFG). AUTH deny also in `UAT-SMOKE-RBAC.md`.
+
+| AC | Deny check | Expect |
+|----|------------|--------|
+| BILL | Owner invoice PDF / billing mutate as non-owner or foreign invoice id | **403** (`BILLING_OWNER_ONLY` / `BILLING_INVOICE_ACCESS`); no subscription → `SUBSCRIPTION_MISSING` |
+| MDM | `POST /internal/v1/mdm/persons/lookup-by-fin` without service token | **401** |
+| WF | `POST /platform/v1/workforce/employments/hire` as ACCOUNTANT (not OWNER/HR_MANAGER) | **403**; org without `platform_workforce` → `PLATFORM_WORKFORCE_REQUIRED` |
+| SA | `GET /v1/admin/organizations` as non-super-admin JWT | **403** |
+| INT | Platform catalog / satellite gateway with wrong Bearer; plus `npm run audit:integration:strict` | **401** + CI gate |
+| BIND | `POST {satellite}/api/internal/v1/organization/bind` without / bad Bearer | **401** |
+| CFG | `POST …/runtime-config` without Bearer → **401**; body `{ "ssoSharedSecret": "too-short" }` with valid Bearer → **400** |
+
+```bash
+# BIND deny (any satellite with kit handlers, e.g. clinic :3202)
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:3202/api/internal/v1/organization/bind \
+  -H "Content-Type: application/json" \
+  -d '{"organizationId":"00000000-0000-4000-8000-000000000001"}'
+# expect 401 when SATELLITE_EVENT_SERVICE_TOKEN is set
+
+# CFG short SSO
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:3202/api/internal/v1/runtime-config \
+  -H "Authorization: Bearer $SATELLITE_EVENT_SERVICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"ssoSharedSecret":"too-short"}'
+# expect 400
+```
+
+AC-CP-TOPO remains **not** Scaffold ✅ — do not treat PlacementJob API as SHARED pool sell.
+
+## UI paths (SCREEN — no Demo/TE sign-off yet)
+
+Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readiness UI/Demo ✅ from this list alone.
+
+| Surface | Path | Check |
+|---------|------|-------|
+| Workforce vacation | `/workspace/workforce/vacation-plans` | list + submit/approve modal |
+| Personnel orders | `/workspace/workforce/personnel-orders` | list |
+| Staff schedule | `/workspace/workforce/staff-schedule` | list |
+| Timesheets | `/workspace/workforce/timesheets` | list |
+| Org catalog | `/super-admin/orgs` | search + open hub |
+| Referrals | `/super-admin/referrals` | list |
+| Landing | `/super-admin/landing` | list |
+| Owner billing | `/settings/subscription`, `/settings/invoices`, `/settings/orders` | pages load for owner |
+| Placement hop | `/super-admin/orgs/{id}/placement` | create SHARED→DEDICATED; create SHARED→ONPREM shows REJECTED |

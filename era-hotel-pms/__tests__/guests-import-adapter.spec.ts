@@ -7,7 +7,7 @@ describe('guests import adapter', () => {
     const { guestsAdapter } = await import('@/lib/import/adapters/guests.adapter');
     const tx = {
       guest: {
-        findUnique: jest.fn().mockResolvedValue(null),
+        findFirst: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue({}),
       },
     };
@@ -20,6 +20,7 @@ describe('guests import adapter', () => {
         lastName: 'Mammadov',
         fullName: 'Ali Mammadov',
         title: null,
+        gender: 'M',
         birthDate: null,
         passportNumber: 'AA1234567',
         nationalIdFin: 'ABC1234',

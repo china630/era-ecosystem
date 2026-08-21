@@ -1,3 +1,4 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { createStorageService } from "@era/storage";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
-  const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID ?? "local-dev";
+  const orgId = satelliteOrganizationId();
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) {

@@ -29,6 +29,7 @@ export async function POST(
     const denied = requireClinicRole(session, [
       CLINIC_ROLE.NURSE,
       CLINIC_ROLE.DOCTOR,
+      CLINIC_ROLE.FLOOR,
     ]);
     if (denied) return denied;
 

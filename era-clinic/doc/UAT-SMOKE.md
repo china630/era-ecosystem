@@ -94,10 +94,10 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan checked in; `programSchedulingMode=AFTER_CHECKUP`.
 
-1. **`/sanatorium`** — episode visible; **no** procedures until checkup (complaint + ICD).
+1. **`/sanatorium`** — episode visible; **no** procedures until checkup (complaint + ICD). Search ICD (`I10` / гипертенз) → add diagnosis → then schedule program.
 2. **Complete checkup & schedule program** → FIFO chart with 5-min slots; same procedure not twice same day. Slots require free **cabin/equipment** AND **skilled HARD staff** (Pattern A allocations).
 3. **`/nurse`** — day board: agenda (previous slot → EOD) + day progress; kanban Missed / Upcoming / In progress / Completed. **Check-in** only while unified window open (`endsAt`, +gap if next slot free) → `CHECKED_IN`. No nurse No-show button. Missed rows stay `SCHEDULED` until EOD sweep. Late guests: reception reschedules.
-4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks; lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); default gap 5 min in **Admin → Settings**; DEMO-WEEK from Randevular (~840 orders). Drag/move/cancel as before.
+4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks; lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); per-type `resourceGapMinutes` / `patientRestMinutes` on procedure types (tenant default = create default only); DEMO-WEEK from Randevular (~840 orders). Drag/move/cancel as before.
 5. Dispute path: audit on ProcedureOrder (`checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`).
 5. Reschedule procedure time on chart → conflict rules enforced (cabin + staff).
 6. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
@@ -105,6 +105,17 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 8. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
 9. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
 10. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
+11. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab.
+
+### ICD-10 catalog (CLI-39…42)
+
+1. **`/sanatorium`** — search ICD picker for `I10` or «гипертенз»; add diagnosis (selectable category/leaf only) + optional note; then **Complete checkup & schedule program**. Chapter/BLOCK codes must not save.
+2. **Patient card** (`/patients/[id]` or sanatorium patient modal) — contraindications body map is **collapsed** (amber bar + expand); ICD-10 list sits **below** it; add/remove against the **open** episode. Without an open episode the add path is hidden (409 `NO_OPEN_EPISODE` if posted).
+3. **`/visits/[id]`** — add primary/secondary visit diagnoses; list updates.
+4. **`/inpatient`** — admission diagnoses modal (admission/discharge + role).
+5. **Print checkup** — patient print form shows recorded diagnoses.
+6. **`/reports/diagnoses`** (DOCTOR) — date range + source/chapter; table totals episode/visit/admission.
+7. **`/admin/icd-favorites`** — pin a favorite; Sync catalog; retire a code (`active=false`); titles are not editable.
 
 
 
@@ -162,3 +173,47 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 2. Lab order workflow -> Print -> choose language -> form opens and print dialog appears.
 3. Patient card -> Print check-up / Print schedule -> language dialog -> print page.
 4. Qualitative analyte (if configured): enter via select; reprint in another language shows translated label.
+
+## Topology — two-org isolation (CP-TENANT-01 / Wave 10)
+
+**Status:** outline only — field run **pending**. Does **not** unlock AC-CLI-TENANT Scaffold ✅, SHIPPED, or SHARED pool sell. Signoff stub: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md).
+
+### Prerequisites
+
+- Clinic schema with `organizationId` on tenant roots + kit Prisma tenant extension.
+- Two distinct org UUIDs (`ORG_A`, `ORG_B`) bound via Sync / `ERA_SATELLITE_ORGANIZATION_ID` for dedicated deploys; for a shared DB lab, run one process with ALS/bind switching **or** two sequential binds with clear data ownership.
+- Super-admin + clinic ops login.
+
+### API outline
+
+1. Bind clinic to `ORG_A`; create patient / appointment (or use seed) tagged to `ORG_A`.
+2. Switch bind (or second process) to `ORG_B`; `GET /api/patients` (and appointments list) must **not** return `ORG_A` rows.
+3. Attempt cross-org update by id from `ORG_B` session → expect 404 / empty (not other org’s data).
+4. Negative: raw SQL / admin without filter is out of scope — product path must use kit filter.
+
+### UI outline
+
+1. Ops login → `/patients` as `ORG_A` — list shows only A.
+2. After org switch / second appliance → `/patients` shows only B; no A names/phones.
+3. Record pass/fail in `reports/two-org-isolation-signoff.md` (do not mark passed until field run).
+
+## Deny (Scaffold BE negative paths)
+
+1. **Module off → 403:** With `industry_clinic` inactive (or unbound org / source=fallback), operational routes that call `assertClinicEntitled` / `getRouteSession` return **403** (`Industry module not active: industry_clinic`). Proof: `__tests__/cli-*-negative.spec.ts`.
+2. **OPS:** Cancel COMPLETED appointment refused; double-book / off-shift → 409; reschedule on CANCELLED/COMPLETED denied.
+3. **PT / MD:** Patient without FIN/passport/MDM identifier refused; inactive practitioner not bookable.
+4. **SAN:** Doctor-confirm skipping earlier PROPOSED → **409** FIFO.
+5. **LAB (ops):** Illegal publish/collect/complete status paths refused — **not** live HL7 (CLI-23 External).
+6. **CASH:** Settle deny when visit missing / shift closed; live fiscal KKM refused — **not** NBC live (CLI-24 External).
+7. **PRINT / CAP:** Missing print source / unsupported lang; critical capacity blocks medical-package booking.
+
+## Procedure TTK → Finance (CLI-47)
+
+**Status:** API landed (W1+W2). Sign-off required before SHIPPED. ADR: [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic-procedure-consumable-ttk.md).
+
+1. SatAdmin → `/admin/master-data` → Procedure types → edit type → **Procedure TTK**: search Finance product, set qty per session, save.
+2. Empty BOM: complete a procedure → event `lines=[]`; Finance shows no stock movement for that order id.
+3. With BOM: nurse check-in → wait/auto-complete (or complete) → Finance `/inventory` stock OUT for those SKUs (corr = procedure order id). Shortage does **not** block nurse (warn+post).
+4. Replay same correlationId → Finance idempotent skip (no double write-off).
+5. Out of this UAT: retail pharmacy, Rx reserve, guest folio line per pad.
+

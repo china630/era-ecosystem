@@ -12,6 +12,8 @@
 
 ## Scope
 
+- **Declared, not this edition:** SHARED multi-tenant pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). CP-TENANT-01 schema+filter / AC-LOG-TENANT 🟡; appliance remains one-org DEDICATED/ONPREM. Do not sell SHARED Logistics.
+
 - In scope: Fleet/trips, POD, fuel, customs/FX/HS preview via Finance, platform add-ons on trip complete
 - Out of scope: Live customs brokerage certification; own GL SoT
 

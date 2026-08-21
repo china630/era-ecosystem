@@ -2,6 +2,7 @@ import {
   isValidAzFin,
   linkPersonIdentity,
   lookupGlobalPersonByFin,
+  satelliteOrganizationId,
 } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     };
     const fin = body.fin?.trim();
     const fullName = body.fullName?.trim();
-    const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
+    const orgId = satelliteOrganizationId();
 
     if (fin) {
       if (!isValidAzFin(fin)) {

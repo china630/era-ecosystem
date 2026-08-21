@@ -80,11 +80,9 @@ export const POSTING_ROLE_RUNTIME_ACCOUNT_CODES: Partial<
 > = {
   [OrganizationKind.COMMERCIAL]: [
     "241",
-    "251",
     "231",
     "713",
     "762",
-    "545",
     "244",
     "334",
   ],

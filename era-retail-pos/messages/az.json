@@ -102,5 +102,26 @@
     "localeAz": "AZ",
     "localeRu": "RU",
     "localeEn": "EN"
+  },
+  "admin": {
+    "supplierMatch": {
+      "title": "Təchizatçı uyğunlaşdırması",
+      "subtitle": "Finance proxy vasitəsilə invoys uyğunlaşdırılması üçün modal axın",
+      "matchInvoice": "İnvoysu uyğunlaşdır",
+      "replenishment": "Tamamlama",
+      "modalTitle": "Təchizatçı uyğunlaşdırması",
+      "match": "Uyğunlaşdır",
+      "invoiceRef": "İnvoys istinadı",
+      "invoiceRefPlaceholder": "İnvoys istinadı"
+    },
+    "replenishment": {
+      "title": "Tamamlama",
+      "subtitle": "Stok üçün tövsiyə olunan tamamlanma siyahısı",
+      "supplierMatch": "Təchizatçı uyğunlaşdırması",
+      "sku": "SKU",
+      "suggestedQty": "Tövsiyə edilən miqdar",
+      "unknownSku": "Naməlum SKU",
+      "empty": "Təklif yoxdur (stub və ya stok kifayətdir)."
+    }
   }
 }

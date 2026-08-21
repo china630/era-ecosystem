@@ -44,19 +44,19 @@ describe("BankSubaccountService", () => {
     const prisma = makePrisma([]);
     const svc = new BankSubaccountService(prisma, createMockPostingResolver());
     const code = await svc.nextSubaccountCode(orgId, "14");
-    expect(code).toBe("221.14.01");
+    expect(code).toBe("223.14.01");
   });
 
   it("nextSubaccountCode picks max+1 across nested codes", async () => {
     const prisma = makePrisma([
-      { code: "221.14.01" },
-      { code: "221.14.02" },
-      { code: "221.14.05.01" },
-      { code: "221.14.03" },
+      { code: "223.14.01" },
+      { code: "223.14.02" },
+      { code: "223.14.05.01" },
+      { code: "223.14.03" },
     ]);
     const svc = new BankSubaccountService(prisma, createMockPostingResolver());
     const code = await svc.nextSubaccountCode(orgId, "14");
-    expect(code).toBe("221.14.06");
+    expect(code).toBe("223.14.06");
   });
 
   it("nextSubaccountCode rejects invalid bank code", async () => {
@@ -68,25 +68,25 @@ describe("BankSubaccountService", () => {
   });
 
   it("nextSubaccountCode overflows past 99", async () => {
-    const prisma = makePrisma([{ code: "221.14.99" }]);
+    const prisma = makePrisma([{ code: "223.14.99" }]);
     const svc = new BankSubaccountService(prisma, createMockPostingResolver());
     await expect(svc.nextSubaccountCode(orgId, "14")).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
 
-  it("ensureSubaccountForBranch creates a 221.<bankCode>.<seq> ASSET account", async () => {
-    const prisma = makePrisma([{ code: "221.14.01" }]);
+  it("ensureSubaccountForBranch creates a MAIN_BANK.<bankCode>.<seq> ASSET account", async () => {
+    const prisma = makePrisma([{ code: "223.14.01" }]);
     const svc = new BankSubaccountService(prisma, createMockPostingResolver());
     const result = await svc.ensureSubaccountForBranch(orgId, branchId, {
       currency: "AZN",
     });
     expect(result.created).toBe(true);
-    expect(result.code).toBe("221.14.02");
+    expect(result.code).toBe("223.14.02");
     const create = (prisma.account.create as jest.Mock).mock.calls[0][0];
     expect(create.data).toMatchObject({
       organizationId: orgId,
-      code: "221.14.02",
+      code: "223.14.02",
       type: AccountType.ASSET,
       ledgerType: LedgerType.NAS,
       currency: "AZN",

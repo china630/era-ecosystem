@@ -1,4 +1,4 @@
-import { listPersonIdentifiers } from "@era/satellite-kit";
+import { listPersonIdentifiers, satelliteOrganizationId } from "@era/satellite-kit";
 import type { PatientBloodGroup, PatientSex, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { linkPatientGlobalPerson } from "@/lib/patient-identity";
@@ -46,6 +46,9 @@ export type ListPatientsQuery = {
   hasMdm?: 0 | 1;
   ageMin?: number;
   ageMax?: number;
+  /** Hotel room on an OPEN sanatorium episode (Nafta / hotel appliance). */
+  roomNumber?: string;
+  includeHotelRooms?: boolean;
   page?: number;
   pageSize?: number;
 };
@@ -113,6 +116,20 @@ export async function listPatients(query?: string) {
   return result.items;
 }
 
+export async function listHotelRoomNumbers(): Promise<string[]> {
+  const rows = await prisma.clinicalEpisode.findMany({
+    where: { status: "OPEN", roomNumber: { not: null } },
+    select: { roomNumber: true },
+  });
+  return [
+    ...new Set(
+      rows
+        .map((r) => r.roomNumber?.trim())
+        .filter((n): n is string => Boolean(n)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
 export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   const page = Math.max(1, input.page ?? 1);
   const pageSize = Math.min(100, Math.max(10, input.pageSize ?? 25));
@@ -134,21 +151,47 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   const birthRange = birthDateRangeForAge(input.ageMin, input.ageMax);
   if (birthRange) where.birthDate = birthRange;
 
-  const [rows, total] = await Promise.all([
+  const roomNumber = input.roomNumber?.trim();
+  if (roomNumber) {
+    where.episodes = {
+      some: {
+        status: "OPEN",
+        roomNumber: { equals: roomNumber, mode: "insensitive" },
+      },
+    };
+  }
+
+  const [rows, total, hotelRooms] = await Promise.all([
     prisma.patientRef.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
+      include: {
+        episodes: {
+          where: { status: "OPEN" },
+          select: { roomNumber: true },
+          orderBy: { openedAt: "desc" },
+          take: 1,
+        },
+      },
     }),
     prisma.patientRef.count({ where }),
+    input.includeHotelRooms ? listHotelRoomNumbers() : Promise.resolve(undefined),
   ]);
 
   return {
-    items: rows.map(withDerivedDemographics),
+    items: rows.map((row) => {
+      const { episodes, ...patient } = row;
+      return {
+        ...withDerivedDemographics(patient),
+        hotelRoomNumber: episodes[0]?.roomNumber ?? null,
+      };
+    }),
     total,
     page,
     pageSize,
+    ...(hotelRooms ? { hotelRooms } : {}),
   };
 }
 
@@ -194,6 +237,7 @@ export async function createPatient(data: {
   const demo = demographicsWriteData(data);
   const patient = await prisma.patientRef.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       refCode: data.refCode,
       fullName: data.fullName,
       phone: data.phone,

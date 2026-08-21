@@ -93,6 +93,15 @@
   "projects": {
     "title": "ERA Construction",
     "subtitle": "C2 — projects, plan/actual, requisitions",
+    "addProject": "Add project",
+    "createProject": "Create project",
+    "projectCode": "Project code",
+    "projectName": "Project name",
+    "amountNet": "Initial amount (AZN)",
+    "boqItemCode": "BOQ item code",
+    "boqDescription": "BOQ line description",
+    "boqQty": "BOQ qty",
+    "created": "Project {code} created",
     "requisitions": "Requisitions",
     "empty": "No projects — POST /api/projects for demo.",
     "progressActs": "{count} progress certificate(s)"

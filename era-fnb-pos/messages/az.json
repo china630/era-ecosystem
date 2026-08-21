@@ -135,6 +135,16 @@
       "confirmDelete": "Bu masanı silək?",
       "empty": "Masa yoxdur — əlavə edin və ya seed işlədin."
     },
+    "dailyMenu": {
+      "title": "Günün menyusu paneli",
+      "subtitle": "Tarix üzrə menyu elementlərini kütləvi seçin",
+      "date": "Tarix",
+      "saveBoard": "Paneli saxla",
+      "copyYesterday": "Dünəndən kopyala",
+      "guestQrMenu": "Qonaqlar üçün QR menyu",
+      "saved": "{count} element saxlanıldı",
+      "copied": "{copied} element kopyalandı"
+    },
     "integration": {
       "title": "İnteqrasiya və billing",
       "loadFailed": "Yükləmə uğursuz oldu",

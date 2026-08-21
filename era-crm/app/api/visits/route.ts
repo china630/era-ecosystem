@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SATELLITE_CRM_VISIT_LOGGED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { prisma } from "@/lib/prisma";
 
@@ -15,6 +15,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    await assertCrmEntitled();
     const visits = await prisma.visit.findMany({
       include: { lead: true },
       orderBy: { visitedAt: "desc" },
@@ -28,6 +29,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await assertCrmEntitled();
     const body = createSchema.parse(await req.json());
     const lead = await prisma.lead.findUnique({ where: { id: body.leadId } });
     if (!lead) return jsonError("Lead not found", 404);

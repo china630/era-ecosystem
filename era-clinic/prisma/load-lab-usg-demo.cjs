@@ -219,6 +219,7 @@ function pickUsg(patient, index) {
 async function main() {
   const catalog = loadCatalogIndex();
   const patients = await prisma.patientRef.findMany({
+    where: process.env.DEMO_WEEK_ONLY === "1" ? { refCode: { startsWith: "DEMO-WEEK-" } } : undefined,
     orderBy: { refCode: "asc" },
     select: { id: true, refCode: true, fullName: true, sex: true },
   });

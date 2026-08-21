@@ -147,6 +147,16 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 
 ## Environment variables (canonical)
 
+### Satellite / Finance install bootstrap vs Sync
+
+| Class | Variables | Role |
+|-------|-----------|------|
+| **Required at install** | Orchestrator base URL (`CONTROL_PLANE_URL` / `ORCHESTRATOR_URL` / `ORCHESTRATOR_INTERNAL_URL`), handshake token (`SATELLITE_EVENT_SERVICE_TOKEN` or Finance `CONTROL_PLANE_SERVICE_TOKEN`), `DATABASE_URL`, Redis URL (where used), listen `PORT` | First boot + Sync fan-out only |
+| **Optional / emergency** | `ERA_SATELLITE_ORGANIZATION_ID` (or bank alias), `ERA_SSO_SHARED_SECRET`, event token override | Prefer Super-admin **Sync** bind + runtime-config |
+| **After first Sync** | `CONTROL_PLANE_URL` / orch URL in compose may stay as bootstrap; live readers prefer kit runtime-config memory (`orchestratorEventUrl`, tokens, SSO, PSA, `deploymentTopology`, `edition`) | Do not treat compose as SoR for desired state |
+
+`CONTROL_PLANE_URL` = **install bootstrap** for Finance Nest (and industry env fallback). After Sync, `@era/satellite-kit` `resolveOrchestratorBaseUrl()` prefers runtime-config memory.
+
 | Role | Variable | Example (prod) |
 |------|----------|----------------|
 | Orch Web | `ERA_APP_ORIGIN` | `https://app.era-365.online` |
@@ -165,7 +175,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Auto | `ERA_AUTO_SERVICE_ORIGIN` | `https://auto-service.era-365.online` |
 | Wholesale | `ERA_WHOLESALE_ORIGIN` | `https://wholesale.era-365.online` |
 
-**Launcher (Next.js):** `NEXT_PUBLIC_SATELLITE_FNB_POS_URL`, `NEXT_PUBLIC_SATELLITE_HOTEL_URL`, … — set from `ERA_*_ORIGIN` in compose.
+**Launcher URLs:** production SoR = orchestrator `SatelliteEndpoint` (`GET /v1/satellites/launch-url?satelliteKey=…`). `NEXT_PUBLIC_SATELLITE_FNB_POS_URL`, `NEXT_PUBLIC_SATELLITE_HOTEL_URL`, … and matching `ERA_*_ORIGIN` are **local-dev fallback only** (webpack inlining + API env fallback when no registry row). Do not treat compose NEXT_PUBLIC_* as the multi-tenant production registry.
 
 | Cross-app links | Variable | Example (local Docker) |
 |-----------------|----------|------------------------|
@@ -178,7 +188,9 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `true` on **finance-core** and **bank-core** (Phase 2 contract default) |
 | Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required when hub consumer enabled |
 | Finance CBAR ingest | `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` | `true` — finance no longer runs CBAR HTTP/cron (hub SoR) |
-| Industry reference data | `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` | Industry sync reads via orchestrator `GET /platform/v1/catalog/*` ([ADR](./adr/orchestrator-platform-integration-gateway.md)). Orchestrator backend: `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. HS tariff preview remains Finance-only. |
+| Industry reference data | `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` | Industry sync reads via orchestrator `GET /platform/v1/catalog/*` ([ADR](./adr/orchestrator-platform-integration-gateway.md)). Orchestrator backend: `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. HS tariff preview remains Finance-only. Prefer Sync bind + `satelliteOrganizationId()` over baking org UUID into compose. |
+| Industry desired-state (Sync) | orch → `POST …/organization/bind` + `POST …/runtime-config` | SSO / PSA / event URL+token / `activeModules` / optional `deploymentTopology` + `edition`; env = bootstrap override. See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md). |
+| Finance → Orchestrator S2S | `CONTROL_PLANE_SERVICE_TOKEN` (alias `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); URL via kit `resolveOrchestratorBaseUrl` (memory → `CONTROL_PLANE_URL` / `ORCHESTRATOR_*` bootstrap) | Same token value on orch + finance. Health reports configured booleans only. |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
 | Bank Core org | `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |

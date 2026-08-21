@@ -28,10 +28,10 @@ export interface BankSubaccountResult {
 }
 
 /**
- * AccountingService hook that materializes a NAS subaccount of `221` per
- * organization × bank branch.
+ * AccountingService hook that materializes a NAS subaccount of `MAIN_BANK`
+ * (Q-01 223 / NAS-GOV 103) per organization × bank branch.
  *
- * Mask: `221.<BankCode>.<Sequence>` where `BankCode` is the two-digit code
+ * Mask: `<MAIN_BANK>.<BankCode>.<Sequence>` where `BankCode` is the two-digit code
  * from `BankGlossary.code` and `Sequence` is a two-digit, organization-local,
  * monotonically increasing counter (`01`, `02`, …, max `99`).
  *
@@ -54,7 +54,7 @@ export class BankSubaccountService {
 
   /**
    * Compute the next subaccount code for an organization × bank code. Scans
-   * existing NAS accounts under `221.<bankCode>.` and picks `max + 1`.
+   * existing NAS accounts under `<MAIN_BANK>.<bankCode>.` and picks `max + 1`.
    */
   async nextSubaccountCode(
     organizationId: string,

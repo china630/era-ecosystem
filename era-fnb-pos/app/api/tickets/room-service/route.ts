@@ -1,5 +1,8 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
+import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
@@ -21,25 +24,20 @@ const schema = z.object({
 
 /** Room service ticket — no table; routes to KDS via standard fire flow. */
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;
 
   const body = schema.parse(await request.json());
-  let outlet = await prisma.outlet.findUnique({
-    where: { code: body.outletCode },
-  });
-  if (!outlet) {
-    outlet = await prisma.outlet.create({
-      data: { code: body.outletCode, name: body.outletCode },
-    });
-  }
+  const outlet = await ensureOutletByCode(body.outletCode);
   const cookieOutlet = await getSelectedOutletId();
   const outletId = cookieOutlet && cookieOutlet === outlet.id ? outlet.id : outlet.id;
 
   const subtotal = body.lines.reduce((s, l) => s + l.qty * l.unitPriceAzn, 0);
   const ticket = await prisma.ticket.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       outletId,
       serviceChannel: "ROOM_SERVICE",
       guestName: body.guestName ?? `Room ${body.roomNumber}`,

@@ -13,7 +13,6 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
-  Field,
   FieldSelect,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -80,7 +79,6 @@ export default function AgencyLedgerPage() {
   const [ledger, setLedger] = useState<Ledger | null>(null);
   const [summary, setSummary] = useState<SummaryRow[]>([]);
   const [transferred, setTransferred] = useState<TransferredRow[]>([]);
-  const [settleAmount, setSettleAmount] = useState('');
   const [lastSnapshot, setLastSnapshot] = useState<SnapshotMeta | null>(null);
 
   useEffect(() => {
@@ -174,31 +172,6 @@ export default function AgencyLedgerPage() {
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('error') });
     }
-  }
-
-  async function payAgencySettlement() {
-    if (!agencyId) return;
-    const amount = parseFloat(settleAmount);
-    if (!amount || amount <= 0) return;
-    const res = await fetch(`/api/agencies/${agencyId}/settlement`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, paymentMethod: 'COMPANY_ACCOUNT' }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      showSuccess(
-        t('settlementApplied', {
-          count: data.applied?.length ?? 0,
-          commission: Number(data.commissionAccrual ?? 0).toFixed(2),
-        }),
-      );
-      setSettleAmount('');
-      setAgencyId(agencyId);
-      const trRes = await fetch(`/api/agencies/${agencyId}/settlement`);
-      const tr = await trRes.json();
-      if (trRes.ok && Array.isArray(tr)) setTransferred(tr);
-    } else showApiError(data, tc('error'));
   }
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
@@ -388,24 +361,6 @@ export default function AgencyLedgerPage() {
                   </li>
                 ))}
               </ul>
-              {can(PERMISSIONS.FOLIO_PAYMENT) ? (
-                <div className="flex flex-wrap items-end gap-2">
-                  <Field
-                    label={t('agencyPaymentAzn')}
-                    preset="amount"
-                    type="number"
-                    value={settleAmount}
-                    onChange={(e) => setSettleAmount(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    onClick={() => void payAgencySettlement()}
-                  >
-                    {t('applyToCityLedger')}
-                  </button>
-                </div>
-              ) : null}
               <p className="mt-2 text-[12px] text-[#7F8C8D]">{t('financeBankMatchHint')}</p>
               {financeDeepLink('salesInvoices') ? (
                 <a

@@ -30,7 +30,7 @@ export async function postNightlyPackageCharges(
   }
 
   const lines = reservation.ratePlan.packageLines;
-  const pkgCode = await prisma.revenueCode.findUnique({ where: { code: 'PKG' } });
+  const pkgCode = await prisma.revenueCode.findFirst({ where: { code: 'PKG' } });
 
   const chargeLines =
     lines.length > 0

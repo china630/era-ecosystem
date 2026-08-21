@@ -15,7 +15,9 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
 | /fo/reservations | reservations grid | Stay list / arrivals |
 | /fo/rack | rack | Door tiles |
-| /fo/room-plan | room-plan API | Timeline bars |
+| /fo/room-plan | room-plan API | Timeline bars; share twin two lanes + pool badge |
+| Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
+| Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
 
@@ -30,6 +32,17 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | Reservation card | `salesContractId` on `POST /api/reservations`, `PATCH …/full` | Tag booking under contract; StaysBar + names-incomplete gate |
 | `/admin/contract-pricing` | 410 redirect | Legacy — use `/admin/contracts` |
 | `/reports/agency-ledger`, `/reports/agency-profitability` | Finance city ledger reports | Agency AR boundary |
+
+## hotel_agency_portal (HOT-AGP)
+
+| Route | API | Role |
+|-------|-----|------|
+| Orchestrator `/agency/login` | CP agency account + grants | Password login + property picker |
+| Hotel `/agency/*` | `POST /api/auth/agency-sso/exchange`, `/api/agency/*` | Extranet after agency SSO (`era_agency_session`) |
+| `/fo/agency-inbox` | `GET/POST /api/fo/agency-inbox` | Staff confirm/decline OPTION (hotel_core + portal SKU) |
+| Travel agency invite | `POST /api/admin/travel-agencies/:id/portal-invite` | SatAdmin; requires VÖEN + `hotel_agency_portal` |
+
+See ADR [`docs/adr/hotel-agency-portal.md`](../../docs/adr/hotel-agency-portal.md).
 
 ## hotel_banquets (H-BL-31)
 
@@ -74,7 +87,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/front-cash/agency-ledger` | agency ledger + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL ops + Finance re-push (HOT-CL-03/04) |
 | `/folio/[reservationId]` | `POST /api/folios/settle`, deposits, void charge, BANK_TRANSFER | Guest folio settle (HOT-CASH-01) |
 | `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); polish H-BL-44 |
-| `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD reports pack (HOT-NA-03) |
+| `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD ops grids (HOT-NA-03); Management pack deep-links → `/reports` (HOT-RPT spec) |
 | `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
 | `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Filters + CSV (HOT-NA-04) |
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Staged — ADR `hotel-year-end-calendar`; HOT-NA-05 STUB |
@@ -105,12 +118,13 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 | Agency settlement ops | HOT-AG-02 | H-BL-46 |
 | List filters | HOT-UI-01 | H-BL-47 |
 | Finance AR terms/aging/match | HOT-CL-05 | H-BL-48 |
+| Early unused-nights refund | HOT-CO-04 | H-BL-49 |
 
-**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`), `POST /api/folios/settle` (DEPOSIT/discount), `POST /api/folios/payments/[id]/refund`, `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: `/folio/[reservationId]`, chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`.
+**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `POST /api/folios/settle` (DEPOSIT/discount), `POST /api/folios/payments/[id]/refund`, `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: `/folio/[reservationId]`, chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`.
 
-**UAT:** `doc/UAT-SMOKE.md` §27 P5 FO money.
+**UAT:** `doc/UAT-SMOKE.md` §27 P5 FO money. Unused-nights refund: §33.
 
-ADR: `docs/adr/hotel-city-ledger-and-fo-money.md`. Boundary: `docs/HOSPITALITY_FINANCE_BOUNDARY.md`.
+ADR: `docs/adr/hotel-city-ledger-and-fo-money.md`. Early leave: `docs/adr/hotel-early-checkout-unused-nights.md`. Boundary: `docs/HOSPITALITY_FINANCE_BOUNDARY.md`.
 See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CASH/CO/CL/NA/AG/UI.
 
 ## Pricing components / BAR accounting base (2026-08)
@@ -127,6 +141,30 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 
 ADR: `docs/adr/hotel-bar-accounting-vs-package-sell.md`, `docs/adr/hotel-occupancy-and-load-pricing-flags.md` · Nafta: `doc/nafta/BAR_DERIVED_2026.md`
 
+## Management reports (HOT-RPT — W1 API)
+
+SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG.md) · menu [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) §2.16.
+
+| Route | API | Role |
+|-------|-----|------|
+| `/reports` | hub | Category tiles + shared period filter |
+| `/reports/analysis` | `GET /api/reports/analysis` | A0 hub (cubes P2) |
+| `/reports/occupancy` | `GET /api/reports/occupancy` | A occupancy / forecast / annual / monthly-daily |
+| `/reports/occupancy/annual` | `GET /api/reports/annual-occupancy?lang=` | P0 Annual Occupancy screen + PDF |
+| `/reports/occupancy/monthly-daily` | `GET /api/reports/monthly-daily-analysis?lang=` | P0 Monthly and Daily Analysis screen + PDF |
+| `/reports/daily` | hub | B Daily flash |
+| `/reports/daily/management` | `GET /api/reports/daily-management?lang=` | P0 Daily Management screen + PDF |
+| `/reports/daily/in-house` | `GET /api/reports/in-house?lang=` | P0 In-house screen + PDF |
+| `/reports/financial` | hub | C Financial |
+| `/reports/financial/trial-balance-period` | `GET /api/reports/trial-balance-period?lang=` | P0 Trial Balance Date Period screen + PDF |
+| `/reports/financial/cash` | `GET /api/reports/cash-report?lang=` | P0 Cash Report screen + PDF |
+| `/reports/financial/folio-transactions` | `GET /api/reports/folio-transactions?lang=` | P0 Folio Transactions screen + PDF |
+| `/reports/financial/department-revenues` | `GET /api/reports/department-revenues?lang=` | P0 Department Revenues screen + PDF |
+| `/reports/agency` | existing profitability | D agency / market |
+| `/reports/booking` | planned | E create / cancel / CRM |
+| `/reports/nightly-pack` | `GET /api/reports/pack`, `GET /api/reports/pack/download?businessDate=&lang=` | ZIP for closed business date |
+| `/settings/report-pack` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership config |
+
 ## Related docs
 
 - `doc/nafta/B2B-GATE.md` — Nafta P4 gate defaults
@@ -135,3 +173,4 @@ ADR: `docs/adr/hotel-bar-accounting-vs-package-sell.md`, `docs/adr/hotel-occupan
 - `docs/adr/hotel-bar-accounting-vs-package-sell.md` — BAR vs package sell
 - `doc/BACKLOG-PRODUCTION.md` § P5
 - `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money)
+- `doc/MANAGEMENT-REPORTS-CATALOG.md` — EW Management Reports catalog + Nafta nightly ZIP

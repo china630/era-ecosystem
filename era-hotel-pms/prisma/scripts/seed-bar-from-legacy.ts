@@ -3,9 +3,12 @@
  * Usage: npx tsx prisma/scripts/seed-bar-from-legacy.ts [--from=2026-06-01] [--to=2026-12-31]
  */
 import { PrismaClient, Prisma } from '@prisma/client';
+import { createSatelliteTenantExtension } from '@era/satellite-kit/tenancy';
 import { ensureBarBasePlan } from '../../src/lib/pricing/bar-bootstrap.service';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as PrismaClient;
 
 function parseArg(name: string, fallback: string): string {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));

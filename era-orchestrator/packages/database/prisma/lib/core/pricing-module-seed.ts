@@ -207,6 +207,14 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     satelliteKey: "industry_hotel_pms",
   },
   {
+    key: "hotel_agency_portal",
+    name: "Agency Portal (B2B extranet)",
+    pricePerMonth: 18,
+    sortOrder: 1125,
+    isPremium: true,
+    satelliteKey: "industry_hotel_pms",
+  },
+  {
     key: "hotel_guest_experience",
     name: "Guest Profiles & Tasks",
     pricePerMonth: 10,

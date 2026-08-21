@@ -110,7 +110,7 @@ export async function completeTransfer(id: string) {
 
   let folioCharged = order.folioCharged;
   if (!folioCharged) {
-    const transferCode = await prisma.revenueCode.findUnique({ where: { code: 'TRANSFER' } });
+    const transferCode = await prisma.revenueCode.findFirst({ where: { code: 'TRANSFER' } });
     if (!transferCode) throw new Error('Revenue code TRANSFER not configured');
     const directionLabel = order.direction === 'IN' ? 'Airport pickup' : 'Airport drop-off';
     // postCharge resolves stay override → property FolioRoutingRule → default
@@ -140,7 +140,7 @@ export async function cancelTransfer(id: string, reason?: string) {
   if (!order) throw new Error('Transfer order not found');
   if (order.status === 'CANCELLED') return order;
   if (order.status === 'DONE' && order.folioCharged) {
-    const transferCode = await prisma.revenueCode.findUnique({ where: { code: 'TRANSFER' } });
+    const transferCode = await prisma.revenueCode.findFirst({ where: { code: 'TRANSFER' } });
     if (transferCode) {
       const charge = await prisma.folioCharge.findFirst({
         where: {

@@ -13,6 +13,7 @@ import {
   FieldSection,
   FieldSelect,
   hotelTenderOptions,
+  MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_DANGER_CLASS,
@@ -78,6 +79,11 @@ export type ReservationCardLeftPanelProps = {
   segment: string;
   resNo: string;
   shareNo: string;
+  shareEligible: boolean;
+  guestGender: string;
+  shareNeighborHint?: string;
+  onBreakShare?: () => void;
+  breakShareBusy?: boolean;
   optionDate: string;
   optionState: string;
   salesProject: string;
@@ -150,6 +156,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     onFocusRoomSelect,
     onToggleLock,
     roomStatus,
+    onBreakShare,
+    breakShareBusy,
   } = props;
 
   const nights = nightsBetween(props.checkIn, props.checkOut);
@@ -555,6 +563,46 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 </button>
               </div>
             </FieldRow>
+            <FieldRow cols={2} className="items-end">
+              <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={props.shareEligible}
+                  disabled={disabled || Number(props.adults) !== 1}
+                  onChange={(e) => onChange({ shareEligible: e.target.checked ? 'true' : 'false' })}
+                />
+                <span title={t('shareEligibleHint')}>{t('shareEligible')}</span>
+              </label>
+              {props.shareEligible ? (
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t('gender')}
+                  value={props.guestGender}
+                  onChange={(v) =>
+                    onChange({ guestGender: (Array.isArray(v) ? v[0] : v) ?? '' })
+                  }
+                  options={[
+                    { value: 'M', label: t('genderMale') },
+                    { value: 'F', label: t('genderFemale') },
+                  ]}
+                  disabled={disabled}
+                />
+              ) : null}
+            </FieldRow>
+            {props.shareEligible && props.shareNeighborHint ? (
+              <p className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{props.shareNeighborHint}</p>
+            ) : null}
+            {props.shareEligible && !isCreate && onBreakShare ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={disabled || breakShareBusy}
+                onClick={onBreakShare}
+              >
+                {t('breakShare')}
+              </button>
+            ) : null}
             <FieldSelect
               label={t('givenRoomType')}
               preset="select"

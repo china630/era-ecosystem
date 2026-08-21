@@ -9,14 +9,18 @@ datasource db {
 
 model Tenant {
   id        String   @id @default(cuid())
-  code      String   @unique
+  organizationId String @map("organization_id")
+  code String
   name      String
   createdAt DateTime @default(now())
   outlets   Outlet[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model Outlet {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   tenantId  String
   code      String
   name      String
@@ -25,11 +29,13 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+  @@index([organizationId])
 }
 
 model Project {
   id                   String                @id @default(cuid())
-  code                 String                @unique
+  organizationId String @map("organization_id")
+  code String
   name                 String
   progressActs         ProgressAct[]
   materialRequisitions MaterialRequisition[]
@@ -42,10 +48,13 @@ model Project {
   drawingRevisions     DrawingRevision[]
   timesheetEntries     TimesheetEntry[]
   createdAt            DateTime              @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ProjectTask {
   id          String    @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId   String
   name        String
   startDate   DateTime  @db.Date
@@ -55,10 +64,12 @@ model ProjectTask {
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([organizationId])
 }
 
 model EquipmentLog {
   id           String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId    String
   equipmentCode String
   hours        Decimal  @db.Decimal(10, 2)
@@ -67,10 +78,12 @@ model EquipmentLog {
   createdAt    DateTime @default(now())
 
   @@index([projectId, logDate])
+  @@index([organizationId])
 }
 
 model DrawingRevision {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId   String
   drawingCode String
   revision    String
@@ -79,10 +92,12 @@ model DrawingRevision {
   createdAt   DateTime @default(now())
 
   @@index([projectId, drawingCode])
+  @@index([organizationId])
 }
 
 model TimesheetEntry {
   id              String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId       String
   workerRef       String
   cpEmploymentId  String?  @map("cp_employment_id")
@@ -93,10 +108,12 @@ model TimesheetEntry {
   createdAt       DateTime @default(now())
 
   @@index([projectId, workDate])
+  @@index([organizationId])
 }
 
 model DailyLog {
   id         String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId  String
   logDate    DateTime @db.Date
   weather    String?
@@ -107,10 +124,12 @@ model DailyLog {
   createdAt  DateTime @default(now())
 
   @@index([projectId, logDate])
+  @@index([organizationId])
 }
 
 model PunchListItem {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId   String
   location    String
   description String
@@ -120,10 +139,12 @@ model PunchListItem {
   createdAt   DateTime @default(now())
 
   @@index([projectId, status])
+  @@index([organizationId])
 }
 
 model SubcontractorClaim {
   id                String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId         String
   subcontractorName String
   amountNet         Decimal  @default(0) @db.Decimal(12, 2)
@@ -133,10 +154,12 @@ model SubcontractorClaim {
   createdAt         DateTime @default(now())
 
   @@index([projectId, status])
+  @@index([organizationId])
 }
 
 model BoqLine {
   id               String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId        String
   itemCode         String
   description      String
@@ -147,10 +170,12 @@ model BoqLine {
 
   @@unique([projectId, itemCode])
   @@index([projectId])
+  @@index([organizationId])
 }
 
 model MaterialRequisition {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId   String
   itemCode    String
   description String
@@ -160,10 +185,12 @@ model MaterialRequisition {
   createdAt   DateTime @default(now())
 
   @@index([projectId, status])
+  @@index([organizationId])
 }
 
 model ProgressAct {
   id         String    @id @default(cuid())
+  organizationId String @map("organization_id")
   projectId  String
   periodKey  String?
   amountNet  Decimal   @db.Decimal(12, 2)
@@ -173,21 +200,26 @@ model ProgressAct {
   createdAt  DateTime  @default(now())
 
   @@index([projectId])
+  @@index([organizationId])
 }
 
 model Role {
   id              String   @id @default(cuid())
-  code            String   @unique
+  organizationId String @map("organization_id")
+  code String
   name            String
   permissionsJson String   @default("[]")
   users           User[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model User {
   id              String    @id @default(cuid())
-  login           String    @unique
+  organizationId String @map("organization_id")
+  login String
   email           String?
-  phone           String?   @unique
+  phone           String?   
   fullName        String
   passwordHash    String
   roleId          String
@@ -196,4 +228,7 @@ model User {
   isCrossSystem   Boolean   @default(false) @map("is_cross_system")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }

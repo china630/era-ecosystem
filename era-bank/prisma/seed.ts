@@ -1,10 +1,16 @@
-import { hashPassword } from "@era/satellite-kit";
-import { PrismaClient } from "@prisma/client";
+import { createSatelliteTenantExtension, hashPassword } from "@era/satellite-kit";
+import { Prisma, PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as PrismaClient;
 
 const DEMO_BRANCH_ID = "demo-branch-hq";
 const DEMO_PASSWORD = "demo1234";
+const ORG_ID =
+  process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
+  process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+  "demo-org";
 
 const roles = [
   {
@@ -71,12 +77,15 @@ async function main() {
 
   for (const role of roles) {
     await prisma.opsRole.upsert({
-      where: { code: role.code },
+      where: {
+        organizationId_code: { organizationId: ORG_ID, code: role.code },
+      },
       update: {
         name: role.name,
         limitsJson: role.limitsJson,
       },
       create: {
+        organizationId: ORG_ID,
         code: role.code,
         name: role.name,
         limitsJson: role.limitsJson,
@@ -86,10 +95,17 @@ async function main() {
 
   for (const user of users) {
     const role = await prisma.opsRole.findUniqueOrThrow({
-      where: { code: user.roleCode },
+      where: {
+        organizationId_code: { organizationId: ORG_ID, code: user.roleCode },
+      },
     });
     await prisma.opsUser.upsert({
-      where: { username: user.username },
+      where: {
+        organizationId_username: {
+          organizationId: ORG_ID,
+          username: user.username,
+        },
+      },
       update: {
         fullName: user.fullName,
         passwordHash,
@@ -98,6 +114,7 @@ async function main() {
         status: "ACTIVE",
       },
       create: {
+        organizationId: ORG_ID,
         username: user.username,
         fullName: user.fullName,
         passwordHash,
@@ -108,7 +125,7 @@ async function main() {
     });
   }
 
-  console.log("Seeded era-bank ops users (password: demo1234):");
+  console.log(`Seeded era-bank ops users org=${ORG_ID} (password: demo1234):`);
   for (const user of users) {
     console.log(`  - ${user.username} (${user.roleCode})`);
   }

@@ -1,8 +1,10 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 
 export async function GET() {
+  await assertFnbEntitled();
   const outlets = await prisma.outlet.findMany({
     where: { active: true },
     orderBy: { code: "asc" },

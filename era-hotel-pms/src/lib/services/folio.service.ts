@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { FolioType, PaymentMethod } from '@prisma/client';
@@ -44,7 +45,14 @@ export async function openFoliosForReservation(reservationId: string, guestVoen:
 
   return prisma.$transaction(
     types.map((type) =>
-      prisma.folio.create({ data: { reservationId, type, status: 'OPEN' } }),
+      prisma.folio.create({
+        data: {
+          organizationId: satelliteOrganizationId(),
+          reservationId,
+          type,
+          status: 'OPEN',
+        },
+      }),
     ),
   );
 }
@@ -120,9 +128,16 @@ export async function postCharge(input: {
     }
   } else if (!folio) {
     folio = await prisma.folio.create({
-      data: { reservationId: input.reservationId, type: targetType, status: 'OPEN' },
+      data: {
+        organizationId: satelliteOrganizationId(),
+        reservationId: input.reservationId,
+        type: targetType,
+        status: 'OPEN',
+      },
     });
   }
+
+  if (!folio) throw new Error('Open folio missing after ensure');
 
   const charge = await prisma.folioCharge.create({
     data: {
@@ -222,7 +237,7 @@ export async function postPayment(input: {
     );
   }
 
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  const organizationId = satelliteOrganizationId();
   if (organizationId && input.amount > 0 && kind === 'PAYMENT') {
     const { runHotelFolioPlatformHooks } = await import(
       '@/lib/integration/platform-commerce'
@@ -322,12 +337,13 @@ export async function postDiscount(input: {
   folioId?: string;
 }) {
   if (input.amount <= 0) throw new Error('Discount amount must be positive');
-  let code = await prisma.revenueCode.findUnique({ where: { code: 'DISCOUNT' } });
+  let code = await prisma.revenueCode.findFirst({ where: { code: 'DISCOUNT' } });
   if (!code) {
     code = await prisma.revenueCode.create({
       data: { code: 'DISCOUNT', name: 'Discount', active: true },
     });
   }
+  if (!code) throw new Error('DISCOUNT revenue code missing');
   return postCharge({
     reservationId: input.reservationId,
     revenueCodeId: code.id,

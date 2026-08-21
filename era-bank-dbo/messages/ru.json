@@ -12,7 +12,8 @@
     "approve": "Подпись",
     "more": "Ещё",
     "logout": "Выход",
-    "standingOrders": "ПО"
+    "standingOrders": "ПО",
+    "openApi": "API"
   },
   "login": {
     "title": "Вход",
@@ -105,5 +106,13 @@
   "islamic": {
     "title": "Исламские продукты",
     "subtitle": "Только просмотр (активация в ops)"
+  },
+  "openApi": {
+    "title": "Ключи Open API",
+    "subtitle": "Партнёрские ключи для /dbo/open. Секрет показывается один раз. Lab — не Open Banking GA.",
+    "permissions": "Права",
+    "create": "Создать ключ",
+    "revoke": "Отозвать",
+    "shownOnce": "Скопируйте сейчас — показывается один раз"
   }
 }

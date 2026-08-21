@@ -13,6 +13,8 @@ import { OrgOperatingModeController } from "./org-operating-mode.controller";
 import { OrgOperatingModeService } from "./org-operating-mode.service";
 import { OrgDepartmentsController } from "./org-departments.controller";
 import { OrgDepartmentsService } from "./org-departments.service";
+import { AdminOrganizationsController } from "./admin-organizations.controller";
+import { AdminOrganizationsService } from "./admin-organizations.service";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 
 @Module({
@@ -24,6 +26,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     PublicLandingController,
     OrgOperatingModeController,
     OrgDepartmentsController,
+    AdminOrganizationsController,
   ],
   providers: [
     AdminBillingService,
@@ -31,6 +34,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     PricingService,
     OrgOperatingModeService,
     OrgDepartmentsService,
+    AdminOrganizationsService,
     PermissionsGuard,
   ],
   exports: [
@@ -39,6 +43,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     PricingService,
     OrgOperatingModeService,
     OrgDepartmentsService,
+    AdminOrganizationsService,
   ],
 })
 export class AdminModule {}

@@ -22,14 +22,18 @@ export function handleRouteError(err: unknown) {
     return jsonError(err.message, 400);
   }
   if (err instanceof Error) {
+    const status = (err as Error & { status?: number }).status;
     const lower = err.message.toLowerCase();
+    if (typeof status === 'number' && status >= 400 && status < 600) {
+      return jsonError(err.message, status);
+    }
     if (lower.includes('unauthorized')) {
       return jsonError(err.message, 401);
     }
     if (lower.includes('forbidden') || lower.includes('insufficient permissions')) {
       return jsonError(err.message, 403);
     }
-    if (lower.includes('idempotency conflict')) {
+    if (lower.includes('idempotency conflict') || lower.includes('duplicate') || lower.includes('no contract allotment') || lower.includes('no availability')) {
       return jsonError(err.message, 409);
     }
     const known = ['not found', 'invalid', 'cannot', 'only', 'must'];

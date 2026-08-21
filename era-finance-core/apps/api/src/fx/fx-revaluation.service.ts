@@ -3,6 +3,8 @@ import { AccountType, LedgerType, Prisma } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { CronModuleGateService } from "../subscription/cron-module-gate.service";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { CbarRateSyncService } from "./cbar-rate-sync.service";
 
 type Decimal = Prisma.Decimal;
@@ -57,6 +59,7 @@ export class FxRevaluationService {
     private readonly cbarRates: CbarRateSyncService,
     private readonly accounting: AccountingService,
     private readonly posting: PostingAccountResolver,
+    private readonly cronGate: CronModuleGateService,
   ) {}
 
   async runMonthEndForAllOrganizations(now: Date = new Date()): Promise<void> {
@@ -70,6 +73,14 @@ export class FxRevaluationService {
 
     for (const org of orgs) {
       try {
+        const entitled = await this.cronGate.isModuleOn(
+          org.id,
+          ModuleEntitlement.IFRS_MAPPING,
+        );
+        if (!entitled) {
+          this.logger.debug(`FX reval skipped org ${org.id}: ifrs_mapping off`);
+          continue;
+        }
         await this.runForOrganization(org.id, org.settings, asOf, monthKey);
       } catch (e) {
         this.logger.warn(

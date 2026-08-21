@@ -45,6 +45,13 @@
   "trips": {
     "title": "ERA Logistics",
     "subtitle": "Рейсы — откройте детали для POD, топлива и workflow",
+    "addTrip": "Добавить рейс",
+    "createTrip": "Создать рейс",
+    "vehiclePlate": "Номер транспорта",
+    "vehicleModel": "Модель транспорта",
+    "routeCode": "Код маршрута",
+    "freightAmount": "Сумма фрахта (AZN)",
+    "created": "Рейс создан для {plate}",
     "fuelReport": "Отчёт по топливу",
     "empty": "Рейсов пока нет."
   },

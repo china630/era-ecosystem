@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
@@ -38,10 +39,13 @@ export async function openEpisodeFromStay(input: {
   }
 
   const refCode = refCodeFromPassport(input.passportNumber);
-  let patient = await prisma.patientRef.findUnique({ where: { refCode } });
+  let patient = await prisma.patientRef.findFirst({
+    where: { organizationId: input.organizationId, refCode },
+  });
   if (!patient) {
     patient = await prisma.patientRef.create({
       data: {
+        organizationId: input.organizationId,
         refCode,
         fullName: input.guestName,
         phone: input.phone ?? null,
@@ -49,6 +53,7 @@ export async function openEpisodeFromStay(input: {
       },
     });
   }
+  if (!patient) throw new Error("Failed to ensure patient ref");
 
   return prisma.clinicalEpisode.create({
     data: {
@@ -83,7 +88,9 @@ export async function registerWalkInEpisode(input: {
   if (!key) throw new Error("FIN or passport required");
   const refCode = walkInRefCode(key);
 
-  let patient = await prisma.patientRef.findUnique({ where: { refCode } });
+  let patient = await prisma.patientRef.findFirst({
+    where: { organizationId: input.organizationId, refCode },
+  });
   const birthDate = input.birthDate?.trim()
     ? new Date(`${input.birthDate.trim()}T00:00:00.000Z`)
     : undefined;
@@ -91,6 +98,7 @@ export async function registerWalkInEpisode(input: {
   if (!patient) {
     patient = await prisma.patientRef.create({
       data: {
+        organizationId: input.organizationId,
         refCode,
         fullName: input.fullName,
         phone: input.phone ?? null,
@@ -113,6 +121,7 @@ export async function registerWalkInEpisode(input: {
       },
     });
   }
+  if (!patient) throw new Error("Failed to ensure patient ref");
 
   const episode = await prisma.clinicalEpisode.create({
     data: {
@@ -200,21 +209,10 @@ export async function addComplaint(episodeId: string, text: string) {
 
 export async function addDiagnosis(
   episodeId: string,
-  input: { icdCode?: string; icdCodeId?: string; description: string },
+  input: { icdCodeId: string; note?: string | null; recordedByUserId?: string | null },
 ) {
-  let icdCodeId = input.icdCodeId;
-  if (!icdCodeId && input.icdCode) {
-    const icd = await prisma.icdCode.findUnique({ where: { code: input.icdCode } });
-    icdCodeId = icd?.id;
-  }
-  return prisma.clinicalDiagnosis.create({
-    data: {
-      episodeId,
-      icdCodeId: icdCodeId ?? null,
-      icdCodeText: input.icdCode ?? null,
-      description: input.description,
-    },
-  });
+  const { addEpisodeDiagnosis } = await import("@/domain/icd/diagnosis-write.service");
+  return addEpisodeDiagnosis(episodeId, input);
 }
 
 export async function createEpisodeLabOrder(episodeId: string, testCode: string) {
@@ -241,6 +239,7 @@ export async function createEpisodeLabOrder(episodeId: string, testCode: string)
   const orderId = await prisma.$transaction(async (tx) => {
     const order = await tx.labOrder.create({
       data: {
+        organizationId: episode.organizationId || satelliteOrganizationId(),
         patientRefId,
         clinicalEpisodeId: episodeId,
         testCode,

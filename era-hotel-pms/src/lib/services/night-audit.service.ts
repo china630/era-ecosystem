@@ -10,13 +10,13 @@ import {
 } from '@/lib/services/business-date.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
-import { resolveSettlementPolicy } from '@era/satellite-kit';
+import { resolveSettlementPolicy, satelliteOrganizationId } from '@era/satellite-kit';
 
 export async function getNightAuditStatus() {
   const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
   const posShiftStatus = await getPosShiftStatus();
   const currentBiz = await getCurrentBusinessDate();
-  const businessDay = await prisma.businessDay.findUnique({
+  const businessDay = await prisma.businessDay.findFirst({
     where: { date: currentBiz },
     include: { nightRuns: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
@@ -24,7 +24,7 @@ export async function getNightAuditStatus() {
   const pendingSummary = await getPendingSummary(currentBiz);
   const { getBusinessDateStatus } = await import('@/lib/services/business-date.service');
   const bizStatus = await getBusinessDateStatus();
-  const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  const orgId = satelliteOrganizationId();
   const settlementPolicy = orgId
     ? await resolveSettlementPolicy(orgId)
     : { pendingSettlementNaPolicy: 'BLOCK' as const };
@@ -81,10 +81,11 @@ export async function runNightAudit() {
   await lockBusinessDateForAudit();
 
   const date = await getCurrentBusinessDate();
-  let businessDay = await prisma.businessDay.findUnique({ where: { date } });
+  let businessDay = await prisma.businessDay.findFirst({ where: { date } });
   if (!businessDay) {
     businessDay = await prisma.businessDay.create({ data: { date, status: 'OPEN' } });
   }
+  if (!businessDay) throw new Error('Business day missing');
   if (businessDay.status === 'CLOSED') {
     throw new Error('Business day already closed');
   }
@@ -99,7 +100,7 @@ export async function runNightAudit() {
   try {
     steps.push('Step 1: Pre-check cash + POS shifts — OK');
 
-    const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    const orgId = satelliteOrganizationId();
     const settlementPolicy = orgId
       ? await resolveSettlementPolicy(orgId)
       : { pendingSettlementNaPolicy: 'BLOCK' as const };
@@ -188,7 +189,7 @@ export async function runNightAudit() {
       `Step 2d: Trial balance — charges ${trialCharges.toFixed(2)} / payments ${trialPays.toFixed(2)} AZN`,
     );
 
-    const revenueRoom = await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } });
+    const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
     if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
 
     const inHouse = await prisma.reservation.findMany({

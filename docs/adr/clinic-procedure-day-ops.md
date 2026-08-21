@@ -4,9 +4,10 @@
 
 Accepted — 2026-07-14  
 Amended 2026-07-18 (check-in auto-completes short procedures) — **superseded**  
-Amended 2026-07-19 (atomic check-in → `CHECKED_IN`; auto-complete by `endsAt`; NO_SHOW burns quota)
+Amended 2026-07-19 (atomic check-in → `CHECKED_IN`; auto-complete by `endsAt`; NO_SHOW burns quota)  
+Amended 2026-08-21 — turnover vs patient rest: [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md)
 
-Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
+Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
 
 ## Context
 
@@ -70,7 +71,7 @@ Manual `POST …/complete` remains only as admin/fallback for stuck `CHECKED_IN`
 1. **QR** (default when `Tenant.checkInRequiresQr = true`): live guest QR must match `patientRefId`.
 2. **MANUAL** (when `checkInRequiresQr = false`): nurse one-click without QR.
 3. **OVERRIDE:** `overrideReason` required; `DOCTOR` / clinic admin; audited.
-4. **Unified time window (all channels):** `scheduledAt − graceBefore` … `endsAt`. Optional grace to `endsAt + defaultProcedureGapMinutes` **only when the next turnover slot on the resource is free** (no active booking overlapping `(endsAt, endsAt+gap]`). If the next slot is occupied, hard stop at `endsAt` — late guests are **rescheduled by reception** (never slide the rest of the day).
+4. **Unified time window (all channels):** `scheduledAt − graceBefore` … `endsAt`. Optional grace to `endsAt + resourceGap` **only when the next turnover slot on the resource is free** (no active booking overlapping `(endsAt, endsAt+gap]`). `resourceGap` is the occupying procedure’s `ProcedureType.resourceGapMinutes` ([time layers](./clinic-scheduling-time-layers.md)). If the next slot is occupied, hard stop at `endsAt` — late guests are **rescheduled by reception** (never slide the rest of the day).
 5. **Resource occupancy:** at most `capacity` concurrent `CHECKED_IN` orders per `resourceId`.
 6. Audit: `checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`, `cancelledAt/By`, `cancelReason`, `manuallyAdjusted`.
 
@@ -101,7 +102,7 @@ Hotel room-plan analogy (Location **projection** of multi-resource SoR — see [
 - Columns = time slots (`schedulingSlotMinutes`).
 - Exhausted capacity (cabin **or** HARD staff) → slot **blocked** / omitted from “available” pickers.
 - Compatibility / lunch / same-procedure-day rules filter availability the same way as the planner.
-- **Turnover gap:** consecutive procedures on the same resource keep a minimum break (`defaultProcedureGapMinutes`, default **5 min**). Enforced in `countResourceAllocations(..., gapMinutes)` across planner, availability, and reschedule, so a bed/device stays busy for the gap after each booking.
+- **Turnover gap:** consecutive procedures on the same **resource** keep a minimum break after occupancy (`ProcedureType.resourceGapMinutes`, default **5 min**; **0** allowed). This is **not** the guest’s rest between their own procedures (`patientRestMinutes` / WO `PatientGapMin`). Enforced via occupying-tail in `countResourceAllocations` across planner, availability, and reschedule. Occupies `[startsAt, endsAt + resourceGap of that order)`. See [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md).
 - **Slot-aligned duration:** `ProcedureType.durationMin` must be a multiple of `schedulingSlotMinutes` (admin create/update rejects otherwise). Placements always round duration **up** via `alignDurationToSlotMinutes`, so ends land on the same :00/:05/:10 grid as starts.
 - **Matrix default date:** open **today** (Asia/Baku), even when closed (Sunday) — show empty matrix + closed-day hint; do not silently jump to the next weekday.
 - **Time horizon filters** (`rest` / `+1h` / `+3h`): always anchor to wall-clock (now − 5 min, floored to slot grid), including when viewing another calendar day.

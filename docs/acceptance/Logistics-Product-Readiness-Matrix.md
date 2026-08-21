@@ -10,23 +10,29 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-08-17 Green Scaffold BE Wave 1):** Scaffold BE ✅ (TENANT excl.). UI / Demo / Pilot / Sell unchanged — do **not** claim GA; edition stays `mvp`.
+
 ---
 
 ## Line summary (SSOT readiness)
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Logistics** | ✅ | 🟡 | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
+| **Logistics** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
 
 ---
 
 ## UI (short)
+
+**UI class rollup:** SCREEN — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
 
 | Surface | Path | Level |
 |---------|------|-------|
 | Trips | `/trips` | 🟡 |
 | Fuel reports | `/reports/fuel` | 🟡 |
 | Customs hub | `/customs` | 🟡 |
+
+Trip creation now follows the modal CRUD playbook; Demo/TE stays 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. HEADLESS lines use `n/a` with reason.
 
@@ -47,3 +53,4 @@
 - Edition column copies `docs/editions/logistics.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
+- Forbidden: «SHARED / multi-tenant Logistics SaaS pool» — AC-LOG-TENANT 🟡 (schema+filter ≠ live pool); stays out of BE rollup.

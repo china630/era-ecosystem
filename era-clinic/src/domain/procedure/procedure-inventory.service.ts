@@ -1,8 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
-import { hasProcedureSameDay, nextWorkSlot, skipLunch } from "@/lib/treatment-planner.service";
+import {
+  hasProcedureSameDay,
+  nextWorkSlot,
+  skipLunch,
+  validatePatientConsecutiveGap,
+} from "@/lib/treatment-planner.service";
 import { getResourceCalendar } from "@/lib/procedure-scheduling.service";
+import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
 
 function addMinutes(d: Date, mins: number): Date {
   return new Date(d.getTime() + mins * 60_000);
@@ -57,16 +63,12 @@ export async function listAvailableResourceSlots(input: {
       const adjusted = skipLunch(slotStart);
       const slotEnd = addMinutes(adjusted, duration);
 
-      const overlapping = await prisma.resourceBooking.count({
-        where: {
-          resourceId: row.resourceId,
-          startsAt: { lt: slotEnd },
-          endsAt: { gt: adjusted },
-          ...(input.excludeOrderId
-            ? { NOT: { procedureOrderId: input.excludeOrderId } }
-            : {}),
-        },
-      });
+      const overlapping = await countResourceAllocations(
+        row.resourceId,
+        adjusted,
+        slotEnd,
+        input.excludeOrderId,
+      );
       if (overlapping >= capacity) continue;
 
       if (input.patientRefId && input.procedureCode) {
@@ -103,6 +105,15 @@ export async function listAvailableResourceSlots(input: {
           })),
         });
         if (violations.length > 0) continue;
+
+        const gapErr = await validatePatientConsecutiveGap({
+          patientRefId: input.patientRefId,
+          startAt: adjusted,
+          endAt: slotEnd,
+          excludeOrderId: input.excludeOrderId,
+          candidatePatientRestMinutes: procedureType?.patientRestMinutes ?? 15,
+        });
+        if (gapErr) continue;
       }
 
       out.push({

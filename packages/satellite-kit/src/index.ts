@@ -12,9 +12,61 @@ export {
   resolveSatelliteOrganizationId,
   setRuntimeOrganizationId,
   hydrateOrganizationBindFromDb,
+  onSatelliteBoot,
+  resetOrganizationBindForTests,
+  SatelliteOrganizationUnboundError,
   type OrgBindPrisma,
   type OrganizationBindSource,
 } from "./tenancy/organization-bind-core";
+export {
+  createRuntimeConfigHandlers,
+  type RuntimeConfigHandlerOptions,
+} from "./tenancy/runtime-config";
+export {
+  applySatelliteRuntimeConfig,
+  satelliteRuntimeConfig,
+  onSatelliteRuntimeBoot,
+  hydrateRuntimeConfigFromDb,
+  publicRuntimeConfigView,
+  resetRuntimeConfigForTests,
+  type SatelliteRuntimeConfig,
+} from "./tenancy/runtime-config-core";
+export { getRuntimeSsoSharedSecret } from "./tenancy/runtime-config-memory";
+export {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "./tenancy/resolve-orchestrator-url";
+export {
+  runWithSatelliteTenant,
+  getSatelliteTenantContext,
+  resolveSatelliteTenantOrgId,
+  resolveSatelliteTenantFilter,
+  type SatelliteTenantContext,
+  type SatelliteTenantFilter,
+} from "./tenancy/satellite-tenant-context";
+export {
+  isSentinelOrganizationId,
+  stampTenantCreateData,
+  stampTenantCreateTree,
+  TenantOrganizationMismatchError,
+  SENTINEL_ORGANIZATION_IDS,
+} from "./tenancy/organization-id-guard";
+export {
+  asSatellitePrisma,
+  type SatellitePrisma,
+  type SatelliteTransactionClient,
+  type WithOptionalOrganizationId,
+} from "./tenancy/satellite-prisma-types";
+export {
+  createSatelliteTenantExtension,
+  mergeWhere,
+  mergeWhereForUnique,
+} from "./tenancy/satellite-tenant-extension";
+export {
+  assertTenantRawOrganizationId,
+  assertTenantRawSqlMentionsOrg,
+  SatelliteTenantRawSqlError,
+} from "./tenancy/tenant-raw-sql";
 
 export {
   assertEnvServiceToken,
@@ -235,7 +287,9 @@ export {
   platformCatalogGet,
   platformFxConvert,
   platformVoenLookup,
+  platformIcd10Search,
   type PlatformCatalogClientOptions,
+  type PlatformIcd10Page,
 } from "./integration/platform-catalog.client";
 export {
   fetchWorkforcePolicy,
@@ -256,12 +310,21 @@ export {
   type CalendarClientOptions,
 } from "./integration/calendar.client";
 export {
+  assertEntitled,
   assertIndustryModuleActive,
   assertHotelModuleActive,
   assertHotelModuleForRoute,
+  assertClinicModuleActive,
+  assertClinicModuleForRoute,
+  requireSatelliteModule,
+  runCronIfEntitled,
+  runCronForEachTenant,
   isIndustryModuleActive,
   IndustryModuleInactiveError,
   INDUSTRY_MODULE_BY_APP,
+  INDUSTRY_MODULE_KEY_ALIASES,
+  resolveIndustryModuleKey,
+  resolveEntitlementActiveModules,
   HOTEL_MODULE_BY_ROUTE,
   HOTEL_MODULE_KEY_ALIASES,
   HOTEL_PRICING_MODULE_KEYS,
@@ -269,8 +332,18 @@ export {
   isHotelModuleActive,
   resolveHotelModuleForPathname,
   resolveHotelModuleKey,
+  CLINIC_MODULE_BY_ROUTE,
+  CLINIC_PRICING_MODULE_KEYS,
+  isClinicModuleActive,
+  resolveClinicModuleForPathname,
   type IndustryAppKey,
+  type CronEntitlementOpts,
+  type CronEntitlementResult,
 } from "./integration/org-entitlement-gate";
+export {
+  exportOrgSlice,
+  type OrgSliceExportResult,
+} from "./placement/slice-export";
 export {
   INDUSTRY_NAV_ITEMS,
   INDUSTRY_MODULE_SLUGS,
@@ -301,3 +374,20 @@ export {
   type SatelliteAuditInput,
   type SatelliteAuditWriter,
 } from "./audit/satellite-audit";
+
+export {
+  buildAgencySsoPayload,
+  signAgencySsoPayload,
+  verifyAgencySsoSignature,
+  agencySsoExchangeBodySchema,
+  newAgencySsoJti,
+  type AgencySsoExchangeBody,
+} from "./auth/agency-sso";
+export {
+  agencyAuthCookieName,
+  signAgencySession,
+  verifyAgencySession,
+  type AgencySessionPayload,
+} from "./auth/agency-session";
+
+export { getSatelliteStorage, uploadSatelliteAttachment } from "./storage/satellite-upload";

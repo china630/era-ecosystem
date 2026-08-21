@@ -5,6 +5,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { QuotaModule } from "../quota/quota.module";
 import { SubscriptionAccessService } from "./subscription-access.service";
 import { SubscriptionGuard } from "./subscription.guard";
+import { CronModuleGateService } from "./cron-module-gate.service";
 
 @Global()
 @Module({
@@ -15,7 +16,7 @@ import { SubscriptionGuard } from "./subscription.guard";
     forwardRef(() => AdminModule),
   ],
   controllers: [],
-  providers: [SubscriptionAccessService, SubscriptionGuard],
-  exports: [SubscriptionAccessService, SubscriptionGuard],
+  providers: [SubscriptionAccessService, SubscriptionGuard, CronModuleGateService],
+  exports: [SubscriptionAccessService, SubscriptionGuard, CronModuleGateService],
 })
 export class SubscriptionModule {}

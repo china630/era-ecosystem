@@ -4,6 +4,7 @@ import { patientHasMdmIdentifier } from "@era/clinic-domain";
 jest.mock("@era/satellite-kit", () => ({
   listPersonIdentifiers: jest.fn().mockResolvedValue({ identifiers: [] }),
   linkPersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
+  satelliteOrganizationId: jest.fn().mockReturnValue("test-org"),
 }));
 
 jest.mock("@/lib/prisma", () => ({

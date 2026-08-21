@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 
-type Db = PrismaClient | Prisma.TransactionClient;
+type Db = PrismaClient | Prisma.TransactionClient | SatelliteTransactionClient;
 
 /** Close open price row and insert current price (call inside txn when creating/updating price). */
 export async function recordMenuItemPrice(

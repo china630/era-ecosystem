@@ -47,6 +47,7 @@ import {
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
+import { IcdPicker } from "@/components/IcdPicker";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 
@@ -85,9 +86,13 @@ type Episode = {
   patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { text: string; recordedAt: string }[];
   diagnoses: {
-    icdCodeText: string | null;
-    icdCode?: { code: string } | null;
-    description: string;
+    note?: string | null;
+    icdCode?: {
+      code: string;
+      titleEn: string;
+      titleRu: string;
+      titleAz?: string | null;
+    } | null;
   }[];
   labOrders: { id: string; testCode: string; status: string }[];
   programInstance?: ProgramInstance | null;
@@ -145,10 +150,9 @@ export default function SanatoriumPage() {
   const [patientCardId, setPatientCardId] = useState<string | null>(null);
   const [chartDate, setChartDate] = useState(todayIso());
   const [complaint, setComplaint] = useState("");
-  const [icdCode, setIcdCode] = useState("");
   const [icdCodeId, setIcdCodeId] = useState("");
-  const [icdOptions, setIcdOptions] = useState<Array<{ id: string; code: string; description: string }>>([]);
-  const [diagnosis, setDiagnosis] = useState("");
+  const [diagnosisNote, setDiagnosisNote] = useState("");
+  const [icdChapter, setIcdChapter] = useState("");
   const [testCode, setTestCode] = useState("");
   const [labCatalogItems, setLabCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
@@ -413,9 +417,9 @@ export default function SanatoriumPage() {
         setComplaintModalOpen(false);
       }
       if (action === "diagnosis") {
-        setIcdCode("");
         setIcdCodeId("");
-        setDiagnosis("");
+        setDiagnosisNote("");
+        setIcdChapter("");
         setDiagnosisModalOpen(false);
       }
       if (action === "lab") setLabModalOpen(false);
@@ -666,14 +670,22 @@ export default function SanatoriumPage() {
             <div>
               <h3 className="mb-1 font-semibold">{t("diagnoses")}</h3>
               <ul className="list-disc pl-5">
-                {selected.diagnoses.map((d, i) => (
-                  <li key={i}>
-                    {(d.icdCode?.code ?? d.icdCodeText)
-                      ? `${d.icdCode?.code ?? d.icdCodeText}: `
-                      : ""}
-                    {d.description}
-                  </li>
-                ))}
+                {selected.diagnoses.map((d, i) => {
+                  const code = d.icdCode?.code;
+                  const title = d.icdCode
+                    ? locale.startsWith("ru")
+                      ? d.icdCode.titleRu
+                      : locale.startsWith("az")
+                        ? d.icdCode.titleAz?.trim() || d.icdCode.titleRu
+                        : d.icdCode.titleEn
+                    : null;
+                  return (
+                    <li key={i}>
+                      {code ? `${code}${title ? ` — ${title}` : ""}` : "—"}
+                      {d.note ? ` (${d.note})` : ""}
+                    </li>
+                  );
+                })}
                 {selected.diagnoses.length === 0 ? (
                   <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
                 ) : null}
@@ -973,8 +985,7 @@ export default function SanatoriumPage() {
             onSubmit={() =>
               void postAction("diagnosis", {
                 icdCodeId,
-                icdCode,
-                description: diagnosis,
+                note: diagnosisNote || null,
               })
             }
             busy={busy}
@@ -983,35 +994,20 @@ export default function SanatoriumPage() {
         }
       >
         <div className={`${FORM_STACK_CLASS} grid grid-cols-1 gap-3`}>
-          <FieldSelect
-            label="ICD"
-            preset="select"
-            value={icdCodeId}
-            onFocus={() => {
-              void fetch("/api/icd")
-                .then((r) => r.json())
-                .then((d) => setIcdOptions(d.items ?? []));
-            }}
-            onChange={(e) => {
-              const id = e.target.value;
-              setIcdCodeId(id);
-              const row = icdOptions.find((x) => x.id === id);
-              if (row) setIcdCode(row.code);
-            }}
+          <IcdPicker
+            label={t("icdCode")}
+            valueId={icdCodeId}
             required
-          >
-            <option value="">—</option>
-            {icdOptions.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.code} — {row.description}
-              </option>
-            ))}
-          </FieldSelect>
+            showChapterFilter
+            chapter={icdChapter}
+            onChapterChange={setIcdChapter}
+            onChange={(id) => setIcdCodeId(id)}
+          />
           <FieldTextarea
-            label={t("description")}
-            rows={5}
-            value={diagnosis}
-            onChange={(e) => setDiagnosis(e.target.value)}
+            label={t("diagnosisNote")}
+            rows={3}
+            value={diagnosisNote}
+            onChange={(e) => setDiagnosisNote(e.target.value)}
           />
         </div>
       </ModalShell>

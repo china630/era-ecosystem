@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
+import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
 import {
   CARD_CONTAINER_CLASS,
@@ -102,6 +103,8 @@ export function PatientCardBody({
   const tc = useTranslations("common");
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [ciOpen, setCiOpen] = useState(false);
+  const [ciCount, setCiCount] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -327,12 +330,37 @@ export function PatientCardBody({
           {msg ? <p>{msg}</p> : null}
         </div>
 
-        <section className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-amber-900">
-            {t("contraindicationsTitle")}
-          </h2>
-          <PatientContraindicationsPanel patientRefId={patient.id} />
+        <section
+          className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
+            ciOpen ? "p-4" : "px-4 py-2"
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
+              {t("contraindicationsTitle")}
+              {ciCount > 0 ? (
+                <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
+                  {ciCount}
+                </span>
+              ) : null}
+            </h2>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              aria-expanded={ciOpen}
+              onClick={() => setCiOpen((open) => !open)}
+            >
+              {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
+            </button>
+          </div>
+          <PatientContraindicationsPanel
+            patientRefId={patient.id}
+            expanded={ciOpen}
+            onCountChange={setCiCount}
+          />
         </section>
+
+        <PatientCardDiagnoses patientRefId={patient.id} />
 
         <PatientCardClinicalSections patientRefId={patient.id} panel={panel} />
       </div>

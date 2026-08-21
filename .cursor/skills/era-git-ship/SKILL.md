@@ -41,6 +41,8 @@ Always read [manifests.yaml](manifests.yaml) for path buckets.
 orchestrator → data-hub → mdm → rest (all satellites, finance, bank, platform, docs)
 ```
 
+**Topology / `organizationId` waves** ([deployment-topology.md](../../../docs/adr/deployment-topology.md)): do **not** one-PR kit + all satellites + orch placement + Nafta compose. Order: kit/ADR → **one satellite** schema → orchestrator desired-state/placement → finance SSO/config. Nafta appliance deploy ≠ SHARED pool deploy.
+
 ### Option A — script (preferred on Windows)
 
 From repo root:

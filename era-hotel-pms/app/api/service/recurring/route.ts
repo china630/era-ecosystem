@@ -57,6 +57,11 @@ export async function PUT(req: Request) {
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  try {
+    await requireHotelModule('hotel_service');
+  } catch {
+    return NextResponse.json({ generated: 0, skipped: true, reason: 'module_inactive' });
+  }
   const created = await runDueRecurringSchedules();
   return NextResponse.json({ generated: created.length, ids: created.map((c) => c.id) });
 }

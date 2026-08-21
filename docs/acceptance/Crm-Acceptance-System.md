@@ -12,8 +12,11 @@
 
 ## Scope
 
+- **Declared, not this edition:** SHARED multi-tenant pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). CP-TENANT-01 schema+filter / AC-CRM-TENANT 🟡; appliance remains one-org DEDICATED/ONPREM. Do not sell SHARED CRM.
+
 - In scope: Leads, pipeline, visits, party profile, WhatsApp stage hook
 - Out of scope: Full omnichannel GA without field proof
+- **Wave 8:** AC-CRM-WA stays Scaffold 🟡 (vendor External) and is **out of Scaffold BE rollup** (Hotel INT) — Scaffold BE ✅ ≠ live WhatsApp GA
 
 ## Definition of Done (soft / scaffold)
 

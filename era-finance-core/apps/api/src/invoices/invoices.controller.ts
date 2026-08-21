@@ -32,6 +32,7 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
 import { AllocatePaymentDto } from "./dto/allocate-payment.dto";
 import { RecordInvoicePaymentDto } from "./dto/record-invoice-payment.dto";
+import { CreateInvoiceCreditAdjustmentDto } from "./dto/create-invoice-credit-adjustment.dto";
 import { UpdateInvoiceStatusDto } from "./dto/update-invoice-status.dto";
 import { BulkPrefillInvoicesDto } from "./dto/bulk-prefill-invoices.dto";
 import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
@@ -86,6 +87,21 @@ export class InvoicesController {
       },
       requireOrgRole(user),
     );
+  }
+
+  @Post(":id/credit-adjustment")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Credit-adjust invoice remaining (Dr revenue/expense Cr 211) without changing original invoice lines",
+  })
+  creditAdjustment(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+    @Body() dto: CreateInvoiceCreditAdjustmentDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.invoices.applyCreditAdjustment(orgId, id, dto, requireOrgRole(user));
   }
 
   @Post("payments/allocate")

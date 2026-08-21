@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  inferCatalogFieldKind,
   DatePicker,
   EraDataGrid,
   EraListFilterBar,
@@ -28,6 +29,8 @@ import {
 } from "@era/satellite-kit/ui";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { maskPersonId } from "@/components/patients/PatientCardBody";
+import { useClinicAuth } from "@/hooks/useClinicAuth";
+import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
 
 type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
 type PatientBloodGroup =
@@ -50,6 +53,7 @@ type Patient = {
   ageYears?: number | null;
   bloodGroup?: PatientBloodGroup;
   globalPersonId?: string | null;
+  hotelRoomNumber?: string | null;
 };
 
 type ListResponse = {
@@ -57,6 +61,7 @@ type ListResponse = {
   total: number;
   page: number;
   pageSize: number;
+  hotelRooms?: string[];
 };
 
 const emptyForm = {
@@ -78,6 +83,10 @@ const emptyForm = {
 export default function PatientsPage() {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
+  const { auth } = useClinicAuth();
+  const hasSanatorium = (auth?.enabledPresets ?? []).includes(
+    CLINIC_PRESET.SANATORIUM_CLINICAL,
+  );
   const [rows, setRows] = useState<Patient[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -85,12 +94,14 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
+  const [hotelRooms, setHotelRooms] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     sex: "" as "" | PatientSex,
     bloodGroup: "" as "" | PatientBloodGroup,
     hasMdm: "" as "" | "0" | "1",
     ageMin: "",
     ageMax: "",
+    roomNumber: "",
   });
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
@@ -111,6 +122,10 @@ export default function PatientsPage() {
       if (filters.hasMdm) params.set("hasMdm", filters.hasMdm);
       if (filters.ageMin.trim()) params.set("ageMin", filters.ageMin.trim());
       if (filters.ageMax.trim()) params.set("ageMax", filters.ageMax.trim());
+      if (hasSanatorium && filters.roomNumber.trim()) {
+        params.set("roomNumber", filters.roomNumber.trim());
+      }
+      if (hasSanatorium) params.set("includeHotelRooms", "1");
       const res = await fetch(`/api/patients?${params}`);
       const d = await res.json();
       const payload = (d.data ?? d) as ListResponse;
@@ -118,10 +133,11 @@ export default function PatientsPage() {
       setTotal(payload.total ?? 0);
       setPage(payload.page ?? page);
       setPageSize(payload.pageSize ?? pageSize);
+      if (payload.hotelRooms) setHotelRooms(payload.hotelRooms);
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, filters, page, pageSize]);
+  }, [debouncedQ, filters, hasSanatorium, page, pageSize]);
 
   useEffect(() => {
     void load();
@@ -153,6 +169,15 @@ export default function PatientsPage() {
         render: (p) => (p.ageYears != null ? t("ageYears", { age: p.ageYears }) : "—"),
       },
       { key: "phone", header: t("phone"), render: (p) => p.phone ?? "—" },
+      ...(hasSanatorium
+        ? [
+            {
+              key: "hotelRoomNumber",
+              header: t("filterHotelRoom"),
+              render: (p: Patient) => p.hotelRoomNumber ?? "—",
+            } satisfies EraDataGridColumn<Patient>,
+          ]
+        : []),
       {
         key: "mdm",
         header: t("mdmBadge"),
@@ -180,7 +205,7 @@ export default function PatientsPage() {
         ),
       },
     ],
-    [t, tc],
+    [t, tc, hasSanatorium],
   );
 
   async function lookupMdm() {
@@ -250,6 +275,7 @@ export default function PatientsPage() {
             hasMdm: "" as const,
             ageMin: "",
             ageMax: "",
+            roomNumber: "",
           });
           setPage(1);
         }}
@@ -311,6 +337,27 @@ export default function PatientsPage() {
           <option value="1">{t("filterMdmLinked")}</option>
           <option value="0">{t("filterMdmMissing")}</option>
         </FieldSelect>
+        {hasSanatorium ? (
+          <CatalogField
+            kind={inferCatalogFieldKind({
+              optionCount: hotelRooms.length,
+              searchable: hotelRooms.length > 40,
+            })}
+            label={t("filterHotelRoom")}
+            value={filters.roomNumber}
+            onChange={(v) => {
+              setFilters({ ...filters, roomNumber: String(v ?? "") });
+              setPage(1);
+            }}
+            options={[
+              ...(hotelRooms.length > 40
+                ? [{ value: "", label: t("filterHotelRoomAll") }]
+                : []),
+              ...hotelRooms.map((room) => ({ value: room, label: room })),
+            ]}
+            emptyLabel={t("filterHotelRoomAll")}
+          />
+        ) : null}
         <FieldRow cols={2}>
           <Field
             label={t("filterAgeMin")}

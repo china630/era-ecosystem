@@ -3,6 +3,7 @@ import { resolvePersonIdentity } from '@era/satellite-kit';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellBool, cellNumber, cellString, parseDateCell } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
+import { genderFromElektrawebGuest } from '@/lib/integration/elektraweb-share-map';
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
@@ -10,6 +11,7 @@ const rowSchema = z.object({
   lastName: z.string().optional().nullable(),
   fullName: z.string().min(1),
   title: z.string().optional().nullable(),
+  gender: z.string().optional().nullable(),
   birthDate: z.date().optional().nullable(),
   passportNumber: z.string().optional().nullable(),
   nationalIdFin: z.string().optional().nullable(),
@@ -34,6 +36,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     Name: 'firstName',
     'Last Name': 'lastName',
     Title: 'title',
+    Gender: 'gender',
     'Birth Date': 'birthDate',
     'Passport No': 'passportNumber',
     'National Id No': 'nationalIdFin',
@@ -51,12 +54,16 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     const firstName = cellString(raw.firstName);
     const lastName = cellString(raw.lastName);
     const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+    const title = cellString(raw.title);
+    const genderRaw = cellString(raw.gender);
+    const gender = genderFromElektrawebGuest({ gender: genderRaw, title });
     return {
       externalRef: cellString(raw.externalRef),
       firstName,
       lastName,
       fullName: fullName || firstName || lastName || 'Unknown Guest',
-      title: cellString(raw.title),
+      title,
+      gender: gender ?? genderRaw,
       birthDate: parseDateCell(raw.birthDate),
       passportNumber: cellString(raw.passportNumber),
       nationalIdFin: cellString(raw.nationalIdFin),
@@ -71,7 +78,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     };
   },
   upsert: async (tx, row, dryRun) => {
-    const existing = await tx.guest.findUnique({ where: { externalRef: row.externalRef } });
+    const existing = await tx.guest.findFirst({ where: { externalRef: row.externalRef } });
 
     let globalPersonId: string | null = existing?.globalPersonId ?? null;
     if (!dryRun && (row.nationalIdFin || row.passportNumber)) {
@@ -97,6 +104,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       firstName: row.firstName ?? undefined,
       lastName: row.lastName ?? undefined,
       title: row.title ?? undefined,
+      gender: row.gender ?? undefined,
       birthDate: row.birthDate ?? undefined,
       nationality: row.nationality ?? 'AZ',
       phone: row.phone ?? undefined,
@@ -109,7 +117,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     };
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.guest.upsert({
-      where: { externalRef: row.externalRef },
+      where: { externalRef: row.externalRef } as never,
       create: data,
       update: {
         globalPersonId: data.globalPersonId,
@@ -117,6 +125,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         firstName: data.firstName,
         lastName: data.lastName,
         title: data.title,
+        gender: data.gender,
         birthDate: data.birthDate,
         nationality: data.nationality,
         phone: data.phone,

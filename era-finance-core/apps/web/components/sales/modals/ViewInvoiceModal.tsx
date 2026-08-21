@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -11,6 +13,7 @@ import { formatInvoiceStatus } from "../../../lib/invoice-status";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { isRestrictedUserRole } from "../../../lib/role-utils";
 import { ActivityPanel } from "../../activity/ActivityPanel";
 import { SignatureProviderMark } from "../../signature-provider-mark";
@@ -28,11 +31,15 @@ import {
   MODAL_FIELD_LABEL_CLASS,
   MODAL_FOOTER_ACTIONS_CLASS,
   MODAL_FOOTER_BUTTON_CLASS,
-  MODAL_INPUT_NUMERIC_CLASS,
+  MODAL_INPUT_CLASS,
 } from "../../../lib/design-system";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { SalesModalShell } from "./modal-shell";
+import {
+  computeInvoiceVatTotalsFromItems,
+  previewCreditAdjustVat,
+} from "../../../lib/credit-adjust-vat-preview";
 
 type SignatureLog = {
   id: string;
@@ -64,6 +71,13 @@ type InvoiceDetail = {
     product: { name: string; sku: string } | null;
   }>;
   signatureLogs: SignatureLog[];
+  payments?: Array<{
+    id: string;
+    amount: unknown;
+    date: string;
+    kind?: string;
+    transactionId?: string | null;
+  }>;
 };
 
 type NettingPreview = {
@@ -86,10 +100,12 @@ export function ViewInvoiceModal({
   onInvoicesUpdated?: () => void;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const id = invoiceId ?? "";
   const { token, ready } = useRequireAuth();
   const { user } = useAuth();
   const mayCommentActivity = !isRestrictedUserRole(user?.role ?? undefined);
+  const { canPostAccounting } = useOrgPermissions();
   const { ledgerType, ready: ledgerReady } = useLedger();
   const [inv, setInv] = useState<InvoiceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +125,13 @@ export function ViewInvoiceModal({
   const [netAmount, setNetAmount] = useState("");
   const [netBusy, setNetBusy] = useState(false);
   const [netErr, setNetErr] = useState<string | null>(null);
+  const [creditModal, setCreditModal] = useState(false);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditDate, setCreditDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [creditReason, setCreditReason] = useState("");
+  const [creditOffset, setCreditOffset] = useState<"REVENUE" | "EXPENSE">("REVENUE");
+  const [creditBusy, setCreditBusy] = useState(false);
+  const [creditErr, setCreditErr] = useState<string | null>(null);
   const [viewTab, setViewTab] = useState<"details" | "history" | "activity">("details");
   const [shareBusy, setShareBusy] = useState(false);
 
@@ -277,6 +300,51 @@ export function ViewInvoiceModal({
     onInvoicesUpdated?.();
   }
 
+  function openCreditModal() {
+    if (!inv) return;
+    const rem = Number(inv.remaining);
+    setCreditAmount(String(Number.isFinite(rem) && rem > 0 ? rem : ""));
+    setCreditDate(new Date().toISOString().slice(0, 10));
+    setCreditReason("");
+    setCreditOffset("REVENUE");
+    setCreditErr(null);
+    setCreditModal(true);
+  }
+
+  async function submitCreditAdjustment() {
+    if (!token || !inv) return;
+    const amt = Number(creditAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setCreditErr(t("invoiceView.creditAdjustAmountInvalid"));
+      return;
+    }
+    if (creditReason.trim().length < 10) {
+      setCreditErr(t("invoiceView.creditAdjustReasonShort"));
+      return;
+    }
+    setCreditBusy(true);
+    setCreditErr(null);
+    const res = await apiFetch(`/api/invoices/${inv.id}/credit-adjustment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: amt,
+        date: creditDate,
+        reason: creditReason.trim(),
+        offset: creditOffset,
+      }),
+    });
+    setCreditBusy(false);
+    if (!res.ok) {
+      setCreditErr(await res.text());
+      return;
+    }
+    setCreditModal(false);
+    toast.success(t("invoiceView.creditAdjustOk"));
+    await load();
+    onInvoicesUpdated?.();
+  }
+
   async function startSign(provider: "ASAN_IMZA" | "SIMA") {
     if (!id) return;
     setSignBusy(true);
@@ -327,6 +395,58 @@ export function ViewInvoiceModal({
     inv.revenueRecognized &&
     Number(inv.remaining) > 0 &&
     netPreview?.canNet;
+
+  const showCreditAdjustCta =
+    inv &&
+    canPostAccounting &&
+    inv.revenueRecognized &&
+    Number(inv.remaining) > 0 &&
+    inv.status !== "CANCELLED" &&
+    inv.status !== "LOCKED_BY_SIGNATURE";
+
+  const showOverpaymentRefundCta =
+    inv &&
+    canPostAccounting &&
+    inv.revenueRecognized &&
+    Number(inv.paidTotal) > Number(inv.totalAmount) &&
+    inv.status !== "CANCELLED";
+
+  const creditVatPreview = useMemo(() => {
+    if (!inv || creditOffset !== "REVENUE") return null;
+    const amt = Number(creditAmount);
+    if (!Number.isFinite(amt) || amt <= 0) return null;
+    const orgIsVatPayer = inv.items.some((i) => Number(i.vatRate) > 0);
+    const totals = computeInvoiceVatTotalsFromItems(inv.items, orgIsVatPayer);
+    const invoiceGross = Number(inv.totalAmount);
+    return previewCreditAdjustVat(
+      amt,
+      invoiceGross,
+      totals.vatTotal,
+      orgIsVatPayer,
+    );
+  }, [inv, creditOffset, creditAmount]);
+
+  async function downloadAdjustmentPdf(transactionId: string) {
+    const res = await apiFetch(`/api/accounting/manual-adjustments/${transactionId}/pdf`);
+    if (!res.ok) {
+      toast.error(t("manualAdjustments.pdfErr"));
+      return;
+    }
+    const blob = await res.blob();
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = `adjustment-${transactionId.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(href);
+  }
+
+  function openOverpaymentRefund() {
+    if (!inv) return;
+    router.push(
+      `/accounting/adjustments?template=AR_OVERCOLLECTION_REFUND&invoice=${encodeURIComponent(inv.id)}&counterparty=${encodeURIComponent(inv.counterpartyId)}`,
+    );
+  }
 
   if (!ready || !token) return null;
   if (!ledgerReady) return null;
@@ -450,6 +570,63 @@ export function ViewInvoiceModal({
                       </Button>
                     </div>
                   )}
+                  {showCreditAdjustCta && (
+                    <div className="mt-4 space-y-2">
+                      <p className="mb-2 text-[13px] text-[#7F8C8D]">{t("invoiceView.creditAdjustHint")}</p>
+                      <Button type="button" variant="secondary" onClick={() => openCreditModal()}>
+                        {t("invoiceView.creditAdjust")}
+                      </Button>
+                    </div>
+                  )}
+                  {showOverpaymentRefundCta && (
+                    <div className="mt-4 space-y-2">
+                      <p className="mb-2 text-[13px] text-[#7F8C8D]">
+                        {t("invoiceView.overpaymentRefundHint")}
+                      </p>
+                      <Button type="button" variant="secondary" onClick={() => openOverpaymentRefund()}>
+                        {t("invoiceView.overpaymentRefund")}
+                      </Button>
+                    </div>
+                  )}
+                  {(inv.payments?.length ?? 0) > 0 ? (
+                    <div className="mt-4 space-y-2">
+                      <h3 className="m-0 text-sm font-semibold text-[#34495E]">
+                        {t("invoiceView.paymentsTitle")}
+                      </h3>
+                      <ul className="m-0 list-none space-y-1 p-0 text-[13px]">
+                        {inv.payments!.map((p) => (
+                          <li key={p.id} className="flex flex-wrap justify-between gap-2 rounded border border-[#E8EAED] px-2 py-1">
+                            <span>
+                              {String(p.date).slice(0, 10)}
+                              {p.kind && p.kind !== "PAYMENT" ? (
+                                <span className="ml-2 text-[#7F8C8D]">
+                                  ({t(`invoiceView.paymentKind_${p.kind}`, { defaultValue: p.kind })})
+                                </span>
+                              ) : null}
+                              {p.kind === "CREDIT_ADJUSTMENT" && p.transactionId ? (
+                                <span className="ml-2 inline-flex flex-wrap gap-2">
+                                  <Link
+                                    href="/accounting/adjustments"
+                                    className="text-[#2980B9] hover:underline"
+                                  >
+                                    {t("invoiceView.paymentVoucherLink")}
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    className="text-[#2980B9] hover:underline"
+                                    onClick={() => void downloadAdjustmentPdf(p.transactionId!)}
+                                  >
+                                    {t("invoiceView.paymentPdfLink")}
+                                  </button>
+                                </span>
+                              ) : null}
+                            </span>
+                            <span className="font-medium">{formatMoneyAzn(String(p.amount))}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="overflow-x-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm">
@@ -515,12 +692,12 @@ export function ViewInvoiceModal({
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("reconciliation.nettingAmount")}
                 <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
                   type="number"
                   min={0.0001}
                   step="any"
                   value={netAmount}
                   onChange={(e) => setNetAmount(e.target.value)}
-                  className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
                 />
               </label>
               {netErr ? <p className="text-[13px] text-red-600">{netErr}</p> : null}
@@ -546,6 +723,116 @@ export function ViewInvoiceModal({
                 onClick={() => void submitNetting()}
               >
                 {netBusy ? t("reconciliation.nettingBusy") : t("invoiceView.payByNettingSubmit")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {creditModal && inv && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+          <div role="dialog" aria-modal="true" className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-md`}>
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h2 className="m-0 min-w-0 flex-1 pr-2 text-lg font-semibold text-[#34495E]">
+                {t("invoiceView.creditAdjustModalTitle")}
+              </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                disabled={creditBusy}
+                onClick={() => {
+                  setCreditModal(false);
+                  setCreditErr(null);
+                }}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4 shrink-0" aria-hidden />
+              </Button>
+            </header>
+            <div className="mt-4 space-y-4">
+              <p className="text-[13px] text-[#7F8C8D]">{t("invoiceView.creditAdjustModalHint")}</p>
+              <label className={MODAL_FIELD_LABEL_CLASS}>
+                {t("invoiceView.creditAdjustAmount")}
+                <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
+                  type="number"
+                  step="0.01"
+                  min={0.01}
+                  max={Number(inv.remaining) || undefined}
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                />
+              </label>
+              <label className={MODAL_FIELD_LABEL_CLASS}>
+                {t("invoiceView.creditAdjustDate")}
+                <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                  type="date"
+                  value={creditDate}
+                  onChange={(e) => setCreditDate(e.target.value)}
+                />
+              </label>
+              <label className={MODAL_FIELD_LABEL_CLASS}>
+                {t("invoiceView.creditAdjustOffset")}
+                <select
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                  value={creditOffset}
+                  onChange={(e) => setCreditOffset(e.target.value as "REVENUE" | "EXPENSE")}
+                >
+                  <option value="REVENUE">{t("invoiceView.creditAdjustOffsetRevenue")}</option>
+                  <option value="EXPENSE">{t("invoiceView.creditAdjustOffsetExpense")}</option>
+                </select>
+              </label>
+              {creditOffset === "REVENUE" && creditVatPreview && creditVatPreview.vat > 0 ? (
+                <p className="m-0 text-[13px] text-[#34495E]">
+                  {t("invoiceView.creditAdjustVatPreview", {
+                    net: creditVatPreview.net.toFixed(2),
+                    vat: creditVatPreview.vat.toFixed(2),
+                    receivable: creditVatPreview.receivable.toFixed(2),
+                  })}
+                </p>
+              ) : null}
+              {creditOffset === "EXPENSE" && Number(creditAmount) > 0 ? (
+                <p className="m-0 text-[13px] text-[#7F8C8D]">
+                  {t("invoiceView.creditAdjustExpensePreview", {
+                    gross: Number(creditAmount).toFixed(2),
+                  })}
+                </p>
+              ) : null}
+              <label className={MODAL_FIELD_LABEL_CLASS}>
+                {t("invoiceView.creditAdjustReason")}
+                <textarea
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                  value={creditReason}
+                  onChange={(e) => setCreditReason(e.target.value)}
+                  rows={3}
+                  placeholder={t("invoiceView.creditAdjustReasonPh")}
+                />
+              </label>
+              {creditErr ? <p className="m-0 text-[13px] text-red-600">{creditErr}</p> : null}
+            </div>
+            <div className={`${MODAL_FOOTER_ACTIONS_CLASS} mt-4`}>
+              <Button
+                type="button"
+                variant="outline"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                disabled={creditBusy}
+                onClick={() => {
+                  setCreditModal(false);
+                  setCreditErr(null);
+                }}
+              >
+                {t("common.close")}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                disabled={creditBusy}
+                onClick={() => void submitCreditAdjustment()}
+              >
+                {creditBusy ? "…" : t("invoiceView.creditAdjustSubmit")}
               </Button>
             </div>
           </div>

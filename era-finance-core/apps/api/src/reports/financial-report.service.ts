@@ -78,7 +78,7 @@ export class FinancialReportService {
     };
 
     const assetsRows = [
-      { code: "CASH", name: "Cash & Bank", amount: sumByPrefix(["101", "221", "223"]) },
+      { code: "CASH", name: "Cash & Bank", amount: sumByPrefix(["221", "222", "223", "224", "225"]) },
       { code: "AR", name: "Receivables (211)", amount: sumByPrefix(["211"]) },
       { code: "INV", name: "Inventory (201/204)", amount: sumByPrefix(["201", "204"]) },
     ];

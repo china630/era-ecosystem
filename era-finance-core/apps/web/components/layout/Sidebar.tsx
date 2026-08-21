@@ -1065,6 +1065,14 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
+              href="/accounting/adjustments"
+              label={t("nav.manualAdjustments")}
+              isActive={pathname.startsWith("/accounting/adjustments")}
+              icon={FileText}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
               href="/accounting/mapping"
               label={t("nav.accountingMappingNav")}
               isActive={pathname.startsWith("/accounting/mapping")}

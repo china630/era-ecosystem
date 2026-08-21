@@ -37,7 +37,11 @@ export async function PATCH(
     const { id } = await params;
     const body = statusSchema.parse(await req.json());
 
-    const trip = await prisma.trip.findUnique({ where: { id } });
+    const trip = (await prisma.trip.findUnique({ where: { id } })) as {
+      id: string;
+      status: TripStatus;
+      startedAt: Date | null;
+    } | null;
     if (!trip) return jsonError("Trip not found", 404);
     if (trip.status === "COMPLETED" || trip.status === "CANCELLED") {
       return jsonError("Trip cannot change status", 409);

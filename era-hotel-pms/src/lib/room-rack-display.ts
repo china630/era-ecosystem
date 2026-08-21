@@ -74,6 +74,19 @@ export function rackNumberTextClass(
   return RACK_NUMBER_BY_HK[room.status] ?? 'text-[#34495E]';
 }
 
+export function formatSharePoolBadge(pool: {
+  gender: string;
+  occupied: number;
+  capacity: number;
+}): { text: string; className: string } {
+  const isMale = pool.gender.toUpperCase().startsWith('M');
+  const sym = isMale ? '♂' : '♀';
+  return {
+    text: `${sym} ${pool.occupied}/${pool.capacity}`,
+    className: isMale ? 'text-sky-700' : 'text-rose-700',
+  };
+}
+
 const HK_ASSIGNABLE: RoomStatus[] = ['AVAILABLE', 'CLEAN', 'INSPECTED'];
 
 export function canQuickBookRoom(room: {

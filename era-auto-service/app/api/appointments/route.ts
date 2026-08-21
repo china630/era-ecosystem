@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { appointmentCreateDenied } from "@/lib/appointment-gates";
 import { nextServiceAppointmentDay } from "@/lib/production-calendar";
 import { prisma } from "@/lib/prisma";
 
@@ -25,6 +26,8 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
+    const denied = appointmentCreateDenied(body);
+    if (denied) return jsonError(denied, 400);
     let scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : new Date();
     const iso = scheduledAt.toISOString().slice(0, 10);
     const snappedIso = await nextServiceAppointmentDay(iso);

@@ -1,0 +1,24 @@
+---
+description: era-finance-core routes and APIs (GL / accounting)
+globs: era-finance-core/**/*
+---
+
+# era-finance-core module map
+
+**Acceptance SSOT:** [Finance-Acceptance-System](../../../docs/acceptance/Finance-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Finance-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Finance-Implementation-Matrix.md)
+
+## Accounting / GL
+
+| Route | API |
+|-------|-----|
+| `/accounting/chart` | `GET /api/accounts`, `GET /api/accounts/templates`, `POST /api/accounts/import-from-template` |
+| `/accounting/mapping` | NAS↔IFRS pairing |
+| `/accounting/ifrs-mapping` | IFRS auto-map rules |
+| `/accounting/posting-roles` | `GET/PATCH /api/accounting/posting-roles` |
+| `/accounting/adjustments` | Manual voucher: `GET/POST /api/accounting/manual-adjustments`, `GET …/:id`, `GET …/:id/pdf`, `POST …/preview`, `POST …/:id/reverse`, `GET …/templates`; basis links + PDF + reverse — ADR [finance-manual-adjusting-journal.md](../../../docs/adr/finance-manual-adjusting-journal.md) wave 3 |
+| `/sales/invoices` (ViewInvoiceModal) | `POST /api/invoices/:id/credit-adjustment` — internal remaining credit (wave 2–3 VAT split REVENUE); overpayment CTA → adjustments |
+| `/fixed-assets` | lifecycle journal ref → adjustments; `?asset=` deep link (wave 3) |
+| `/reporting/journal` | `GET /api/reporting/general-ledger` (read-only) |
+| `/expenses/quick` | `POST /api/accounting/quick-expense` (fixed 731/101) |
+
+Roles for posting: OWNER / ADMIN / ACCOUNTANT. USER cannot post journal vouchers (`assertMayPostManualJournal`).

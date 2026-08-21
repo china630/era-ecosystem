@@ -135,6 +135,16 @@
       "confirmDelete": "Удалить этот стол?",
       "empty": "Нет столов — добавьте или выполните seed."
     },
+    "dailyMenu": {
+      "title": "Меню дня",
+      "subtitle": "Массовый выбор позиций меню по дате",
+      "date": "Дата",
+      "saveBoard": "Сохранить доску",
+      "copyYesterday": "Скопировать с вчера",
+      "guestQrMenu": "QR-меню для гостей",
+      "saved": "Сохранено {count} позиций",
+      "copied": "Скопировано {copied} позиций"
+    },
     "integration": {
       "title": "Интеграция и billing",
       "loadFailed": "Не удалось загрузить",

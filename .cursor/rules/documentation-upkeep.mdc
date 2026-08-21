@@ -18,6 +18,7 @@ Any change that adds or alters a **feature**, **behavior**, **API/event contract
 | API, SSO, or event contract | `docs/INTEGRATION_SSO_EVENTS.md` + app docs |
 | New satellite capability / readiness | `docs/SATELLITE_DOCUMENTATION.md`, `docs/READINESS_MATRIX.md`, `docs/COVERAGE_MATRIX.md` |
 | Feature SHIPPED vs API-only / STUB | `docs/COVERAGE_MATRIX.md` + DELIVERY tag `[x]`/`[~]`/`[s]`/`[h]` — see `era-coverage-definition.mdc` |
+| UI class (NONE / SCREEN / SHOW vs missing screen) | [`docs/acceptance/UI-COVERAGE-BOARD.md`](../docs/acceptance/UI-COVERAGE-BOARD.md) + Product-Readiness `## UI (short)` — not a sell SSOT |
 | Product sell/show / pilot honesty | `docs/acceptance/*-Product-Readiness-Matrix.md` + Implementation-Matrix + `docs/editions/*.yaml` — see `docs/products/ERA-Acceptance-Standard.md` |
 | Bank scope boundary (IN/OUT vs full ABS) | `docs/acceptance/Bank-Capability-Inventory.md` + Bank Acceptance-System / PRD §11 — AC ✅ ≠ full commercial bank |
 | Control-plane / billing | `docs/CONTROL_PLANE_ARCHITECTURE.md` or matching `docs/*.md` |

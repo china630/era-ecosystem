@@ -107,3 +107,21 @@ Expect `{ "valid": true, "organizationId": "...", "metered": true }`.
 ```bash
 node scripts/smoke-data-hub.mjs
 ```
+
+## Deny (Scaffold BE negative paths — curl OK)
+
+API-only Nest service — curl deny is acceptable proof alongside Jest units.
+
+1. **REG (401 without key):**
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4200/registry/v1/fx/rates?symbols=USD
+   ```
+   Expect **401**. Proof: `apps/api/__tests__/dh-reg-negative.spec.ts`.
+
+2. **FX without rate:** `GET /registry/v1/fx/convert?from=USD&to=AZN&amount=10&date=1900-01-01` with valid `X-Api-Key` → **400** `RATE_NOT_FOUND`. Proof: `dh-fx-negative.spec.ts`.
+
+3. **BANK bad IBAN:** `GET /registry/v1/iban/validate?iban=DE89370400440532013000` with key → `isValid: false`. Proof: `dh-bank-negative.spec.ts`.
+
+4. **HS bad code:** `GET /registry/v1/hs/99999999` with key → **404** `HS_NOT_FOUND`. Proof: `dh-hs-negative.spec.ts`.
+
+5. **VOEN:** not in this deny section — AC-DH-VOEN remains External (e-taxes BLOCKED).

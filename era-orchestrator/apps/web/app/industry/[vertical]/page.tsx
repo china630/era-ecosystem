@@ -14,11 +14,14 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { useAuth } from "../../../lib/auth-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useSubscription } from "../../../lib/subscription-context";
 import { workspacePricingHref } from "../../../lib/workspace-access";
-import { fetchSatelliteSsoTicket, getOrchAccessToken } from "../../../lib/open-finance";
+import {
+  fetchSatelliteLaunchUrl,
+  fetchSatelliteSsoTicket,
+  getOrchAccessToken,
+} from "../../../lib/open-finance";
 
 export default function IndustryVerticalPage() {
   const { vertical } = useParams<{ vertical: string }>();
@@ -37,18 +40,24 @@ export default function IndustryVerticalPage() {
     );
   }
 
-  const entitled = hasIndustryModuleAccess(snapshot, item.key);
+  const industry = item;
+  const entitled = hasIndustryModuleAccess(snapshot, industry.key);
   const readOnly = Boolean(snapshot?.readOnly);
-  const satelliteUrl = satelliteUrlForItem(item);
 
   function openSatellite() {
-    if (!satelliteUrl || !user?.email || !user.organizationId) return;
+    if (!user?.email || !user.organizationId) return;
     const token = getOrchAccessToken();
     if (!token) return;
-    const base = satelliteUrl;
     const organizationId = user.organizationId;
     const popup = window.open("", "_blank");
-    void fetchSatelliteSsoTicket(token, organizationId).then((ticket) => {
+    void (async () => {
+      const fromRegistry = await fetchSatelliteLaunchUrl(token, industry.slug);
+      const base = fromRegistry?.baseUrl ?? satelliteUrlForItem(industry);
+      if (!base) {
+        popup?.close();
+        return;
+      }
+      const ticket = await fetchSatelliteSsoTicket(token, organizationId);
       if (!ticket) {
         popup?.close();
         return;
@@ -56,7 +65,7 @@ export default function IndustryVerticalPage() {
       const url = buildSatelliteSsoLaunchUrlFromTicket(base, ticket);
       if (popup) popup.location.href = url;
       else window.open(url, "_blank", "noopener,noreferrer");
-    });
+    })();
   }
 
   return (
@@ -65,8 +74,8 @@ export default function IndustryVerticalPage() {
         {t("workspace")}
       </Link>
       <section className={`${CARD_CONTAINER_CLASS} mt-6 p-8 text-center`}>
-        <h1 className="text-lg font-semibold text-[#34495E]">{item.title}</h1>
-        <p className="mt-2 text-sm text-[#7F8C8D]">{item.description}</p>
+        <h1 className="text-lg font-semibold text-[#34495E]">{industry.title}</h1>
+        <p className="mt-2 text-sm text-[#7F8C8D]">{industry.description}</p>
         {loading ? (
           <p className="mt-4 text-sm text-[#7F8C8D]">{t("loading")}</p>
         ) : readOnly ? (
@@ -77,24 +86,18 @@ export default function IndustryVerticalPage() {
             </Link>
           </>
         ) : entitled ? (
-          satelliteUrl ? (
-            <button
-              type="button"
-              className={`${PRIMARY_BUTTON_CLASS} mt-6`}
-              onClick={openSatellite}
-            >
-              {t("openModule")}
-            </button>
-          ) : (
-            <p className="mt-4 text-xs text-amber-700">
-              {t("envHint", { env: item.satelliteUrlEnv })}
-            </p>
-          )
+          <button
+            type="button"
+            className={`${PRIMARY_BUTTON_CLASS} mt-6`}
+            onClick={openSatellite}
+          >
+            {t("openModule")}
+          </button>
         ) : (
           <>
             <p className="mt-4 text-sm text-[#7F8C8D]">{t("notEntitled")}</p>
             <Link
-              href={workspacePricingHref(item.slug)}
+              href={workspacePricingHref(industry.slug)}
               className={`${PRIMARY_BUTTON_CLASS} mt-4 inline-flex`}
             >
               {t("addModule")}

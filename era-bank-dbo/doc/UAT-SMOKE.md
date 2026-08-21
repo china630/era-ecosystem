@@ -60,16 +60,15 @@ Open `http://127.0.0.1:3211/login`
 2. Open card detail — **`/cards/[id]`** shows status and expiry.
 3. **Temporary block** — button calls `POST /dbo/cards/:id/temporary-block`; card status becomes `BLOCKED`.
 
-## Open API (curl — B2B)
+## Open API keys (UI — corporate)
 
-Requires engine `/api/v1/dbo/open/*` and seeded API key (`npm run db:seed` prints key).
+1. Corporate login → **`/open-api`**.
+2. Select permissions → **Create key** → raw secret shown once.
+3. **Revoke** the new key → status REVOKED.
+4. **Deny:** retail session opening `/api/open-api-keys` → **403** Corporate channel required.
+5. Engine deny (automated): `era-bank-core` `dbo-open-negative.spec.ts` (missing/bad/revoked key, missing scope).
 
-```bash
-curl -s -X POST http://127.0.0.1:4300/api/v1/dbo/open/payments/orders \
-  -H "X-Api-Key: dbo-demo-api-key-change-in-prod" \
-  -H "Content-Type: application/json" \
-  -d '{"debitAccountId":"...","beneficiaryIban":"AZ...","amountMinor":10000}'
-```
+Engine still accepts the seeded demo key via env for lab AIS/PIS curls (not a substitute for the UI path).
 
 ## Schema audit
 

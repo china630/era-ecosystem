@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { cancelProcedureOrder } from "@/domain/procedure/procedure-attendance.service";
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
     let replaced = 0;
     let placed = 0;
     if (body.replaceWithCode && targets.length > 0) {
-      const pt = await prisma.procedureType.findUnique({
+      const pt = await prisma.procedureType.findFirst({
         where: { code: body.replaceWithCode },
       });
       if (!pt) return jsonError(`Unknown replaceWithCode ${body.replaceWithCode}`, 400);
@@ -89,6 +90,7 @@ export async function POST(req: Request) {
         const src = targets[i];
         const created = await prisma.procedureOrder.create({
           data: {
+            organizationId: satelliteOrganizationId(),
             patientRefId,
             procedureCode: pt.code,
             procedureName: pt.name,

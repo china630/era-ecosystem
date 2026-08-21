@@ -9,6 +9,7 @@ import {
   FixedAssetStatus,
   LedgerType,
   Prisma,
+  TransactionKind,
   type PostingRole,
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
@@ -26,6 +27,7 @@ import {
   RevalueFixedAssetDto,
 } from "./dto/revalue-fixed-asset.dto";
 import { DisposeFixedAssetDto } from "./dto/dispose-fixed-asset.dto";
+import { MANUAL_ADJUSTMENT_REASON_MIN } from "../accounting/manual-adjustment.constants";
 import {
   DEFAULT_TAX_DEPRECIATION_GROUP,
   resolveTaxDepreciationRateFraction,
@@ -116,21 +118,29 @@ export class FixedAssetLifecycleService {
 
     const date = dto.date ? new Date(dto.date) : asset.purchaseDate;
     const creditRole = this.creditRoleForSource(dto.creditSource);
-    this.assertCreditSource(dto.creditSource, dto.counterpartyId);
+    this.assertCreditSource(dto.creditSource, dto.counterpartyId, dto.note);
 
     const [fixedAssetCostCode, creditCode] = await Promise.all([
       this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
       this.posting.resolveAccountCode(organizationId, creditRole, tx),
     ]);
 
+    const isDonation = dto.creditSource === FixedAssetCreditSource.DONATION;
+    const donationNote = dto.note?.trim() ?? "";
+
     const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
       organizationId,
       date,
       reference: `FA-ACQ-${asset.inventoryNumber}`,
-      description: `Fixed asset acquisition: ${asset.name}`,
+      description: isDonation
+        ? `Fixed asset in-kind donation: ${asset.name}`
+        : `Fixed asset acquisition: ${asset.name}`,
       isFinal: true,
       counterpartyId:
         dto.creditSource === FixedAssetCreditSource.SUPPLIER ? dto.counterpartyId : null,
+      kind: isDonation ? TransactionKind.MANUAL_ADJUSTMENT : TransactionKind.SYSTEM,
+      reason: isDonation ? donationNote : null,
+      basisFixedAssetId: isDonation ? assetId : null,
       lines: [
         { accountCode: fixedAssetCostCode, debit: amount.toString(), credit: "0" },
         { accountCode: creditCode, debit: "0", credit: amount.toString() },
@@ -176,7 +186,7 @@ export class FixedAssetLifecycleService {
     const amount = roundMoney2(new Decimal(dto.amount));
     const date = dto.date ? new Date(dto.date) : new Date();
     const creditRole = this.creditRoleForSource(dto.creditSource);
-    this.assertCreditSource(dto.creditSource, dto.counterpartyId);
+    this.assertCreditSource(dto.creditSource, dto.counterpartyId, dto.note);
 
     const [fixedAssetCostCode, creditCode] = await Promise.all([
       this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
@@ -490,12 +500,31 @@ export class FixedAssetLifecycleService {
   }
 
   private creditRoleForSource(source: FixedAssetCreditSource): PostingRole {
-    return source === FixedAssetCreditSource.SUPPLIER ? "SUPPLIER_PAYABLE" : "MAIN_BANK";
+    switch (source) {
+      case FixedAssetCreditSource.SUPPLIER:
+        return "SUPPLIER_PAYABLE";
+      case FixedAssetCreditSource.DONATION:
+        return "DONATION_REVENUE";
+      default:
+        return "MAIN_BANK";
+    }
   }
 
-  private assertCreditSource(source: FixedAssetCreditSource, counterpartyId?: string): void {
+  private assertCreditSource(
+    source: FixedAssetCreditSource,
+    counterpartyId?: string,
+    note?: string,
+  ): void {
     if (source === FixedAssetCreditSource.SUPPLIER && !counterpartyId) {
       throw new BadRequestException("counterpartyId is required when creditSource is SUPPLIER");
+    }
+    if (source === FixedAssetCreditSource.DONATION) {
+      const trimmed = note?.trim() ?? "";
+      if (trimmed.length < MANUAL_ADJUSTMENT_REASON_MIN) {
+        throw new BadRequestException(
+          `note must be at least ${MANUAL_ADJUSTMENT_REASON_MIN} characters when creditSource is DONATION`,
+        );
+      }
     }
   }
 

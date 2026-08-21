@@ -48,6 +48,15 @@
   "projects": {
     "title": "ERA Construction",
     "subtitle": "C2 — проекты, план/факт, заявки",
+    "addProject": "Добавить проект",
+    "createProject": "Создать проект",
+    "projectCode": "Код проекта",
+    "projectName": "Название проекта",
+    "amountNet": "Начальная сумма (AZN)",
+    "boqItemCode": "Код позиции BOQ",
+    "boqDescription": "Описание строки BOQ",
+    "boqQty": "Кол-во BOQ",
+    "created": "Проект {code} создан",
     "requisitions": "Заявки",
     "empty": "Нет проектов — POST /api/projects для demo.",
     "progressActs": "{count} акт(ов) прогресса"

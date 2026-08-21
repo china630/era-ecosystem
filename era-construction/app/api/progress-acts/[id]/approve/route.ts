@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
@@ -10,7 +10,9 @@ import {
   createPromotion,
   createCustomDomain,
 } from "@/integration/control-plane-platform.client";
+import { progressActReopenDenied } from "@/lib/progress-act-status";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const bodySchema = z.object({
   customHostname: z.string().max(253).optional(),
@@ -28,7 +30,10 @@ export async function POST(
       include: { project: true },
     });
     if (!act) return jsonError("Progress act not found", 404);
-    if (act.status === "APPROVED") return jsonOk(act);
+    // Idempotent approve; reopen / reverse is refused by progressActReopenDenied.
+    if (act.status === "APPROVED" || progressActReopenDenied(act.status)) {
+      return jsonOk(act);
+    }
 
     const approved = await prisma.progressAct.update({
       where: { id },
@@ -47,7 +52,7 @@ export async function POST(
       },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const organizationId = satelliteOrganizationId();
     const amountNet = Number(approved.amountNet);
     let payUrl: string | undefined;
     if (organizationId && amountNet > 0) {

@@ -1,5 +1,13 @@
+import { Prisma } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+
+type TripTracking = Prisma.TripGetPayload<{
+  include: {
+    vehicle: true;
+    points: true;
+  };
+}>;
 
 export async function GET(
   _req: Request,
@@ -7,13 +15,13 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
-    const trip = await prisma.trip.findUnique({
-      where: { trackingToken: token },
+    const trip = (await prisma.trip.findUnique({
+      where: { trackingToken: token } as never,
       include: {
         vehicle: true,
         points: { orderBy: { sequence: "asc" } },
       },
-    });
+    })) as TripTracking | null;
     if (!trip) return jsonError("Tracking not found", 404);
     return jsonOk({
       tripId: trip.id,

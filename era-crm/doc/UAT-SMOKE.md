@@ -68,12 +68,12 @@ curl -X POST http://localhost:3303/api/inbox \
 ## C5–C8 — v3.0 party model + import (UI smoke)
 
 - [ ] Login at `/login`
-- [ ] `/leads` → **Create lead** — legal entity with VÖEN lookup + company name; or individual with phone
+- [ ] `/leads` → **Create lead** modal — legal entity with VÖEN lookup + company name; or individual with phone
 - [ ] Set `prospectType=PARTNER`; filter pipeline by Partner
 - [ ] Open `/leads/[id]` — party block, stage history, visits
 - [ ] Move lead to QUALIFIED (requires VÖEN for legal entity) → PROPOSAL → **Convert**
 - [ ] Finance: counterparty auto-created (`handleCrmLead`); draft invoice if `estimatedAmount` set
-- [ ] `/admin/import` — upload sample slice of `data/legal-entities/azerbaijan-companies-with-voen.csv`; verify import report
+- [ ] `/admin/import` → **Run import** modal — upload sample slice of `data/legal-entities/azerbaijan-companies-with-voen.csv`; verify import report
 
 ### v3.0 curl smoke (`:3207` local dev)
 
@@ -102,4 +102,11 @@ curl -X POST "http://localhost:3207/api/leads/import?mode=upsert" \
   -H "Cookie: era_satellite_token=<token>" \
   -F "file=@../data/legal-entities/azerbaijan-legal-entities.csv"
 ```
+
+## Deny (Scaffold BE negative paths — PIPE / PARTY only)
+
+1. **Module off → 403:** With `industry_crm` inactive (or unbound org / source=fallback), routes that call `assertCrmEntitled` return **403**. Proof: `__tests__/crm-pipe-negative.spec.ts`, `crm-party-negative.spec.ts`.
+2. **Domain denies (PIPE):** assign without `SALES_LEAD` / `BUSINESS_OWNER` → **403**; stage advance to QUALIFIED+ without party VÖEN/phone denied.
+3. **Domain denies (PARTY):** legal entity missing company name; individual missing phone; import row without phone denied.
+4. **WA:** not in this deny section — AC-CRM-WA remains External vendor (not Scaffold ✅).
 

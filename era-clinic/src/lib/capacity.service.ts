@@ -5,12 +5,22 @@ import {
   SATELLITE_CLINIC_CAPACITY_CHANGED,
 } from "@era/contracts";
 
+import { assertCapacityBookingAllowed as assertCap } from "@/lib/capacity-booking-gates";
+
 export const DEFAULT_DAILY_PROCEDURE_SLOTS = 1000;
 export const PROCEDURES_PER_GUEST_WEEK = 8;
 export const RISK_GUEST_WEEK_MIN = 120;
 export const RISK_GUEST_WEEK_MAX = 125;
 
 export type CapacityRiskLevel = "ok" | "warning" | "critical";
+
+/** Deny medical-package booking when capacity risk is critical. */
+export function assertCapacityBookingAllowed(summary: {
+  bookingAllowed: boolean;
+  riskLevel: CapacityRiskLevel;
+}): void {
+  assertCap(summary);
+}
 
 export type CapacitySummary = {
   weekStart: string;

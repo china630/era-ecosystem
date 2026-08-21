@@ -6,6 +6,8 @@ import {
   SATELLITE_ROLE,
   signSatelliteSession,
   ssoExchangeBodySchema,
+  setRuntimeOrganizationId,
+  satelliteOrganizationId,
 } from "@era/satellite-kit";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
@@ -19,10 +21,12 @@ export async function POST(request: Request) {
       return jsonError("SSO token expired", 401);
     }
 
-    const expectedOrg =
-      process.env.ERA_BANK_ORGANIZATION_ID ??
-      process.env.ERA_SATELLITE_ORGANIZATION_ID;
-    if (expectedOrg && body.organizationId !== expectedOrg) {
+    const expectedOrg = satelliteOrganizationId();
+    if (
+      expectedOrg &&
+      expectedOrg !== "demo-org" &&
+      body.organizationId !== expectedOrg
+    ) {
       return jsonError("Organization mismatch", 403);
     }
 
@@ -40,6 +44,8 @@ export async function POST(request: Request) {
     if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
       return jsonError("SSO ticket already used", 401);
     }
+
+    setRuntimeOrganizationId(body.organizationId);
 
     const satelliteRole = mapFinanceRoleToSatellite(financeRole);
     const roleName =
@@ -84,6 +90,7 @@ export async function POST(request: Request) {
       role: user.opsRole.code,
       fullName: user.fullName,
       isOwner: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER,
+      organizationId: body.organizationId,
     });
 
     const res = jsonOk({

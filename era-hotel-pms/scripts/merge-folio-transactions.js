@@ -258,11 +258,91 @@ function parseArgs(argv) {
   if (args[0] === '--ew') {
     return { mode: 'ew', ewDir: args[1], hotelOut: args[2], fnbOut: args[3] };
   }
+  if (args[0] === '--files') {
+    const files = [];
+    let hotelOut;
+    let fnbOut;
+    for (let i = 1; i < args.length; i += 1) {
+      if (args[i] === '--out') {
+        hotelOut = args[i + 1];
+        i += 1;
+      } else if (args[i] === '--fnb-out') {
+        fnbOut = args[i + 1];
+        i += 1;
+      } else {
+        files.push(args[i]);
+      }
+    }
+    return { mode: 'files', files, hotelOut, fnbOut };
+  }
   return { mode: 'dir', inputDir: args[0], outputPath: args[1] };
+}
+
+function runSplitMerge(files, hotelOut, fnbOut) {
+  if (!files.length) {
+    console.error('No Folio Transaction sources');
+    process.exit(1);
+  }
+  console.log('Folio sources:', files.length);
+  for (const f of files) console.log(' -', path.basename(f));
+
+  const { merged, headers, sheetName, totalRows, perFile } = mergeFiles(files);
+  const hotel = [];
+  const fnb = [];
+  for (const row of merged) {
+    if (isFnbHouseLedger(row)) fnb.push(row);
+    else hotel.push(row);
+  }
+
+  const hotelRes = writeMerged(hotel, headers, sheetName, hotelOut, {
+    stream: 'hotel',
+    inputFiles: files.length,
+    totalRawRows: totalRows,
+    duplicatesRemoved: totalRows - merged.length,
+    uniqueBeforeSplit: merged.length,
+    perFile,
+  });
+  const fnbRes = writeMerged(fnb, headers, sheetName, fnbOut, {
+    stream: 'fnb',
+    inputFiles: files.length,
+    totalRawRows: totalRows,
+    uniqueBeforeSplit: merged.length,
+    splitRule:
+      'Guest Name 999 FB / FB999; CASH FOLIO + F&B dept; RESTORAN agency without Res Id',
+  });
+
+  console.log('\n=== MERGE + SPLIT DONE ===');
+  console.log('Raw rows:', totalRows);
+  console.log('Unique Id:', merged.length);
+  console.log('Hotel folio:', hotel.length, '->', hotelOut);
+  console.log('FnB house:', fnb.length, '->', fnbOut);
+  console.log('Hotel date:', hotelRes.summary.dateMin, '->', hotelRes.summary.dateMax);
+  console.log('FnB date:', fnbRes.summary.dateMin, '->', fnbRes.summary.dateMax);
+  console.log('Hotel gaps >=3d:', hotelRes.summary.gapsGte3.length);
+  for (const g of hotelRes.summary.gapsGte3) {
+    console.log(`  GAP ${g.from} — ${g.to} (${g.days}d)`);
+  }
+  console.log('Jun 15–20 closed (hotel days present):', hotelRes.summary.gapJun15to20Closed);
+  console.log('Summaries:', hotelRes.summaryPath, fnbRes.summaryPath);
+  return { hotelRes, fnbRes, merged, hotel, fnb, perFile };
 }
 
 function main() {
   const opts = parseArgs(process.argv);
+
+  if (opts.mode === 'files') {
+    const missing = (opts.files || []).filter((f) => !fs.existsSync(f));
+    if (missing.length) {
+      console.error('Missing folio files:\n', missing.join('\n'));
+      process.exit(1);
+    }
+    runSplitMerge(
+      opts.files,
+      opts.hotelOut || path.join(process.cwd(), 'Folio Transactions.merged.xlsx'),
+      opts.fnbOut || path.join(process.cwd(), 'FnB Transactions.merged.xlsx'),
+    );
+    return;
+  }
 
   if (opts.mode === 'ew') {
     const ewDir = opts.ewDir;
@@ -271,56 +351,11 @@ function main() {
       process.exit(1);
     }
     const files = collectEwSources(ewDir);
-    if (!files.length) {
-      console.error('No Folio Transaction sources under', ewDir);
-      process.exit(1);
-    }
-
-    console.log('EW sources:', files.length);
-    for (const f of files) console.log(' -', path.relative(ewDir, f));
-
-    const { merged, headers, sheetName, totalRows, perFile } = mergeFiles(files);
-    const hotel = [];
-    const fnb = [];
-    for (const row of merged) {
-      if (isFnbHouseLedger(row)) fnb.push(row);
-      else hotel.push(row);
-    }
-
-    const hotelOut =
-      opts.hotelOut || path.join(ewDir, 'Folio Transactions.merged.xlsx');
-    const fnbOut = opts.fnbOut || path.join(ewDir, 'FnB Transactions.merged.xlsx');
-
-    const hotelRes = writeMerged(hotel, headers, sheetName, hotelOut, {
-      stream: 'hotel',
-      inputFiles: files.length,
-      totalRawRows: totalRows,
-      duplicatesRemoved: totalRows - merged.length,
-      uniqueBeforeSplit: merged.length,
-      perFile,
-    });
-    const fnbRes = writeMerged(fnb, headers, sheetName, fnbOut, {
-      stream: 'fnb',
-      inputFiles: files.length,
-      totalRawRows: totalRows,
-      uniqueBeforeSplit: merged.length,
-      splitRule:
-        'Guest Name 999 FB / FB999; CASH FOLIO + F&B dept; RESTORAN agency without Res Id',
-    });
-
-    console.log('\n=== MERGE + SPLIT DONE ===');
-    console.log('Raw rows:', totalRows);
-    console.log('Unique Id:', merged.length);
-    console.log('Hotel folio:', hotel.length, '->', hotelOut);
-    console.log('FnB house:', fnb.length, '->', fnbOut);
-    console.log('Hotel date:', hotelRes.summary.dateMin, '->', hotelRes.summary.dateMax);
-    console.log('FnB date:', fnbRes.summary.dateMin, '->', fnbRes.summary.dateMax);
-    console.log('Hotel gaps >=3d:', hotelRes.summary.gapsGte3.length);
-    for (const g of hotelRes.summary.gapsGte3) {
-      console.log(`  GAP ${g.from} — ${g.to} (${g.days}d)`);
-    }
-    console.log('Jun 15–20 closed (hotel days present):', hotelRes.summary.gapJun15to20Closed);
-    console.log('Summaries:', hotelRes.summaryPath, fnbRes.summaryPath);
+    runSplitMerge(
+      files,
+      opts.hotelOut || path.join(ewDir, 'Folio Transactions.merged.xlsx'),
+      opts.fnbOut || path.join(ewDir, 'FnB Transactions.merged.xlsx'),
+    );
     return;
   }
 

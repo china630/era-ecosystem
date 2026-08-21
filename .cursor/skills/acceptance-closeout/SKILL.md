@@ -21,7 +21,8 @@ description: >-
    - Scaffold ✅ only if PRD wording + **negative path** + no Critical residual + not field-intent.
    - Else 🟡. Worst-component: any 🟡 sub-row → AC 🟡.
    - Pilot-ready separate; field AC max Scaffold 🟡.
-4. Update **Product-Readiness-Matrix** (Gate, BE, UI, Demo, Pilot, Edition, Sell); rollup = worst layers.
+4. Update **Product-Readiness-Matrix** (Gate, BE, UI, Demo, Pilot, Edition, Sell); rollup = worst layers.  
+   If a human show/edit screen appeared or vanished: update [`UI-COVERAGE-BOARD.md`](../../docs/acceptance/UI-COVERAGE-BOARD.md) class (NONE/SCREEN/SHOW). Sell still from Product-Readiness only.
 5. **Bank:** update [`Bank-Capability-Inventory.md`](../../docs/acceptance/Bank-Capability-Inventory.md) if scope IN/PARTIAL/DECLARED/OUT changed; never narrate AC ✅ as full ABS.
 6. Sync rollups in the **same change**: Sprint-Index, editions yaml if sell claim changed.
 7. Run:

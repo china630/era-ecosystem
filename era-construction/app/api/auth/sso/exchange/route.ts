@@ -4,6 +4,7 @@ import {
   executeSatelliteSsoExchange,
   resolveVerifiedSsoFinanceRole,
   ssoExchangeBodySchema,
+  satelliteOrganizationId,
 } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
@@ -30,8 +31,8 @@ export async function POST(request: Request) {
       return jsonError("SSO ticket already used", 401);
     }
 
-    const deployOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
-    if (deployOrg && body.organizationId !== deployOrg) {
+    const deployOrg = satelliteOrganizationId();
+    if (deployOrg && deployOrg !== 'demo-org' && body.organizationId !== deployOrg) {
       return jsonError("SSO organization mismatch", 401);
     }
 

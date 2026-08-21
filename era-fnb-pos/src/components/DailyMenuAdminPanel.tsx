@@ -1,11 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, FieldRow } from '@era/satellite-kit/ui';
 
 type MenuItem = { id: string; plu: string; name: string; category: { name: string } };
 
 export default function DailyMenuAdminPanel() {
+  const t = useTranslations('admin.dailyMenu');
+  const tc = useTranslations('common');
+
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [allItems, setAllItems] = useState<MenuItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -34,36 +38,49 @@ export default function DailyMenuAdminPanel() {
 
   async function save() {
     setMsg(null);
-    const res = await fetch('/api/admin/daily-menu', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, menuItemIds: [...selected] }),
-    });
-    const json = await res.json();
-    setMsg(res.ok ? `Saved ${json.count} items` : json.error ?? 'Error');
+    try {
+      const res = await fetch('/api/admin/daily-menu', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, menuItemIds: [...selected] }),
+      });
+      const json = await res.json();
+      setMsg(
+        res.ok
+          ? t('saved', { count: json.count })
+          : json.error ?? tc('error'),
+      );
+    } catch (e) {
+      setMsg(tc('error'));
+    }
   }
 
   async function copyYesterday() {
-    const y = new Date(date);
-    y.setDate(y.getDate() - 1);
-    const res = await fetch('/api/admin/daily-menu', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fromDate: y.toISOString().slice(0, 10),
-        toDate: date,
-      }),
-    });
-    const json = await res.json();
-    setMsg(res.ok ? `Copied ${json.copied}` : json.error ?? 'Error');
-    await load();
+    setMsg(null);
+    try {
+      const y = new Date(date);
+      y.setDate(y.getDate() - 1);
+      const res = await fetch('/api/admin/daily-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromDate: y.toISOString().slice(0, 10),
+          toDate: date,
+        }),
+      });
+      const json = await res.json();
+      setMsg(res.ok ? t('copied', { copied: json.copied }) : json.error ?? tc('error'));
+      await load();
+    } catch {
+      setMsg(tc('error'));
+    }
   }
 
   return (
     <div className="space-y-4">
       <FieldRow cols={2} className="items-end">
         <Field
-          label="Date"
+          label={t('date')}
           preset="date"
           type="date"
           value={date}
@@ -71,13 +88,13 @@ export default function DailyMenuAdminPanel() {
         />
         <div className="flex flex-wrap gap-2 pb-0.5">
           <button type="button" className="rounded bg-[#2980B9] px-3 py-1 text-white text-sm" onClick={() => void save()}>
-            Save board
+            {t('saveBoard')}
           </button>
           <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void copyYesterday()}>
-            Copy from yesterday
+            {t('copyYesterday')}
           </button>
           <a className="text-sm text-[#2980B9] underline self-center" href={`/menu/today?outlet=RESTAURANT`} target="_blank" rel="noreferrer">
-            Guest QR menu
+            {t('guestQrMenu')}
           </a>
         </div>
       </FieldRow>

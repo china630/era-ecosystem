@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,7 +11,6 @@ import {
   MODAL_FOOTER_ACTIONS_CLASS,
   MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
-  MODAL_INPUT_NUMERIC_CLASS,
 } from "../../lib/design-system";
 import { Button } from "../ui/button";
 
@@ -21,9 +21,10 @@ type LifecycleEvent = {
   portion?: unknown;
   note?: string | null;
   createdAt: string;
+  transaction?: { id: string; reference: string | null; date?: string } | null;
 };
 
-type CreditSource = "SUPPLIER" | "BANK";
+type CreditSource = "SUPPLIER" | "BANK" | "DONATION";
 
 function LifecycleFormModal({
   title,
@@ -160,6 +161,18 @@ export function FixedAssetLifecyclePanel({
               {e.portion != null ? ` · ${String(e.portion)}` : ""}
               {" · "}
               {String(e.createdAt).slice(0, 10)}
+              {e.transaction?.reference ? (
+                <>
+                  {" · "}
+                  <Link
+                    href="/accounting/adjustments"
+                    className="text-[#2980B9] hover:underline"
+                    title={e.transaction.id}
+                  >
+                    {e.transaction.reference}
+                  </Link>
+                </>
+              ) : null}
               {e.note ? ` — ${e.note}` : ""}
             </li>
           ))}
@@ -173,6 +186,10 @@ export function FixedAssetLifecyclePanel({
         busy={busy}
         onSubmit={(e) => {
           e.preventDefault();
+          if (creditSource === "DONATION" && note.trim().length < 10) {
+            toast.error(t("fixedAssets.lifecycleDonationNoteRequired"));
+            return;
+          }
           void postAction("acquire", {
             creditSource,
             counterpartyId: creditSource === "SUPPLIER" ? counterpartyId.trim() || undefined : undefined,
@@ -190,7 +207,7 @@ export function FixedAssetLifecyclePanel({
           setAmount={setAmount}
           amountLabel={t("fixedAssets.lifecycleAmountOptional")}
         />
-        <NoteField note={note} setNote={setNote} />
+        <NoteField note={note} setNote={setNote} required={creditSource === "DONATION"} multiline={creditSource === "DONATION"} />
       </LifecycleFormModal>
 
       <LifecycleFormModal
@@ -243,9 +260,9 @@ export function FixedAssetLifecyclePanel({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleDirection")}
           <select
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
             value={direction}
             onChange={(e) => setDirection(e.target.value as "UP" | "DOWN")}
-            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           >
             <option value="UP">{t("fixedAssets.lifecycleUp")}</option>
             <option value="DOWN">{t("fixedAssets.lifecycleDown")}</option>
@@ -254,11 +271,11 @@ export function FixedAssetLifecyclePanel({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleAmount")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
             type="number"
             step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
           />
         </label>
         <NoteField note={note} setNote={setNote} />
@@ -286,24 +303,24 @@ export function FixedAssetLifecyclePanel({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecyclePortion")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
             type="number"
             step="0.01"
             min={0.01}
             max={1}
             value={portion}
             onChange={(e) => setPortion(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
           />
         </label>
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleProceeds")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
             type="number"
             step="0.01"
             min={0}
             value={proceeds}
             onChange={(e) => setProceeds(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
           />
         </label>
         <NoteField note={note} setNote={setNote} />
@@ -335,48 +352,70 @@ function CreditFields({
       <label className={MODAL_FIELD_LABEL_CLASS}>
         {t("fixedAssets.lifecycleCreditSource")}
         <select
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           value={creditSource}
           onChange={(e) => setCreditSource(e.target.value as CreditSource)}
-          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
         >
           <option value="BANK">{t("fixedAssets.lifecycleBank")}</option>
           <option value="SUPPLIER">{t("fixedAssets.lifecycleSupplier")}</option>
+          <option value="DONATION">{t("fixedAssets.lifecycleDonation")}</option>
         </select>
       </label>
       {creditSource === "SUPPLIER" ? (
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleCounterpartyId")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
             value={counterpartyId}
             onChange={(e) => setCounterpartyId(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           />
         </label>
       ) : null}
       <label className={MODAL_FIELD_LABEL_CLASS}>
         {amountLabel}
         <input
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
           type="number"
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
         />
       </label>
     </>
   );
 }
 
-function NoteField({ note, setNote }: { note: string; setNote: (v: string) => void }) {
+function NoteField({
+  note,
+  setNote,
+  required,
+  multiline,
+}: {
+  note: string;
+  setNote: (v: string) => void;
+  required?: boolean;
+  multiline?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <label className={MODAL_FIELD_LABEL_CLASS}>
       {t("fixedAssets.lifecycleNote")}
-      <input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-      />
+      {required ? " *" : ""}
+      {multiline ? (
+        <textarea
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={3}
+          placeholder={t("fixedAssets.lifecycleDonationNotePh")}
+        />
+      ) : (
+        <input
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+      )}
     </label>
   );
 }

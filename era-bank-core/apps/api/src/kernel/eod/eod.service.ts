@@ -158,7 +158,9 @@ export class EodService {
     const glAccounts = await this.prisma.glAccount.findMany({
       where: { bankOrgId: this.bankOrg.bankOrgId },
     });
-    const glById = new Map(glAccounts.map((g) => [g.id, g.code]));
+    const glById = new Map<string, string>(
+      glAccounts.map((g: { id: string; code: string }) => [g.id, g.code]),
+    );
     const summaryLines = trialBalance.map((row) => ({
       glCode: glById.get(row.glAccountId) ?? row.glAccountId,
       debit: Number(row.debitMinor),
@@ -212,7 +214,11 @@ export class EodService {
     if (balanced) {
       const publishResult = await this.events.publishGlDailySummary({
         businessDate: businessDate.toISOString().slice(0, 10),
-        lines: summaryLines,
+        lines: summaryLines as Array<{
+          glCode: string;
+          debit: number;
+          credit: number;
+        }>,
       });
       await this.prisma.eodRun.update({
         where: {

@@ -29,10 +29,10 @@ export const revenueCodesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     taxTag: cellString(raw.taxTag),
   }),
   upsert: async (tx, row, dryRun) => {
-    const existing = await tx.revenueCode.findUnique({ where: { code: row.code } });
+    const existing = await tx.revenueCode.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.revenueCode.upsert({
-      where: { code: row.code },
+      where: { code: row.code } as never,
       create: { code: row.code, name: row.name, taxTag: row.taxTag ?? undefined },
       update: { name: row.name, taxTag: row.taxTag ?? undefined },
     });

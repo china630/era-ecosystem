@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: Params) {
     });
 
     const signRequest = await prisma.paymentSignRequest.findUnique({
-      where: { engineOrderId: id },
+      where: { engineOrderId: id } as never,
     });
     if (signRequest && signRequest.status === "PENDING") {
       await markSignRequestSigned({

@@ -26,6 +26,14 @@ Port **3211**. Customer channel — not ops SSO. BFF only; balances from engine.
 | `/payments` | Payment order list |
 | `/payments/new` | Create + sign + submit (retail) |
 | `/payments/approve` | Corporate signatory queue |
+| `/open-api` | Corporate Open API keys (create/revoke; raw secret once) |
+
+## Internal (orchestrator Sync)
+
+| Path | Notes |
+|------|-------|
+| `POST/GET /api/internal/v1/organization/bind` | Org UUID bind (Bearer service token); kit persist + `instrumentation` boot |
+| `POST/GET /api/internal/v1/runtime-config` | Desired-state runtime config (SSO, event token, activeModules); kit persist + boot hydrate |
 
 ## BFF (`app/api`)
 
@@ -48,6 +56,8 @@ Port **3211**. Customer channel — not ops SSO. BFF only; balances from engine.
 | `POST /api/payments/orders/[id]/submit` | `/api/v1/dbo/payments/orders/:id/submit` |
 | `POST /api/payments/orders/[id]/preflight` | `/api/v1/dbo/payments/orders/:id/preflight` (optional) |
 | `GET /api/payments/sign-requests` | Channel DB |
+| `GET/POST /api/open-api-keys` | Channel `CorporateApiKey` + engine `POST /dbo/open/keys/register` |
+| `POST /api/open-api-keys/[id]/revoke` | Channel revoke + engine revoke |
 
 ## Channel DB models
 

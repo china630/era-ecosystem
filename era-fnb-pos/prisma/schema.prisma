@@ -40,7 +40,8 @@ enum PosShiftStatus {
 
 model Outlet {
   id                 String   @id @default(cuid())
-  code               String   @unique
+  organizationId String @map("organization_id")
+  code               String
   name               String
   revenueCenterCode  String   @default("FOOD") @map("revenue_center_code")
   propertyCode       String?  @map("property_code")
@@ -54,11 +55,14 @@ model Outlet {
   dailyMenuEntries   DailyMenuEntry[]
 
   @@map("outlets")
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model DeliveryInboxOrder {
   id           String   @id @default(cuid())
-  externalRef  String   @unique @map("external_ref")
+  organizationId String @map("organization_id")
+  externalRef  String @map("external_ref")
   channel      String   @default("aggregator")
   status       String   @default("NEW")
   payloadJson  String?  @map("payload_json")
@@ -66,10 +70,13 @@ model DeliveryInboxOrder {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("delivery_inbox_orders")
+  @@unique([organizationId, externalRef])
+  @@index([organizationId])
 }
 
 model PosTable {
   id              String      @id @default(cuid())
+  organizationId String @map("organization_id")
   outletId        String      @map("outlet_id")
   code            String
   name            String
@@ -85,10 +92,12 @@ model PosTable {
 
   @@unique([outletId, code])
   @@map("pos_tables")
+  @@index([organizationId])
 }
 
 model TableReservation {
   id         String   @id @default(cuid())
+  organizationId String @map("organization_id")
   tableId    String   @map("table_id")
   startAt    DateTime @map("start_at")
   endAt      DateTime @map("end_at")
@@ -99,10 +108,12 @@ model TableReservation {
 
   @@index([tableId, startAt])
   @@map("table_reservations")
+  @@index([organizationId])
 }
 
 model MenuCategory {
   id        String     @id @default(cuid())
+  organizationId String @map("organization_id")
   outletId  String     @map("outlet_id")
   name      String
   sortOrder Int        @default(0) @map("sort_order")
@@ -110,10 +121,12 @@ model MenuCategory {
   outlet    Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
 
   @@map("menu_categories")
+  @@index([organizationId])
 }
 
 model MenuItem {
   id         String          @id @default(cuid())
+  organizationId String @map("organization_id")
   categoryId String          @map("category_id")
   plu        String
   name       String
@@ -128,6 +141,7 @@ model MenuItem {
 
   @@unique([categoryId, plu])
   @@map("menu_items")
+  @@index([organizationId])
 }
 
 /// Selling-price journal for menu reporting (catalog history; TicketLine still snapshots sale price).
@@ -164,6 +178,7 @@ model DailyMenuEntry {
 
 model Ticket {
   id                      String       @id @default(cuid())
+  organizationId String @map("organization_id")
   outletId                String       @map("outlet_id")
   tableId                 String?      @map("table_id")
   status                  TicketStatus @default(OPEN)
@@ -188,6 +203,7 @@ model Ticket {
   @@index([outletId, status])
   @@index([beoId])
   @@map("tickets")
+  @@index([organizationId])
 }
 
 model TicketLine {
@@ -210,6 +226,7 @@ model TicketLine {
 
 model PosShift {
   id          String         @id @default(cuid())
+  organizationId String @map("organization_id")
   outletId    String         @map("outlet_id")
   status      PosShiftStatus @default(OPEN)
   openedAt    DateTime       @default(now()) @map("opened_at")
@@ -219,11 +236,13 @@ model PosShift {
 
   @@index([outletId, status])
   @@map("pos_shifts")
+  @@index([organizationId])
 }
 
 model StaffRoster {
   id             String   @id @default(cuid())
-  staffCode      String   @unique @map("staff_code")
+  organizationId String @map("organization_id")
+  staffCode      String @map("staff_code")
   fullName       String   @map("full_name")
   pinHash        String   @map("pin_hash")
   globalPersonId String?  @map("global_person_id")
@@ -233,33 +252,41 @@ model StaffRoster {
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("staff_rosters")
+  @@unique([organizationId, staffCode])
+  @@index([organizationId])
 }
 
 model PinClockEvent {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   staffCode String   @map("staff_code")
   eventType String   @map("event_type")
   clockedAt DateTime @default(now()) @map("clocked_at")
 
   @@index([staffCode, clockedAt])
   @@map("pin_clock_events")
+  @@index([organizationId])
 }
 
 model Role {
   id              String @id @default(cuid())
-  code            String @unique
+  organizationId String @map("organization_id")
+  code            String
   name            String
   permissionsJson String @default("[]") @map("permissions_json")
   users           User[]
 
   @@map("roles")
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model User {
   id                String    @id @default(cuid())
-  login             String    @unique
+  organizationId String @map("organization_id")
+  login             String
   email             String?
-  phone             String?   @unique
+  phone             String?   
   fullName          String    @map("full_name")
   passwordHash      String    @map("password_hash")
   roleId            String    @map("role_id")
@@ -273,10 +300,14 @@ model User {
   createdAt         DateTime  @default(now()) @map("created_at")
 
   @@map("users")
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }
 
 model SatelliteAuditLog {
   id            String   @id @default(cuid())
+  organizationId String @map("organization_id")
   userId        String?  @map("user_id")
   entityType    String   @map("entity_type")
   entityId      String   @map("entity_id")
@@ -289,4 +320,5 @@ model SatelliteAuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("satellite_audit_logs")
+  @@index([organizationId])
 }

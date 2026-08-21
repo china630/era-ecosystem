@@ -85,18 +85,40 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
       titleParts.push(pickL10n({ en: svc.titleEn, ru: svc.titleRu, az: svc.titleAz }, lang));
     }
     const analytes = svc?.analytes ?? [];
-    const byCode = new Map(analytes.map((a) => [a.code, a]));
+    const byCode = new Map(analytes.map((a: { code: string }) => [a.code, a]));
     for (const r of item.results) {
-      const analyte = byCode.get(r.code);
+      const analyte = byCode.get(r.code) as {
+        section?: string | null;
+        valueType?: string;
+        valueOptions?: Array<{ code: string; labelEn: string; labelRu: string; labelAz: string | null }>;
+        labelEn?: string;
+        labelRu?: string;
+        labelAz?: string | null;
+        unit?: string | null;
+        refMin?: string | null;
+        refMax?: string | null;
+      } | undefined;
       const section = analyte?.section ?? null;
       const sectionKey = section ?? "_default";
       let value = r.value;
-      if (analyte?.valueType === "QUALITATIVE" && analyte.valueOptions.length) {
-        const opt = analyte.valueOptions.find((o) => o.code === r.value);
-        if (opt) value = pickL10n({ en: opt.labelEn, ru: opt.labelRu, az: opt.labelAz }, lang);
+      if (analyte?.valueType === "QUALITATIVE" && analyte.valueOptions?.length) {
+        const opt = analyte.valueOptions.find((o: { code: string }) => o.code === r.value);
+        if (opt) {
+          value = pickL10n(
+            { en: opt.labelEn, ru: opt.labelRu, az: opt.labelAz ?? opt.labelEn },
+            lang,
+          );
+        }
       }
       const label = analyte
-        ? pickL10n({ en: analyte.labelEn, ru: analyte.labelRu, az: analyte.labelAz }, lang)
+        ? pickL10n(
+            {
+              en: analyte.labelEn ?? r.code,
+              ru: analyte.labelRu ?? analyte.labelEn ?? r.code,
+              az: analyte.labelAz ?? analyte.labelEn ?? r.code,
+            },
+            lang,
+          )
         : r.label || r.code;
       const row: PrintLabRow = {
         no: no++,

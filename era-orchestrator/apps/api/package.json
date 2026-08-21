@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@era/contracts": "file:../../../packages/era-contracts",
+    "@era/satellite-kit": "file:../../../packages/satellite-kit",
     "@era365/database": "*",
     "@era365/mdm-database": "*",
     "@nestjs/common": "^11.0.8",

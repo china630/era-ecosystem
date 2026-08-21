@@ -37,6 +37,7 @@ Base path: `GET /platform/v1/catalog/*` on `era-orchestrator`.
 | Calendar day / days / add-business-days | `/platform/v1/catalog/calendar/...` | data-hub `/registry/v1/calendar/...` |
 | FX convert (display) | `/platform/v1/catalog/fx/convert` | data-hub `/registry/v1/fx/convert` |
 | VÖEN company directory | `/platform/v1/catalog/companies/:voen` | data-hub `/registry/v1/companies/:voen` |
+| ICD-10 (WHO 2019) | `/platform/v1/catalog/icd10` | **In-process** shared generator (`packages/satellite-kit/icd10`); **not** a data-hub proxy |
 
 **Auth:** Bearer `SATELLITE_EVENT_SERVICE_TOKEN` (or control-plane service token) + organization context (`X-Organization-Id` or deployment `ERA_SATELLITE_ORGANIZATION_ID`).
 

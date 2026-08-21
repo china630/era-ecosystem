@@ -15,57 +15,68 @@ enum OpsUserStatus {
 
 /// Operational staff — branch-bound; no ledger data.
 model OpsRole {
-  id         String    @id @default(cuid())
-  code       String    @unique
-  name       String
-  limitsJson Json      @default("{}")
-  users      OpsUser[]
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  code           String
+  name           String
+  limitsJson     Json      @default("{}")
+  users          OpsUser[]
+  createdAt      DateTime  @default(now())
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model OpsUser {
-  id             String        @id @default(cuid())
-  username       String        @unique
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  username       String
   passwordHash   String?
   fullName       String
   globalPersonId String?
   branchId       String
   opsRoleId      String
-  opsRole        OpsRole       @relation(fields: [opsRoleId], references: [id])
-  status         OpsUserStatus @default(ACTIVE)
+  opsRole        OpsRole        @relation(fields: [opsRoleId], references: [id])
+  status         OpsUserStatus  @default(ACTIVE)
   sessions       OpsSession[]
   actionLogs     OpsActionLog[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
+  @@unique([organizationId, username])
   @@index([opsRoleId])
   @@index([branchId])
   @@index([status])
+  @@index([organizationId])
 }
 
 model OpsSession {
-  id        String    @id @default(cuid())
-  opsUserId String
-  opsUser   OpsUser   @relation(fields: [opsUserId], references: [id], onDelete: Cascade)
-  branchId  String
-  openedAt  DateTime  @default(now())
-  closedAt  DateTime?
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  opsUserId      String
+  opsUser        OpsUser   @relation(fields: [opsUserId], references: [id], onDelete: Cascade)
+  branchId       String
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
 
   @@index([opsUserId])
   @@index([branchId])
+  @@index([organizationId])
 }
 
 /// Operational UI audit — immutable ledger audit lives in era-bank-core.
 model OpsActionLog {
-  id           String   @id @default(cuid())
-  opsUserId    String
-  opsUser      OpsUser  @relation(fields: [opsUserId], references: [id], onDelete: Cascade)
-  action       String
-  refType      String?
-  refId        String?
-  metadataJson Json?
-  at           DateTime @default(now())
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  opsUserId      String
+  opsUser        OpsUser  @relation(fields: [opsUserId], references: [id], onDelete: Cascade)
+  action         String
+  refType        String?
+  refId          String?
+  metadataJson   Json?
+  at             DateTime @default(now())
 
   @@index([opsUserId])
   @@index([at])
+  @@index([organizationId])
 }

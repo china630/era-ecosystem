@@ -1,3 +1,4 @@
+import type { BoqLine, ProgressAct } from "@prisma/client";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
@@ -27,10 +28,10 @@ export async function GET(
     }
 
     const approvedProgress = project.progressActs
-      .filter((a) => a.status === "APPROVED")
-      .reduce((sum, a) => sum + Number(a.amountNet), 0);
+      .filter((a: ProgressAct) => a.status === "APPROVED")
+      .reduce((sum: number, a: ProgressAct) => sum + Number(a.amountNet), 0);
 
-    const lines = project.boqLines.map((boq) => {
+    const lines = project.boqLines.map((boq: BoqLine) => {
       const requisitionQty = requisitionByItem.get(boq.itemCode) ?? 0;
       const plannedQty = Number(boq.plannedQty);
       return {
@@ -44,7 +45,7 @@ export async function GET(
     });
 
     const plannedAmountTotal = lines.reduce(
-      (s, l) => s + l.plannedAmountNet,
+      (s: number, l: (typeof lines)[number]) => s + l.plannedAmountNet,
       0,
     );
 

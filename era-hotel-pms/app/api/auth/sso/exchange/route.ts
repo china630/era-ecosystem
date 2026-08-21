@@ -17,7 +17,7 @@ import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'era_session';
 
 async function ensureRole(code: string) {
-  const existing = await prisma.role.findUnique({ where: { code } });
+  const existing = await prisma.role.findFirst({ where: { code } });
   if (existing) return existing;
   return prisma.role.create({
     data: {
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     const role = await ensureRole(roleCode);
 
     const login = `sso_${email.split('@')[0]}`;
-    let user = await prisma.user.findUnique({
+    let user = await prisma.user.findFirst({
       where: { login },
       include: { role: true },
     });
@@ -102,6 +102,10 @@ export async function POST(request: Request) {
         },
         include: { role: true },
       });
+    }
+
+    if (!user) {
+      return jsonError('SSO user provisioning failed', 500);
     }
 
     const token = await signToken({

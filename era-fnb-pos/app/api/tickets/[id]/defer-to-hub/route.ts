@@ -1,3 +1,5 @@
+import type { TicketLine } from "@prisma/client";
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
@@ -12,6 +14,7 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(_request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;
@@ -40,7 +43,7 @@ export async function POST(
   }
 
   const lineSummary = ticket.lines
-    .map((l) => `${l.qty}x ${l.description}`)
+    .map((l: TicketLine) => `${l.qty}x ${l.description}`)
     .join("; ")
     .slice(0, 500);
   const payerLabel =

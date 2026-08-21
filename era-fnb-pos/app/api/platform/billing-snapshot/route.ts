@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { resolveSatelliteOrganizationId } from "@era/satellite-kit";
 import { getSubscriptionMe } from "@/integration/control-plane-platform.client";
 
 export async function GET() {
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
-  if (!organizationId) {
+  const { organizationId, source } = resolveSatelliteOrganizationId({ allowFallback: true });
+  if (source === "fallback") {
     return NextResponse.json({
       skipped: true,
-      reason: "ERA_SATELLITE_ORGANIZATION_ID not set",
+      reason: "satellite organizationId not bound",
     });
   }
   try {

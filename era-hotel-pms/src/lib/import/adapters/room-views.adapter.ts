@@ -24,10 +24,10 @@ export const roomViewsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     return { code: slugCode(name), name };
   },
   upsert: async (tx, row, dryRun) => {
-    const existing = await tx.roomView.findUnique({ where: { code: row.code } });
+    const existing = await tx.roomView.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.roomView.upsert({
-      where: { code: row.code },
+      where: { code: row.code } as never,
       create: { code: row.code, name: row.name },
       update: { name: row.name },
     });

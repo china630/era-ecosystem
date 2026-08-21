@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const X = require('xlsx');
 
-const ew = process.argv[2] || 'C:/Users/ASUS G752VT/Downloads/EW';
+const ew = process.argv[2] || 'D:/ERA-BACKUP/NAFTA-START/hotel';
 
 function normName(s) {
   return String(s || '')
@@ -48,9 +48,9 @@ function excelDate(v) {
   return null;
 }
 
-const guests = load(path.join(ew, 'Guest Cards.merged.xlsx'));
-const reservations = load(path.join(ew, 'Reservations.merged.xlsx'));
-const folioHotel = load(path.join(ew, 'Folio Transactions.merged.xlsx'));
+const guests = load(path.join(ew, '10-Guest-Cards.merged.xlsx'));
+const reservations = load(path.join(ew, '11-Reservations.merged.xlsx'));
+const folioHotel = load(path.join(ew, '12-Folio-Transactions.merged.xlsx'));
 
 const guestNameToIds = new Map();
 for (const g of guests) {

@@ -57,3 +57,4 @@ node scripts/run-bank-dbo-stage-gate.mjs
 - Channel AC ✅ ≠ full commercial digital bank or full ABS  
 - Do not write «all ✅» while any in-scope AC or Readiness layer is 🟡/❌  
 - MODULES_CATALOG DONE ≠ edition `ga`
+- **AC-DBO-OPEN:** stays Scaffold 🟡 **in** Scaffold BE rollup (curl-only Code stretch, not vendor). Product-Readiness Scaffold BE **🟡**. Playbook: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md). ≠ OPEN ✅ / full Open Banking UAT

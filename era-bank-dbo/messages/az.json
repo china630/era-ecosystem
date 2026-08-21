@@ -13,7 +13,8 @@
     "more": "Daha çox",
     "logout": "Çıxış",
     "standingOrders": "SO",
-    "pfm": "PFM"
+    "pfm": "PFM",
+    "openApi": "API"
   },
   "login": {
     "title": "Daxil ol",
@@ -106,5 +107,13 @@
   "islamic": {
     "title": "İslami məhsullar",
     "subtitle": "Yalnız oxuma (aktivasiya ops-da)"
+  },
+  "openApi": {
+    "title": "Open API açarları",
+    "subtitle": "Tərəfdaş açarları /dbo/open üçün. Açar bir dəfə göstərilir. Lab — Open Banking GA deyil.",
+    "permissions": "İcazələr",
+    "create": "Açar yarat",
+    "revoke": "Ləğv et",
+    "shownOnce": "İndi kopyala — bir dəfə göstərilir"
   }
 }

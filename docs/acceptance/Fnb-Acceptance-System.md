@@ -14,6 +14,7 @@
 
 - In scope: Floor POS, KDS, recipes, delivery inbox, labor roster
 - Out of scope: Hotel FO SoT; live fiscal beyond stub
+- **Declared, not this edition:** SHARED F&B pool — [deployment-topology.md](../adr/deployment-topology.md). Waves 3–5: Outlet/Ticket/menu/staff tenant roots + kit filter (CP-TENANT-01 API); Nafta F&B = DEDICATED/ONPREM (Outlet remains POS axis).
 
 ## Definition of Done (soft / scaffold)
 

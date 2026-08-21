@@ -32,7 +32,7 @@ export async function upsertGuestFromElektrawebRow(
   const email = str(row.EMAIL);
   const birthDate = parseElektrawebDate(row.BIRTHDATE);
 
-  const existing = await prisma.guest.findUnique({ where: { externalRef } });
+  const existing = await prisma.guest.findFirst({ where: { externalRef } });
   let globalPersonId: string | null = existing?.globalPersonId ?? null;
   if (nationalIdFin || passportNumber) {
     try {
@@ -68,7 +68,7 @@ export async function upsertGuestFromElektrawebRow(
   };
 
   await prisma.guest.upsert({
-    where: { externalRef },
+    where: { externalRef } as never,
     create: data,
     update: {
       globalPersonId: data.globalPersonId,

@@ -24,7 +24,9 @@ export type RackRoomDto = {
   status: string;
   floor: number;
   roomTypeId: string;
-  roomType: { code: string; name: string };
+  roomType: { code: string; name: string; adultCapacity?: number };
+  maxBed?: number | null;
+  sharePool?: { gender: string; occupied: number; capacity: number } | null;
   reservations: RackReservationSummary[];
 };
 
@@ -55,33 +57,53 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
     },
   });
 
-  return rooms.map((room) => ({
-    id: room.id,
-    roomNumber: room.roomNumber,
-    status: room.status,
-    floor: room.floor,
-    roomTypeId: room.roomTypeId,
-    roomType: { code: room.roomType.code, name: room.roomType.name },
-    reservations: room.reservations.map((r) => {
-      let balance = 0;
-      for (const f of r.folios) {
-        balance += folioBalance(f.charges, f.payments);
-      }
-      const pending = r.medicalOrders.filter((o) => o.status === 'PENDING').length;
-      return {
-        id: r.id,
-        status: r.status,
-        guest: { fullName: r.guest.fullName },
-        checkInDate: r.checkInDate.toISOString(),
-        checkOutDate: r.checkOutDate.toISOString(),
-        payStatus: resolvePayStatus(balance, r.folios.length > 0),
-        procedureCount: r.medicalOrders.length,
-        procedurePending: pending,
-        agencyId: r.agencyId,
-        agencyCode: r.agency?.code ?? null,
-        sourceId: r.sourceId,
-        sourceCode: r.source?.code ?? null,
-      };
-    }),
-  }));
+  return rooms.map((room) => {
+    const shareStays = room.reservations.filter(
+      (r) => r.shareEligible && r.shareGender && r.adults === 1,
+    );
+    const maxBed = room.maxBed ?? room.roomType.adultCapacity ?? 2;
+    const sharePool =
+      shareStays.length > 0
+        ? {
+            gender: shareStays[0]!.shareGender!,
+            occupied: shareStays.length,
+            capacity: maxBed,
+          }
+        : null;
+    return {
+      id: room.id,
+      roomNumber: room.roomNumber,
+      status: room.status,
+      floor: room.floor,
+      roomTypeId: room.roomTypeId,
+      maxBed: room.maxBed,
+      sharePool,
+      roomType: {
+        code: room.roomType.code,
+        name: room.roomType.name,
+        adultCapacity: room.roomType.adultCapacity,
+      },
+      reservations: room.reservations.map((r) => {
+        let balance = 0;
+        for (const f of r.folios) {
+          balance += folioBalance(f.charges, f.payments);
+        }
+        const pending = r.medicalOrders.filter((o) => o.status === 'PENDING').length;
+        return {
+          id: r.id,
+          status: r.status,
+          guest: { fullName: r.guest.fullName },
+          checkInDate: r.checkInDate.toISOString(),
+          checkOutDate: r.checkOutDate.toISOString(),
+          payStatus: resolvePayStatus(balance, r.folios.length > 0),
+          procedureCount: r.medicalOrders.length,
+          procedurePending: pending,
+          agencyId: r.agencyId,
+          agencyCode: r.agency?.code ?? null,
+          sourceId: r.sourceId,
+          sourceCode: r.source?.code ?? null,
+        };
+      }),
+    };
+  });
 }

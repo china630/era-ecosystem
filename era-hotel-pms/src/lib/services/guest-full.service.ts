@@ -129,6 +129,13 @@ export async function patchGuestFull(
     }
   }
 
+  if (rest.gender !== undefined) {
+    const { assertGuestGenderChangeAllowed } = await import(
+      '@/lib/services/share-assignment.service'
+    );
+    await assertGuestGenderChangeAllowed(id, rest.gender);
+  }
+
   await prisma.guest.update({
     where: { id },
     data: {

@@ -1,6 +1,7 @@
 jest.mock('@era/satellite-kit', () => ({
   linkPersonIdentity: jest.fn(),
   getPersonOpsProfile: jest.fn().mockResolvedValue(null),
+  satelliteOrganizationId: jest.fn().mockReturnValue('test-org'),
 }));
 
 jest.mock('@/lib/prisma', () => ({
@@ -58,6 +59,7 @@ describe('guest-identity', () => {
       data: expect.objectContaining({
         globalPersonId: 'person-1',
         fullName: 'Ali Mammadov',
+        organizationId: expect.any(String),
       }),
     });
     const createData = prisma.guest.create.mock.calls[0][0].data;

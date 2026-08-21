@@ -18,6 +18,12 @@ const patchSchema = z.object({
   earlyCheckInFeeAmount: z.number().optional(),
   lateCheckOutFeeMode: z.enum(['FIXED', 'PERCENT_OF_NIGHT', 'HOURLY']).optional(),
   lateCheckOutFeeAmount: z.number().optional(),
+  cityLedgerMissingCounterparty: z
+    .enum(['BLOCK_CHECKOUT', 'DEFER_HANDOFF', 'AUTO_CREATE'])
+    .optional(),
+  yearEndBlockIfOpenCityLedger: z.boolean().optional(),
+  agencyPortalAutoConfirm: z.boolean().optional(),
+  agencyPortalOptionHoldHours: z.number().int().min(1).max(720).optional(),
 });
 
 export async function GET() {

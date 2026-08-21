@@ -11,6 +11,7 @@ export const INDUSTRY_SATELLITE_KEYS = [
   "industry_auto_service",
   "industry_clinic",
   "industry_wholesale",
+  "industry_banking",
 ] as const;
 
 export type IndustrySatelliteKey = (typeof INDUSTRY_SATELLITE_KEYS)[number];
@@ -26,6 +27,7 @@ export const WORKSPACE_SATELLITE_KEYS: Record<string, string> = {
   AUTO_SERVICE: "industry_auto_service",
   CLINIC: "industry_clinic",
   WHOLESALE: "industry_wholesale",
+  BANKING: "industry_banking",
 };
 
 export function resolveSatelliteGateSlug(satelliteKey: string): string | null {

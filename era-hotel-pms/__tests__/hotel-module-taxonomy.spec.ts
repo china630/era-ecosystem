@@ -30,6 +30,17 @@ describe('hotel module taxonomy (hotel-pms)', () => {
     );
   });
 
+  it('maps agency portal routes to hotel_agency_portal', () => {
+    expect(resolveHotelModuleForPathname('/agency')).toBe('hotel_agency_portal');
+    expect(resolveHotelModuleForPathname('/api/agency/reservations')).toBe(
+      'hotel_agency_portal',
+    );
+  });
+
+  it('maps FO agency inbox to hotel_core', () => {
+    expect(resolveHotelModuleForPathname('/fo/agency-inbox')).toBe('hotel_core');
+  });
+
   it('maps settings to hotel_setup_advanced', () => {
     expect(resolveHotelModuleForPathname('/settings/master-data')).toBe('hotel_setup_advanced');
   });

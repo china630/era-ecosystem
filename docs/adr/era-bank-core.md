@@ -99,7 +99,8 @@ The BullMQ event bus remains, but only for **notifications, statements, analytic
 
 ### D8 — Deployment and licensing for selling to banks
 
-- **One deployment = one bank** (`ERA_BANK_ORGANIZATION_ID`), consistent with the satellite "one deployment = one org" law.
+- **Current implementation:** one deployment = one bank (`ERA_BANK_ORGANIZATION_ID`) is the usual appliance, not a schema law.
+- **Product intent:** Bank uses the **same** topology ladder as other satellites (`SHARED` / `DEDICATED` / `ONPREM`) until the owner writes an exception. Live SHARED pool is not built yet (same as hotel/clinic TENANT 🟡) — do **not** narrate a bank-only ban. Canon: [deployment-topology.md](./deployment-topology.md).
 - **On-prem / private-cloud capable**: AZ banks frequently require data inside their perimeter. The regulated engine (`era-bank-core`) must run isolated, including an **on-prem reference data mode** (no dependency on the public `data-hub`).
 - Crypto keys (`PII_ENCRYPTION_KEY`, `PII_BLIND_INDEX_KEY`) held by the bank; identical across MDM resolve paths where cross-system resolution is used.
 - Licensing/activation through orchestrator (`industry_banking` gate + module set), but a bank license is a contract + activation key rather than SMB post-paid metering.

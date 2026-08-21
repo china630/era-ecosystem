@@ -5,6 +5,7 @@ import { HrModule } from "../hr/hr.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { CounterpartiesModule } from "../counterparties/counterparties.module";
+import { InventoryModule } from "../inventory/inventory.module";
 import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
 import { SatelliteEventIdempotencyService } from "./satellite-event-idempotency.service";
 import { SatelliteEventWorker } from "./satellite-event.worker";
@@ -15,7 +16,15 @@ import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.servic
 import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
 
 @Module({
-  imports: [PrismaModule, AccountingModule, InvoicesModule, HrModule, SubscriptionModule, CounterpartiesModule],
+  imports: [
+    PrismaModule,
+    AccountingModule,
+    InvoicesModule,
+    HrModule,
+    SubscriptionModule,
+    CounterpartiesModule,
+    InventoryModule,
+  ],
   providers: [
     SatelliteEventIdempotencyService,
     SatelliteEventDispatchService,

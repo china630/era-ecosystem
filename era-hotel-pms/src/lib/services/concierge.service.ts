@@ -61,7 +61,7 @@ export async function completeConciergeOrder(orderId: string) {
     });
   }
 
-  const foodCode = await prisma.revenueCode.findFirst({ where: { code: 'FOOD' } });
+  const foodCode = await prisma.revenueCode.findFirst({ where: { code: 'FOOD' } as never });
   if (foodCode) {
     await postCharge({
       reservationId: order.reservationId,

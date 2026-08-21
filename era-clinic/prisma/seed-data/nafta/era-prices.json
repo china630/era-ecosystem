@@ -221,13 +221,23 @@
   },
   {
     "code": "SVC-ULTRAFONOFOREZ",
-    "descriptionAz": "Ultrafonoforez",
-    "descriptionRu": "Ультрафонофорез",
-    "description": "Ультрафонофорез",
+    "descriptionAz": "Ultrafonoforez (Naftalan yağıyla)",
+    "descriptionRu": "Ультрафонофорез (масло)",
+    "description": "Ультрафонофорез (масло)",
     "amount": 12,
     "packageIncluded": false,
     "department": "Физиотерапия",
-    "descriptionEn": "Ultraphonophoresis"
+    "descriptionEn": "Ultraphonophoresis (naftalan oil)"
+  },
+  {
+    "code": "SVC-ULTRAFONOFOREZ-GEL",
+    "descriptionAz": "Ultrafonoforez (Gellə)",
+    "descriptionRu": "Ультрафонофорез (гель)",
+    "description": "Ультрафонофорез (гель)",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия",
+    "descriptionEn": "Ultraphonophoresis (gel)"
   },
   {
     "code": "SVC-DARSONVAL",

@@ -44,5 +44,8 @@ alwaysApply: false
 
 | Events | `events/dispatch` | orchestrator |
 
+| Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
+
 | Admin import UI | `app/admin/import/` | SatAdmin upload (v3.0) |
 
+**Tenancy (CP-TENANT-01):** `organizationId` on tenant/ops models + kit Prisma extension + `requireSatelliteModule("industry_crm")` (AC-CRM-TENANT 🟡 — not live SHARED pool).

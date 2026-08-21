@@ -4,9 +4,12 @@
  *
  * Usage: npm run db:seed:reference
  */
-import { HotelLookupKind, PrismaClient } from '@prisma/client';
+import { HotelLookupKind, Prisma, PrismaClient } from '@prisma/client';
+import { createSatelliteTenantExtension } from '@era/satellite-kit/tenancy';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as PrismaClient;
 
 const REVENUE_CODES = [
   { code: 'ROOM', name: 'Room', taxTag: '18%' },

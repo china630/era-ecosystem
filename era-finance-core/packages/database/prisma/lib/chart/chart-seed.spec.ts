@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { OrganizationKind } from "@prisma/client";
 import {
   cashProfileForNasCode,
+  isNasBankLedgerCode,
+  isNasCashDeskCode,
   normalizeChartAccountSeedRow,
   organizationKindToPayrollSettingsTemplateGroup,
   type ChartOfAccountsFile,
@@ -53,10 +55,41 @@ describe("chart-seed NAS JSON catalogs", () => {
     );
   });
 
-  it("assigns cash profiles by kind (101 kassa for commercial/budget; 221 for NGO)", () => {
+  it("assigns cash profiles by official chart (Q-01 221 commercial, NAS-GOV 101 budget, İ-05 221 NGO)", () => {
     expect(cashProfileForNasCode(OrganizationKind.BUDGET, "101")).toBe("AZN");
-    expect(cashProfileForNasCode(OrganizationKind.COMMERCIAL, "101")).toBe("AZN");
+    expect(cashProfileForNasCode(OrganizationKind.BUDGET, "221")).toBeNull();
+    expect(cashProfileForNasCode(OrganizationKind.COMMERCIAL, "101")).toBeNull();
+    expect(cashProfileForNasCode(OrganizationKind.COMMERCIAL, "221")).toBe("AZN");
+    expect(cashProfileForNasCode(OrganizationKind.COMMERCIAL, "221.01")).toBe("AZN");
+    expect(cashProfileForNasCode(OrganizationKind.COMMERCIAL, "221.11")).toBe("FX");
+    expect(cashProfileForNasCode(OrganizationKind.COMMERCIAL, "223")).toBeNull();
     expect(cashProfileForNasCode(OrganizationKind.NGO, "221")).toBe("AZN");
+    expect(cashProfileForNasCode(OrganizationKind.NGO, "222")).toBeNull();
+  });
+
+  it("maps official kassa vs bank codes per kind", () => {
+    expect(isNasCashDeskCode(OrganizationKind.COMMERCIAL, "221")).toBe(true);
+    expect(isNasCashDeskCode(OrganizationKind.COMMERCIAL, "223")).toBe(false);
+    expect(isNasBankLedgerCode(OrganizationKind.COMMERCIAL, "223")).toBe(true);
+    expect(isNasBankLedgerCode(OrganizationKind.COMMERCIAL, "221")).toBe(false);
+    expect(isNasCashDeskCode(OrganizationKind.BUDGET, "101")).toBe(true);
+    expect(isNasBankLedgerCode(OrganizationKind.BUDGET, "103")).toBe(true);
+    expect(isNasCashDeskCode(OrganizationKind.BUDGET, "221")).toBe(false);
+    expect(isNasCashDeskCode(OrganizationKind.NGO, "221")).toBe(true);
+    expect(isNasBankLedgerCode(OrganizationKind.NGO, "223")).toBe(true);
+  });
+
+  it("COMMERCIAL chart uses Q-01 221 kassa / 223 bank, not NAS-GOV 101", () => {
+    const parsed = loadJsonFile("../../catalog/national/chart-of-accounts-commercial.json");
+    const byCode = new Map(
+      (parsed.accounts as Record<string, unknown>[]).map((r) => [
+        String(r.code ?? "").trim(),
+        r,
+      ]),
+    );
+    expect(byCode.has("101")).toBe(false);
+    expect(String(byCode.get("221")?.nameAz ?? "")).toMatch(/Kassa/i);
+    expect(String(byCode.get("223")?.nameAz ?? "")).toMatch(/Bank/i);
   });
 
   it("BUDGET chart includes account 101 (government cash)", () => {

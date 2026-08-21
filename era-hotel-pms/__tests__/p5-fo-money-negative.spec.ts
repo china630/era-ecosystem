@@ -50,9 +50,21 @@ jest.mock('@/lib/services/card-auth.service', () => ({
   captureAuthorization: jest.fn(),
 }));
 
+jest.mock('@/lib/services/hotel-policy.service', () => ({
+  getHotelPolicy: jest.fn(async () => ({
+    cityLedgerMissingCounterparty: 'DEFER_HANDOFF',
+  })),
+}));
+
 describe('P5 FO money negative paths (AC-HOT-CASH)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+      text: async () => '',
+    }) as unknown as typeof fetch;
   });
 
   it('rejects City Ledger transfer without ACTIVE sales contract', async () => {
@@ -92,7 +104,7 @@ describe('P5 FO money negative paths (AC-HOT-CASH)', () => {
       agencyId: 'a1',
       salesContractId: 'c1',
       checkInDate: new Date('2026-08-01'),
-      agency: { creditLimitAzn: null },
+      agency: { creditLimitAzn: null, voen: '1234567890', financeCounterpartyId: 'cp-1' },
       salesContract: { id: 'c1' },
     });
     prisma.folio.findUnique.mockResolvedValue({

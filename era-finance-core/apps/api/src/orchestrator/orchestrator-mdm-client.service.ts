@@ -1,6 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { normalizeFin } from "../security/pii-crypto.util";
+import {
+  resolveControlPlaneServiceToken,
+  resolveOrchestratorInternalUrl,
+} from "../control-plane/control-plane-credentials";
 
 export type OrchestratorFinLookupResult = {
   found: boolean;
@@ -27,17 +31,16 @@ export class OrchestratorMdmClientService {
   constructor(private readonly config: ConfigService) {}
 
   private baseUrl(): string {
+    // Runtime-config memory first (kit); CONTROL_PLANE_URL env = bootstrap only.
     return (
-      this.config.get<string>("ORCHESTRATOR_INTERNAL_URL") ??
-      process.env.CONTROL_PLANE_URL ??
-      "http://127.0.0.1:4000"
+      resolveOrchestratorInternalUrl(this.config) || "http://127.0.0.1:4000"
     ).replace(/\/$/, "");
   }
 
   private token(): string {
     return (
-      this.config.get<string>("ORCHESTRATOR_SERVICE_TOKEN")?.trim() ??
-      this.config.get<string>("CONTROL_PLANE_SERVICE_TOKEN")?.trim() ??
+      resolveControlPlaneServiceToken(this.config) ||
+      this.config.get<string>("ORCHESTRATOR_SERVICE_TOKEN")?.trim() ||
       ""
     );
   }

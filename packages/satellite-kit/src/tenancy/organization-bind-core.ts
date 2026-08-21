@@ -1,5 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
+import { onSatelliteRuntimeBoot } from "./runtime-config-core";
+import {
+  getRuntimeOrganizationId,
+  resetOrganizationBindRuntimeForTests,
+  resolveSatelliteOrganizationId as resolveFromRuntime,
+  setRuntimeOrganizationId,
+  type OrganizationBindSource,
+} from "./organization-bind-runtime";
+
+export {
+  getRuntimeOrganizationId,
+  setRuntimeOrganizationId,
+  SatelliteOrganizationUnboundError,
+  type OrganizationBindSource,
+} from "./organization-bind-runtime";
 
 const BIND_TABLE = "_era_organization_bind";
 
@@ -8,14 +23,6 @@ export type OrgBindPrisma = {
   $queryRawUnsafe: <T = unknown>(sql: string, ...values: unknown[]) => Promise<T>;
 };
 
-export type OrganizationBindSource =
-  | "runtime"
-  | "file"
-  | "db"
-  | "env"
-  | "fallback";
-
-let runtimeOrganizationId: string | null = null;
 let fileHydrated = false;
 
 export function organizationBindFilePath(): string {
@@ -56,22 +63,10 @@ export function writeOrganizationBindFile(
   );
 }
 
-export function setRuntimeOrganizationId(organizationId: string | null): void {
-  const id = organizationId?.trim() || null;
-  runtimeOrganizationId = id;
-  if (id) {
-    process.env.ERA_SATELLITE_ORGANIZATION_ID = id;
-  }
-}
-
-export function getRuntimeOrganizationId(): string | null {
-  return runtimeOrganizationId;
-}
-
 function hydrateFromFileOnce(): void {
   if (fileHydrated) return;
   fileHydrated = true;
-  if (runtimeOrganizationId) return;
+  if (getRuntimeOrganizationId()) return;
   const fromFile = readBindFile();
   if (fromFile) {
     setRuntimeOrganizationId(fromFile);
@@ -81,23 +76,55 @@ function hydrateFromFileOnce(): void {
 /**
  * Resolve deployment org id. Prefer runtime bind / file over env so Sync
  * survives without editing compose `.env`.
+ *
+ * Order: runtime → file → env → fallback `demo-org` (non-production only).
  */
-export function resolveSatelliteOrganizationId(): {
+export function resolveSatelliteOrganizationId(opts?: {
+  allowFallback?: boolean;
+}): {
   organizationId: string;
   source: OrganizationBindSource;
 } {
   hydrateFromFileOnce();
-  if (runtimeOrganizationId) {
-    return { organizationId: runtimeOrganizationId, source: "runtime" };
+  return resolveFromRuntime(opts);
+}
+
+/**
+ * Hydrate org bind from Postgres into runtime (+ process.env) at process start.
+ * Call from satellite `instrumentation.ts` / Nest bootstrap so recreate without
+ * `.data/` volume still recovers the last Sync bind.
+ * Also hydrates desired-state runtime config when present.
+ */
+export async function onSatelliteBoot(opts: {
+  prisma?: OrgBindPrisma | null;
+}): Promise<{ organizationId: string | null; source: OrganizationBindSource | "none" }> {
+  await onSatelliteRuntimeBoot({ prisma: opts.prisma ?? null });
+
+  if (opts.prisma) {
+    const id = await hydrateOrganizationBindFromDb(opts.prisma);
+    if (id) {
+      return { organizationId: id, source: "db" };
+    }
+  }
+  hydrateFromFileOnce();
+  if (getRuntimeOrganizationId()) {
+    return { organizationId: getRuntimeOrganizationId(), source: "runtime" };
   }
   const fromEnv =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
     "";
   if (fromEnv) {
     return { organizationId: fromEnv, source: "env" };
   }
-  return { organizationId: "demo-org", source: "fallback" };
+  return { organizationId: null, source: "none" };
+}
+
+/** Test-only: clear in-memory bind and file-hydrate latch. */
+export function resetOrganizationBindForTests(): void {
+  resetOrganizationBindRuntimeForTests();
+  fileHydrated = false;
 }
 
 export async function ensureOrganizationBindTable(

@@ -1,10 +1,12 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { SATELLITE_ROLE } from "@era/satellite-kit";
+import { resolveSatelliteOrganizationId, SATELLITE_ROLE } from "@era/satellite-kit";
 import { getSubscriptionMe } from "@/integration/control-plane-platform.client";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET(request: Request) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [
     FB_ROLES.MANAGER,
@@ -22,9 +24,9 @@ export async function GET(request: Request) {
     );
   }
 
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+  const { organizationId, source } = resolveSatelliteOrganizationId({ allowFallback: true });
   let platformSubscription: unknown = null;
-  if (organizationId) {
+  if (source !== "fallback") {
     try {
       platformSubscription = await getSubscriptionMe({ organizationId });
     } catch {
@@ -43,6 +45,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
   if (denied) return denied;

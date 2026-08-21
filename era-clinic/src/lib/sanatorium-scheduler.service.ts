@@ -7,7 +7,7 @@ export async function instantiateProgramFromTemplate(input: {
   reservationId?: string;
   startsOn: Date;
 }) {
-  const template = await prisma.programTemplate.findUnique({
+  const template = await prisma.programTemplate.findFirst({
     where: { code: input.programCode },
     include: { procedures: true },
   });

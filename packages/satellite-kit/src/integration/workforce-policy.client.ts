@@ -1,8 +1,12 @@
 /**
-
  * Orchestrator workforce policy — hire mode for industry satellites (v3 Plan C).
-
  */
+
+import { resolveSatelliteOrganizationId } from "../tenancy/organization-bind-core";
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "../tenancy/resolve-orchestrator-url";
 
 export type WorkforceHireMode = "cp_workforce" | "disabled";
 
@@ -33,29 +37,28 @@ function policyEnabled(opts?: WorkforcePolicyClientOptions): boolean {
 }
 
 function baseUrl(opts?: WorkforcePolicyClientOptions): string {
-  return (
-    opts?.orchestratorUrl ??
-    process.env.ORCHESTRATOR_URL ??
-    process.env.CONTROL_PLANE_URL ??
-    "http://127.0.0.1:4000"
-  ).replace(/\/$/, "");
+  if (opts?.orchestratorUrl?.trim()) {
+    return opts.orchestratorUrl.trim().replace(/\/$/, "");
+  }
+  return resolveOrchestratorBaseUrl({ fallback: "http://127.0.0.1:4000" });
 }
 
 function serviceToken(opts?: WorkforcePolicyClientOptions): string | undefined {
   return (
-    opts?.serviceToken ??
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN ??
-    process.env.MDM_INTERNAL_SERVICE_TOKEN
-  )?.trim();
+    opts?.serviceToken?.trim() ||
+    resolveSatelliteEventServiceToken() ||
+    process.env.MDM_INTERNAL_SERVICE_TOKEN?.trim() ||
+    undefined
+  );
 }
 
 function organizationId(opts?: WorkforcePolicyClientOptions): string | undefined {
-  return (
-    opts?.organizationId ??
-    process.env.ERA_SATELLITE_ORGANIZATION_ID ??
-    process.env.ERA_CLINIC_ORGANIZATION_ID ??
-    process.env.ERA_HOTEL_ORGANIZATION_ID
-  )?.trim();
+  const explicit = opts?.organizationId?.trim();
+  if (explicit) return explicit;
+  const { organizationId: id, source } = resolveSatelliteOrganizationId({
+    allowFallback: true,
+  });
+  return source === "fallback" ? undefined : id;
 }
 
 function defaultDisabled(): WorkforcePolicyResult {

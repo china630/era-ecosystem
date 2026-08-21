@@ -1,9 +1,17 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { SATELLITE_RETAIL_SHIFT_CLOSED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { resolveOutletPreset } from "@/lib/retail-preset";
 import { prisma } from "@/lib/prisma";
+
+type ShiftForClose = Prisma.ShiftGetPayload<{
+  include: {
+    register: { include: { outlet: true } };
+    receipts: true;
+  };
+}>;
 
 const bodySchema = z.object({
   shiftId: z.string(),
@@ -11,14 +19,15 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    await assertRetailEntitled();
     const body = bodySchema.parse(await req.json());
-    const shift = await prisma.shift.findUnique({
+    const shift = (await prisma.shift.findUnique({
       where: { id: body.shiftId },
       include: {
         register: { include: { outlet: true } },
         receipts: { where: { status: "PAID" } },
       },
-    });
+    })) as ShiftForClose | null;
     if (!shift) return jsonError("Shift not found", 404);
     if (shift.status === "CLOSED") return jsonOk(shift);
 

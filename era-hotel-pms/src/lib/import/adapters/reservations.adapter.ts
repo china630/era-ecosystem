@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   cellNumber,
@@ -8,11 +9,18 @@ import {
 } from '@/lib/import/helpers';
 import { toDecimal } from '@/lib/decimal';
 import type { ImportAdapter } from '@/lib/import/types';
+import {
+  applyElektrawebSharePair,
+  isElektrawebShareSecond,
+  parseElektrawebRoomCount,
+  physicalRoomNumber,
+} from '@/lib/integration/elektraweb-share-map';
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
   guestName: z.string().optional().nullable(),
   roomTypeCode: z.string().min(1),
+  /** Raw EW Room No (may be 707S). */
   roomNumber: z.string().optional().nullable(),
   agencyName: z.string().optional().nullable(),
   checkInDate: z.date(),
@@ -21,6 +29,9 @@ const rowSchema = z.object({
   children: z.number().int().optional(),
   status: z.string().optional().nullable(),
   voucherNo: z.string().optional().nullable(),
+  recordType: z.string().optional().nullable(),
+  roomCount: z.number().int().optional().nullable(),
+  shareNo: z.string().optional().nullable(),
 });
 
 async function resolveGuestId(
@@ -43,6 +54,7 @@ async function resolveGuestId(
   if (byName) return byName.id;
   const created = await tx.guest.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       fullName: guestName,
       firstName: guestName.split(' ')[0],
       lastName: guestName.split(' ').slice(1).join(' ') || undefined,
@@ -70,6 +82,15 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     TChd: 'children',
     State: 'status',
     Voucher: 'voucherNo',
+    'Record Type': 'recordType',
+    RECORDTYPE: 'recordType',
+    RESTYPE: 'recordType',
+    'Room Count': 'roomCount',
+    ROOMCOUNT: 'roomCount',
+    ROOMCNT: 'roomCount',
+    ShareNo: 'shareNo',
+    'Share No': 'shareNo',
+    SHARENO: 'shareNo',
   },
   rowSchema,
   mapRow: (raw) => {
@@ -88,6 +109,9 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       children: cellNumber(raw.children) ?? 0,
       status: cellString(raw.status),
       voucherNo: cellString(raw.voucherNo),
+      recordType: cellString(raw.recordType),
+      roomCount: parseElektrawebRoomCount(raw.roomCount),
+      shareNo: cellString(raw.shareNo),
     };
   },
   upsert: async (tx, row, dryRun) => {
@@ -112,18 +136,26 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       agencyId = agency?.id;
     }
 
+    const doorNumber = physicalRoomNumber(row.roomNumber);
     let roomId: string | undefined;
-    if (row.roomNumber) {
-      const room = await tx.room.findUnique({ where: { roomNumber: row.roomNumber } });
+    if (doorNumber) {
+      const room = await tx.room.findFirst({ where: { roomNumber: doorNumber } });
       roomId = room?.id;
+      if (!room && row.roomNumber) {
+        // 707S with no master 707 — leave unassigned; share pair skipped later.
+        console.warn(
+          `[import:reservations] Room ${doorNumber} not found for Res ${row.externalRef} (raw ${row.roomNumber})`,
+        );
+      }
     }
 
     const guestId = dryRun
       ? (await tx.guest.findFirst())?.id ?? 'dry-run-guest'
       : await resolveGuestId(tx, row.guestName);
 
-    const existing = await tx.reservation.findUnique({ where: { externalRef: row.externalRef } });
+    const existing = await tx.reservation.findFirst({ where: { externalRef: row.externalRef } });
     const data = {
+      organizationId: satelliteOrganizationId(),
       externalRef: row.externalRef,
       roomTypeId: roomType.id,
       roomId,
@@ -138,12 +170,13 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       adults: row.adults ?? 1,
       children11_6: row.children ?? 0,
       voucherNo: row.voucherNo ?? undefined,
+      shareNo: row.shareNo ?? undefined,
     };
 
     if (dryRun) return existing ? 'updated' : 'created';
 
     const reservation = await tx.reservation.upsert({
-      where: { externalRef: row.externalRef },
+      where: { externalRef: row.externalRef } as never,
       create: data,
       update: {
         roomTypeId: data.roomTypeId,
@@ -157,14 +190,37 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         adults: data.adults,
         children11_6: data.children11_6,
         voucherNo: data.voucherNo,
+        shareNo: data.shareNo,
+        // Do NOT clear shareEligible / shareGender / shareBedIndex on NORMAL re-import.
       },
     });
 
     const folios = await tx.folio.findMany({ where: { reservationId: reservation.id } });
     if (folios.length === 0) {
       await tx.folio.create({
-        data: { reservationId: reservation.id, type: 'GUEST', status: 'OPEN' },
+        data: {
+          organizationId: satelliteOrganizationId(),
+          reservationId: reservation.id,
+          type: 'GUEST',
+          status: 'OPEN',
+        },
       });
+    }
+
+    const isSecond = isElektrawebShareSecond({
+      rawRoomNumber: row.roomNumber,
+      recordType: row.recordType,
+      roomCount: row.roomCount,
+    });
+    const pair = await applyElektrawebSharePair(tx, {
+      reservationId: reservation.id,
+      isSecond,
+      shareNo: row.shareNo,
+    });
+    if (isSecond && !pair.applied && pair.skippedReason) {
+      console.warn(
+        `[import:reservations] share pair skipped for ${row.externalRef}: ${pair.skippedReason}`,
+      );
     }
 
     return existing ? 'updated' : 'created';

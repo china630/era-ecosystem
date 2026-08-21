@@ -13,6 +13,7 @@
   "dependencies": {
     "@era/bank-core-database": "*",
     "@era/contracts": "file:../../../packages/era-contracts",
+    "@era/satellite-kit": "file:../../../packages/satellite-kit",
     "@nestjs/common": "^11.0.8",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.8",

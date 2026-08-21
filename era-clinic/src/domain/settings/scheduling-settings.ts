@@ -7,6 +7,8 @@ import { getDefaultTenant } from "@/domain/settings/settings.service";
 export type SchedulingSettings = {
   programSchedulingMode: ProgramSchedulingMode;
   schedulingSlotMinutes: number;
+  /// Default appointment slot length for new practitioners (outpatient doctor matrix).
+  defaultAppointmentSlotMinutes: number;
   procedureOverQuotaPolicy: ProcedureOverQuotaPolicy;
   dayStartHour: number;
   dayEndHour: number;
@@ -32,6 +34,7 @@ export type TenantWorkHours = Pick<
 export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   programSchedulingMode: "AFTER_CHECKUP",
   schedulingSlotMinutes: 5,
+  defaultAppointmentSlotMinutes: 30,
   procedureOverQuotaPolicy: "CHARGE_FOLIO",
   dayStartHour: 9,
   dayEndHour: 18,
@@ -70,6 +73,7 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
   return {
     programSchedulingMode: tenant.programSchedulingMode,
     schedulingSlotMinutes: tenant.schedulingSlotMinutes,
+    defaultAppointmentSlotMinutes: tenant.defaultAppointmentSlotMinutes ?? 30,
     procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     ...workHoursFromTenant(tenant),

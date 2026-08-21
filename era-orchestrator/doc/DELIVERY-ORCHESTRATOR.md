@@ -79,6 +79,7 @@ Industry satellites read calendar, FX convert, VÖEN directory via orchestrator 
 - [x] `GET /platform/v1/catalog/calendar/*` — proxy to data-hub
 - [x] `GET /platform/v1/catalog/fx/convert`
 - [x] `GET /platform/v1/catalog/companies/:voen`
+- [x] `GET /platform/v1/catalog/icd10` — in-process WHO ICD-10 generator (not data-hub)
 - [x] Auth: `SATELLITE_EVENT_SERVICE_TOKEN` + `X-Organization-Id`; entitlement `platform_reference_data`
 - [x] `@era/satellite-kit` `platform-catalog.client.ts` + calendar/finance handoff delegates
 

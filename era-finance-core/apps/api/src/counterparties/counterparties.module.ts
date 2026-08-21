@@ -5,11 +5,12 @@ import { OrchestratorModule } from "../orchestrator/orchestrator.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { TaxModule } from "../tax/tax.module";
 import { CounterpartiesController } from "./counterparties.controller";
+import { InternalCounterpartiesController } from "./internal-counterparties.controller";
 import { CounterpartiesService } from "./counterparties.service";
 
 @Module({
   imports: [PrismaModule, GlobalCompanyDirectoryModule, TaxModule, OrchestratorModule, DataHubModule],
-  controllers: [CounterpartiesController],
+  controllers: [CounterpartiesController, InternalCounterpartiesController],
   providers: [CounterpartiesService],
   exports: [CounterpartiesService],
 })

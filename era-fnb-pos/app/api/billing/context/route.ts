@@ -1,3 +1,4 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import {
   resolveSettlementPolicy,
@@ -6,6 +7,7 @@ import {
 } from "@era/satellite-kit";
 
 export async function GET() {
+  await assertFnbEntitled();
   const orgId = satelliteOrganizationId();
   if (!orgId) {
     return NextResponse.json({ deferWalkInToHub: false });

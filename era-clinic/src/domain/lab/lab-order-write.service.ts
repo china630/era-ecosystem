@@ -1,4 +1,5 @@
 import type { Prisma, LabResultSource } from "@prisma/client";
+import { satelliteOrganizationId, type SatelliteTransactionClient } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import {
   enrichResultLines,
@@ -8,7 +9,7 @@ import {
 
 export type { ResultLineInput };
 
-type Tx = Prisma.TransactionClient;
+type Tx = SatelliteTransactionClient;
 
 type RawResultLine = {
   code?: string;
@@ -200,6 +201,7 @@ export async function createLabOrderWithItems(
   const orderId = await prisma.$transaction(async (tx) => {
     const created = await tx.labOrder.create({
       data: {
+        organizationId: satelliteOrganizationId(),
         patientRefId: params.patientRefId,
         visitId: params.visitId,
         clinicalEpisodeId: params.clinicalEpisodeId,
@@ -260,7 +262,7 @@ export async function writeLabResultsForOrder(
   const enrichedLines = enrichResultLines(rawLines);
 
   await prisma.$transaction(async (tx) => {
-    let items: ResultTargetItem[] = order.items.map((it) => ({
+    let items: ResultTargetItem[] = order.items.map((it: { id: string; diagnosticService: { analytes: { code: string }[] } | null }) => ({
       id: it.id,
       diagnosticService: it.diagnosticService
         ? { analytes: it.diagnosticService.analytes }
@@ -320,6 +322,7 @@ export async function createImportedLabOrder(params: {
   const orderId = await prisma.$transaction(async (tx) => {
     const created = await tx.labOrder.create({
       data: {
+        organizationId: satelliteOrganizationId(),
         patientRefId: params.patientRefId,
         visitId: params.visitId,
         testCode: params.code,

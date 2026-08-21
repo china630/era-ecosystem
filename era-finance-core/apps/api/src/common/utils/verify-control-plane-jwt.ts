@@ -2,6 +2,7 @@ import { createPublicKey } from "crypto";
 import { verify } from "jsonwebtoken";
 import type { ConfigService } from "@nestjs/config";
 import type { ControlPlaneJwtPayload } from "../types/control-plane-jwt-payload";
+import { resolveOrchestratorInternalUrl } from "../../control-plane/control-plane-credentials";
 
 type JwksCache = { keys: Record<string, unknown>[]; fetchedAt: number };
 
@@ -9,14 +10,33 @@ let jwksCache: JwksCache | null = null;
 
 const DEFAULT_JWKS_URL = "http://127.0.0.1:4000/.well-known/jwks.json";
 
+function isLoopbackUrl(url: string): boolean {
+  return /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(url);
+}
+
+/**
+ * JWKS endpoint: explicit non-loopback ERA_JWT_JWKS_URL, else orchestrator base
+ * (runtime-config → CONTROL_PLANE_URL bootstrap), never a leftover host loopback in Docker.
+ */
+export function resolveControlPlaneJwksUrl(config: ConfigService): string {
+  const explicit = config.get<string>("ERA_JWT_JWKS_URL")?.trim() ?? "";
+  const cp = resolveOrchestratorInternalUrl(config);
+  if (explicit && !isLoopbackUrl(explicit)) {
+    return explicit.replace(/\/$/, "");
+  }
+  if (cp && !isLoopbackUrl(cp)) {
+    return `${cp}/.well-known/jwks.json`;
+  }
+  if (explicit) return explicit.replace(/\/$/, "");
+  return DEFAULT_JWKS_URL;
+}
+
 export function resetControlPlaneJwksCache(): void {
   jwksCache = null;
 }
 
 async function loadJwks(config: ConfigService): Promise<Record<string, unknown>[]> {
-  const uri = (
-    config.get<string>("ERA_JWT_JWKS_URL")?.trim() || DEFAULT_JWKS_URL
-  ).replace(/\/$/, "");
+  const uri = resolveControlPlaneJwksUrl(config);
   const ttlMs = 300_000;
   if (jwksCache && Date.now() - jwksCache.fetchedAt < ttlMs) {
     return jwksCache.keys;

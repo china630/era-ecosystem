@@ -78,6 +78,8 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 3. Walk-in: optional label → **Open walk-in ticket** → `serviceChannel: WALK_IN`
 4. `/orders` — ticket list shows WALK_IN / BEO labels
 5. Nav: **Daily menu** → `/admin/daily-menu`
+6. Daily menu board: pick `Date`, bulk-select menu items (checkboxes), then `Save board` (PUT)
+7. Optional: `Copy from yesterday` (POST) and re-open `/admin/daily-menu` to verify selection persists
 
 ## Quartet (Track C)
 
@@ -96,4 +98,10 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 ## v1.1 — M14 (DONE)
 
 - [x] `POST /api/labor/clock` PIN clock-in/out
+
+## Deny (Scaffold BE negative paths)
+
+1. **Module off → 403:** With `industry_fnb_pos` inactive (or unbound org / source=fallback), operational routes that call `assertFnbEntitled` return **403** (`Industry module not active: industry_fnb_pos`). Proof: `__tests__/fnb-pos-negative.spec.ts` (+ inv/labor suites).
+2. **Foreign / empty org:** Unbound satellite (no CP bind, no env org) fails closed — same 403 path; list/mutation does not silently serve another tenant’s data.
+3. **Domain denies:** CLOSED ticket refuses line/fire mutations; hotel-folio settlement blocks cash pay; VOID lines excluded from stock consumption; wrong PIN → 401 on `/api/labor/clock`.
 

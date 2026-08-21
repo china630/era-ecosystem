@@ -24,9 +24,10 @@ Operators confused Room plan empty cells (free doors) with sellable inventory. E
 |------|---------|
 | Booking | ReservationGroup envelope |
 | RoomStay | Prisma Reservation (one sold room intent, roomCount=1) |
-| Assignment | roomId (+ Stay at check-in) |
-| Sellable (Avl) | quota minus overlapping OPTION/CONFIRMED/IN_HOUSE (unassigned count) |
-| Free door | Physical room without overlapping assigned stay |
+| Assignment | roomId (+ share pool + shareBedIndex 1..maxBed at assign; Stay at check-in) |
+| Sellable (Avl) | quota minus **door** consumption (exclusive = 1 door; share packs beds by gender) — [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
+| Free door | Physical room without overlapping assigned stay (share pool may be n/maxBed occupied) |
+| Share door | Up to maxBed independent RoomStays on one door, same gender (M or F only); checkbox on card, not guest count |
 
 ## Header entry points (FO ops shell)
 

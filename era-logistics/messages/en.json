@@ -93,6 +93,13 @@
   "trips": {
     "title": "ERA Logistics",
     "subtitle": "Trips — open details for POD, fuel, and workflow",
+    "addTrip": "Add trip",
+    "createTrip": "Create trip",
+    "vehiclePlate": "Vehicle plate",
+    "vehicleModel": "Vehicle model",
+    "routeCode": "Route code",
+    "freightAmount": "Freight amount (AZN)",
+    "created": "Trip created for {plate}",
     "fuelReport": "Fuel report",
     "empty": "No trips yet."
   },

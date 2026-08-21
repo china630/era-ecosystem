@@ -30,3 +30,17 @@
 - [x] `POST /api/work-orders/:id/complete` recalculates totals before event dispatch
 
 See [SMOKE_ALL_SERVICES.md](../../docs/SMOKE_ALL_SERVICES.md) § Module maturity — Auto.
+
+## Deny (Scaffold BE negative paths)
+
+1. **Module off → 403:** With `industry_auto_service` inactive (or unbound org / source=fallback), `assertAutoEntitled` / `requireAutoSatellite` fail closed → **403**. Proof: `__tests__/auto-wo-negative.spec.ts` (+ appt/plat suites).
+2. **Foreign / empty org:** Unbound satellite does not leak cross-org work orders/appointments; gate returns inactive before domain work.
+3. **Domain denies:** COMPLETED work order refuses new labor/parts lines; appointment without `vehiclePlate` refused; cron with `PLATFORM_CRON_SECRET` and missing/wrong `Authorization` → **401**.
+
+## Admin UI (modal CRUD)
+
+1. Login as manager at `/login`.
+2. Open `/admin/settings` → `Edit` workshop name in `ModalShell` → `Save`.
+3. Open `/appointments` → `Book` modal → create appointment with `vehiclePlate` + datetime.
+4. Open `/work-orders` → `Create work order` modal → save a new order.
+5. On `/work-orders`, select the created order → add labor line, add part line, then `Complete work order`.

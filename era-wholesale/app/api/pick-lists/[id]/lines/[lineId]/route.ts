@@ -1,6 +1,9 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+
+type PickListWithLines = Prisma.PickListGetPayload<{ include: { order: true; lines: true } }>;
 
 const patchSchema = z.object({
   qtyPicked: z.number().int().nonnegative(),
@@ -28,10 +31,10 @@ export async function PATCH(
       data: { qtyPicked: body.qtyPicked },
     });
 
-    const pickList = await prisma.pickList.findUnique({
+    const pickList = (await prisma.pickList.findUnique({
       where: { id },
       include: { order: true, lines: true },
-    });
+    })) as PickListWithLines | null;
 
     const allPicked =
       pickList?.lines.every((l) => l.qtyPicked >= l.qtyOrdered) ?? false;

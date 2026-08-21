@@ -1,14 +1,16 @@
-import { headers } from 'next/headers';
-import type { SessionPayload } from './jwt';
-import { prisma } from '@/lib/prisma';
+import { headers } from "next/headers";
+import type { SessionPayload } from "./jwt";
+import { prisma } from "@/lib/prisma";
+import { assertHotelApiEntitled } from "@/lib/hotel-module-gate";
 
 export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
+  await assertHotelApiEntitled();
   const h = await headers();
-  const userId = h.get('x-user-id');
-  const role = h.get('x-user-role');
-  const login = h.get('x-user-login');
-  const fullName = h.get('x-user-fullname');
-  let email = h.get('x-user-email')?.trim() || undefined;
+  const userId = h.get("x-user-id");
+  const role = h.get("x-user-role");
+  const login = h.get("x-user-login");
+  const fullName = h.get("x-user-fullname");
+  let email = h.get("x-user-email")?.trim() || undefined;
   if (!userId || !role) return null;
 
   // Legacy tokens (pre-email claim) and sso_* logins: resolve email so
@@ -24,8 +26,8 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
   return {
     sub: userId,
     role,
-    login: login ?? '',
-    fullName: fullName ?? '',
+    login: login ?? "",
+    fullName: fullName ?? "",
     email,
   };
 }

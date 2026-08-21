@@ -25,6 +25,7 @@ npm run check:acceptance:strict
 | Gate | Tool | Blocks |
 |------|------|--------|
 | Acceptance | `check-acceptance-consistency.mjs` | False-green docs / false `ga` / missing SSOT |
+| Satellite raw SQL | `check:satellite-raw-sql` | `$queryRaw` / `$executeRaw` in satellite runtime (no tenant filter) |
 | Integration | `audit:integration:strict` | MDM/hub/workforce contract drift |
 | Design tokens | `lint:design-tokens`, `lint:token-layers` | Token layer violations |
 

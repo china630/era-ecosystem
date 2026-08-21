@@ -14,8 +14,7 @@ export type NasBankAccountOption = {
 
 function isBankLedgerNasCode(code: string): boolean {
   const c = code.trim();
-  if (c === "221" || c.startsWith("221.")) return true;
-  for (const r of ["222", "223", "224"] as const) {
+  for (const r of ["103", "104", "223", "224"] as const) {
     if (c === r || c.startsWith(`${r}.`)) return true;
   }
   return false;
