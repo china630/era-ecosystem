@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { satelliteOrganizationId } from "@era/satellite-kit/orchestrator-gateway";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
 import { bakuDayBounds } from "@/lib/baku-day";

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { FolioType, PaymentMethod } from '@prisma/client';

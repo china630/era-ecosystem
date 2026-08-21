@@ -1,5 +1,5 @@
 import type { PractitionerStaffKind, StaffAbsenceKind } from "@prisma/client";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { satelliteOrganizationId } from "@era/satellite-kit/orchestrator-gateway";
 import { prisma } from "@/lib/prisma";
 import { bakuYmd } from "@/domain/appointment/practitioner-schedule.service";
 import {
