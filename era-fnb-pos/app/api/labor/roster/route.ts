@@ -1,3 +1,4 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { z } from "zod";
 import { createHash } from "crypto";
 import { NextResponse } from "next/server";
@@ -8,6 +9,7 @@ function hashPin(pin: string) {
 }
 
 export async function GET() {
+  await assertFnbEntitled();
   const roster = await prisma.staffRoster.findMany({
     where: { active: true },
     select: { id: true, staffCode: true, fullName: true, globalPersonId: true },
@@ -23,6 +25,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  await assertFnbEntitled();
   const body = bodySchema.parse(await req.json());
   if (!body.globalPersonId) {
     return NextResponse.json(
@@ -34,7 +37,7 @@ export async function POST(req: Request) {
     );
   }
   const row = await prisma.staffRoster.upsert({
-    where: { staffCode: body.staffCode },
+    where: { staffCode: body.staffCode } as never,
     create: {
       staffCode: body.staffCode,
       fullName: body.fullName,

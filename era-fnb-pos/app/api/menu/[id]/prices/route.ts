@@ -1,4 +1,4 @@
-import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
@@ -6,6 +6,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(_request);
     const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);

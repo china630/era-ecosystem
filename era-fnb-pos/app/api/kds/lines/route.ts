@@ -1,7 +1,9 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
+  await assertFnbEntitled();
   const lines = await prisma.ticketLine.findMany({
     where: { kitchenStatus: { in: ["NEW", "FIRED", "IN_PREP"] } },
     include: { ticket: { include: { table: true, outlet: true } } },

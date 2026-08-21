@@ -1,6 +1,7 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { runPlatformCommerceHooks } from "@era/satellite-kit";
+import { runPlatformCommerceHooks, satelliteOrganizationId } from "@era/satellite-kit";
 import { postRoomCharge, fetchGuestEntitlements } from "@/lib/pms-bridge-client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -20,6 +21,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await assertFnbEntitled();
   const { id } = await params;
   const body = bodySchema.parse(await request.json().catch(() => undefined));
 
@@ -113,7 +115,7 @@ export async function POST(
   });
   await releaseTableForTicket(id, ticket.tableId);
 
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+  const organizationId = satelliteOrganizationId();
   if (organizationId) {
     void runPlatformCommerceHooks({
       organizationId,

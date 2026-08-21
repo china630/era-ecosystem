@@ -1,3 +1,4 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
@@ -15,6 +16,7 @@ const bodySchema = z.object({
 
 /** Replay queued pay/fire from offline client. */
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;

@@ -1,5 +1,8 @@
+import type { TicketLine } from "@prisma/client";
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
@@ -12,6 +15,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;
@@ -31,11 +35,11 @@ export async function POST(
   }
 
   const lineSet = new Set(body.lineIds);
-  const toMove = source.lines.filter((l) => lineSet.has(l.id));
+  const toMove = source.lines.filter((l: TicketLine) => lineSet.has(l.id));
   if (toMove.length === 0) {
     return NextResponse.json({ error: "No matching lines" }, { status: 400 });
   }
-  if (toMove.length === source.lines.filter((l) => l.kitchenStatus !== "VOID").length) {
+  if (toMove.length === source.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID").length) {
     return NextResponse.json(
       { error: "Leave at least one active line on the original ticket" },
       { status: 400 },
@@ -45,6 +49,7 @@ export async function POST(
   const splitTicket = await prisma.$transaction(async (tx) => {
     const created = await tx.ticket.create({
       data: {
+        organizationId: source.organizationId || satelliteOrganizationId(),
         outletId: source.outletId,
         tableId: null,
         covers: source.covers,
@@ -55,7 +60,7 @@ export async function POST(
       },
     });
     await tx.ticketLine.updateMany({
-      where: { id: { in: toMove.map((l) => l.id) } },
+      where: { id: { in: toMove.map((l: TicketLine) => l.id) } },
       data: { ticketId: created.id },
     });
     return created;

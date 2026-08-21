@@ -1,3 +1,4 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +10,7 @@ const createSchema = z.object({
 });
 
 export async function GET() {
+  await assertFnbEntitled();
   const orders = await prisma.deliveryInboxOrder.findMany({
     where: { status: { in: ["NEW", "ACCEPTED"] } },
     orderBy: { createdAt: "desc" },
@@ -18,6 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const body = createSchema.parse(await request.json());
   const order = await prisma.deliveryInboxOrder.create({
     data: {

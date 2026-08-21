@@ -1,6 +1,8 @@
+import type { TicketLine } from "@prisma/client";
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { runPlatformCommerceHooks } from "@era/satellite-kit";
+import { runPlatformCommerceHooks, satelliteOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
@@ -24,6 +26,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;
@@ -46,7 +49,7 @@ export async function POST(
   }
 
   const amount = body.amount ?? Number(ticket.totalAzn);
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+  const organizationId = satelliteOrganizationId();
 
   const settlement = await resolveTicketSettlement(ticket);
   const payBlock = payBlockedReason(settlement);
@@ -144,7 +147,7 @@ export async function POST(
 
   if (settlement === "LOCAL_CASHIER") {
     const receiptId = fiscal.receiptId?.trim() || `fb-ticket-${id}`;
-    const lineCount = ticket.lines.filter((l) => l.kitchenStatus !== "VOID").length;
+    const lineCount = ticket.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID").length;
     void dispatchFbSaleCompleted({
       ticketId: id,
       outletId: ticket.outletId,

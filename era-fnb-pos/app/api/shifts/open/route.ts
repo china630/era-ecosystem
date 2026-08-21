@@ -1,5 +1,7 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 
@@ -9,6 +11,7 @@ const openSchema = z.object({
 });
 
 export async function GET() {
+  await assertFnbEntitled();
   const shift = await prisma.posShift.findFirst({
     where: { status: "OPEN" },
     include: { outlet: true },
@@ -18,16 +21,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const body = openSchema.parse(await request.json());
 
-  let outlet = await prisma.outlet.findUnique({
-    where: { code: body.outletCode },
-  });
-  if (!outlet) {
-    outlet = await prisma.outlet.create({
-      data: { code: body.outletCode, name: body.outletCode },
-    });
-  }
+  const outlet = await ensureOutletByCode(body.outletCode);
 
   const existing = await prisma.posShift.findFirst({
     where: { outletId: outlet.id, status: "OPEN" },

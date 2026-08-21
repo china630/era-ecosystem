@@ -1,10 +1,12 @@
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { recordMenuItemPrice } from "@/lib/menu-price-history";
+import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET(request: Request) {
+  await assertFnbEntitled();
   try {
     const url = new URL(request.url);
     const dailyOnly = url.searchParams.get("dailyOnly") === "true";
@@ -25,7 +27,7 @@ export async function GET(request: Request) {
       return jsonOk(categories);
     }
 
-    const outlet = await prisma.outlet.findUnique({ where: { code: outletCode } });
+    const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
     if (!outlet) return jsonOk(categories);
 
     const date = new Date();
@@ -67,20 +69,14 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
     const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());
-    let outlet = await prisma.outlet.findUnique({
-      where: { code: body.outletCode },
-    });
-    if (!outlet) {
-      outlet = await prisma.outlet.create({
-        data: { code: body.outletCode, name: body.outletCode },
-      });
-    }
+    const outlet = await ensureOutletByCode(body.outletCode);
 
     let category =
       body.categoryId != null

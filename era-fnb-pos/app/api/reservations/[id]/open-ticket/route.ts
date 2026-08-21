@@ -1,4 +1,6 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
@@ -6,6 +8,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;
@@ -31,6 +34,7 @@ export async function POST(
 
   const ticket = await prisma.ticket.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       outletId: reservation.table.outletId,
       tableId: reservation.tableId,
       covers: reservation.partySize,

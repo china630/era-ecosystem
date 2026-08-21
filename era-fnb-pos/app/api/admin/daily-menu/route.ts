@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
@@ -11,12 +12,13 @@ function parseBoardDate(raw: string | null): Date {
 }
 
 export async function GET(request: Request) {
+  await assertFnbEntitled();
   try {
     const url = new URL(request.url);
     const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
     const date = parseBoardDate(url.searchParams.get("date"));
 
-    const outlet = await prisma.outlet.findUnique({ where: { code: outletCode } });
+    const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
     if (!outlet) return jsonOk({ date: date.toISOString().slice(0, 10), entries: [] });
 
     const entries = await prisma.dailyMenuEntry.findMany({
@@ -51,6 +53,7 @@ const putSchema = z.object({
 });
 
 export async function PUT(request: Request) {
+  await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
     const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
@@ -59,18 +62,13 @@ export async function PUT(request: Request) {
     const body = putSchema.parse(await request.json());
     const date = parseBoardDate(body.date ?? null);
 
-    let outlet = await prisma.outlet.findUnique({ where: { code: body.outletCode } });
-    if (!outlet) {
-      outlet = await prisma.outlet.create({
-        data: { code: body.outletCode, name: body.outletCode },
-      });
-    }
+    const outlet = await ensureOutletByCode(body.outletCode);
 
     await prisma.$transaction([
       prisma.dailyMenuEntry.deleteMany({ where: { outletId: outlet.id, boardDate: date } }),
       prisma.dailyMenuEntry.createMany({
         data: body.menuItemIds.map((menuItemId, idx) => ({
-          outletId: outlet!.id,
+          outletId: outlet.id,
           menuItemId,
           boardDate: date,
           sortOrder: idx,
@@ -91,6 +89,7 @@ const copySchema = z.object({
 });
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
     const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
@@ -100,7 +99,7 @@ export async function POST(request: Request) {
     const from = parseBoardDate(body.fromDate);
     const to = parseBoardDate(body.toDate);
 
-    const outlet = await prisma.outlet.findUnique({ where: { code: body.outletCode } });
+    const outlet = await prisma.outlet.findFirst({ where: { code: body.outletCode } });
     if (!outlet) return jsonError("Outlet not found", 404);
 
     const source = await prisma.dailyMenuEntry.findMany({
