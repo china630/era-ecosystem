@@ -10,20 +10,27 @@ import {
   SATELLITE_BANK_REG_REPORT_EXPORTED,
   SATELLITE_BANK_TREASURY_GAP_SNAPSHOT,
 } from "@era/contracts";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 
 @Injectable()
 export class OrchestratorEventsPublisher {
   private readonly logger = new Logger(OrchestratorEventsPublisher.name);
   private readonly gatewayUrl: string;
   private readonly token: string;
-  private readonly organizationId: string;
 
   constructor(config: ConfigService) {
     this.gatewayUrl =
       config.get<string>("CONTROL_PLANE_URL")?.replace(/\/$/, "") ??
       "http://127.0.0.1:4000";
     this.token = config.get<string>("SATELLITE_EVENT_SERVICE_TOKEN") ?? "";
-    this.organizationId = config.get<string>("ERA_BANK_ORGANIZATION_ID") ?? "";
+  }
+
+  private resolveOrganizationId(): string {
+    try {
+      return satelliteOrganizationId();
+    } catch {
+      return "";
+    }
   }
 
   async publishGlDailySummary(payload: {
@@ -36,7 +43,7 @@ export class OrchestratorEventsPublisher {
     }
     const envelope = {
       type: SATELLITE_BANK_GL_DAILY_SUMMARY,
-      organizationId: this.organizationId,
+      organizationId: this.resolveOrganizationId(),
       satelliteKey: "bank_core",
       occurredAt: new Date().toISOString(),
       payload: { ...payload, currency: "AZN" as const },
@@ -108,7 +115,7 @@ export class OrchestratorEventsPublisher {
     }
     const envelope = {
       type,
-      organizationId: this.organizationId,
+      organizationId: this.resolveOrganizationId(),
       satelliteKey: "bank_core",
       occurredAt: new Date().toISOString(),
       payload,

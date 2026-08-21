@@ -122,6 +122,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.GlAccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -135,6 +136,7 @@ exports.Prisma.GlAccountScalarFieldEnum = {
 
 exports.Prisma.SystemGlConfigScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   key: 'key',
   glCode: 'glCode',
@@ -144,6 +146,7 @@ exports.Prisma.SystemGlConfigScalarFieldEnum = {
 
 exports.Prisma.BranchScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -156,6 +159,7 @@ exports.Prisma.BranchScalarFieldEnum = {
 
 exports.Prisma.BranchLimitScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   branchId: 'branchId',
   limitCode: 'limitCode',
@@ -167,6 +171,7 @@ exports.Prisma.BranchLimitScalarFieldEnum = {
 
 exports.Prisma.BankCustomerScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   globalPersonId: 'globalPersonId',
   voen: 'voen',
@@ -185,6 +190,7 @@ exports.Prisma.BankCustomerScalarFieldEnum = {
 
 exports.Prisma.BeneficialOwnerScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   globalPersonId: 'globalPersonId',
@@ -194,6 +200,7 @@ exports.Prisma.BeneficialOwnerScalarFieldEnum = {
 
 exports.Prisma.AccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   iban: 'iban',
   customerId: 'customerId',
@@ -212,6 +219,7 @@ exports.Prisma.AccountScalarFieldEnum = {
 
 exports.Prisma.AccountHoldScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   accountId: 'accountId',
   amountMinor: 'amountMinor',
@@ -226,6 +234,7 @@ exports.Prisma.AccountHoldScalarFieldEnum = {
 
 exports.Prisma.JournalTransactionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   reference: 'reference',
   idempotencyKey: 'idempotencyKey',
@@ -242,6 +251,7 @@ exports.Prisma.JournalTransactionScalarFieldEnum = {
 
 exports.Prisma.JournalEntryScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   transactionId: 'transactionId',
   accountId: 'accountId',
@@ -255,6 +265,7 @@ exports.Prisma.JournalEntryScalarFieldEnum = {
 
 exports.Prisma.ProductTemplateScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   moduleKey: 'moduleKey',
   kind: 'kind',
@@ -269,6 +280,7 @@ exports.Prisma.ProductTemplateScalarFieldEnum = {
 
 exports.Prisma.EodRunScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   businessDate: 'businessDate',
   status: 'status',
@@ -280,6 +292,7 @@ exports.Prisma.EodRunScalarFieldEnum = {
 
 exports.Prisma.AuditLogEntryScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   entity: 'entity',
   entityId: 'entityId',
@@ -292,6 +305,7 @@ exports.Prisma.AuditLogEntryScalarFieldEnum = {
 
 exports.Prisma.PaymentOrderScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   debtorAccountId: 'debtorAccountId',
   creditorIban: 'creditorIban',
@@ -310,6 +324,7 @@ exports.Prisma.PaymentOrderScalarFieldEnum = {
 
 exports.Prisma.PaymentRailMessageScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   paymentOrderId: 'paymentOrderId',
   direction: 'direction',
@@ -320,6 +335,7 @@ exports.Prisma.PaymentRailMessageScalarFieldEnum = {
 
 exports.Prisma.DepositContractScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   accountId: 'accountId',
   customerId: 'customerId',
@@ -348,6 +364,7 @@ exports.Prisma.DepositContractScalarFieldEnum = {
 
 exports.Prisma.LoanContractScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   accountId: 'accountId',
@@ -381,6 +398,7 @@ exports.Prisma.LoanContractScalarFieldEnum = {
 
 exports.Prisma.LoanScheduleInstallmentScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   loanId: 'loanId',
   sequenceNo: 'sequenceNo',
@@ -395,6 +413,7 @@ exports.Prisma.LoanScheduleInstallmentScalarFieldEnum = {
 
 exports.Prisma.EclCalculationRunScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   asOfDate: 'asOfDate',
   status: 'status',
@@ -412,6 +431,7 @@ exports.Prisma.EclCalculationRunScalarFieldEnum = {
 
 exports.Prisma.EclResultScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   runId: 'runId',
   loanId: 'loanId',
@@ -426,6 +446,7 @@ exports.Prisma.EclResultScalarFieldEnum = {
 
 exports.Prisma.RateIndexQuoteScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   indexKey: 'indexKey',
   asOfDate: 'asOfDate',
@@ -436,6 +457,7 @@ exports.Prisma.RateIndexQuoteScalarFieldEnum = {
 
 exports.Prisma.RwaSnapshotScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   asOfDate: 'asOfDate',
   totalRwaMinor: 'totalRwaMinor',
@@ -446,6 +468,7 @@ exports.Prisma.RwaSnapshotScalarFieldEnum = {
 
 exports.Prisma.CapitalAdequacySnapshotScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   asOfDate: 'asOfDate',
   tier1CapitalMinor: 'tier1CapitalMinor',
@@ -458,6 +481,7 @@ exports.Prisma.CapitalAdequacySnapshotScalarFieldEnum = {
 
 exports.Prisma.EclParameterSetScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   version: 'version',
   asOfDate: 'asOfDate',
@@ -468,6 +492,7 @@ exports.Prisma.EclParameterSetScalarFieldEnum = {
 
 exports.Prisma.AmlRuleScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   enabled: 'enabled',
@@ -478,6 +503,7 @@ exports.Prisma.AmlRuleScalarFieldEnum = {
 
 exports.Prisma.AmlAlertScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   status: 'status',
   severity: 'severity',
@@ -497,6 +523,7 @@ exports.Prisma.AmlAlertScalarFieldEnum = {
 
 exports.Prisma.AmlScreeningHitScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   alertId: 'alertId',
   listSource: 'listSource',
@@ -508,6 +535,7 @@ exports.Prisma.AmlScreeningHitScalarFieldEnum = {
 
 exports.Prisma.FmnReportScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   periodFrom: 'periodFrom',
   periodTo: 'periodTo',
@@ -520,6 +548,7 @@ exports.Prisma.FmnReportScalarFieldEnum = {
 
 exports.Prisma.RegReportRunScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   templateCode: 'templateCode',
   periodFrom: 'periodFrom',
@@ -532,6 +561,7 @@ exports.Prisma.RegReportRunScalarFieldEnum = {
 
 exports.Prisma.FatcaCrsClassificationScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   classification: 'classification',
@@ -541,6 +571,7 @@ exports.Prisma.FatcaCrsClassificationScalarFieldEnum = {
 
 exports.Prisma.DboCustomerCredentialScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   loginHash: 'loginHash',
@@ -554,6 +585,7 @@ exports.Prisma.DboCustomerCredentialScalarFieldEnum = {
 
 exports.Prisma.DboOtpChallengeScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   codeHash: 'codeHash',
@@ -564,6 +596,7 @@ exports.Prisma.DboOtpChallengeScalarFieldEnum = {
 
 exports.Prisma.CorporateSignatoryScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   globalPersonId: 'globalPersonId',
@@ -576,6 +609,7 @@ exports.Prisma.CorporateSignatoryScalarFieldEnum = {
 
 exports.Prisma.CardProductScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   productTemplateId: 'productTemplateId',
   scheme: 'scheme',
@@ -586,6 +620,7 @@ exports.Prisma.CardProductScalarFieldEnum = {
 
 exports.Prisma.CardScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   accountId: 'accountId',
@@ -606,6 +641,7 @@ exports.Prisma.CardScalarFieldEnum = {
 
 exports.Prisma.CardTransactionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   cardId: 'cardId',
   accountId: 'accountId',
@@ -627,6 +663,7 @@ exports.Prisma.CardTransactionScalarFieldEnum = {
 
 exports.Prisma.CardProcessorMessageScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   direction: 'direction',
   gateway: 'gateway',
@@ -637,6 +674,7 @@ exports.Prisma.CardProcessorMessageScalarFieldEnum = {
 
 exports.Prisma.TreasuryCounterpartyScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   bankMfo: 'bankMfo',
   name: 'name',
@@ -648,6 +686,7 @@ exports.Prisma.TreasuryCounterpartyScalarFieldEnum = {
 
 exports.Prisma.NostroVostroAccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   counterpartyId: 'counterpartyId',
   direction: 'direction',
@@ -661,6 +700,7 @@ exports.Prisma.NostroVostroAccountScalarFieldEnum = {
 
 exports.Prisma.FxDealScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   dealType: 'dealType',
   baseCurrency: 'baseCurrency',
@@ -679,6 +719,7 @@ exports.Prisma.FxDealScalarFieldEnum = {
 
 exports.Prisma.InterbankPlacementScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   counterpartyId: 'counterpartyId',
   nostroAccountId: 'nostroAccountId',
@@ -695,6 +736,7 @@ exports.Prisma.InterbankPlacementScalarFieldEnum = {
 
 exports.Prisma.GovSecurityPositionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   isin: 'isin',
   faceValueMinor: 'faceValueMinor',
@@ -707,6 +749,7 @@ exports.Prisma.GovSecurityPositionScalarFieldEnum = {
 
 exports.Prisma.LiquidityGapSnapshotScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   asOfDate: 'asOfDate',
   bucketsJson: 'bucketsJson',
@@ -715,6 +758,7 @@ exports.Prisma.LiquidityGapSnapshotScalarFieldEnum = {
 
 exports.Prisma.FeeTariffScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -729,6 +773,7 @@ exports.Prisma.FeeTariffScalarFieldEnum = {
 
 exports.Prisma.RelationshipPackageScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -739,6 +784,7 @@ exports.Prisma.RelationshipPackageScalarFieldEnum = {
 
 exports.Prisma.RelationshipPackageTariffScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   packageId: 'packageId',
   tariffCode: 'tariffCode',
@@ -750,6 +796,7 @@ exports.Prisma.RelationshipPackageTariffScalarFieldEnum = {
 
 exports.Prisma.RelationshipPackageLinkScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   packageId: 'packageId',
   customerId: 'customerId',
@@ -758,6 +805,7 @@ exports.Prisma.RelationshipPackageLinkScalarFieldEnum = {
 
 exports.Prisma.SafeDepositBoxScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   branchId: 'branchId',
   boxNumber: 'boxNumber',
@@ -773,6 +821,7 @@ exports.Prisma.SafeDepositBoxScalarFieldEnum = {
 
 exports.Prisma.CashMovementScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   branchId: 'branchId',
   kind: 'kind',
@@ -789,6 +838,7 @@ exports.Prisma.CashMovementScalarFieldEnum = {
 
 exports.Prisma.InventoryItemScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   branchId: 'branchId',
   kind: 'kind',
@@ -801,6 +851,7 @@ exports.Prisma.InventoryItemScalarFieldEnum = {
 
 exports.Prisma.InventoryMovementScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   itemId: 'itemId',
   deltaQty: 'deltaQty',
@@ -812,6 +863,7 @@ exports.Prisma.InventoryMovementScalarFieldEnum = {
 
 exports.Prisma.BranchQueueTicketScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   branchId: 'branchId',
   ticketNo: 'ticketNo',
@@ -826,6 +878,7 @@ exports.Prisma.BranchQueueTicketScalarFieldEnum = {
 
 exports.Prisma.CollateralValuationScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   loanId: 'loanId',
   amountMinor: 'amountMinor',
@@ -837,6 +890,7 @@ exports.Prisma.CollateralValuationScalarFieldEnum = {
 
 exports.Prisma.LienRegisterScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   loanId: 'loanId',
   lienRef: 'lienRef',
@@ -850,6 +904,7 @@ exports.Prisma.LienRegisterScalarFieldEnum = {
 
 exports.Prisma.CreditDecisionRequestScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   applicationId: 'applicationId',
@@ -862,6 +917,7 @@ exports.Prisma.CreditDecisionRequestScalarFieldEnum = {
 
 exports.Prisma.LoanApplicationScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   productTemplateId: 'productTemplateId',
@@ -881,6 +937,7 @@ exports.Prisma.LoanApplicationScalarFieldEnum = {
 
 exports.Prisma.CreditPolicyRuleScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -892,6 +949,7 @@ exports.Prisma.CreditPolicyRuleScalarFieldEnum = {
 
 exports.Prisma.CreditLineScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   productTemplateId: 'productTemplateId',
@@ -907,6 +965,7 @@ exports.Prisma.CreditLineScalarFieldEnum = {
 
 exports.Prisma.CreditLineDrawdownScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   creditLineId: 'creditLineId',
   amountMinor: 'amountMinor',
@@ -922,6 +981,7 @@ exports.Prisma.CreditLineDrawdownScalarFieldEnum = {
 
 exports.Prisma.CollectionCaseScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   loanId: 'loanId',
   customerId: 'customerId',
@@ -935,6 +995,7 @@ exports.Prisma.CollectionCaseScalarFieldEnum = {
 
 exports.Prisma.CollectionPromiseToPayScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   caseId: 'caseId',
   amountMinor: 'amountMinor',
@@ -945,6 +1006,7 @@ exports.Prisma.CollectionPromiseToPayScalarFieldEnum = {
 
 exports.Prisma.StandingOrderScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   fromAccountId: 'fromAccountId',
@@ -962,6 +1024,7 @@ exports.Prisma.StandingOrderScalarFieldEnum = {
 
 exports.Prisma.DirectDebitMandateScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   accountId: 'accountId',
@@ -976,6 +1039,7 @@ exports.Prisma.DirectDebitMandateScalarFieldEnum = {
 
 exports.Prisma.VirtualAccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   parentAccountId: 'parentAccountId',
@@ -987,6 +1051,7 @@ exports.Prisma.VirtualAccountScalarFieldEnum = {
 
 exports.Prisma.CashPoolSweepRuleScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   masterAccountId: 'masterAccountId',
   childAccountId: 'childAccountId',
@@ -998,6 +1063,7 @@ exports.Prisma.CashPoolSweepRuleScalarFieldEnum = {
 
 exports.Prisma.ChequeInstrumentScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   accountId: 'accountId',
   chequeNumber: 'chequeNumber',
@@ -1014,6 +1080,7 @@ exports.Prisma.ChequeInstrumentScalarFieldEnum = {
 
 exports.Prisma.LetterOfCreditScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   direction: 'direction',
@@ -1031,6 +1098,7 @@ exports.Prisma.LetterOfCreditScalarFieldEnum = {
 
 exports.Prisma.TradeLcAmendmentScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   lcId: 'lcId',
   seqNo: 'seqNo',
@@ -1040,6 +1108,7 @@ exports.Prisma.TradeLcAmendmentScalarFieldEnum = {
 
 exports.Prisma.BankGuaranteeScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   reference: 'reference',
@@ -1055,6 +1124,7 @@ exports.Prisma.BankGuaranteeScalarFieldEnum = {
 
 exports.Prisma.DocumentaryCollectionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   reference: 'reference',
@@ -1067,6 +1137,7 @@ exports.Prisma.DocumentaryCollectionScalarFieldEnum = {
 
 exports.Prisma.ScfProgramScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -1080,6 +1151,7 @@ exports.Prisma.ScfProgramScalarFieldEnum = {
 
 exports.Prisma.MoneyMarketPlacementScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   counterpartyId: 'counterpartyId',
   nostroAccountId: 'nostroAccountId',
@@ -1099,6 +1171,7 @@ exports.Prisma.MoneyMarketPlacementScalarFieldEnum = {
 
 exports.Prisma.AcquiringMerchantScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   merchantCode: 'merchantCode',
   name: 'name',
@@ -1111,6 +1184,7 @@ exports.Prisma.AcquiringMerchantScalarFieldEnum = {
 
 exports.Prisma.TradeSwiftMessageScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   mtType: 'mtType',
   body: 'body',
@@ -1122,6 +1196,7 @@ exports.Prisma.TradeSwiftMessageScalarFieldEnum = {
 
 exports.Prisma.CardDisputeCaseScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   cardTransactionId: 'cardTransactionId',
   amountMinor: 'amountMinor',
@@ -1135,6 +1210,7 @@ exports.Prisma.CardDisputeCaseScalarFieldEnum = {
 
 exports.Prisma.ThreeDsChallengeScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   cardId: 'cardId',
   amountMinor: 'amountMinor',
@@ -1146,6 +1222,7 @@ exports.Prisma.ThreeDsChallengeScalarFieldEnum = {
 
 exports.Prisma.SafekeepingAccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   accountNo: 'accountNo',
@@ -1157,6 +1234,7 @@ exports.Prisma.SafekeepingAccountScalarFieldEnum = {
 
 exports.Prisma.CustodyPositionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   safekeepingAccountId: 'safekeepingAccountId',
   isin: 'isin',
@@ -1168,6 +1246,7 @@ exports.Prisma.CustodyPositionScalarFieldEnum = {
 
 exports.Prisma.CustodyPositionLedgerScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   custodyPositionId: 'custodyPositionId',
   direction: 'direction',
@@ -1178,6 +1257,7 @@ exports.Prisma.CustodyPositionLedgerScalarFieldEnum = {
 
 exports.Prisma.InsuranceProductScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   code: 'code',
   name: 'name',
@@ -1190,6 +1270,7 @@ exports.Prisma.InsuranceProductScalarFieldEnum = {
 
 exports.Prisma.InsurancePolicyLinkScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   insuranceProductId: 'insuranceProductId',
@@ -1201,6 +1282,7 @@ exports.Prisma.InsurancePolicyLinkScalarFieldEnum = {
 
 exports.Prisma.IslamicContractScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   productTemplateId: 'productTemplateId',
@@ -1216,6 +1298,7 @@ exports.Prisma.IslamicContractScalarFieldEnum = {
 
 exports.Prisma.DboH2hFileJobScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   fileName: 'fileName',
   payload: 'payload',
@@ -1227,6 +1310,7 @@ exports.Prisma.DboH2hFileJobScalarFieldEnum = {
 
 exports.Prisma.OpenBankingConsentScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   scopes: 'scopes',
@@ -1238,6 +1322,7 @@ exports.Prisma.OpenBankingConsentScalarFieldEnum = {
 
 exports.Prisma.AmlCaseScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   alertId: 'alertId',
   customerId: 'customerId',
@@ -1250,6 +1335,7 @@ exports.Prisma.AmlCaseScalarFieldEnum = {
 
 exports.Prisma.FraudScoreRequestScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   reference: 'reference',
   channel: 'channel',
@@ -1265,6 +1351,7 @@ exports.Prisma.FraudScoreRequestScalarFieldEnum = {
 
 exports.Prisma.IrrbbInputScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   asOfDate: 'asOfDate',
   bucketKey: 'bucketKey',
@@ -1275,6 +1362,7 @@ exports.Prisma.IrrbbInputScalarFieldEnum = {
 
 exports.Prisma.OpRiskLossEventScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   eventDate: 'eventDate',
   amountMinor: 'amountMinor',
@@ -1288,6 +1376,7 @@ exports.Prisma.OpRiskLossEventScalarFieldEnum = {
 
 exports.Prisma.InsuranceAffiliateCommissionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   policyRef: 'policyRef',
@@ -1298,6 +1387,7 @@ exports.Prisma.InsuranceAffiliateCommissionScalarFieldEnum = {
 
 exports.Prisma.AtmTerminalScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   terminalId: 'terminalId',
   branchId: 'branchId',
@@ -1309,6 +1399,7 @@ exports.Prisma.AtmTerminalScalarFieldEnum = {
 
 exports.Prisma.AtmTxnScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   atmTerminalId: 'atmTerminalId',
   cardId: 'cardId',
@@ -1323,6 +1414,7 @@ exports.Prisma.AtmTxnScalarFieldEnum = {
 
 exports.Prisma.SchemeMessageOutboxScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   messageType: 'messageType',
   direction: 'direction',
@@ -1334,6 +1426,7 @@ exports.Prisma.SchemeMessageOutboxScalarFieldEnum = {
 
 exports.Prisma.DerivativeContractScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   contractRef: 'contractRef',
   productType: 'productType',
@@ -1347,6 +1440,7 @@ exports.Prisma.DerivativeContractScalarFieldEnum = {
 
 exports.Prisma.BondPositionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   isin: 'isin',
   faceValueMinor: 'faceValueMinor',
@@ -1359,6 +1453,7 @@ exports.Prisma.BondPositionScalarFieldEnum = {
 
 exports.Prisma.CsdAccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   csdAccountNo: 'csdAccountNo',
@@ -1369,6 +1464,7 @@ exports.Prisma.CsdAccountScalarFieldEnum = {
 
 exports.Prisma.BrokerageOrderScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   isin: 'isin',
@@ -1382,6 +1478,7 @@ exports.Prisma.BrokerageOrderScalarFieldEnum = {
 
 exports.Prisma.MetalPositionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   metalCode: 'metalCode',
@@ -1393,6 +1490,7 @@ exports.Prisma.MetalPositionScalarFieldEnum = {
 
 exports.Prisma.PensionContributionScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   customerId: 'customerId',
   employerRef: 'employerRef',
@@ -1405,6 +1503,7 @@ exports.Prisma.PensionContributionScalarFieldEnum = {
 
 exports.Prisma.PsaTsaAccountScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   agencyCode: 'agencyCode',
   accountNo: 'accountNo',
@@ -1416,6 +1515,7 @@ exports.Prisma.PsaTsaAccountScalarFieldEnum = {
 
 exports.Prisma.AgencyLinkScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   peerBankOrgId: 'peerBankOrgId',
   agencyType: 'agencyType',
@@ -1426,6 +1526,7 @@ exports.Prisma.AgencyLinkScalarFieldEnum = {
 
 exports.Prisma.MisReportJobScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   reportCode: 'reportCode',
   paramsJson: 'paramsJson',
@@ -1437,6 +1538,7 @@ exports.Prisma.MisReportJobScalarFieldEnum = {
 
 exports.Prisma.BpmProcessStubScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   processCode: 'processCode',
   name: 'name',
@@ -1448,6 +1550,7 @@ exports.Prisma.BpmProcessStubScalarFieldEnum = {
 
 exports.Prisma.DmsDocumentMetaScalarFieldEnum = {
   id: 'id',
+  organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   documentRef: 'documentRef',
   category: 'category',

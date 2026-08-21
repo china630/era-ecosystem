@@ -4,6 +4,7 @@ import { AuthModule } from "./auth/auth.module";
 import { BankCommonModule } from "./common/bank-common.module";
 import { HealthController } from "./common/health.controller";
 import { IntegrationModule } from "./integration/integration.module";
+import { ControlPlaneModule } from "./control-plane/control-plane.module";
 import { KernelModule } from "./kernel/kernel.module";
 import { AmlModule } from "./modules/aml/aml.module";
 import { AtmModule } from "./modules/atm/atm.module";
@@ -38,6 +39,7 @@ import { PrismaModule } from "./prisma/prisma.module";
     BankCommonModule,
     AuthModule,
     IntegrationModule,
+    ControlPlaneModule,
     KernelModule,
     PaymentsModule,
     DepositsModule,

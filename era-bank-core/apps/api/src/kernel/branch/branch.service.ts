@@ -179,12 +179,9 @@ export class BranchService {
     for (const entry of entries) {
 
       const net =
-
         (byBranch.get(entry.branchId) ?? 0n) +
-
-        entry.debitMinor -
-
-        entry.creditMinor;
+        BigInt(entry.debitMinor) -
+        BigInt(entry.creditMinor);
 
       byBranch.set(entry.branchId, net);
 

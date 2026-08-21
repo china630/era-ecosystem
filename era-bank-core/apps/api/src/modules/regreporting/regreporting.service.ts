@@ -51,19 +51,33 @@ export class RegReportingService {
     const glAccounts = await this.prisma.glAccount.findMany({
       where: { bankOrgId: this.bankOrg.bankOrgId },
     });
-    const glById = new Map(glAccounts.map((g) => [g.id, g]));
+    const glById = new Map(
+      glAccounts.map((g: { id: string; code: string; name: string; type?: string }) => [g.id, g]),
+    );
 
     let outputJson: Record<string, unknown>;
 
     switch (template) {
       case "CBAR_TRIAL_BALANCE":
-        outputJson = this.buildTrialBalanceOutput(template, trialBalance, glById);
+        outputJson = this.buildTrialBalanceOutput(
+          template,
+          trialBalance,
+          glById as Map<string, { code: string; name: string }>,
+        );
         break;
       case "CBAR_BALANCE_SHEET_STUB":
-        outputJson = this.buildBalanceSheetStub(template, trialBalance, glById);
+        outputJson = this.buildBalanceSheetStub(
+          template,
+          trialBalance,
+          glById as Map<string, { code: string; name: string; type: GlAccountType }>,
+        );
         break;
       case "CBAR_LCR_STUB":
-        outputJson = await this.buildLcrFromRisk(template, trialBalance, glById);
+        outputJson = await this.buildLcrFromRisk(
+          template,
+          trialBalance,
+          glById as Map<string, { code: string; type: GlAccountType }>,
+        );
         break;
       case "CBAR_CAR_STUB":
         outputJson = await this.buildCarFromRisk(template);

@@ -33,9 +33,15 @@ export class AuditService {
     });
   }
 
-  appendInTx(tx: Prisma.TransactionClient, input: AuditAppendInput) {
+  appendInTx(
+    // Interactive tx from SatellitePrisma.$transaction
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx: any,
+    input: AuditAppendInput,
+  ) {
     return tx.auditLogEntry.create({
       data: {
+        organizationId: this.bankOrg.bankOrgId,
         bankOrgId: this.bankOrg.bankOrgId,
         entity: input.entity,
         entityId: input.entityId,

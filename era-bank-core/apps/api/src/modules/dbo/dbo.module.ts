@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { AuthModule } from "../../auth/auth.module";
 import { AsanSimaStubAdapter } from "../../integration/asan-sima-stub.adapter";
 import { IntegrationModule } from "../../integration/integration.module";
 import { LedgerModule } from "../../kernel/ledger/ledger.module";
@@ -19,6 +20,7 @@ import { DboIslamicController } from "./dbo-islamic.controller";
 import { DboLoanApplicationsController } from "./dbo-loan-applications.controller";
 import { DboOpenController } from "./dbo-open.controller";
 import { DboOpenAccountsController } from "./dbo-open-accounts.controller";
+import { DboOpenKeysController } from "./dbo-open-keys.controller";
 import { DboOpenApiService } from "./dbo-open-api.service";
 import { DboPaymentsController } from "./dbo-payments.controller";
 import { DboPaymentsService } from "./dbo-payments.service";
@@ -33,6 +35,7 @@ import { OpenApiGuard } from "./open-api.guard";
 @Module({
   imports: [
     ConfigModule,
+    AuthModule,
     IntegrationModule,
     LedgerModule,
     PostingEngineModule,
@@ -52,6 +55,7 @@ import { OpenApiGuard } from "./open-api.guard";
     DboIslamicController,
     DboOpenController,
     DboOpenAccountsController,
+    DboOpenKeysController,
     DboCardsController,
     DboOpsController,
   ],

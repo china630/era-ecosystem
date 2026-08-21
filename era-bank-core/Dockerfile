@@ -7,9 +7,11 @@ RUN apk add --no-cache python3 make g++ openssl
 
 WORKDIR /workspace
 
-COPY packages/era-contracts/package.json ./packages/era-contracts/
-COPY packages/era-contracts/src ./packages/era-contracts/src
-COPY packages/era-contracts/tsconfig.json ./packages/era-contracts/
+COPY packages/era-contracts ./packages/era-contracts
+COPY packages/era-storage ./packages/era-storage
+COPY packages/i18n-common ./packages/i18n-common
+COPY packages/era-fiscal ./packages/era-fiscal
+COPY packages/satellite-kit ./packages/satellite-kit
 
 COPY era-bank-core/package.json era-bank-core/package-lock.json* ./era-bank-core/
 COPY era-bank-core/apps/api/package.json ./era-bank-core/apps/api/
@@ -20,8 +22,11 @@ COPY era-bank-core/apps/api ./era-bank-core/apps/api
 
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 
-WORKDIR /workspace/packages/era-contracts
-RUN npm install --include=dev && npm run build
+RUN cd /workspace/packages/i18n-common && npm install && npm run build \
+  && cd /workspace/packages/era-contracts && npm install --include=dev && npm run build \
+  && cd /workspace/packages/era-storage && npm install && npm run build \
+  && cd /workspace/packages/era-fiscal && npm install && npm run build \
+  && cd /workspace/packages/satellite-kit && npm install && npm run build
 
 WORKDIR /workspace/era-bank-core
 RUN npm install && npm run build -w @era/bank-core-database && npm run build -w @era/bank-core-api
@@ -37,7 +42,13 @@ RUN apk add --no-cache openssl wget \
   && adduser --system --uid 1001 nestjs
 
 COPY --from=builder --chown=nestjs:nodejs /workspace/era-bank-core /app
-COPY --from=builder --chown=nestjs:nodejs /workspace/packages/era-contracts /app/node_modules/@era/contracts
+COPY --from=builder --chown=nestjs:nodejs /workspace/packages /packages
+RUN mkdir -p /app/node_modules/@era \
+  && ln -sfn /packages/satellite-kit /app/node_modules/@era/satellite-kit \
+  && ln -sfn /packages/era-contracts /app/node_modules/@era/contracts \
+  && ln -sfn /packages/era-fiscal /app/node_modules/@era/fiscal \
+  && ln -sfn /packages/era-storage /app/node_modules/@era/storage \
+  && ln -sfn /packages/i18n-common /app/node_modules/@era/i18n-common
 
 COPY era-bank-core/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh && sed -i 's/\r$//' /app/docker-entrypoint.sh
