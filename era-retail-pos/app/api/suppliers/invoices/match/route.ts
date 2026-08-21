@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { financeSupplierMatch } from "@era/satellite-kit";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 
 const bodySchema = z.object({
   invoiceRef: z.string().min(1),
@@ -10,6 +10,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    await assertRetailEntitled();
     const body = bodySchema.parse(await req.json());
     const result = await financeSupplierMatch(body, {
       authHeader: req.headers.get("authorization"),

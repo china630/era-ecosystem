@@ -8,11 +8,15 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  outlets   Outlet[]
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  code           String
+  name           String
+  createdAt      DateTime @default(now())
+  outlets        Outlet[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 enum ShiftStatus {
@@ -32,46 +36,53 @@ enum ReceiptLineStatus {
 }
 
 model Outlet {
-  id        String     @id @default(cuid())
-  tenantId  String
-  code      String
-  name      String
-  preset    String?
-  tenant    Tenant     @relation(fields: [tenantId], references: [id])
-  createdAt DateTime   @default(now())
-  registers Register[]
-  receipts  Receipt[]
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  tenantId       String
+  code           String
+  name           String
+  preset         String?
+  tenant         Tenant     @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime   @default(now())
+  registers      Register[]
+  receipts       Receipt[]
 
   @@unique([tenantId, code])
+  @@index([organizationId])
 }
 
 model Register {
-  id        String    @id @default(cuid())
-  outletId  String
-  code      String
-  name      String
-  outlet    Outlet    @relation(fields: [outletId], references: [id])
-  shifts    Shift[]
-  receipts  Receipt[]
-  createdAt DateTime  @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  outletId       String
+  code           String
+  name           String
+  outlet         Outlet    @relation(fields: [outletId], references: [id])
+  shifts         Shift[]
+  receipts       Receipt[]
+  createdAt      DateTime  @default(now())
 
   @@unique([outletId, code])
+  @@index([organizationId])
 }
 
 model Shift {
-  id         String      @id @default(cuid())
-  registerId String
-  status     ShiftStatus @default(OPEN)
-  openedAt   DateTime    @default(now())
-  closedAt   DateTime?
-  register   Register    @relation(fields: [registerId], references: [id])
-  receipts   Receipt[]
+  id             String      @id @default(cuid())
+  organizationId String      @map("organization_id")
+  registerId     String
+  status         ShiftStatus @default(OPEN)
+  openedAt       DateTime    @default(now())
+  closedAt       DateTime?
+  register       Register    @relation(fields: [registerId], references: [id])
+  receipts       Receipt[]
 
   @@index([registerId, status])
+  @@index([organizationId])
 }
 
 model Receipt {
   id                String        @id @default(cuid())
+  organizationId    String        @map("organization_id")
   outletId          String
   registerId        String
   shiftId           String
@@ -103,84 +114,103 @@ model Receipt {
 
   @@index([shiftId])
   @@index([originalReceiptId])
+  @@index([organizationId])
 }
 
 model ReceiptLine {
-  id           String            @id @default(cuid())
-  receiptId    String
-  description  String
-  qty          Int               @default(1)
-  unitPrice    Decimal           @db.Decimal(12, 2)
-  lineTotal    Decimal           @db.Decimal(12, 2)
-  plu          String?
-  barcode      String?
-  isWeighted   Boolean           @default(false)
-  weightKg     Decimal?          @db.Decimal(10, 3)
-  size         String?
-  color        String?
-  serial       String?
-  batch        String?
-  rxRequired   Boolean           @default(false)
-  rxApprovedBy String?
-  lineStatus   ReceiptLineStatus @default(ACTIVE)
-  receipt      Receipt           @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  receiptId      String
+  description    String
+  qty            Int               @default(1)
+  unitPrice      Decimal           @db.Decimal(12, 2)
+  lineTotal      Decimal           @db.Decimal(12, 2)
+  plu            String?
+  barcode        String?
+  isWeighted     Boolean           @default(false)
+  weightKg       Decimal?          @db.Decimal(10, 3)
+  size           String?
+  color          String?
+  serial         String?
+  batch          String?
+  rxRequired     Boolean           @default(false)
+  rxApprovedBy   String?
+  lineStatus     ReceiptLineStatus @default(ACTIVE)
+  receipt        Receipt           @relation(fields: [receiptId], references: [id], onDelete: Cascade)
 
   @@index([receiptId])
+  @@index([organizationId])
 }
 
 model Role {
   id              String   @id @default(cuid())
-  code            String   @unique
+  organizationId  String   @map("organization_id")
+  code            String
   name            String
   permissionsJson String   @default("[]")
   users           User[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model User {
-  id              String    @id @default(cuid())
-  login           String    @unique
-  email           String?
-  phone           String?   @unique
-  fullName        String
-  passwordHash    String
-  roleId          String
-  role            Role      @relation(fields: [roleId], references: [id])
-  status          String    @default("ACTIVE")
-  isCrossSystem   Boolean   @default(false) @map("is_cross_system")
-  lastLoginAt     DateTime? @map("last_login_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  login          String
+  email          String?
+  phone          String?   
+  fullName       String
+  passwordHash   String
+  roleId         String
+  role           Role      @relation(fields: [roleId], references: [id])
+  status         String    @default("ACTIVE")
+  isCrossSystem  Boolean   @default(false) @map("is_cross_system")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }
 
 model OfflineReceiptQueue {
-  id           String   @id @default(cuid())
-  clientId     String
-  payloadJson  String
-  status       String   @default("PENDING")
-  syncedAt     DateTime?
-  createdAt    DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  clientId       String
+  payloadJson    String
+  status         String    @default("PENDING")
+  syncedAt       DateTime?
+  createdAt      DateTime  @default(now())
 
   @@index([status, createdAt])
+  @@index([organizationId])
 }
 
 model MarketplaceWebhookEvent {
-  id          String   @id @default(cuid())
-  channel     String
-  externalRef String
-  payloadJson String
-  processedAt DateTime?
-  createdAt   DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  channel        String
+  externalRef    String
+  payloadJson    String
+  processedAt    DateTime?
+  createdAt      DateTime  @default(now())
 
   @@index([channel, externalRef])
+  @@index([organizationId])
 }
 
 model ProductCache {
-  id          String   @id @default(cuid())
-  sku         String   @unique
-  barcode     String?
-  description String
-  unitPrice   Decimal  @db.Decimal(12, 2)
-  syncedAt    DateTime @default(now())
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  sku            String
+  barcode        String?
+  description    String
+  unitPrice      Decimal  @db.Decimal(12, 2)
+  syncedAt       DateTime @default(now())
 
+  @@unique([organizationId, sku])
   @@index([barcode])
   @@index([sku])
+  @@index([organizationId])
 }

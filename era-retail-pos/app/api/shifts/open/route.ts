@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -10,6 +10,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    await assertRetailEntitled();
     const body = bodySchema.parse(await req.json());
 
     let tenant = await prisma.tenant.findFirst();
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
         data: { code: "demo", name: "Demo Tenant" },
       });
     }
+    if (!tenant) throw new Error("tenant unavailable");
 
     let outlet = await prisma.outlet.findFirst({
       where: { tenantId: tenant.id, code: body.outletCode },
@@ -37,6 +39,7 @@ export async function POST(req: Request) {
         data: { preset: body.preset },
       });
     }
+    if (!outlet) throw new Error("outlet unavailable");
 
     let register = await prisma.register.findFirst({
       where: { outletId: outlet.id, code: body.registerCode },
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
         },
       });
     }
+    if (!register) throw new Error("register unavailable");
 
     const existing = await prisma.shift.findFirst({
       where: { registerId: register.id, status: "OPEN" },
