@@ -3,7 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, FieldSelect, PRIMARY_BUTTON_CLASS, PageHeader } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  FieldSelect,
+  FORM_STACK_CLASS,
+  ModalFooter,
+  ModalShell,
+  PRIMARY_BUTTON_CLASS,
+  PageHeader,
+  SECONDARY_BUTTON_CLASS,
+} from "@era/satellite-kit/ui";
 
 type ImportReport = {
   created: number;
@@ -11,6 +20,8 @@ type ImportReport = {
   skipped: number;
   errors: { row: number; message: string }[];
 };
+
+const importFormId = "crm-import-form";
 
 export default function AdminImportPage() {
   const t = useTranslations("import");
@@ -22,6 +33,7 @@ export default function AdminImportPage() {
   const [message, setMessage] = useState("");
   const [batchId, setBatchId] = useState<string | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   async function runImport() {
     if (!file) {
@@ -42,6 +54,7 @@ export default function AdminImportPage() {
       setBatchId(data.batchId);
       setReport(data.report);
       setMessage(t("importDone", { batchId: data.batchId.slice(0, 8) }));
+      setModalOpen(false);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {
@@ -55,39 +68,18 @@ export default function AdminImportPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <Link href="/leads" className={PRIMARY_BUTTON_CLASS}>
-            {tNav("leads")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setModalOpen(true)}>
+              {t("runImport")}
+            </button>
+            <Link href="/leads" className={SECONDARY_BUTTON_CLASS}>
+              {tNav("leads")}
+            </Link>
+          </div>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4 max-w-xl`}>
         <p className="text-[13px] text-[#7F8C8D]">{t("hint")}</p>
-        <label className="block text-[13px]">
-          {t("fileLabel")}
-          <input
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            className="mt-1 block w-full text-[13px]"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
-        <FieldSelect
-          label={t("mode")}
-          preset="selectWide"
-          value={mode}
-          onChange={(e) => setMode(e.target.value as "upsert" | "create-only")}
-        >
-          <option value="upsert">{t("modeUpsert")}</option>
-          <option value="create-only">{t("modeCreateOnly")}</option>
-        </FieldSelect>
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={busy || !file}
-          onClick={() => void runImport()}
-        >
-          {busy ? tc("loading") : t("runImport")}
-        </button>
         {message && <p className="text-[13px]">{message}</p>}
         {report && (
           <div className="rounded border p-3 text-[13px] space-y-2">
@@ -112,6 +104,49 @@ export default function AdminImportPage() {
           </div>
         )}
       </div>
+      <ModalShell
+        open={modalOpen}
+        title={t("title")}
+        onClose={() => setModalOpen(false)}
+        closeLabel={tc("cancel")}
+        footer={
+          <ModalFooter
+            formId={importFormId}
+            onCancel={() => setModalOpen(false)}
+            busy={busy}
+            submitLabel={busy ? tc("loading") : t("runImport")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <form
+          id={importFormId}
+          className={FORM_STACK_CLASS}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void runImport();
+          }}
+        >
+          <label className="block text-[13px]">
+            {t("fileLabel")}
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="mt-1 block w-full text-[13px]"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+          <FieldSelect
+            label={t("mode")}
+            preset="selectWide"
+            value={mode}
+            onChange={(e) => setMode(e.target.value as "upsert" | "create-only")}
+          >
+            <option value="upsert">{t("modeUpsert")}</option>
+            <option value="create-only">{t("modeCreateOnly")}</option>
+          </FieldSelect>
+        </form>
+      </ModalShell>
     </>
   );
 }

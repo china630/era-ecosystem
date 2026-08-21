@@ -46,6 +46,7 @@ describe("lead-party", () => {
   it("builds convert payload with party fields", () => {
     const payload = buildConvertPartyPayload({
       id: "l1",
+      organizationId: "demo-org",
       partyKind: "LEGAL_ENTITY",
       taxId: "1234567890",
       companyName: "Test MMC",

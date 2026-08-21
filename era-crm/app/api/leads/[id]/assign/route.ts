@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { assignLeadDenied } from "@/lib/lead-assign-gates";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
   ownerId: z.string().nullable(),
 });
-
-const ASSIGN_ROLES = new Set(["SALES_LEAD", "BUSINESS_OWNER"]);
 
 export async function PATCH(
   req: Request,
@@ -14,9 +13,8 @@ export async function PATCH(
 ) {
   try {
     const role = req.headers.get("x-user-role");
-    if (!role || !ASSIGN_ROLES.has(role)) {
-      return jsonError("Forbidden — SALES_LEAD or BUSINESS_OWNER required", 403);
-    }
+    const assignDenied = assignLeadDenied(role);
+    if (assignDenied) return jsonError(assignDenied, 403);
 
     const { id } = await params;
     const body = bodySchema.parse(await req.json());

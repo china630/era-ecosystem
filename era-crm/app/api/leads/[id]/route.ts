@@ -1,4 +1,4 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { computeLeadScore } from "@/lib/lead-score";
 import { updateLeadSchema, toPrismaPartyData } from "@/lib/lead-schemas";
 import { syncContactRef, validatePartyForStage } from "@/lib/lead-party";
@@ -9,6 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertCrmEntitled();
     const { id } = await params;
     const lead = await prisma.lead.findUnique({
       where: { id },
@@ -33,6 +34,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertCrmEntitled();
     const { id } = await params;
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) return jsonError("Lead not found", 404);

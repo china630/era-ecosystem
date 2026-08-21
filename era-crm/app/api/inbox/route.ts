@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -12,6 +12,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    await assertCrmEntitled();
     const threads = await prisma.inboxThread.findMany({
       include: {
         lead: { select: { id: true, title: true, contactRef: true } },
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await assertCrmEntitled();
     const body = createSchema.parse(await req.json());
 
     if (body.leadId) {

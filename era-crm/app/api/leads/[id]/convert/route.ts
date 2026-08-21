@@ -1,6 +1,7 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { z } from "zod";
 import { SATELLITE_CRM_LEAD_CONVERTED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import {
@@ -25,6 +26,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertCrmEntitled();
     const { id } = await params;
     const body = bodySchema.parse(await req.json().catch(() => ({})));
 
@@ -68,7 +70,7 @@ export async function POST(
       },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const organizationId = satelliteOrganizationId();
     const amountNet = converted.estimatedAmount
       ? Number(converted.estimatedAmount)
       : 0;

@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { LeadStage } from "@prisma/client";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
+    await assertCrmEntitled();
     const rules = await prisma.pipelineRule.findMany({ orderBy: { createdAt: "desc" } });
     return jsonOk({ rules });
   } catch (err) {
@@ -20,6 +21,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    await assertCrmEntitled();
     const body = bodySchema.parse(await req.json());
     const rule = await prisma.pipelineRule.create({ data: body });
     return jsonOk(rule, 201);
