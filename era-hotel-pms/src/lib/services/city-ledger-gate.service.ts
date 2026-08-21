@@ -4,7 +4,7 @@ import { folioBalance } from '@/lib/services/folio.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { resolveCreditLimitAzn } from '@/lib/services/guest-dedup.service';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 export type CityLedgerCounterparty = {
   agencyId?: string | null;

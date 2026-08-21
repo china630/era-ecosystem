@@ -8,11 +8,13 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     reservation: {
       findUnique: (...args: unknown[]) => findUnique(...args),
+      findFirst: (...args: unknown[]) => findUnique(...args),
       update: (...args: unknown[]) => update(...args),
       create: jest.fn(),
     },
     guest: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
