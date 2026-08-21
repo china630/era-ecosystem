@@ -1,5 +1,9 @@
 import axios, { AxiosError } from "axios";
-import { resolveSatelliteOrganizationId } from "./tenancy/organization-bind-core";
+import { resolveSatelliteOrganizationId } from "./tenancy/organization-bind-runtime";
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "./tenancy/resolve-orchestrator-url";
 
 export type OrchestratorGatewayResult = {
   ok: boolean;
@@ -10,11 +14,10 @@ export type OrchestratorGatewayResult = {
 export async function publishToOrchestratorGateway(
   event: Record<string, unknown>,
 ): Promise<OrchestratorGatewayResult> {
-  const baseUrl =
-    process.env.ORCHESTRATOR_EVENT_URL ??
-    process.env.ORCHESTRATOR_URL ??
-    "http://localhost:4100";
-  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
+  const baseUrl = resolveOrchestratorBaseUrl({
+    fallback: "http://localhost:4100",
+  });
+  const token = resolveSatelliteEventServiceToken();
   if (!token && process.env.NODE_ENV === "production") {
     return {
       ok: false,
@@ -43,6 +46,10 @@ export async function publishToOrchestratorGateway(
   }
 }
 
+/**
+ * Deployment org UUID for events, SSO SEC-SSO-05, billing.
+ * Production: refuses silent `demo-org` — bind via Sync or set env first.
+ */
 export function satelliteOrganizationId(): string {
   return resolveSatelliteOrganizationId().organizationId;
 }

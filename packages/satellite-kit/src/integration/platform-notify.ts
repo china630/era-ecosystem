@@ -4,16 +4,24 @@ import {
   type SendNotificationInput,
 } from "./control-plane-platform.client";
 import { satelliteOrganizationId } from "../orchestrator-gateway";
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "../tenancy/resolve-orchestrator-url";
 
 export { satelliteOrganizationId };
 
 export function platformNotificationsEnabled(): boolean {
-  return Boolean(
-    process.env.CONTROL_PLANE_URL?.trim() &&
-      satelliteOrganizationId() &&
-      (process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
-        process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim()),
+  const hasOrch = Boolean(resolveOrchestratorBaseUrl({ fallback: "" }));
+  const hasToken = Boolean(
+    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+      resolveSatelliteEventServiceToken(),
   );
+  try {
+    return Boolean(hasOrch && hasToken && satelliteOrganizationId());
+  } catch {
+    return false;
+  }
 }
 
 /** Best-effort transactional notification; no-op when CP env is unset. */

@@ -2,21 +2,26 @@
  * CP-VERTICAL-GROWTH — thin client for era-orchestrator platform add-ons.
  */
 
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "../tenancy/resolve-orchestrator-url";
+
 export type PlatformCallOptions = {
   bearerToken?: string;
   organizationId?: string;
 };
 
 function baseUrl(): string {
-  return (process.env.CONTROL_PLANE_URL ?? "http://127.0.0.1:4100").replace(/\/$/, "");
+  return resolveOrchestratorBaseUrl({ fallback: "http://127.0.0.1:4100" });
 }
 
 function bearerToken(explicit?: string): string | undefined {
   const token =
-    explicit ??
-    process.env.CONTROL_PLANE_SERVICE_TOKEN ??
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN;
-  return token?.trim() || undefined;
+    explicit?.trim() ||
+    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+    resolveSatelliteEventServiceToken();
+  return token || undefined;
 }
 
 async function platformGet<T>(path: string, opts?: PlatformCallOptions): Promise<T> {

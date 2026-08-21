@@ -43,15 +43,29 @@
       "default": "./dist/auth/platform-super-admin.js"
     },
 
+    "./tenancy": {
+      "types": "./dist/tenancy/satellite-tenant-extension.d.ts",
+      "default": "./dist/tenancy/satellite-tenant-extension.js"
+    },
+    "./tenancy/boot": {
+      "types": "./dist/tenancy/organization-bind-core.d.ts",
+      "default": "./dist/tenancy/organization-bind-core.js"
+    },
+    "./placement": {
+      "types": "./dist/placement/slice-export.d.ts",
+      "default": "./dist/placement/slice-export.js"
+    },
     "./bff/voen-preview": {
       "types": "./dist/bff/voen-preview-route.d.ts",
       "default": "./dist/bff/voen-preview-route.js"
     },
-    "./tailwind-content": "./tailwind-content.js"
+    "./tailwind-content": "./tailwind-content.js",
+    "./icd10/generate": "./icd10/generate-icd10.cjs"
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/integration/org-entitlement-gate.test.js"
   },
   "dependencies": {
     "@era/fiscal": "file:../era-fiscal",

@@ -1,4 +1,13 @@
-/** Industry launcher config — shared by Orchestrator web (SP9). */
+/**
+ * Industry launcher config — shared by Orchestrator web (SP9).
+ *
+ * Production SoR for owner-launcher base URLs is orchestrator
+ * `SatelliteEndpoint` (orgId + satelliteKey), resolved server-side via
+ * `GET /v1/satellites/launch-url`. The NEXT_PUBLIC_SATELLITE_* / ERA_*_ORIGIN
+ * values below are **local-dev fallback only** (and webpack inlining for any
+ * client path that still reads env). Do not treat compose NEXT_PUBLIC_* as
+ * the multi-tenant production registry.
+ */
 
 export type IndustryModuleKey =
   | "RETAIL"
@@ -186,12 +195,17 @@ export function industryItemByVertical(
 }
 
 /**
- * Static NEXT_PUBLIC_* reads. The Next.js/webpack compiler only inlines direct
- * `process.env.NEXT_PUBLIC_X` member expressions into the client bundle; indirect
- * access (`const e = process.env; e[key]`) is NOT replaced and resolves to
+ * Static NEXT_PUBLIC_* reads (local-dev / webpack inlining only).
+ *
+ * Production launch URLs come from orchestrator SatelliteEndpoint via
+ * `GET /v1/satellites/launch-url` — not from these vars.
+ *
+ * The Next.js/webpack compiler only inlines direct `process.env.NEXT_PUBLIC_X`
+ * member expressions into the client bundle; indirect access
+ * (`const e = process.env; e[key]`) is NOT replaced and resolves to
  * `undefined` in the browser. Enumerate every launcher key here so the values
- * survive into the client bundle. Server-side, real `process.env` is merged on
- * top so `ERA_*_ORIGIN` fallbacks keep working.
+ * survive into the client bundle as a fallback. Server-side, real `process.env`
+ * is merged on top so `ERA_*_ORIGIN` fallbacks keep working.
  */
 function staticPublicEnv(): Record<string, string | undefined> {
   return {
@@ -224,6 +238,7 @@ export function satelliteUrlForItem(
   item: (typeof INDUSTRY_NAV_ITEMS)[number],
   env: Record<string, string | undefined> = {},
 ): string | null {
+  /** Local-dev / client fallback only — prefer registry launch-url on orch API. */
   const e = Object.keys(env).length > 0 ? env : readEnvRecord();
   const primary = e[item.satelliteUrlEnv];
   if (primary) return primary;

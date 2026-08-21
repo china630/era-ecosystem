@@ -1,8 +1,9 @@
-/**
- * Orchestrator Platform Catalog Gateway — industry sync reads (calendar, FX, VÖEN).
- */
-
 import type { FxConvertResult } from "@era/contracts";
+import { resolveSatelliteOrganizationId } from "../tenancy/organization-bind-core";
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "../tenancy/resolve-orchestrator-url";
 import type {
   FinanceFxPreviewResult,
   FinanceVoenLookupResult,
@@ -23,29 +24,28 @@ function catalogEnabled(opts?: PlatformCatalogClientOptions): boolean {
 }
 
 function baseUrl(opts?: PlatformCatalogClientOptions): string {
-  return (
-    opts?.orchestratorUrl ??
-    process.env.ORCHESTRATOR_URL ??
-    process.env.CONTROL_PLANE_URL ??
-    "http://127.0.0.1:4000"
-  ).replace(/\/$/, "");
+  if (opts?.orchestratorUrl?.trim()) {
+    return opts.orchestratorUrl.trim().replace(/\/$/, "");
+  }
+  return resolveOrchestratorBaseUrl({ fallback: "http://127.0.0.1:4000" });
 }
 
 function serviceToken(opts?: PlatformCatalogClientOptions): string | undefined {
   return (
-    opts?.serviceToken ??
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN ??
-    process.env.MDM_INTERNAL_SERVICE_TOKEN
-  )?.trim();
+    opts?.serviceToken?.trim() ||
+    resolveSatelliteEventServiceToken() ||
+    process.env.MDM_INTERNAL_SERVICE_TOKEN?.trim() ||
+    undefined
+  );
 }
 
 function organizationId(opts?: PlatformCatalogClientOptions): string | undefined {
-  return (
-    opts?.organizationId ??
-    process.env.ERA_SATELLITE_ORGANIZATION_ID ??
-    process.env.ERA_CLINIC_ORGANIZATION_ID ??
-    process.env.ERA_HOTEL_ORGANIZATION_ID
-  )?.trim();
+  const explicit = opts?.organizationId?.trim();
+  if (explicit) return explicit;
+  const { organizationId: id, source } = resolveSatelliteOrganizationId({
+    allowFallback: true,
+  });
+  return source === "fallback" ? undefined : id;
 }
 
 function authHeaders(
@@ -128,4 +128,44 @@ export async function platformVoenLookup(
     vatStatus: body.vatStatus,
     source: body.source ?? "era-data-hub",
   };
+}
+
+export type PlatformIcd10Page = {
+  version: string;
+  total?: number;
+  items: Array<{
+    code: string;
+    kind: string;
+    chapterCode: string;
+    blockCode: string;
+    parentCode: string | null;
+    titleEn: string;
+    titleRu: string;
+    titleAz: string | null;
+    searchText: string;
+    selectable: boolean;
+    active: boolean;
+  }>;
+  nextCursor?: string | null;
+};
+
+/** Industry-only: WHO ICD-10 via orchestrator gateway (not data-hub). */
+export async function platformIcd10Search(
+  params?: {
+    q?: string;
+    chapter?: string;
+    take?: number;
+    cursor?: string;
+    selectable?: boolean;
+  },
+  opts?: PlatformCatalogClientOptions,
+): Promise<PlatformIcd10Page | null> {
+  const q = new URLSearchParams();
+  if (params?.q?.trim()) q.set("q", params.q.trim());
+  if (params?.chapter?.trim()) q.set("chapter", params.chapter.trim());
+  if (params?.take != null) q.set("take", String(params.take));
+  if (params?.cursor?.trim()) q.set("cursor", params.cursor.trim());
+  if (params?.selectable === false) q.set("selectable", "0");
+  const suffix = q.toString() ? `?${q}` : "";
+  return platformCatalogGet<PlatformIcd10Page>(`/icd10${suffix}`, opts);
 }

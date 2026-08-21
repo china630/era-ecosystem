@@ -4,6 +4,10 @@ import {
   verifyGuestIdentityToken,
   type GuestIdentityTokenPayload,
 } from "../auth/guest-identity-token";
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from "../tenancy/resolve-orchestrator-url";
 
 export type GuestIdentityClientOptions = {
   orchestratorUrl?: string;
@@ -11,19 +15,18 @@ export type GuestIdentityClientOptions = {
 };
 
 function baseUrl(opts?: GuestIdentityClientOptions): string {
-  return (
-    opts?.orchestratorUrl ??
-    process.env.ORCHESTRATOR_URL ??
-    process.env.CONTROL_PLANE_URL ??
-    "http://127.0.0.1:4100"
-  ).replace(/\/$/, "");
+  if (opts?.orchestratorUrl?.trim()) {
+    return opts.orchestratorUrl.trim().replace(/\/$/, "");
+  }
+  return resolveOrchestratorBaseUrl({ fallback: "http://127.0.0.1:4100" });
 }
 
 function serviceToken(opts?: GuestIdentityClientOptions): string | undefined {
   return (
-    opts?.serviceToken ??
-    process.env.MDM_INTERNAL_SERVICE_TOKEN ??
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN
+    opts?.serviceToken?.trim() ||
+    process.env.MDM_INTERNAL_SERVICE_TOKEN?.trim() ||
+    resolveSatelliteEventServiceToken() ||
+    undefined
   );
 }
 
