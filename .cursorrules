@@ -12,7 +12,7 @@
 | `quality-tooling.mdc` | Acceptance / integration / design-token gates + shell bans |
 | `era-managed-list-controls.mdc` | Pick-lists: ban plain text; `CatalogFieldKind` → Select/Multi/Chips/Autocomplete |
 | `era-no-emergency-reset.mdc` | **Never** reset a core to green a monorepo ship — fix or split PR |
-| `era-git-ship.mdc` | **полный коммит** / per-core PR workflow → `.cursor/skills/era-git-ship/` |
+| `era-git-ship.mdc` | **полный коммит** / **шип + пуш** / per-core PR → `.cursor/skills/era-git-ship/` (local `ship:prepush` before git push) |
 | `era-legal-entities-backup.mdc` | Companies master + e-taxes cache → `D:\ERA-BACKUP\` (never stash-wipe) |
 
 **Skills:** `.cursor/skills/` — `era-readiness-matrix` (engineering API/DELIVERY), `acceptance-closeout`, `quality-gates`, `era-git-ship`.
