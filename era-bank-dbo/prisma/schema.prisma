@@ -27,6 +27,7 @@ enum SignStatus {
 
 model CustomerSession {
   id               String     @id @default(cuid())
+  organizationId   String     @map("organization_id")
   customerId       String
   globalPersonId   String?
   channel          DboChannel
@@ -41,24 +42,29 @@ model CustomerSession {
 
   @@index([customerId])
   @@index([expiresAt])
+  @@index([organizationId])
 }
 
 model CorporateApiKey {
   id              String       @id @default(cuid())
+  organizationId  String       @map("organization_id")
   customerId      String
-  keyHash         String       @unique
+  keyHash         String
   permissionsJson Json
   ipAllowlist     String[]
   status          ApiKeyStatus @default(ACTIVE)
   expiresAt       DateTime?
   createdAt       DateTime     @default(now())
 
+  @@unique([organizationId, keyHash])
   @@index([customerId])
+  @@index([organizationId])
 }
 
 model PaymentSignRequest {
   id                   String     @id @default(cuid())
-  engineOrderId        String     @unique
+  organizationId       String     @map("organization_id")
+  engineOrderId        String
   customerId           String
   status               SignStatus @default(PENDING)
   requestedBySessionId String
@@ -70,5 +76,7 @@ model PaymentSignRequest {
   requestedBy CustomerSession  @relation("RequestedBy", fields: [requestedBySessionId], references: [id])
   signedBy    CustomerSession? @relation("SignedBy", fields: [signedBySessionId], references: [id])
 
+  @@unique([organizationId, engineOrderId])
   @@index([customerId, status])
+  @@index([organizationId])
 }

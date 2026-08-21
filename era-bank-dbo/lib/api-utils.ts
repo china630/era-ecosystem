@@ -4,6 +4,10 @@ import type { CustomerSession } from "@prisma/client";
 import { resolveCustomerSession } from "@/lib/customer-session";
 import { DBO_SESSION_COOKIE } from "@/lib/dbo-session-cookie";
 import type { EngineDboError } from "@/lib/engine-dbo-client";
+import {
+  requireDboSatellite,
+  IndustryModuleInactiveError,
+} from "@/lib/dbo-module-gate";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -14,6 +18,16 @@ export function jsonError(message: string, status: number) {
 }
 
 export function handleRouteError(err: unknown) {
+  if (err instanceof IndustryModuleInactiveError) {
+    return jsonError(err.message, err.status ?? 403);
+  }
+  if (err instanceof Error && err.name === "IndustryModuleInactiveError") {
+    const status =
+      "status" in err && typeof (err as { status?: number }).status === "number"
+        ? (err as { status: number }).status
+        : 403;
+    return jsonError(err.message, status);
+  }
   if (err && typeof err === "object" && "issues" in err) {
     return jsonError("Validation failed", 400);
   }
@@ -23,6 +37,10 @@ export function handleRouteError(err: unknown) {
   }
   const msg = err instanceof Error ? err.message : "Internal error";
   return jsonError(msg, 500);
+}
+
+export async function assertDboEntitled(): Promise<void> {
+  await requireDboSatellite();
 }
 
 export async function getSessionTokenFromRequest(): Promise<string | null> {
@@ -38,6 +56,7 @@ export async function getSessionTokenFromRequest(): Promise<string | null> {
 export async function requireCustomerSession(): Promise<
   { session: CustomerSession } | NextResponse
 > {
+  await assertDboEntitled();
   const token = await getSessionTokenFromRequest();
   const session = await resolveCustomerSession(token);
   if (!session) return jsonError("Unauthorized", 401);

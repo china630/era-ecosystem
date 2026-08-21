@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, CreditCard, Home, LogOut, PieChart, Repeat, Send, ShieldCheck, Wallet } from "lucide-react";
+import { CreditCard, Home, KeyRound, LogOut, PieChart, Repeat, Send, ShieldCheck, Wallet } from "lucide-react";
 
 type Props = {
   children: React.ReactNode;
@@ -19,14 +19,17 @@ const retailItems = [
   { href: "/standing-orders", labelKey: "standingOrders" as const, icon: Repeat },
 ];
 
-const corporateExtra = { href: "/payments/approve", labelKey: "approve" as const, icon: ShieldCheck };
+const corporateExtra = [
+  { href: "/payments/approve", labelKey: "approve" as const, icon: ShieldCheck },
+  { href: "/open-api", labelKey: "openApi" as const, icon: KeyRound },
+];
 
 export default function DboShell({ children, channel = "RETAIL" }: Props) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const navItems =
     channel === "CORPORATE"
-      ? [...retailItems.slice(0, 3), corporateExtra]
+      ? [...retailItems.slice(0, 3), ...corporateExtra]
       : retailItems;
 
   async function logout() {
