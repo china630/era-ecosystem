@@ -146,7 +146,7 @@ export async function finishAppointment(id: string, auditNote?: string) {
   let folioChargeId: string | null = null;
 
   if (!included) {
-    const medicalCode = await prisma.revenueCode.findUnique({ where: { code: 'MEDICAL' } });
+    const medicalCode = await prisma.revenueCode.findFirst({ where: { code: 'MEDICAL' } });
     if (!medicalCode) throw new Error('Revenue code MEDICAL not configured');
     const charge = await postCharge({
       reservationId: appt.reservationId,

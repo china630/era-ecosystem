@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertWholesaleEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -13,6 +13,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    await assertWholesaleEntitled();
     const orders = await prisma.b2BOrder.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,

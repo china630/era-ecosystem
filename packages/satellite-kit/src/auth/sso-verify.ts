@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { getRuntimeSsoSharedSecret } from "../tenancy/runtime-config-memory";
 
 /**
  * SSO HMAC payload.
@@ -26,7 +27,7 @@ export function verifySsoSignature(
   signature: string,
   secret?: string,
 ): boolean {
-  const key = secret ?? process.env.ERA_SSO_SHARED_SECRET;
+  const key = secret ?? getRuntimeSsoSharedSecret();
   if (!key) return false;
   const expected = createHmac("sha256", key).update(payload).digest("hex");
   try {

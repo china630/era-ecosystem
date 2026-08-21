@@ -11,6 +11,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { getReportBySlug, reportHref } from '@/lib/reports/catalog';
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -164,9 +165,46 @@ export default function NightAuditReportsHubPage() {
     </div>
   );
 
+  const packSlugs = [
+    { slug: 'daily-management', label: 'B-01 Daily Management' },
+    { slug: 'trial-balance-period', label: 'B-02 Trial Balance' },
+    { slug: 'cash-report', label: 'B-03 Cash Report' },
+    { slug: 'monthly-daily-analysis', label: 'A-11 Monthly Daily' },
+    { slug: 'in-house', label: 'B-08 In-House' },
+    { slug: 'annual-occupancy', label: 'A-07 Annual Occupancy' },
+    { slug: 'folio-transactions', label: 'B-04 Folio Txns' },
+    { slug: 'department-revenues', label: 'B-05 Dept Revenues' },
+  ];
+
   return (
     <>
       <PageHeader title={t('reportsTitle')} subtitle={t('reportsSubtitle')} />
+      <section className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
+        <h2 className="mb-2 text-[13px] font-semibold text-[#2C3E50]">
+          Report Pack (PDF)
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {packSlugs.map((p) => {
+            const def = getReportBySlug(p.slug);
+            const href = def ? `${reportHref(def)}?from=${date}&to=${date}` : `/reports/${p.slug}`;
+            return (
+            <Link
+              key={p.slug}
+              href={href}
+              className="rounded bg-[#ECF0F1] px-2 py-1 text-[12px] text-[#2980B9] hover:bg-[#D5DBDB]"
+            >
+              {p.label}
+            </Link>
+            );
+          })}
+          <Link
+            href={`/api/reports/pack/download?businessDate=${date}`}
+            className="rounded bg-[#2980B9] px-3 py-1 text-[12px] font-medium text-white hover:bg-[#2471A3]"
+          >
+            ⬇ Download ZIP
+          </Link>
+        </div>
+      </section>
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => setDate(todayIso())}

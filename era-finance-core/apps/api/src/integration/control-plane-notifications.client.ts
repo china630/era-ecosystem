@@ -1,3 +1,8 @@
+import {
+  resolveControlPlaneServiceToken,
+  resolveOrchestratorInternalUrl,
+} from "../control-plane/control-plane-credentials";
+
 /** CP-VERTICAL-GROWTH - Finance to control plane Notifications Pack (ERA_NOTIFICATIONS_PACK). */
 
 export type SendNotificationInput = {
@@ -13,11 +18,14 @@ export type SendNotificationInput = {
 };
 
 function controlPlaneBaseUrl(): string {
-  return (process.env.CONTROL_PLANE_URL ?? "http://127.0.0.1:4100").replace(/\/$/, "");
+  // Runtime-config memory first (kit); CONTROL_PLANE_URL env = bootstrap only.
+  return (
+    resolveOrchestratorInternalUrl() || "http://127.0.0.1:4100"
+  ).replace(/\/$/, "");
 }
 
 function serviceBearerToken(): string | undefined {
-  const token = process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim();
+  const token = resolveControlPlaneServiceToken();
   return token || undefined;
 }
 

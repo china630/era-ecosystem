@@ -66,7 +66,10 @@ export function OrchSidebar({
       resources: pathname === "/pricing" || pathname.startsWith("/help"),
       settings:
         pathname === "/settings" ||
-        pathname.startsWith("/settings/subscription"),
+        pathname.startsWith("/settings/subscription") ||
+        pathname.startsWith("/settings/invoices") ||
+        pathname.startsWith("/settings/orders") ||
+        pathname.startsWith("/settings/team"),
       platform: pathname.startsWith("/super-admin"),
     }),
     [pathname],
@@ -180,6 +183,38 @@ export function OrchSidebar({
             nested
             onNavClick={onNavClick}
           />
+          <SideNavItem
+            href="/workspace/workforce/vacation-plans"
+            label={t("wfVacationPlans")}
+            isActive={pathname.startsWith("/workspace/workforce/vacation-plans")}
+            icon={CalendarClock}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/personnel-orders"
+            label={t("wfPersonnelOrders")}
+            isActive={pathname.startsWith("/workspace/workforce/personnel-orders")}
+            icon={Package}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/staff-schedule"
+            label={t("wfStaffSchedule")}
+            isActive={pathname.startsWith("/workspace/workforce/staff-schedule")}
+            icon={Building2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/timesheets"
+            label={t("wfTimesheets")}
+            isActive={pathname.startsWith("/workspace/workforce/timesheets")}
+            icon={CalendarClock}
+            nested
+            onNavClick={onNavClick}
+          />
           <CollapsibleNavSection
             sectionKey="workforce-security"
             title={t("wfSecurity")}
@@ -271,6 +306,22 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
+            href="/settings/invoices"
+            label={t("invoices")}
+            isActive={pathname.startsWith("/settings/invoices")}
+            icon={Package}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/settings/orders"
+            label={t("orders")}
+            isActive={pathname.startsWith("/settings/orders")}
+            icon={Tags}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
             href="/settings/team"
             label={t("team")}
             isActive={pathname.startsWith("/settings/team")}
@@ -345,6 +396,14 @@ export function OrchSidebar({
                 onNavClick={onNavClick}
               />
             </CollapsibleNavSection>
+            <SideNavItem
+              href="/super-admin/orgs"
+              label={t("platformOrgs")}
+              isActive={pathname.startsWith("/super-admin/orgs")}
+              icon={Building2}
+              nested
+              onNavClick={onNavClick}
+            />
             <CollapsibleNavSection
               sectionKey="platform-mdm"
               title={t("platformMdm")}
@@ -381,6 +440,22 @@ export function OrchSidebar({
               label={t("platformEarlyAccess")}
               isActive={pathname.startsWith("/super-admin/early-access")}
               icon={Sparkles}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href="/super-admin/referrals"
+              label={t("platformReferrals")}
+              isActive={pathname.startsWith("/super-admin/referrals")}
+              icon={Users}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href="/super-admin/landing"
+              label={t("platformLanding")}
+              isActive={pathname.startsWith("/super-admin/landing")}
+              icon={Tags}
               nested
               onNavClick={onNavClick}
             />

@@ -1,7 +1,9 @@
-import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "@era/satellite-kit";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { createSatelliteTenantExtension, hashPassword } from "@era/satellite-kit";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as PrismaClient;
 
 async function main() {
   const waiterRole = await prisma.role.upsert({

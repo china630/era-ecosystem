@@ -43,7 +43,7 @@ export async function postProcedureToFolio(
   reservationId: string,
   input: { code: string; name: string; amount: number },
 ) {
-  const medicalCode = await prisma.revenueCode.findUnique({ where: { code: 'MEDICAL' } });
+  const medicalCode = await prisma.revenueCode.findFirst({ where: { code: 'MEDICAL' } });
   if (!medicalCode) throw new Error('Revenue code MEDICAL not configured');
 
   await prisma.medicalProcedure.create({

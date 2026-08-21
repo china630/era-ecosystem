@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { SATELLITE_CLINIC_PROCEDURE_COMPLETED } from "@era/contracts";
 import { prisma } from "@/lib/prisma";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
@@ -11,6 +10,7 @@ import {
   type AttendanceActor,
 } from "@/domain/procedure/procedure-attendance.service";
 import { resolveProcedureCharge, logProcedureCharge } from "@/domain/procedure/procedure-charge.service";
+import { resolveProcedureConsumableLines } from "@/domain/master-data/master-data.service";
 
 export async function completeProcedureOrder(
   orderId: string,
@@ -55,9 +55,13 @@ export async function completeProcedureOrder(
   }
 
   const amountNet = body.amountNet ?? charge.amountNet;
-  const lines = body.consumableLines ?? [
-    { sku: `PROC-${order.procedureCode}`, qty: 1, description: order.procedureName },
-  ];
+  // Explicit caller lines win; else resolve TTK BOM. Empty BOM → [] (never PROC-{code}).
+  const lines =
+    body.consumableLines ??
+    (await resolveProcedureConsumableLines({
+      procedureTypeId: order.procedureTypeId,
+      procedureCode: order.procedureCode,
+    }));
 
   const now = new Date();
   const updated = await prisma.procedureOrder.update({
@@ -76,12 +80,13 @@ export async function completeProcedureOrder(
     "ProcedureOrder",
     orderId,
     "PROCEDURE_COMPLETE",
-    { status: "COMPLETED", amountNet, overQuota: charge.overQuota },
+    { status: "COMPLETED", amountNet, overQuota: charge.overQuota, consumableLineCount: lines.length },
   );
 
   await dispatchSatelliteEvent({
     type: SATELLITE_CLINIC_PROCEDURE_COMPLETED,
     globalPersonId: order.patientRef.globalPersonId ?? undefined,
+    correlationId: order.id,
     payload: {
       visitId: order.visitId ?? undefined,
       patientRef: order.patientRef.refCode,
@@ -92,6 +97,7 @@ export async function completeProcedureOrder(
       lines,
       reservationId: order.reservationId ?? undefined,
       overQuota: charge.overQuota,
+      procedureOrderId: order.id,
     },
   });
 
@@ -133,17 +139,7 @@ export async function completeProcedureOrder(
     externalTicketId: shouldChargeFolio ? ticketId : null,
   });
 
-  const retailBase = (process.env.RETAIL_POS_URL ?? "http://127.0.0.1:3204").replace(/\/$/, "");
-  await fetch(`${retailBase}/api/integration/stock-write-off`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      source: "clinic",
-      procedureOrderId: order.id,
-      lines,
-      correlationId: randomUUID(),
-    }),
-  }).catch(() => null);
+  // Retail HTTP stock-write-off retired (CLI-47): Finance owns TTK via event bus.
 
   return { ...updated, overQuota: charge.overQuota, folioCharged: !!shouldChargeFolio };
 }

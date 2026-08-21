@@ -118,42 +118,26 @@ PDF/Excel snapshot **на дату D** — immutable.
 
 # Часть B — Отчёты менеджера
 
+**SSOT каталога** (классификатор A0–E, nightly ZIP, меню `/reports`): [`../MANAGEMENT-REPORTS-CATALOG.md`](../MANAGEMENT-REPORTS-CATALOG.md).  
+Coverage `HOT-RPT-01` / `HOT-RPT-02` — W1 implemented (8 P0 screens + PDF + nightly ZIP), не SHIPPED (нет UAT evidence).
+
 ## B.1 Назначение
 
-KPI и операционные PDF без Excel.
+KPI и операционные PDF без Excel. Дом отчётов — меню **Reports**, не 50 пунктов в Night Audit.
 
 ## B.2 Панель отчётов
 
-**Экран:** WA0059.
-
-| Область | Метрики |
-|---------|---------|
-| Occupancy | % по датам |
-| Revenue | Room, F&B, Med total |
-| Quotes | OTB (on the books) |
-
-Фильтр: date range, compare YoY (фаза 2).
+**Экран:** WA0059 — Analysis Screens + общий фильтр дат/периодов (Pdf/Frx в ERA не копируем).
 
 ## B.3 PDF-пакет
 
-**Экран:** WA0058.
+**Экран:** WA0058 — Occupancy PDF + PDF Reports.
 
-Кнопки быстрого доступа:
-
-- Ежедневное управление  
-- Итоги дня  
-- In-house list  
-- … (настраиваемый список)
+Nafta **nightly pack** (после NA, одна кнопка ZIP; рассылку делают сами): Daily Management, Trial Balance Date Period, Cash Report, Monthly and Daily Analysis, In-house, Annual Occupancy, Folio Transactions, Department revenues. Состав настраивается (`/settings/report-pack`).
 
 ## B.4 Заполняемость по питанию
 
-**Экран:** WA0202 (must).
-
-| Строка | BB | HB | FB |
-|--------|----|----|-----|
-| Rooms | | | |
-| ADR | | | |
-| RevPAR | | | |
+**Экран:** WA0202 (must) — Board Forecast / Meal Plan в каталоге A-06 / A-12.
 
 ## B.5 CRM / PMS дубли отчётов
 
@@ -161,9 +145,11 @@ WA0121 — daily status (overlap с dashboard) — **единый отчёт** �
 
 ## B.6 Auto report sender
 
-WA0345–0346 — email рассылка HTML отчётов — **фаза 2**.
+WA0345–0346 — email рассылка — **фаза 2 / P2**. Nafta P0 = ZIP файл.
 
-## B.7 Каталог отчётов фазы 1
+## B.7 Исторический каталог фазы 1 (R01–R10)
+
+Сохранён как ранний срез; актуальные ID — таблицы A0–E в MANAGEMENT-REPORTS-CATALOG.
 
 | ID | Отчёт | Потребитель | Частота |
 |----|-------|-------------|---------|

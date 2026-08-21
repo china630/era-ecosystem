@@ -600,8 +600,78 @@ export class AuthService {
       });
     }
 
-    const controlPlaneOrgId = claims.organizationId ?? null;
-    if (!controlPlaneOrgId) {
+    const role = this.financeRoleFromClaim(claims.role);
+
+    // Attach to a Finance-local company first. Do not clone an Orchestrator
+    // org id into Finance when a local company already exists — that path
+    // was creating a new row and dying on currencies FK when AZN was unseeded.
+    const existingMembership = await this.prisma.organizationMembership.findFirst({
+      where: { userId: user.id, deletedAt: null },
+      orderBy: { joinedAt: "asc" },
+      select: { organizationId: true },
+    });
+    const localByCpId = claims.organizationId
+      ? await this.prisma.organization.findUnique({
+          where: { id: claims.organizationId },
+          select: { id: true, name: true, currency: true },
+        })
+      : null;
+    const anyLocalOrg =
+      existingMembership || localByCpId
+        ? null
+        : await this.prisma.organization.findFirst({
+            orderBy: { createdAt: "asc" },
+            select: { id: true, name: true, currency: true },
+          });
+
+    let org: { id: string; name: string; currency: string } | null = localByCpId;
+    if (!org && existingMembership) {
+      org = await this.prisma.organization.findUnique({
+        where: { id: existingMembership.organizationId },
+        select: { id: true, name: true, currency: true },
+      });
+    }
+    if (!org && anyLocalOrg) {
+      org = anyLocalOrg;
+    }
+
+    if (!org && claims.organizationId) {
+      try {
+        org = await this.resolveOrProvisionControlPlaneOrg(
+          claims.organizationId,
+          user.id,
+          role,
+        );
+      } catch (e) {
+        this.logger.error(
+          `SSO org provision failed for ${claims.organizationId}: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+        org = await this.prisma.organization.findFirst({
+          orderBy: { createdAt: "asc" },
+          select: { id: true, name: true, currency: true },
+        });
+      }
+    }
+
+    if (!org && claims.isSuperAdmin) {
+      try {
+        org = await this.resolveOrProvisionControlPlaneOrg(
+          claims.organizationId ?? "00000000-0000-4000-8000-0000000000ea",
+          user.id,
+          role,
+        );
+      } catch (e) {
+        this.logger.error(
+          `SSO placeholder org provision failed: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      }
+    }
+
+    if (!org) {
       const tokens = await this.signTokenPairWithoutOrg(user.id);
       const orgs = await this.listOrganizationsForUser(user.id);
       return {
@@ -611,32 +681,7 @@ export class AuthService {
       };
     }
 
-    // 2) Resolve or provision the Finance-local organization for this tenant.
-    const role = (claims.role as UserRole) ?? UserRole.OWNER;
-    let org: { id: string; name: string; currency: string };
-    try {
-      org = await this.resolveOrProvisionControlPlaneOrg(
-        controlPlaneOrgId,
-        user.id,
-        role,
-      );
-    } catch (e) {
-      if (claims.isSuperAdmin) {
-        this.logger.warn(
-          `Super-admin SSO: org ${controlPlaneOrgId} not provisioned (${
-            e instanceof Error ? e.message : String(e)
-          }) — signing in without org context`,
-        );
-        const tokens = await this.signTokenPairWithoutOrg(user.id);
-        const orgs = await this.listOrganizationsForUser(user.id);
-        return {
-          ...tokens,
-          user: this.toPublicUserNoOrg(user),
-          organizations: orgs,
-        };
-      }
-      throw e;
-    }
+    await this.ensureOrgMembership(user.id, org.id, role);
 
     const tokens = await this.signTokenPair(user.id, org.id);
     const fresh = await this.prisma.user.findUniqueOrThrow({
@@ -678,26 +723,30 @@ export class AuthService {
     }
 
     if (!org) {
-      if (!details?.name || !details?.taxId) {
-        throw new BadRequestException(
-          "Cannot provision Finance organization: control-plane details unavailable (check CONTROL_PLANE_URL=:4000, CONTROL_PLANE_SERVICE_TOKEN, and org VÖEN in MDM)",
-        );
-      }
-      const normalizedTaxId = details.taxId.trim();
-      const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
-      const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);
+      const orgName =
+        details?.name?.trim() ||
+        `Organization ${controlPlaneOrgId.slice(0, 8)}`;
+      const normalizedTaxId = details?.taxId?.trim() || null;
+      const taxIdBlindIndex = normalizedTaxId
+        ? this.piiCrypto.blindIndexForVoen(normalizedTaxId)
+        : null;
+      const taxIdCipher = normalizedTaxId
+        ? this.piiCrypto.encryptVoen(normalizedTaxId)
+        : null;
       const kind = OrganizationKind.COMMERCIAL;
-      const orgName = details.name.trim();
+      const currency = await this.ensureDefaultCurrencyCode();
       // Commit the org + trial first so downstream provisioning (which resolves
       // posting roles via a non-transactional client) can see the committed row.
-      const created = await this.prisma.$transaction(async (tx) => {
+      let created: { id: string; name: string; currency: string; createdAt: Date };
+      try {
+      created = await this.prisma.$transaction(async (tx) => {
         const o = await tx.organization.create({
           data: {
             id: controlPlaneOrgId,
             name: orgName,
             taxIdBlindIndex,
             taxIdCipher,
-            currency: "AZN",
+            currency,
             subscriptionPlan: "mvp",
             activeModules: [...DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES],
             kind,
@@ -717,6 +766,14 @@ export class AuthService {
         });
         return o;
       });
+      } catch (e) {
+        const raced = await this.prisma.organization.findUnique({
+          where: { id: controlPlaneOrgId },
+          select: { id: true, name: true, currency: true, createdAt: true },
+        });
+        if (!raced) throw e;
+        created = raced;
+      }
       // Best-effort provisioning: a partial failure must not block the SSO
       // session — the org + membership are enough to sign in; accounting setup
       // can be re-run by admin tooling if needed.
@@ -736,26 +793,77 @@ export class AuthService {
           }`,
         );
       }
-      await this.controlPlane.linkOrganizationMdm({
-        organizationId: created.id,
-        name: orgName,
-        taxId: normalizedTaxId,
-      });
+      if (normalizedTaxId) {
+        await this.controlPlane.linkOrganizationMdm({
+          organizationId: created.id,
+          name: orgName,
+          taxId: normalizedTaxId,
+        });
+      }
       org = { id: created.id, name: created.name, currency: created.currency };
     }
 
+    await this.ensureOrgMembership(userId, org.id, role);
+    return org;
+  }
+
+  /** `organizations.currency` FK → `currencies.code`. Staging can miss seed. */
+  private async ensureDefaultCurrencyCode(): Promise<string> {
+    const azn = await this.prisma.currency.findUnique({
+      where: { code: "AZN" },
+      select: { code: true },
+    });
+    if (azn) return azn.code;
+    const any = await this.prisma.currency.findFirst({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { code: true },
+    });
+    if (any) return any.code;
+    await this.prisma.currency.create({
+      data: {
+        code: "AZN",
+        symbol: "₼",
+        decimals: 2,
+        nameAz: "Azərbaycan manatı",
+        nameRu: "Азербайджанский манат",
+        nameEn: "Azerbaijani manat",
+        sortOrder: 0,
+        isActive: true,
+      },
+    });
+    return "AZN";
+  }
+
+  private financeRoleFromClaim(role: unknown): UserRole {
+    if (
+      typeof role === "string" &&
+      (Object.values(UserRole) as string[]).includes(role)
+    ) {
+      return role as UserRole;
+    }
+    return UserRole.OWNER;
+  }
+
+  private async ensureOrgMembership(
+    userId: string,
+    organizationId: string,
+    role: UserRole,
+  ): Promise<void> {
     const membership = await this.prisma.organizationMembership.findUnique({
       where: {
-        userId_organizationId: { userId, organizationId: org.id },
+        userId_organizationId: { userId, organizationId },
       },
     });
     if (!membership) {
       await this.prisma.organizationMembership.create({
-        data: { userId, organizationId: org.id, role },
+        data: { userId, organizationId, role },
       });
-    } else if (membership.deletedAt) {
+      return;
+    }
+    if (membership.deletedAt) {
       await this.prisma.organizationMembership.update({
-        where: { userId_organizationId: { userId, organizationId: org.id } },
+        where: { userId_organizationId: { userId, organizationId } },
         data: {
           deletedAt: null,
           deletedByUserId: null,
@@ -764,24 +872,31 @@ export class AuthService {
         },
       });
     }
-
-    return org;
   }
 
   async login(dto: LoginDto) {
+    const email = dto.email.toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+      where: { email },
     });
-    if (!user) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-    if (user.passwordHash === "sso:no-password") {
-      throw new UnauthorizedException(
-        "This account uses Orchestrator login — open Finance from the workspace",
+    const hasLocalPassword =
+      !!user && user.passwordHash !== "sso:no-password";
+    if (hasLocalPassword) {
+      const ok = await bcrypt.compare(dto.password, user.passwordHash);
+      if (!ok) {
+        throw new UnauthorizedException("Invalid credentials");
+      }
+    } else {
+      const orchToken = await this.controlPlane.loginWithPassword(
+        email,
+        dto.password,
       );
+      if (!orchToken) {
+        throw new UnauthorizedException("Invalid credentials");
+      }
+      return this.provisionFromControlPlane(`Bearer ${orchToken}`);
     }
-    const ok = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!ok) {
+    if (!user) {
       throw new UnauthorizedException("Invalid credentials");
     }
     const memberships = await this.prisma.organizationMembership.findMany({

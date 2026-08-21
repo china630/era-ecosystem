@@ -92,5 +92,6 @@ These grids are the primary surfaces operators open so the extension sees list/d
 ## References
 
 - Excel bootstrap ADR: [hotel-elektraweb-import.md](./hotel-elektraweb-import.md)
+- Shared twin / EW SHARE+Room Count 0 pairing: [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) § Elektraweb cutover
 - Nafta cutover scope: [NAFTA_SANATORIUM_UAT.md](../NAFTA_SANATORIUM_UAT.md) §6.2
 - Clinic lifecycle consumer: `era-clinic/src/lib/lifecycle-consumer.ts`

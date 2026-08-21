@@ -329,6 +329,39 @@ UI paths (no curl) for [NAFTA_DOC_API_UI_AUDIT](../../docs/NAFTA_DOC_API_UI_AUDI
 3. **Channel:** `/channel` → **Push OTA** / **Pull OTA**; confirm last sync message.
 4. **Admin:** `/admin/yield-rules` CRUD; `/admin/audit` filter by entity type + date range.
 
+## 30. Reports W1 — Management reports catalog + nightly ZIP (HOT-RPT-01/02)
+
+Prerequisite: W1 code deployed (`src/lib/reports/`, 8 P0 query services + pages + PDF, pack config).
+
+1. Switch UI locale to **az** (`/settings` or locale switcher). Open `/reports/nightly-pack` → **Download ZIP** for closed business date → open PDF inside → content in Azerbaijani (headers, labels, dates).
+2. Switch UI locale to **ru**, same page → Download ZIP → PDF content in Russian (not cached English).
+3. Each of the 8 P0 reports — open screen + **Export PDF** (no curl):
+   - `/reports/daily/management` (Daily Management)
+   - `/reports/financial/trial-balance-period` (Trial Balance Date Period)
+   - `/reports/financial/cash-report` (Cash Report)
+   - `/reports/occupancy/monthly-daily-analysis` (Monthly and Daily Analysis)
+   - `/reports/daily/in-house` (In-house)
+   - `/reports/occupancy/annual-occupancy` (Annual Occupancy)
+   - `/reports/financial/folio-transactions` (Folio Transactions)
+   - `/reports/financial/department-revenues` (Department Revenues)
+4. Night Audit `/night-audit/reports`: pack member links resolve to canonical `/reports/...` pages + Download ZIP button — not a dead list.
+5. SatAdmin `/settings/report-pack`: disable one report → Download ZIP without it.
+6. Empty report (e.g. no discounts for the day) → empty PDF renders with empty-state message, not HTTP 500.
+
+## 31. Reports W2 — remaining catalog (P1)
+
+1. Open `/reports/daily/management` tabs: List / Summary / Revenue / YoY / Forecast — each loads without curl.
+2. Open one Agency hub report (e.g. `/reports/agency/agency-monthly`) + Export PDF.
+3. Open one Booking report (e.g. `/reports/booking/cancel-by-cancel`) + Export PDF.
+4. `/reports/analytics` still reachable from Analysis hub (folded, not a second catalog).
+5. `/reports/agency-profitability` reachable from Agency hub.
+
+## 32. Reports W3 — cubes / 3-year / email ZIP link
+
+1. `/reports/analysis/cubes` — pick Revenue cube + a dimension (department) → pivot table renders (not OLAP engine).
+2. `/reports/occupancy/three-year-occ` (or `/reports/occupancy/three-year-occ` via hub) — 3-year occupancy PDF exports.
+3. Email cron (HEADLESS): `POST /api/admin/reports/email-cron?secret=…` body contains ZIP URL with `lang=` from `HOTEL_REPORT_EMAIL_LOCALE` (no UI session). Task Cube is not in Hotel PMS.
+
 ## Pass criteria
 
 - `npm run build` succeeds.
@@ -376,3 +409,39 @@ UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / 
 4. **BEO day sheet (HOT-BEO-01):** `/banquets/[id]` → preferred folio on confirm → **Print day sheet** (HTML lines/resources/staff/master folio).
 5. **CL snapshot (HOT-CL-04):** `/front-cash/agency-ledger` → select agency → see last snapshot meta → **Push CL snapshot** → **Open Finance AR** when Finance URL configured.
 6. **Channel local CM (HOT-CH-01):** `/distribution/channel` — health panel; cancel OTA by externalRef/reservationId only (no latest-OTA fallback); error journal OPEN→RESOLVED. Live Booking/Expedia/Exely = HOT-CH-02 **STUB** until vendor creds + UAT.
+
+## 30. Shared twin assignment (HOT-FO-03) (2026-08-20)
+
+UI paths (OpsUI) — required before Status=SHIPPED. Queue APIs are API-only (not a SHIPPED step).
+
+1. **Share checkbox:** reservation card → Assignment → enable **Shared twin (share)** (not near guest count) → gender Select **M or F** required → save. Ungendered guest: share refused / exclusive only.
+2. **T2 reject:** confirm male share stay when type quota full for female pool on overlapping dates → second booking rejected; first keeps slot.
+3. **Same door (N beds):** assign same-gender share singles up to `maxBed` → N lanes on room plan; badge `♂ n/N` or `♀ n/N`. Opposite gender on door → reject.
+4. **Rack / arrivals assign:** first guest IN_HOUSE on OCCUPIED door → second same-gender share assignable from rack/chessboard (not only CLEAN).
+5. **Check-in second:** second share check-in on OCCUPIED succeeds.
+6. **Partial checkout / cancel:** first share leaves while roommate remains → door OCCUPIED (bed-HK note allowed, not full DIRTY); last-out → DIRTY + HK task.
+7. **Break share:** with no roommate → Break share → exclusive; with roommate → refused until relocate.
+8. **Import/bridge (ops note, not SHIPPED):** re-import reservations where Room No is `707` + `707S` (or detail SHARE / Room Count 0) → both stays `shareEligible` on door `707`, occupancy doors = 1; NORMAL primary is never treated as clear-share. See ADR hotel-shared-twin-assignment § Elektraweb cutover.
+
+## 31. Agency portal P0–P1 (HOT-AGP) (2026-08-20)
+
+UI paths — required before SHIPPED bump for HOT-AGP-01/02/03. Module `hotel_agency_portal` must be entitled.
+
+1. **Invite:** `/distribution/travel-agencies` → agency with VÖEN → invite portal user email → grant created on orchestrator (same email on second hotel = second grant).
+2. **Login + pick:** orchestrator `/agency/login` → property picker → SSO into hotel `/agency`.
+3. **Book (AUTO off):** search dates under ACTIVE contract allotment → create stay → status **OPTION**; FO sees row on `/fo/agency-inbox`.
+4. **Confirm / decline:** inbox Confirm → CONFIRMED; Decline → CANCELLED (quota released).
+5. **Isolation:** agency session cannot open `/fo` or `/api/admin`; cannot book another agencyId.
+6. **Passport (optional):** upload scan on create or card → FO sees attachment; not sent to KBS.
+7. **AUTO on:** SatAdmin sets `agencyPortalAutoConfirm` in pricing/policy settings → create → CONFIRMED when allotment allows.
+
+## 33. Early checkout unused-nights refund (HOT-CO-04)
+
+UI paths (OpsUI) — ADR: [hotel-early-checkout-unused-nights.md](../../docs/adr/hotel-early-checkout-unused-nights.md).
+
+1. Prepaid / posted stay with night-audit lodging for N nights; open check-out **before** planned `checkOutDate` (folio page or chessboard).
+2. Confirm modal shows unused nights, unused gross, VAT 18% withheld, **cash to guest** = net; tender default **CASH** (CARD optional).
+3. Confirm → unused night charges voided (or lump partially reversed); GUEST refund payment = net; COMPANY/AGENCY AR reduced without agency cash payout.
+4. Negative: departure on/after planned checkout → no unused-nights block (H-BL-09 hour fees still apply if policy).
+5. Clinic leftover procedures cancel via `GUEST_CHECKED_OUT` — no clinic cash payout.
+

@@ -20,3 +20,6 @@ alwaysApply: false
 | EDI | `edi/export` | export integrations |
 | MDM | `mdm/voen-lookup` | buyer lookup |
 | Events | `events/dispatch` | orchestrator |
+| Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
+
+**Tenancy (CP-TENANT-01):** `organizationId` on tenant/ops models + kit Prisma extension + `requireSatelliteModule("industry_wholesale")` (AC-WS-TENANT 🟡 — not live SHARED pool).

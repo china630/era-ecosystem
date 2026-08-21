@@ -3,6 +3,8 @@ import { Cron } from "@nestjs/schedule";
 import { EmployeeEmploymentStatus, EmployeeKind, UserRole } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { CronModuleGateService } from "../subscription/cron-module-gate.service";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { batchEmployeePersonMap } from "./employee-person.util";
 import {
   notificationsPackEnabled,
@@ -37,6 +39,7 @@ export class HrRemindersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mdm: OrchestratorMdmClientService,
+    private readonly cronGate: CronModuleGateService,
   ) {}
 
   /** Daily 08:00 Asia/Baku — contract end T-7 and birthdays. */
@@ -74,6 +77,11 @@ export class HrRemindersService {
     }
     const personLabels = new Map<string, string>();
     for (const [orgId, orgEmps] of byOrg) {
+      const on = await this.cronGate.isModuleOn(orgId, ModuleEntitlement.HR_FULL);
+      if (!on) {
+        this.logger.debug(`HR reminders skipped org ${orgId}: hr_full off`);
+        continue;
+      }
       const map = await batchEmployeePersonMap(
         this.mdm,
         orgId,

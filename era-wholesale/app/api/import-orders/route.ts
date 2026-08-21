@@ -1,8 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { financeExternalPurchase } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { wholesaleTermDueDate } from "@/lib/production-calendar";
 import { prisma } from "@/lib/prisma";
+
+type ImportOrderWithLines = Prisma.ImportPurchaseOrderGetPayload<{ include: { lines: true } }>;
 
 const lineSchema = z.object({
   sku: z.string().min(1),
@@ -71,10 +74,10 @@ export async function PATCH(req: Request) {
         confirm: z.literal(true),
       })
       .parse(await req.json());
-    const order = await prisma.importPurchaseOrder.findUnique({
+    const order = (await prisma.importPurchaseOrder.findUnique({
       where: { id: body.id },
       include: { lines: true },
-    });
+    })) as ImportOrderWithLines | null;
     if (!order) return jsonError("Import order not found", 404);
     if (order.status === "CONFIRMED") return jsonOk(order);
 

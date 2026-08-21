@@ -66,7 +66,7 @@ export async function completeVisitBilling(visitId: string) {
     payload: {
       visitId: visit.id,
       patientRef: visit.patientRef.refCode,
-      serviceCodes: visit.serviceLines.map((l) => l.serviceCode),
+      serviceCodes: visit.serviceLines.map((l: { serviceCode: string }) => l.serviceCode),
       amountNet,
       currency: "AZN",
     },

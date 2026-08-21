@@ -228,33 +228,51 @@ model HotelProfile {
   name                     String
   currency                 String    @default("AZN")
   timezone                 String    @default("Asia/Baku")
-  propertyCode             String    @unique
-  organizationId           String    @default("nafta-sanatorium-org")
+  propertyCode             String
+  organizationId           String   
   roomCapacity             Int       @default(78)
   integrationSettingsJson  String?   @db.Text
   currentBusinessDate      DateTime? @db.Date
   businessDateLocked       Boolean   @default(false)
   defaultCreditLimitAzn    Decimal?  @db.Decimal(12, 2)
+  /**
+   * Hotel-wide feature flags / settings JSON.
+   *
+   * Shape stored in `HotelProfile.policyJson.nightAuditReportPack`:
+   * interface ReportPackConfig {
+   *   enabled: boolean;
+   *   slugs: string[]; // ordered list of enabled report slugs
+   * }
+   *
+   * Nafta default pack is 8 enabled slugs:
+   * ['daily-management','trial-balance-period','cash-report','monthly-daily-analysis','in-house','annual-occupancy','folio-transactions','department-revenues']
+   */
   policyJson               String?   @db.Text
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
+  @@unique([organizationId, propertyCode])
+  @@index([organizationId])
 }
 
 model Role {
   id              String   @id @default(uuid())
-  code            String   @unique
+  organizationId String
+  code            String
   name            String
   permissionsJson String   @db.Text
   users           User[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model User {
   id                String     @id @default(uuid())
-  login             String     @unique
+  organizationId String
+  login             String
   email             String?
-  phone             String?    @unique
+  phone             String?    
   passwordHash      String
   fullName          String
   department        String?
@@ -271,6 +289,9 @@ model User {
 
   @@index([roleId])
   @@index([status])
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }
 
 enum RatePlanType {
@@ -322,6 +343,7 @@ enum HotelLookupKind {
 
 model HotelLookup {
   id        String          @id @default(uuid())
+  organizationId String
   kind      HotelLookupKind
   code      String
   name      String
@@ -330,32 +352,40 @@ model HotelLookup {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  @@unique([kind, code])
+  @@unique([organizationId, kind, code])
   @@index([kind, active, sortOrder])
+  @@index([organizationId])
 }
 
 model RoomView {
   id        String   @id @default(uuid())
-  code      String   @unique
+  organizationId String
+  code      String
   name      String
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model BedType {
   id         String   @id @default(uuid())
-  code       String   @unique
+  organizationId String
+  code       String
   name       String
   systemType String?
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model RoomType {
   id            String              @id @default(uuid())
-  code          String              @unique
+  organizationId String
+  code          String
   name          String
   adultCapacity Int                 @default(2)
   childCapacity Int                 @default(0)
@@ -372,22 +402,27 @@ model RoomType {
   allotmentBlockLines AllotmentBlockLine[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ChannelStopSell {
-  id         String    @id @default(uuid())
-  date       DateTime  @db.Date
-  roomTypeId String?
-  roomType   RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
-  note       String?
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(uuid())
+  organizationId String   
+  date           DateTime  @db.Date
+  roomTypeId     String?
+  roomType       RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  note           String?
+  createdAt      DateTime  @default(now())
 
-  @@unique([date, roomTypeId])
+  @@unique([organizationId, date, roomTypeId])
+  @@index([organizationId])
 }
 
 model Room {
   id           String             @id @default(uuid())
-  roomNumber   String             @unique
+  organizationId String
+  roomNumber   String
   roomTypeId   String
   roomType     RoomType           @relation(fields: [roomTypeId], references: [id])
   floor        Int                @default(1)
@@ -408,19 +443,25 @@ model Room {
   roomChangesTo   RoomChangePlan[] @relation("RoomChangeTo")
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
+  @@unique([organizationId, roomNumber])
+  @@index([organizationId])
 }
 
 model MealPlan {
   id           String        @id @default(uuid())
-  code         String        @unique
+  organizationId String
+  code         String
   name         String
   ratePlans    RatePlan[]
   reservations Reservation[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model RatePlan {
   id            String        @id @default(uuid())
-  code          String        @unique
+  organizationId String
+  code          String
   name          String
   type          RatePlanType  @default(DERIVED)
 
@@ -464,6 +505,8 @@ model RatePlan {
   allotmentBlockLines AllotmentBlockLine[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 // Absolute price calendar — only for BASE (BAR) rate plans, per room type and date
@@ -474,6 +517,7 @@ enum RoomTypeRateSource {
 
 model RoomTypeRate {
   id           String              @id @default(uuid())
+  /// Tenant isolation via RatePlan / RoomType parents — not a query root. Cross-org FK is a service invariant.
   ratePlanId   String
   ratePlan     RatePlan            @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
   roomTypeId   String
@@ -492,7 +536,8 @@ model RoomTypeRate {
 
 model AddOn {
   id            String           @id @default(uuid())
-  code          String           @unique
+  organizationId String
+  code          String
   name          String
   price         Decimal          @db.Decimal(12, 2)
   pricingUnit   AddOnPricingUnit @default(PER_GUEST_NIGHT)
@@ -503,6 +548,8 @@ model AddOn {
   ratePlanLinks RatePlanAddOn[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model RatePlanAddOn {
@@ -534,13 +581,16 @@ model RatePlanPackageLine {
 
 model ProcedureService {
   id            String               @id @default(uuid())
-  code          String               @unique
+  organizationId String
+  code          String
   name          String
   durationMin   Int                  @default(30)
   defaultAmount Decimal              @db.Decimal(12, 2)
   appointments  ProcedureAppointment[]
   inclusions    RatePlanProcedureInclusion[]
   createdAt     DateTime             @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model RatePlanProcedureInclusion {
@@ -575,15 +625,19 @@ model ProcedureAppointment {
 
 model Department {
   id           String        @id @default(uuid())
-  code         String        @unique
+  organizationId String
+  code         String
   name         String
   revenueCodes RevenueCode[]
   charges      FolioCharge[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model RevenueCode {
   id           String             @id @default(uuid())
-  code         String             @unique
+  organizationId String
+  code         String
   name         String
   taxTag       String?
   active       Boolean            @default(true)
@@ -597,6 +651,8 @@ model RevenueCode {
   ratePlansRoom RatePlan[]        @relation("RatePlanRoomRevenue")
   addOns        AddOn[]           @relation("AddOnRevenue")
   eventOrderLines EventOrderLine[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model HotelRevenueGlMapping {
@@ -610,16 +666,22 @@ model HotelRevenueGlMapping {
 
 model BookingSource {
   id           String        @id @default(uuid())
-  code         String        @unique
+  organizationId String
+  code         String
   name         String
   reservations Reservation[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model Agency {
   id                   String              @id @default(uuid())
-  code                 String              @unique
+  organizationId String
+  code                 String
   name                 String
   voen                 String?
+  /** Local cache for Finance counterparty (resolved by agency VÖEN). */
+  financeCounterpartyId String?
   commissionPercent    Decimal?            @db.Decimal(5, 2)
   /** Max open AR (PENDING_AR + TRANSFERRED_AR) for this agency; null = use stay/hotel default */
   creditLimitAzn       Decimal?            @db.Decimal(12, 2)
@@ -632,6 +694,8 @@ model Agency {
   contractPricingRules ContractPricingRule[]
   salesContracts       SalesContract[]
   banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 enum ContractPricingRuleType {
@@ -680,7 +744,8 @@ model ContractPricingRule {
 
 model SalesContract {
   id                String                        @id @default(uuid())
-  code              String                        @unique
+  organizationId String
+  code              String
   name              String
   counterpartyType  SalesContractCounterpartyType @default(AGENCY)
   agencyId          String?
@@ -710,6 +775,8 @@ model SalesContract {
 
   @@index([agencyId, status])
   @@index([validFrom, validTo])
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ContractAllotment {
@@ -731,7 +798,8 @@ model ContractAllotment {
 
 model Guest {
   id                 String         @id @default(uuid())
-  externalRef        String?        @unique
+  organizationId String
+  externalRef        String?
   globalPersonId     String?
   fullName           String
   firstName          String?
@@ -805,7 +873,9 @@ model Guest {
   salesContracts       SalesContract[]     @relation("SalesContractCompany")
   banquetEventsAsCompany BanquetEvent[]    @relation("BanquetCompanyGuest")
 
+  @@unique([organizationId, externalRef])
   @@index([globalPersonId])
+  @@index([organizationId])
 }
 
 enum MigrationRegistrationStatus {
@@ -1099,7 +1169,8 @@ model GuestAddress {
 
 model ReservationGroup {
   id               String           @id @default(uuid())
-  code             String           @unique
+  organizationId String
+  code             String
   name             String?
   agencyId         String?
   agency           Agency?          @relation(fields: [agencyId], references: [id], onDelete: SetNull)
@@ -1117,12 +1188,15 @@ model ReservationGroup {
 
   @@index([allotmentBlockId])
   @@index([agencyId])
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 /** Corporate negotiation block — inventory hold before / during pickup into bookings. */
 model AllotmentBlock {
   id              String               @id @default(uuid())
-  code            String               @unique
+  organizationId String
+  code            String
   name            String?
   status          AllotmentBlockStatus @default(TENTATIVE)
   agencyId        String?
@@ -1142,6 +1216,8 @@ model AllotmentBlock {
   @@index([agencyId, status])
   @@index([validFrom, validTo])
   @@index([cutoffDate])
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model AllotmentBlockLine {
@@ -1163,7 +1239,8 @@ model AllotmentBlockLine {
 
 model Reservation {
   id            String            @id @default(uuid())
-  externalRef   String?           @unique
+  organizationId String
+  externalRef   String?
   roomTypeId    String
   roomType      RoomType          @relation(fields: [roomTypeId], references: [id])
   roomId        String?
@@ -1213,6 +1290,12 @@ model Reservation {
   colorCode     String?
   resNo         String?
   shareNo       String?
+  /** FO opted into shared-twin assignment (union singles). Not the Elektraweb shareNo label. */
+  shareEligible Boolean           @default(false)
+  /** M | F — locked from guest gender when shareEligible; required before confirm consumes inventory. */
+  shareGender   String?
+  /** Bed slot 1|2 on assigned door after share assign. */
+  shareBedIndex Int?
   /** PRIMARY = one folio owner; EQUAL = each party member has own GUEST folio. */
   partyBillingMode PartyBillingMode @default(PRIMARY)
   optionDate    DateTime?
@@ -1262,6 +1345,8 @@ model Reservation {
   @@index([agencyId])
   @@index([groupId])
   @@index([salesContractId])
+  @@unique([organizationId, externalRef])
+  @@index([organizationId])
 }
 
 model ReservationPaymentCard {
@@ -1340,9 +1425,13 @@ model ReservationAttachment {
   fileName      String
   mimeType      String?
   fileSize      Int?
+  /** PASSPORT_SCAN | OTHER */
+  kind          String      @default("OTHER")
+  storageKey    String?
   createdAt     DateTime    @default(now())
 
   @@index([reservationId])
+  @@index([kind])
 }
 
 model ReservationNote {
@@ -1397,12 +1486,15 @@ enum RoomChangeStatus {
 
 model PromotionCode {
   id             String   @id @default(uuid())
-  code           String   @unique
+  organizationId String
+  code           String
   discountPercent Decimal @db.Decimal(5, 2)
   validFrom      DateTime @db.Date
   validTo        DateTime? @db.Date
   active         Boolean  @default(true)
   createdAt      DateTime @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ChildPricingMatrix {
@@ -1420,6 +1512,7 @@ model ChildPricingMatrix {
 
 model RoomClosure {
   id        String   @id @default(uuid())
+  organizationId String
   roomId    String
   room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   startDate DateTime @db.Date
@@ -1428,24 +1521,31 @@ model RoomClosure {
   createdAt DateTime @default(now())
 
   @@index([roomId])
+  @@index([organizationId])
 }
 
 model Housekeeper {
   id        String             @id @default(uuid())
-  code      String             @unique
+  organizationId String
+  code      String
   name      String
   active    Boolean            @default(true)
   tasks     HousekeepingTask[]
   createdAt DateTime           @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model MinibarItem {
   id        String           @id @default(uuid())
-  code      String           @unique
+  organizationId String
+  code      String
   name      String
   price     Decimal          @db.Decimal(12, 2)
   active    Boolean          @default(true)
   postings  MinibarPosting[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model MinibarPosting {
@@ -1479,6 +1579,7 @@ model MinibarEvent {
 
 model LostFoundItem {
   id          String            @id @default(uuid())
+  organizationId String
   foundDate   DateTime          @db.Date
   location    String
   description String
@@ -1486,6 +1587,7 @@ model LostFoundItem {
   guestId     String?
   guest       Guest?            @relation(fields: [guestId], references: [id])
   createdAt   DateTime          @default(now())
+  @@index([organizationId])
 }
 
 enum LostFoundStatus {
@@ -1496,21 +1598,27 @@ enum LostFoundStatus {
 
 model SpaPlace {
   id        String   @id @default(uuid())
-  code      String   @unique
+  organizationId String
+  code      String
   name      String
   capacity  Int      @default(1)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model Channel {
   id           String               @id @default(uuid())
-  code         String               @unique
+  organizationId String
+  code         String
   name         String
   active       Boolean              @default(true)
   roomMappings ChannelRoomMapping[]
   rateMappings ChannelRateMapping[]
   createdAt    DateTime             @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ChannelRoomMapping {
@@ -1537,15 +1645,18 @@ model ChannelRateMapping {
 
 model Stay {
   id             String      @id @default(uuid())
+  organizationId String
   reservationId  String      @unique
   reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   actualCheckIn  DateTime
   actualCheckOut DateTime?
   createdAt      DateTime    @default(now())
+  @@index([organizationId])
 }
 
 model Folio {
   id            String         @id @default(uuid())
+  organizationId String
   reservationId String
   reservation   Reservation    @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   /** Personal party folio when partyBillingMode=EQUAL (one GUEST folio per ReservationGuest). */
@@ -1562,6 +1673,7 @@ model Folio {
   updatedAt       DateTime         @updatedAt
 
   @@index([reservationId])
+  @@index([organizationId])
 }
 
 model FiscalDocument {
@@ -1710,6 +1822,7 @@ model CardAuthorization {
 
 model CashShift {
   id         String          @id @default(uuid())
+  organizationId String
   cashier    String
   registerId String
   status     CashShiftStatus @default(OPEN)
@@ -1717,6 +1830,7 @@ model CashShift {
   openedAt   DateTime        @default(now())
   closedAt   DateTime?
   pendingSettlements SettlementPendingCharge[]
+  @@index([organizationId])
 }
 
 model SettlementPendingCharge {
@@ -1750,13 +1864,17 @@ model SettlementPendingCharge {
 
 model BusinessDay {
   id        String            @id @default(uuid())
-  date      DateTime          @unique @db.Date
+  organizationId String
+  date      DateTime          @db.Date
   status    BusinessDayStatus @default(OPEN)
   nightRuns NightAuditRun[]
+  @@unique([organizationId, date])
+  @@index([organizationId])
 }
 
 model NightAuditRun {
   id            String           @id @default(uuid())
+  organizationId String
   businessDayId String
   businessDay   BusinessDay      @relation(fields: [businessDayId], references: [id])
   status        NightAuditStatus @default(RUNNING)
@@ -1764,10 +1882,12 @@ model NightAuditRun {
   errorsJson    String?          @db.Text
   completedAt   DateTime?
   createdAt     DateTime         @default(now())
+  @@index([organizationId])
 }
 
 model HousekeepingTask {
   id            String                 @id @default(uuid())
+  organizationId String
   roomId        String
   room          Room                   @relation(fields: [roomId], references: [id])
   housekeeperId String?
@@ -1776,6 +1896,7 @@ model HousekeepingTask {
   notes         String?
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
+  @@index([organizationId])
 }
 
 model ChannelSyncError {
@@ -1846,7 +1967,8 @@ model TourismSubmission {
 
 model PosResource {
   id            String             @id @default(uuid())
-  code          String             @unique
+  organizationId String
+  code          String
   name          String
   resourceType  PosResourceType
   outletCode    String             @default("RESTAURANT")
@@ -1855,11 +1977,14 @@ model PosResource {
   banquetSaloon BanquetSaloon?
   eventResourceBookings EventResourceBooking[]
   createdAt     DateTime           @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model BanquetSaloon {
   id            String         @id @default(uuid())
-  code          String         @unique
+  organizationId String
+  code          String
   name          String
   maxPax        Int            @default(100)
   posResourceId String?        @unique
@@ -1869,21 +1994,27 @@ model BanquetSaloon {
   resourceBookings EventResourceBooking[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model BanquetMenuPackage {
   id          String         @id @default(uuid())
-  code        String         @unique
+  organizationId String
+  code        String
   name        String
   pricePerPax Decimal        @db.Decimal(12, 2)
   active      Boolean        @default(true)
   events      BanquetEvent[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model BanquetEvent {
   id               String             @id @default(uuid())
+  organizationId String
   referenceNo      String?
   eventName        String
   saloonId         String
@@ -1921,6 +2052,7 @@ model BanquetEvent {
   @@index([reservationId])
   @@index([salesContractId])
   @@index([agencyId])
+  @@index([organizationId])
 }
 
 model EventOrderLine {
@@ -2027,23 +2159,32 @@ model PosRoomChargeIdempotency {
 }
 
 model Warehouse {
-  id         String          @id @default(uuid())
-  code       String          @unique
-  name       String
-  movements  StockMovement[]
-  createdAt  DateTime        @default(now())
+  id             String          @id @default(uuid())
+  organizationId String         
+  code           String
+  name           String
+  movements      StockMovement[]
+  createdAt      DateTime        @default(now())
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ProductGroup {
-  id       String    @id @default(uuid())
-  code     String    @unique
-  name     String
-  products Product[]
+  id             String    @id @default(uuid())
+  organizationId String   
+  code           String
+  name           String
+  products       Product[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model Product {
   id           String          @id @default(uuid())
-  code         String          @unique
+  organizationId String       
+  code         String
   name         String
   productType  ProductType     @default(STOCK)
   groupId      String?
@@ -2062,19 +2203,26 @@ model Product {
   recipeLines  RecipeLine[]    @relation("Ingredient")
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model TransferVehicle {
-  id            String          @id @default(uuid())
-  code          String          @unique
-  brand         String
-  licensePlate  String
-  driverName    String?
-  driverPhone   String?
-  maxSeats      Int             @default(4)
-  active        Boolean         @default(true)
+  id             String          @id @default(uuid())
+  organizationId String         
+  code           String
+  brand          String
+  licensePlate   String
+  driverName     String?
+  driverPhone    String?
+  maxSeats       Int             @default(4)
+  active         Boolean         @default(true)
   transferOrders TransferOrder[]
-  createdAt     DateTime        @default(now())
+  createdAt      DateTime        @default(now())
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model TransferOrder {
@@ -2106,17 +2254,21 @@ enum ConciergeOrderStatus {
 }
 
 model ConciergeProduct {
-  id            String           @id @default(uuid())
-  code          String           @unique
-  name          String
+  id             String           @id @default(uuid())
+  organizationId String          
+  code           String
+  name           String
   /// HotelLookup CONCIERGE_CATEGORY code
-  category      String           @default("EXCURSION")
-  supplierName  String?
-  commissionPct Decimal?         @db.Decimal(5, 2)
-  price         Decimal          @db.Decimal(12, 2)
-  active        Boolean          @default(true)
-  orders        ConciergeOrder[]
-  createdAt     DateTime         @default(now())
+  category       String           @default("EXCURSION")
+  supplierName   String?
+  commissionPct  Decimal?         @db.Decimal(5, 2)
+  price          Decimal          @db.Decimal(12, 2)
+  active         Boolean          @default(true)
+  orders         ConciergeOrder[]
+  createdAt      DateTime         @default(now())
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ConciergeOrder {
@@ -2146,13 +2298,17 @@ enum DispatchRequestStatus {
 }
 
 model DispatchVehicle {
-  id        String            @id @default(uuid())
-  code      String            @unique
-  name      String
-  capacity  Int               @default(4)
-  active    Boolean           @default(true)
-  requests  DispatchRequest[]
-  createdAt DateTime          @default(now())
+  id             String            @id @default(uuid())
+  organizationId String           
+  code           String
+  name           String
+  capacity       Int               @default(4)
+  active         Boolean           @default(true)
+  requests       DispatchRequest[]
+  createdAt      DateTime          @default(now())
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model DispatchRequest {
@@ -2225,11 +2381,14 @@ model OutboundEventLog {
 
 model YieldRule {
   id              String   @id @default(uuid())
+  organizationId  String  
   propertyCode    String
   minOccupancyPct Decimal  @db.Decimal(5, 2)
   rateAdjustment  Decimal  @db.Decimal(5, 2)
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
+
+  @@index([organizationId])
 }
 
 enum ServiceWorkOrderStatus {
@@ -2262,8 +2421,9 @@ enum ServiceCadence {
 }
 
 model MaintenanceWorkOrder {
-  id          String                 @id @default(uuid())
-  roomId      String?
+  id             String                 @id @default(uuid())
+  organizationId String                
+  roomId         String?
   room        Room?                  @relation(fields: [roomId], references: [id])
   title       String
   description String?
@@ -2280,11 +2440,13 @@ model MaintenanceWorkOrder {
 
   @@index([roomId])
   @@index([status])
+  @@index([organizationId])
 }
 
 model RecurringServiceSchedule {
-  id          String         @id @default(uuid())
-  title       String
+  id             String         @id @default(uuid())
+  organizationId String        
+  title          String
   category    String?
   cadence     ServiceCadence
   anchorDate  DateTime?
@@ -2299,10 +2461,12 @@ model RecurringServiceSchedule {
 
   @@index([nextDueAt])
   @@index([enabled])
+  @@index([organizationId])
 }
 
 model SatelliteAuditLog {
   id            String   @id @default(uuid())
+  organizationId String
   userId        String?  @map("user_id")
   entityType    String   @map("entity_type")
   entityId      String   @map("entity_id")
@@ -2315,6 +2479,7 @@ model SatelliteAuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("satellite_audit_logs")
+  @@index([organizationId])
 }
 
 /// Versioned BAR / unit-economics building blocks (service fee, meals, COGS).
@@ -2352,18 +2517,21 @@ model RatePlanSellVersion {
 }
 
 model PricingComponent {
-  id        String               @id @default(uuid())
-  code      String               @unique
-  name      String
-  kind      PricingComponentKind
-  unit      PricingAmountUnit
-  sortOrder Int                  @default(0)
-  active    Boolean              @default(true)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  versions  PricingComponentVersion[]
+  id             String               @id @default(uuid())
+  organizationId String              
+  code           String
+  name           String
+  kind           PricingComponentKind
+  unit           PricingAmountUnit
+  sortOrder      Int                  @default(0)
+  active         Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  versions       PricingComponentVersion[]
 
+  @@unique([organizationId, code])
   @@index([kind, sortOrder])
+  @@index([organizationId])
 }
 
 model PricingComponentVersion {

@@ -14,6 +14,8 @@
 
 - In scope: POS, promos, BOPIS, stock, fiscal stub, marketplace webhooks
 - Out of scope: Live KKM certification
+- **Declared, not this edition:** SHARED retail pool — [deployment-topology.md](../adr/deployment-topology.md). Tenant roots + kit filter (CP-TENANT-01 API / AC-RET-TENANT 🟡); Nafta retail = DEDICATED/ONPREM. Do not sell SHARED retail.
+- **Wave 8:** AC-RET-FISCAL stays Scaffold 🟡 (External STUB) and is **out of Scaffold BE rollup** (Hotel INT) — Scaffold BE ✅ ≠ live fiscal GA
 
 ## Definition of Done (soft / scaffold)
 

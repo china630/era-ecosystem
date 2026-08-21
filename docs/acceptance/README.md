@@ -15,17 +15,23 @@
 | «полный банк / чего нет / OUT scope» | [`Bank-Capability-Inventory.md`](./Bank-Capability-Inventory.md) |
 | «BE Lite / Deep bank API» | [`Bank-BE-Roadmap.md`](./Bank-BE-Roadmap.md) |
 | «матрица готовности API / §4 / consumer / обнови READINESS» | [`docs/READINESS_MATRIX.md`](../READINESS_MATRIX.md) + skill `era-readiness-matrix` |
+| «есть ли экран / UI покрывает API / класс NONE·SCREEN·SHOW» | [`UI-COVERAGE-BOARD.md`](./UI-COVERAGE-BOARD.md) (derived; sell still Product-Readiness) |
 
 **Forbidden:** answering sell/show from COVERAGE SHIPPED or DELIVERY % alone.  
 **Forbidden:** treating Bank AC all ✅ as «полная коммерческая АБС» — check Capability Inventory OUT.
 
-## Closeout (5 steps)
+## Closeout (6 steps)
 
 1. Update COVERAGE_MATRIX row(s) for touched capabilities.  
 2. Update Implementation-Matrix (Scaffold ✅ only per canon §3.2).  
 3. Update Product-Readiness-Matrix (rollup = worst layers).  
-4. Sync Sprint-Index / editions yaml if gate or sell claim changed.  
-5. `npm run check:acceptance` (strict before PR: `npm run check:acceptance:strict`).
+4. If UI class changed (NONE/SCREEN/SHOW): update [`UI-COVERAGE-BOARD.md`](./UI-COVERAGE-BOARD.md).  
+5. Sync Sprint-Index / editions yaml if gate or sell claim changed.  
+6. `npm run check:acceptance` (strict before PR: `npm run check:acceptance:strict`).
+
+Scaffold BE program (2026-08): Implementation-Matrix Residual register separates **Code** leftovers (negative-path) from **External ⏸** (vendor/fiscal/HL7/e-taxes/WhatsApp). TENANT ACs stay out of BE rollup.  
+**Vendor leftovers (Hotel INT):** FISCAL / WA / VOEN / Hotel INT / Clinic HL7+KKM residuals stay Scaffold 🟡 and **out of** that product’s BE rollup — without marking those ACs Scaffold ✅.  
+**Code leftovers in rollup:** AC-DBO-OPEN and AC-CP-TOPO stay Scaffold 🟡 **in** Bank DBO / Platform BE rollup — [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md). Scaffold BE ✅ ≠ SHIPPED / ga / SaaS pool.
 
 ## Product lines
 
@@ -58,3 +64,6 @@
 ## Related
 
 - Security & Hygiene program (AuthZ / SAST / DAST / remediation waves): [`SECURITY_HYGIENE_PROGRAM.md`](../SECURITY_HYGIENE_PROGRAM.md)
+- Deployment topology (SHARED / DEDICATED / ONPREM vs DEPARTMENT / Outlet): [`docs/adr/deployment-topology.md`](../adr/deployment-topology.md) — waves 0–5 + CP-LIC-01 license defaults (API); **not** a live SHARED SaaS pool
+- Return to OPEN + TOPO (in-rollup 🟡): [`BE-OPEN-AND-TOPO-RETURN.md`](./BE-OPEN-AND-TOPO-RETURN.md)
+- UI class board (NONE / SCREEN / SHOW vs sell): [`UI-COVERAGE-BOARD.md`](./UI-COVERAGE-BOARD.md)

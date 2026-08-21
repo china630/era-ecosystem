@@ -26,7 +26,7 @@ src/
 | `domain/visit/` | Appointments, check-in, visit lines, complete |
 | `domain/lab/` | Lab order lifecycle |
 | `domain/inpatient/` | Ward, bed, assignment, ADT-light (Phase 4) |
-| `domain/sanatorium/` | Episodes, program, chart, planner |
+| `domain/sanatorium/` | Episodes, program, chart, planner. Time layers: [clinic-scheduling-time-layers.md](../../docs/adr/clinic-scheduling-time-layers.md) |
 | `domain/catalog/` | Service cache sync |
 | `domain/billing/` | Event dispatch, origin routing |
 

@@ -33,6 +33,35 @@ export async function fetchSatelliteSsoTicket(
   }
 }
 
+/**
+ * Fetch owner-launcher base URL from orchestrator SoR (SatelliteEndpoint),
+ * with server-side NEXT_PUBLIC_* / ERA_*_ORIGIN fallback for local-dev.
+ */
+export async function fetchSatelliteLaunchUrl(
+  accessToken: string,
+  satelliteKey: string,
+): Promise<{ baseUrl: string; source: "registry" | "env" } | null> {
+  try {
+    const q = encodeURIComponent(satelliteKey);
+    const res = await orchFetch(`/v1/satellites/launch-url?satelliteKey=${q}`, {
+      method: "GET",
+      token: accessToken,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      baseUrl?: string;
+      source?: "registry" | "env";
+    };
+    if (!data.baseUrl) return null;
+    return {
+      baseUrl: data.baseUrl.replace(/\/$/, ""),
+      source: data.source === "registry" ? "registry" : "env",
+    };
+  } catch {
+    return null;
+  }
+}
+
 function decodeJwtJsonSegment(segment: string): Record<string, unknown> | null {
   try {
     const b64 = segment.replace(/-/g, "+").replace(/_/g, "/");

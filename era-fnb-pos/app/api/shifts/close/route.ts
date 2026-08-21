@@ -1,3 +1,4 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dispatchFbShiftClosed } from "@/lib/fb-finance-events";
@@ -10,6 +11,7 @@ const closeSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
   if (denied) return denied;

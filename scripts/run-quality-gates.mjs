@@ -18,11 +18,11 @@ function run(label, cmd, args) {
   }
 }
 
-run(
-  "acceptance consistency",
-  "node",
-  ["scripts/check-acceptance-consistency.mjs", ...(strict ? ["--strict"] : [])]
-);
+run("acceptance consistency", "node", [
+  "scripts/check-acceptance-consistency.mjs",
+  ...(strict ? ["--strict"] : []),
+]);
+run("satellite raw SQL ban", "node", ["scripts/check-satellite-raw-sql.mjs"]);
 run("integration audit strict", "npm", ["run", "audit:integration:strict"]);
 run("design tokens", "npm", ["run", "lint:design-tokens"]);
 run("token layers", "npm", ["run", "lint:token-layers"]);

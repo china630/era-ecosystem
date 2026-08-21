@@ -61,9 +61,18 @@
 - [x] M14: `POST /api/stock/check` with SKU + actual qty
 - [x] M15: `GET /api/replenishment/suggestions`
 - [x] M16: supplier-match via Finance proxy (see [SMOKE_ALL_SERVICES.md](../../docs/SMOKE_ALL_SERVICES.md) § v1.1)
+ - [x] UI `/admin/replenishment` → suggestions table
+ - [x] UI `/admin/supplier-match` → `Match invoice` modal with `invoiceRef`
 
 ## v2.0 — M8–M10 (DONE)
 
 - [x] M8: offline queue UI + `POST /api/offline/sync`
 - [x] M9: fiscal pay path with `ERA_FISCAL_PROVIDER=mock`
 - [x] M10: marketplace webhook idempotency stub
+
+## Deny (Scaffold BE negative paths — POS / STOCK only)
+
+1. **Module off → 403:** With `industry_retail` inactive (or unbound org / source=fallback), operational routes that call `assertRetailEntitled` return **403** (`Industry module not active: industry_retail`). Proof: `__tests__/ret-pos-negative.spec.ts`, `ret-stock-negative.spec.ts`.
+2. **Domain denies (POS):** PAID receipt refuses void (must return); promo / line-void only on OPEN; apparel line missing size/color rejected.
+3. **Domain denies (STOCK):** stock write-off with empty `lines` → **400** `lines required`.
+4. **FISCAL:** not in this deny section — AC-RET-FISCAL remains External stub (not Scaffold ✅).

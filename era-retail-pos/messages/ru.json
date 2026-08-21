@@ -102,5 +102,26 @@
     "localeAz": "AZ",
     "localeRu": "RU",
     "localeEn": "EN"
+  },
+  "admin": {
+    "supplierMatch": {
+      "title": "Сопоставление поставщика",
+      "subtitle": "Сопоставление инвойса через Finance proxy в модальном потоке",
+      "matchInvoice": "Сопоставить инвойс",
+      "replenishment": "Пополнение",
+      "modalTitle": "Сопоставление поставщика",
+      "match": "Сопоставить",
+      "invoiceRef": "Ссылка на инвойс",
+      "invoiceRefPlaceholder": "Ссылка на инвойс"
+    },
+    "replenishment": {
+      "title": "Пополнение",
+      "subtitle": "Список рекомендованного пополнения склада",
+      "supplierMatch": "Сопоставление поставщика",
+      "sku": "SKU",
+      "suggestedQty": "Рекоменд. кол-во",
+      "unknownSku": "Неизвестный SKU",
+      "empty": "Нет рекомендаций (stub или запас достаточен)."
+    }
   }
 }

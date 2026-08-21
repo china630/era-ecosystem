@@ -250,12 +250,16 @@ Same browser page + tab filter is enough: each tab hits a **different Select obj
 | `RESID` / `ID` | yes | yes | yes | `Reservation.externalRef` |
 | `RESSTATE` / `RESSTATEID` | yes | yes | yes | status + lifecycle |
 | `CHECKIN` / `CHECKOUT` | yes | yes | yes | dates |
-| `ROOMNO` / `ROOMTYPECODE` | partial / yes | yes / yes | yes | room |
+| `ROOMNO` / `ROOMTYPECODE` | partial / yes | yes / yes | yes | room — **strip** trailing `S` (`707S`→`707`); never create virtual room |
 | `RATECODE` / `RATECODEID` | yes | yes | yes | rate / medical program |
 | `AGENCY` | yes | yes | yes | agency |
 | `GUESTNAMES` | yes | yes | yes | display |
 | `RESGUESTID` / `CONTACTGUESTID` | ~36–47% | ~83% | ~93% | soft guest link |
 | Detail `GUESTID` + `QA_HOTEL_RES_GUEST` | when card opened | when card opened | when card opened | hard `Guest.externalRef` |
+| Detail `RECORDTYPE` / `RESTYPE` / `ROOMCOUNT` / `ROOMCNT` | often missing on list | — | — | share second-guest signal when present on card |
+| `SHARENO` | optional | optional | optional | display label only |
+
+**Shared twin:** after reservation upsert, `applyElektrawebSharePair` (`elektraweb-share-map.ts`) pairs SHARE / Room Count 0 / `…S` with the NORMAL neighbor on the same physical door. **Do not** clear `shareEligible` when EW later sets Record Type NORMAL after first-out. Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assignment.md).
 
 **Extension:** allowlist all three list objects + detail/guest-on-stay when FO opens a card.
 

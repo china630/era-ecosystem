@@ -3,6 +3,8 @@ export const CLINIC_ROLE = {
   RECEPTION: "RECEPTION",
   DOCTOR: "DOCTOR",
   NURSE: "NURSE",
+  FLOOR: "FLOOR",
+  LAB_TECH: "LAB_TECH",
 } as const;
 
 export type ClinicRoleCode = (typeof CLINIC_ROLE)[keyof typeof CLINIC_ROLE];

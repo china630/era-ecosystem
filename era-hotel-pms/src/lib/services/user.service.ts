@@ -24,7 +24,7 @@ export async function createUser(input: {
   email?: string;
   department?: string;
 }) {
-  const existing = await prisma.user.findUnique({ where: { login: input.login } });
+  const existing = await prisma.user.findFirst({ where: { login: input.login } });
   if (existing) throw new Error('Login already exists');
 
   const role = await prisma.role.findUnique({ where: { id: input.roleId } });

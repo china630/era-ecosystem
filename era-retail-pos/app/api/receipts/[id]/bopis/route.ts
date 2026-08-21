@@ -1,5 +1,6 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import {
   createBookingSlot,
   createShipment,
@@ -16,6 +17,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertRetailEntitled();
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
     const receipt = await prisma.receipt.findUnique({
@@ -37,7 +39,7 @@ export async function POST(
       },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID ?? "";
+    const organizationId = satelliteOrganizationId();
     if (organizationId) {
       try {
         await createBookingSlot(

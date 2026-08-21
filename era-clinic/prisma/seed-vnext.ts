@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { createSatelliteTenantExtension } from "@era/satellite-kit/tenancy";
 import {
   hashPassword,
   platformSuperAdminBootstrapPassword,
@@ -8,7 +10,10 @@ import {
 } from "@era/satellite-kit";
 import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
 
-const prisma = new PrismaClient();
+const requireCjs = createRequire(__filename);
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as PrismaClient;
 
 type L10n = { en: string; ru: string; az: string };
 type CatalogField = Record<string, unknown>;
@@ -296,19 +301,10 @@ async function main() {
     skipDuplicates: true,
   });
 
-  await prisma.icdCode.createMany({
-    data: [
-      { code: "J06.9", description: "Acute upper respiratory infection" },
-      { code: "I10", description: "Essential hypertension" },
-      { code: "E11", description: "Type 2 diabetes mellitus" },
-      { code: "M54.5", description: "Low back pain" },
-      { code: "J45.9", description: "Asthma, unspecified" },
-      { code: "K21.0", description: "Gastro-esophageal reflux disease with esophagitis" },
-      { code: "F41.1", description: "Generalized anxiety disorder" },
-      { code: "Z00.0", description: "General medical examination" },
-    ],
-    skipDuplicates: true,
-  });
+  const { loadIcd10 } = requireCjs("./load-icd10.cjs") as {
+    loadIcd10: (client: PrismaClient, opts?: { force?: boolean }) => Promise<unknown>;
+  };
+  await loadIcd10(prisma);
 
   const wardA = await prisma.ward.upsert({
     where: { code: "WARD-A" },

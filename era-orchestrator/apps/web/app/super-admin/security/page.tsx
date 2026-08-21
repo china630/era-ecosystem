@@ -10,7 +10,9 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  GHOST_BUTTON_CLASS,
   ListPaginationFooter,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { orchFetch } from "../../../lib/orch-api";
@@ -26,7 +28,11 @@ export default function SuperAdminSecurityPage() {
   const [disputes, setDisputes] = useState<Array<Record<string, unknown>>>([]);
   const [disputeId, setDisputeId] = useState("");
   const [newStatus, setNewStatus] = useState("EVIDENCE_REVIEW");
+  const [claimantUserId, setClaimantUserId] = useState("");
+  const [incumbentUserId, setIncumbentUserId] = useState("");
+  const [severity, setSeverity] = useState("STANDARD");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const { page, pageSize, setPage, setPageSize, paged, total } =
     useListPagination(disputes);
@@ -34,6 +40,7 @@ export default function SuperAdminSecurityPage() {
   async function load() {
     if (!token || !orgId.trim()) return;
     setError(null);
+    setMessage(null);
     const id = orgId.trim();
     const [sRes, dRes] = await Promise.all([
       orchFetch(`/admin/organizations/${id}/security-state`, { token }),
@@ -68,6 +75,7 @@ export default function SuperAdminSecurityPage() {
 
   async function patchDispute() {
     if (!token || !orgId.trim() || !disputeId.trim()) return;
+    setError(null);
     const res = await orchFetch(
       `/admin/organizations/${orgId.trim()}/disputes/${disputeId.trim()}/status`,
       {
@@ -80,6 +88,63 @@ export default function SuperAdminSecurityPage() {
       setError(t("patchFailed"));
       return;
     }
+    setMessage(t("statusUpdated"));
+    await load();
+  }
+
+  async function openDispute() {
+    if (!token || !orgId.trim() || !claimantUserId.trim() || !incumbentUserId.trim()) {
+      setError(t("openRequired"));
+      return;
+    }
+    setError(null);
+    const res = await orchFetch(`/admin/organizations/${orgId.trim()}/disputes`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({
+        claimantUserId: claimantUserId.trim(),
+        incumbentUserId: incumbentUserId.trim(),
+        severity,
+      }),
+    });
+    if (!res.ok) {
+      setError(t("openFailed"));
+      return;
+    }
+    const created = (await res.json()) as { id?: string };
+    if (created.id) setDisputeId(created.id);
+    setMessage(t("openOk"));
+    await load();
+  }
+
+  async function notifyDispute() {
+    if (!token || !orgId.trim() || !disputeId.trim()) return;
+    setError(null);
+    const res = await orchFetch(
+      `/admin/organizations/${orgId.trim()}/disputes/${disputeId.trim()}/notify`,
+      { method: "POST", token },
+    );
+    if (!res.ok) {
+      setError(t("notifyFailed"));
+      return;
+    }
+    setMessage(t("notifyOk"));
+    await load();
+  }
+
+  async function executeDispute() {
+    if (!token || !orgId.trim() || !disputeId.trim()) return;
+    if (!window.confirm(t("executeConfirm"))) return;
+    setError(null);
+    const res = await orchFetch(
+      `/admin/organizations/${orgId.trim()}/disputes/${disputeId.trim()}/execute`,
+      { method: "POST", token },
+    );
+    if (!res.ok) {
+      setError(t("executeFailed"));
+      return;
+    }
+    setMessage(t("executeOk"));
     await load();
   }
 
@@ -98,6 +163,38 @@ export default function SuperAdminSecurityPage() {
         </button>
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
+
+      <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <h2 className="text-sm font-semibold text-[#34495E]">{t("openTitle")}</h2>
+        <div className="flex flex-wrap gap-2">
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("claimantPlaceholder")}
+            value={claimantUserId}
+            onChange={(e) => setClaimantUserId(e.target.value)}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("incumbentPlaceholder")}
+            value={incumbentUserId}
+            onChange={(e) => setIncumbentUserId(e.target.value)}
+          />
+          <select
+            className="h-9 rounded-lg border border-[#D5DADF] px-3 text-sm"
+            value={severity}
+            onChange={(e) => setSeverity(e.target.value)}
+          >
+            <option value="STANDARD">STANDARD</option>
+            <option value="HIGH">HIGH</option>
+            <option value="CRITICAL">CRITICAL</option>
+          </select>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openDispute()}>
+            {t("openDispute")}
+          </button>
+        </div>
+      </div>
+
       <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-2 p-4`}>
         <input
           className="h-9 min-w-[200px] rounded-lg border border-[#D5DADF] px-3 text-sm"
@@ -118,6 +215,12 @@ export default function SuperAdminSecurityPage() {
         </select>
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void patchDispute()}>
           {t("updateDispute")}
+        </button>
+        <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => void notifyDispute()}>
+          {t("notify")}
+        </button>
+        <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => void executeDispute()}>
+          {t("execute")}
         </button>
       </div>
 
@@ -158,7 +261,11 @@ export default function SuperAdminSecurityPage() {
                   </thead>
                   <tbody>
                     {paged.map((d) => (
-                      <tr key={String(d.id)} className={DATA_TABLE_TR_CLASS}>
+                      <tr
+                        key={String(d.id)}
+                        className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}
+                        onClick={() => setDisputeId(String(d.id))}
+                      >
                         <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
                           {String(d.id)}
                         </td>

@@ -72,13 +72,16 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
 
   const title =
     order.items
-      .map((i) =>
+      .map((i: {
+        serviceCode: string;
+        diagnosticService: { titleEn: string; titleRu: string; titleAz: string | null } | null;
+      }) =>
         i.diagnosticService
           ? pickL10n(
               {
                 en: i.diagnosticService.titleEn,
                 ru: i.diagnosticService.titleRu,
-                az: i.diagnosticService.titleAz,
+                az: i.diagnosticService.titleAz ?? i.diagnosticService.titleEn,
               },
               lang,
             )

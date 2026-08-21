@@ -43,7 +43,8 @@ export function createOrganizationBindHandlers(
     if (prisma) {
       await hydrateOrganizationBindFromDb(prisma);
     }
-    const resolved = resolveSatelliteOrganizationId();
+    // Diagnostics must not throw when unbound (GET shows fallback/demo in non-prod).
+    const resolved = resolveSatelliteOrganizationId({ allowFallback: true });
     return NextResponse.json({
       ok: true,
       organizationId: resolved.organizationId,

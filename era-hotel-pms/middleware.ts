@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import {
+  agencyAuthCookieName,
   authCookieName,
   eraPathnameRequestHeaders,
   getBearerOrCookieToken,
   isPublicApiPath,
   redirectNoStore,
+  verifyAgencySession,
   verifySatelliteSession,
 } from '@era/satellite-kit/auth/middleware-edge';
 import type { NextRequest } from 'next/server';
@@ -13,18 +15,34 @@ import {
   verifyPosBridgeFromHeaders,
 } from '@/lib/pos-bridge-auth-edge';
 
-const COOKIE = authCookieName();
+const STAFF_COOKIE = authCookieName();
+const AGENCY_COOKIE = agencyAuthCookieName();
 
 const PUBLIC_API_EXTRA = [
   '/api/integration/mock-receiver',
   '/api/integration/mock-licensing',
   '/api/integration/erp/inbound',
   '/api/integration/staff-provision',
+  '/api/auth/agency-sso/exchange',
 ];
+
+function isAgencyPath(pathname: string): boolean {
+  return (
+    pathname === '/agency' ||
+    pathname.startsWith('/agency/') ||
+    pathname === '/api/agency' ||
+    pathname.startsWith('/api/agency/')
+  );
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const reqHeaders = eraPathnameRequestHeaders(request.headers, pathname);
+
+  // Agency SSO callback is public HTML
+  if (pathname === '/agency/sso/callback' || pathname.startsWith('/agency/sso/callback/')) {
+    return NextResponse.next({ request: { headers: reqHeaders } });
+  }
 
   if (pathname.startsWith('/api')) {
     if (isPublicApiPath(pathname, PUBLIC_API_EXTRA)) {
@@ -41,19 +59,46 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next({ request: { headers: reqHeaders } });
     }
 
-    const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Agency API: only agency session
+    if (pathname.startsWith('/api/agency')) {
+      const agencyToken = getBearerOrCookieToken(
+        request.cookies,
+        request.headers,
+        AGENCY_COOKIE,
+      );
+      if (!agencyToken) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      try {
+        const session = await verifyAgencySession(agencyToken);
+        const headers = new Headers(reqHeaders);
+        headers.set('x-agency-id', session.agencyId);
+        headers.set('x-agency-email', session.email);
+        headers.set('x-user-actor', 'agency');
+        return NextResponse.next({ request: { headers } });
+      } catch {
+        return NextResponse.json({ error: 'Invalid agency session' }, { status: 401 });
+      }
     }
 
+    // Staff API: reject pure agency sessions
+    const staffToken = getBearerOrCookieToken(
+      request.cookies,
+      request.headers,
+      STAFF_COOKIE,
+    );
+    if (!staffToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
-      const session = await verifySatelliteSession(token);
+      const session = await verifySatelliteSession(staffToken);
       const headers = new Headers(reqHeaders);
       headers.set('x-user-id', session.sub);
       headers.set('x-user-role', session.role);
       headers.set('x-user-login', session.login);
       headers.set('x-user-fullname', session.fullName);
       if (session.email) headers.set('x-user-email', session.email);
+      headers.set('x-user-actor', 'staff');
       return NextResponse.next({ request: { headers } });
     } catch {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
@@ -71,7 +116,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
 
-  const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
+  // Agency UI pages
+  if (isAgencyPath(pathname)) {
+    const agencyToken = getBearerOrCookieToken(
+      request.cookies,
+      request.headers,
+      AGENCY_COOKIE,
+    );
+    if (!agencyToken) {
+      return redirectNoStore(new URL('/agency/sso/callback?error=login', request.url));
+    }
+    try {
+      await verifyAgencySession(agencyToken);
+      return NextResponse.next({ request: { headers: reqHeaders } });
+    } catch {
+      return redirectNoStore(new URL('/agency/sso/callback?error=session', request.url));
+    }
+  }
+
+  // Staff UI — agency cookie alone is not enough
+  const token = getBearerOrCookieToken(request.cookies, request.headers, STAFF_COOKIE);
   if (!token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);

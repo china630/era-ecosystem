@@ -1,3 +1,4 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { z } from "zod";
 import { SATELLITE_LOGISTICS_TRIP_COMPLETED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
@@ -52,7 +53,7 @@ export async function POST(
       process.env.LOGISTICS_NOTIFY_RECIPIENT?.trim() ||
       completed.routeCode ||
       completed.id;
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const organizationId = satelliteOrganizationId();
     if (organizationId) {
       try {
         await createPortalLink(

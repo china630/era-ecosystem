@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import {
   createPortalLink,
@@ -6,6 +7,7 @@ import {
   createPromotion,
   createCustomDomain,
 } from "@/integration/control-plane-platform.client";
+import { labPublishDenied } from "@/lib/lab-order-status-gates";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { prisma } from "@/lib/prisma";
 
@@ -26,14 +28,10 @@ export async function POST(
       include: { patientRef: true, visit: true },
     });
     if (!order) return jsonError("Lab order not found", 404);
-    if (order.status !== "RESULT_READY") {
-      return jsonError(`Cannot publish from status ${order.status}`, 400);
-    }
-    if (!order.resultJson) {
-      return jsonError("Results required before publish", 400);
-    }
+    const publishBlock = labPublishDenied(order.status, Boolean(order.resultJson));
+    if (publishBlock) return jsonError(publishBlock, 400);
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID ?? "";
+    const organizationId = satelliteOrganizationId();
     const phone = order.patientRef.phone?.trim();
     let portalUrl: string | undefined;
     if (organizationId && phone) {

@@ -12,7 +12,17 @@ import { BodySilhouette } from "./BodySilhouette";
 
 type Row = { id: string; bodyPart: string; note: string | null };
 
-export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: string }) {
+type Props = {
+  patientRefId: string;
+  expanded?: boolean;
+  onCountChange?: (count: number) => void;
+};
+
+export function PatientContraindicationsPanel({
+  patientRefId,
+  expanded = true,
+  onCountChange,
+}: Props) {
   const t = useTranslations("contraindications");
   const tc = useTranslations("common");
   const [rows, setRows] = useState<Row[]>([]);
@@ -36,6 +46,10 @@ export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!loading) onCountChange?.(rows.length);
+  }, [loading, rows.length, onCountChange]);
 
   const blocked = new Set(rows.map((r) => r.bodyPart));
 
@@ -69,10 +83,11 @@ export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: 
     await load();
   }
 
+  if (!expanded) return null;
   if (loading) return <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
 
   return (
-    <div className="space-y-3">
+    <div className="mt-3 space-y-3">
       <BodySilhouette blocked={blocked} onToggle={onZoneClick} />
       <ul className={`text-sm ${TEXT_MUTED_CLASS}`}>
         {rows.length === 0 ? (

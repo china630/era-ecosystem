@@ -48,7 +48,7 @@ export async function assertBusinessDayOpenForPosting(): Promise<void> {
   }
 
   const bizDate = await getCurrentBusinessDate();
-  const day = await prisma.businessDay.findUnique({ where: { date: bizDate } });
+  const day = await prisma.businessDay.findFirst({ where: { date: bizDate } });
   if (!day || day.status !== 'OPEN') {
     throw new Error(
       `Business day ${bizDate.toISOString().slice(0, 10)} is not open for posting. Run night audit for previous day first.`,
@@ -62,7 +62,7 @@ export async function advanceBusinessDate(): Promise<Date> {
   next.setUTCDate(next.getUTCDate() + 1);
 
   await prisma.$transaction(async (tx) => {
-    const existing = await tx.businessDay.findUnique({ where: { date: next } });
+    const existing = await tx.businessDay.findFirst({ where: { date: next } });
     if (!existing) {
       await tx.businessDay.create({ data: { date: next, status: 'OPEN' } });
     } else if (existing.status === 'CLOSED') {
@@ -98,7 +98,7 @@ export async function getBusinessDateStatus() {
   const current = await getCurrentBusinessDate();
   const wall = dateOnly(new Date());
   const lagDays = Math.round((wall.getTime() - current.getTime()) / 86400000);
-  const day = await prisma.businessDay.findUnique({ where: { date: current } });
+  const day = await prisma.businessDay.findFirst({ where: { date: current } });
 
   return {
     currentBusinessDate: current.toISOString().slice(0, 10),

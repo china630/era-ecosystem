@@ -19,7 +19,9 @@ Inherits nothing; app-specific rules add detail on top. User chat — **Russian*
 ## Multi-tenancy
 
 - **Finance + Orchestrator:** tenant-scoped models use `organizationId`; Prisma tenant extension; raw SQL must filter by org; BullMQ jobs carry tenant from payload (or documented global-only jobs).
-- **Industry satellites:** one deployment = one org via `ERA_SATELLITE_ORGANIZATION_ID`; operational DB is not shared across orgs. Multiple outlets/points inside one deployment use local models (`Outlet`, etc.), not separate org records.
+- **Industry satellites (target):** same `organizationId` discipline. Topology (`SHARED` / `DEDICATED` / `ONPREM`) is placement — [deployment-topology.md](../../docs/adr/deployment-topology.md). Do not treat “one deployment = one org” as the schema law.
+- **Industry satellites (today):** many tables still omit `organizationId` (Nafta appliance = DEDICATED/ONPREM). New tenant tables and uniques must be org-scoped. Do not capture `ERA_SATELLITE_ORGANIZATION_ID` at module import — use `satelliteOrganizationId()` / runtime config.
+- **Outlet** = point of sale inside one org; **DEPARTMENT/STANDALONE** = legal/money; never use those words for VM topology.
 - **Person identity:** satellites store `globalPersonId` only; PII lives in MDM (`era_mdm`). Do not duplicate FIN/passport in satellite DBs when MDM-linked.
 
 ## Security

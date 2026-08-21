@@ -61,7 +61,7 @@ Configure environment **staging** secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_
 1. Merge to **`dev`** → **Build and push images** runs automatically  
 2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `pull` → migrate → `up -d` with `IMAGE_TAG=dev-<sha>`  
 
-Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`).  
+Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`, **scope default `finance`**). Use `all` only when the whole stack must move.  
 Production: **Deploy production** remains manual only.
 
 Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW Anywhere is fine for staging).
@@ -78,7 +78,7 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 
 | Issue | Check |
 |-------|--------|
-| Pull 401 | `GHCR_PULL_TOKEN`, package visibility, `GHCR_IMAGE_PREFIX` lowercase owner |
+| Pull 401 / `ghcr.io/v2/: denied` | Actions deploy logs in with the job `github.token` (not a stale `GHCR_PULL_TOKEN` PAT). Manual pull still needs a PAT with `read:packages`. `.env` is scp'd; login/pull run in `docker/scripts/deploy-droplet.sh`. |
 | Migrate fails | Container running? `DATABASE_URL` in `.env`, postgres healthy |
 | OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |

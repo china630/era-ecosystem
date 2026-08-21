@@ -1,3 +1,4 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { isSatelliteEvent } from "@era/contracts";
@@ -9,6 +10,7 @@ import {
 
 /** SEC-SAT-01: require service token; never trust client organizationId. */
 export async function POST(req: Request) {
+  await assertFnbEntitled();
   const authz = assertEnvServiceToken({
     expectedEnvKeys: ["SATELLITE_EVENT_SERVICE_TOKEN"],
     authorization: req.headers.get("authorization"),

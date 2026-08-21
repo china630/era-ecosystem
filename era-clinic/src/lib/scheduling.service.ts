@@ -1,14 +1,21 @@
 import { prisma } from "@/lib/prisma";
 
-const DEFAULT_SLOT_MINUTES = 30;
+import { getDefaultTenant } from "@/domain/settings/settings.service";
+
+const DEFAULT_SLOT_MINUTES_FALLBACK = 30;
 
 async function resolveSlotMinutes(practitionerCode?: string): Promise<number> {
-  if (!practitionerCode) return DEFAULT_SLOT_MINUTES;
-  const practitioner = await prisma.practitioner.findUnique({
+  if (!practitionerCode) {
+    const tenant = await getDefaultTenant();
+    return tenant.defaultAppointmentSlotMinutes ?? DEFAULT_SLOT_MINUTES_FALLBACK;
+  }
+  const practitioner = await prisma.practitioner.findFirst({
     where: { code: practitionerCode },
     select: { defaultSlotMinutes: true },
   });
-  return practitioner?.defaultSlotMinutes ?? DEFAULT_SLOT_MINUTES;
+  if (practitioner?.defaultSlotMinutes) return practitioner.defaultSlotMinutes;
+  const tenant = await getDefaultTenant();
+  return tenant.defaultAppointmentSlotMinutes ?? DEFAULT_SLOT_MINUTES_FALLBACK;
 }
 
 /** Overlap check for outpatient appointment create/reschedule. */

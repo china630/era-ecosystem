@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AccountingController } from "./accounting.controller";
 import { AccountingService } from "./accounting.service";
+import { ManualAdjustmentController } from "./manual-adjustment.controller";
+import { ManualAdjustmentService } from "./manual-adjustment.service";
 import { BankSubaccountService } from "./bank-subaccount.service";
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
 import { NettingService } from "./netting.service";
@@ -20,6 +22,7 @@ import { VatDepositService } from "./vat-deposit.service";
   imports: [],
   controllers: [
     AccountingController,
+    ManualAdjustmentController,
     PostingRolesController,
     GrantReceiptController,
     SubcontoController,
@@ -27,6 +30,7 @@ import { VatDepositService } from "./vat-deposit.service";
   ],
   providers: [
     AccountingService,
+    ManualAdjustmentService,
     BankSubaccountService,
     IfrsAutoMappingService,
     NettingService,
@@ -40,6 +44,7 @@ import { VatDepositService } from "./vat-deposit.service";
   ],
   exports: [
     AccountingService,
+    ManualAdjustmentService,
     BankSubaccountService,
     NettingService,
     PostingAccountResolver,

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import type { FiscalDocumentStatus } from '@prisma/client';
 import { dispatchInvoiceIssued } from '@/lib/integration/event-dispatcher';
 
@@ -134,11 +135,13 @@ export async function issueFolioInvoice(folioId: string) {
     });
   }
 
+  if (!doc) throw new Error('Fiscal document missing after issue');
+
   void dispatchInvoiceIssued(doc.id).catch((err) =>
     console.error('Invoice issued dispatch failed', err),
   );
 
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  const organizationId = satelliteOrganizationId();
   const amountAzn = folio.charges.reduce(
     (sum, c) => sum + Number(c.amount ?? 0),
     0,

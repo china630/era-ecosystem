@@ -156,6 +156,29 @@ export default function SuperAdminOrgHubPage() {
     await reload();
   }
 
+  async function detachDepartment() {
+    if (!token) return;
+    if (
+      !window.confirm(
+        "Detach this organization from its parent (DEPARTMENT → STANDALONE)? Routing becomes OWN.",
+      )
+    ) {
+      return;
+    }
+    setMessage("");
+    const res = await orchFetch(`/v1/admin/orgs/${orgId}/operating-mode/detach`, {
+      token,
+      method: "POST",
+    });
+    if (!res.ok) {
+      setMessage(`Detach failed (${res.status})`);
+      return;
+    }
+    setMode((await res.json()) as OperatingMode);
+    setMessage("Detached to STANDALONE");
+    await reload();
+  }
+
   function copyUuid(id: string) {
     void navigator.clipboard.writeText(id);
     setMessage(`Copied ${id}`);
@@ -201,11 +224,14 @@ export default function SuperAdminOrgHubPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Link href="/super-admin" className={GHOST_BUTTON_CLASS}>
-          ← Super admin
+        <Link href="/super-admin/orgs" className={GHOST_BUTTON_CLASS}>
+          ← Organizations
         </Link>
         <Link href={`/super-admin/orgs/${orgId}/subscription`} className={GHOST_BUTTON_CLASS}>
-          Subscription
+          License / trial
+        </Link>
+        <Link href={`/super-admin/orgs/${orgId}/placement`} className={GHOST_BUTTON_CLASS}>
+          Placement
         </Link>
         <h1 className="text-lg font-semibold text-[#34495E]">Organization hub</h1>
         <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => copyUuid(orgId)}>
@@ -246,6 +272,11 @@ export default function SuperAdminOrgHubPage() {
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void saveOperatingMode("DEPARTMENT")}>
             Set DEPARTMENT
           </button>
+          {mode?.mode === "DEPARTMENT" ? (
+            <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => void detachDepartment()}>
+              Detach → STANDALONE
+            </button>
+          ) : null}
         </div>
       </section>
 

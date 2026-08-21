@@ -118,7 +118,11 @@ export async function getPatientTimeline(
     prisma.clinicalEpisode.findMany({
       where: { patientRefId },
       include: {
-        diagnoses: { take: 3, orderBy: { recordedAt: "desc" } },
+        diagnoses: {
+          take: 3,
+          orderBy: { recordedAt: "desc" },
+          include: { icdCode: true },
+        },
         complaints: { take: 2, orderBy: { recordedAt: "desc" } },
       },
       orderBy: { openedAt: "desc" },
@@ -208,7 +212,15 @@ export async function getPatientTimeline(
   }
 
   for (const e of episodes) {
-    const dx = e.diagnoses.map((d) => d.icdCodeText ?? d.description).filter(Boolean);
+    const dx = e.diagnoses
+      .map((d) => {
+        const code = d.icdCode?.code;
+        const title = d.icdCode
+          ? d.icdCode.titleEn
+          : null;
+        return code ? (title ? `${code} — ${title}` : code) : d.note;
+      })
+      .filter(Boolean);
     events.push({
       id: `episode:${e.id}:open`,
       type: "episode",

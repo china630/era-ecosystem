@@ -138,6 +138,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | `hotel_core` | PMS Core (FO, Front Cash, Night Audit) — Wave B FO live; **P5 FO money / CL ops open** ([ADR](./adr/hotel-city-ledger-and-fo-money.md)) | City+ |
 | `hotel_housekeeping` | Housekeeping & Room Rack | City+ |
 | `hotel_distribution` | Distribution (Channel + Contracts) | Resort |
+| `hotel_agency_portal` | Agency Portal (B2B extranet) | Optional SKU — not in bundles; [ADR](./adr/hotel-agency-portal.md) |
 | `hotel_guest_experience` | Guest Profiles & Tasks | Resort |
 | `hotel_spa_scheduling` | SPA & Scheduling | Resort / Sanatorium |
 | `hotel_transfers` | Transfers | Resort |
@@ -334,6 +335,7 @@ Product lines & presets: [ADR clinic-product-lines-and-presets](./adr/clinic-pro
 | M11 LIS HL7 import | v1.1 | `/api/lab/import` — **DONE** | `clinic_lis_import` |
 | M12 Insurance eligibility | v1.1 | FINANCE proxy — **DONE** | `clinic_insurance` |
 | M13 Inpatient beds | v1.1 | ward-lite stub → preset `inpatient_day` — **PARTIAL** | `clinic_inpatient` |
+| M3e Procedure TTK | — | BOM → Finance inventory — **API** (CLI-47; UAT open) | — |
 | M14 Telehealth + portal | v1.0 | **DONE** | `clinic_telehealth` |
 | K5 Sanatorium bridge | — | **DONE** | — |
 | Presets | 2026-06 | outpatient / sanatorium / inpatient_day / wellness — **PLANNED** | — |

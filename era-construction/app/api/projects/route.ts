@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertConstructionEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -21,6 +21,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    await assertConstructionEntitled();
     const projects = await prisma.project.findMany({
       include: { progressActs: true },
       orderBy: { createdAt: "desc" },
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
     let project = await prisma.project.findUnique({
-      where: { code: body.projectCode },
+      where: { code: body.projectCode } as never,
     });
     if (!project) {
       project = await prisma.project.create({
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
         });
       }
     }
+    if (!project) throw new Error("Project missing after ensure");
 
     const act = await prisma.progressAct.create({
       data: {

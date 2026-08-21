@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export async function resolveProcedureAmount(
   procedureCode: string,
 ): Promise<{ amountNet: number; packageIncluded: boolean }> {
-  const catalog = await prisma.serviceCatalogCache.findUnique({
+  const catalog = await prisma.serviceCatalogCache.findFirst({
     where: { code: procedureCode },
   });
   if (!catalog) {

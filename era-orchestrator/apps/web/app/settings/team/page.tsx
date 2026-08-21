@@ -64,6 +64,9 @@ export default function TeamSettingsPage() {
   const [inviteRole, setInviteRole] = useState<string>("USER");
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [transferUserId, setTransferUserId] = useState("");
+  const [transferBusy, setTransferBusy] = useState(false);
+  const [transferMsg, setTransferMsg] = useState<string | null>(null);
 
   const roleLabel = useCallback(
     (role: string): string => {
@@ -138,6 +141,31 @@ export default function TeamSettingsPage() {
       return;
     }
     await load();
+  }
+
+  async function transferOwnership(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token || !transferUserId.trim()) return;
+    if (!window.confirm(tTeam("transferConfirm"))) return;
+    setTransferBusy(true);
+    setTransferMsg(null);
+    setError(null);
+    try {
+      const res = await orchFetch("/organizations/transfer-ownership", {
+        method: "POST",
+        token,
+        body: JSON.stringify({ newOwnerUserId: transferUserId.trim() }),
+      });
+      if (!res.ok) {
+        setError(await res.text().catch(() => tTeam("transferFailed")));
+        return;
+      }
+      setTransferMsg(tTeam("transferOk"));
+      setTransferUserId("");
+      await load();
+    } finally {
+      setTransferBusy(false);
+    }
   }
 
   if (!ready) return null;
@@ -287,6 +315,37 @@ export default function TeamSettingsPage() {
               ))}
             </ul>
           )}
+        </section>
+
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+          <h2 className="text-sm font-semibold text-[#34495E]">{tTeam("transferTitle")}</h2>
+          <p className="mt-1 text-xs text-[#7F8C8D]">{tTeam("transferHint")}</p>
+          <form onSubmit={(e) => void transferOwnership(e)} className="mt-3 flex flex-wrap gap-2">
+            <select
+              className="h-9 min-w-[16rem] rounded-lg border border-[#D5DADF] px-3 text-sm"
+              value={transferUserId}
+              onChange={(e) => setTransferUserId(e.target.value)}
+            >
+              <option value="">{tTeam("transferPick")}</option>
+              {members
+                .filter((m) => !m.isOwner)
+                .map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {(m.email ?? m.userId) + ` · ${roleLabel(m.role)}`}
+                  </option>
+                ))}
+            </select>
+            <button
+              type="submit"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={transferBusy || !transferUserId}
+            >
+              {transferBusy ? tCommon("loading") : tTeam("transferSubmit")}
+            </button>
+          </form>
+          {transferMsg ? (
+            <p className="mt-2 text-sm text-emerald-700">{transferMsg}</p>
+          ) : null}
         </section>
       </div>
 

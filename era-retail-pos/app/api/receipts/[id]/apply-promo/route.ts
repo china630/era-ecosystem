@@ -1,7 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { receiptPromoDenied } from "@/lib/receipt-status-gates";
 import { resolvePromo } from "@/lib/receipt-promo";
 import { prisma } from "@/lib/prisma";
+
+type ReceiptWithLines = Prisma.ReceiptGetPayload<{ include: { lines: true } }>;
 
 const bodySchema = z.object({
   promoCode: z.string().optional(),
@@ -13,16 +17,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertRetailEntitled();
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
-    const receipt = await prisma.receipt.findUnique({
+    const receipt = (await prisma.receipt.findUnique({
       where: { id },
       include: { lines: true },
-    });
+    })) as ReceiptWithLines | null;
     if (!receipt) return jsonError("Receipt not found", 404);
-    if (receipt.status !== "OPEN") {
-      return jsonError("Promo applies only to OPEN receipts", 400);
-    }
+    const promoDenied = receiptPromoDenied(receipt.status);
+    if (promoDenied) return jsonError(promoDenied, 400);
 
     const subtotal = Number(receipt.subtotalAmount) || receipt.lines
       .filter((l) => l.lineStatus === "ACTIVE")

@@ -64,7 +64,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
     const kind = inferServiceCatalogKind(code, department);
 
     await prisma.serviceCatalogCache.upsert({
-      where: { code },
+      where: { code } as never,
       create: {
         code,
         description,
@@ -92,7 +92,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
     catalogCount++;
 
     const pt = await prisma.procedureType.upsert({
-      where: { code },
+      where: { code } as never,
       create: { code, name: description, durationMin: 15 },
       update: { name: description },
     });

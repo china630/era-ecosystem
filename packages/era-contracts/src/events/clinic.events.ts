@@ -72,9 +72,11 @@ export const satelliteClinicProcedureCompletedSchema =
       procedureCode: z.string(),
       amountNet: z.number(),
       currency: z.literal("AZN"),
-      lines: z.array(clinicConsumptionLineSchema).min(1),
+      /** Resolved TTK from ProcedureConsumableLine; empty = no stock movement (no dummy PROC-*). */
+      lines: z.array(clinicConsumptionLineSchema).default([]),
       reservationId: z.string().optional(),
       roomNumber: z.string().optional(),
+      procedureOrderId: z.string().optional(),
     }),
   });
 

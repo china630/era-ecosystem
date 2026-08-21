@@ -19,12 +19,32 @@ export async function relocateReservationRoom(reservationId: string, toRoomId: s
   if (toRoom.roomTypeId !== reservation.roomTypeId) {
     throw new Error('Room type mismatch');
   }
-  if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(toRoom.status)) {
+  const { assertRoomShareAssignable, roomStatusAllowedForShareAssign } = await import(
+    '@/lib/services/share-assignment.service'
+  );
+  const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
+    roomId: toRoomId,
+    checkIn: reservation.checkInDate,
+    checkOut: reservation.checkOutDate,
+    excludeReservationId: reservationId,
+    candidate: {
+      shareEligible: reservation.shareEligible,
+      shareGender: reservation.shareGender,
+      adults: reservation.adults,
+    },
+  });
+  if (!roomStatusAllowedForShareAssign(toRoom.status, joiningPool)) {
     throw new Error('Target room must be AVAILABLE, CLEAN, or INSPECTED (HK-03)');
   }
 
   const fromRoomId = reservation.roomId;
   const updated = await updateReservationSchedule(reservationId, { roomId: toRoomId });
+  if (shareBedIndex != null) {
+    await prisma.reservation.update({
+      where: { id: reservationId },
+      data: { shareBedIndex },
+    });
+  }
 
   if (fromRoomId && fromRoomId !== toRoomId) {
     await createRoomChangePlan({

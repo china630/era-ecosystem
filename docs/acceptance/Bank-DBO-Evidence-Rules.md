@@ -16,6 +16,14 @@
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (or HEADLESS + ADR) |
 | Live ASAN claim | YC-E3 evidence — stub badge alone insufficient |
 
+## AC-DBO-OPEN (in BE rollup)
+
+| Claim | Reality |
+|-------|---------|
+| Scaffold BE Product-Readiness | **🟡** — OPEN in rollup (curl-only Code stretch) |
+| How to close | [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) §1 |
+| Sell / edition | Unchanged — ≠ full digital bank; `mvp` / `pilot_ready: false` |
+
 ## Forbidden as sole proof
 
 - Chat assertion without artifact
@@ -23,6 +31,7 @@
 - MODULES_CATALOG DONE → sell/show ✅
 - Soft partner-GA prose while yaml = `mvp`
 - Implying parent CAP-* OUT modules via DBO channel screens
+- Scaffold BE ✅ on other ACs → claiming full Open Banking / full ABS (OPEN 🟡 in rollup; Inventory OUT stands)
 
 ## Artifact naming
 

@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED } from "@era/contracts";
 import { NextResponse } from "next/server";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { stockWriteOffDenied } from "@/lib/stock-gates";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
@@ -11,8 +12,9 @@ export async function POST(request: Request) {
     correlationId?: string;
   };
   const lines = body.lines ?? [];
-  if (lines.length === 0) {
-    return NextResponse.json({ error: "lines required" }, { status: 400 });
+  const denied = stockWriteOffDenied(lines);
+  if (denied) {
+    return NextResponse.json({ error: denied }, { status: 400 });
   }
 
   const amountAzn = lines.reduce((s, l) => s + l.qty, 0);

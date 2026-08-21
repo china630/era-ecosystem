@@ -4,7 +4,9 @@
 
 Accepted — 2026-07-18
 
-Related: [clinic-procedure-day-ops.md](./clinic-procedure-day-ops.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [sanatorium-vnext.md](./sanatorium-vnext.md) (SV6)
+Related: [clinic-procedure-day-ops.md](./clinic-procedure-day-ops.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [sanatorium-vnext.md](./sanatorium-vnext.md) (SV6)
+
+Amended 2026-08-21 — staff calendars stay independent of cabin resource gap.
 
 ## Context
 
@@ -27,7 +29,9 @@ Equal multi-resource search for procedures:
    - **HARD** — practitioner exclusivity: overlapping STAFF allocation blocks the slot.
    - **SOFT** — shared nurse pool: any skilled practitioner may be assigned; concurrency is allowed (load-balanced to least-busy). Physical `Resource.capacity` remains the scarce constraint (e.g. ozone cabin capacity=3).
 
-Availability = AND(physical free by capacity, skilled staff available under the type's STAFF `staffMode`). No skilled practitioner configured ⇒ slot unavailable (bootstrap: any active practitioner). New types default STAFF to **SOFT**; massage-style types may keep HARD.
+Availability = AND(physical free by capacity **and resource gap**, skilled staff available under the type's STAFF `staffMode`). Resource gap is a property of the **procedure type** (cabin/device idle after occupancy), not of the nurse. **SOFT** staff may be assigned to overlapping LOCATION slots (shared pool, load-balanced). **HARD** staff is exclusive on `[startsAt, endsAt)` only — `countStaffHardBusy` does not add the cabin turnover minutes. Do not copy `resourceGapMinutes` onto SOFT nurses. See [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md).
+
+No skilled practitioner configured ⇒ slot unavailable (bootstrap: any active practitioner). New types default STAFF to **SOFT**; massage-style types may keep HARD.
 
 ### Pattern B — Outpatient clinic (`outpatient` appointments)
 

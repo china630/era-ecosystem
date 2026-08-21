@@ -275,7 +275,7 @@ const landingMarketingRu: LandingMarketingCopy = {
       bullets: [
         "Журнал кассы и банковские карточки в одном контуре",
         "Сверка выписки со счетами и контрагентами",
-        "Контроль остатков 101* и 221–224 в реальном времени",
+        "Контроль остатков кассы и банка по плану NAS в реальном времени",
       ],
     },
     manufacturing: {
@@ -516,7 +516,7 @@ const landingMarketingAz: LandingMarketingCopy = {
       bullets: [
         "Kassa jurnalı və bank kartları bir konturdə",
         "Çıxarışın hesablar və kontragentlərlə uzlaşdırılması",
-        "101* və 221–224 qalıqlarının real vaxt nəzarəti",
+        "NAS planı üzrə kassa və bank qalıqlarının real vaxt nəzarəti",
       ],
     },
     manufacturing: {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { detectSchedulingConflict } from "@/lib/scheduling.service";
 import { isWithinShift } from "@/domain/appointment/practitioner-schedule.service";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 
 const createSchema = z
   .object({
@@ -44,21 +45,25 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
 
+    const organizationId = satelliteOrganizationId();
     const patient = body.patientRefId
       ? await prisma.patientRef.findUnique({ where: { id: body.patientRefId } })
-      : await prisma.patientRef.findUnique({
-          where: { refCode: body.patientRefCode! },
+      : await prisma.patientRef.findFirst({
+          where: { organizationId, refCode: body.patientRefCode! },
         });
     if (!patient) {
       return jsonError("Patient not found — register the patient first", 400);
     }
 
-    const practitioner = await prisma.practitioner.findUnique({
+    const practitioner = await prisma.practitioner.findFirst({
       where: { code: body.practitionerCode },
     });
-    if (!practitioner || !practitioner.active) {
-      return jsonError("Practitioner not found", 400);
-    }
+    const { practitionerBookableDenied } = await import("@/lib/master-data-gates");
+    const mdBlock = practitionerBookableDenied({
+      found: Boolean(practitioner),
+      active: practitioner?.active,
+    });
+    if (mdBlock || !practitioner) return jsonError(mdBlock ?? "Practitioner not found", 400);
 
     const scheduledAt = body.scheduledAt
       ? new Date(body.scheduledAt)
@@ -83,6 +88,7 @@ export async function POST(req: Request) {
 
     const appointment = await prisma.appointment.create({
       data: {
+        organizationId,
         patientRefId: patient.id,
         practitionerId: practitioner.id,
         scheduledAt,
@@ -90,6 +96,7 @@ export async function POST(req: Request) {
         resourceId: body.resourceId || null,
         visit: {
           create: {
+            organizationId,
             patientRefId: patient.id,
             practitionerId: practitioner.id,
             amountNet,

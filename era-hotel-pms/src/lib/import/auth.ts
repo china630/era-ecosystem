@@ -1,4 +1,4 @@
-import { assertHotelModuleActive } from '@era/satellite-kit';
+import { assertHotelModuleActive, satelliteOrganizationId } from '@era/satellite-kit';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 import { prisma } from '@/lib/prisma';
@@ -37,11 +37,19 @@ export async function assertHotelImportAccess(): Promise<HotelImportAccess> {
     throw new Error('Forbidden: import requires platform super-admin or hotel admin');
   }
 
-  const organizationId =
-    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ??
-    (await prisma.hotelProfile.findFirst({ select: { organizationId: true } }))?.organizationId?.trim();
+  let organizationId: string | undefined;
+  try {
+    organizationId = satelliteOrganizationId();
+  } catch {
+    organizationId = undefined;
+  }
+  if (!organizationId || organizationId === "demo-org") {
+    organizationId = (
+      await prisma.hotelProfile.findFirst({ select: { organizationId: true } })
+    )?.organizationId?.trim();
+  }
   if (!organizationId) {
-    throw new Error('Forbidden: organization not configured');
+    throw new Error("Forbidden: organization not configured");
   }
 
   await assertHotelModuleActive(organizationId, 'hotel_migration_pro');
@@ -62,10 +70,15 @@ export async function canRunHotelImport(user: {
   if (user.status !== 'ACTIVE') return false;
   if (isPlatformSuperAdminUser({ email: user.email, login: user.login })) return true;
   if (!OWNER_IMPORT_ROLES.has(user.roleCode)) return false;
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
-  if (!organizationId) return true;
+  let organizationId: string | undefined;
   try {
-    await assertHotelModuleActive(organizationId, 'hotel_migration_pro');
+    organizationId = satelliteOrganizationId();
+  } catch {
+    return true;
+  }
+  if (!organizationId || organizationId === "demo-org") return true;
+  try {
+    await assertHotelModuleActive(organizationId, "hotel_migration_pro");
     return true;
   } catch {
     return false;

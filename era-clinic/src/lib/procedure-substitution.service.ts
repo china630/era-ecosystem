@@ -28,7 +28,7 @@ export async function resolveProcedureSubstitution(input: {
   });
 
   for (const rule of rules) {
-    const subType = await prisma.procedureType.findUnique({
+    const subType = await prisma.procedureType.findFirst({
       where: { code: rule.substituteCode },
     });
     if (!subType) continue;

@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const X = require('xlsx');
 
-const ew = process.argv[2] || 'C:/Users/ASUS G752VT/Downloads/EW';
+const ew = process.argv[2] || 'D:/ERA-BACKUP/NAFTA-START/hotel';
 
 function excelDate(v) {
   if (v == null || v === '') return null;
@@ -93,10 +93,10 @@ function folioIndex(rows) {
 }
 
 console.log('Loading from', ew);
-const reservations = load(path.join(ew, 'Reservations.merged.xlsx'));
-const guests = load(path.join(ew, 'Guest Cards.merged.xlsx'));
-const folioHotel = load(path.join(ew, 'Folio Transactions.merged.xlsx'));
-const folioFnb = load(path.join(ew, 'FnB Transactions.merged.xlsx'));
+const reservations = load(path.join(ew, '11-Reservations.merged.xlsx'));
+const guests = load(path.join(ew, '10-Guest-Cards.merged.xlsx'));
+const folioHotel = load(path.join(ew, '12-Folio-Transactions.merged.xlsx'));
+const folioFnb = load(path.join(ew, '16-FnB-Transactions.merged.xlsx'));
 
 const guestsById = new Map();
 const guestNameToIds = new Map();
@@ -228,10 +228,10 @@ for (const n of folioGuestNames) {
 const report = {
   generatedAt: new Date().toISOString(),
   files: {
-    reservations: 'Reservations.merged.xlsx',
-    guests: 'Guest Cards.merged.xlsx',
-    folioHotel: 'Folio Transactions.merged.xlsx',
-    folioFnb: 'FnB Transactions.merged.xlsx',
+    reservations: '11-Reservations.merged.xlsx',
+    guests: '10-Guest-Cards.merged.xlsx',
+    folioHotel: '12-Folio-Transactions.merged.xlsx',
+    folioFnb: '16-FnB-Transactions.merged.xlsx',
   },
   counts: {
     reservations: resById.size,

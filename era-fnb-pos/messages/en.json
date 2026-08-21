@@ -127,6 +127,16 @@
       "confirmDelete": "Delete this table?",
       "empty": "No tables — add one or run seed."
     },
+    "dailyMenu": {
+      "title": "Daily menu board",
+      "subtitle": "Bulk select menu items per date (board pattern)",
+      "date": "Date",
+      "saveBoard": "Save board",
+      "copyYesterday": "Copy from yesterday",
+      "guestQrMenu": "Guest QR menu",
+      "saved": "Saved {count} items",
+      "copied": "Copied {copied} items"
+    },
     "integration": {
       "title": "Integration & billing",
       "loadFailed": "Failed to load",

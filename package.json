@@ -47,6 +47,7 @@
     "report:ecosystem-readiness": "node scripts/generate-ecosystem-readiness-report.mjs",
     "check:acceptance": "node scripts/check-acceptance-consistency.mjs",
     "check:acceptance:strict": "node scripts/check-acceptance-consistency.mjs --strict",
+    "check:satellite-raw-sql": "node scripts/check-satellite-raw-sql.mjs",
     "run:quality-gates": "node scripts/run-quality-gates.mjs",
     "run:quality-gates:strict": "node scripts/run-quality-gates.mjs --strict",
     "lint:token-layers": "node scripts/lint-token-layers.mjs",

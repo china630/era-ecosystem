@@ -1,4 +1,5 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { resolveSatelliteOrganizationId } from '@era/satellite-kit';
 import { authenticateBridgeRequest } from '@/lib/integration/elektraweb-bridge/auth';
 import {
   getBridgeOrganizationId,
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     if (!authHeader) {
       return jsonOk({
         enabled: isElektrawebBridgeEnabled(),
-        organizationIdConfigured: !!process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim(),
+        organizationIdConfigured: resolveSatelliteOrganizationId({ allowFallback: true }).source !== 'fallback',
         elektrawebHotelIdConfigured: !!process.env.ELEKTRAWEB_HOTEL_ID?.trim(),
       });
     }

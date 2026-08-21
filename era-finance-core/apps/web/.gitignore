@@ -3,3 +3,5 @@ node_modules/
 out/
 coverage/
 *.tsbuildinfo
+lib/i18n/resources.js
+lib/i18n/resources.js.map

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { lineAmount, recalcWorkOrderTotals } from "@/lib/work-order-lines";
+import { workOrderMutationDenied } from "@/lib/work-order-status";
 
 const createSchema = z.object({
   description: z.string().min(1),
@@ -33,9 +34,8 @@ export async function POST(
     const { id } = await params;
     const wo = await prisma.workOrder.findUnique({ where: { id } });
     if (!wo) return jsonError("Work order not found", 404);
-    if (wo.status === "COMPLETED") {
-      return jsonError("Work order is closed", 400);
-    }
+    const closed = workOrderMutationDenied(wo.status);
+    if (closed) return jsonError(closed, 400);
     const body = createSchema.parse(await req.json());
     const amountAzn = lineAmount(body.hours, body.rateAzn);
     await prisma.workOrderLaborLine.create({

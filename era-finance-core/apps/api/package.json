@@ -17,6 +17,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.741.0",
     "@era/contracts": "file:../../../packages/era-contracts",
+    "@era/satellite-kit": "file:../../../packages/satellite-kit",
     "@era/storage": "file:../../../packages/era-storage",
     "@erafinance/api-contracts": "*",
     "@era365/database": "file:../../../era-orchestrator/packages/database",

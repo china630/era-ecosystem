@@ -11,6 +11,8 @@ import {
   Prisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { CronModuleGateService } from "../subscription/cron-module-gate.service";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { normalizeListPagination } from "../common/list-pagination";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { CreateContractDto } from "./dto/create-contract.dto";
@@ -44,7 +46,10 @@ function toDateOnlyUtc(d: Date): Date {
 export class ContractsService {
   private readonly logger = new Logger(ContractsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cronGate: CronModuleGateService,
+  ) {}
 
   async list(
     organizationId: string,
@@ -340,14 +345,33 @@ export class ContractsService {
   /** Sets ACTIVE contracts with dateTo &lt; today (UTC) to EXPIRED. */
   async expireOverdueContracts(): Promise<{ updated: number }> {
     const today = utcTodayDateOnly();
-    const result = await this.prisma.contract.updateMany({
+    const candidates = await this.prisma.contract.findMany({
       where: {
         status: ContractStatus.ACTIVE,
         dateTo: { lt: today },
       },
-      data: { status: ContractStatus.EXPIRED },
+      select: { id: true, organizationId: true },
     });
-    return { updated: result.count };
+    const byOrg = new Map<string, string[]>();
+    for (const row of candidates) {
+      const list = byOrg.get(row.organizationId) ?? [];
+      list.push(row.id);
+      byOrg.set(row.organizationId, list);
+    }
+    let updated = 0;
+    for (const [orgId, ids] of byOrg) {
+      const on = await this.cronGate.isModuleOn(
+        orgId,
+        ModuleEntitlement.CONTRACT_MANAGEMENT_PRO,
+      );
+      if (!on) continue;
+      const result = await this.prisma.contract.updateMany({
+        where: { id: { in: ids }, status: ContractStatus.ACTIVE },
+        data: { status: ContractStatus.EXPIRED },
+      });
+      updated += result.count;
+    }
+    return { updated };
   }
 
   @Cron("15 1 * * *", { timeZone: "Asia/Baku" })

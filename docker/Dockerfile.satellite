@@ -45,9 +45,12 @@ COPY --from=builder /workspace/${SATELLITE_DIR}/prisma ./prisma
 COPY docker/scripts/docker-migrate-deploy.mjs ./scripts/docker-migrate-deploy.mjs
 COPY --from=builder /workspace/${SATELLITE_DIR}/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /workspace/${SATELLITE_DIR}/package.json ./package.json
+COPY --from=builder /workspace/packages /packages
 COPY --from=builder /workspace/${SATELLITE_DIR}/docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh \
-  && chown -R nextjs:nodejs /app
+RUN mkdir -p ./node_modules/@era \
+  && ln -sfn /packages/satellite-kit ./node_modules/@era/satellite-kit \
+  && sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh \
+  && chown -R nextjs:nodejs /app /packages
 USER nextjs
 EXPOSE ${SATELLITE_PORT}
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \

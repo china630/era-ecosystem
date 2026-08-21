@@ -1,9 +1,11 @@
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET() {
+  await assertFnbEntitled();
   try {
     const categories = await prisma.menuCategory.findMany({
       orderBy: { sortOrder: "asc" },
@@ -24,20 +26,14 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
     const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());
-    let outlet = await prisma.outlet.findUnique({
-      where: { code: body.outletCode },
-    });
-    if (!outlet) {
-      outlet = await prisma.outlet.create({
-        data: { code: body.outletCode, name: body.outletCode },
-      });
-    }
+    const outlet = await ensureOutletByCode(body.outletCode);
 
     const existing = await prisma.menuCategory.findFirst({
       where: { outletId: outlet.id, name: body.name },

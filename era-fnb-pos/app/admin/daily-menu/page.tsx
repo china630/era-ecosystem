@@ -1,11 +1,15 @@
+import { getTranslations } from "next-intl/server";
+import { PageHeader } from "@era/satellite-kit/ui";
 import FbPosNav from "@/components/FbPosNav";
 import DailyMenuAdminPanel from "@/components/DailyMenuAdminPanel";
 
-export default function DailyMenuAdminPage() {
+export default async function DailyMenuAdminPage() {
+  const t = await getTranslations("admin.dailyMenu");
+
   return (
     <>
       <FbPosNav />
-      <h1 className="mb-4 text-xl font-semibold">Daily menu board</h1>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <DailyMenuAdminPanel />
     </>
   );

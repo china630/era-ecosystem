@@ -42,4 +42,7 @@ export class AdjustStockDto {
   @IsNumber()
   @Min(0)
   unitPrice?: number;
+
+  /** Internal: clinic TTK warn+post may go negative without org setting. */
+  forceAllowNegative?: boolean;
 }

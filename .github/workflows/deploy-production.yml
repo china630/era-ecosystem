@@ -7,6 +7,10 @@ on:
         description: GHCR tag (e.g. prod-abc1234 or latest)
         required: true
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,25 +19,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pack remote .env (base64)
-        id: envpack
+      - name: Write droplet env file
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           set -euo pipefail
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           {
-            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=)' || true
+            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=|ERA_JWT_JWKS_URL=)' || true
             echo "IMAGE_TAG=${{ inputs.image_tag }}"
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
-          } | base64 -w0 > /tmp/era-env.b64
-          echo "b64=$(cat /tmp/era-env.b64)" >> "$GITHUB_OUTPUT"
+            echo "ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json"
+          } > "${GITHUB_WORKSPACE}/era.droplet.env"
+
+      - name: Copy env to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 22 }}
+          source: era.droplet.env
+          target: /opt/era-ecosystem
+          overwrite: true
+          timeout: 60s
 
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
-          ERA_ENV_B64: ${{ steps.envpack.outputs.b64 }}
-          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          GHCR_PULL_TOKEN: ${{ github.token }}
           GIT_SHA: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
         with:
@@ -44,18 +58,15 @@ jobs:
           timeout: 60s
           command_timeout: 30m
           script_stop: false
-          envs: ERA_ENV_B64,GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
+          envs: GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
           script: |
             set -euo pipefail
             cd /opt/era-ecosystem
             git fetch origin
-            # Droplet may have local traefik edits; deploy is pull-only and must not abort.
             git reset --hard "$GIT_SHA"
-            printf '%s' "$ERA_ENV_B64" | base64 -d > .env
-            echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env pull
-            chmod +x docker/scripts/migrate-all.sh
-            COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
-            docker image prune -f
-            node scripts/ecosystem-smoke-all.mjs
+            if [ ! -f era.droplet.env ]; then
+              echo "era.droplet.env missing after scp" >&2
+              exit 1
+            fi
+            mv -f era.droplet.env .env
+            bash docker/scripts/deploy-droplet.sh

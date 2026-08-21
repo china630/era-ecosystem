@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
 
-  const outlet = await prisma.outlet.findUnique({ where: { code: outletCode } });
+  const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
   if (!outlet) {
     return NextResponse.json({ outletCode, date: date.toISOString().slice(0, 10), items: [] });
   }

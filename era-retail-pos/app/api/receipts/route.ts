@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import {
   computeLineTotal,
   validateReceiptLines,
@@ -30,6 +30,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    await assertRetailEntitled();
     const body = bodySchema.parse(await req.json());
     const shift = await prisma.shift.findUnique({
       where: { id: body.shiftId },

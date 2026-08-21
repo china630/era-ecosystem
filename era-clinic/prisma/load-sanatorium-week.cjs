@@ -1,7 +1,14 @@
 /**
  * Idempotent DEMO-WEEK seed from Nafta Randevular week export
  * (prisma/seed-data/nafta/randevular-week.json — Jul 13–19 2026).
- * Remaps source dayOffset onto Asia/Baku today..+6 (skips Sundays).
+ *
+ * Remaps source dayOffset (0..6) onto an open Asia/Baku window (skips Sundays),
+ * tiling the week pattern across the range for a dense planner demo.
+ *
+ * Window (env override or default):
+ *   DEMO_SANATORIUM_FROM=YYYY-MM-DD
+ *   DEMO_SANATORIUM_TO=YYYY-MM-DD
+ * Default: Monday of last week → Saturday of next week (Baku calendar).
  */
 const fs = require("fs");
 const path = require("path");
@@ -63,21 +70,165 @@ function parseHm(time) {
   return { h, m };
 }
 
-/** Map source dayOffset 0..6 onto open Baku dates starting today (skip Sunday). */
-function buildDayMap() {
-  const map = new Map();
-  let cursor = bakuYmd();
-  let src = 0;
-  while (src <= 6) {
-    if (weekdaySun0(cursor) === 0) {
-      cursor = addDaysYmd(cursor, 1);
-      continue;
-    }
-    map.set(src, cursor);
-    src += 1;
+/** Monday of calendar week containing `ymd` (Mon–Sun weeks). */
+function mondayOfWeek(ymd) {
+  const dow = weekdaySun0(ymd); // 0=Sun … 6=Sat
+  const daysSinceMon = dow === 0 ? 6 : dow - 1;
+  return addDaysYmd(ymd, -daysSinceMon);
+}
+
+function resolveDemoWindow() {
+  const fromEnv = process.env.DEMO_SANATORIUM_FROM?.trim();
+  const toEnv = process.env.DEMO_SANATORIUM_TO?.trim();
+  if (fromEnv && toEnv) return { from: fromEnv, to: toEnv };
+  const today = bakuYmd();
+  const thisMon = mondayOfWeek(today);
+  const lastMon = addDaysYmd(thisMon, -7);
+  const nextSat = addDaysYmd(thisMon, 12); // next week's Saturday
+  return { from: lastMon, to: nextSat };
+}
+
+/** Open (non-Sunday) Baku dates in [from, to] inclusive. */
+function openDaysInRange(fromYmd, toYmd) {
+  const days = [];
+  let cursor = fromYmd;
+  while (cursor <= toYmd) {
+    if (weekdaySun0(cursor) !== 0) days.push(cursor);
     cursor = addDaysYmd(cursor, 1);
   }
+  return days;
+}
+
+/**
+ * WO Randevular export often covers only Mon–Tue (dayOffset 0–1). Map each open
+ * demo day to a source offset that actually has appointments (prefer weekday match,
+ * else cycle available offsets) so the planner is dense Mon–Sat across the window.
+ */
+function sourceOffsetsPresent(appointments) {
+  const set = new Set();
+  for (const a of appointments) set.add(Number(a.dayOffset) || 0);
+  return [...set].sort((a, b) => a - b);
+}
+
+function sourceOffsetForOpenDay(ymd, available) {
+  if (!available.length) return 0;
+  const dow = weekdaySun0(ymd); // Sun=0 … Sat=6
+  const preferred = dow === 0 ? 6 : dow - 1; // Mon=0 … Sat=5
+  if (available.includes(preferred)) return preferred;
+  return available[preferred % available.length];
+}
+
+/** openYmd → source dayOffset used for that calendar day */
+function buildOpenDaySourceMap(appointments) {
+  const { from, to } = resolveDemoWindow();
+  const openDays = openDaysInRange(from, to);
+  const available = sourceOffsetsPresent(appointments);
+  const map = new Map();
+  for (const ymd of openDays) {
+    map.set(ymd, sourceOffsetForOpenDay(ymd, available));
+  }
+  map._meta = {
+    from,
+    to,
+    openDays: openDays.length,
+    sourceOffsets: available,
+  };
   return map;
+}
+
+/** Nafta doctors from WO export (hekimler) — ensure enough practitioners for STAFF allocations. */
+const DEMO_DOCTORS = [
+  { code: "DOC-RENA", fullName: "Rəna Kəngərli", specialty: "Chief physician" },
+  { code: "DOC-KEMAL", fullName: "Kəmaləddin Sahmuradov", specialty: "Therapist" },
+  { code: "DOC-AZADE", fullName: "Azadə Mustafayeva", specialty: "Doctor" },
+  { code: "DOC-TURAN", fullName: "Turanə Məmmədzadə", specialty: "Cosmetologist" },
+  { code: "DOC-RAFIQ", fullName: "Rafiq Huseynov", specialty: "Physiotherapist" },
+  { code: "NURSE-LEYLA", fullName: "Leyla Qasımova", specialty: "Senior nurse" },
+];
+
+function inferStaffKind(p) {
+  const blob = `${p.specialty || ""} ${p.code || ""}`.toLowerCase();
+  if (blob.includes("nurse") || blob.startsWith("nr-") || blob.includes("nurse-")) return "NURSE";
+  if (blob.includes("lab")) return "LAB";
+  return "DOCTOR";
+}
+
+async function ensureDemoPractitioners() {
+  const out = [];
+  for (const d of DEMO_DOCTORS) {
+    const staffKind = inferStaffKind(d);
+    let row = await prisma.practitioner.findUnique({ where: { code: d.code } });
+    if (!row) {
+      row = await prisma.practitioner.create({
+        data: {
+          code: d.code,
+          fullName: d.fullName,
+          specialty: d.specialty,
+          staffKind,
+          active: true,
+        },
+      });
+    } else if (row.staffKind !== staffKind) {
+      row = await prisma.practitioner.update({
+        where: { id: row.id },
+        data: { staffKind },
+      });
+    }
+    out.push(row);
+  }
+  const extra = await prisma.practitioner.findMany({
+    where: { code: { notIn: DEMO_DOCTORS.map((x) => x.code) } },
+    orderBy: { code: "asc" },
+    take: 6,
+  });
+  return [...out, ...extra];
+}
+
+/** Minimal bootstrap when seed-vnext never ran (prod image without kit). */
+async function ensureBootstrap() {
+  let template = await prisma.programTemplate.findUnique({ where: { code: "DETOX-7" } });
+  if (!template) {
+    template = await prisma.programTemplate.create({
+      data: {
+        code: "DETOX-7",
+        name: "Detox 7 days",
+        durationDays: 7,
+        procedures: {
+          create: [
+            { procedureCode: "MASSAGE", procedureName: "Massage", quotaTotal: 5, avoidAfterHour: 14 },
+            { procedureCode: "USG", procedureName: "Ultrasound", quotaTotal: 2 },
+          ],
+        },
+      },
+    });
+    console.log("Created ProgramTemplate DETOX-7");
+  }
+
+  let icd = await prisma.icdCode.findFirst({
+    where: { code: "M54.5", selectable: true, active: true },
+  });
+  if (!icd) {
+    console.warn("ICD-10 M54.5 missing — run node prisma/load-icd10.cjs first");
+  }
+
+  let ward = await prisma.ward.findFirst({ where: { code: "WARD-A" } });
+  if (!ward) {
+    ward = await prisma.ward.create({
+      data: {
+        code: "WARD-A",
+        name: "Ward A",
+        beds: {
+          create: [
+            { code: "A1", status: "AVAILABLE" },
+            { code: "A2", status: "AVAILABLE" },
+          ],
+        },
+      },
+    });
+    console.log("Created WARD-A");
+  }
+
+  return { template, icd };
 }
 
 async function wipeDemoWeek() {
@@ -126,6 +277,53 @@ async function wipeDemoWeek() {
     await prisma.clinicalEpisode.deleteMany({ where: { id: { in: episodeIds } } });
   }
   if (patientIds.length) {
+    try {
+      await prisma.procedureChargeLog.deleteMany({
+        where: { patientRefId: { in: patientIds } },
+      });
+    } catch {
+      /* optional */
+    }
+    try {
+      await prisma.labOrder.deleteMany({
+        where: {
+          OR: [
+            { patientRefId: { in: patientIds } },
+            { telehealthUrl: "demo:lab-usg-v1" },
+          ],
+        },
+      });
+    } catch {
+      /* optional if LabOrder absent */
+    }
+    try {
+      await prisma.clinicReceipt.deleteMany({
+        where: { patientRefId: { in: patientIds } },
+      });
+    } catch {
+      /* optional */
+    }
+    try {
+      const visits = await prisma.visit.findMany({
+        where: { patientRefId: { in: patientIds } },
+        select: { id: true },
+      });
+      const visitIds = visits.map((v) => v.id);
+      if (visitIds.length) {
+        await prisma.visitServiceLine.deleteMany({ where: { visitId: { in: visitIds } } });
+        await prisma.cpoeEntry.deleteMany({ where: { visitId: { in: visitIds } } });
+        await prisma.visit.deleteMany({ where: { id: { in: visitIds } } });
+      }
+    } catch {
+      /* optional */
+    }
+    try {
+      await prisma.appointment.deleteMany({
+        where: { patientRefId: { in: patientIds } },
+      });
+    } catch {
+      /* optional */
+    }
     const admissions = await prisma.inpatientAdmission.findMany({
       where: { patientRefId: { in: patientIds } },
       select: { id: true },
@@ -236,19 +434,32 @@ async function main() {
 
   await wipeDemoWeek();
 
-  const dayMap = buildDayMap();
-  const template =
-    (await prisma.programTemplate.findFirst({ where: { code: "DETOX-7" } })) ||
-    (await prisma.programTemplate.findFirst());
-  if (!template) throw new Error("No ProgramTemplate — run seed-vnext first");
+  const { template, icd: bootIcd } = await ensureBootstrap();
+  const openDaySource = buildOpenDaySourceMap(appointments);
+  const windowMeta = openDaySource._meta || {};
+  const allOpenDays = [...openDaySource.keys()]
+    .filter((k) => typeof k === "string")
+    .sort();
+  const firstYmd = allOpenDays[0] || bakuYmd();
+  const lastYmd = allOpenDays[allOpenDays.length - 1] || firstYmd;
+  const todayYmd = bakuYmd();
 
-  const practitioners = await prisma.practitioner.findMany({
-    orderBy: { code: "asc" },
-    take: 12,
-  });
+  /** source dayOffset → appointments[] */
+  const bySourceOffset = new Map();
+  for (const appt of appointments) {
+    const off = Number(appt.dayOffset) || 0;
+    if (!bySourceOffset.has(off)) bySourceOffset.set(off, []);
+    bySourceOffset.get(off).push(appt);
+  }
+  for (const [, list] of bySourceOffset) {
+    list.sort((a, b) => a.time.localeCompare(b.time) || String(a.roomName).localeCompare(String(b.roomName)));
+  }
+
+  const practitioners = await ensureDemoPractitioners();
   if (!practitioners.length) throw new Error("No practitioners");
 
   const icd =
+    bootIcd ||
     (await prisma.icdCode.findFirst({ where: { code: "M54.5" } })) ||
     (await prisma.icdCode.findFirst());
 
@@ -258,6 +469,7 @@ async function main() {
   const episodeCache = new Map();
   const nameToCode = loadRandevuProcedureMap();
   console.log("Randevu procedure map entries:", nameToCode.size);
+  console.log("Demo window:", windowMeta);
 
   let orderCount = 0;
   let skippedLunch = 0;
@@ -288,8 +500,6 @@ async function main() {
       },
     });
 
-    const firstYmd = dayMap.get(0) || bakuYmd();
-    const lastYmd = dayMap.get(6) || addDaysYmd(firstYmd, 6);
     const episode = await prisma.clinicalEpisode.create({
       data: {
         organizationId: ORG,
@@ -309,14 +519,15 @@ async function main() {
         text: "Sanatorium program — imported from Randevular week",
       },
     });
-    await prisma.clinicalDiagnosis.create({
-      data: {
-        episodeId: episode.id,
-        icdCodeId: icd?.id,
-        icdCodeText: icd?.code ?? "M54.5",
-        description: "Demo week diagnosis",
-      },
-    });
+    if (icd?.id) {
+      await prisma.clinicalDiagnosis.create({
+        data: {
+          episodeId: episode.id,
+          icdCodeId: icd.id,
+          note: "Demo week diagnosis",
+        },
+      });
+    }
 
     await prisma.programInstance.create({
       data: {
@@ -343,98 +554,106 @@ async function main() {
   const MIN_GAP_MIN = 5;
   // Track last booking end per resource+day so demo data reflects the gap.
   const lastEndByResourceDay = new Map();
-  // Place appointments in chronological order so the gap shift is stable.
-  const orderedAppointments = [...appointments].sort(
-    (a, b) => a.dayOffset - b.dayOffset || a.time.localeCompare(b.time),
-  );
 
-  for (const appt of orderedAppointments) {
-    const ymd = dayMap.get(appt.dayOffset);
-    if (!ymd) {
+  for (const ymd of allOpenDays) {
+    const srcOffset = openDaySource.get(ymd);
+    const dayAppts = bySourceOffset.get(srcOffset) || [];
+    if (!dayAppts.length) {
       skippedClosed += 1;
       continue;
     }
-    const { h, m } = parseHm(appt.time);
-    if (h >= 13 && h < 14) {
-      skippedLunch += 1;
-      continue;
-    }
+    for (const appt of dayAppts) {
+      const { h, m } = parseHm(appt.time);
+      if (h >= 13 && h < 14) {
+        skippedLunch += 1;
+        continue;
+      }
 
-    const { patient, reservationId } = patientCache.get(appt.patientName);
-    const resource = await ensureResource(appt.roomName, resourceCache);
-    const procType = await ensureProcedureType(appt.procedureName, procCache, nameToCode);
-    const pract = practitioners[orderCount % practitioners.length];
-    const duration = alignDuration(procType.durationMin || DEFAULT_DURATION_MIN);
-    let startsAt = bakuDateAt(ymd, h, m);
-    const gapKey = `${resource.id}|${ymd}`;
-    const prevEnd = lastEndByResourceDay.get(gapKey);
-    if (prevEnd && startsAt.getTime() < prevEnd.getTime() + MIN_GAP_MIN * 60_000) {
-      startsAt = new Date(prevEnd.getTime() + MIN_GAP_MIN * 60_000);
-    }
-    // A procedure must finish before lunch OR start after it — never overlap 13:00-14:00.
-    const lunchStart = bakuDateAt(ymd, 13, 0);
-    const lunchEnd = bakuDateAt(ymd, 14, 0);
-    let endsAt = new Date(startsAt.getTime() + duration * 60_000);
-    if (startsAt.getTime() < lunchEnd.getTime() && endsAt.getTime() > lunchStart.getTime()) {
-      startsAt = new Date(lunchEnd.getTime());
-      endsAt = new Date(startsAt.getTime() + duration * 60_000);
-    }
-    // End of day: allow at most a 10-min overrun past 18:00, otherwise drop.
-    const dayEndCap = bakuDateAt(ymd, 18, 10);
-    if (endsAt.getTime() > dayEndCap.getTime()) {
-      skippedLate += 1;
-      continue;
-    }
-    lastEndByResourceDay.set(gapKey, endsAt);
-    const isPastMorning = ymd === dayMap.get(0) && h < 11;
-    const status = isPastMorning && orderCount % 7 === 0 ? "COMPLETED" : "SCHEDULED";
+      const cached = patientCache.get(appt.patientName);
+      if (!cached?.patient) continue;
+      const { patient, reservationId } = cached;
+      const resource = await ensureResource(appt.roomName, resourceCache);
+      const procType = await ensureProcedureType(appt.procedureName, procCache, nameToCode);
+      const pract = practitioners[orderCount % practitioners.length];
+      const duration = alignDuration(procType.durationMin || DEFAULT_DURATION_MIN);
+      let startsAt = bakuDateAt(ymd, h, m);
+      const gapKey = `${resource.id}|${ymd}`;
+      const prevEnd = lastEndByResourceDay.get(gapKey);
+      if (prevEnd && startsAt.getTime() < prevEnd.getTime() + MIN_GAP_MIN * 60_000) {
+        startsAt = new Date(prevEnd.getTime() + MIN_GAP_MIN * 60_000);
+      }
+      // A procedure must finish before lunch OR start after it — never overlap 13:00-14:00.
+      const lunchStart = bakuDateAt(ymd, 13, 0);
+      const lunchEnd = bakuDateAt(ymd, 14, 0);
+      let endsAt = new Date(startsAt.getTime() + duration * 60_000);
+      if (startsAt.getTime() < lunchEnd.getTime() && endsAt.getTime() > lunchStart.getTime()) {
+        startsAt = new Date(lunchEnd.getTime());
+        endsAt = new Date(startsAt.getTime() + duration * 60_000);
+      }
+      // End of day: allow at most a 10-min overrun past 18:00, otherwise drop.
+      const dayEndCap = bakuDateAt(ymd, 18, 10);
+      if (endsAt.getTime() > dayEndCap.getTime()) {
+        skippedLate += 1;
+        continue;
+      }
+      lastEndByResourceDay.set(gapKey, endsAt);
+      const isPastDay = ymd < todayYmd;
+      const isTodayMorning = ymd === todayYmd && h < 11;
+      let status = "SCHEDULED";
+      if (isPastDay) {
+        status =
+          orderCount % 5 === 0 ? "COMPLETED" : orderCount % 5 === 1 ? "CHECKED_IN" : "SCHEDULED";
+      } else if (isTodayMorning && orderCount % 7 === 0) {
+        status = "COMPLETED";
+      }
 
-    const order = await prisma.procedureOrder.create({
-      data: {
-        patientRefId: patient.id,
-        procedureTypeId: procType.id,
-        procedureCode: procType.code,
-        procedureName: procType.name,
-        scheduledAt: startsAt,
-        endsAt,
-        resourceId: resource.id,
-        amountNet: 20,
-        status,
-        patientOrigin: "IN_HOUSE",
-        reservationId,
-        completedAt: status === "COMPLETED" ? endsAt : undefined,
-      },
-    });
-    orderCount += 1;
-
-    await prisma.resourceBooking.create({
-      data: {
-        resourceId: resource.id,
-        practitionerId: pract.id,
-        procedureOrderId: order.id,
-        startsAt,
-        endsAt,
-      },
-    });
-
-    await prisma.procedureAllocation.createMany({
-      data: [
-        {
-          procedureOrderId: order.id,
-          role: "LOCATION",
+      const order = await prisma.procedureOrder.create({
+        data: {
+          patientRefId: patient.id,
+          procedureTypeId: procType.id,
+          procedureCode: procType.code,
+          procedureName: procType.name,
+          scheduledAt: startsAt,
+          endsAt,
           resourceId: resource.id,
-          startsAt,
-          endsAt,
+          amountNet: 20,
+          status,
+          patientOrigin: "IN_HOUSE",
+          reservationId,
+          completedAt: status === "COMPLETED" ? endsAt : undefined,
         },
-        {
-          procedureOrderId: order.id,
-          role: "STAFF",
+      });
+      orderCount += 1;
+
+      await prisma.resourceBooking.create({
+        data: {
+          resourceId: resource.id,
           practitionerId: pract.id,
+          procedureOrderId: order.id,
           startsAt,
           endsAt,
         },
-      ],
-    });
+      });
+
+      await prisma.procedureAllocation.createMany({
+        data: [
+          {
+            procedureOrderId: order.id,
+            role: "LOCATION",
+            resourceId: resource.id,
+            startsAt,
+            endsAt,
+          },
+          {
+            procedureOrderId: order.id,
+            role: "STAFF",
+            practitionerId: pract.id,
+            startsAt,
+            endsAt,
+          },
+        ],
+      });
+    }
   }
 
   const ward = await prisma.ward.findFirst({
@@ -466,14 +685,18 @@ async function main() {
     }
   }
 
+  const daySourceLog = {};
+  for (const ymd of allOpenDays) daySourceLog[ymd] = openDaySource.get(ymd);
   console.log("DEMO-WEEK seed OK", {
-    today: bakuYmd(),
-    dayMap: Object.fromEntries(dayMap),
+    today: todayYmd,
+    window: windowMeta,
+    daySourceMap: daySourceLog,
     patients: uniqueNames.length,
     episodes: uniqueNames.length,
     orderCount,
     resources: resourceCache.size,
     procedureTypes: procCache.size,
+    practitioners: practitioners.length,
     skippedLunch,
     skippedClosed,
     skippedLate,

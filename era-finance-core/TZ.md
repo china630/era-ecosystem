@@ -382,7 +382,7 @@
 | **Валидация** | Функция `validateBalance()` проверяет, что **Σ Debit = Σ Credit** перед сохранением |
 | **Атомарность** | `Prisma.$transaction`: при ошибке одной проводки откатывается вся транзакция |
 | **Блокировка** | Невозможность удаления/изменения проводок в «закрытых» периодах; закрытие периода — только **Owner** или **Admin** |
-| **Журнал (MVP)** | Правки проводок **допускаются**, каждое изменение — в **`AuditLog`**; неизменяемый журнал / только сторно — позже |
+| **Журнал (MVP)** | Правки уже проведённых строк **не** делаются из UI корректировок; каждое изменение через HTTP — в **`AuditLog`**. Новая ручная операция — §3.4. Неизменяемый журнал / только сторно исходных документов — позже |
 
 **Стаб §5.E (РБП / prepaid):** помесячное признание предоплаченных расходов — отдельные сущности **`PrepaidExpense`** / **`PrepaidExpenseSchedule`** и проводки через **`AccountingService.postJournalInTransaction`** с теми же ограничениями закрытого периода, что и для прочих ручных операций. Детали — **§12.8.5**.
 
@@ -424,6 +424,24 @@
 - **Акт сверки (Üzləşmə aktı):** `GET /api/reports/reconciliation/:counterpartyId` (`startDate`, `endDate`, опционально `currency`, `ledgerType`; алиасы `dateFrom`/`dateTo`); экспорт **`/pdf`**, **`/xlsx`**; **`POST …/email`** — PDF на `counterparty.email` при настроенном SMTP. Вкладка **«Акт сверки»** в UI редактирования контрагента (**модальное окно** на странице списка **`/crm/counterparties`**; отдельный маршрут карточки — **`/crm/counterparties/[id]/reconciliation`**). Устаревший JSON-эндпоинт **`GET /api/reporting/reconciliation?counterpartyId=…`** сохранён для совместимости.
 - **Встречные требования / взаимозачёт** (`GET /api/reporting/netting/preview`, UI отчётов): блок остатков **211 / 531** и лимит зачёта; кнопка **«Оплатить зачётом / Pay by netting»** на странице `/reporting/reconciliation` доступна только при `canNet`.
 - **Карточка инвойса:** при непогашенном остатке и `canNet` — действие **«Оплатить зачётом»** (сумма по умолчанию ≤ min(остаток инвойса, suggestedAmount)).
+
+### 3.4. Ручная корректирующая операция (əl ilə tənzimləmə)
+
+**Назначение:** любые корректировки ГК **новыми** проводками, без правки уже проведённых документов (возврат переплаты клиенту, одностороннее прощение 211/531/533, безвозмездное поступление имущества). Не заменяет взаимозачёт (§3.3), quick-expense, ручной банк или складской surplus.
+
+**Модель:** `Transaction.kind = MANUAL_ADJUSTMENT`; обязательное **`reason`** (≥ 10 символов); опционально `manualTemplate`, `counterpartyId`, `departmentId`, `basisInvoiceId`, `basisFixedAssetId` (ссылки; исходные документы **не** мутируются free-form voucher). Проведение через `AccountingService.postTransaction` (`isFinal: true`), те же guards закрытого периода / `lockedPeriodUntil` / `validateBalance`. Роли: **OWNER / ADMIN / ACCOUNTANT**; **USER → 403**.
+
+**REST:** `GET /api/accounting/manual-adjustments` (реестр), `GET …/:id`, `GET …/:id/pdf`, `POST …/preview`, `POST …/:id/reverse`, `GET …/templates?template=`, `POST /api/accounting/manual-adjustments`. Шаблоны v1: `FREEFORM`, `AR_OVERCOLLECTION_REFUND` (Дт 211 / Кт касса), `AR_WRITEOFF`, `AP_WRITEOFF`, `DONATION_IN_KIND` (Дт ОС / Кт доход дарения) — только подстановка кодов через `PostingAccountResolver`. На шаблонах `AR_*` / `AP_WRITEOFF` **`counterpartyId` обязателен**.
+
+**UI:** `/accounting/adjustments` + модалка `ManualAdjustmentModal` (`SalesModalShell`): шаг **Проверить → Провести**; поле **departmentId**; реестр — PDF-справка, копия, сторно, кликабельное основание. Журнал `/reporting/journal` остаётся read-only.
+
+**Негативные пути:** короткий `reason`; роль USER; несбалансированные строки; закрытый период; неизвестный счёт; чужой контрагент; повторный reverse; FA donation ACQUISITION. Тесты: `apps/api/__tests__/fin-gl-negative.spec.ts`, `fin-arap-negative.spec.ts`. ADR: [finance-manual-adjusting-journal.md](../docs/adr/finance-manual-adjusting-journal.md).
+
+**Вне v1:** PDF кредит-нота клиенту, e-qaimé credit, складской модуль, черновик, сторно исходных проводок SENT, правка `totalAmount` инвойса.
+
+**Wave 2 (2026-08):** `POST /api/invoices/:id/credit-adjustment`; FA `creditSource=DONATION`; `basisFixedAssetId`; см. ADR wave 2.
+
+**Wave 3 (2026-08):** НДС-split на credit-adjust (REVENUE); `reversesTransactionId` + `CREDIT_ADJUSTMENT_REVERSAL`; справка-PDF; preview/copy/reverse; навигация основание↔документ; CTA переплаты с PAID-инвойса. См. ADR wave 3.
 
 ---
 
@@ -665,7 +683,7 @@
 1. Ордер существует в организации, статус **`DRAFT`**; иначе **404** / **409**.
 2. Если **`skipJournalPosting`** — только смена статуса на **POSTED**, привязка `postedTransactionId` к уже существующей `linkedTransactionId` (без новой проводки).
 3. Иначе: обязателен **`cashFlowItemId`** на записи; повторная проверка `assertCashFlowItem`; при **`cashDeskId`** — `assertCashDesk`.
-4. Обязателен непустой **`offsetAccountCode`**; **`cashAccountCode`** должен проходить **`assertValidCashDeskAccountCode`** (касса **101\***).
+4. Обязателен непустой **`offsetAccountCode`**; **`cashAccountCode`** должен проходить **`assertValidCashDeskAccountCode(kind)`** (NAS-GOV **101\***; Q-01 / İ-05 **221\***).
 5. **Удержание налога у источника:** если `withholdingTaxAmount` > 0 — только для **`MXO`**; сумма **`amount`** трактуется как **нетто** (выдано из кассы), **валовая** = `amount + withholdingTaxAmount`. Проводки в одной транзакции: **Дт** второй счёт (`offset`) на **gross**, **Кт** касса на **amount**, **Кт** счёт **`521`** (`PAYROLL_TAX_PAYABLE_ACCOUNT_CODE`) на **withholdingTaxAmount**. Если удержание 0 — классическая пара Дт/Кт по кассе и второму счёту на сумму `amount`.
 6. MKO: **Дт** касса, **Кт** второй счёт на `amount`.
 7. После успеха — `postedTransactionId` на созданную финансовую транзакцию, статус **POSTED**.
@@ -697,7 +715,7 @@
 |------|-----------|
 | `type` | enum **`BankStatementLineType`**: `INFLOW` \| `OUTFLOW` |
 | `amount` | > 0, finite, до 4 десятичных |
-| `bankAccountCode` | строка; после trim должна удовлетворять **`isBankLedgerAccountCode`** — счета **221\*, 222\*, 223\*, 224\*** |
+| `bankAccountCode` | строка; после trim должна удовлетворять **`isNasBankLedgerCode(kind)`** — Q-01/İ-05 **223\*/224\***, NAS-GOV **103\*/104\*** |
 | `offsetAccountCode` | второй счёт проводки (строка, не пустая) |
 | `date` | `YYYY-MM-DD` |
 | **`cashFlowItemId`** | UUID; проверка `treasury.assertCashFlowItem` |
@@ -2619,7 +2637,7 @@ enum SubscriptionTier {
 - **Компонент:** `apps/web/app/register-org/page.tsx` (форма регистрации организации).
 - **UI-элемент:** radio/cards с обязательным выбором **`kind`**.
 - **Варианты:**
-  - **`COMMERCIAL`** — коммерческий план (каталог `chart-of-accounts-commercial.json`; ERA: касса **`101`**, банк **`221.*`** и т.д.).
+  - **`COMMERCIAL`** — коммерческий план Q-01 (`chart-of-accounts-commercial.json`, e-qanun **34909**): касса **`221`**, банк **`223`**. Ядро маппит **`PostingRole`** (`CASH_AZN`, `MAIN_BANK`, …) на эти коды — не переписывает официальный план.
   - **`BUDGET`** — бюджетный план (NAS-GOV, `chart-of-accounts-budget.json`).
   - **`NGO`** — некоммерческие организации (`chart-of-accounts-ngo.json`).
 - **Локализация:** ключи **`auth.organizationTypeCommercial` / `Budget` / `Nco`** и описания **`auth.organizationType*Desc`**; для списка компаний — **`companiesPage.organizationKind*`**; super-admin колонка **`superAdmin.chartColKind`**.
@@ -3293,7 +3311,7 @@ Active org context = O_k:
 |------------|-----------|------------|
 | `PREPAID_ASSET` | `133` | Расходы будущих периодов (актив) — §27.5 |
 | `CHARTER_CAPITAL` | `301` | Уставный капитал (взнос учредителя: касса/банк ↔ 301) |
-| (опц.) карточные банк-счета | `222`–`224` | Если нужны отдельные роли помимо `MAIN_BANK`→`221` |
+| (опц.) карточные банк-счета | `224` | Q-01 other demand accounts; `MAIN_BANK`/`BANK_SETTLEMENT` → **`223`** |
 
 **Таблица фиксов (аудит 2026-06):**
 
@@ -3317,7 +3335,7 @@ Active org context = O_k:
 | P3 | `common/cash-account-code.util.ts` | `101/102` (валидатор), `211/531/538` (анти-касса) | оставить как **валидатор префиксов** (разрешённое исключение) |
 | cleanup | `ledger.constants.ts` | все коммерческие коды | удалить файл (нет активных импортов) |
 
-**Разрешённые исключения (не считаются хардкодом):** резолвер и пресеты ролей; seeds/catalog (`packages/database`); валидаторы **семейств/префиксов** счетов (касса 101/102, банк 221–224) — это правила НР АР, а не выбор конкретного счёта; отчётная агрегация по префиксам; `scripts/local-mock-seed.ts` (dev).
+**Разрешённые исключения (не считаются хардкодом):** резолвер и пресеты ролей; seeds/catalog (`packages/database`); kind-aware валидаторы семейств (`isNasCashDeskCode` / `isNasBankLedgerCode`: NAS-GOV 101/103, Q-01/İ-05 221/223) — правила НР АР, не выбор конкретного счёта; отчётная агрегация по префиксам; `scripts/local-mock-seed.ts` (dev).
 
 **Гард-рейл (CI):** добавить тест/линт-правило, запрещающее литералы NAS-кодов (regex на `accountCode:\s*["']\d{3}` и явные `"\d{3}(\.\d+)?"` в проводках) в `apps/api/src/**` вне whitelist выше. Ориентир — существующий `packages/database/prisma/scripts/validate-posting-roles.ts`.
 

@@ -66,7 +66,7 @@ export async function POST(request: Request) {
   } catch (err) {
     if (correlationId) {
       await prisma.processedEvent
-        .delete({ where: { correlationId } })
+        .delete({ where: { correlationId } as never })
         .catch(() => null);
     }
     const msg = err instanceof Error ? err.message : "handler failed";

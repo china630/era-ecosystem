@@ -110,7 +110,7 @@ function serializeVersion(v: {
 export async function ensurePricingComponentsSeeded() {
   const epoch = new Date('2026-01-01T00:00:00.000Z');
   for (const def of DEFAULTS) {
-    const existing = await prisma.pricingComponent.findUnique({
+    const existing = await prisma.pricingComponent.findFirst({
       where: { code: def.code },
       include: { versions: { take: 1 } },
     });
@@ -180,7 +180,7 @@ export async function listPricingComponents(asOf?: Date) {
 
 export async function getPricingComponent(code: string) {
   await ensurePricingComponentsSeeded();
-  const c = await prisma.pricingComponent.findUnique({
+  const c = await prisma.pricingComponent.findFirst({
     where: { code },
     include: { versions: { orderBy: { effectiveFrom: 'desc' } } },
   });
@@ -204,7 +204,7 @@ export async function addPricingComponentVersion(input: {
   note?: string | null;
   createdById?: string | null;
 }) {
-  const component = await prisma.pricingComponent.findUnique({
+  const component = await prisma.pricingComponent.findFirst({
     where: { code: input.code },
   });
   if (!component) throw new Error('Pricing component not found');

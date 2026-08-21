@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
       './messages/**/*',
       './node_modules/@era/i18n-common/messages/**/*',
       '../packages/i18n-common/messages/**/*',
+      './node_modules/dejavu-fonts-ttf/ttf/**/*',
     ],
   },
   async redirects() {
@@ -56,7 +57,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  serverExternalPackages: ['@prisma/client', 'redis'],
+  serverExternalPackages: ['@prisma/client', 'redis', 'dejavu-fonts-ttf', 'pdfkit'],
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(ttf|otf|woff2?|eot)$/i,
+      type: 'asset/resource',
+    });
+    return config;
+  },
 };
 
 export default withNextIntl(nextConfig);

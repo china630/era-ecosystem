@@ -33,7 +33,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const cpEmploymentId = p.cpEmploymentId;
 
     await prisma.staffRoster.upsert({
-      where: { staffCode: p.staffCode },
+      where: { staffCode: p.staffCode } as never,
       create: {
         staffCode: p.staffCode,
         fullName: p.fullName,
@@ -53,7 +53,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     });
 
     const byCp = await prisma.user.findFirst({ where: { cpEmploymentId } });
-    const existingUser = byCp ?? (await prisma.user.findUnique({ where: { login } }));
+    const existingUser = byCp ?? (await prisma.user.findFirst({ where: { login } }));
     if (existingUser) {
       await prisma.user.update({
         where: { id: existingUser.id },

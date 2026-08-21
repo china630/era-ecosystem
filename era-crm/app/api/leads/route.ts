@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
 import { computeLeadScore } from "@/lib/lead-score";
 import {
   createLeadSchema,
@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
+    await assertCrmEntitled();
     const { searchParams } = new URL(req.url);
     const ownerId = searchParams.get("ownerId");
     const mine = searchParams.get("mine") === "true";

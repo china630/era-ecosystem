@@ -20,6 +20,8 @@ const createSchema = z.object({
   checkOutDate: z.coerce.date(),
   paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']),
   partyBillingMode: z.enum(['PRIMARY', 'EQUAL']).optional(),
+  adults: z.number().int().min(0).optional(),
+  shareEligible: z.boolean().optional(),
 });
 
 export async function GET(request: Request) {

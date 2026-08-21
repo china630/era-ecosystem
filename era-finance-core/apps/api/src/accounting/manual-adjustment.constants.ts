@@ -1,0 +1,18 @@
+export const MANUAL_ADJUSTMENT_TEMPLATES = [
+  "FREEFORM",
+  "AR_OVERCOLLECTION_REFUND",
+  "AR_WRITEOFF",
+  "AP_WRITEOFF",
+  "DONATION_IN_KIND",
+] as const;
+
+export type ManualAdjustmentTemplate =
+  (typeof MANUAL_ADJUSTMENT_TEMPLATES)[number];
+
+export const MANUAL_ADJUSTMENT_REASON_MIN = 10;
+
+export const MANUAL_ADJUSTMENT_TEMPLATES_REQUIRING_COUNTERPARTY = [
+  "AR_OVERCOLLECTION_REFUND",
+  "AR_WRITEOFF",
+  "AP_WRITEOFF",
+] as const;

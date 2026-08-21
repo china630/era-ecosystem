@@ -28,10 +28,10 @@ export const ratePlansAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     currency: cellString(raw.currency),
   }),
   upsert: async (tx, row, dryRun) => {
-    const existing = await tx.ratePlan.findUnique({ where: { code: row.code } });
+    const existing = await tx.ratePlan.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.ratePlan.upsert({
-      where: { code: row.code },
+      where: { code: row.code } as never,
       create: {
         code: row.code,
         name: row.name,

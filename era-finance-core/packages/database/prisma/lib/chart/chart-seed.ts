@@ -282,20 +282,46 @@ export function organizationKindToPayrollSettingsTemplateGroup(
   return "COMMERCIAL";
 }
 
+/** Official kassa synthetic (not transit / bank). Q-01 / İ-05: 221; NAS-GOV: 101. */
+export function isNasCashDeskCode(kind: OrganizationKind, code: string): boolean {
+  const c = code.trim();
+  if (kind === OrganizationKind.BUDGET) {
+    return c === "101" || c.startsWith("101.");
+  }
+  return c === "221" || c.startsWith("221.");
+}
+
+/** Official bank settlement / other demand accounts. Q-01 / İ-05: 223–224; NAS-GOV: 103–104. */
+export function isNasBankLedgerCode(kind: OrganizationKind, code: string): boolean {
+  const c = code.trim();
+  if (kind === OrganizationKind.BUDGET) {
+    return (
+      c === "103" ||
+      c.startsWith("103.") ||
+      c === "104" ||
+      c.startsWith("104.")
+    );
+  }
+  return (
+    c === "223" ||
+    c.startsWith("223.") ||
+    c === "224" ||
+    c.startsWith("224.")
+  );
+}
+
 export function cashProfileForNasCode(kind: OrganizationKind, code: string): string | null {
   if (kind === OrganizationKind.BUDGET) {
     if (code === "101" || code.startsWith("101.")) return "AZN";
-    if (code === "102" || code.startsWith("102.")) return "FX";
     return null;
   }
   if (kind === OrganizationKind.NGO) {
     if (code === "221" || code.startsWith("221.")) return "AZN";
-    if (code === "222" || code.startsWith("222.")) return "FX";
     return null;
   }
-  // COMMERCIAL — ERA harmonized (101 kassa, 102 FX cash)
-  if (code === "101" || code.startsWith("101.")) return "AZN";
-  if (code === "102" || code.startsWith("102.")) return "FX";
+  // COMMERCIAL Q-01 (e-qanun 34909): 221 kassa; 221.11 operational FX subaccount
+  if (code === "221.11" || code.startsWith("221.11.")) return "FX";
+  if (code === "221" || code.startsWith("221.")) return "AZN";
   return null;
 }
 

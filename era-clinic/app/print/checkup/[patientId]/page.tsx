@@ -42,6 +42,10 @@ export default async function PrintCheckupPage({ params, searchParams }: Props) 
         <strong>{printLabel(lang, "workingHours")}:</strong> {printLabel(lang, "weekdays")} 09:00–17:00 ·{" "}
         {printLabel(lang, "saturday")} 09:00–13:00
       </p>
+      <div className="mb-3 text-[11px]">
+        <strong>{printLabel(lang, "diagnosis")}:</strong>{" "}
+        {doc.diagnoses.length > 0 ? doc.diagnoses.join("; ") : "—"}
+      </div>
       <ol className="m-0 list-decimal space-y-4 pl-5">
         {doc.sections.map((sec) => (
           <li key={sec.specialty} className="text-[11px]">

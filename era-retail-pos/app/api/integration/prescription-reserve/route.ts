@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       include: { register: { include: { outlet: true } } },
     });
   }
+  if (!shift) throw new Error("shift unavailable");
 
   const receipt = await prisma.receipt.create({
     data: {

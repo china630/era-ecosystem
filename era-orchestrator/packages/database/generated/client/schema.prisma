@@ -390,6 +390,42 @@ model SatelliteEndpoint {
   @@map("satellite_endpoints")
 }
 
+/// PlacementJob state machine (API scaffold). Real DB dump / live migrate not implemented.
+/// Direct SHARED ↔ ONPREM is REJECTED — two hops via DEDICATED only.
+enum PlacementJobStatus {
+  PENDING
+  FREEZE
+  EXPORT
+  PROVISION
+  BIND
+  CUTOVER
+  SMOKE
+  DONE
+  FAILED
+  REJECTED
+}
+
+model PlacementJob {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  satelliteKey   String             @map("satellite_key")
+  fromTopology   DeploymentTopology @map("from_topology")
+  toTopology     DeploymentTopology @map("to_topology")
+  status         PlacementJobStatus @default(PENDING)
+  errorMessage   String?            @map("error_message")
+  /// Metadata from exportSlice stub (not a full dump).
+  sliceMeta      Json?              @map("slice_meta")
+  /// Optional target URL for cutoverEndpoint.
+  targetBaseUrl  String?            @map("target_base_url")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("placement_jobs")
+}
+
 enum WorkforceAssignmentStatus {
   ACTIVE
   INACTIVE
@@ -934,6 +970,14 @@ enum OrgOperatingMode {
   DEPARTMENT
 }
 
+/// Axis B placement (not DEPARTMENT). License defaults: SHARED=system trial,
+/// DEDICATED/ONPREM=no trial + perpetual until super-admin sets a date.
+enum DeploymentTopology {
+  SHARED
+  DEDICATED
+  ONPREM
+}
+
 /// Where a given financial concern is settled: under the org itself (OWN) or
 /// routed to the parent org (PARENT, e.g. hotel folio / hotel accounting).
 enum OrgRouting {
@@ -958,6 +1002,8 @@ model Organization {
   subscriptionPlan           String?                            @map("subscription_plan")
   billingStatus              BillingStatus                      @default(ACTIVE) @map("billing_status")
   operatingMode              OrgOperatingMode                   @default(STANDALONE) @map("operating_mode")
+  /// Placement for license defaults. Per-endpoint mix is a later PlacementJob.
+  deploymentTopology         DeploymentTopology                 @default(SHARED) @map("deployment_topology")
   parentOrgId                String?                            @map("parent_org_id") @db.Uuid
   /// Holding grouping for multi-entity consolidation — distinct from parentOrgId/DEPARTMENT money routing.
   holdingId                  String?                            @map("holding_id") @db.Uuid
@@ -999,6 +1045,7 @@ model Organization {
   platformIdempotencyRecords PlatformIdempotencyRecord[]
   platformLoyaltyLedger      PlatformLoyaltyLedger[]
   satelliteEndpoints         SatelliteEndpoint[]
+  placementJobs              PlacementJob[]
   satelliteEntitlements      OrganizationSatelliteEntitlement[]
   workforceAssignments       WorkforceAssignment[]
   workforceEmployments       WorkforceEmployment[]

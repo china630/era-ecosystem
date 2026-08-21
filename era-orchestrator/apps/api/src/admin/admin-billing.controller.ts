@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -33,6 +34,7 @@ import { PatchTierSpendCeilingsDto } from "./dto/patch-tier-spend-ceilings.dto";
 import { SetBillingQuotasMatrixDto } from "./dto/set-billing-quotas-matrix.dto";
 import { SetTierQuotasDto } from "./dto/set-tier-quotas.dto";
 import {
+  PatchDeploymentTopologyDto,
   PatchModuleTrialDto,
   PatchOrgQuotasDto,
   PatchOrgTrialDto,
@@ -188,7 +190,21 @@ export class AdminBillingController {
     return this.trialSync.patchOrgTrial(id, {
       trialExpiresAt,
       isTrial: dto.isTrial,
+      neverExpires: dto.neverExpires,
+      shiftMonths: dto.shiftMonths,
     });
+  }
+
+  @Patch("organizations/:id/deployment-topology")
+  patchDeploymentTopology(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: PatchDeploymentTopologyDto,
+  ) {
+    return this.trialSync.patchDeploymentTopology(
+      id,
+      dto.topology,
+      Boolean(dto.applyLicenseDefault),
+    );
   }
 
   @Patch("organizations/:id/satellites/:satelliteKey/trial")
@@ -197,11 +213,16 @@ export class AdminBillingController {
     @Param("satelliteKey") satelliteKey: string,
     @Body() dto: PatchSatelliteTrialDto,
   ) {
-    return this.trialSync.patchSatelliteTrial(
-      id,
-      satelliteKey,
-      new Date(dto.trialExpiresAt),
-    );
+    const trialExpiresAt =
+      dto.trialExpiresAt === undefined
+        ? undefined
+        : dto.trialExpiresAt === null || dto.trialExpiresAt === ""
+          ? null
+          : new Date(dto.trialExpiresAt);
+    if (trialExpiresAt === undefined) {
+      throw new BadRequestException("trialExpiresAt is required (ISO date or null)");
+    }
+    return this.trialSync.patchSatelliteTrial(id, satelliteKey, trialExpiresAt);
   }
 
   @Patch("organizations/:id/modules/:moduleKey/trial")
@@ -210,11 +231,16 @@ export class AdminBillingController {
     @Param("moduleKey") moduleKey: string,
     @Body() dto: PatchModuleTrialDto,
   ) {
-    return this.trialSync.patchModuleTrial(
-      id,
-      moduleKey,
-      new Date(dto.trialExpiresAt),
-    );
+    const trialExpiresAt =
+      dto.trialExpiresAt === undefined
+        ? undefined
+        : dto.trialExpiresAt === null || dto.trialExpiresAt === ""
+          ? null
+          : new Date(dto.trialExpiresAt);
+    if (trialExpiresAt === undefined) {
+      throw new BadRequestException("trialExpiresAt is required (ISO date or null)");
+    }
+    return this.trialSync.patchModuleTrial(id, moduleKey, trialExpiresAt);
   }
 
   @Patch("organizations/:id/quotas")

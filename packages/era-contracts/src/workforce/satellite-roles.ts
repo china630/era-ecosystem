@@ -9,6 +9,7 @@ export const clinicSatelliteRoleSchema = z.enum([
   "NURSE",
   "RECEPTION",
   "CLINIC_ADMIN",
+  "FLOOR",
 ]);
 
 export const hotelSatelliteRoleSchema = z.enum([

@@ -73,6 +73,13 @@ Commercial submodule keys: see [`docs/adr/hotel-module-taxonomy.md`](../docs/adr
 
 Full checklist: [doc/DELIVERY.md](./doc/DELIVERY.md)
 
+### Planned (not DONE)
+
+| Feature area | Scope | Status | Doc |
+|--------------|-------|--------|-----|
+| **Management reports** | EW WA0058/59 catalog under `/reports` + Nafta nightly ZIP pack | **W1–W3 API** (catalog + ZIP + cubes; not SHIPPED) | [`doc/MANAGEMENT-REPORTS-CATALOG.md`](./doc/MANAGEMENT-REPORTS-CATALOG.md) · HOT-RPT-01/02 |
+| **Agency portal** | B2B extranet: CP grant + hotel book + FO inbox | **P0–P1 API** (not SHIPPED) | [`docs/adr/hotel-agency-portal.md`](../docs/adr/hotel-agency-portal.md) · HOT-AGP-* |
+
 ### Internal traceability (appendix — not for UI)
 
 | Legacy ID | Maps to feature area above |
@@ -118,6 +125,6 @@ Must stories for UAT: [doc/clone-spec/13-nafta-validation-checklist.md](./doc/cl
 
 | Date | Note |
 |------|------|
-| 2026-05 | Phase 1–2 delivery |
+| 2026-08-19 | Management reports catalog (EW WA0058/59) + Nafta nightly ZIP pack spec |
 | 2026-05-28 | §4 module IDs M1–M23; W2 enrichment M20–M23 |
 | 2026-05-24 | Formal PRD.md (umbrella index to clone-spec) |

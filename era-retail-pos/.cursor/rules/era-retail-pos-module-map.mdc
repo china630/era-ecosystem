@@ -18,5 +18,6 @@ alwaysApply: false
 | Integrations | `integrations/marketplace`, `integration/` | prescription, stock write-off |
 | Offline | `offline/sync` | edge replay |
 | Events | `events/dispatch` | sale completed → orchestrator |
+| Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
 
 Room charge when `shouldRouteRevenueToParent`; fiscal via `fiscalizeForSatellite`.

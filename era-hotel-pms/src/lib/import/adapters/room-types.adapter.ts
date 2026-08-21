@@ -30,10 +30,10 @@ export const roomTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     adultCapacity: cellNumber(raw.adultCapacity) ?? 2,
   }),
   upsert: async (tx, row, dryRun) => {
-    const existing = await tx.roomType.findUnique({ where: { code: row.code } });
+    const existing = await tx.roomType.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.roomType.upsert({
-      where: { code: row.code },
+      where: { code: row.code } as never,
       create: {
         code: row.code,
         name: row.name,

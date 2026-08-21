@@ -59,7 +59,7 @@ export async function POST(request: Request) {
         payload: {
           visitId: visit.id,
           patientRef: visit.patientRef.refCode,
-          serviceCodes: visit.serviceLines.map((l) => l.serviceCode),
+          serviceCodes: visit.serviceLines.map((l: { serviceCode: string }) => l.serviceCode),
           amountNet,
           currency: "AZN",
           settlementPendingId: body.pendingId,

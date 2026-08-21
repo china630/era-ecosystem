@@ -2,6 +2,7 @@ import { sign } from "jsonwebtoken";
 import type { ConfigService } from "@nestjs/config";
 import {
   resetControlPlaneJwksCache,
+  resolveControlPlaneJwksUrl,
   verifyControlPlaneAccessToken,
 } from "./verify-control-plane-jwt";
 
@@ -59,6 +60,17 @@ describe("verifyControlPlaneAccessToken", () => {
       }),
     );
     expect(payload).toBeNull();
+  });
+
+  it("prefers CONTROL_PLANE_URL over loopback ERA_JWT_JWKS_URL", () => {
+    expect(
+      resolveControlPlaneJwksUrl(
+        config({
+          ERA_JWT_JWKS_URL: "http://127.0.0.1:4000/.well-known/jwks.json",
+          CONTROL_PLANE_URL: "http://orchestrator:4000",
+        }),
+      ),
+    ).toBe("http://orchestrator:4000/.well-known/jwks.json");
   });
 
   it("does not throw when JWKS host is unreachable", async () => {

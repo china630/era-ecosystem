@@ -66,10 +66,12 @@ import { InvoicesService } from "../invoices/invoices.service";
 import { CounterpartiesService } from "../counterparties/counterparties.service";
 import { TimesheetService } from "../hr/timesheet.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { InventoryService } from "../inventory/inventory.service";
 import { WorkforceAbsenceSyncService } from "./workforce-absence-sync.service";
 import { WorkforceOrgSyncService } from "./workforce-org-sync.service";
 import { WorkforceEmploymentSyncService } from "./workforce-employment-sync.service";
 import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.service";
+import { blindIndex, normalizeVoen } from "../security/pii-crypto.util";
 
 export type SatelliteDispatchResult = {
   transactionId?: string;
@@ -92,6 +94,7 @@ export class SatelliteEventDispatchService {
     private readonly workforceEmploymentSync: WorkforceEmploymentSyncService,
     private readonly workforceTimesheetSync: WorkforceTimesheetSyncService,
     private readonly counterparties: CounterpartiesService,
+    private readonly inventory: InventoryService,
   ) {}
 
   async dispatch(
@@ -359,24 +362,60 @@ export class SatelliteEventDispatchService {
       (sum, line) => sum + line.amount * line.qty,
       0,
     );
-    let counterpartyId = await this.resolveCounterpartyId(organizationId);
-    if (!counterpartyId) {
+    const taxId = event.payload.counterpartyTaxId;
+    if (!taxId) {
       this.logger.warn(
-        `Hotel invoice ${event.payload.invoiceNumber}: no counterparty; skipping invoice`,
+        `Hotel invoice ${event.payload.invoiceNumber}: missing counterpartyTaxId; skipping invoice`,
       );
       return {
         meta: {
           folioId: event.payload.folioId,
           skipped: true,
-          reason: "no counterparty",
+          reason: "missing counterpartyTaxId",
         },
       };
     }
+
+    const normalized = normalizeVoen(taxId);
+    const taxIdBlindIndex = blindIndex("voen", normalized);
+    const cp = await this.prisma.counterparty.findFirst({
+      where: { organizationId, taxIdBlindIndex, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!cp?.id) {
+      // Fail-fast: hotel checkout gate should already block by default,
+      // but if this happens for a retry stream, we want the event to retry.
+      throw new Error(`No Finance counterparty for VOEN=${taxId}`);
+    }
+
+    const counterpartyId = cp.id;
+
+    // Idempotency: retries + re-emits may come with different invoiceNumber.
+    // We dedupe by hotel folio id.
+    const sourceFolioId = event.payload.folioId;
+    const existing = await this.prisma.invoice.findFirst({
+      where: { organizationId, sourceFolioId },
+      select: { id: true },
+    });
+    if (existing) {
+      return {
+        invoiceId: existing.id,
+        meta: {
+          folioId: event.payload.folioId,
+          invoiceNumber: event.payload.invoiceNumber,
+          total,
+          paymentTermsDays: await this.resolvePaymentTermsDays(organizationId, counterpartyId),
+          deduped: true,
+        },
+      };
+    }
+
     const terms = await this.resolvePaymentTermsDays(organizationId, counterpartyId);
     const issue = new Date(`${event.payload.issueDate}T00:00:00.000Z`);
     issue.setUTCDate(issue.getUTCDate() + terms);
     const dueDate = issue.toISOString().slice(0, 10);
-    const invoiceId = await this.invoices.create(organizationId, {
+    const invoiceRow = await this.invoices.create(organizationId, {
       counterpartyId,
       dueDate,
       items: event.payload.lines.map((line: { description: string; qty: number; amount: number; vatRate?: number }) => ({
@@ -388,8 +427,28 @@ export class SatelliteEventDispatchService {
       currency: "AZN",
       vatInclusive: false,
     });
+
+    try {
+      await this.prisma.invoice.update({
+        where: { id: invoiceRow.id },
+        data: { sourceFolioId },
+      });
+    } catch (e) {
+      // If uniqueness raced, fall back to re-fetch and return existing.
+      const raced = await this.prisma.invoice.findFirst({
+        where: { organizationId, sourceFolioId },
+        select: { id: true },
+      });
+      if (raced?.id) {
+        return {
+          invoiceId: raced.id,
+          meta: { folioId: event.payload.folioId, invoiceNumber: event.payload.invoiceNumber, total, paymentTermsDays: terms, deduped: true },
+        };
+      }
+      throw e;
+    }
     return {
-      invoiceId: invoiceId.id,
+      invoiceId: invoiceRow.id,
       meta: {
         folioId: event.payload.folioId,
         invoiceNumber: event.payload.invoiceNumber,
@@ -452,19 +511,8 @@ export class SatelliteEventDispatchService {
         counterpartyId: cpId,
       }),
     );
-    let invoiceId: string | undefined;
-    if (cpId) {
-      invoiceId = await this.createDraftInvoice(
-        organizationId,
-        cpId,
-        event.payload.amountNet,
-        "Hotel folio revenue",
-        event.payload.reservationId,
-      );
-    }
     return {
       transactionId,
-      invoiceId,
       meta: { reservationId: event.payload.reservationId },
     };
   }
@@ -824,6 +872,11 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteClinicProcedureCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    const ttk = await this.writeOffClinicProcedureConsumables(
+      organizationId,
+      event,
+    );
+
     if (event.payload.patientOrigin === "IN_HOUSE") {
       this.logger.log(
         `Clinic procedure ${event.payload.procedureCode} billed to folio (reservation=${event.payload.reservationId})`,
@@ -834,39 +887,126 @@ export class SatelliteEventDispatchService {
           patientOrigin: "IN_HOUSE",
           reservationId: event.payload.reservationId,
           lineCount: event.payload.lines.length,
+          ttk,
         },
       };
     }
     const cpId = await this.resolveCounterpartyId(organizationId);
     const amount = event.payload.amountNet;
     const transactionId = await this.prisma.$transaction(async (tx) => {
-      const revenueId = await this.postBalancedJournal(tx, organizationId, {
+      return this.postBalancedJournal(tx, organizationId, {
         amount,
         reference: `clinic-procedure:${event.payload.procedureCode}:${event.correlationId}`,
         description: `Clinic procedure completed (${event.correlationId})`,
         counterpartyId: cpId,
       });
-      const [wipDefault, cogsDefault] = await Promise.all([
-        this.satelliteGlAccount(organizationId, "SATELLITE_GL_WIP", "WIP_MANUFACTURING", tx),
-        this.satelliteGlAccount(organizationId, "SATELLITE_GL_COGS", "COGS", tx),
-      ]);
-      await this.postBalancedJournal(tx, organizationId, {
-        amount: Math.max(0.01, event.payload.lines.reduce((s, l) => s + l.qty, 0)),
-        reference: `clinic-procedure-cogs:${event.correlationId}`,
-        description: `Clinic procedure consumables (${event.correlationId})`,
-        counterpartyId: cpId,
-        debitAccount: wipDefault,
-        creditAccount: cogsDefault,
-      });
-      return revenueId;
     });
     return {
       transactionId,
       meta: {
         procedureCode: event.payload.procedureCode,
         lineCount: event.payload.lines.length,
+        ttk,
       },
     };
+  }
+
+  /**
+   * CLI-47: write off procedure TTK to Finance warehouse (warn+post).
+   * Empty lines → no-op. Unknown SKU / missing warehouse → warn, skip line.
+   */
+  private async writeOffClinicProcedureConsumables(
+    organizationId: string,
+    event: ReturnType<typeof satelliteClinicProcedureCompletedSchema.parse>,
+  ): Promise<{
+    writtenOff: number;
+    skipped: number;
+    warnings: string[];
+    warehouseId: string | null;
+  }> {
+    const warnings: string[] = [];
+    const lines = event.payload.lines ?? [];
+    if (lines.length === 0) {
+      return { writtenOff: 0, skipped: 0, warnings, warehouseId: null };
+    }
+
+    const warehouseId = await this.inventory.resolveDefaultWarehouseId(organizationId);
+    if (!warehouseId) {
+      warnings.push("No default warehouse — TTK write-off skipped");
+      this.logger.warn(
+        `Clinic TTK skip (no warehouse) org=${organizationId} corr=${event.correlationId}`,
+      );
+      return { writtenOff: 0, skipped: lines.length, warnings, warehouseId: null };
+    }
+
+    const warehouse = await this.prisma.warehouse.findFirst({
+      where: { id: warehouseId, organizationId },
+      select: { inventoryAccountCode: true },
+    });
+    if (!warehouse?.inventoryAccountCode) {
+      warnings.push("Warehouse missing inventory account — TTK write-off skipped");
+      this.logger.warn(
+        `Clinic TTK skip (no inventory account) org=${organizationId} corr=${event.correlationId}`,
+      );
+      return { writtenOff: 0, skipped: lines.length, warnings, warehouseId };
+    }
+    const inventoryAccountCode = warehouse.inventoryAccountCode;
+    if (inventoryAccountCode !== "201" && inventoryAccountCode !== "204") {
+      warnings.push(
+        `Warehouse inventory account ${inventoryAccountCode} is not a stock account — TTK write-off skipped`,
+      );
+      this.logger.warn(
+        `Clinic TTK skip (inventory account ${inventoryAccountCode}) org=${organizationId} corr=${event.correlationId}`,
+      );
+      return { writtenOff: 0, skipped: lines.length, warnings, warehouseId };
+    }
+
+    let writtenOff = 0;
+    let skipped = 0;
+    for (const line of lines) {
+      const sku = line.sku?.trim();
+      if (!sku || !(line.qty > 0)) {
+        skipped += 1;
+        warnings.push(`Invalid line skipped: sku=${line.sku} qty=${line.qty}`);
+        continue;
+      }
+      const product = await this.prisma.product.findFirst({
+        where: {
+          organizationId,
+          deletedAt: null,
+          isService: false,
+          sku: { equals: sku, mode: "insensitive" },
+        },
+      });
+      if (!product) {
+        skipped += 1;
+        warnings.push(`Unknown SKU ${sku}`);
+        this.logger.warn(
+          `Clinic TTK unknown SKU=${sku} corr=${event.correlationId}`,
+        );
+        continue;
+      }
+      try {
+        await this.inventory.adjustStock(organizationId, {
+          warehouseId,
+          productId: product.id,
+          quantity: line.qty,
+          type: "OUT",
+          inventoryAccountCode,
+          forceAllowNegative: true,
+        });
+        writtenOff += 1;
+      } catch (err) {
+        skipped += 1;
+        const msg = err instanceof Error ? err.message : "write-off failed";
+        warnings.push(`SKU ${sku}: ${msg}`);
+        this.logger.warn(
+          `Clinic TTK write-off failed sku=${sku} corr=${event.correlationId}: ${msg}`,
+        );
+      }
+    }
+
+    return { writtenOff, skipped, warnings, warehouseId };
   }
 
   private async handleClinicPrescription(

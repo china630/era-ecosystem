@@ -17,11 +17,23 @@ alwaysApply: true
 
 ## Tenancy layers (do not conflate)
 
+**Axis A — legal / money / POS**
+
 | Need | Mechanism |
 |------|-----------|
-| Bar + restaurant, same VOEN, same deployment | Multiple **`Outlet`** rows in satellite DB |
-| Clinic/shop as department of hotel, own DB | Orchestrator org `DEPARTMENT` + `parentOrgId`; revenue/fiscal may route **PARENT**; ops data stays in department DB |
+| Bar + restaurant, same VOEN, same org | Multiple **`Outlet`** rows in satellite DB |
+| Clinic/shop as department of hotel | Orchestrator org `DEPARTMENT` + `parentOrgId`; revenue/fiscal may route **PARENT**; ops data stays in that org’s satellite rows |
 | Separate legal entity | Separate org `STANDALONE` + unique `taxIdBlindIndex` (VOEN) |
+
+**Axis B — placement** (`docs/adr/deployment-topology.md`) — not the same as DEPARTMENT:
+
+| Topology | Meaning |
+|----------|---------|
+| **SHARED** | One process + one **per-satellite** DB → many `organizationId` |
+| **DEDICATED** | One process + one DB → one org (filter still required) |
+| **ONPREM** | Same image as DEDICATED, customer iron |
+
+DEPARTMENT ≠ dedicated VM. Hotel DEDICATED + clinic SHARED is a valid mix (endpoints + MDM/events). Source license is a SKU, not a topology.
 
 See `docs/adr/org-operating-mode.md`. Detach department → standalone: routing only, no data migration.
 

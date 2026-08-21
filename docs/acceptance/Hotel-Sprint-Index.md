@@ -27,5 +27,9 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-4 | BE deepen → Scaffold ✅ (excl. INT stubs) | [x] | IM + `__tests__/*-negative.spec.ts` |
 | S-5 | UI deepen → UI/Demo ✅ | [x] | `reports/hotel-demo-te-signoff.md` |
+| S-6 | SHARED hotel pool isolation | [~] | AC-HOT-TENANT 🟡 — schema+filter; live pool / field UAT open |
+| S-7 | Management reports catalog + Nafta nightly ZIP | [~] | W1–W3 API/SCREEN (P0 pack + P1 catalog + cubes/3-year + email ZIP link HEADLESS); HOT-RPT-01/02 not SHIPPED — no UAT evidence |
+| S-8 | Agency portal P0–P1 | [~] | ADR hotel-agency-portal; AC-HOT-AGP 🟡; HOT-AGP-01/02/03 API |
+| S-9 | Early checkout unused-nights refund (HOT-CO-04) | [x] | ADR Accepted; preview+apply+UI; UAT §33; AC-HOT-CO-EARLY 🟡 |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

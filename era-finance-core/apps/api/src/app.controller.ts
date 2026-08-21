@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
-import { HEALTH_CHECK_PAYLOAD } from "./common/health-payload";
+import { HEALTH_CHECK_PAYLOAD, healthCheckWithDiagnostics } from "./common/health-payload";
 import { Public } from "./auth/decorators/public.decorator";
 import { CbarRateSyncService } from "./fx/cbar-rate-sync.service";
 import { CbarExternalFetchDisabledError } from "./fx/cbar-errors";
@@ -13,7 +13,7 @@ export class AppController {
   @SkipThrottle()
   @Get("health")
   health() {
-    return HEALTH_CHECK_PAYLOAD;
+    return healthCheckWithDiagnostics();
   }
 
   /**

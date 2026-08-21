@@ -1,13 +1,18 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { Prisma } from "@prisma/client";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { receiptLineVoidDenied } from "@/lib/receipt-status-gates";
 import { totalsFromReceipt } from "@/lib/receipt-totals";
 import { prisma } from "@/lib/prisma";
 import { canVoidLine, getRequestSession } from "@/lib/session";
+
+type ReceiptWithLines = Prisma.ReceiptGetPayload<{ include: { lines: true } }>;
 
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string; lineId: string }> },
 ) {
   try {
+    await assertRetailEntitled();
     const session = await getRequestSession();
     if (!session) return jsonError("Unauthorized", 401);
     if (!canVoidLine(session)) {
@@ -15,14 +20,13 @@ export async function POST(
     }
 
     const { id, lineId } = await params;
-    const receipt = await prisma.receipt.findUnique({
+    const receipt = (await prisma.receipt.findUnique({
       where: { id },
       include: { lines: true },
-    });
+    })) as ReceiptWithLines | null;
     if (!receipt) return jsonError("Receipt not found", 404);
-    if (receipt.status !== "OPEN") {
-      return jsonError("Only open receipts allow line void", 400);
-    }
+    const lineVoidDenied = receiptLineVoidDenied(receipt.status);
+    if (lineVoidDenied) return jsonError(lineVoidDenied, 400);
 
     const line = receipt.lines.find((item) => item.id === lineId);
     if (!line) return jsonError("Line not found", 404);

@@ -5,7 +5,7 @@ import type { SsoExchangeBody } from "./sso-exchange-schema";
 
 export type SsoExchangePrisma = {
   role: {
-    findUnique(args: {
+    findFirst(args: {
       where: { code: string };
     }): Promise<{ id: string; code: string } | null>;
     create(args: {
@@ -13,7 +13,7 @@ export type SsoExchangePrisma = {
     }): Promise<{ id: string; code: string }>;
   };
   user: {
-    findUnique(args: {
+    findFirst(args: {
       where: { login: string };
       include: { role: true };
     }): Promise<{
@@ -98,7 +98,7 @@ export async function executeSatelliteSsoExchange(
     [SATELLITE_ROLE.SATELLITE_OPERATOR]: "Satellite Operator",
   };
 
-  let role = await prisma.role.findUnique({ where: { code: satelliteRole } });
+  let role = await prisma.role.findFirst({ where: { code: satelliteRole } });
   if (!role) {
     role = await prisma.role.create({
       data: {
@@ -110,7 +110,7 @@ export async function executeSatelliteSsoExchange(
   }
 
   const login = `sso_${body.email.split("@")[0]}`;
-  let user = await prisma.user.findUnique({
+  let user = await prisma.user.findFirst({
     where: { login },
     include: { role: true },
   });

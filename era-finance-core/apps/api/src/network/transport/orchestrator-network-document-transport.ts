@@ -4,6 +4,10 @@ import type {
   NetworkDocumentPayload,
   NetworkDocumentTransport,
 } from "./network-document-transport";
+import {
+  resolveControlPlaneServiceToken,
+  resolveOrchestratorInternalUrl,
+} from "../../control-plane/control-plane-credentials";
 
 @Injectable()
 export class OrchestratorNetworkDocumentTransport implements NetworkDocumentTransport {
@@ -12,17 +16,16 @@ export class OrchestratorNetworkDocumentTransport implements NetworkDocumentTran
   constructor(private readonly config: ConfigService) {}
 
   async deliver(payload: NetworkDocumentPayload): Promise<void> {
+    // Runtime-config memory first (kit); CONTROL_PLANE_URL env = bootstrap only.
     const baseUrl = (
-      this.config.get<string>("ORCHESTRATOR_INTERNAL_URL") ??
-      this.config.get<string>("CONTROL_PLANE_URL") ??
-      "http://127.0.0.1:4000"
+      resolveOrchestratorInternalUrl(this.config) || "http://127.0.0.1:4000"
     ).replace(/\/$/, "");
     const token =
-      this.config.get<string>("ORCHESTRATOR_SERVICE_TOKEN")?.trim() ??
-      this.config.get<string>("CONTROL_PLANE_SERVICE_TOKEN")?.trim() ??
+      resolveControlPlaneServiceToken(this.config) ||
+      this.config.get<string>("ORCHESTRATOR_SERVICE_TOKEN")?.trim() ||
       "";
     if (!token) {
-      this.logger.warn("ORCHESTRATOR_SERVICE_TOKEN missing; cannot deliver network doc");
+      this.logger.warn("ORCHESTRATOR_SERVICE_TOKEN / CONTROL_PLANE_SERVICE_TOKEN missing; cannot deliver network doc");
       return;
     }
     const res = await fetch(`${baseUrl}/internal/v1/network-documents/deliver`, {

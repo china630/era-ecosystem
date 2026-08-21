@@ -4,7 +4,10 @@ import {
   BankStatementLineOrigin,
   BankStatementLineType,
   Decimal,
+  isNasBankLedgerCode,
+  isNasCashDeskCode,
   LedgerType,
+  OrganizationKind,
   pickAccountDisplayName,
   type Prisma,
   type UserRole,
@@ -25,17 +28,6 @@ import type { CreateInternalTransferDto } from "./dto/create-internal-transfer.d
 import type { CreateOrganizationBankAccountDto } from "./dto/create-organization-bank-account.dto";
 import type { UpdateOrganizationBankAccountDto } from "./dto/update-organization-bank-account.dto";
 
-function matchesPrefix(accountCode: string, prefix: string): boolean {
-  return accountCode === prefix || accountCode.startsWith(`${prefix}.`);
-}
-
-function matchesAnyRoot(
-  accountCode: string,
-  roots: readonly string[],
-): boolean {
-  return roots.some((r) => matchesPrefix(accountCode, r));
-}
-
 function maskAccountCode(code: string): string {
   const digits = code.replace(/\D/g, "");
   if (digits.length >= 4) {
@@ -47,25 +39,12 @@ function maskAccountCode(code: string): string {
   return "••••";
 }
 
-function isBankLedgerAccountCode(code: string): boolean {
-  const c = code.trim();
-  if (c === "221" || c.startsWith("221.")) return true;
-  for (const r of ["222", "223", "224"] as const) {
-    if (c === r || c.startsWith(`${r}.`)) return true;
-  }
-  return false;
-}
-
 function segmentForAccountCode(
+  kind: OrganizationKind,
   code: string,
 ): "CASH" | "BANK" | null {
-  if (matchesPrefix(code, "101")) return "CASH";
-  if (
-    matchesPrefix(code, "221") ||
-    matchesAnyRoot(code, ["222", "223", "224"])
-  ) {
-    return "BANK";
-  }
+  if (isNasCashDeskCode(kind, code)) return "CASH";
+  if (isNasBankLedgerCode(kind, code)) return "BANK";
   return null;
 }
 
@@ -148,9 +127,10 @@ export class BankingService {
   }
 
   /**
-   * Сетка карточек: по одному счёту кассы (101*) и банка (221–224) — сальдо ОСВ (ТЗ §6).
+   * Сетка карточек: касса vs банк по официальному плану kind (Q-01 221/223, NAS-GOV 101/103).
    */
   async getAccountCards(organizationId: string, ledgerType: LedgerType) {
+    const kind = await this.posting.getOrganizationKind(organizationId);
     const today = new Date().toISOString().slice(0, 10);
     const yearStart = `${new Date().getUTCFullYear()}-01-01`;
     const tb = await this.reporting.trialBalance(
@@ -181,7 +161,7 @@ export class BankingService {
     }> = [];
 
     for (const row of tb.rows) {
-      const seg = segmentForAccountCode(row.accountCode);
+      const seg = segmentForAccountCode(kind, row.accountCode);
       if (!seg) continue;
       const acc = byCode.get(row.accountCode);
       const net = new Decimal(row.closingDebit).sub(
@@ -295,9 +275,10 @@ export class BankingService {
   ) {
     const bank = dto.bankAccountCode.trim();
     const offset = dto.offsetAccountCode.trim();
-    if (!isBankLedgerAccountCode(bank)) {
+    const kind = await this.posting.getOrganizationKind(organizationId);
+    if (!isNasBankLedgerCode(kind, bank)) {
       throw new BadRequestException(
-        "bankAccountCode must be a bank account (221*, 222*, 223*, 224*)",
+        "bankAccountCode must be the official bank settlement account for this organization kind",
       );
     }
     if (!offset) {

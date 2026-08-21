@@ -14,6 +14,7 @@ import {
 export enum FixedAssetCreditSource {
   SUPPLIER = "SUPPLIER",
   BANK = "BANK",
+  DONATION = "DONATION",
 }
 
 export class AcquireFixedAssetDto {

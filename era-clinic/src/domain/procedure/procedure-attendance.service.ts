@@ -31,6 +31,10 @@ export class ProcedureAttendanceError extends Error {
       | "INVALID_TRANSITION"
       | "QR_REQUIRED"
       | "QR_MISMATCH"
+      | "CODE_REQUIRED"
+      | "CODE_MISMATCH"
+      | "CODE_DISABLED"
+      | "CHECK_IN_MODE_MISMATCH"
       | "NOT_IN_CHECKIN_WINDOW"
       | "RESOURCE_BUSY"
       | "OVERRIDE_FORBIDDEN",
@@ -48,13 +52,23 @@ export type AttendanceActor = {
 async function getGrace() {
   try {
     const tenant = await prisma.tenant.findFirst({ orderBy: { createdAt: "asc" } });
+    const derivedMode: "QR" | "MANUAL" =
+      tenant?.checkInRequiresQr === false ? "MANUAL" : "QR";
+    const procedureCheckInMode: "QR" | "CODE" | "MANUAL" =
+      tenant?.procedureCheckInMode ?? derivedMode;
     return {
       beforeMin: tenant?.procedureCheckInGraceBeforeMin ?? 5,
       afterMin: tenant?.procedureCheckInGraceAfterMin ?? 15,
-      checkInRequiresQr: tenant?.checkInRequiresQr ?? true,
+      checkInRequiresQr: procedureCheckInMode === "QR",
+      procedureCheckInMode,
     };
   } catch {
-    return { beforeMin: 5, afterMin: 15, checkInRequiresQr: true };
+    return {
+      beforeMin: 5,
+      afterMin: 15,
+      checkInRequiresQr: true,
+      procedureCheckInMode: "QR",
+    };
   }
 }
 
@@ -118,8 +132,7 @@ export async function assertCheckInWindow(
   now = new Date(),
 ) {
   const { beforeMin } = await getGrace();
-  const settings = await getSchedulingSettings();
-  const gap = settings.defaultProcedureGapMinutes ?? 5;
+  const gap = await resolveOrderResourceGap(order.procedureTypeId);
   const endsAt = await resolveOrderEndsAt(order);
   const nextOccupied = await isNextGapOccupied(
     order.resourceId,
@@ -156,10 +169,9 @@ export async function getCheckInOpenState(
     status: string;
   },
   now = new Date(),
-): Promise<{ open: boolean; deadline: Date; endsAt: Date }> {
+): Promise<{ open: boolean; deadline: Date; endsAt: Date; resourceGapMinutes: number }> {
   const { beforeMin } = await getGrace();
-  const settings = await getSchedulingSettings();
-  const gap = settings.defaultProcedureGapMinutes ?? 5;
+  const gap = await resolveOrderResourceGap(order.procedureTypeId);
   const endsAt = await resolveOrderEndsAt(order);
   const nextOccupied = await isNextGapOccupied(
     order.resourceId,
@@ -178,7 +190,18 @@ export async function getCheckInOpenState(
       gap,
       nextOccupied,
     );
-  return { open, deadline, endsAt };
+  return { open, deadline, endsAt, resourceGapMinutes: gap };
+}
+
+async function resolveOrderResourceGap(
+  procedureTypeId?: string | null,
+): Promise<number> {
+  if (!procedureTypeId) return 5;
+  const pt = await prisma.procedureType.findUnique({
+    where: { id: procedureTypeId },
+    select: { resourceGapMinutes: true },
+  });
+  return pt?.resourceGapMinutes ?? 5;
 }
 
 async function resolvePatientFromQr(qrToken: string): Promise<string> {
@@ -217,7 +240,7 @@ async function assertResourceFreeForCheckIn(order: ProcedureOrder) {
 export async function checkInProcedureOrder(
   orderId: string,
   actor: AttendanceActor,
-  input: { qrToken?: string; overrideReason?: string },
+  input: { qrToken?: string; accessCode?: string; overrideReason?: string },
 ) {
   const order = await prisma.procedureOrder.findUnique({ where: { id: orderId } });
   if (!order) throw new ProcedureAttendanceError("Procedure not found", "NOT_FOUND");
@@ -231,6 +254,7 @@ export async function checkInProcedureOrder(
   let channel: ProcedureCheckInChannel;
   let overrideReason: string | null = null;
   const grace = await getGrace();
+  const mode = grace.procedureCheckInMode;
 
   if (input.overrideReason?.trim()) {
     if (!actor.canOverrideCheckIn) {
@@ -241,7 +265,28 @@ export async function checkInProcedureOrder(
     }
     channel = "OVERRIDE";
     overrideReason = input.overrideReason.trim();
+  } else if (input.accessCode?.trim()) {
+    if (mode !== "CODE") {
+      throw new ProcedureAttendanceError(
+        "Code check-in is disabled for this clinic mode",
+        "CODE_DISABLED",
+      );
+    }
+    const normalized = input.accessCode.trim().toUpperCase();
+    if (!order.accessCode || order.accessCode.toUpperCase() !== normalized) {
+      throw new ProcedureAttendanceError(
+        "Access code does not match this procedure",
+        "CODE_MISMATCH",
+      );
+    }
+    channel = "CODE";
   } else if (input.qrToken?.trim()) {
+    if (mode !== "QR") {
+      throw new ProcedureAttendanceError(
+        "QR check-in is disabled for this clinic mode",
+        "CHECK_IN_MODE_MISMATCH",
+      );
+    }
     const patientRefId = await resolvePatientFromQr(input.qrToken);
     if (patientRefId !== order.patientRefId) {
       throw new ProcedureAttendanceError(
@@ -250,8 +295,10 @@ export async function checkInProcedureOrder(
       );
     }
     channel = "QR";
-  } else if (!grace.checkInRequiresQr) {
+  } else if (mode === "MANUAL") {
     channel = "MANUAL";
+  } else if (mode === "CODE") {
+    throw new ProcedureAttendanceError("Access code required for check-in", "CODE_REQUIRED");
   } else {
     throw new ProcedureAttendanceError(
       "Guest QR required for check-in (or override with reason)",
@@ -451,9 +498,14 @@ export function mapAttendanceHttpStatus(err: ProcedureAttendanceError): number {
     case "INVALID_TRANSITION":
     case "QR_REQUIRED":
     case "QR_MISMATCH":
+    case "CODE_REQUIRED":
+    case "CODE_MISMATCH":
     case "NOT_IN_CHECKIN_WINDOW":
     case "RESOURCE_BUSY":
       return 409;
+    case "CODE_DISABLED":
+    case "CHECK_IN_MODE_MISMATCH":
+      return 400;
     case "OVERRIDE_FORBIDDEN":
       return 403;
     default:

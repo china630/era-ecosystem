@@ -64,6 +64,21 @@ Event: `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` — `labOrderId`, `visitId?`, `pat
 | POST | `/api/lab-orders/:id/results` | `resultJson` lines with `flag: CRITICAL` (M5) |
 | GET | `/api/lab-orders?criticalOnly=true` | Filter orders with critical results |
 
+## Scheduling time layers (sanatorium)
+
+Canon: [docs/adr/clinic-scheduling-time-layers.md](../docs/adr/clinic-scheduling-time-layers.md).
+
+| Layer | Target field | Today |
+|-------|----------------|-------|
+| Occupancy (guest in cabin, 5-min grid) | `ProcedureType.durationMin` | Shipped |
+| Resource gap (cabin idle after occupancy; **0 allowed**) | `ProcedureType.resourceGapMinutes` | Shipped — default 5; tenant field = default-on-create |
+| Patient rest (this guest, next any procedure) | `ProcedureType.patientRestMinutes` | Shipped — default 15 |
+| Pair gap | `ProcedureRule.minGapMinutes` | Shipped, barely seeded |
+
+Nafta UFF gel (`SVC-ULTRAFONOFOREZ-GEL`, cabin 17): occupancy **5**, resource gap **0**, patient rest **15**. Oil remains `SVC-ULTRAFONOFOREZ` 10/5/15. Do not set tenant gap to 0.
+
+SOFT staff (CLI-30) does not inherit resource gap; HARD staff is exclusive on `[startsAt, endsAt)` only.
+
 ## Finance boundary
 
 Insurance billing, full patient billing — deferred to Finance MDM + AR. See [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md).

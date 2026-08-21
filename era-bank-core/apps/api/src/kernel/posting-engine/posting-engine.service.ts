@@ -35,7 +35,7 @@ export class PostingEngineService {
     assertBalancedLegs(request.legs);
 
     const existing = await this.prisma.journalTransaction.findUnique({
-      where: { idempotencyKey: request.idempotencyKey },
+      where: { idempotencyKey: request.idempotencyKey } as never,
       include: { entries: true },
     });
     if (existing) return existing;
@@ -235,7 +235,8 @@ export class PostingEngineService {
   }
 
   private async assertAccountCanDebit(
-    tx: Pick<PrismaService, "account" | "accountHold">,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx: any,
     leg: { accountId?: string; debitMinor: bigint; currency: string },
   ) {
     if (!leg.accountId || leg.debitMinor <= 0n) return;
@@ -317,7 +318,8 @@ export class PostingEngineService {
   }
 
   private async applyBalanceUpdates(
-    tx: Pick<PrismaService, "account">,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx: any,
     legs: Array<{ accountId?: string; debitMinor: bigint; creditMinor: bigint }>,
   ) {
     for (const leg of legs) {

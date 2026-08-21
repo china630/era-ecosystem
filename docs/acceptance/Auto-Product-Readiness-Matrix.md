@@ -16,16 +16,20 @@
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Auto Service** | ✅ | 🟡 | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
+| **Auto Service** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
 
 ---
 
 ## UI (short)
 
+**UI class rollup:** SCREEN — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+
 | Surface | Path | Level |
 |---------|------|-------|
 | Work orders | `/work-orders` | 🟡 |
 | Appointments | `/appointments` | 🟡 |
+
+Admin modal CRUD is now in place for settings, appointments, and work-order creation; Demo/TE stays 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. HEADLESS lines use `n/a` with reason.
 
@@ -46,3 +50,4 @@
 - Edition column copies `docs/editions/auto.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
+- Forbidden: «SHARED / multi-tenant Auto Service SaaS pool» — AC-AUTO-TENANT 🟡 (schema+filter ≠ live pool); stays out of BE rollup.

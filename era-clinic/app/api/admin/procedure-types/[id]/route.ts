@@ -10,6 +10,8 @@ import {
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   durationMin: z.number().int().positive().optional(),
+  resourceGapMinutes: z.number().int().min(0).max(240).optional(),
+  patientRestMinutes: z.number().int().min(0).max(240).optional(),
   resourceKind: z.enum(["ROOM", "EQUIPMENT"]).nullable().optional(),
   resourceCode: z.string().nullable().optional(),
   bodyPart: z.string().min(1).nullable().optional(),

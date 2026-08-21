@@ -10,7 +10,7 @@ import {
 } from "@/domain/appointment/practitioner-schedule.service";
 
 const BAKU_OFFSET = "+04:00";
-const DEFAULT_SLOT_MINUTES = 30;
+const MIN_GRID_MINUTES = 5;
 
 function bakuYmd(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -69,7 +69,8 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
 }> {
   const dateYmd = bakuYmd(dayInput);
   const settings = await getSchedulingSettings();
-  const gridMinutes = DEFAULT_SLOT_MINUTES;
+  const tenantDefaultAppointmentSlotMinutes =
+    settings.defaultAppointmentSlotMinutes ?? 30;
   const {
     dayStartHour,
     dayEndHour,
@@ -80,14 +81,53 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
 
   const noonBaku = new Date(`${dateYmd}T12:00:00${BAKU_OFFSET}`);
   if (isClosedWeekday(noonBaku, closedWeekdays)) {
-    return { date: dateYmd, slotMinutes: gridMinutes, resources: [] };
+    return {
+      date: dateYmd,
+      slotMinutes: tenantDefaultAppointmentSlotMinutes,
+      resources: [],
+    };
   }
   if (!(await isElectiveSchedulingAllowed(noonBaku))) {
-    return { date: dateYmd, slotMinutes: gridMinutes, resources: [] };
+    return {
+      date: dateYmd,
+      slotMinutes: tenantDefaultAppointmentSlotMinutes,
+      resources: [],
+    };
   }
 
   const dayStart = bakuSlotStart(dateYmd, 0, 0);
   const dayEnd = addMinutes(bakuSlotStart(dateYmd, 23, 59), 1);
+
+  const practitioners = await prisma.practitioner.findMany({
+    where: { active: true, staffKind: "DOCTOR" },
+    orderBy: { fullName: "asc" },
+    select: {
+      id: true,
+      code: true,
+      fullName: true,
+      defaultSlotMinutes: true,
+    },
+  });
+
+  function gcd(a: number, b: number): number {
+    let x = Math.abs(a);
+    let y = Math.abs(b);
+    while (y !== 0) {
+      const t = y;
+      y = x % y;
+      x = t;
+    }
+    return x;
+  }
+
+  // Use GCD of doctors' reception slot lengths so all defaultSlotMinutes align
+  // into a single grid without fractional coverage.
+  const gcdAcrossPractitioners = practitioners.length
+    ? practitioners
+        .map((p) => p.defaultSlotMinutes ?? tenantDefaultAppointmentSlotMinutes)
+        .reduce((acc, v) => gcd(acc, v), tenantDefaultAppointmentSlotMinutes)
+    : tenantDefaultAppointmentSlotMinutes;
+  const gridMinutes = Math.max(MIN_GRID_MINUTES, gcdAcrossPractitioners);
 
   const gridSlots: Array<{ start: Date; end: Date; lunch: boolean; startMin: number }> = [];
   for (let h = dayStartHour; h < dayEndHour; h++) {
@@ -98,17 +138,6 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
       gridSlots.push({ start, end, lunch, startMin: h * 60 + m });
     }
   }
-
-  const practitioners = await prisma.practitioner.findMany({
-    where: { active: true },
-    orderBy: { fullName: "asc" },
-    select: {
-      id: true,
-      code: true,
-      fullName: true,
-      defaultSlotMinutes: true,
-    },
-  });
 
   const appointments = await prisma.appointment.findMany({
     where: {

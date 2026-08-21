@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SATELLITE_RETAIL_SALE_COMPLETED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import {
@@ -30,6 +30,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertRetailEntitled();
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
 
@@ -139,7 +140,7 @@ export async function POST(
       },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID ?? "";
+    const organizationId = satelliteOrganizationId();
     const recipient =
       process.env.RETAIL_NOTIFY_RECIPIENT?.trim() || `receipt-${receipt.id}@local`;
     let payUrl: string | undefined;

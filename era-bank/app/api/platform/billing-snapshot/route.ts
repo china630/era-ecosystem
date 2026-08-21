@@ -1,4 +1,7 @@
-import { fetchSubscriptionSnapshot } from "@era/satellite-kit";
+import {
+  fetchSubscriptionSnapshot,
+  resolveSatelliteOrganizationId,
+} from "@era/satellite-kit";
 import { jsonOk } from "@/lib/api-utils";
 
 /**
@@ -6,12 +9,11 @@ import { jsonOk } from "@/lib/api-utils";
  * Falls back to a demo tier when control-plane is unreachable (local docker).
  */
 export async function GET() {
-  const organizationId =
-    process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
-    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-    "";
+  const { organizationId, source } = resolveSatelliteOrganizationId({
+    allowFallback: true,
+  });
 
-  if (!organizationId) {
+  if (source === "fallback" || !organizationId) {
     return jsonOk({
       tier: "mvp",
       quotas: {

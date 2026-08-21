@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import { logSyncError } from '@/lib/services/channel.service';
 import type { OtaReservationPayload } from '@/lib/channel/adapters/types';
@@ -59,7 +60,7 @@ async function upsertGuest(payload: OtaReservationPayload) {
     payload.guest.externalGuestId ??
     `ota:${payload.channelCode}:${payload.guest.fullName.replace(/\s+/g, '-').slice(0, 40)}`;
 
-  const existing = await prisma.guest.findUnique({ where: { externalRef } });
+  const existing = await prisma.guest.findFirst({ where: { externalRef } });
   if (existing) {
     return prisma.guest.update({
       where: { id: existing.id },
@@ -73,6 +74,7 @@ async function upsertGuest(payload: OtaReservationPayload) {
 
   return prisma.guest.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       externalRef,
       fullName: payload.guest.fullName,
       email: payload.guest.email,
@@ -83,7 +85,7 @@ async function upsertGuest(payload: OtaReservationPayload) {
 
 export async function upsertOtaReservation(payload: OtaReservationPayload) {
   if (payload.event === 'cancel') {
-    const existing = await prisma.reservation.findUnique({
+    const existing = await prisma.reservation.findFirst({
       where: { externalRef: payload.externalReservationId },
     });
     if (!existing) {
@@ -109,7 +111,7 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
   const checkOutDate = new Date(payload.checkOutDate);
   const totalAmount = payload.totalAmount ?? 0;
 
-  const existing = await prisma.reservation.findUnique({
+  const existing = await prisma.reservation.findFirst({
     where: { externalRef: payload.externalReservationId },
   });
 
@@ -125,6 +127,9 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
         checkOutDate,
         adults: payload.adults ?? existing.adults,
         totalAmount: toDecimal(totalAmount || decimalToNumber(existing.totalAmount)),
+        shareEligible: false,
+        shareGender: null,
+        shareBedIndex: null,
         status: 'CONFIRMED',
       },
     });
@@ -133,6 +138,7 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
 
   const created = await prisma.reservation.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       externalRef: payload.externalReservationId,
       roomTypeId,
       ratePlanId,
@@ -143,6 +149,7 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
       adults: payload.adults ?? 1,
       paymentMethod: payload.paymentMethod ?? 'COMPANY_ACCOUNT',
       totalAmount: toDecimal(totalAmount),
+      shareEligible: false,
       status: 'CONFIRMED',
     },
   });

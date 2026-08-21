@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
@@ -143,17 +144,20 @@ export async function POST(req: Request) {
       return jsonError("testCode or testCodes required", 400);
     }
 
-    let patient = await prisma.patientRef.findUnique({
-      where: { refCode: body.patientRefCode },
+    const organizationId = satelliteOrganizationId();
+    let patient = await prisma.patientRef.findFirst({
+      where: { organizationId, refCode: body.patientRefCode },
     });
     if (!patient) {
       patient = await prisma.patientRef.create({
         data: {
+          organizationId,
           refCode: body.patientRefCode,
           fullName: body.patientFullName,
         },
       });
     }
+    if (!patient) throw new Error("Failed to ensure patient ref");
 
     if (body.visitId) {
       const visit = await prisma.visit.findUnique({

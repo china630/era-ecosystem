@@ -12,7 +12,7 @@ Canon: `docs/products/ERA-Acceptance-Standard.md` § Tooling.
 1. `npm run check:acceptance` (strict: `npm run check:acceptance:strict`)
 2. On MDM / hub / workforce / reference contracts: `npm run audit:integration:strict`
 3. Design tokens (if UI): `npm run lint:design-tokens` + `npm run lint:token-layers`
-4. Bundle: `npm run run:quality-gates`
+4. Bundle: `npm run run:quality-gates` (includes `check:satellite-raw-sql`)
 5. Matrix: no Scaffold ✅ without negative path; no false `all ✅`; no edition `ga` without Pilot-ready
 6. Pick-list UI: no new `shortText`/`code` for catalog-shaped fields — use `CatalogField` + `CatalogFieldKind` (`era-managed-list-controls.mdc`)
 

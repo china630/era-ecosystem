@@ -1,9 +1,14 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { SATELLITE_RETAIL_SALE_COMPLETED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { resolveOutletPreset } from "@/lib/retail-preset";
 import { prisma } from "@/lib/prisma";
+
+type PaidReceiptForReturn = Prisma.ReceiptGetPayload<{
+  include: { lines: true; shift: true; outlet: true };
+}>;
 
 const bodySchema = z.object({
   reason: z.string().optional(),
@@ -14,13 +19,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await assertRetailEntitled();
     const { id } = await params;
     bodySchema.parse(await req.json().catch(() => ({})));
 
-    const original = await prisma.receipt.findUnique({
+    const original = (await prisma.receipt.findUnique({
       where: { id },
       include: { lines: true, shift: true, outlet: true },
-    });
+    })) as PaidReceiptForReturn | null;
     if (!original) return jsonError("Receipt not found", 404);
     if (original.status !== "PAID") {
       return jsonError("Only paid receipts can be returned", 400);

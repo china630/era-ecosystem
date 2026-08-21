@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { satelliteOrganizationId } from "@era/satellite-kit/orchestrator-gateway";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
 import { bakuDayBounds } from "@/lib/baku-day";
@@ -54,26 +55,28 @@ function dayBounds(d: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
-/** @internal exported for unit tests */
+import { effectivePatientRestMinutes } from "@/domain/procedure/resource-occupancy";
+
+/** @internal exported for unit tests — patient rest layer (not cabin idle). */
 export function effectiveProcedureGapMinutes(
   templateGap: number | null | undefined,
-  defaultGapMinutes: number,
+  patientRestMinutes: number,
 ): number {
-  return Math.max(templateGap ?? 0, defaultGapMinutes);
+  return effectivePatientRestMinutes(templateGap, patientRestMinutes);
 }
 
-/** Validates minimum gap between consecutive same-day patient procedures. */
+/**
+ * Validates minimum gap between consecutive same-day patient procedures.
+ * Required rest = preceding procedure's patientRestMinutes (layer 3).
+ */
 export async function validatePatientConsecutiveGap(input: {
   patientRefId: string;
   startAt: Date;
   endAt: Date;
   excludeOrderId?: string;
-  minGapMinutes?: number;
+  /** Rest after the candidate itself when it becomes previous for a later slot (unused for pair check). */
+  candidatePatientRestMinutes?: number;
 }): Promise<string | null> {
-  const settings = await getSchedulingSettings();
-  const minGap = input.minGapMinutes ?? settings.defaultProcedureGapMinutes;
-  if (minGap <= 0) return null;
-
   const { start, end } = bakuDayBounds(bakuDateKey(input.startAt));
   const orders = await prisma.procedureOrder.findMany({
     where: {
@@ -82,25 +85,36 @@ export async function validatePatientConsecutiveGap(input: {
       status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] },
       ...(input.excludeOrderId ? { id: { not: input.excludeOrderId } } : {}),
     },
-    select: { scheduledAt: true, endsAt: true },
+    select: {
+      scheduledAt: true,
+      endsAt: true,
+      procedureType: { select: { patientRestMinutes: true } },
+    },
     orderBy: { scheduledAt: "asc" },
   });
 
-  type Slot = { start: Date; end: Date };
+  type Slot = { start: Date; end: Date; restAfter: number };
   const timeline: Slot[] = [
     ...orders.map((o) => ({
       start: o.scheduledAt,
       end: o.endsAt ?? o.scheduledAt,
+      restAfter: o.procedureType?.patientRestMinutes ?? 15,
     })),
-    { start: input.startAt, end: input.endAt },
+    {
+      start: input.startAt,
+      end: input.endAt,
+      restAfter: input.candidatePatientRestMinutes ?? 15,
+    },
   ].sort((a, b) => a.start.getTime() - b.start.getTime());
 
   for (let i = 1; i < timeline.length; i++) {
-    const prev = timeline[i - 1];
-    const curr = timeline[i];
+    const prev = timeline[i - 1]!;
+    const curr = timeline[i]!;
+    const need = Math.max(0, prev.restAfter);
+    if (need <= 0) continue;
     const gapMs = curr.start.getTime() - prev.end.getTime();
-    if (gapMs < minGap * 60_000) {
-      return `Minimum ${minGap} min gap required between consecutive procedures`;
+    if (gapMs < need * 60_000) {
+      return `Minimum ${need} min patient rest required between consecutive procedures`;
     }
   }
   return null;
@@ -195,7 +209,7 @@ async function expandProposedSlots(instanceId: string): Promise<{
   slots: PlannedSlot[];
 }> {
   const settings = await getSchedulingSettings();
-  const { schedulingSlotMinutes: slotMinutes, defaultProcedureGapMinutes } = settings;
+  const { schedulingSlotMinutes: slotMinutes } = settings;
   const instance = await prisma.programInstance.findUnique({
     where: { id: instanceId },
     include: {
@@ -229,7 +243,7 @@ async function expandProposedSlots(instanceId: string): Promise<{
   let seq = 0;
   for (const line of instance.procedureLines) {
     const meta = instance.template.procedures.find(
-      (p) => p.procedureCode === line.procedureCode,
+      (p: { procedureCode: string }) => p.procedureCode === line.procedureCode,
     );
     let code = line.procedureCode;
     let pt = typeByCode.get(code);
@@ -272,7 +286,7 @@ async function expandProposedSlots(instanceId: string): Promise<{
         afterLunchAllowed: pt.afterLunchAllowed ?? true,
         minGapMinutes: effectiveProcedureGapMinutes(
           meta?.minGapMinutes,
-          defaultProcedureGapMinutes,
+          pt.patientRestMinutes ?? 15,
         ),
         sequenceIndex: seq++,
         extendedEndHour: pt.extendedEndHour,
@@ -317,6 +331,7 @@ export async function buildProposedPlan(instanceId: string): Promise<number> {
     const proposedAt = await nextWorkSlot(cursor, workHours);
     await prisma.procedureOrder.create({
       data: {
+        organizationId: satelliteOrganizationId(),
         patientRefId,
         procedureCode: item.procedureCode,
         procedureName: item.procedureName,
@@ -348,7 +363,7 @@ export async function placeConfirmedProcedures(
   if (orderIds.length === 0) return 0;
 
   const settings = await getSchedulingSettings();
-  const { schedulingSlotMinutes: slotMinutes, defaultProcedureGapMinutes } = settings;
+  const { schedulingSlotMinutes: slotMinutes } = settings;
   const workHours = await getTenantWorkHours();
 
   const orders = await prisma.procedureOrder.findMany({
@@ -375,6 +390,7 @@ export async function placeConfirmedProcedures(
       bodyPart: true,
       scheduledAt: true,
       endsAt: true,
+      procedureType: { select: { patientRestMinutes: true } },
     },
     orderBy: { scheduledAt: "asc" },
   });
@@ -384,11 +400,13 @@ export async function placeConfirmedProcedures(
     bodyPart?: string | null;
     start: Date;
     end: Date;
+    patientRestMinutes: number;
   }[] = existing.map((e) => ({
     code: e.procedureCode,
     bodyPart: e.bodyPart,
     start: e.scheduledAt,
     end: e.endsAt ?? e.scheduledAt,
+    patientRestMinutes: e.procedureType?.patientRestMinutes ?? 15,
   }));
 
   const rotationContext: RotationContextSlot[] = scheduledPatient.map((s) => ({
@@ -398,12 +416,10 @@ export async function placeConfirmedProcedures(
     endAt: s.end,
   }));
 
+  const lastPlaced = scheduledPatient[scheduledPatient.length - 1];
   let cursor =
-    scheduledPatient.length > 0
-      ? addMinutes(
-          scheduledPatient[scheduledPatient.length - 1].end,
-          defaultProcedureGapMinutes,
-        )
+    lastPlaced != null
+      ? addMinutes(lastPlaced.end, lastPlaced.patientRestMinutes)
       : new Date(orders[0].scheduledAt);
   cursor.setHours(
     Math.max(cursor.getHours(), workHours.dayStartHour),
@@ -414,6 +430,39 @@ export async function placeConfirmedProcedures(
 
   let placed = 0;
   const now = new Date();
+
+  const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+  const prescribedByPractitionerId =
+    opts?.confirmedByUserId
+      ? (
+          await prisma.practitioner.findFirst({
+            where: { userId: opts.confirmedByUserId },
+            select: { id: true },
+          })
+        )?.id ?? null
+      : null;
+
+  function randomAccessCode(): string {
+    let out = "";
+    for (let i = 0; i < 5; i++) {
+      const idx = Math.floor(Math.random() * ACCESS_CODE_ALPHABET.length);
+      out += ACCESS_CODE_ALPHABET[idx]!;
+    }
+    return out;
+  }
+
+  async function generateUniqueAccessCode(organizationId: string): Promise<string> {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const code = randomAccessCode();
+      const exists = await prisma.procedureOrder.findFirst({
+        where: { organizationId, accessCode: code },
+        select: { id: true },
+      });
+      if (!exists) return code;
+    }
+    throw new Error("Unable to generate unique procedure access code");
+  }
 
   for (const order of orders) {
     const pt = order.procedureType ?? typeByCode.get(order.procedureCode);
@@ -489,8 +538,6 @@ export async function placeConfirmedProcedures(
         resource.id,
         slotStart,
         slotEnd,
-        undefined,
-        defaultProcedureGapMinutes,
       );
       const busy = used >= resource.capacity;
 
@@ -544,15 +591,19 @@ export async function placeConfirmedProcedures(
       });
       const compatOk = compatViolations.length === 0;
 
+      const patientRest = pt.patientRestMinutes ?? 15;
       const gapErr = await validatePatientConsecutiveGap({
         patientRefId,
         startAt: slotStart,
         endAt: slotEnd,
         excludeOrderId: order.id,
-        minGapMinutes: defaultProcedureGapMinutes,
+        candidatePatientRestMinutes: patientRest,
       });
 
       if (!busy && ruleOk && compatOk && !gapErr) {
+        const accessCode =
+          order.accessCode?.trim() ||
+          (await generateUniqueAccessCode(order.organizationId));
         await prisma.procedureOrder.update({
           where: { id: order.id },
           data: {
@@ -562,6 +613,8 @@ export async function placeConfirmedProcedures(
             resourceId: resource.id,
             confirmedAt: now,
             confirmedByUserId: opts?.confirmedByUserId,
+            prescribedByPractitionerId,
+            accessCode,
             bodyPart: order.bodyPart ?? pt.bodyPart ?? undefined,
           },
         });
@@ -585,6 +638,7 @@ export async function placeConfirmedProcedures(
           bodyPart: order.bodyPart ?? pt.bodyPart,
           start: slotStart,
           end: slotEnd,
+          patientRestMinutes: patientRest,
         };
         scheduledPatient.push(placedSlot);
         rotationContext.push({
@@ -593,7 +647,7 @@ export async function placeConfirmedProcedures(
           startAt: placedSlot.start,
           endAt: placedSlot.end,
         });
-        cursor = addMinutes(slotEnd, defaultProcedureGapMinutes);
+        cursor = addMinutes(slotEnd, patientRest);
         placed++;
         break;
       }

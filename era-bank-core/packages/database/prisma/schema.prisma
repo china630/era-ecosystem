@@ -308,6 +308,7 @@ enum PositionStatus {
 
 model GlAccount {
   id         String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String        @map("bank_org_id")
   code       String
   name       String
@@ -320,12 +321,14 @@ model GlAccount {
 
   @@unique([bankOrgId, code])
   @@index([bankOrgId])
+  @@index([organizationId])
   @@map("gl_accounts")
 }
 
 /// Bank-wide system GL mapping (nostro, FX transit, MFR, etc.). Product GL lives in ProductTemplate.paramsJson.
 model SystemGlConfig {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId String   @map("bank_org_id")
   key       String
   glCode    String   @map("gl_code")
@@ -334,11 +337,13 @@ model SystemGlConfig {
 
   @@unique([bankOrgId, key])
   @@index([bankOrgId])
+  @@index([organizationId])
   @@map("system_gl_configs")
 }
 
 model Branch {
   id           String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String       @map("bank_org_id")
   code         String
   name         String
@@ -350,11 +355,13 @@ model Branch {
 
   @@unique([bankOrgId, code])
   @@index([bankOrgId])
+  @@index([organizationId])
   @@map("branches")
 }
 
 model BranchLimit {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   branchId    String   @map("branch_id")
   limitCode   String   @map("limit_code")
@@ -365,11 +372,13 @@ model BranchLimit {
 
   @@unique([bankOrgId, branchId, limitCode])
   @@index([bankOrgId, branchId])
+  @@index([organizationId])
   @@map("branch_limits")
 }
 
 model BankCustomer {
   id             String         @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String         @map("bank_org_id")
   globalPersonId String?        @map("global_person_id")
   voen           String?
@@ -391,11 +400,13 @@ model BankCustomer {
   @@index([bankOrgId])
   @@index([globalPersonId])
   @@index([voen])
+  @@index([organizationId])
   @@map("bank_customers")
 }
 
 model BeneficialOwner {
   id             String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String   @map("bank_org_id")
   customerId     String   @map("customer_id")
   globalPersonId String   @map("global_person_id")
@@ -405,13 +416,15 @@ model BeneficialOwner {
   customer BankCustomer @relation(fields: [customerId], references: [id])
 
   @@index([customerId])
+  @@index([organizationId])
   @@map("beneficial_owners")
 }
 
 model Account {
   id               String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId        String        @map("bank_org_id")
-  iban             String        @unique
+  iban             String
   customerId       String        @map("customer_id")
   branchId         String        @map("branch_id")
   glAccountId      String        @map("gl_account_id")
@@ -430,11 +443,15 @@ model Account {
   @@index([bankOrgId])
   @@index([customerId])
   @@index([branchId])
+  @@unique([organizationId, iban])
+  @@index([organizationId])
+
   @@map("accounts")
 }
 
 model AccountHold {
   id            String     @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String     @map("bank_org_id")
   accountId     String     @map("account_id")
   amountMinor   BigInt     @map("amount_minor")
@@ -449,14 +466,16 @@ model AccountHold {
   account Account @relation(fields: [accountId], references: [id])
 
   @@index([accountId, status])
+  @@index([organizationId])
   @@map("account_holds")
 }
 
 model JournalTransaction {
   id             String    @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String    @map("bank_org_id")
   reference      String
-  idempotencyKey String    @unique @map("idempotency_key")
+  idempotencyKey String @map("idempotency_key")
   valueDate      DateTime  @map("value_date")
   bookingDate    DateTime  @map("booking_date")
   branchId       String?   @map("branch_id")
@@ -471,11 +490,15 @@ model JournalTransaction {
 
   @@unique([bankOrgId, reference])
   @@index([bankOrgId, status])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("journal_transactions")
 }
 
 model JournalEntry {
   id            String @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String @map("bank_org_id")
   transactionId String @map("transaction_id")
   accountId     String? @map("account_id")
@@ -490,11 +513,13 @@ model JournalEntry {
 
   @@index([transactionId])
   @@index([accountId])
+  @@index([organizationId])
   @@map("journal_entries")
 }
 
 model ProductTemplate {
   id            String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String        @map("bank_org_id")
   moduleKey     String        @map("module_key")
   kind          ProductKind
@@ -507,11 +532,13 @@ model ProductTemplate {
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
   @@index([bankOrgId, moduleKey, status])
+  @@index([organizationId])
   @@map("product_templates")
 }
 
 model EodRun {
   id           String    @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String    @map("bank_org_id")
   businessDate DateTime  @map("business_date")
   status       EodStatus @default(RUNNING)
@@ -521,11 +548,13 @@ model EodRun {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, businessDate])
+  @@index([organizationId])
   @@map("eod_runs")
 }
 
 model AuditLogEntry {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   entity      String
   entityId    String   @map("entity_id")
@@ -536,6 +565,7 @@ model AuditLogEntry {
   at          DateTime @default(now())
 
   @@index([bankOrgId, entity, entityId])
+  @@index([organizationId])
   @@map("audit_log_entries")
 }
 
@@ -543,6 +573,7 @@ model AuditLogEntry {
 
 model PaymentOrder {
   id                   String             @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId            String             @map("bank_org_id")
   debtorAccountId      String?            @map("debtor_account_id")
   creditorIban         String             @map("creditor_iban")
@@ -551,7 +582,7 @@ model PaymentOrder {
   currency             String             @default("AZN")
   rail                 PaymentRail        @default(INTERNAL)
   status               PaymentOrderStatus @default(DRAFT)
-  idempotencyKey       String             @unique @map("idempotency_key")
+  idempotencyKey       String @map("idempotency_key")
   journalTransactionId String?            @map("journal_transaction_id")
   narrative            String?
   createdByUserId      String             @map("created_by_user_id")
@@ -561,11 +592,15 @@ model PaymentOrder {
   railMessages PaymentRailMessage[]
 
   @@index([bankOrgId, status])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("payment_orders")
 }
 
 model PaymentRailMessage {
   id             String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String   @map("bank_org_id")
   paymentOrderId String   @map("payment_order_id")
   direction      String
@@ -576,6 +611,7 @@ model PaymentRailMessage {
   paymentOrder PaymentOrder @relation(fields: [paymentOrderId], references: [id])
 
   @@index([paymentOrderId])
+  @@index([organizationId])
   @@map("payment_rail_messages")
 }
 
@@ -583,6 +619,7 @@ model PaymentRailMessage {
 
 model DepositContract {
   id                   String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId            String        @map("bank_org_id")
   accountId            String        @map("account_id")
   customerId           String        @map("customer_id")
@@ -612,6 +649,7 @@ model DepositContract {
   @@index([bankOrgId, customerId])
   @@index([accountId])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("deposit_contracts")
 }
 
@@ -619,6 +657,7 @@ model DepositContract {
 
 model LoanContract {
   id                String     @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String     @map("bank_org_id")
   customerId        String     @map("customer_id")
   accountId         String?    @map("account_id")
@@ -653,11 +692,13 @@ model LoanContract {
 
   @@index([bankOrgId, customerId])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("loan_contracts")
 }
 
 model LoanScheduleInstallment {
   id                 String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId          String            @map("bank_org_id")
   loanId             String            @map("loan_id")
   sequenceNo         Int               @map("sequence_no")
@@ -672,6 +713,7 @@ model LoanScheduleInstallment {
   loan LoanContract @relation(fields: [loanId], references: [id])
 
   @@unique([loanId, sequenceNo])
+  @@index([organizationId])
   @@map("loan_schedule_installments")
 }
 
@@ -686,6 +728,7 @@ enum EclRunStatus {
 
 model EclCalculationRun {
   id                 String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId          String       @map("bank_org_id")
   asOfDate           DateTime     @map("as_of_date")
   status             EclRunStatus @default(RUNNING)
@@ -704,11 +747,13 @@ model EclCalculationRun {
 
   @@index([bankOrgId, asOfDate])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("ecl_calculation_runs")
 }
 
 model EclResult {
   id          String @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String @map("bank_org_id")
   runId       String @map("run_id")
   loanId      String @map("loan_id")
@@ -724,11 +769,13 @@ model EclResult {
 
   @@index([runId])
   @@index([bankOrgId, loanId])
+  @@index([organizationId])
   @@map("ecl_results")
 }
 
 model RateIndexQuote {
   id         String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String   @map("bank_org_id")
   indexKey   String   @map("index_key")
   asOfDate   DateTime @map("as_of_date")
@@ -738,11 +785,13 @@ model RateIndexQuote {
 
   @@unique([bankOrgId, indexKey, asOfDate])
   @@index([bankOrgId, indexKey])
+  @@index([organizationId])
   @@map("rate_index_quotes")
 }
 
 model RwaSnapshot {
   id              String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String   @map("bank_org_id")
   asOfDate        DateTime @map("as_of_date")
   totalRwaMinor   BigInt   @map("total_rwa_minor")
@@ -751,11 +800,13 @@ model RwaSnapshot {
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, asOfDate])
+  @@index([organizationId])
   @@map("rwa_snapshots")
 }
 
 model CapitalAdequacySnapshot {
   id                String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String   @map("bank_org_id")
   asOfDate          DateTime @map("as_of_date")
   tier1CapitalMinor BigInt   @map("tier1_capital_minor")
@@ -766,12 +817,14 @@ model CapitalAdequacySnapshot {
   createdAt         DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, asOfDate])
+  @@index([organizationId])
   @@map("capital_adequacy_snapshots")
 }
 
 /// Versioned PD/LGD matrices for certified-oriented ECL (lab seed).
 model EclParameterSet {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId String   @map("bank_org_id")
   version   String
   asOfDate  DateTime @map("as_of_date")
@@ -782,6 +835,7 @@ model EclParameterSet {
 
   @@unique([bankOrgId, version])
   @@index([bankOrgId, active])
+  @@index([organizationId])
   @@map("ecl_parameter_sets")
 }
 
@@ -789,6 +843,7 @@ model EclParameterSet {
 
 model AmlRule {
   id         String  @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String  @map("bank_org_id")
   code       String
   enabled    Boolean @default(true)
@@ -797,11 +852,13 @@ model AmlRule {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, code])
+  @@index([organizationId])
   @@map("aml_rules")
 }
 
 model AmlAlert {
   id               String         @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId        String         @map("bank_org_id")
   status           AmlAlertStatus @default(OPEN)
   severity         AmlSeverity    @default(MEDIUM)
@@ -821,11 +878,13 @@ model AmlAlert {
   screeningHits AmlScreeningHit[]
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("aml_alerts")
 }
 
 model AmlScreeningHit {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   alertId     String?  @map("alert_id")
   listSource  String   @map("list_source")
@@ -837,11 +896,13 @@ model AmlScreeningHit {
   alert AmlAlert? @relation(fields: [alertId], references: [id])
 
   @@index([alertId])
+  @@index([organizationId])
   @@map("aml_screening_hits")
 }
 
 model FmnReport {
   id            String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String          @map("bank_org_id")
   periodFrom    DateTime        @map("period_from")
   periodTo      DateTime        @map("period_to")
@@ -852,6 +913,7 @@ model FmnReport {
   createdAt     DateTime        @default(now()) @map("created_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("fmn_reports")
 }
 
@@ -859,6 +921,7 @@ model FmnReport {
 
 model RegReportRun {
   id           String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String          @map("bank_org_id")
   templateCode String          @map("template_code")
   periodFrom   DateTime        @map("period_from")
@@ -869,11 +932,13 @@ model RegReportRun {
   createdAt    DateTime        @default(now()) @map("created_at")
 
   @@index([bankOrgId, templateCode])
+  @@index([organizationId])
   @@map("reg_report_runs")
 }
 
 model FatcaCrsClassification {
   id             String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String        @map("bank_org_id")
   customerId     String        @map("customer_id")
   classification FatcaCrsClass
@@ -881,6 +946,7 @@ model FatcaCrsClassification {
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("fatca_crs_classifications")
 }
 
@@ -888,6 +954,7 @@ model FatcaCrsClassification {
 
 model DboCustomerCredential {
   id             String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String           @map("bank_org_id")
   customerId     String           @map("customer_id")
   loginHash      String           @map("login_hash")
@@ -899,11 +966,13 @@ model DboCustomerCredential {
   updatedAt      DateTime         @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("dbo_customer_credentials")
 }
 
 model DboOtpChallenge {
   id         String    @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String    @map("bank_org_id")
   customerId String    @map("customer_id")
   codeHash   String    @map("code_hash")
@@ -912,11 +981,13 @@ model DboOtpChallenge {
   createdAt  DateTime  @default(now()) @map("created_at")
 
   @@index([customerId])
+  @@index([organizationId])
   @@map("dbo_otp_challenges")
 }
 
 model CorporateSignatory {
   id             String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String          @map("bank_org_id")
   customerId     String          @map("customer_id")
   globalPersonId String          @map("global_person_id")
@@ -927,6 +998,7 @@ model CorporateSignatory {
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@index([customerId])
+  @@index([organizationId])
   @@map("corporate_signatories")
 }
 
@@ -934,23 +1006,28 @@ model CorporateSignatory {
 
 model CardProduct {
   id                String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String   @map("bank_org_id")
-  productTemplateId String   @unique @map("product_template_id")
+  productTemplateId String @map("product_template_id")
   scheme            CardScheme
   cardType          CardType @map("card_type")
   defaultLimitsJson Json     @map("default_limits_json")
   createdAt         DateTime @default(now()) @map("created_at")
+  @@unique([organizationId, productTemplateId])
+  @@index([organizationId])
+
 
   @@map("card_products")
 }
 
 model Card {
   id          String     @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String     @map("bank_org_id")
   customerId  String     @map("customer_id")
   accountId   String     @map("account_id")
   branchId    String     @map("branch_id")
-  cardToken   String     @unique @map("card_token")
+  cardToken   String @map("card_token")
   panLast4    String     @map("pan_last4")
   bin6        String
   expiryMonth Int        @map("expiry_month")
@@ -967,11 +1044,15 @@ model Card {
 
   @@index([customerId])
   @@index([accountId])
+  @@unique([organizationId, cardToken])
+  @@index([organizationId])
+
   @@map("cards")
 }
 
 model CardTransaction {
   id           String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String        @map("bank_org_id")
   cardId       String        @map("card_id")
   accountId    String        @map("account_id")
@@ -983,7 +1064,7 @@ model CardTransaction {
   currency     String        @default("AZN")
   merchantName String?       @map("merchant_name")
   merchantMcc  String?       @map("merchant_mcc")
-  processorRef String        @unique @map("processor_ref")
+  processorRef String @map("processor_ref")
   authCode     String?       @map("auth_code")
   declineReason String?      @map("decline_reason")
   authorizedAt DateTime?     @map("authorized_at")
@@ -993,11 +1074,15 @@ model CardTransaction {
   card Card @relation(fields: [cardId], references: [id])
 
   @@index([cardId])
+  @@unique([organizationId, processorRef])
+  @@index([organizationId])
+
   @@map("card_transactions")
 }
 
 model CardProcessorMessage {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   direction   String
   gateway     String
@@ -1006,6 +1091,7 @@ model CardProcessorMessage {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([cardTxnId])
+  @@index([organizationId])
   @@map("card_processor_messages")
 }
 
@@ -1013,6 +1099,7 @@ model CardProcessorMessage {
 
 model TreasuryCounterparty {
   id         String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String           @map("bank_org_id")
   bankMfo    String           @map("bank_mfo")
   name       String
@@ -1022,15 +1109,17 @@ model TreasuryCounterparty {
   createdAt  DateTime         @default(now()) @map("created_at")
 
   @@unique([bankOrgId, bankMfo])
+  @@index([organizationId])
   @@map("treasury_counterparties")
 }
 
 model NostroVostroAccount {
   id                   String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId            String          @map("bank_org_id")
   counterpartyId       String?         @map("counterparty_id")
   direction            NostroDirection
-  iban                 String          @unique
+  iban                 String
   currency             String
   glAccountId          String          @map("gl_account_id")
   ledgerBalanceMinor   BigInt          @default(0) @map("ledger_balance_minor")
@@ -1038,11 +1127,15 @@ model NostroVostroAccount {
   createdAt            DateTime        @default(now()) @map("created_at")
 
   @@index([bankOrgId])
+  @@unique([organizationId, iban])
+  @@index([organizationId])
+
   @@map("nostro_vostro_accounts")
 }
 
 model FxDeal {
   id               String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId        String       @map("bank_org_id")
   dealType         FxDealType   @map("deal_type")
   baseCurrency     String       @map("base_currency")
@@ -1055,15 +1148,19 @@ model FxDeal {
   postingTxnId     String?      @map("posting_txn_id")
   counterpartyId   String?      @map("counterparty_id")
   bookedByUserId   String       @map("booked_by_user_id")
-  idempotencyKey   String       @unique @map("idempotency_key")
+  idempotencyKey   String @map("idempotency_key")
   createdAt        DateTime     @default(now()) @map("created_at")
 
   @@index([bankOrgId, status])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("fx_deals")
 }
 
 model InterbankPlacement {
   id                String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String          @map("bank_org_id")
   counterpartyId    String          @map("counterparty_id")
   nostroAccountId   String          @map("nostro_account_id")
@@ -1078,11 +1175,13 @@ model InterbankPlacement {
   createdAt         DateTime        @default(now()) @map("created_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("interbank_placements")
 }
 
 model GovSecurityPosition {
   id             String         @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String         @map("bank_org_id")
   isin           String
   faceValueMinor BigInt         @map("face_value_minor")
@@ -1093,17 +1192,20 @@ model GovSecurityPosition {
   createdAt      DateTime       @default(now()) @map("created_at")
 
   @@index([bankOrgId])
+  @@index([organizationId])
   @@map("gov_security_positions")
 }
 
 model LiquidityGapSnapshot {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   asOfDate    DateTime @map("as_of_date")
   bucketsJson Json     @map("buckets_json")
   generatedAt DateTime @default(now()) @map("generated_at")
 
   @@index([bankOrgId, asOfDate])
+  @@index([organizationId])
   @@map("liquidity_gap_snapshots")
 }
 
@@ -1303,6 +1405,7 @@ enum OpRiskEventStatus {
 
 model FeeTariff {
   id          String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String          @map("bank_org_id")
   code        String
   name        String
@@ -1316,11 +1419,13 @@ model FeeTariff {
 
   @@unique([bankOrgId, code])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("fee_tariffs")
 }
 
 model RelationshipPackage {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   code        String
   name        String
@@ -1332,11 +1437,13 @@ model RelationshipPackage {
   tariffs RelationshipPackageTariff[]
 
   @@unique([bankOrgId, code])
+  @@index([organizationId])
   @@map("relationship_packages")
 }
 
 model RelationshipPackageTariff {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   packageId   String   @map("package_id")
   tariffCode  String   @map("tariff_code")
@@ -1349,11 +1456,13 @@ model RelationshipPackageTariff {
 
   @@unique([packageId, tariffCode])
   @@index([bankOrgId, packageId])
+  @@index([organizationId])
   @@map("relationship_package_tariffs")
 }
 
 model RelationshipPackageLink {
   id         String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String   @map("bank_org_id")
   packageId  String   @map("package_id")
   customerId String   @map("customer_id")
@@ -1363,11 +1472,13 @@ model RelationshipPackageLink {
 
   @@unique([packageId, customerId])
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("relationship_package_links")
 }
 
 model SafeDepositBox {
   id           String               @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String               @map("bank_org_id")
   branchId     String               @map("branch_id")
   boxNumber    String               @map("box_number")
@@ -1382,11 +1493,13 @@ model SafeDepositBox {
 
   @@unique([bankOrgId, branchId, boxNumber])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("safe_deposit_boxes")
 }
 
 model CashMovement {
   id              String             @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String             @map("bank_org_id")
   branchId        String             @map("branch_id")
   kind            CashMovementKind
@@ -1394,18 +1507,22 @@ model CashMovement {
   currency        String             @default("AZN")
   status          CashMovementStatus @default(DRAFT)
   reference       String?
-  idempotencyKey  String             @unique @map("idempotency_key")
+  idempotencyKey  String @map("idempotency_key")
   journalTxnId    String?            @map("journal_txn_id")
   makerUserId     String?            @map("maker_user_id")
   createdAt       DateTime           @default(now()) @map("created_at")
   updatedAt       DateTime           @updatedAt @map("updated_at")
 
   @@index([bankOrgId, branchId, status])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("cash_movements")
 }
 
 model InventoryItem {
   id          String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String            @map("bank_org_id")
   branchId    String            @map("branch_id")
   kind        InventoryItemKind
@@ -1418,11 +1535,13 @@ model InventoryItem {
   movements InventoryMovement[]
 
   @@unique([bankOrgId, branchId, sku])
+  @@index([organizationId])
   @@map("inventory_items")
 }
 
 model InventoryMovement {
   id           String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String   @map("bank_org_id")
   itemId       String   @map("item_id")
   deltaQty     Int      @map("delta_qty")
@@ -1434,11 +1553,13 @@ model InventoryMovement {
   item InventoryItem @relation(fields: [itemId], references: [id])
 
   @@index([bankOrgId, itemId])
+  @@index([organizationId])
   @@map("inventory_movements")
 }
 
 model BranchQueueTicket {
   id             String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String            @map("bank_org_id")
   branchId       String            @map("branch_id")
   ticketNo       Int               @map("ticket_no")
@@ -1452,11 +1573,13 @@ model BranchQueueTicket {
 
   @@unique([bankOrgId, branchId, ticketNo])
   @@index([bankOrgId, branchId, status])
+  @@index([organizationId])
   @@map("branch_queue_tickets")
 }
 
 model CollateralValuation {
   id              String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String   @map("bank_org_id")
   loanId          String   @map("loan_id")
   amountMinor     BigInt   @map("amount_minor")
@@ -1466,11 +1589,13 @@ model CollateralValuation {
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, loanId])
+  @@index([organizationId])
   @@map("collateral_valuations")
 }
 
 model LienRegister {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   loanId      String   @map("loan_id")
   lienRef     String   @map("lien_ref")
@@ -1483,11 +1608,13 @@ model LienRegister {
 
   @@unique([bankOrgId, lienRef])
   @@index([bankOrgId, loanId])
+  @@index([organizationId])
   @@map("lien_registers")
 }
 
 model CreditDecisionRequest {
   id            String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String   @map("bank_org_id")
   customerId    String   @map("customer_id")
   applicationId String?  @map("application_id")
@@ -1498,11 +1625,13 @@ model CreditDecisionRequest {
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("credit_decision_requests")
 }
 
 model LoanApplication {
   id                String                @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String                @map("bank_org_id")
   customerId        String                @map("customer_id")
   productTemplateId String                @map("product_template_id")
@@ -1520,11 +1649,13 @@ model LoanApplication {
   updatedAt         DateTime              @updatedAt @map("updated_at")
 
   @@index([bankOrgId, customerId, status])
+  @@index([organizationId])
   @@map("loan_applications")
 }
 
 model CreditPolicyRule {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId String   @map("bank_org_id")
   code      String
   name      String
@@ -1535,11 +1666,13 @@ model CreditPolicyRule {
 
   @@unique([bankOrgId, code])
   @@index([bankOrgId, enabled])
+  @@index([organizationId])
   @@map("credit_policy_rules")
 }
 
 model CreditLine {
   id                String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String           @map("bank_org_id")
   customerId        String           @map("customer_id")
   productTemplateId String           @map("product_template_id")
@@ -1555,11 +1688,13 @@ model CreditLine {
   drawdowns CreditLineDrawdown[]
 
   @@index([bankOrgId, customerId, status])
+  @@index([organizationId])
   @@map("credit_lines")
 }
 
 model CreditLineDrawdown {
   id             String         @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String         @map("bank_org_id")
   creditLineId   String         @map("credit_line_id")
   amountMinor    BigInt         @map("amount_minor")
@@ -1567,7 +1702,7 @@ model CreditLineDrawdown {
   status         DrawdownStatus @default(REQUESTED)
   loanId         String?        @map("loan_id")
   journalTxnId   String?        @map("journal_txn_id")
-  idempotencyKey String         @unique @map("idempotency_key")
+  idempotencyKey String @map("idempotency_key")
   makerUserId    String?        @map("maker_user_id")
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
@@ -1575,11 +1710,15 @@ model CreditLineDrawdown {
   creditLine CreditLine @relation(fields: [creditLineId], references: [id])
 
   @@index([bankOrgId, creditLineId])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("credit_line_drawdowns")
 }
 
 model CollectionCase {
   id            String               @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String               @map("bank_org_id")
   loanId        String               @map("loan_id")
   customerId    String               @map("customer_id")
@@ -1594,11 +1733,13 @@ model CollectionCase {
 
   @@index([bankOrgId, status])
   @@index([bankOrgId, loanId])
+  @@index([organizationId])
   @@map("collection_cases")
 }
 
 model CollectionPromiseToPay {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   caseId      String   @map("case_id")
   amountMinor BigInt   @map("amount_minor")
@@ -1609,11 +1750,13 @@ model CollectionPromiseToPay {
   case CollectionCase @relation(fields: [caseId], references: [id])
 
   @@index([bankOrgId, caseId])
+  @@index([organizationId])
   @@map("collection_promises_to_pay")
 }
 
 model StandingOrder {
   id              String              @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String              @map("bank_org_id")
   customerId      String              @map("customer_id")
   fromAccountId   String              @map("from_account_id")
@@ -1624,16 +1767,20 @@ model StandingOrder {
   nextRunAt       DateTime            @map("next_run_at")
   status          StandingOrderStatus @default(ACTIVE)
   lastRunAt       DateTime?           @map("last_run_at")
-  idempotencyKey  String              @unique @map("idempotency_key")
+  idempotencyKey  String @map("idempotency_key")
   createdAt       DateTime            @default(now()) @map("created_at")
   updatedAt       DateTime            @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status, nextRunAt])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("standing_orders")
 }
 
 model DirectDebitMandate {
   id             String                   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String                   @map("bank_org_id")
   customerId     String                   @map("customer_id")
   accountId      String                   @map("account_id")
@@ -1647,11 +1794,13 @@ model DirectDebitMandate {
 
   @@unique([bankOrgId, creditorRef])
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("direct_debit_mandates")
 }
 
 model VirtualAccount {
   id              String               @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String               @map("bank_org_id")
   customerId      String               @map("customer_id")
   parentAccountId String               @map("parent_account_id")
@@ -1662,11 +1811,13 @@ model VirtualAccount {
 
   @@unique([bankOrgId, virtualIban])
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("virtual_accounts")
 }
 
 model CashPoolSweepRule {
   id              String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String          @map("bank_org_id")
   masterAccountId String          @map("master_account_id")
   childAccountId  String          @map("child_account_id")
@@ -1676,11 +1827,13 @@ model CashPoolSweepRule {
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("cash_pool_sweep_rules")
 }
 
 model ChequeInstrument {
   id            String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String       @map("bank_org_id")
   accountId     String       @map("account_id")
   chequeNumber  String       @map("cheque_number")
@@ -1696,11 +1849,13 @@ model ChequeInstrument {
 
   @@unique([bankOrgId, chequeNumber])
   @@index([bankOrgId, accountId, status])
+  @@index([organizationId])
   @@map("cheque_instruments")
 }
 
 model LetterOfCredit {
   id              String                @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String                @map("bank_org_id")
   customerId      String                @map("customer_id")
   direction       String                @default("IMPORT")
@@ -1719,11 +1874,13 @@ model LetterOfCredit {
 
   @@unique([bankOrgId, reference])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("letters_of_credit")
 }
 
 model TradeLcAmendment {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId String   @map("bank_org_id")
   lcId      String   @map("lc_id")
   seqNo     Int      @map("seq_no")
@@ -1733,11 +1890,13 @@ model TradeLcAmendment {
   lc LetterOfCredit @relation(fields: [lcId], references: [id])
 
   @@unique([lcId, seqNo])
+  @@index([organizationId])
   @@map("trade_lc_amendments")
 }
 
 model BankGuarantee {
   id              String                @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String                @map("bank_org_id")
   customerId      String                @map("customer_id")
   reference       String
@@ -1752,11 +1911,13 @@ model BankGuarantee {
 
   @@unique([bankOrgId, reference])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("bank_guarantees")
 }
 
 model DocumentaryCollection {
   id           String                @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String                @map("bank_org_id")
   customerId   String                @map("customer_id")
   reference    String
@@ -1767,11 +1928,13 @@ model DocumentaryCollection {
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, reference])
+  @@index([organizationId])
   @@map("documentary_collections")
 }
 
 model ScfProgram {
   id             String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String           @map("bank_org_id")
   code           String
   name           String
@@ -1783,11 +1946,13 @@ model ScfProgram {
   updatedAt      DateTime         @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, code])
+  @@index([organizationId])
   @@map("scf_programs")
 }
 
 model MoneyMarketPlacement {
   id               String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId        String          @map("bank_org_id")
   counterpartyId   String          @map("counterparty_id")
   nostroAccountId  String          @map("nostro_account_id")
@@ -1800,16 +1965,20 @@ model MoneyMarketPlacement {
   status           PlacementStatus @default(ACTIVE)
   openPostingTxnId String?         @map("open_posting_txn_id")
   closePostingTxnId String?        @map("close_posting_txn_id")
-  idempotencyKey   String          @unique @map("idempotency_key")
+  idempotencyKey   String @map("idempotency_key")
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+
   @@map("money_market_placements")
 }
 
 model AcquiringMerchant {
   id           String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String       @map("bank_org_id")
   merchantCode String       @map("merchant_code")
   name         String
@@ -1820,11 +1989,13 @@ model AcquiringMerchant {
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, merchantCode])
+  @@index([organizationId])
   @@map("acquiring_merchants")
 }
 
 model TradeSwiftMessage {
   id        String                  @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId String                  @map("bank_org_id")
   mtType    String                  @map("mt_type")
   body      String
@@ -1834,11 +2005,13 @@ model TradeSwiftMessage {
   updatedAt DateTime                @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("trade_swift_messages")
 }
 
 model CardDisputeCase {
   id                 String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId          String            @map("bank_org_id")
   cardTransactionId  String            @map("card_transaction_id")
   amountMinor        BigInt            @map("amount_minor")
@@ -1850,11 +2023,13 @@ model CardDisputeCase {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("card_dispute_cases")
 }
 
 model ThreeDsChallenge {
   id            String                @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String                @map("bank_org_id")
   cardId        String                @map("card_id")
   amountMinor   BigInt                @map("amount_minor")
@@ -1864,11 +2039,13 @@ model ThreeDsChallenge {
   createdAt     DateTime              @default(now()) @map("created_at")
 
   @@index([bankOrgId, cardId, status])
+  @@index([organizationId])
   @@map("three_ds_challenges")
 }
 
 model SafekeepingAccount {
   id           String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String   @map("bank_org_id")
   customerId   String   @map("customer_id")
   accountNo    String   @map("account_no")
@@ -1880,11 +2057,13 @@ model SafekeepingAccount {
   positions CustodyPosition[]
 
   @@unique([bankOrgId, accountNo])
+  @@index([organizationId])
   @@map("safekeeping_accounts")
 }
 
 model CustodyPosition {
   id                  String                 @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId           String                 @map("bank_org_id")
   safekeepingAccountId String                @map("safekeeping_account_id")
   isin                String
@@ -1897,11 +2076,13 @@ model CustodyPosition {
   ledgerEntries CustodyPositionLedger[]
 
   @@index([bankOrgId, isin])
+  @@index([organizationId])
   @@map("custody_positions")
 }
 
 model CustodyPositionLedger {
   id                 String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId          String   @map("bank_org_id")
   custodyPositionId  String   @map("custody_position_id")
   direction          String
@@ -1912,11 +2093,13 @@ model CustodyPositionLedger {
   position CustodyPosition @relation(fields: [custodyPositionId], references: [id])
 
   @@index([bankOrgId, custodyPositionId])
+  @@index([organizationId])
   @@map("custody_position_ledger")
 }
 
 model InsuranceProduct {
   id          String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String       @map("bank_org_id")
   code        String
   name        String
@@ -1929,11 +2112,13 @@ model InsuranceProduct {
   policies InsurancePolicyLink[]
 
   @@unique([bankOrgId, code])
+  @@index([organizationId])
   @@map("insurance_products")
 }
 
 model InsurancePolicyLink {
   id                 String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId          String   @map("bank_org_id")
   customerId         String   @map("customer_id")
   insuranceProductId String   @map("insurance_product_id")
@@ -1946,11 +2131,13 @@ model InsurancePolicyLink {
 
   @@unique([bankOrgId, policyRef])
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("insurance_policy_links")
 }
 
 model IslamicContract {
   id                String                @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId         String                @map("bank_org_id")
   customerId        String                @map("customer_id")
   productTemplateId String                @map("product_template_id")
@@ -1964,11 +2151,13 @@ model IslamicContract {
   updatedAt         DateTime              @updatedAt @map("updated_at")
 
   @@index([bankOrgId, customerId, status])
+  @@index([organizationId])
   @@map("islamic_contracts")
 }
 
 model DboH2hFileJob {
   id         String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String       @map("bank_org_id")
   fileName   String       @map("file_name")
   payload    String
@@ -1978,11 +2167,13 @@ model DboH2hFileJob {
   updatedAt  DateTime     @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("dbo_h2h_file_jobs")
 }
 
 model OpenBankingConsent {
   id         String          @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId  String          @map("bank_org_id")
   customerId String          @map("customer_id")
   scopes     Json            @default("[]")
@@ -1992,11 +2183,13 @@ model OpenBankingConsent {
   updatedAt  DateTime        @updatedAt @map("updated_at")
 
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("open_banking_consents")
 }
 
 model AmlCase {
   id             String        @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId      String        @map("bank_org_id")
   alertId        String?       @map("alert_id")
   customerId     String?       @map("customer_id")
@@ -2007,11 +2200,13 @@ model AmlCase {
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("aml_cases")
 }
 
 model FraudScoreRequest {
   id              String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String   @map("bank_org_id")
   reference       String
   channel         String
@@ -2025,11 +2220,13 @@ model FraudScoreRequest {
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, reference])
+  @@index([organizationId])
   @@map("fraud_score_requests")
 }
 
 model IrrbbInput {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   asOfDate    DateTime @map("as_of_date")
   bucketKey   String   @map("bucket_key")
@@ -2038,11 +2235,13 @@ model IrrbbInput {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, asOfDate])
+  @@index([organizationId])
   @@map("irrbb_inputs")
 }
 
 model OpRiskLossEvent {
   id          String             @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String             @map("bank_org_id")
   eventDate   DateTime           @map("event_date")
   amountMinor BigInt             @map("amount_minor")
@@ -2054,11 +2253,13 @@ model OpRiskLossEvent {
   updatedAt   DateTime           @updatedAt @map("updated_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("oprisk_loss_events")
 }
 
 model InsuranceAffiliateCommission {
   id          String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String   @map("bank_org_id")
   customerId  String   @map("customer_id")
   policyRef   String   @map("policy_ref")
@@ -2067,6 +2268,7 @@ model InsuranceAffiliateCommission {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("insurance_affiliate_commissions")
 }
 
@@ -2148,6 +2350,7 @@ enum DmsDocumentStatus {
 
 model AtmTerminal {
   id           String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String            @map("bank_org_id")
   terminalId   String            @map("terminal_id")
   branchId     String            @map("branch_id")
@@ -2160,11 +2363,13 @@ model AtmTerminal {
 
   @@unique([bankOrgId, terminalId])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("atm_terminals")
 }
 
 model AtmTxn {
   id            String       @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String       @map("bank_org_id")
   atmTerminalId String       @map("atm_terminal_id")
   cardId        String?      @map("card_id")
@@ -2179,11 +2384,13 @@ model AtmTxn {
   terminal AtmTerminal @relation(fields: [atmTerminalId], references: [id])
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("atm_txns")
 }
 
 model SchemeMessageOutbox {
   id          String             @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String             @map("bank_org_id")
   messageType String             @map("message_type")
   direction   String
@@ -2193,11 +2400,13 @@ model SchemeMessageOutbox {
   createdAt   DateTime           @default(now()) @map("created_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("scheme_message_outbox")
 }
 
 model DerivativeContract {
   id           String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String            @map("bank_org_id")
   contractRef  String            @map("contract_ref")
   productType  String            @map("product_type")
@@ -2210,11 +2419,13 @@ model DerivativeContract {
 
   @@unique([bankOrgId, contractRef])
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("derivative_contracts")
 }
 
 model BondPosition {
   id            String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId     String            @map("bank_org_id")
   isin          String
   faceValueMinor BigInt           @map("face_value_minor")
@@ -2225,11 +2436,13 @@ model BondPosition {
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
   @@index([bankOrgId, isin])
+  @@index([organizationId])
   @@map("bond_positions")
 }
 
 model CsdAccount {
   id           String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String           @map("bank_org_id")
   customerId   String           @map("customer_id")
   csdAccountNo String           @map("csd_account_no")
@@ -2238,11 +2451,13 @@ model CsdAccount {
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, csdAccountNo])
+  @@index([organizationId])
   @@map("csd_accounts")
 }
 
 model BrokerageOrder {
   id           String               @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String               @map("bank_org_id")
   customerId   String               @map("customer_id")
   isin         String
@@ -2254,11 +2469,13 @@ model BrokerageOrder {
   updatedAt    DateTime             @updatedAt @map("updated_at")
 
   @@index([bankOrgId, customerId, status])
+  @@index([organizationId])
   @@map("brokerage_orders")
 }
 
 model MetalPosition {
   id           String              @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String              @map("bank_org_id")
   customerId   String              @map("customer_id")
   metalCode    String              @map("metal_code")
@@ -2268,11 +2485,13 @@ model MetalPosition {
   updatedAt    DateTime            @updatedAt @map("updated_at")
 
   @@index([bankOrgId, customerId])
+  @@index([organizationId])
   @@map("metal_positions")
 }
 
 model PensionContribution {
   id           String                    @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String                    @map("bank_org_id")
   customerId   String                    @map("customer_id")
   employerRef  String                    @map("employer_ref")
@@ -2283,11 +2502,13 @@ model PensionContribution {
   createdAt    DateTime                  @default(now()) @map("created_at")
 
   @@index([bankOrgId, periodMonth])
+  @@index([organizationId])
   @@map("pension_contributions")
 }
 
 model PsaTsaAccount {
   id           String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String           @map("bank_org_id")
   agencyCode   String           @map("agency_code")
   accountNo    String           @map("account_no")
@@ -2297,11 +2518,13 @@ model PsaTsaAccount {
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, accountNo])
+  @@index([organizationId])
   @@map("psa_tsa_accounts")
 }
 
 model AgencyLink {
   id              String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId       String           @map("bank_org_id")
   peerBankOrgId   String           @map("peer_bank_org_id")
   agencyType      String           @map("agency_type")
@@ -2310,11 +2533,13 @@ model AgencyLink {
   updatedAt       DateTime         @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, peerBankOrgId, agencyType])
+  @@index([organizationId])
   @@map("agency_links")
 }
 
 model MisReportJob {
   id          String             @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String             @map("bank_org_id")
   reportCode  String             @map("report_code")
   paramsJson  Json               @default("{}") @map("params_json")
@@ -2324,11 +2549,13 @@ model MisReportJob {
   completedAt DateTime?          @map("completed_at")
 
   @@index([bankOrgId, status])
+  @@index([organizationId])
   @@map("mis_report_jobs")
 }
 
 model BpmProcessStub {
   id          String           @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId   String           @map("bank_org_id")
   processCode String           @map("process_code")
   name        String
@@ -2338,11 +2565,13 @@ model BpmProcessStub {
   updatedAt   DateTime         @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, processCode])
+  @@index([organizationId])
   @@map("bpm_process_stubs")
 }
 
 model DmsDocumentMeta {
   id           String            @id @default(cuid())
+  organizationId String @map("organization_id")
   bankOrgId    String            @map("bank_org_id")
   documentRef  String            @map("document_ref")
   category     String
@@ -2353,5 +2582,6 @@ model DmsDocumentMeta {
   updatedAt    DateTime          @updatedAt @map("updated_at")
 
   @@unique([bankOrgId, documentRef])
+  @@index([organizationId])
   @@map("dms_document_meta")
 }

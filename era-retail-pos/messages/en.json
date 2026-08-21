@@ -136,6 +136,25 @@
     "localeEn": "EN"
   },
   "admin": {
+    "supplierMatch": {
+      "title": "Supplier match",
+      "subtitle": "Finance proxy invoice matching in a modal flow",
+      "matchInvoice": "Match invoice",
+      "replenishment": "Replenishment",
+      "modalTitle": "Supplier match",
+      "match": "Match",
+      "invoiceRef": "Invoice ref",
+      "invoiceRefPlaceholder": "Invoice ref"
+    },
+    "replenishment": {
+      "title": "Replenishment",
+      "subtitle": "Suggested stock top-up list",
+      "supplierMatch": "Supplier match",
+      "sku": "SKU",
+      "suggestedQty": "Suggested qty",
+      "unknownSku": "Unknown SKU",
+      "empty": "No suggestions (stub or all stocked)."
+    },
     "settings": {
       "field": "Field",
       "value": "Value",

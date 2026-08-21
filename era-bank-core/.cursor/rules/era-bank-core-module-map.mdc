@@ -73,6 +73,13 @@ Kernel routes consumed by `era-bank` BFF (prefix `/api/v1/`).
 | GET | `/product-templates` |
 | POST | `/product-templates` |
 
+## Internal (orchestrator Sync — no `/api/v1` prefix)
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET/POST | `/api/internal/v1/organization/bind` | Org UUID bind; Bearer `SATELLITE_EVENT_SERVICE_TOKEN` (or bank service tokens); excluded from global `api/v1` prefix |
+| GET/POST | `/api/internal/v1/runtime-config` | Desired-state runtime config (SSO, event token, activeModules); same auth + prefix exclusion as bind |
+
 ## EOD
 
 | Method | Path |

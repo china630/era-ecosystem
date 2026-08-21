@@ -22,7 +22,7 @@ import type { NestExpressApplication } from "@nestjs/platform-express";
 import type { NextFunction, Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
-import { HEALTH_CHECK_PAYLOAD } from "./common/health-payload";
+import { HEALTH_CHECK_PAYLOAD, healthCheckWithDiagnostics } from "./common/health-payload";
 import { HttpApiExceptionFilter } from "./common/http-api-exception.filter";
 import { AppModule } from "./app.module";
 
@@ -105,7 +105,7 @@ async function bootstrap() {
   app.use((req: Request, res: Response, next: NextFunction) => {
     const path = (req.url ?? "").split("?")[0];
     if (path === "/health" && req.method === "GET") {
-      res.status(200).json(HEALTH_CHECK_PAYLOAD);
+      res.status(200).json(healthCheckWithDiagnostics());
       return;
     }
     next();
@@ -141,6 +141,17 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup("docs", app, document);
+
+  const { PrismaService } = await import("./prisma/prisma.service");
+  const { bootFinanceRuntimeConfig } = await import("./control-plane/runtime-config.controller");
+  try {
+    const prisma = app.get(PrismaService);
+    await bootFinanceRuntimeConfig(prisma);
+  } catch (err) {
+    logger.warn(
+      `Finance runtime-config boot skipped: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 
   const port = process.env.API_PORT ?? "4100";
   await app.listen(Number(port), "0.0.0.0");

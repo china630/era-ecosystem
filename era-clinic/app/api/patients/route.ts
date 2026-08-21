@@ -70,6 +70,8 @@ export async function GET(req: Request) {
       hasMdm: parseHasMdm(params.get("hasMdm")),
       ageMin: ageMinRaw ? Number(ageMinRaw) : undefined,
       ageMax: ageMaxRaw ? Number(ageMaxRaw) : undefined,
+      roomNumber: params.get("roomNumber")?.trim() || undefined,
+      includeHotelRooms: params.get("includeHotelRooms") === "1",
       page: pageRaw ? Number(pageRaw) : undefined,
       pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
     });

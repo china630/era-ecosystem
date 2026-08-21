@@ -23,6 +23,7 @@ import {
   Activity,
   Wrench,
   Grid3x3,
+  CalendarRange,
 } from "lucide-react";
 import type { EraOpsNavItem, EraOpsNavSection } from "@era/satellite-kit/ui";
 import { CLINIC_ROLE, type ClinicRoleCode } from "@/lib/clinic-roles";
@@ -142,11 +143,32 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     roles: [CLINIC_ROLE.NURSE],
   },
   {
+    href: "/check-in",
+    labelKey: "checkIn",
+    icon: ClipboardList,
+    group: "clinical",
+    roles: [CLINIC_ROLE.FLOOR, CLINIC_ROLE.NURSE],
+  },
+  {
     href: "/lab-orders",
     labelKey: "labOrders",
     icon: FlaskConical,
     group: "clinical",
-    roles: [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE],
+    roles: [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE, CLINIC_ROLE.LAB_TECH],
+  },
+  {
+    href: "/reports/diagnoses",
+    labelKey: "diagnosisReport",
+    icon: FileSpreadsheet,
+    group: "clinical",
+    roles: [CLINIC_ROLE.DOCTOR],
+  },
+  {
+    href: "/reports/procedures",
+    labelKey: "procedureReport",
+    icon: FileSpreadsheet,
+    group: "clinical",
+    roles: [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE, CLINIC_ROLE.CLINIC_ADMIN],
   },
 
   // Module: Sanatoriya
@@ -164,6 +186,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Grid3x3,
     group: "mod:sanatorium",
     roles: [CLINIC_ROLE.RECEPTION],
+    preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
+  },
+  {
+    href: "/sanatorium/nurse-roster",
+    labelKey: "nurseRoster",
+    icon: CalendarRange,
+    group: "mod:sanatorium",
+    roles: [CLINIC_ROLE.DOCTOR],
     preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
   },
 
@@ -205,6 +235,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     href: "/admin/diagnostic-catalog",
     labelKey: "diagnosticCatalog",
     icon: Beaker,
+    group: "setup:catalogs",
+    adminOnly: true,
+  },
+  {
+    href: "/admin/icd-favorites",
+    labelKey: "icdFavorites",
+    icon: BookOpen,
     group: "setup:catalogs",
     adminOnly: true,
   },

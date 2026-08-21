@@ -4,6 +4,10 @@ import {
   computeContractNightAvailable,
   eachNight,
 } from '@/lib/services/contract-allotment-core';
+import {
+  countDoorsUsedOnNight,
+  loadShareSlicesForType,
+} from '@/lib/services/share-assignment.service';
 
 export async function listContractAllotments(salesContractId: string) {
   return prisma.contractAllotment.findMany({
@@ -107,14 +111,9 @@ export async function getAvailabilityWithContractAllotment(
   const dayResults = [];
 
   for (const night of nights) {
-    const overlapping = await prisma.reservation.count({
-      where: {
-        roomTypeId,
-        status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
-        checkInDate: { lt: new Date(night.getTime() + 86400000) },
-        checkOutDate: { gt: night },
-      },
-    });
+    const nightEnd = new Date(night.getTime() + 86400000);
+    const slices = await loadShareSlicesForType(roomTypeId, night, nightEnd);
+    const overlapping = countDoorsUsedOnNight(slices, night, roomType.adultCapacity ?? 2);
 
     let available = Math.max(0, roomType.baseQuota - overlapping);
 

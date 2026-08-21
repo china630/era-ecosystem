@@ -45,6 +45,9 @@ export default function TravelAgenciesPage() {
   const [agencyVoen, setAgencyVoen] = useState('');
   const [agencyNameHint, setAgencyNameHint] = useState('');
 
+  const [inviteAgency, setInviteAgency] = useState<AgencyRow | null>(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/travel-agencies');
@@ -138,15 +141,86 @@ export default function TravelAgenciesPage() {
             key: 'actions',
             header: tc('actions'),
             render: (r) => (
-              <button type="button" className="text-[#2980B9] hover:underline" onClick={() => openEdit(r)}>
-                {tc('edit')}
-              </button>
+              <span className="flex flex-wrap gap-2">
+                <button type="button" className="text-[#2980B9] hover:underline" onClick={() => openEdit(r)}>
+                  {tc('edit')}
+                </button>
+                <button
+                  type="button"
+                  className="text-[#2980B9] hover:underline"
+                  disabled={busy}
+                  onClick={() => {
+                    setInviteAgency(r);
+                    setInviteEmail('');
+                  }}
+                >
+                  {t('invitePortal')}
+                </button>
+              </span>
             ),
           },
         ]}
         rows={filteredRows as (AgencyRow & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
       />
+
+      <EraModal
+        open={Boolean(inviteAgency)}
+        title={t('invitePortal')}
+        onClose={() => setInviteAgency(null)}
+        footer={
+          <EraModalFooter
+            formId="agency-portal-invite-form"
+            onCancel={() => setInviteAgency(null)}
+            busy={busy}
+            submitLabel={t('invitePortal')}
+          />
+        }
+      >
+        <form
+          id="agency-portal-invite-form"
+          className={FORM_STACK_CLASS}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!inviteAgency) return;
+            if (!inviteAgency.voen || inviteAgency.voen.replace(/\D/g, '').length !== 10) {
+              showApiError({ error: t('inviteNeedVoen') });
+              return;
+            }
+            setBusy(true);
+            try {
+              const res = await fetch(`/api/admin/travel-agencies/${inviteAgency.id}/portal-invite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: inviteEmail.trim() }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) {
+                showApiError(data, tc('error'));
+                return;
+              }
+              const temp = data.temporaryPassword
+                ? ` temp password: ${data.temporaryPassword}`
+                : '';
+              showSuccess(t('inviteOk') + temp);
+              setInviteAgency(null);
+            } catch (err) {
+              showApiError({ error: err instanceof Error ? err.message : tc('error') });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <Field
+            label="Email"
+            preset="longText"
+            type="email"
+            value={inviteEmail}
+            onChange={(ev) => setInviteEmail(ev.target.value)}
+            required
+          />
+        </form>
+      </EraModal>
 
       <EraModal
         open={modalOpen}

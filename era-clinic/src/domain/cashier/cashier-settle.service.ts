@@ -1,6 +1,7 @@
 import { fiscalize } from "@era/fiscal";
 import { prisma } from "@/lib/prisma";
 import { postHotelRoomCharge } from "@/lib/billing-router";
+import { settleDenied } from "@/lib/cashier-settle-gates";
 import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
 import {
   buildUnifiedBill,
@@ -47,6 +48,8 @@ async function ensureShift(shiftId?: string, userId?: string | null) {
  */
 export async function settleVisitBill(input: SettleInput) {
   const bill = await buildUnifiedBill(input.visitId);
+  const precheck = settleDenied({ visitFound: Boolean(bill), fiscalMode: "stub" });
+  if (precheck) throw new Error(precheck);
   if (!bill) throw new Error("Visit not found");
   if (bill.alreadyPaid) {
     const existing = await prisma.clinicReceipt.findFirst({
@@ -65,6 +68,8 @@ export async function settleVisitBill(input: SettleInput) {
   const amountNet = Math.max(0, Math.round((amountGross - discountAmount) * 100) / 100);
 
   const shift = await ensureShift(input.shiftId, input.userId);
+  const shiftBlock = settleDenied({ visitFound: true, shiftStatus: shift.status });
+  if (shiftBlock) throw new Error(shiftBlock);
 
   if (channel === "HOTEL_FOLIO") {
     if (!bill.reservationId) throw new Error("No reservation for folio charge");

@@ -10,7 +10,7 @@ export type MinibarSensorPayload = {
 };
 
 export async function ingestMinibarSensorEvent(payload: MinibarSensorPayload) {
-  const room = await prisma.room.findUnique({ where: { roomNumber: payload.roomNumber } });
+  const room = await prisma.room.findFirst({ where: { roomNumber: payload.roomNumber } });
   const event = await prisma.minibarEvent.create({
     data: {
       roomId: room?.id,

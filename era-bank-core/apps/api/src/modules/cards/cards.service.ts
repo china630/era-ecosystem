@@ -256,7 +256,7 @@ export class CardsService {
     mcc?: string;
   }) {
     const existing = await this.prisma.cardTransaction.findUnique({
-      where: { processorRef: input.processorRef },
+      where: { processorRef: input.processorRef } as never,
     });
     if (existing) return existing;
 

@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { isStopSellForDate } from '@/lib/services/channel.service';
+import {
+  countDoorsUsedOnNight,
+  loadShareSlicesForType,
+  type ShareReservationSlice,
+} from '@/lib/services/share-assignment.service';
 import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 
 const SELLABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
@@ -30,18 +35,21 @@ function eachHotelNight(fromKey: string, toKey: string): string[] {
   return keys;
 }
 
-/** Occupancy for one hotel-night: stays overlapping that night (incl. unassigned). */
-async function occupiedOnNight(roomTypeId: string, nightKey: string): Promise<number> {
+/** Occupancy for one hotel-night: door consumption (share-aware). */
+async function occupiedDoorsOnNight(roomTypeId: string, nightKey: string): Promise<number> {
   const nightStart = parseHotelNoon(nightKey);
   const nightEnd = parseHotelNoon(addHotelDays(nightKey, 1));
-  return prisma.reservation.count({
-    where: {
-      roomTypeId,
-      status: { in: [...SELLABLE_STATUSES] },
-      checkInDate: { lt: nightEnd },
-      checkOutDate: { gt: nightStart },
-    },
+  const roomType = await prisma.roomType.findUnique({
+    where: { id: roomTypeId },
+    select: { adultCapacity: true },
   });
+  const maxBed = roomType?.adultCapacity ?? 2;
+  const slices: ShareReservationSlice[] = await loadShareSlicesForType(
+    roomTypeId,
+    nightStart,
+    nightEnd,
+  );
+  return countDoorsUsedOnNight(slices, nightStart, maxBed);
 }
 
 /**
@@ -66,7 +74,7 @@ export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   for (const rt of roomTypes) {
     const days: DayCell[] = [];
     for (const night of nights) {
-      const occupied = await occupiedOnNight(rt.id, night);
+      const occupied = await occupiedDoorsOnNight(rt.id, night);
       const stopSell = await isStopSellForDate(parseHotelNoon(night), rt.id);
       const available = stopSell ? 0 : rt.baseQuota - occupied;
       days.push({

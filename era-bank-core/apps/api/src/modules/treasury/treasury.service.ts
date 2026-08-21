@@ -115,7 +115,7 @@ export class TreasuryService {
     idempotencyKey: string;
   }) {
     const existing = await this.prisma.fxDeal.findUnique({
-      where: { idempotencyKey: input.idempotencyKey },
+      where: { idempotencyKey: input.idempotencyKey } as never,
     });
     if (existing) return existing;
 
@@ -592,7 +592,8 @@ export class TreasuryService {
       pnlMinor: string;
     }> = [];
 
-    for (const currency of currencies) {
+    for (const rawCurrency of currencies) {
+      const currency = String(rawCurrency);
       let rate = 1;
       try {
         rate = await this.dataHub.getFxRate(currency, input.asOfDate);
@@ -693,7 +694,7 @@ export class TreasuryService {
     idempotencyKey: string;
   }) {
     const existing = await this.prisma.moneyMarketPlacement.findUnique({
-      where: { idempotencyKey: input.idempotencyKey },
+      where: { idempotencyKey: input.idempotencyKey } as never,
     });
     if (existing) return existing;
 

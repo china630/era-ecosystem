@@ -119,6 +119,12 @@ Honest audit vs Opera-like CL. ADR: [docs/adr/hotel-city-ledger-and-fo-money.md]
 | H-BL-47 | **List filter enrichment (HOT UI standard)** | hotel-pms | **Done** | EraListFilterBar depth on FO lists + allotment/reservations |
 | H-BL-48 | **Finance AR: terms, aging, invoice matching** | era-finance-core | **Done** | `paymentTermsDays`; aging; `/sales/invoices/allocate` |
 
+### P6 — Nafta early leave (docs 2026-08-21)
+
+| ID | Task | Primary owner | Status | Notes |
+|----|------|---------------|--------|-------|
+| H-BL-49 | **Unused-nights refund at checkout** | hotel-pms | **Done** | ADR [hotel-early-checkout-unused-nights.md](../../docs/adr/hotel-early-checkout-unused-nights.md); HOT-CO-04 SHIPPED; net of 18% VAT; default CASH; all folios |
+
 **Already MVP (do not re-scope as greenfield):** transfers `HOT-XFER-01`, banquets `HOT-BEO-01`, settle `HOT-CASH-01`, agency CL snapshot `HOT-CL-03`, NA core `HOT-NA-01`.
 
 ### P3 — Future / optional parity

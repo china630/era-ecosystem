@@ -8,6 +8,7 @@ import { jwtVerify } from "jose";
 export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/auth/login",
   "/api/auth/sso/exchange",
+  "/api/auth/agency-sso/exchange",
   "/api/health",
   "/api/events/dispatch",
   "/api/locale",
@@ -123,4 +124,37 @@ export function redirectNoStore(url: URL | string): NextResponse {
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.headers.set("Pragma", "no-cache");
   return res;
+}
+
+export function agencyAuthCookieName(): string {
+  return process.env.AGENCY_AUTH_COOKIE_NAME ?? "era_agency_session";
+}
+
+export type AgencySessionPayload = {
+  sub: string;
+  actor: "agency";
+  email: string;
+  fullName: string;
+  organizationId: string;
+  agencyId: string;
+  agencyCode?: string;
+};
+
+/** Edge-safe agency JWT verify (jose only). */
+export async function verifyAgencySession(
+  token: string,
+): Promise<AgencySessionPayload> {
+  const { payload } = await jwtVerify(token, jwtSecret());
+  const sub = payload.sub;
+  if (!sub || typeof sub !== "string") throw new Error("Invalid token subject");
+  if (payload.actor !== "agency") throw new Error("Not an agency session");
+  return {
+    sub,
+    actor: "agency",
+    email: String(payload.email ?? ""),
+    fullName: String(payload.fullName ?? ""),
+    organizationId: String(payload.organizationId ?? ""),
+    agencyId: String(payload.agencyId ?? ""),
+    agencyCode: payload.agencyCode ? String(payload.agencyCode) : undefined,
+  };
 }

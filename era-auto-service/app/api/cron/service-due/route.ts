@@ -1,19 +1,22 @@
+import { satelliteOrganizationId, runWithSatelliteTenant } from "@era/satellite-kit";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { sendNotification, createBookingSlots } from "@/integration/control-plane-platform.client";
 import { platformNotificationsEnabled } from "@/lib/platform-notify";
 import { nextServiceAppointmentDay } from "@/lib/production-calendar";
+import { cronUnauthorized } from "@/lib/cron-auth";
 
 const CRON_SECRET = process.env.PLATFORM_CRON_SECRET ?? "";
 
 export async function POST(req: Request) {
   try {
     const auth = req.headers.get("authorization") ?? "";
-    if (CRON_SECRET && auth !== `Bearer ${CRON_SECRET}`) {
+    if (cronUnauthorized(auth, CRON_SECRET)) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID ?? "";
+    const organizationId = satelliteOrganizationId();
+    return runWithSatelliteTenant({ organizationId }, async () => {
     const dueBefore = new Date(Date.now() - 180 * 24 * 3600_000);
 
     const workOrders = await prisma.workOrder.findMany({
@@ -73,6 +76,7 @@ export async function POST(req: Request) {
     }
 
     return jsonOk({ scanned: workOrders.length, sent });
+    });
   } catch (err) {
     return handleRouteError(err);
   }

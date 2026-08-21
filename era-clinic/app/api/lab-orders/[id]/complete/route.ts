@@ -1,4 +1,5 @@
 import { SATELLITE_CLINIC_LAB_ORDER_COMPLETED } from "@era/contracts";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { createPaymentLink } from "@/integration/control-plane-platform.client";
@@ -34,7 +35,7 @@ export async function POST(
     });
 
     const testCodes = order.items.length
-      ? order.items.map((item) => item.serviceCode)
+      ? order.items.map((item: { serviceCode: string }) => item.serviceCode)
       : testCodesFromOrder(completed.testCode);
 
     await dispatchSatelliteEvent({
@@ -51,7 +52,7 @@ export async function POST(
       },
     });
 
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const organizationId = satelliteOrganizationId();
     const amountNet = Number(completed.amountNet);
     if (organizationId && amountNet > 0) {
       try {

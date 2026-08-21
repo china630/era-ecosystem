@@ -11,6 +11,7 @@ import {
   CashOrderKind,
   CashOrderStatus,
   Decimal,
+  isNasCashDeskCode,
   LedgerType,
   type Prisma,
 } from "@erafinance/database";
@@ -110,10 +111,7 @@ export class CashOrderService {
       transactionId: string;
     },
   ): Promise<void> {
-    if (
-      params.debitAccountCode !== "101" &&
-      !params.debitAccountCode.startsWith("101.")
-    ) {
+    if (!isNasCashDeskCode(await this.posting.getOrganizationKind(organizationId), params.debitAccountCode)) {
       return;
     }
     const existing = await tx.cashOrder.findFirst({
@@ -175,9 +173,10 @@ export class CashOrderService {
     });
     const byCode = new Map(accounts.map((a) => [a.code, a]));
 
+    const kind = await this.posting.getOrganizationKind(organizationId);
     const sums = new Map<string, Decimal>();
     for (const row of tb.rows) {
-      if (row.accountCode !== "101" && !row.accountCode.startsWith("101.")) {
+      if (!isNasCashDeskCode(kind, row.accountCode)) {
         continue;
       }
       const net = d(row.closingDebit).sub(d(row.closingCredit));
@@ -575,7 +574,8 @@ export class CashOrderService {
       throw new BadRequestException("offsetAccountCode missing");
     }
     const cash = order.cashAccountCode;
-    assertValidCashDeskAccountCode(cash);
+    const kind = await this.posting.getOrganizationKind(organizationId);
+    assertValidCashDeskAccountCode(cash, kind);
     const offset = order.offsetAccountCode.trim();
     const charterCode = await this.posting.resolveAccountCode(
       organizationId,

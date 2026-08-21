@@ -2619,7 +2619,9 @@ export class InventoryService {
     const org = await tx.organization.findUnique({
       where: { id: organizationId },
     });
-    const allowNeg = !!parseInventorySettings(org?.settings).allowNegativeStock;
+    const allowNeg =
+      !!parseInventorySettings(org?.settings).allowNegativeStock ||
+      !!dto.forceAllowNegative;
 
     const [finishedGoodsCode, inventoryGoodsCode, miscExpenseCode] = await Promise.all([
       this.nas(organizationId, "FINISHED_GOODS", tx),

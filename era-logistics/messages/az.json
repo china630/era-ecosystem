@@ -45,6 +45,13 @@
   "trips": {
     "title": "ERA Logistics",
     "subtitle": "Gedişlər — POD, yanacaq və iş axını üçün ətraflıya keçin",
+    "addTrip": "Gediş əlavə et",
+    "createTrip": "Gediş yarat",
+    "vehiclePlate": "Nəqliyyat nömrəsi",
+    "vehicleModel": "Nəqliyyat modeli",
+    "routeCode": "Marşrut kodu",
+    "freightAmount": "Daşıma məbləği (AZN)",
+    "created": "{plate} üçün gediş yaradıldı",
     "fuelReport": "Yanacaq hesabatı",
     "empty": "Hələ gediş yoxdur."
   },

@@ -15,6 +15,7 @@ import type { PublicPricingResponse } from "../../../lib/public-pricing-types";
 import { fetchPublicPricingSnapshot } from "../../../lib/pricing/fetch-public-pricing";
 import { buildModuleLabeler } from "../../../lib/module-labels";
 import { getOrchAccessToken, orchFetch } from "../../../lib/orch-api";
+import { useAuth } from "../../../lib/auth-context";
 
 const FINANCE_GROUP = new Set([
   "finance_core",
@@ -69,6 +70,17 @@ const GROUP_ORDER = [
 ];
 
 type ModuleStateRow = { moduleKey: string; pendingDeactivation: boolean };
+type MarketplaceBundle = {
+  id: string;
+  name: string;
+  pricePerMonth?: number;
+  moduleKeys?: string[];
+  active?: boolean;
+};
+type MarketplaceSnapshot = {
+  bundles?: MarketplaceBundle[];
+  premiumModules?: Array<{ key: string; name: string }>;
+};
 
 function groupKeyForSlug(
   slug: string,
@@ -86,13 +98,24 @@ function groupKeyForSlug(
 
 export default function SubscriptionPage() {
   const { ready } = useRequireAuth();
-  const { snapshot, loading } = useSubscription();
+  const { token } = useAuth();
+  const { snapshot, loading, refresh } = useSubscription();
   const t = useTranslations("settings");
   const tSub = useTranslations("settings.subscription");
   const tSys = useTranslations("workspace.systems");
 
   const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
+  const [marketplace, setMarketplace] = useState<MarketplaceSnapshot | null>(null);
+  const [plans, setPlans] = useState<Record<string, number>>({});
+  const [selectedTier, setSelectedTier] = useState<"TIER_1" | "TIER_2" | "TIER_3">("TIER_1");
+  const [upgradePreview, setUpgradePreview] = useState<string | null>(null);
+  const [billingMsg, setBillingMsg] = useState<string | null>(null);
+  const [billingErr, setBillingErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [premiumKeys, setPremiumKeys] = useState("");
+  const [ceilingAmount, setCeilingAmount] = useState("50");
+  const [checkoutAmount, setCheckoutAmount] = useState("10");
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +144,41 @@ export default function SubscriptionPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!token) return;
+    void Promise.all([
+      orchFetch("/v1/billing/marketplace", { token }),
+      orchFetch("/v1/billing/plans", { token }),
+    ]).then(async ([mRes, pRes]) => {
+      if (cancelled) return;
+      if (mRes.ok) {
+        setMarketplace((await mRes.json()) as MarketplaceSnapshot);
+      }
+      if (pRes.ok) {
+        const data = (await pRes.json()) as { prices?: Record<string, number> };
+        setPlans(data.prices ?? {});
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  async function runBilling(action: () => Promise<void>) {
+    setBusy(true);
+    setBillingErr(null);
+    setBillingMsg(null);
+    try {
+      await action();
+      await refresh();
+    } catch (e) {
+      setBillingErr(e instanceof Error ? e.message : tSub("billingFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const satelliteByKey = useMemo(() => {
     const map = new Map<string, string | null>();
@@ -243,6 +301,12 @@ export default function SubscriptionPage() {
             <Link href="/pricing" className={SECONDARY_BUTTON_CLASS}>
               {tSub("managePricing")}
             </Link>
+            <Link href="/settings/invoices" className={SECONDARY_BUTTON_CLASS}>
+              {tSub("viewInvoices")}
+            </Link>
+            <Link href="/settings/orders" className={SECONDARY_BUTTON_CLASS}>
+              {tSub("viewOrders")}
+            </Link>
             <Link href="/help" className={SECONDARY_BUTTON_CLASS}>
               {tSub("contactSupport")}
             </Link>
@@ -250,6 +314,246 @@ export default function SubscriptionPage() {
           <p className="text-xs text-[#7F8C8D]">{tSub("trialHint")}</p>
         </div>
       )}
+
+      {ready && !loading ? (
+        <div className={`${CARD_CONTAINER_CLASS} mt-4 space-y-5 p-4`}>
+          <h2 className="text-sm font-semibold text-[#34495E]">{tSub("billingConstructor")}</h2>
+          <p className="text-xs text-[#7F8C8D]">{tSub("billingConstructorHint")}</p>
+          {billingErr ? <p className="text-sm text-red-600">{billingErr}</p> : null}
+          {billingMsg ? <p className="text-sm text-emerald-700">{billingMsg}</p> : null}
+
+          <section className="space-y-2 border-t border-[#EBEDF0] pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {tSub("changePlan")}
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                className="h-9 rounded-lg border border-[#D5DADF] px-3 text-sm"
+                value={selectedTier}
+                onChange={(e) =>
+                  setSelectedTier(e.target.value as "TIER_1" | "TIER_2" | "TIER_3")
+                }
+              >
+                {(["TIER_1", "TIER_2", "TIER_3"] as const).map((tier) => (
+                  <option key={tier} value={tier}>
+                    {tier}
+                    {plans[tier] != null ? ` · ${plans[tier]} AZN` : ""}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy || !token}
+                onClick={() =>
+                  void runBilling(async () => {
+                    const res = await orchFetch(
+                      `/v1/billing/upgrade-preview?newTier=${selectedTier}`,
+                      { token: token! },
+                    );
+                    if (!res.ok) throw new Error(tSub("previewFailed"));
+                    const data = (await res.json()) as { amountToPay?: string };
+                    setUpgradePreview(data.amountToPay ?? null);
+                    setBillingMsg(
+                      tSub("previewOk", { amount: data.amountToPay ?? "—" }),
+                    );
+                  })
+                }
+              >
+                {tSub("previewUpgrade")}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={busy || !token}
+                onClick={() =>
+                  void runBilling(async () => {
+                    const res = await orchFetch("/v1/subscription/select-plan", {
+                      token: token!,
+                      method: "POST",
+                      body: JSON.stringify({ tier: selectedTier }),
+                    });
+                    if (!res.ok) throw new Error(tSub("planFailed"));
+                    setBillingMsg(tSub("planOk"));
+                  })
+                }
+              >
+                {tSub("applyPlan")}
+              </button>
+            </div>
+            {upgradePreview ? (
+              <p className="text-xs text-[#7F8C8D]">
+                {tSub("previewAmount", { amount: upgradePreview })}
+              </p>
+            ) : null}
+          </section>
+
+          <section className="space-y-2 border-t border-[#EBEDF0] pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {tSub("bundles")}
+            </h3>
+            {(marketplace?.bundles ?? []).length === 0 ? (
+              <p className="text-sm text-[#7F8C8D]">{tSub("noBundles")}</p>
+            ) : (
+              <ul className="space-y-2">
+                {(marketplace?.bundles ?? []).map((b) => (
+                  <li
+                    key={b.id}
+                    className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                  >
+                    <span>
+                      {b.name}
+                      {b.pricePerMonth != null ? ` · ${b.pricePerMonth} AZN` : ""}
+                      {b.active ? ` · ${tSub("bundleActive")}` : ""}
+                    </span>
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      disabled={busy || !token}
+                      onClick={() =>
+                        void runBilling(async () => {
+                          const res = await orchFetch("/v1/billing/toggle-bundle", {
+                            token: token!,
+                            method: "POST",
+                            body: JSON.stringify({
+                              bundleId: b.id,
+                              enabled: !b.active,
+                            }),
+                          });
+                          if (!res.ok) throw new Error(tSub("bundleFailed"));
+                          setBillingMsg(tSub("bundleOk"));
+                          const mRes = await orchFetch("/v1/billing/marketplace", {
+                            token: token!,
+                          });
+                          if (mRes.ok) {
+                            setMarketplace((await mRes.json()) as MarketplaceSnapshot);
+                          }
+                        })
+                      }
+                    >
+                      {b.active ? tSub("disableBundle") : tSub("enableBundle")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="space-y-2 border-t border-[#EBEDF0] pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {tSub("premiumUnlock")}
+            </h3>
+            <input
+              className="h-9 w-full max-w-md rounded-lg border border-[#D5DADF] px-3 text-sm"
+              placeholder={tSub("premiumPlaceholder")}
+              value={premiumKeys}
+              onChange={(e) => setPremiumKeys(e.target.value)}
+            />
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={busy || !token || !premiumKeys.trim()}
+              onClick={() =>
+                void runBilling(async () => {
+                  const modules = premiumKeys
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  const res = await orchFetch("/v1/billing/activate-premium", {
+                    token: token!,
+                    method: "POST",
+                    body: JSON.stringify({
+                      modules,
+                      confirmCommercialStatus: true,
+                    }),
+                  });
+                  if (!res.ok) throw new Error(tSub("premiumFailed"));
+                  setBillingMsg(tSub("premiumOk"));
+                })
+              }
+            >
+              {tSub("activatePremium")}
+            </button>
+          </section>
+
+          <section className="space-y-2 border-t border-[#EBEDF0] pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {tSub("payments")}
+            </h3>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="text-xs text-[#7F8C8D]">
+                {tSub("checkoutAmount")}
+                <input
+                  className="mt-1 block h-9 w-28 rounded-lg border border-[#D5DADF] px-3 text-sm"
+                  value={checkoutAmount}
+                  onChange={(e) => setCheckoutAmount(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={busy || !token}
+                onClick={() =>
+                  void runBilling(async () => {
+                    const amountAzn = Number(checkoutAmount);
+                    const res = await orchFetch("/v1/billing/checkout", {
+                      token: token!,
+                      method: "POST",
+                      body: JSON.stringify({
+                        amountAzn,
+                        tier: selectedTier,
+                        provider: "pasha_bank",
+                      }),
+                    });
+                    if (!res.ok) throw new Error(tSub("checkoutFailed"));
+                    const data = (await res.json()) as {
+                      paymentUrl?: string;
+                      id?: string;
+                    };
+                    setBillingMsg(
+                      data.paymentUrl
+                        ? tSub("checkoutOkUrl", { url: data.paymentUrl })
+                        : tSub("checkoutOk", { id: data.id ?? "—" }),
+                    );
+                    if (data.paymentUrl) {
+                      window.open(data.paymentUrl, "_blank", "noopener,noreferrer");
+                    }
+                  })
+                }
+              >
+                {tSub("startCheckout")}
+              </button>
+              <label className="text-xs text-[#7F8C8D]">
+                {tSub("ceilingAmount")}
+                <input
+                  className="mt-1 block h-9 w-28 rounded-lg border border-[#D5DADF] px-3 text-sm"
+                  value={ceilingAmount}
+                  onChange={(e) => setCeilingAmount(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy || !token}
+                onClick={() =>
+                  void runBilling(async () => {
+                    const amountAzn = Number(ceilingAmount);
+                    const res = await orchFetch("/v1/billing/tier-ceiling-unlock", {
+                      token: token!,
+                      method: "POST",
+                      body: JSON.stringify({ amountAzn }),
+                    });
+                    if (!res.ok) throw new Error(tSub("ceilingFailed"));
+                    setBillingMsg(tSub("ceilingOk"));
+                  })
+                }
+              >
+                {tSub("unlockCeiling")}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </>
   );
 }

@@ -11,6 +11,7 @@ import {
 import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.service';
 import { createFiscalDocumentsOnCheckout, issueFolioInvoice } from '@/lib/services/fiscal-document.service';
 import { getReservation } from '@/lib/services/reservation.service';
+import { releaseDoorAfterShareDeparture } from '@/lib/services/share-assignment.service';
 
 export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
@@ -24,6 +25,8 @@ export async function checkoutReservation(
     transferToCityLedger?: boolean;
     discountAmount?: number;
     discountDescription?: string;
+    unusedNightsRefundMethod?: 'CASH' | 'CARD';
+    unusedNightsReason?: string;
   },
 ): Promise<CheckoutResult> {
   const existing = await getReservation(id);
@@ -33,6 +36,14 @@ export async function checkoutReservation(
 
   const { postLateCheckOutFee } = await import('@/lib/services/early-late-fees.service');
   await postLateCheckOutFee(id).catch((e) => console.error('Late check-out fee failed', e));
+
+  const { applyEarlyCheckoutUnusedNights } = await import(
+    '@/lib/services/early-checkout-unused-nights.service'
+  );
+  await applyEarlyCheckoutUnusedNights(id, {
+    refundMethod: opts?.unusedNightsRefundMethod ?? 'CASH',
+    reason: opts?.unusedNightsReason,
+  }).catch((e) => console.error('Early checkout unused-nights failed', e));
 
   if (opts?.discountAmount && opts.discountAmount > 0) {
     const { postDiscount } = await import('@/lib/services/folio.service');
@@ -111,12 +122,11 @@ export async function checkoutReservation(
     });
 
     if (reservation.roomId) {
-      await tx.room.update({
-        where: { id: reservation.roomId },
-        data: { status: 'DIRTY' },
-      });
-      await tx.housekeepingTask.create({
-        data: { roomId: reservation.roomId, status: 'PENDING', notes: 'Post check-out' },
+      await releaseDoorAfterShareDeparture(tx, {
+        roomId: reservation.roomId,
+        excludeReservationId: id,
+        shareBedIndex: reservation.shareBedIndex,
+        wasInHouse: true,
       });
     }
 

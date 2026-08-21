@@ -9,10 +9,13 @@ datasource db {
 
 model Tenant {
   id        String   @id @default(cuid())
-  code      String   @unique
+  organizationId String @map("organization_id")
+  code String
   name      String
   createdAt DateTime @default(now())
   outlets   Outlet[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 enum WorkOrderStatus {
@@ -23,6 +26,7 @@ enum WorkOrderStatus {
 
 model Outlet {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   tenantId  String
   code      String
   name      String
@@ -31,10 +35,12 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+  @@index([organizationId])
 }
 
 model CustomerVehicle {
   id                    String      @id @default(cuid())
+  organizationId String @map("organization_id")
   plate                 String
   vin                   String?
   customerName          String?
@@ -43,13 +49,15 @@ model CustomerVehicle {
   workOrders            WorkOrder[]
   createdAt             DateTime    @default(now())
 
-  @@unique([plate])
+  @@unique([organizationId, plate])
   @@index([vin])
+  @@index([organizationId])
 }
 
 model WorkOrder {
   id                 String          @id @default(cuid())
-  code               String          @unique
+  organizationId String @map("organization_id")
+  code String
   vehicleId          String?
   vehicle            CustomerVehicle? @relation(fields: [vehicleId], references: [id])
   vehiclePlate       String?
@@ -75,10 +83,13 @@ model WorkOrder {
   @@index([vehiclePlate])
   @@index([vin])
   @@index([vehicleId])
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model WorkOrderLaborLine {
   id          String    @id @default(cuid())
+  organizationId String @map("organization_id")
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   description String
@@ -89,10 +100,12 @@ model WorkOrderLaborLine {
   createdAt   DateTime  @default(now())
 
   @@index([workOrderId])
+  @@index([organizationId])
 }
 
 model WorkOrderPartLine {
   id          String    @id @default(cuid())
+  organizationId String @map("organization_id")
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   sku         String?
@@ -104,28 +117,35 @@ model WorkOrderPartLine {
   createdAt   DateTime  @default(now())
 
   @@index([workOrderId])
+  @@index([organizationId])
 }
 
 model Bay {
   id        String   @id @default(cuid())
-  code      String   @unique
+  organizationId String @map("organization_id")
+  code String
   name      String
   lifts     Lift[]
   createdAt DateTime @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model Lift {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   bayId     String
   code      String
   bay       Bay      @relation(fields: [bayId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([bayId, code])
+  @@index([organizationId])
 }
 
 model PartsCatalogEntry {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   sku       String
   name      String
   vinPrefix String?
@@ -134,10 +154,12 @@ model PartsCatalogEntry {
 
   @@index([vinPrefix])
   @@index([sku])
+  @@index([organizationId])
 }
 
 model Appointment {
   id           String    @id @default(cuid())
+  organizationId String @map("organization_id")
   vehiclePlate String
   customerName String?
   scheduledAt  DateTime
@@ -149,18 +171,23 @@ model Appointment {
   createdAt    DateTime  @default(now())
 
   @@index([scheduledAt, status])
+  @@index([organizationId])
 }
 
 model Tool {
   id        String         @id @default(cuid())
-  code      String         @unique
+  organizationId String @map("organization_id")
+  code String
   name      String
   checkouts ToolCheckout[]
   createdAt DateTime       @default(now())
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model ToolCheckout {
   id           String    @id @default(cuid())
+  organizationId String @map("organization_id")
   toolId       String
   checkedOutBy String
   checkedOutAt DateTime  @default(now())
@@ -168,21 +195,26 @@ model ToolCheckout {
   tool         Tool      @relation(fields: [toolId], references: [id])
 
   @@index([toolId, returnedAt])
+  @@index([organizationId])
 }
 
 model Role {
   id              String   @id @default(cuid())
-  code            String   @unique
+  organizationId String @map("organization_id")
+  code String
   name            String
   permissionsJson String   @default("[]")
   users           User[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model User {
   id              String    @id @default(cuid())
-  login           String    @unique
+  organizationId String @map("organization_id")
+  login String
   email           String?
-  phone           String?   @unique
+  phone           String?   
   fullName        String
   passwordHash    String
   roleId          String
@@ -191,4 +223,7 @@ model User {
   isCrossSystem   Boolean   @default(false) @map("is_cross_system")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }

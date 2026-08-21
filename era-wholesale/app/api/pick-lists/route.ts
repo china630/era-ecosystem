@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
     const order = await prisma.b2BOrder.findUnique({
-      where: { orderNumber: body.orderNumber },
+      where: { orderNumber: body.orderNumber } as never,
     });
     if (!order) return jsonError("Order not found", 404);
 

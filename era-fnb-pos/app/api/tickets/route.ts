@@ -1,10 +1,14 @@
+import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
+import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET(request: Request) {
+  await assertFnbEntitled();
   const url = new URL(request.url);
   const beoId = url.searchParams.get("beoId");
   const serviceChannel = url.searchParams.get("serviceChannel");
@@ -46,19 +50,13 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
   const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
   if (denied) return denied;
 
   const body = createSchema.parse(await request.json());
-  let outlet = await prisma.outlet.findUnique({
-    where: { code: body.outletCode },
-  });
-  if (!outlet) {
-    outlet = await prisma.outlet.create({
-      data: { code: body.outletCode, name: body.outletCode },
-    });
-  }
+  const outlet = await ensureOutletByCode(body.outletCode);
 
   const lines = body.lines ?? [];
   const subtotal = lines.reduce(
@@ -72,6 +70,7 @@ export async function POST(request: Request) {
 
   const ticket = await prisma.ticket.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       outletId: outlet.id,
       tableId: body.tableId,
       covers: body.covers ?? 1,

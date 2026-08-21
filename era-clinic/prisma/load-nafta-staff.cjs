@@ -20,7 +20,7 @@ const STAFF = [
 
 async function main(){
   const roles={};
-  for(const rc of [["CLINIC_ADMIN","Clinic administrator"],["RECEPTION","Reception"],["DOCTOR","Doctor"],["NURSE","Nurse"]]){
+  for(const rc of [["CLINIC_ADMIN","Clinic administrator"],["RECEPTION","Reception"],["DOCTOR","Doctor"],["NURSE","Nurse"],["LAB_TECH","Lab technician"]]){
     const r=await prisma.role.upsert({where:{code:rc[0]},update:{name:rc[1]},create:{code:rc[0],name:rc[1],permissionsJson:"[]"}});
     roles[rc[0]]=r.id;
   }
@@ -34,7 +34,8 @@ async function main(){
       update:{fullName:pr.fullName,passwordHash:ph,roleId:roles[s.role],status:"ACTIVE"},
       create:{login:s.login,email:s.login+"@nafta.local",fullName:pr.fullName,passwordHash:ph,roleId:roles[s.role],status:"ACTIVE"},
     });
-    await prisma.practitioner.update({where:{id:pr.id},data:{userId:u.id}});
+    const staffKind = s.role === "NURSE" ? "NURSE" : s.role === "LAB_TECH" ? "LAB" : "DOCTOR";
+    await prisma.practitioner.update({where:{id:pr.id},data:{userId:u.id, staffKind}});
     n++;
   }
   // generic clinic reception login

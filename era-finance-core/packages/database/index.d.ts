@@ -5,6 +5,8 @@ export type Decimal = InstanceType<typeof Prisma.Decimal>;
 export declare const Decimal: typeof Prisma.Decimal;
 export {
   cashProfileForNasCode,
+  isNasBankLedgerCode,
+  isNasCashDeskCode,
   chartOfAccountsJsonPath,
   loadChartJson,
   loadChartTemplateFromDb,

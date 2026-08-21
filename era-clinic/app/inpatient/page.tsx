@@ -15,6 +15,7 @@ import {
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
+import { DiagnosisPanel } from "@/components/DiagnosisPanel";
 
 type PatientSummary = {
   id: string;
@@ -60,6 +61,8 @@ export default function InpatientPage() {
     newBedId: "",
     patientName: "",
   });
+  const [dxAdmissionId, setDxAdmissionId] = useState<string | null>(null);
+  const [dxPatientName, setDxPatientName] = useState("");
 
   const availableBeds = useMemo(() => {
     const rows: Array<{ id: string; label: string }> = [];
@@ -256,13 +259,27 @@ export default function InpatientPage() {
                                 {t("transfer")}
                               </button>
                               {active.admissionId ? (
-                                <button
-                                  type="button"
-                                  className={`mt-1 w-full ${SECONDARY_BUTTON_CLASS}`}
-                                  onClick={() => void discharge(active.admissionId!)}
-                                >
-                                  {t("discharge")}
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    className={`mt-1 w-full ${SECONDARY_BUTTON_CLASS}`}
+                                    onClick={() => {
+                                      setDxAdmissionId(active.admissionId);
+                                      setDxPatientName(
+                                        active.patient?.fullName ?? active.patientRefId,
+                                      );
+                                    }}
+                                  >
+                                    {t("diagnoses")}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`mt-1 w-full ${SECONDARY_BUTTON_CLASS}`}
+                                    onClick={() => void discharge(active.admissionId!)}
+                                  >
+                                    {t("discharge")}
+                                  </button>
+                                </>
                               ) : null}
                             </div>
                           ) : (
@@ -343,6 +360,20 @@ export default function InpatientPage() {
           onSubmit={() => void submitTransfer()}
           submitLabel={t("transfer")}
         />
+      </ModalShell>
+
+      <ModalShell
+        open={Boolean(dxAdmissionId)}
+        title={`${t("diagnoses")}${dxPatientName ? ` — ${dxPatientName}` : ""}`}
+        onClose={() => setDxAdmissionId(null)}
+      >
+        {dxAdmissionId ? (
+          <DiagnosisPanel
+            apiBase={`/api/inpatient/${dxAdmissionId}/diagnoses`}
+            title={t("diagnoses")}
+            showKind
+          />
+        ) : null}
       </ModalShell>
     </>
   );

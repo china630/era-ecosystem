@@ -411,7 +411,7 @@
       "nameRu": "Yolda olan pul köçürmələri",
       "nameEn": "Yolda olan pul köçürmələri",
       "type": "ASSET",
-      "parentCode": "221"
+      "parentCode": "2"
     },
     {
       "code": "223",
@@ -419,7 +419,7 @@
       "nameRu": "Bank hesablaşma hesabları",
       "nameEn": "Bank hesablaşma hesabları",
       "type": "ASSET",
-      "parentCode": "221"
+      "parentCode": "2"
     },
     {
       "code": "224",
@@ -427,7 +427,7 @@
       "nameRu": "Digər tələbli bank hesabları",
       "nameEn": "Digər tələbli bank hesabları",
       "type": "ASSET",
-      "parentCode": "221"
+      "parentCode": "2"
     },
     {
       "code": "225",
@@ -435,7 +435,7 @@
       "nameRu": "Pul vəsaitlərinin ekvivalentləri",
       "nameEn": "Pul vəsaitlərinin ekvivalentləri",
       "type": "ASSET",
-      "parentCode": "221"
+      "parentCode": "2"
     },
     {
       "code": "231",

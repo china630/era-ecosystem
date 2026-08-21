@@ -26,6 +26,8 @@ import { QuotaModule } from "./quota/quota.module";
 import { PlatformModule } from "./platform/platform.module";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { HoldingsModule } from "./holdings/holdings.module";
+import { PlacementModule } from "./placement/placement.module";
+import { AgencyPortalModule } from "./agency-portal/agency-portal.module";
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { HoldingsModule } from "./holdings/holdings.module";
     EarlyAccessModule,
     QuotaModule,
     PlatformModule,
+    PlacementModule,
+    AgencyPortalModule,
   ],
   controllers: [AppController],
   providers: [

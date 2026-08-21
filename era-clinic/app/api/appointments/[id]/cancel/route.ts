@@ -7,6 +7,7 @@ import {
   requireClinicRole,
 } from "@/lib/api-utils";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { appointmentCancelDenied } from "@/lib/appointment-status-gates";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -31,6 +32,9 @@ export async function POST(
     });
     if (!appt) return jsonError("Appointment not found", 404);
     if (appt.status === "CANCELLED") return jsonOk(appt);
+
+    const cancelBlock = appointmentCancelDenied(appt.status);
+    if (cancelBlock) return jsonError(cancelBlock, 409);
 
     if (appt.visit && appt.visit.status !== "CANCELLED" && appt.visit.status !== "COMPLETED") {
       await prisma.visit.update({

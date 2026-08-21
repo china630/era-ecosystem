@@ -16,16 +16,20 @@
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **F&B** | ✅ | 🟡 | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
+| **F&B** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — pilot open |
 
 ---
 
 ## UI (short)
 
+**UI class rollup:** SCREEN — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+
 | Surface | Path | Level |
 |---------|------|-------|
 | POS / KDS | `floor + KDS` | 🟡 |
 | Admin | `/admin` | 🟡 |
+
+Admin modal CRUD is now in place for menu, tables, settings, and daily-menu board; sell/show remains 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off.
 
@@ -46,3 +50,4 @@
 - Edition column copies `docs/editions/fnb.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
+- Forbidden: «SHARED F&B SaaS pool» — tenant-root org + kit filter ≠ live multi-tenant pool ([deployment-topology.md](../adr/deployment-topology.md)).

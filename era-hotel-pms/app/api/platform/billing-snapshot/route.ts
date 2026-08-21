@@ -1,11 +1,12 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { resolveSatelliteOrganizationId } from '@era/satellite-kit';
 import { getSubscriptionMe } from '@/integration/control-plane-platform.client';
 
 export async function GET() {
   try {
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
-    if (!organizationId) {
-      return jsonOk({ skipped: true, reason: 'ERA_SATELLITE_ORGANIZATION_ID not set' });
+    const { organizationId, source } = resolveSatelliteOrganizationId({ allowFallback: true });
+    if (source === 'fallback') {
+      return jsonOk({ skipped: true, reason: 'satellite organizationId not bound' });
     }
     const snapshot = await getSubscriptionMe({ organizationId });
     return jsonOk(snapshot);

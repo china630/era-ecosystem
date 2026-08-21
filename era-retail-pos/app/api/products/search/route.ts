@@ -1,9 +1,10 @@
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import { ensureProductCacheSeeded } from "@/lib/product-cache-seed";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
+    await assertRetailEntitled();
     await ensureProductCacheSeeded();
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim();
