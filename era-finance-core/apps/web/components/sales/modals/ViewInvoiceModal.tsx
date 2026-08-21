@@ -32,7 +32,6 @@ import {
   MODAL_FOOTER_ACTIONS_CLASS,
   MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
-  MODAL_INPUT_NUMERIC_CLASS,
 } from "../../../lib/design-system";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
@@ -693,12 +692,12 @@ export function ViewInvoiceModal({
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("reconciliation.nettingAmount")}
                 <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
                   type="number"
                   min={0.0001}
                   step="any"
                   value={netAmount}
                   onChange={(e) => setNetAmount(e.target.value)}
-                  className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
                 />
               </label>
               {netErr ? <p className="text-[13px] text-red-600">{netErr}</p> : null}
@@ -756,30 +755,30 @@ export function ViewInvoiceModal({
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("invoiceView.creditAdjustAmount")}
                 <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
                   type="number"
                   step="0.01"
                   min={0.01}
                   max={Number(inv.remaining) || undefined}
                   value={creditAmount}
                   onChange={(e) => setCreditAmount(e.target.value)}
-                  className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
                 />
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("invoiceView.creditAdjustDate")}
                 <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                   type="date"
                   value={creditDate}
                   onChange={(e) => setCreditDate(e.target.value)}
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                 />
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("invoiceView.creditAdjustOffset")}
                 <select
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                   value={creditOffset}
                   onChange={(e) => setCreditOffset(e.target.value as "REVENUE" | "EXPENSE")}
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                 >
                   <option value="REVENUE">{t("invoiceView.creditAdjustOffsetRevenue")}</option>
                   <option value="EXPENSE">{t("invoiceView.creditAdjustOffsetExpense")}</option>
@@ -804,10 +803,10 @@ export function ViewInvoiceModal({
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("invoiceView.creditAdjustReason")}
                 <textarea
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                   value={creditReason}
                   onChange={(e) => setCreditReason(e.target.value)}
                   rows={3}
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                   placeholder={t("invoiceView.creditAdjustReasonPh")}
                 />
               </label>

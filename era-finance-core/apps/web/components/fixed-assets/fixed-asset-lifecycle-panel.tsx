@@ -11,7 +11,6 @@ import {
   MODAL_FOOTER_ACTIONS_CLASS,
   MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
-  MODAL_INPUT_NUMERIC_CLASS,
 } from "../../lib/design-system";
 import { Button } from "../ui/button";
 
@@ -261,9 +260,9 @@ export function FixedAssetLifecyclePanel({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleDirection")}
           <select
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
             value={direction}
             onChange={(e) => setDirection(e.target.value as "UP" | "DOWN")}
-            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           >
             <option value="UP">{t("fixedAssets.lifecycleUp")}</option>
             <option value="DOWN">{t("fixedAssets.lifecycleDown")}</option>
@@ -272,11 +271,11 @@ export function FixedAssetLifecyclePanel({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleAmount")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
             type="number"
             step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
           />
         </label>
         <NoteField note={note} setNote={setNote} />
@@ -304,24 +303,24 @@ export function FixedAssetLifecyclePanel({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecyclePortion")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
             type="number"
             step="0.01"
             min={0.01}
             max={1}
             value={portion}
             onChange={(e) => setPortion(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
           />
         </label>
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleProceeds")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
             type="number"
             step="0.01"
             min={0}
             value={proceeds}
             onChange={(e) => setProceeds(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
           />
         </label>
         <NoteField note={note} setNote={setNote} />
@@ -353,9 +352,9 @@ function CreditFields({
       <label className={MODAL_FIELD_LABEL_CLASS}>
         {t("fixedAssets.lifecycleCreditSource")}
         <select
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           value={creditSource}
           onChange={(e) => setCreditSource(e.target.value as CreditSource)}
-          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
         >
           <option value="BANK">{t("fixedAssets.lifecycleBank")}</option>
           <option value="SUPPLIER">{t("fixedAssets.lifecycleSupplier")}</option>
@@ -366,20 +365,20 @@ function CreditFields({
         <label className={MODAL_FIELD_LABEL_CLASS}>
           {t("fixedAssets.lifecycleCounterpartyId")}
           <input
+            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
             value={counterpartyId}
             onChange={(e) => setCounterpartyId(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           />
         </label>
       ) : null}
       <label className={MODAL_FIELD_LABEL_CLASS}>
         {amountLabel}
         <input
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS} text-right tabular-nums`}
           type="number"
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
         />
       </label>
     </>
@@ -404,17 +403,17 @@ function NoteField({
       {required ? " *" : ""}
       {multiline ? (
         <textarea
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={3}
-          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           placeholder={t("fixedAssets.lifecycleDonationNotePh")}
         />
       ) : (
         <input
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
         />
       )}
     </label>
