@@ -12,6 +12,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   PageHeader,
 } from "@era/satellite-kit/ui";
+import { DiagnosisPanel } from "@/components/DiagnosisPanel";
 
 type VisitDetail = {
   id: string;
@@ -141,6 +142,10 @@ export default function VisitDetailPage() {
           ))}
         </ul>
         <p className="font-medium">Total: {visit.amountNet} AZN</p>
+        <DiagnosisPanel
+          apiBase={`/api/visits/${visit.id}/diagnoses`}
+          title={t("diagnoses")}
+        />
         {insuranceResult && (
           <pre className="rounded border bg-slate-50 p-2 text-xs">{insuranceResult}</pre>
         )}

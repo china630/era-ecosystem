@@ -8,6 +8,7 @@ import { localizedCatalogDescription } from "@era/clinic-domain";
 import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModal";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -40,6 +41,7 @@ type Practitioner = {
   code: string;
   fullName: string;
   specialty?: string | null;
+  staffKind?: "DOCTOR" | "NURSE" | "LAB";
   globalPersonId?: string | null;
   financeEmployeeId?: string | null;
   defaultSlotMinutes?: number | null;
@@ -69,6 +71,8 @@ type ProcedureType = {
   code: string;
   name: string;
   durationMin: number;
+  resourceGapMinutes?: number;
+  patientRestMinutes?: number;
   resourceCode?: string | null;
   bodyPart?: string | null;
   extendedEndHour?: number | null;
@@ -94,6 +98,17 @@ type RequirementRow = {
   staffMode?: "HARD" | "SOFT";
   required?: boolean;
 };
+
+type ConsumableRow = {
+  id?: string;
+  sku: string;
+  financeProductId?: string | null;
+  qtyPerSession: number;
+  wasteFactor?: number;
+  label?: string;
+};
+
+type FinanceProductOption = { value: string; label: string; id?: string; name?: string };
 
 type Tab = "practitioners" | "rooms" | "resources" | "procedureTypes";
 
@@ -161,6 +176,10 @@ export default function MasterDataPage() {
   const [workforcePolicy, setWorkforcePolicy] = useState<WorkforcePolicy | null>(null);
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [requirements, setRequirements] = useState<RequirementRow[]>([]);
+  const [consumables, setConsumables] = useState<ConsumableRow[]>([]);
+  const [financeProductOptions, setFinanceProductOptions] = useState<FinanceProductOption[]>([]);
+  const [financeProductQ, setFinanceProductQ] = useState("");
+  const debouncedFinanceQ = useDebouncedValue(financeProductQ, 300);
   const [skillCoverageMsg, setSkillCoverageMsg] = useState<string | null>(null);
   const [scheduleFor, setScheduleFor] = useState<{ id: string; name: string } | null>(null);
 
@@ -203,13 +222,42 @@ export default function MasterDataPage() {
   }, [loadAll]);
 
   useEffect(() => {
+    if (!modalOpen || tab !== "procedureTypes") return;
+    let cancelled = false;
+    void (async () => {
+      const params = new URLSearchParams({ limit: "30" });
+      if (debouncedFinanceQ.trim()) params.set("q", debouncedFinanceQ.trim());
+      const res = await fetch(`/api/admin/finance-products?${params}`);
+      if (!res.ok || cancelled) return;
+      const parsed = await res.json();
+      const payload = (parsed.data ?? parsed) as {
+        items?: Array<{ value: string; label: string; id?: string; name?: string; sku?: string }>;
+      };
+      const items = payload.items ?? [];
+      if (!cancelled) {
+        setFinanceProductOptions(
+          items.map((p) => ({
+            value: p.sku ?? p.value,
+            label: p.label,
+            id: p.id,
+            name: p.name,
+          })),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [modalOpen, tab, debouncedFinanceQ]);
+
+  useEffect(() => {
     setQ("");
   }, [tab]);
 
   const filteredPractitioners = useMemo(
     () =>
       practitioners.filter((row) =>
-        matchesFilter(debouncedQ, [row.code, row.fullName, row.specialty]),
+        matchesFilter(debouncedQ, [row.code, row.fullName, row.specialty, row.staffKind]),
       ),
     [practitioners, debouncedQ],
   );
@@ -238,6 +286,8 @@ export default function MasterDataPage() {
     setIdentifierTypes([]);
     setSelectedSkillIds([]);
     setRequirements([]);
+    setConsumables([]);
+    setFinanceProductQ("");
     setSkillCoverageMsg(null);
   }
 
@@ -249,6 +299,7 @@ export default function MasterDataPage() {
     resetModalExtras();
     if (tab === "procedureTypes") {
       setRequirements(defaultProcedureRequirements());
+      setConsumables([]);
     }
     setModalOpen(true);
   }
@@ -259,6 +310,7 @@ export default function MasterDataPage() {
       code: row.code ?? "",
       fullName: row.fullName ?? "",
       specialty: row.specialty ?? "",
+      staffKind: row.staffKind ?? "DOCTOR",
       finCode: "",
       passportNumber: "",
       issuingCountry: "",
@@ -324,6 +376,8 @@ export default function MasterDataPage() {
       code: row.code,
       name: row.name,
       durationMin: String(row.durationMin),
+      resourceGapMinutes: String(row.resourceGapMinutes ?? 5),
+      patientRestMinutes: String(row.patientRestMinutes ?? 15),
       bodyPart: row.bodyPart ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
     });
@@ -340,6 +394,21 @@ export default function MasterDataPage() {
     const reqPayload = (reqParsed.data ?? reqParsed) as RequirementRow[];
     const rows = Array.isArray(reqPayload) ? reqPayload : [];
     setRequirements(rows.length > 0 ? rows : defaultProcedureRequirements());
+    const consRes = await fetch(`/api/admin/procedure-types/${row.id}/consumables`);
+    const consParsed = await consRes.json();
+    const consPayload = (consParsed.data ?? consParsed) as ConsumableRow[];
+    setConsumables(
+      Array.isArray(consPayload)
+        ? consPayload.map((c) => ({
+            id: c.id,
+            sku: c.sku,
+            financeProductId: c.financeProductId ?? null,
+            qtyPerSession: Number(c.qtyPerSession) || 1,
+            wasteFactor: Number(c.wasteFactor) || 0,
+            label: c.sku,
+          }))
+        : [],
+    );
     setModalOpen(true);
   }
 
@@ -390,6 +459,7 @@ export default function MasterDataPage() {
         payload = opsOnly
           ? {
               specialty: form.specialty || null,
+              staffKind: form.staffKind || undefined,
               defaultSlotMinutes: form.defaultSlotMinutes
                 ? Number(form.defaultSlotMinutes)
                 : undefined,
@@ -397,6 +467,7 @@ export default function MasterDataPage() {
           : {
               fullName: form.fullName ?? form.name,
               specialty: form.specialty || null,
+              staffKind: form.staffKind || undefined,
               finCode: form.finCode?.trim() || undefined,
               passportNumber: form.passportNumber?.trim() || undefined,
               issuingCountry: form.issuingCountry?.trim() || undefined,
@@ -421,6 +492,8 @@ export default function MasterDataPage() {
         payload = {
           name: form.name ?? form.fullName,
           durationMin: Number(form.durationMin || "30"),
+          resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
+          patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
           bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
@@ -458,6 +531,8 @@ export default function MasterDataPage() {
         code: form.code,
         name: form.name,
         durationMin: Number(form.durationMin || "30"),
+        resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
+        patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
@@ -510,6 +585,24 @@ export default function MasterDataPage() {
           }),
         });
         if (!reqRes.ok) {
+          setMsg(tc("saveFailed"));
+          return;
+        }
+        const consRes = await fetch(`/api/admin/procedure-types/${typeId}/consumables`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lines: consumables
+              .filter((c) => c.sku.trim())
+              .map((c) => ({
+                sku: c.sku.trim(),
+                financeProductId: c.financeProductId ?? null,
+                qtyPerSession: Number(c.qtyPerSession) || 1,
+                wasteFactor: Number(c.wasteFactor) || 0,
+              })),
+          }),
+        });
+        if (!consRes.ok) {
           setMsg(tc("saveFailed"));
           return;
         }
@@ -592,6 +685,9 @@ export default function MasterDataPage() {
             <Link href="/admin/wards" className={SECONDARY_BUTTON_CLASS}>
               {t("wardsLink")}
             </Link>
+            <Link href="/sanatorium/nurse-roster" className={SECONDARY_BUTTON_CLASS}>
+              {t("nurseRosterLink")}
+            </Link>
             {!(tab === "practitioners" && blockPractitionerCreate) ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
                 {tc("add")}
@@ -638,6 +734,7 @@ export default function MasterDataPage() {
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("staffKind")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("specialty")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("mdmBadge")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("financeLinked")}</th>
@@ -650,6 +747,13 @@ export default function MasterDataPage() {
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.fullName}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.staffKind === "NURSE"
+                        ? t("staffKindNurse")
+                        : row.staffKind === "LAB"
+                          ? t("staffKindLab")
+                          : t("staffKindDoctor")}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.specialty ?? "—"}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {row.globalPersonId ? (
@@ -788,6 +892,8 @@ export default function MasterDataPage() {
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("durationMin")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("resourceGapMinutes")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patientRestMinutes")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("resourceCode")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
@@ -798,6 +904,8 @@ export default function MasterDataPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.durationMin}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.resourceGapMinutes ?? 5}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.patientRestMinutes ?? 15}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{displayProcedureResourceCode(row)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
@@ -888,6 +996,18 @@ export default function MasterDataPage() {
           )}
           {tab === "practitioners" && (
             <>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("staffKind")}
+                value={form.staffKind || "DOCTOR"}
+                onChange={(v) => setForm({ ...form, staffKind: String(v) })}
+                options={[
+                  { value: "DOCTOR", label: t("staffKindDoctor") },
+                  { value: "NURSE", label: t("staffKindNurse") },
+                  { value: "LAB", label: t("staffKindLab") },
+                ]}
+                emptyLabel={null}
+              />
               {opsLocked ? (
                 <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
                   {form.fullName} · {form.code}
@@ -1027,6 +1147,18 @@ export default function MasterDataPage() {
                 value={form.durationMin ?? "30"}
                 onChange={(e) => setForm({ ...form, durationMin: e.target.value })}
               />
+              <Field
+                label={t("resourceGapMinutes")}
+                preset="count"
+                value={form.resourceGapMinutes ?? "5"}
+                onChange={(e) => setForm({ ...form, resourceGapMinutes: e.target.value })}
+              />
+              <Field
+                label={t("patientRestMinutes")}
+                preset="count"
+                value={form.patientRestMinutes ?? "15"}
+                onChange={(e) => setForm({ ...form, patientRestMinutes: e.target.value })}
+              />
               <FieldSelect
                 label={t("bodyPart")}
                 preset="select"
@@ -1110,6 +1242,85 @@ export default function MasterDataPage() {
                     </div>
                   ))
                 )}
+              </div>
+              <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
+                <p className={MODAL_FIELD_LABEL_CLASS}>{t("consumableBom")}</p>
+                <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("consumableBomHint")}</p>
+                <Field
+                  label={t("financeProductSearch")}
+                  preset="shortText"
+                  value={financeProductQ}
+                  onChange={(e) => setFinanceProductQ(e.target.value)}
+                  hint={t("financeProductSearchHint")}
+                />
+                {consumables.map((line, index) => (
+                  <div key={line.id ?? `c-${index}`} className="space-y-2 border-b border-[#ECF0F1] pb-3">
+                    <CatalogField
+                      kind="ENTITY_REF"
+                      label={t("consumableSku")}
+                      value={line.sku}
+                      onChange={(v) => {
+                        const sku = String(v);
+                        const opt = financeProductOptions.find((o) => o.value === sku);
+                        setConsumables((prev) =>
+                          prev.map((row, i) =>
+                            i === index
+                              ? {
+                                  ...row,
+                                  sku,
+                                  financeProductId: opt?.id ?? row.financeProductId ?? null,
+                                  label: opt?.label ?? sku,
+                                }
+                              : row,
+                          ),
+                        );
+                      }}
+                      options={
+                        line.sku && !financeProductOptions.some((o) => o.value === line.sku)
+                          ? [
+                              { value: line.sku, label: line.label ?? line.sku },
+                              ...financeProductOptions,
+                            ]
+                          : financeProductOptions
+                      }
+                    />
+                    <Field
+                      label={t("qtyPerSession")}
+                      preset="count"
+                      value={String(line.qtyPerSession)}
+                      onChange={(e) =>
+                        setConsumables((prev) =>
+                          prev.map((row, i) =>
+                            i === index
+                              ? { ...row, qtyPerSession: Number(e.target.value) || 1 }
+                              : row,
+                          ),
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      className={`${SECONDARY_BUTTON_CLASS} text-xs`}
+                      onClick={() =>
+                        setConsumables((prev) => prev.filter((_, i) => i !== index))
+                      }
+                    >
+                      {t("removeConsumable")}
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() =>
+                    setConsumables((prev) => [
+                      ...prev,
+                      { sku: "", qtyPerSession: 1, wasteFactor: 0 },
+                    ])
+                  }
+                >
+                  {t("addConsumable")}
+                </button>
               </div>
             </>
           )}

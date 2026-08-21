@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { prisma } from "@/lib/prisma";
+import {
+  fifoConfirmBlockedReason,
+  procedureConfirmHttpStatus,
+} from "@/lib/sanatorium-fifo-gates";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
 
 const bodySchema = z.object({
@@ -12,6 +17,28 @@ export async function POST(req: Request) {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
+
+    const selected = await prisma.procedureOrder.findMany({
+      where: { id: { in: body.orderIds }, status: "PROPOSED" },
+      select: { id: true, patientRefId: true, sequenceIndex: true },
+    });
+    if (selected.length === 0) {
+      return jsonError("No PROPOSED orders to confirm", 404);
+    }
+    const patientRefId = selected[0].patientRefId;
+    const proposedForPatient = await prisma.procedureOrder.findMany({
+      where: { patientRefId, status: "PROPOSED" },
+      select: { id: true, sequenceIndex: true },
+      orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
+    });
+    const fifoBlock = fifoConfirmBlockedReason({
+      confirmingIds: body.orderIds,
+      proposedForPatient,
+    });
+    if (fifoBlock) {
+      return jsonError(fifoBlock, procedureConfirmHttpStatus(fifoBlock));
+    }
+
     const placed = await placeConfirmedProcedures(body.orderIds, {
       confirmedByUserId: session.sub,
     });

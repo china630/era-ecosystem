@@ -37,7 +37,7 @@ export async function resolveProcedureCharge(order: {
     }
   }
 
-  const catalog = await prisma.serviceCatalogCache.findUnique({
+  const catalog = await prisma.serviceCatalogCache.findFirst({
     where: { code: order.procedureCode },
   });
   let amountNet = Number(order.amountNet);

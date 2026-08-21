@@ -1,19 +1,33 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import {
+  getTenantIcdFavorites,
+  listIcdChapters,
+  searchSelectableIcd,
+} from "@/domain/icd/icd-search.service";
 
 export async function GET(request: Request) {
-  const q = new URL(request.url).searchParams.get("q")?.trim() ?? "";
-  const items = await prisma.icdCode.findMany({
-    where: q
-      ? {
-          OR: [
-            { code: { contains: q, mode: "insensitive" } },
-            { description: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    take: 30,
-    orderBy: { code: "asc" },
-  });
-  return NextResponse.json({ items });
+  try {
+    const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    const url = new URL(request.url);
+    const q = url.searchParams.get("q") ?? "";
+    const chapter = url.searchParams.get("chapter") ?? "";
+    const locale = url.searchParams.get("locale") ?? "en";
+    const take = Number(url.searchParams.get("take") ?? "20");
+    const favorites = await getTenantIcdFavorites();
+    if (url.searchParams.get("chapters") === "1") {
+      return jsonOk({ chapters: await listIcdChapters(locale) });
+    }
+    return jsonOk(
+      await searchSelectableIcd({
+        q,
+        chapter: chapter || undefined,
+        locale,
+        take: Number.isFinite(take) ? take : 20,
+        favoriteCodes: favorites,
+      }),
+    );
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

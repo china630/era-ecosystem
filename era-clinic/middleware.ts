@@ -96,6 +96,14 @@ export async function middleware(request: NextRequest) {
         return roleGuardResponse(request, reqHeaders);
       }
     }
+    if (pathname.startsWith("/sanatorium/nurse-roster")) {
+      const rosterOk =
+        sessionHasClinicRole(session.role, [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.CLINIC_ADMIN]) ||
+        hasClinicAdminAccess(session);
+      if (!rosterOk) {
+        return roleGuardResponse(request, reqHeaders);
+      }
+    }
     if (pathname.startsWith("/admin")) {
       if (!hasClinicAdminAccess(session)) {
         return roleGuardResponse(request, reqHeaders);

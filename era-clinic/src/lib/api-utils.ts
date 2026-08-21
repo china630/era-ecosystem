@@ -31,14 +31,37 @@ export function handleRouteError(err: unknown) {
   if (err && typeof err === "object" && "issues" in err) {
     return jsonError("Validation failed", 400);
   }
+  if (err instanceof Error && err.name === "IndustryModuleInactiveError") {
+    const status =
+      "status" in err && typeof (err as { status?: number }).status === "number"
+        ? (err as { status: number }).status
+        : 403;
+    return jsonError(err.message, status);
+  }
   if (err instanceof Error && err.name === "PatientMdmRequiredError") {
     return jsonError(err.message, 400);
+  }
+  if (err instanceof Error && err.name === "StaffDutyError") {
+    const status = "status" in err && typeof err.status === "number" ? err.status : 400;
+    return jsonError(err.message, status);
+  }
+  if (err instanceof Error && err.name === "IcdCatalogError") {
+    const status = "status" in err && typeof err.status === "number" ? err.status : 400;
+    return jsonError(err.message, status);
   }
   const msg = err instanceof Error ? err.message : "Internal error";
   return jsonError(msg, 500);
 }
 
+/** Call at the start of operational clinic API handlers. */
+export async function assertClinicEntitled(): Promise<void> {
+  const { assertClinicEntitled: gate } = await import("@/lib/clinic-module-gate");
+  await gate();
+}
+
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
+  const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
+  await assertClinicApiEntitled();
   const cookieStore = await cookies();
   const headerStore = await headers();
   const token = getBearerOrCookieToken(

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import {
   jsonOk,
   handleRouteError,
@@ -37,6 +38,7 @@ export async function GET(request: Request) {
       CLINIC_ROLE.NURSE,
       CLINIC_ROLE.DOCTOR,
       CLINIC_ROLE.RECEPTION,
+      CLINIC_ROLE.FLOOR,
     ]);
     if (denied) return denied;
 
@@ -153,7 +155,8 @@ export async function GET(request: Request) {
           checkInOpen: checkIn.open,
           checkInDeadline: checkIn.deadline.toISOString(),
           effectiveEndsAt: checkIn.endsAt.toISOString(),
-          procedureGapMinutes: settings.defaultProcedureGapMinutes ?? 5,
+          resourceGapMinutes: checkIn.resourceGapMinutes,
+          procedureGapMinutes: checkIn.resourceGapMinutes,
           dayStartHour: settings.dayStartHour,
           dayEndHour: settings.dayEndHour,
         };
@@ -166,6 +169,7 @@ export async function GET(request: Request) {
       orders: enriched,
       dayStartHour: settings.dayStartHour,
       dayEndHour: settings.dayEndHour,
+      /** @deprecated tenant default; prefer per-order resourceGapMinutes */
       procedureGapMinutes: settings.defaultProcedureGapMinutes ?? 5,
     });
   } catch (err) {
@@ -194,6 +198,7 @@ export async function POST(req: Request) {
     }
     const order = await prisma.procedureOrder.create({
       data: {
+        organizationId: satelliteOrganizationId(),
         patientRefId: body.patientRefId,
         procedureCode: body.procedureCode,
         procedureName: body.procedureName,

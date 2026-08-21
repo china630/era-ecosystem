@@ -16,7 +16,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 
-import { fetchControlPlaneOrganizationName } from "@era/satellite-kit";
+import { fetchControlPlaneOrganizationName, resolveSatelliteOrganizationId } from "@era/satellite-kit";
 
 
 
@@ -48,7 +48,7 @@ export async function GET() {
 
     const tenant = await prisma.tenant.findFirst({
       where: { code: "default" },
-      select: { name: true, checkInRequiresQr: true },
+      select: { name: true, checkInRequiresQr: true, procedureCheckInMode: true },
     });
 
 
@@ -56,15 +56,12 @@ export async function GET() {
     // Company name is owned by the orchestrator (control plane); fall back to
     // the local tenant name if the control plane is unreachable.
 
-    const controlPlaneName = process.env.ERA_SATELLITE_ORGANIZATION_ID
+    const bound = resolveSatelliteOrganizationId({ allowFallback: true });
 
-      ? await fetchControlPlaneOrganizationName(
-
-          process.env.ERA_SATELLITE_ORGANIZATION_ID,
-
-        )
-
-      : null;
+    const controlPlaneName =
+      bound.source !== "fallback"
+        ? await fetchControlPlaneOrganizationName(bound.organizationId)
+        : null;
 
 
 
@@ -102,7 +99,11 @@ export async function GET() {
 
       isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
       enabledPresets,
-      checkInRequiresQr: tenant?.checkInRequiresQr ?? true,
+      checkInMode:
+        tenant?.procedureCheckInMode ??
+        (tenant?.checkInRequiresQr === false ? "MANUAL" : "QR"),
+      checkInRequiresQr:
+        (tenant?.procedureCheckInMode ?? (tenant?.checkInRequiresQr === false ? "MANUAL" : "QR")) === "QR",
     });
 
     res.cookies.set(PRESETS_COOKIE, serializePresetsCookie(enabledPresets), {

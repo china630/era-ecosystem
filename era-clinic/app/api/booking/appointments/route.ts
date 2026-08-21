@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { createBookingAppointment } from "@era/satellite-kit";
+import { createBookingAppointment, satelliteOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -26,7 +26,13 @@ export async function POST(request: Request) {
     }
 
     const body = schema.parse(await request.json());
-    const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
+    let orgId: string | undefined;
+    try {
+      const id = satelliteOrganizationId();
+      orgId = id === "demo-org" ? undefined : id;
+    } catch {
+      orgId = undefined;
+    }
 
     if (orgId) {
       await createBookingAppointment(
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
       ).catch(() => null);
     }
 
-    const practitioner = await prisma.practitioner.findUnique({
+    const practitioner = await prisma.practitioner.findFirst({
       where: { code: body.practitionerCode },
     });
     if (!practitioner) {
@@ -53,21 +59,25 @@ export async function POST(request: Request) {
     }
 
     // Pending patient stub — no MDM link from public path
-    let patient = await prisma.patientRef.findUnique({
-      where: { refCode: body.customerRef },
+    const organizationId = satelliteOrganizationId();
+    let patient = await prisma.patientRef.findFirst({
+      where: { organizationId, refCode: body.customerRef },
     });
     if (!patient) {
       patient = await prisma.patientRef.create({
         data: {
+          organizationId,
           refCode: body.customerRef,
           fullName: body.customerName,
           phone: body.customerPhone,
         },
       });
     }
+    if (!patient) throw new Error("Failed to ensure patient ref");
 
     const appointment = await prisma.appointment.create({
       data: {
+        organizationId,
         patientRefId: patient.id,
         practitionerId: practitioner.id,
         scheduledAt: new Date(body.scheduledAt),

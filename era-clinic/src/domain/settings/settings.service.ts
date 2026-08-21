@@ -9,6 +9,7 @@ import { SANATORIUM_DEFAULT_SETTINGS } from "@/domain/settings/scheduling-settin
 import type {
   ProcedureOverQuotaPolicy,
   ProgramSchedulingMode,
+  ProcedureCheckInMode,
 } from "@prisma/client";
 
 const DEFAULT_TENANT_CODE = "default";
@@ -26,7 +27,7 @@ function clampCardLimit(n: number | undefined, fallback: number, max = 100): num
 }
 
 export async function getDefaultTenant() {
-  let tenant = await prisma.tenant.findUnique({
+  let tenant = await prisma.tenant.findFirst({
     where: { code: DEFAULT_TENANT_CODE },
   });
   if (!tenant) {
@@ -37,10 +38,13 @@ export async function getDefaultTenant() {
         enabledPresets: [CLINIC_PRESET.OUTPATIENT, CLINIC_PRESET.SANATORIUM_CLINICAL],
         programSchedulingMode: SANATORIUM_DEFAULT_SETTINGS.programSchedulingMode,
         schedulingSlotMinutes: SANATORIUM_DEFAULT_SETTINGS.schedulingSlotMinutes,
+        defaultAppointmentSlotMinutes:
+          SANATORIUM_DEFAULT_SETTINGS.defaultAppointmentSlotMinutes,
         procedureOverQuotaPolicy: SANATORIUM_DEFAULT_SETTINGS.procedureOverQuotaPolicy,
       },
     });
   }
+  if (!tenant) throw new Error("Failed to ensure default tenant");
   return tenant;
 }
 
@@ -52,6 +56,9 @@ export async function getClinicSettings() {
     enabledPresets: tenant.enabledPresets as ClinicPresetCode[],
     programSchedulingMode: tenant.programSchedulingMode,
     schedulingSlotMinutes: tenant.schedulingSlotMinutes,
+    defaultAppointmentSlotMinutes:
+      tenant.defaultAppointmentSlotMinutes ??
+      SANATORIUM_DEFAULT_SETTINGS.defaultAppointmentSlotMinutes,
     procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
     dayStartHour: tenant.dayStartHour,
     dayEndHour: tenant.dayEndHour,
@@ -62,6 +69,9 @@ export async function getClinicSettings() {
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
     checkInRequiresQr: tenant.checkInRequiresQr ?? true,
+    procedureCheckInMode:
+      tenant.procedureCheckInMode ??
+      (tenant.checkInRequiresQr === false ? "MANUAL" : "QR"),
     autoNoShowAfterMin: tenant.autoNoShowAfterMin ?? null,
     patientCardResultsPreview:
       tenant.patientCardResultsPreview ?? CARD_DEFAULTS.patientCardResultsPreview,
@@ -105,7 +115,9 @@ export async function updateClinicSettings(input: {
   enabledPresets?: string[];
   programSchedulingMode?: ProgramSchedulingMode;
   schedulingSlotMinutes?: number;
+  defaultAppointmentSlotMinutes?: number;
   procedureOverQuotaPolicy?: ProcedureOverQuotaPolicy;
+  procedureCheckInMode?: ProcedureCheckInMode;
   dayStartHour?: number;
   dayEndHour?: number;
   lunchStartHour?: number;
@@ -170,9 +182,13 @@ export async function updateClinicSettings(input: {
     input.defaultProcedureGapMinutes != null
       ? Math.min(240, Math.max(0, Math.floor(input.defaultProcedureGapMinutes)))
       : undefined;
+  const defaultAppointmentSlotMinutes =
+    input.defaultAppointmentSlotMinutes != null
+      ? Math.min(120, Math.max(5, Math.floor(input.defaultAppointmentSlotMinutes)))
+      : undefined;
 
   return prisma.tenant.upsert({
-    where: { code: DEFAULT_TENANT_CODE },
+    where: { code: DEFAULT_TENANT_CODE } as never,
     create: {
       code: DEFAULT_TENANT_CODE,
       name: input.clinicName ?? "Nafta Clinic",
@@ -197,6 +213,9 @@ export async function updateClinicSettings(input: {
       ...(input.schedulingSlotMinutes != null
         ? { schedulingSlotMinutes: input.schedulingSlotMinutes }
         : {}),
+      ...(defaultAppointmentSlotMinutes != null
+        ? { defaultAppointmentSlotMinutes }
+        : {}),
       ...(input.procedureOverQuotaPolicy
         ? { procedureOverQuotaPolicy: input.procedureOverQuotaPolicy }
         : {}),
@@ -210,7 +229,18 @@ export async function updateClinicSettings(input: {
       ...(input.peakDayEndHour != null
         ? { peakDayEndHour: Math.min(24, Math.max(1, Math.floor(input.peakDayEndHour))) }
         : {}),
-      ...(input.checkInRequiresQr != null ? { checkInRequiresQr: input.checkInRequiresQr } : {}),
+      ...(input.procedureCheckInMode != null
+        ? {
+            procedureCheckInMode: input.procedureCheckInMode,
+            checkInRequiresQr: input.procedureCheckInMode === "QR",
+          }
+        : {}),
+      ...(input.procedureCheckInMode == null && input.checkInRequiresQr != null
+        ? {
+            checkInRequiresQr: input.checkInRequiresQr,
+            procedureCheckInMode: input.checkInRequiresQr ? "QR" : "MANUAL",
+          }
+        : {}),
       ...(input.autoNoShowAfterMin !== undefined
         ? {
             autoNoShowAfterMin:

@@ -1,6 +1,7 @@
-import { z } from 'zod';
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { listOpenEpisodes, registerWalkInEpisode } from '@/lib/services/sanatorium.service';
+import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { listOpenEpisodes, registerWalkInEpisode } from "@/lib/services/sanatorium.service";
 
 const walkInSchema = z.object({
   fullName: z.string().min(1),
@@ -17,7 +18,7 @@ const walkInSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const orgId = new URL(req.url).searchParams.get('organizationId') ?? undefined;
+    const orgId = new URL(req.url).searchParams.get("organizationId") ?? undefined;
     const episodes = await listOpenEpisodes(orgId);
     return jsonOk(episodes);
   } catch (err) {
@@ -28,10 +29,17 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = walkInSchema.parse(await req.json());
+    let boundOrg: string | undefined;
+    try {
+      const id = satelliteOrganizationId();
+      boundOrg = id === "demo-org" ? undefined : id;
+    } catch {
+      boundOrg = undefined;
+    }
     const organizationId =
-      process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ??
-      new URL(req.url).searchParams.get('organizationId') ??
-      'local-clinic';
+      boundOrg ??
+      new URL(req.url).searchParams.get("organizationId") ??
+      "local-clinic";
     const episode = await registerWalkInEpisode({
       organizationId,
       fullName: body.fullName,

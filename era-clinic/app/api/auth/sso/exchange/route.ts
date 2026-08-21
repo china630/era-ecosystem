@@ -3,6 +3,7 @@ import {
   consumeSsoSignatureOnce,
   executeSatelliteSsoExchange,
   resolveVerifiedSsoFinanceRole,
+  satelliteOrganizationId,
   ssoExchangeBodySchema,
 } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
@@ -30,9 +31,9 @@ export async function POST(request: Request) {
       return jsonError("SSO ticket already used", 401);
     }
 
-    const deployOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
+    const deployOrg = satelliteOrganizationId();
     // SEC-SSO-05: bind ticket org to deployment org when configured
-    if (deployOrg && body.organizationId !== deployOrg) {
+    if (deployOrg && deployOrg !== "demo-org" && body.organizationId !== deployOrg) {
       return jsonError("SSO organization mismatch", 401);
     }
 

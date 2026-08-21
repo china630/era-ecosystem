@@ -23,11 +23,13 @@
   "price": 20,
   "durationMin": 20
  },
- {
+  {
   "code": "SVC-DARSONVAL",
   "name": "Darsonval",
   "price": 11,
-  "durationMin": 20
+  "durationMin": 10,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-ELEKTROTERAPIYA",
@@ -173,11 +175,21 @@
   "price": 20,
   "durationMin": 20
  },
- {
+  {
   "code": "SVC-ULTRAFONOFOREZ",
-  "name": "Ultrafonoforez",
+  "name": "Ultrafonoforez (Naftalan oil)",
   "price": 12,
-  "durationMin": 20
+  "durationMin": 10,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 15
+ },
+ {
+  "code": "SVC-ULTRAFONOFOREZ-GEL",
+  "name": "Ultrafonoforez (gel)",
+  "price": 12,
+  "durationMin": 5,
+  "resourceGapMinutes": 0,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-UROLOJI-MIKROKLIZMA",

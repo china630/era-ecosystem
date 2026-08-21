@@ -24,12 +24,20 @@ async function main() {
       enabledPresets: ["outpatient", "sanatorium_clinical", "inpatient_day"] },
   });
 
+  function inferStaffKind(p) {
+    const blob = `${p.specialty || ""} ${p.code || ""}`.toLowerCase();
+    if (blob.includes("nurse") || blob.startsWith("nr-") || blob.includes("nurse-")) return "NURSE";
+    if (blob.includes("lab")) return "LAB";
+    return "DOCTOR";
+  }
+
   // practitioners
   for (const p of practitioners) {
+    const staffKind = inferStaffKind(p);
     await prisma.practitioner.upsert({
       where: { code: p.code },
-      update: { fullName: p.fullName, specialty: p.specialty, active: true },
-      create: { code: p.code, fullName: p.fullName, specialty: p.specialty },
+      update: { fullName: p.fullName, specialty: p.specialty, staffKind, active: true },
+      create: { code: p.code, fullName: p.fullName, specialty: p.specialty, staffKind },
     });
   }
 
@@ -53,8 +61,21 @@ async function main() {
   for (const p of procTypes) {
     const pt = await prisma.procedureType.upsert({
       where: { code: p.code },
-      update: { name: p.name, durationMin: p.durationMin, resourceKind: "ROOM" },
-      create: { code: p.code, name: p.name, durationMin: p.durationMin, resourceKind: "ROOM" },
+      update: {
+        name: p.name,
+        durationMin: p.durationMin,
+        resourceGapMinutes: p.resourceGapMinutes ?? 5,
+        patientRestMinutes: p.patientRestMinutes ?? 15,
+        resourceKind: "ROOM",
+      },
+      create: {
+        code: p.code,
+        name: p.name,
+        durationMin: p.durationMin,
+        resourceGapMinutes: p.resourceGapMinutes ?? 5,
+        patientRestMinutes: p.patientRestMinutes ?? 15,
+        resourceKind: "ROOM",
+      },
     });
     procTypeByCode[p.code] = pt.id;
   }

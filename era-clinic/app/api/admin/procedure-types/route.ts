@@ -11,6 +11,8 @@ const createSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
   durationMin: z.number().int().positive().optional(),
+  resourceGapMinutes: z.number().int().min(0).max(240).optional(),
+  patientRestMinutes: z.number().int().min(0).max(240).optional(),
   resourceKind: z.enum(["ROOM", "EQUIPMENT"]).nullable().optional(),
   resourceCode: z.string().nullable().optional(),
   bodyPart: z

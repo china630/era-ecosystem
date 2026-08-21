@@ -30,7 +30,7 @@
 | Национальный e-recept (Dərman) | Регуляторный контур AZ — Phase 3 |
 | Полная EMR (долгая история болезни) | Упрощённая карта визита + CPOE lite |
 | Страховые ТПА и pre-auth (full) | Finance + модуль договоров §4.15 |
-| Склад медикаментов / фармаопт | Finance inventory или retail pharmacy preset |
+| Склад медикаментов / фармаопт | Finance inventory или retail pharmacy preset — **не** ТТК процедур (см. M3e) |
 
 **In scope (future on same `era-clinic`):** preset **`inpatient_day`** — ward/bed master, ADT-light, daily charges — not full HIS. Current M13 is a **stub** until [CLINIC-FULL-IMPLEMENTATION-PLAN Phase 4](doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md).
 
@@ -51,7 +51,7 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 **Sanatorium business:** orchestrator entitlements `industry_hotel_pms` + `industry_clinic` (+ optional retail), not a standalone sanatorium satellite.
 
-**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md).
+**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped.
 
 **Code packaging:** domain logic migrates to `era-clinic/src/domain/`; extract to `packages/clinic-domain` only after inpatient ADT API stabilizes (ADR D5).
 
@@ -91,11 +91,14 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 |----|--------|--------|---------|
 | M0 | Platform shell, SSO | **DONE** | — |
 | M1 | Patient registry (ref, не полная EMR) | **SHIPPED** (registry UI) | Counterparty / patient ref sync |
-| M2 | Practitioners, rooms, schedule | **SHIPPED** (master-data admin) | — |
+| M2 | Practitioners, rooms, schedule | **SHIPPED** (master-data admin; `staffKind` DOCTOR/NURSE/LAB) | — |
+| M3d | Monthly nurse/lab duty roster | **SHIPPED** | Head-doctor matrix `/sanatorium/nurse-roster`; clinic-local absences (Finance HR sync later) |
 | M3 | Appointment & check-in | **DONE** | — |
 | M3b | Sanatorium nurse day-ops | **SHIPPED** | Check-in → `CHECKED_IN`; auto-complete at `endsAt`; `NO_SHOW` burns quota; event at complete |
+| M3e | Procedure TTK (consumable BOM) | **API** | Finance inventory on COMPLETED; ADR clinic-procedure-consumable-ttk; SatAdmin BOM; UAT open |
 | M3c | Doctor-confirmed procedure planning | **SHIPPED** | Package/program lines create `PROPOSED` orders; doctor confirms before FIFO resource placement (`placeConfirmedProcedures`); see ADR clinic-doctor-confirmed-fifo-planning |
 | M4 | Visit card & clinical services | **DONE** | `VISIT_COMPLETED` |
+| M4b | ICD-10 catalog & diagnosis recording | **SHIPPED** | WHO ICD-10 2019 local catalog; sanatorium / visit / inpatient / print; favorites; diagnosis report; orch gateway sync |
 | M5 | **Laboratory orders & results** | **DONE** | `LAB_ORDER_COMPLETED`; portal on publish |
 | M5 (extend) | **Critical lab result flag** | LIS alert | **DONE** | `enrichResultLines` + `criticalOnly` filter |
 | M6 | Service catalog cache (codes, prices) | **DONE** | `ServiceCatalogCache` + sync API |
@@ -211,6 +214,7 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 | 2026-06-16 | §1.4 product lines & presets; out-of-scope clarified (full HIS vs inpatient_day); M13 → PARTIAL |
 | 2026-07-14 | Standard diagnostic + lab template catalog (USG/CT/ECG/panels) — seed JSON + K-12 link |
 | 2026-07-14 | Catalog v1.1 P0+P1: 85 studies, 45 lab panels, 13 visits, 7 packages |
+| 2026-08-18 | CLI-39…42: WHO ICD-10 catalog + diagnosis recording (sanatorium/visit/inpatient/print/favorites/report + orch gateway) |
 
 
 ### 2026-07-22 — CLI-34 print forms

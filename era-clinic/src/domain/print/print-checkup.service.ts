@@ -16,6 +16,7 @@ export type PrintCheckupDocument = {
   patient: PrintPatientStrip;
   arrival: string | null;
   departure: string | null;
+  diagnoses: string[];
   sections: PrintCheckupSection[];
 };
 
@@ -51,6 +52,12 @@ export async function buildCheckupPrint(
   const episode = await prisma.clinicalEpisode.findFirst({
     where: { patientRefId: patientId },
     orderBy: { openedAt: "desc" },
+    include: {
+      diagnoses: {
+        include: { icdCode: true },
+        orderBy: { recordedAt: "asc" },
+      },
+    },
   });
 
   const appointments = await prisma.appointment.findMany({
@@ -72,6 +79,17 @@ export async function buildCheckupPrint(
     };
   });
 
+  const diagnoses = (episode?.diagnoses ?? []).map((d) => {
+    const title =
+      lang === "ru"
+        ? d.icdCode.titleRu
+        : lang === "az"
+          ? d.icdCode.titleAz?.trim() || d.icdCode.titleRu
+          : d.icdCode.titleEn;
+    const base = `${d.icdCode.code} — ${title}`;
+    return d.note ? `${base} (${d.note})` : base;
+  });
+
   return {
     branding,
     patient: {
@@ -86,6 +104,7 @@ export async function buildCheckupPrint(
     },
     arrival: episode?.openedAt ? episode.openedAt.toISOString().slice(0, 10) : null,
     departure: episode?.closedAt ? episode.closedAt.toISOString().slice(0, 10) : null,
+    diagnoses,
     sections,
   };
 }

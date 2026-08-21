@@ -111,7 +111,7 @@ export default function NursePage() {
   useEffect(() => {
     if (!isDemoStaffFilter) return;
     let cancelled = false;
-    void fetch("/api/admin/practitioners")
+    void fetch("/api/admin/practitioners?staffKind=NURSE")
       .then(async (res) => (res.ok ? res.json() : null))
       .then((raw) => {
         if (cancelled || !raw) return;

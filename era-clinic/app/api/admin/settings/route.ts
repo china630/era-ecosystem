@@ -16,6 +16,12 @@ const patchSchema = z.object({
   enabledPresets: z.array(z.string()).min(1).optional(),
   programSchedulingMode: z.enum(["ON_CHECKIN", "AFTER_CHECKUP"]).optional(),
   schedulingSlotMinutes: z.number().int().min(1).max(60).optional(),
+  defaultAppointmentSlotMinutes: z
+    .number()
+    .int()
+    .min(5)
+    .max(120)
+    .optional(),
   procedureOverQuotaPolicy: z
     .enum(["CHARGE_FOLIO", "BLOCK", "WARN_ONLY"])
     .optional(),
@@ -28,6 +34,7 @@ const patchSchema = z.object({
   peakModeEnabled: z.boolean().optional(),
   peakDayEndHour: z.number().int().min(1).max(24).optional(),
   checkInRequiresQr: z.boolean().optional(),
+  procedureCheckInMode: z.enum(["QR", "CODE", "MANUAL"]).optional(),
   autoNoShowAfterMin: z.number().int().min(1).max(1440).nullable().optional(),
   patientCardResultsPreview: z.number().int().min(1).max(50).optional(),
   patientCardPlanPreview: z.number().int().min(1).max(50).optional(),

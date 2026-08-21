@@ -49,6 +49,8 @@ type WorkHours = {
 
 type SchedulingDefaults = {
   defaultProcedureGapMinutes: number;
+  defaultAppointmentSlotMinutes: number;
+  procedureCheckInMode: "QR" | "CODE" | "MANUAL";
   peakModeEnabled: boolean;
   peakDayEndHour: number;
 };
@@ -70,6 +72,8 @@ const WORK_DEFAULTS: WorkHours = {
 
 const SCHED_DEFAULTS: SchedulingDefaults = {
   defaultProcedureGapMinutes: 5,
+  defaultAppointmentSlotMinutes: 30,
+  procedureCheckInMode: "QR",
   peakModeEnabled: false,
   peakDayEndHour: 22,
 };
@@ -132,6 +136,12 @@ export default function ClinicAdminSettingsPage() {
         const sched: SchedulingDefaults = {
           defaultProcedureGapMinutes:
             row.defaultProcedureGapMinutes ?? SCHED_DEFAULTS.defaultProcedureGapMinutes,
+          defaultAppointmentSlotMinutes:
+            row.defaultAppointmentSlotMinutes ??
+            SCHED_DEFAULTS.defaultAppointmentSlotMinutes,
+          procedureCheckInMode:
+            row.procedureCheckInMode ??
+            (row.checkInRequiresQr === false ? "MANUAL" : "QR"),
           peakModeEnabled: Boolean(row.peakModeEnabled ?? SCHED_DEFAULTS.peakModeEnabled),
           peakDayEndHour: row.peakDayEndHour ?? SCHED_DEFAULTS.peakDayEndHour,
         };
@@ -194,6 +204,10 @@ export default function ClinicAdminSettingsPage() {
       setSchedDefaults({
         defaultProcedureGapMinutes:
           row.defaultProcedureGapMinutes ?? draftSched.defaultProcedureGapMinutes,
+        defaultAppointmentSlotMinutes:
+          row.defaultAppointmentSlotMinutes ?? draftSched.defaultAppointmentSlotMinutes,
+        procedureCheckInMode:
+          row.procedureCheckInMode ?? draftSched.procedureCheckInMode,
         peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
         peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
       });
@@ -278,6 +292,14 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("defaultProcedureGapMinutes")}</td>
             <td className="p-3">{schedDefaults.defaultProcedureGapMinutes} min</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("defaultAppointmentSlotMinutes")}</td>
+            <td className="p-3">{schedDefaults.defaultAppointmentSlotMinutes} min</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("procedureCheckInMode")}</td>
+            <td className="p-3">{schedDefaults.procedureCheckInMode}</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("peakModeEnabled")}</td>
@@ -384,6 +406,41 @@ export default function ClinicAdminSettingsPage() {
               }))
             }
           />
+          <Field
+            label={t("defaultAppointmentSlotMinutes")}
+            preset="count"
+            type="number"
+            min={5}
+            max={120}
+            value={draftSched.defaultAppointmentSlotMinutes}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                defaultAppointmentSlotMinutes:
+                  Number(e.target.value) || prev.defaultAppointmentSlotMinutes,
+              }))
+            }
+          />
+          <label className="flex flex-col gap-1 text-[13px]">
+            <span className="text-sm opacity-80">{t("procedureCheckInMode")}</span>
+            <select
+              value={draftSched.procedureCheckInMode}
+              onChange={(e) =>
+                setDraftSched((prev) => ({
+                  ...prev,
+                  procedureCheckInMode: e.target.value as
+                    | "QR"
+                    | "CODE"
+                    | "MANUAL",
+                }))
+              }
+              className="w-56 rounded border px-2 py-1"
+            >
+              <option value="QR">QR</option>
+              <option value="CODE">CODE</option>
+              <option value="MANUAL">MANUAL</option>
+            </select>
+          </label>
           <label className="flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"

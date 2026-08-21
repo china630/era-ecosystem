@@ -1,5 +1,12 @@
 import type { ProcedureRequirementRole, ProcedureStaffMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  applyDutyFilter,
+  resolvePostedStaffForSlot,
+} from "@/domain/staff/staff-duty-roster.service";
+import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
+
+export { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 
 export type PhysicalResource = {
   id: string;
@@ -29,33 +36,60 @@ export async function countStaffHardBusy(
   });
 }
 
+/** Upper bound lookback when scanning occupying tails (tenant max gap clamp). */
+const RESOURCE_GAP_LOOKBACK_MIN = 240;
+
 /**
- * Count LOCATION/EQUIPMENT allocations overlapping [start, end).
- * When `gapMinutes` > 0 the window is widened by the turnover gap on both
- * sides, so a resource stays busy for `gapMinutes` after each booking (min
- * break between consecutive procedures on the same bed/room).
+ * Count LOCATION/EQUIPMENT allocations whose occupying window
+ * `[startsAt, endsAt + type.resourceGapMinutes)` overlaps [startsAt, endsAt).
+ * Gap comes from the occupying procedure type (not the candidate).
+ * STAFF is never included — SOFT nurses may overlap cabins.
  */
 export async function countResourceAllocations(
   resourceId: string,
   startsAt: Date,
   endsAt: Date,
   excludeOrderId?: string,
-  gapMinutes = 0,
 ): Promise<number> {
-  const winStart =
-    gapMinutes > 0 ? new Date(startsAt.getTime() - gapMinutes * 60_000) : startsAt;
-  const winEnd =
-    gapMinutes > 0 ? new Date(endsAt.getTime() + gapMinutes * 60_000) : endsAt;
-  return prisma.procedureAllocation.count({
+  const lookbackStart = new Date(
+    startsAt.getTime() - RESOURCE_GAP_LOOKBACK_MIN * 60_000,
+  );
+  const rows = await prisma.procedureAllocation.findMany({
     where: {
       role: { in: ["LOCATION", "EQUIPMENT"] },
       resourceId,
-      startsAt: { lt: winEnd },
-      endsAt: { gt: winStart },
+      startsAt: { lt: endsAt },
+      endsAt: { gt: lookbackStart },
       ...(excludeOrderId ? { procedureOrderId: { not: excludeOrderId } } : {}),
       procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
     },
+    select: {
+      startsAt: true,
+      endsAt: true,
+      procedureOrder: {
+        select: {
+          procedureType: { select: { resourceGapMinutes: true } },
+        },
+      },
+    },
   });
+
+  let count = 0;
+  for (const row of rows) {
+    const gap = row.procedureOrder.procedureType?.resourceGapMinutes ?? 5;
+    if (
+      allocationOccupiesCandidate(
+        row.startsAt,
+        row.endsAt,
+        gap,
+        startsAt,
+        endsAt,
+      )
+    ) {
+      count++;
+    }
+  }
+  return count;
 }
 
 export async function findSkilledFreePractitioner(input: {
@@ -66,39 +100,38 @@ export async function findSkilledFreePractitioner(input: {
   excludeOrderId?: string;
   staffMode?: ProcedureStaffMode;
 }): Promise<{ id: string; fullName: string; code: string } | null> {
+  const duty = await resolvePostedStaffForSlot({
+    procedureTypeId: input.procedureTypeId,
+    at: input.startsAt,
+    staffKind: "NURSE",
+  });
+
   const skills = await prisma.practitionerSkill.findMany({
     where: {
       procedureTypeId: input.procedureTypeId,
       active: true,
-      practitioner: { active: true },
+      practitioner: { active: true, staffKind: "NURSE" },
     },
     include: { practitioner: true },
   });
-  if (skills.length === 0) {
-    // No skills configured yet — any active practitioner (bootstrap).
-    const any = await prisma.practitioner.findMany({
-      where: { active: true },
+  let pool = skills.map((s) => s.practitioner);
+  if (pool.length === 0) {
+    const nurses = await prisma.practitioner.findMany({
+      where: { active: true, staffKind: "NURSE" },
       orderBy: { code: "asc" },
       take: 20,
     });
-    const bootstrap = preferFirst(any, input.preferPractitionerId);
-    if (input.staffMode === "SOFT") {
-      return pickSoftStaff(bootstrap, input);
-    }
-    for (const p of bootstrap) {
-      const busy = await countStaffHardBusy(
-        p.id,
-        input.startsAt,
-        input.endsAt,
-        input.excludeOrderId,
-      );
-      if (busy === 0) return p;
-    }
-    return null;
+    pool =
+      nurses.length > 0
+        ? nurses
+        : await prisma.practitioner.findMany({
+            where: { active: true },
+            orderBy: { code: "asc" },
+            take: 20,
+          });
   }
-
   const candidates = preferFirst(
-    skills.map((s) => s.practitioner),
+    applyDutyFilter(pool, duty),
     input.preferPractitionerId,
   );
   if (input.staffMode === "SOFT") {
@@ -166,7 +199,7 @@ export async function resolvePhysicalResource(input: {
     if (r) return r;
   }
   if (input.resourceCode) {
-    const byCode = await prisma.resource.findUnique({
+    const byCode = await prisma.resource.findFirst({
       where: { code: input.resourceCode },
     });
     if (byCode) return byCode;

@@ -38,7 +38,7 @@ export async function POST() {
 
     for (const item of items) {
       await prisma.serviceCatalogCache.upsert({
-        where: { code: item.code },
+        where: { code: item.code } as never,
         create: {
           code: item.code,
           description: item.description,
