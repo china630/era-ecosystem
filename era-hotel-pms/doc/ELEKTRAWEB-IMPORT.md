@@ -124,14 +124,25 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Room Views.xlsx | `room-views` | `RoomView` | `code` | Also in reference seed |
 | Room Types.xlsx | `room-types` | `RoomType` | `code` | |
 | Rate Codes.xlsx | `rate-plans` | `RatePlan` | `code` | Legacy flat price fields |
-| Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode` |
+| Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode`. **Skip** virtual share labels (`707S`) — not master rooms |
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | |
 | Product Cards.xlsx | `product-cards` | `Product` | `code` | `productType = SELLABLE` |
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
-| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**; FIN/passport resolve via MDM only (W4 — not persisted on `Guest`) |
-| Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id** |
+| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**; FIN/passport resolve via MDM only (W4 — not persisted on `Guest`). **Gender** column → `Guest.gender` (share M/F) |
+| Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
 | Folios.xlsx | `folios` | `FolioCharge` | `externalRef` | Elektraweb folio/charge id |
 | Chart of Accounts | — | — | — | **Excluded** — finance-core |
+
+### 4.1 Shared twin (Elektraweb → ERA)
+
+Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assignment.md) § Elektraweb cutover.
+
+- Resolve room by **physical** door: `707S` → `Room` `707` (never create `707S`).
+- Second-guest signal: `Record Type=SHARE` **or** `Room Count=0` **or** Room No suffix `S` (Nafta list export often only has the suffix).
+- After upsert, `applyElektrawebSharePair` marks the second stay **and** overlapping NORMAL/CHECKED_OUT neighbors on that door (`shareEligible` + beds 1..maxBed).
+- Re-import does **not** clear share when the row is NORMAL (EW primary is always NORMAL).
+- Agency name is **not** a trigger. Walk-in shares only when EW marks the second guest.
+- Guests must be imported with Gender before share pairs become effective inventory.
 
 ---
 
@@ -364,6 +375,9 @@ node era-hotel-pms/scripts/merge-folio-transactions.js "C:/Users/.../Folio 01 ja
 
 # Nafta EW pack: multi-root (Folio 2024/, Folio 2025/, consolidated xlsx, Jul chunks) + hotel/FnB split
 node era-hotel-pms/scripts/merge-folio-transactions.js --ew "C:/Users/.../Downloads/EW"
+
+# Cutover folder (keep previous .merged + new chunks, then delete chunks)
+node era-hotel-pms/scripts/merge-ew-cutover.js --dir "D:/ERA-BACKUP/NAFTA-START/hotel" --delete
 ```
 
 When the last chunk has **< ~850 rows**, the export is likely complete for that filter. Chunks with **900–1000 rows** usually need another date slice.

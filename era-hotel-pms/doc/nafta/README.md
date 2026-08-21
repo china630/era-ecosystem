@@ -3,6 +3,8 @@
 Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full screen dump omitted; see clone-spec and reference catalogs.
 
 **Import file checklist (hotel wizard + clinic/FnB data packs):** [IMPORT_FILE_CHECKLIST.md](./IMPORT_FILE_CHECKLIST.md)  
+**Start-contour inventory (HAVE / ASK / LATER, EW·WO·1C → satellite):** [START-DATA-INVENTORY.md](./START-DATA-INVENTORY.md)  
+**Numbered file checklist + 1C request text:** [START-FILE-CHECKLIST.md](./START-FILE-CHECKLIST.md)  
 **BAR accounting base vs package sell:** [BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md) · [ADR](../../../docs/adr/hotel-bar-accounting-vs-package-sell.md) · costing ref [reference/hotel-costing-and-pricing-usali.md](./reference/hotel-costing-and-pricing-usali.md)  
 **Live dual-run (post-Excel mirror via browser plugin):** [ELEKTRAWEB-LIVE-BRIDGE.md](../ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](../../../docs/adr/hotel-elektraweb-live-bridge.md)
 

@@ -35,6 +35,7 @@ export const reservationFullPatchSchema = z.object({
   colorCode: z.string().nullable().optional(),
   resNo: z.string().nullable().optional(),
   shareNo: z.string().nullable().optional(),
+  shareEligible: z.boolean().optional(),
   optionDate: z.coerce.date().nullable().optional(),
   optionState: z.string().nullable().optional(),
   salesProject: z.string().nullable().optional(),

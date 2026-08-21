@@ -15,7 +15,7 @@ Canon: [`MENU-IA-CANON.md`](./MENU-IA-CANON.md). Coverage IDs: `docs/COVERAGE_MA
 | `/night-audit/reports` | Yes (navigation hub) | **API** HOT-NA-03 | Dated links to 8 existing screens |
 | `/night-audit/reservation-updates` | Yes (read grid) | **API** HOT-NA-04 | `updatedAt` + audit actions |
 | `/night-audit/year-end` | Preview only | **STUB** HOT-NA-05 | POST always `YEAR_END_NOT_ENABLED` |
-| Full Elektraweb EOD 01–22 | No | Gap | Deepen wave |
+| Full Elektraweb EOD 01–22 | No | Gap | Replaced by HOT-RPT catalog spec — not implemented |
 
 **Do not claim SHIPPED / Pilot-ready** for HOT-CASH-06, HOT-NA-03/04/05 until UAT-SMOKE UI steps and deepen criteria below.
 

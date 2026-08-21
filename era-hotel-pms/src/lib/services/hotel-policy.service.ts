@@ -32,7 +32,32 @@ export type ChannelFeaturePolicy = {
   channelAutoPushEnabled: boolean;
 };
 
-export type HotelPolicy = EarlyLatePolicy & PricingFeaturePolicy & ChannelFeaturePolicy;
+/** Agency portal confirm behaviour (default OFF → OPTION + FO inbox). */
+export type AgencyPortalPolicy = {
+  agencyPortalAutoConfirm: boolean;
+  /** Hours to hold OPTION before soft-release (informational for P1 UI). */
+  agencyPortalOptionHoldHours: number;
+};
+
+export type CityLedgerPolicy = {
+  /**
+   * What to do when we need to transfer agency/company folio to City Ledger
+   * but Finance has no local counterparty card for the agency/company VÖEN.
+   */
+  cityLedgerMissingCounterparty: "BLOCK_CHECKOUT" | "DEFER_HANDOFF" | "AUTO_CREATE";
+
+  /**
+   * When true: last-day year-end action is blocked/refused while City Ledger
+   * has any OPEN agency/company balances.
+   */
+  yearEndBlockIfOpenCityLedger: boolean;
+};
+
+export type HotelPolicy = EarlyLatePolicy &
+  PricingFeaturePolicy &
+  ChannelFeaturePolicy &
+  AgencyPortalPolicy &
+  CityLedgerPolicy;
 
 export const DEFAULT_HOTEL_POLICY: HotelPolicy = {
   standardCheckInTime: '14:00',
@@ -45,6 +70,10 @@ export const DEFAULT_HOTEL_POLICY: HotelPolicy = {
   loadBasedPricingEnabled: false,
   childAbsolutePricingEnabled: false,
   channelAutoPushEnabled: false,
+  agencyPortalAutoConfirm: false,
+  agencyPortalOptionHoldHours: 48,
+  cityLedgerMissingCounterparty: "BLOCK_CHECKOUT",
+  yearEndBlockIfOpenCityLedger: true,
 };
 
 function parsePolicy(raw: string | null | undefined): HotelPolicy {

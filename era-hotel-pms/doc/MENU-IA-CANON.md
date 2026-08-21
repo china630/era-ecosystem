@@ -34,6 +34,9 @@ Related: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md) · [HotelOps
 | In-house | `/fo/in-house` | In-house guests; jump to card / folio |
 | Room changes | `/fo/room-changes` | Room change plans |
 | Reservation times *(optional FO report)* | `/fo/reservation-times` | Actual check-in / check-out times |
+| Agency inbox | `/fo/agency-inbox` | OPTION stays from agency portal — confirm / decline (`hotel_agency_portal`) |
+
+Agency extranet UI lives on orchestrator `/agency/*` + hotel `/agency/*` after SSO — **not** in the hotel staff sidebar.
 
 Reservation Card / Guest Card open from list/rack — not sidebar items.
 
@@ -65,15 +68,14 @@ Short sidebar (Elektraweb shape); EOD report pack is a **hub**, not 20 menu rows
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | End of day | `/night-audit` | Close-day console: business date, pre-check gates, polish preview, Run NA |
-| EOD reports | `/night-audit/reports` | Archived daily report hub (date + report list) |
+| EOD reports | `/night-audit/reports` | Closed-date hub: **nightly pack** members (deep links to `/reports/*`) + Download ZIP; NA-only ops grids stay here |
 | EOD logs | `/night-audit/logs` | NA run history (who / when / steps / errors) — single log screen |
 | Reservation updates | `/night-audit/reservation-updates` | Reservation changes in audit window (cancel/extend/notes) |
 | End of year | `/night-audit/year-end` | Year close/open (Last/First day). **In menu now**; implement when asked at year-end |
 
 **Inside EOD reports hub (not sidebar):**  
-P0 — Daily in-house, check-in, check-out.  
-P1 — Cancelled, created today, folio transactions, room price control, cash report (ops).  
-P2 — CL / dept revenue → hotel snapshot or Finance deep link.  
+Management pack (hotel-configured, Nafta default = 8 PDFs) — links to `/reports/*` + ZIP. Spec: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md).  
+NA ops grids remain here: cancelled / created / room-price / no-show / room-move / VIP / reservation updates / EOD logs.  
 Police/official guest → Migration; POS product sales → F&B.
 
 End of day links to Front Cash pending as a **blocker**, not a duplicate menu item.
@@ -190,6 +192,7 @@ Deep clinical / lab → **Clinic** (external).
 | Audit viewer | `/settings/audit` | Action audit |
 | Stock (local MVP) | `/settings/stock` | Local HK consumption; ERP warehouse → Finance |
 | Elektraweb import | `/settings/import` | Import (controlled / SuperAdmin) |
+| Nightly report pack | `/settings/report-pack` | Which Management Reports go into the post-NA ZIP (HOT-RPT-02; spec) |
 
 Legacy: `/admin/*` → `/settings/*` for these screens.
 
@@ -212,13 +215,39 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 
 ---
 
+### 2.16 Reports — `/reports/*` (canonical home)
+
+SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md) (ElektraWeb WA0058/59 + Nafta samples). **W1 live** — 8 P0 screens + PDF + nightly ZIP; not SHIPPED (no UAT evidence).
+
+**Sidebar:** category hubs, not 50 PDF tiles.
+
+| Menu item | URL | Classifier |
+|-----------|-----|------------|
+| Reports hub | `/reports` | Tiles + shared date/period filter |
+| Analysis | `/reports/analysis` | A0 screens (cubes = P2) |
+| Occupancy | `/reports/occupancy` | A occupancy / forecast / annual / monthly-daily |
+| Daily flash | `/reports/daily` | B Daily Management + in-house |
+| Financial | `/reports/financial` | C trial balance, dept revenues, cash, folio day |
+| Agency & market | `/reports/agency` | D agency / nationality / segment |
+| Reservations & CRM | `/reports/booking` | E create/cancel/definite/CRM |
+| Nightly pack | `/reports/nightly-pack` | Hotel-configured ZIP for closed NA date |
+
+SatAdmin pack membership: `/settings/report-pack`.
+
+**One screen → one primary home:** Management PDFs live here. Night Audit `/night-audit/reports` is a **deep-link hub** (enabled pack + Download ZIP + NA-only ops grids). Front Cash journal links to cash report; FO in-house ops list stays `/fo/in-house` and links to `/reports/daily/in-house` for PDF.
+
+**Not copied:** `.frx` engine; EW Accounting/Stock/POS report menus; Task Cube.
+
+---
+
 ## 3. Working-screen → home map
 
 | Work class | Home |
 |------------|------|
 | Sell / book / stay | Front Office `/fo` |
 | Stay pay + café/clinic walk-in + agency CL | Front Cash `/front-cash` |
-| Day close / logs / EOD pack / year-end | Night Audit `/night-audit` |
+| Day close / logs / year-end / NA ops grids | Night Audit `/night-audit` |
+| Management PDFs / ZIP pack / occupancy analytics | Reports `/reports` |
 | Cleaning / OOO / L&F | Housekeeping `/hk` |
 | OTA + B2B + quotas | Distribution `/distribution` |
 | Guest profile | Guests `/guests` |
@@ -242,9 +271,10 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 10. Transfers  
 11. Banquets  
 12. Medical  
-13. Settings  
-14. External links (footer / header)  
-15. Əsas — when decided  
+13. Reports  
+14. Settings  
+15. External links (footer / header)  
+16. Əsas — when decided  
 
 ---
 
@@ -253,7 +283,7 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 | Screen | Status (2026-08-07 deepen) | Still later |
 |--------|----------------------------|-------------|
 | `/front-cash/transactions` | **SHIPPED** HOT-CASH-06 — shift filter + printable ops Z + close shift | Fiscal KKM Z (not claimed) |
-| `/night-audit/reports` + P1 grids | **SHIPPED** HOT-NA-03 — P1 + no-shows / room-moves / VIP + CSV | Full EW-style 01–22 archived pack |
+| `/night-audit/reports` + P1 grids | **SHIPPED** HOT-NA-03 — P1 + no-shows / room-moves / VIP + CSV | EW Management PDF catalog + ZIP pack (HOT-RPT-01/02 spec) |
 | `/night-audit/reservation-updates` | **SHIPPED** HOT-NA-04 — action filter + CSV | Richer diff / typed events |
 | `/night-audit/year-end` | **STUB** HOT-NA-05 — ADR [`hotel-year-end-calendar`](../../docs/adr/hotel-year-end-calendar.md) | Live close/open after Finance sign-off |
 | URL migration FO/HK/Cash/NA/Distribution/Settings | Done (legacy redirects in `next.config`) | Remove redirects when bookmarks migrate |
@@ -266,7 +296,7 @@ Readiness: [`MENU-IA-PRIMARY-FILL-AUDIT.md`](./MENU-IA-PRIMARY-FILL-AUDIT.md) ·
 
 - Invoice / Accounting / Fixed Assets / Purchasing / ERP Stock as hotel modules  
 - Full POS / Digital Menu inside hotel sidebar  
-- 20+ EOD reports as separate sidebar rows  
+- 50+ Management Report tiles as separate sidebar rows (use `/reports` category hubs)  
 - Duplicate End of Day Log 2  
 - Elektraweb Setup noise (license, carbon, agency portal)
 
@@ -282,3 +312,4 @@ Readiness: [`MENU-IA-PRIMARY-FILL-AUDIT.md`](./MENU-IA-PRIMARY-FILL-AUDIT.md) ·
 | Night Audit | `/night-audit/*` |
 | Distribution | `/distribution/*` |
 | Settings | `/settings/*` |
+| Reports | `/reports/*` |

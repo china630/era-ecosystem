@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { postCharge } from '@/lib/services/folio.service';
 import { consumeRecipeForProduct } from '@/lib/services/stock.service';
 import {
@@ -88,7 +89,7 @@ export async function postRoomCharge(
 
   let reservationId = input.reservationId;
   if (!reservationId && input.roomNumber) {
-    const room = await prisma.room.findUnique({
+    const room = await prisma.room.findFirst({
       where: { roomNumber: input.roomNumber },
       include: {
         reservations: { where: { status: 'IN_HOUSE' }, take: 1 },
@@ -140,7 +141,7 @@ export async function postRoomCharge(
     );
   }
 
-  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  const organizationId = satelliteOrganizationId();
   if (organizationId && input.amount > 0 && charge.folioId) {
     const reservationRow = await prisma.reservation.findUnique({
       where: { id: reservationId },

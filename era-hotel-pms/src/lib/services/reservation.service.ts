@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
@@ -10,6 +11,16 @@ import {
   findApplicableContractRule,
 } from '@/lib/services/contract-pricing.service';
 import { assertContractAllotmentAvailable, getAvailabilityWithContractAllotment } from '@/lib/services/contract-allotment.service';
+import {
+  assertRoomShareAssignable,
+  assertShareInventory,
+  countDoorsUsedForRoomType,
+  isEffectiveShare,
+  reservationIsOta,
+  roomStatusAllowedForShareAssign,
+  syncShareGenderFromGuest,
+  validateShareCandidate,
+} from '@/lib/services/share-assignment.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
@@ -51,27 +62,20 @@ export async function getReservation(id: string) {
   return reservation;
 }
 
-export async function getAvailability(roomTypeId: string, from: Date, to: Date) {
+export async function getAvailability(roomTypeId: string, from: Date, to: Date, excludeReservationId?: string) {
   const roomType = await prisma.roomType.findUnique({ where: { id: roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
 
-  const overlapping = await prisma.reservation.count({
-    where: {
-      roomTypeId,
-      status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
-      checkInDate: { lt: to },
-      checkOutDate: { gt: from },
-    },
-  });
+  const booked = await countDoorsUsedForRoomType(roomTypeId, from, to, excludeReservationId);
 
   const stopSell = await hasStopSellInRange(roomTypeId, from, to);
   const effectiveQuota = stopSell ? 0 : roomType.baseQuota;
 
   return {
     quota: roomType.baseQuota,
-    booked: overlapping,
+    booked,
     stopSell,
-    available: Math.max(0, effectiveQuota - overlapping),
+    available: Math.max(0, effectiveQuota - booked),
   };
 }
 
@@ -103,6 +107,10 @@ export async function createReservation(input: {
    * gate applies and the same booker is not treated as a named claim on every stay.
    */
   copyGuestNameToPax?: boolean;
+  shareEligible?: boolean;
+  /** Default CONFIRMED; agency portal uses OPTION when auto-confirm is off. */
+  status?: 'OPTION' | 'CONFIRMED';
+  externalRef?: string;
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
@@ -138,22 +146,62 @@ export async function createReservation(input: {
   if (!roomType) throw new Error('Room type not found');
   assertActiveForNewUse(`Room type ${roomType.code}`, roomType.active);
 
-  if (input.roomId) {
-    const room = await prisma.room.findUnique({ where: { id: input.roomId } });
-    if (!room) throw new Error('Room not found');
-    assertRoomInventoryAvailable(room);
-    if (room.roomTypeId !== input.roomTypeId) throw new Error('Room does not match room type');
-    if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
-      throw new Error('Room is not available for booking');
-    }
-  }
-
   const ratePlan = await prisma.ratePlan.findUnique({ where: { id: ratePlanId } });
   if (!ratePlan) throw new Error('Rate plan not found');
   assertActiveForNewUse(`Rate plan ${ratePlan.code}`, ratePlan.active);
 
   const guestMaster = await prisma.guest.findUnique({ where: { id: input.guestId } });
   if (!guestMaster) throw new Error('Guest not found');
+
+  const shareEligible = input.shareEligible ?? false;
+  let shareGender: string | null = null;
+  let shareBedIndex: number | null = null;
+  if (shareEligible) {
+    if (agencyId) {
+      const agencyForOta = await prisma.agency.findUnique({ where: { id: agencyId } });
+      if (
+        agencyForOta &&
+        (await import('@/lib/booking-source-kind')).isOtaAgency(agencyForOta.code, agencyForOta.name)
+      ) {
+        throw new Error('OTA reservations cannot use shared twin assignment');
+      }
+    }
+    shareGender = syncShareGenderFromGuest(true, guestMaster.gender);
+    validateShareCandidate({
+      shareEligible: true,
+      shareGender,
+      adults: input.adults ?? 1,
+    });
+    await assertShareInventory(input.roomTypeId, input.checkInDate, input.checkOutDate, {
+      shareEligible: true,
+      shareGender,
+      adults: input.adults ?? 1,
+      roomId: input.roomId,
+    });
+  }
+
+  if (input.roomId) {
+    const room = await prisma.room.findUnique({ where: { id: input.roomId } });
+    if (!room) throw new Error('Room not found');
+    assertRoomInventoryAvailable(room);
+    if (room.roomTypeId !== input.roomTypeId) throw new Error('Room does not match room type');
+    const candidate = {
+      shareEligible,
+      shareGender,
+      adults: input.adults ?? 1,
+    };
+    const { shareBedIndex: bedIdx, joiningPool } = await assertRoomShareAssignable({
+      roomId: input.roomId,
+      checkIn: input.checkInDate,
+      checkOut: input.checkOutDate,
+      candidate,
+    });
+    shareBedIndex = bedIdx;
+    if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
+      throw new Error('Room is not available for booking');
+    }
+  }
+
   const copyNames = input.copyGuestNameToPax !== false;
   const guestNameParts = guestMaster.fullName.trim().split(/\s+/).filter(Boolean);
   const paxFirstName = copyNames ? guestNameParts[0] || undefined : undefined;
@@ -189,6 +237,7 @@ export async function createReservation(input: {
 
   const reservation = await prisma.reservation.create({
     data: {
+      organizationId: satelliteOrganizationId(),
       roomTypeId: input.roomTypeId,
       guestId: input.guestId,
       ratePlanId,
@@ -218,7 +267,11 @@ export async function createReservation(input: {
           ? (await prisma.salesContract.findUnique({ where: { id: salesContractId }, select: { code: true } }))
               ?.code
           : undefined),
-      status: 'CONFIRMED',
+      shareEligible,
+      shareGender,
+      shareBedIndex,
+      status: input.status ?? 'CONFIRMED',
+      externalRef: input.externalRef,
       paxGuests: {
         create: [
           {
@@ -277,17 +330,30 @@ export async function assignRoom(reservationId: string, roomId: string) {
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) throw new Error('Room not found');
   if (room.roomTypeId !== reservation.roomTypeId) throw new Error('Room type mismatch');
-  if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
+
+  const candidate = {
+    shareEligible: reservation.shareEligible,
+    shareGender: reservation.shareGender ?? reservation.guest.gender,
+    adults: reservation.adults,
+    isOta: await reservationIsOta(reservationId),
+  };
+  const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
+    roomId,
+    checkIn: reservation.checkInDate,
+    checkOut: reservation.checkOutDate,
+    excludeReservationId: reservationId,
+    candidate,
+  });
+  if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
     throw new Error(
       `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
     );
   }
-  await assertRoomFree(roomId, reservation.checkInDate, reservation.checkOutDate, reservationId);
   await assertNamedGuestsFreeOnStay(reservationId);
 
   return prisma.reservation.update({
     where: { id: reservationId },
-    data: { roomId },
+    data: { roomId, shareBedIndex },
     include: { room: true, guest: true, roomType: true, ratePlan: true },
   });
 }
@@ -319,14 +385,25 @@ export async function checkInReservation(id: string) {
   if (!reservation.roomId) throw new Error('Assign a room before check-in');
 
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
-  if (!room || !['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
+  const joiningSharePool =
+    reservation.shareEligible &&
+    isEffectiveShare({
+      shareEligible: reservation.shareEligible,
+      shareGender: reservation.shareGender,
+      adults: reservation.adults,
+    }) &&
+    room?.status === 'OCCUPIED';
+  if (
+    !room ||
+    (!joiningSharePool && !['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status))
+  ) {
     throw new Error(
       `Room ${room?.roomNumber ?? ''} is ${room?.status ?? 'missing'}; must be AVAILABLE, CLEAN, or INSPECTED for check-in`,
     );
   }
   await assertNamedGuestsFreeOnStay(id);
 
-  const revenueRoom = await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } });
+  const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({
@@ -404,11 +481,22 @@ export async function cancelReservation(id: string, noShow = false) {
   return prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({
       where: { id },
-      data: { status: noShow ? 'NO_SHOW' : 'CANCELLED' },
+      data: {
+        status: noShow ? 'NO_SHOW' : 'CANCELLED',
+        shareBedIndex: null,
+      },
       include: { room: true, guest: true },
     });
-    if (reservation.roomId && reservation.status === 'IN_HOUSE') {
-      await tx.room.update({ where: { id: reservation.roomId }, data: { status: 'DIRTY' } });
+    if (reservation.roomId) {
+      const { releaseDoorAfterShareDeparture } = await import(
+        '@/lib/services/share-assignment.service'
+      );
+      await releaseDoorAfterShareDeparture(tx, {
+        roomId: reservation.roomId,
+        excludeReservationId: id,
+        shareBedIndex: reservation.shareBedIndex,
+        wasInHouse: reservation.status === 'IN_HOUSE',
+      });
     }
     return updated;
   });
@@ -500,7 +588,24 @@ export async function assertRoomFree(
   checkIn: Date,
   checkOut: Date,
   excludeReservationId?: string,
+  candidate?: {
+    shareEligible: boolean;
+    shareGender: string | null;
+    adults: number;
+    isOta?: boolean;
+  },
 ) {
+  if (candidate?.shareEligible && isEffectiveShare(candidate)) {
+    await assertRoomShareAssignable({
+      roomId,
+      checkIn,
+      checkOut,
+      excludeReservationId,
+      candidate,
+    });
+    return;
+  }
+
   const conflict = await prisma.reservation.findFirst({
     where: {
       roomId,
@@ -544,6 +649,9 @@ export async function updateReservationSchedule(
     }
   }
 
+  const nights = countNights(newCheckIn, newCheckOut);
+  const totalAmount = toDecimal(decimalToNumber(reservation.ratePlan.pricePerNight) * nights);
+
   if (newRoomId) {
     const room = await prisma.room.findUnique({ where: { id: newRoomId } });
     if (!room) throw new Error('Room not found');
@@ -553,27 +661,57 @@ export async function updateReservationSchedule(
     if (BLOCKED_ROOM_STATUSES.includes(room.status as (typeof BLOCKED_ROOM_STATUSES)[number])) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
-    await assertRoomFree(newRoomId, newCheckIn, newCheckOut, id);
+    const candidate = {
+      shareEligible: reservation.shareEligible,
+      shareGender: reservation.shareGender,
+      adults: reservation.adults,
+      isOta: await reservationIsOta(id),
+    };
+    const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
+      roomId: newRoomId,
+      checkIn: newCheckIn,
+      checkOut: newCheckOut,
+      excludeReservationId: id,
+      candidate,
+    });
+    if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
+      throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
+    }
+    await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {
+      id,
+      shareEligible: reservation.shareEligible,
+      shareGender: reservation.shareGender,
+      adults: reservation.adults,
+      roomId: newRoomId,
+    });
+    const updated = await prisma.reservation.update({
+      where: { id },
+      data: {
+        checkInDate: newCheckIn,
+        checkOutDate: newCheckOut,
+        roomId: newRoomId,
+        shareBedIndex,
+        totalAmount,
+      },
+      include: { room: true, guest: true, ratePlan: true, roomType: true },
+    });
+    if (
+      input.checkOutDate &&
+      input.checkOutDate.getTime() !== reservation.checkOutDate.getTime()
+    ) {
+      const { recalcReservationDailyRates } = await import('./reservation-pricing.service');
+      await recalcReservationDailyRates(id).catch(() => undefined);
+    }
+    return updated;
   }
 
-  const roomType = await prisma.roomType.findUnique({ where: { id: reservation.roomTypeId } });
-  if (!roomType) throw new Error('Room type not found');
-
-  const overlapping = await prisma.reservation.count({
-    where: {
-      roomTypeId: reservation.roomTypeId,
-      id: { not: id },
-      status: { in: [...SCHEDULABLE_STATUSES] },
-      checkInDate: { lt: newCheckOut },
-      checkOutDate: { gt: newCheckIn },
-    },
+  await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {
+    id,
+    shareEligible: reservation.shareEligible,
+    shareGender: reservation.shareGender,
+    adults: reservation.adults,
+    roomId: newRoomId ?? reservation.roomId,
   });
-  if (overlapping + 1 > roomType.baseQuota) {
-    throw new Error('No availability for room type in selected dates');
-  }
-
-  const nights = countNights(newCheckIn, newCheckOut);
-  const totalAmount = toDecimal(decimalToNumber(reservation.ratePlan.pricePerNight) * nights);
 
   const updated = await prisma.reservation.update({
     where: { id },

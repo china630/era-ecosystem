@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellNumber, cellString, parseDateCell } from '@/lib/import/helpers';
 import { toDecimal } from '@/lib/decimal';
@@ -48,7 +49,7 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     };
   },
   upsert: async (tx, row, dryRun) => {
-    const reservation = await tx.reservation.findUnique({
+    const reservation = await tx.reservation.findFirst({
       where: { externalRef: row.reservationExternalRef },
       include: { folios: true },
     });
@@ -69,14 +70,19 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     let folio = reservation.folios.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
     if (!folio && !dryRun) {
       folio = await tx.folio.create({
-        data: { reservationId: reservation.id, type: 'GUEST', status: 'OPEN' },
+        data: {
+          organizationId: satelliteOrganizationId(),
+          reservationId: reservation.id,
+          type: 'GUEST',
+          status: 'OPEN',
+        },
       });
     } else if (!folio && dryRun) {
       folio = reservation.folios[0] ?? { id: 'dry-run-folio' };
     }
     if (!folio) throw new Error('Could not resolve folio for reservation');
 
-    const existing = await tx.folioCharge.findUnique({ where: { externalRef: row.externalRef } });
+    const existing = await tx.folioCharge.findFirst({ where: { externalRef: row.externalRef } });
     const data = {
       externalRef: row.externalRef,
       folioId: folio.id,
@@ -90,7 +96,7 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (dryRun) return existing ? 'updated' : 'created';
 
     await tx.folioCharge.upsert({
-      where: { externalRef: row.externalRef },
+      where: { externalRef: row.externalRef } as never,
       create: data,
       update: {
         revenueCodeId: data.revenueCodeId,

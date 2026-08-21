@@ -51,6 +51,31 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 - [x] Front cash journal (payments + HELD deposits + pending + method totals)
 - [s] Year-end close/open (preview only; `YEAR_END_NOT_ENABLED`)
 
+## Stage 4b — Management Reports W1 (HOT-RPT-01/02)
+
+> **Honesty (2026-08-19):** 8 P0 reports delivered (screen + PDF + nightly ZIP). Status **API** — not SHIPPED (no UAT-SMOKE §30 evidence yet).
+
+- [~] Report catalog kernel (`src/lib/reports/catalog`, period, locale, pdf-font, pdf-render)
+- [~] 8 P0 query services + screen pages + PDF export (daily-management, trial-balance-period, cash-report, monthly-daily-analysis, in-house, annual-occupancy, folio-transactions, department-revenues)
+- [~] Report hub pages (`/reports`, `/reports/analysis`, `/reports/occupancy`, `/reports/daily`, `/reports/financial`, `/reports/agency`, `/reports/booking`, `/reports/nightly-pack`)
+- [~] ZIP pack download (`/api/reports/pack/download`)
+- [~] ReportFilterBar component
+- [~] Pack config admin page (`/settings/report-pack`)
+- [~] HotelOpsShell sidebar restructured with hierarchical reports nav
+- [~] i18n keys en/az/ru (nav + reportsPdf namespace)
+- [~] NA `/night-audit/reports` deep links + FO in-house link
+
+## Stage 4c — Management Reports W2/W3
+
+> **Honesty (2026-08-19):** P1 remaining catalog + Daily Management tabs + pivot cubes + 3-year comparatives + email-cron ZIP link (HEADLESS). Status **API/SCREEN** — not SHIPPED.
+
+- [~] P1 occupancy / analysis / daily / financial / agency / booking query services
+- [~] Daily Management tabs (`/reports/daily/management`)
+- [~] Pivot cubes (`/reports/analysis/cubes`) — not OLAP; Task Cube skipped
+- [~] 3-year occupancy/revenue comparatives
+- [~] Email cron body = ZIP download URL (`lang` from `HOTEL_REPORT_EMAIL_LOCALE`, default az)
+- [~] Negative path `__tests__/hotel-reports-negative.spec.ts`
+
 ## Stage 5 — Satellite bridge (doc 19)
 
 - [x] Checkout event from FolioCharge (revenue code SKUs)

@@ -1,19 +1,11 @@
-import { z } from 'zod';
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import {
   listAgencyTransferredFolios,
-  recordAgencySettlementPayment,
 } from '@/lib/services/agency-settlement.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-
-const paySchema = z.object({
-  amount: z.number().positive(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']).optional(),
-  registerRef: z.string().optional(),
-});
 
 export async function GET(
   _request: Request,
@@ -36,12 +28,9 @@ export async function POST(
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
-    const { id } = await params;
-    const body = paySchema.parse(await request.json());
-    return jsonOk(
-      serialize(await recordAgencySettlementPayment({ agencyId: id, ...body })),
-      201,
-    );
+    // Hotel does not accept agency money: it must be booked in Finance.
+    // Cash (5–10% edge cases) is handled as a manual "handoff to accountant" process.
+    return jsonError('Agency settlement is paid in Finance only (City Ledger handoff).', 409);
   } catch (err) {
     return handleRouteError(err);
   }

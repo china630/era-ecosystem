@@ -8,7 +8,7 @@ Coverage: `docs/COVERAGE_MATRIX.md`. UAT: [`UAT-SMOKE.md`](./UAT-SMOKE.md) §28.
 | ID | Capability | Status | Showable? | Caveat |
 |----|------------|--------|-----------|--------|
 | HOT-CASH-06 | Cash journal deepen | **SHIPPED** | Yes | Not a full cash-shift Z / register close report |
-| HOT-NA-03 | EOD hub + P1 grids | **SHIPPED** | Yes | Four real grids + hub; **not** Elektraweb 01–22 archive parity |
+| HOT-NA-03 | EOD hub + P1 grids | **SHIPPED** | Yes | Four real grids + hub; **not** Elektraweb Management PDF catalog (HOT-RPT spec) |
 | HOT-NA-04 | Reservation updates | **SHIPPED** | Yes | Action kinds are heuristics on audit/status/notes |
 | HOT-NA-05 | Year-end | **STUB** | Preview only | ADR `hotel-year-end-calendar`; POST always `YEAR_END_NOT_ENABLED` |
 | HOT-NA-01/02 | Core EOD + polish | **SHIPPED** | Yes | Path `/night-audit` (unchanged product depth) |

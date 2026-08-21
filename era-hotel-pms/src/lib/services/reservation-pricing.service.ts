@@ -75,10 +75,11 @@ export async function recalcReservationDailyRates(reservationId: string) {
     children11_6: res.children11_6,
   });
 
-  const occupancySupplement = policy.occupancyPricingEnabled
-    ? decimalToNumber(
-        computeOccupancyNightlySupplement({
-          adults: res.adults,
+  const occupancySupplement =
+    policy.occupancyPricingEnabled && !res.shareEligible
+      ? decimalToNumber(
+          computeOccupancyNightlySupplement({
+            adults: res.adults,
           baseOccupancy: res.ratePlan.baseOccupancy ?? 1,
           extraAdultAmount:
             res.ratePlan.extraAdultAmount == null
@@ -95,7 +96,7 @@ export async function recalcReservationDailyRates(reservationId: string) {
               : decimalToNumber(res.ratePlan.extraBedAmount),
         }),
       )
-    : 0;
+      : 0;
 
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   const nightlyByDate = new Map(quoteResult.nightlyRates.map((n) => [n.date, n.amount]));
@@ -194,7 +195,7 @@ export async function chargeAllRoomNights(reservationId: string) {
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
 
-  const revenueRoom = await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } });
+  const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
   if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
 
   let rates = res.dailyRates;

@@ -15,6 +15,7 @@ import {
   RACK_BORDER_CLASS,
   RACK_SWATCH_CLASS,
   rackNumberTextClass,
+  formatSharePoolBadge,
   canQuickBookRoom,
   type RackDisplayState,
 } from '@/lib/room-rack-display';
@@ -60,6 +61,7 @@ export type RoomRackRoom = {
     sourceCode?: string | null;
   }>;
   rackDisplayState?: RackDisplayState;
+  sharePool?: { gender: string; occupied: number; capacity: number } | null;
 };
 
 function formatStayRange(checkIn?: string, checkOut?: string): string {
@@ -469,7 +471,16 @@ export default function RoomRackView({
                   <div className={`text-[11px] font-semibold uppercase ${textCls}`}>
                     {tRoom(room.status)}
                   </div>
-                  <div className={`text-xl font-bold ${textCls}`}>{room.roomNumber}</div>
+                  <div className={`flex items-center gap-1 text-xl font-bold ${textCls}`}>
+                    <span>{room.roomNumber}</span>
+                    {room.sharePool ? (
+                      <span
+                        className={`text-[11px] font-semibold ${formatSharePoolBadge(room.sharePool).className}`}
+                      >
+                        {formatSharePoolBadge(room.sharePool).text}
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="text-[12px] text-[#7F8C8D]">{room.roomType.code}</div>
                   {active ? (
                     <div className="mt-2 space-y-1">

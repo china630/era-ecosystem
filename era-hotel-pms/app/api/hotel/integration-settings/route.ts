@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -45,7 +46,7 @@ export async function GET() {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const settings = await getOutboundSettings();
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    const organizationId = satelliteOrganizationId();
     let platformSubscription: unknown = null;
     if (organizationId) {
       try {
@@ -73,7 +74,7 @@ export async function PATCH(request: Request) {
       urls: { ...current.urls, ...partial.urls },
     };
     await saveIntegrationSettings(merged);
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    const organizationId = satelliteOrganizationId();
     if (organizationId && partial.customHostname?.trim()) {
       try {
         await createCustomDomain(

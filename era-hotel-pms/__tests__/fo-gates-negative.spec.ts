@@ -3,6 +3,7 @@ jest.mock('@/lib/prisma', () => ({
     reservation: {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
       count: jest.fn(),
       update: jest.fn(),
     },
@@ -131,6 +132,8 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         status: 'CONFIRMED',
         roomTypeId: 'rt1',
         adults: 1,
+        shareEligible: false,
+        shareGender: null,
         guest: { fullName: 'Ali Mammadov' },
         paxGuests: [{ firstName: 'Ali', lastName: 'Mammadov', isPrimary: true }],
         checkInDate: new Date('2026-08-10'),
@@ -141,7 +144,9 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         roomNumber: '402',
         roomTypeId: 'rt1',
         status: 'DIRTY',
+        roomType: { adultCapacity: 2 },
       });
+      prisma.reservation.findMany.mockResolvedValue([]);
       const { assignRoom } = await import('@/lib/services/reservation.service');
       await expect(assignRoom('r1', 'room1')).rejects.toThrow(/DIRTY/);
     });
@@ -154,9 +159,20 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
       prisma.roomType.findUnique.mockResolvedValue({
         id: 'rt1',
         baseQuota: 1,
+        adultCapacity: 2,
         active: true,
       });
-      prisma.reservation.count.mockResolvedValue(1);
+      prisma.reservation.findMany.mockResolvedValue([
+        {
+          id: 'other',
+          roomId: null,
+          shareEligible: false,
+          shareGender: null,
+          adults: 1,
+          checkInDate: new Date('2026-08-10'),
+          checkOutDate: new Date('2026-08-13'),
+        },
+      ]);
       prisma.room.findUnique.mockResolvedValue(null);
 
       // createReservation needs more mocks — call getAvailability path via updateReservationSchedule
@@ -167,6 +183,9 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         checkOutDate: new Date('2026-08-12'),
         roomId: null,
         roomTypeId: 'rt1',
+        shareEligible: false,
+        shareGender: null,
+        adults: 1,
         ratePlan: { pricePerNight: 100 },
       });
       // getReservation is used inside updateReservationSchedule
@@ -179,13 +198,15 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         checkOutDate: new Date('2026-08-12'),
         roomId: null,
         roomTypeId: 'rt1',
+        shareEligible: false,
+        shareGender: null,
+        adults: 1,
         ratePlan: { pricePerNight: 100 },
         guest: { fullName: 'Ali' },
         room: null,
         roomType: { id: 'rt1', baseQuota: 1 },
       });
-      prisma.roomType.findUnique.mockResolvedValue({ id: 'rt1', baseQuota: 1 });
-      prisma.reservation.count.mockResolvedValue(1);
+      prisma.roomType.findUnique.mockResolvedValue({ id: 'rt1', baseQuota: 1, adultCapacity: 2 });
 
       await expect(
         svc.updateReservationSchedule('r1', {

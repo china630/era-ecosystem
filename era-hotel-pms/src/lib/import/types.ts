@@ -1,13 +1,12 @@
-import type { Prisma } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
+import type { SatellitePrisma } from '@era/satellite-kit/tenancy';
 import type { Permission } from '@/lib/auth/permissions';
 import type { z } from 'zod';
 
 export type UpsertOutcome = 'created' | 'updated' | 'skipped';
 
-export type ImportTx = Omit<
-  Prisma.TransactionClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'
->;
+/** Import adapters use the extended client (kit stamps organizationId). */
+export type ImportTx = SatellitePrisma<PrismaClient>;
 
 export type ImportRowError = {
   row: number;

@@ -11,6 +11,8 @@ const bodySchema = z
     transferToCityLedger: z.boolean().optional(),
     discountAmount: z.number().positive().optional(),
     discountDescription: z.string().max(200).optional(),
+    unusedNightsRefundMethod: z.enum(['CASH', 'CARD']).optional(),
+    unusedNightsReason: z.string().max(500).optional(),
   })
   .optional();
 

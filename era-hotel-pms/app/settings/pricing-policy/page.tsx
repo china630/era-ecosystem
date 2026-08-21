@@ -18,6 +18,7 @@ type PricingPolicy = {
   occupancyPricingEnabled: boolean;
   loadBasedPricingEnabled: boolean;
   childAbsolutePricingEnabled: boolean;
+  agencyPortalAutoConfirm: boolean;
 };
 
 export default function PricingPolicyPage() {
@@ -40,6 +41,7 @@ export default function PricingPolicyPage() {
         occupancyPricingEnabled: Boolean(data.occupancyPricingEnabled),
         loadBasedPricingEnabled: Boolean(data.loadBasedPricingEnabled),
         childAbsolutePricingEnabled: Boolean(data.childAbsolutePricingEnabled),
+        agencyPortalAutoConfirm: Boolean(data.agencyPortalAutoConfirm),
       });
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
@@ -68,6 +70,7 @@ export default function PricingPolicyPage() {
         occupancyPricingEnabled: Boolean(data.occupancyPricingEnabled),
         loadBasedPricingEnabled: Boolean(data.loadBasedPricingEnabled),
         childAbsolutePricingEnabled: Boolean(data.childAbsolutePricingEnabled),
+        agencyPortalAutoConfirm: Boolean(data.agencyPortalAutoConfirm),
       });
       showSuccess(t('saved'));
     } catch (e) {
@@ -132,6 +135,21 @@ export default function PricingPolicyPage() {
               <strong className="font-semibold">{t('childAbsolute')}</strong>
               <br />
               <span className="text-[#7F8C8D]">{t('childAbsoluteHint')}</span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 text-[13px] text-[#34495E]">
+            <input
+              type="checkbox"
+              className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+              checked={policy.agencyPortalAutoConfirm}
+              disabled={!canWrite}
+              onChange={() => toggle('agencyPortalAutoConfirm')}
+            />
+            <span>
+              <strong className="font-semibold">{t('agencyPortalAutoConfirm')}</strong>
+              <br />
+              <span className="text-[#7F8C8D]">{t('agencyPortalAutoConfirmHint')}</span>
             </span>
           </label>
 

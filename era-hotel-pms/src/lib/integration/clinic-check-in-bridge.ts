@@ -1,3 +1,5 @@
+import { satelliteOrganizationId } from "@era/satellite-kit";
+
 type ClinicCheckInInput = {
   reservationId: string;
   guestName: string;
@@ -26,12 +28,17 @@ export async function notifyClinicCheckIn(input: ClinicCheckInInput): Promise<vo
     return;
   }
 
-  const organizationId =
-    input.organizationId ??
-    process.env.ERA_SATELLITE_ORGANIZATION_ID ??
-    process.env.ORGANIZATION_ID;
+  let organizationId = input.organizationId;
   if (!organizationId) {
-    console.warn('notifyClinicCheckIn skipped: organizationId missing');
+    try {
+      organizationId = satelliteOrganizationId();
+    } catch {
+      console.warn("notifyClinicCheckIn skipped: organizationId missing");
+      return;
+    }
+  }
+  if (!organizationId || organizationId === "demo-org") {
+    console.warn("notifyClinicCheckIn skipped: organizationId missing");
     return;
   }
 

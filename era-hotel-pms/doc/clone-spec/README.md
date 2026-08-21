@@ -42,7 +42,7 @@
 
 | 6 | [06-channel-crm-med.md](06-channel-crm-med.md) | OTA, CRM, мед. | **Углублённо** |
 
-| 7 | [07-night-audit-and-reports.md](07-night-audit-and-reports.md) | Night audit | **Углублённо** |
+| 7 | [07-night-audit-and-reports.md](07-night-audit-and-reports.md) | Night audit + reports | **Углублённо** · catalog [`../MANAGEMENT-REPORTS-CATALOG.md`](../MANAGEMENT-REPORTS-CATALOG.md) |
 
 | 8 | [08-erp-handoff.md](08-erp-handoff.md) | События E1–E5 (кратко) | Концепт |
 

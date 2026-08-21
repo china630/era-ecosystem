@@ -91,6 +91,40 @@ export default function FolioPage() {
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [checkoutConfirmOpen, setCheckoutConfirmOpen] = useState(false);
+  const [earlyCheckout, setEarlyCheckout] = useState<{
+    applicable: boolean;
+    unusedNights: number;
+    unusedSellGross: number;
+    vatWithheld: number;
+    refundNet: number;
+    guestCashRefund: number;
+  } | null>(null);
+  const [unusedNightsRefundMethod, setUnusedNightsRefundMethod] = useState<'CASH' | 'CARD'>('CASH');
+  const [unusedNightsReason, setUnusedNightsReason] = useState('');
+
+  async function openCheckoutConfirm() {
+    setUnusedNightsRefundMethod('CASH');
+    setUnusedNightsReason('');
+    setEarlyCheckout(null);
+    setCheckoutConfirmOpen(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/early-checkout-preview`);
+      const data = await res.json();
+      const payload = data.data ?? data;
+      if (res.ok && payload) {
+        setEarlyCheckout({
+          applicable: !!payload.applicable,
+          unusedNights: Number(payload.unusedNights) || 0,
+          unusedSellGross: Number(payload.unusedSellGross) || 0,
+          vatWithheld: Number(payload.vatWithheld) || 0,
+          refundNet: Number(payload.refundNet) || 0,
+          guestCashRefund: Number(payload.guestCashRefund) || 0,
+        });
+      }
+    } catch {
+      /* preview optional */
+    }
+  }
 
   const load = useCallback(async () => {
     const [fRes, rRes, resRes] = await Promise.all([
@@ -274,6 +308,14 @@ export default function FolioPage() {
       body: JSON.stringify({
         transferToCityLedger: transferToCl,
         discountAmount: discountAmount ? parseFloat(discountAmount) : undefined,
+        unusedNightsRefundMethod:
+          earlyCheckout?.applicable && earlyCheckout.guestCashRefund > 0
+            ? unusedNightsRefundMethod
+            : undefined,
+        unusedNightsReason:
+          earlyCheckout?.applicable && unusedNightsReason.trim()
+            ? unusedNightsReason.trim()
+            : undefined,
       }),
     });
     const data = await res.json();
@@ -362,7 +404,7 @@ export default function FolioPage() {
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
-              onClick={() => setCheckoutConfirmOpen(true)}
+              onClick={() => void openCheckoutConfirm()}
             >
               {t('checkOut')}
             </button>
@@ -670,6 +712,44 @@ export default function FolioPage() {
           </p>
           {transferToCl ? (
             <p className="m-0 text-amber-800">{t('checkoutClConfirmWarn')}</p>
+          ) : null}
+          {earlyCheckout?.applicable ? (
+            <div className="mt-2 space-y-2 rounded border border-[#BDC3C7] bg-[#F8F9F9] p-3">
+              <p className="m-0 font-medium">{t('earlyCheckoutTitle')}</p>
+              <p className="m-0">
+                {t('earlyCheckoutNights', { count: earlyCheckout.unusedNights })}
+              </p>
+              <p className="m-0">
+                {t('earlyCheckoutGross', { amount: earlyCheckout.unusedSellGross.toFixed(2) })}
+              </p>
+              <p className="m-0">
+                {t('earlyCheckoutVat', { amount: earlyCheckout.vatWithheld.toFixed(2) })}
+              </p>
+              <p className="m-0">
+                {t('earlyCheckoutCash', { amount: earlyCheckout.guestCashRefund.toFixed(2) })}
+              </p>
+              {earlyCheckout.guestCashRefund > 0 ? (
+                <>
+                  <FieldSelect
+                    label={t('earlyCheckoutTender')}
+                    preset="select"
+                    value={unusedNightsRefundMethod}
+                    onChange={(e) =>
+                      setUnusedNightsRefundMethod(e.target.value as 'CASH' | 'CARD')
+                    }
+                  >
+                    <option value="CASH">CASH</option>
+                    <option value="CARD">CARD</option>
+                  </FieldSelect>
+                  <Field
+                    label={t('earlyCheckoutReason')}
+                    preset="shortText"
+                    value={unusedNightsReason}
+                    onChange={(e) => setUnusedNightsReason(e.target.value)}
+                  />
+                </>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </EraModal>

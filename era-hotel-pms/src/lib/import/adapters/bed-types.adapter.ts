@@ -30,10 +30,10 @@ export const bedTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     };
   },
   upsert: async (tx, row, dryRun) => {
-    const existing = await tx.bedType.findUnique({ where: { code: row.code } });
+    const existing = await tx.bedType.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.bedType.upsert({
-      where: { code: row.code },
+      where: { code: row.code } as never,
       create: {
         code: row.code,
         name: row.name,

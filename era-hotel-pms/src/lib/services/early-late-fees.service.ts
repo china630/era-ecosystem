@@ -92,8 +92,8 @@ export async function postEarlyCheckInFee(reservationId: string, checkInTime?: s
   if (preview.earlyFee <= 0) return { posted: false, amount: 0 };
 
   const code =
-    (await prisma.revenueCode.findUnique({ where: { code: 'EARLY_CI' } })) ??
-    (await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } }));
+    (await prisma.revenueCode.findFirst({ where: { code: 'EARLY_CI' } })) ??
+    (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
   if (!code) throw new Error('Revenue code not configured');
 
   const bizDate = await getCurrentBusinessDate();
@@ -112,8 +112,8 @@ export async function postLateCheckOutFee(reservationId: string, checkOutTime?: 
   if (preview.lateFee <= 0) return { posted: false, amount: 0 };
 
   const code =
-    (await prisma.revenueCode.findUnique({ where: { code: 'LATE_CO' } })) ??
-    (await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } }));
+    (await prisma.revenueCode.findFirst({ where: { code: 'LATE_CO' } })) ??
+    (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
   if (!code) throw new Error('Revenue code not configured');
 
   const bizDate = await getCurrentBusinessDate();

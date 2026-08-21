@@ -7,6 +7,7 @@ import {
   mapRoomStatus,
 } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
+import { isShareRoomNumberSuffix } from '@/lib/integration/elektraweb-share-map';
 
 const rowSchema = z.object({
   roomNumber: z.string().min(1),
@@ -56,6 +57,10 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     deleted: cellBool(raw.deleted),
   }),
   upsert: async (tx, row, dryRun) => {
+    // EW FO list suffix 707S is not a master room — skip virtual share labels.
+    if (isShareRoomNumberSuffix(row.roomNumber)) {
+      return 'skipped';
+    }
     const roomType = await tx.roomType.findFirst({
       where: {
         OR: [
@@ -67,7 +72,7 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (!roomType) {
       throw new Error(`Room type not found: ${row.roomTypeCode}`);
     }
-    const existing = await tx.room.findUnique({ where: { roomNumber: row.roomNumber } });
+    const existing = await tx.room.findFirst({ where: { roomNumber: row.roomNumber } });
     const data = {
       roomTypeId: roomType.id,
       floor: row.floor ?? 1,
@@ -82,7 +87,7 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     };
     if (dryRun) return existing ? 'updated' : 'created';
     await tx.room.upsert({
-      where: { roomNumber: row.roomNumber },
+      where: { roomNumber: row.roomNumber } as never,
       create: { roomNumber: row.roomNumber, ...data },
       update: data,
     });

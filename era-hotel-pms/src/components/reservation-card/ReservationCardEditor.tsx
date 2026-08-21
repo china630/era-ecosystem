@@ -122,6 +122,9 @@ export function ReservationCardEditor({
   const [rateType, setRateType] = useState('');
   const [resNo, setResNo] = useState('');
   const [shareNo, setShareNo] = useState('');
+  const [shareEligible, setShareEligible] = useState(false);
+  const [guestGender, setGuestGender] = useState('');
+  const [shareNeighborHint, setShareNeighborHint] = useState('');
   const [optionDate, setOptionDate] = useState('');
   const [optionState, setOptionState] = useState('');
   const [salesProject, setSalesProject] = useState('');
@@ -222,6 +225,20 @@ export function ReservationCardEditor({
     setRateType(String(json.rateType ?? ''));
     setResNo(String(json.resNo ?? ''));
     setShareNo(String(json.shareNo ?? ''));
+    setShareEligible(Boolean(json.shareEligible));
+    const guestObj = json.guest as { gender?: string | null } | undefined;
+    setGuestGender(String(json.shareGender ?? guestObj?.gender ?? ''));
+    const neighbors = json.shareNeighbors as
+      | Array<{ guestName: string; checkInDate: string; checkOutDate: string }>
+      | undefined;
+    if (neighbors && neighbors.length > 0) {
+      const n = neighbors[0]!;
+      setShareNeighborHint(
+        `${n.guestName} (${String(n.checkInDate).slice(0, 10)} – ${String(n.checkOutDate).slice(0, 10)})`,
+      );
+    } else {
+      setShareNeighborHint('');
+    }
     setOptionDate(json.optionDate ? String(json.optionDate).slice(0, 10) : '');
     setOptionState(String(json.optionState ?? ''));
     setSalesProject(String(json.salesProject ?? ''));
@@ -800,6 +817,27 @@ export function ReservationCardEditor({
     }
   }
 
+  async function breakShare() {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/full`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shareEligible: false }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      showSuccess(t('breakShareDone'));
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const leftPatch = useMemo(
     () => ({
       checkIn,
@@ -823,6 +861,9 @@ export function ReservationCardEditor({
       segment,
       resNo,
       shareNo,
+      shareEligible,
+      guestGender,
+      shareNeighborHint,
       optionDate,
       optionState,
       salesProject,
@@ -865,6 +906,9 @@ export function ReservationCardEditor({
       segment,
       resNo,
       shareNo,
+      shareEligible,
+      guestGender,
+      shareNeighborHint,
       optionDate,
       optionState,
       salesProject,
@@ -904,6 +948,17 @@ export function ReservationCardEditor({
       setAgencyId('');
       setSalesContractId('');
       setContractRef('');
+      setShareEligible(false);
+    }
+    if (patch.agencyId !== undefined && patch.agencyId !== agencyId) {
+      const agency = agencies.find((a) => a.id === patch.agencyId);
+      const genderOk = guestGender === 'M' || guestGender === 'F';
+      if (isCreate && agency && !agency.isOta && Number(adults) <= 1 && genderOk) {
+        setShareEligible(true);
+      }
+      if (agency?.isOta) {
+        setShareEligible(false);
+      }
     }
     if (patch.salesContractId !== undefined) {
       const cid = patch.salesContractId;
@@ -965,6 +1020,9 @@ export function ReservationCardEditor({
         patch.children5_2 !== undefined ? Number(patch.children5_2) || 0 : nextC5;
       nextC1 =
         patch.children1_0 !== undefined ? Number(patch.children1_0) || 0 : nextC1;
+      if (nextAdults !== 1) {
+        setShareEligible(false);
+      }
     }
 
     const m: Record<string, (v: string) => void> = {
@@ -990,6 +1048,8 @@ export function ReservationCardEditor({
       segment: setSegment,
       resNo: setResNo,
       shareNo: setShareNo,
+      shareEligible: (v) => setShareEligible(v === 'true'),
+      guestGender: setGuestGender,
       optionDate: setOptionDate,
       optionState: setOptionState,
       salesProject: setSalesProject,
@@ -1112,6 +1172,8 @@ export function ReservationCardEditor({
             checkInDate: mergeDateTime(checkIn, checkInTime),
             checkOutDate: mergeDateTime(checkOut, checkOutTime),
             paymentMethod,
+            adults: Number(adults) || 1,
+            shareEligible: shareEligible && Number(adults) === 1,
           }),
         });
         const json = await res.json();
@@ -1135,6 +1197,17 @@ export function ReservationCardEditor({
           return;
         }
       }
+      if (shareEligible && !guestGender) {
+        showApiError({ error: t('shareGenderRequired') }, tc('failed'));
+        return;
+      }
+      if (guestId && guestGender) {
+        await fetch(`/api/guests/${guestId}/full`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gender: guestGender }),
+        }).catch(() => undefined);
+      }
       const res = await fetch(`/api/reservations/${reservationId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1155,6 +1228,7 @@ export function ReservationCardEditor({
           rateType: rateType || null,
           resNo: resNo || null,
           shareNo: shareNo || null,
+          shareEligible: shareEligible && Number(adults) === 1,
           optionDate: optionDate ? new Date(optionDate).toISOString() : null,
           optionState: optionState || null,
           salesProject: salesProject || null,
@@ -1426,6 +1500,12 @@ export function ReservationCardEditor({
             reservationId={reservationId}
             folioBalance={guestFolioBalance}
             statusLabel={status ? tRes(status as 'CONFIRMED') : undefined}
+            onBreakShare={
+              !isCreate && shareEligible
+                ? () => void breakShare()
+                : undefined
+            }
+            breakShareBusy={busy}
             {...leftPatch}
           />
 

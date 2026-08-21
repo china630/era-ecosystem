@@ -172,7 +172,7 @@ export async function postMinibar(input: {
   if (input.reservationId) {
     const { postCharge } = await import('@/lib/services/folio.service');
     const fb = await prisma.revenueCode.findFirst({ where: { code: 'MINIBAR' } });
-    const code = fb ?? (await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } }));
+    const code = fb ?? (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
     if (code) {
       await postCharge({
         reservationId: input.reservationId,

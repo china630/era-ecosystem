@@ -1,4 +1,5 @@
 import { ROLE_CODES, type RoleCode } from '@/lib/auth/permissions';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 
 const BRIDGE_ROLES = new Set<string>([
   ROLE_CODES.HOTEL_ADMIN,
@@ -13,14 +14,7 @@ export function isElektrawebBridgeEnabled(): boolean {
 
 /** ERA tenant for this hotel-pms deployment (single-org satellite). */
 export function getBridgeOrganizationId(): string {
-  const org =
-    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-    process.env.ORGANIZATION_ID?.trim() ||
-    '';
-  if (!org) {
-    throw new Error('ERA_SATELLITE_ORGANIZATION_ID is not configured');
-  }
-  return org;
+  return satelliteOrganizationId();
 }
 
 /** Elektraweb property id (e.g. Nafta 31606) — must match payload HOTELID. */

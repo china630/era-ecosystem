@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma';
+import { decimalToNumber } from '@/lib/decimal';
+import { folioBalance } from '@/lib/services/folio.service';
 import {
   addHotelDays,
   hotelDateKey,
@@ -26,11 +28,20 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       checkOutDate: { gt: from },
     },
     include: {
-      guest: true,
-      roomType: true,
-      room: true,
-      agency: true,
-      source: true,
+      guest: { select: { fullName: true } },
+      roomType: { select: { code: true } },
+      room: { select: { roomNumber: true } },
+      agency: { select: { name: true } },
+      source: { select: { name: true, code: true } },
+      mealPlan: { select: { code: true } },
+      notes: { select: { noteType: true, text: true } },
+      folios: {
+        select: {
+          type: true,
+          charges: { select: { amount: true, qty: true } },
+          payments: { select: { amount: true, kind: true } },
+        },
+      },
     },
     orderBy: { checkInDate: 'asc' },
   });
@@ -53,6 +64,60 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
 
   const occupiedByDay = new Map<string, Set<string>>();
   for (const dk of dateKeys) occupiedByDay.set(dk, new Set());
+
+  function pickNote(notes: Array<{ noteType: string; text: string }>, voucherNo: string | null) {
+    const preferred =
+      notes.find((n) => n.noteType === 'RES_NOTE' && n.text.trim()) ??
+      notes.find((n) => n.text.trim());
+    const text = preferred?.text.trim() || '';
+    if (voucherNo && text) return text.includes(voucherNo) ? text : `${voucherNo} · ${text}`;
+    return text || voucherNo || null;
+  }
+
+  function mapBar(r: (typeof reservations)[number]) {
+    const nights = Math.max(
+      1,
+      Math.round(
+        (r.checkOutDate.getTime() - r.checkInDate.getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    );
+    const total = decimalToNumber(r.totalAmount);
+    const guestFolios = r.folios.filter((f) => f.type === 'GUEST');
+    const agencyFolios = r.folios.filter((f) => f.type === 'AGENCY' || f.type === 'COMPANY');
+    const sumBal = (folios: typeof r.folios) =>
+      folios.reduce((s, f) => s + folioBalance(f.charges, f.payments), 0);
+    const daily =
+      r.manualDailyRate != null ? decimalToNumber(r.manualDailyRate) : total / nights;
+    return {
+      id: r.id,
+      resNo: r.resNo,
+      roomId: r.roomId,
+      checkInDate: r.checkInDate.toISOString(),
+      checkOutDate: r.checkOutDate.toISOString(),
+      status: r.status,
+      paymentMethod: r.paymentMethod,
+      paidBy: r.paidBy,
+      totalAmount: total,
+      dailyRate: Number.isFinite(daily) ? Math.round(daily * 100) / 100 : null,
+      guestBalance: guestFolios.length ? Math.round(sumBal(guestFolios) * 100) / 100 : null,
+      agencyBalance: agencyFolios.length ? Math.round(sumBal(agencyFolios) * 100) / 100 : null,
+      adults: r.adults,
+      children11_6: r.children11_6,
+      children5_2: r.children5_2,
+      children1_0: r.children1_0,
+      mealPlanCode: r.mealPlan?.code ?? null,
+      voucherNo: r.voucherNo,
+      note: pickNote(r.notes, r.voucherNo),
+      shareEligible: r.shareEligible,
+      shareGender: r.shareGender,
+      shareBedIndex: r.shareBedIndex,
+      guest: r.guest,
+      roomType: r.roomType,
+      room: r.room,
+      agency: r.agency,
+      source: r.source,
+    };
+  }
 
   for (const r of reservations) {
     if (!r.roomId) continue;
@@ -121,8 +186,23 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     from: fromKey,
     days,
     to: to.toISOString(),
-    rooms,
-    reservations,
+    rooms: rooms.map((room) => {
+      const roomRes = reservations.filter((r) => r.roomId === room.id);
+      const shareStays = roomRes.filter(
+        (r) => r.shareEligible && r.shareGender && r.adults === 1,
+      );
+      const maxBed = room.maxBed ?? room.roomType.adultCapacity ?? 2;
+      let sharePool: { gender: string; occupied: number; capacity: number } | null = null;
+      if (shareStays.length > 0) {
+        sharePool = {
+          gender: shareStays[0]!.shareGender!,
+          occupied: shareStays.length,
+          capacity: maxBed,
+        };
+      }
+      return { ...room, sharePool };
+    }),
+    reservations: reservations.map(mapBar),
     unassigned,
     availabilityByDay,
     groups,

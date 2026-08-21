@@ -1,9 +1,10 @@
-import { z } from 'zod';
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { createBookingSlot } from '@/integration/control-plane-platform.client';
+import { z } from "zod";
+import { satelliteOrganizationId, requireSatelliteModule } from "@era/satellite-kit";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { createBookingSlot } from "@/integration/control-plane-platform.client";
 
 const bodySchema = z.object({
-  resourceKey: z.string().min(1).max(64).default('spa-cabin-1'),
+  resourceKey: z.string().min(1).max(64).default("spa-cabin-1"),
   resourceName: z.string().max(256).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
@@ -12,10 +13,12 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    await requireSatelliteModule("industry_hotel_pms");
+    await requireSatelliteModule("hotel_spa_scheduling");
     const body = bodySchema.parse(await req.json());
-    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    const organizationId = satelliteOrganizationId();
     if (!organizationId) {
-      return jsonOk({ skipped: true, reason: 'ERA_SATELLITE_ORGANIZATION_ID not set' });
+      return jsonOk({ skipped: true, reason: "ERA_SATELLITE_ORGANIZATION_ID not set" });
     }
 
     const slot = await createBookingSlot(
