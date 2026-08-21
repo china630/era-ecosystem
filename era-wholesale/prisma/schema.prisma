@@ -9,10 +9,13 @@ datasource db {
 
 model Tenant {
   id        String   @id @default(cuid())
-  code      String   @unique
+  organizationId String @map("organization_id")
+  code String
   name      String
   createdAt DateTime @default(now())
   outlets   Outlet[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 enum B2BOrderStatus {
@@ -29,6 +32,7 @@ enum OrderChannel {
 
 model Outlet {
   id        String   @id @default(cuid())
+  organizationId String @map("organization_id")
   tenantId  String
   code      String
   name      String
@@ -37,11 +41,13 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+  @@index([organizationId])
 }
 
 model B2BOrder {
   id                  String         @id @default(cuid())
-  orderNumber         String         @unique
+  organizationId String @map("organization_id")
+  orderNumber String
   buyerCounterpartyId String
   channel             OrderChannel   @default(B2B)
   status              B2BOrderStatus @default(DRAFT)
@@ -57,6 +63,8 @@ model B2BOrder {
   ttnIssuedAt         DateTime?
   pickList            PickList?
   createdAt           DateTime       @default(now())
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId])
 }
 
 enum ImportPurchaseOrderStatus {
@@ -67,7 +75,8 @@ enum ImportPurchaseOrderStatus {
 
 model ImportPurchaseOrder {
   id                      String                    @id @default(cuid())
-  externalRef             String                    @unique
+  organizationId String @map("organization_id")
+  externalRef String
   supplierCounterpartyId  String?
   supplierVoen            String?
   currencyCode            String                    @default("USD")
@@ -79,10 +88,13 @@ model ImportPurchaseOrder {
   lines                   ImportPurchaseOrderLine[]
   createdAt               DateTime                  @default(now())
   confirmedAt             DateTime?
+  @@unique([organizationId, externalRef])
+  @@index([organizationId])
 }
 
 model ImportPurchaseOrderLine {
   id              String              @id @default(cuid())
+  organizationId String @map("organization_id")
   importOrderId   String
   sku             String
   quantity        Decimal             @db.Decimal(12, 3)
@@ -90,10 +102,12 @@ model ImportPurchaseOrderLine {
   importOrder     ImportPurchaseOrder @relation(fields: [importOrderId], references: [id], onDelete: Cascade)
 
   @@index([importOrderId])
+  @@index([organizationId])
 }
 
 model PickList {
   id        String         @id @default(cuid())
+  organizationId String @map("organization_id")
   orderId   String         @unique
   waveCode  String?
   status    String         @default("OPEN")
@@ -102,10 +116,12 @@ model PickList {
   createdAt DateTime       @default(now())
 
   @@index([waveCode])
+  @@index([organizationId])
 }
 
 model PickListLine {
   id         String   @id @default(cuid())
+  organizationId String @map("organization_id")
   pickListId String
   skuCode    String
   qtyOrdered Int
@@ -113,21 +129,26 @@ model PickListLine {
   pickList   PickList @relation(fields: [pickListId], references: [id], onDelete: Cascade)
 
   @@index([pickListId])
+  @@index([organizationId])
 }
 
 model Role {
   id              String   @id @default(cuid())
-  code            String   @unique
+  organizationId String @map("organization_id")
+  code String
   name            String
   permissionsJson String   @default("[]")
   users           User[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model User {
   id              String    @id @default(cuid())
-  login           String    @unique
+  organizationId String @map("organization_id")
+  login String
   email           String?
-  phone           String?   @unique
+  phone           String?   
   fullName        String
   passwordHash    String
   roleId          String
@@ -136,4 +157,7 @@ model User {
   isCrossSystem   Boolean   @default(false) @map("is_cross_system")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
+  @@unique([organizationId, login])
+  @@unique([organizationId, phone])
+  @@index([organizationId])
 }

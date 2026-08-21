@@ -37,7 +37,9 @@ export async function POST(req: Request) {
     const body = createSchema.parse(await req.json());
     const results = [];
     for (const orderNumber of body.orderNumbers) {
-      const order = await prisma.b2BOrder.findUnique({ where: { orderNumber } });
+      const order = await prisma.b2BOrder.findUnique({
+        where: { orderNumber } as never,
+      });
       if (!order) continue;
       const pl = await prisma.pickList.upsert({
         where: { orderId: order.id },
