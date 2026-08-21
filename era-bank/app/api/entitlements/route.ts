@@ -1,11 +1,6 @@
 import { getRouteSession, jsonError } from "@/lib/api-utils";
-import { hasActiveModule } from "@era/satellite-kit";
+import { hasActiveModule, satelliteOrganizationId } from "@era/satellite-kit";
 import { loadBankSubscriptionSnapshot } from "@/lib/engine-client";
-
-const BANK_ORG_ID =
-  process.env.ERA_BANK_ORGANIZATION_ID ??
-  process.env.ERA_SATELLITE_ORGANIZATION_ID ??
-  "";
 
 const BANKING_MODULES = [
   "industry_banking",
@@ -24,7 +19,15 @@ export async function GET() {
   const session = await getRouteSession();
   if (!session) return jsonError("Unauthorized", 401);
 
-  if (!BANK_ORG_ID || process.env.NODE_ENV !== "production") {
+  let bankOrgId = "";
+  try {
+    const id = satelliteOrganizationId();
+    bankOrgId = id === "demo-org" ? "" : id;
+  } catch {
+    bankOrgId = "";
+  }
+
+  if (!bankOrgId || process.env.NODE_ENV !== "production") {
     return Response.json({ modules: [...BANKING_MODULES] });
   }
 

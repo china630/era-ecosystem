@@ -10,6 +10,10 @@ import {
   BankingEntitlementError,
   BankEngineError,
 } from "@/lib/engine-client";
+import {
+  requireBankSatellite,
+  IndustryModuleInactiveError,
+} from "@/lib/bank-module-gate";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -23,6 +27,16 @@ export function handleRouteError(err: unknown) {
   if (err instanceof BankingEntitlementError) {
     return jsonError(err.message, 403);
   }
+  if (err instanceof IndustryModuleInactiveError) {
+    return jsonError(err.message, err.status ?? 403);
+  }
+  if (err instanceof Error && err.name === "IndustryModuleInactiveError") {
+    const status =
+      "status" in err && typeof (err as { status?: number }).status === "number"
+        ? (err as { status: number }).status
+        : 403;
+    return jsonError(err.message, status);
+  }
   if (err instanceof BankEngineError) {
     return NextResponse.json(err.body ?? { error: err.message }, {
       status: err.status,
@@ -35,7 +49,13 @@ export function handleRouteError(err: unknown) {
   return jsonError(msg, 500);
 }
 
+/** Call at the start of authenticated API handlers (session helper). */
+export async function assertBankEntitled(): Promise<void> {
+  await requireBankSatellite();
+}
+
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
+  await assertBankEntitled();
   const cookieStore = await cookies();
   const headerStore = await headers();
   const token = getBearerOrCookieToken(

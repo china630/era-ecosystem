@@ -41,3 +41,10 @@ Port **3210**. Ops satellite — **no ledger in `era_bank` DB**.
 | `/cards/disputes`, `/cards/3ds` | `/api/cards/disputes*`, `/api/cards/3ds/*` |
 
 Entitlement gate: `industry_banking` + per-module `banking_*`.
+
+## Internal (orchestrator Sync)
+
+| Path | Notes |
+|------|-------|
+| `POST/GET /api/internal/v1/organization/bind` | Org UUID bind (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`); kit persist + boot hydrate |
+| `POST/GET /api/internal/v1/runtime-config` | Desired-state runtime config (SSO, event token, activeModules); kit persist + boot hydrate |
