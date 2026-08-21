@@ -125,7 +125,6 @@ type ShareMapNeighbor = {
 };
 
 /** Minimal Prisma-shaped client (full client or import transaction). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ShareMapDb = { reservation: Record<string, any> };
 
 export type ApplyElektrawebSharePairInput = {

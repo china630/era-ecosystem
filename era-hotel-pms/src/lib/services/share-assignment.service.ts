@@ -452,7 +452,6 @@ export async function breakShareReservation(reservationId: string) {
  */
 export async function releaseDoorAfterShareDeparture(
   // Interactive tx / extended client — kit stamps organizationId on create.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,
   input: {
     roomId: string;
