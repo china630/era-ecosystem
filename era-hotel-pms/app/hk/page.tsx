@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   EraListFilterBar,
   FieldSelect,
   FORM_FIELD_GROUP_CLASS,
@@ -49,16 +50,23 @@ export default function HousekeepingPage() {
   const [oooModalOpen, setOooModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<HkFilter>('all');
+  const [sheetFloor, setSheetFloor] = useState('2');
+  const [sheetRows, setSheetRows] = useState<Array<Record<string, unknown>>>([]);
+  const [printPages, setPrintPages] = useState<Array<{ floor: number; rows: Array<Record<string, unknown>> }>>([]);
+  const [sheetDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
 
   const load = useCallback(async () => {
-    const [tRes, rRes] = await Promise.all([
+    const [tRes, rRes, sRes] = await Promise.all([
       fetch('/api/housekeeping/tasks'),
       fetch('/api/rooms'),
+      fetch(`/api/housekeeping/sheet?floor=${sheetFloor}`),
     ]);
     if (tRes.ok) setTasks(await tRes.json());
     else showApiError(await tRes.json(), tc('loadError'));
     if (rRes.ok) setRooms(await rRes.json());
-  }, [tc]);
+    if (sRes.ok) setSheetRows(await sRes.json());
+  }, [tc, sheetFloor]);
 
   useEffect(() => {
     void load();
@@ -165,6 +173,156 @@ export default function HousekeepingPage() {
         </FieldSelect>
       </EraListFilterBar>
       <p className="mb-4 text-[12px] text-[#7F8C8D]">{t('statusActionsHint')}</p>
+
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 print:shadow-none`} id="hk-floor-sheet">
+        <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
+          <h2 className="text-sm font-semibold">{t('sheetTitle')}</h2>
+          <input
+            type="number"
+            className={MODAL_INPUT_CLASS}
+            style={{ width: 80 }}
+            value={sheetFloor}
+            onChange={(e) => setSheetFloor(e.target.value)}
+          />
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={async () => {
+              const res = await fetch(`/api/housekeeping/sheet?all=1&date=${sheetDate}`);
+              if (res.ok) setPrintPages(await res.json());
+              window.print();
+            }}
+          >
+            {t('printSheet')}
+          </button>
+        </div>
+        {(printPages.length ? printPages : [{ floor: Number(sheetFloor), rows: sheetRows }]).map((page) => (
+          <div key={page.floor} className="hk-print-floor" style={{ pageBreakAfter: 'always' }}>
+            <p className="mb-1 hidden text-xs print:block">
+              {t('sheetTitle')} · {t('floor')} {page.floor} · {sheetDate} · {t('inList')}: {page.rows.length}
+            </p>
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr>
+                  <th>{t('colRoom')}</th>
+                  <th>HK</th>
+                  <th>{t('colOcc')}</th>
+                  <th>{t('colType')}</th>
+                  <th>{t('colMaid')}</th>
+                  <th>{t('floor')}</th>
+                  <th>{t('colLoc')}</th>
+                  <th>{t('colGuest')}</th>
+                  <th>VIP</th>
+                  <th>{t('colAgency')}</th>
+                  <th>{t('colArrive')}</th>
+                  <th>{t('colDepart')}</th>
+                  <th>{t('colAdults')}</th>
+                  <th>{t('colChild')}</th>
+                  <th>{t('colJob')}</th>
+                  <th>{t('colDuty')}</th>
+                  <th>{t('colNat')}</th>
+                  <th>{t('colExtra')}</th>
+                  <th>{t('colTodayArr')}</th>
+                  <th>{t('colTodayDep')}</th>
+                  <th>Q</th>
+                  <th className="print:hidden">{t('neededBy')}</th>
+                  <th className="print:hidden">{t('outcome')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {page.rows.map((r) => (
+                  <tr key={String(r.roomId)} className="break-inside-avoid">
+                    <td>{String(r.roomNumber)}</td>
+                    <td>{String(r.hkCondition ?? r.status)}</td>
+                    <td>{String(r.occupancy ?? '')}</td>
+                    <td>{String(r.roomType)}</td>
+                    <td>{String(r.maidName)}</td>
+                    <td>{String(r.floor)}</td>
+                    <td>{String(r.location)}</td>
+                    <td>{String(r.guests)}</td>
+                    <td>{String(r.vip)}</td>
+                    <td>{String(r.agency)}</td>
+                    <td>{String(r.arrival)}</td>
+                    <td>{String(r.departure)}</td>
+                    <td>{String(r.adults)}</td>
+                    <td>{String(r.children)}</td>
+                    <td>{String(r.jobType)}</td>
+                    <td>{String(r.jobDuty ?? '')}</td>
+                    <td>{String(r.nationality)}</td>
+                    <td>{String(r.extraPax ?? 0)}</td>
+                    <td>{String(r.todayArrivalPax ?? 0)}</td>
+                    <td>{String(r.todayDepartPax ?? 0)}</td>
+                    <td>{String(r.qHour ?? '')}</td>
+                    <td className="print:hidden">
+                      <input
+                        type="time"
+                        className={MODAL_INPUT_CLASS}
+                        defaultValue={
+                          r.neededByAt
+                            ? String(r.neededByAt).slice(11, 16)
+                            : ''
+                        }
+                        onBlur={(e) => {
+                          const time = e.target.value;
+                          if (!time) return;
+                          void fetch('/api/housekeeping/needed-by', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ roomId: r.roomId, date: sheetDate, time }),
+                          }).then(() => load());
+                        }}
+                      />
+                    </td>
+                    <td className="print:hidden">
+                      {r.reservationId ? (
+                        <div className="flex flex-col gap-1">
+                          <CatalogField
+                            kind="CLOSED_SMALL"
+                            label={t('outcome')}
+                            value=""
+                            onChange={(v) => {
+                              void fetch('/api/housekeeping/outcome', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  roomId: r.roomId,
+                                  date: sheetDate,
+                                  outcome: v,
+                                }),
+                              }).then(() => load());
+                            }}
+                            options={OUTCOMES.map((o) => ({
+                              value: o,
+                              label: o === 'REFUSED' ? t('refused') : o,
+                            }))}
+                          />
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON_CLASS}
+                            onClick={() => {
+                              void fetch('/api/housekeeping/nsr', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  reservationId: r.reservationId,
+                                  roomId: r.roomId,
+                                  date: sheetDate,
+                                }),
+                              }).then(() => load());
+                            }}
+                          >
+                            {t('nsr')}
+                          </button>
+                        </div>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </section>
 
       {showPending ? (
         <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>

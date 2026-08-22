@@ -137,7 +137,7 @@ async function countRoomsInHouseNight(day: Date): Promise<number> {
 }
 
 async function getRoomsTotal(): Promise<number> {
-  return prisma.room.count({ where: { status: { notIn: ['OOO', 'OOS'] } } });
+  return prisma.room.count({ where: { NOT: { OR: [{ status: 'OOO' }, { inventoryStatus: 'OOO' }] } } });
 }
 
 async function getDayFlashMetrics(day: Date) {

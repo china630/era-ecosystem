@@ -16,6 +16,7 @@
 - Out of scope: Opera-depth AR, live NBC KKM, door locks field certification
 - **Declared, not built:** early checkout unused-nights refund (net of 18% VAT, default CASH) — [hotel-early-checkout-unused-nights.md](../adr/hotel-early-checkout-unused-nights.md) (HOT-CO-04 STUB; not H-BL-09 hour fees)
 - **Declared spec (not SHIPPED):** Management Reports catalog + nightly ZIP — [`era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md`](../../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) (HOT-RPT-01/02 API/SCREEN; out of Scaffold BE rollup)
+- **Declared spec (not SHIPPED):** Nafta housekeeping deepen — SCREEN engineering ([`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md) · UAT-SMOKE §34). `AC-HOT-HK` scaffold ✅ is Dirty/Clean/Inspected only.
 - **Declared, not this edition:** SHARED hotel pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). Waves 3–5: tenant roots + kit filter (CP-TENANT-01 API / AC-HOT-TENANT 🟡); Nafta hotel = DEDICATED/ONPREM. Mix (hotel DEDICATED + clinic SHARED) is a future sales shape, not the pilot default.
 
 ## Definition of Done (soft / scaffold)

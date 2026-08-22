@@ -10,10 +10,10 @@ async function getSellableRoomInfo() {
   const profile = await prisma.hotelProfile.findFirst({ select: { roomCapacity: true } });
   const rooms = await prisma.room.findMany({
     where: { deleted: false, disabled: false },
-    select: { id: true, status: true, roomTypeId: true },
+    select: { id: true, status: true, inventoryStatus: true, roomTypeId: true },
   });
   const totalRooms = profile?.roomCapacity ?? rooms.length;
-  const ooo = rooms.filter((r) => r.status === 'OOO' || r.status === 'OOS').length;
+  const ooo = rooms.filter((r) => r.status === 'OOO' || r.inventoryStatus === 'OOO').length;
   return { totalRooms, sellable: totalRooms - ooo, rooms };
 }
 

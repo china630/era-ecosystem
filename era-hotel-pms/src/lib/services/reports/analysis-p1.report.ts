@@ -211,7 +211,9 @@ export async function queryManagerView(from: Date, to: Date): Promise<ManagerVie
 
   const profile = await prisma.hotelProfile.findFirst({ select: { roomCapacity: true } });
   const roomCount = profile?.roomCapacity ?? 0;
-  const ooo = await prisma.room.count({ where: { deleted: false, disabled: false, status: { in: ['OOO', 'OOS'] } } });
+  const ooo = await prisma.room.count({
+    where: { deleted: false, disabled: false, OR: [{ status: 'OOO' }, { inventoryStatus: 'OOO' }] },
+  });
   const sellableRooms = roomCount - ooo;
   const capacity = sellableRooms * days;
 

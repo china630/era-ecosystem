@@ -261,7 +261,7 @@ export async function patchReservationFull(
       candidate,
     });
     assignShareBedIndex = shareBedIndex;
-    if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
+    if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
       throw new Error(
         `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
       );

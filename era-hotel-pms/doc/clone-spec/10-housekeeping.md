@@ -1,5 +1,8 @@
 # 10. Housekeeping (служба уборки номеров)
 
+> **Nafta ops SSOT (declared, not SHIPPED):** [`../HK-NAFTA-OPS.md`](../HK-NAFTA-OPS.md) · ADR [`docs/adr/hotel-housekeeping-nafta-ops.md`](../../../docs/adr/hotel-housekeeping-nafta-ops.md).  
+> This page is the Elektraweb clone map (WA screens). Room-state axes, roster, ƏG, daily floor pairs, visit codes (V/VC/OK/…), and guest laundry live in the SSOT. Scaffold today remains DIRTY → CLEAN → INSPECTED.
+
 ## 10.0 Обзор
 
 | Показатель | Значение |

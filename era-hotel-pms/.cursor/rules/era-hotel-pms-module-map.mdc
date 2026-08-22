@@ -8,6 +8,23 @@ Entitlement keys: `hotel_distribution`, `hotel_banquets` (see `docs/adr/hotel-mo
 
 SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/hk/*`, Cash=`/front-cash/*`, NA=`/night-audit/*`, Distribution=`/distribution/*`, Settings=`/settings/*`.
 
+## hotel_housekeeping (Nafta deepen — coded, not SHIPPED)
+
+| Route | API | Role |
+|-------|-----|------|
+| `/hk` | `GET /api/housekeeping/tasks`, `GET /api/housekeeping/sheet` | Board + floor sheet |
+| `/hk/mobile` | tasks + `POST /api/housekeeping/outcome` | Maid outcomes V/VC/OK/DND/SO |
+| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week E/L/N/OFF/ƏG |
+| `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
+| `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Ticket → folio `LAUNDRY` |
+| `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
+| `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Skip / Sleep board (Sleep ≠ SO) |
+| `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
+| `/settings/hk-policy` | `GET/PUT /api/housekeeping/policy` | Linen/deep every N (hotel-wide) |
+| Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops |
+
+Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
+
 ## Front office chain
 
 | Route | API | Role |

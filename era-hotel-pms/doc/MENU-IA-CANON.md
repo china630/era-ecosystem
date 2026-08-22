@@ -91,9 +91,15 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
 | HK mobile | `/hk/mobile` | Maid mobile client |
 | Minibar | `/hk/minibar` | Minibar control |
-| Maid management | `/hk/maids` | Maid shifts / assignment |
-| Closed rooms (OOO) | `/hk/closed-rooms` | OOO / closed rooms |
+| Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
+| Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
+| HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
+| Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap DnD |
+| Guest laundry | `/hk/laundry` | Ticket → folio `LAUNDRY` |
+| HK forecast | `/hk/forecast` | Load 7/14 by floor |
+| `/hk/discrepancy` | Skip / Sleep (Sleep ≠ SO) |
+| `/settings/hk-policy` | Linen / deep every N nights (hotel-wide) |
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
@@ -193,6 +199,7 @@ Deep clinical / lab → **Clinic** (external).
 | Stock (local MVP) | `/settings/stock` | Local HK consumption; ERP warehouse → Finance |
 | Elektraweb import | `/settings/import` | Import (controlled / SuperAdmin) |
 | Nightly report pack | `/settings/report-pack` | Which Management Reports go into the post-NA ZIP (HOT-RPT-02; spec) |
+| HK linen / deep | `/settings/hk-policy` | Hotel-wide every-N nights (HOT-HK-05; not per-stay) |
 
 Legacy: `/admin/*` → `/settings/*` for these screens.
 

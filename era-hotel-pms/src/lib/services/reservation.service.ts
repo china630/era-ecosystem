@@ -15,6 +15,7 @@ import {
   assertRoomShareAssignable,
   assertShareInventory,
   countDoorsUsedForRoomType,
+  countRemainingInHouseOnDoor,
   isEffectiveShare,
   reservationIsOta,
   roomStatusAllowedForShareAssign,
@@ -197,7 +198,7 @@ export async function createReservation(input: {
       candidate,
     });
     shareBedIndex = bedIdx;
-    if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
+    if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
       throw new Error('Room is not available for booking');
     }
   }
@@ -344,7 +345,7 @@ export async function assignRoom(reservationId: string, roomId: string) {
     excludeReservationId: reservationId,
     candidate,
   });
-  if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
+  if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
     throw new Error(
       `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
     );
@@ -385,6 +386,9 @@ export async function checkInReservation(id: string) {
   if (!reservation.roomId) throw new Error('Assign a room before check-in');
 
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
+  const othersInHouse = reservation.roomId
+    ? await countRemainingInHouseOnDoor(reservation.roomId, id)
+    : 0;
   const joiningSharePool =
     reservation.shareEligible &&
     isEffectiveShare({
@@ -392,14 +396,17 @@ export async function checkInReservation(id: string) {
       shareGender: reservation.shareGender,
       adults: reservation.adults,
     }) &&
-    room?.status === 'OCCUPIED';
+    othersInHouse > 0;
   if (
     !room ||
-    (!joiningSharePool && !['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status))
+    (!joiningSharePool && !roomStatusAllowedForShareAssign(room, false))
   ) {
     throw new Error(
-      `Room ${room?.roomNumber ?? ''} is ${room?.status ?? 'missing'}; must be AVAILABLE, CLEAN, or INSPECTED for check-in`,
+      `Room ${room?.roomNumber ?? ''} is ${room?.status ?? 'missing'}; must be CLEAN or INSPECTED to assign`,
     );
+  }
+  if (joiningSharePool && room && !roomStatusAllowedForShareAssign(room, true)) {
+    throw new Error(`Room ${room.roomNumber} is out of inventory`);
   }
   await assertNamedGuestsFreeOnStay(id);
 
@@ -413,10 +420,6 @@ export async function checkInReservation(id: string) {
     });
     await tx.stay.create({
       data: { reservationId: id, actualCheckIn: new Date() },
-    });
-    await tx.room.update({
-      where: { id: reservation.roomId! },
-      data: { status: 'OCCUPIED' },
     });
 
     await openFoliosForReservation(id, updated.guest.voen);
@@ -658,7 +661,11 @@ export async function updateReservationSchedule(
     if (room.roomTypeId !== reservation.roomTypeId) {
       throw new Error('Room does not match reservation room type');
     }
-    if (BLOCKED_ROOM_STATUSES.includes(room.status as (typeof BLOCKED_ROOM_STATUSES)[number])) {
+    if (
+      BLOCKED_ROOM_STATUSES.includes(room.status as (typeof BLOCKED_ROOM_STATUSES)[number]) ||
+      room.inventoryStatus === 'OOO' ||
+      room.inventoryStatus === 'OOS'
+    ) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
     const candidate = {
@@ -674,7 +681,7 @@ export async function updateReservationSchedule(
       excludeReservationId: id,
       candidate,
     });
-    if (!roomStatusAllowedForShareAssign(room.status, joiningPool)) {
+    if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
     await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { completeTask, listTasks } from '@/lib/services/housekeeping.service';
-import { setRoomOOO } from '@/lib/services/room.service';
+import { setRoomOOO, setRoomOOS } from '@/lib/services/room.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -27,6 +27,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (body.roomId && body.days) {
       const data = oooSchema.parse(body);
+      if (body.kind === 'OOS') {
+        return jsonOk(serialize(await setRoomOOS(data.roomId, data.days, data.notes)));
+      }
       return jsonOk(serialize(await setRoomOOO(data.roomId, data.days, data.notes)));
     }
     const data = completeSchema.parse(body);
