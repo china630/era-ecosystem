@@ -19,9 +19,10 @@ async function main() {
   // tenant
   await prisma.tenant.upsert({
     where: { code: "default" },
-    update: { name: "Nafta Clinic" },
+    update: { name: "Nafta Clinic", dayEndHour: 17, dayStartHour: 9 },
     create: { code: "default", name: "Nafta Clinic",
-      enabledPresets: ["outpatient", "sanatorium_clinical", "inpatient_day"] },
+      enabledPresets: ["outpatient", "sanatorium_clinical", "inpatient_day"],
+      dayStartHour: 9, dayEndHour: 17 },
   });
 
   function inferStaffKind(p) {
@@ -66,6 +67,10 @@ async function main() {
         durationMin: p.durationMin,
         resourceGapMinutes: p.resourceGapMinutes ?? 5,
         patientRestMinutes: p.patientRestMinutes ?? 15,
+        afterLunchAllowed: p.afterLunchAllowed ?? true,
+        beforeLunchAllowed: p.beforeLunchAllowed ?? true,
+        dayStartHour: p.dayStartHour ?? null,
+        dayEndHour: p.dayEndHour ?? null,
         resourceKind: "ROOM",
       },
       create: {
@@ -74,6 +79,10 @@ async function main() {
         durationMin: p.durationMin,
         resourceGapMinutes: p.resourceGapMinutes ?? 5,
         patientRestMinutes: p.patientRestMinutes ?? 15,
+        afterLunchAllowed: p.afterLunchAllowed ?? true,
+        beforeLunchAllowed: p.beforeLunchAllowed ?? true,
+        dayStartHour: p.dayStartHour ?? null,
+        dayEndHour: p.dayEndHour ?? null,
         resourceKind: "ROOM",
       },
     });

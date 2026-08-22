@@ -37,7 +37,7 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   defaultAppointmentSlotMinutes: 30,
   procedureOverQuotaPolicy: "CHARGE_FOLIO",
   dayStartHour: 9,
-  dayEndHour: 18,
+  dayEndHour: 17,
   lunchStartHour: 13,
   lunchEndHour: 14,
   closedWeekdays: [0],

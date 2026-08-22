@@ -25,7 +25,7 @@ ERA previously collapsed layers 2–3 into one tenant field. **Shipped:**
 | Create default only | `Tenant.defaultProcedureGapMinutes` | Copied onto new types at create |
 | Pair rules | `ProcedureRule` `SEQUENCE_GAP` | Unchanged |
 
-One global gap cannot express UFF gel (cabin 17): medical occupancy is **~seconds of gel + 3–5 min enter/exit** → grid **5 min**, and the next **other** guest may start immediately (**resource gap 0**). Putting 15 min of guest rest onto the apparatus idle clock drops cabin 17 to 32 slots/day against 52–57 demand. Putting gel resource gap 0 into the tenant field would also zero patient rest and pack massage in-butt.
+One global gap cannot express UFF gel (cabin 17): occupancy is Excel **10** min (not the earlier 5-min override), and the next **other** guest may start immediately (**resource gap 0**). Putting 15 min of guest rest onto the apparatus idle clock still under-slots cabin 17. Putting gel resource gap 0 into the tenant field would also zero patient rest and pack massage.
 
 Staff HARD/SOFT is a **separate calendar** (CLI-30). Soft nurses covering several cabins in parallel must not inherit the cabin turnover gap.
 
@@ -35,8 +35,8 @@ Staff HARD/SOFT is a **separate calendar** (CLI-30). Soft nurses covering severa
 
 | Layer | Meaning | SoR (target) | Nafta example |
 |-------|---------|----------------|---------------|
-| **1. Occupancy** | Guest in cabin on the 5-min grid | `ProcedureType.durationMin` (already) | UFF gel **5**; Darsonval **10**; laser Excel 8 → grid **10**; UFB 1 → grid **5** |
-| **2. Resource gap** | Cabin/device cannot take the next guest until this many minutes after `endsAt` | `ProcedureType.resourceGapMinutes` (new). Tenant `defaultProcedureGapMinutes` = **default-on-create** only | Gel **0**; typical physio / massage **5** |
+| **1. Occupancy** | Guest in cabin on the 5-min grid | `ProcedureType.durationMin` (already) | UFF gel **10**; Darsonval **10**; laser Excel 8 → grid **10**; UFB 1 → grid **5** |
+| **2. Resource gap** | Cabin/device cannot take the next guest until this many minutes after `endsAt` | `ProcedureType.resourceGapMinutes` (new). Tenant `defaultProcedureGapMinutes` = **default-on-create** only | Gel / laser / darsonval **0**; paraffin cycle **20** (gap 0); typical physio **5** |
 | **3. Patient rest** | This guest’s next *any* procedure starts no earlier than `endsAt + rest` | `ProcedureType.patientRestMinutes` (new; maps WO `PatientGapMin`) | Gel **15**; baths **40**; massage Excel **5** |
 | **4. Pair gap** | Named code pairs | `ProcedureRule` `SEQUENCE_GAP` | Unchanged |
 
@@ -73,8 +73,12 @@ Source of catalog minutes: WO `25-Treatments.xlsx` `DurationMin` / `PatientGapMi
 
 | Procedure | Cabin(s) | Occupancy | Resource gap | Patient rest | Capacity note |
 |-----------|----------|-----------|--------------|--------------|----------------|
-| Ultrafonoforez (Gellə) | **17 only** | **5** (Excel listed 10; treatment is seconds + 3–5 min enter/exit) | **0** | 15 (Excel) | 96 slots / 8 h vs demand 52–57 |
-| Darsonval | **19** | 10 (Excel; truly 10 min on device) | 5 | 15 | ~32 slots / 8 h vs ~38–42 demand → **second device**, not a packing trick |
+| Ultrafonoforez (Gellə) | **17 only** | **10** (Excel DurationMin) | **0** | 15 (Excel) | 10+0 cycle on cabin 17 |
+| Darsonval | **19** | 10 | **0** | 15 | Back-to-back on device |
+| Lazerterapiya | **18** | 10 (Excel 8 → grid) | **0** | 15 | Back-to-back |
+| Paraffin (all sites) | Parafin 1–5 | **20** including turnover | **0** | 15 | Cycle = occupancy |
+| UFB | UFB | 1 → grid **5** | 5 | 15 | Medical 1 min, ERA slot 5 |
+| 4-chamber bath | shared tub | 20 | 5 | 40 | **08:00–18:00**; women before lunch, men after. Other physio **09:00–17:00** |
 | Typical electro / UFF oil / magnet / vacuum | Namiq list | Excel DurationMin, aligned up to 5 | 5 | Excel PatientGapMin | Resource gap 5 stays |
 | Massage | couches | Excel 15/30 | 5 | Excel 5 | STAFF **HARD** |
 
@@ -83,7 +87,7 @@ Namiq cabin list (physio 1–25, no cabin 9) is ops topology, not this ADR. Bath
 ### Grid and lunch (unchanged)
 
 - Slot `schedulingSlotMinutes` = 5; durations align **up**.
-- Day 09:00–18:00; lunch 13:00–14:00 empty; procedures do not straddle lunch.
+- Physio day **09:00–17:00**; 4-chamber bath **08:00–18:00**. Lunch 13:00–14:00 empty; procedures do not straddle lunch.
 - Overflow past `dayEndHour` is reception/peak-mode, not silent slide.
 
 ## Consequences
@@ -95,7 +99,7 @@ SatAdmin procedure type card shows three numbers: duration, resource gap, patien
 ### Code (shipped 2026-08-21)
 
 1. Prisma: `ProcedureType.resourceGapMinutes` `@default(5)`, `ProcedureType.patientRestMinutes` `@default(15)`.
-2. Seed Nafta: `SVC-ULTRAFONOFOREZ-GEL` 5/0/15; oil `SVC-ULTRAFONOFOREZ` 10/5/15; Darsonval occupancy 10.
+2. Seed Nafta: gel `SVC-ULTRAFONOFOREZ-GEL` 10/0/15; oil 10/5/15; Darsonval/laser gap 0; UFB 1→5; paraffin cycle 20; 4-chamber 08–18 women AM / men PM.
 3. Planner / available-slots / reschedule: `countResourceAllocations` uses occupying tail of each booking.
 4. `validatePatientConsecutiveGap` / patient cursor: preceding type `patientRestMinutes`.
 5. Unit tests: `__tests__/scheduling-time-layers.spec.ts`.

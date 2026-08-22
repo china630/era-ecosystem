@@ -42,7 +42,7 @@ model Tenant {
   /// Clinic day start hour (Asia/Baku wall clock), inclusive
   dayStartHour             Int                      @default(9) @map("day_start_hour")
   /// Clinic day end hour (Asia/Baku), exclusive
-  dayEndHour               Int                      @default(18) @map("day_end_hour")
+  dayEndHour               Int                      @default(17) @map("day_end_hour")
   lunchStartHour           Int                      @default(13) @map("lunch_start_hour")
   lunchEndHour             Int                      @default(14) @map("lunch_end_hour")
   /// JS getUTCDay-style weekday numbers closed (0=Sunday). Default Sunday only.
@@ -924,6 +924,12 @@ model ProcedureType {
   /// ClinicLookup BODY_PART code
   bodyPart           String?
   afterLunchAllowed  Boolean       @default(true)
+  /// When false, slot must start at or after lunchEndHour (men 4-chamber after lunch).
+  beforeLunchAllowed Boolean       @default(true) @map("before_lunch_allowed")
+  /// Optional wall-clock start (Asia/Baku hour). Null = tenant dayStartHour.
+  dayStartHour       Int?          @map("day_start_hour")
+  /// Optional exclusive end hour. Null = tenant dayEndHour.
+  dayEndHour         Int?          @map("day_end_hour")
   /// When peak mode is on, this procedure may run until this hour (exclusive)
   extendedEndHour    Int?          @map("extended_end_hour")
   orders             ProcedureOrder[]

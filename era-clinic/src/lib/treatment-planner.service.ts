@@ -34,9 +34,12 @@ type PlannedSlot = {
   physicalRole: "LOCATION" | "EQUIPMENT";
   bodyPart?: string | null;
   afterLunchAllowed: boolean;
+  beforeLunchAllowed: boolean;
   minGapMinutes: number;
   sequenceIndex: number;
   extendedEndHour?: number | null;
+  dayStartHour?: number | null;
+  dayEndHour?: number | null;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -284,12 +287,15 @@ async function expandProposedSlots(instanceId: string): Promise<{
         physicalRole,
         bodyPart: pt.bodyPart ?? null,
         afterLunchAllowed: pt.afterLunchAllowed ?? true,
+        beforeLunchAllowed: pt.beforeLunchAllowed ?? true,
         minGapMinutes: effectiveProcedureGapMinutes(
           meta?.minGapMinutes,
           pt.patientRestMinutes ?? 15,
         ),
         sequenceIndex: seq++,
         extendedEndHour: pt.extendedEndHour,
+        dayStartHour: pt.dayStartHour,
+        dayEndHour: pt.dayEndHour,
       });
     }
   }
@@ -487,36 +493,49 @@ export async function placeConfirmedProcedures(
     if (!resource) continue;
 
     const duration = alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes);
-    const dayEnd = resolveEffectiveDayEndHour(workHours, {
+    const typeHours = {
+      ...workHours,
+      dayStartHour: pt.dayStartHour ?? workHours.dayStartHour,
+      dayEndHour: pt.dayEndHour ?? workHours.dayEndHour,
+    };
+    const dayEnd = resolveEffectiveDayEndHour(typeHours, {
       procedureExtendedEndHour: pt.extendedEndHour,
       resourceExtendedEndHour: resource.extendedEndHour,
     });
 
-    let slotStart = await nextWorkSlot(cursor, workHours, dayEnd);
-    if (!pt.afterLunchAllowed && slotStart.getHours() >= workHours.lunchEndHour) {
+    let slotStart = await nextWorkSlot(cursor, typeHours, dayEnd);
+    if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
       slotStart.setDate(slotStart.getDate() + 1);
-      slotStart.setHours(workHours.dayStartHour, 0, 0, 0);
+      slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
+    }
+    if (!pt.beforeLunchAllowed && slotStart.getHours() < typeHours.lunchEndHour) {
+      slotStart.setHours(typeHours.lunchEndHour, 0, 0, 0);
     }
 
     for (let attempt = 0; attempt < 96; attempt++) {
-      slotStart = avoidLunchOverlap(slotStart, duration, workHours);
-      if (!pt.afterLunchAllowed && slotStart.getHours() >= workHours.lunchEndHour) {
+      slotStart = avoidLunchOverlap(slotStart, duration, typeHours);
+      if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
         slotStart.setDate(slotStart.getDate() + 1);
-        slotStart.setHours(workHours.dayStartHour, 0, 0, 0);
-        slotStart = await nextWorkSlot(slotStart, workHours, dayEnd);
+        slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
+        continue;
+      }
+      if (!pt.beforeLunchAllowed && slotStart.getHours() < typeHours.lunchEndHour) {
+        slotStart.setHours(typeHours.lunchEndHour, 0, 0, 0);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
 
       const slotEnd = addMinutes(slotStart, duration);
       if (slotEnd.getHours() > dayEnd || (slotEnd.getHours() === dayEnd && slotEnd.getMinutes() > 0)) {
         slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, workHours, dayEnd);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
 
       if (await hasProcedureSameDay(patientRefId, order.procedureCode, slotStart, order.id)) {
         slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, workHours, dayEnd);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
 
@@ -529,8 +548,8 @@ export async function placeConfirmedProcedures(
       if (!rotation.ok) {
         // Shift to next day when consecutive-day rule blocks
         slotStart.setDate(slotStart.getDate() + 1);
-        slotStart.setHours(workHours.dayStartHour, 0, 0, 0);
-        slotStart = await nextWorkSlot(slotStart, workHours, dayEnd);
+        slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
 
@@ -551,7 +570,7 @@ export async function placeConfirmedProcedures(
       });
       if (!staff) {
         slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, workHours, dayEnd);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
 
@@ -652,7 +671,7 @@ export async function placeConfirmedProcedures(
         break;
       }
       slotStart = addMinutes(slotStart, slotMinutes);
-      slotStart = await nextWorkSlot(slotStart, workHours, dayEnd);
+      slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
     }
   }
 
