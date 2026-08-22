@@ -617,6 +617,8 @@ node scripts/install-era-git-hooks.mjs   # once: .git/hooks/pre-push → same sc
 
 Скрипт гоняет `run:quality-gates` и `npm test` / `npm run build` только в тронутых `era-*` (finance — NAS + integration). Фраза агенту: **«сделай шип + пуш на гит»**. Merge на `dev`/`master` — только после зелёного Actions.
 
+Nightly **Design regression** (`bootstrap-local --demo --migrate-satellites`) seeds hotel with `ERA_HOTEL_ORGANIZATION_ID` (default `nafta-sanatorium-org`). Do not let `ERA_BANK_ORGANIZATION_ID` become the hotel tenant context — fail-closed Prisma will refuse the seed.
+
 ### Docker stack
 
 ```bash
