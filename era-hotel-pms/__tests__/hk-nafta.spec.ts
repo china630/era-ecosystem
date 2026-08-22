@@ -6,6 +6,7 @@ import {
   laundryLineAmount,
   mondayOf,
   nextPairIndex,
+  stayoverDuty,
 } from '@/lib/services/hk-nafta.service';
 
 describe('HK Nafta roster helpers', () => {
@@ -38,6 +39,16 @@ describe('HK Nafta roster helpers', () => {
     const weekdayMorning = new Date('2026-08-24T06:00:00.000Z');
     expect(laundryIntakeBlockReason({ now: weekdayMorning, express: false, dayType: 'holiday' })).toMatch(/holiday/i);
     expect(laundryIntakeBlockReason({ now: weekdayMorning, express: false, dayType: 'working' })).toBeNull();
+    const weekdayNoonUtc = new Date('2026-08-24T08:00:00.000Z');
+    expect(laundryIntakeBlockReason({ now: weekdayNoonUtc, express: false, dayType: 'working' })).toMatch(/10:00/);
+  });
+
+  it('linen night 3 and deep night 5; deep wins on 15', () => {
+    expect(stayoverDuty(3, 3, 5)).toBe('LINEN');
+    expect(stayoverDuty(5, 3, 5)).toBe('DEEP');
+    expect(stayoverDuty(1, 3, 5)).toBe('STAY');
+    expect(stayoverDuty(15, 3, 5)).toBe('DEEP');
+    expect(stayoverDuty(0, 3, 5)).toBe('NONE');
   });
 
   it('OOO leaves inventory; OOS stays in denominator', () => {
@@ -48,7 +59,6 @@ describe('HK Nafta roster helpers', () => {
     ];
     expect(inventoryOooCount(rooms)).toBe(1);
     expect(inventoryOosCount(rooms)).toBe(1);
-    const sellable = rooms.length - inventoryOooCount(rooms);
-    expect(sellable).toBe(2);
+    expect(rooms.length - inventoryOooCount(rooms)).toBe(2);
   });
 });

@@ -20,6 +20,7 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Skip / Sleep board (Sleep ≠ SO) |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
+| `/settings/hk-policy` | `GET/PUT /api/housekeeping/policy` | Linen/deep every N (hotel-wide) |
 | Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops |
 
 Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).

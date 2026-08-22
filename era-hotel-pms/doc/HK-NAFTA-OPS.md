@@ -18,15 +18,16 @@ Paper / export sources (2026-08):
 
 | Area | Scaffold now | This spec |
 |------|----------------|-----------|
-| Screens | `/hk`, `/hk/mobile`, `/hk/minibar`, `/hk/maids`, `/hk/closed-rooms`, `/hk/lost-and-found` | + roster, daily rotation, forecast, guest laundry ticket |
-| Room state | One `RoomStatus` (AVAILABLE / OCCUPIED / DIRTY / CLEAN / INSPECTED / OOO / OOS / MAINTENANCE) | Three axes (inventory × FO occupancy × HK condition) |
-| Check-in | Door forced to `OCCUPIED` — cleanliness lost | Occupied + Dirty/Clean/Inspected/Pickup can coexist |
-| Task | PENDING / IN_PROGRESS / DONE, no type, no business date | Typed job + visit outcome + business date |
-| Housekeeper | Code + name | Department, pin-shift, ƏG balance, daily floor pair |
+| Screens | `/hk`, `/hk/mobile`, `/hk/minibar`, `/hk/maids`, `/hk/closed-rooms`, `/hk/lost-and-found` | + roster, rotation, forecast, laundry, discrepancy, `/settings/hk-policy` |
+| Room state | One `RoomStatus` mix | Three axes coded (inventory × FO occupancy × HK condition) |
+| Check-in | Door forced to `OCCUPIED` | Occupied + Dirty/Clean/Inspected/Pickup coexist; no OCCUPIED write |
+| Task | PENDING / IN_PROGRESS / DONE, no type | Typed job + visit outcome + business date + optional needed-by |
+| Housekeeper | Code + name | Department, pin-shift, ƏG, daily floor pair |
 | Mobile | All hotel tasks | Assigned floors today + outcome codes |
-| OOO / OOS | Enum exists; UI sets OOO; reports subtract both from sellable | Distinct inventory math |
-| Forecast | Occupancy forecast only | HK load by floor 7–14 days |
-| Laundry | Revenue code `LAUNDRY` + `postCharge` | Guest ticket → one folio line |
+| OOO / OOS | Reports subtracted both | Occupancy denominator **OOO only** |
+| Forecast | Occupancy forecast only | HK load by floor 7–14 + linen/deep/heads |
+| Laundry | Revenue code + postCharge | Ticket → one folio line; void → VOIDED |
+| Linen / deep | Paper 3rd / 5th night | Hotel policy UI + sheet duty; **no per-stay N override** |
 
 ---
 
@@ -61,7 +62,13 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN) |
 | Laundry → folio + voidCharge → VOIDED | Landed (SCREEN) |
 | Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
-| HK forecast 7/14 | Landed (SCREEN) |
+| HK forecast 7/14 + linen/deep/heads | Landed (SCREEN) |
+| Linen/deep every N (`/settings/hk-policy`) + sheet duty | Landed (SCREEN); stay-level override **not built** |
+| Needed-by time on sheet | Landed (SCREEN); stored as UTC clock on business date |
+| DND×2 / SO×3 → OPEN GuestTask | Landed (SCREEN) |
+| Print | `window.print()` page-break; **not** a PDF library |
+| Elektra time columns / Q Saati | Slots empty (no source clock) |
+| Per-stay linen/deep N | **Open** |
 | UAT-SMOKE §34 pass / SHIPPED | **Open** |
 | Opera credits / turndown / rush-push / ƏG cash / finance stock | OUT |
 

@@ -457,4 +457,6 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 6. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
 7. `/hk/forecast` — 7 and 14 day load by floor.
 8. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
+9. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
+10. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
 

@@ -171,8 +171,9 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
 | HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | UAT-SMOKE §34 open — not SHIPPED |
 | HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |
-| HOT-HK-03 | Floor sheet + visit outcomes + laundry folio | Y | Y `/hk` `/hk/laundry` `/hk/mobile` | API | SCREEN; UAT §34 |
-| HOT-HK-04 | Skip/Sleep discrepancy + HK forecast | Y | Y `/hk/discrepancy` `/hk/forecast` | API | SCREEN; Sleep ≠ SO |
+| HOT-HK-03 | Floor sheet + visit outcomes + laundry folio | Y | Y `/hk` `/hk/laundry` `/hk/mobile` | API | SCREEN; millət + duty + needed-by; UAT §34 |
+| HOT-HK-04 | Skip/Sleep discrepancy + HK forecast | Y | Y `/hk/discrepancy` `/hk/forecast` | API | SCREEN; Sleep ≠ SO; heads/linen/deep counts |
+| HOT-HK-05 | Linen/deep hotel policy | Y | Y `/settings/hk-policy` | API | SCREEN; no per-stay override; not SHIPPED |
 
 ### Hotel FO money / City Ledger / adjacent (2026-08-03 audit)
 
@@ -451,7 +452,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
-| 2026-08-22 | HOT-HK-01…04 Nafta HK SCREEN (not SHIPPED); UAT-SMOKE §34 checklist. |
+| 2026-08-22 | HOT-HK-05 linen/deep policy SCREEN; sheet duty + needed-by; still not SHIPPED. |
 | 2026-08-21 | Fail-closed tenant filter (no unbound default; stamp+mismatch reject); User.phone unique per org; runCronForEachTenant; check:satellite-raw-sql. Bank CAP-NFR-TOPO: same ladder as hotel (pool not built, not a special ban). CP-TENANT-01 stays API; AC-*-TENANT stay 🟡 |
 | 2026-08-21 | Clinic scheduling time layers ADR: occupancy vs per-type resource gap vs patient rest vs pair rules; UFF gel 5/0/15; SOFT nurse ≠ cabin gap. CLI-26/30 stay SHIPPED; schema split not built |
 | 2026-08-21 | Clinic time layers shipped: ProcedureType.resourceGapMinutes/patientRestMinutes; occupying-tail; SVC-ULTRAFONOFOREZ-GEL; SatAdmin three numbers |

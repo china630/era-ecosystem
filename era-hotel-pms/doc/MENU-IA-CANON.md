@@ -98,7 +98,8 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap DnD |
 | Guest laundry | `/hk/laundry` | Ticket → folio `LAUNDRY` |
 | HK forecast | `/hk/forecast` | Load 7/14 by floor |
-| Skip / Sleep | `/hk/discrepancy` | FO vs physical; Sleep ≠ SO |
+| `/hk/discrepancy` | Skip / Sleep (Sleep ≠ SO) |
+| `/settings/hk-policy` | Linen / deep every N nights (hotel-wide) |
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
@@ -198,6 +199,7 @@ Deep clinical / lab → **Clinic** (external).
 | Stock (local MVP) | `/settings/stock` | Local HK consumption; ERP warehouse → Finance |
 | Elektraweb import | `/settings/import` | Import (controlled / SuperAdmin) |
 | Nightly report pack | `/settings/report-pack` | Which Management Reports go into the post-NA ZIP (HOT-RPT-02; spec) |
+| HK linen / deep | `/settings/hk-policy` | Hotel-wide every-N nights (HOT-HK-05; not per-stay) |
 
 Legacy: `/admin/*` → `/settings/*` for these screens.
 

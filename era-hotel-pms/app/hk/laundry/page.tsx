@@ -177,7 +177,9 @@ export default function HkLaundryPage() {
       <button type="button" className={`${SECONDARY_BUTTON_CLASS} ml-2 print:hidden`} onClick={() => window.print()}>
         {t('printTicket')}
       </button>
-      <p className="mt-4 hidden text-xs print:block">{t('laundryLegal')}</p>
+      <p className="mt-4 hidden text-xs print:block">{t('laundryLegalAz')}</p>
+      <p className="hidden text-xs print:block">{t('laundryLegalEn')}</p>
+      <p className="hidden text-xs print:block">{t('laundryLegalRu')}</p>
       <ul className="mt-6 text-sm">
         {tickets.map((tk) => (
           <li key={tk.id}>

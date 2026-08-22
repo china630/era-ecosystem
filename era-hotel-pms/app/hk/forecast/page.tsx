@@ -9,8 +9,11 @@ type Floor = {
   departures: number;
   arrivals: number;
   stayovers: number;
+  linen: number;
+  deep: number;
   nsr: number;
   vip: number;
+  headsOnDuty: number;
 };
 
 export default function HkForecastPage() {
@@ -46,8 +49,11 @@ export default function HkForecastPage() {
             <th>Dep</th>
             <th>Arr</th>
             <th>Stay</th>
+            <th>Linen</th>
+            <th>Deep</th>
             <th>NSR</th>
             <th>VIP</th>
+            <th>{t('headsOnDuty')}</th>
           </tr>
         </thead>
         <tbody>
@@ -57,8 +63,11 @@ export default function HkForecastPage() {
               <td>{f.departures}</td>
               <td>{f.arrivals}</td>
               <td>{f.stayovers}</td>
+              <td>{f.linen}</td>
+              <td>{f.deep}</td>
               <td>{f.nsr}</td>
               <td>{f.vip}</td>
+              <td>{f.headsOnDuty}</td>
             </tr>
           ))}
         </tbody>

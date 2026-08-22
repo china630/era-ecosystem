@@ -597,6 +597,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
             {
+              id: 'set-hk-policy',
+              href: '/settings/hk-policy',
+              labelKey: 'hkPolicy',
+              icon: Wrench,
+              show: can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
               id: 'set-pricing-components',
               href: '/settings/pricing-components',
               labelKey: 'pricingComponents',
