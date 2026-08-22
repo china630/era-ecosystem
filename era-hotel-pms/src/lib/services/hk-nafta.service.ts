@@ -239,19 +239,46 @@ export async function rotatePairsForDate(workDateIso: string, shiftKind: HkRoste
       }),
     );
   }
-  return assigned;
+  return { assigned, unassignedPairCount: pairs.length - used.size, warning: pairs.length > onDuty.length };
 }
 
 function nightsSince(checkIn: Date, onDate: Date): number {
   return Math.max(0, Math.round((onDate.getTime() - checkIn.getTime()) / 86_400_000));
 }
 
+export type StayoverDuty = 'DEEP' | 'LINEN' | 'STAY' | 'NONE';
+
+/** Night 0 = arrival day. Deep wins when both cycles land on the same night. */
+export function stayoverDuty(nightsInHouse: number, linenEvery: number, deepEvery: number): StayoverDuty {
+  if (nightsInHouse <= 0) return 'NONE';
+  if (deepEvery > 0 && nightsInHouse % deepEvery === 0) return 'DEEP';
+  if (linenEvery > 0 && nightsInHouse % linenEvery === 0) return 'LINEN';
+  return 'STAY';
+}
+
+export async function getHkHotelPolicy() {
+  const existing = await prisma.hkHotelPolicy.findFirst();
+  if (existing) return existing;
+  return prisma.hkHotelPolicy.create({ data: { linenEveryNights: 3, deepEveryNights: 5 } });
+}
+
+export async function saveHkHotelPolicy(linenEveryNights: number, deepEveryNights: number) {
+  const row = await getHkHotelPolicy();
+  return prisma.hkHotelPolicy.update({
+    where: { id: row.id },
+    data: {
+      linenEveryNights: Math.max(1, Math.min(30, linenEveryNights)),
+      deepEveryNights: Math.max(1, Math.min(30, deepEveryNights)),
+    },
+  });
+}
+
 export async function generateFloorSheet(workDateIso: string, floor: number) {
   const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
   const next = addUtcDays(workDate, 1);
-  const policy = await prisma.hkHotelPolicy.findFirst();
-  const linenEvery = policy?.linenEveryNights ?? 3;
-  const deepEvery = policy?.deepEveryNights ?? 5;
+  const policy = await getHkHotelPolicy();
+  const linenEvery = policy.linenEveryNights;
+  const deepEvery = policy.deepEveryNights;
   const rooms = await prisma.room.findMany({
     where: { floor, deleted: false, disabled: false },
     include: {
@@ -270,6 +297,13 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
   });
   const nsr = await prisma.hkNsrDay.findMany({ where: { workDate } });
   const nsrSet = new Set(nsr.map((n) => n.reservationId));
+  const dayTasks =
+    rooms.length === 0
+      ? []
+      : await prisma.housekeepingTask.findMany({
+          where: { businessDate: workDate, roomId: { in: rooms.map((r) => r.id) } },
+        });
+  const neededByMap = new Map(dayTasks.map((t) => [t.roomId, t.neededByAt]));
   const rotation = await prisma.hkRotationDay.findMany({
     where: { workDate },
     include: { housekeeper: true, pair: true },
@@ -281,15 +315,19 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
     const co = stay ? isoDay(stay.checkOutDate) : '';
     const ci = stay ? isoDay(stay.checkInDate) : '';
     let jobType: HkJobType = 'OTHER';
-    if (stay && nsrSet.has(stay.id)) jobType = 'NSR';
-    else if (stay && co === workDateIso) jobType = 'DEPARTURE';
-    else if (stay?.status === 'IN_HOUSE') {
-      const n = nightsSince(stay.checkInDate, workDate);
-      if (deepEvery > 0 && n > 0 && n % deepEvery === 0) jobType = 'STAYOVER';
-      else if (linenEvery > 0 && n > 0 && n % linenEvery === 0) jobType = 'STAYOVER';
-      else jobType = 'STAYOVER';
+    let jobDuty: StayoverDuty | 'DEPARTURE' | 'ARRIVAL_PREP' | 'NSR' | 'OTHER' = 'OTHER';
+    if (stay && nsrSet.has(stay.id)) {
+      jobType = 'NSR';
+      jobDuty = 'NSR';
+    } else if (stay && co === workDateIso) {
+      jobType = 'DEPARTURE';
+      jobDuty = 'DEPARTURE';
+    } else if (stay?.status === 'IN_HOUSE') {
+      jobType = 'STAYOVER';
+      jobDuty = stayoverDuty(nightsSince(stay.checkInDate, workDate), linenEvery, deepEvery);
     } else if ((room.hkCondition === 'DIRTY' || room.status === 'DIRTY') && !stay) {
       jobType = 'ARRIVAL_PREP';
+      jobDuty = 'ARRIVAL_PREP';
     }
     const todayArrival = stay && ci === workDateIso;
     const todayDepart = stay && co === workDateIso;
@@ -312,7 +350,7 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       arrivalTime: '',
       departure: co,
       lateCheckout: '',
-      extraPax: 0,
+      extraPax: stay?.extraBeds ?? 0,
       adults: stay?.adults ?? 0,
       children: (stay?.children11_6 ?? 0) + (stay?.children5_2 ?? 0) + (stay?.children1_0 ?? 0),
       repeat: 0,
@@ -322,23 +360,31 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       todayDepartTime: '',
       qHour: '',
       jobType,
+      jobDuty,
+      nightsInHouse: stay?.status === 'IN_HOUSE' ? nightsSince(stay.checkInDate, workDate) : 0,
+      linenEvery,
+      deepEvery,
       visitOutcome: '',
       visitTime: '',
+      neededByAt: neededByMap.get(room.id)?.toISOString() ?? null,
       maidName: maid?.housekeeper.name ?? '',
       maidChef: '',
       reservationId: stay?.id ?? null,
     };
   });
-  const rank = (j: HkJobType) =>
-    j === 'DEPARTURE' ? 0 : j === 'ARRIVAL_PREP' ? 2 : j === 'STAYOVER' ? 3 : 4;
+  const rank = (duty: string) =>
+    duty === 'DEPARTURE' ? 0 : duty === 'DEEP' ? 1 : duty === 'LINEN' ? 2 : duty === 'ARRIVAL_PREP' ? 3 : 4;
   return rows.sort((a, b) => {
-    if (a.jobType === 'DEPARTURE' && b.jobType !== 'DEPARTURE') return -1;
-    if (b.jobType === 'DEPARTURE' && a.jobType !== 'DEPARTURE') return 1;
+    if (a.jobDuty === 'DEPARTURE' && b.jobDuty !== 'DEPARTURE') return -1;
+    if (b.jobDuty === 'DEPARTURE' && a.jobDuty !== 'DEPARTURE') return 1;
     const vip = Number(Boolean(b.vip)) - Number(Boolean(a.vip));
     if (vip !== 0) return vip;
+    const na = a.neededByAt ? new Date(a.neededByAt).getTime() : Number.POSITIVE_INFINITY;
+    const nb = b.neededByAt ? new Date(b.neededByAt).getTime() : Number.POSITIVE_INFINITY;
+    if (na !== nb) return na - nb;
     const dirty = Number(b.hkCondition === 'DIRTY') - Number(a.hkCondition === 'DIRTY');
     if (dirty !== 0) return dirty;
-    return rank(a.jobType) - rank(b.jobType);
+    return rank(String(a.jobDuty)) - rank(String(b.jobDuty));
   });
 }
 
@@ -403,13 +449,35 @@ export async function applyVisitOutcome(taskId: string, outcome: HkVisitOutcome)
   return { outcome, done };
 }
 
+export async function setNeededByAt(roomId: string, workDateIso: string, hhmm: string) {
+  const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
+  const [hh, mm] = hhmm.split(':').map(Number);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) throw new Error('Invalid time');
+  const neededByAt = new Date(`${workDateIso}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00.000Z`);
+  let task = await prisma.housekeepingTask.findFirst({
+    where: { roomId, businessDate: workDate, status: { not: 'DONE' } },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!task) {
+    task = await prisma.housekeepingTask.create({
+      data: { roomId, businessDate: workDate, jobType: 'OTHER', status: 'PENDING', neededByAt },
+    });
+  } else {
+    task = await prisma.housekeepingTask.update({
+      where: { id: task.id },
+      data: { neededByAt },
+    });
+  }
+  return task;
+}
+
 export async function escalateVisitFlags(workDateIso: string) {
   const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
   const tasks = await prisma.housekeepingTask.findMany({
     where: { visitOutcome: { in: ['DND', 'SO'] } },
     include: { room: true },
   });
-  const fo: Array<{ roomNumber: string; kind: string; days: number }> = [];
+  const fo: Array<{ roomNumber: string; kind: string; days: number; roomId: string }> = [];
   for (const t of tasks) {
     const streak = await prisma.housekeepingTask.count({
       where: {
@@ -418,8 +486,20 @@ export async function escalateVisitFlags(workDateIso: string) {
         businessDate: { lte: workDate },
       },
     });
-    if (t.visitOutcome === 'DND' && streak >= 2) fo.push({ roomNumber: t.room.roomNumber, kind: 'DND', days: streak });
-    if (t.visitOutcome === 'SO' && streak >= 3) fo.push({ roomNumber: t.room.roomNumber, kind: 'SO', days: streak });
+    if (t.visitOutcome === 'DND' && streak >= 2) fo.push({ roomNumber: t.room.roomNumber, kind: 'DND', days: streak, roomId: t.roomId });
+    if (t.visitOutcome === 'SO' && streak >= 3) fo.push({ roomNumber: t.room.roomNumber, kind: 'SO', days: streak, roomId: t.roomId });
+  }
+  for (const row of fo) {
+    const stay = await prisma.reservation.findFirst({
+      where: { roomId: row.roomId, status: 'IN_HOUSE' },
+      select: { guestId: true },
+    });
+    if (!stay) continue;
+    const title = row.kind === 'DND' ? `FO DND ${row.days}d room ${row.roomNumber}` : `FO SO ${row.days}d room ${row.roomNumber}`;
+    const existing = await prisma.guestTask.findFirst({ where: { guestId: stay.guestId, title, status: 'OPEN' } });
+    if (!existing) {
+      await prisma.guestTask.create({ data: { guestId: stay.guestId, title, status: 'OPEN' } });
+    }
   }
   return fo;
 }
@@ -465,6 +545,9 @@ export function laundryIntakeBlockReason(input: {
   }
   if (input.express && (hour < 9 || hour >= 17)) {
     return 'Express laundry is 09:00–17:00 Asia/Baku';
+  }
+  if (!input.express && hour >= 11) {
+    return 'Regular laundry intake is by 10:00 Asia/Baku for same-day 17:00 return';
   }
   return null;
 }
@@ -598,15 +681,49 @@ export async function hkLoadForecast(fromIso: string, days: number) {
   const nsr = await prisma.hkNsrDay.findMany({
     where: { workDate: { gte: from, lt: to } },
   });
-  const byFloor = new Map<number, { floor: number; departures: number; arrivals: number; stayovers: number; nsr: number; vip: number }>();
+  const byFloor = new Map<
+    number,
+    {
+      floor: number;
+      departures: number;
+      arrivals: number;
+      stayovers: number;
+      linen: number;
+      deep: number;
+      nsr: number;
+      vip: number;
+      headsOnDuty: number;
+    }
+  >();
+  const policy = await getHkHotelPolicy();
   for (const r of rooms) {
     if (!byFloor.has(r.floor)) {
-      byFloor.set(r.floor, { floor: r.floor, departures: 0, arrivals: 0, stayovers: 0, nsr: 0, vip: 0 });
+      byFloor.set(r.floor, {
+        floor: r.floor,
+        departures: 0,
+        arrivals: 0,
+        stayovers: 0,
+        linen: 0,
+        deep: 0,
+        nsr: 0,
+        vip: 0,
+        headsOnDuty: 0,
+      });
     }
   }
   for (let i = 0; i < horizon; i++) {
     const day = addUtcDays(from, i);
     const key = isoDay(day);
+    const rotation = await prisma.hkRotationDay.findMany({
+      where: { workDate: day },
+      include: { pair: true },
+    });
+    for (const rot of rotation) {
+      for (let f = rot.pair.floorLow; f <= rot.pair.floorHigh; f++) {
+        const row = byFloor.get(f);
+        if (row) row.headsOnDuty += 1;
+      }
+    }
     for (const s of stays) {
       const room = rooms.find((r) => r.id === s.roomId);
       if (!room) continue;
@@ -615,8 +732,13 @@ export async function hkLoadForecast(fromIso: string, days: number) {
       const co = isoDay(s.checkOutDate);
       if (co === key) row.departures += 1;
       else if (ci === key) row.arrivals += 1;
-      else if (ci < key && co > key) row.stayovers += 1;
-      if ((s.vipType || s.guest.vipType) && (ci <= key && co > key)) row.vip += 1;
+      else if (ci < key && co > key) {
+        row.stayovers += 1;
+        const duty = stayoverDuty(nightsSince(s.checkInDate, day), policy.linenEveryNights, policy.deepEveryNights);
+        if (duty === 'LINEN') row.linen += 1;
+        if (duty === 'DEEP') row.deep += 1;
+      }
+      if ((s.vipType || s.guest.vipType) && ci <= key && co > key) row.vip += 1;
     }
     for (const n of nsr) {
       if (isoDay(n.workDate) !== key) continue;

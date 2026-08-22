@@ -16,6 +16,8 @@ export default function HkRotationPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [drag, setDrag] = useState<string | null>(null);
 
+  const [warn, setWarn] = useState(false);
+
   const load = useCallback(async () => {
     const res = await fetch(`/api/housekeeping/rotation?date=${date}`);
     const json = await res.json();
@@ -23,7 +25,7 @@ export default function HkRotationPage() {
       showApiError(json, t('title'));
       return;
     }
-    setRows(Array.isArray(json) ? json : []);
+    setRows(Array.isArray(json) ? json : json.assigned ?? []);
   }, [date, t]);
 
   useEffect(() => {
@@ -36,7 +38,9 @@ export default function HkRotationPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date, shiftKind: 'E' }),
     });
-    if (!res.ok) showApiError(await res.json(), t('title'));
+    const json = await res.json();
+    if (!res.ok) showApiError(json, t('title'));
+    else setWarn(Boolean(json.warning));
     await load();
   }
 
@@ -63,6 +67,7 @@ export default function HkRotationPage() {
         }
       />
       <input type="date" className="mb-4 border px-2 py-1" value={date} onChange={(e) => setDate(e.target.value)} />
+      {warn ? <p className="mb-2 text-sm text-amber-800">{t('pairsLeftover')}</p> : null}
       <ul className="space-y-2 text-sm">
         {rows.map((r) => (
           <li

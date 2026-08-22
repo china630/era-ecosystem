@@ -25,6 +25,7 @@ export default function HkRosterPage() {
   });
   const [cells, setCells] = useState<Cell[]>([]);
   const [order, setOrder] = useState<string[]>([]);
+  const [todayPair, setTodayPair] = useState<Record<string, string>>({});
   const [calendarNote, setCalendarNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -41,6 +42,16 @@ export default function HkRosterPage() {
       if (!ids.includes(c.housekeeper.id)) ids.push(c.housekeeper.id);
     }
     setOrder(ids);
+    const today = new Date().toISOString().slice(0, 10);
+    const rot = await fetch(`/api/housekeeping/rotation?date=${today}`);
+    if (rot.ok) {
+      const list = await rot.json();
+      const map: Record<string, string> = {};
+      for (const r of Array.isArray(list) ? list : []) {
+        map[r.housekeeper?.id ?? r.housekeeperId] = `${r.pair.floorLow}–${r.pair.floorHigh}`;
+      }
+      setTodayPair(map);
+    }
   }, [weekStart, t]);
 
   useEffect(() => {
@@ -119,6 +130,22 @@ export default function HkRosterPage() {
         }
       />
       {calendarNote ? <p className="mb-2 text-sm text-amber-800">{calendarNote}</p> : null}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {DEPTS.map((d) => (
+          <div
+            key={d}
+            className="rounded border border-dashed px-3 py-2 text-xs"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = e.dataTransfer.getData('text/plain');
+              if (from) void moveDept(from, d);
+            }}
+          >
+            {t('dropDept')} {d}
+          </div>
+        ))}
+      </div>
       <label className="mb-4 block text-sm">
         {t('weekStart')}
         <input
@@ -150,6 +177,7 @@ export default function HkRosterPage() {
             >
               <p className="mb-2 text-sm font-medium">
                 {row[0].housekeeper.name} · ƏG {row[0].housekeeper.egBalance}
+                {todayPair[hid] ? ` · ${todayPair[hid]}` : ''}
               </p>
               <CatalogField
                 kind="CLOSED_SMALL"

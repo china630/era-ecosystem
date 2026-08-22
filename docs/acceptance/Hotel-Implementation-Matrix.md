@@ -41,7 +41,7 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 | AC-HOT-RATE / HOT-02 | Nafta BAR Excel import | BLOCKED external | Scoped out of AC-HOT-RATE |
 | AC-HOT-INT | Live KKM / locks / notify | External ⏸ | Keep STUB; max Scaffold 🟡 |
 | HOT-RPT-01/02 | EW Management Reports catalog + nightly ZIP | W1–W3 code delivered (out of BE rollup) | Screens + PDF + ZIP + cubes + 3-year + email ZIP link; negative path `__tests__/hotel-reports-negative.spec.ts` (unknown slug / lang / empty pack) — Scaffold 🟡 not ✅; no AC-HOT-RPT ✅ |
-| Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts`; UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
+| Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy/policy | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts`; UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | HOT-CO-04 | Early checkout unused-nights refund (net VAT, default CASH) | Out of BE rollup | ADR Accepted; AC-HOT-CO-EARLY 🟡 until fuller negatives; SHIPPED OpsUI |
 

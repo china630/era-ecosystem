@@ -97,7 +97,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-UE-01 | Hotel | unit economics | Y | `/executive/unit-economics` | **SCREEN** | deepen + UAT | Hotel SHOW rollup unchanged (core FO SHOW) |
 | HOT-RPT-01/02 | Hotel | management PDF catalog + nightly ZIP | Y | `/reports/*` hubs + cubes | **SCREEN** | W1–W3 catalog + ZIP; email cron HEADLESS; out of Hotel SHOW rollup | HOT-NA-03 ops grids already SHIPPED |
 | HOT-AGP-01/02/03 | Hotel | agency portal + FO inbox | Y | `/agency/*` + `/fo/agency-inbox` | **SCREEN** | P0–P1; AC-HOT-AGP 🟡; out of Hotel SHOW rollup | ADR hotel-agency-portal |
-| HOT-HK-01…04 | Hotel | Nafta HK deepen | Y | `/hk` roster rotation laundry forecast discrepancy | **SCREEN** | UAT-SMOKE §34 open; out of Hotel SHOW rollup | AC-HOT-HK remains Dirty/Clean/Inspected |
+| HOT-HK-01…05 | Hotel | Nafta HK deepen | Y | `/hk` roster rotation laundry forecast discrepancy policy | **SCREEN** | UAT-SMOKE §34 open; out of Hotel SHOW rollup | AC-HOT-HK remains Dirty/Clean/Inspected |
 | BANK-GL / PAY-APPR / LOAN-* / ECL / CAP | Bank | ops lab | Y | paths Y | **SHOW** lab | field / cert is VENDOR or Pilot — not a missing screen | Inventory OUT |
 | CLI-* admin/ops | Clinic | catalogs / appts / cash | Y | `/admin/*`, `/appointments`, `/cashier` | **SCREEN** | Demo/TE sign-off | Nafta 2026-06 API-only master-data is closed |
 | FNB/RET/CRM/AUTO/CON/WS/LOG surfaces | Industry | POS / orders / trips | Y | routes in PRM UI (short) | **SCREEN** | thin-industry modal CRUD wave closed: all listed products now have modal CRUD/admin surfaces; do not claim SHIPPED from route alone | do not claim SHIPPED from route alone |
@@ -125,7 +125,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
-| 2026-08-22 | HOT-HK-01…04 Nafta HK deepen SCREEN (out of Hotel SHOW rollup); UAT §34 checklist only. |
+| 2026-08-22 | HOT-HK-01…05 Nafta HK deepen SCREEN (policy + needed-by); UAT §34 not signed. |
 | 2026-08-20 | Clinic patient card: ICD-10 after contraindications (CLI-39 SCREEN); contraindications collapsed by default. |
 | 2026-08-19 | D6 modal CRUD closeout: Logistics `/trips` create flow moved into `ModalShell`; all thin-industry PARTIAL CRUD rows cleared to SCREEN. |
 | 2026-08-19 | D5 modal CRUD closeout: Wholesale import-orders create flow moved into `ModalShell`; UI class to SCREEN. |

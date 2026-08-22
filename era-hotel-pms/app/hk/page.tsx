@@ -219,7 +219,13 @@ export default function HousekeepingPage() {
                   <th>{t('colAdults')}</th>
                   <th>{t('colChild')}</th>
                   <th>{t('colJob')}</th>
+                  <th>{t('colDuty')}</th>
                   <th>{t('colNat')}</th>
+                  <th>{t('colExtra')}</th>
+                  <th>{t('colTodayArr')}</th>
+                  <th>{t('colTodayDep')}</th>
+                  <th>Q</th>
+                  <th className="print:hidden">{t('neededBy')}</th>
                   <th className="print:hidden">{t('outcome')}</th>
                 </tr>
               </thead>
@@ -241,7 +247,32 @@ export default function HousekeepingPage() {
                     <td>{String(r.adults)}</td>
                     <td>{String(r.children)}</td>
                     <td>{String(r.jobType)}</td>
+                    <td>{String(r.jobDuty ?? '')}</td>
                     <td>{String(r.nationality)}</td>
+                    <td>{String(r.extraPax ?? 0)}</td>
+                    <td>{String(r.todayArrivalPax ?? 0)}</td>
+                    <td>{String(r.todayDepartPax ?? 0)}</td>
+                    <td>{String(r.qHour ?? '')}</td>
+                    <td className="print:hidden">
+                      <input
+                        type="time"
+                        className={MODAL_INPUT_CLASS}
+                        defaultValue={
+                          r.neededByAt
+                            ? String(r.neededByAt).slice(11, 16)
+                            : ''
+                        }
+                        onBlur={(e) => {
+                          const time = e.target.value;
+                          if (!time) return;
+                          void fetch('/api/housekeeping/needed-by', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ roomId: r.roomId, date: sheetDate, time }),
+                          }).then(() => load());
+                        }}
+                      />
+                    </td>
                     <td className="print:hidden">
                       {r.reservationId ? (
                         <div className="flex flex-col gap-1">
