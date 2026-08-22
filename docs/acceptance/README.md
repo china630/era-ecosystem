@@ -16,6 +16,7 @@
 | «BE Lite / Deep bank API» | [`Bank-BE-Roadmap.md`](./Bank-BE-Roadmap.md) |
 | «матрица готовности API / §4 / consumer / обнови READINESS» | [`docs/READINESS_MATRIX.md`](../READINESS_MATRIX.md) + skill `era-readiness-matrix` |
 | «есть ли экран / UI покрывает API / класс NONE·SCREEN·SHOW» | [`UI-COVERAGE-BOARD.md`](./UI-COVERAGE-BOARD.md) (derived; sell still Product-Readiness) |
+| «сравнение с Opera / hospitality brief / NotebookLM» | [`docs/briefs/ERA-Hospitality-Capability-Brief.md`](../briefs/ERA-Hospitality-Capability-Brief.md) (+ PDF) — derived snapshot, not sell SSOT |
 
 **Forbidden:** answering sell/show from COVERAGE SHIPPED or DELIVERY % alone.  
 **Forbidden:** treating Bank AC all ✅ as «полная коммерческая АБС» — check Capability Inventory OUT.
