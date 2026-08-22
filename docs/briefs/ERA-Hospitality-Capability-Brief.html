@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>ERA Hospitality Stack — Capability Brief</title>
+<style>
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+:root { color-scheme: light; }
+html, body { background: #fff; }
+body {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  color: #1a1a1a;
+  max-width: 190mm;
+  margin: 0 auto;
+}
+h1 { font-size: 20pt; margin: 0 0 10pt; line-height: 1.2; }
+h2 { font-size: 14pt; margin: 22pt 0 8pt; page-break-after: avoid; border-bottom: 1px solid #ccc; padding-bottom: 3pt; }
+h3 { font-size: 12pt; margin: 16pt 0 6pt; page-break-after: avoid; }
+p, li { orphans: 3; widows: 3; }
+blockquote {
+  margin: 10pt 0;
+  padding: 8pt 12pt;
+  background: #f4f6f8;
+  border-left: 4px solid #1f4e79;
+}
+table { border-collapse: collapse; width: 100%; margin: 8pt 0 12pt; font-size: 9pt; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid #c5c5c5; padding: 4pt 6pt; vertical-align: top; text-align: left; }
+th { background: #1f4e79; color: #fff; font-weight: 600; }
+tr:nth-child(even) td { background: #f7f9fb; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; background: #eef1f4; padding: 0 3pt; }
+pre { background: #eef1f4; padding: 8pt; overflow: hidden; font-size: 8.5pt; }
+hr { border: 0; border-top: 1px solid #ddd; margin: 16pt 0; }
+a { color: #1f4e79; text-decoration: none; }
+.cover-meta { color: #444; font-size: 9.5pt; margin-bottom: 14pt; }
+</style>
+</head>
+<body>
+<h1 id="era-hospitality-stack-capability-brief">ERA Hospitality Stack — Capability Brief</h1>
+<p><strong>Document type:</strong> derived comparison brief (not a sell SSOT)  </p>
+<p><strong>Audience:</strong> NotebookLM / partner comparison against Oracle Opera Cloud user guides  </p>
+<p><strong>Language:</strong> English  </p>
+<p><strong>Snapshot date:</strong> 2026-08-22  </p>
+<p><strong>Edition of every product in this brief:</strong> <code>mvp</code> · <strong>field pilot:</strong> open · <strong><code>pilot_ready</code>:</strong> false  </p>
+<blockquote><strong>Honesty rule.</strong> This document describes what the ERA stack <em>is built to do</em> and what is <em>actually shipped</em> in the current edition. It does <strong>not</strong> claim GA, certified fiscal, live OTA connectivity, or a shared multi-tenant SaaS hotel pool. For sell / show language use the Product-Readiness matrices, not this brief.</blockquote>
+<hr/>
+<h2 id="0-how-to-read-this-document">0. How to read this document</h2>
+<h3 id="0-1-what-this-is">0.1 What this is</h3>
+<p>A single English inventory of the ERA hospitality stack — <strong>Orchestrator (control plane)</strong>, <strong>Finance (accounting satellite)</strong>, <strong>Hotel PMS</strong>, <strong>Clinic / sanatorium</strong>, and <strong>F&amp;B POS</strong> — written so an analyst can compare it with Oracle Opera Cloud (and related Oracle Hospitality modules) without opening the monorepo.</p>
+<h3 id="0-2-what-this-is-not">0.2 What this is not</h3>
+<table>
+<tr><th>Do not treat this brief as…</th><th>Use instead</th></tr>
+<tr><td>Permission to sell “GA hotel”</td><td><code>docs/editions/hotel.yaml</code> + Hotel Product-Readiness Matrix</td></tr>
+<tr><td>Proof that every listed screen is field-signed</td><td><code>docs/COVERAGE_MATRIX.md</code> + UAT-SMOKE</td></tr>
+<tr><td>A full commercial bank / ABS</td><td>Bank Capability Inventory (out of hospitality scope)</td></tr>
+<tr><td>A clone of Opera Sales &amp; Catering, OXI/OHIP, or OPERA Controls</td><td>Honest gap table in §11</td></tr>
+</table>
+<h3 id="0-3-status-tags-used-here">0.3 Status tags used here</h3>
+<table>
+<tr><th>Tag</th><th>Meaning</th></tr>
+<tr><td><strong>SHIPPED</strong></td><td>Doc + API + UI for the declared actor, plus a UI UAT-SMOKE path (not curl-only)</td></tr>
+<tr><td><strong>API</strong></td><td>Backend and usually a screen exist; not accepted as SHIPPED (no UAT / Demo-TE)</td></tr>
+<tr><td><strong>STUB</strong></td><td>Mock / env-gated / needs vendor cert or credentials</td></tr>
+<tr><td><strong>HEADLESS</strong></td><td>Worker, webhook, cron, or browser extension — no SatAdmin card required</td></tr>
+<tr><td><strong>mvp / not GA</strong></td><td>Product edition. Scaffold-green ≠ product acceptance. SHIPPED ≠ Pilot-ready</td></tr>
+</table>
+<p>Actor columns in the living matrix: <strong>OpsUI</strong> (local staff login), <strong>SatAdmin</strong>, <strong>OrgOwner</strong> (SSO owner), <strong>SuperAdmin</strong> (orchestrator).</p>
+<h3 id="0-4-source-documents-ssot">0.4 Source documents (SSOT)</h3>
+<table>
+<tr><th>Layer</th><th>Path</th></tr>
+<tr><td>Architecture</td><td><code>docs/CONTROL_PLANE_ARCHITECTURE.md</code>, <code>docs/adr/</code></td></tr>
+<tr><td>Hospitality ↔ Finance</td><td><code>docs/HOSPITALITY_FINANCE_BOUNDARY.md</code></td></tr>
+<tr><td>Actor coverage</td><td><code>docs/COVERAGE_MATRIX.md</code></td></tr>
+<tr><td>Sell / show</td><td><code>docs/acceptance/*-Product-Readiness-Matrix.md</code></td></tr>
+<tr><td>Editions</td><td><code>docs/editions/*.yaml</code></td></tr>
+<tr><td>Hotel IA</td><td><code>era-hotel-pms/doc/MENU-IA-CANON.md</code></td></tr>
+<tr><td>Hotel PRD</td><td><code>era-hotel-pms/PRD.md</code></td></tr>
+<tr><td>Clinic PRD</td><td><code>era-clinic/PRD.md</code></td></tr>
+<tr><td>F&amp;B PRD</td><td><code>era-fnb-pos/PRD.md</code></td></tr>
+<tr><td>Finance PRD</td><td><code>era-finance-core/PRD.md</code></td></tr>
+<tr><td>Orchestrator PRD</td><td><code>era-orchestrator/PRD.md</code></td></tr>
+</table>
+<hr/>
+<h2 id="1-product-thesis">1. Product thesis</h2>
+<p>ERA is not a standalone PMS. It is a <strong>multi-satellite stack for an Azerbaijan hospitality property (or group)</strong> where:</p>
+<ol>
+<li><strong>Hotel PMS</strong> owns guest-facing stay operations: book, assign, folio, night audit, housekeeping, B2B allotment, thin medical/SPA, banquets.</li>
+<li><strong>Clinic</strong> owns clinical operations: appointments, visits, procedures, ICD, lab, sanatorium planning — including the medical depth that a city-hotel PMS never ships.</li>
+<li><strong>F&amp;B POS</strong> owns the restaurant floor: tables, tickets, KDS, shift close, room-charge to the hotel folio.</li>
+<li><strong>Finance</strong> owns accounting truth: GL, sales invoices / e-qaimə, warehouse, AR aging, purchases. Hotel and POS <strong>hand off</strong>; they do not duplicate ERP.</li>
+<li><strong>Orchestrator</strong> owns identity, SSO, entitlements, billing SKUs, MDM persons, workforce hire, and the satellite event bus.</li>
+</ol>
+<p><strong>The comparison implication vs Opera Cloud:</strong> Opera is a deep <em>hotel</em> PMS (plus OHIP for certified interfaces). A typical Opera property still buys SPA, clinic/HIS, restaurant POS, and local GL as separate products. ERA’s bet is that a <strong>wellness / medical / sanatorium resort</strong> (and an unbranded city hotel that wants local fiscal + one owner cockpit) is better served by one control plane than by Opera + 4 vendors.</p>
+<p><strong>Pilot property shape:</strong> Nafta-class resort — hotel + restaurant + medical/sanatorium cycle — not an international branded chain (Hilton/Marriott often mandate Opera).</p>
+<hr/>
+<h2 id="2-architecture">2. Architecture</h2>
+<h3 id="2-1-three-planes">2.1 Three planes</h3>
+<table>
+<tr><th>Plane</th><th>Product</th><th>Owns</th></tr>
+<tr><td>Control plane</td><td><code>era-orchestrator</code></td><td>Identity launcher, SSO, RBAC, billing, entitlements, MDM API, satellite event ingest, org operating mode, workforce hub</td></tr>
+<tr><td>Finance satellite</td><td><code>era-finance-core</code></td><td>GL, documents, inventory, HR/payroll (optional), tax, counterparty MDM for accounting</td></tr>
+<tr><td>Industry satellites</td><td><code>era-hotel-pms</code>, <code>era-clinic</code>, <code>era-fnb-pos</code>, …</td><td>Vertical operational data only</td></tr>
+</table>
+<p><strong>Rule:</strong> cross-tenant, cross-satellite, or commercial logic → orchestrator. Ledger and accounting events → finance. Hotel does not become a second 1C.</p>
+<h3 id="2-2-two-tenancy-axes-do-not-conflate">2.2 Two tenancy axes (do not conflate)</h3>
+<p><strong>Axis A — legal / money / POS</strong></p>
+<table>
+<tr><th>Need</th><th>Mechanism</th></tr>
+<tr><td>Bar + restaurant, same VÖEN, same org</td><td>Multiple <code>Outlet</code> rows in the satellite DB</td></tr>
+<tr><td>Clinic / shop as a department of the hotel</td><td>Orchestrator org <code>DEPARTMENT</code> + <code>parentOrgId</code>; revenue / fiscal may route to <strong>PARENT</strong>; ops data stays in that org’s satellite rows</td></tr>
+<tr><td>Separate legal entity</td><td>Separate org <code>STANDALONE</code> + unique <code>taxIdBlindIndex</code> (VÖEN)</td></tr>
+</table>
+<p>Detach department → standalone changes <strong>routing only</strong>. No operational data migration.</p>
+<p><strong>Axis B — placement</strong> (<code>SHARED</code> / <code>DEDICATED</code> / <code>ONPREM</code>) is packaging, not the same as DEPARTMENT. PlacementJob API is a <strong>scaffold</strong>. Live SHARED hotel SaaS pool and automated on-prem migrate are <strong>not built</strong>. Do not sell “SaaS pool”.</p>
+<h3 id="2-3-identity-and-login">2.3 Identity and login</h3>
+<table>
+<tr><th>Actor</th><th>Login</th><th>Org resolution</th></tr>
+<tr><td>Operational staff (reception, waiter, maid, nurse)</td><td>Local form on the satellite (<code>/api/auth/login</code>)</td><td>Deployment-bound; no org picker</td></tr>
+<tr><td>Owner / management</td><td>SSO from orchestrator launcher</td><td>Signed <code>organizationId</code> in SSO payload</td></tr>
+<tr><td>Finance / platform user</td><td>Orchestrator or finance login</td><td>Membership; multi-org switcher for owners</td></tr>
+</table>
+<p>SSO payload: HMAC <code>email|organizationId|expiresAt</code>. Local staff use <code>passwordHash</code>. SSO users use <code>sso:no-password</code> and cannot local-login.</p>
+<p>Workforce hire master = orchestrator. Satellites consume <code>STAFF_PROVISIONED</code> and upsert a local user keyed on <code>cpEmploymentId</code>. Hotel admin “create user” is a secondary seat guard.</p>
+<h3 id="2-4-mdm-person-identity">2.4 MDM (person identity)</h3>
+<ul>
+<li>PII lives in orchestrator MDM (<code>era_mdm</code>): <code>GlobalNaturalPerson</code>, identifiers (FIN, passport + issuing country).</li>
+<li>Satellites store <strong><code>globalPersonId</code> only</strong>. Hotel guest card shows a <strong>masked</strong> ops-profile. No local FIN/passport columns when MDM-linked.</li>
+<li>Guest create/edit links identity; merge supports foreigner → citizen when FIN is obtained.</li>
+<li>Production hotel templates set <code>ERA_HOTEL_GUEST_MDM_STRICT=true</code>.</li>
+</ul>
+<h3 id="2-5-event-bus">2.5 Event bus</h3>
+<p>Satellites publish <code>POST /api/v1/satellite-events</code> (Bearer <code>SATELLITE_EVENT_SERVICE_TOKEN</code>). Queue: <code>era-satellite-events</code> (BullMQ). Envelope: <code>@era/contracts</code>.</p>
+<p>Hospitality events that Finance consumes (live unless noted):</p>
+<table>
+<tr><th>Event</th><th>Effect</th></tr>
+<tr><td><code>SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED</code></td><td>Multi-line NAS journal from <code>revenueLines</code> + GL map</td></tr>
+<tr><td><code>SATELLITE_HOTEL_INVOICE_ISSUED</code></td><td>Draft sales invoice in Finance</td></tr>
+<tr><td><code>SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT</code></td><td>Agency balance snapshot (<code>AgencyCityLedgerSnapshot</code>)</td></tr>
+<tr><td><code>SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED</code></td><td>WIP / COGS journal</td></tr>
+<tr><td><code>SATELLITE_FB_SALE_COMPLETED</code></td><td>Revenue journal on LOCAL_CASHIER pay (not room-charge / hub)</td></tr>
+<tr><td><code>SATELLITE_FB_SHIFT_CLOSED</code></td><td>Cash recon log meta (stub-ish)</td></tr>
+<tr><td><code>SATELLITE_CLINIC_VISIT_COMPLETED</code></td><td>Visit revenue path</td></tr>
+<tr><td><code>SATELLITE_CLINIC_LAB_ORDER_COMPLETED</code></td><td>Lab revenue path</td></tr>
+<tr><td><code>SATELLITE_CLINIC_PROCEDURE_COMPLETED</code></td><td>Procedure TTK lines → Finance <code>adjustStock</code> (warn + post)</td></tr>
+</table>
+<h3 id="2-6-localization-azerbaijan">2.6 Localization (Azerbaijan)</h3>
+<ul>
+<li>Currency <strong>AZN</strong>; display timezone <strong>Asia/Baku</strong>; UTC in DB.</li>
+<li>Legal entity <strong>VÖEN</strong> (10 digits); citizen <strong>FIN</strong> (7 chars, no I/O).</li>
+<li>Foreigners: passport + <code>issuingCountry</code> until residency.</li>
+<li>Fiscal guest receipt (KKM / NBC) is <strong>STUB</strong> in this edition. e-qaimə (e-invoice) is a Finance concern; hotel folio shows a read-only stub (HOT-04).</li>
+</ul>
+<hr/>
+<h2 id="3-edition-snapshot-sell-honesty">3. Edition snapshot (sell honesty)</h2>
+<table>
+<tr><th>Product</th><th>Edition file</th><th>Status</th><th>Pilot ready</th><th>Sell / show one-liner</th></tr>
+<tr><td>Platform / Orchestrator</td><td><code>platform.yaml</code></td><td>mvp</td><td>false</td><td>Control plane + MDM + billing + workforce; topology hop/pool not live</td></tr>
+<tr><td>Hotel PMS</td><td><code>hotel.yaml</code></td><td>mvp</td><td>false</td><td>FO + City Ledger <strong>showable</strong> (UI/Demo green). Pilot open. KKM STUB. Not GA</td></tr>
+<tr><td>Clinic</td><td><code>clinic.yaml</code></td><td>mvp</td><td>false</td><td>Do not claim GA — fiscal / HL7 STUB; pilot open</td></tr>
+<tr><td>F&amp;B POS</td><td><code>fnb.yaml</code></td><td>mvp</td><td>false</td><td>Floor / KDS / admin showable at 🟡; pilot open</td></tr>
+<tr><td>Finance</td><td><code>finance.yaml</code></td><td>mvp</td><td>false</td><td>GL / events MVP; many FIN-* still API-only</td></tr>
+</table>
+<p><strong>Forbidden claims in this edition:</strong> “ready”, “GA”, “certified KKM”, “live Booking.com/Expedia sync”, “SHARED hotel SaaS pool”, “full Opera replacement”, “full commercial HIS”.</p>
+<p><strong>Allowed show language:</strong> “FO + City Ledger MVP showable; medical/sanatorium + POS + Finance in one stack; field pilot open.”</p>
+<hr/>
+<h2 id="4-hotel-pms-era-hotel-pms">4. Hotel PMS — <code>era-hotel-pms</code></h2>
+<p><strong>Entitlement gate:</strong> <code>industry_hotel_pms</code>  </p>
+<p><strong>Commercial modules:</strong> see §10  </p>
+<p><strong>IA rule:</strong> shift sections, not an ElektraWeb clone. FO=<code>/fo/<em></code>, HK=<code>/hk/</em></code>, Cash=<code>/front-cash/<em></code>, NA=<code>/night-audit/</em></code>, Distribution=<code>/distribution/<em></code>, Settings=<code>/settings/</em></code>. Finance / Clinic / POS are <strong>external deep links</strong>.</p>
+<p>Benchmark mix (honest): Opera Cloud for folio / night-audit <em>patterns</em>; Mews for modern UX density; ElektraWeb for Azerbaijan/Turkey market parity (not a pixel clone).</p>
+<h3 id="4-1-front-office-show-shipped">4.1 Front Office (SHOW / SHIPPED)</h3>
+<p>Working home: stay lifecycle.</p>
+<table>
+<tr><th>Screen</th><th>Path</th><th>What it does</th></tr>
+<tr><td>Room-type availability</td><td><code>/fo/availability</code></td><td>Sellable Avl / Occ; create blocked when Avl = 0</td></tr>
+<tr><td>Reservation list</td><td><code>/fo/reservations</code></td><td>Stay queue: filters, notes, assign, check-in</td></tr>
+<tr><td>Room rack</td><td><code>/fo/rack</code></td><td>Door tiles: HK status, in-house, quick actions</td></tr>
+<tr><td>Room plan</td><td><code>/fo/room-plan</code></td><td>Timeline bars; relocate / extend; share-twin lanes</td></tr>
+<tr><td>Groups</td><td><code>/fo/groups</code></td><td>Booking envelope (group)</td></tr>
+<tr><td>In-house</td><td><code>/fo/in-house</code></td><td>In-house guests → card / folio</td></tr>
+<tr><td>Room changes</td><td><code>/fo/room-changes</code></td><td>Move plans</td></tr>
+<tr><td>Agency inbox</td><td><code>/fo/agency-inbox</code></td><td>Confirm / decline OPTION stays from agency portal (<strong>API</strong>, not SHOW)</td></tr>
+<tr><td>Reservation card</td><td>modal / editor</td><td>Agency-first layout; assignment by stage; Additional collapsed</td></tr>
+<tr><td>Guest card</td><td>GuestCardModal</td><td>MDM link + masked FIN/passport; merge</td></tr>
+</table>
+<p><strong>Booking model (SHIPPED):</strong> hierarchy <strong>Block → Booking → RoomStay</strong>. Pickup from allotment. MASTER folio routing. Allotment cutoff soft-release is <strong>HEADLESS</strong> cron.</p>
+<p><strong>Shared twin (HOT-FO-03):</strong> <code>shareEligible</code> + M/F pool + door inventory on card / room-plan / rack. Status <strong>API</strong> — UAT-SMOKE §30 not signed, so not SHIPPED.</p>
+<h3 id="4-2-front-cash-folio-city-ledger-show-shipped">4.2 Front Cash, folio, City Ledger (SHOW / SHIPPED)</h3>
+<p>This is the area closest to Opera cashiering — and the one ERA treats as a first-class ops product, not an ERP screen.</p>
+<table>
+<tr><th>Capability</th><th>ID</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Folio settle multi-tender</td><td>HOT-CASH-01</td><td>SHIPPED</td><td>CASH / CARD / COMPANY / LOYALTY / DEPOSIT / BANK_TRANSFER (+ bankReference; match in Finance)</td></tr>
+<tr><td>Unified pending hub</td><td>HOT-CASH-02</td><td>SHIPPED</td><td>F&amp;B + clinic walk-in pay at reception (<code>/front-cash/pending</code>). Not the clinic cashier</td></tr>
+<tr><td>Front-cash journal + shift Z</td><td>HOT-CASH-06</td><td>SHIPPED</td><td>Ops Z packet — <strong>not</strong> fiscal KKM Z</td></tr>
+<tr><td>Deposit hold / apply / refund</td><td>HOT-CASH-03</td><td>SHIPPED</td><td>Apply at check-in and settle / checkout</td></tr>
+<tr><td>Payment refunds</td><td>HOT-CASH-04</td><td>SHIPPED</td><td>Mock fiscal; blocked after TRANSFERRED_AR</td></tr>
+<tr><td>Checkout discounts</td><td>HOT-CASH-05</td><td>SHIPPED</td><td>Manual + automatic promo</td></tr>
+<tr><td>Checkout close (zero balance)</td><td>HOT-CO-01</td><td>SHIPPED</td><td>Guest must settle</td></tr>
+<tr><td>Transfer balance to City Ledger</td><td>HOT-CO-02</td><td>SHIPPED</td><td>Credit / contract gate → <code>PENDING_AR</code></td></tr>
+<tr><td>Per-guest folio close</td><td>HOT-CO-03</td><td>SHIPPED</td><td>Selective close</td></tr>
+<tr><td>Early checkout unused-nights refund</td><td>HOT-CO-04</td><td>SHIPPED</td><td>Net of 18% VAT, default CASH; all folios reverse</td></tr>
+<tr><td>Folio routing</td><td>HOT-CL-01</td><td>SHIPPED</td><td>Revenue → GUEST / COMPANY / AGENCY; stay overrides beat property rules</td></tr>
+<tr><td>Credit limit on stay / room charge</td><td>HOT-CL-02</td><td>SHIPPED</td><td>Used by CL gate</td></tr>
+<tr><td>Agency CL ops snapshot</td><td>HOT-CL-03</td><td>SHIPPED</td><td><code>/front-cash/agency-ledger</code></td></tr>
+<tr><td>CL → Finance snapshot</td><td>HOT-CL-04</td><td>SHIPPED</td><td>Re-push + Finance deep link</td></tr>
+<tr><td>Terms / aging / invoice matching</td><td>HOT-CL-05</td><td>SHIPPED</td><td><strong>Owned by Finance</strong>, not duplicated in PMS</td></tr>
+<tr><td>Agency prepaid / postpaid + refunds</td><td>HOT-AG-02</td><td>SHIPPED</td><td>Bank match in Finance</td></tr>
+</table>
+<p><strong>Folio windows:</strong> ERA uses <strong>routing rules + stay overrides + MASTER folio</strong>, not Opera’s 8 named folio windows (1–8) as a first-class object. Functionally similar for “guest vs company vs agency”; not a window-for-window clone.</p>
+<p><strong>City Ledger vs Opera AR:</strong> hotel keeps <strong>operational</strong> CL (opening, charges, payments, checkout transfer). Finance keeps <strong>AR aging, allocation, e-invoice</strong>. This is an explicit product boundary, not a missing screen.</p>
+<h3 id="4-3-night-audit-show-shipped">4.3 Night Audit (SHOW / SHIPPED)</h3>
+<table>
+<tr><th>Capability</th><th>ID</th><th>Status</th></tr>
+<tr><td>EOD: post room / package, roll business day, emit E1</td><td>HOT-NA-01</td><td>SHIPPED</td></tr>
+<tr><td>Polish: exceptions, auto no-show, trial</td><td>HOT-NA-02</td><td>SHIPPED</td></tr>
+<tr><td>EOD reports hub + CSV (cancel / create / folio tx / price control / no-show / room-move / VIP)</td><td>HOT-NA-03</td><td>SHIPPED</td></tr>
+<tr><td>Reservation updates filter + CSV</td><td>HOT-NA-04</td><td>SHIPPED</td></tr>
+<tr><td>End of year close / open</td><td>HOT-NA-05</td><td><strong>STUB</strong> (<code>YEAR_END_NOT_ENABLED</code>)</td></tr>
+</table>
+<p>Night Audit is an operational day-close, not a GL close. GL posts from <code>SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED</code>.</p>
+<h3 id="4-4-housekeeping-show">4.4 Housekeeping (SHOW)</h3>
+<table>
+<tr><th>Screen</th><th>Path</th></tr>
+<tr><td>HK board (DIRTY → CLEAN → INSPECTED)</td><td><code>/hk</code></td></tr>
+<tr><td>Maid mobile</td><td><code>/hk/mobile</code></td></tr>
+<tr><td>Minibar</td><td><code>/hk/minibar</code></td></tr>
+<tr><td>Maid shifts / assignment</td><td><code>/hk/maids</code></td></tr>
+<tr><td>OOO / closed rooms</td><td><code>/hk/closed-rooms</code></td></tr>
+<tr><td>Lost &amp; found</td><td><code>/hk/lost-and-found</code></td></tr>
+</table>
+<p>Local stock MVP for HK consumption: <code>/settings/stock</code> (deep link to Finance warehouse for real inventory).</p>
+<h3 id="4-5-distribution-b2b-yield">4.5 Distribution, B2B, yield</h3>
+<table>
+<tr><th>Capability</th><th>ID</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Local channel manager</td><td>HOT-CH-01</td><td>SHIPPED</td><td>Mappings, stop-sell, sync journal, OTA cancel by ref, health</td></tr>
+<tr><td>Live OTA ARI (Booking.com / Expedia / Exely)</td><td>HOT-CH-02</td><td><strong>STUB</strong></td><td>Env-gated dry-run; no vendor creds in this edition</td></tr>
+<tr><td>Tour agency contracts + commission %</td><td>HOT-AG-01</td><td>SHIPPED</td><td></td></tr>
+<tr><td>Allotment blocks + pickup</td><td>HOT-BOOK-01</td><td>SHIPPED</td><td>Cutoff cron HEADLESS</td></tr>
+<tr><td>Occupancy / load / child pricing flags</td><td>HOT-OCC-01</td><td>SHIPPED</td><td>Flags default OFF; 2nd/3rd adult, extra bed, child matrix</td></tr>
+<tr><td>Yield rules (load %)</td><td>part of HOT-OCC-01</td><td>SHIPPED</td><td>Applied only if load flag ON</td></tr>
+<tr><td>Pricing components (fee / meals / COGS versions)</td><td>HOT-PC-01</td><td>SHIPPED</td><td>Version history + audit</td></tr>
+<tr><td>Package sell + costFloor versions</td><td>HOT-PKG-01</td><td>SHIPPED</td><td></td></tr>
+<tr><td>Auto-BAR from production calendar</td><td>M24</td><td>SHIPPED</td><td>Nightly <code>/api/cron/auto-bar</code>; <code>dayType</code> + MANUAL lock</td></tr>
+<tr><td>Unit economics (CPOR / BEP / below-floor)</td><td>HOT-UE-01</td><td><strong>API</strong></td><td>Phase A proxy; Finance CPOR later</td></tr>
+<tr><td>Agency portal book</td><td>HOT-AGP-01</td><td><strong>API</strong></td><td>B2B extranet; AUTO default OFF → OPTION</td></tr>
+<tr><td>FO agency inbox</td><td>HOT-AGP-02</td><td><strong>API</strong></td><td>Confirm → CONFIRMED; decline → CANCELLED</td></tr>
+<tr><td>Optional passport scan on agency book</td><td>HOT-AGP-03</td><td><strong>API</strong></td><td>Not KBS</td></tr>
+</table>
+<p><strong>Yield honesty vs Opera:</strong> ERA has BAR calendar, occupancy/load flags, child matrix, and auto-BAR from a production calendar. It does <strong>not</strong> claim Opera-class hurdle rates, best-available-rate strategy trees, or a certified CRS. Live channel push is a stub.</p>
+<h3 id="4-6-banquets-transfers-service-migration">4.6 Banquets, transfers, service, migration</h3>
+<table>
+<tr><th>Area</th><th>Path</th><th>Status</th><th>Honesty</th></tr>
+<tr><td>Banquets / BEO</td><td><code>/banquets*</code></td><td>SHIPPED (HOT-BEO-01)</td><td>Lines, resources, staff, settlement, calendar, event P&amp;L. <strong>Not</strong> full Opera S&amp;C (blocks, function diary, BEO change-log at Opera depth)</td></tr>
+<tr><td>Transfers</td><td><code>/transfers</code>, <code>/transfers/airport</code></td><td>SHIPPED (HOT-XFER-01)</td><td>Charge via postCharge routing; cancel / void</td></tr>
+<tr><td>Service / maintenance WO</td><td><code>/service</code>, <code>/service/guest</code></td><td>SHIPPED (PRD M23)</td><td>Staff + guest request form</td></tr>
+<tr><td>Migration PRO</td><td><code>/migration</code></td><td>module <code>hotel_migration_pro</code></td><td>AZ police / registration queue</td></tr>
+<tr><td>ElektraWeb historical import</td><td><code>/settings/import</code></td><td>SHIPPED (HOT-05)</td><td>SuperAdmin</td></tr>
+<tr><td>ElektraWeb live bridge</td><td>extension + ingest API</td><td>HEADLESS (HOT-06)</td><td>Dual-run; no SatAdmin card</td></tr>
+</table>
+<h3 id="4-7-hotel-thin-medical-spa">4.7 Hotel-thin medical / SPA</h3>
+<p>Hotel owns <strong>scheduling surfaces</strong>; Clinic owns <strong>clinical record</strong>.</p>
+<table>
+<tr><th>Screen</th><th>Path</th><th>Role</th></tr>
+<tr><td>Procedures</td><td><code>/procedures</code></td><td>Sanatorium procedure slots</td></tr>
+<tr><td>SPA reservations</td><td><code>/spa/reservations</code></td><td>SPA book list</td></tr>
+<tr><td>Staff match</td><td><code>/spa/staff-match</code></td><td>Therapist matching</td></tr>
+<tr><td>Places / cabinets</td><td><code>/spa/places</code></td><td>Resource rooms</td></tr>
+<tr><td>Medical (thin)</td><td><code>/medical</code></td><td>Jump / thin hotel medical</td></tr>
+</table>
+<p>Deep lab, ICD, nurse roster, contraindications, procedure TTK → <strong>Clinic</strong>.</p>
+<h3 id="4-8-guest-loyalty">4.8 Guest loyalty</h3>
+<p>PRD: guest loyalty tiers via platform hook <code>platform_loyalty</code> — <strong>DONE</strong> as a platform hook, not an Opera-class loyalty engine (points, tiers, stay-based earn/burn across a brand).</p>
+<h3 id="4-9-management-reports-api-not-shipped">4.9 Management reports (API — not SHIPPED)</h3>
+<p>Catalog inspired by ElektraWeb WA0058/59 + Nafta nightly pack. Screens and PDFs exist; <strong>no UAT evidence → not SHIPPED</strong>.</p>
+<table>
+<tr><th>Hub</th><th>Path</th><th>Contents</th></tr>
+<tr><td>Reports</td><td><code>/reports</code></td><td>Category tiles + shared period</td></tr>
+<tr><td>Analysis</td><td><code>/reports/analysis</code></td><td>Cubes (P2)</td></tr>
+<tr><td>Occupancy</td><td><code>/reports/occupancy</code></td><td>Forecast / annual / monthly-daily + PDF</td></tr>
+<tr><td>Daily flash</td><td><code>/reports/daily</code></td><td>Daily management + in-house + PDF</td></tr>
+<tr><td>Financial (ops)</td><td><code>/reports/financial</code></td><td>Trial balance period, cash, folio tx, department revenues — <strong>ops</strong>, not Finance GL</td></tr>
+<tr><td>Agency</td><td><code>/reports/agency</code></td><td>Profitability / market</td></tr>
+<tr><td>Booking</td><td><code>/reports/booking</code></td><td>Planned create/cancel/CRM</td></tr>
+<tr><td>Nightly ZIP</td><td><code>/reports/nightly-pack</code></td><td>Configurable pack after NA; cron sends link (HEADLESS)</td></tr>
+</table>
+<h3 id="4-10-hotel-gaps-vs-a-full-opera-cloud-property">4.10 Hotel gaps vs a full Opera Cloud property</h3>
+<table>
+<tr><th>Opera-class area</th><th>ERA today</th></tr>
+<tr><td>27 folio styles / 8 folio windows</td><td>Routing + MASTER folio; fewer print styles</td></tr>
+<tr><td>Certified PMS↔CRS / OHIP</td><td>Local CM SHIPPED; live OTA <strong>STUB</strong></td></tr>
+<tr><td>Multi-property chain + central reservation</td><td>Org + holding in Finance / CP; not Opera Cloud multi-property</td></tr>
+<tr><td>Sales &amp; Catering depth</td><td>BEO MVP only</td></tr>
+<tr><td>Year-end calendar</td><td>STUB</td></tr>
+<tr><td>Fiscal / KKM certified</td><td>STUB</td></tr>
+<tr><td>Management report acceptance</td><td>API / screens, not SHIPPED</td></tr>
+<tr><td>Agency extranet</td><td>API, not SHOW</td></tr>
+<tr><td>Shared-twin UAT</td><td>API</td></tr>
+<tr><td>Brand / franchise mandated interfaces</td><td>Out of scope for Nafta-class</td></tr>
+</table>
+<hr/>
+<h2 id="5-clinic-sanatorium-era-clinic">5. Clinic / sanatorium — <code>era-clinic</code></h2>
+<p><strong>Entitlement:</strong> <code>industry_clinic</code> (+ hotel bundle for sanatorium).  </p>
+<p><strong>There is no <code>industry_hospital</code> tile.</strong> Hospital pack = same satellite + inpatient modules (future).</p>
+<h3 id="5-1-product-lines-presets">5.1 Product lines (presets)</h3>
+<table>
+<tr><th>Product line</th><th><code>Outlet.preset</code></th><th>Gate</th><th>Notes</th></tr>
+<tr><td>ERA Clinic Outpatient</td><td><code>outpatient</code></td><td><code>industry_clinic</code></td><td>Polyclinic, diagnostics — core</td></tr>
+<tr><td>ERA Clinic Inpatient Day</td><td><code>inpatient_day</code></td><td>+ future <code>clinic_inpatient_day</code></td><td>Ward-lite; <strong>not</strong> full HIS. Current inpatient is a stub until Phase 4</td></tr>
+<tr><td>ERA Sanatorium Clinical</td><td><code>sanatorium_clinical</code></td><td>clinic + hotel bundle</td><td>Requires <code>era-hotel-pms</code> + bus</td></tr>
+<tr><td>ERA Wellness</td><td><code>wellness</code></td><td><code>industry_clinic</code></td><td>Scheduling + resources, no EMR</td></tr>
+</table>
+<p>Sanatorium <strong>business</strong> = entitlements <code>industry_hotel_pms</code> + <code>industry_clinic</code> (+ optional retail). Not a standalone sanatorium satellite.</p>
+<h3 id="5-2-in-scope-clinical-operations">5.2 In-scope clinical operations</h3>
+<table>
+<tr><th>Area</th><th>Surfaces</th><th>Status (readiness)</th></tr>
+<tr><td>Ops home / appointments / nurse</td><td><code>/</code>, <code>/appointments</code>, <code>/nurse</code></td><td>UI 🟡</td></tr>
+<tr><td>Nurse / lab monthly rotation</td><td><code>/sanatorium/nurse-roster</code></td><td>UI 🟡</td></tr>
+<tr><td>Sanatorium МКБ</td><td><code>/sanatorium</code></td><td>UI 🟡</td></tr>
+<tr><td>Patient card (after contraindications)</td><td><code>/patients/[id]</code></td><td>UI 🟡</td></tr>
+<tr><td>Visit / inpatient</td><td><code>/visits/[id]</code>, <code>/inpatient</code></td><td>UI 🟡</td></tr>
+<tr><td>Diagnosis report</td><td><code>/reports/diagnoses</code></td><td>UI 🟡</td></tr>
+<tr><td>ICD favorites</td><td><code>/admin/icd-favorites</code></td><td>UI 🟡</td></tr>
+<tr><td>SatAdmin catalogs</td><td><code>/admin/*</code></td><td>UI 🟡</td></tr>
+<tr><td>Cashier</td><td><code>/cashier</code></td><td>UI 🟡</td></tr>
+<tr><td>Print</td><td><code>/print/*</code></td><td>UI 🟡</td></tr>
+<tr><td>Procedure TTK BOM</td><td><code>/admin/master-data</code></td><td><strong>API</strong> (CLI-47; UAT open)</td></tr>
+</table>
+<p><strong>Procedure planning:</strong> program / package quotas expand to <code>PROPOSED</code> procedure orders; doctor confirms; FIFO placement onto resources (<code>placeConfirmedProcedures</code>). Time layers: occupancy vs cabin resource gap vs guest rest vs pair rules (<code>resourceGapMinutes</code>, <code>patientRestMinutes</code>).</p>
+<p><strong>Hotel capacity foresight (CLI-27, SHIPPED):</strong> clinic reads hotel capacity; soft warn at ≤15% remaining; critical <strong>blocks medical booking</strong>; bus <code>CAPACITY_CHANGED</code>.</p>
+<p><strong>Workforce (CLI-WF-01, SHIPPED):</strong> CP hire → clinic <code>DOCTOR</code> login.</p>
+<h3 id="5-3-explicitly-out-of-clinic-v1">5.3 Explicitly out of clinic v1</h3>
+<p>Full HIS (OR, MAR, ward pharmacy, DRG), production HL7/FHIR, DICOM/PACS, national e-recept, full EMR, full insurance TPA / pre-auth, pharmacy warehouse (Finance or retail — <strong>not</strong> procedure TTK).</p>
+<p>Fiscal / HL7: <strong>STUB</strong>. Edition <code>mvp</code>, pilot open, do not claim GA.</p>
+<hr/>
+<h2 id="6-f-b-pos-era-fnb-pos">6. F&amp;B POS — <code>era-fnb-pos</code></h2>
+<p><strong>Role:</strong> restaurant satellite. Floor / ticket / KDS / shift live here — never in PMS or ERP.</p>
+<table>
+<tr><th>ID</th><th>Capability</th><th>Status</th></tr>
+<tr><td>FNB-01</td><td>CARD pay + shift</td><td>SHIPPED</td></tr>
+<tr><td>FNB-02</td><td>Real KKM / NBC</td><td><strong>STUB</strong> (mock)</td></tr>
+<tr><td>FNB-03</td><td>Admin modal CRUD (menu categories/items, tables)</td><td>SHIPPED</td></tr>
+<tr><td>FNB-04</td><td>Menu price history</td><td>SHIPPED</td></tr>
+<tr><td>FNB-05</td><td>Standalone sale / shift → Finance GL</td><td>SHIPPED (LOCAL_CASHIER only; hotel paths via NA)</td></tr>
+<tr><td>FNB-06</td><td>Recipe SKU + Finance deep-link (BOM SoT in Finance)</td><td>SHIPPED</td></tr>
+<tr><td>FNB-07</td><td>Dish image URL (no upload)</td><td>SHIPPED</td></tr>
+<tr><td>M11</td><td>KDS course timing</td><td>DONE (PRD)</td></tr>
+<tr><td>M12</td><td>Recipe / BOH depletion engine</td><td>DONE — posting → Finance</td></tr>
+<tr><td>M13</td><td>Delivery aggregator inbox</td><td>DONE as <strong>platform</strong> <code>delivery</code> (not a full Wolt/Glovo cert)</td></tr>
+<tr><td>M14</td><td>Labor roster / PIN clock</td><td>DONE</td></tr>
+</table>
+<p><strong>Room charge:</strong> <code>POST /api/pms/room-charge</code> into hotel-pms. Reception can collect café tickets on <code>/front-cash/pending</code>.</p>
+<p><strong>Banquet extras:</strong> fb-pos tickets with <code>beoId</code> — extras on event day; base package on PMS master folio.</p>
+<p><strong>Out of F&amp;B v1:</strong> PMS chessboard, medical, SPA POS, local warehouse/GL, dark kitchen, full iiko/rKeeper clone, split bill (deferred).</p>
+<p>Readiness: UI 🟡, Demo 🟡, edition <code>mvp</code>, pilot open.</p>
+<hr/>
+<h2 id="7-finance-era-finance-core">7. Finance — <code>era-finance-core</code></h2>
+<p>Finance is the <strong>accounting data plane</strong>, not the SaaS front door. Registration, launcher, and billing SoT stay on the orchestrator.</p>
+<h3 id="7-1-what-hospitality-needs-from-finance">7.1 What hospitality needs from Finance</h3>
+<table>
+<tr><th>Need</th><th>Finance home</th><th>Hotel / POS role</th></tr>
+<tr><td>Sales invoices / e-qaimə / AR</td><td><code>/sales/invoices</code></td><td>Hotel <code>/reports/invoices</code> list + <code>integrateToAccounting</code> + deep link</td></tr>
+<tr><td>Agency AR / aging / allocate</td><td><code>/crm/counterparties</code>, <code>/reporting/aging</code></td><td>Hotel snapshot + checkout <code>PENDING_AR</code> / <code>TRANSFERRED_AR</code></td></tr>
+<tr><td>Purchases / PO</td><td><code>/purchases</code></td><td>Not in hotel</td></tr>
+<tr><td>Warehouse / stock</td><td><code>/inventory/*</code></td><td>Hotel local HK MVP only; clinic TTK write-off via event</td></tr>
+<tr><td>GL journals from NA / POS / clinic</td><td>event consumers</td><td>Satellites emit; Finance posts atomically</td></tr>
+<tr><td>Bank apply / match</td><td>bank modules</td><td>Folio <code>BANK_TRANSFER</code> reference</td></tr>
+</table>
+<h3 id="7-2-core-finance-product-honest">7.2 Core finance product (honest)</h3>
+<ul>
+<li>Double-entry GL; adjusting journals (FIN-GL-02 SHIPPED).</li>
+<li>Holdings: multi-org consolidation to holding base currency (AZN) via CBAR; monthly-slice P&amp;L.</li>
+<li>Inventory including statutory Forma-5 / Forma-2 PDF (<strong>API</strong>).</li>
+<li>Tax declarations (simplified / profit / payroll) — <strong>API</strong>, <code>tax_pro</code>; property file export pending.</li>
+<li>Counterparty CRM for accounting (not hotel guest CRM).</li>
+<li>Optional payroll mirror from CP workforce (<code>hr_full</code>).</li>
+<li>Many FIN-* rows remain <strong>API-only</strong>. Edition <code>mvp</code>. Demo ❌ on Finance Product-Readiness.</li>
+</ul>
+<h3 id="7-3-what-finance-is-not">7.3 What Finance is not</h3>
+<p>Not a PMS. Not a POS. Not the identity provider. Not a replacement for Opera’s cashiering UI — that UI is in Hotel Front Cash.</p>
+<hr/>
+<h2 id="8-orchestrator-platform-era-orchestrator">8. Orchestrator / platform — <code>era-orchestrator</code></h2>
+<h3 id="8-1-modules-prd">8.1 Modules (PRD)</h3>
+<table>
+<tr><th>ID</th><th>Module</th><th>Status</th></tr>
+<tr><td>M1</td><td>Auth (login, refresh, SSO)</td><td>DONE</td></tr>
+<tr><td>M2</td><td>Membership API</td><td>DONE</td></tr>
+<tr><td>M3</td><td>Entitlements validate</td><td>DONE</td></tr>
+<tr><td>M4</td><td>Satellite events ingress</td><td>DONE</td></tr>
+<tr><td>M5</td><td>Access request / transfer ownership</td><td>DONE</td></tr>
+<tr><td>M6</td><td>Ownership dispute</td><td>DONE</td></tr>
+<tr><td>M7</td><td>Billing &amp; subscription SoT</td><td>DONE</td></tr>
+<tr><td>M8</td><td>Platform add-ons (notifications, booking, …)</td><td>Live</td></tr>
+<tr><td>M9</td><td>Launcher web</td><td>DONE</td></tr>
+</table>
+<h3 id="8-2-workforce-hub-shipped-api-mix">8.2 Workforce hub (SHIPPED / API mix)</h3>
+<p>Hire, org units, positions, absences (7 Azerbaijan Labour Code kinds), vacation plans, personnel-order PDF, ştat (staff schedule) PDF, timesheets, CSV import/export, seat licensing + Security Admin, masked FIN on employments.</p>
+<p>Several PDF / approve flows are <strong>API</strong> until UAT-SMOKE. Hire → satellite provision is <strong>SHIPPED</strong> for clinic (and the same pattern for hotel).</p>
+<h3 id="8-3-platform-add-ons-relevant-to-hospitality">8.3 Platform add-ons relevant to hospitality</h3>
+<table>
+<tr><th>Add-on</th><th>Role</th></tr>
+<tr><td><code>platform_workforce</code></td><td>CP hire / absence / seats</td></tr>
+<tr><td><code>platform_loyalty</code></td><td>Hotel loyalty hook</td></tr>
+<tr><td><code>platform_notifications_pro</code></td><td>Guest notify path — hotel HOT-03 is still <strong>STUB</strong> (Twilio/SendGrid)</td></tr>
+<tr><td><code>delivery</code></td><td>F&amp;B aggregator inbox</td></tr>
+<tr><td>Booking add-on</td><td>Platform booking (not Opera CRS)</td></tr>
+</table>
+<h3 id="8-4-topology-honesty-repeat">8.4 Topology honesty (repeat)</h3>
+<p>Bind + runtime-config Sync + PlacementJob API scaffold exist. Live SHARED pool ops and automated migrate <strong>do not</strong>. License defaults follow <code>deploymentTopology</code>. Do not sell as multi-tenant Opera Cloud equivalent.</p>
+<hr/>
+<h2 id="9-cross-stack-journeys-the-actual-product">9. Cross-stack journeys (the actual product)</h2>
+<p>These journeys are why ERA is comparable to “Opera + POS + SPA + 1C”, not to Opera alone.</p>
+<h3 id="9-1-in-house-guest-dines-and-charges-the-room">9.1 In-house guest dines and charges the room</h3>
+<ol>
+<li>Waiter opens a table on F&amp;B POS, fires KDS, pays <strong>room charge</strong>.</li>
+<li>Hotel posts a folio charge via PMS bridge (routing rules apply).</li>
+<li>Night Audit includes the charge in the business day and emits <code>SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED</code>.</li>
+<li>Finance posts NAS journal lines. Standalone café cash (LOCAL_CASHIER) can also emit <code>SATELLITE_FB_SALE_COMPLETED</code> without a stay.</li>
+</ol>
+<h3 id="9-2-walk-in-caf-or-clinic-paid-at-reception">9.2 Walk-in café or clinic paid at reception</h3>
+<ol>
+<li>F&amp;B or Clinic creates a pending settlement (<code>POS_BRIDGE_SECRET</code>).</li>
+<li>Reception pays or voids on <code>/front-cash/pending</code>.</li>
+<li>Callback confirms to the source satellite. This is <strong>one cash desk</strong>, not three.</li>
+</ol>
+<h3 id="9-3-agency-group-checkout-to-city-ledger">9.3 Agency group checkout to city ledger</h3>
+<ol>
+<li>Stay routing sends room + extras to AGENCY.</li>
+<li>Checkout transfers remaining balance to CL (<code>PENDING_AR</code>) after credit/contract gate.</li>
+<li>Hotel pushes <code>SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT</code>.</li>
+<li>Finance ages and allocates invoices. Hotel does not invent a second AR.</li>
+</ol>
+<h3 id="9-4-sanatorium-stay-procedures">9.4 Sanatorium stay + procedures</h3>
+<ol>
+<li>Guest is a hotel stay <strong>and</strong> a clinic patient (<code>globalPersonId</code>).</li>
+<li>Doctor confirms proposed procedures; FIFO scheduler places them with resource-gap and rest rules.</li>
+<li>CLI-27 blocks booking when hotel remaining capacity is critical.</li>
+<li>Completed procedure emits TTK consumable lines → Finance stock (CLI-47 API).</li>
+<li>Walk-in clinical charges can settle at hotel Front Cash.</li>
+</ol>
+<h3 id="9-5-department-clinic-under-hotel-v-en">9.5 Department clinic under hotel VÖEN</h3>
+<p>Clinic org <code>DEPARTMENT</code> of hotel: operational rows stay in clinic; revenue / fiscal <strong>may</strong> route to parent. Detach later without migrating stays or visits.</p>
+<h3 id="9-6-owner-cockpit">9.6 Owner cockpit</h3>
+<p>Owner SSO into launcher → Hotel executive / unit-economics (API), Clinic revenue summary, Finance holdings P&amp;L, workforce seats. One identity, several satellites.</p>
+<hr/>
+<h2 id="10-hotel-commercial-modules-sku">10. Hotel commercial modules (SKU)</h2>
+<p>Satellite gate: <code>industry_hotel_pms</code>. Billable keys (not 12 fine-grained leftovers):</p>
+<table>
+<tr><th>Key</th><th>Human name</th><th>Typical contents</th></tr>
+<tr><td><code>hotel_core</code></td><td>PMS Core</td><td>Front Office, Front Cash, Night Audit</td></tr>
+<tr><td><code>hotel_housekeeping</code></td><td>Housekeeping &amp; Room Rack</td><td><code>/hk/*</code></td></tr>
+<tr><td><code>hotel_service</code></td><td>Service &amp; maintenance</td><td><code>/service</code></td></tr>
+<tr><td><code>hotel_migration_pro</code></td><td>Migration PRO</td><td>AZ registration queue</td></tr>
+<tr><td><code>hotel_transfers</code></td><td>Transfers</td><td>Airport / fleet</td></tr>
+<tr><td><code>hotel_spa_scheduling</code></td><td>SPA &amp; Scheduling</td><td><code>/spa/*</code>, <code>/procedures</code></td></tr>
+<tr><td><code>hotel_distribution</code></td><td>Distribution</td><td>Channel manager, contracts, yield</td></tr>
+<tr><td><code>hotel_agency_portal</code></td><td>Agency Portal</td><td>B2B extranet — <strong>sold separately</strong>, not in default City/Resort/Sanatorium bundles</td></tr>
+<tr><td><code>hotel_guest_experience</code></td><td>Guest Profiles &amp; Tasks</td><td>Guest card / tasks</td></tr>
+<tr><td><code>hotel_banquets</code></td><td>Banquets &amp; BEO</td><td><code>/banquets*</code></td></tr>
+<tr><td><code>hotel_medical_sanatorium</code></td><td>Medical &amp; Sanatorium</td><td>Hotel-thin <code>/medical</code></td></tr>
+<tr><td><code>hotel_setup_advanced</code></td><td>Advanced master data</td><td>Deep settings</td></tr>
+</table>
+<p>Clinic gate <code>industry_clinic</code> is a <strong>separate satellite SKU</strong>, not a hotel submodule. That is the architectural difference vs “Opera + OPERA Controls flag for activities”.</p>
+<hr/>
+<h2 id="11-comparison-axes-vs-oracle-opera-cloud">11. Comparison axes vs Oracle Opera Cloud</h2>
+<p>Use this section in NotebookLM as the scoring rubric. Scores are qualitative and edition-honest.</p>
+<h3 id="11-1-where-opera-cloud-is-deeper-today">11.1 Where Opera Cloud is deeper today</h3>
+<table>
+<tr><th>Axis</th><th>Why Opera wins</th></tr>
+<tr><td>Pure hotel cashiering taxonomy</td><td>Folio windows, 20+ folio styles, cashier shifts as a 30-year product</td></tr>
+<tr><td>Group / block sophistication</td><td>Master / sub-blocks, wash, cutoff, pickup at chain scale</td></tr>
+<tr><td>Rate engine</td><td>BAR / hurdle / restriction trees, occupancy-driven strategy as default</td></tr>
+<tr><td>Channel / CRS</td><td>Certified OHIP adapters; live ARI to major OTAs</td></tr>
+<tr><td>Multi-property / brand</td><td>Native chain, central reservation, franchise reporting</td></tr>
+<tr><td>Sales &amp; Catering</td><td>Function diary, BEO versions, banquet forecast</td></tr>
+<tr><td>Interface marketplace</td><td>1,000+ certified vendors (locks, TV, PBX, key cards)</td></tr>
+<tr><td>Page Composer / OPERA Controls</td><td>Field-level UI composition + thousands of flags</td></tr>
+</table>
+<h3 id="11-2-where-era-is-structurally-different-and-often-stronger-for-this-market">11.2 Where ERA is structurally different (and often stronger for this market)</h3>
+<table>
+<tr><th>Axis</th><th>Why ERA is the better fit for a Nafta-class / wellness property</th></tr>
+<tr><td>Medical / sanatorium</td><td>First-class clinic satellite: ICD, contraindications, doctor-confirmed FIFO, nurse roster, capacity gate vs hotel occupancy</td></tr>
+<tr><td>One cash desk across hotel + café + clinic</td><td>Unified Front Cash pending hub</td></tr>
+<tr><td>Accounting boundary</td><td>Real GL + e-qaimə + warehouse in the same vendor; not “export to 1C and hope”</td></tr>
+<tr><td>Identity</td><td>MDM person (FIN/passport) shared across hotel guest and clinic patient</td></tr>
+<tr><td>Org operating mode</td><td>DEPARTMENT clinic under hotel VÖEN without merging databases</td></tr>
+<tr><td>Workforce</td><td>CP hire → satellite role provision; Labour Code absence kinds</td></tr>
+<tr><td>Localization</td><td>AZN, VÖEN, FIN, Baku TZ, migration/police queue as a SKU</td></tr>
+<tr><td>Owner UX</td><td>One launcher, not Opera + iiko + Medesk + 1C passwords</td></tr>
+<tr><td>TCO</td><td>No Oracle Hospitality list price, no OHIP interface tax, no Opera Cloud Foundation vs Premium feature gating</td></tr>
+</table>
+<h3 id="11-3-where-both-are-incomplete-do-not-bluff">11.3 Where both are incomplete (do not bluff)</h3>
+<table>
+<tr><th>Axis</th><th>Opera</th><th>ERA</th></tr>
+<tr><td>Certified AZ KKM / NBC</td><td>via local fiscal vendor</td><td>STUB</td></tr>
+<tr><td>Live OTA without a channel manager</td><td>OHIP / OXI (paid)</td><td>Local CM yes; live ARI STUB</td></tr>
+<tr><td>Full HIS</td><td>not Opera’s job</td><td>not clinic v1</td></tr>
+<tr><td>Field-proven GA at this property</td><td>decades</td><td><strong>pilot open</strong></td></tr>
+</table>
+<h3 id="11-4-recommended-notebooklm-questions">11.4 Recommended NotebookLM questions</h3>
+<ol>
+<li>For each Opera Cloud cashiering object (folio window, deposit, city ledger, night audit), what is the ERA equivalent and who owns the GL?</li>
+<li>Which Opera S&amp;C objects have no ERA counterpart beyond BEO MVP?</li>
+<li>Which ERA clinic / sanatorium objects have <strong>no</strong> Opera Cloud counterpart?</li>
+<li>What must be true (KKM, live OTA, Pilot field) before ERA can be shown as a replacement rather than a parallel stack?</li>
+<li>For a TABIA/PMD-class group: which properties are Opera-mandated (brand) vs ERA-fit (wellness / unbranded / medical)?</li>
+</ol>
+<hr/>
+<h2 id="12-compact-capability-index">12. Compact capability index</h2>
+<p>Statuses below are a snapshot of <code>docs/COVERAGE_MATRIX.md</code> and Product-Readiness on 2026-08-22. When they disagree, <strong>the matrix files win</strong>.</p>
+<h3 id="12-1-hotel">12.1 Hotel</h3>
+<table>
+<tr><th>ID</th><th>Capability</th><th>Status</th></tr>
+<tr><td>HOT-01</td><td>Master data CRUD</td><td>SHIPPED</td></tr>
+<tr><td>HOT-02</td><td>BAR rates Excel import</td><td>BLOCKED (Nafta Excel out of AC; dynamic plans only)</td></tr>
+<tr><td>HOT-03</td><td>Guest notify</td><td>STUB</td></tr>
+<tr><td>HOT-04</td><td>e-qaimé on folio</td><td>STUB</td></tr>
+<tr><td>HOT-05</td><td>ElektraWeb import</td><td>SHIPPED (SuperAdmin)</td></tr>
+<tr><td>HOT-06</td><td>ElektraWeb live bridge</td><td>HEADLESS</td></tr>
+<tr><td>HOT-MDM-01/02</td><td>Guest MDM link + masked profile</td><td>SHIPPED</td></tr>
+<tr><td>HOT-BOOK-01</td><td>Block → Booking → RoomStay</td><td>SHIPPED</td></tr>
+<tr><td>HOT-BOOK-02</td><td>Reservation card Phase 0</td><td>SHIPPED</td></tr>
+<tr><td>HOT-BOOK-03</td><td>Allotment cutoff cron</td><td>HEADLESS</td></tr>
+<tr><td>HOT-FO-01/02</td><td>Availability + sellable preview</td><td>SHIPPED</td></tr>
+<tr><td>HOT-FO-03</td><td>Shared twin</td><td>API</td></tr>
+<tr><td>HOT-CASH-01..06</td><td>Settle, pending, journal, deposit, refund, discount</td><td>SHIPPED</td></tr>
+<tr><td>HOT-CO-01..04</td><td>Checkout, CL transfer, per-guest close, unused-nights</td><td>SHIPPED</td></tr>
+<tr><td>HOT-CL-01..05</td><td>Routing, credit, agency CL, Finance snapshot, aging</td><td>SHIPPED</td></tr>
+<tr><td>HOT-NA-01..04</td><td>Night audit + EOD + updates</td><td>SHIPPED</td></tr>
+<tr><td>HOT-NA-05</td><td>Year-end</td><td>STUB</td></tr>
+<tr><td>HOT-RPT-01/02</td><td>Management reports + nightly ZIP</td><td>API</td></tr>
+<tr><td>HOT-XFER-01</td><td>Transfers</td><td>SHIPPED</td></tr>
+<tr><td>HOT-BEO-01</td><td>Banquets BEO</td><td>SHIPPED</td></tr>
+<tr><td>HOT-AG-01/02</td><td>Contracts + agency settlement</td><td>SHIPPED</td></tr>
+<tr><td>HOT-AGP-01..03</td><td>Agency portal</td><td>API</td></tr>
+<tr><td>HOT-PC-01</td><td>Pricing components</td><td>SHIPPED</td></tr>
+<tr><td>HOT-OCC-01</td><td>Occupancy / child / yield flags</td><td>SHIPPED</td></tr>
+<tr><td>HOT-PKG-01</td><td>Package sell versions</td><td>SHIPPED</td></tr>
+<tr><td>HOT-UE-01</td><td>Unit economics</td><td>API</td></tr>
+<tr><td>HOT-CH-01</td><td>Local channel manager</td><td>SHIPPED</td></tr>
+<tr><td>HOT-CH-02</td><td>Live OTA ARI</td><td>STUB</td></tr>
+<tr><td>HOT-UI-01</td><td>List filters</td><td>SHIPPED</td></tr>
+</table>
+<h3 id="12-2-clinic-platform-workforce-hospitality-relevant">12.2 Clinic / platform workforce (hospitality-relevant)</h3>
+<table>
+<tr><th>ID</th><th>Capability</th><th>Status</th></tr>
+<tr><td>CLI-27</td><td>Hotel capacity foresight</td><td>SHIPPED</td></tr>
+<tr><td>CLI-47</td><td>Procedure TTK → Finance stock</td><td>API</td></tr>
+<tr><td>CLI-WF-01</td><td>Practitioner hire → clinic login</td><td>SHIPPED</td></tr>
+<tr><td>CP-WF-HUB-01</td><td>Workforce hub E2E</td><td>SHIPPED</td></tr>
+<tr><td>CP-WF-* PDF / ştat / vacation / timesheet</td><td>Approve + PDF</td><td>API (UI landed)</td></tr>
+</table>
+<h3 id="12-3-f-b">12.3 F&amp;B</h3>
+<table>
+<tr><th>ID</th><th>Capability</th><th>Status</th></tr>
+<tr><td>FNB-01</td><td>Card pay + shift</td><td>SHIPPED</td></tr>
+<tr><td>FNB-02</td><td>Real KKM</td><td>STUB</td></tr>
+<tr><td>FNB-03..07</td><td>Admin CRUD, price history, GL sale, recipe, image URL</td><td>SHIPPED</td></tr>
+</table>
+<h3 id="12-4-orchestrator">12.4 Orchestrator</h3>
+<table>
+<tr><th>ID</th><th>Capability</th><th>Status</th></tr>
+<tr><td>ORCH-01</td><td>Workspace launcher + SSO</td><td>SHIPPED</td></tr>
+<tr><td>CP-LAUNCH-01</td><td>Launch URL from SatelliteEndpoint</td><td>API</td></tr>
+<tr><td>CP-WF-EMP/ABS/ORG/POS</td><td>Employment, absence, org tree, positions</td><td>UI landed / API until UAT</td></tr>
+</table>
+<hr/>
+<h2 id="13-ui-map-hotel-shift-ia">13. UI map (hotel shift IA)</h2>
+<p>Sidebar order: Front Office → Front Cash → Night Audit → Housekeeping → Guests → Distribution → Service → Migration → SPA → Transfers → Banquets → Medical → Reports → Settings → external (POS, Retail, Finance, Clinic).</p>
+<table>
+<tr><th>Work class</th><th>Home</th></tr>
+<tr><td>Sell / book / stay</td><td><code>/fo</code></td></tr>
+<tr><td>Stay pay + café/clinic walk-in + agency CL</td><td><code>/front-cash</code></td></tr>
+<tr><td>Day close</td><td><code>/night-audit</code></td></tr>
+<tr><td>Management PDFs / ZIP</td><td><code>/reports</code> (API acceptance)</td></tr>
+<tr><td>Cleaning / OOO / L&amp;F</td><td><code>/hk</code></td></tr>
+<tr><td>OTA + B2B + quotas</td><td><code>/distribution</code></td></tr>
+<tr><td>Guest profile</td><td><code>/guests</code></td></tr>
+<tr><td>GL / AR / e-invoice</td><td><strong>Finance</strong></td></tr>
+<tr><td>POS / digital menu</td><td><strong>F&amp;B</strong></td></tr>
+<tr><td>Lab / deep medical</td><td><strong>Clinic</strong></td></tr>
+</table>
+<p>i18n: new screens require <strong>en + az + ru</strong>.</p>
+<hr/>
+<h2 id="14-closing-statement-for-analysts">14. Closing statement for analysts</h2>
+<p>ERA’s hotel satellite is already a <strong>dense operational PMS</strong> (folio, city ledger, night audit, HK, B2B allotment, BEO MVP, local channel manager). Marketing screenshots of Opera Cloud look “light” because Alta + Page Composer hide density; Opera’s <em>user guides</em> are still deeper on chain hotel mechanics.</p>
+<p>ERA’s distinctive claim is not “we have more folio styles than Oracle”. It is:</p>
+<blockquote><strong>One stack for a medical/wellness resort: stay + procedures + restaurant + local GL + one owner identity — with honest stubs where the law or a vendor is not yet wired.</strong></blockquote>
+<p>Until Pilot field is signed, KKM is live, and live OTA is more than a dry-run, the correct commercial sentence is <strong>MVP showable</strong>, not <strong>Opera replacement</strong>.</p>
+<hr/>
+<p><em>End of brief. Snapshot 2026-08-22. Update this file when editions or COVERAGE rows that affect hospitality sell claims change.</em></p>
+</body>
+</html>

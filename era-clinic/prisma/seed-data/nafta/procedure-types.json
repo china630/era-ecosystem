@@ -3,13 +3,21 @@
   "code": "SVC-4-KAMERALI-HIDROQALVANIZASIYA",
   "name": "4 kameralı hidroqalvanizasiya",
   "price": 15,
-  "durationMin": 20
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 15,
+  "dayStartHour": 8,
+  "dayEndHour": 18
  },
  {
   "code": "SVC-4-KAMERALI-NAFTALAN-VANNASI",
   "name": "4 kameralı naftalan vannası",
   "price": 12,
-  "durationMin": 20
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 8,
+  "dayEndHour": 18
  },
  {
   "code": "SVC-AMPLIPULS",
@@ -28,7 +36,7 @@
   "name": "Darsonval",
   "price": 11,
   "durationMin": 10,
-  "resourceGapMinutes": 5,
+  "resourceGapMinutes": 0,
   "patientRestMinutes": 15
  },
  {
@@ -95,7 +103,9 @@
   "code": "SVC-LAZERTERAPIYA",
   "name": "Lazerterapiya",
   "price": 12,
-  "durationMin": 20
+  "durationMin": 10,
+  "resourceGapMinutes": 0,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-LIMFODRENAJ",
@@ -119,25 +129,33 @@
   "code": "SVC-PARAFINOTERAPIYA-ASAGI-ETRAF",
   "name": "Parafinoterapiya (aşağı ətraf)",
   "price": 12,
-  "durationMin": 20
+  "durationMin": 20,
+  "resourceGapMinutes": 0,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-PARAFINOTERAPIYA-BOYUN-KUREK",
   "name": "Parafinoterapiya (boyun kürək)",
   "price": 14,
-  "durationMin": 20
+  "durationMin": 20,
+  "resourceGapMinutes": 0,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-PARAFINOTERAPIYA-BUTUN-BEDEN",
   "name": "Parafinoterapiya (bütün bədən)",
   "price": 18,
-  "durationMin": 30
+  "durationMin": 20,
+  "resourceGapMinutes": 0,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-PARAFINOTERAPIYA-YUXARI-ETRAF",
   "name": "Parafinoterapiya (yuxarı ətraf)",
   "price": 11,
-  "durationMin": 20
+  "durationMin": 20,
+  "resourceGapMinutes": 0,
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-QISA-DALGA-TERAPIYA-UVC",
@@ -173,7 +191,9 @@
   "code": "SVC-UFB-TERAPIYA",
   "name": "UFB terapiya",
   "price": 20,
-  "durationMin": 20
+  "durationMin": 5,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 15
  },
   {
   "code": "SVC-ULTRAFONOFOREZ",
@@ -187,9 +207,31 @@
   "code": "SVC-ULTRAFONOFOREZ-GEL",
   "name": "Ultrafonoforez (gel)",
   "price": 12,
-  "durationMin": 5,
+  "durationMin": 10,
   "resourceGapMinutes": 0,
   "patientRestMinutes": 15
+ },
+ {
+  "code": "SVC-NAFTALAN-VANNASI-QADIN",
+  "name": "Naftalan vannası (Qadın)",
+  "price": 14,
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 8,
+  "dayEndHour": 13,
+  "afterLunchAllowed": false
+ },
+ {
+  "code": "SVC-NAFTALAN-VANNASI-KISI",
+  "name": "Naftalan vannası (Kişi)",
+  "price": 14,
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 14,
+  "dayEndHour": 18,
+  "beforeLunchAllowed": false
  },
  {
   "code": "SVC-UROLOJI-MIKROKLIZMA",

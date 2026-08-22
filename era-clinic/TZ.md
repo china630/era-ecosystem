@@ -75,7 +75,7 @@ Canon: [docs/adr/clinic-scheduling-time-layers.md](../docs/adr/clinic-scheduling
 | Patient rest (this guest, next any procedure) | `ProcedureType.patientRestMinutes` | Shipped — default 15 |
 | Pair gap | `ProcedureRule.minGapMinutes` | Shipped, barely seeded |
 
-Nafta UFF gel (`SVC-ULTRAFONOFOREZ-GEL`, cabin 17): occupancy **5**, resource gap **0**, patient rest **15**. Oil remains `SVC-ULTRAFONOFOREZ` 10/5/15. Do not set tenant gap to 0.
+Nafta UFF gel (`SVC-ULTRAFONOFOREZ-GEL`, cabin 17): occupancy **10**, resource gap **0**, patient rest **15**. Oil remains `SVC-ULTRAFONOFOREZ` 10/5/15. UFB medical 1 min → grid 5. Laser and Darsonval resource gap **0**. Paraffin cycle **20** (gap 0). Physio day 09:00–17:00; 4-chamber 08:00–18:00, women before lunch / men after. Do not set tenant gap to 0.
 
 SOFT staff (CLI-30) does not inherit resource gap; HARD staff is exclusive on `[startsAt, endsAt)` only.
 
