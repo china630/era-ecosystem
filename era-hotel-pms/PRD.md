@@ -117,7 +117,8 @@ Must stories for UAT: [doc/clone-spec/13-nafta-validation-checklist.md](./doc/cl
 |-------|--------|
 | Phase 1 | MVP PMS (DELIVERY Stages 0–11) — **done** |
 | Phase 2 | ERP, AZ compliance, POS bridge — **done** |
-| Phase 2+ | B2C, HK mobile, drag room plan — backlog |
+| Phase 2+ | B2C, drag room plan — backlog |
+| Phase 2+ HK | Nafta roster / floor sheet / guest laundry — **declared spec**, not SHIPPED — [doc/HK-NAFTA-OPS.md](doc/HK-NAFTA-OPS.md) |
 
 ---
 
@@ -125,6 +126,7 @@ Must stories for UAT: [doc/clone-spec/13-nafta-validation-checklist.md](./doc/cl
 
 | Date | Note |
 |------|------|
+| 2026-08-22 | Nafta HK ops spec + ADR (roster, ƏG, floor pairs, laundry) — declared, not SHIPPED |
 | 2026-08-19 | Management reports catalog (EW WA0058/59) + Nafta nightly ZIP pack spec |
 | 2026-05-28 | §4 module IDs M1–M23; W2 enrichment M20–M23 |
 | 2026-05-24 | Formal PRD.md (umbrella index to clone-spec) |

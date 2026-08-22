@@ -18,6 +18,53 @@ enum RoomStatus {
   MAINTENANCE
 }
 
+/** HK cleanliness axis — ADR hotel-housekeeping-nafta-ops */
+enum RoomHkCondition {
+  DIRTY
+  PICKUP
+  CLEAN
+  INSPECTED
+}
+
+/** Inventory axis — OOO leaves inventory; OOS stays in denominator */
+enum RoomInventoryStatus {
+  IN_SERVICE
+  OOS
+  OOO
+}
+
+enum HkJobType {
+  DEPARTURE
+  STAYOVER
+  ARRIVAL_PREP
+  NSR
+  OTHER
+}
+
+enum HkVisitOutcome {
+  V
+  VC
+  OK
+  REFUSED
+  DND
+  SO
+}
+
+enum HkDepartment {
+  ROOMS
+  PUBLIC_AREA
+  LAUNDRY
+}
+
+enum HkRosterCellKind {
+  E
+  L
+  N
+  OFF
+  EG
+  CUSTOM
+}
+
 enum ReservationStatus {
   OPTION
   CONFIRMED
@@ -427,6 +474,9 @@ model Room {
   roomType     RoomType           @relation(fields: [roomTypeId], references: [id])
   floor        Int                @default(1)
   status       RoomStatus         @default(AVAILABLE)
+  hkCondition  RoomHkCondition    @default(CLEAN)
+  inventoryStatus RoomInventoryStatus @default(IN_SERVICE)
+  inventoryReason String?
   description  String?
   viewCode     String?
   bedTypeCode  String?
@@ -1530,10 +1580,149 @@ model Housekeeper {
   code      String
   name      String
   active    Boolean            @default(true)
+  department HkDepartment      @default(ROOMS)
+  pinShift  HkRosterCellKind?
+  egBalance Int                @default(0)
+  sortOrder Int                @default(0)
   tasks     HousekeepingTask[]
+  rosterCells HkRosterCell[]
+  rotationDays HkRotationDay[]
+  egLedger  HkEgLedger[]
   createdAt DateTime           @default(now())
   @@unique([organizationId, code])
   @@index([organizationId])
+}
+
+model HkFloorPair {
+  id             String   @id @default(uuid())
+  organizationId String
+  sortOrder      Int      @default(0)
+  floorLow       Int
+  floorHigh      Int
+  rotationDays   HkRotationDay[]
+  @@index([organizationId])
+}
+
+model HkRosterWeek {
+  id             String         @id @default(uuid())
+  organizationId String
+  weekStart      DateTime       @db.Date
+  cells          HkRosterCell[]
+  createdAt      DateTime       @default(now())
+  @@unique([organizationId, weekStart])
+  @@index([organizationId])
+}
+
+model HkRosterCell {
+  id             String            @id @default(uuid())
+  organizationId String
+  weekId         String
+  week           HkRosterWeek      @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  housekeeperId  String
+  housekeeper    Housekeeper       @relation(fields: [housekeeperId], references: [id], onDelete: Cascade)
+  workDate       DateTime          @db.Date
+  kind           HkRosterCellKind
+  customStart    String?
+  customEnd      String?
+  @@unique([weekId, housekeeperId, workDate])
+  @@index([organizationId])
+}
+
+model HkRotationDay {
+  id             String      @id @default(uuid())
+  organizationId String
+  workDate       DateTime    @db.Date
+  shiftKind      HkRosterCellKind @default(E)
+  housekeeperId  String
+  housekeeper    Housekeeper @relation(fields: [housekeeperId], references: [id], onDelete: Cascade)
+  pairId         String
+  pair           HkFloorPair @relation(fields: [pairId], references: [id])
+  @@unique([organizationId, workDate, shiftKind, housekeeperId])
+  @@index([organizationId, workDate])
+}
+
+model HkEgLedger {
+  id             String      @id @default(uuid())
+  organizationId String
+  housekeeperId  String
+  housekeeper    Housekeeper @relation(fields: [housekeeperId], references: [id], onDelete: Cascade)
+  workDate       DateTime    @db.Date
+  delta          Int
+  reason         String
+  createdAt      DateTime    @default(now())
+  @@index([organizationId, housekeeperId])
+}
+
+model LaundryItem {
+  id             String   @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  category       String   @default("GENTLEMEN")
+  washPrice      Decimal  @db.Decimal(12, 2) @default(0)
+  ironPrice      Decimal  @db.Decimal(12, 2) @default(0)
+  active         Boolean  @default(true)
+  lines          LaundryTicketLine[]
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model LaundryTicket {
+  id             String   @id @default(uuid())
+  organizationId String
+  roomId         String
+  reservationId  String?
+  guestName      String
+  service        String   @default("REGULAR")
+  status         String   @default("DRAFT")
+  express        Boolean  @default(false)
+  total          Decimal  @db.Decimal(12, 2) @default(0)
+  folioChargeId  String?
+  lines          LaundryTicketLine[]
+  createdAt      DateTime @default(now())
+  @@index([organizationId])
+}
+
+model LaundryTicketLine {
+  id             String        @id @default(uuid())
+  ticketId       String
+  ticket         LaundryTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  itemId         String
+  item           LaundryItem   @relation(fields: [itemId], references: [id])
+  guestQty       Int           @default(0)
+  hotelQty       Int           @default(0)
+  washQty        Int           @default(0)
+  ironQty        Int           @default(0)
+  amount         Decimal       @db.Decimal(12, 2) @default(0)
+}
+
+model HkNsrDay {
+  id             String   @id @default(uuid())
+  organizationId String
+  reservationId  String
+  roomId         String
+  workDate       DateTime @db.Date
+  @@unique([reservationId, workDate])
+  @@index([organizationId, workDate])
+}
+
+model HkDiscrepancy {
+  id             String   @id @default(uuid())
+  organizationId String
+  roomId         String
+  workDate       DateTime @db.Date
+  kind           String
+  status         String   @default("OPEN")
+  notes          String?
+  createdAt      DateTime @default(now())
+  @@index([organizationId, workDate])
+}
+
+model HkHotelPolicy {
+  id                String @id @default(uuid())
+  organizationId    String @unique
+  linenEveryNights  Int    @default(3)
+  deepEveryNights   Int    @default(5)
 }
 
 model MinibarItem {
@@ -1893,10 +2082,15 @@ model HousekeepingTask {
   housekeeperId String?
   housekeeper   Housekeeper?           @relation(fields: [housekeeperId], references: [id], onDelete: SetNull)
   status        HousekeepingTaskStatus @default(PENDING)
+  businessDate  DateTime               @default(now()) @db.Date
+  jobType       HkJobType              @default(OTHER)
+  visitOutcome  HkVisitOutcome?
+  neededByAt    DateTime?
   notes         String?
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   @@index([organizationId])
+  @@index([organizationId, businessDate])
 }
 
 model ChannelSyncError {

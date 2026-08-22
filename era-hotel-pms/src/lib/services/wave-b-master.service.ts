@@ -121,7 +121,7 @@ export async function upsertTravelAgency(input: {
 
 export async function listClosedRooms() {
   return prisma.room.findMany({
-    where: { status: { in: ['OOO', 'OOS'] } },
+    where: { inventoryStatus: { in: ['OOO', 'OOS'] } },
     include: { roomType: true, closures: { orderBy: { startDate: 'desc' }, take: 1 } },
     orderBy: { roomNumber: 'asc' },
   });

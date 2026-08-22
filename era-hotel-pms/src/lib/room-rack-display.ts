@@ -1,3 +1,11 @@
+import {
+  canAssignDoor,
+  isHkDirtyish,
+  isHkNotReady,
+  type RoomHkCondition,
+  type RoomInventoryStatus,
+} from '@/lib/room-state';
+
 type RoomStatus =
   | 'AVAILABLE'
   | 'OCCUPIED'
@@ -67,10 +75,12 @@ export const RACK_NUMBER_BY_HK: Record<RoomStatus, string> = {
 export function rackNumberTextClass(
   room: {
     status: RoomStatus;
+    hkCondition?: RoomHkCondition;
     rackDisplayState?: RackDisplayState;
   },
 ): string {
   if (room.rackDisplayState) return RACK_TEXT_CLASS[room.rackDisplayState];
+  if (room.hkCondition === 'PICKUP') return 'text-amber-500';
   return RACK_NUMBER_BY_HK[room.status] ?? 'text-[#34495E]';
 }
 
@@ -87,14 +97,15 @@ export function formatSharePoolBadge(pool: {
   };
 }
 
-const HK_ASSIGNABLE: RoomStatus[] = ['AVAILABLE', 'CLEAN', 'INSPECTED'];
-
 export function canQuickBookRoom(room: {
   status: RoomStatus;
+  hkCondition?: RoomHkCondition | null;
+  inventoryStatus?: RoomInventoryStatus | null;
   rackDisplayState?: RackDisplayState;
 }): boolean {
   const state = room.rackDisplayState ?? 'vacant';
-  return state === 'vacant' && HK_ASSIGNABLE.includes(room.status);
+  if (state !== 'vacant') return false;
+  return canAssignDoor(room, false);
 }
 
 function dayStart(d: Date): number {
@@ -106,6 +117,8 @@ function dayStart(d: Date): number {
 export function computeRackDisplayState(
   room: {
     status: RoomStatus;
+    hkCondition?: RoomHkCondition | null;
+    inventoryStatus?: RoomInventoryStatus | null;
     reservations: Array<{
       status: ReservationStatus;
       checkInDate?: string;
@@ -114,8 +127,8 @@ export function computeRackDisplayState(
   },
   today = new Date(),
 ): RackDisplayState {
-  if (['OOO', 'OOS', 'MAINTENANCE'].includes(room.status)) return 'notReady';
-  if (room.status === 'DIRTY') return 'cleaning';
+  if (isHkNotReady(room) || ['OOO', 'OOS', 'MAINTENANCE'].includes(room.status)) return 'notReady';
+  if (isHkDirtyish(room) || room.status === 'DIRTY') return 'cleaning';
 
   const t = dayStart(today);
   const active =

@@ -27,7 +27,7 @@ export async function getOccupancyForecast(days: number): Promise<OccupancyForec
   const grid = await getOccupancyGrid({ from: new Date(), days: horizon });
 
   const roomsFromInventory = await prisma.room.count({
-    where: { status: { notIn: ['OOO', 'OOS'] } },
+    where: { NOT: { OR: [{ status: 'OOO' }, { inventoryStatus: 'OOO' }] } },
   });
 
   const daily: ForecastDay[] = grid.dates.map((date) => {

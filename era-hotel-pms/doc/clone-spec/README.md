@@ -48,7 +48,7 @@
 
 | 9 | [09-master-data.md](09-master-data.md) | Справочники | **Углублённо** |
 
-| 10 | [10-housekeeping.md](10-housekeeping.md) | HK | **Углублённо** |
+| 10 | [10-housekeeping.md](10-housekeeping.md) | HK (Elektra WA map) | **Углублённо** · Nafta SSOT [`../HK-NAFTA-OPS.md`](../HK-NAFTA-OPS.md) |
 
 
 

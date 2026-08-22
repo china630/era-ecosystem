@@ -378,6 +378,8 @@ export async function voidCharge(chargeId: string) {
   };
 
   await prisma.folioCharge.delete({ where: { id: chargeId } });
+  const { voidLaundryForCharge } = await import('@/lib/services/hk-nafta.service');
+  await voidLaundryForCharge(chargeId);
   await recalcReservationTotal(charge.folio.reservationId);
   fireAndForgetDispatch(dispatchFolioChargeVoided(voidPayload));
   return { reservationId: charge.folio.reservationId };

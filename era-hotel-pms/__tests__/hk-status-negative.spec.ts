@@ -3,6 +3,7 @@ import {
   computeRackDisplayState,
   rackNumberTextClass,
 } from '@/lib/room-rack-display';
+import { canAssignDoor, projectLegacyStatus, roomWriteFromAxes } from '@/lib/room-state';
 
 describe('HK status / assignable proof (AC-HOT-HK)', () => {
   it('DIRTY rooms are cleaning on rack and not assignable for quick book', () => {
@@ -18,6 +19,32 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
     }
   });
 
+  it('Pickup is not assignable', () => {
+    expect(
+      canAssignDoor({ status: 'CLEAN', hkCondition: 'PICKUP', inventoryStatus: 'IN_SERVICE' }, false),
+    ).toBe(false);
+    expect(
+      canQuickBookRoom({
+        status: 'CLEAN',
+        hkCondition: 'PICKUP',
+        inventoryStatus: 'IN_SERVICE',
+        rackDisplayState: 'vacant',
+      }),
+    ).toBe(false);
+  });
+
+  it('Occupied + Dirty is not assignable', () => {
+    expect(
+      canAssignDoor({ status: 'DIRTY', hkCondition: 'DIRTY', inventoryStatus: 'IN_SERVICE' }, true),
+    ).toBe(false);
+  });
+
+  it('check-in projection does not map to OCCUPIED', () => {
+    expect(projectLegacyStatus('IN_SERVICE', 'DIRTY')).toBe('DIRTY');
+    expect(projectLegacyStatus('IN_SERVICE', 'CLEAN')).toBe('CLEAN');
+    expect(roomWriteFromAxes('DIRTY', 'IN_SERVICE').status).not.toBe('OCCUPIED');
+  });
+
   it('OOO / MAINTENANCE are notReady and not assignable', () => {
     expect(computeRackDisplayState({ status: 'OOO', reservations: [] })).toBe('notReady');
     expect(canQuickBookRoom({ status: 'OOO', rackDisplayState: 'notReady' })).toBe(false);
@@ -27,7 +54,6 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
   });
 
   it('badge text for DIRTY stays orange even if display vacant (badge vs assignable)', () => {
-    // Number color follows HK status; assignable requires CLEAN/INSPECTED/AVAILABLE
     expect(rackNumberTextClass({ status: 'DIRTY' })).toContain('orange');
     expect(canQuickBookRoom({ status: 'DIRTY', rackDisplayState: 'vacant' })).toBe(false);
   });
@@ -45,6 +71,11 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
               update: jest.fn().mockResolvedValue({ id: 't1', status: 'DONE' }),
             },
             room: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'room1',
+                inventoryStatus: 'IN_SERVICE',
+                inventoryReason: null,
+              }),
               update: jest.fn().mockImplementation(({ data }: { data: { status: string } }) =>
                 Promise.resolve({ id: 'room1', status: data.status }),
               ),
@@ -59,15 +90,15 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
     );
     const cleaned = await completeTask('t1', 'CLEAN');
     expect(cleaned).toBeDefined();
-    const { prisma } = jest.requireMock('@/lib/prisma');
-    prisma.room = {
-      update: jest.fn().mockResolvedValue({ id: 'room1', status: 'INSPECTED' }),
-    };
-    // markInspected uses prisma.room.update directly
     jest.resetModules();
     jest.doMock('@/lib/prisma', () => ({
       prisma: {
         room: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'room1',
+            inventoryStatus: 'IN_SERVICE',
+            inventoryReason: null,
+          }),
           update: jest.fn().mockResolvedValue({ id: 'room1', status: 'INSPECTED' }),
         },
       },

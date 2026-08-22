@@ -32,6 +32,6 @@
 | PMS | [04-pms-core.md](04-pms-core.md) |
 | Folio & Cash | [05-folio-and-cash.md](05-folio-and-cash.md) |
 | Channel + CRM + Med | [06-channel-crm-med.md](06-channel-crm-med.md) |
-| Housekeeping | [10-housekeeping.md](10-housekeeping.md) |
+| Housekeeping | [10-housekeeping.md](10-housekeeping.md) · Nafta ops [`../HK-NAFTA-OPS.md`](../HK-NAFTA-OPS.md) |
 | Night audit & Reports | [07-night-audit-and-reports.md](07-night-audit-and-reports.md) |
 | ERP handoff | [08-erp-handoff.md](08-erp-handoff.md) |

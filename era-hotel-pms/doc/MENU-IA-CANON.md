@@ -91,9 +91,14 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
 | HK mobile | `/hk/mobile` | Maid mobile client |
 | Minibar | `/hk/minibar` | Minibar control |
-| Maid management | `/hk/maids` | Maid shifts / assignment |
-| Closed rooms (OOO) | `/hk/closed-rooms` | OOO / closed rooms |
+| Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
+| Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
+| HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
+| Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap DnD |
+| Guest laundry | `/hk/laundry` | Ticket → folio `LAUNDRY` |
+| HK forecast | `/hk/forecast` | Load 7/14 by floor |
+| Skip / Sleep | `/hk/discrepancy` | FO vs physical; Sleep ≠ SO |
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 

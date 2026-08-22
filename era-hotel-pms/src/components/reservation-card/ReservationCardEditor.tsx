@@ -40,6 +40,7 @@ import {
   useReservationSubModals,
 } from '@/components/reservation-card/ReservationCardSubModals';
 import { reservationNamesIncomplete } from '@/lib/reservation-names';
+import { canAssignDoor } from '@/lib/room-state';
 import type {
   AgencyOption,
   DailyRateRow,
@@ -162,6 +163,8 @@ export function ReservationCardEditor({
       roomNumber: string;
       roomTypeId?: string;
       status?: string;
+      hkCondition?: string;
+      inventoryStatus?: string;
       reservations?: Array<{
         id: string;
         checkInDate: string;
@@ -1318,8 +1321,6 @@ export function ReservationCardEditor({
       status === 'IN_HOUSE' ||
       status === 'CHECKED_OUT');
 
-  const assignableHk = useMemo(() => ['AVAILABLE', 'CLEAN', 'INSPECTED'] as const, []);
-
   const assignableRooms = useMemo(() => {
     const typeId = roomTypeId;
     if (!typeId) return [];
@@ -1328,8 +1329,17 @@ export function ReservationCardEditor({
     const currentAssigned = roomId;
     const list = rooms.filter((r) => {
       if (r.roomTypeId && r.roomTypeId !== typeId) return false;
-      // HK assignable only; keep currently assigned door visible even if DIRTY/OCCUPIED.
-      if (r.status && !assignableHk.includes(r.status as (typeof assignableHk)[number])) {
+      if (
+        r.status &&
+        !canAssignDoor(
+          {
+            status: r.status as 'AVAILABLE' | 'CLEAN' | 'INSPECTED' | 'DIRTY' | 'OCCUPIED' | 'OOO' | 'OOS' | 'MAINTENANCE',
+            hkCondition: r.hkCondition as 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED' | undefined,
+            inventoryStatus: r.inventoryStatus as 'IN_SERVICE' | 'OOS' | 'OOO' | undefined,
+          },
+          false,
+        )
+      ) {
         if (r.id !== currentAssigned) return false;
       }
       if (!ci || !co) return true;
@@ -1348,7 +1358,7 @@ export function ReservationCardEditor({
       if (selected) return [selected, ...list];
     }
     return list;
-  }, [rooms, roomTypeId, checkIn, checkOut, reservationId, pendingRoomId, roomId, assignableHk]);
+  }, [rooms, roomTypeId, checkIn, checkOut, reservationId, pendingRoomId, roomId]);
 
   /** Badge follows the door in the dropdown, not only the already-assigned room. */
   const selectedRoomStatus = useMemo(() => {

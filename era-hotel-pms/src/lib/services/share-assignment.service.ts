@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { isOtaAgency } from '@/lib/booking-source-kind';
+import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 
 export const SCHEDULABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
@@ -359,12 +360,18 @@ export async function assertRoomShareAssignable(input: {
 }
 
 export function roomStatusAllowedForShareAssign(
-  roomStatus: string,
+  room: { status: string; hkCondition?: string | null; inventoryStatus?: string | null },
   joiningPool: boolean,
 ): boolean {
-  if (['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(roomStatus)) return true;
-  if (joiningPool && roomStatus === 'OCCUPIED') return true;
-  return false;
+  const r = {
+    status: room.status as import('@prisma/client').RoomStatus,
+    hkCondition: room.hkCondition as import('@/lib/room-state').RoomHkCondition | undefined,
+    inventoryStatus: room.inventoryStatus as import('@/lib/room-state').RoomInventoryStatus | undefined,
+  };
+  if (joiningPool) {
+    return resolveAxes(r).inventoryStatus === 'IN_SERVICE';
+  }
+  return canAssignDoor(r, false);
 }
 
 export async function countRemainingInHouseOnDoor(roomId: string, excludeReservationId: string) {
@@ -471,17 +478,18 @@ export async function releaseDoorAfterShareDeparture(
   if (othersInHouse === 0 && othersAssigned === 0) {
     await tx.room.update({
       where: { id: input.roomId },
-      data: { status: 'DIRTY' },
+      data: roomWriteFromAxes('DIRTY', 'IN_SERVICE'),
     });
     await tx.housekeepingTask.create({
-      data: { roomId: input.roomId, status: 'PENDING', notes: 'Post check-out' },
+      data: {
+        roomId: input.roomId,
+        status: 'PENDING',
+        notes: 'Post check-out',
+        jobType: 'DEPARTURE',
+      },
     });
     return { doorCleared: true };
   }
-  await tx.room.update({
-    where: { id: input.roomId },
-    data: { status: 'OCCUPIED' },
-  });
   if (input.wasInHouse) {
     const bed = input.shareBedIndex ?? '?';
     await tx.housekeepingTask.create({
@@ -489,6 +497,7 @@ export async function releaseDoorAfterShareDeparture(
         roomId: input.roomId,
         status: 'PENDING',
         notes: `Share departure bed ${bed}, roommate remains`,
+        jobType: 'STAYOVER',
       },
     });
   }
