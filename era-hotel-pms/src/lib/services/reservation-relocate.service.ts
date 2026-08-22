@@ -33,7 +33,7 @@ export async function relocateReservationRoom(reservationId: string, toRoomId: s
       adults: reservation.adults,
     },
   });
-  if (!roomStatusAllowedForShareAssign(toRoom.status, joiningPool)) {
+  if (!roomStatusAllowedForShareAssign(toRoom, joiningPool)) {
     throw new Error('Target room must be AVAILABLE, CLEAN, or INSPECTED (HK-03)');
   }
 

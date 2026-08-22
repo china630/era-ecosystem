@@ -49,16 +49,20 @@ export default function HousekeepingPage() {
   const [oooModalOpen, setOooModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<HkFilter>('all');
+  const [sheetFloor, setSheetFloor] = useState('2');
+  const [sheetRows, setSheetRows] = useState<Array<Record<string, unknown>>>([]);
 
   const load = useCallback(async () => {
-    const [tRes, rRes] = await Promise.all([
+    const [tRes, rRes, sRes] = await Promise.all([
       fetch('/api/housekeeping/tasks'),
       fetch('/api/rooms'),
+      fetch(`/api/housekeeping/sheet?floor=${sheetFloor}`),
     ]);
     if (tRes.ok) setTasks(await tRes.json());
     else showApiError(await tRes.json(), tc('loadError'));
     if (rRes.ok) setRooms(await rRes.json());
-  }, [tc]);
+    if (sRes.ok) setSheetRows(await sRes.json());
+  }, [tc, sheetFloor]);
 
   useEffect(() => {
     void load();
@@ -165,6 +169,46 @@ export default function HousekeepingPage() {
         </FieldSelect>
       </EraListFilterBar>
       <p className="mb-4 text-[12px] text-[#7F8C8D]">{t('statusActionsHint')}</p>
+
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 print:shadow-none`} id="hk-floor-sheet">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold">{t('sheetTitle')}</h2>
+          <input
+            type="number"
+            className={MODAL_INPUT_CLASS}
+            style={{ width: 80 }}
+            value={sheetFloor}
+            onChange={(e) => setSheetFloor(e.target.value)}
+          />
+          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => window.print()}>
+            {t('printSheet')}
+          </button>
+        </div>
+        <table className="w-full text-[12px]">
+          <thead>
+            <tr>
+              <th className="text-left">No</th>
+              <th>HK</th>
+              <th>Job</th>
+              <th className="text-left">Guest</th>
+              <th>Nat</th>
+              <th>VIP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sheetRows.map((r) => (
+              <tr key={String(r.roomId)} className="break-inside-avoid">
+                <td>{String(r.roomNumber)}</td>
+                <td>{String(r.hkCondition ?? r.status)}</td>
+                <td>{String(r.jobType)}</td>
+                <td>{String(r.guests)}</td>
+                <td>{String(r.nationality)}</td>
+                <td>{String(r.vip)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
 
       {showPending ? (
         <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>

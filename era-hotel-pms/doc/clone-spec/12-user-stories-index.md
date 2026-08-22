@@ -40,6 +40,9 @@
 | HK-02 | HK | Горничная: 401 clean с телефона | P3 | [10](10-housekeeping.md) | later |
 | HK-03 | HK | Assign только на inspected | P2 | [10](10-housekeeping.md) §10.1 | must |
 | HK-04 | HK | 512 OOO на 3 дня (ремонт) | P3 | [10](10-housekeeping.md) §10.1 | must |
+| HK-05 | HK | Табель смен + ротация пар этажей | — | [HK-NAFTA-OPS](../HK-NAFTA-OPS.md) | declared |
+| HK-06 | HK | Исход обхода V/VC/OK/İstəmədi/DND/SO | — | [HK-NAFTA-OPS](../HK-NAFTA-OPS.md) | declared |
+| HK-07 | HK | Прачечный тикет → folio LAUNDRY | — | [HK-NAFTA-OPS](../HK-NAFTA-OPS.md) | declared |
 | MED-01 | Санаторий | T=38° → alert врачу | P2, P3 | [06](06-channel-crm-med.md) §C | must |
 | MED-02 | Санаторий | Врач назначает панель анализов | P3 | [06](06-channel-crm-med.md) §C | must |
 | MED-03 | Санаторий | Лаборатория: результат High | P3 | [06](06-channel-crm-med.md) §C | must |
@@ -93,12 +96,17 @@
 
 ### Housekeeping (HK)
 
+Nafta deepen (declared): [`../HK-NAFTA-OPS.md`](../HK-NAFTA-OPS.md).
+
 | ID | Роль | История |
 |----|------|---------|
 | HK-01 | Супервайзер | Распределить dirty после выездов |
 | HK-02 | Горничная | Отметить clean (mobile, фаза 2) |
 | HK-03 | Ресепшен | Назначать номер только inspected |
 | HK-04 | Супервайзер | OOO на период ремонта |
+| HK-05 | Супервайзер | Недельный табель E/L/N/OFF/ƏG + ротация пар этажей |
+| HK-06 | Горничная | Сдать исход обхода V / VC / OK / İstəmədi / DND / SO |
+| HK-07 | Прачечная | Тикет стирка± / глажка± → фолио LAUNDRY |
 
 ### Medical / санаторий (MED)
 

@@ -1,8 +1,12 @@
 import { prisma } from '@/lib/prisma';
-
 import type { RoomStatus } from '@prisma/client';
-
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
+import {
+  axesFromLegacyStatus,
+  roomWriteFromAxes,
+  type RoomHkCondition,
+  type RoomInventoryStatus,
+} from '@/lib/room-state';
 
 
 
@@ -90,7 +94,9 @@ export async function createRoom(input: {
 
       maxBed: input.maxBed,
 
-      status: 'AVAILABLE',
+      status: 'CLEAN',
+      hkCondition: 'CLEAN',
+      inventoryStatus: 'IN_SERVICE',
 
     },
 
@@ -177,43 +183,63 @@ export async function assignRoomType(id: string, roomTypeId: string) {
 
 
 export async function updateRoomStatus(id: string, status: RoomStatus) {
-
   const room = await prisma.room.findUnique({ where: { id } });
-
   if (!room) throw new Error('Room not found');
-
+  const axes = axesFromLegacyStatus(status);
   return prisma.room.update({
-
     where: { id },
-
-    data: { status },
-
+    data: roomWriteFromAxes(axes.hkCondition, axes.inventoryStatus, axes.inventoryReason),
     include: { roomType: true },
-
   });
+}
 
+export async function updateRoomAxes(
+  id: string,
+  hk: RoomHkCondition,
+  inventory: RoomInventoryStatus,
+  reason?: string | null,
+) {
+  const room = await prisma.room.findUnique({ where: { id } });
+  if (!room) throw new Error('Room not found');
+  return prisma.room.update({
+    where: { id },
+    data: roomWriteFromAxes(hk, inventory, reason),
+    include: { roomType: true },
+  });
 }
 
 
 
 export async function setRoomOOO(id: string, days: number, notes?: string) {
-
   const room = await prisma.room.update({
-
     where: { id },
-
-    data: { status: 'OOO' },
-
+    data: roomWriteFromAxes('DIRTY', 'OOO'),
   });
-
   await prisma.housekeepingTask.create({
-
-    data: { roomId: id, status: 'PENDING', notes: notes ?? `OOO ${days} days` },
-
+    data: {
+      roomId: id,
+      status: 'PENDING',
+      notes: notes ?? `OOO ${days} days`,
+      jobType: 'OTHER',
+    },
   });
-
   return room;
+}
 
+export async function setRoomOOS(id: string, days: number, notes?: string) {
+  const room = await prisma.room.update({
+    where: { id },
+    data: roomWriteFromAxes('DIRTY', 'OOS'),
+  });
+  await prisma.housekeepingTask.create({
+    data: {
+      roomId: id,
+      status: 'PENDING',
+      notes: notes ?? `OOS ${days} days`,
+      jobType: 'OTHER',
+    },
+  });
+  return room;
 }
 
 

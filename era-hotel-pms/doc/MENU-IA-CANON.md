@@ -91,9 +91,11 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
 | HK mobile | `/hk/mobile` | Maid mobile client |
 | Minibar | `/hk/minibar` | Minibar control |
-| Maid management | `/hk/maids` | Maid shifts / assignment |
+| Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
 | Closed rooms (OOO) | `/hk/closed-rooms` | OOO / closed rooms |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
+
+Declared (not built) — [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md): `/hk/roster`, `/hk/rotation`, `/hk/forecast`, `/hk/laundry`.
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
