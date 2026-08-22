@@ -50,3 +50,4 @@ Opera Cloud practices (credits, turndown, rush-push) do not match this labour mo
 - Night audit or a morning job generates the next business-date sheet from the reservation book + roster + pair rotation.
 - `/hk/maids` CRUD is not the roster; new screens are specified in the SSOT.
 - Occupancy / RevPAR reports must treat OOO and OOS differently when inventory axis ships.
+- Engineering SCREEN landed 2026-08-22 (folio laundry round-trip, sheet print, DnD roster, discrepancy board, OOO≠OOS reports). UAT-SMOKE §34 remains open — not SHIPPED.

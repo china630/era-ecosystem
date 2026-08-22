@@ -108,14 +108,20 @@ export async function setRosterCell(cellId: string, kind: HkRosterCellKind, cust
 
 export async function accrueEgForDate(workDateIso: string) {
   let days: { date: string; dayType: string }[] = [];
+  let calendarUnavailable = false;
   try {
     days = await getCalendarDaysRange(workDateIso, workDateIso);
-  } catch {
+  } catch (err) {
+    calendarUnavailable = true;
+    console.warn('HK ƏG calendar unavailable', err);
     days = [];
+  }
+  if (!days.length && !calendarUnavailable) {
+    calendarUnavailable = true;
   }
   const day = days[0];
   const holiday = day && (day.dayType === 'holiday' || day.dayType === 'transferred_rest');
-  if (!holiday) return { accrued: 0 };
+  if (!holiday) return { accrued: 0, calendarUnavailable };
   const cells = await prisma.hkRosterCell.findMany({
     where: {
       workDate: new Date(`${workDateIso}T00:00:00.000Z`),
@@ -138,12 +144,57 @@ export async function accrueEgForDate(workDateIso: string) {
     });
     accrued += 1;
   }
-  return { accrued };
+  return { accrued, calendarUnavailable };
+}
+
+export async function burnEgBalances(asOfIso: string) {
+  const md = asOfIso.slice(5, 10);
+  if (md !== '01-01') return { burned: 0 };
+  const maids = await prisma.housekeeper.findMany({ where: { egBalance: { gt: 0 } } });
+  let burned = 0;
+  for (const hk of maids) {
+    burned += hk.egBalance;
+    await prisma.hkEgLedger.create({
+      data: {
+        housekeeperId: hk.id,
+        workDate: new Date(`${asOfIso}T00:00:00.000Z`),
+        delta: -hk.egBalance,
+        reason: 'burn-1-jan',
+      },
+    });
+    await prisma.housekeeper.update({ where: { id: hk.id }, data: { egBalance: 0 } });
+  }
+  return { burned };
+}
+
+export async function reorderHousekeepers(orderedIds: string[]) {
+  await prisma.$transaction(
+    orderedIds.map((id, i) => prisma.housekeeper.update({ where: { id }, data: { sortOrder: i } })),
+  );
+}
+
+export async function moveHousekeeperDepartment(housekeeperId: string, department: 'ROOMS' | 'PUBLIC_AREA' | 'LAUNDRY') {
+  return prisma.housekeeper.update({ where: { id: housekeeperId }, data: { department } });
+}
+
+export async function swapRotationPairs(rowIdA: string, rowIdB: string) {
+  const a = await prisma.hkRotationDay.findUnique({ where: { id: rowIdA } });
+  const b = await prisma.hkRotationDay.findUnique({ where: { id: rowIdB } });
+  if (!a || !b) throw new Error('Rotation row not found');
+  await prisma.$transaction([
+    prisma.hkRotationDay.update({ where: { id: a.id }, data: { pairId: b.pairId } }),
+    prisma.hkRotationDay.update({ where: { id: b.id }, data: { pairId: a.pairId } }),
+  ]);
+  return { swapped: true };
 }
 
 export function nextPairIndex(yesterdayIndex: number, pairCount: number): number {
   if (pairCount <= 0) return 0;
   return (yesterdayIndex + 1) % pairCount;
+}
+
+export function assignedPairsUnique(pairIds: string[]): boolean {
+  return new Set(pairIds).size === pairIds.length;
 }
 
 export async function rotatePairsForDate(workDateIso: string, shiftKind: HkRosterCellKind = 'E') {
@@ -211,7 +262,7 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
           checkInDate: { lt: next },
           checkOutDate: { gt: workDate },
         },
-        include: { guest: true },
+        include: { guest: true, agency: true },
         orderBy: { checkInDate: 'asc' },
       },
     },
@@ -242,40 +293,82 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
     }
     const todayArrival = stay && ci === workDateIso;
     const todayDepart = stay && co === workDateIso;
+    const occupied = stay?.status === 'IN_HOUSE';
     return {
       roomId: room.id,
       roomNumber: room.roomNumber,
       hkCondition: room.hkCondition,
       inventoryStatus: room.inventoryStatus,
+      occupancy: occupied ? 'OCC' : 'AVL',
       status: room.status,
       roomType: room.roomType.code,
       floor: room.floor,
-      location: room.location,
+      location: room.location ?? '',
       guests: stay?.guest.fullName ?? '',
       nationality: stay?.guest.nationality ?? '',
       vip: stay?.guest.vipType ?? stay?.vipType ?? '',
-      agency: '',
+      agency: stay?.agency?.name ?? '',
       arrival: ci,
+      arrivalTime: '',
       departure: co,
+      lateCheckout: '',
+      extraPax: 0,
       adults: stay?.adults ?? 0,
       children: (stay?.children11_6 ?? 0) + (stay?.children5_2 ?? 0) + (stay?.children1_0 ?? 0),
-      repeat: stay?.guest ? 0 : 0,
+      repeat: 0,
       todayArrivalPax: todayArrival ? stay?.adults ?? 0 : 0,
+      todayArrivalTime: '',
       todayDepartPax: todayDepart ? stay?.adults ?? 0 : 0,
+      todayDepartTime: '',
+      qHour: '',
       jobType,
+      visitOutcome: '',
+      visitTime: '',
       maidName: maid?.housekeeper.name ?? '',
+      maidChef: '',
       reservationId: stay?.id ?? null,
     };
   });
   const rank = (j: HkJobType) =>
     j === 'DEPARTURE' ? 0 : j === 'ARRIVAL_PREP' ? 2 : j === 'STAYOVER' ? 3 : 4;
   return rows.sort((a, b) => {
-    const vip = Number(Boolean(b.vip)) - Number(Boolean(a.vip));
     if (a.jobType === 'DEPARTURE' && b.jobType !== 'DEPARTURE') return -1;
     if (b.jobType === 'DEPARTURE' && a.jobType !== 'DEPARTURE') return 1;
-    if (vip !== 0 && a.jobType !== 'DEPARTURE') return vip;
+    const vip = Number(Boolean(b.vip)) - Number(Boolean(a.vip));
+    if (vip !== 0) return vip;
+    const dirty = Number(b.hkCondition === 'DIRTY') - Number(a.hkCondition === 'DIRTY');
+    if (dirty !== 0) return dirty;
     return rank(a.jobType) - rank(b.jobType);
   });
+}
+
+export async function generateAllFloorSheets(workDateIso: string) {
+  const floors = await prisma.room.findMany({
+    where: { deleted: false, disabled: false },
+    select: { floor: true },
+    distinct: ['floor'],
+    orderBy: { floor: 'asc' },
+  });
+  const pages = [];
+  for (const f of floors) {
+    pages.push({ floor: f.floor, rows: await generateFloorSheet(workDateIso, f.floor) });
+  }
+  return pages;
+}
+
+export async function applySheetOutcome(roomId: string, workDateIso: string, outcome: HkVisitOutcome) {
+  const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
+  let task = await prisma.housekeepingTask.findFirst({
+    where: { roomId, businessDate: workDate, status: { not: 'DONE' } },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!task) {
+    task = await prisma.housekeepingTask.create({
+      data: { roomId, businessDate: workDate, jobType: 'OTHER', status: 'PENDING' },
+    });
+  }
+  if (!task) throw new Error('Task missing');
+  return applyVisitOutcome(task.id, outcome);
 }
 
 export async function applyVisitOutcome(taskId: string, outcome: HkVisitOutcome) {
@@ -347,18 +440,87 @@ export function laundryLineAmount(washQty: number, ironQty: number, washPrice: n
   return express ? Math.round(base * 1.5 * 100) / 100 : Math.round(base * 100) / 100;
 }
 
-export async function postLaundryTicket(ticketId: string) {
+export function bakuClock(now: Date): { weekday: string; hour: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Baku',
+    weekday: 'short',
+    hour: 'numeric',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const weekday = parts.find((p) => p.type === 'weekday')?.value ?? '';
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '0');
+  return { weekday, hour };
+}
+
+export function laundryIntakeBlockReason(input: {
+  now: Date;
+  express: boolean;
+  dayType?: string | null;
+  calendarUnavailable?: boolean;
+}): string | null {
+  const { weekday, hour } = bakuClock(input.now);
+  if (weekday === 'Sun') return 'No laundry intake on Sunday';
+  if (input.dayType === 'holiday' || input.dayType === 'transferred_rest') {
+    return 'No laundry intake on labour holiday';
+  }
+  if (input.express && (hour < 9 || hour >= 17)) {
+    return 'Express laundry is 09:00–17:00 Asia/Baku';
+  }
+  return null;
+}
+
+export async function resolveStayForRoom(roomId: string) {
+  const inHouse = await prisma.reservation.findFirst({
+    where: { roomId, status: 'IN_HOUSE' },
+    include: { guest: true },
+  });
+  if (inHouse) return inHouse;
+  const today = isoDay(new Date());
+  const start = new Date(`${today}T00:00:00.000Z`);
+  const end = addUtcDays(start, 1);
+  return prisma.reservation.findFirst({
+    where: {
+      roomId,
+      status: 'CONFIRMED',
+      checkInDate: { lt: end },
+      checkOutDate: { gt: start },
+    },
+    include: { guest: true },
+  });
+}
+
+export async function postLaundryTicket(ticketId: string, now = new Date()) {
   const ticket = await prisma.laundryTicket.findUnique({
     where: { id: ticketId },
     include: { lines: { include: { item: true } } },
   });
   if (!ticket) throw new Error('Ticket not found');
   if (ticket.status === 'POSTED') throw new Error('Already posted');
-  if (!ticket.reservationId) throw new Error('Reservation required');
+  let reservationId = ticket.reservationId;
+  if (!reservationId) {
+    const stay = await resolveStayForRoom(ticket.roomId);
+    if (!stay) throw new Error('Reservation required');
+    reservationId = stay.id;
+    await prisma.laundryTicket.update({ where: { id: ticketId }, data: { reservationId } });
+  }
+  let dayType: string | null = null;
+  let calendarUnavailable = false;
+  const dayIso = isoDay(now);
+  try {
+    const days = await getCalendarDaysRange(dayIso, dayIso);
+    dayType = days[0]?.dayType ?? null;
+  } catch {
+    calendarUnavailable = true;
+  }
+  const blocked = laundryIntakeBlockReason({ now, express: ticket.express, dayType, calendarUnavailable });
+  if (blocked) throw new Error(blocked);
   let total = 0;
+  let qty = 0;
+  const summary: string[] = [];
   for (const line of ticket.lines) {
     const wash = line.washQty;
     const iron = line.ironQty;
+    qty += wash + iron;
     const amt = laundryLineAmount(
       wash,
       iron,
@@ -367,23 +529,48 @@ export async function postLaundryTicket(ticketId: string) {
       ticket.express,
     );
     total += amt;
+    if (wash || iron) summary.push(`${line.item.code} W${wash}/I${iron}`);
+    const qtyMismatch = line.guestQty !== line.hotelQty;
     await prisma.laundryTicketLine.update({
       where: { id: line.id },
-      data: { amount: toDecimal(amt), hotelQty: Math.max(line.hotelQty, wash, iron) },
+      data: { amount: toDecimal(amt), ...(qtyMismatch ? {} : {}) },
     });
   }
   const rev = await prisma.revenueCode.findFirst({ where: { code: 'LAUNDRY' } });
   if (!rev) throw new Error('LAUNDRY revenue code missing');
+  const dept =
+    (await prisma.department.findFirst({ where: { code: 'LAUNDRY' } })) ??
+    (await prisma.department.findFirst({ where: { code: 'HK' } }));
   const charge = await postCharge({
-    reservationId: ticket.reservationId,
+    reservationId,
     revenueCodeId: rev.id,
     amount: total,
-    description: `Laundry ${ticket.express ? 'express' : 'regular'}`,
+    qty: Math.max(1, qty),
+    departmentId: dept?.id,
+    businessDate: new Date(`${dayIso}T00:00:00.000Z`),
+    description: `Laundry ${ticket.express ? 'express' : 'regular'} ticket ${ticket.id.slice(0, 8)} ${summary.join(', ')}`,
   });
   return prisma.laundryTicket.update({
     where: { id: ticketId },
-    data: { status: 'POSTED', total: toDecimal(total), folioChargeId: charge.id },
+    data: { status: 'POSTED', total: toDecimal(total), folioChargeId: charge.id, reservationId },
   });
+}
+
+export async function voidLaundryForCharge(chargeId: string) {
+  const ticket = await prisma.laundryTicket.findFirst({ where: { folioChargeId: chargeId } });
+  if (!ticket) return null;
+  return prisma.laundryTicket.update({
+    where: { id: ticket.id },
+    data: { status: 'VOIDED', folioChargeId: null },
+  });
+}
+
+export function inventoryOooCount(rooms: { inventoryStatus?: string | null; status?: string | null }[]) {
+  return rooms.filter((r) => r.inventoryStatus === 'OOO' || (!r.inventoryStatus && r.status === 'OOO')).length;
+}
+
+export function inventoryOosCount(rooms: { inventoryStatus?: string | null; status?: string | null }[]) {
+  return rooms.filter((r) => r.inventoryStatus === 'OOS' || (!r.inventoryStatus && r.status === 'OOS')).length;
 }
 
 export async function hkLoadForecast(fromIso: string, days: number) {

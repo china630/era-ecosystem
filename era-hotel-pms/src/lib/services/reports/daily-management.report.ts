@@ -30,7 +30,7 @@ export async function queryDailyManagement(businessDate: Date): Promise<DailyMan
   const [rooms, reservations, charges, profile] = await Promise.all([
     prisma.room.findMany({
       where: { deleted: false, disabled: false },
-      select: { id: true, status: true },
+      select: { id: true, status: true, inventoryStatus: true },
     }),
     prisma.reservation.findMany({
       where: {
@@ -62,8 +62,8 @@ export async function queryDailyManagement(businessDate: Date): Promise<DailyMan
   ]);
 
   const totalRooms = profile?.roomCapacity ?? rooms.length;
-  const ooo = rooms.filter((r) => r.status === 'OOO').length;
-  const oos = rooms.filter((r) => r.status === 'OOS').length;
+  const ooo = rooms.filter((r) => r.inventoryStatus === 'OOO' || (!r.inventoryStatus && r.status === 'OOO')).length;
+  const oos = rooms.filter((r) => r.inventoryStatus === 'OOS' || (!r.inventoryStatus && r.status === 'OOS')).length;
 
   const inHouseRes = reservations.filter(
     (r) => r.status === 'IN_HOUSE' || (r.checkInDate <= dayStart && r.checkOutDate > dayStart),
@@ -72,7 +72,7 @@ export async function queryDailyManagement(businessDate: Date): Promise<DailyMan
   const complimentary = inHouseRes.filter((r) => r.accomType === 'COMP').length;
   const houseUse = inHouseRes.filter((r) => r.accomType === 'HOUSE').length;
 
-  const sellableRooms = totalRooms - ooo - oos;
+  const sellableRooms = totalRooms - ooo;
   const vacant = Math.max(sellableRooms - occupied, 0);
   const occupancyPct = sellableRooms > 0 ? Math.round((occupied / sellableRooms) * 1000) / 10 : 0;
 

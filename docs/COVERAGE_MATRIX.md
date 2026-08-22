@@ -169,6 +169,10 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; block save when Avl=0 |
 | HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door inventory; UAT-SMOKE §30 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
+| HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | UAT-SMOKE §34 open — not SHIPPED |
+| HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |
+| HOT-HK-03 | Floor sheet + visit outcomes + laundry folio | Y | Y `/hk` `/hk/laundry` `/hk/mobile` | API | SCREEN; UAT §34 |
+| HOT-HK-04 | Skip/Sleep discrepancy + HK forecast | Y | Y `/hk/discrepancy` `/hk/forecast` | API | SCREEN; Sleep ≠ SO |
 
 ### Hotel FO money / City Ledger / adjacent (2026-08-03 audit)
 
@@ -447,9 +451,11 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-22 | HOT-HK-01…04 Nafta HK SCREEN (not SHIPPED); UAT-SMOKE §34 checklist. |
 | 2026-08-21 | Fail-closed tenant filter (no unbound default; stamp+mismatch reject); User.phone unique per org; runCronForEachTenant; check:satellite-raw-sql. Bank CAP-NFR-TOPO: same ladder as hotel (pool not built, not a special ban). CP-TENANT-01 stays API; AC-*-TENANT stay 🟡 |
 | 2026-08-21 | Clinic scheduling time layers ADR: occupancy vs per-type resource gap vs patient rest vs pair rules; UFF gel 5/0/15; SOFT nurse ≠ cabin gap. CLI-26/30 stay SHIPPED; schema split not built |
 | 2026-08-21 | Clinic time layers shipped: ProcedureType.resourceGapMinutes/patientRestMinutes; occupying-tail; SVC-ULTRAFONOFOREZ-GEL; SatAdmin three numbers |
+| 2026-08-22 | Nafta ops: gel occupancy 10 (not 5); UFB 1→5; laser/darsonval gap 0; paraffin cycle 20; physio 09–17; 4-chamber 08–18 women AM/men PM; Solux 4 units from 24.08 |
 | 2026-08-18 | UI waves A–C: DBO `/open-api` + orch placement page (NONE→SCREEN); HOT-06 + BANK-REF-01 HEADLESS; thin-satellite MDM re-audit. Demo/TE unchanged. |
 | 2026-08-18 | UI Coverage Board: `docs/acceptance/UI-COVERAGE-BOARD.md` joins PRM UI + COVERAGE actors + NONE holes. Status=`API` + actor Y = SCREEN (not «no UI»). Sell still Product-Readiness only. |
 | 2026-08-18 | Green Scaffold BE Wave 8: vendor leftovers (FISCAL / WA / VOEN) stay out of their product BE rollup (Hotel INT). Same-day owner revert: AC-DBO-OPEN + AC-CP-TOPO stay **in** Bank DBO / Platform BE rollup as 🟡 — playbook `docs/acceptance/BE-OPEN-AND-TOPO-RETURN.md`. No SHIPPED / no edition ga / no SaaS pool sell |

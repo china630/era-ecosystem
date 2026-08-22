@@ -359,6 +359,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.HOUSEKEEPING_MANAGE),
             },
             {
+              id: 'hk-discrepancy',
+              href: '/hk/discrepancy',
+              labelKey: 'hkDiscrepancy',
+              icon: ClipboardList,
+              show: can(PERMISSIONS.HOUSEKEEPING_MANAGE),
+            },
+            {
               id: 'hk-ooo',
               href: '/hk/closed-rooms',
               labelKey: 'closedRoomList',

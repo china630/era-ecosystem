@@ -445,3 +445,16 @@ UI paths (OpsUI) — ADR: [hotel-early-checkout-unused-nights.md](../../docs/adr
 4. Negative: departure on/after planned checkout → no unused-nights block (H-BL-09 hour fees still apply if policy).
 5. Clinic leftover procedures cancel via `GUEST_CHECKED_OUT` — no clinic cash payout.
 
+## 34. Nafta housekeeping deepen (HOT-HK) — checklist only, not signed
+
+UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED until this section is signed.
+
+1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
+2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
+3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
+4. `/hk/laundry` — pick in-house room (not UUID); wash/iron/guest/hotel steppers; post → folio `LAUNDRY` line; void folio charge → ticket VOIDED.
+5. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
+6. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
+7. `/hk/forecast` — 7 and 14 day load by floor.
+8. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
+

@@ -18,6 +18,8 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Ticket → folio `LAUNDRY` |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
+| `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Skip / Sleep board (Sleep ≠ SO) |
+| `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
 | Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops |
 
 Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).

@@ -17,11 +17,11 @@ export async function queryMonthlyDailyAnalysis(
   const profile = await prisma.hotelProfile.findFirst({ select: { roomCapacity: true } });
   const rooms = await prisma.room.findMany({
     where: { deleted: false, disabled: false },
-    select: { id: true, status: true },
+    select: { id: true, status: true, inventoryStatus: true },
   });
 
   const totalRooms = profile?.roomCapacity ?? rooms.length;
-  const oooCount = rooms.filter((r) => r.status === 'OOO' || r.status === 'OOS').length;
+  const oooCount = rooms.filter((r) => r.inventoryStatus === 'OOO' || (!r.inventoryStatus && r.status === 'OOO')).length;
   const sellable = totalRooms - oooCount;
 
   const startIso = monthStart.toISOString().slice(0, 10);

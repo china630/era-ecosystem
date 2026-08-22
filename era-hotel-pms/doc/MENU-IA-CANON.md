@@ -92,10 +92,13 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | HK mobile | `/hk/mobile` | Maid mobile client |
 | Minibar | `/hk/minibar` | Minibar control |
 | Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
-| Closed rooms (OOO) | `/hk/closed-rooms` | OOO / closed rooms |
+| Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
-
-Declared (not built) — [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md): `/hk/roster`, `/hk/rotation`, `/hk/forecast`, `/hk/laundry`.
+| HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
+| Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap DnD |
+| Guest laundry | `/hk/laundry` | Ticket → folio `LAUNDRY` |
+| HK forecast | `/hk/forecast` | Load 7/14 by floor |
+| Skip / Sleep | `/hk/discrepancy` | FO vs physical; Sleep ≠ SO |
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 

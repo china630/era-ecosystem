@@ -4,7 +4,7 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { rotatePairsForDate, ensureFloorPairs } from '@/lib/services/hk-nafta.service';
+import { rotatePairsForDate, ensureFloorPairs, swapRotationPairs } from '@/lib/services/hk-nafta.service';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
@@ -32,8 +32,12 @@ export async function POST(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
-    const body = schema.parse(await request.json());
-    return jsonOk(serialize(await rotatePairsForDate(body.date, body.shiftKind ?? 'E')));
+    const body = await request.json();
+    if (body.rowIdA && body.rowIdB) {
+      return jsonOk(serialize(await swapRotationPairs(String(body.rowIdA), String(body.rowIdB))));
+    }
+    const data = schema.parse(body);
+    return jsonOk(serialize(await rotatePairsForDate(data.date, data.shiftKind ?? 'E')));
   } catch (err) {
     return handleRouteError(err);
   }

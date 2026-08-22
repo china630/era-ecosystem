@@ -1,6 +1,6 @@
 # Housekeeping — Nafta operational spec
 
-**Status:** Waves 0–3 **coded** (2026-08-22) — not SHIPPED / not Pilot until UAT-SMOKE HK UI sign-off.  
+**Status:** Engineering SCREEN (2026-08-22) — BE/API/UI coded; **not SHIPPED / not Pilot** until UAT-SMOKE §34 sign-off.  
 **ADR:** [`docs/adr/hotel-housekeeping-nafta-ops.md`](../../docs/adr/hotel-housekeeping-nafta-ops.md)  
 **Acceptance:** declared in [`Hotel-Acceptance-System.md`](../../docs/acceptance/Hotel-Acceptance-System.md) — do not treat as Pilot-ready or edition `ga`.  
 **Scaffold today:** `AC-HOT-HK` (DIRTY not assignable; CLEAN → INSPECTED). That is not this spec.
@@ -50,7 +50,20 @@ Do **not** add Pickup, SO, or DND as extra `RoomStatus` values.
 | Sell | No | No |
 | Occupancy / RevPAR denominator | **Exclude** | **Keep** |
 
-Today `occupancy-p1` / `analysis-p1` treat both as the same subtract. That must change when this axis ships.
+Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management subtract **only OOO** from the occupancy denominator; OOS stays in inventory.
+
+### Coded vs remaining (engineering)
+
+| Item | Code |
+|------|------|
+| Three axes + check-in does not write OCCUPIED | Landed |
+| Roster / rotation DnD + CatalogField shifts | Landed (SCREEN) |
+| Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN) |
+| Laundry → folio + voidCharge → VOIDED | Landed (SCREEN) |
+| Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
+| HK forecast 7/14 | Landed (SCREEN) |
+| UAT-SMOKE §34 pass / SHIPPED | **Open** |
+| Opera credits / turndown / rush-push / ƏG cash / finance stock | OUT |
 
 ### 2.2 Derived job type on the daily sheet
 

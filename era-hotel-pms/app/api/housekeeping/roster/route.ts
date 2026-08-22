@@ -4,7 +4,7 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { proposeRosterWeek, setRosterCell } from '@/lib/services/hk-nafta.service';
+import { proposeRosterWeek, setRosterCell, reorderHousekeepers, moveHousekeeperDepartment } from '@/lib/services/hk-nafta.service';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
@@ -42,6 +42,20 @@ export async function POST(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = await request.json();
+    if (Array.isArray(body.orderedIds)) {
+      await reorderHousekeepers(body.orderedIds.map(String));
+      return jsonOk({ ok: true });
+    }
+    if (body.housekeeperId && body.department) {
+      return jsonOk(
+        serialize(
+          await moveHousekeeperDepartment(
+            String(body.housekeeperId),
+            body.department as 'ROOMS' | 'PUBLIC_AREA' | 'LAUNDRY',
+          ),
+        ),
+      );
+    }
     if (body.cellId) {
       const data = cell.parse(body);
       return jsonOk(serialize(await setRosterCell(data.cellId, data.kind, data.customStart, data.customEnd)));

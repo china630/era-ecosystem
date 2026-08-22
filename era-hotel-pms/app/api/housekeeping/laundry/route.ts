@@ -4,7 +4,8 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { postLaundryTicket } from '@/lib/services/hk-nafta.service';
+import { postLaundryTicket, resolveStayForRoom, laundryIntakeBlockReason, isoDay } from '@/lib/services/hk-nafta.service';
+import { getCalendarDaysRange } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { toDecimal } from '@/lib/decimal';
 
@@ -18,7 +19,18 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: { lines: true },
     });
-    return jsonOk(serialize({ items, tickets }));
+    const stays = await prisma.reservation.findMany({
+      where: { status: { in: ['IN_HOUSE', 'CONFIRMED'] } },
+      select: {
+        id: true,
+        roomId: true,
+        status: true,
+        guest: { select: { fullName: true } },
+        room: { select: { id: true, roomNumber: true } },
+      },
+      take: 400,
+    });
+    return jsonOk(serialize({ items, tickets, stays }));
   } catch (err) {
     return handleRouteError(err);
   }
@@ -35,7 +47,7 @@ const createItem = z.object({
 const createTicket = z.object({
   roomId: z.string().uuid(),
   reservationId: z.string().uuid().optional(),
-  guestName: z.string(),
+  guestName: z.string().optional(),
   express: z.boolean().optional(),
   lines: z.array(
     z.object({
@@ -70,11 +82,24 @@ export async function POST(request: Request) {
       return jsonOk(serialize(item));
     }
     const data = createTicket.parse(body);
+    const stay = data.reservationId
+      ? await prisma.reservation.findUnique({ where: { id: data.reservationId }, include: { guest: true } })
+      : await resolveStayForRoom(data.roomId);
+    if (!stay) throw new Error('In-house or arriving reservation required');
+    let dayType: string | null = null;
+    try {
+      const days = await getCalendarDaysRange(isoDay(new Date()), isoDay(new Date()));
+      dayType = days[0]?.dayType ?? null;
+    } catch {
+      dayType = null;
+    }
+    const blocked = laundryIntakeBlockReason({ now: new Date(), express: data.express ?? false, dayType });
+    if (blocked) throw new Error(blocked);
     const ticket = await prisma.laundryTicket.create({
       data: {
         roomId: data.roomId,
-        reservationId: data.reservationId,
-        guestName: data.guestName,
+        reservationId: stay.id,
+        guestName: data.guestName || stay.guest.fullName,
         express: data.express ?? false,
         status: 'ACCEPTED',
         lines: {
