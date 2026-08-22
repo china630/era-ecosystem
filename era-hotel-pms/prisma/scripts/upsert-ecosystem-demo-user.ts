@@ -10,12 +10,13 @@ import { createRequire } from "node:module";
 import path from "node:path";
 
 const require = createRequire(path.join(process.cwd(), "package.json"));
-const { PrismaClient } = require("@prisma/client") as typeof import("@prisma/client");
+const { Prisma, PrismaClient } = require("@prisma/client") as typeof import("@prisma/client");
 const {
   hashPassword,
   platformSuperAdminEmails,
   platformSuperAdminBootstrapPassword,
 } = require("@era/satellite-kit") as typeof import("@era/satellite-kit");
+const { createSatelliteTenantExtension } = require("@era/satellite-kit/tenancy") as typeof import("@era/satellite-kit/tenancy");
 
 const {
   ROLE_CODES,
@@ -39,7 +40,9 @@ function resolveLogins(): string[] {
   return emails;
 }
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(
+  createSatelliteTenantExtension(Prisma as never) as never,
+) as unknown as InstanceType<typeof PrismaClient>;
 
 async function main() {
   const hash = await hashPassword(password);

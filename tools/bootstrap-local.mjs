@@ -108,6 +108,47 @@ function runOptional(label, cmd, cwd, extraEnv = {}) {
   }
 }
 
+/** Per-satellite org so hotel seed is not stamped with ERA_BANK_ORGANIZATION_ID. */
+function satelliteOrgEnv(dir) {
+  const byDir = {
+    "era-hotel-pms":
+      process.env.ERA_HOTEL_ORGANIZATION_ID?.trim() || "nafta-sanatorium-org",
+    "era-clinic":
+      process.env.ERA_CLINIC_ORGANIZATION_ID?.trim() ||
+      process.env.ERA_HOTEL_ORGANIZATION_ID?.trim() ||
+      "nafta-sanatorium-org",
+    "era-fnb-pos":
+      process.env.ERA_FB_ORGANIZATION_ID?.trim() || "nafta-sanatorium-org",
+    "era-bank":
+      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "demo-bank-org-001",
+    "era-bank-dbo":
+      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "demo-bank-org-001",
+    "era-bank-core":
+      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "demo-bank-org-001",
+  };
+  const organizationId =
+    byDir[dir] ||
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    "demo-org";
+  return { ERA_SATELLITE_ORGANIZATION_ID: organizationId };
+}
+
+function ensurePostgresDatabase(name) {
+  const check = spawnSync(
+    `docker exec era-postgres psql -U ${pgUser} -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${name}'"`,
+    { shell: true, encoding: "utf8" },
+  );
+  if ((check.stdout || "").trim() === "1") {
+    process.stdout.write(`\n[bootstrap] database ${name} already exists\n`);
+    return;
+  }
+  run(
+    `ensure ${name} database`,
+    `docker exec era-postgres psql -U ${pgUser} -d postgres -c "CREATE DATABASE ${name}"`,
+    root,
+  );
+}
+
 /** Prefer local prisma bin; otherwise pin Prisma 6 (npx latest is Prisma 7 and rejects schema `url`). */
 const PRISMA_CLI_PIN = "prisma@6.9.0";
 function prismaCli(satRoot, prismaArgs) {
@@ -160,11 +201,7 @@ async function main() {
         { DATABASE_URL: dbUrl("era_orchestrator") },
       );
     }
-    runOptional(
-      "ensure era_mdm database",
-      `docker exec era-postgres psql -U ${pgUser} -d postgres -c "CREATE DATABASE era_mdm"`,
-      root,
-    );
+    ensurePostgresDatabase("era_mdm");
     runOptional(
       "orchestrator mdm migrate deploy",
       "npm run db:migrate:deploy -w @era365/mdm-database",
@@ -224,7 +261,7 @@ async function main() {
     for (const { dir, db, mode, adminRole } of satelliteDirs) {
       const satRoot = path.join(root, dir);
       if (!fs.existsSync(path.join(satRoot, "prisma/schema.prisma"))) continue;
-      const env = { DATABASE_URL: dbUrl(db) };
+      const env = { DATABASE_URL: dbUrl(db), ...satelliteOrgEnv(dir) };
       if (mode === "migrate") {
         run(
           `${dir} migrate deploy`,
@@ -277,7 +314,7 @@ async function main() {
       "era-fnb-pos seed",
       "npm run db:seed",
       path.join(root, "era-fnb-pos"),
-      { DATABASE_URL: dbUrl("era_fnb_pos") },
+      { DATABASE_URL: dbUrl("era_fnb_pos"), ...satelliteOrgEnv("era-fnb-pos") },
     );
     runOptional(
       "era-fnb-pos chingiz demo user",
@@ -285,6 +322,7 @@ async function main() {
       path.join(root, "era-fnb-pos"),
       {
         DATABASE_URL: dbUrl("era_fnb_pos"),
+        ...satelliteOrgEnv("era-fnb-pos"),
         ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
         ECOSYSTEM_DEMO_PASSWORD:
           process.env.PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD ?? "12345678",

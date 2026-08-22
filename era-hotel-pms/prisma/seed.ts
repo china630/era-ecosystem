@@ -1,4 +1,5 @@
 import { Prisma, PrismaClient, PaymentMethod } from '@prisma/client';
+import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { createSatelliteTenantExtension } from '@era/satellite-kit/tenancy';
 import {
   ROLE_CODES,
@@ -17,6 +18,7 @@ const prisma = new PrismaClient().$extends(
 ) as unknown as PrismaClient;
 
 async function main() {
+  const organizationId = satelliteOrganizationId();
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
   await prisma.recipeLine.deleteMany();
@@ -76,7 +78,7 @@ async function main() {
     data: {
       name: 'Nafta Sanatorium',
       propertyCode: 'NAFTA-SANATORIUM-001',
-      organizationId: 'nafta-sanatorium-org',
+      organizationId,
       roomCapacity: 78,
       currency: 'AZN',
       timezone: 'Asia/Baku',
