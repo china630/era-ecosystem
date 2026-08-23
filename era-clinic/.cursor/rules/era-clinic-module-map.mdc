@@ -104,6 +104,8 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/nurse/qr-scan` | session NURSE — verifyGuestQrToken; returns `qrToken` for check-in |
 | `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED` |
 | Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products`; complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
+| Gender session windows (CLI-48) | **API** — tenant `/admin/settings` + type card `/admin/master-data`; planner/slots/reschedule predicate; matrix tint |
+| Matrix replan (CLI-49) | **API** — `POST /api/admin/procedures/replan/{preview,apply,undo}`; wizard on `/sanatorium/resources` (modes, preview table, undo; Nuclear = platform super-admin) |
 | `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota) |
 | `/api/procedures/[id]/no-show` | session NURSE — burns quota + may charge folio |
 | `/api/sanatorium/resources/available-slots` | session RECEPTION — free inventory (exhausted omitted) |

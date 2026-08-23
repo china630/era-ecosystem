@@ -217,3 +217,21 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 4. Replay same correlationId → Finance idempotent skip (no double write-off).
 5. Out of this UAT: retail pharmacy, Rx reserve, guest folio line per pad.
 
+## Gender session windows (CLI-48)
+
+**Status:** API + SatAdmin UI. Sign-off required before SHIPPED. ADR: [clinic-procedure-gender-session-windows.md](../../docs/adr/clinic-procedure-gender-session-windows.md). Copy: gender session windows (women/men) — no religious labels.
+
+1. Clinic Admin → Settings: mode OFF / SPLIT_BY_LUNCH / CUSTOM_WINDOWS; unknown BLOCK vs ALLOW_BOTH; custom hours only when CUSTOM.
+2. Master data → procedure type: policy OFF / INHERIT / SPLIT_BY_LUNCH / CUSTOM (hours if CUSTOM). Seed 4-chamber types may be SPLIT_BY_LUNCH.
+3. Female guest: AM slot offered on split types; male AM blocked on matrix (rose/sky tint). UNKNOWN blocked unless ALLOW_BOTH.
+4. Reception override on reschedule requires reason; `afterLunchAllowed` unchanged for mixed-sex types.
+
+## Matrix replan (CLI-49)
+
+**Status:** API + resources wizard. Sign-off required before SHIPPED. ADR: [clinic-procedure-matrix-replan.md](../../docs/adr/clinic-procedure-matrix-replan.md).
+
+1. `/sanatorium/resources` → Replan: pick mode (Fill holes / Pack resource / Apply gender). Pack requires a resource.
+2. Preview counts + sample table before apply. Type `REPLAN` and a reason.
+3. CHECKED_IN / COMPLETED / past not moved; pins skipped unless Nuclear + unpin (platform super-admin only).
+4. Undo within snapshot TTL from the same dialog. Nuclear hidden for clinic admin.
+

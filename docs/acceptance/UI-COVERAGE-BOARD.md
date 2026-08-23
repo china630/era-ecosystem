@@ -56,7 +56,7 @@ Worst **in-scope** class (NONE < PARTIAL < SCREEN < SHIPPED < SHOW). HEADLESS / 
 | Bank | ✅ lab | ✅ | **SHOW** | — | BANK-REF-01 **HEADLESS** (file/env snapshot); rails VENDOR; ≠ full ABS |
 | Bank DBO | ✅ lab | ✅ | **SHOW** | — | `/open-api` **SCREEN** (keys UI); AC-DBO-OPEN still Scaffold 🟡; ASAN VENDOR |
 | Platform | 🟡 | 🟡 | **SCREEN** | — | Placement `/super-admin/orgs/{id}/placement` **SCREEN**; AC-CP-TOPO still Scaffold 🟡 |
-| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (SatAdmin BOM; Finance write-off; UAT open → not SHOW) | Fiscal / HL7 VENDOR; Demo 🟡 |
+| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API; CLI-48/49 **SCREEN**/API (UAT open → not SHOW) | Fiscal / HL7 VENDOR; Demo 🟡 |
 | Finance | 🟡 | ❌ | **SCREEN** | — (ERP paths exist) | tax/stat/contracts/EQF = SCREEN; worker HEADLESS; e-qaimé VENDOR |
 | F&B | 🟡 | 🟡 | **SCREEN** | — | Person card N/A (staff via HR); admin menu/tables/settings/daily-menu Done; KKM VENDOR |
 | Retail | 🟡 | 🟡 | **SCREEN** | — | No customer `globalPersonId` SoR; admin replenishment + supplier-match/settings/stock-check done; fiscal VENDOR |
@@ -125,6 +125,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-08-23 | Clinic CLI-48 gender sessions + CLI-49 replan landed API/SCREEN (UAT open; not SHOW). |
 | 2026-08-22 | HOT-HK-01…05 Nafta HK deepen SCREEN (policy + needed-by); UAT §34 not signed. |
 | 2026-08-20 | Clinic patient card: ICD-10 after contraindications (CLI-39 SCREEN); contraindications collapsed by default. |
 | 2026-08-19 | D6 modal CRUD closeout: Logistics `/trips` create flow moved into `ModalShell`; all thin-industry PARTIAL CRUD rows cleared to SCREEN. |

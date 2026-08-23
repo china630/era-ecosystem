@@ -78,7 +78,7 @@ Source of catalog minutes: WO `25-Treatments.xlsx` `DurationMin` / `PatientGapMi
 | Lazerterapiya | **18** | 10 (Excel 8 → grid) | **0** | 15 | Back-to-back |
 | Paraffin (all sites) | Parafin 1–5 | **20** including turnover | **0** | 15 | Cycle = occupancy |
 | UFB | UFB | 1 → grid **5** | 5 | 15 | Medical 1 min, ERA slot 5 |
-| 4-chamber bath | shared tub | 20 | 5 | 40 | **08:00–18:00**; women before lunch, men after. Other physio **09:00–17:00** |
+| 4-chamber bath | shared tub | 20 | 5 | 40 | **08:00–18:00**; women before lunch, men after — **product:** [clinic-procedure-gender-session-windows.md](./clinic-procedure-gender-session-windows.md) (CLI-48 API). Other physio **09:00–17:00** |
 | Typical electro / UFF oil / magnet / vacuum | Namiq list | Excel DurationMin, aligned up to 5 | 5 | Excel PatientGapMin | Resource gap 5 stays |
 | Massage | couches | Excel 15/30 | 5 | Excel 5 | STAFF **HARD** |
 
@@ -99,7 +99,7 @@ SatAdmin procedure type card shows three numbers: duration, resource gap, patien
 ### Code (shipped 2026-08-21)
 
 1. Prisma: `ProcedureType.resourceGapMinutes` `@default(5)`, `ProcedureType.patientRestMinutes` `@default(15)`.
-2. Seed Nafta: gel `SVC-ULTRAFONOFOREZ-GEL` 10/0/15; oil 10/5/15; Darsonval/laser gap 0; UFB 1→5; paraffin cycle 20; 4-chamber 08–18 women AM / men PM.
+2. Seed Nafta: gel `SVC-ULTRAFONOFOREZ-GEL` 10/0/15; oil 10/5/15; Darsonval/laser gap 0; UFB 1→5; paraffin cycle 20; 4-chamber 08–18. Women AM / men PM is CLI-48 **API** (UAT open) — [clinic-procedure-gender-session-windows.md](./clinic-procedure-gender-session-windows.md).
 3. Planner / available-slots / reschedule: `countResourceAllocations` uses occupying tail of each booking.
 4. `validatePatientConsecutiveGap` / patient cursor: preceding type `patientRestMinutes`.
 5. Unit tests: `__tests__/scheduling-time-layers.spec.ts`.

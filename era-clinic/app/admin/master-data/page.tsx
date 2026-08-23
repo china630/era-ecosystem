@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
+import { hourCatalogOptions } from "@/lib/hour-catalog-options";
 import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModal";
 import {
   CARD_CONTAINER_CLASS,
@@ -75,6 +76,11 @@ type ProcedureType = {
   patientRestMinutes?: number;
   resourceCode?: string | null;
   bodyPart?: string | null;
+  genderSessionPolicy?: "OFF" | "INHERIT" | "SPLIT_BY_LUNCH" | "CUSTOM";
+  genderSessionFemaleStartHour?: number | null;
+  genderSessionFemaleEndHour?: number | null;
+  genderSessionMaleStartHour?: number | null;
+  genderSessionMaleEndHour?: number | null;
   extendedEndHour?: number | null;
   skillCoverage?: number | null;
   requirements?: RequirementRow[];
@@ -298,6 +304,7 @@ export default function MasterDataPage() {
     setCatalogPick("");
     resetModalExtras();
     if (tab === "procedureTypes") {
+      setForm({ genderSessionPolicy: "INHERIT" });
       setRequirements(defaultProcedureRequirements());
       setConsumables([]);
     }
@@ -379,6 +386,21 @@ export default function MasterDataPage() {
       resourceGapMinutes: String(row.resourceGapMinutes ?? 5),
       patientRestMinutes: String(row.patientRestMinutes ?? 15),
       bodyPart: row.bodyPart ?? "",
+      genderSessionPolicy: row.genderSessionPolicy ?? "INHERIT",
+      genderSessionFemaleStartHour:
+        row.genderSessionFemaleStartHour != null
+          ? String(row.genderSessionFemaleStartHour)
+          : "",
+      genderSessionFemaleEndHour:
+        row.genderSessionFemaleEndHour != null
+          ? String(row.genderSessionFemaleEndHour)
+          : "",
+      genderSessionMaleStartHour:
+        row.genderSessionMaleStartHour != null
+          ? String(row.genderSessionMaleStartHour)
+          : "",
+      genderSessionMaleEndHour:
+        row.genderSessionMaleEndHour != null ? String(row.genderSessionMaleEndHour) : "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
     });
     setMdmStatus(null);
@@ -489,12 +511,26 @@ export default function MasterDataPage() {
             : null,
         };
       } else {
+        const policy = form.genderSessionPolicy || "INHERIT";
+        const hourOrNull = (key: string) => {
+          const raw = form[key]?.trim();
+          return raw ? Number(raw) : null;
+        };
         payload = {
           name: form.name ?? form.fullName,
           durationMin: Number(form.durationMin || "30"),
           resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
           patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
           bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
+          genderSessionPolicy: policy,
+          genderSessionFemaleStartHour:
+            policy === "CUSTOM" ? hourOrNull("genderSessionFemaleStartHour") : null,
+          genderSessionFemaleEndHour:
+            policy === "CUSTOM" ? hourOrNull("genderSessionFemaleEndHour") : null,
+          genderSessionMaleStartHour:
+            policy === "CUSTOM" ? hourOrNull("genderSessionMaleStartHour") : null,
+          genderSessionMaleEndHour:
+            policy === "CUSTOM" ? hourOrNull("genderSessionMaleEndHour") : null,
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
@@ -527,6 +563,11 @@ export default function MasterDataPage() {
           : null,
       };
     } else {
+      const policy = form.genderSessionPolicy || "INHERIT";
+      const hourOrNull = (key: string) => {
+        const raw = form[key]?.trim();
+        return raw ? Number(raw) : null;
+      };
       payload = {
         code: form.code,
         name: form.name,
@@ -534,6 +575,15 @@ export default function MasterDataPage() {
         resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
         patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
+        genderSessionPolicy: policy,
+        genderSessionFemaleStartHour:
+          policy === "CUSTOM" ? hourOrNull("genderSessionFemaleStartHour") : null,
+        genderSessionFemaleEndHour:
+          policy === "CUSTOM" ? hourOrNull("genderSessionFemaleEndHour") : null,
+        genderSessionMaleStartHour:
+          policy === "CUSTOM" ? hourOrNull("genderSessionMaleStartHour") : null,
+        genderSessionMaleEndHour:
+          policy === "CUSTOM" ? hourOrNull("genderSessionMaleEndHour") : null,
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
           : null,
@@ -895,6 +945,7 @@ export default function MasterDataPage() {
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("resourceGapMinutes")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patientRestMinutes")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("resourceCode")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("genderSessionPolicy")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
@@ -907,6 +958,9 @@ export default function MasterDataPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{row.resourceGapMinutes ?? 5}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.patientRestMinutes ?? 15}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{displayProcedureResourceCode(row)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.genderSessionPolicy ?? "OFF"}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
                         <button
@@ -1183,6 +1237,59 @@ export default function MasterDataPage() {
                   </option>
                 ))}
               </FieldSelect>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("genderSessionPolicy")}
+                value={form.genderSessionPolicy || "INHERIT"}
+                onChange={(v) => setForm({ ...form, genderSessionPolicy: String(v) })}
+                options={[
+                  { value: "OFF", label: t("genderPolicyOff") },
+                  { value: "INHERIT", label: t("genderPolicyInherit") },
+                  { value: "SPLIT_BY_LUNCH", label: t("genderPolicySplitLunch") },
+                  { value: "CUSTOM", label: t("genderPolicyCustom") },
+                ]}
+                emptyLabel={null}
+              />
+              {(form.genderSessionPolicy || "INHERIT") === "CUSTOM" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("genderFemaleStart")}
+                    value={form.genderSessionFemaleStartHour ?? ""}
+                    onChange={(v) =>
+                      setForm({ ...form, genderSessionFemaleStartHour: String(v) })
+                    }
+                    options={hourCatalogOptions()}
+                  />
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("genderFemaleEnd")}
+                    value={form.genderSessionFemaleEndHour ?? ""}
+                    onChange={(v) =>
+                      setForm({ ...form, genderSessionFemaleEndHour: String(v) })
+                    }
+                    options={hourCatalogOptions()}
+                  />
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("genderMaleStart")}
+                    value={form.genderSessionMaleStartHour ?? ""}
+                    onChange={(v) =>
+                      setForm({ ...form, genderSessionMaleStartHour: String(v) })
+                    }
+                    options={hourCatalogOptions()}
+                  />
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("genderMaleEnd")}
+                    value={form.genderSessionMaleEndHour ?? ""}
+                    onChange={(v) =>
+                      setForm({ ...form, genderSessionMaleEndHour: String(v) })
+                    }
+                    options={hourCatalogOptions()}
+                  />
+                </div>
+              ) : null}
               <Field
                 label={t("extendedEndHour")}
                 preset="count"

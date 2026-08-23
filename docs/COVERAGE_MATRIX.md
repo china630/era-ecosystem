@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-08-20
+**Last updated:** 2026-08-23
 
 ---
 
@@ -90,6 +90,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
 | CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
 | CLI-47 | Procedure TTK (consumable BOM) → Finance stock | ADR clinic-procedure-consumable-ttk | Y consumables CRUD; resolve on COMPLETED; event lines; finance product proxy | — | Y `/admin/master-data` TTK BOM | — | — | API | Retail HTTP retired; Finance write-off W2; no UAT → not SHIPPED |
+| CLI-48 | Procedure gender session windows | ADR clinic-procedure-gender-session-windows | Y | Y planner/slots/DnD | Y matrix tint | Y type+tenant settings | — | Y Nuclear N/A | API | Per-type M/F AM/PM; SatAdmin UI; UAT open → not SHIPPED |
+| CLI-49 | Procedure matrix replan | ADR clinic-procedure-matrix-replan | Y | Y preview/apply/undo | Y `/sanatorium/resources` wizard | Y Fill/Gender | — | Y Nuclear | API | Preview+undo UI; never move CHECKED_IN; UAT open |
 
 ### MDM natural-person identity
 

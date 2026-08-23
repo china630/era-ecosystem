@@ -185,4 +185,12 @@ Trilingual print routes (lab/USM/checkup/procedures), tenant branding, qualitati
 
 ### Planned — CLI-47 procedure TTK
 
-Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic-procedure-consumable-ttk.md). Dummy `PROC-*` on complete remains until W1.
+API W1+W2 landed; UAT-SMOKE outline in this file. Dummy `PROC-*` retired. SHIPPED blocked on UAT sign-off. ADR: [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic-procedure-consumable-ttk.md).
+
+### Planned — CLI-48 gender session windows
+
+API + planner predicate + SatAdmin settings/type card (2026-08-23). UAT-SMOKE not signed. ADR: [clinic-procedure-gender-session-windows.md](../../docs/adr/clinic-procedure-gender-session-windows.md).
+
+### Planned — CLI-49 matrix replan
+
+Preview/apply/undo API + resources wizard (modes, sample table, undo). Confirm FIFO still does not move placed rows. UAT open. ADR: [clinic-procedure-matrix-replan.md](../../docs/adr/clinic-procedure-matrix-replan.md).

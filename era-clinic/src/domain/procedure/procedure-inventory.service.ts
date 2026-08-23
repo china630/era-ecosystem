@@ -9,6 +9,13 @@ import {
 } from "@/lib/treatment-planner.service";
 import { getResourceCalendar } from "@/lib/procedure-scheduling.service";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { slotAllowedForGender } from "@/domain/procedure/gender-slot";
+import { getDefaultTenant } from "@/domain/settings/settings.service";
+import {
+  genderTintForHour,
+  resolveGenderSession,
+  genderTenantFromPrisma,
+} from "@/domain/procedure/gender-session";
 
 function addMinutes(d: Date, mins: number): Date {
   return new Date(d.getTime() + mins * 60_000);
@@ -62,6 +69,23 @@ export async function listAvailableResourceSlots(input: {
       }
       const adjusted = skipLunch(slotStart);
       const slotEnd = addMinutes(adjusted, duration);
+
+      if (procedureType && input.patientRefId) {
+        const patient = await prisma.patientRef.findUnique({
+          where: { id: input.patientRefId },
+          select: { sex: true },
+        });
+        if (
+          !(await slotAllowedForGender({
+            procedureType,
+            sex: patient?.sex,
+            startsAt: adjusted,
+            endsAt: slotEnd,
+          }))
+        ) {
+          continue;
+        }
+      }
 
       const overlapping = await countResourceAllocations(
         row.resourceId,
@@ -148,6 +172,10 @@ export async function getResourceDayMatrix(date: Date) {
         })
       : [];
   const byId = new Map(orders.map((o) => [o.id, o]));
+  const tenant = await getDefaultTenant();
+  const genderResolved = resolveGenderSession(genderTenantFromPrisma(tenant), {
+    genderSessionPolicy: tenant.genderSessionMode === "OFF" ? "OFF" : "INHERIT",
+  });
 
   return {
     date: date.toISOString().slice(0, 10),
@@ -155,6 +183,7 @@ export async function getResourceDayMatrix(date: Date) {
       ...r,
       slots: r.slots.map((s) => {
         const ord = s.procedureOrderId ? byId.get(s.procedureOrderId) : undefined;
+        const hour = new Date(s.time).getHours();
         return {
           ...s,
           status: ord?.status,
@@ -162,6 +191,11 @@ export async function getResourceDayMatrix(date: Date) {
           procedureCode: ord?.procedureCode,
           manuallyAdjusted: ord?.manuallyAdjusted,
           blocked: s.occupied,
+          genderTint:
+            s.occupied ||
+            (hour >= tenant.lunchStartHour && hour < tenant.lunchEndHour)
+              ? null
+              : genderTintForHour(genderResolved, hour),
         };
       }),
     })),

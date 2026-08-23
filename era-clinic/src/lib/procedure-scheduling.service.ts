@@ -8,6 +8,7 @@ import {
   validatePatientConsecutiveGap,
 } from "@/lib/treatment-planner.service";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { slotAllowedForGender } from "@/domain/procedure/gender-slot";
 
 const LUNCH_END_HOUR = 14;
 
@@ -18,11 +19,11 @@ function addMinutes(d: Date, mins: number): Date {
 export async function rescheduleProcedureOrder(
   orderId: string,
   scheduledAt: Date,
-  opts?: { resourceId?: string },
+  opts?: { resourceId?: string; overrideReason?: string },
 ): Promise<{ id: string; scheduledAt: Date; endsAt: Date | null; resourceId: string | null }> {
   const order = await prisma.procedureOrder.findUnique({
     where: { id: orderId },
-    include: { resourceBooking: true, procedureType: true },
+    include: { resourceBooking: true, procedureType: true, patientRef: { select: { sex: true } } },
   });
   if (!order) throw new Error("Procedure not found");
   if (order.status !== "SCHEDULED") {
@@ -49,6 +50,18 @@ export async function rescheduleProcedureOrder(
   }
   slotStart = skipLunch(slotStart);
   const slotEnd = addMinutes(slotStart, duration);
+
+  if (order.procedureType && !opts?.overrideReason) {
+    const ok = await slotAllowedForGender({
+      procedureType: order.procedureType,
+      sex: order.patientRef?.sex,
+      startsAt: slotStart,
+      endsAt: slotEnd,
+    });
+    if (!ok) {
+      throw new Error("Slot is outside the guest gender session window");
+    }
+  }
 
   if (
     await hasProcedureSameDay(
