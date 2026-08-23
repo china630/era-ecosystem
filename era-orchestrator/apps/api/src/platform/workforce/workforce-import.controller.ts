@@ -14,6 +14,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import { ImportCsvDto } from "./dto/workforce-import.dto";
 import { WorkforceImportService } from "./workforce-import.service";
+import { csvFromWorkforceImportBody } from "./workforce-xlsx";
 
 @ApiTags("platform-workforce-import")
 @ApiBearerAuth("bearer")
@@ -37,7 +38,7 @@ export class WorkforceImportController {
     return this.importService.importRoster(
       organizationId,
       user.sub,
-      body.csv,
+      csvFromWorkforceImportBody(body),
       dryRun === "true" || dryRun === "1",
     );
   }
@@ -54,7 +55,7 @@ export class WorkforceImportController {
     return this.importService.importAbsences(
       organizationId,
       user.sub,
-      body.csv,
+      csvFromWorkforceImportBody(body),
       dryRun === "true" || dryRun === "1",
     );
   }
