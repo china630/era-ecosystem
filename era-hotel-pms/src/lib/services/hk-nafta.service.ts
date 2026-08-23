@@ -890,6 +890,8 @@ export async function hkLoadForecast(fromIso: string, days: number) {
       checkInDate: true,
       checkOutDate: true,
       vipType: true,
+      linenEveryNights: true,
+      deepEveryNights: true,
       guest: { select: { vipType: true } },
     },
   });
