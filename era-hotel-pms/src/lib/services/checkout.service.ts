@@ -34,6 +34,9 @@ export async function checkoutReservation(
     throw new Error('Check-out is only allowed for IN_HOUSE reservations');
   }
 
+  const { assertNoOpenLaundry } = await import('@/lib/services/hk-nafta.service');
+  await assertNoOpenLaundry(id);
+
   const { postLateCheckOutFee } = await import('@/lib/services/early-late-fees.service');
   await postLateCheckOutFee(id).catch((e) => console.error('Late check-out fee failed', e));
 

@@ -35,6 +35,7 @@ Related: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md) · [HotelOps
 | Room changes | `/fo/room-changes` | Room change plans |
 | Reservation times *(optional FO report)* | `/fo/reservation-times` | Actual check-in / check-out times |
 | Agency inbox | `/fo/agency-inbox` | OPTION stays from agency portal — confirm / decline (`hotel_agency_portal`) |
+| Guest laundry | `/fo/laundry` | In-plant vs posted tickets; fallback Delivered + return scan (same ticket as HK; no invent) |
 
 Agency extranet UI lives on orchestrator `/agency/*` + hotel `/agency/*` after SSO — **not** in the hotel staff sidebar.
 
@@ -96,7 +97,7 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Lost & found | `/hk/lost-and-found` | Lost & found |
 | HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
 | Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap DnD |
-| Guest laundry | `/hk/laundry` | Ticket → folio `LAUNDRY` |
+| Guest laundry | `/hk/laundry` | Accept IN_PLANT; Delivered + return form → folio `LAUNDRY` |
 | HK forecast | `/hk/forecast` | Load 7/14 by floor |
 | `/hk/discrepancy` | Skip / Sleep (Sleep ≠ SO) |
 | `/settings/hk-policy` | Linen / deep every N nights (hotel-wide) |

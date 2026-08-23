@@ -16,7 +16,8 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/mobile` | tasks + `POST /api/housekeeping/outcome` | Maid outcomes V/VC/OK/DND/SO |
 | `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week E/L/N/OFF/ƏG |
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
-| `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Ticket → folio `LAUNDRY` |
+| `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Accept IN_PLANT; Delivered → `LAUNDRY` (canon §9; code still posts on accept) |
+| `/fo/laundry` | same API + Delivered | FO fallback post; no ticket invent |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Skip / Sleep board (Sleep ≠ SO) |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |

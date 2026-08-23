@@ -105,6 +105,8 @@ export async function patchReservationFull(
     voucherNo?: string | null;
     roomCount?: number;
     adults?: number;
+    linenEveryNights?: number | null;
+    deepEveryNights?: number | null;
     children11_6?: number;
     children5_2?: number;
     children1_0?: number;

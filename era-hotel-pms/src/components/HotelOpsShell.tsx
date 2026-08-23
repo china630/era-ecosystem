@@ -206,6 +206,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.FOLIO_READ) || can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
+              id: 'fo-laundry',
+              href: '/fo/laundry',
+              labelKey: 'foLaundry',
+              icon: Package,
+              show: can(PERMISSIONS.FOLIO_CHARGE) || can(PERMISSIONS.HOUSEKEEPING_MANAGE),
+            },
+            {
               id: 'fo-room-changes',
               href: '/fo/room-changes',
               labelKey: 'roomChanges',

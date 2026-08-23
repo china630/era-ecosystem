@@ -466,11 +466,12 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
 3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
-4. `/hk/laundry` — pick in-house room (not UUID); wash/iron/guest/hotel steppers; post → folio `LAUNDRY` line; void folio charge → ticket VOIDED.
-5. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
-6. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
-7. `/hk/forecast` — 7 and 14 day load by floor.
-8. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
-9. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
-10. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
+4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` fallback Delivered on the **same** ticket only.
+5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
+6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
+7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
+8. `/hk/forecast` — 7 and 14 day load by floor.
+9. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
+10. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
+11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
 
