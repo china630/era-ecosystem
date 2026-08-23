@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const date = sp.get('date') ?? new Date().toISOString().slice(0, 10);
     if (sp.get('format') === 'pdf') {
       const buf = await generateFloorSheetPdf(date);
-      return new Response(buf, {
+      return new Response(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="floor-sheet-${date}.pdf"`,

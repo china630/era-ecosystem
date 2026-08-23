@@ -98,3 +98,6 @@ export function neededByBakuToUtc(workDateIso: string, hhmm: string): Date {
   if (!Number.isFinite(hh) || !Number.isFinite(mm) || !y || !m || !d) throw new Error('Invalid time');
   return bakuWallToUtc(y, m, d, hh, mm);
 }
+
+export const bakuClockHhmm = bakuHhmm;
+export const neededByBakuToUtc = neededByBakuToUtc;
