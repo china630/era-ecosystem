@@ -758,6 +758,3 @@ export function listImportEntities(): ImportEntityMeta[] {
     fileless,
   })).sort((a, b) => a.order - b.order);
 }
-
-export const listImportEntities = listImportEntities;
-export const listImportEntities = listImportEntities;
