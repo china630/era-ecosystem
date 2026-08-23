@@ -100,4 +100,3 @@ export function neededByBakuToUtc(workDateIso: string, hhmm: string): Date {
 }
 
 export const bakuClockHhmm = bakuHhmm;
-export const neededByBakuToUtc = neededByBakuToUtc;
