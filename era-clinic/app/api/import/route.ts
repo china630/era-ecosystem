@@ -4,7 +4,8 @@ import { assertClinicImportAccess } from "@/lib/import/auth";
 
 export async function GET() {
   try {
-    await assertClinicImportAccess();
+    const access = await assertClinicImportAccess();
+    if (access.error) return access.error;
     return jsonOk(listImportEntities());
   } catch (err) {
     return handleRouteError(err);

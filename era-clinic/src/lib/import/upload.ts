@@ -1,4 +1,4 @@
-import type { ImportSummary } from '@/components/import/ImportModal';
+import type { ImportSummary } from '@/lib/import/types';
 
 export async function uploadImportFile(
   entity: string,

@@ -1,5 +1,5 @@
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
-import { getImportAdapter, listImportEntities } from "@/lib/import/adapters";
+import { getImportAdapter } from "@/lib/import/adapters";
 import { assertClinicImportAccess } from "@/lib/import/auth";
 import { runImport, runFilelessImport } from "@/lib/import/run-import";
 import { recordClinicAudit } from "@/lib/satellite-audit";
@@ -14,6 +14,7 @@ export async function POST(
     if (!adapter) return jsonError(`Unknown import entity: ${entity}`, 404);
 
     const access = await assertClinicImportAccess();
+    if (access.error) return access.error;
     const url = new URL(request.url);
     const dryRun = url.searchParams.get("dryRun") === "1";
 

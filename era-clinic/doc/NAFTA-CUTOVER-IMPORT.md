@@ -21,14 +21,25 @@ node era-clinic/scripts/nafta-cutover/build-era-ready.cjs
 | 05-quotas.xlsx | patientRef, procedureCode, quotaTotal, quotaUsed, quotaLeft |
 | 06-slots.xlsx | externalRef, date, startTime, patientRef, procedureCode, roomCode, status |
 | 07-lab-catalog.xlsx | externalRef, code, name, group |
-| 08-lab-orders.xlsx | externalRef, patientRef, testCode, status, resultText, takenAt |
+| 08-lab-orders.xlsx | externalRef, patientRef, testCode, status, resultText, takenAt, fileRel |
 | 09-diagnostics.xlsx | externalRef, patientRef, code, name, resultText, takenAt |
 | 10-diagnoses.xlsx | patientRef, rawText, icd10, recordedAt |
 | `../hr/37-roster.xlsx` | fin, fullName, orgUnit, position, hireDate, satellites |
 
-Quota rule: do not burn twice. COMPLETED slots count used **or** load `05-quotas` without past slots on the live board. Historical COMPLETED sets `importedHistorical` — no folio post, no nurse bonus.
+`fileRel` points at dump `files/lab/{id}_{fileName}`. Public WebOnly GET often returns JSON, not Word/PDF bytes — at Hour X copy binaries from the WO share if downloads fail. Do not parse Word CBC grids before go-live.
+
+Quota rule: do not burn twice. COMPLETED slots count used **or** load `05-quotas` without past slots on the live board. Historical COMPLETED / `IMPORTED_DONE` sets `importedHistorical` — no folio post, no nurse bonus.
 
 Ops slots: **24.08–31.08.2026** as SCHEDULED. Past dates COMPLETED (or aggregate in 05). Full calendar: `06-slots-archive.xlsx`.
+
+## Hour X punch list
+
+1. Freeze WebOnly writes.
+2. Lab files: `node era-clinic/scripts/dump-webonly-patient-cards.cjs --with-files --skip-cards --skip-bulk`.
+3. Build packs: `node era-clinic/scripts/nafta-cutover/build-era-ready.cjs`.
+4. Wizard 01–07, then 05–06 (quotas + ops week). Then 08–10 after the board is stable.
+5. Empty `icd10` skips ICD FK. Hotel FO stays Elektraweb. Do not dual-run the WO calendar.
+6. Super-admin “Muslim schedule” later must not reset `quotaUsed` / historical COMPLETED.
 
 ## Wizard phases
 

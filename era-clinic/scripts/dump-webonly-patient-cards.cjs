@@ -40,6 +40,7 @@ const CONCURRENCY = Number(flag("--concurrency", 6));
 const LIMIT = Number(flag("--limit", 0)) || 0;
 const WITH_FILES = Boolean(flag("--with-files", false));
 const SKIP_CARDS = Boolean(flag("--skip-cards", false));
+const SKIP_BULK = Boolean(flag("--skip-bulk", false));
 
 const agent = new https.Agent({ keepAlive: true, maxSockets: CONCURRENCY + 2 });
 
@@ -301,9 +302,11 @@ async function dumpFiles(summary) {
   fs.mkdirSync(path.join(filesDir, "lab"), { recursive: true });
   fs.mkdirSync(path.join(filesDir, "archive-pdf"), { recursive: true });
 
-  const labResults = readBulk("bulk/lab-results.json");
+  const labResultsAll = readBulk("bulk/lab-results.json");
+  const labResults = LIMIT > 0 ? labResultsAll.slice(0, LIMIT) : labResultsAll;
   let labOk = 0;
   let labSkip = 0;
+  let labFail = 0;
   await mapPool(labResults, Math.min(4, CONCURRENCY), async (row) => {
     const name = `${row.id}_${safeFileName(row.fileName || "result")}`;
     const dest = path.join(filesDir, "lab", name);
@@ -311,46 +314,66 @@ async function dumpFiles(summary) {
       labSkip += 1;
       return;
     }
-    const src = row.filePath;
-    if (!src) return;
-    const url = /^https?:\/\//i.test(src) ? src : CLINIC_BASE + (src.startsWith("/") ? src : `/${src}`);
-    try {
-      const r = await requestRetry(url);
-      if (r.status >= 200 && r.status < 300 && r.body.length) {
-        fs.writeFileSync(dest, r.body);
-        labOk += 1;
-      }
-    } catch {
-      /* keep going */
+    const src = row.filePath || "";
+    const urls = [];
+    if (src) {
+      urls.push(/^https?:\/\//i.test(src) ? src : CLINIC_BASE + (src.startsWith("/") ? src : `/${src}`));
     }
-  });
-
-  const cardFiles = fs
-    .readdirSync(path.join(OUT_DIR, "cards"))
-    .filter((f) => f.endsWith(".json"));
-  let pdfOk = 0;
-  await mapPool(cardFiles, Math.min(4, CONCURRENCY), async (file) => {
-    const card = JSON.parse(fs.readFileSync(path.join(OUT_DIR, "cards", file), "utf8"));
-    const list = Array.isArray(card.slices?.archivePdfs) ? card.slices.archivePdfs : [];
-    for (const pdf of list) {
-      const pdfId = pdf.id || pdf.pdfId;
-      if (!pdfId) continue;
-      const dest = path.join(filesDir, "archive-pdf", `${card.patientId}_${pdfId}.pdf`);
-      if (fs.existsSync(dest) && fs.statSync(dest).size > 0) continue;
-      const url = `${CLINIC_BASE}/api/Archive/patient/pdf/${pdfId}`;
+    if (row.id != null) {
+      urls.push(`${CLINIC_BASE}/api/LabResult/${row.id}`);
+    }
+    let saved = false;
+    for (const url of urls) {
       try {
-        const r = await requestRetry(url);
-        if (r.status >= 200 && r.status < 300 && r.body.length) {
+        const r = await requestRetry(url, {
+          headers: { Accept: "application/octet-stream, application/pdf, */*" },
+        });
+        const ct = String(r.headers["content-type"] || "");
+        const looksBinary =
+          r.body.length > 64 &&
+          !ct.includes("json") &&
+          !ct.includes("text/html") &&
+          r.body[0] !== 0x7b;
+        if (r.status >= 200 && r.status < 300 && looksBinary) {
           fs.writeFileSync(dest, r.body);
-          pdfOk += 1;
+          labOk += 1;
+          saved = true;
+          break;
         }
       } catch {
-        /* keep going */
+        /* try next */
       }
     }
+    if (!saved) labFail += 1;
   });
 
-  summary.files = { labDownloaded: labOk, labSkipped: labSkip, archivePdfs: pdfOk };
+  let pdfOk = 0;
+  const cardsDir = path.join(OUT_DIR, "cards");
+  if (fs.existsSync(cardsDir)) {
+    const cardFiles = fs.readdirSync(cardsDir).filter((f) => f.endsWith(".json"));
+    await mapPool(cardFiles, Math.min(4, CONCURRENCY), async (file) => {
+      const card = JSON.parse(fs.readFileSync(path.join(cardsDir, file), "utf8"));
+      const list = Array.isArray(card.slices?.archivePdfs) ? card.slices.archivePdfs : [];
+      for (const pdf of list) {
+        const pdfId = pdf.id || pdf.pdfId;
+        if (!pdfId) continue;
+        const dest = path.join(filesDir, "archive-pdf", `${card.patientId}_${pdfId}.pdf`);
+        if (fs.existsSync(dest) && fs.statSync(dest).size > 0) continue;
+        const url = `${CLINIC_BASE}/api/Archive/patient/pdf/${pdfId}`;
+        try {
+          const r = await requestRetry(url);
+          if (r.status >= 200 && r.status < 300 && r.body.length) {
+            fs.writeFileSync(dest, r.body);
+            pdfOk += 1;
+          }
+        } catch {
+          /* keep going */
+        }
+      }
+    });
+  }
+
+  summary.files = { labDownloaded: labOk, labSkipped: labSkip, labFailed: labFail, archivePdfs: pdfOk };
 }
 
 async function main() {
@@ -365,11 +388,12 @@ async function main() {
   };
 
   console.log(`out ${OUT_DIR}`);
-  await dumpBulk(summary);
-
-  const swagger = await requestRetry(`${CLINIC_BASE}/swagger/v1/swagger.json`);
-  if (swagger.status === 200) {
-    writeJson(path.join(OUT_DIR, "catalogs/swagger.json"), JSON.parse(swagger.body.toString("utf8")));
+  if (!SKIP_BULK) {
+    await dumpBulk(summary);
+    const swagger = await requestRetry(`${CLINIC_BASE}/swagger/v1/swagger.json`);
+    if (swagger.status === 200) {
+      writeJson(path.join(OUT_DIR, "catalogs/swagger.json"), JSON.parse(swagger.body.toString("utf8")));
+    }
   }
 
   const patients = readBulk("bulk/patients.json");
