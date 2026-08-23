@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { IndustryModuleInactiveError } from '@era/satellite-kit';
 import { GuestMdmRequiredError } from '@/lib/guest-identity';
+import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -20,6 +21,12 @@ export function handleRouteError(err: unknown) {
   }
   if (err instanceof GuestMdmRequiredError) {
     return jsonError(err.message, 400);
+  }
+  if (err instanceof LaundryOpenError) {
+    return NextResponse.json(
+      { error: err.message, code: err.code, tickets: err.tickets },
+      { status: 409 },
+    );
   }
   if (err instanceof Error) {
     const status = (err as Error & { status?: number }).status;

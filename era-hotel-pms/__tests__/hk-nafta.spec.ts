@@ -27,20 +27,21 @@ describe('HK Nafta roster helpers', () => {
     expect(mondayOf(wed).toISOString().slice(0, 10)).toBe('2026-05-04');
   });
 
-  it('laundry express adds 50 percent', () => {
+  it('laundry express does not invent a surcharge when percent is unset', () => {
     expect(laundryLineAmount(1, 0, 4, 3, false)).toBe(4);
     expect(laundryLineAmount(1, 1, 4, 3, false)).toBe(7);
-    expect(laundryLineAmount(1, 0, 4, 3, true)).toBe(6);
+    expect(laundryLineAmount(1, 0, 4, 3, true)).toBe(4);
+    expect(laundryLineAmount(1, 0, 4, 3, true, 50)).toBe(6);
   });
 
-  it('blocks Sunday and holiday intake; express only 09-17', () => {
+  it('blocks Sunday and holiday intake; weekday noon still accepts wash', () => {
     const sunday = new Date('2026-08-23T08:00:00.000Z');
     expect(laundryIntakeBlockReason({ now: sunday, express: false })).toBeTruthy();
     const weekdayMorning = new Date('2026-08-24T06:00:00.000Z');
     expect(laundryIntakeBlockReason({ now: weekdayMorning, express: false, dayType: 'holiday' })).toMatch(/holiday/i);
     expect(laundryIntakeBlockReason({ now: weekdayMorning, express: false, dayType: 'working' })).toBeNull();
     const weekdayNoonUtc = new Date('2026-08-24T08:00:00.000Z');
-    expect(laundryIntakeBlockReason({ now: weekdayNoonUtc, express: false, dayType: 'working' })).toMatch(/10:00/);
+    expect(laundryIntakeBlockReason({ now: weekdayNoonUtc, express: false, dayType: 'working' })).toBeNull();
   });
 
   it('linen night 3 and deep night 5; deep wins on 15', () => {

@@ -134,7 +134,8 @@
     "reportsInvoices": "Счета",
     "reportsReconciliation": "Сверка",
     "reportsOccupancyGrid": "Сетка загрузки",
-    "agencyInbox": "Входящие агентств"
+    "agencyInbox": "Входящие агентств",
+    "foLaundry": "Очередь прачечной гостя"
   },
   "auth": {
     "signInHint": "Sign in with your hotel account",
@@ -1480,7 +1481,20 @@
     "colTodayArr": "Заезд сегодня",
     "colTodayDep": "Выезд сегодня",
     "headsOnDuty": "Голов в смене",
-    "pairsLeftover": "Пары без назначения — назначьте вручную"
+    "pairsLeftover": "Пары без назначения — назначьте вручную",
+    "acceptLaundry": "Принять (в цех)",
+    "deliverLaundry": "Выдано",
+    "returnScanRequired": "Нужен скан возвратной ведомости",
+    "foLaundryTitle": "Прачечная стойки",
+    "foLaundryHint": "Выдача только по существующему талону — стойка не создаёт талоны.",
+    "laundryExpressFlag": "Express (надбавка позже)",
+    "egPressureFrom": "Дата давления ƏG",
+    "downloadSheetPdf": "PDF ведомости",
+    "linenStayOverride": "Смена белья каждые N ночей (проживание)",
+    "deepStayOverride": "Глубокая уборка каждые N ночей",
+    "laundryOpenCheckout": "Открытая прачечная блокирует выезд",
+    "waitLaundry": "Ждать (остаться in-house)",
+    "voidLaundryTicket": "Аннулировать талон"
   },
   "service": {
     "title": "Сервис и обслуживание",

@@ -67,6 +67,7 @@ export default function FolioPage() {
   const { can } = useAuth();
   const t = useTranslations('folio');
   const tc = useTranslations('common');
+  const tHk = useTranslations('housekeeping');
   const tChess = useTranslations('chessboard');
   const tFiscal = useTranslations('fiscalStatus');
   const [folios, setFolios] = useState<FolioRow[]>([]);
@@ -101,6 +102,8 @@ export default function FolioPage() {
   } | null>(null);
   const [unusedNightsRefundMethod, setUnusedNightsRefundMethod] = useState<'CASH' | 'CARD'>('CASH');
   const [unusedNightsReason, setUnusedNightsReason] = useState('');
+  const [laundryOpenTickets, setLaundryOpenTickets] = useState<Array<{ id: string; guestName: string }>>([]);
+  const [laundryScan, setLaundryScan] = useState('');
 
   async function openCheckoutConfirm() {
     setUnusedNightsRefundMethod('CASH');
@@ -325,6 +328,9 @@ export default function FolioPage() {
           ? t('checkoutClSuccess', { count: data.cityLedgerTransferred.length })
           : t('checkoutSuccess'),
       );
+      setCheckoutConfirmOpen(false);
+    } else if (data.code === 'LAUNDRY_OPEN' && Array.isArray(data.tickets)) {
+      setLaundryOpenTickets(data.tickets);
       setCheckoutConfirmOpen(false);
     } else showApiError(data, tc('error'));
     await load();
@@ -752,6 +758,55 @@ export default function FolioPage() {
             </div>
           ) : null}
         </div>
+      </EraModal>
+      <EraModal
+        open={laundryOpenTickets.length > 0}
+        title={tHk('laundryOpenCheckout')}
+        onClose={() => setLaundryOpenTickets([])}
+      >
+        <ul className="mb-3 text-[13px]">
+          {laundryOpenTickets.map((tk) => (
+            <li key={tk.id}>{tk.guestName}</li>
+          ))}
+        </ul>
+        <input
+          type="file"
+          className="mb-2 text-xs"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => setLaundryScan(String(reader.result ?? file.name));
+            reader.readAsDataURL(file);
+          }}
+        />
+        <EraModalFooter
+          onCancel={() => setLaundryOpenTickets([])}
+          cancelLabel={tHk('waitLaundry')}
+          onSubmit={async () => {
+            const first = laundryOpenTickets[0];
+            if (!first || !laundryScan) {
+              showApiError({ error: tHk('returnScanRequired') }, tc('error'));
+              return;
+            }
+            const res = await fetch('/api/housekeeping/laundry', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                deliverTicketId: first.id,
+                returnScanKey: laundryScan,
+                actorRole: 'FO',
+              }),
+            });
+            if (!res.ok) showApiError(await res.json(), tc('error'));
+            else {
+              showSuccess(tc('saved'));
+              setLaundryOpenTickets([]);
+              await load();
+            }
+          }}
+          submitLabel={tHk('deliverLaundry')}
+        />
       </EraModal>
     </div>
   );

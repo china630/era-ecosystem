@@ -1323,6 +1323,10 @@ model Reservation {
   children5_2   Int               @default(0)
   children1_0   Int               @default(0)
   extraBeds     Int               @default(0)
+  linenEveryNights Int?
+  deepEveryNights  Int?
+  linenEveryNights Int?
+  deepEveryNights  Int?
   market        String?
   segment       String?
   rateType      String?
@@ -1674,10 +1678,16 @@ model LaundryTicket {
   reservationId  String?
   guestName      String
   service        String   @default("REGULAR")
-  status         String   @default("DRAFT")
+  status         String   @default("IN_PLANT")
   express        Boolean  @default(false)
   total          Decimal  @db.Decimal(12, 2) @default(0)
   folioChargeId  String?
+  dueAt          DateTime?
+  postedAt       DateTime?
+  postedByUserId String?
+  postedByRole   String?
+  intakeNote     String?
+  returnScanKey  String?
   lines          LaundryTicketLine[]
   createdAt      DateTime @default(now())
   @@index([organizationId])
@@ -1719,10 +1729,13 @@ model HkDiscrepancy {
 }
 
 model HkHotelPolicy {
-  id                String @id @default(uuid())
-  organizationId    String @unique
-  linenEveryNights  Int    @default(3)
-  deepEveryNights   Int    @default(5)
+  id                      String    @id @default(uuid())
+  organizationId          String    @unique
+  linenEveryNights        Int       @default(3)
+  deepEveryNights         Int       @default(5)
+  laundryExpressEnabled   Boolean   @default(false)
+  laundryExpressPercent   Int?
+  egPressureFrom          DateTime? @db.Date
 }
 
 model MinibarItem {

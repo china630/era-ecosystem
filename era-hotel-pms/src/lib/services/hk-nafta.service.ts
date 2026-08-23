@@ -4,6 +4,12 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { roomWriteFromAxes } from '@/lib/room-state';
 import type { HkJobType, HkRosterCellKind, HkVisitOutcome } from '@prisma/client';
+import {
+  bakuClockHhmm,
+  laundryDueAt,
+  laundryIntakeBlockReason as laundryWindowBlock,
+  neededByBakuToUtc,
+} from '@/lib/services/laundry-windows';
 
 export const DEFAULT_FLOOR_PAIRS = [
   [2, 3],
@@ -262,13 +268,30 @@ export async function getHkHotelPolicy() {
   return prisma.hkHotelPolicy.create({ data: { linenEveryNights: 3, deepEveryNights: 5 } });
 }
 
-export async function saveHkHotelPolicy(linenEveryNights: number, deepEveryNights: number) {
+export async function saveHkHotelPolicy(
+  linenEveryNights: number,
+  deepEveryNights: number,
+  extra?: {
+    laundryExpressEnabled?: boolean;
+    laundryExpressPercent?: number | null;
+    egPressureFrom?: string | null;
+  },
+) {
   const row = await getHkHotelPolicy();
   return prisma.hkHotelPolicy.update({
     where: { id: row.id },
     data: {
       linenEveryNights: Math.max(1, Math.min(30, linenEveryNights)),
       deepEveryNights: Math.max(1, Math.min(30, deepEveryNights)),
+      ...(extra?.laundryExpressEnabled !== undefined
+        ? { laundryExpressEnabled: extra.laundryExpressEnabled }
+        : {}),
+      ...(extra && 'laundryExpressPercent' in extra
+        ? { laundryExpressPercent: extra.laundryExpressPercent }
+        : {}),
+      ...(extra && 'egPressureFrom' in extra
+        ? { egPressureFrom: extra.egPressureFrom ? new Date(`${extra.egPressureFrom}T00:00:00.000Z`) : null }
+        : {}),
     },
   });
 }
@@ -289,7 +312,7 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
           checkInDate: { lt: next },
           checkOutDate: { gt: workDate },
         },
-        include: { guest: true, agency: true },
+        include: { guest: true, agency: true, stay: true },
         orderBy: { checkInDate: 'asc' },
       },
     },
@@ -324,7 +347,11 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       jobDuty = 'DEPARTURE';
     } else if (stay?.status === 'IN_HOUSE') {
       jobType = 'STAYOVER';
-      jobDuty = stayoverDuty(nightsSince(stay.checkInDate, workDate), linenEvery, deepEvery);
+      jobDuty = stayoverDuty(
+        nightsSince(stay.checkInDate, workDate),
+        stay.linenEveryNights ?? linenEvery,
+        stay.deepEveryNights ?? deepEvery,
+      );
     } else if ((room.hkCondition === 'DIRTY' || room.status === 'DIRTY') && !stay) {
       jobType = 'ARRIVAL_PREP';
       jobDuty = 'ARRIVAL_PREP';
@@ -347,23 +374,23 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       vip: stay?.guest.vipType ?? stay?.vipType ?? '',
       agency: stay?.agency?.name ?? '',
       arrival: ci,
-      arrivalTime: '',
+      arrivalTime: stay?.stay?.actualCheckIn ? bakuClockHhmm(stay.stay.actualCheckIn) : '',
       departure: co,
-      lateCheckout: '',
+      lateCheckout: stay?.stay?.actualCheckOut ? bakuClockHhmm(stay.stay.actualCheckOut) : '',
       extraPax: stay?.extraBeds ?? 0,
       adults: stay?.adults ?? 0,
       children: (stay?.children11_6 ?? 0) + (stay?.children5_2 ?? 0) + (stay?.children1_0 ?? 0),
       repeat: 0,
       todayArrivalPax: todayArrival ? stay?.adults ?? 0 : 0,
-      todayArrivalTime: '',
+      todayArrivalTime: todayArrival && stay?.stay?.actualCheckIn ? bakuClockHhmm(stay.stay.actualCheckIn) : '',
       todayDepartPax: todayDepart ? stay?.adults ?? 0 : 0,
-      todayDepartTime: '',
+      todayDepartTime: todayDepart && stay?.stay?.actualCheckOut ? bakuClockHhmm(stay.stay.actualCheckOut) : '',
       qHour: '',
       jobType,
       jobDuty,
       nightsInHouse: stay?.status === 'IN_HOUSE' ? nightsSince(stay.checkInDate, workDate) : 0,
-      linenEvery,
-      deepEvery,
+      linenEvery: stay?.linenEveryNights ?? linenEvery,
+      deepEvery: stay?.deepEveryNights ?? deepEvery,
       visitOutcome: '',
       visitTime: '',
       neededByAt: neededByMap.get(room.id)?.toISOString() ?? null,
@@ -400,6 +427,33 @@ export async function generateAllFloorSheets(workDateIso: string) {
     pages.push({ floor: f.floor, rows: await generateFloorSheet(workDateIso, f.floor) });
   }
   return pages;
+}
+
+export async function generateFloorSheetPdf(workDateIso: string): Promise<Buffer> {
+  const PDFDocument = (await import('pdfkit')).default;
+  const pages = await generateAllFloorSheets(workDateIso);
+  const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 28 });
+  const chunks: Buffer[] = [];
+  doc.on('data', (c: Buffer) => chunks.push(c));
+  const done = new Promise<Buffer>((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+  });
+  doc.fontSize(12).text(`Floor sheet ${workDateIso}`, { align: 'left' });
+  for (const page of pages) {
+    doc.moveDown();
+    doc.fontSize(10).text(`Floor ${page.floor}`);
+    for (const row of page.rows) {
+      const r = row as Record<string, unknown>;
+      doc
+        .fontSize(8)
+        .text(
+          `${r.roomNumber ?? ''} ${r.occupancy ?? ''} ${r.guests ?? ''} ${r.arrivalTime ?? ''} ${r.departureTime ?? ''} ${r.jobDuty ?? ''}`,
+        );
+    }
+  }
+  doc.end();
+  return done;
 }
 
 export async function applySheetOutcome(roomId: string, workDateIso: string, outcome: HkVisitOutcome) {
@@ -453,7 +507,10 @@ export async function setNeededByAt(roomId: string, workDateIso: string, hhmm: s
   const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
   const [hh, mm] = hhmm.split(':').map(Number);
   if (!Number.isFinite(hh) || !Number.isFinite(mm)) throw new Error('Invalid time');
-  const neededByAt = new Date(`${workDateIso}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00.000Z`);
+  const neededByAt = neededByBakuToUtc(
+    workDateIso,
+    `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+  );
   let task = await prisma.housekeepingTask.findFirst({
     where: { roomId, businessDate: workDate, status: { not: 'DONE' } },
     orderBy: { createdAt: 'desc' },
@@ -515,41 +572,40 @@ export async function recordDiscrepancy(roomId: string, workDateIso: string, kin
   });
 }
 
-export function laundryLineAmount(washQty: number, ironQty: number, washPrice: number, ironPrice: number, express: boolean) {
+export function laundryLineAmount(
+  washQty: number,
+  ironQty: number,
+  washPrice: number,
+  ironPrice: number,
+  express = false,
+  surchargePercent?: number | null,
+) {
   const base = washQty * washPrice + ironQty * ironPrice;
-  return express ? Math.round(base * 1.5 * 100) / 100 : Math.round(base * 100) / 100;
-}
-
-export function bakuClock(now: Date): { weekday: string; hour: number } {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Baku',
-    weekday: 'short',
-    hour: 'numeric',
-    hourCycle: 'h23',
-  }).formatToParts(now);
-  const weekday = parts.find((p) => p.type === 'weekday')?.value ?? '';
-  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '0');
-  return { weekday, hour };
+  if (express && surchargePercent && surchargePercent > 0) {
+    return Math.round(base * (1 + surchargePercent / 100) * 100) / 100;
+  }
+  return Math.round(base * 100) / 100;
 }
 
 export function laundryIntakeBlockReason(input: {
   now: Date;
   express: boolean;
+  hasWash?: boolean;
+  hasIron?: boolean;
+  expressEnabled?: boolean;
   dayType?: string | null;
   calendarUnavailable?: boolean;
 }): string | null {
-  const { weekday, hour } = bakuClock(input.now);
-  if (weekday === 'Sun') return 'No laundry intake on Sunday';
-  if (input.dayType === 'holiday' || input.dayType === 'transferred_rest') {
-    return 'No laundry intake on labour holiday';
-  }
-  if (input.express && (hour < 9 || hour >= 17)) {
-    return 'Express laundry is 09:00–17:00 Asia/Baku';
-  }
-  if (!input.express && hour >= 11) {
-    return 'Regular laundry intake is by 10:00 Asia/Baku for same-day 17:00 return';
-  }
-  return null;
+  const hasWash = input.hasWash ?? true;
+  const hasIron = input.hasIron ?? false;
+  return laundryWindowBlock({
+    now: input.now,
+    hasWash,
+    hasIron,
+    express: input.express,
+    expressEnabled: input.expressEnabled,
+    dayType: input.dayType,
+  });
 }
 
 export async function resolveStayForRoom(roomId: string) {
@@ -572,31 +628,93 @@ export async function resolveStayForRoom(roomId: string) {
   });
 }
 
-export async function postLaundryTicket(ticketId: string, now = new Date()) {
+export async function createLaundryTicket(input: {
+  roomId: string;
+  reservationId?: string;
+  guestName?: string;
+  express?: boolean;
+  now?: Date;
+  lines: Array<{ itemId: string; washQty: number; ironQty: number; guestQty?: number; hotelQty?: number }>;
+}) {
+  const now = input.now ?? new Date();
+  const policy = await getHkHotelPolicy();
+  const stay = input.reservationId
+    ? await prisma.reservation.findUnique({ where: { id: input.reservationId }, include: { guest: true } })
+    : await resolveStayForRoom(input.roomId);
+  if (!stay) throw new Error('In-house or arriving reservation required');
+  const hasWash = input.lines.some((l) => l.washQty > 0);
+  const hasIron = input.lines.some((l) => l.ironQty > 0);
+  let dayType: string | null = null;
+  try {
+    const days = await getCalendarDaysRange(isoDay(now), isoDay(now));
+    dayType = days[0]?.dayType ?? null;
+  } catch {
+    dayType = null;
+  }
+  const blocked = laundryWindowBlock({
+    now,
+    hasWash,
+    hasIron,
+    express: input.express ?? false,
+    expressEnabled: policy.laundryExpressEnabled,
+    dayType,
+  });
+  if (blocked) throw new Error(blocked);
+  if (input.express && (policy.laundryExpressPercent == null || policy.laundryExpressPercent <= 0)) {
+    throw new Error('Express surcharge is not configured');
+  }
+  const dueAt = laundryDueAt(now);
+  return prisma.laundryTicket.create({
+    data: {
+      roomId: input.roomId,
+      reservationId: stay.id,
+      guestName: input.guestName || stay.guest.fullName,
+      express: input.express ?? false,
+      status: 'IN_PLANT',
+      dueAt,
+      lines: {
+        create: input.lines
+          .filter((l) => l.washQty > 0 || l.ironQty > 0)
+          .map((l) => ({
+            itemId: l.itemId,
+            washQty: l.washQty,
+            ironQty: l.ironQty,
+            guestQty: l.guestQty ?? l.washQty + l.ironQty,
+            hotelQty: l.hotelQty ?? l.washQty + l.ironQty,
+          })),
+      },
+    },
+    include: { lines: true },
+  });
+}
+
+export async function deliverLaundryTicket(input: {
+  ticketId: string;
+  actorUserId: string;
+  actorRole: 'HK' | 'FO';
+  returnScanKey: string;
+  now?: Date;
+}) {
+  if (!input.returnScanKey.trim()) {
+    const err = new Error('Return form scan is required');
+    (err as Error & { status?: number }).status = 400;
+    throw err;
+  }
   const ticket = await prisma.laundryTicket.findUnique({
-    where: { id: ticketId },
+    where: { id: input.ticketId },
     include: { lines: { include: { item: true } } },
   });
   if (!ticket) throw new Error('Ticket not found');
-  if (ticket.status === 'POSTED') throw new Error('Already posted');
+  if (ticket.status === 'POSTED') return ticket;
+  if (ticket.status === 'VOIDED') throw new Error('Ticket is voided');
+  const policy = await getHkHotelPolicy();
+  const now = input.now ?? new Date();
   let reservationId = ticket.reservationId;
   if (!reservationId) {
     const stay = await resolveStayForRoom(ticket.roomId);
     if (!stay) throw new Error('Reservation required');
     reservationId = stay.id;
-    await prisma.laundryTicket.update({ where: { id: ticketId }, data: { reservationId } });
   }
-  let dayType: string | null = null;
-  let calendarUnavailable = false;
-  const dayIso = isoDay(now);
-  try {
-    const days = await getCalendarDaysRange(dayIso, dayIso);
-    dayType = days[0]?.dayType ?? null;
-  } catch {
-    calendarUnavailable = true;
-  }
-  const blocked = laundryIntakeBlockReason({ now, express: ticket.express, dayType, calendarUnavailable });
-  if (blocked) throw new Error(blocked);
   let total = 0;
   let qty = 0;
   const summary: string[] = [];
@@ -610,13 +728,13 @@ export async function postLaundryTicket(ticketId: string, now = new Date()) {
       decimalToNumber(line.item.washPrice),
       decimalToNumber(line.item.ironPrice),
       ticket.express,
+      policy.laundryExpressPercent,
     );
     total += amt;
     if (wash || iron) summary.push(`${line.item.code} W${wash}/I${iron}`);
-    const qtyMismatch = line.guestQty !== line.hotelQty;
     await prisma.laundryTicketLine.update({
       where: { id: line.id },
-      data: { amount: toDecimal(amt), ...(qtyMismatch ? {} : {}) },
+      data: { amount: toDecimal(amt) },
     });
   }
   const rev = await prisma.revenueCode.findFirst({ where: { code: 'LAUNDRY' } });
@@ -630,13 +748,27 @@ export async function postLaundryTicket(ticketId: string, now = new Date()) {
     amount: total,
     qty: Math.max(1, qty),
     departmentId: dept?.id,
-    businessDate: new Date(`${dayIso}T00:00:00.000Z`),
+    businessDate: new Date(`${isoDay(now)}T00:00:00.000Z`),
     description: `Laundry ${ticket.express ? 'express' : 'regular'} ticket ${ticket.id.slice(0, 8)} ${summary.join(', ')}`,
   });
   return prisma.laundryTicket.update({
-    where: { id: ticketId },
-    data: { status: 'POSTED', total: toDecimal(total), folioChargeId: charge.id, reservationId },
+    where: { id: ticket.id },
+    data: {
+      status: 'POSTED',
+      total: toDecimal(total),
+      folioChargeId: charge.id,
+      reservationId,
+      postedAt: now,
+      postedByUserId: input.actorUserId,
+      postedByRole: input.actorRole,
+      returnScanKey: input.returnScanKey,
+    },
   });
+}
+
+export async function postLaundryTicket(ticketId: string, now = new Date()) {
+  void now;
+  throw new Error('Laundry posts only on Delivered — use deliverLaundryTicket');
 }
 
 export async function voidLaundryForCharge(chargeId: string) {
@@ -646,6 +778,89 @@ export async function voidLaundryForCharge(chargeId: string) {
     where: { id: ticket.id },
     data: { status: 'VOIDED', folioChargeId: null },
   });
+}
+
+export class LaundryOpenError extends Error {
+  status = 409;
+  code = 'LAUNDRY_OPEN' as const;
+  tickets: Array<{ id: string; guestName: string; dueAt: Date | null }>;
+  constructor(tickets: Array<{ id: string; guestName: string; dueAt: Date | null }>) {
+    super('Open laundry tickets block check-out');
+    this.tickets = tickets;
+  }
+}
+
+export async function assertNoOpenLaundry(reservationId: string) {
+  const open = await prisma.laundryTicket.findMany({
+    where: { reservationId, status: 'IN_PLANT' },
+    select: { id: true, guestName: true, dueAt: true },
+  });
+  if (open.length > 0) throw new LaundryOpenError(open);
+}
+
+export async function saveStayLinenOverride(
+  reservationId: string,
+  linenEveryNights: number | null,
+  deepEveryNights: number | null,
+) {
+  return prisma.reservation.update({
+    where: { id: reservationId },
+    data: { linenEveryNights, deepEveryNights },
+  });
+}
+
+export const NAFTA_LAUNDRY_CATALOG: Array<{
+  code: string;
+  name: string;
+  category: string;
+  washPrice: number;
+  ironPrice: number;
+}> = [
+  { code: 'M-TROUSERS', name: 'Men trousers', category: 'MEN', washPrice: 4, ironPrice: 3 },
+  { code: 'M-SHIRT', name: 'Men shirt', category: 'MEN', washPrice: 4, ironPrice: 3 },
+  { code: 'M-TEE', name: 'Men T-shirt', category: 'MEN', washPrice: 3, ironPrice: 2 },
+  { code: 'M-SOCKS', name: 'Men socks', category: 'MEN', washPrice: 0.5, ironPrice: 0 },
+  { code: 'W-SKIRT', name: 'Women skirt', category: 'WOMEN', washPrice: 5, ironPrice: 3 },
+  { code: 'W-DRESS', name: 'Women dress', category: 'WOMEN', washPrice: 10, ironPrice: 5 },
+  { code: 'W-TEE', name: 'Women T-shirt', category: 'WOMEN', washPrice: 3, ironPrice: 2 },
+  { code: 'C-TROUSERS', name: 'Child trousers', category: 'CHILD', washPrice: 2, ironPrice: 1 },
+  { code: 'C-SOCKS', name: 'Child socks', category: 'CHILD', washPrice: 0.5, ironPrice: 0 },
+];
+
+export async function ensureNaftaLaundryCatalog() {
+  for (const row of NAFTA_LAUNDRY_CATALOG) {
+    const existing = await prisma.laundryItem.findFirst({ where: { code: row.code } });
+    if (existing) {
+      await prisma.laundryItem.update({
+        where: { id: existing.id },
+        data: {
+          washPrice: toDecimal(row.washPrice),
+          ironPrice: toDecimal(row.ironPrice),
+          name: row.name,
+          category: row.category,
+          active: true,
+        },
+      });
+    } else {
+      await prisma.laundryItem.create({
+        data: {
+          code: row.code,
+          name: row.name,
+          category: row.category,
+          washPrice: toDecimal(row.washPrice),
+          ironPrice: toDecimal(row.ironPrice),
+          active: true,
+        },
+      });
+    }
+  }
+}
+
+async function orgId(): Promise<string> {
+  const first = await prisma.laundryItem.findFirst({ select: { organizationId: true } });
+  if (first) return first.organizationId;
+  const hk = await prisma.hkHotelPolicy.findFirst({ select: { organizationId: true } });
+  return hk?.organizationId ?? 'default';
 }
 
 export function inventoryOooCount(rooms: { inventoryStatus?: string | null; status?: string | null }[]) {
@@ -734,7 +949,11 @@ export async function hkLoadForecast(fromIso: string, days: number) {
       else if (ci === key) row.arrivals += 1;
       else if (ci < key && co > key) {
         row.stayovers += 1;
-        const duty = stayoverDuty(nightsSince(s.checkInDate, day), policy.linenEveryNights, policy.deepEveryNights);
+        const duty = stayoverDuty(
+          nightsSince(s.checkInDate, day),
+          s.linenEveryNights ?? policy.linenEveryNights,
+          s.deepEveryNights ?? policy.deepEveryNights,
+        );
         if (duty === 'LINEN') row.linen += 1;
         if (duty === 'DEEP') row.deep += 1;
       }
