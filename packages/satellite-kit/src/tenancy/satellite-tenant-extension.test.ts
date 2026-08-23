@@ -27,6 +27,21 @@ describe("satellite tenant where merge", () => {
     });
   });
 
+  it("rewrites Date unique to composite (BusinessDay.date)", () => {
+    const date = new Date("2026-08-22T00:00:00.000Z");
+    assert.deepEqual(mergeWhereForUnique({ date }, "org-a"), {
+      organizationId_date: { organizationId: "org-a", date },
+    });
+  });
+
+  it("rewrites Date + organizationId pair to compound unique", () => {
+    const date = new Date("2026-08-22T00:00:00.000Z");
+    assert.deepEqual(
+      mergeWhereForUnique({ date, organizationId: "nafta-sanatorium-org" }, "org-a"),
+      { organizationId_date: { organizationId: "org-a", date } },
+    );
+  });
+
   it("keeps id unique and adds org (extendedWhereUnique)", () => {
     assert.deepEqual(mergeWhereForUnique({ id: "row-1" }, "org-a"), {
       id: "row-1",
