@@ -355,39 +355,41 @@ export default function PatientsPage() {
           <option value="0">{t("filterMdmMissing")}</option>
         </FieldSelect>
         {hasSanatorium ? (
-          <CatalogField
-            kind={inferCatalogFieldKind({
-              optionCount: hotelRooms.length,
-              searchable: hotelRooms.length > 40,
-            })}
-            label={t("filterHotelRoom")}
-            value={filters.roomNumber}
-            onChange={(v) => {
-              setFilters({ ...filters, roomNumber: String(v ?? "") });
-              setPage(1);
-            }}
-            options={[
-              ...(hotelRooms.length > 40
-                ? [{ value: "", label: t("filterHotelRoomAll") }]
-                : []),
-              ...hotelRooms.map((room) => ({ value: room, label: room })),
-            ]}
-            emptyLabel={t("filterHotelRoomAll")}
-          />
-          <CatalogField
-            kind={inferCatalogFieldKind({
-              optionCount: programCodes.length,
-              searchable: programCodes.length > 12,
-            })}
-            label={t("filterProgramCode")}
-            value={filters.programCode}
-            onChange={(v) => {
-              setFilters({ ...filters, programCode: String(v ?? "") });
-              setPage(1);
-            }}
-            options={programCodes.map((code) => ({ value: code, label: code }))}
-            emptyLabel={t("filterProgramCodeAll")}
-          />
+          <>
+            <CatalogField
+              kind={inferCatalogFieldKind({
+                optionCount: hotelRooms.length,
+                searchable: hotelRooms.length > 40,
+              })}
+              label={t("filterHotelRoom")}
+              value={filters.roomNumber}
+              onChange={(v) => {
+                setFilters({ ...filters, roomNumber: String(v ?? "") });
+                setPage(1);
+              }}
+              options={[
+                ...(hotelRooms.length > 40
+                  ? [{ value: "", label: t("filterHotelRoomAll") }]
+                  : []),
+                ...hotelRooms.map((room) => ({ value: room, label: room })),
+              ]}
+              emptyLabel={t("filterHotelRoomAll")}
+            />
+            <CatalogField
+              kind={inferCatalogFieldKind({
+                optionCount: programCodes.length,
+                searchable: programCodes.length > 12,
+              })}
+              label={t("filterProgramCode")}
+              value={filters.programCode}
+              onChange={(v) => {
+                setFilters({ ...filters, programCode: String(v ?? "") });
+                setPage(1);
+              }}
+              options={programCodes.map((code) => ({ value: code, label: code }))}
+              emptyLabel={t("filterProgramCodeAll")}
+            />
+          </>
         ) : null}
         <FieldRow cols={2}>
           <Field

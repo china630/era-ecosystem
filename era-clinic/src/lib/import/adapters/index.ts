@@ -749,8 +749,6 @@ export function getImportAdapter(entity: string): ImportAdapter<unknown> | undef
   return byEntity.get(entity);
 }
 
-export const getImportAdapter = getImportAdapter;
-
 export function listImportEntities(): ImportEntityMeta[] {
   return ADAPTERS.map(({ entity, label, order, templateHint, fileless }) => ({
     entity,
