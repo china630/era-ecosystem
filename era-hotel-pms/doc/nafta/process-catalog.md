@@ -9,6 +9,7 @@ Source: NotebookLM export 2026-05-25. E2E processes for ERA mapping — not per-
 | PROC-02 Check-out | Guest zero-balance; COMPANY/AGENCY leave-on-CL **SHIPPED** (H-BL-40) |
 | PROC-03 Night Audit | Core SHIPPED (HOT-NA-01); polish **SHIPPED** (H-BL-44) |
 | PROC-08…10 Transfers | MVP SHIPPED (HOT-XFER-01) |
+| PROC-TOUR Guest weekend tours | **SHIPPED** (HOT-TOUR-01) |
 | PROC-11…14 Banquets | MVP SHIPPED (HOT-BEO-01) |
 | PROC-21 Agency Ledger | Ops snapshot + settlement SHIPPED; Finance aging/match **SHIPPED** (H-BL-48) |
 | PROC-25 Deposit | Apply@check-in + settle/checkout offset **SHIPPED** (H-BL-41) |
@@ -26,6 +27,7 @@ Source: NotebookLM export 2026-05-25. E2E processes for ERA mapping — not per-
 | PROC-08 | Transfer IN (Airport) Request | Flight info provided | Concierge | Airport Transfer Confirmation | hotel-pms | P0 | 4 |
 | PROC-09 | Transfer OUT (Hotel) Dispatch | Guest departing | Dispatcher | Hotel Transfer, Vehicle List | hotel-pms | P0 | 4 |
 | PROC-10 | Post Transfer Charge to Folio | Transfer confirmed | System | Hotel Transfer, Folio Transactions | hotel-pms | P0 | 4 |
+| PROC-TOUR | Weekend group tour roster + folio | Sunday excursion | Organizer, Reception | `/tours`, `/fleet` | hotel-pms | P1 | SHIPPED |
 | PROC-11 | Banquet Sales & BEO Creation | Client inquiry | Sales Mgr | Banquet Agreements, Saloons | hotel-pms | P0 | 4 |
 | PROC-12 | Banquet Space Blocking | BEO confirmed | Sales Mgr | Event Calendar | hotel-pms | P0 | 4 |
 | PROC-13 | Banquet Service Day Execution | Event day arrives | F&B Manager | Pos Check List (Table=Banquet) | fb-pos | P0 | 4 |

@@ -101,7 +101,7 @@ export async function settleFolio(input: {
     );
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const settlement = await tx.folioSettlement.create({
       data: {
         reservationId: refreshed.reservationId,
@@ -143,6 +143,15 @@ export async function settleFolio(input: {
       data: { status: 'COMPLETED', completedAt: new Date() },
     });
   });
+
+  const { syncTourBookingsAfterFolioSettle, usedGuestTender } = await import(
+    '@/lib/services/tour.service'
+  );
+  await syncTourBookingsAfterFolioSettle(
+    input.folioId,
+    usedGuestTender(cashLines.map((l) => l.method)),
+  );
+  return result;
 }
 
 export async function listSettlements(reservationId: string) {

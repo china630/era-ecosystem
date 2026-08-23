@@ -41,7 +41,14 @@ describe('hotel module taxonomy (hotel-pms)', () => {
     expect(resolveHotelModuleForPathname('/fo/agency-inbox')).toBe('hotel_core');
   });
 
-  it('maps settings to hotel_setup_advanced', () => {
+  it('maps tours and fleet to hotel_transfers', () => {
+    expect(resolveHotelModuleForPathname('/tours')).toBe('hotel_transfers');
+    expect(resolveHotelModuleForPathname('/api/tours/departures')).toBe('hotel_transfers');
+    expect(resolveHotelModuleForPathname('/fleet')).toBe('hotel_transfers');
+    expect(resolveHotelModuleForPathname('/api/fleet/vehicles')).toBe('hotel_transfers');
+  });
+
+  it('maps master-data settings to hotel_setup_advanced', () => {
     expect(resolveHotelModuleForPathname('/settings/master-data')).toBe('hotel_setup_advanced');
   });
 

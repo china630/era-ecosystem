@@ -168,6 +168,8 @@ Deep clinical / lab → **Clinic** (external).
 |-----------|-----|-------------|
 | Transfers | `/transfers` | Transfers → folio |
 | Airport | `/transfers/airport` | Airport transfer flow |
+| Tours | `/tours` | Group excursions / Nafta weekend roster (HOT-TOUR-01). Nav under Transfers. Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md) |
+| Fleet | `/fleet` | TransferVehicle CRUD for tours and airport |
 
 ---
 

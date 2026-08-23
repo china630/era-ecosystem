@@ -120,6 +120,7 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 | Route | Status |
 |-------|--------|
 | `/transfers`, `/transfers/airport` | SHIPPED — folio routing charge, cancel/void, day-board print (HOT-XFER-01) |
+| `/tours`, `/tours/[id]`, `/tours/[id]/print`, `/fleet` | SHIPPED — group excursions + roster + TOUR folio + fleet (HOT-TOUR-01). Spec: [`doc/TOURS-NAFTA-OPS.md`](../../doc/TOURS-NAFTA-OPS.md) · ADR `hotel-guest-tours`. |
 | `/banquets*` | SHIPPED — BEO + printable day sheet + preferred folio (HOT-BEO-01); not full Opera S&C |
 | Reservation card folio routing | `GET/PUT /api/reservations/[id]/folio-routing` | Stay overrides (HOT-CL-01) |
 

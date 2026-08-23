@@ -264,6 +264,21 @@ enum TransferOrderStatus {
   CANCELLED
 }
 
+enum TourDepartureStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  DEPARTED
+  CANCELLED
+}
+
+enum TourBookingStatus {
+  CHARGED
+  PAID
+  CANCELLED
+  ON_CITY_LEDGER
+}
+
 enum StockMovementType {
   RECEIPT
   ISSUE
@@ -1380,6 +1395,7 @@ model Reservation {
   posReservations   PosReservation[]
   procedureAppointments ProcedureAppointment[]
   transferOrders    TransferOrder[]
+  tourBookings      TourBooking[]
   conciergeOrders   ConciergeOrder[]
   banquetEvents     BanquetEvent[]
   paymentCards      ReservationPaymentCard[]
@@ -1941,6 +1957,8 @@ model FolioCharge {
   paxNo         Int?
   invoiceRef    String?
   createdAt     DateTime    @default(now())
+  paymentAllocations FolioPaymentAllocation[]
+  tourBookings       TourBooking[]
 }
 
 model FolioPayment {
@@ -1962,9 +1980,22 @@ model FolioPayment {
   fiscalReceiptId String?
   fiscalQrPayload String?
   createdAt       DateTime         @default(now())
+  allocations     FolioPaymentAllocation[]
 
   @@index([settlementId])
   @@index([refundOfPaymentId])
+}
+
+model FolioPaymentAllocation {
+  id        String       @id @default(uuid())
+  paymentId String
+  payment   FolioPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  chargeId  String
+  charge    FolioCharge  @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+  amount    Decimal      @db.Decimal(12, 2)
+
+  @@unique([paymentId, chargeId])
+  @@index([chargeId])
 }
 
 model FolioSettlement {
@@ -2424,6 +2455,7 @@ model TransferVehicle {
   maxSeats       Int             @default(4)
   active         Boolean         @default(true)
   transferOrders TransferOrder[]
+  tourDepartures TourDeparture[]
   createdAt      DateTime        @default(now())
 
   @@unique([organizationId, code])
@@ -2448,6 +2480,70 @@ model TransferOrder {
 
   @@index([reservationId])
   @@index([pickupAt])
+  @@index([status])
+}
+
+model TourTemplate {
+  id             String          @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  defaultAgenda  String          @default("")
+  defaultPickup  String?
+  defaultReturn  String?
+  defaultCapacity Int            @default(20)
+  defaultPrice   Decimal         @db.Decimal(12, 2)
+  active         Boolean         @default(true)
+  departures     TourDeparture[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model TourDeparture {
+  id             String              @id @default(uuid())
+  organizationId String
+  templateId     String?
+  template       TourTemplate?       @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  date           DateTime            @db.Date
+  pickupAt       DateTime
+  returnAt       DateTime
+  agenda         String              @default("")
+  meetingPoint   String              @default("")
+  guideName      String?
+  vehicleId      String?
+  vehicle        TransferVehicle?    @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  capacity       Int
+  price          Decimal             @db.Decimal(12, 2)
+  status         TourDepartureStatus @default(DRAFT)
+  bookings       TourBooking[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([organizationId, date])
+  @@index([vehicleId])
+  @@index([status])
+}
+
+model TourBooking {
+  id             String            @id @default(uuid())
+  departureId    String
+  departure      TourDeparture     @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  reservationId  String
+  reservation    Reservation       @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  guestId        String?
+  folioChargeId  String?
+  folioCharge    FolioCharge?      @relation(fields: [folioChargeId], references: [id], onDelete: SetNull)
+  folioPaymentId String?
+  status         TourBookingStatus @default(CHARGED)
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([departureId, reservationId])
+  @@index([reservationId])
   @@index([status])
 }
 

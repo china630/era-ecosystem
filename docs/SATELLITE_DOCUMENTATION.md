@@ -207,3 +207,5 @@ UI: [`@era/satellite-kit/ui`](../packages/satellite-kit/ui) (DESIGN.md tokens, P
 **Hotel Elektraweb migration (Stage 26):** [ELEKTRAWEB-IMPORT.md](../era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md) · ADR [hotel-elektraweb-import.md](./adr/hotel-elektraweb-import.md)
 
 **Hotel Management Reports (W1–W3 API):** [MANAGEMENT-REPORTS-CATALOG.md](../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) — classifier A0–E, `/reports` home, Nafta nightly ZIP, P1 catalog, pivot cubes (not OLAP), 3-year, email ZIP link HEADLESS (HOT-RPT-01/02 API/SCREEN — not SHIPPED, no UAT evidence).
+
+**Hotel guest tours:** ADR [hotel-guest-tours.md](./adr/hotel-guest-tours.md) · [TOURS-NAFTA-OPS.md](../era-hotel-pms/doc/TOURS-NAFTA-OPS.md) — HOT-TOUR-01 SHIPPED (`/tours`, `/fleet`).

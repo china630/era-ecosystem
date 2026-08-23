@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 import { IndustryModuleInactiveError } from '@era/satellite-kit';
 import { GuestMdmRequiredError } from '@/lib/guest-identity';
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
+import { TourConflictError } from '@/lib/services/tour.service';
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -27,6 +28,9 @@ export function handleRouteError(err: unknown) {
       { error: err.message, code: err.code, tickets: err.tickets },
       { status: 409 },
     );
+  }
+  if (err instanceof TourConflictError) {
+    return jsonError(err.message, 409);
   }
   if (err instanceof Error) {
     const status = (err as Error & { status?: number }).status;
