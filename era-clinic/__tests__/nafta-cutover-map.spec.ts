@@ -5,12 +5,15 @@ const {
   slotStatus,
   isOpsSlotDate,
   mapRosterRow,
+  isUsgExam,
+  labFileRel,
 } = require("../scripts/nafta-cutover/map.cjs");
 
 describe("nafta cutover column map", () => {
   it("exposes EN headers for clinic 01–10 and roster", () => {
     expect(HEADERS.procedures[0]).toBe("externalRef");
     expect(HEADERS.slots).toContain("status");
+    expect(HEADERS.labOrders).toContain("fileRel");
     expect(HEADERS.roster).toEqual([
       "fin",
       "fullName",
@@ -31,6 +34,16 @@ describe("nafta cutover column map", () => {
     expect(slotStatus("2026-08-25")).toBe("SCHEDULED");
     expect(isOpsSlotDate("2026-08-24")).toBe(true);
     expect(isOpsSlotDate("2026-09-01")).toBe(false);
+  });
+
+  it("detects USM from nested examination diagnoses", () => {
+    expect(
+      isUsgExam({
+        notes: "abdomen",
+        diagnoses: [{ diagnosisName: "USM" }],
+      }),
+    ).toBe(true);
+    expect(labFileRel({ id: 57, fileName: "QAN.docx" })).toBe("files/lab/57_QAN.docx");
   });
 
   it("maps medical job titles to clinic satellite", () => {

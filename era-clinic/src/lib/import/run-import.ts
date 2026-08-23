@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseWorkbook } from '@/lib/import/excel';
-import { mapHeaders } from '@/lib/import/helpers';
-import type { ImportAdapter, ImportResult } from '@/lib/import/types';
+import { mapHeaders } from "@/lib/import/helpers";
+import type { ImportAdapter, ImportResult } from "@/lib/import/types";
 
 export async function runImport<T>(
   adapter: ImportAdapter<T>,

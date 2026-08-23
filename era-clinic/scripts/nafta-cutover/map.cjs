@@ -38,7 +38,7 @@ const HEADERS = {
     "status",
   ],
   labCatalog: ["externalRef", "code", "name", "group"],
-  labOrders: ["externalRef", "patientRef", "testCode", "status", "resultText", "takenAt"],
+  labOrders: ["externalRef", "patientRef", "testCode", "status", "resultText", "takenAt", "fileRel"],
   diagnostics: ["externalRef", "patientRef", "code", "name", "resultText", "takenAt"],
   diagnoses: ["patientRef", "rawText", "icd10", "recordedAt"],
   roster: ["fin", "fullName", "orgUnit", "position", "hireDate", "satellites"],
@@ -103,6 +103,18 @@ function mapRosterRow(row) {
   };
 }
 
+function isUsgExam(form) {
+  const diagnoses = Array.isArray(form?.diagnoses) ? form.diagnoses : [];
+  const names = diagnoses.map((d) => String(d.diagnosisName || d.name || "")).join(" ");
+  const blob = `${names} ${form?.notes || form?.note || ""}`;
+  return /USM|USG|USİ|USI|ultrason/i.test(blob);
+}
+
+function labFileRel(row) {
+  const name = String(row.fileName || "result").replace(/[<>:"/\\|?*]/g, "_").slice(0, 80);
+  return `files/lab/${row.id}_${name}`;
+}
+
 module.exports = {
   CUTOVER,
   OPS_SLOT_FROM,
@@ -116,4 +128,10 @@ module.exports = {
   mapSex,
   mapPractitionerRole,
   mapRosterRow,
+  isUsgExam,
+  labFileRel,
+  procedureCode: procedureCode,
+  roomCode: roomCode,
+  slotStatus: slotStatus,
+  isOpsSlotDate: isOpsSlotDate,
 };

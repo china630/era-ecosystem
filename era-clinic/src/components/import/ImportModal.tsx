@@ -9,23 +9,15 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  ModalFooter,
+  ModalShell,
 } from '@era/satellite-kit/ui';
-import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { useAuth } from '@/hooks/useAuth';
+import { useClinicAuth } from '@/hooks/useClinicAuth';
+import type { ImportSummary } from '@/lib/import/types';
 import { uploadImportFile } from '@/lib/import/upload';
 
-export type ImportSummary = {
-  entity: string;
-  label: string;
-  dryRun: boolean;
-  totalRows: number;
-  created: number;
-  updated: number;
-  skipped: number;
-  errors: { row: number; message: string }[];
-};
+export type { ImportSummary };
 
 type Step = 'pick' | 'preview' | 'done';
 
@@ -40,10 +32,11 @@ export function ImportButton({
   onComplete?: () => void;
   className?: string;
 }) {
-  const { canRunElektrawebImport, loading } = useAuth();
+  const { auth, loading } = useClinicAuth();
   const [open, setOpen] = useState(false);
+  const allowed = Boolean(auth?.canViewClinicAdmin || auth?.isPlatformSuperAdmin);
 
-  if (loading || !canRunElektrawebImport) return null;
+  if (loading || !allowed) return null;
 
   return (
     <>
@@ -59,7 +52,7 @@ export function ImportButton({
       <ImportModal
         open={open}
         entity={entity}
-        title={label ?? 'Import from Elektraweb'}
+        title={label ?? 'Import from Excel'}
         onClose={() => setOpen(false)}
         onComplete={() => {
           onComplete?.();
@@ -105,17 +98,12 @@ export function ImportModal({
     onClose();
   }
 
-  async function upload(selected: File, dryRun: boolean) {
-    return uploadImportFile(entity, selected, dryRun);
-  }
-
   async function handlePreview() {
     if (!file) return;
     setBusy(true);
     setError(null);
     try {
-      const summary = await upload(file, true);
-      setPreview(summary);
+      setPreview(await uploadImportFile(entity, file, true));
       setStep('preview');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -129,8 +117,7 @@ export function ImportModal({
     setBusy(true);
     setError(null);
     try {
-      const summary = await upload(file, false);
-      setResult(summary);
+      setResult(await uploadImportFile(entity, file, false));
       setStep('done');
       onComplete?.();
     } catch (err) {
@@ -143,15 +130,15 @@ export function ImportModal({
   const summary = step === 'done' ? result : preview;
 
   return (
-    <EraModal
+    <ModalShell
       open={open}
       title={title}
-      subtitle="Elektraweb .xlsx — idempotent upsert"
+      subtitle="Nafta cutover .xlsx — idempotent upsert"
       onClose={handleClose}
       maxWidthClass="max-w-2xl"
       footer={
         step === 'pick' ? (
-          <EraModalFooter
+          <ModalFooter
             onCancel={handleClose}
             onSubmit={() => void handlePreview()}
             busy={busy}
@@ -159,18 +146,18 @@ export function ImportModal({
             submitLabel="Preview"
           />
         ) : step === 'preview' ? (
-          <EraModalFooter
+          <ModalFooter
             onCancel={() => setStep('pick')}
             onSubmit={() => void handleConfirm()}
             busy={busy}
             submitLabel="Import"
           />
         ) : (
-          <EraModalFooter onCancel={handleClose} submitLabel="Close" onSubmit={handleClose} />
+          <ModalFooter onCancel={handleClose} submitLabel="Close" onSubmit={handleClose} />
         )
       }
     >
-      {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       {step === 'pick' && (
         <div className="space-y-3">
@@ -182,14 +169,14 @@ export function ImportModal({
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
           <p className="text-sm text-gray-500">
-            Upload an Elektraweb export (.xlsx). Preview validates rows before writing to the database.
+            Upload an era-ready workbook (.xlsx). Preview validates rows before writing.
           </p>
         </div>
       )}
 
       {(step === 'preview' || step === 'done') && summary && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+          <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
             <div className="rounded border p-2">Rows: {summary.totalRows}</div>
             <div className="rounded border p-2 text-green-700">Created: {summary.created}</div>
             <div className="rounded border p-2 text-blue-700">Updated: {summary.updated}</div>
@@ -197,8 +184,8 @@ export function ImportModal({
           </div>
           {summary.errors.length > 0 && (
             <div>
-              <p className="font-medium text-sm mb-2">Errors ({summary.errors.length})</p>
-              <div className={DATA_TABLE_VIEWPORT_CLASS}>
+              <p className="mb-2 text-sm font-medium">Errors ({summary.errors.length})</p>
+              <div className="max-h-48 overflow-auto">
                 <table className={DATA_TABLE_CLASS}>
                   <thead>
                     <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -219,12 +206,12 @@ export function ImportModal({
             </div>
           )}
           {step === 'done' && (
-            <p className="text-sm text-green-700">Import completed. Re-uploading the same file will update existing records.</p>
+            <p className="text-sm text-green-700">
+              Import completed. Re-uploading the same file will update existing records.
+            </p>
           )}
         </div>
       )}
-    </EraModal>
+    </ModalShell>
   );
 }
-
-const DATA_TABLE_VIEWPORT_CLASS = 'max-h-48 overflow-auto';

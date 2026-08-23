@@ -12,7 +12,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
-import type { ImportSummary } from '@/components/import/ImportModal';
+import type { ImportSummary } from '@/lib/import/types';
 import { uploadImportFile, runFilelessImportEntity } from '@/lib/import/upload';
 import {
   clearImportStepStatus,

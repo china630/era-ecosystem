@@ -20,6 +20,8 @@ const {
   mapSex,
   mapPractitionerRole,
   mapRosterRow,
+  isUsgExam,
+  labFileRel,
 } = require("./map.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
@@ -43,9 +45,21 @@ function loadXlsx() {
 }
 
 function readDumpJson(rel) {
-  const file = path.join(DUMP, rel);
-  if (!fs.existsSync(file)) return null;
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  const alts = [rel];
+  const swap = {
+    "catalogs/treatments.json": "catalogs/treatments.json",
+    "catalogs/rooms.json": "catalogs/rooms.json",
+    "catalogs/doctors.json": "catalogs/doctors.json",
+    "catalogs/analyses.json": "catalogs/analyses.json",
+    "bulk/examination-forms.json": "bulk/examination-forms.json",
+    "calendar/reservations-all.json": "calendar/reservations-all.json",
+  };
+  if (swap[rel]) alts.push(swap[rel]);
+  for (const a of alts) {
+    const file = path.join(DUMP, a);
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf8"));
+  }
+  return null;
 }
 
 function rowsOf(doc) {
@@ -133,7 +147,15 @@ function main() {
     })),
   );
 
-  const livePatients = patients.filter((p) => inHousePatient(p));
+  const liveIds = new Set();
+  for (const p of patients) {
+    if (inHousePatient(p)) liveIds.add(p.id);
+  }
+  for (const s of slotsRaw) {
+    const date = ymd(s.date);
+    if (isOpsSlotDate(date) && slotStatus(date) === "SCHEDULED") liveIds.add(s.patientId);
+  }
+  const livePatients = patients.filter((p) => liveIds.has(p.id));
   const nPat = writeSheet(
     XLSX,
     path.join(clinicOut, "04-patients.xlsx"),
@@ -178,16 +200,19 @@ function main() {
     quotaMap.set(key, cur);
   }
 
-  const quotaRows = [...quotaMap.entries()].map(([key, v]) => {
-    const [patientRef, procedureCd] = key.split("|");
-    return {
-      patientRef,
-      procedureCode: procedureCd,
-      quotaTotal: v.total,
-      quotaUsed: v.used,
-      quotaLeft: Math.max(0, v.total - v.used),
-    };
-  });
+  const liveRefs = new Set(livePatients.map((p) => `wo:patient:${p.id}`));
+  const quotaRows = [...quotaMap.entries()]
+    .map(([key, v]) => {
+      const [patientRef, procedureCd] = key.split("|");
+      return {
+        patientRef,
+        procedureCode: procedureCd,
+        quotaTotal: v.total,
+        quotaUsed: v.used,
+        quotaLeft: Math.max(0, v.total - v.used),
+      };
+    })
+    .filter((r) => liveRefs.has(r.patientRef));
 
   const nQuota = writeSheet(XLSX, path.join(clinicOut, "05-quotas.xlsx"), HEADERS.quotas, quotaRows);
   const nSlots = writeSheet(XLSX, path.join(clinicOut, "06-slots.xlsx"), HEADERS.slots, opsSlots);
@@ -197,17 +222,76 @@ function main() {
     XLSX,
     path.join(clinicOut, "07-lab-catalog.xlsx"),
     HEADERS.labCatalog,
-    analyses.map((a) => ({
-      externalRef: `wo:analysis:${a.id}`,
-      code: `WO-LAB-${a.id}`,
-      name: a.name || "",
-      group: "lab",
+    [
+      ...analyses.map((a) => ({
+        externalRef: `wo:analysis:${a.id}`,
+        code: `WO-LAB-${a.id}`,
+        name: a.name || "",
+        group: "lab",
+      })),
+      {
+        externalRef: "wo:analysis:file",
+        code: "WO-LAB-FILE",
+        name: "Attached lab file (WebOnly)",
+        group: "lab",
+      },
+    ],
+  );
+
+  const labResults = rowsOf(readDumpJson("bulk/lab-results.json"));
+  const nLabOrd = writeSheet(
+    XLSX,
+    path.join(clinicOut, "08-lab-orders.xlsx"),
+    HEADERS.labOrders,
+    labResults.map((r) => ({
+      externalRef: `wo:lab:${r.id}`,
+      patientRef: `wo:patient:${r.patientId}`,
+      testCode: r.labTestId ? `WO-LAB-${r.labTestId}` : "WO-LAB-FILE",
+      status: "COMPLETED",
+      resultText: r.note || r.fileName || "",
+      takenAt: ymd(r.resultDate),
+      fileRel: labFileRel(r),
     })),
   );
 
-  writeSheet(XLSX, path.join(clinicOut, "08-lab-orders.xlsx"), HEADERS.labOrders, []);
-  writeSheet(XLSX, path.join(clinicOut, "09-diagnostics.xlsx"), HEADERS.diagnostics, []);
-  writeSheet(XLSX, path.join(clinicOut, "10-diagnoses.xlsx"), HEADERS.diagnoses, []);
+  const examForms = rowsOf(readDumpJson("bulk/examination-forms.json"));
+  const usgRows = [];
+  const dxRows = [];
+  for (const form of examForms) {
+    const takenAt = ymd(form.date);
+    if (isUsgExam(form)) {
+      usgRows.push({
+        externalRef: `wo:usg:${form.id}`,
+        patientRef: `wo:patient:${form.patientId}`,
+        code: "USG",
+        name: "USM",
+        resultText: String(form.notes || "").trim(),
+        takenAt,
+      });
+    }
+    const note = String(form.notes || "").trim();
+    if (note && !isUsgExam(form)) {
+      dxRows.push({
+        patientRef: `wo:patient:${form.patientId}`,
+        rawText: note,
+        icd10: "",
+        recordedAt: takenAt,
+      });
+    }
+  }
+
+  const nDxImg = writeSheet(
+    XLSX,
+    path.join(clinicOut, "09-diagnostics.xlsx"),
+    HEADERS.diagnostics,
+    usgRows,
+  );
+  const nDx = writeSheet(
+    XLSX,
+    path.join(clinicOut, "10-diagnoses.xlsx"),
+    HEADERS.diagnoses,
+    dxRows,
+  );
 
   const hrPath = path.join(START, "hr", "37-Employees.xlsx");
   let nRoster = 0;
@@ -254,6 +338,9 @@ function main() {
       slotsOps: nSlots,
       slotsArchive: archiveSlots.length,
       labCatalog: nLabCat,
+      labOrders: nLabOrd,
+      diagnostics: nDxImg,
+      diagnoses: nDx,
     },
     roster: nRoster,
   };

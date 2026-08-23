@@ -1,4 +1,4 @@
-import type { ImportSummary } from '@/components/import/ImportModal';
+import type { ImportSummary } from '@/lib/import/types';
 
 const STORAGE_KEY = "era-clinic-nafta-import-wizard-v1";
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ImportAdapter, ImportEntityMeta, ImportTx, UpsertOutcome } from "@/lib/import/types";
-import { cellNumber as cellNumber, cellString as cellString, parseDateCell } from "@/lib/import/helpers";
+import { cellNumber, cellString, parseDateCell } from "@/lib/import/helpers";
 import { bindImportRecord, findImportRecordId } from "@/lib/import/keys";
 
 function aliases(...keys: string[]): Record<string, string> {
@@ -262,7 +262,13 @@ const patientsAdapter: ImportAdapter<{
       dryRun,
       async () => {
         const sex =
-          row.sex === "MALE" || row.sex === "FEMALE" || row.sex === "OTHER" ? row.sex : "UNKNOWN";
+          row.sex === "MALE" || row.sex === "FEMALE" || row.sex === "OTHER"
+            ? row.sex
+            : row.sex === "MALE"
+              ? "MALE"
+              : row.sex === "FEMALE"
+                ? "FEMALE"
+                : "UNKNOWN";
         const patient = await tx.patientRef.create({
           data: {
             refCode: row.externalRef.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 48),
@@ -314,7 +320,11 @@ const quotasAdapter: ImportAdapter<{
   label: "Quotas",
   order: 40,
   templateHint: "05-quotas.xlsx",
-  headerAliases: aliases("patientRef", "procedureCode", "quotaTotal", "quotaUsed", "quotaLeft"),
+  headerAliases: {
+    ...aliases("patientRef", "procedureCode", "quotaTotal", "quotaUsed", "quotaLeft"),
+    quotaTotal: "quotaTotal",
+    quotaUsed: "quotaUsed",
+  },
   rowSchema: z.object({
     patientRef: z.string().min(1),
     procedureCode: z.string().min(1),
@@ -325,8 +335,8 @@ const quotasAdapter: ImportAdapter<{
   mapRow: (raw) => ({
     patientRef: req(raw.patientRef),
     procedureCode: req(raw.procedureCode),
-    quotaTotal: cellNumber(raw.quotaTotal) ?? 0,
-    quotaUsed: cellNumber(raw.quotaUsed) ?? 0,
+    quotaTotal: cellNumber(raw.quotaTotal ?? raw.quotaTotal) ?? 0,
+    quotaUsed: cellNumber(raw.quotaUsed ?? raw.quotaUsed) ?? 0,
     quotaLeft: cellNumber(raw.quotaLeft) ?? 0,
   }),
   upsert: async (tx, row, dryRun) => {
@@ -347,6 +357,7 @@ const quotasAdapter: ImportAdapter<{
           data: { code, name: code, durationDays: 14 },
         });
       }
+      if (!template) throw new Error(`Could not resolve program template ${code}`);
       instance = await tx.programInstance.create({
         data: {
           templateId: template.id,
@@ -357,6 +368,7 @@ const quotasAdapter: ImportAdapter<{
         },
       });
     }
+    if (!instance) throw new Error(`Could not resolve program instance for ${row.patientRef}`);
     const line = await tx.programProcedureBalance.findUnique({
       where: {
         instanceId_procedureCode: { instanceId: instance.id, procedureCode: row.procedureCode },
@@ -430,7 +442,8 @@ const slotsAdapter: ImportAdapter<{
       : null;
     const hhmm = row.startTime.length === 5 ? `${row.startTime}:00` : row.startTime;
     const start = new Date(`${row.date}T${hhmm}`);
-    const historical = row.status === "COMPLETED";
+    const st = row.status.toUpperCase();
+    const historical = st === "COMPLETED" || st === "IMPORTED_DONE";
     return upsertByRef(
       tx,
       "slots",
@@ -540,12 +553,21 @@ const labOrdersAdapter: ImportAdapter<{
   status: string;
   resultText: string;
   takenAt: string;
+  fileRel: string;
 }> = {
   entity: "lab-orders",
   label: "Lab orders",
   order: 51,
   templateHint: "08-lab-orders.xlsx",
-  headerAliases: aliases("externalRef", "patientRef", "testCode", "status", "resultText", "takenAt"),
+  headerAliases: aliases(
+    "externalRef",
+    "patientRef",
+    "testCode",
+    "status",
+    "resultText",
+    "takenAt",
+    "fileRel",
+  ),
   rowSchema: z.object({
     externalRef: z.string().min(1),
     patientRef: z.string().min(1),
@@ -553,6 +575,7 @@ const labOrdersAdapter: ImportAdapter<{
     status: z.string(),
     resultText: z.string(),
     takenAt: z.string(),
+    fileRel: z.string(),
   }),
   mapRow: (raw) => ({
     externalRef: req(raw.externalRef),
@@ -561,12 +584,17 @@ const labOrdersAdapter: ImportAdapter<{
     status: cellString(raw.status) ?? "ORDERED",
     resultText: cellString(raw.resultText) ?? "",
     takenAt: cellString(raw.takenAt) ?? "",
+    fileRel: cellString(raw.fileRel) ?? "",
   }),
   upsert: async (tx, row, dryRun) => {
     const patientId = await findImportRecordId(tx, "patients", row.patientRef);
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
     const svc = await tx.diagnosticService.findFirst({ where: { code: row.testCode } });
-    const done = row.status === "COMPLETED";
+    const done = row.status.toUpperCase() === "COMPLETED";
+    const resultJson = JSON.stringify({
+      note: row.resultText || null,
+      fileRel: row.fileRel || null,
+    });
     return upsertByRef(
       tx,
       "lab-orders",
@@ -579,8 +607,9 @@ const labOrdersAdapter: ImportAdapter<{
               patientRefId: patientId,
               testCode: row.testCode,
               status: done ? "COMPLETED" : "ORDERED",
-              resultJson: row.resultText || null,
+              resultJson,
               collectedAt: parseDateCell(row.takenAt),
+              resultDate: parseDateCell(row.takenAt),
               items: {
                 create: { serviceCode: row.testCode, diagnosticServiceId: svc?.id },
               },
@@ -590,7 +619,7 @@ const labOrdersAdapter: ImportAdapter<{
       async (id) => {
         await tx.labOrder.update({
           where: { id },
-          data: { resultJson: row.resultText || null, testCode: row.testCode },
+          data: { resultJson, testCode: row.testCode },
         });
       },
     );
@@ -651,13 +680,14 @@ const diagnosticsAdapter: ImportAdapter<{
             },
           });
         }
+        if (!svc) throw new Error(`Could not resolve diagnostic service ${row.code}`);
         return (
           await tx.labOrder.create({
             data: {
               patientRefId: patientId,
               testCode: row.code,
               status: "COMPLETED",
-              resultJson: row.resultText || null,
+              resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }),
               collectedAt: parseDateCell(row.takenAt),
               items: { create: { serviceCode: row.code, diagnosticServiceId: svc.id } },
             },
@@ -665,7 +695,10 @@ const diagnosticsAdapter: ImportAdapter<{
         ).id;
       },
       async (id) => {
-        await tx.labOrder.update({ where: { id }, data: { resultJson: row.resultText || null } });
+        await tx.labOrder.update({
+          where: { id },
+          data: { resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }) },
+        });
       },
     );
   },

@@ -20,6 +20,23 @@ describe("nafta cutover import rules", () => {
     });
   });
 
+  it("maps lab fileRel and keeps COMPLETED status", () => {
+    const adapter = getImportAdapter("lab-orders")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:lab:57",
+      patientRef: "wo:patient:451",
+      testCode: "WO-LAB-FILE",
+      status: "COMPLETED",
+      resultText: "QAN.docx",
+      takenAt: "2026-02-18",
+      fileRel: "files/lab/57_QAN.docx",
+    });
+    expect(adapter.rowSchema.parse(mapped)).toMatchObject({
+      fileRel: "files/lab/57_QAN.docx",
+      status: "COMPLETED",
+    });
+  });
+
   it("does not award nurse bonus on imported historical orders", () => {
     expect(
       qualifiesForNurseBonus({
