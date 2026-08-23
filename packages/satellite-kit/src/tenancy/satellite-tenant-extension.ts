@@ -33,9 +33,17 @@ export function mergeWhere(where: unknown, orgId: string): Record<string, unknow
   return { AND: [{ organizationId: orgId }, w] };
 }
 
+/** Plain `{ a: 1 }` records only — Date / Decimal / Buffer stay unique scalars. */
+function isPlainRecord(v: unknown): v is Record<string, unknown> {
+  if (v === null || typeof v !== "object" || Array.isArray(v)) return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+}
+
 /**
  * findUnique / update / delete: Prisma needs a unique selector.
  * After @@unique([organizationId, code]), `{ code }` becomes `{ organizationId_code: { organizationId, code } }`.
+ * Date values (BusinessDay.date) must remap the same way — they are objects but not compound selectors.
  */
 export function mergeWhereForUnique(
   where: unknown,
@@ -46,22 +54,28 @@ export function mergeWhereForUnique(
   }
   const w = where as Record<string, unknown>;
   const keys = Object.keys(w);
+
+  if (keys.length === 2 && keys.includes("organizationId")) {
+    const field = keys.find((k) => k !== "organizationId")!;
+    const v = w[field];
+    if (field !== "id" && !field.startsWith("organizationId_") && !isPlainRecord(v)) {
+      return { [`organizationId_${field}`]: { organizationId: orgId, [field]: v } };
+    }
+  }
+
   if (keys.length === 1) {
     const k = keys[0];
     const v = w[k];
     if (k === "id") {
       return { id: v, organizationId: orgId };
     }
-    if (k.startsWith("organizationId_") && v && typeof v === "object" && !Array.isArray(v)) {
-      return { [k]: { ...(v as object), organizationId: orgId } };
+    if (k.startsWith("organizationId_") && isPlainRecord(v)) {
+      return { [k]: { ...v, organizationId: orgId } };
     }
-    if (v && typeof v === "object" && !Array.isArray(v)) {
-      const inner = v as Record<string, unknown>;
-      if (Object.prototype.hasOwnProperty.call(inner, "organizationId")) {
-        return { [k]: { ...inner, organizationId: orgId } };
-      }
+    if (isPlainRecord(v) && Object.prototype.hasOwnProperty.call(v, "organizationId")) {
+      return { [k]: { ...v, organizationId: orgId } };
     }
-    if (v === null || typeof v !== "object") {
+    if (!isPlainRecord(v)) {
       return { [`organizationId_${k}`]: { organizationId: orgId, [k]: v } };
     }
   }
