@@ -49,6 +49,8 @@ export type ListPatientsQuery = {
   /** Hotel room on an OPEN sanatorium episode (Nafta / hotel appliance). */
   roomNumber?: string;
   includeHotelRooms?: boolean;
+  programCode?: string;
+  includeProgramCodes?: boolean;
   page?: number;
   pageSize?: number;
 };
@@ -116,6 +118,20 @@ export async function listPatients(query?: string) {
   return result.items;
 }
 
+export async function listProgramCodes(): Promise<string[]> {
+  const rows = await prisma.clinicalEpisode.findMany({
+    where: { status: "OPEN", programCode: { not: null } },
+    select: { programCode: true },
+  });
+  return [
+    ...new Set(
+      rows
+        .map((r) => r.programCode?.trim())
+        .filter((n): n is string => Boolean(n)),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+}
+
 export async function listHotelRoomNumbers(): Promise<string[]> {
   const rows = await prisma.clinicalEpisode.findMany({
     where: { status: "OPEN", roomNumber: { not: null } },
@@ -160,8 +176,18 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
       },
     };
   }
+  const programCode = input.programCode?.trim();
+  if (programCode) {
+    where.episodes = {
+      some: {
+        ...(where.episodes && "some" in where.episodes ? where.episodes.some : {}),
+        status: "OPEN",
+        programCode: { equals: programCode, mode: "insensitive" },
+      },
+    };
+  }
 
-  const [rows, total, hotelRooms] = await Promise.all([
+  const [rows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -170,7 +196,7 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
       include: {
         episodes: {
           where: { status: "OPEN" },
-          select: { roomNumber: true },
+          select: { roomNumber: true, programCode: true },
           orderBy: { openedAt: "desc" },
           take: 1,
         },
@@ -178,6 +204,7 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
     }),
     prisma.patientRef.count({ where }),
     input.includeHotelRooms ? listHotelRoomNumbers() : Promise.resolve(undefined),
+    input.includeProgramCodes ? listProgramCodes() : Promise.resolve(undefined),
   ]);
 
   return {
@@ -186,12 +213,14 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
       return {
         ...withDerivedDemographics(patient),
         hotelRoomNumber: episodes[0]?.roomNumber ?? null,
+        programCode: episodes[0]?.programCode ?? null,
       };
     }),
     total,
     page,
     pageSize,
     ...(hotelRooms ? { hotelRooms } : {}),
+    ...(programCodes ? { programCodes } : {}),
   };
 }
 

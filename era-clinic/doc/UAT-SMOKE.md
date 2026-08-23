@@ -217,3 +217,9 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 4. Replay same correlationId → Finance idempotent skip (no double write-off).
 5. Out of this UAT: retail pharmacy, Rx reserve, guest folio line per pad.
 
+## Nafta cutover import
+
+1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes).
+2. `/patients`: filter by hotel room and program/package (`programCode`).
+3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
+

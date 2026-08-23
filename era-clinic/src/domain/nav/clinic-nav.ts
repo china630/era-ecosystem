@@ -252,6 +252,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     group: "setup:catalogs",
     adminOnly: true,
   },
+  {
+    href: "/admin/import",
+    labelKey: "cutoverImport",
+    icon: FileInput,
+    group: "setup:catalogs",
+    adminOnly: true,
+  },
 
   // Setup — Rules & data (admin/owner)
   {

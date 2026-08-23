@@ -72,6 +72,8 @@ export async function GET(req: Request) {
       ageMax: ageMaxRaw ? Number(ageMaxRaw) : undefined,
       roomNumber: params.get("roomNumber")?.trim() || undefined,
       includeHotelRooms: params.get("includeHotelRooms") === "1",
+      programCode: params.get("programCode")?.trim() || undefined,
+      includeProgramCodes: params.get("includeProgramCodes") === "1",
       page: pageRaw ? Number(pageRaw) : undefined,
       pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
     });
