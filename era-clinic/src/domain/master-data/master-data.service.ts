@@ -172,6 +172,11 @@ export async function createProcedureType(data: {
   resourceCode?: string | null;
   bodyPart?: string | null;
   afterLunchAllowed?: boolean;
+  genderSessionPolicy?: "OFF" | "INHERIT" | "SPLIT_BY_LUNCH" | "CUSTOM";
+  genderSessionFemaleStartHour?: number | null;
+  genderSessionFemaleEndHour?: number | null;
+  genderSessionMaleStartHour?: number | null;
+  genderSessionMaleEndHour?: number | null;
   extendedEndHour?: number | null;
 }) {
   const settings = await getSchedulingSettings();
@@ -221,6 +226,11 @@ export async function updateProcedureType(
     resourceCode?: string | null;
     bodyPart?: string | null;
     afterLunchAllowed?: boolean;
+    genderSessionPolicy?: "OFF" | "INHERIT" | "SPLIT_BY_LUNCH" | "CUSTOM";
+    genderSessionFemaleStartHour?: number | null;
+    genderSessionFemaleEndHour?: number | null;
+    genderSessionMaleStartHour?: number | null;
+    genderSessionMaleEndHour?: number | null;
     extendedEndHour?: number | null;
   },
 ) {

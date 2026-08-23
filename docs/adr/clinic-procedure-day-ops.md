@@ -109,7 +109,8 @@ Hotel room-plan analogy (Location **projection** of multi-resource SoR — see [
 - **Lunch boundary:** a procedure must finish **before** lunch (`lunchStartHour`) or start **after** it (`avoidLunchOverlap`); windows never straddle 13:00–14:00. `afterLunchAllowed=false` types that would overlap are pushed to the next working morning.
 - **End of day:** a small overrun past `dayEndHour` is tolerated (≤ 10 min); later placements are dropped by the demo loader and not offered by availability.
 - Drag-and-drop is on the **shared matrix** (by `procedureOrderId`), not on a single-patient list. Slot picker without DnD remains supported.
-- Planner remains the happy path; matrix edits are exception/fill (marked `manuallyAdjusted`).
+- Planner remains the happy path; matrix edits are exception/fill (marked `manuallyAdjusted`). Super-admin **replan** (preview + undo) is a separate exception — [clinic-procedure-matrix-replan.md](./clinic-procedure-matrix-replan.md) (CLI-49 API; UAT open); confirm FIFO still does not move placed rows.
+- **Gender session windows** (per-type M/F AM/PM) are not the same as lunch-allowed flags — [clinic-procedure-gender-session-windows.md](./clinic-procedure-gender-session-windows.md) (CLI-48 API; UAT open).
 - **Fullscreen board:** `/sanatorium/resources` may open the matrix in a viewport overlay (filters + board, Esc to exit) for reception wall / large monitors.
 
 ### Sanatorium courses list (`/sanatorium`)

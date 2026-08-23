@@ -37,8 +37,10 @@
 | Cashier | `/cashier` | 🟡 |
 | Print | `/print/*` | 🟡 |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
+| Gender session windows (CLI-48) | matrix + type card + `/admin/settings` | 🟡 API + UI (UAT sign-off open) |
+| Matrix replan (CLI-49) | `/sanatorium/resources` wizard | 🟡 API + UI (UAT sign-off open) |
 
-**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA).
+**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK / CLI-48 / CLI-49 do not change sell (still do not claim GA).
 
 ---
 

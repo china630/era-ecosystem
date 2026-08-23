@@ -31,6 +31,11 @@ const createSchema = z.object({
     .nullable()
     .optional(),
   afterLunchAllowed: z.boolean().optional(),
+  genderSessionPolicy: z.enum(["OFF", "INHERIT", "SPLIT_BY_LUNCH", "CUSTOM"]).optional(),
+  genderSessionFemaleStartHour: z.number().int().min(0).max(23).nullable().optional(),
+  genderSessionFemaleEndHour: z.number().int().min(0).max(24).nullable().optional(),
+  genderSessionMaleStartHour: z.number().int().min(0).max(23).nullable().optional(),
+  genderSessionMaleEndHour: z.number().int().min(0).max(24).nullable().optional(),
   extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
 });
 

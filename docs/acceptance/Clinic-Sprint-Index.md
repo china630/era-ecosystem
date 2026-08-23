@@ -27,5 +27,7 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-5 | BE deepen → Scaffold ✅ (excl. TENANT) | [x] | IM + `__tests__/cli-*-negative.spec.ts` |
 | S-6 | ICD-10 waves CLI-39…42 | [~] | ADR clinic-icd10-catalog; UAT-SMOKE ICD; `__tests__/icd10-catalog.spec.ts` |
 | S-7 | Procedure TTK → Finance stock (CLI-47) | [~] | ADR clinic-procedure-consumable-ttk; W1 BOM+event API; Finance write-off W2 |
+| S-8 | Gender session windows (CLI-48) | [~] | ADR + schema + planner + SatAdmin settings/type UI; UAT open |
+| S-9 | Matrix replan (CLI-49) | [~] | Preview/apply/undo API + resources wizard (modes/preview/undo); UAT open |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

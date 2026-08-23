@@ -14,7 +14,8 @@
 
 - In scope: ops clinic + sanatorium day-ops, SatAdmin catalogs, cashier settle/ops (stub fiscal), print forms, lab orders ops, Nafta pilot contours
 - Out of scope: live HL7 LIS vendor (CLI-23 External), real NBC fiscal / KKM (CLI-24 External), retail pharmacy / Rx reserve
-- **Declared, not built:** procedure TTK → Finance inventory — [clinic-procedure-consumable-ttk.md](../adr/clinic-procedure-consumable-ttk.md) (CLI-47 STUB)
+- **Declared, not SHIPPED:** gender session windows — [clinic-procedure-gender-session-windows.md](../adr/clinic-procedure-gender-session-windows.md) (CLI-48 API+SatAdmin UI; UAT open); matrix replan — [clinic-procedure-matrix-replan.md](../adr/clinic-procedure-matrix-replan.md) (CLI-49 API+wizard UI; UAT open)
+- **Declared, API not SHIPPED:** procedure TTK → Finance inventory — [clinic-procedure-consumable-ttk.md](../adr/clinic-procedure-consumable-ttk.md) (CLI-47 API; UAT open)
 - **Declared, not this edition:** SHARED multi-tenant clinic pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). Waves 3–5: tenant roots + kit filter (CP-TENANT-01 API / AC-CLI-TENANT 🟡); Nafta remains one-org DEDICATED/ONPREM. Do not sell SHARED clinic.
 
 ## Definition of Done (soft / scaffold)

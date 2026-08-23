@@ -7,7 +7,8 @@
   "resourceGapMinutes": 5,
   "patientRestMinutes": 15,
   "dayStartHour": 8,
-  "dayEndHour": 18
+  "dayEndHour": 18,
+  "genderSessionPolicy": "SPLIT_BY_LUNCH"
  },
  {
   "code": "SVC-4-KAMERALI-NAFTALAN-VANNASI",
@@ -17,7 +18,8 @@
   "resourceGapMinutes": 5,
   "patientRestMinutes": 40,
   "dayStartHour": 8,
-  "dayEndHour": 18
+  "dayEndHour": 18,
+  "genderSessionPolicy": "SPLIT_BY_LUNCH"
  },
  {
   "code": "SVC-AMPLIPULS",

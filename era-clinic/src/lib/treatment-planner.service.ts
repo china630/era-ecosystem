@@ -23,6 +23,7 @@ import {
   type RotationContextSlot,
 } from "@/lib/procedure-rotation.service";
 import { resolveProcedureSubstitution } from "@/lib/procedure-substitution.service";
+import { slotAllowedForGender } from "@/domain/procedure/gender-slot";
 
 type PlannedSlot = {
   procedureCode: string;
@@ -374,7 +375,7 @@ export async function placeConfirmedProcedures(
 
   const orders = await prisma.procedureOrder.findMany({
     where: { id: { in: orderIds }, status: "PROPOSED" },
-    include: { procedureType: { include: { requirements: true } } },
+    include: { procedureType: { include: { requirements: true } }, patientRef: { select: { sex: true } } },
     orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
   });
   if (orders.length === 0) return 0;
@@ -527,6 +528,18 @@ export async function placeConfirmedProcedures(
       }
 
       const slotEnd = addMinutes(slotStart, duration);
+      if (
+        !(await slotAllowedForGender({
+          procedureType: pt,
+          sex: order.patientRef?.sex,
+          startsAt: slotStart,
+          endsAt: slotEnd,
+        }))
+      ) {
+        slotStart = addMinutes(slotStart, slotMinutes);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
+        continue;
+      }
       if (slotEnd.getHours() > dayEnd || (slotEnd.getHours() === dayEnd && slotEnd.getMinutes() > 0)) {
         slotStart = addMinutes(slotStart, slotMinutes);
         slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);

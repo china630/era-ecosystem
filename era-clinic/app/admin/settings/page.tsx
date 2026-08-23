@@ -13,6 +13,7 @@ import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
+  CatalogField,
   Field,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
@@ -22,8 +23,10 @@ import {
   PageHeader,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { PrintSettingsPanel } from "@/components/print/PrintSettingsPanel";
+import { hourCatalogOptions } from "@/lib/hour-catalog-options";
 
 const PRESET_LABELS: Record<ClinicPresetCode, string> = {
   [CLINIC_PRESET.OUTPATIENT]: "Outpatient",
@@ -55,6 +58,16 @@ type SchedulingDefaults = {
   peakDayEndHour: number;
 };
 
+type GenderSessionSettings = {
+  genderSessionMode: "OFF" | "SPLIT_BY_LUNCH" | "CUSTOM_WINDOWS";
+  genderSessionFemaleFirst: boolean;
+  genderSessionUnknown: "BLOCK" | "ALLOW_BOTH";
+  genderSessionFemaleStartHour: string;
+  genderSessionFemaleEndHour: string;
+  genderSessionMaleStartHour: string;
+  genderSessionMaleEndHour: string;
+};
+
 const CARD_DEFAULTS: CardLimits = {
   patientCardResultsPreview: 5,
   patientCardPlanPreview: 15,
@@ -78,6 +91,43 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   peakDayEndHour: 22,
 };
 
+const GENDER_DEFAULTS: GenderSessionSettings = {
+  genderSessionMode: "OFF",
+  genderSessionFemaleFirst: true,
+  genderSessionUnknown: "BLOCK",
+  genderSessionFemaleStartHour: "8",
+  genderSessionFemaleEndHour: "13",
+  genderSessionMaleStartHour: "14",
+  genderSessionMaleEndHour: "18",
+};
+
+function genderFromApi(row: Record<string, unknown>): GenderSessionSettings {
+  return {
+    genderSessionMode:
+      row.genderSessionMode === "SPLIT_BY_LUNCH" || row.genderSessionMode === "CUSTOM_WINDOWS"
+        ? row.genderSessionMode
+        : "OFF",
+    genderSessionFemaleFirst: row.genderSessionFemaleFirst !== false,
+    genderSessionUnknown: row.genderSessionUnknown === "ALLOW_BOTH" ? "ALLOW_BOTH" : "BLOCK",
+    genderSessionFemaleStartHour:
+      row.genderSessionFemaleStartHour != null
+        ? String(row.genderSessionFemaleStartHour)
+        : GENDER_DEFAULTS.genderSessionFemaleStartHour,
+    genderSessionFemaleEndHour:
+      row.genderSessionFemaleEndHour != null
+        ? String(row.genderSessionFemaleEndHour)
+        : GENDER_DEFAULTS.genderSessionFemaleEndHour,
+    genderSessionMaleStartHour:
+      row.genderSessionMaleStartHour != null
+        ? String(row.genderSessionMaleStartHour)
+        : GENDER_DEFAULTS.genderSessionMaleStartHour,
+    genderSessionMaleEndHour:
+      row.genderSessionMaleEndHour != null
+        ? String(row.genderSessionMaleEndHour)
+        : GENDER_DEFAULTS.genderSessionMaleEndHour,
+  };
+}
+
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 export default function ClinicAdminSettingsPage() {
@@ -99,6 +149,8 @@ export default function ClinicAdminSettingsPage() {
   const [draftCard, setDraftCard] = useState<CardLimits>(CARD_DEFAULTS);
   const [draftWork, setDraftWork] = useState<WorkHours>(WORK_DEFAULTS);
   const [draftSched, setDraftSched] = useState<SchedulingDefaults>(SCHED_DEFAULTS);
+  const [genderSession, setGenderSession] = useState<GenderSessionSettings>(GENDER_DEFAULTS);
+  const [draftGender, setDraftGender] = useState<GenderSessionSettings>(GENDER_DEFAULTS);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -147,6 +199,9 @@ export default function ClinicAdminSettingsPage() {
         };
         setSchedDefaults(sched);
         setDraftSched(sched);
+        const gender = genderFromApi(row);
+        setGenderSession(gender);
+        setDraftGender(gender);
       });
   }, []);
 
@@ -179,6 +234,25 @@ export default function ClinicAdminSettingsPage() {
         ...draftCard,
         ...draftWork,
         ...draftSched,
+        genderSessionMode: draftGender.genderSessionMode,
+        genderSessionFemaleFirst: draftGender.genderSessionFemaleFirst,
+        genderSessionUnknown: draftGender.genderSessionUnknown,
+        genderSessionFemaleStartHour:
+          draftGender.genderSessionMode === "CUSTOM_WINDOWS"
+            ? Number(draftGender.genderSessionFemaleStartHour)
+            : null,
+        genderSessionFemaleEndHour:
+          draftGender.genderSessionMode === "CUSTOM_WINDOWS"
+            ? Number(draftGender.genderSessionFemaleEndHour)
+            : null,
+        genderSessionMaleStartHour:
+          draftGender.genderSessionMode === "CUSTOM_WINDOWS"
+            ? Number(draftGender.genderSessionMaleStartHour)
+            : null,
+        genderSessionMaleEndHour:
+          draftGender.genderSessionMode === "CUSTOM_WINDOWS"
+            ? Number(draftGender.genderSessionMaleEndHour)
+            : null,
       }),
     });
     if (res.ok) {
@@ -211,6 +285,9 @@ export default function ClinicAdminSettingsPage() {
         peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
         peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
       });
+      const gender = genderFromApi(row);
+      setGenderSession(gender);
+      setDraftGender(gender);
       setOpen(false);
       setMsg(tc("saved"));
       window.location.reload();
@@ -247,7 +324,7 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("clinicName")}</td>
             <td className="p-3">{clinicName}</td>
-            <td className="p-3 text-right" rowSpan={13}>
+            <td className="p-3 text-right" rowSpan={16}>
               <button
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
@@ -258,6 +335,7 @@ export default function ClinicAdminSettingsPage() {
                   setDraftCard(cardLimits);
                   setDraftWork(workHours);
                   setDraftSched(schedDefaults);
+                  setDraftGender(genderSession);
                   setOpen(true);
                 }}
               >
@@ -308,6 +386,18 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("peakDayEndHour")}</td>
             <td className="p-3">{schedDefaults.peakDayEndHour}:00</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("genderSessionMode")}</td>
+            <td className="p-3">{genderSession.genderSessionMode}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("genderSessionUnknown")}</td>
+            <td className="p-3">{genderSession.genderSessionUnknown}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("genderSessionFemaleFirst")}</td>
+            <td className="p-3">{genderSession.genderSessionFemaleFirst ? "Yes" : "No"}</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("cardResultsPreview")}</td>
@@ -466,6 +556,80 @@ export default function ClinicAdminSettingsPage() {
               }))
             }
           />
+          <fieldset className="space-y-3 text-[13px]">
+            <legend className={MODAL_FIELD_LABEL_CLASS}>{t("genderSessionTitle")}</legend>
+            <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("genderSessionHint")}</p>
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("genderSessionMode")}
+              value={draftGender.genderSessionMode}
+              onChange={(v) =>
+                setDraftGender((prev) => ({
+                  ...prev,
+                  genderSessionMode: String(v) as GenderSessionSettings["genderSessionMode"],
+                }))
+              }
+              options={[
+                { value: "OFF", label: t("genderModeOff") },
+                { value: "SPLIT_BY_LUNCH", label: t("genderModeSplitLunch") },
+                { value: "CUSTOM_WINDOWS", label: t("genderModeCustom") },
+              ]}
+              emptyLabel={null}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("genderSessionUnknown")}
+              value={draftGender.genderSessionUnknown}
+              onChange={(v) =>
+                setDraftGender((prev) => ({
+                  ...prev,
+                  genderSessionUnknown: String(v) as GenderSessionSettings["genderSessionUnknown"],
+                }))
+              }
+              options={[
+                { value: "BLOCK", label: t("genderUnknownBlock") },
+                { value: "ALLOW_BOTH", label: t("genderUnknownAllow") },
+              ]}
+              emptyLabel={null}
+            />
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className={MODAL_CHECKBOX_CLASS}
+                checked={draftGender.genderSessionFemaleFirst}
+                onChange={(e) =>
+                  setDraftGender((prev) => ({
+                    ...prev,
+                    genderSessionFemaleFirst: e.target.checked,
+                  }))
+                }
+              />
+              {t("genderSessionFemaleFirst")}
+            </label>
+            {draftGender.genderSessionMode === "CUSTOM_WINDOWS" ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    ["genderSessionFemaleStartHour", "genderFemaleStart"],
+                    ["genderSessionFemaleEndHour", "genderFemaleEnd"],
+                    ["genderSessionMaleStartHour", "genderMaleStart"],
+                    ["genderSessionMaleEndHour", "genderMaleEnd"],
+                  ] as const
+                ).map(([key, labelKey]) => (
+                  <CatalogField
+                    key={key}
+                    kind="CLOSED_SMALL"
+                    label={t(labelKey)}
+                    value={draftGender[key]}
+                    onChange={(v) =>
+                      setDraftGender((prev) => ({ ...prev, [key]: String(v) }))
+                    }
+                    options={hourCatalogOptions()}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </fieldset>
           <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
             <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("cardLimitsTitle")}</legend>
             {(

@@ -71,6 +71,7 @@ async function main() {
         beforeLunchAllowed: p.beforeLunchAllowed ?? true,
         dayStartHour: p.dayStartHour ?? null,
         dayEndHour: p.dayEndHour ?? null,
+        genderSessionPolicy: p.genderSessionPolicy ?? "OFF",
         resourceKind: "ROOM",
       },
       create: {
@@ -83,6 +84,7 @@ async function main() {
         beforeLunchAllowed: p.beforeLunchAllowed ?? true,
         dayStartHour: p.dayStartHour ?? null,
         dayEndHour: p.dayEndHour ?? null,
+        genderSessionPolicy: p.genderSessionPolicy ?? "OFF",
         resourceKind: "ROOM",
       },
     });

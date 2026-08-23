@@ -6,6 +6,7 @@ import { Maximize2, Minimize2, X } from "lucide-react";
 import {
   APP_SHELL_CLASS,
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   EraListFilterBar,
   FIELD_SECTION_CLASS,
@@ -20,6 +21,7 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  MODAL_CHECKBOX_CLASS,
 } from "@era/satellite-kit/ui";
 import {
   ResourceDayMatrix,
@@ -65,6 +67,32 @@ export default function SanatoriumResourcesPage() {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [detailSlot, setDetailSlot] = useState<Slot | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [replanOpen, setReplanOpen] = useState(false);
+  const [replanBusy, setReplanBusy] = useState(false);
+  const [replanMode, setReplanMode] = useState<
+    "FILL_HOLES" | "PACK_RESOURCE" | "APPLY_GENDER_WINDOWS" | "NUCLEAR_DAY"
+  >("FILL_HOLES");
+  const [replanResourceId, setReplanResourceId] = useState("");
+  const [replanTypeId, setReplanTypeId] = useState("");
+  const [replanRespectPins, setReplanRespectPins] = useState(true);
+  const [replanReason, setReplanReason] = useState("");
+  const [replanConfirm, setReplanConfirm] = useState("");
+  const [replanSnapshotId, setReplanSnapshotId] = useState<string | null>(null);
+  const [isPlatformSuperAdmin, setIsPlatformSuperAdmin] = useState(false);
+  const [procedureTypes, setProcedureTypes] = useState<Array<{ id: string; code: string; name: string }>>(
+    [],
+  );
+  const [replanPreview, setReplanPreview] = useState<{
+    previewId: string;
+    counts: { candidates: number; pinnedSkipped: number };
+    sample?: Array<{
+      orderId: string;
+      code?: string;
+      from?: string;
+      resourceId?: string | null;
+      status?: string;
+    }>;
+  } | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(
@@ -78,6 +106,23 @@ export default function SanatoriumResourcesPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        const row = d.data ?? d;
+        setIsPlatformSuperAdmin(Boolean(row.isPlatformSuperAdmin));
+      })
+      .catch(() => setIsPlatformSuperAdmin(false));
+    void fetch("/api/admin/procedure-types")
+      .then((r) => r.json())
+      .then((d) => {
+        const rows = (d.data ?? d) as Array<{ id: string; code: string; name: string }>;
+        setProcedureTypes(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => setProcedureTypes([]));
+  }, []);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -165,12 +210,118 @@ export default function SanatoriumResourcesPage() {
     await load();
   }
 
+  async function previewReplan() {
+    if (replanMode === "PACK_RESOURCE" && !replanResourceId) {
+      flash(t("replanNeedResource"), true);
+      return;
+    }
+    if (replanMode === "NUCLEAR_DAY" && !isPlatformSuperAdmin) {
+      flash(t("replanNuclearDenied"), true);
+      return;
+    }
+    setReplanBusy(true);
+    setReplanPreview(null);
+    setReplanSnapshotId(null);
+    const res = await fetch("/api/admin/procedures/replan/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date,
+        mode: replanMode,
+        resourceId: replanResourceId || null,
+        procedureTypeId: replanTypeId || null,
+        respectPins: replanMode === "NUCLEAR_DAY" && isPlatformSuperAdmin ? replanRespectPins : true,
+      }),
+    });
+    const data = await res.json();
+    setReplanBusy(false);
+    if (!res.ok) {
+      flash(data.error ?? t("replanFailed"), true);
+      return;
+    }
+    const payload = data.data ?? data;
+    setReplanPreview({
+      previewId: payload.previewId,
+      counts: payload.counts ?? { candidates: 0, pinnedSkipped: 0 },
+      sample: payload.sample ?? [],
+    });
+  }
+
+  async function applyReplan() {
+    if (!replanPreview) return;
+    if (replanConfirm !== "REPLAN") {
+      flash(t("replanConfirmHint"), true);
+      return;
+    }
+    if (replanReason.trim().length < 3) {
+      flash(t("replanNeedReason"), true);
+      return;
+    }
+    setReplanBusy(true);
+    const res = await fetch("/api/admin/procedures/replan/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        previewId: replanPreview.previewId,
+        confirm: "REPLAN",
+        reason: replanReason.trim(),
+      }),
+    });
+    const data = await res.json();
+    setReplanBusy(false);
+    if (!res.ok) {
+      flash(data.error ?? t("replanFailed"), true);
+      return;
+    }
+    const payload = data.data ?? data;
+    setReplanSnapshotId(payload.snapshotId ?? null);
+    setReplanPreview(null);
+    flash(t("replanApplied"));
+    await load();
+  }
+
+  async function undoReplan() {
+    if (!replanSnapshotId) return;
+    setReplanBusy(true);
+    const res = await fetch("/api/admin/procedures/replan/undo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ snapshotId: replanSnapshotId }),
+    });
+    const data = await res.json();
+    setReplanBusy(false);
+    if (!res.ok) {
+      flash(data.error ?? t("replanUndoFailed"), true);
+      return;
+    }
+    setReplanSnapshotId(null);
+    flash(t("replanUndone"));
+    await load();
+  }
+
   const filters = (
     <EraListFilterBar
       actionsExtra={
         <div className="flex flex-wrap gap-2">
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
             {t("refresh")}
+          </button>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => {
+              setReplanOpen(true);
+              setReplanPreview(null);
+              setReplanSnapshotId(null);
+              setReplanConfirm("");
+              setReplanReason("");
+              setReplanMode("FILL_HOLES");
+              setReplanResourceId("");
+              setReplanTypeId("");
+              setReplanRespectPins(true);
+            }}
+          >
+            {t("replan")}
           </button>
           <button
             type="button"
@@ -372,6 +523,137 @@ export default function SanatoriumResourcesPage() {
           onCancel={() => setCancelId(null)}
           onSubmit={() => void confirmCancel()}
           submitLabel={t("cancel")}
+        />
+      </ModalShell>
+
+      <ModalShell
+        open={replanOpen}
+        title={t("replan")}
+        onClose={() => setReplanOpen(false)}
+        closeLabel="Close"
+      >
+        <div className="space-y-3">
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("replanHint")}</p>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("replanMode")}
+            value={replanMode}
+            onChange={(v) => {
+              setReplanMode(
+                String(v) as
+                  | "FILL_HOLES"
+                  | "PACK_RESOURCE"
+                  | "APPLY_GENDER_WINDOWS"
+                  | "NUCLEAR_DAY",
+              );
+              setReplanPreview(null);
+            }}
+            options={[
+              { value: "FILL_HOLES", label: t("replanFillHoles") },
+              { value: "PACK_RESOURCE", label: t("replanPackResource") },
+              { value: "APPLY_GENDER_WINDOWS", label: t("replanApplyGender") },
+              ...(isPlatformSuperAdmin
+                ? [{ value: "NUCLEAR_DAY", label: t("replanNuclear") }]
+                : []),
+            ]}
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("replanResource")}
+            value={replanResourceId}
+            onChange={(v) => {
+              setReplanResourceId(String(v));
+              if (v) setReplanTypeId("");
+              setReplanPreview(null);
+            }}
+            options={resources.map((r) => ({
+              value: r.resourceId,
+              label: `${r.code} — ${r.name}`,
+            }))}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("replanProcedureType")}
+            value={replanTypeId}
+            onChange={(v) => {
+              setReplanTypeId(String(v));
+              if (v) setReplanResourceId("");
+              setReplanPreview(null);
+            }}
+            options={procedureTypes.map((pt) => ({
+              value: pt.id,
+              label: `${pt.code} — ${pt.name}`,
+            }))}
+          />
+          {replanMode === "NUCLEAR_DAY" && isPlatformSuperAdmin ? (
+            <label className={`flex items-center gap-2 text-[13px]`}>
+              <input
+                type="checkbox"
+                className={MODAL_CHECKBOX_CLASS}
+                checked={!replanRespectPins}
+                onChange={(e) => setReplanRespectPins(!e.target.checked)}
+              />
+              {t("replanUnpin")}
+            </label>
+          ) : null}
+          {replanPreview ? (
+            <>
+              <p className="text-[13px]">
+                {t("replanCounts", {
+                  n: replanPreview.counts.candidates,
+                  pinned: replanPreview.counts.pinnedSkipped,
+                })}
+              </p>
+              {replanPreview.sample && replanPreview.sample.length > 0 ? (
+                <table className="w-full text-left text-[12px]">
+                  <thead>
+                    <tr>
+                      <th>{t("replanSampleCode")}</th>
+                      <th>{t("replanSampleFrom")}</th>
+                      <th>{t("replanSampleStatus")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {replanPreview.sample.map((row) => (
+                      <tr key={row.orderId}>
+                        <td>{row.code ?? row.orderId.slice(0, 8)}</td>
+                        <td>{row.from ? new Date(row.from).toLocaleTimeString() : "—"}</td>
+                        <td>{row.status ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+              <Field
+                label={t("replanReason")}
+                preset="shortText"
+                value={replanReason}
+                onChange={(e) => setReplanReason(e.target.value)}
+              />
+              <Field
+                label={t("replanConfirmHint")}
+                preset="code"
+                value={replanConfirm}
+                onChange={(e) => setReplanConfirm(e.target.value)}
+              />
+            </>
+          ) : null}
+          {replanSnapshotId ? (
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={replanBusy}
+              onClick={() => void undoReplan()}
+            >
+              {t("replanUndo")}
+            </button>
+          ) : null}
+        </div>
+        <ModalFooter
+          onCancel={() => setReplanOpen(false)}
+          onSubmit={() => void (replanPreview ? applyReplan() : previewReplan())}
+          submitLabel={replanBusy ? "…" : replanPreview ? t("replanApply") : t("replanPreview")}
         />
       </ModalShell>
     </>

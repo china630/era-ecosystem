@@ -68,6 +68,13 @@ export async function getClinicSettings() {
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
+    genderSessionMode: tenant.genderSessionMode ?? "OFF",
+    genderSessionFemaleFirst: tenant.genderSessionFemaleFirst ?? true,
+    genderSessionUnknown: tenant.genderSessionUnknown ?? "BLOCK",
+    genderSessionFemaleStartHour: tenant.genderSessionFemaleStartHour ?? null,
+    genderSessionFemaleEndHour: tenant.genderSessionFemaleEndHour ?? null,
+    genderSessionMaleStartHour: tenant.genderSessionMaleStartHour ?? null,
+    genderSessionMaleEndHour: tenant.genderSessionMaleEndHour ?? null,
     checkInRequiresQr: tenant.checkInRequiresQr ?? true,
     procedureCheckInMode:
       tenant.procedureCheckInMode ??
@@ -126,6 +133,13 @@ export async function updateClinicSettings(input: {
   defaultProcedureGapMinutes?: number;
   peakModeEnabled?: boolean;
   peakDayEndHour?: number;
+  genderSessionMode?: "OFF" | "SPLIT_BY_LUNCH" | "CUSTOM_WINDOWS";
+  genderSessionFemaleFirst?: boolean;
+  genderSessionUnknown?: "BLOCK" | "ALLOW_BOTH";
+  genderSessionFemaleStartHour?: number | null;
+  genderSessionFemaleEndHour?: number | null;
+  genderSessionMaleStartHour?: number | null;
+  genderSessionMaleEndHour?: number | null;
   checkInRequiresQr?: boolean;
   autoNoShowAfterMin?: number | null;
   patientCardResultsPreview?: number;
@@ -228,6 +242,25 @@ export async function updateClinicSettings(input: {
       ...(input.peakModeEnabled != null ? { peakModeEnabled: input.peakModeEnabled } : {}),
       ...(input.peakDayEndHour != null
         ? { peakDayEndHour: Math.min(24, Math.max(1, Math.floor(input.peakDayEndHour))) }
+        : {}),
+      ...(input.genderSessionMode != null ? { genderSessionMode: input.genderSessionMode } : {}),
+      ...(input.genderSessionFemaleFirst != null
+        ? { genderSessionFemaleFirst: input.genderSessionFemaleFirst }
+        : {}),
+      ...(input.genderSessionUnknown != null
+        ? { genderSessionUnknown: input.genderSessionUnknown }
+        : {}),
+      ...(input.genderSessionFemaleStartHour !== undefined
+        ? { genderSessionFemaleStartHour: input.genderSessionFemaleStartHour }
+        : {}),
+      ...(input.genderSessionFemaleEndHour !== undefined
+        ? { genderSessionFemaleEndHour: input.genderSessionFemaleEndHour }
+        : {}),
+      ...(input.genderSessionMaleStartHour !== undefined
+        ? { genderSessionMaleStartHour: input.genderSessionMaleStartHour }
+        : {}),
+      ...(input.genderSessionMaleEndHour !== undefined
+        ? { genderSessionMaleEndHour: input.genderSessionMaleEndHour }
         : {}),
       ...(input.procedureCheckInMode != null
         ? {

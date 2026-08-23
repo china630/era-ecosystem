@@ -39,6 +39,8 @@ Do not call this table «product readiness».
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | AC-CLI-TENANT | Live SHARED pool + field isolation UAT | Out of BE rollup | Schema+filter only |
 | CLI-47 | Procedure TTK → Finance inventory | Out of BE plan | ADR `clinic-procedure-consumable-ttk`; API W1 (BOM+event); Finance write-off W2 |
+| CLI-48 | Gender session windows | Out of BE plan | ADR; **API** — not Scaffold, not in AC-CLI-SAN rollup |
+| CLI-49 | Matrix replan | Out of BE plan | ADR; **API** — not Scaffold, not in AC-CLI-OPS rollup |
 
 ### Negative-path proof index
 

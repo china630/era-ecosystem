@@ -51,7 +51,7 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 **Sanatorium business:** orchestrator entitlements `industry_hotel_pms` + `industry_clinic` (+ optional retail), not a standalone sanatorium satellite.
 
-**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped.
+**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped. Gender session windows (per-type M/F AM/PM, not `afterLunchAllowed`): [ADR clinic-procedure-gender-session-windows](../docs/adr/clinic-procedure-gender-session-windows.md) — **API** (SatAdmin UI; UAT open). Super-admin matrix replan (preview + undo; confirm FIFO does not move placed rows): [ADR clinic-procedure-matrix-replan](../docs/adr/clinic-procedure-matrix-replan.md) — **API** (wizard UI; UAT open).
 
 **Code packaging:** domain logic migrates to `era-clinic/src/domain/`; extract to `packages/clinic-domain` only after inpatient ADT API stabilizes (ADR D5).
 
@@ -96,6 +96,8 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 | M3 | Appointment & check-in | **DONE** | — |
 | M3b | Sanatorium nurse day-ops | **SHIPPED** | Check-in → `CHECKED_IN`; auto-complete at `endsAt`; `NO_SHOW` burns quota; event at complete |
 | M3e | Procedure TTK (consumable BOM) | **API** | Finance inventory on COMPLETED; ADR clinic-procedure-consumable-ttk; SatAdmin BOM; UAT open |
+| M3f | Gender session windows | **API** | Per-type M/F cabin windows; ADR; UAT open |
+| M3g | Procedure matrix replan | **API** | Preview + snapshot undo; Nuclear = platform super-admin; UAT open |
 | M3c | Doctor-confirmed procedure planning | **SHIPPED** | Package/program lines create `PROPOSED` orders; doctor confirms before FIFO resource placement (`placeConfirmedProcedures`); see ADR clinic-doctor-confirmed-fifo-planning |
 | M4 | Visit card & clinical services | **DONE** | `VISIT_COMPLETED` |
 | M4b | ICD-10 catalog & diagnosis recording | **SHIPPED** | WHO ICD-10 2019 local catalog; sanatorium / visit / inpatient / print; favorites; diagnosis report; orch gateway sync |

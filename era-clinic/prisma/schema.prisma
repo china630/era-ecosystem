@@ -47,6 +47,16 @@ model Tenant {
   lunchEndHour             Int                      @default(14) @map("lunch_end_hour")
   /// JS getUTCDay-style weekday numbers closed (0=Sunday). Default Sunday only.
   closedWeekdays           Int[]                    @default([0]) @map("closed_weekdays")
+  /// Gender session windows (CLI-48). Not lunch-allowed flags.
+  genderSessionMode        GenderSessionMode        @default(OFF) @map("gender_session_mode")
+  genderSessionFemaleFirst Boolean                  @default(true) @map("gender_session_female_first")
+  genderSessionUnknown     GenderSessionUnknownPolicy @default(BLOCK) @map("gender_session_unknown")
+  genderSessionFemaleStartHour Int?                 @map("gender_session_female_start_hour")
+  genderSessionFemaleEndHour   Int?                 @map("gender_session_female_end_hour")
+  genderSessionMaleStartHour   Int?                 @map("gender_session_male_start_hour")
+  genderSessionMaleEndHour     Int?                 @map("gender_session_male_end_hour")
+  replanPreviews           ProcedureReplanPreview[]
+  replanSnapshots          ProcedureReplanSnapshot[]
   /// Default resourceGapMinutes copied onto new ProcedureType rows (cabin idle after occupancy)
   defaultProcedureGapMinutes Int                    @default(5) @map("default_procedure_gap_minutes")
   /// When true, procedures/resources with extendedEndHour may run past dayEndHour
@@ -223,6 +233,31 @@ enum PatientSex {
   FEMALE
   OTHER
   UNKNOWN
+}
+
+enum GenderSessionMode {
+  OFF
+  SPLIT_BY_LUNCH
+  CUSTOM_WINDOWS
+}
+
+enum GenderSessionPolicy {
+  OFF
+  INHERIT
+  SPLIT_BY_LUNCH
+  CUSTOM
+}
+
+enum GenderSessionUnknownPolicy {
+  BLOCK
+  ALLOW_BOTH
+}
+
+enum ProcedureReplanMode {
+  FILL_HOLES
+  PACK_RESOURCE
+  APPLY_GENDER_WINDOWS
+  NUCLEAR_DAY
 }
 
 enum PatientBloodGroup {
@@ -924,8 +959,13 @@ model ProcedureType {
   /// ClinicLookup BODY_PART code
   bodyPart           String?
   afterLunchAllowed  Boolean       @default(true)
-  /// When false, slot must start at or after lunchEndHour (men 4-chamber after lunch).
+  /// When false, slot must start at or after lunchEndHour (type AM/PM ban — not guest sex).
   beforeLunchAllowed Boolean       @default(true) @map("before_lunch_allowed")
+  genderSessionPolicy GenderSessionPolicy @default(OFF) @map("gender_session_policy")
+  genderSessionFemaleStartHour Int? @map("gender_session_female_start_hour")
+  genderSessionFemaleEndHour   Int? @map("gender_session_female_end_hour")
+  genderSessionMaleStartHour   Int? @map("gender_session_male_start_hour")
+  genderSessionMaleEndHour     Int? @map("gender_session_male_end_hour")
   /// Optional wall-clock start (Asia/Baku hour). Null = tenant dayStartHour.
   dayStartHour       Int?          @map("day_start_hour")
   /// Optional exclusive end hour. Null = tenant dayEndHour.
@@ -1524,6 +1564,45 @@ model User {
   createdAt         DateTime      @default(now()) @map("created_at")
   @@unique([organizationId, login])
   @@unique([organizationId, phone])
+  @@index([organizationId])
+}
+
+model ProcedureReplanPreview {
+  id              String              @id @default(cuid())
+  organizationId  String              @map("organization_id")
+  tenantId        String              @map("tenant_id")
+  mode            ProcedureReplanMode
+  bakuDate        String              @map("baku_date")
+  resourceId      String?             @map("resource_id")
+  procedureTypeId String?             @map("procedure_type_id")
+  respectPins     Boolean             @default(true) @map("respect_pins")
+  scopeHash       String              @map("scope_hash")
+  payloadJson     String              @map("payload_json") @db.Text
+  createdByUserId String              @map("created_by_user_id")
+  expiresAt       DateTime            @map("expires_at")
+  appliedAt       DateTime?           @map("applied_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  snapshots       ProcedureReplanSnapshot[]
+
+  @@index([expiresAt])
+  @@index([organizationId])
+}
+
+model ProcedureReplanSnapshot {
+  id              String                 @id @default(cuid())
+  organizationId  String                 @map("organization_id")
+  tenantId        String                 @map("tenant_id")
+  previewId       String                 @map("preview_id")
+  beforeJson      String                 @map("before_json") @db.Text
+  createdByUserId String                 @map("created_by_user_id")
+  expiresAt       DateTime               @map("expires_at")
+  undoneAt        DateTime?              @map("undone_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  tenant          Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  preview         ProcedureReplanPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
   @@index([organizationId])
 }
 

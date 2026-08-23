@@ -8,6 +8,7 @@ export type MatrixSlot = {
   occupied: boolean;
   blocked?: boolean;
   lunch?: boolean;
+  genderTint?: "female" | "male" | null;
   procedureOrderId?: string;
   patientName?: string;
   procedureName?: string;
@@ -372,7 +373,13 @@ export function ResourceDayMatrix({
                         return (
                           <div
                             key={`${row.resourceId}-${seg.slot.time}`}
-                            className={`min-h-[3.25rem] border-b border-r border-emerald-100 bg-emerald-50/80 ${onFreeClick ? "cursor-pointer hover:bg-emerald-100/90" : ""}`}
+                            className={`min-h-[3.25rem] border-b border-r border-emerald-100 ${
+                              seg.slot.genderTint === "female"
+                                ? "bg-rose-50/90"
+                                : seg.slot.genderTint === "male"
+                                  ? "bg-sky-50/90"
+                                  : "bg-emerald-50/80"
+                            } ${onFreeClick ? "cursor-pointer hover:bg-emerald-100/90" : ""}`}
                             style={{ gridColumn: "span 1" }}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={() => onDropFree(row.resourceId, seg.slot.time)}

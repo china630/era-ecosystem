@@ -17,3 +17,5 @@ export function bakuDayBounds(dateYmd: string): { start: Date; end: Date; date: 
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
   return { start, end, date: `${m[1]}-${m[2]}-${m[3]}` };
 }
+
+export const bakuDayRange = bakuDayBounds;
