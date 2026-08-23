@@ -24,13 +24,15 @@
 | AC-HOT-INT | Integrations (KKM, locks, B2C widget) | 🟡 | [ ] | HOT-03/04 STUB; HOT-06 API | Explicit stub — **excluded from Scaffold BE rollup** (external ⏸) |
 | AC-HOT-TENANT | SHARED pool: `organizationId` on ops rows | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension | **Excluded from Scaffold BE rollup.** Schema + filter landed (no `unbound` default); still not Scaffold ✅ (no live SHARED pool / field two-org UAT) |
 | AC-HOT-AGP | Agency portal (CP grant + PMS book + FO inbox) | 🟡 | [ ] | ADR hotel-agency-portal; HOT-AGP-01/02/03; `__tests__/agency-portal-negative.spec.ts` | Negatives landed (SSO HMAC + auto-confirm default OFF); Scaffold ✅ after fuller isolation suite + UAT §31 |
+| AC-HOT-TOUR | Guest group tours (Nafta roster + TOUR folio) | ✅ | [ ] | ADR hotel-guest-tours; `__tests__/tours-money.spec.ts` + `tours-negative.spec.ts`; UAT-SMOKE §14b | **Out of Scaffold BE rollup** — Nafta add-on; not in FO/CASH worst-of. Edition stays `mvp`. |
 | AC-HOT-CO-EARLY | Early unused-nights refund (net VAT, all folios) | 🟡 | [ ] | `__tests__/early-checkout-unused-nights.spec.ts` + HOT-CO-04 | **Out of Scaffold BE rollup** until fuller void/lump/CL negatives; does not reopen AC-HOT-CASH |
 
 **Edition / wave rollup (BE, in-scope)** = worst(FO, CASH, HK, RATE, MDM) → **✅**.  
 AC-HOT-INT remains 🟡 and is **out of Scaffold BE rollup** until vendor modes leave STUB.  
 AC-HOT-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** (does not undo FO money scaffold).  
 AC-HOT-AGP is 🟡 (P0–P1 landing) and stays **out of Scaffold BE rollup** until negative suite is green.  
-AC-HOT-CO-EARLY is 🟡 and stays **out of Scaffold BE rollup**.
+AC-HOT-CO-EARLY is 🟡 and stays **out of Scaffold BE rollup**.  
+AC-HOT-TOUR is Scaffold ✅ (negatives + UAT UI path) and stays **out of Scaffold BE rollup**.
 
 Do not call this table «product readiness» (UI / Pilot still separate).
 

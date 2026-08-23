@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { IndustryModuleInactiveError } from '@era/satellite-kit';
 import { GuestMdmRequiredError } from '@/lib/guest-identity';
+import { TourConflictError } from '@/lib/services/tour.service';
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -20,6 +21,9 @@ export function handleRouteError(err: unknown) {
   }
   if (err instanceof GuestMdmRequiredError) {
     return jsonError(err.message, 400);
+  }
+  if (err instanceof TourConflictError) {
+    return jsonError(err.message, 409);
   }
   if (err instanceof Error) {
     const status = (err as Error & { status?: number }).status;

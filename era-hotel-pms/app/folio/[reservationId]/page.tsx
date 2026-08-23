@@ -201,6 +201,18 @@ export default function FolioPage() {
     await load();
   }
 
+  async function payChargeLine(chargeId: string) {
+    const res = await fetch(`/api/folios/charges/${chargeId}/pay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentMethod: payMethod === 'BANK_TRANSFER' ? 'BANK_TRANSFER' : payMethod }),
+    });
+    const data = await res.json();
+    if (res.ok) showSuccess(t('pay'));
+    else showApiError(data, tc('error'));
+    await load();
+  }
+
   async function issueInvoice(folioId: string) {
     const res = await fetch(`/api/folios/${folioId}/issue-invoice`, { method: 'POST' });
     const data = await res.json();
@@ -434,6 +446,15 @@ export default function FolioPage() {
                 {can(PERMISSIONS.FOLIO_VOID) && (
                   <button type="button" onClick={() => voidCharge(c.id)} className={GHOST_BUTTON_CLASS}>
                     {t('void')}
+                  </button>
+                )}
+                {can(PERMISSIONS.FOLIO_PAYMENT) && f.type === 'GUEST' && f.status === 'OPEN' && (
+                  <button
+                    type="button"
+                    className={GHOST_BUTTON_CLASS}
+                    onClick={() => void payChargeLine(c.id)}
+                  >
+                    {t('pay')}
                   </button>
                 )}
               </li>
