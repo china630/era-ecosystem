@@ -191,7 +191,11 @@ export async function getResourceDayMatrix(date: Date) {
           procedureCode: ord?.procedureCode,
           manuallyAdjusted: ord?.manuallyAdjusted,
           blocked: s.occupied,
-          genderTint: s.occupied || s.lunch ? null : genderTintForHour(genderResolved, hour),
+          genderTint:
+            s.occupied ||
+            (hour >= tenant.lunchStartHour && hour < tenant.lunchEndHour)
+              ? null
+              : genderTintForHour(genderResolved, hour),
         };
       }),
     })),
