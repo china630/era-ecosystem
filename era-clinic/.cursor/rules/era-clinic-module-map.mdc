@@ -80,6 +80,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/diagnostic-catalog` (tab `favorites`) | `/api/admin/catalog-favorites` — favorite modalities/categories (`first` \| `only`); no standalone `/admin/catalog-favorites` route |
 | `/admin/icd-favorites` | `GET/PUT /api/admin/icd-favorites`; `POST ?action=sync` (orch gateway or local generator); `POST ?action=retire` (`active=false` + `retiredAt`). SatAdmin does **not** CRUD 14k WHO titles |
 | `/admin/templates` | `/api/admin/clinical-templates`, program-templates (+ PATCH `[id]`) — seed pack: `prisma/seed-data/diagnostic-lab-catalog.json` ([DIAGNOSTIC_AND_LAB_CATALOG](../../doc/DIAGNOSTIC_AND_LAB_CATALOG.md)) |
+| `/admin/import` | `GET /api/import`, `POST /api/import/[entity]?dryRun=1` — Nafta cutover xlsx wizard ([NAFTA-CUTOVER-IMPORT](../../doc/NAFTA-CUTOVER-IMPORT.md)) |
 | `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`), `/api/admin/procedure-rotation-rules` (+ `[id]`), `/api/admin/procedure-substitution-rules` (+ `[id]`) |
 | `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, card limits) |
 | `/admin/audit` | `/api/audit` |

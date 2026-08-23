@@ -27,6 +27,9 @@ export async function completeProcedureOrder(
   });
   if (!order) throw new ProcedureAttendanceError("Procedure not found", "NOT_FOUND");
   if (order.status === "COMPLETED") return { ...order, overQuota: false, folioCharged: false };
+  if (order.importedHistorical) {
+    return { ...order, overQuota: false, folioCharged: false };
+  }
   if (order.status === "CANCELLED" || order.status === "NO_SHOW") {
     throw new ProcedureAttendanceError(
       `Cannot complete from status ${order.status}`,

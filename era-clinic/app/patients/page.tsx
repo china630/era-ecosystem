@@ -54,6 +54,7 @@ type Patient = {
   bloodGroup?: PatientBloodGroup;
   globalPersonId?: string | null;
   hotelRoomNumber?: string | null;
+  programCode?: string | null;
 };
 
 type ListResponse = {
@@ -62,6 +63,7 @@ type ListResponse = {
   page: number;
   pageSize: number;
   hotelRooms?: string[];
+  programCodes?: string[];
 };
 
 const emptyForm = {
@@ -95,6 +97,7 @@ export default function PatientsPage() {
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
   const [hotelRooms, setHotelRooms] = useState<string[]>([]);
+  const [programCodes, setProgramCodes] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     sex: "" as "" | PatientSex,
     bloodGroup: "" as "" | PatientBloodGroup,
@@ -102,6 +105,7 @@ export default function PatientsPage() {
     ageMin: "",
     ageMax: "",
     roomNumber: "",
+    programCode: "",
   });
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
@@ -125,7 +129,13 @@ export default function PatientsPage() {
       if (hasSanatorium && filters.roomNumber.trim()) {
         params.set("roomNumber", filters.roomNumber.trim());
       }
-      if (hasSanatorium) params.set("includeHotelRooms", "1");
+      if (hasSanatorium && filters.programCode.trim()) {
+        params.set("programCode", filters.programCode.trim());
+      }
+      if (hasSanatorium) {
+        params.set("includeHotelRooms", "1");
+        params.set("includeProgramCodes", "1");
+      }
       const res = await fetch(`/api/patients?${params}`);
       const d = await res.json();
       const payload = (d.data ?? d) as ListResponse;
@@ -134,6 +144,7 @@ export default function PatientsPage() {
       setPage(payload.page ?? page);
       setPageSize(payload.pageSize ?? pageSize);
       if (payload.hotelRooms) setHotelRooms(payload.hotelRooms);
+      if (payload.programCodes) setProgramCodes(payload.programCodes);
     } finally {
       setLoading(false);
     }
@@ -175,6 +186,11 @@ export default function PatientsPage() {
               key: "hotelRoomNumber",
               header: t("filterHotelRoom"),
               render: (p: Patient) => p.hotelRoomNumber ?? "—",
+            } satisfies EraDataGridColumn<Patient>,
+            {
+              key: "programCode",
+              header: t("filterProgramCode"),
+              render: (p: Patient) => p.programCode ?? "—",
             } satisfies EraDataGridColumn<Patient>,
           ]
         : []),
@@ -276,6 +292,7 @@ export default function PatientsPage() {
             ageMin: "",
             ageMax: "",
             roomNumber: "",
+            programCode: "",
           });
           setPage(1);
         }}
@@ -356,6 +373,20 @@ export default function PatientsPage() {
               ...hotelRooms.map((room) => ({ value: room, label: room })),
             ]}
             emptyLabel={t("filterHotelRoomAll")}
+          />
+          <CatalogField
+            kind={inferCatalogFieldKind({
+              optionCount: programCodes.length,
+              searchable: programCodes.length > 12,
+            })}
+            label={t("filterProgramCode")}
+            value={filters.programCode}
+            onChange={(v) => {
+              setFilters({ ...filters, programCode: String(v ?? "") });
+              setPage(1);
+            }}
+            options={programCodes.map((code) => ({ value: code, label: code }))}
+            emptyLabel={t("filterProgramCodeAll")}
           />
         ) : null}
         <FieldRow cols={2}>
