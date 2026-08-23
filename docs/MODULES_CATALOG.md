@@ -141,7 +141,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | `hotel_agency_portal` | Agency Portal (B2B extranet) | Optional SKU — not in bundles; [ADR](./adr/hotel-agency-portal.md) |
 | `hotel_guest_experience` | Guest Profiles & Tasks | Resort |
 | `hotel_spa_scheduling` | SPA & Scheduling | Resort / Sanatorium |
-| `hotel_transfers` | Transfers | Resort |
+| `hotel_transfers` | Transfers & guest tours | Resort |
 | `hotel_banquets` | Banquets & BEO | Resort |
 | `hotel_medical_sanatorium` | Medical & Sanatorium | Sanatorium |
 | `hotel_setup_advanced` | Advanced master data | Optional |

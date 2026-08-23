@@ -182,8 +182,8 @@ async function main() {
   const revBoard = await prisma.revenueCode.create({
     data: { code: 'BOARD', name: 'Included board', departmentId: deptRest.id },
   });
-  const revTransfer = await prisma.revenueCode.create({
-    data: { code: 'TRANSFER', name: 'Airport transfer', departmentId: deptAcc.id },
+  const revTour = await prisma.revenueCode.create({
+    data: { code: 'TOUR', name: 'Guest tour', departmentId: deptAcc.id },
   });
 
   await prisma.folioRoutingRule.create({
@@ -202,6 +202,7 @@ async function main() {
       { revenueCodeId: revTreatment.id, glAccountCode: '604' },
       { revenueCodeId: revBoard.id, glAccountCode: '605' },
       { revenueCodeId: revTransfer.id, glAccountCode: '606' },
+      { revenueCodeId: revTour.id, glAccountCode: '606' },
     ],
   });
 

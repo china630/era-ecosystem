@@ -32,6 +32,7 @@
 | Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30) |
 | Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
+| Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
 | Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |

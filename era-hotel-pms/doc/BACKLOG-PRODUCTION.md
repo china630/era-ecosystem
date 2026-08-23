@@ -127,6 +127,12 @@ Honest audit vs Opera-like CL. ADR: [docs/adr/hotel-city-ledger-and-fo-money.md]
 
 **Already MVP (do not re-scope as greenfield):** transfers `HOT-XFER-01`, banquets `HOT-BEO-01`, settle `HOT-CASH-01`, agency CL snapshot `HOT-CL-03`, NA core `HOT-NA-01`.
 
+### P7 — Guest group tours (docs 2026-08-23 — not coded)
+
+| ID | Task | Primary owner | Status | Notes |
+|----|------|---------------|--------|-------|
+| H-BL-50 | **Nafta weekend tours** (`/tours`, roster, `TOUR` charge, desk/folio line-pay) | hotel-pms | **Done** | ADR [hotel-guest-tours.md](../../docs/adr/hotel-guest-tours.md); ops [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md); HOT-TOUR-01 SHIPPED. Not concierge. Not `/front-cash/pending`. |
+
 ### P3 — Future / optional parity
 
 | ID | Task | Primary owner | Status | Notes |

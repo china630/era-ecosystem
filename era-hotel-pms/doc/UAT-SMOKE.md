@@ -129,6 +129,20 @@ Room plan UI (Wave C+):
 3. Assign vehicle � status CONFIRMED.
 4. **Complete** � `TRANSFER` charge on guest folio; order status DONE.
 
+## 14b. TOURS (HOT-TOUR-01)
+
+Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`.
+
+1. `/fleet` — create a bus (code, plate, max seats, driver). Retire is not hard-delete.
+2. `/tours/new` — Sunday departure (agenda, pickup/return, meeting point, capacity, price). Assign the bus.
+3. `/tours/[id]` — add IN_HOUSE guest → `TOUR` charge on guest folio immediately; roster **CHARGED**.
+4. Reception **Pay** on roster (CASH/CARD) — roster **PAID**; payment allocated to that charge.
+5. Alternate: **Pay** on the TOUR line on `/folio/[reservationId]` (GUEST folio only) — same PAID.
+6. Alternate: settle GUEST folio to zero with guest tender — TOUR PAID. City-ledger / COMPANY_ACCOUNT → **ON_CITY_LEDGER**, not Paid.
+7. Attempt to assign the same vehicle over an airport transfer window — API 409, UI error (not a toast-only warning).
+8. `/tours/[id]/print` — driver can read room, name, phone, paid status. Re-print does not change data.
+9. Confirm **no** extra row on `/front-cash/pending` for the tour (front-cash is not the tour pay path).
+
 ## 15. BANQUET BEO / MICE (Stage 21 / HN-8 / H-BL-31)
 
 1. `/banquets` as `manager` — seed shows DRAFT BEO for **NAFTANI-HALL**.
