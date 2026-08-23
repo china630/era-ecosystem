@@ -1325,8 +1325,6 @@ model Reservation {
   extraBeds     Int               @default(0)
   linenEveryNights Int?
   deepEveryNights  Int?
-  linenEveryNights Int?
-  deepEveryNights  Int?
   market        String?
   segment       String?
   rateType      String?
