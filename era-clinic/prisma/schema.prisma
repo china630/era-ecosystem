@@ -1248,6 +1248,8 @@ model ProcedureOrder {
   checkInOverrideReason String?         @map("check_in_override_reason")
   completedAt      DateTime?            @map("completed_at")
   completedByUserId String?             @map("completed_by_user_id")
+  /// Cutover import: historical COMPLETED rows skip folio posting and nurse bonus.
+  importedHistorical Boolean             @default(false) @map("imported_historical")
   noShowAt         DateTime?            @map("no_show_at")
   noShowByUserId   String?              @map("no_show_by_user_id")
   cancelledAt      DateTime?            @map("cancelled_at")
@@ -1572,4 +1574,17 @@ model LisFileProfile {
   updatedAt     DateTime      @updatedAt
   @@unique([organizationId, name])
   @@index([organizationId])
+}
+
+model CutoverImportKey {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  entity         String
+  externalRef    String   @map("external_ref")
+  recordId       String   @map("record_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([organizationId, entity, externalRef])
+  @@index([organizationId])
+  @@map("cutover_import_key")
 }

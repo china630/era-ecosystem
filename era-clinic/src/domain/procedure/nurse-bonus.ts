@@ -7,7 +7,9 @@ import type { ProcedureOrderStatus } from "@prisma/client";
 export function qualifiesForNurseBonus(order: {
   checkedInAt: Date | null;
   status: ProcedureOrderStatus | string;
+  importedHistorical?: boolean;
 }): boolean {
+  if (order.importedHistorical) return false;
   if (!order.checkedInAt) return false;
   return order.status === "CHECKED_IN" || order.status === "COMPLETED";
 }

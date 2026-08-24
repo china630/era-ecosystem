@@ -102,10 +102,11 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 5. Reschedule procedure time on chart → conflict rules enforced (cabin + staff).
 6. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
 7. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).
-8. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
-9. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
-10. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
-11. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab.
+8. Hotel stay product change from date (`SATELLITE_HOTEL_STAY_PRODUCT_CHANGED`) → remaining **PROPOSED** and **SCHEDULED** orders from the effective date are cancelled; completed/checked-in stay. Clinic rebuilds a new **PROPOSED** plan for the new program when a matching template exists.
+9. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
+10. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
+11. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
+12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab.
 
 ### ICD-10 catalog (CLI-39…42)
 
@@ -216,4 +217,10 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 3. With BOM: nurse check-in → wait/auto-complete (or complete) → Finance `/inventory` stock OUT for those SKUs (corr = procedure order id). Shortage does **not** block nurse (warn+post).
 4. Replay same correlationId → Finance idempotent skip (no double write-off).
 5. Out of this UAT: retail pharmacy, Rx reserve, guest folio line per pad.
+
+## Nafta cutover import
+
+1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes).
+2. `/patients`: filter by hotel room and program/package (`programCode`).
+3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 
