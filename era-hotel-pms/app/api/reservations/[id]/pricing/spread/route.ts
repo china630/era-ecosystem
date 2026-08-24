@@ -4,14 +4,15 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { relocateReservationRoom } from '@/lib/services/reservation-relocate.service';
+import {
+  applyStayPercent,
+  spreadManualNightly,
+  spreadStayTotal,
+} from '@/lib/services/reservation-pricing.service';
 
 const schema = z.object({
-  roomId: z.string().uuid(),
-  reason: z.string().optional(),
-  reasonCode: z.string().optional(),
-  compUpgrade: z.boolean().optional(),
-  givenRoomTypeId: z.string().uuid().nullable().optional(),
+  kind: z.enum(['NIGHTLY', 'STAY_TOTAL', 'PERCENT']),
+  value: z.number(),
 });
 
 export async function POST(
@@ -23,14 +24,13 @@ export async function POST(
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = schema.parse(await request.json());
-    const reservation = await relocateReservationRoom(id, body.roomId, {
-      reason: body.reason,
-      reasonCode: body.reasonCode,
-      compUpgrade: body.compUpgrade,
-      givenRoomTypeId: body.givenRoomTypeId,
-      actorUserId: session?.sub,
-    });
-    return jsonOk(serialize(reservation));
+    if (body.kind === 'NIGHTLY') {
+      return jsonOk(serialize(await spreadManualNightly(id, body.value)));
+    }
+    if (body.kind === 'STAY_TOTAL') {
+      return jsonOk(serialize(await spreadStayTotal(id, body.value)));
+    }
+    return jsonOk(serialize(await applyStayPercent(id, body.value)));
   } catch (err) {
     return handleRouteError(err);
   }

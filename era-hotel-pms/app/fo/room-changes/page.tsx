@@ -17,6 +17,8 @@ type Row = {
   id: string;
   status: string;
   effectiveAt: string;
+  notes?: string | null;
+  reasonCode?: string | null;
   reservation: { guest: { fullName: string } };
   fromRoom: { roomNumber: string } | null;
   toRoom: { roomNumber: string } | null;
@@ -82,6 +84,7 @@ export default function RoomChangesPage() {
           { key: 'from', header: t('from'), render: (r) => r.fromRoom?.roomNumber ?? '—' },
           { key: 'to', header: t('to'), render: (r) => r.toRoom?.roomNumber ?? '—' },
           { key: 'when', header: t('effective'), render: (r) => r.effectiveAt.slice(0, 16) },
+          { key: 'reason', header: t('reason'), render: (r) => r.reasonCode ?? r.notes ?? '—' },
           { key: 'status', header: t('status') },
         ]}
         rows={filtered}

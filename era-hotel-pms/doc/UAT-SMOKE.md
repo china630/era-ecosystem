@@ -475,3 +475,14 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 10. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
 11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
 
+## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
+
+ADR: [hotel-stay-amendment-and-pricing.md](../../docs/adr/hotel-stay-amendment-and-pricing.md). Do **not** mark SHIPPED until signed.
+
+1. In-house stay: rack DnD to another door of the **same** charged type → occupancy log APPLIED; folio sell unchanged.
+2. DnD to **other** type with `compUpgrade` → given type set; sell unchanged. Paid type change is **not** DnD — use **Change product from date**.
+3. Pricing tab: Manual Price nightly → Apply to all nights; Recalc skips locked nights. Stay % is mutually exclusive with Manual Price.
+4. Wizard: effective date = today or later; preview nights; apply. Past posted nights unchanged. If tonight already posted, folio shows one `RATE_ADJ` line.
+5. Medical package stay: night audit package lines sum to that night’s sell. Clinic remaining `PROPOSED`/`SCHEDULED` from effective date cancelled; completed procedures remain.
+
+

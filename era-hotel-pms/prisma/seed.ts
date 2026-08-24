@@ -185,6 +185,9 @@ async function main() {
   const revTour = await prisma.revenueCode.create({
     data: { code: 'TOUR', name: 'Guest tour', departmentId: deptAcc.id },
   });
+  await prisma.revenueCode.create({
+    data: { code: 'RATE_ADJ', name: 'Same-day rate adjustment', taxTag: '18%', departmentId: deptAcc.id },
+  });
 
   await prisma.folioRoutingRule.create({
     data: { revenueCodeId: revRoom.id, targetFolioType: 'COMPANY' },

@@ -35,6 +35,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | /fo/rack | rack | Door tiles |
 | /fo/room-plan | room-plan API | Timeline bars; share twin two lanes + pool badge |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
+| Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes` | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)

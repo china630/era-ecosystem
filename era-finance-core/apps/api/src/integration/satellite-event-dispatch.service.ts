@@ -9,6 +9,7 @@ import {
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
   isSatelliteHotelRoomChanged,
+  isSatelliteHotelStayProductChanged,
   isSatelliteConstructionProgressActApproved,
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
@@ -223,6 +224,9 @@ export class SatelliteEventDispatchService {
     if (isSatelliteBankGlDailySummary(data)) {
       const event = satelliteBankGlDailySummarySchema.parse(data);
       return this.handleBankGlDailySummary(organizationId, event);
+    }
+    if (isSatelliteHotelStayProductChanged(data)) {
+      return { meta: { skipped: true, reason: "clinic_lifecycle" } };
     }
     throw new Error("Unhandled satellite event type");
   }

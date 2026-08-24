@@ -24,6 +24,7 @@ export type ReservationCardToolbarProps = {
   onHistory?: () => void;
   onRecalc?: () => void;
   onChargeAll?: () => void;
+  onAmendProduct?: () => void;
   attachOpen?: boolean;
   onAttachToggle?: () => void;
   showLock?: boolean;
@@ -45,6 +46,7 @@ export function ReservationCardActions({
   onHistory,
   onRecalc,
   onChargeAll,
+  onAmendProduct,
   attachOpen,
   onAttachToggle,
   canCheckIn,
@@ -78,9 +80,11 @@ export function ReservationCardActions({
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            disabled={busy || (!onRecalc && !onChargeAll && !canCheckIn)}
+            disabled={busy || (!onRecalc && !onChargeAll && !onAmendProduct && !canCheckIn)}
             title={
-              !onRecalc && !onChargeAll && !canCheckIn ? t('availableAfterSave') : t('lightning')
+              !onRecalc && !onChargeAll && !onAmendProduct && !canCheckIn
+                ? t('availableAfterSave')
+                : t('lightning')
             }
             onClick={() => setLightningOpen((o) => !o)}
           >
@@ -109,6 +113,17 @@ export function ReservationCardActions({
                 }}
               >
                 {t('chargeAll')}
+              </button>
+              <button
+                type="button"
+                className={DROPDOWN_ITEM_CLASS}
+                disabled={!onAmendProduct}
+                onClick={() => {
+                  setLightningOpen(false);
+                  onAmendProduct?.();
+                }}
+              >
+                {t('amendProduct')}
               </button>
               <button
                 type="button"

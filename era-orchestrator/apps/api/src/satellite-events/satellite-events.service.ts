@@ -5,8 +5,9 @@ import {
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
   isSatelliteHotelRoomChanged,
-  isSatelliteHotelSanatoriumBookingCreated,
-  isSatelliteStaffDeactivated,
+    isSatelliteHotelSanatoriumBookingCreated,
+    isSatelliteHotelStayProductChanged,
+    isSatelliteStaffDeactivated,
   isSatelliteStaffProvisioned,
   satelliteStaffDeactivatedSchema,
   satelliteStaffProvisionedSchema,
@@ -36,7 +37,8 @@ function isClinicLifecycleEvent(data: unknown): boolean {
     isSatelliteHotelGuestCheckedIn(data) ||
     isSatelliteHotelGuestCheckedOut(data) ||
     isSatelliteHotelRoomChanged(data) ||
-    isSatelliteHotelSanatoriumBookingCreated(data)
+    isSatelliteHotelSanatoriumBookingCreated(data) ||
+    isSatelliteHotelStayProductChanged(data)
   );
 }
 

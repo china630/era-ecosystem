@@ -89,7 +89,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
 | CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
 | CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
-| CLI-47 | Procedure TTK (consumable BOM) → Finance stock | ADR clinic-procedure-consumable-ttk | Y consumables CRUD; resolve on COMPLETED; event lines; finance product proxy | — | Y `/admin/master-data` TTK BOM | — | — | API | Retail HTTP retired; Finance write-off W2; no UAT → not SHIPPED |
+| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `GET /api/lab-orders/:id/file` | Y patient card download | Y `/admin/import` 01–09 | — | — | SHIPPED | Binaries under `D:\ERA-BACKUP\NAFTA-START\clinic\dump\files\lab`; wizard copies to `ERA_CLINIC_DATA/lab-import` |
 
 ### MDM natural-person identity
 
@@ -168,6 +168,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-FO-01 | Room type availability (Avl/Occ) | Y | Y /availability | SHIPPED | FO chain ADR; Occ includes unassigned |
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; block save when Avl=0 |
 | HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door inventory; UAT-SMOKE §30 not signed — not SHIPPED |
+| HOT-FO-04 | Stay amendment + Manual Price / stay % | Y ADR | Y relocate/amendments/pricing/spread | API | UI on card; UAT-SMOKE §35 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
 | HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | UAT-SMOKE §34 open — not SHIPPED |
 | HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |

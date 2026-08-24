@@ -20,6 +20,7 @@ import {
   isSatelliteHotelReservationCompleted,
   isSatelliteHotelRoomChanged,
   isSatelliteHotelSanatoriumBookingCreated,
+  isSatelliteHotelStayProductChanged,
 } from "./hotel.events";
 import { isSatelliteLogisticsTripCompleted } from "./logistics.events";
 import {
@@ -70,6 +71,7 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteHotelGuestCheckedOut(data) ||
     isSatelliteHotelRoomChanged(data) ||
     isSatelliteHotelSanatoriumBookingCreated(data) ||
+    isSatelliteHotelStayProductChanged(data) ||
     isSatelliteRetailSaleCompleted(data) ||
     isSatelliteRetailShiftClosed(data) ||
     isSatelliteLogisticsTripCompleted(data) ||
