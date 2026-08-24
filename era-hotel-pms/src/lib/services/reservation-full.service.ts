@@ -18,6 +18,11 @@ const fullInclude = {
   paxGuests: { orderBy: { sortOrder: 'asc' as const } },
   notes: true,
   dailyRates: { orderBy: { stayDate: 'asc' as const } },
+  staySlices: { orderBy: { fromDate: 'asc' as const } },
+  roomChanges: {
+    orderBy: { effectiveAt: 'asc' as const },
+    include: { fromRoom: true, toRoom: true },
+  },
   folios: {
     include: {
       charges: { include: { revenueCode: true } },
@@ -67,6 +72,9 @@ export async function getReservationFull(id: string) {
   return {
     ...reservation,
     totalAmount: decimalToNumber(reservation.totalAmount),
+    discountPercent: reservation.discountPercent
+      ? decimalToNumber(reservation.discountPercent)
+      : null,
     manualDailyRate: reservation.manualDailyRate
       ? decimalToNumber(reservation.manualDailyRate)
       : null,
@@ -131,6 +139,7 @@ export async function patchReservationFull(
     salesProject?: string | null;
     useManualRate?: boolean;
     manualDailyRate?: number | null;
+    discountPercent?: number | null;
     discountActive?: boolean;
     creditLimitAzn?: number | null;
     isLocked?: boolean;
@@ -248,7 +257,16 @@ export async function patchReservationFull(
     const room = await prisma.room.findUnique({ where: { id: data.roomId } });
     if (!room) throw new Error('Room not found');
     const typeId = data.roomTypeId ?? existing.roomTypeId;
-    if (room.roomTypeId !== typeId) throw new Error('Room type mismatch');
+    if (room.roomTypeId !== typeId) {
+      const { physicalTypeAllowedForDoor } = await import('@/lib/services/door-type.policy');
+      const allowed = physicalTypeAllowedForDoor({
+        chargedRoomTypeId: typeId,
+        givenRoomTypeId: data.givenRoomTypeId !== undefined ? data.givenRoomTypeId : existing.givenRoomTypeId,
+        doorRoomTypeId: room.roomTypeId,
+        compUpgrade: false,
+      });
+      if (!allowed.ok) throw new Error(allowed.error);
+    }
     const candidate = {
       shareEligible: nextShareEligible,
       shareGender: nextShareGender,
@@ -296,8 +314,31 @@ export async function patchReservationFull(
           : creditLimitAzn === null
             ? null
             : toDecimal(creditLimitAzn),
+      ...(input.discountPercent !== undefined
+        ? {
+            discountPercent:
+              input.discountPercent === null ? null : toDecimal(input.discountPercent),
+          }
+        : {}),
     },
   });
+
+  if (
+    data.roomId !== undefined &&
+    data.roomId &&
+    data.roomId !== existing.roomId
+  ) {
+    const { recordRoomMove } = await import('@/lib/services/room-occupancy-log.service');
+    await recordRoomMove({
+      reservationId: id,
+      fromRoomId: existing.roomId,
+      toRoomId: data.roomId,
+      notes: 'CARD_ASSIGN',
+      reasonCode: 'CARD_ASSIGN',
+      kind: 'OCCURRED',
+      status: 'APPLIED',
+    });
+  }
 
   if (notes) {
     for (const [noteType, text] of Object.entries(notes) as [string, string][]) {
@@ -375,7 +416,7 @@ export async function patchReservationFull(
           reservationId: id,
           stayDate,
           amount: toDecimal(d.amount),
-          manualFlag: d.manualFlag ?? false,
+          manualFlag: true,
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
           discountPct:
@@ -385,7 +426,7 @@ export async function patchReservationFull(
         },
         update: {
           amount: toDecimal(d.amount),
-          manualFlag: d.manualFlag ?? false,
+          manualFlag: true,
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
           discountPct:

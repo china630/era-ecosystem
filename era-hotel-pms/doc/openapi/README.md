@@ -8,4 +8,11 @@
 
 **Umbrella target:** `packages/contracts/openapi/` — см. [MONOREPO.md](../MONOREPO.md).
 
+Stay amendment / pricing (not in YAML yet; Next.js routes):
+
+- `POST /api/reservations/{id}/amendments` and `…/amendments/preview` — product change from date
+- `POST /api/reservations/{id}/pricing/spread` — stay-total / nightly / stay-% spread
+- `POST /api/reservations/{id}/relocate` — door move (comp upgrade when types differ)
+- `GET /api/reservations/{id}/room-changes` — occupancy log
+
 Просмотр: Swagger Editor, Redoc, или `npx @redocly/cli preview-docs doc/openapi/fb-pos-pms-bridge.yaml`.

@@ -146,13 +146,15 @@ export async function getNightlyRoomChargeForDate(
   );
   if (daily) return decimalToNumber(daily.amount);
 
-  const roomTypeId = res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
+  const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
+  const slice = await resolveStaySliceForDate(reservationId, businessDate);
+  const roomTypeId = slice?.roomTypeId ?? res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
   if (!roomTypeId) {
     return decimalToNumber(res.ratePlan.pricePerNight);
   }
 
   const quote = await quoteReservationStay({
-    ratePlanId: res.ratePlanId,
+    ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
     roomTypeId,
     checkInDate: res.checkInDate,
     checkOutDate: res.checkOutDate,

@@ -1,17 +1,14 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { relocateReservationRoom } from '@/lib/services/reservation-relocate.service';
+import { applyStayAmendment } from '@/lib/services/stay-amendment.service';
 
 const schema = z.object({
-  roomId: z.string().uuid(),
-  reason: z.string().optional(),
-  reasonCode: z.string().optional(),
-  compUpgrade: z.boolean().optional(),
-  givenRoomTypeId: z.string().uuid().nullable().optional(),
+  effectiveDate: z.coerce.date(),
+  roomTypeId: z.string().uuid(),
+  ratePlanId: z.string().uuid(),
 });
 
 export async function POST(
@@ -23,14 +20,14 @@ export async function POST(
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = schema.parse(await request.json());
-    const reservation = await relocateReservationRoom(id, body.roomId, {
-      reason: body.reason,
-      reasonCode: body.reasonCode,
-      compUpgrade: body.compUpgrade,
-      givenRoomTypeId: body.givenRoomTypeId,
-      actorUserId: session?.sub,
-    });
-    return jsonOk(serialize(reservation));
+    return jsonOk(
+      await applyStayAmendment({
+        reservationId: id,
+        effectiveDate: body.effectiveDate,
+        roomTypeId: body.roomTypeId,
+        ratePlanId: body.ratePlanId,
+      }),
+    );
   } catch (err) {
     return handleRouteError(err);
   }
