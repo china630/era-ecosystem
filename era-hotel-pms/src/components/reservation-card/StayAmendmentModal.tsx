@@ -138,6 +138,8 @@ export function StayAmendmentModal({
             setEffectiveDate(v);
             setPreview(null);
           }}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
         />
         <CatalogField
           kind="CLOSED_MEDIUM"
