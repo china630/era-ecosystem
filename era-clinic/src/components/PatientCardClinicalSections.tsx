@@ -457,6 +457,17 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
                         <span className={`ml-2 ${TEXT_DANGER_CLASS}`}>{t("critical")}</span>
                       ) : null}
                     </p>
+                    {ev.href && /lab-orders\//.test(ev.href) ? (
+                      <a
+                        href={`${ev.href.replace(/[?#].*$/, "")}/file`.replace(
+                          "/lab-orders/",
+                          "/api/lab-orders/",
+                        )}
+                        className={`mt-1 inline-block ${LINK_ACCENT_CLASS}`}
+                      >
+                        {t("downloadLabFile", { defaultValue: "Download lab file" })}
+                      </a>
+                    ) : null}
                   </div>
                   {labPrintHref(ev) ? (
                     <button

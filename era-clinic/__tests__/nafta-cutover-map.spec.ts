@@ -43,7 +43,7 @@ describe("nafta cutover column map", () => {
         diagnoses: [{ diagnosisName: "USM" }],
       }),
     ).toBe(true);
-    expect(labFileRel({ id: 57, fileName: "QAN.docx" })).toBe("files/lab/57_QAN.docx");
+    expect(labFileRel({ id: 57, fileName: "QAN.docx" })).toBe("dump/files/lab/57_QAN.docx");
   });
 
   it("maps medical job titles to clinic satellite", () => {

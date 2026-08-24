@@ -1123,6 +1123,7 @@
     "printCheckup": "Print check-up",
     "printProcedures": "Print schedule",
     "print": "Print",
+    "downloadLabFile": "Download lab file",
     "diagnosesTitle": "ICD-10 diagnoses",
     "diagnosesNoEpisode": "No active sanatorium episode — diagnoses are recorded on an open course.",
     "diagnosesOpenSanatorium": "Open sanatorium"

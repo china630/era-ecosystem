@@ -112,7 +112,7 @@ function isUsgExam(form) {
 
 function labFileRel(row) {
   const name = String(row.fileName || "result").replace(/[<>:"/\\|?*]/g, "_").slice(0, 80);
-  return `files/lab/${row.id}_${name}`;
+  return `dump/files/lab/${row.id}_${name}`;
 }
 
 module.exports = {

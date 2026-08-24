@@ -62,6 +62,7 @@ function request(url, { method = "GET", headers = {}, maxRedirects = 3 } = {}) {
         headers: {
           "User-Agent": "era-clinic-webonly-cutover-dump/1.0",
           Accept: "application/json, application/pdf, */*",
+          ...(process.env.WO_COOKIE ? { Cookie: process.env.WO_COOKIE } : {}),
           ...headers,
         },
       },
@@ -330,10 +331,11 @@ async function dumpFiles(summary) {
         });
         const ct = String(r.headers["content-type"] || "");
         const looksBinary =
-          r.body.length > 64 &&
+          r.body.length > 1024 &&
+          ((r.body[0] === 0x50 && r.body[1] === 0x4b) ||
+            r.body.slice(0, 5).toString("ascii") === "%PDF-") &&
           !ct.includes("json") &&
-          !ct.includes("text/html") &&
-          r.body[0] !== 0x7b;
+          !ct.includes("text/html");
         if (r.status >= 200 && r.status < 300 && looksBinary) {
           fs.writeFileSync(dest, r.body);
           labOk += 1;

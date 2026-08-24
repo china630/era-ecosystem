@@ -1100,6 +1100,7 @@
     "printCheckup": "Check-up çapı",
     "printProcedures": "Qrafik çapı",
     "print": "Çap",
+    "downloadLabFile": "Analiz faylını yüklə",
     "diagnosesTitle": "ICD-10 diaqnozları",
     "diagnosesNoEpisode": "Aktiv sanatoriya epizodu yoxdur — diaqnoz açıq kursa yazılır.",
     "diagnosesOpenSanatorium": "Sanatoriyanı aç"

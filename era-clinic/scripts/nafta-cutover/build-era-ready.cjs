@@ -238,20 +238,42 @@ function main() {
     ],
   );
 
+  const labDumpDir = path.join(START, "clinic", "dump", "files", "lab");
+  const labById = new Map();
+  if (fs.existsSync(labDumpDir)) {
+    for (const name of fs.readdirSync(labDumpDir)) {
+      const m = String(name).match(/^(\d+)_/);
+      if (!m) continue;
+      const abs = path.join(labDumpDir, name);
+      try {
+        if (fs.statSync(abs).isFile() && fs.statSync(abs).size >= 1024) labById.set(m[1], abs);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+
   const labResults = rowsOf(readDumpJson("bulk/lab-results.json"));
   const nLabOrd = writeSheet(
     XLSX,
     path.join(clinicOut, "08-lab-orders.xlsx"),
     HEADERS.labOrders,
-    labResults.map((r) => ({
-      externalRef: `wo:lab:${r.id}`,
-      patientRef: `wo:patient:${r.patientId}`,
-      testCode: r.labTestId ? `WO-LAB-${r.labTestId}` : "WO-LAB-FILE",
-      status: "COMPLETED",
-      resultText: r.note || r.fileName || "",
-      takenAt: ymd(r.resultDate),
-      fileRel: labFileRel(r),
-    })),
+    labResults.map((r) => {
+      const rel = labFileRel(r);
+      const absExact = path.join(START, "clinic", rel);
+      const absById = labById.get(String(r.id));
+      const abs = fs.existsSync(absExact) ? absExact : absById;
+      const fileRel = abs && fs.existsSync(abs) ? (fs.existsSync(absExact) ? rel : `dump/files/lab/${path.basename(abs)}`) : "";
+      return {
+        externalRef: `wo:lab:${r.id}`,
+        patientRef: `wo:patient:${r.patientId}`,
+        testCode: r.labTestId ? `WO-LAB-${r.labTestId}` : "WO-LAB-FILE",
+        status: "COMPLETED",
+        resultText: r.note || r.fileName || "",
+        takenAt: ymd(r.resultDate),
+        fileRel,
+      };
+    }),
   );
 
   const examForms = rowsOf(readDumpJson("bulk/examination-forms.json"));

@@ -1100,6 +1100,7 @@
     "printCheckup": "Печать чек-апа",
     "printProcedures": "Печать графика",
     "print": "Печать",
+    "downloadLabFile": "Скачать файл анализа",
     "diagnosesTitle": "Диагнозы МКБ-10",
     "diagnosesNoEpisode": "Нет активного эпизода санатория — диагнозы пишутся на открытый курс.",
     "diagnosesOpenSanatorium": "Открыть санаторий"

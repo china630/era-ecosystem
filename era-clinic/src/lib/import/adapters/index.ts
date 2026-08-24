@@ -1,7 +1,13 @@
 import { z } from "zod";
+import { satelliteOrganizationId } from "@era/satellite-kit";
 import type { ImportAdapter, ImportEntityMeta, ImportTx, UpsertOutcome } from "@/lib/import/types";
 import { cellNumber, cellString, parseDateCell } from "@/lib/import/helpers";
 import { bindImportRecord, findImportRecordId } from "@/lib/import/keys";
+import { tryCopyLabFileOnImport } from "@/lib/import/lab-import-files";
+
+function orgId(): string {
+  return satelliteOrganizationId();
+}
 
 function aliases(...keys: string[]): Record<string, string> {
   return Object.fromEntries(keys.map((k) => [k, k]));
@@ -89,6 +95,7 @@ const proceduresAdapter: ImportAdapter<{
         (
           await tx.procedureType.create({
             data: {
+              organizationId: orgId(),
               code: row.code,
               name: row.nameAz,
               durationMin: row.durationMin,
@@ -135,9 +142,17 @@ const roomsAdapter: ImportAdapter<{ externalRef: string; code: string; name: str
       row.externalRef,
       dryRun,
       async () => {
-        const room = await tx.room.create({ data: { code: row.code, name: row.name } });
+        const room = await tx.room.create({
+          data: { organizationId: orgId(), code: row.code, name: row.name },
+        });
         await tx.resource.create({
-          data: { code: row.code, name: row.name, kind: "ROOM", roomId: room.id },
+          data: {
+            organizationId: orgId(),
+            code: row.code,
+            name: row.name,
+            kind: "ROOM",
+            roomId: room.id,
+          },
         });
         return room.id;
       },
@@ -151,7 +166,13 @@ const roomsAdapter: ImportAdapter<{ externalRef: string; code: string; name: str
           });
         } else {
           await tx.resource.create({
-            data: { code: row.code, name: row.name, kind: "ROOM", roomId: id },
+            data: {
+              organizationId: orgId(),
+              code: row.code,
+              name: row.name,
+              kind: "ROOM",
+              roomId: id,
+            },
           });
         }
       },
@@ -191,6 +212,7 @@ const practitionersAdapter: ImportAdapter<{
         (
           await tx.practitioner.create({
             data: {
+              organizationId: orgId(),
               code: row.fin || row.externalRef,
               fullName: row.fullName,
               staffKind: toStaffKind(row.role),
@@ -271,6 +293,7 @@ const patientsAdapter: ImportAdapter<{
                 : "UNKNOWN";
         const patient = await tx.patientRef.create({
           data: {
+            organizationId: orgId(),
             refCode: row.externalRef.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 48),
             fullName: row.fullName,
             sex,
@@ -281,6 +304,7 @@ const patientsAdapter: ImportAdapter<{
         });
         await tx.clinicalEpisode.create({
           data: {
+            organizationId: orgId(),
             patientRefId: patient.id,
             roomNumber: row.roomNumber || null,
             reservationId: row.hotelResNo || null,
@@ -321,7 +345,11 @@ const quotasAdapter: ImportAdapter<{
   order: 40,
   templateHint: "05-quotas.xlsx",
   headerAliases: {
-    ...aliases("patientRef", "procedureCode", "quotaTotal", "quotaUsed", "quotaLeft"),
+    patientRef: "patientRef",
+    procedureCode: "procedureCode",
+    quotaLeft: "quotaLeft",
+    quotaTotal: "quotaTotal",
+    quotaUsed: "quotaUsed",
     quotaTotal: "quotaTotal",
     quotaUsed: "quotaUsed",
   },
@@ -354,12 +382,13 @@ const quotasAdapter: ImportAdapter<{
       let template = await tx.programTemplate.findFirst({ where: { code } });
       if (!template) {
         template = await tx.programTemplate.create({
-          data: { code, name: code, durationDays: 14 },
+          data: { organizationId: orgId(), code, name: code, durationDays: 14 },
         });
       }
       if (!template) throw new Error(`Could not resolve program template ${code}`);
       instance = await tx.programInstance.create({
         data: {
+          organizationId: orgId(),
           templateId: template.id,
           episodeId: episode.id,
           programCode: code,
@@ -453,6 +482,7 @@ const slotsAdapter: ImportAdapter<{
         (
           await tx.procedureOrder.create({
             data: {
+              organizationId: orgId(),
               patientRefId: patientId,
               procedureTypeId: proc?.id,
               procedureCode: row.procedureCode,
@@ -487,7 +517,14 @@ async function ensureModality(tx: ImportTx, code: string, kind: string, title: s
   const existing = await tx.modality.findFirst({ where: { code } });
   if (existing) return existing;
   return tx.modality.create({
-    data: { code, kind, titleEn: title, titleRu: title, titleAz: title },
+    data: {
+      organizationId: orgId(),
+      code,
+      kind,
+      titleEn: title,
+      titleRu: title,
+      titleAz: title,
+    },
   });
 }
 
@@ -525,6 +562,7 @@ const labCatalogAdapter: ImportAdapter<{
         return (
           await tx.diagnosticService.create({
             data: {
+              organizationId: orgId(),
               code: row.code,
               modalityId: modality.id,
               category: row.group,
@@ -591,32 +629,48 @@ const labOrdersAdapter: ImportAdapter<{
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
     const svc = await tx.diagnosticService.findFirst({ where: { code: row.testCode } });
     const done = row.status.toUpperCase() === "COMPLETED";
-    const resultJson = JSON.stringify({
+    const payload = {
       note: row.resultText || null,
       fileRel: row.fileRel || null,
-    });
+    };
+    async function persistFile(labOrderId: string) {
+      if (!row.fileRel) return JSON.stringify(payload);
+      const copied = tryCopyLabFileOnImport(row.fileRel, labOrderId);
+      if (!copied) {
+        return JSON.stringify({ ...payload, fileMissing: true });
+      }
+      return JSON.stringify({
+        ...payload,
+        storedPath: copied.storedPath,
+        fileName: copied.fileName,
+      });
+    }
     return upsertByRef(
       tx,
       "lab-orders",
       row.externalRef,
       dryRun,
-      async () =>
-        (
-          await tx.labOrder.create({
-            data: {
-              patientRefId: patientId,
-              testCode: row.testCode,
-              status: done ? "COMPLETED" : "ORDERED",
-              resultJson,
-              collectedAt: parseDateCell(row.takenAt),
-              resultDate: parseDateCell(row.takenAt),
-              items: {
-                create: { serviceCode: row.testCode, diagnosticServiceId: svc?.id },
-              },
+      async () => {
+        const created = await tx.labOrder.create({
+          data: {
+            organizationId: orgId(),
+            patientRefId: patientId,
+            testCode: row.testCode,
+            status: done ? "COMPLETED" : "ORDERED",
+            resultJson: JSON.stringify(payload),
+            collectedAt: parseDateCell(row.takenAt),
+            resultDate: parseDateCell(row.takenAt),
+            items: {
+              create: { serviceCode: row.testCode, diagnosticServiceId: svc?.id },
             },
-          })
-        ).id,
+          },
+        });
+        const resultJson = await persistFile(created.id);
+        await tx.labOrder.update({ where: { id: created.id }, data: { resultJson } });
+        return created.id;
+      },
       async (id) => {
+        const resultJson = await persistFile(id);
         await tx.labOrder.update({
           where: { id },
           data: { resultJson, testCode: row.testCode },
@@ -669,6 +723,7 @@ const diagnosticsAdapter: ImportAdapter<{
         if (!svc) {
           svc = await tx.diagnosticService.create({
             data: {
+              organizationId: orgId(),
               code: row.code,
               modalityId: modality.id,
               category: "imaging",
@@ -684,6 +739,7 @@ const diagnosticsAdapter: ImportAdapter<{
         return (
           await tx.labOrder.create({
             data: {
+              organizationId: orgId(),
               patientRefId: patientId,
               testCode: row.code,
               status: "COMPLETED",

@@ -26,7 +26,14 @@ node era-clinic/scripts/nafta-cutover/build-era-ready.cjs
 | 10-diagnoses.xlsx | patientRef, rawText, icd10, recordedAt |
 | `../hr/37-roster.xlsx` | fin, fullName, orgUnit, position, hireDate, satellites |
 
-`fileRel` points at dump `files/lab/{id}_{fileName}`. Public WebOnly GET often returns JSON, not Word/PDF bytes — at Hour X copy binaries from the WO share if downloads fail. Do not parse Word CBC grids before go-live.
+`fileRel` is `dump/files/lab/{id}_{fileName}` relative to `clinic\`. The wizard also matches by `{id}_*` in that folder if the stored name differs. Missing blobs (WebOnly 404, ~169 rows) still import as COMPLETED with `fileMissing` — they do not fail the step. Download:
+
+```
+node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs
+WO_COOKIE="session=..." node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs
+```
+
+Gate: `ok ≥ 2000` in `dump/files/lab/manifest.json`. Wizard step 08 copies files into `ERA_CLINIC_DATA/lab-import/{labOrderId}/`. Card download: `GET /api/lab-orders/:id/file`. Do not parse Word CBC grids before go-live.
 
 Quota rule: do not burn twice. COMPLETED slots count used **or** load `05-quotas` without past slots on the live board. Historical COMPLETED / `IMPORTED_DONE` sets `importedHistorical` — no folio post, no nurse bonus.
 
@@ -35,10 +42,10 @@ Ops slots: **24.08–31.08.2026** as SCHEDULED. Past dates COMPLETED (or aggrega
 ## Hour X punch list
 
 1. Freeze WebOnly writes.
-2. Lab files: `node era-clinic/scripts/dump-webonly-patient-cards.cjs --with-files --skip-cards --skip-bulk`.
+2. Lab files: `WO_COOKIE=… node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs` (gate ≥2000).
 3. Build packs: `node era-clinic/scripts/nafta-cutover/build-era-ready.cjs`.
-4. Wizard 01–07, then 05–06 (quotas + ops week). Then 08–10 after the board is stable.
-5. Empty `icd10` skips ICD FK. Hotel FO stays Elektraweb. Do not dual-run the WO calendar.
+4. Staging: `node era-clinic/scripts/nafta-cutover/staging-gate.cjs`. Empty clinic DB → wizard 01–09 dry-run then apply. Spot-check 3 in-house guests + one Word download.
+5. Hotel FO stays Elektraweb. Do not dual-run the WO calendar.
 6. Super-admin “Muslim schedule” later must not reset `quotaUsed` / historical COMPLETED.
 
 ## Wizard phases

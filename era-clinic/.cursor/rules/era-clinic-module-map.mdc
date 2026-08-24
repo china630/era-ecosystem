@@ -90,7 +90,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 
 | Route | Auth |
 |-------|------|
-| `/api/integration/hotel-lifecycle` | bridge secret |
+| `/api/integration/hotel-lifecycle` | bridge secret — check-in/out, room change, **stay product changed** |
 | `/api/integration/staff-provision` | bridge secret |
 | `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback |
 | `/api/billing/context` | session — `deferWalkInToHub` for cashier gate |
