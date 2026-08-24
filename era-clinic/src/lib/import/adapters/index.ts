@@ -350,8 +350,6 @@ const quotasAdapter: ImportAdapter<{
     quotaLeft: "quotaLeft",
     quotaTotal: "quotaTotal",
     quotaUsed: "quotaUsed",
-    quotaTotal: "quotaTotal",
-    quotaUsed: "quotaUsed",
   },
   rowSchema: z.object({
     patientRef: z.string().min(1),
@@ -363,8 +361,8 @@ const quotasAdapter: ImportAdapter<{
   mapRow: (raw) => ({
     patientRef: req(raw.patientRef),
     procedureCode: req(raw.procedureCode),
-    quotaTotal: cellNumber(raw.quotaTotal ?? raw.quotaTotal) ?? 0,
-    quotaUsed: cellNumber(raw.quotaUsed ?? raw.quotaUsed) ?? 0,
+    quotaTotal: cellNumber(raw.quotaTotal) ?? 0,
+    quotaUsed: cellNumber(raw.quotaUsed) ?? 0,
     quotaLeft: cellNumber(raw.quotaLeft) ?? 0,
   }),
   upsert: async (tx, row, dryRun) => {
