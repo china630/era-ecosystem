@@ -89,7 +89,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
 | CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
 | CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
-| CLI-47 | Procedure TTK (consumable BOM) → Finance stock | ADR clinic-procedure-consumable-ttk | Y consumables CRUD; resolve on COMPLETED; event lines; finance product proxy | — | Y `/admin/master-data` TTK BOM | — | — | API | Retail HTTP retired; Finance write-off W2; no UAT → not SHIPPED |
+| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `GET /api/lab-orders/:id/file` | Y patient card download | Y `/admin/import` 01–09 | — | — | SHIPPED | Binaries under `D:\ERA-BACKUP\NAFTA-START\clinic\dump\files\lab`; wizard copies to `ERA_CLINIC_DATA/lab-import` |
 
 ### MDM natural-person identity
 
@@ -168,6 +168,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-FO-01 | Room type availability (Avl/Occ) | Y | Y /availability | SHIPPED | FO chain ADR; Occ includes unassigned |
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; block save when Avl=0 |
 | HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door inventory; UAT-SMOKE §30 not signed — not SHIPPED |
+| HOT-FO-04 | Stay amendment + Manual Price / stay % | Y ADR | Y relocate/amendments/pricing/spread | API | UI on card; UAT-SMOKE §35 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
 | HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | UAT-SMOKE §34 open — not SHIPPED |
 | HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |
@@ -204,6 +205,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-RPT-01 | Management reports catalog + `/reports` category hubs (EW WA0058/59) | [catalog](../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) | Y `/api/reports/{slug}` | Y `/reports/{analysis,occupancy,daily,financial,agency,booking}` + cubes | — | — | — | API | W1–W3 screens + PDF; email cron HEADLESS; no UAT evidence → not SHIPPED |
 | HOT-RPT-02 | Configurable nightly management pack + ZIP | catalog §6 | Y `/api/reports/pack/download` | Y `/reports/nightly-pack` + NA deep link | Y `/settings/report-pack` | — | — | API | ZIP + SatAdmin; cron sends ZIP link (HEADLESS); not SHIPPED |
 | HOT-XFER-01 | Transfers (airport / fleet → folio + cancel + routing) | module map | Y | Y `/transfers` | — | — | — | SHIPPED | Charge via postCharge routing; cancel/void; UAT transfers |
+| HOT-TOUR-01 | Guest group tours (Nafta weekend roster + TOUR folio) | [ADR hotel-guest-tours](./adr/hotel-guest-tours.md) | Y `/api/tours/*` `/api/fleet/*` `/api/folios/charges/[chargeId]/pay` | Y `/tours` `/tours/[id]` `/tours/[id]/print` | Y `/fleet` | — | — | SHIPPED | SKU `hotel_transfers`. UAT-SMOKE §14b. City ledger ≠ Paid. DispatchVehicle not merged. |
 | HOT-BEO-01 | Banquets / BEO MVP + day sheet print | H-BL-31 | Y day-sheet | Y `/banquets*` | — | — | — | SHIPPED | UAT-SMOKE §15; not full Opera S&C |
 | HOT-AG-01 | Tour agency contracts + commission % | H-BL-30 | Y | Y `/admin/contracts` | Y | — | — | SHIPPED | UAT-SMOKE §18 |
 | HOT-AG-02 | Agency prepaid/postpaid settlement + refunds | ADR CL | Y settlement API | Y agency-ledger | — | Finance match | — | SHIPPED | UAT-SMOKE §27; bank match Finance |
@@ -498,6 +500,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-07-22 | CLI-35 sidebar cleanup: Setup→Catalogs/Rules; wards under Inpatient; `/executive` merged into Home (owners); `/admin/catalog-favorites` merged into diagnostic-catalog favorites tab; both routes removed |
 | 2026-07-22 | CLI-36 practitioner shift rotation: rule engine (weekly/parity/cycle) + exceptions; matrix off-shift block; booking guard; Shifts admin modal |
 | 2026-07-22 | CLI-37 UI list/filter standard: EraListFilterBar instant+inline Reset; clinic home shared date; name-first + icon actions |
+| 2026-08-23 | Hotel guest tours HOT-TOUR-01 SHIPPED: `/tours` roster + TOUR folio + `/fleet` + print; SKU hotel_transfers; AC-HOT-TOUR Scaffold ✅; UI SCREEN (not SHOW) |
 | 2026-08-19 | HOT-RPT-01/02 Hotel Management Reports W1–W3 (P0 ZIP + P1 catalog + cubes/3-year + email ZIP link HEADLESS); STUB → API — not SHIPPED (no UAT evidence) |
 | 2026-08-20 | HOT-AGP-01/02/03 Agency portal P0–P1 (CP grants + hotel book + FO inbox + passport scan); Status=API; AC-HOT-AGP 🟡; SKU `hotel_agency_portal` |
 | 2026-08-17 | CLI-38 staff kind + monthly nurse/lab duty roster (`/sanatorium/nurse-roster`); clinic-local absences; planner honors approved posting |

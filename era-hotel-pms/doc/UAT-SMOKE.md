@@ -129,6 +129,20 @@ Room plan UI (Wave C+):
 3. Assign vehicle � status CONFIRMED.
 4. **Complete** � `TRANSFER` charge on guest folio; order status DONE.
 
+## 14b. TOURS (HOT-TOUR-01)
+
+Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`.
+
+1. `/fleet` — create a bus (code, plate, max seats, driver). Retire is not hard-delete.
+2. `/tours/new` — Sunday departure (agenda, pickup/return, meeting point, capacity, price). Assign the bus.
+3. `/tours/[id]` — add IN_HOUSE guest → `TOUR` charge on guest folio immediately; roster **CHARGED**.
+4. Reception **Pay** on roster (CASH/CARD) — roster **PAID**; payment allocated to that charge.
+5. Alternate: **Pay** on the TOUR line on `/folio/[reservationId]` (GUEST folio only) — same PAID.
+6. Alternate: settle GUEST folio to zero with guest tender — TOUR PAID. City-ledger / COMPANY_ACCOUNT → **ON_CITY_LEDGER**, not Paid.
+7. Attempt to assign the same vehicle over an airport transfer window — API 409, UI error (not a toast-only warning).
+8. `/tours/[id]/print` — driver can read room, name, phone, paid status. Re-print does not change data.
+9. Confirm **no** extra row on `/front-cash/pending` for the tour (front-cash is not the tour pay path).
+
 ## 15. BANQUET BEO / MICE (Stage 21 / HN-8 / H-BL-31)
 
 1. `/banquets` as `manager` — seed shows DRAFT BEO for **NAFTANI-HALL**.
@@ -452,11 +466,23 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
 3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
-4. `/hk/laundry` — pick in-house room (not UUID); wash/iron/guest/hotel steppers; post → folio `LAUNDRY` line; void folio charge → ticket VOIDED.
-5. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
-6. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
-7. `/hk/forecast` — 7 and 14 day load by floor.
-8. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
-9. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
-10. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
+4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` fallback Delivered on the **same** ticket only.
+5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
+6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
+7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
+8. `/hk/forecast` — 7 and 14 day load by floor.
+9. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
+10. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
+11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
+
+## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
+
+ADR: [hotel-stay-amendment-and-pricing.md](../../docs/adr/hotel-stay-amendment-and-pricing.md). Do **not** mark SHIPPED until signed.
+
+1. In-house stay: rack DnD to another door of the **same** charged type → occupancy log APPLIED; folio sell unchanged.
+2. DnD to **other** type with `compUpgrade` → given type set; sell unchanged. Paid type change is **not** DnD — use **Change product from date**.
+3. Pricing tab: Manual Price nightly → Apply to all nights; Recalc skips locked nights. Stay % is mutually exclusive with Manual Price.
+4. Wizard: effective date = today or later; preview nights; apply. Past posted nights unchanged. If tonight already posted, folio shows one `RATE_ADJ` line.
+5. Medical package stay: night audit package lines sum to that night’s sell. Clinic remaining `PROPOSED`/`SCHEDULED` from effective date cancelled; completed procedures remain.
+
 

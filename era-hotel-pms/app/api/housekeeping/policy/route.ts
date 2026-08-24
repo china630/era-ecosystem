@@ -19,6 +19,9 @@ export async function GET() {
 const schema = z.object({
   linenEveryNights: z.number().int().min(1).max(30),
   deepEveryNights: z.number().int().min(1).max(30),
+  laundryExpressEnabled: z.boolean().optional(),
+  laundryExpressPercent: z.number().int().min(1).max(200).nullable().optional(),
+  egPressureFrom: z.string().nullable().optional(),
 });
 
 export async function PUT(request: Request) {
@@ -26,7 +29,15 @@ export async function PUT(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
-    return jsonOk(serialize(await saveHkHotelPolicy(body.linenEveryNights, body.deepEveryNights)));
+    return jsonOk(
+      serialize(
+        await saveHkHotelPolicy(body.linenEveryNights, body.deepEveryNights, {
+          laundryExpressEnabled: body.laundryExpressEnabled,
+          laundryExpressPercent: body.laundryExpressPercent,
+          egPressureFrom: body.egPressureFrom,
+        }),
+      ),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

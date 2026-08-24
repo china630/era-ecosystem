@@ -18,6 +18,8 @@ const REVENUE_CODES = [
   { code: 'MEDICAL', name: 'Medical', taxTag: '18%' },
   { code: 'LAUNDRY', name: 'Laundry', taxTag: '18%' },
   { code: 'TRANSFER', name: 'Transfer', taxTag: '18%' },
+  { code: 'TOUR', name: 'Guest tour', taxTag: '18%' },
+  { code: 'RATE_ADJ', name: 'Same-day rate adjustment', taxTag: '18%' },
 ];
 
 const BED_TYPES = [

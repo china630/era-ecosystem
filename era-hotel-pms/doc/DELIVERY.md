@@ -257,6 +257,12 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528130000_wave4_transfer`
 
+### Stage 20b — GUEST TOURS (2026-08-23)
+- [x] `TourTemplate` / `TourDeparture` / `TourBooking` + revenue `TOUR` + `FolioPaymentAllocation`
+- [x] Charge-level payment on GUEST folio; city ledger ≠ Paid
+- [x] `/api/tours/*` + `/tours` UI + pay-from-roster + folio line-pay + settle-to-zero + `/fleet` + print
+- [x] Spec: [TOURS-NAFTA-OPS.md](TOURS-NAFTA-OPS.md) · ADR `docs/adr/hotel-guest-tours.md` · HOT-TOUR-01 SHIPPED
+
 ### Stage 22 — GL-BRIDGE
 - [x] `HotelRevenueGlMapping` — revenue code → NAS GL account (601–606 seed)
 - [x] Night audit E1 enriches `revenueLines` with `glAccountCode`; orchestrator `@era/contracts` `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`

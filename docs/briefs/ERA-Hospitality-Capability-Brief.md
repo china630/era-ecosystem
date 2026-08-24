@@ -268,6 +268,7 @@ Local stock MVP for HK consumption: `/settings/stock` (deep link to Finance ware
 |---|---|---|---|
 | Banquets / BEO | `/banquets*` | SHIPPED (HOT-BEO-01) | Lines, resources, staff, settlement, calendar, event P&L. **Not** full Opera S&C (blocks, function diary, BEO change-log at Opera depth) |
 | Transfers | `/transfers`, `/transfers/airport` | SHIPPED (HOT-XFER-01) | Charge via postCharge routing; cancel / void |
+| Guest tours | `/tours` | SHIPPED (HOT-TOUR-01) | Group roster + TOUR folio; ADR hotel-guest-tours |
 | Service / maintenance WO | `/service`, `/service/guest` | SHIPPED (PRD M23) | Staff + guest request form |
 | Migration PRO | `/migration` | module `hotel_migration_pro` | AZ police / registration queue |
 | ElektraWeb historical import | `/settings/import` | SHIPPED (HOT-05) | SuperAdmin |
@@ -518,7 +519,7 @@ Satellite gate: `industry_hotel_pms`. Billable keys (not 12 fine-grained leftove
 | `hotel_housekeeping` | Housekeeping & Room Rack | `/hk/*` |
 | `hotel_service` | Service & maintenance | `/service` |
 | `hotel_migration_pro` | Migration PRO | AZ registration queue |
-| `hotel_transfers` | Transfers | Airport / fleet |
+| `hotel_transfers` | Transfers & guest tours | Airport / fleet / Nafta weekend tours (tours not coded) |
 | `hotel_spa_scheduling` | SPA & Scheduling | `/spa/*`, `/procedures` |
 | `hotel_distribution` | Distribution | Channel manager, contracts, yield |
 | `hotel_agency_portal` | Agency Portal | B2B extranet — **sold separately**, not in default City/Resort/Sanatorium bundles |
@@ -608,6 +609,7 @@ Statuses below are a snapshot of `docs/COVERAGE_MATRIX.md` and Product-Readiness
 | HOT-NA-05 | Year-end | STUB |
 | HOT-RPT-01/02 | Management reports + nightly ZIP | API |
 | HOT-XFER-01 | Transfers | SHIPPED |
+| HOT-TOUR-01 | Guest group tours | SHIPPED |
 | HOT-BEO-01 | Banquets BEO | SHIPPED |
 | HOT-AG-01/02 | Contracts + agency settlement | SHIPPED |
 | HOT-AGP-01..03 | Agency portal | API |

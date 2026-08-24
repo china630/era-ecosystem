@@ -9,6 +9,7 @@ import {
   reservationChildGroups,
   type ChildPricingRow,
 } from '@/lib/services/pricing-engine-core';
+import { splitStayAmounts } from '@/lib/services/door-type.policy';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
 import {
   estimateOccupancyPctForNight,
@@ -47,19 +48,43 @@ function eachNight(from: Date, to: Date): Date[] {
   return nights;
 }
 
-export async function recalcReservationDailyRates(reservationId: string) {
+export async function recalcReservationDailyRates(
+  reservationId: string,
+  opts?: { remainingFrom?: Date },
+) {
   const res = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    include: { ratePlan: true, dailyRates: true, room: true },
+    include: { ratePlan: true, dailyRates: true, room: true, staySlices: true },
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
 
-  const roomTypeId = res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
+  const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
+  const quoteDate = opts?.remainingFrom ?? res.checkInDate;
+  const slice = await resolveStaySliceForDate(reservationId, quoteDate);
+  const roomTypeId = slice?.roomTypeId ?? res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
   if (!roomTypeId) throw new Error('Room type required for pricing recalc');
 
+  if (res.useManualRate && opts?.remainingFrom) {
+    return {
+      dailyRates: res.dailyRates.map((d) => ({
+        stayDate: d.stayDate,
+        amount: decimalToNumber(d.amount),
+        manualFlag: d.manualFlag,
+        currencyCode: d.currencyCode ?? 'AZN',
+        fixPrice: d.fixPrice,
+        discountPct: d.discountPct ? decimalToNumber(d.discountPct) : null,
+      })),
+      totalAmount: res.dailyRates.reduce((s, r) => s + decimalToNumber(r.amount), 0),
+      quote: null,
+      childAddonNightly: 0,
+      adultNightly: 0,
+      frozenManual: true,
+    };
+  }
+
   const quoteResult = await quoteReservationStay({
-    ratePlanId: res.ratePlanId,
+    ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
     roomTypeId,
     checkInDate: res.checkInDate,
     checkOutDate: res.checkOutDate,
@@ -111,7 +136,10 @@ export async function recalcReservationDailyRates(reservationId: string) {
     }),
   );
 
-  const discountPct = res.discountActive ? 0 : null;
+  const stayPct =
+    res.discountPercent != null ? decimalToNumber(res.discountPercent) : 0;
+  const remainingFrom = opts?.remainingFrom ? dateOnly(opts.remainingFrom) : null;
+  const discountPct = stayPct > 0 ? stayPct : res.discountActive ? 0 : null;
   const rows: Array<{
     stayDate: Date;
     amount: number;
@@ -124,6 +152,17 @@ export async function recalcReservationDailyRates(reservationId: string) {
     const existing = res.dailyRates.find(
       (d) => d.stayDate.toDateString() === night.toDateString(),
     );
+    if (remainingFrom && dateOnly(night) < remainingFrom && existing) {
+      rows.push({
+        stayDate: night,
+        amount: decimalToNumber(existing.amount),
+        manualFlag: existing.manualFlag,
+        currencyCode: existing.currencyCode ?? 'AZN',
+        fixPrice: existing.fixPrice,
+        discountPct: existing.discountPct ? decimalToNumber(existing.discountPct) : null,
+      });
+      continue;
+    }
     if (existing?.manualFlag) {
       rows.push({
         stayDate: night,
@@ -141,6 +180,9 @@ export async function recalcReservationDailyRates(reservationId: string) {
         const occPct = await estimateOccupancyPctForNight(night);
         const adj = await resolveLoadBasedAdjustmentPercent(occPct);
         baseAmount = decimalToNumber(applyLoadBasedAdjustment(baseAmount, adj));
+      }
+      if (stayPct > 0) {
+        baseAmount = Math.round(baseAmount * (1 - stayPct / 100) * 100) / 100;
       }
       rows.push({
         stayDate: night,
@@ -257,4 +299,121 @@ export async function listDailyRates(reservationId: string) {
     discountPct: r.discountPct ? decimalToNumber(r.discountPct) : null,
     manualFlag: r.manualFlag,
   }));
+}
+
+export async function spreadManualNightly(reservationId: string, nightly: number) {
+  const res = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { dailyRates: true },
+  });
+  if (!res) throw new Error('Reservation not found');
+  if (res.isLocked) throw new Error('Reservation is locked');
+  const nights = eachNight(res.checkInDate, res.checkOutDate);
+  await prisma.$transaction([
+    prisma.reservation.update({
+      where: { id: reservationId },
+      data: {
+        useManualRate: true,
+        manualDailyRate: toDecimal(nightly),
+        discountPercent: null,
+        discountActive: false,
+      },
+    }),
+    ...nights.map((stayDate) => {
+      const existing = res.dailyRates.find(
+        (d) => d.stayDate.toDateString() === stayDate.toDateString(),
+      );
+      if (existing?.manualFlag) {
+        return prisma.reservationDailyRate.update({
+          where: { id: existing.id },
+          data: {},
+        });
+      }
+      return prisma.reservationDailyRate.upsert({
+        where: { reservationId_stayDate: { reservationId, stayDate } },
+        create: {
+          reservationId,
+          stayDate,
+          amount: toDecimal(nightly),
+          manualFlag: true,
+          currencyCode: 'AZN',
+          fixPrice: true,
+        },
+        update: {
+          amount: toDecimal(nightly),
+          manualFlag: true,
+          fixPrice: true,
+        },
+      });
+    }),
+  ]);
+  return recalcReservationDailyRates(reservationId);
+}
+
+export async function spreadStayTotal(reservationId: string, total: number) {
+  const res = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { dailyRates: true },
+  });
+  if (!res) throw new Error('Reservation not found');
+  if (res.isLocked) throw new Error('Reservation is locked');
+  const nights = eachNight(res.checkInDate, res.checkOutDate);
+  if (nights.length === 0) throw new Error('No nights');
+  const unlocked = nights.filter((stayDate) => {
+    const existing = res.dailyRates.find(
+      (d) => d.stayDate.toDateString() === stayDate.toDateString(),
+    );
+    return !existing?.manualFlag;
+  });
+  if (unlocked.length === 0) throw new Error('All nights are locked');
+  const amounts = splitStayAmounts(total, unlocked.length);
+  const nightlyHint = amounts[0] ?? 0;
+  await prisma.$transaction([
+    prisma.reservation.update({
+      where: { id: reservationId },
+      data: {
+        useManualRate: true,
+        manualDailyRate: toDecimal(nightlyHint),
+        discountPercent: null,
+        discountActive: false,
+      },
+    }),
+    ...unlocked.map((stayDate, i) =>
+      prisma.reservationDailyRate.upsert({
+        where: { reservationId_stayDate: { reservationId, stayDate } },
+        create: {
+          reservationId,
+          stayDate,
+          amount: toDecimal(amounts[i] ?? 0),
+          manualFlag: true,
+          currencyCode: 'AZN',
+          fixPrice: true,
+        },
+        update: {
+          amount: toDecimal(amounts[i] ?? 0),
+          manualFlag: true,
+          fixPrice: true,
+        },
+      }),
+    ),
+  ]);
+  return recalcReservationDailyRates(reservationId);
+}
+
+export async function applyStayPercent(reservationId: string, percent: number) {
+  const res = await prisma.reservation.findUnique({ where: { id: reservationId } });
+  if (!res) throw new Error('Reservation not found');
+  if (res.useManualRate) {
+    throw new Error('Stay % and Manual Price are mutually exclusive');
+  }
+  if (percent < 0 || percent > 100) throw new Error('Percent must be 0–100');
+  await prisma.reservation.update({
+    where: { id: reservationId },
+    data: {
+      discountPercent: toDecimal(percent),
+      discountActive: percent > 0,
+      useManualRate: false,
+    },
+  });
+  return recalcReservationDailyRates(reservationId);
 }

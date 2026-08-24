@@ -302,3 +302,31 @@ export function isSatelliteHotelSanatoriumBookingCreated(
 ): data is SatelliteHotelSanatoriumBookingCreatedEvent {
   return satelliteHotelSanatoriumBookingCreatedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_HOTEL_STAY_PRODUCT_CHANGED =
+  "SATELLITE_HOTEL_STAY_PRODUCT_CHANGED" as const;
+
+export const satelliteHotelStayProductChangedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_STAY_PRODUCT_CHANGED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload.extend({
+    previousProgramCode: z.string().optional(),
+    newProgramCode: z.string().optional(),
+    effectiveDate: z.string().min(1),
+    roomTypeId: z.string().optional(),
+    ratePlanId: z.string().optional(),
+  }),
+});
+
+export type SatelliteHotelStayProductChangedEvent = z.infer<
+  typeof satelliteHotelStayProductChangedSchema
+>;
+
+export function isSatelliteHotelStayProductChanged(
+  data: unknown,
+): data is SatelliteHotelStayProductChangedEvent {
+  return satelliteHotelStayProductChangedSchema.safeParse(data).success;
+}

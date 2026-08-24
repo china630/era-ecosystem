@@ -19,7 +19,14 @@ type Stay = {
   guest: { fullName: string };
   room: { id: string; roomNumber: string };
 };
-type Ticket = { id: string; status: string; guestName: string; total: number; folioChargeId: string | null };
+type Ticket = {
+  id: string;
+  status: string;
+  guestName: string;
+  total: number;
+  folioChargeId: string | null;
+  dueAt: string | null;
+};
 
 export default function HkLaundryPage() {
   const t = useTranslations('housekeeping');
@@ -29,6 +36,8 @@ export default function HkLaundryPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [roomId, setRoomId] = useState('');
   const [express, setExpress] = useState(false);
+  const [expressEnabled, setExpressEnabled] = useState(false);
+  const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
   const [qty, setQty] = useState<Record<string, { wash: number; iron: number; guest: number; hotel: number }>>({});
 
   const load = useCallback(async () => {
@@ -41,6 +50,7 @@ export default function HkLaundryPage() {
     setItems(json.items ?? []);
     setStays(json.stays ?? []);
     setTickets(json.tickets ?? []);
+    setExpressEnabled(Boolean(json.laundryExpressEnabled));
   }, [tc]);
 
   useEffect(() => {
@@ -80,17 +90,6 @@ export default function HkLaundryPage() {
       showApiError(json, tc('failed'));
       return;
     }
-    if (json.id) {
-      const post = await fetch('/api/housekeeping/laundry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postTicketId: json.id }),
-      });
-      if (!post.ok) {
-        showApiError(await post.json(), tc('failed'));
-        return;
-      }
-    }
     showSuccess(tc('saved'));
     await load();
   }
@@ -110,16 +109,18 @@ export default function HkLaundryPage() {
           }))}
         />
         <p className="text-sm text-[#7F8C8D]">{stay ? stay.guest.fullName : t('guestName')}</p>
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t('express')}
-          value={express ? 'yes' : 'no'}
-          onChange={(v) => setExpress(String(v) === 'yes')}
-          options={[
-            { value: 'no', label: t('regular') },
-            { value: 'yes', label: t('express') },
-          ]}
-        />
+        {expressEnabled ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('express')}
+            value={express ? 'yes' : 'no'}
+            onChange={(v) => setExpress(String(v) === 'yes')}
+            options={[
+              { value: 'no', label: t('regular') },
+              { value: 'yes', label: t('express') },
+            ]}
+          />
+        ) : null}
         {mismatch ? <p className="text-sm text-amber-800">{t('qtyMismatch')}</p> : null}
       </div>
       <ul className="mb-4 space-y-2 text-sm">
@@ -172,7 +173,7 @@ export default function HkLaundryPage() {
         ))}
       </ul>
       <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void submit()}>
-        {t('postLaundry')}
+        {t('acceptLaundry')}
       </button>
       <button type="button" className={`${SECONDARY_BUTTON_CLASS} ml-2 print:hidden`} onClick={() => window.print()}>
         {t('printTicket')}
@@ -182,9 +183,51 @@ export default function HkLaundryPage() {
       <p className="hidden text-xs print:block">{t('laundryLegalRu')}</p>
       <ul className="mt-6 text-sm">
         {tickets.map((tk) => (
-          <li key={tk.id}>
-            {tk.guestName} · {tk.status} · {tk.total}
-            {tk.folioChargeId ? ` · folio ${tk.folioChargeId.slice(0, 8)}` : ''}
+          <li key={tk.id} className="mb-2 flex flex-wrap items-center gap-2">
+            <span>
+              {tk.guestName} · {tk.status}
+              {tk.dueAt ? ` · due ${tk.dueAt.slice(0, 16)}` : ''}
+              {tk.folioChargeId ? ` · folio ${tk.folioChargeId.slice(0, 8)}` : ''}
+            </span>
+            {tk.status === 'IN_PLANT' ? (
+              <>
+                <input
+                  type="file"
+                  className="text-xs"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      setScanByTicket((m) => ({ ...m, [tk.id]: String(reader.result ?? file.name) }));
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={async () => {
+                    const key = scanByTicket[tk.id];
+                    if (!key) {
+                      showApiError({ error: t('returnScanRequired') }, tc('failed'));
+                      return;
+                    }
+                    const res = await fetch('/api/housekeeping/laundry', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ deliverTicketId: tk.id, returnScanKey: key, actorRole: 'HK' }),
+                    });
+                    if (!res.ok) showApiError(await res.json(), tc('failed'));
+                    else {
+                      showSuccess(tc('saved'));
+                      await load();
+                    }
+                  }}
+                >
+                  {t('deliverLaundry')}
+                </button>
+              </>
+            ) : null}
           </li>
         ))}
       </ul>

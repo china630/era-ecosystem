@@ -11,6 +11,7 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
+  Bus,
   Car,
   ClipboardList,
   DollarSign,
@@ -203,6 +204,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'inHouse',
               icon: Users,
               show: can(PERMISSIONS.FOLIO_READ) || can(PERMISSIONS.RESERVATIONS_READ),
+            },
+            {
+              id: 'fo-laundry',
+              href: '/fo/laundry',
+              labelKey: 'foLaundry',
+              icon: Package,
+              show: can(PERMISSIONS.FOLIO_CHARGE) || can(PERMISSIONS.HOUSEKEEPING_MANAGE),
             },
             {
               id: 'fo-room-changes',
@@ -527,6 +535,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: Car,
           items: sectionItems([
             {
+              id: 'tr-tours',
+              href: '/tours',
+              labelKey: 'tours',
+              icon: Bus,
+              show: can(PERMISSIONS.RESERVATIONS_WRITE),
+            },
+            {
               id: 'tr-main',
               href: '/transfers',
               labelKey: 'transfers',
@@ -537,6 +552,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               id: 'tr-airport',
               href: '/transfers/airport',
               labelKey: 'airportTransfer',
+              icon: Car,
+              show: can(PERMISSIONS.RESERVATIONS_WRITE),
+            },
+            {
+              id: 'tr-fleet',
+              href: '/fleet',
+              labelKey: 'fleet',
               icon: Car,
               show: can(PERMISSIONS.RESERVATIONS_WRITE),
             },

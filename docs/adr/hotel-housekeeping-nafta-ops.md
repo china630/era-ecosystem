@@ -32,7 +32,7 @@ Opera Cloud practices (credits, turndown, rush-push) do not match this labour mo
 6. **Floor assignment unit is a pair**, catalog default for Nafta: `2–3`, `4–5`, `6–7`, `8–9`, `10–11`. Rotation is **daily** (+1 pair on the ring among staff who are on duty that shift). Floor 1 is not in the default catalog. Manager override always wins; next auto run continues from the **saved** assignment.
 7. **Daily floor sheet** matches Elektra *Kat Hizmetleri* columns plus nationality, derived job type (departure / stayover / arrival-prep), and a visit-outcome code. Print: one PDF, **one floor per page**, locale = UI language (`az` / `ru` / `en`).
 8. **Visit outcomes** are a closed catalog (paper codes). **OK** on the sheet means deep clean (not the word *dərin*). **SO** (sleep-out: belongings present, guest absent) is not Opera **Sleep**. DND two consecutive days → FO task. SO three consecutive days → FO task.
-9. **Guest laundry** is a ticket (wash qty and iron qty as independent steppers on one item row) → one `FolioCharge` with revenue code `LAUNDRY`. Staff laundry roster is a separate stream.
+9. **Guest laundry** is two documents (intake vs return, same layout, different instances). Folio `LAUNDRY` posts on **Delivered** (HK primary, FO fallback on the same ticket + return scan). Intake does not post. Checkout is blocked while a ticket is IN_PLANT. Evening paper pack is archive only. Express is a hotel flag (off at Nafta); surcharge TBD. Staff laundry roster is a separate stream.
 10. **Opera credits, traveling credits, turndown, and rush-push are out** of this edition. Soft priority (departures, VIP, needed-by) and a 7–14 day HK load forecast are in. Finance inventory norms from linen counts are later.
 
 ## Explicitly not in this edition
@@ -50,4 +50,4 @@ Opera Cloud practices (credits, turndown, rush-push) do not match this labour mo
 - Night audit or a morning job generates the next business-date sheet from the reservation book + roster + pair rotation.
 - `/hk/maids` CRUD is not the roster; new screens are specified in the SSOT.
 - Occupancy / RevPAR reports must treat OOO and OOS differently when inventory axis ships.
-- Engineering SCREEN landed 2026-08-22 (folio laundry round-trip, sheet print, DnD roster, discrepancy board, OOO≠OOS reports). UAT-SMOKE §34 remains open — not SHIPPED.
+- Engineering SCREEN landed 2026-08-22 (laundry still posts on accept — superseded by SSOT §9, not recoded). UAT-SMOKE §34 remains open — not SHIPPED.

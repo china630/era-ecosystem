@@ -2,20 +2,31 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
-import { assertPermission } from '@/lib/auth/require';
+import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { postLaundryTicket, resolveStayForRoom, laundryIntakeBlockReason, isoDay } from '@/lib/services/hk-nafta.service';
-import { getCalendarDaysRange } from '@era/satellite-kit';
+import {
+  createLaundryTicket,
+  deliverLaundryTicket,
+  ensureNaftaLaundryCatalog,
+  getHkHotelPolicy,
+} from '@/lib/services/hk-nafta.service';
 import { prisma } from '@/lib/prisma';
 import { toDecimal } from '@/lib/decimal';
 
-export async function GET() {
+function laundryReadWritePerms() {
+  return [PERMISSIONS.HOUSEKEEPING_MANAGE, PERMISSIONS.FOLIO_CHARGE] as const;
+}
+
+export async function GET(request: Request) {
   try {
     const session = await getSessionFromHeaders();
-    assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
+    assertAnyPermission(session, [...laundryReadWritePerms()]);
+    await ensureNaftaLaundryCatalog();
+    const reservationId = new URL(request.url).searchParams.get('reservationId');
     const items = await prisma.laundryItem.findMany({ where: { active: true }, orderBy: { code: 'asc' } });
     const tickets = await prisma.laundryTicket.findMany({
-      take: 50,
+      where: reservationId ? { reservationId } : undefined,
+      take: 80,
       orderBy: { createdAt: 'desc' },
       include: { lines: true },
     });
@@ -30,7 +41,15 @@ export async function GET() {
       },
       take: 400,
     });
-    return jsonOk(serialize({ items, tickets, stays }));
+    const policy = await getHkHotelPolicy();
+    return jsonOk(
+      serialize({
+        items,
+        tickets,
+        stays,
+        laundryExpressEnabled: policy.laundryExpressEnabled,
+      }),
+    );
   } catch (err) {
     return handleRouteError(err);
   }
@@ -49,6 +68,7 @@ const createTicket = z.object({
   reservationId: z.string().uuid().optional(),
   guestName: z.string().optional(),
   express: z.boolean().optional(),
+  intakeNote: z.string().optional(),
   lines: z.array(
     z.object({
       itemId: z.string().uuid(),
@@ -60,14 +80,34 @@ const createTicket = z.object({
   ),
 });
 
+const deliverBody = z.object({
+  deliverTicketId: z.string().uuid(),
+  returnScanKey: z.string().min(1),
+  actorRole: z.enum(['HK', 'FO']).optional(),
+});
+
 export async function POST(request: Request) {
   try {
     const session = await getSessionFromHeaders();
-    assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = await request.json();
-    if (body.postTicketId) {
-      return jsonOk(serialize(await postLaundryTicket(String(body.postTicketId))));
+    if (body.deliverTicketId) {
+      assertAnyPermission(session, [...laundryReadWritePerms()]);
+      const data = deliverBody.parse(body);
+      const { hasPermission } = await import('@/lib/auth/permissions');
+      const hk = session && hasPermission(session.role, PERMISSIONS.HOUSEKEEPING_MANAGE);
+      const role: 'HK' | 'FO' = data.actorRole ?? (hk ? 'HK' : 'FO');
+      return jsonOk(
+        serialize(
+          await deliverLaundryTicket({
+            ticketId: data.deliverTicketId,
+            actorUserId: session!.sub,
+            actorRole: role,
+            returnScanKey: data.returnScanKey,
+          }),
+        ),
+      );
     }
+    assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     if (body.code && body.name) {
       const data = createItem.parse(body);
       const item = await prisma.laundryItem.create({
@@ -82,37 +122,13 @@ export async function POST(request: Request) {
       return jsonOk(serialize(item));
     }
     const data = createTicket.parse(body);
-    const stay = data.reservationId
-      ? await prisma.reservation.findUnique({ where: { id: data.reservationId }, include: { guest: true } })
-      : await resolveStayForRoom(data.roomId);
-    if (!stay) throw new Error('In-house or arriving reservation required');
-    let dayType: string | null = null;
-    try {
-      const days = await getCalendarDaysRange(isoDay(new Date()), isoDay(new Date()));
-      dayType = days[0]?.dayType ?? null;
-    } catch {
-      dayType = null;
-    }
-    const blocked = laundryIntakeBlockReason({ now: new Date(), express: data.express ?? false, dayType });
-    if (blocked) throw new Error(blocked);
-    const ticket = await prisma.laundryTicket.create({
-      data: {
-        roomId: data.roomId,
-        reservationId: stay.id,
-        guestName: data.guestName || stay.guest.fullName,
-        express: data.express ?? false,
-        status: 'ACCEPTED',
-        lines: {
-          create: data.lines.map((l) => ({
-            itemId: l.itemId,
-            washQty: l.washQty,
-            ironQty: l.ironQty,
-            guestQty: l.guestQty ?? l.washQty + l.ironQty,
-            hotelQty: l.hotelQty ?? l.washQty + l.ironQty,
-          })),
-        },
-      },
-      include: { lines: true },
+    const ticket = await createLaundryTicket({
+      roomId: data.roomId,
+      reservationId: data.reservationId,
+      guestName: data.guestName,
+      express: data.express,
+      now: new Date(),
+      lines: data.lines,
     });
     return jsonOk(serialize(ticket));
   } catch (err) {

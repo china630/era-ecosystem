@@ -43,3 +43,4 @@ See [hotel-agency-portal.md](./hotel-agency-portal.md).
 - Hotel routes map to required `hotel_*` key via `org-entitlement-gate` / `requireHotelModule`.
 - Nav sections in `HotelOpsShell` use section `id` = module key.
 - Source of truth: `era-orchestrator/packages/database/prisma/lib/core/hotel-module-keys.ts` (mirrored in `@era/satellite-kit`).
+- Guest group tours (`/tours`, HOT-TOUR-01) share **`hotel_transfers`** — do not add a SKU. Spec: [hotel-guest-tours.md](./hotel-guest-tours.md).

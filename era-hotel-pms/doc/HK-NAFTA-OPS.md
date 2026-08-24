@@ -26,7 +26,7 @@ Paper / export sources (2026-08):
 | Mobile | All hotel tasks | Assigned floors today + outcome codes |
 | OOO / OOS | Reports subtracted both | Occupancy denominator **OOO only** |
 | Forecast | Occupancy forecast only | HK load by floor 7–14 + linen/deep/heads |
-| Laundry | Revenue code + postCharge | Ticket → one folio line; void → VOIDED |
+| Laundry | Revenue code + postCharge | §9: IN_PLANT then Delivered → `LAUNDRY`; checkout blocked while open |
 | Linen / deep | Paper 3rd / 5th night | Hotel policy UI + sheet duty; **no per-stay N override** |
 
 ---
@@ -60,15 +60,16 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Three axes + check-in does not write OCCUPIED | Landed |
 | Roster / rotation DnD + CatalogField shifts | Landed (SCREEN) |
 | Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN) |
-| Laundry → folio + voidCharge → VOIDED | Landed (SCREEN) |
+| Laundry ticket + immediate post on accept | **Superseded** — accept is IN_PLANT only |
 | Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
 | HK forecast 7/14 + linen/deep/heads | Landed (SCREEN) |
-| Linen/deep every N (`/settings/hk-policy`) + sheet duty | Landed (SCREEN); stay-level override **not built** |
-| Needed-by time on sheet | Landed (SCREEN); stored as UTC clock on business date |
+| Linen/deep every N (`/settings/hk-policy`) + sheet duty | Landed (SCREEN); stay-level override on reservation |
+| Needed-by time on sheet | Landed (SCREEN); stored as Asia/Baku wall clock |
 | DND×2 / SO×3 → OPEN GuestTask | Landed (SCREEN) |
-| Print | `window.print()` page-break; **not** a PDF library |
-| Elektra time columns / Q Saati | Slots empty (no source clock) |
-| Per-stay linen/deep N | **Open** |
+| Print | `window.print()` plus PDF download of the floor sheet |
+| Elektra time columns / Q Saati | Arrival/departure clocks from Stay actual times; Q Saati still empty |
+| Per-stay linen/deep N | **Coded** (HK job on stay, **not** a folio line) |
+| Laundry cycle §9 (intake ≠ return, post on Delivered, FO fallback, checkout stop) | **Coded** (SCREEN) — UAT unsigned |
 | UAT-SMOKE §34 pass / SHIPPED | **Open** |
 | Opera credits / turndown / rush-push / ƏG cash / finance stock | OUT |
 
@@ -264,19 +265,59 @@ Skip / Sleep stay on a discrepancy board; they are not maid sheet codes.
 
 ## 9. Guest laundry ticket
 
-Separate from the Çamaşırxana **shift** roster. Same department, different document.
+Separate from the Çamaşırxana **shift** roster. Same department, different document.  
+**Room linen / deep every N nights** (and a stay override of that N) is an HK **job on the sheet**, not a `LAUNDRY` folio line. Guest wash/iron is the only laundry posting.
 
-Ticket header: guest (default from in-house stay), room, date, Regular | Express.
-
-Each catalog item row has **two independent steppers**:
+Ticket header: guest (default from in-house stay), room, date. Catalog rows: two independent steppers:
 
 `line = washQty × washPrice + ironQty × ironPrice`
 
-Zero qty = service not ordered. Express **+50%** on ticket total (window 09:00–17:00, 3-hour SLA). Regular: in by 10:00 → back 17:00 same day. No intake on Sundays or labour holidays (same production calendar). Pressing hours 09:00–20:00 (ticket rules).
+Zero qty = service not ordered. Bill **hotel count** when guest vs hotel qty differ (flag, do not block). Prices live in an HK catalog, not hardcoded AZN. Legal text (shrinkage, stains, cap 3× wash price) is on both print forms, az/en/ru.
 
-Bill **hotel count** when guest vs hotel qty differ (flag, do not block). One `postCharge` (`LAUNDRY`, 18% tax tag already seeded). Lines stay on the ticket for print and dispute. No second post; void/correct the folio to reverse.
+Revenue code is always **`LAUNDRY`** (18% tax tag already seeded). Tours (`TOUR`) are a later FO module, not this ticket.
 
-Print reprints the three-language legal ticket (shrinkage, stains, compensation cap 3× wash price). Prices live in an HK catalog, not hardcoded AZN.
+### 9.1 Intake windows and due time (Asia/Baku)
+
+| Service | Accept window | Same-day return |
+|---------|---------------|-----------------|
+| Wash | 09:00–17:00 | if accepted **before 10:00** → due 17:00 same day |
+| Iron | 09:00–20:00 | if accepted **before 10:00** → due 17:00 same day |
+
+After 10:00, still accept until the window closes; due = **next working day** 17:00. Mixed ticket: wash lines cannot be added after 17:00; iron-only until 20:00; `dueAt` = latest of the lines. No intake Sunday / labour holiday (production calendar).
+
+**Express:** hotel setting, **off at Nafta**. Other hotels may enable it. Surcharge shape (`percent` vs fixed) is **TBD** — do not hardcode +50%. Disabled or missing surcharge ⇒ Express cannot be selected.
+
+### 9.2 Two forms, same layout, two instances
+
+Nafta paper uses the **same layout** for acceptance and for return, but they are **not the same sheet**:
+
+| Form | When | Signatures |
+|------|------|------------|
+| **Intake** | Clothes into the plant | Laundry staff + guest |
+| **Return** | Finished clothes back to guest | Laundry staff + guest |
+
+Do not write return on the intake copy. In the system: `intakeDocument` and `returnDocument` (scan/photo + captured names/time). Optional print of either PDF. Three paper copies (plant / guest / desk) remain **end-of-shift archive**; they are not a posting gate.
+
+### 9.3 Who posts the folio (canon)
+
+**Posting event = first successful Delivered**, not intake, not the evening paper pack.
+
+1. HK accepts on `/hk/laundry` (intake form). Ticket **IN_PLANT**. **No folio line.** Same ticket is visible read-only on `/fo/laundry`.
+2. Plant processes. Checkout of that stay is **blocked** while any ticket is not posted or voided (guest may forget clothes). Modal: post now / wait / void per hotel rules — **no** “check out anyway”.
+3. HK returns clothes, attaches **return** form, presses **Delivered** → one `postCharge` `LAUNDRY`. Ticket **POSTED**. Button disappears for everyone.
+4. If HK has already left: FO on `/fo/laundry` may Delivered **that same ticket** only, with the return-form file required. FO **must not invent** a ticket that was never accepted in HK.
+5. Second Delivered (other desk, stale tab) → refuse: already on folio. Audit: `userId`, role HK|FO, time, `ticketId`, `chargeId`, return-form attachment.
+
+End-of-shift paper bundle → reception is **control and archive**, not a third confirmation step.
+
+Void/correct after POSTED: void the folio charge (ticket VOIDED), same as other charges. Cancel before Delivered: VOIDED, no charge.
+
+### 9.4 Screens
+
+| Route | Role |
+|-------|------|
+| `/hk/laundry` | Accept, process, Delivered + return file (primary post) |
+| `/fo/laundry` | Queue in plant vs already posted; fallback Delivered + return file |
 
 Laundry plant uses ticket volume only as a **load hint**, not room credits.
 
@@ -291,7 +332,8 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/hk` | Floor sheets, VIP strip, derived job type |
 | `/hk/mobile` | My floors today + outcome codes |
 | `/hk/forecast` | 7–14 day load |
-| `/hk/laundry` | Ticket steppers → folio |
+| `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY` |
+| `/fo/laundry` | Same tickets; fallback Delivered only (no invent) |
 | `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Keep; closed-rooms gain real OOO≠OOS |
 
 `/hk/maids` code+name CRUD is not the roster.
@@ -316,7 +358,7 @@ Change a shift cell with a closed select, not drag.
 | **1** | Three departments, roster, ƏG, daily pair rotation, Elektra sheet + outcomes, Pickup, OOO≠OOS stats |
 | **2** | Stayover/NSR on the reservation, DND×2 / SO×3, Skip/Sleep, soft priority, nationality on the sheet |
 | **3** | HK forecast 7–14 days |
-| **Later** | Credits (default off); linen norms → finance inventory |
+| **Later** | Credits (default off); linen norms → finance inventory; **laundry cycle §9 recode** |
 | **OUT** | Turndown; rush-push; ƏG cash payout |
 
 No Scaffold ✅ / SHIPPED / Pilot-ready on this deepen without UAT-SMOKE UI evidence and matrix updates (`task-acceptance.mdc`).
@@ -327,7 +369,8 @@ No Scaffold ✅ / SHIPPED / Pilot-ready on this deepen without UAT-SMOKE UI evid
 
 - **Q Saati** meaning (empty in the 22.08 export).
 - When to start ƏG roster pressure (setting; 1 Nov is a candidate).
-- Exact Nafta building/wing list for `Konumu` (rooms today have `floor` + `location` only).
+- Exact Nafta building/wing list for `Konumu`: **one building** — use `floor` + `location` only (no wing catalog).
+- Express laundry surcharge (`percent` vs fixed) for non-Nafta hotels.
 
 ---
 
@@ -343,4 +386,8 @@ No Scaffold ✅ / SHIPPED / Pilot-ready on this deepen without UAT-SMOKE UI evid
 | ƏG burn | 1 January |
 | ƏG pressure-from | TBD |
 | Inspected required to assign | Already in clone-spec (keep) |
-| Linen / deep every N nights | Hotel policy + stay override (wave 2) |
+| Linen / deep every N nights | Hotel policy + stay override (HK job, not folio) |
+| Laundry Express | Off at Nafta; surcharge TBD |
+| Wash accept | 09:00–17:00 Asia/Baku |
+| Iron accept | 09:00–20:00 Asia/Baku |
+| Same-day return cutoff | 10:00 Asia/Baku |

@@ -195,6 +195,9 @@ export default function HousekeepingPage() {
           >
             {t('printSheet')}
           </button>
+          <a className={SECONDARY_BUTTON_CLASS} href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}`}>
+            {t('downloadSheetPdf')}
+          </a>
         </div>
         {(printPages.length ? printPages : [{ floor: Number(sheetFloor), rows: sheetRows }]).map((page) => (
           <div key={page.floor} className="hk-print-floor" style={{ pageBreakAfter: 'always' }}>

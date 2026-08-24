@@ -82,6 +82,7 @@ export async function postCharge(input: {
   description: string;
   businessDate?: Date;
   departmentId?: string;
+  externalRef?: string;
 }) {
   const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
   await assertBusinessDayOpenForPosting();
@@ -148,6 +149,7 @@ export async function postCharge(input: {
       qty: input.qty ?? 1,
       description: input.description,
       businessDate: input.businessDate ?? new Date(),
+      externalRef: input.externalRef,
     },
     include: { revenueCode: true, folio: true },
   });

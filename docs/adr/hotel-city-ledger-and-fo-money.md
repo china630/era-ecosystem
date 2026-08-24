@@ -32,6 +32,7 @@ Architecture already splits planes ([HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITA
 | Early unused-nights refund | SHIPPED | ADR hotel-early-checkout-unused-nights; HOT-CO-04; apply before CL transfer |
 | Checkout discounts | SHIPPED | Negative `DISCOUNT` charge at settle/checkout + promo/`discountPct` |
 | Transfers / Banquets | SHIPPED (MVP) | unchanged |
+| Guest tours (in-house roster) | **Not implemented** | ADR [hotel-guest-tours.md](./hotel-guest-tours.md) — charge on GUEST folio, not pending hub |
 | Agency settlement ops | SHIPPED (ops) | Hotel postpaid apply; commission accrual note; bank match in Finance |
 
 Folio status: `OPEN | CLOSED | VOID | PENDING_AR | TRANSFERRED_AR`.
