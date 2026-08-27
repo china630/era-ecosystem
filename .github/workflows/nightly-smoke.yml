@@ -50,7 +50,9 @@ jobs:
           COMPOSE_FILE=docker-compose.prod.yml ENV_FILE=.env.ci ./docker/scripts/migrate-all.sh
 
       - name: Start stack
-        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d --wait --wait-timeout 180 orchestrator
 
       - name: Ecosystem health smoke
         run: node scripts/ecosystem-smoke-all.mjs

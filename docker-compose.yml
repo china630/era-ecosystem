@@ -116,12 +116,12 @@ services:
       NEXT_PUBLIC_ORCH_WEB_URL: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
       NEXT_PUBLIC_FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
       FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
+      # Nightly/droplet migrate-all already applied schema; skip boot migrate.
+      SKIP_PRISMA_MIGRATE: ${SKIP_PRISMA_MIGRATE:-0}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      finance-core:
         condition: service_healthy
     ports:
       - "${ORCHESTRATOR_WEB_PUBLISH_PORT:-3000}:3000"

@@ -24,6 +24,8 @@ alwaysApply: true
 
 Migrations: `npm run db:migrate:deploy -w @era365/database` (and mdm-database when schema changes).
 
+**Docker:** image already has generated Prisma clients. Entrypoint must not `prisma generate` / `npx prisma` (Nightly hang). `SKIP_PRISMA_MIGRATE=1` after `migrate-all.sh`. Compose: orchestrator depends on Postgres + Redis only — not finance-core.
+
 ## Env (typical)
 
 `JWT_SECRET`, `DATABASE_URL`, `MDM_DATABASE_URL`, `REDIS_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SSO_SHARED_SECRET`, `PII_ENCRYPTION_KEY`, `PII_BLIND_INDEX_KEY`.
