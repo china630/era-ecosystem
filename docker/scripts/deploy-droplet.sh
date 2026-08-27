@@ -66,6 +66,7 @@ COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
 
 if [ -z "$services" ]; then
   "${COMPOSE[@]}" up -d --remove-orphans
+  "${COMPOSE[@]}" up -d --wait --wait-timeout 180 orchestrator
   docker image prune -af || true
   node scripts/ecosystem-smoke-all.mjs || echo "WARN: ecosystem-smoke-all failed (non-blocking)"
 else
@@ -73,5 +74,5 @@ else
   # --no-deps: scoped IMAGE_TAG only exists for the rebuilt service; pulling
   # depends_on siblings (e.g. finance-web → finance-core) 404s on GHCR.
   # shellcheck disable=SC2086
-  "${COMPOSE[@]}" up -d --no-deps $services
+  "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services
 fi
