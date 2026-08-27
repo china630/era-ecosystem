@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Apply Prisma migrations for all ERA stack databases.
 # Always `compose run --no-deps` (fresh pulled image), never exec into a stale container.
+# Orchestrator: in-image Prisma CLI (no npx — download hang). Clients are baked; entrypoint does not generate.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -129,8 +130,8 @@ run_or_flag() {
   fi
 }
 
-run_or_flag orchestrator "cd /app/packages/database && npx prisma migrate deploy"
-run_migrate orchestrator "cd /app/packages/mdm-database && npx prisma migrate deploy" || echo "WARN: mdm migrate skipped or failed"
+run_or_flag orchestrator "cd /app/packages/database && node ./node_modules/prisma/build/index.js migrate deploy"
+run_migrate orchestrator "cd /app/packages/mdm-database && node ./node_modules/prisma/build/index.js migrate deploy" || echo "WARN: mdm migrate skipped or failed"
 run_or_flag finance-core "cd /app/packages/database && npx prisma migrate deploy"
 run_migrate data-hub "cd /app/packages/database && npx prisma migrate deploy" || echo "WARN: data-hub migrate skipped or failed"
 

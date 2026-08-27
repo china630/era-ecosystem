@@ -51,6 +51,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 chmod +x docker/scripts/migrate-all.sh
 COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 180 orchestrator
 node scripts/ecosystem-smoke-all.mjs
 ```
 
@@ -72,7 +73,7 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 |------|---------|
 | Logs | `docker compose -f docker-compose.prod.yml logs -f orchestrator` |
 | Prune old images | `docker image prune -f` (also in deploy workflow) |
-| Update stack | New `IMAGE_TAG` → `pull` → `migrate-all.sh` → `up -d` |
+| Update stack | New `IMAGE_TAG` → `pull` → `migrate-all.sh` → `up -d` + `--wait` orchestrator |
 
 ## Troubleshooting
 

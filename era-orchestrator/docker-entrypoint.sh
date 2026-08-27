@@ -1,17 +1,34 @@
 #!/bin/sh
+# Control-plane entrypoint. Prisma clients are baked in the image — do not
+# `prisma generate` or `npx prisma` at boot (Nightly CPU contention; npx hangs
+# downloading CLI). migrate-all.sh already applied schema before `up`.
 set -e
 cd /app
 
-if [ -f packages/database/prisma/schema.prisma ]; then
-  npm run db:generate -w @era365/database 2>/dev/null || true
-  npm run db:migrate:deploy -w @era365/database 2>/dev/null || true
-fi
-
-if [ -f packages/mdm-database/prisma/schema.prisma ]; then
-  npm run db:generate -w @era365/mdm-database 2>/dev/null || true
-  if ! npm run db:migrate:deploy -w @era365/mdm-database; then
-    echo "[entrypoint] WARN: MDM migrate deploy failed — register-org will 500 until era_mdm is migrated" >&2
+migrate_pkg() {
+  pkg="$1"
+  label="$2"
+  if [ "${SKIP_PRISMA_MIGRATE:-0}" = "1" ]; then
+    return 0
   fi
+  if [ ! -f "$pkg/prisma/schema.prisma" ]; then
+    return 0
+  fi
+  if [ -f "$pkg/node_modules/prisma/build/index.js" ]; then
+    (cd "$pkg" && node ./node_modules/prisma/build/index.js migrate deploy)
+  elif [ -x "$pkg/node_modules/.bin/prisma" ]; then
+    (cd "$pkg" && ./node_modules/.bin/prisma migrate deploy)
+  else
+    echo "[entrypoint] WARN: prisma CLI missing in $pkg ($label) — skip migrate" >&2
+    return 0
+  fi
+}
+
+if ! migrate_pkg packages/database "control-plane"; then
+  echo "[entrypoint] WARN: control-plane migrate deploy failed" >&2
+fi
+if ! migrate_pkg packages/mdm-database "MDM"; then
+  echo "[entrypoint] WARN: MDM migrate deploy failed — register-org will 500 until era_mdm is migrated" >&2
 fi
 
 if [ "$1" = "start" ]; then
