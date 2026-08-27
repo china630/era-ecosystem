@@ -21,6 +21,9 @@ export {
 export {
   createRuntimeConfigHandlers,
   type RuntimeConfigHandlerOptions,
+  type ElektrawebBridgeSyncPayload,
+  type ClinicCutoverSyncPayload,
+  type RuntimeConfigBody,
 } from "./tenancy/runtime-config";
 export {
   applySatelliteRuntimeConfig,
@@ -38,6 +41,7 @@ export {
 } from "./tenancy/resolve-orchestrator-url";
 export {
   runWithSatelliteTenant,
+  enterSatelliteTenant,
   getSatelliteTenantContext,
   resolveSatelliteTenantOrgId,
   resolveSatelliteTenantFilter,
@@ -340,9 +344,17 @@ export {
   type CronEntitlementOpts,
   type CronEntitlementResult,
 } from "./integration/org-entitlement-gate";
+export { fetchPoolOrganizationIdsFromOrch } from "./integration/fetch-pool-organization-ids";
 export {
   exportOrgSlice,
+  exportOrgSliceLabSummary,
+  importOrgSlice,
+  ORG_SLICE_FORMAT_VERSION,
+  ORG_SLICE_NOTE_HOTEL_V1,
   type OrgSliceExportResult,
+  type OrgSliceImportResult,
+  type OrgSliceTableMeta,
+  type SliceModelDelegate,
 } from "./placement/slice-export";
 export {
   INDUSTRY_NAV_ITEMS,
