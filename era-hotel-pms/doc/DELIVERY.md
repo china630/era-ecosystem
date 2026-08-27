@@ -252,7 +252,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] `TransferVehicle`, `TransferOrder` — IN/OUT directions, fleet assignment
 - [x] `/transfers` UI + `/api/transfers/*` — book, assign vehicle, complete
 - [x] Complete: posts `TRANSFER` revenue on folio when not yet charged
-- [x] Seed: 2 vehicles, sample IN transfer for in-house guest Ali Mammadov
+- [x] Seed: 2 vehicles, sample IN transfer for in-house guest Ali Mammadov; revenue codes `TRANSFER` + `TOUR` (distinct P&L, both NAS 606)
 - [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § TRANSFER
 
 **Migration:** `20260528130000_wave4_transfer`

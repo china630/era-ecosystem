@@ -67,6 +67,8 @@ export function computeHotelStatus(input: {
 export function revenueFlashBucket(code: string, departmentCode?: string | null): 'room' | 'fb' | 'spa' | 'medical' | 'other' {
   const c = code.toUpperCase();
   const dept = (departmentCode ?? '').toUpperCase();
+  // TOUR is ACC-department but excursion P&L — do not inherit the ACC→room catch-all.
+  if (c === 'TOUR') return 'other';
   if (c === 'ROOM' || c === 'PKG' || c === 'TRANSFER' || dept === 'ACC') return 'room';
   if (c === 'FOOD' || c === 'BOARD' || c === 'MINIBAR' || dept === 'REST') return 'fb';
   if (c === 'TREATMENT' || c.includes('SPA')) return 'spa';
