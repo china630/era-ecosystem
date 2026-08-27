@@ -173,9 +173,10 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 
 **Hotel revenue split (room vs add-on):** PMS folio charges carry a `RevenueCode` (`ROOM`, `FOOD`, `MEDICAL`, …). The dynamic pricing engine (`quoteStay` in `era-hotel-pms`) emits quotes with separate **Room Revenue** and **Add-on Revenue** lines so each posts to the correct code. Night audit aggregates charges by `revenueCodeId`, enriches each line with `glAccountCode` (e.g. ROOM→601, FOOD→602), and sends `revenueLines[]` on `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` — enabling Finance/Orchestrator to route food revenue to the F&B org/satellite without merging it into accommodation revenue. See ADR [hotel-dynamic-rate-plans.md](./adr/hotel-dynamic-rate-plans.md).
 
-**Elektraweb live bridge (Nafta dual-run, planned):** temporary browser extension mirrors guests/reservations/open folio into `era-hotel-pms` while FO SoT remains Elektraweb. Ingest must emit the same hotel→clinic lifecycle events as native check-in (`SATELLITE_HOTEL_GUEST_CHECKED_IN` / `OUT`, `ROOM_CHANGED`, `SANATORIUM_BOOKING_CREATED`) — not Prisma-only upsert. During dual-run do **not** emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` from ERA for mirrored stays. Docs: [ADR](./adr/hotel-elektraweb-live-bridge.md) · [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md).
+**Elektraweb live bridge (Nafta dual-run):** temporary browser extension mirrors guests/reservations/open folio into `era-hotel-pms` while FO SoT remains Elektraweb. Ingest must emit the same hotel→clinic lifecycle events as native check-in (`SATELLITE_HOTEL_GUEST_CHECKED_IN` / `OUT`, `ROOM_CHANGED`, `SANATORIUM_BOOKING_CREATED`, `STAY_PRODUCT_CHANGED`) — not Prisma-only upsert. During dual-run do **not** emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` from ERA for mirrored stays. Extra SPA tickets stay in Elektraweb until hotel hour X (charge at **issue ticket**, not `COMPLETED`; walk-in extras → house folio `TIBB AMBULATOR FOLIO`, not Cash Office). **SaaS Wave 1:** property ids and dual-run flags are per org (Super-Admin `ElektrawebBridgePolicy` / `ClinicCutoverPolicy` + Sync); ingest/outbox org from JWT/body — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md). Docs: [inbound ADR](./adr/hotel-elektraweb-live-bridge.md) · [reverse extras](./adr/hotel-elektraweb-reverse-folio-post.md) · [ops guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md).
 | `SATELLITE_HOTEL_INVOICE_ISSUED` | era-hotel-pms | `handleHotelInvoiceIssued` | Draft sales invoice in Finance |
 | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | era-hotel-pms | `handleHotelCityLedgerSnapshot` | Agency city-ledger snapshot persisted (`AgencyCityLedgerSnapshot`); read on Finance counterparty |
+| `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` | era-hotel-pms | skip (clinic lifecycle) | Fan-out to clinic remaining replan; payload: `globalPersonId`, `roomNumber`, stay dates, `newProgramCode`; Finance no-op |
 | `SATELLITE_RETAIL_SALE_COMPLETED` | era-retail-pos | `handleRetailSale` | GL + draft invoice |
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | era-retail-pos | `handleRetailShiftClosed` | Cash recon log (meta only) |
 | `SATELLITE_FB_SALE_COMPLETED` | era-fnb-pos | `handleFbSale` | GL journal (LOCAL_CASHIER only; not room-charge/hub) |
@@ -207,6 +208,7 @@ When org `settlementPolicy.settlementHub=HOTEL_FRONT_CASH` (see [unified-settlem
 | Direction | Endpoint | Auth |
 |-----------|----------|------|
 | fb-pos / clinic → hotel | `POST /api/settlement/pending` | `POS_BRIDGE_SECRET` / `x-pos-bridge-secret` |
+| clinic → hotel (dual-run extras) | `POST /api/integrations/elektraweb-bridge/outbox` | same POS secret; widget drains with bridge JWT |
 | hotel → fb-pos / clinic | `POST /api/integration/settlement-confirmed` | same secret |
 | Front Cash UI | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | session + `folio:payment` / `folio:void` |
 

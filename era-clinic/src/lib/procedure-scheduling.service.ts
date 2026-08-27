@@ -144,14 +144,43 @@ export async function rescheduleProcedureOrder(
   return updated;
 }
 
-export async function getResourceCalendar(date: Date) {
+export async function getResourceCalendar(date: Date, opts?: { procedureCode?: string }) {
   const { schedulingSlotMinutes } = await getSchedulingSettings();
   const dayStart = new Date(date);
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = new Date(dayStart);
   dayEnd.setDate(dayEnd.getDate() + 1);
 
-  const resources = await prisma.resource.findMany({ orderBy: { code: "asc" } });
+  const schedulingCodes = new Set(
+    (
+      await prisma.procedureTypeRequirement.findMany({
+        where: {
+          role: { in: ["LOCATION", "EQUIPMENT"] },
+          resourceCode: { not: null },
+        },
+        select: { resourceCode: true },
+      })
+    )
+      .map((r) => r.resourceCode)
+      .filter(Boolean) as string[],
+  );
+
+  let procedureResourceCodes: Set<string> | null = null;
+  if (opts?.procedureCode) {
+    const pt = await prisma.procedureType.findFirst({
+      where: { code: opts.procedureCode },
+      include: { requirements: true },
+    });
+    if (pt) {
+      const { listPhysicalRequirementResources } = await import(
+        "@/domain/procedure/procedure-allocation.service"
+      );
+      const resources = await listPhysicalRequirementResources(pt);
+      procedureResourceCodes = new Set(resources.map((r) => r.code));
+    }
+  }
+
+  const allResources = await prisma.resource.findMany({ orderBy: { code: "asc" } });
   const bookings = await prisma.resourceBooking.findMany({
     where: {
       startsAt: { lt: dayEnd },
@@ -160,6 +189,14 @@ export async function getResourceCalendar(date: Date) {
     include: {
       procedureOrder: { include: { patientRef: true } },
     },
+  });
+
+  const bookingResourceIds = new Set(bookings.map((b) => b.resourceId));
+  const resources = allResources.filter((resource) => {
+    if (procedureResourceCodes) {
+      return procedureResourceCodes.has(resource.code);
+    }
+    return schedulingCodes.has(resource.code) || bookingResourceIds.has(resource.id);
   });
 
   return resources.map((resource) => {

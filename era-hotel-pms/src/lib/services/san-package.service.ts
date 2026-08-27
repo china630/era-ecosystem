@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
+import { scaleLinesToSell } from '@/lib/services/door-type.policy';
+import { resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 
 function sameCalendarDay(a: Date, b: Date): boolean {
   return a.toDateString() === b.toDateString();
@@ -22,17 +24,33 @@ export async function postNightlyPackageCharges(
     where: { id: reservationId },
     include: {
       ratePlan: { include: { packageLines: { include: { revenueCode: true } } } },
+      dailyRates: true,
       folios: { include: { charges: { include: { revenueCode: true } } } },
     },
   });
-  if (!reservation?.ratePlan.medicalFlag) {
+  if (!reservation) return { posted: 0, skipped: true };
+
+  const slice = await resolveStaySliceForDate(reservationId, businessDate);
+  const ratePlanId = slice?.ratePlanId ?? reservation.ratePlanId;
+  const ratePlan =
+    ratePlanId === reservation.ratePlanId
+      ? reservation.ratePlan
+      : await prisma.ratePlan.findUnique({
+          where: { id: ratePlanId },
+          include: { packageLines: { include: { revenueCode: true } } },
+        });
+  if (!ratePlan?.medicalFlag) {
     return { posted: 0, skipped: true };
   }
 
-  const lines = reservation.ratePlan.packageLines;
+  const lines = ratePlan.packageLines;
   const pkgCode = await prisma.revenueCode.findFirst({ where: { code: 'PKG' } });
+  const sellRow = reservation.dailyRates.find((d) => sameCalendarDay(d.stayDate, businessDate));
+  const sellAmount = sellRow
+    ? decimalToNumber(sellRow.amount)
+    : decimalToNumber(ratePlan.pricePerNight);
 
-  const chargeLines =
+  const rawLines =
     lines.length > 0
       ? lines.map((l) => ({
           revenueCodeId: l.revenueCodeId,
@@ -45,11 +63,14 @@ export async function postNightlyPackageCharges(
             {
               revenueCodeId: pkgCode.id,
               code: 'PKG',
-              amount: decimalToNumber(reservation.ratePlan.pricePerNight),
+              amount: decimalToNumber(ratePlan.pricePerNight),
               description: `Medical package ${businessDate.toISOString().slice(0, 10)}`,
             },
           ]
         : [];
+
+  const scaled = scaleLinesToSell(rawLines, sellAmount);
+  const chargeLines = rawLines.map((line, i) => ({ ...line, amount: scaled[i] ?? line.amount }));
 
   if (chargeLines.length === 0) {
     return { posted: 0, skipped: true };

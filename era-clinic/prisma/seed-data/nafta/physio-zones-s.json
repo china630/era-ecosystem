@@ -1,0 +1,3676 @@
+{
+  "id": "physio-zones-s-v0",
+  "status": "draft-for-review",
+  "notProductSoR": true,
+  "sources": [
+    {
+      "id": "USSR-817-1987",
+      "title": "Minzdrav USSR order 18.06.1987 No. 817 — massage load units (zone list with anatomical bounds)",
+      "legal": "Repealed in RF (Minzdrav 15.12.2023 No. 697). Still the de-facto CIS spa/physio zone vocabulary."
+    },
+    {
+      "id": "SHCHERBAK",
+      "title": "A.E. Shcherbak segmental galvanization / electrophoresis (collar + panty zones)"
+    },
+    {
+      "id": "PELOID-CLOTHING",
+      "title": "CIS peloid/paraffin application names (collar, panties, trousers, gloves, socks)"
+    },
+    {
+      "id": "HYDRO",
+      "title": "Balneology fill/site: full bath, sitz, to-waist, four-chamber"
+    }
+  ],
+  "notes": [
+    "S is doctor-facing. A (FMA/TA) is a pre-bound underlay — not picked on the visit.",
+    "Prikaz 817 items 15 and 18 (segmental massage) are the same sites as 14 and 17 — method, not extra S codes.",
+    "fmaId is a lookup hint, not a licensed SNOMED identifier. Confirm against FMA/BioPortal before seed.",
+    "Canon era-clinic/doc/physio-site-canon.md wins if this file disagrees.",
+    "4 lü = electrode count, not Amplipuls work-kind IV (that is 4 cu rej).",
+    "Sock/glove strings alias foot/hand S. APPLICATION_CUT is legacy; matcher still maps those phrases to S.",
+    "böyrəküstü / böyrək üstü = lumbosacral (above the kidneys), not a new S.",
+    "sadə on inhalation = no additive, not a site. rus akimi = Kotz, not SMT I–V.",
+    "dizdən aşağı / asagi eyaqlar = below the knee → ZONE-FOOT-LEG, not the whole lower limb.",
+    "baldır = crus (ZONE-FOOT-LEG). bud = thigh / hip-gluteal. Not the same S.",
+    "artroz pr / artrit rej = stim program, not PRP (SVC-PRP-TERAPIYA is a different SKU).",
+    "BTL 4000: any electro procedures in parallel on the two split-room outputs. 4-pad capability only 12/13; those couches also serve 2-pad. FIFO, no hold.",
+    "Resource occupancy is planning-only in naftaResourceSketch — not runtime schema."
+  ],
+  "orderFieldsNotZones": [
+    {
+      "code": "SEQUENCE_ALTERNATING",
+      "meaning": "Apply listed S sites in turn, not one combined patch",
+      "wo": [
+        "növbəli",
+        "nobeli",
+        "novbe",
+        "novb",
+        "novbeli",
+        "noybeli",
+        "novvbeli",
+        "novbveli",
+        "novcvbeli",
+        "növbvəli",
+        "növbəlii",
+        "novbelii",
+        "övbəli",
+        "ovbeli",
+        "növəli",
+        "noveeli",
+        "vobeli",
+        "növbli",
+        "novveli",
+        "novbre",
+        "nibeli",
+        "novbelilar",
+        "növbəlilar",
+        "novbe",
+        "nov"
+      ]
+    },
+    {
+      "code": "SEQUENCE_SIMULTANEOUS",
+      "meaning": "Several S in one session as one combined application. Default when multiple chips without növbəli.",
+      "wo": [
+        "eyni vaxtda",
+        "eyni vaxda",
+        "eyni zamanda",
+        "eyni anda",
+        "eyni zaman",
+        "eyni vaxti",
+        "eyni enda"
+      ]
+    },
+    {
+      "code": "LATERALITY",
+      "meaning": "NONE | LEFT | RIGHT | BILATERAL",
+      "wo": [
+        "sağ",
+        "sol",
+        "saq",
+        "her iki",
+        "hər iki",
+        "heriki",
+        "hər ikisi",
+        "her ikisi",
+        "hər ikisinə",
+        "her ikisine",
+        "hir iki",
+        "hiriki",
+        "ker iki",
+        "keriki",
+        "so",
+        "hər4 iki",
+        "her4 iki",
+        "hər ki",
+        "her ki",
+        "her etrafa",
+        "hər ətrafa"
+      ]
+    },
+    {
+      "code": "AMPLIPULS_WORK_KIND",
+      "meaning": "Amplipuls SMT роды работы I–V. WO 4 cu rej = IV, 2 ci rej = II. Not electrode count.",
+      "wo": [
+        "4 cu rej",
+        "4 cü rej",
+        "4cü rej",
+        "4cu rej",
+        "4 -cu rej",
+        "4 cü rejimlə",
+        "2 ci rej",
+        "2-ci rej",
+        "2 ci rejim",
+        "1 ci rej",
+        "3 cu rej",
+        "5 ci rej",
+        "4 cu re j",
+        "4-cü rej",
+        "4 cu re",
+        "2 ci re",
+        "4- rej",
+        "4-rej"
+      ]
+    },
+    {
+      "code": "DEVICE_PROGRAM",
+      "meaning": "Named program/current on the stim (not Amplipuls I–V): TENS, Kotz, interferential, artroz/artrit templates. artroz pr = proqram, NOT PRP.",
+      "wo": [
+        "tens proqrami ile",
+        "tens proqrami ilə",
+        "tens proqrami",
+        "tens proq",
+        "tens üsulu ilə",
+        "tens usulu ile",
+        "tens üsulu",
+        "tenslə",
+        "tens le",
+        "tens rej",
+        "tenis rej",
+        "tens",
+        "artroz rej b",
+        "artroz reh",
+        "artroz rej",
+        "capiq rej",
+        "capiq rejim",
+        "çapıq rejim",
+        "çapıq rej",
+        "artroz proqrtami ile",
+        "artroz proqrtamı ilə",
+        "ekzem proqramiyla",
+        "ekzem proqramı ilə",
+        "artroz",
+        "dermatit",
+        "artroz pr ilə",
+        "art pr ilə",
+        "artrit pr ilə",
+        "padaqra rej",
+        "podaqra",
+        "tens proqtami ile",
+        "tenis",
+        "nevraloji rej",
+        "nevroloji rej",
+        "rus akimi ilə",
+        "rus akimi ile",
+        "rus akimi",
+        "rus akiimi",
+        "artrit proqramile",
+        "artrit proqrami ilə",
+        "artrit proqrami ile",
+        "artrit proqrami ile b",
+        "artrit proqrami ilə(b)",
+        "artrit proqrqmi",
+        "artrit proq",
+        "artroz rej brej",
+        "artroz proqrami ilə(b)",
+        "artroz proqrami ile b",
+        "rej brej",
+        "b rej",
+        "brej",
+        "oriqrami",
+        "proqrami ole",
+        "proqrami ilə",
+        "proqrami ile",
+        "proqram ilə",
+        "proqram ile",
+        "proqramla",
+        "proq ile",
+        "proq ilə",
+        "proqrami",
+        "rozesea proqrami",
+        "rozasea proqrami",
+        "art rejimilə",
+        "art rejimile",
+        "rejimilə",
+        "rejimile",
+        "rejimi ilə",
+        "rejimi ile",
+        "qartroz",
+        "ortrit pr",
+        "odem usulu",
+        "ödem üsulu",
+        "enterferensial proqramo",
+        "rejim",
+        "rej",
+        "dermo pr ilə",
+        "dermo pr ile",
+        "dermo",
+        "art",
+        "artroz b rej",
+        "artrir b rej",
+        "artrit rej",
+        "artrit",
+        "artr pr",
+        "ekz rej",
+        "ekzo rej",
+        "spor rej",
+        "ionofarez",
+        "iyontofarez",
+        "ionoforez",
+        "enterferensial proqrami",
+        "enterferensial",
+        "miospazm rejimiylə",
+        "miospazm rej",
+        "agri rejimi",
+        "lumbalgiya",
+        "ekzem pr ilə",
+        "eqzem pr ile",
+        "eqzema rej",
+        "ekzema proqrami",
+        "padaqra re",
+        "raloji rej",
+        "artrit proqramiyla",
+        "artrit proqramıyla",
+        "artrroz pr ilə",
+        "artrroz pr ile",
+        "astroz rej",
+        "prpqrami",
+        "dermatit pr ile",
+        "pr ile",
+        "pr ilə",
+        "odem pr ile",
+        "ödem pr ilə",
+        "odem pr",
+        "ekz pr ile",
+        "ekz pr",
+        "ekzema pr ile",
+        "dermo rej",
+        "artrit rejimile",
+        "artrit rejimilə",
+        "proqramiyla",
+        "kelloid capiq pr",
+        "artroz re",
+        "artrooz rej",
+        "artroz proqrami",
+        "artroz pr ilə(b)",
+        "art pr ilə(b)",
+        "art pr ile b",
+        "artroz pr ile b",
+        "artrit pr ile b",
+        "artrit pr ilə b",
+        "artrit pr ilə(b)",
+        "b",
+        "ekzem proqrami",
+        "dermatit proqrami ilə",
+        "dermatit proqrami",
+        "dermatit pr il",
+        "rematidniy artrir b rej",
+        "rematidniy artrit b rej"
+      ]
+    },
+    {
+      "code": "ELECTRODE_COUNT",
+      "meaning": "2 vs 4 plates (WO 4 lü, 2 li, 4 basliqli). Not Amplipuls work-kind IV. 2-pad: all six electro couches (12/13 as 2 of 4). 4-pad capability: 12/13 when free. FIFO; do not hold 12/13.",
+      "wo": [
+        "4 lü",
+        "4 lu",
+        "4lü",
+        "4lu",
+        "2 li",
+        "2'li",
+        "4 basliqli",
+        "4 basliql",
+        "iki basligi",
+        "basligi",
+        "4 lü rejim",
+        "4 lu rejim",
+        "4lü rejim",
+        "4 lü rej",
+        "4 lu rej",
+        "4lü rej"
+      ]
+    },
+    {
+      "code": "DEVICE_PARAMS",
+      "meaning": "Frequency / pulse / duration tokens — ProcedureType, not S",
+      "wo": [
+        "1 mhz",
+        "1mhz",
+        "3 mhz",
+        "3mhz",
+        "1 5 mhz",
+        "1.5 mhz",
+        "1-5 mhz",
+        "kəsikli",
+        "kesikli",
+        "aşağı tezlikli",
+        "aşagi tezlikli",
+        "asagi tezlkli",
+        "aşağı tezlkli",
+        "asagi tezlikle",
+        "frekansla",
+        "frekans",
+        "90 100 frekans",
+        "90-100 frekans",
+        "açagi tezlikli",
+        "asagi tezlik",
+        "aşağı tezlik",
+        "asagi tezli",
+        "aşağı tezli",
+        "yuxari tezlikle",
+        "yuxari tezlikli",
+        "yuxarı tezlikli",
+        "15-20 de",
+        "15 20 deqe",
+        "15-20 deqe",
+        "5 deq",
+        "5 dəq",
+        "5 deyqa",
+        "5deq",
+        "5dq",
+        "3hz",
+        "3 hz",
+        "seo 550 deo 232",
+        "seo 550",
+        "deo 232",
+        "0 24 basla",
+        "0 24 baslamaq",
+        "0 24 başla",
+        "0 24 başlamaq",
+        "1 deqiqe",
+        "12 deqiqe",
+        "12 dəq",
+        "12 deq",
+        "8 deqiqe",
+        "8 dəqiqə",
+        "15 deqiqe",
+        "15 deqqiqe",
+        "15 dəqqiqe",
+        "15 dəq",
+        "3 deqiqe",
+        "2 zona 3 deqiqe",
+        "2 zona",
+        "mualiceden once 1 stekan su",
+        "müalicədən öncə 1 stəkan su",
+        "mualiceden once su icilsen",
+        "müalicədən öncə su içilsin",
+        "su icilsen",
+        "su içilsin",
+        "5 deqiqe",
+        "6 deqiqe",
+        "6 dəqiqə",
+        "10 deqiqq",
+        "10 dəqiqə",
+        "uzaq mesafeden",
+        "uzaq məsafədən",
+        "uzaqdan",
+        "yaxin",
+        "yaxın",
+        "once 1 stekan su",
+        "öncə 1 stəkan su",
+        "once 1 stekan",
+        "200-100",
+        "200 100",
+        "90-100 mhz",
+        "90 100 mhz",
+        "orta tezlikle",
+        "orta tezlikli",
+        "orta tezliklə",
+        "proseduradan usaq 1 stekan su",
+        "proseduradan qabaq 1 stekan su",
+        "proseduradan usaq 1 stekan s",
+        "mualicede n once su icmek lazimdir",
+        "müalicədən öncə su içmək lazımdır",
+        "mualiceden once su icmek lazimdir",
+        "düz cərəyan 1-3 ma",
+        "duz cereyan 1-3 ma",
+        "düz cərəyan",
+        "duz cereyan",
+        "1-3 ma",
+        "1 3 ma"
+      ]
+    },
+    {
+      "code": "NO_ADDITIVE",
+      "meaning": "Plain / no plant or drug additive (typical on inhalation). Not a site.",
+      "wo": [
+        "sade",
+        "sadə"
+      ]
+    },
+    {
+      "code": "APPLICATION_SURFACE",
+      "meaning": "Front vs back of an already chosen S (or full body). Not extra S codes.",
+      "wo": [
+        "on ve arxa hissesi",
+        "on ve arxa hissesine",
+        "on ve arxa terefi",
+        "on ve arxa",
+        "ön və arxa hissəsi",
+        "ön və arxa hissəsinə",
+        "ön və arxa",
+        "arxa ve on",
+        "on arxa",
+        "arxa on",
+        "on ve arxasi",
+        "ön və arxasi",
+        "ön hissəsi",
+        "on hissesi",
+        "ön və arxaə",
+        "yan hissəsi",
+        "yan hissesi",
+        "rxa",
+        "ön və rxa",
+        "ön v arxa",
+        "arxas",
+        "arxa",
+        "arxası",
+        "arxasi",
+        "yuxari hissə",
+        "yuxarı hissə",
+        "yuxari hissəsi",
+        "yuxarı hissəsi",
+        "aşagi hissəsi",
+        "aşağı hissəsi",
+        "aşagi hissə",
+        "aşağı hissə",
+        "ön hissəsinə",
+        "on hissesine",
+        "aşagi hissəsinə",
+        "aşağı hissəsinə",
+        "asagi hissesine",
+        "arxasina",
+        "arxasına",
+        "ön",
+        "on",
+        "yan tərəf",
+        "yan teref",
+        "yan tərəfləri",
+        "yan terefleri",
+        "ardina",
+        "ardına"
+      ]
+    },
+    {
+      "code": "DAY_BLOCK",
+      "meaning": "N days on site A then N days on site B (paraffin / darsonval). Distinct from növbəli (same slot) and from naftalan BATH_SEQUENCE.",
+      "wo": [
+        "3 gun",
+        "3 gün",
+        "5 gun",
+        "5 gün",
+        "günaşiri",
+        "gunasiri",
+        "5 gunden bir",
+        "bir günnən bir",
+        "5 gun ardindan",
+        "5 gün ardından",
+        "ardindan",
+        "axir 4 gun yalniz",
+        "axir 4 gün yalniz",
+        "bir gunden bir",
+        "1 cib gun",
+        "1 cib gün",
+        "günaşir",
+        "sonraki günlər",
+        "sonraki gunler",
+        "sonraki gün",
+        "1 ci",
+        "1-ci",
+        "1ci",
+        "1-ci gun",
+        "1-ci gün",
+        "1 ci gun",
+        "1 ci gün",
+        "5 gunden sonra",
+        "5 gündən sonra",
+        "birinci gunu",
+        "birinci gün",
+        "birinci gun",
+        "gwn"
+      ]
+    },
+    {
+      "code": "BATH_SEQUENCE",
+      "meaning": "Day-1 sitz then full (naftalan). Two S over time, not one zone.",
+      "wo": [
+        "1 ci oturaq son tam",
+        "1 ci otraq son tam",
+        "1 ci gün oturaq sonra tam",
+        "1 ci gun oturaq sonra tam",
+        "1 ci dün oturaq sonra tam",
+        "1 ci dun oturaq sonra tam",
+        "1 ci dün oturaq sonr4a tam",
+        "1ci oturaq son tam",
+        "1 ci oturaq con tam",
+        "1ci oturaq con tam",
+        "1 cioturaq con tam",
+        "1 ci vanna oturaq son tam",
+        "1ci gün oturaq sonra tam",
+        "2 oturaq son tam",
+        "1 ciotraq son tam",
+        "1 cioturaq son tam",
+        "1 oturaq son tam",
+        "1 cib gün oturaq sonra tam",
+        "1 ci oturaq so tam",
+        "1 ci gün oturaq sonraki gün tam",
+        "1-ci gün oturaq sonraki gün tam",
+        "1 ci gün oturaq sonraki günlər tam",
+        "1 ci otraq con tam",
+        "birinci gün oturaq sonra tam",
+        "son tam",
+        "sonra tam"
+      ]
+    },
+    {
+      "code": "SUBSTANCE_OR_ADDITIVE",
+      "meaning": "Drug / plant / nicotine — electrophoresis, inhalation, UFF. Not anatomy.",
+      "wo": [
+        "bitkilərlə",
+        "otlar",
+        "bitkilerle",
+        "bitkiler",
+        "bitkilrlə",
+        "bitkilrle",
+        "coban yastigi",
+        "çoban yastığı",
+        "nikatinle",
+        "nikotinlə",
+        "nikarinle",
+        "nikatin",
+        "nikatin kislata ile",
+        "nikatin kislata",
+        "kali yodla",
+        "kaliyod",
+        "kyodla",
+        "ky-la",
+        "ky la",
+        "ky",
+        "kalsiilə",
+        "kalsiiləe",
+        "kalsi ilə",
+        "kalsilə",
+        "kalsiile",
+        "kalsi",
+        "calsi",
+        "x kalsi",
+        "novakainlə",
+        "novokoinle",
+        "novakoinle",
+        "navakainle",
+        "navakain",
+        "navakayinla",
+        "navakayin",
+        "karipazimlə",
+        "karipazimle",
+        "karipazinle",
+        "karpazinlə",
+        "karipazin",
+        "karirazim",
+        "karirazimlə",
+        "karirazimle",
+        "oz mazi ile",
+        "oz mazi",
+        "naft",
+        "nftal",
+        "dimeksid ile",
+        "dimeksid ilə",
+        "dimeksidiki",
+        "dimeksid",
+        "dimeksid iile",
+        "hidrokortizonla",
+        "hidrokartizonla",
+        "qidrokartizonla",
+        "qidrokartizonle",
+        "gidrokartizonla",
+        "karipazim",
+        "novakayinlə",
+        "novokain ilə",
+        "öz dərmani ilə",
+        "oz dermani ile",
+        "oz mazil ile",
+        "öz mazı ilə",
+        "mg ile",
+        "maqniy ilə",
+        "maqni sulfatla",
+        "maqnezi sulfatla",
+        "maqnezi ilə",
+        "maqneziile",
+        "eufillin",
+        "novakainləə",
+        "karpazimle",
+        "jmaqnezi sulfatla",
+        "karipazlmle",
+        "karpazim",
+        "ozunun mazi ile",
+        "özünün mazı ilə",
+        "kariipazimlə",
+        "mazi ile",
+        "maz ilə",
+        "mg-le",
+        "mg le"
+      ]
+    },
+    {
+      "code": "SMEAR",
+      "meaning": "Naftalan smear (surtulsun) — remaining tokens are smear sites, not fill line",
+      "wo": [
+        "surtulsun",
+        "yaxmaq",
+        "qalan yerlərə yaxmaq",
+        "qalan yerlere yaxmaq",
+        "temizlenmi",
+        "təmizlənməsi"
+      ]
+    },
+    {
+      "code": "EXTRA_OIL",
+      "meaning": "UFF / naftalan: extra oil (bol yağla). Consumable note, not a site.",
+      "wo": [
+        "yagi bol olsun",
+        "yaği bol olsun",
+        "bol yagla",
+        "bol yağla",
+        "bol yağ",
+        "naftalan yagi ile",
+        "naftalan yağı ilə",
+        "naftalanla",
+        "naf",
+        "naftalanan",
+        "naftalan yagiyla",
+        "naftalan yağıyla",
+        "naftalan yagi",
+        "yaqlar",
+        "yağlar"
+      ]
+    },
+    {
+      "code": "INTENSITY",
+      "meaning": "Massage intensity (Massaj 15 yungul = light; zəif = weak; isti olmasin = not hot)",
+      "wo": [
+        "cox yungul",
+        "yungul",
+        "zaif",
+        "zəif",
+        "cox asta",
+        "sethi masaj",
+        "səthi masaj",
+        "siddetini paient hiss edeceyi derecede",
+        "siddetini pasient hiss edeceyi derecede",
+        "isti olmasin r",
+        "isti olmasin",
+        "isdi olmasin",
+        "isti olmasın",
+        "asagi intensivlik",
+        "aşağı intensivlik",
+        "asaqi intensiv",
+        "orta intensvlik",
+        "orta intensivlik",
+        "isdi proqram olmasin",
+        "isti proqram olmasın",
+        "biraz daha cox",
+        "biraz daha çox"
+      ]
+    },
+    {
+      "code": "HOLD_OR_STOP",
+      "meaning": "Stop / withhold the application. Order action, not anatomy.",
+      "wo": [
+        "dayandirilsin",
+        "omaya olmaz",
+        "ombaya olmaz",
+        "olunmasin",
+        "olunmasın",
+        "hecbir basqi olmasin",
+        "heçbir basqı olmasın",
+        "basqi olmasin",
+        "basqı olmasın"
+      ]
+    },
+    {
+      "code": "PROCEDURE_NAME_BLEED",
+      "meaning": "Procedure title written into nahiye (e.g. shockwave). Not a site.",
+      "wo": [
+        "zerbe dalga",
+        "zərbə dalğa",
+        "zerbe dalga terapiya",
+        "turunda",
+        "trunda",
+        "trficiskiy yazva",
+        "tropiceskiy yazva",
+        "tropiçeskaya yazva",
+        "tropik yazva",
+        "tampon",
+        "parafi evezine",
+        "parafin əvəzinə",
+        "fonofarez",
+        "fonoforez",
+        "ultrafonofarez",
+        "ultrafonoforez"
+      ]
+    },
+    {
+      "code": "SPINE_LEVEL",
+      "meaning": "Vertebral qualifier on an S (L4–L5 ≠ Amplipuls IV). Not a new S.",
+      "wo": [
+        "l4 l5",
+        "l1 l5",
+        "l4l5 s1",
+        "l4 l5 s1",
+        "l4l5",
+        "c3 c4 c5",
+        "c4 c5",
+        "c5 c6",
+        "c4 c6 c7",
+        "l1 l2",
+        "l3 l4",
+        "l1 l3 l4",
+        "c4 c5 l1 l3 l4",
+        "l1",
+        "l2",
+        "l3",
+        "l4",
+        "l5",
+        "c3",
+        "c4",
+        "c5",
+        "c6",
+        "c7"
+      ]
+    },
+    {
+      "code": "APPLICATION_CUT",
+      "meaning": "Legacy peloid clothing phrases. Canon: these alias foot/hand S; matcher still strips then implies ZONE-FOOT-LEG / ZONE-HAND-FOREARM.",
+      "wo": [
+        "corabşəkilli",
+        "corabşekilli",
+        "corabşəklli",
+        "corabseklli",
+        "corabşəkili",
+        "corab sekil",
+        "corab sekilli",
+        "corabsekil",
+        "corab nahiyesine",
+        "corabnahiyesine",
+        "əlcək",
+        "elcek",
+        "перчатки",
+        "носки"
+      ]
+    }
+  ],
+  "zones": [
+    {
+      "code": "ZONE-HEAD",
+      "kind": "USSR-817",
+      "prikaz817": 1,
+      "laterality": false,
+      "titleAz": "Baş",
+      "titleRu": "Голова",
+      "titleEn": "Head",
+      "titleLa": "Caput",
+      "boundary": "Fronto-temporal and occipito-parietal regions (817 §1).",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Head",
+          "ta": "Caput",
+          "fmaId": "FMA:7154"
+        }
+      ],
+      "woAliases": [
+        "basina",
+        "baş",
+        "başa",
+        "basa",
+        "bsina",
+        "başına",
+        "basin",
+        "abasin"
+      ]
+    },
+    {
+      "code": "ZONE-SCALP",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Başın tüklü hissəsi",
+      "titleRu": "Волосистая часть головы",
+      "titleEn": "Scalp (hairy part of head)",
+      "titleLa": "Regio capillata capitis",
+      "boundary": "Hairy scalp — darsonval / solux local, narrower than 817 head.",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Scalp",
+          "ta": "Scalp",
+          "fmaId": "FMA:54237"
+        }
+      ],
+      "woAliases": [
+        "başin tüklü hissəsi",
+        "başin tüklü hissəsinə",
+        "basin tuklu nahiyesine",
+        "basin tuklu hissesi",
+        "baçin tüklü hissəsinə",
+        "baçin tüklü hissəsi",
+        "basin tuklu nahiyesi",
+        "basin tuku nahiyyesi",
+        "basin tuklu",
+        "basin tuku",
+        "basin yuklu",
+        "basin tuklu hissesei",
+        "basin tuklu hisesi",
+        "saçina",
+        "saçlarina",
+        "sacina",
+        "sac",
+        "saç"
+      ]
+    },
+    {
+      "code": "ZONE-FACE",
+      "kind": "USSR-817",
+      "prikaz817": 2,
+      "laterality": false,
+      "titleAz": "Üz",
+      "titleRu": "Лицо",
+      "titleEn": "Face",
+      "titleLa": "Facies",
+      "boundary": "Frontal, peri-orbital, maxillary regions (817 §2).",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Face",
+          "ta": "Facies",
+          "fmaId": "FMA:24763"
+        }
+      ],
+      "woAliases": [
+        "çənə",
+        "cene",
+        "üz nahiyəsi",
+        "uz nahiyesi",
+        "üz",
+        "burun alin",
+        "alın",
+        "üzə",
+        "uze",
+        "burun",
+        "buruna",
+        "elave uzede",
+        "elave uzə",
+        "uzede",
+        "furun"
+      ]
+    },
+    {
+      "code": "ZONE-NECK",
+      "kind": "USSR-817",
+      "prikaz817": 3,
+      "laterality": false,
+      "titleAz": "Boyun",
+      "titleRu": "Шея",
+      "titleEn": "Neck",
+      "titleLa": "Collum",
+      "boundary": "Neck only, without collar flap (817 §3).",
+      "coarse": [
+        "NECK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Neck",
+          "ta": "Collum",
+          "fmaId": "FMA:7155"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-COLLAR",
+      "kind": "USSR-817",
+      "prikaz817": 4,
+      "laterality": false,
+      "titleAz": "Yaxalıq (boyun-çiyin) nahiyəsi",
+      "titleRu": "Воротниковая зона",
+      "titleEn": "Cervical collar region (Shcherbak / 817 §4)",
+      "titleLa": "Regio cervicalis posterior et pars superior dorsi",
+      "boundary": "Posterior neck, back down to Th IV, anterior chest to 2nd rib (817 §4). Same patch as Shcherbak collar electrode.",
+      "coarse": [
+        "NECK",
+        "BACK",
+        "CHEST"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Cervical region of back",
+          "ta": "Regio cervicalis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Trapezius",
+          "ta": "M. trapezius",
+          "fmaId": "FMA:9625"
+        },
+        {
+          "fmaLabel": "Scalene muscles",
+          "ta": "Mm. scaleni",
+          "fmaId": null
+        }
+      ],
+      "woAliases": [
+        "kurek boyun ciyinlere",
+        "kurek boyuna",
+        "boyun çiyin",
+        "kurek ciyinlere",
+        "kürək çiyinlər",
+        "yaxaliq",
+        "yaxalıq",
+        "yaxaliq nahiyesine",
+        "vorotnik",
+        "varatnik",
+        "boyun",
+        "boyunçiyin",
+        "boyunciyin",
+        "boyun ciyin",
+        "kurek boyun",
+        "abefayaxaliq",
+        "bef",
+        "boun",
+        "boynundaki",
+        "trapez",
+        "trapez ezeleler",
+        "kurrek boyun",
+        "kurek biyuna",
+        "varatnik formada",
+        "boyuna",
+        "bpyun",
+        "varatniik",
+        "boy6un",
+        "biyun",
+        "boyuyn",
+        "boyin",
+        "boyn",
+        "servikal",
+        "boyun ardina",
+        "boyun ardına",
+        "boynuna"
+      ]
+    },
+    {
+      "code": "ZONE-UPPER-LIMB",
+      "kind": "USSR-817",
+      "prikaz817": 5,
+      "laterality": true,
+      "titleAz": "Yuxarı ətraf",
+      "titleRu": "Верхняя конечность",
+      "titleEn": "Upper limb",
+      "titleLa": "Membrum superius",
+      "boundary": "Whole upper limb (817 §5).",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Upper limb",
+          "ta": "Membrum superius",
+          "fmaId": "FMA:7183"
+        }
+      ],
+      "woAliases": [
+        "qollara",
+        "qollar",
+        "qolara",
+        "qollarin ic",
+        "qollarin iç",
+        "qolarda",
+        "yuxari etraf",
+        "yuxarı ətraf",
+        "yuxari nahiye",
+        "yuxarı nahiye",
+        "qoltuqalti",
+        "qoltuqaltı",
+        "qolar",
+        "qol",
+        "bazu",
+        "bazu nahiyəsi",
+        "bazu nahiyesi",
+        "qoltuq altina",
+        "qoltuq altına",
+        "qollarara",
+        "yuxari ekstremite",
+        "yuxarı ekstremite",
+        "qolla",
+        "qola",
+        "gollar",
+        "qolu",
+        "qillar",
+        "qillara"
+      ]
+    },
+    {
+      "code": "ZONE-UPPER-LIMB-SCAPULA",
+      "kind": "USSR-817",
+      "prikaz817": 6,
+      "laterality": true,
+      "titleAz": "Yuxarı ətraf, çiyin və kürək",
+      "titleRu": "Верхняя конечность, надплечье и лопатка",
+      "titleEn": "Upper limb, shoulder girdle and scapula",
+      "titleLa": "Membrum superius et scapula",
+      "boundary": "817 §6 — limb plus shoulder girdle and scapular region.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Upper limb",
+          "ta": "Membrum superius",
+          "fmaId": "FMA:7183"
+        },
+        {
+          "fmaLabel": "Scapula",
+          "ta": "Scapula",
+          "fmaId": "FMA:13310"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-SHOULDER",
+      "kind": "USSR-817",
+      "prikaz817": 7,
+      "laterality": true,
+      "titleAz": "Çiyin oynağı",
+      "titleRu": "Плечевой сустав",
+      "titleEn": "Shoulder joint",
+      "titleLa": "Articulatio humeri",
+      "boundary": "Upper third of arm, shoulder joint, ipsilateral girdle (817 §7).",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Glenohumeral joint",
+          "ta": "Articulatio humeri",
+          "fmaId": "FMA:25580"
+        }
+      ],
+      "woAliases": [
+        "ciyinlere",
+        "çiyinlər",
+        "çiyin",
+        "ciyine",
+        "ciyn",
+        "çiyn",
+        "siyine",
+        "şiyinə",
+        "ciyiner",
+        "ciyuinlere",
+        "çiyuinlərə",
+        "çiyuin",
+        "çiynlər",
+        "çiyionlər",
+        "çiyinləriə",
+        "çiyinlərə",
+        "çmiyinlər",
+        "supraspinatus",
+        "insraspinatus",
+        "infraspinatus",
+        "ciyin lere",
+        "ciyuna",
+        "cuyinlere",
+        "coyinlere"
+      ]
+    },
+    {
+      "code": "ZONE-ELBOW",
+      "kind": "USSR-817",
+      "prikaz817": 8,
+      "laterality": true,
+      "titleAz": "Dirsək oynağı",
+      "titleRu": "Локтевой сустав",
+      "titleEn": "Elbow joint",
+      "titleLa": "Articulatio cubiti",
+      "boundary": "817 §8.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Elbow joint",
+          "ta": "Articulatio cubiti",
+          "fmaId": "FMA:34898"
+        }
+      ],
+      "woAliases": [
+        "dirseklere",
+        "dirsəklər",
+        "dirsək",
+        "dirsekler",
+        "dirseye",
+        "dirsekden asagi",
+        "dircek",
+        "dirceye",
+        "disəklər",
+        "diraeklere",
+        "dirsəklərə",
+        "sadirsek"
+      ]
+    },
+    {
+      "code": "ZONE-WRIST",
+      "kind": "USSR-817",
+      "prikaz817": 9,
+      "laterality": true,
+      "titleAz": "Bilək oynağı",
+      "titleRu": "Лучезапястный сустав",
+      "titleEn": "Wrist joint",
+      "titleLa": "Articulatio radiocarpalis",
+      "boundary": "817 §9.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Radiocarpal joint",
+          "ta": "Articulatio radiocarpalis",
+          "fmaId": "FMA:25521"
+        }
+      ],
+      "woAliases": [
+        "əl biləyi",
+        "bilək",
+        "bileklere",
+        "biləklər",
+        "bilekler",
+        "biləklərə",
+        "biləyə",
+        "bileye"
+      ]
+    },
+    {
+      "code": "ZONE-HAND-FOREARM",
+      "kind": "USSR-817",
+      "prikaz817": 10,
+      "laterality": true,
+      "titleAz": "Əl və önqol",
+      "titleRu": "Кисть и предплечье",
+      "titleEn": "Hand and forearm",
+      "titleLa": "Manus et antebrachium",
+      "boundary": "817 §10. Glove strings (əlcək, elcek) are aliases of this S, not a separate cut field.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Hand",
+          "ta": "Manus",
+          "fmaId": "FMA:9712"
+        },
+        {
+          "fmaLabel": "Forearm",
+          "ta": "Antebrachium",
+          "fmaId": "FMA:24923"
+        }
+      ],
+      "woAliases": [
+        "əllər",
+        "eller",
+        "ellere",
+        "ovuc ici",
+        "elcek",
+        "əlcək",
+        "elller",
+        "elleri",
+        "el barmaq",
+        "əl barmaq",
+        "qollarin ic terefi",
+        "el barmaqlari",
+        "əl barmaqlari",
+        "el",
+        "əl",
+        "ellerin icine",
+        "ellerin içine",
+        "ellerein icine",
+        "ələrin içi",
+        "elerin ici",
+        "ovuclar",
+        "ovuclarin",
+        "eller ustune",
+        "əllər üstünə",
+        "əllərə",
+        "eline",
+        "əlinə",
+        "qollardan asagi",
+        "qollardan aşağı",
+        "əllərin içi",
+        "ellerin ici"
+      ]
+    },
+    {
+      "code": "ZONE-CHEST",
+      "kind": "USSR-817",
+      "prikaz817": 11,
+      "laterality": false,
+      "titleAz": "Döş qəfəsi",
+      "titleRu": "Грудная клетка",
+      "titleEn": "Chest",
+      "titleLa": "Thorax",
+      "boundary": "Anterior chest from girdle to costal arches + back C7–L1 (817 §11).",
+      "coarse": [
+        "CHEST",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Thorax",
+          "ta": "Thorax",
+          "fmaId": "FMA:11391"
+        }
+      ],
+      "woAliases": [
+        "sine",
+        "sinə",
+        "sinəyə",
+        "sineye",
+        "dos qefesi",
+        "döş qəfəsi",
+        "dos qefesinin",
+        "döş qəfəsinin",
+        "sud vezi",
+        "süd vəzi",
+        "sud vezinin altina",
+        "süd vəzinin altina",
+        "qabirga üstü",
+        "qabırğa üstü",
+        "qabirgaustu",
+        "doş qefesi",
+        "doş",
+        "dos",
+        "doş qefesində",
+        "döş qəfəsində",
+        "dos qefesine",
+        "urek",
+        "ürək",
+        "thorakal",
+        "torakal"
+      ]
+    },
+    {
+      "code": "ZONE-BACK",
+      "kind": "USSR-817",
+      "prikaz817": 12,
+      "laterality": false,
+      "titleAz": "Kürək",
+      "titleRu": "Спина",
+      "titleEn": "Back",
+      "titleLa": "Dorsum",
+      "boundary": "C7–L1 between mid-axillary lines (817 §12). Not the full spine strip.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Back",
+          "ta": "Dorsum",
+          "fmaId": "FMA:14181"
+        }
+      ],
+      "woAliases": [
+        "kurek",
+        "kürəyə",
+        "kürək nahiyəsi",
+        "kürək bütöv",
+        "kürəyin yuxari hissəsi",
+        "kurem",
+        "kueye",
+        "kürəyin yuxari",
+        "küək",
+        "hurek",
+        "kureek",
+        "kürəjk",
+        "kürəkalti",
+        "kurekalti",
+        "kürək altı",
+        "kurrk",
+        "kureyine",
+        "kürəklərə",
+        "kürəyin",
+        "kureyin",
+        "krek",
+        "kurel",
+        "kürəy6ə",
+        "lotissimus dorsi",
+        "latissimus dorsi"
+      ]
+    },
+    {
+      "code": "ZONE-ABDOMEN",
+      "kind": "USSR-817",
+      "prikaz817": 13,
+      "laterality": false,
+      "titleAz": "Qarın",
+      "titleRu": "Передняя брюшная стенка",
+      "titleEn": "Anterior abdominal wall",
+      "titleLa": "Paries anterior abdominis",
+      "boundary": "817 §13.",
+      "coarse": [
+        "ABDOMEN"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Anterior abdominal wall",
+          "ta": "Paries abdominalis anterior",
+          "fmaId": "FMA:25905"
+        }
+      ],
+      "woAliases": [
+        "qarin",
+        "qarın",
+        "qarina",
+        "qarinin",
+        "q1arin",
+        "gobek",
+        "göbək",
+        "gobeye",
+        "göbəyə"
+      ]
+    },
+    {
+      "code": "ZONE-LUMBOSACRAL",
+      "kind": "USSR-817",
+      "prikaz817": 14,
+      "laterality": false,
+      "titleAz": "Bel-oma nahiyəsi",
+      "titleRu": "Пояснично-крестцовая область",
+      "titleEn": "Lumbosacral region",
+      "titleLa": "Regio lumbosacralis",
+      "boundary": "L1 to inferior gluteal folds (817 §14). Segmental massage (817 §15) is the same site.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Sacral region",
+          "ta": "Regio sacralis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": [
+        "beloma nahiyesine",
+        "bel oma",
+        "beloma",
+        "bel oma nahiyəsi",
+        "bel oma nahiyyesi",
+        "bel",
+        "lombal",
+        "lumbar",
+        "beloma nahiyyesi",
+        "bel nahiyesine",
+        "bel nahiyəsi",
+        "böyrəküstü",
+        "böyrək üstü",
+        "boyrekustu",
+        "boyrek ustu",
+        "böyrəküstü nahiyə",
+        "böyrək üstü nahiyə",
+        "bel omba",
+        "bei oma",
+        "belomba",
+        "bel olma",
+        "beol oma",
+        "bel olam",
+        "dumbek",
+        "dumbek nahiyesi",
+        "oma",
+        "neloma",
+        "meloma",
+        "sakrum",
+        "öyrəküstü",
+        "oyrekustu"
+      ]
+    },
+    {
+      "code": "ZONE-BACK-AND-LUMBAR",
+      "kind": "USSR-817",
+      "prikaz817": 16,
+      "laterality": false,
+      "titleAz": "Kürək və bel",
+      "titleRu": "Спина и поясница",
+      "titleEn": "Back and lumbar region",
+      "titleLa": "Dorsum et regio lumbalis",
+      "boundary": "C7 to sacral base, mid-axillary to mid-axillary (817 §16).",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Back",
+          "ta": "Dorsum",
+          "fmaId": "FMA:14181"
+        },
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": [
+        "kürək bel oma",
+        "kurekbel oma",
+        "kürəkbel oma",
+        "belinə və kürəynə"
+      ]
+    },
+    {
+      "code": "ZONE-CERVICOTHORACIC",
+      "kind": "USSR-817",
+      "prikaz817": 17,
+      "laterality": false,
+      "titleAz": "Boyun-döş onurğa",
+      "titleRu": "Шейно-грудной отдел позвоночника",
+      "titleEn": "Cervicothoracic spine",
+      "titleLa": "Columna vertebralis cervicalis et thoracica",
+      "boundary": "Posterior neck and back to L1 between posterior axillary lines (817 §17). §18 segmental = same site.",
+      "coarse": [
+        "NECK",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Vertebral column",
+          "ta": "Columna vertebralis",
+          "fmaId": "FMA:13478"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-SPINE-FULL",
+      "kind": "USSR-817",
+      "prikaz817": 19,
+      "laterality": false,
+      "titleAz": "Onurğa boyu (tam sütun)",
+      "titleRu": "Область позвоночника (вдоль столба)",
+      "titleEn": "Full spine / paravertebral strip",
+      "titleLa": "Columna vertebralis",
+      "boundary": "Posterior neck + back + lumbosacral between posterior axillary lines (817 §19).",
+      "coarse": [
+        "NECK",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Vertebral column",
+          "ta": "Columna vertebralis",
+          "fmaId": "FMA:13478"
+        }
+      ],
+      "woAliases": [
+        "feqere sutunu boyunca",
+        "onurga boyu",
+        "tam onurga",
+        "onurga boyu bel oma",
+        "onurga",
+        "feqere sutunu",
+        "feqere sut",
+        "onurqa boyu",
+        "feqere sut boyunca",
+        "feq sut boyunca",
+        "onurqa",
+        "onurganin etrafina",
+        "onurga kenarlarina",
+        "onurga kənarlarina",
+        "0nurga boyu",
+        "onurganin usdune",
+        "onurganin üstünə",
+        "oonurga",
+        "onurğa",
+        "onurgqa boyu",
+        "erector spina para vertebral",
+        "erector spina",
+        "para vertebral",
+        "paravertebral",
+        "ourga",
+        "ourga boyu",
+        "onuga",
+        "onurha",
+        "onuga boyu",
+        "onurga boyui",
+        "oonurga boyu",
+        "onurğa boyu",
+        "sutunu boyu",
+        "sütünü boyu",
+        "sütunu boyu",
+        "feqere surunu",
+        "fegere sutu",
+        "fəgərə sutu",
+        "fəgərə sütunu",
+        "fegere sutunu"
+      ]
+    },
+    {
+      "code": "ZONE-LOWER-LIMB",
+      "kind": "USSR-817",
+      "prikaz817": 20,
+      "laterality": true,
+      "titleAz": "Aşağı ətraf",
+      "titleRu": "Нижняя конечность",
+      "titleEn": "Lower limb",
+      "titleLa": "Membrum inferius",
+      "boundary": "817 §20.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lower limb",
+          "ta": "Membrum inferius",
+          "fmaId": "FMA:7184"
+        }
+      ],
+      "woAliases": [
+        "ayaqlara",
+        "ayaqlar",
+        "eyaqlar",
+        "asagi etraflara",
+        "aşagi ətraflar",
+        "ayyaqlar",
+        "asagi etraf",
+        "ayaqlarina",
+        "ayaqlari",
+        "asadi etraflara",
+        "asaqi etraflara",
+        "asagi ereadflara",
+        "asagi etraflapa",
+        "asafi etraflara",
+        "asasagi etraflara",
+        "aşagii ətraflar",
+        "asahi etraflara",
+        "asagi etraglara",
+        "dizden yuxari",
+        "dizdən yuxarı",
+        "ayaqklae",
+        "eyaq",
+        "ayaq",
+        "ayalar",
+        "ayaqolar",
+        "canaqdan asagi",
+        "çanaqdan aşağı",
+        "asagi ekstremite",
+        "aşağı ekstremite",
+        "alt ekstremite",
+        "ayaga",
+        "ayağa",
+        "asagi nahiye",
+        "aşağı nahiyə",
+        "belden aşaği",
+        "beldən aşağı",
+        "ayaqlart",
+        "ayaqlaqra",
+        "ayaqlaer",
+        "ayaqloar",
+        "asagi etraflr",
+        "aşağı ətraflar"
+      ]
+    },
+    {
+      "code": "ZONE-LOWER-LIMB-LUMBAR",
+      "kind": "USSR-817",
+      "prikaz817": 21,
+      "laterality": true,
+      "titleAz": "Aşağı ətraf və bel",
+      "titleRu": "Нижняя конечность и поясница",
+      "titleEn": "Lower limb and lumbar region",
+      "titleLa": "Membrum inferius et regio lumbalis",
+      "boundary": "Foot, leg, thigh, gluteal and lumbosacral (817 §21).",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lower limb",
+          "ta": "Membrum inferius",
+          "fmaId": "FMA:7184"
+        },
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-HIP-GLUTEAL",
+      "kind": "USSR-817",
+      "prikaz817": 22,
+      "laterality": true,
+      "titleAz": "Bud-çanaq oynağı",
+      "titleRu": "Тазобедренный сустав и ягодичная область",
+      "titleEn": "Hip joint and gluteal region",
+      "titleLa": "Articulatio coxae et regio glutealis",
+      "boundary": "817 §22 hip joint + gluteal. WO bud / quadriseps / hamstring (thigh) alias here. Not baldır (crus), not Shcherbak panty, not bare biceps (arm).",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Hip joint",
+          "ta": "Articulatio coxae",
+          "fmaId": "FMA:25511"
+        },
+        {
+          "fmaLabel": "Gluteal region",
+          "ta": "Regio glutealis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": [
+        "bud canaq",
+        "bud çanaq",
+        "bud çanağı",
+        "sagri",
+        "bud canag",
+        "budçanaq",
+        "bud",
+        "bud nahiyesi",
+        "bud nahiyəsi",
+        "bud ezeleleri",
+        "canaq",
+        "çanaq",
+        "çanaq nahiyəsi",
+        "budun",
+        "quadriseps",
+        "quadriseps ezeleler",
+        "hamstring",
+        "canag",
+        "canaga",
+        "çanağa",
+        "canaqlara",
+        "çanaqlara",
+        "budhissesi",
+        "bud hissesi",
+        "bud hissəsi",
+        "şanaq",
+        "sanaq",
+        "bbud"
+      ]
+    },
+    {
+      "code": "ZONE-KNEE",
+      "kind": "USSR-817",
+      "prikaz817": 23,
+      "laterality": true,
+      "titleAz": "Diz oynağı",
+      "titleRu": "Коленный сустав",
+      "titleEn": "Knee joint",
+      "titleLa": "Articulatio genus",
+      "boundary": "817 §23.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Knee joint",
+          "ta": "Articulatio genus",
+          "fmaId": "FMA:32564"
+        }
+      ],
+      "woAliases": [
+        "dizlere",
+        "dizler",
+        "dizlərə",
+        "dizlər",
+        "dozlere",
+        "diz",
+        "deiz",
+        "dizllere",
+        "dizseklere",
+        "dize",
+        "dizine",
+        "dizi",
+        "bizler",
+        "bizlere",
+        "deizlere",
+        "deizlərə",
+        "dizin",
+        "edizlər",
+        "diz oynagi",
+        "diz oynağı",
+        "diz oynagı",
+        "dizətrafi",
+        "diz etrafi",
+        "dizətrafı",
+        "dizlier",
+        "dizarxasi",
+        "diz arxasi",
+        "di8zlər",
+        "di8zler",
+        "diz usdu",
+        "diz üstü",
+        "dizlerin altina",
+        "dizlərin altina",
+        "dizlərinin altina",
+        "dizlerinin altina",
+        "dizalti",
+        "dizaltı",
+        "qizlere"
+      ]
+    },
+    {
+      "code": "ZONE-ANKLE",
+      "kind": "USSR-817",
+      "prikaz817": 24,
+      "laterality": true,
+      "titleAz": "Aşil / topuq oynağı",
+      "titleRu": "Голеностопный сустав",
+      "titleEn": "Ankle joint",
+      "titleLa": "Articulatio talocruralis",
+      "boundary": "817 §24.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Ankle joint",
+          "ta": "Articulatio talocruralis",
+          "fmaId": "FMA:35179"
+        }
+      ],
+      "woAliases": [
+        "topuqlara",
+        "topuq",
+        "aşil",
+        "asil",
+        "topuqlar",
+        "topuga",
+        "topug",
+        "topuqla",
+        "topuqlarina",
+        "ayaq topuqlarina",
+        "toppug",
+        "topuq lara",
+        "topulara",
+        "topuglara",
+        "yopuqlara",
+        "malleol",
+        "lateral malleol",
+        "medial malleol",
+        "medial lateral malleol"
+      ]
+    },
+    {
+      "code": "ZONE-FOOT-LEG",
+      "kind": "USSR-817",
+      "prikaz817": 25,
+      "laterality": true,
+      "titleAz": "Ayaq və baldır",
+      "titleRu": "Стопа и голень",
+      "titleEn": "Foot and leg (crus)",
+      "titleLa": "Pes et crus",
+      "boundary": "817 §25. Sock strings (corab, noski) are aliases of this S, not a separate cut field. baldır = crus, not thigh. dizdən aşağı / asagi eyaqlar belong here, not ZONE-LOWER-LIMB.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Foot",
+          "ta": "Pes",
+          "fmaId": "FMA:9664"
+        },
+        {
+          "fmaLabel": "Leg",
+          "ta": "Crus",
+          "fmaId": "FMA:24979"
+        }
+      ],
+      "woAliases": [
+        "daban",
+        "dabanlara",
+        "dabanlar",
+        "ayaqalti",
+        "ayaq alti",
+        "pence",
+        "baldir",
+        "dabana",
+        "corab",
+        "bas barmaq",
+        "baş barmaq",
+        "ayaq barmaq",
+        "ayaqbarmaqlari",
+        "ayaq pencesine",
+        "ayaqüstü",
+        "ayaq bas barmaq",
+        "ayaq bas barmaqlari",
+        "baldirin",
+        "penceler",
+        "pəncələr",
+        "dizden asagi",
+        "dizdən aşağı",
+        "dizlerden asagi",
+        "dizlərdən aşaği",
+        "asagi eyaqlar",
+        "asagi ayaqlar",
+        "pencelere",
+        "baldirlara",
+        "ayaqaltina",
+        "dizəqədər",
+        "dizeqeder",
+        "dizə qədər",
+        "pəncəyə",
+        "penceye",
+        "ayaqlar alti",
+        "ayaqlaraltı",
+        "daban arxasina",
+        "ayaqlarin altina",
+        "bas barmaga",
+        "baş barmağa",
+        "ayaq barmaqlari",
+        "ayaq barmaqları",
+        "ayaqqalti",
+        "ayaqaltii",
+        "daban alti",
+        "ayaqlarinin altina",
+        "baldirlar",
+        "ayaqbarmaqlar",
+        "dizdən aşagi",
+        "ayaqbarmaqlarina",
+        "axil veteri",
+        "axil vətəri",
+        "axilles",
+        "pen cesine",
+        "pəncəsinə",
+        "baldira",
+        "baldıra",
+        "dizdən aşagı"
+      ]
+    },
+    {
+      "code": "ZONE-PANTIES",
+      "kind": "SHCHERBAK",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Tuman (trusi) zonası",
+      "titleRu": "Трусиковая зона (гальванический пояс по Щербаку)",
+      "titleEn": "Panty / girdle zone (Shcherbak)",
+      "titleLa": "Regio lumbosacralis et femora proxima",
+      "boundary": "Shcherbak girdle: lumbar electrode + upper-thigh electrodes. Not a bath (ZONE-SITZ) and not a hip joint (ZONE-HIP-GLUTEAL). Rare in WO nahiye; keep for electro/galvano.",
+      "coarse": [
+        "BACK",
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Sacral region",
+          "ta": "Regio sacralis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Thigh",
+          "ta": "Femur (regio femoralis)",
+          "fmaId": "FMA:24967"
+        }
+      ],
+      "woAliases": [
+        "trusi",
+        "tuman",
+        "трусиковая",
+        "panty"
+      ]
+    },
+    {
+      "code": "ZONE-SITZ",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Oturacaq / oturaq vanna",
+      "titleRu": "Сидячая ванна",
+      "titleEn": "Sitz bath",
+      "titleLa": "Balneum sessile",
+      "boundary": "Immersion of pelvic region only (naftalan sitz). Related to panty zone but a bath fill, not an electrode patch.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Pelvis",
+          "ta": "Pelvis",
+          "fmaId": "FMA:9578"
+        }
+      ],
+      "woAliases": [
+        "oturaq",
+        "otraq",
+        "oturaq qursaga kimi",
+        "0turaq",
+        "oturuaq",
+        "3oturaq",
+        "3 oturaq",
+        "oturuaq vanna",
+        "oturaq vanna",
+        "1 ci oturaq",
+        "1-ci oturaq"
+      ]
+    },
+    {
+      "code": "ZONE-TO-WAIST",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Qurşağa qədər",
+      "titleRu": "До пояса",
+      "titleEn": "To the waist (half bath)",
+      "titleLa": "Balneum ad cingulum",
+      "boundary": "Water line at waist — lower trunk + lower limbs.",
+      "coarse": [
+        "ABDOMEN",
+        "LEG_LEFT",
+        "LEG_RIGHT",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lower half of body",
+          "ta": "Dimidium inferius corporis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": [
+        "qursaga kimi",
+        "qurşagaqədər",
+        "qurşagadək",
+        "qursaq",
+        "qursadek",
+        "qursaga qeder",
+        "qurşaqədər",
+        "qurşağa qədər",
+        "qursagagadek",
+        "oturaqqursaga kimi",
+        "oturaq qursaga kimi"
+      ]
+    },
+    {
+      "code": "ZONE-FULL-BODY",
+      "kind": "HYDRO",
+      "prikaz817": 26,
+      "laterality": false,
+      "titleAz": "Tam bədən",
+      "titleRu": "Общая (всё тело)",
+      "titleEn": "Full body",
+      "titleLa": "Corpus totum",
+      "boundary": "General bath / general massage. 817 §26 is paediatric general massage — same site idea.",
+      "coarse": [
+        "FULL_BODY"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Human body",
+          "ta": "Corpus humanum",
+          "fmaId": "FMA:20394"
+        }
+      ],
+      "woAliases": [
+        "tam",
+        "tam bədən",
+        "tam beden",
+        "umumi",
+        "butun beden",
+        "bütün bədən",
+        "tan beden",
+        "tam bedn",
+        "tam bədn",
+        "beden",
+        "bədən",
+        "bedenin",
+        "bədənin",
+        "bədəənin",
+        "baden"
+      ]
+    },
+    {
+      "code": "ZONE-FOUR-CHAMBER",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "4 kameralı vanna",
+      "titleRu": "Четырёхкамерная ванна",
+      "titleEn": "Four-chamber bath (hands + feet)",
+      "titleLa": "Manus et pedes (balneum quadriloculare)",
+      "boundary": "Both hands and both feet in four cells — not a single anatomical region.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT",
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Hand",
+          "ta": "Manus",
+          "fmaId": "FMA:9712"
+        },
+        {
+          "fmaLabel": "Foot",
+          "ta": "Pes",
+          "fmaId": "FMA:9664"
+        }
+      ],
+      "woAliases": [
+        "4 kamerali vanna",
+        "4 kamera",
+        "4 kamerali",
+        "4kamerali",
+        "4 kameri",
+        "4 kamerali banna"
+      ]
+    },
+    {
+      "code": "ZONE-COCCYX",
+      "kind": "LOCAL",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Büzdüm sümüyü",
+      "titleRu": "Копчик",
+      "titleEn": "Coccyx",
+      "titleLa": "Os coccygis",
+      "boundary": "WO BodyParts id=9. Local point, not 817 §14. bel oma does not imply coccyx; 'büzdüm bel oma' is two chips.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Coccyx",
+          "ta": "Os coccygis",
+          "fmaId": "FMA:20229"
+        }
+      ],
+      "woAliases": [
+        "büzdüm sümüyü",
+        "büzdüm"
+      ]
+    },
+    {
+      "code": "ZONE-EAR",
+      "kind": "LOCAL",
+      "prikaz817": null,
+      "laterality": true,
+      "titleAz": "Qulaq",
+      "titleRu": "Ухо",
+      "titleEn": "Ear",
+      "titleLa": "Auris",
+      "boundary": "WO BodyParts (sağ/sol qulaq) — local, not in 817 massage list.",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Ear",
+          "ta": "Auris",
+          "fmaId": "FMA:52780"
+        }
+      ],
+      "woAliases": [
+        "qulaq",
+        "qulaga",
+        "qulaqlar",
+        "qulagin",
+        "qulağın"
+      ]
+    }
+  ],
+  "closedDecisions": [
+    {
+      "id": "PELOID-CLOTHING-CUT",
+      "decision": "Gloves/socks alias ZONE-HAND-FOREARM / ZONE-FOOT-LEG. Not extra S codes.",
+      "why": "Canon 2026-08-25. APPLICATION_CUT remains only so old WO clothing phrases still strip."
+    },
+    {
+      "id": "COCCYX-OWN-S",
+      "decision": "Keep ZONE-COCCYX. bel-oma does not include it.",
+      "why": "WO BodyParts id=9 Büzdüm sümüyü. 817 §14 is L1 to gluteal folds (region). Coccyx is a local point (Amplipuls/darsonval). WO 'büzdüm bel oma' → two chips."
+    },
+    {
+      "id": "BOYUN-VS-COLLAR",
+      "decision": "Bare boyun = ZONE-COLLAR (Nafta reception: trapezius / scalenus collar patch). ZONE-NECK stays 817 §3 for explicit neck-only, no WO alias.",
+      "why": "Nafta reception 2026-08-25: boyun is the collar (trapezius / scalenus), not 817 §3 neck-only. Isolated WO boyun (88 rows) maps to COLLAR. baş boyun → HEAD+COLLAR."
+    },
+    {
+      "id": "SITZ-PANTIES-HIP",
+      "decision": "Three codes. Do not collapse.",
+      "why": "oturaq 1361/235 is sitz bath (hydro fill). bud çanaq is 817 §22 joint + laterality (BodyParts sağ/sol). Panty is Shcherbak electrode girdle (lumbar + upper thighs), not a bath and not a hip joint. Rename hip so it never says oturaq."
+    },
+    {
+      "id": "STRIP-ORDER-TOKENS",
+      "decision": "Match S only after stripping order-field tokens from the nahiye string.",
+      "why": "4 cu rej / artroz rej / tens / növbəli / sağ-sol are not anatomy."
+    },
+    {
+      "id": "NEVBELI-SESSION-TURN",
+      "decision": "növbəli is siteApplyMode=TURN on one ProcedureOrder (same slot, sites in listed order). Not two series and not sequenceIndex FIFO.",
+      "why": "WO stores növbəli on a single PatientProcedure row. sequenceIndex already means program FIFO (confirm order of procedure types). Day-rotate fill is BATH_SEQUENCE only (1 ci oturaq son tam). eyni vaxtda = TOGETHER."
+    },
+    {
+      "id": "RECEPTION-EMPTY-DEFAULTS",
+      "decision": "When nahiye is empty, default S from procedure name (Nafta reception 2026-08-25).",
+      "why": "Yod-brom / hidromasaj / Massaj 30 / UFB / Bükmə → FULL-BODY. Limfodrenaj empty → LOWER-LIMB (add ABDOMEN if qarın marked). Massaj 15 still needs a region. Naftalan fill stays doctor-assigned (tam|oturaq|qurşaq)."
+    },
+    {
+      "id": "ELECTRODE-VS-WORK-KIND",
+      "decision": "4 lü = 4 electrodes. 4 cu rej = Amplipuls work-kind IV. Never the same field.",
+      "why": "Textbook SMT I–V vs WO 4 lü on two sites and on electrophoresis."
+    },
+    {
+      "id": "EPHOR-SUBSTANCES",
+      "decision": "kali yodla=ky-la=KI; kalsiilə/kalsiiləe=Ca; novakainlə=novocaine; karipazin/kariipazimlə=caripazim; dimeksid; hidrokortizon; maqni sulfat; mg-le=Mg; mazi ile=ointment.",
+      "why": "Elektroforez nahiye is drug + sites + optional 4 lü plates. L4 L5 is spine level, not regime IV."
+    },
+    {
+      "id": "NAFTALAN-TYPOS",
+      "decision": "sonr4a=sonra; 1 ci dün=1-ci gün; siyine=çiyinə; qurşaqədər=qurşağa qədər; bədn=bədən; tan beden=tam; 4kamerali=four-chamber naftalan procedure.",
+      "why": "Reception 2026-08-25."
+    },
+    {
+      "id": "PARAFFIN-SKU",
+      "decision": "Keep four paraffin SKUs. Extra nahiye (3 gün/5 gün, boyunçiyin, kurem) is order fields or sloppy SKU pick, not new procedures.",
+      "why": "WO writes combo sites on whichever paraffin row was handy."
+    },
+    {
+      "id": "HEAD-NOT-BIG-TOE",
+      "decision": "Do not map whole-word bas to HEAD when barmaq is present (baş barmaq = hallux/thumb).",
+      "why": "Matcher bug: her iki ayaq bas barmaq → ZONE-HEAD."
+    },
+    {
+      "id": "BOYREKUSTU-IS-LUMBOSACRAL",
+      "decision": "böyrəküstü / böyrək üstü = ZONE-LUMBOSACRAL (lumbar / above the kidneys). Not a new S.",
+      "why": "Reception closed 2026-08-25. Canon §6.2 no longer treats this as mint-queue anatomy."
+    },
+    {
+      "id": "BIZLER-IS-KNEE",
+      "decision": "her iki bizler = hər iki diz → ZONE-KNEE.",
+      "why": "WO typo bizler."
+    },
+    {
+      "id": "SADE-NO-ADDITIVE",
+      "decision": "İnqalyasiya + sadə = plain inhalation, no additive. Not a site.",
+      "why": "Flags-only / NO_ADDITIVE. Site is the procedure type."
+    },
+    {
+      "id": "KOTZ-NOT-SMT",
+      "decision": "rus akimi = Kotz (Russian stimulation). seo/deo numbers are DEVICE_PARAMS, not Amplipuls I–V.",
+      "why": "BTL combo currents vs classic SMT work-kind."
+    },
+    {
+      "id": "UFB-START-TOKEN",
+      "decision": "0 24 başla / başlamaq on UFB is a session start token (DEVICE_PARAMS), not a site.",
+      "why": "UFB empty already defaults full body; this token is leftover regime text."
+    },
+    {
+      "id": "LONG-TAIL-STAYS-QUEUE",
+      "decision": "Do not auto-mint S for fingers-as-named, quadriceps/biceps named muscles, or other long-tail anatomy.",
+      "why": "Unmatched queue is first-class. SatAdmin synonyms after review."
+    },
+    {
+      "id": "BTL-ELECTRO-US-CHANNELS",
+      "decision": "Planning: four boxes, six couches. BTL 4000 between 7∥8 and between 10∥11 (2 paws/output; any electro procedures in parallel, same or different). UNISTIM 5S on 12 and BTL 4825S Premium on 13 (4 paws; also 2-pad; US on 4825S unused). FIFO only: 12/13 are ordinary 2-pad resources — do not hold for 4 lü. 4 lü / 4-pole IFC → 12 or 13 when free (capability, not priority). Cabin 14 not in ERA. US/UFF 15–16 oil, 17 gel. One electro nurse on all six couches. Separate ProcedureTypes, shared resources. Cutover #40 LOCATION pool stays 7–13.",
+      "why": "Floor wiring + med brother 2026-08-26. Placement is FIFO (placeConfirmedProcedures). Not runtime schema until the resource wave."
+    },
+    {
+      "id": "BELOW-KNEE-IS-FOOT-LEG",
+      "decision": "dizdən aşağı / dizlərdən aşaği / asagi eyaqlar = below the knee → ZONE-FOOT-LEG. Not ZONE-LOWER-LIMB (that includes thigh).",
+      "why": "Reception 2026-08-25. Paraffin bütün bədən + below-knee nahiye is sloppy SKU, site still FOOT-LEG."
+    },
+    {
+      "id": "BALDIR-NOT-THIGH",
+      "decision": "baldır = crus (ZONE-FOOT-LEG). bud / bud nahiyəsi = thigh → ZONE-HIP-GLUTEAL. Not interchangeable.",
+      "why": "Russian ляжка is bud, not baldır."
+    },
+    {
+      "id": "ARTROZ-PR-NOT-PRP",
+      "decision": "artroz pr / artrit rej / artroz b rej / (b) = named stim program on the combo. Not PRP. PRP is SVC-PRP-TERAPIYA.",
+      "why": "pr = proqram; (b) = protocol B. Same rows as TENS / 4 basliqli."
+    },
+    {
+      "id": "NO-BARE-AYAQLAR-AS-AYA",
+      "decision": "Leftover ayaq / eyaq after laterality = ZONE-LOWER-LIMB (sol ayaq = left leg). ayaqlar alti = sole → ZONE-FOOT-LEG. Hallux phrases (ayaq bas barmaq) stay longer and still win.",
+      "why": "Reception 2026-08-26. Bare ayaq is leg unless a longer foot/toe phrase matches."
+    },
+    {
+      "id": "QUAD-IS-THIGH-NOT-NEW-S",
+      "decision": "quadriseps / hamstring → ZONE-HIP-GLUTEAL (thigh). Do not mint a muscle S. Bare biceps is not arm when next to quad (biceps femoris) — only via composite.",
+      "why": "Reception 2026-08-25. Rotator cuff (supra/infraspinatus) still unmatched."
+    },
+    {
+      "id": "LASER-NAMED-PROGRAMS",
+      "decision": "ödem pr / dermo rej / ekzema pr / artrit rejimilə / artroz pr (b) are named device programs (often Lazerterapiya). Same DEVICE_PROGRAM field. Not PRP, not S. Do not alias bare pr.",
+      "why": "pr = proqram. Laser SKU is separate; nahiye holds the template name."
+    },
+    {
+      "id": "TURUNDA-IS-PROCEDURE",
+      "decision": "turunda / tampon = tampon procedure, not a site. Remaining tokens (qulaq / burun) are the S.",
+      "why": "SVC-TURUNDA-BURUN-VE-QULAQ."
+    },
+    {
+      "id": "CHAMOMILE-ADDITIVE",
+      "decision": "çoban yastığı = chamomile additive (inhalation), not a site.",
+      "why": "Same class as bitkilərlə."
+    },
+    {
+      "id": "AXILLA-COARSE-UPPER-LIMB",
+      "decision": "qoltuqaltı → ZONE-UPPER-LIMB. No dedicated axilla S.",
+      "why": "Not in the 31 protocol sites."
+    },
+    {
+      "id": "TOPUQ-IS-ANKLE",
+      "decision": "ayaq topuqlarina = malleolus / ZONE-ANKLE (bump by Achilles), not a new foot point. Heel stays daban.",
+      "why": "Reception 2026-08-25."
+    },
+    {
+      "id": "DIZ-OYNAGI-IS-KNEE",
+      "decision": "diz oynagi / diz oynağı / dizətrafi = ZONE-KNEE (knee joint / peri-knee). Not a ligament S. dizəqədər = ZONE-FOOT-LEG (to the knee).",
+      "why": "Reception 2026-08-26. Same 817 §23 site."
+    },
+    {
+      "id": "NO-BARE-ASAGI-HISSESI",
+      "decision": "aşagi hissəsi / aşagi hissə = APPLICATION_SURFACE (lower portion of the already chosen S), not a new zone. Do not alias bare aşağı / aşagi (ambiguous низ).",
+      "why": "Reception 2026-08-26. yuxari hissə is the same class (upper portion)."
+    },
+    {
+      "id": "SARGI-STAYS-QUEUE",
+      "decision": "sargi nahiyyesi is a dressing/bandage area, not an 817 S. Unmatched queue.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "KUREKALTI-IS-BACK",
+      "decision": "kürəkalti = subscapular → ZONE-BACK. qabırğa üstü → ZONE-CHEST. Not extra S codes.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "DUMBEK-IS-LUMBOSACRAL",
+      "decision": "dumbek / dumbek nahiyesi = sacrum → ZONE-LUMBOSACRAL (lumbosacral includes sacrum). Not coccyx (büzdüm), not perineum.",
+      "why": "Reception 2026-08-26. Clarified as крестец, still the same 817 lumbosacral S."
+    },
+    {
+      "id": "VENA-STAYS-QUEUE",
+      "decision": "venalara = veins, not an 817 S. Unmatched queue. Do not map to a limb.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "OMA-IS-LUMBOSACRAL",
+      "decision": "oma = omba = ZONE-LUMBOSACRAL (same as bel oma). Not a new S.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "DOS-IS-CHEST",
+      "decision": "doş / dos / döş = chest (ZONE-CHEST). döş qəfəsinə qədər ombaya olmaz on Parafin Yuxarı = apply to chest, HOLD lumbar.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "HISSE-IS-SURFACE",
+      "decision": "aşagi hissəsi / yuxari hissə = APPLICATION_SURFACE (lower/upper portion of the already chosen S). Not LOWER-LIMB / UPPER-LIMB. Bare aşağı still unmatched.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "ATRAFLAR-IS-AROUND",
+      "decision": "ətraflar = around (stop word). Longer asagi etraflara / yuxari etraf still win as limb S.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "FOUR-HEAD-CERVICAL-LUMBAR",
+      "decision": "4 basliql hem servikal hem lumbar / 4 basliqli … boyun … bel oma = COLLAR + LUMBOSACRAL + 4-pad. karipazin/dimeksid stay substance. iki basligi / basligi = electrode tokens, not anatomy.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "BAS-BARMAQ-DIGIT",
+      "decision": "baş barmağa / bas barmaga = hallux or thumb (ZONE-FOOT-LEG / already chosen digit S). AZ baş barmaq is not index finger. Do not mint a finger S.",
+      "why": "Reception 2026-08-26 (указательный in the note = that digit, not a new code)."
+    },
+    {
+      "id": "BAZU-IS-UPPER-LIMB",
+      "decision": "bazu nahiyəsi = brachium (humerus, elbow to shoulder) → ZONE-UPPER-LIMB. No dedicated arm-bone S.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "CANAQDAN-ASAGI-LOWER",
+      "decision": "canaqdan aşağı = below the pelvis → ZONE-LOWER-LIMB (includes thigh). Not FOOT-LEG. canaq / çanaq itself stays HIP-GLUTEAL.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "PROTOCOL-B-IS-PROGRAM",
+      "decision": "artroz/artrit … (b) / brej / b rej = named stim program variant B. Same DEVICE_PROGRAM field. Isolated letter b is not a token.",
+      "why": "Reception 2026-08-26. WO writes (b) on many arthritis/artrosis rows."
+    },
+    {
+      "id": "ART-IS-ARTROZ-PROGRAM",
+      "decision": "leftover art after a site (e.g. onurga boyu art) = artroz program, not a new S.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "NO-BARE-ALTI-FIELD",
+      "decision": "x altı = under that S (daban altı / ayaqaltı = sole; diz altina = under the knee). Do not strip generic altı as a field — it would steal sole phrases into leftover ayaq = LOWER-LIMB.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "FURUN-IS-NOSE",
+      "decision": "furun in nahiye = burun (nose) → ZONE-FACE. Not turunda/tampon unless turunda is also written.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "RALOJI-IS-NEVRALOJI",
+      "decision": "raloji rej on Elektroforez = nevraloji (neurological stim program), not radiology. Same DEVICE_PROGRAM as nevraloji rej.",
+      "why": "WO 11 rows, same doctor as KY/BEF yaxaliq + nevraloji rej on Elektroforez. Reception thought radiological; procedure is electrophoresis."
+    },
+    {
+      "id": "EKSTREMITE-IS-LIMB",
+      "decision": "ekstremite = limb(s). aşağı/alt ekstremite → ZONE-LOWER-LIMB. yuxarı ekstremite → ZONE-UPPER-LIMB. Bare ekstremite = both limbs (composite). Not a new S.",
+      "why": "Reception 2026-08-26 (TR/LAT: kol ve bacak)."
+    },
+    {
+      "id": "ERECTOR-IS-SPINE",
+      "decision": "erector spina para vertebral = paravertebral erector spinae → ZONE-SPINE-FULL. Latin anatomy, not a new S.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "DIZALTI-IS-KNEE",
+      "decision": "dizaltı / dizalti = under the knee → ZONE-KNEE. dizdən aşağı = below the knee → ZONE-FOOT-LEG. Not the same.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "FOUR-LU-REJ-IS-PADS",
+      "decision": "4 lü rej = 4-electrode regime → ELECTRODE_COUNT. Still not Amplipuls work-kind IV (that is 4 cu rej).",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "ONE-CI-IS-FIRST",
+      "decision": "1 ci / 1-ci = first (day or first sitz). 1 ci oturaq = first sitz, not BATH_SEQUENCE (that needs son tam). Longer 1 ci rej still wins as work-kind I.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "NELOMA-IS-BELOMA",
+      "decision": "neloma / meloma = beloma typo → ZONE-LUMBOSACRAL. Not melanoma. Keyboard neighbours n/m vs b.",
+      "why": "Reception confirmed 2026-08-26. WO is Amplipuls (4 cu rej) and Super induktiv terapiya, not oncology."
+    },
+    {
+      "id": "ASAGI-NAHIYE-LOWER",
+      "decision": "asagi nahiye on Parafin Aşağı = ZONE-LOWER-LIMB (the lower-body paraffin site), not a surface-only flag.",
+      "why": "Reception 2026-08-26. Same SKU already named Aşağı nahiyə."
+    },
+    {
+      "id": "ROTATOR-CUFF-IS-SHOULDER",
+      "decision": "supraspinatus / infraspinatus (insraspinatus) → ZONE-SHOULDER. Latin muscle names, not a new S.",
+      "why": "Reception 2026-08-26. Amplipuls interferential on those muscles."
+    },
+    {
+      "id": "MALLEOL-IS-ANKLE",
+      "decision": "lateral/medial malleol = malleolus → ZONE-ANKLE.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "THORAKAL-IS-CHEST",
+      "decision": "thorakal / torakal = thorax → ZONE-CHEST.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "ACHILLES-IS-FOOT",
+      "decision": "axil veteri = Achilles tendon → ZONE-FOOT-LEG (shockwave). Not a new S.",
+      "why": "Reception 2026-08-26. Zərbə dalğa rows."
+    },
+    {
+      "id": "HEART-MASSAGE-CHEST",
+      "decision": "ürək nahiyəsi after open-heart surgery = ZONE-CHEST + light INTENSITY + HOLD no pressure. Not a new heart S.",
+      "why": "Reception 2026-08-26. Massaj 30."
+    },
+    {
+      "id": "SAGRI-IS-HAUNCH-NOT-BANDAGE",
+      "decision": "sagri = sağrı (haunch / HIP-GLUTEAL). sarğı (bandage) is sargi / sagir nah — unmatched queue. Do not conflate.",
+      "why": "Reception 2026-08-26 wrote sagri = sarğı; WO shows bilateral sagri + karipazim and bud/çanaq/diz pairs — that is sağrı, not a dressing."
+    },
+    {
+      "id": "QOLLARDAN-ASAGI-HAND",
+      "decision": "qollardan aşağı on Parafin Yuxarı + tam onurga = distal to the upper arm → ZONE-HAND-FOREARM (forearm/hand), simultaneous with spine. Not lower-limb (wrong SKU).",
+      "why": "Reception 2026-08-26 unsure. Distal reading fits upper paraffin; torso-below-axilla would duplicate the spine chip."
+    },
+    {
+      "id": "SAKRUM-IS-LUMBOSACRAL",
+      "decision": "sakrum = sacrum → ZONE-LUMBOSACRAL (same as dumbek). Not coccyx.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "YUXARI-ON-PARAFIN-SKU",
+      "decision": "boyun yuxari bel / yuxari boyun on Parafin Yuxarı: yuxarı echoes the SKU. Sites are COLLAR (+ LUMBOSACRAL if bel). Do not treat leftover yuxari as UPPER-LIMB.",
+      "why": "Reception 2026-08-26: procedure name already has upper."
+    },
+    {
+      "id": "QILLAR-IS-QOLLAR",
+      "decision": "qıllar / qillara = qollar (keyboard i vs o) → ZONE-UPPER-LIMB. Not body hair.",
+      "why": "Reception 2026-08-26: letters are neighbours. Same pattern as neloma/beloma."
+    },
+    {
+      "id": "CAPIQ-REJ-IS-SCAR-PROGRAM",
+      "decision": "capiq rej / çapıq rejim = scar (keloid) device program, same field as kelloid capiq pr. Not a site.",
+      "why": "Reception 2026-08-26 unsure of the word; Azerbaijani çapıq = scar. WO pairs it with artroz b rej on knees + abdomen."
+    },
+    {
+      "id": "FONOFAREZ-IS-UFF-BLEED",
+      "decision": "fonofarez / fonoforez in nahiye = Ultrafonoforez written into the site field. PROCEDURE_NAME_BLEED, not a zone.",
+      "why": "Reception 2026-08-26. Catalog SKU is Ultrafonoforez (Naftalan yağıyla / Gellə)."
+    },
+    {
+      "id": "FOUR-LU-REJIM-IS-PADS",
+      "decision": "4 lü rejim = 4-electrode count, same as 4 lü. Not Amplipuls IV (4 cu rej) and not a named DEVICE_PROGRAM leftover.",
+      "why": "Reception 2026-08-26."
+    },
+    {
+      "id": "ARTROZ-B-IS-PROGRAM-VARIANT",
+      "decision": "artroz rej b / artrit pr ilə(b) / leftover (b) = named stim/laser program variant B. Keep as DEVICE_PROGRAM. Isolated b is not anatomy. Meaning of letter B inside the device menu is still unknown.",
+      "why": "Reception 2026-08-26 cannot yet name what B is; WO writes it on artroz/artrit rows only."
+    },
+    {
+      "id": "BUTUN-VS-BURUN",
+      "decision": "leftover butun is NOT a blind stop. t/r are neighbours: butun may be bütün (all) or burun (nose). If another site is already matched (butun ayaqlar) = bütün of that site. Bare butun on Massaj 30 / UFB / Parafin bütün = FULL-BODY. Bare butun on Trunda/turunda/İnqalyasiya = ZONE-FACE. Without a SKU, leave unmatched.",
+      "why": "Reception 2026-08-27. WO today: butun beden = Massaj 30 + UFB; butun ayaqlar = İnfraqırmızı. No butun on turunda yet."
+    }
+  ],
+  "matchRules": {
+    "stripBeforeMatch": [
+      "SEQUENCE_ALTERNATING",
+      "SEQUENCE_SIMULTANEOUS",
+      "LATERALITY",
+      "AMPLIPULS_WORK_KIND",
+      "DEVICE_PROGRAM",
+      "ELECTRODE_COUNT",
+      "DEVICE_PARAMS",
+      "NO_ADDITIVE",
+      "APPLICATION_SURFACE",
+      "DAY_BLOCK",
+      "BATH_SEQUENCE",
+      "SUBSTANCE_OR_ADDITIVE",
+      "SMEAR",
+      "EXTRA_OIL",
+      "INTENSITY",
+      "HOLD_OR_STOP",
+      "PROCEDURE_NAME_BLEED",
+      "SPINE_LEVEL",
+      "APPLICATION_CUT"
+    ],
+    "specificity": "Longest remaining phrase wins. Bare boyun → COLLAR. Whole-word bas → HEAD unless barmaq (foot/hand digits).",
+    "applicationCutImplies": {
+      "SOCK": "ZONE-FOOT-LEG",
+      "GLOVE": "ZONE-HAND-FOREARM"
+    },
+    "stopWords": [
+      "nahiyesine",
+      "nahiyesi",
+      "nahiyyesi",
+      "nahiye",
+      "ve",
+      "butov",
+      "boyunca",
+      "hissesi",
+      "hissesine",
+      "hisse",
+      "etrafi",
+      "usdu",
+      "ile",
+      "ilə",
+      "ezeleler",
+      "ezelelerine",
+      "ezele",
+      "sepgiye",
+      "terefleri",
+      "terefi",
+      "banna",
+      "formada",
+      "ucun",
+      "üçün",
+      "hamisi",
+      "feqereleri",
+      "feqərələri",
+      "etrafina",
+      "nah",
+      "nahiesine",
+      "nahiyeleri",
+      "verilsin",
+      "eyni gunde",
+      "telefi",
+      "əzələrinə",
+      "ezelerine",
+      "nahi",
+      "nahiy",
+      "nahiyyesine",
+      "nahoiyesine",
+      "nahiyeine",
+      "bnahiyesine",
+      "tuklu",
+      "temiz",
+      "hisseleri",
+      "hissələri",
+      "elave",
+      "ətraf",
+      "ətraflar",
+      "ezelelere",
+      "ezeleleri",
+      "əzələsi",
+      "nahiyyesin",
+      "nahiyessi",
+      "nahiyyəsi",
+      "hem",
+      "bolgeye",
+      "bolge",
+      "bölgəyə",
+      "hahiyesine",
+      "hahiyesi",
+      "iile",
+      "oynagi",
+      "oynağı",
+      "ezeleelr",
+      "hissəsinə",
+      "hissesine",
+      "j",
+      "vanna",
+      "ne",
+      "yalniz",
+      "yalnız",
+      "nahiyes",
+      "ezeleye",
+      "ezelelerinin",
+      "usdune",
+      "üstünə",
+      "saheye",
+      "sadece",
+      "sadəcə",
+      "qeder",
+      "qədər",
+      "oynagina",
+      "oynağına",
+      "nahiyesin",
+      "nahiyessine",
+      "nahieysi",
+      "nahiyesie",
+      "nahiyessesi",
+      "hisseye",
+      "hissei",
+      "kenarina",
+      "kənarına",
+      "kenari",
+      "kənarı",
+      "daxil",
+      "mil",
+      "her nahiyeye",
+      "hər nahiyəyə",
+      "e",
+      "da",
+      "eytrafi",
+      "disklerine",
+      "disklərinə",
+      "asagi",
+      "aşağı",
+      "aşaği",
+      "boyu"
+    ]
+  },
+  "compositeMaps": [
+    {
+      "wo": "kurek boyun ciyinlere ve qollara nobeli",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "onurga boyu ayaqlar növbəli",
+      "chips": [
+        "ZONE-SPINE-FULL",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "boyun çiyin bel oma növbəli",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "1 ci oturaq son tam",
+      "chips": [
+        "ZONE-SITZ",
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "BATH_SEQUENCE"
+      ]
+    },
+    {
+      "wo": "beloma nahiyesine 4 cu rej",
+      "chips": [
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "AMPLIPULS_WORK_KIND"
+      ]
+    },
+    {
+      "wo": "baş boyun",
+      "chips": [
+        "ZONE-HEAD",
+        "ZONE-COLLAR"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "baş boyun çiyinlər",
+      "chips": [
+        "ZONE-HEAD",
+        "ZONE-COLLAR"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "boyun basin tuklu nahiyesine",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-SCALP"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "qarin ayaqlar",
+      "chips": [
+        "ZONE-ABDOMEN",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "bel oma ayaqlar növbəli",
+      "chips": [
+        "ZONE-LUMBOSACRAL",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "büzdüm bel oma tenslə",
+      "chips": [
+        "ZONE-COCCYX",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "DEVICE_PROGRAM"
+      ]
+    },
+    {
+      "wo": "əllər corabşəkilli növbəli",
+      "chips": [
+        "ZONE-HAND-FOREARM",
+        "ZONE-FOOT-LEG"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING",
+        "APPLICATION_CUT"
+      ]
+    },
+    {
+      "wo": "BOYUN BEL",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "ayaqlara qarina",
+      "chips": [
+        "ZONE-LOWER-LIMB",
+        "ZONE-ABDOMEN"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "qollar ve beden",
+      "chips": [
+        "ZONE-UPPER-LIMB",
+        "ZONE-FULL-BODY"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "bədənin ön və arxa hissəsi növbəli",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "tan beden",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "4kamerali",
+      "chips": [
+        "ZONE-FOUR-CHAMBER"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "l4 l5 bel fəqərələri dizlər 4lü kali yodla",
+      "chips": [
+        "ZONE-LUMBOSACRAL",
+        "ZONE-KNEE"
+      ],
+      "flags": [
+        "ELECTRODE_COUNT",
+        "SUBSTANCE_OR_ADDITIVE",
+        "SPINE_LEVEL"
+      ]
+    },
+    {
+      "wo": "əl və ayaq barmaqlari art pr ilə növbəli",
+      "chips": [
+        "ZONE-HAND-FOREARM",
+        "ZONE-FOOT-LEG"
+      ],
+      "flags": [
+        "DEVICE_PROGRAM",
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "bədənin ön və arxa hissəsinə növbəli",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "5 dəq arxa və 5 dəq ön bədən",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "ön 5 dəq arxa 5 dəq bədən",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "5 dəq ön və 5 dəq arxa bədən",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "qarinin yan tərəfləri və süd vəzinin altina",
+      "chips": [
+        "ZONE-ABDOMEN",
+        "ZONE-CHEST"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "5 dəq ön 5 dəq arxa bədən və qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5 dəq ön və 5dəq arxa bədən və qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "bədən və qollar 5 dəq ön 5 dəq arxa",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5 dəq ön 5dəq arxa bədən və qollar",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "baş boyun 5 gun ardindan eyaqlar 5 gun",
+      "chips": [
+        "ZONE-HEAD",
+        "ZONE-COLLAR",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "DAY_BLOCK"
+      ]
+    },
+    {
+      "wo": "ayaqlaradizlərə",
+      "chips": [
+        "ZONE-LOWER-LIMB",
+        "ZONE-KNEE"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "quadriseps ve biceps ezelelerine 4 basliqli",
+      "chips": [
+        "ZONE-HIP-GLUTEAL"
+      ],
+      "flags": [
+        "ELECTRODE_COUNT"
+      ]
+    },
+    {
+      "wo": "femur quadriseps ve hamstring ön və arxa tərəf",
+      "chips": [
+        "ZONE-HIP-GLUTEAL"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "boyuna burun nahiyəsinə",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-FACE"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "bədəənin ön vəv arxa hissəsi növbəli",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "dizştopuq",
+      "chips": [
+        "ZONE-KNEE",
+        "ZONE-ANKLE"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "diz stopuq",
+      "chips": [
+        "ZONE-KNEE",
+        "ZONE-ANKLE"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "kurek ne sine",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-CHEST"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "kürək və sinə",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-CHEST"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "iyin boyuk kurem novbəli",
+      "chips": [
+        "ZONE-SHOULDER",
+        "ZONE-COLLAR",
+        "ZONE-BACK"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "ciyin boyuk kurem novbəli",
+      "chips": [
+        "ZONE-SHOULDER",
+        "ZONE-COLLAR",
+        "ZONE-BACK"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "buruna naftalanla",
+      "chips": [
+        "ZONE-FACE"
+      ],
+      "flags": [
+        "EXTRA_OIL"
+      ]
+    },
+    {
+      "wo": "ayaqlar nov",
+      "chips": [
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "bel ayaq novbeli",
+      "chips": [
+        "ZONE-LUMBOSACRAL",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "bel ayaq növbəli",
+      "chips": [
+        "ZONE-LUMBOSACRAL",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "bədənin ön hissəsinə",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "bədənin ön v arxa hissələri",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "beloma nahiyesine k navakainle",
+      "chips": [
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "SUBSTANCE_OR_ADDITIVE"
+      ]
+    },
+    {
+      "wo": "4 basliql hem servikal hem lumbar bolgeye eyni enda karipazin",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "ELECTRODE_COUNT",
+        "SEQUENCE_SIMULTANEOUS",
+        "SUBSTANCE_OR_ADDITIVE"
+      ]
+    },
+    {
+      "wo": "4 basliqli iki basligi boyun dimeksidiki basligi bel oma",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "ELECTRODE_COUNT",
+        "SUBSTANCE_OR_ADDITIVE"
+      ]
+    },
+    {
+      "wo": "5dəq ön və 5dəq arxa bədən və qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5dəq ön və 5 dəq arxa bədən və qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5 dəq ön 5 dəq arxa bədən və qollar eyni vaxti",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5 dəq bədən ön və 5 dəq arxa bədən və qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5 dəq arxa 5 dəq ön bədən və qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "5 dəq arxa 5 dəq ön",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "DEVICE_PARAMS",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "15 deqiqe bel 15 deqiqe eyaq",
+      "chips": [
+        "ZONE-LUMBOSACRAL",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "DEVICE_PARAMS"
+      ]
+    },
+    {
+      "wo": "topuq lara trficiskiy yazva",
+      "chips": [
+        "ZONE-ANKLE"
+      ],
+      "flags": [
+        "PROCEDURE_NAME_BLEED"
+      ]
+    },
+    {
+      "wo": "ayaqlar q1arin",
+      "chips": [
+        "ZONE-LOWER-LIMB",
+        "ZONE-ABDOMEN"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "bədənin arxa hissəsi",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "dos qefesine qeder omaya olmaz",
+      "chips": [
+        "ZONE-CHEST"
+      ],
+      "flags": [
+        "HOLD_OR_STOP"
+      ]
+    },
+    {
+      "wo": "doş qefesine qeder omaya olmaz",
+      "chips": [
+        "ZONE-CHEST"
+      ],
+      "flags": [
+        "HOLD_OR_STOP"
+      ]
+    },
+    {
+      "wo": "döş qəfəsinə qədər ombaya olmaz",
+      "chips": [
+        "ZONE-CHEST"
+      ],
+      "flags": [
+        "HOLD_OR_STOP"
+      ]
+    },
+    {
+      "wo": "kürəyin yuxari hissəsi",
+      "chips": [
+        "ZONE-BACK"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "onurga boyu art",
+      "chips": [
+        "ZONE-SPINE-FULL"
+      ],
+      "flags": [
+        "DEVICE_PROGRAM"
+      ]
+    },
+    {
+      "wo": "beloma nahiyesine 4 cu re ve kurek boyuna nobeli j",
+      "chips": [
+        "ZONE-LUMBOSACRAL",
+        "ZONE-BACK",
+        "ZONE-COLLAR"
+      ],
+      "flags": [
+        "AMPLIPULS_WORK_KIND",
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "ciyinşkürək",
+      "chips": [
+        "ZONE-SHOULDER",
+        "ZONE-BACK"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "ciyin kürək",
+      "chips": [
+        "ZONE-SHOULDER",
+        "ZONE-BACK"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "diz topuq",
+      "chips": [
+        "ZONE-KNEE",
+        "ZONE-ANKLE"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "basin arxasina",
+      "chips": [
+        "ZONE-HEAD"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "onurga boyu ayaqlar nov",
+      "chips": [
+        "ZONE-SPINE-FULL",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "dizler navakayin 5 gunden sonra boyun ardina",
+      "chips": [
+        "ZONE-KNEE",
+        "ZONE-COLLAR"
+      ],
+      "flags": [
+        "SUBSTANCE_OR_ADDITIVE",
+        "DAY_BLOCK",
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "so baldir",
+      "chips": [
+        "ZONE-FOOT-LEG"
+      ],
+      "flags": [
+        "LATERALITY"
+      ]
+    },
+    {
+      "wo": "ön bədən",
+      "chips": [
+        "ZONE-FULL-BODY"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "ekstremite",
+      "chips": [
+        "ZONE-UPPER-LIMB",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "topulara olunmasin",
+      "chips": [
+        "ZONE-ANKLE"
+      ],
+      "flags": [
+        "HOLD_OR_STOP"
+      ]
+    },
+    {
+      "wo": "kurek ayaqlar naftalanan novbəli",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-LOWER-LIMB"
+      ],
+      "flags": [
+        "EXTRA_OIL",
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "ön bədən və arxa bədən qollar eyni vaxtda",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE",
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "aciq urek emeliyati olub deye cox yungul masaj urek nahiyesine hecbir basqi olmasin",
+      "chips": [
+        "ZONE-CHEST"
+      ],
+      "flags": [
+        "INTENSITY",
+        "HOLD_OR_STOP"
+      ]
+    },
+    {
+      "wo": "baden gollar on ve arxa telefi",
+      "chips": [
+        "ZONE-FULL-BODY",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "APPLICATION_SURFACE"
+      ]
+    },
+    {
+      "wo": "belinden eyaqlarinin altina qeder",
+      "chips": [
+        "ZONE-LOWER-LIMB",
+        "ZONE-FOOT-LEG"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "enterferensial proqrami ile supraspinatus ve insraspinatus ezelelerinin usdune",
+      "chips": [
+        "ZONE-SHOULDER"
+      ],
+      "flags": [
+        "DEVICE_PROGRAM"
+      ]
+    },
+    {
+      "wo": "sadirsek qola",
+      "chips": [
+        "ZONE-ELBOW",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": [
+        "LATERALITY"
+      ]
+    },
+    {
+      "wo": "oturaqqursaga kimi",
+      "chips": [
+        "ZONE-SITZ",
+        "ZONE-TO-WAIST"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "dizden asagi eyaqlar",
+      "chips": [
+        "ZONE-FOOT-LEG"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "c4 c5 l1 l3 l4 karipazimlə növbəli",
+      "chips": [
+        "ZONE-SPINE-FULL"
+      ],
+      "flags": [
+        "SPINE_LEVEL",
+        "SUBSTANCE_OR_ADDITIVE",
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "c4 c5 l1 l3 l4",
+      "chips": [
+        "ZONE-SPINE-FULL"
+      ],
+      "flags": [
+        "SPINE_LEVEL"
+      ]
+    },
+    {
+      "wo": "boyun yuxari bel",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "yuxari boyun",
+      "chips": [
+        "ZONE-COLLAR"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "oturaq qollari daxil",
+      "chips": [
+        "ZONE-SITZ",
+        "ZONE-UPPER-LIMB"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "tam onurga qollardan asagi eyni anda",
+      "chips": [
+        "ZONE-SPINE-FULL",
+        "ZONE-HAND-FOREARM"
+      ],
+      "flags": [
+        "SEQUENCE_SIMULTANEOUS"
+      ]
+    },
+    {
+      "wo": "kurekboyun ciyinlere",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-COLLAR",
+        "ZONE-SHOULDER"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "kurekboyun",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-COLLAR"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "sol qolu el biləyi təmizlənmi s naftalan yagi",
+      "chips": [
+        "ZONE-UPPER-LIMB",
+        "ZONE-WRIST"
+      ],
+      "flags": [
+        "LATERALITY",
+        "SMEAR",
+        "EXTRA_OIL"
+      ]
+    },
+    {
+      "wo": "trapez ve lotissimus dorsi ezeleler enterferensial proqramo 90-100 mhz",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-BACK"
+      ],
+      "flags": [
+        "DEVICE_PROGRAM",
+        "DEVICE_PARAMS"
+      ]
+    },
+    {
+      "wo": "varatnik bel oma kali yodla növbəlic3şc4 l3 l4",
+      "chips": [
+        "ZONE-COLLAR",
+        "ZONE-LUMBOSACRAL"
+      ],
+      "flags": [
+        "SUBSTANCE_OR_ADDITIVE",
+        "SEQUENCE_ALTERNATING",
+        "SPINE_LEVEL"
+      ]
+    },
+    {
+      "wo": "eller corab sekil ayaqar varatnik novbe",
+      "chips": [
+        "ZONE-HAND-FOREARM",
+        "ZONE-FOOT-LEG",
+        "ZONE-COLLAR"
+      ],
+      "flags": [
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "her iki dizlere ve ayaq pen artroz rej cesine nobeli",
+      "chips": [
+        "ZONE-KNEE",
+        "ZONE-FOOT-LEG"
+      ],
+      "flags": [
+        "DEVICE_PROGRAM",
+        "LATERALITY",
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "her iki bud canaq nahiyesin ve dizlere nobeli e",
+      "chips": [
+        "ZONE-HIP-GLUTEAL",
+        "ZONE-KNEE"
+      ],
+      "flags": [
+        "LATERALITY",
+        "SEQUENCE_ALTERNATING"
+      ]
+    },
+    {
+      "wo": "kürək və boynuna",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-COLLAR"
+      ],
+      "flags": []
+    },
+    {
+      "wo": "kurek cuyinlere",
+      "chips": [
+        "ZONE-BACK",
+        "ZONE-SHOULDER"
+      ],
+      "flags": []
+    }
+  ],
+  "naftaResourceSketch": {
+    "status": "planning-not-schema",
+    "electroRooms": [
+      "7",
+      "8",
+      "10",
+      "11",
+      "12",
+      "13"
+    ],
+    "usRooms": [
+      "15",
+      "16",
+      "17"
+    ],
+    "notInEra": [
+      "14"
+    ],
+    "units": [
+      {
+        "id": "BTL-4000-7-8",
+        "model": "BTL 4000",
+        "rooms": [
+          "7",
+          "8"
+        ],
+        "outputs": 2,
+        "pawsPerOutput": 2,
+        "twoPad": true,
+        "fourPad": false,
+        "wiring": "One unit between 7 and 8: E1→7 (2 paws), E2→8 (2 paws).",
+        "parallel": "Any electro procedures on both outputs (same or different)."
+      },
+      {
+        "id": "BTL-4000-10-11",
+        "model": "BTL 4000",
+        "rooms": [
+          "10",
+          "11"
+        ],
+        "outputs": 2,
+        "pawsPerOutput": 2,
+        "twoPad": true,
+        "fourPad": false,
+        "wiring": "One unit between 10 and 11: E1→10 (2 paws), E2→11 (2 paws).",
+        "parallel": "Any electro procedures on both outputs (same or different)."
+      },
+      {
+        "id": "UNISTIM-5S-12",
+        "model": "UNISTIM 5S",
+        "rooms": [
+          "12"
+        ],
+        "outputs": 1,
+        "pawsPerOutput": 4,
+        "twoPad": true,
+        "fourPad": true,
+        "wiring": "Cabin 12 only: 1 output × 4 paws. Also a 2-pad resource (2 of 4).",
+        "parallel": "One patient."
+      },
+      {
+        "id": "BTL-4825S-13",
+        "model": "BTL 4825S Premium",
+        "rooms": [
+          "13"
+        ],
+        "outputs": 1,
+        "pawsPerOutput": 4,
+        "twoPad": true,
+        "fourPad": true,
+        "wiring": "Cabin 13 only: 1 output × 4 paws. Also a 2-pad resource (2 of 4). US on this box not used.",
+        "parallel": "One patient."
+      }
+    ],
+    "electrodeRouting": {
+      "twoPadRooms": [
+        "7",
+        "8",
+        "10",
+        "11",
+        "12",
+        "13"
+      ],
+      "fourPadOnlyRooms": [
+        "12",
+        "13"
+      ],
+      "placement": "FIFO only (placeConfirmedProcedures). Do not hold 12/13 for later 4-pad. 2-pad may take any free electro couch including 12/13.",
+      "note": "2 li → any electro couch (12/13 as 2 of 4 paws). 4 lü / 4 basliqli / 4-pole IFC → 12 or 13 when free (capability, not priority). Patient in 7 cannot take both BTL 4000 outputs (second pair is in 8)."
+    },
+    "staff": "One electro nurse covers couches 7, 8, 10–13 (staff lock, not a device lock).",
+    "devicesNote": "Four apparatuses, six couches: two BTL 4000 (7∥8 and 10∥11), UNISTIM 5S (12), BTL 4825S Premium (13). Closed 2026-08-26.",
+    "occupancy": "BTL 4000: any electro procedures in parallel on both outputs (same or different). 12/13 are 2-pad and 4-pad. FIFO: do not hold 12/13 for 4 lü. 4-pad lands on 12/13 only when free. US/UFF stays 15–17; US on 4825S not used. Cabin 7 does not block 8 (same for 10/11).",
+    "procedureTypes": "Keep separate ProcedureTypes (SMT, TENS, Kotz, interference, electrophoresis, UFF gel, UFF oil) sharing resources so TTK/BOM stays per type. UI may group under электротерапия.",
+    "cutoverExcel": "#40 LOCATION pool for Amplipuls/Elektroforez is still 7–13. FIFO uses that pool for 2-pad. Four-pad is a capability filter on 12/13 when free, not a second #25 SKU and not a hold."
+  }
+}

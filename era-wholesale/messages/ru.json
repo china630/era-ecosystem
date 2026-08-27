@@ -77,6 +77,9 @@
   },
   "auth": {
     "loginFailed": "Ошибка входа",
+    "organizationIdLabel": "ID организации (wholesale)",
+    "organizationIdPlaceholder": "UUID — обязателен в общем wholesale pool",
+    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",

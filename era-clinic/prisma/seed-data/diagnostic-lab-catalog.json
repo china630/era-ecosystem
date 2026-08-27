@@ -1,11 +1,11 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "locale": [
     "en",
     "ru",
     "az"
   ],
-  "notes": "ERA Clinic diagnostic & lab catalog v1.1 (P0+P1 AZ outpatient/sanatorium). kinds: imaging|functional|endoscopy|lab_panel|visit. packages[] = checkup compositions.",
+  "notes": "ERA Clinic diagnostic & lab catalog v1.2 (AZ clinic + MediClub/Exonlab routine layer). kinds: imaging|functional|endoscopy|lab_panel|visit. packages[] = checkup compositions. Rare send-out stays admin-added.",
   "modalities": [
     {
       "code": "USG",
@@ -4486,6 +4486,158 @@
           },
           "refMin": "0",
           "refMax": "20"
+        },
+        {
+          "code": "MCV",
+          "unit": "fL",
+          "label": {
+            "en": "MCV",
+            "ru": "MCV",
+            "az": "MCV"
+          },
+          "refMin": "80",
+          "refMax": "96"
+        },
+        {
+          "code": "MCH",
+          "unit": "pg",
+          "label": {
+            "en": "MCH",
+            "ru": "MCH",
+            "az": "MCH"
+          },
+          "refMin": "27",
+          "refMax": "33"
+        },
+        {
+          "code": "MCHC",
+          "unit": "g/L",
+          "label": {
+            "en": "MCHC",
+            "ru": "MCHC",
+            "az": "MCHC"
+          },
+          "refMin": "320",
+          "refMax": "360"
+        },
+        {
+          "code": "RDW-CV",
+          "unit": "%",
+          "label": {
+            "en": "RDW-CV",
+            "ru": "RDW-CV",
+            "az": "RDW-CV"
+          }
+        },
+        {
+          "code": "RDW-SD",
+          "unit": "fL",
+          "label": {
+            "en": "RDW-SD",
+            "ru": "RDW-SD",
+            "az": "RDW-SD"
+          }
+        },
+        {
+          "code": "MPV",
+          "unit": "fL",
+          "label": {
+            "en": "MPV",
+            "ru": "MPV",
+            "az": "MPV"
+          }
+        },
+        {
+          "code": "PDW",
+          "unit": "fL",
+          "label": {
+            "en": "PDW",
+            "ru": "PDW",
+            "az": "PDW"
+          }
+        },
+        {
+          "code": "P-LCR",
+          "unit": "%",
+          "label": {
+            "en": "P-LCR",
+            "ru": "P-LCR",
+            "az": "P-LCR"
+          }
+        },
+        {
+          "code": "PLT-PCT",
+          "unit": "%",
+          "label": {
+            "en": "Plateletcrit",
+            "ru": "Тромбокрит",
+            "az": "Trombositokrit"
+          },
+          "refMin": "0.1",
+          "refMax": "0.5"
+        },
+        {
+          "code": "MXD%",
+          "unit": "%",
+          "label": {
+            "en": "MXD %",
+            "ru": "Смесь %",
+            "az": "MXD %"
+          }
+        },
+        {
+          "code": "NEUT#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Neutrophils abs",
+            "ru": "Нейтрофилы абс.",
+            "az": "Neytrofil abs"
+          }
+        },
+        {
+          "code": "LYMPH#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Lymphocytes abs",
+            "ru": "Лимфоциты абс.",
+            "az": "Limfosit abs"
+          }
+        },
+        {
+          "code": "MONO#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Monocytes abs",
+            "ru": "Моноциты абс.",
+            "az": "Monosit abs"
+          }
+        },
+        {
+          "code": "EOS#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Eosinophils abs",
+            "ru": "Эозинофилы абс.",
+            "az": "Eozinofil abs"
+          }
+        },
+        {
+          "code": "BASO#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Basophils abs",
+            "ru": "Базофилы абс.",
+            "az": "Bazofil abs"
+          }
+        },
+        {
+          "code": "RETIC",
+          "unit": "%",
+          "label": {
+            "en": "Reticulocytes",
+            "ru": "Ретикулоциты",
+            "az": "Retikulositlər"
+          }
         }
       ]
     },
@@ -4669,6 +4821,159 @@
           },
           "refMin": "0",
           "refMax": "5"
+        },
+        {
+          "code": "IBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Indirect bilirubin",
+            "ru": "Билирубин непрямой",
+            "az": "Dolayı bilirubin"
+          }
+        },
+        {
+          "code": "GLOB",
+          "unit": "g/L",
+          "label": {
+            "en": "Globulin",
+            "ru": "Глобулин",
+            "az": "Qlobalin"
+          }
+        },
+        {
+          "code": "AG",
+          "unit": "",
+          "label": {
+            "en": "A/G ratio",
+            "ru": "А/Г",
+            "az": "A/G"
+          }
+        },
+        {
+          "code": "AMY",
+          "unit": "U/L",
+          "label": {
+            "en": "Amylase",
+            "ru": "Амилаза",
+            "az": "Amilaza"
+          }
+        },
+        {
+          "code": "LIPASE",
+          "unit": "U/L",
+          "label": {
+            "en": "Lipase",
+            "ru": "Липаза",
+            "az": "Lipaza"
+          }
+        },
+        {
+          "code": "LDH",
+          "unit": "U/L",
+          "label": {
+            "en": "LDH",
+            "ru": "ЛДГ",
+            "az": "LDH"
+          }
+        },
+        {
+          "code": "CK",
+          "unit": "U/L",
+          "label": {
+            "en": "CK",
+            "ru": "КК",
+            "az": "CK"
+          }
+        },
+        {
+          "code": "HBDH",
+          "unit": "U/L",
+          "label": {
+            "en": "HBDH",
+            "ru": "ГБДГ",
+            "az": "HBDH"
+          }
+        },
+        {
+          "code": "CHE",
+          "unit": "U/L",
+          "label": {
+            "en": "Cholinesterase",
+            "ru": "Холинэстераза",
+            "az": "Xolinesteraza"
+          }
+        },
+        {
+          "code": "LAC",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Lactate",
+            "ru": "Лактат",
+            "az": "Laktat"
+          }
+        },
+        {
+          "code": "NH3",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Ammonia",
+            "ru": "Аммиак",
+            "az": "Ammoniak"
+          }
+        },
+        {
+          "code": "BUN",
+          "unit": "mmol/L",
+          "label": {
+            "en": "BUN",
+            "ru": "Азот мочевины",
+            "az": "BUN"
+          }
+        },
+        {
+          "code": "FE",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Iron",
+            "ru": "Железо",
+            "az": "Dəmir"
+          }
+        },
+        {
+          "code": "TIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "TIBC",
+            "ru": "ОЖСС",
+            "az": "TIBC"
+          }
+        },
+        {
+          "code": "UIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "UIBC",
+            "ru": "НЖСС",
+            "az": "UIBC"
+          }
+        },
+        {
+          "code": "FERR",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Ferritin",
+            "ru": "Ферритин",
+            "az": "Ferritin"
+          }
+        },
+        {
+          "code": "TRF",
+          "unit": "g/L",
+          "label": {
+            "en": "Transferrin",
+            "ru": "Трансферрин",
+            "az": "Transferrin"
+          }
         }
       ]
     },
@@ -4741,6 +5046,24 @@
             "ru": "Фосфор",
             "az": "Fosfor"
           }
+        },
+        {
+          "code": "TCO2",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Total CO2",
+            "ru": "Общий CO2",
+            "az": "Ümumi CO2"
+          }
+        },
+        {
+          "code": "ICA",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Ionized calcium",
+            "ru": "Кальций ионизированный",
+            "az": "İonlaşmış Ca"
+          }
         }
       ]
     },
@@ -4802,6 +5125,24 @@
             "ru": "D-димер",
             "az": "D-dimer"
           }
+        },
+        {
+          "code": "TT",
+          "unit": "s",
+          "label": {
+            "en": "Thrombin time",
+            "ru": "Тромбиновое время",
+            "az": "Trombin vaxtı"
+          }
+        },
+        {
+          "code": "AT3",
+          "unit": "%",
+          "label": {
+            "en": "Antithrombin III",
+            "ru": "Антитромбин III",
+            "az": "Antitrombin III"
+          }
         }
       ]
     },
@@ -4853,6 +5194,35 @@
             "en": "C-peptide",
             "ru": "C-пептид",
             "az": "C-peptid"
+          }
+        },
+        {
+          "code": "HOMA",
+          "unit": "",
+          "label": {
+            "en": "HOMA-IR",
+            "ru": "HOMA-IR",
+            "az": "HOMA-IR"
+          }
+        },
+        {
+          "code": "GLU",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Glucose",
+            "ru": "Глюкоза",
+            "az": "Qlükoza"
+          },
+          "refMin": "3.9",
+          "refMax": "6.1"
+        },
+        {
+          "code": "MAU",
+          "unit": "mg/L",
+          "label": {
+            "en": "Microalbumin urine",
+            "ru": "МАУ",
+            "az": "MAU"
           }
         }
       ]
@@ -4912,6 +5282,42 @@
             "en": "Anti-TG",
             "ru": "АТ-ТГ",
             "az": "Anti-TG"
+          }
+        },
+        {
+          "code": "TT3",
+          "unit": "nmol/L",
+          "label": {
+            "en": "Total T3",
+            "ru": "Т3 общий",
+            "az": "Ümumi T3"
+          }
+        },
+        {
+          "code": "TT4",
+          "unit": "nmol/L",
+          "label": {
+            "en": "Total T4",
+            "ru": "Т4 общий",
+            "az": "Ümumi T4"
+          }
+        },
+        {
+          "code": "TG",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Thyroglobulin",
+            "ru": "Тиреоглобулин",
+            "az": "Tireoqlobulin"
+          }
+        },
+        {
+          "code": "CALCIT",
+          "unit": "pg/mL",
+          "label": {
+            "en": "Calcitonin",
+            "ru": "Кальцитонин",
+            "az": "Kalsitonin"
           }
         }
       ]
@@ -4987,6 +5393,33 @@
             "en": "AMH",
             "ru": "АМГ",
             "az": "AMH"
+          }
+        },
+        {
+          "code": "SHBG",
+          "unit": "nmol/L",
+          "label": {
+            "en": "SHBG",
+            "ru": "ГСПГ",
+            "az": "SHBG"
+          }
+        },
+        {
+          "code": "DHEAS",
+          "unit": "µg/dL",
+          "label": {
+            "en": "DHEA-S",
+            "ru": "ДГЭА-С",
+            "az": "DHEA-S"
+          }
+        },
+        {
+          "code": "INHB",
+          "unit": "pg/mL",
+          "label": {
+            "en": "Inhibin B",
+            "ru": "Ингибин B",
+            "az": "Inhibin B"
           }
         }
       ]
@@ -5204,6 +5637,15 @@
             "ru": "ОЖСС",
             "az": "Ümumi dəmir bağlama"
           }
+        },
+        {
+          "code": "FOL",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Folate",
+            "ru": "Фолат",
+            "az": "Folat"
+          }
         }
       ]
     },
@@ -5354,6 +5796,42 @@
             "en": "Bacteria",
             "ru": "Бактерии",
             "az": "Bakteriyalar"
+          }
+        },
+        {
+          "code": "U-MUCUS",
+          "unit": "",
+          "label": {
+            "en": "Mucus",
+            "ru": "Слизь",
+            "az": "Selik"
+          }
+        },
+        {
+          "code": "U-SALT",
+          "unit": "",
+          "label": {
+            "en": "Salts / crystals",
+            "ru": "Соли",
+            "az": "Duzlar"
+          }
+        },
+        {
+          "code": "U-URO",
+          "unit": "",
+          "label": {
+            "en": "Urobilinogen",
+            "ru": "Уробилиноген",
+            "az": "Urobilinogen"
+          }
+        },
+        {
+          "code": "U-BIL",
+          "unit": "",
+          "label": {
+            "en": "Bilirubin",
+            "ru": "Билирубин",
+            "az": "Bilirubin"
           }
         }
       ]
@@ -6362,6 +6840,60 @@
             "ru": "Суточный белок мочи",
             "az": "24s zülal"
           }
+        },
+        {
+          "code": "MAU",
+          "unit": "mg/L",
+          "label": {
+            "en": "Microalbumin urine",
+            "ru": "МАУ",
+            "az": "MAU"
+          }
+        },
+        {
+          "code": "GLU",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Glucose",
+            "ru": "Глюкоза",
+            "az": "Qlükoza"
+          }
+        },
+        {
+          "code": "UA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Uric acid",
+            "ru": "Мочевая кислота",
+            "az": "Sidik turşusu"
+          }
+        },
+        {
+          "code": "CA",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Calcium",
+            "ru": "Кальций",
+            "az": "Kalsium"
+          }
+        },
+        {
+          "code": "P",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Phosphorus",
+            "ru": "Фосфор",
+            "az": "Fosfor"
+          }
+        },
+        {
+          "code": "TCO2",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Total CO2",
+            "ru": "Общий CO2",
+            "az": "Ümumi CO2"
+          }
         }
       ]
     },
@@ -6427,6 +6959,24 @@
             "en": "Lp(a)",
             "ru": "Lp(a)",
             "az": "Lp(a)"
+          }
+        },
+        {
+          "code": "VLDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "VLDL",
+            "ru": "ЛПОНП",
+            "az": "VLDL"
+          }
+        },
+        {
+          "code": "APOA1",
+          "unit": "g/L",
+          "label": {
+            "en": "ApoA1",
+            "ru": "ApoA1",
+            "az": "ApoA1"
           }
         }
       ]
@@ -6512,6 +7062,60 @@
             "ru": "Альбумин",
             "az": "Albumin"
           }
+        },
+        {
+          "code": "IBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Indirect bilirubin",
+            "ru": "Билирубин непрямой",
+            "az": "Dolayı bilirubin"
+          }
+        },
+        {
+          "code": "GLOB",
+          "unit": "g/L",
+          "label": {
+            "en": "Globulin",
+            "ru": "Глобулин",
+            "az": "Qlobalin"
+          }
+        },
+        {
+          "code": "AG",
+          "unit": "",
+          "label": {
+            "en": "A/G ratio",
+            "ru": "А/Г",
+            "az": "A/G"
+          }
+        },
+        {
+          "code": "LDH",
+          "unit": "U/L",
+          "label": {
+            "en": "LDH",
+            "ru": "ЛДГ",
+            "az": "LDH"
+          }
+        },
+        {
+          "code": "CHE",
+          "unit": "U/L",
+          "label": {
+            "en": "Cholinesterase",
+            "ru": "Холинэстераза",
+            "az": "Xolinesteraza"
+          }
+        },
+        {
+          "code": "PT",
+          "unit": "s",
+          "label": {
+            "en": "PT (liver)",
+            "ru": "ПВ (печень)",
+            "az": "PT"
+          }
         }
       ]
     },
@@ -6568,6 +7172,60 @@
             "en": "BNP",
             "ru": "BNP",
             "az": "BNP"
+          }
+        },
+        {
+          "code": "AST",
+          "unit": "U/L",
+          "label": {
+            "en": "AST",
+            "ru": "АСТ",
+            "az": "AST"
+          }
+        },
+        {
+          "code": "LDH",
+          "unit": "U/L",
+          "label": {
+            "en": "LDH",
+            "ru": "ЛДГ",
+            "az": "LDH"
+          }
+        },
+        {
+          "code": "HBDH",
+          "unit": "U/L",
+          "label": {
+            "en": "HBDH",
+            "ru": "ГБДГ",
+            "az": "HBDH"
+          }
+        },
+        {
+          "code": "CK",
+          "unit": "U/L",
+          "label": {
+            "en": "CK",
+            "ru": "КК",
+            "az": "CK"
+          }
+        },
+        {
+          "code": "HSCRP",
+          "unit": "mg/L",
+          "label": {
+            "en": "hs-CRP",
+            "ru": "вч-СРБ",
+            "az": "hs-CRP"
+          }
+        },
+        {
+          "code": "LPA",
+          "unit": "nmol/L",
+          "label": {
+            "en": "Lp(a)",
+            "ru": "Lp(a)",
+            "az": "Lp(a)"
           }
         }
       ]
@@ -6643,6 +7301,15 @@
             "en": "IGF-1",
             "ru": "ИФР-1",
             "az": "IGF-1"
+          }
+        },
+        {
+          "code": "GH",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Growth hormone",
+            "ru": "СТГ",
+            "az": "Boy hormonu"
           }
         }
       ]
@@ -7339,6 +8006,258 @@
             "en": "Culture",
             "ru": "Посев",
             "az": "Əkmə"
+          }
+        }
+      ]
+    },
+    {
+      "code": "LAB-SMEAR",
+      "category": "hematology",
+      "title": {
+        "en": "Peripheral smear microscopy",
+        "ru": "Микроскопия мазка",
+        "az": "Yaxma mikroskopiyası"
+      },
+      "serviceCode": "LAB-SMEAR",
+      "analytes": [
+        {
+          "code": "SMEAR-NOTE",
+          "unit": "",
+          "label": {
+            "en": "Smear description",
+            "ru": "Описание мазка",
+            "az": "Yaxma təsviri"
+          }
+        },
+        {
+          "code": "SMEAR-RBC",
+          "unit": "",
+          "label": {
+            "en": "RBC morphology",
+            "ru": "Морфология эритроцитов",
+            "az": "Eritrosit morfologiyası"
+          }
+        },
+        {
+          "code": "SMEAR-WBC",
+          "unit": "",
+          "label": {
+            "en": "WBC morphology",
+            "ru": "Морфология лейкоцитов",
+            "az": "Leykosit morfologiyası"
+          }
+        },
+        {
+          "code": "SMEAR-PLT",
+          "unit": "",
+          "label": {
+            "en": "Platelet estimate",
+            "ru": "Тромбоциты (оценка)",
+            "az": "Trombosit qiyməti"
+          }
+        }
+      ]
+    },
+    {
+      "code": "LAB-BIOCHEM-EXT",
+      "category": "biochemistry",
+      "title": {
+        "en": "Biochemistry extended (clinic/send-in)",
+        "ru": "Биохимия расширенная",
+        "az": "Biokimya geniş"
+      },
+      "serviceCode": "LAB-BIOCHEM-EXT",
+      "analytes": [
+        {
+          "code": "ACE",
+          "unit": "U/L",
+          "label": {
+            "en": "ACE",
+            "ru": "АПФ",
+            "az": "ACE"
+          }
+        },
+        {
+          "code": "AAT",
+          "unit": "mg/dL",
+          "label": {
+            "en": "Alpha-1 antitrypsin",
+            "ru": "А1-антитрипсин",
+            "az": "Alfa-1 antitripsin"
+          }
+        },
+        {
+          "code": "CERU",
+          "unit": "mg/dL",
+          "label": {
+            "en": "Ceruloplasmin",
+            "ru": "Церулоплазмин",
+            "az": "Seruloplazmin"
+          }
+        },
+        {
+          "code": "G6PD",
+          "unit": "U/g Hb",
+          "label": {
+            "en": "G6PD",
+            "ru": "Г6ФД",
+            "az": "G6PD"
+          }
+        },
+        {
+          "code": "ADA",
+          "unit": "U/L",
+          "label": {
+            "en": "ADA",
+            "ru": "АДА",
+            "az": "ADA"
+          }
+        },
+        {
+          "code": "ACP",
+          "unit": "U/L",
+          "label": {
+            "en": "Acid phosphatase",
+            "ru": "Кислая фосфатаза",
+            "az": "Turşu fosfataza"
+          }
+        },
+        {
+          "code": "BILE",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Bile acids",
+            "ru": "Жёлчные кислоты",
+            "az": "Öd turşuları"
+          }
+        },
+        {
+          "code": "OSMO",
+          "unit": "mOsm/kg",
+          "label": {
+            "en": "Osmolality",
+            "ru": "Осмоляльность",
+            "az": "Osmolyarlıq"
+          }
+        },
+        {
+          "code": "SAA",
+          "unit": "mg/L",
+          "label": {
+            "en": "Serum amyloid A",
+            "ru": "Амилоид A",
+            "az": "Amiloid A"
+          }
+        },
+        {
+          "code": "HAPT",
+          "unit": "g/L",
+          "label": {
+            "en": "Haptoglobin",
+            "ru": "Гаптоглобин",
+            "az": "Haptoqlobin"
+          }
+        },
+        {
+          "code": "EPO",
+          "unit": "mIU/mL",
+          "label": {
+            "en": "Erythropoietin",
+            "ru": "Эритропоэтин",
+            "az": "Eritropoetin"
+          }
+        },
+        {
+          "code": "OSTEO",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Osteocalcin",
+            "ru": "Остеокальцин",
+            "az": "Osteokalsin"
+          }
+        },
+        {
+          "code": "ZON",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Zonulin",
+            "ru": "Зонулин",
+            "az": "Zonulin"
+          }
+        },
+        {
+          "code": "CARN",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Carnitine",
+            "ru": "Карнитин",
+            "az": "Karnitin"
+          }
+        },
+        {
+          "code": "AA-PROF",
+          "unit": "",
+          "label": {
+            "en": "Amino acid profile",
+            "ru": "Профиль аминокислот",
+            "az": "Amin turşuları"
+          }
+        },
+        {
+          "code": "PEP",
+          "unit": "",
+          "label": {
+            "en": "Protein electrophoresis",
+            "ru": "Электрофорез белка",
+            "az": "Zülal elektroforezi"
+          }
+        }
+      ]
+    },
+    {
+      "code": "LAB-CELIAC",
+      "category": "immunology",
+      "title": {
+        "en": "Celiac panel",
+        "ru": "Целиакия",
+        "az": "Seliakiya"
+      },
+      "serviceCode": "LAB-CELIAC",
+      "analytes": [
+        {
+          "code": "TTG-IGA",
+          "unit": "U/mL",
+          "label": {
+            "en": "tTG IgA",
+            "ru": "тТГ IgA",
+            "az": "tTG IgA"
+          }
+        },
+        {
+          "code": "TTG-IGG",
+          "unit": "U/mL",
+          "label": {
+            "en": "tTG IgG",
+            "ru": "тТГ IgG",
+            "az": "tTG IgG"
+          }
+        },
+        {
+          "code": "EMA-IGA",
+          "unit": "",
+          "label": {
+            "en": "EMA IgA",
+            "ru": "ЭМА IgA",
+            "az": "EMA IgA"
+          }
+        },
+        {
+          "code": "DGP-IGA",
+          "unit": "U/mL",
+          "label": {
+            "en": "DGP IgA",
+            "ru": "DGP IgA",
+            "az": "DGP IgA"
           }
         }
       ]

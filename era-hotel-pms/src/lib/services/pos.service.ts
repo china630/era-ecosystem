@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { postCharge } from '@/lib/services/folio.service';
 import { consumeRecipeForProduct } from '@/lib/services/stock.service';
 import {
@@ -141,7 +141,7 @@ export async function postRoomCharge(
     );
   }
 
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   if (organizationId && input.amount > 0 && charge.folioId) {
     const reservationRow = await prisma.reservation.findUnique({
       where: { id: reservationId },

@@ -4,6 +4,7 @@ import {
   isSatelliteHotelGuestCheckedOut,
   isSatelliteHotelRoomChanged,
   isSatelliteHotelSanatoriumBookingCreated,
+  isSatelliteHotelStayProductChanged,
   getSatelliteEventType,
 } from "@era/contracts";
 import {
@@ -11,6 +12,7 @@ import {
   handleGuestCheckedOut,
   handleRoomChanged,
   handleSanatoriumBookingCreated,
+  handleStayProductChanged,
 } from "@/lib/lifecycle-consumer";
 import { prisma } from "@/lib/prisma";
 
@@ -60,6 +62,10 @@ export async function POST(request: Request) {
     }
     if (isSatelliteHotelRoomChanged(body)) {
       await handleRoomChanged(body);
+      return NextResponse.json({ ok: true });
+    }
+    if (isSatelliteHotelStayProductChanged(body)) {
+      await handleStayProductChanged(body);
       return NextResponse.json({ ok: true });
     }
     return NextResponse.json({ error: "Unknown event type" }, { status: 400 });

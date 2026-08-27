@@ -100,6 +100,7 @@ export async function createRoomChangePlan(input: {
       effectiveAt: input.effectiveAt,
       notes: input.notes,
       status: 'PENDING',
+      kind: 'SCHEDULED',
     },
     include: { fromRoom: true, toRoom: true, reservation: { include: { guest: true } } },
   });

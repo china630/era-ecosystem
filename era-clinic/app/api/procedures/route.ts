@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import {
   jsonOk,
   handleRouteError,
@@ -198,7 +198,7 @@ export async function POST(req: Request) {
     }
     const order = await prisma.procedureOrder.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         patientRefId: body.patientRefId,
         procedureCode: body.procedureCode,
         procedureName: body.procedureName,

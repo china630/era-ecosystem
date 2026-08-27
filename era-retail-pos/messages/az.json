@@ -83,6 +83,9 @@
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",
+    "organizationIdLabel": "Təşkilat ID (retail)",
+    "organizationIdPlaceholder": "UUID — paylaşılan retail pool üçün tələb olunur",
+    "organizationIdHint": "Dedicated appliance-də boş buraxın — process-bound org istifadə olunur.",
     "footerLegalNavAria": "Hüquqi keçidlər və kömək",
     "footerFaq": "FAQ",
     "footerTerms": "İstifadə şərtləri",

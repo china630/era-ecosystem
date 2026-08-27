@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { cancelProcedureOrder } from "@/domain/procedure/procedure-attendance.service";
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         const src = targets[i];
         const created = await prisma.procedureOrder.create({
           data: {
-            organizationId: satelliteOrganizationId(),
+            organizationId: requestOrganizationId(),
             patientRefId,
             procedureCode: pt.code,
             procedureName: pt.name,

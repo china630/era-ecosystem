@@ -11,6 +11,7 @@ import {
 } from "@/domain/procedure/procedure-attendance.service";
 import { resolveProcedureCharge, logProcedureCharge } from "@/domain/procedure/procedure-charge.service";
 import { resolveProcedureConsumableLines } from "@/domain/master-data/master-data.service";
+import { isClinicElektrawebDualRun } from "@/domain/procedure/extra-ticket";
 
 export async function completeProcedureOrder(
   orderId: string,
@@ -112,7 +113,12 @@ export async function completeProcedureOrder(
     (!charge.overQuota || settings.procedureOverQuotaPolicy === "CHARGE_FOLIO");
 
   const ticketId = `clinic-proc-${order.id}`;
-  if (shouldChargeFolio && order.reservationId) {
+  if (
+    shouldChargeFolio &&
+    order.reservationId &&
+    !(await isClinicElektrawebDualRun()) &&
+    !order.extraTicketIssuedAt
+  ) {
     await postHotelRoomCharge({
       reservationId: order.reservationId,
       amount: amountNet,

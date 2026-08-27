@@ -198,7 +198,7 @@ export default function Chessboard() {
       const res = await fetch(`/api/reservations/${reservationId}/relocate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: toRoomId }),
+        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode: 'RACK_DND' }),
       });
       const data = await res.json();
       if (!res.ok) {

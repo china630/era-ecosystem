@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   cellNumber,
@@ -54,7 +54,7 @@ async function resolveGuestId(
   if (byName) return byName.id;
   const created = await tx.guest.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       fullName: guestName,
       firstName: guestName.split(' ')[0],
       lastName: guestName.split(' ').slice(1).join(' ') || undefined,
@@ -155,7 +155,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
 
     const existing = await tx.reservation.findFirst({ where: { externalRef: row.externalRef } });
     const data = {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       externalRef: row.externalRef,
       roomTypeId: roomType.id,
       roomId,
@@ -199,7 +199,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (folios.length === 0) {
       await tx.folio.create({
         data: {
-          organizationId: satelliteOrganizationId(),
+          organizationId: requestOrganizationId(),
           reservationId: reservation.id,
           type: 'GUEST',
           status: 'OPEN',

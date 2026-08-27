@@ -23,6 +23,15 @@ export function runWithSatelliteTenant<T>(
   return als.run(ctx, fn);
 }
 
+/**
+ * Bind tenant for the remainder of the current async call chain (Node ALS).
+ * Use in route handlers after resolving org from JWT / session / S2S body —
+ * Edge middleware cannot hold ALS for the Node route.
+ */
+export function enterSatelliteTenant(ctx: SatelliteTenantContext): void {
+  als.enterWith(ctx);
+}
+
 export function getSatelliteTenantContext(): SatelliteTenantContext | undefined {
   return als.getStore();
 }

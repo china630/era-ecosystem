@@ -102,10 +102,11 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 5. Reschedule procedure time on chart → conflict rules enforced (cabin + staff).
 6. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
 7. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).
-8. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
-9. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
-10. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
-11. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab.
+8. Hotel stay product change from date (`SATELLITE_HOTEL_STAY_PRODUCT_CHANGED`) → remaining **PROPOSED** and **SCHEDULED** orders from the effective date are cancelled; completed/checked-in stay. Clinic rebuilds a new **PROPOSED** plan for the new program when a matching template exists.
+9. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
+10. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
+11. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
+12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab.
 
 ### ICD-10 catalog (CLI-39…42)
 
@@ -174,20 +175,62 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 3. Patient card -> Print check-up / Print schedule -> language dialog -> print page.
 4. Qualitative analyte (if configured): enter via select; reprint in another language shows translated label.
 
-## Topology — two-org isolation (CP-TENANT-01 / Wave 10)
+## Extra tickets (Nafta dual-run, HOT-06)
 
-**Status:** outline only — field run **pending**. Does **not** unlock AC-CLI-TENANT Scaffold ✅, SHIPPED, or SHARED pool sell. Signoff stub: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md).
+**Lab (Wave 6):** CI `saas-wave6-hot06-lab` (clinic + hotel) + Super-Admin policy / Issue-ticket UI path — see [`reports/hot06-lab-signoff.md`](../../reports/hot06-lab-signoff.md). Lab unlocks **SHOW** for Super-Admin policy + this Issue-ticket screen. Extension SPA Insert stays **HEADLESS** / field-open. **Not SHIPPED**.
+
+**Field runbook:** [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md) — do not mark HOT-06 SHIPPED until field checklist is pass.
+
+Prerequisite (ops): clinic cutover policy `elektrawebDualRun` + Sync; hotel org `writeEnabled` + Sync; pool kill switch; extension on **sanatorium** desk with Write ON and SPA open.
+
+1. Doctor assigns a paid extra (or over-quota).
+2. **`/reception/extra-tickets`** — select rows → **Issue ticket**. ERA opens 3-copy print (`/print/extra-ticket/…`). Charge is **not** posted on nurse complete.
+3. Confirm hotel health `writeEnabled` and outbox not stuck `FAILED`. Unknown SPA product must fail enqueue (do not guess).
+4. **`/nurse`** — extra without ticket → check-in blocked (`TICKET_REQUIRED`).
+5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio, not clinic cashier (field).
+
+```bash
+cd era-clinic && npm test -- --testPathPattern=saas-wave6-hot06-lab
+cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
+```
+
+## Topology — two-org isolation (CP-TENANT-01 / SaaS Waves 5 + 9)
+
+**Status:** **Lab** CI + **Live pool smoke** (opt-in); **Field** still **pending**. Does **not** unlock AC-CLI-TENANT Scaffold ✅, SHIPPED, or SHARED pool sell. Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md).
+
+### Lab (CI)
+
+```bash
+cd era-clinic && npm test -- --testPathPattern=saas-wave5-two-org-isolation
+```
+
+Suite: `__tests__/saas-wave5-two-org-isolation.spec.ts` — real kit `mergeWhere` / ALS: Org B list excludes Org A patients/appointments; cross-org get-by-id empty; ALS stamp wins over process bind.
+
+### Live pool smoke (Wave 9, opt-in)
+
+One DB + Prisma tenant extension. Skip (exit 0) unless `ERA_WAVE9_POOL_SMOKE=1`.
+
+```bash
+cd era-clinic
+# DATABASE_URL = migrated clinic DB
+set ERA_WAVE9_POOL_SMOKE=1
+node scripts/saas-wave9-two-org-pool-smoke.mjs
+```
+
+Record result in signoff **Live pool smoke** section. Live smoke ≠ field; still not Scaffold ✅.
+
+### Field (pending)
 
 ### Prerequisites
 
 - Clinic schema with `organizationId` on tenant roots + kit Prisma tenant extension.
-- Two distinct org UUIDs (`ORG_A`, `ORG_B`) bound via Sync / `ERA_SATELLITE_ORGANIZATION_ID` for dedicated deploys; for a shared DB lab, run one process with ALS/bind switching **or** two sequential binds with clear data ownership.
-- Super-admin + clinic ops login.
+- Two distinct org UUIDs (`ORG_A`, `ORG_B`) in one SHARED-ready DB (or sequential appliance binds with clear data ownership).
+- Super-admin + clinic ops login with JWT/`organizationId` (Wave 2 request tenant).
 
 ### API outline
 
-1. Bind clinic to `ORG_A`; create patient / appointment (or use seed) tagged to `ORG_A`.
-2. Switch bind (or second process) to `ORG_B`; `GET /api/patients` (and appointments list) must **not** return `ORG_A` rows.
+1. Login / bind as `ORG_A`; create patient / appointment tagged to `ORG_A`.
+2. Session as `ORG_B`; `GET /api/patients` (and appointments list) must **not** return `ORG_A` rows.
 3. Attempt cross-org update by id from `ORG_B` session → expect 404 / empty (not other org’s data).
 4. Negative: raw SQL / admin without filter is out of scope — product path must use kit filter.
 
@@ -195,7 +238,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 
 1. Ops login → `/patients` as `ORG_A` — list shows only A.
 2. After org switch / second appliance → `/patients` shows only B; no A names/phones.
-3. Record pass/fail in `reports/two-org-isolation-signoff.md` (do not mark passed until field run).
+3. Record pass/fail in `reports/two-org-isolation-signoff.md` (field section — do not mark Scaffold ✅ from lab alone).
 
 ## Deny (Scaffold BE negative paths)
 
@@ -222,4 +265,25 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes).
 2. `/patients`: filter by hotel room and program/package (`programCode`).
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
+
+## CLI-49 — Physio sites (W2–W4)
+
+SatAdmin:
+
+1. Sign in as `CLINIC_ADMIN`. Open **Catalogs → Physio sites** (`/admin/physio-sites`).
+2. Tabs **Sites / Programs / Substances** list seeded rows (after `npx tsx prisma/seed-physio-catalog.ts`).
+3. Open a site: titles az/ru/en/la, kind Select, coarse MULTI, aliases textarea. Save.
+4. Add a substance. Retire it (row stays, picker drops it).
+5. `/admin/master-data` → Procedure types → Amplipuls: **Needs site chips** on; order fields include work-kind + electrodes. Ozone: chips off.
+6. Tab **Unmatched**: after a slots import with leftover nahiye, a row shows sample + residue. Pick an existing S (`CatalogField` SEARCHABLE) → **Add as alias**. Confirm it does **not** create a new S. Mark a non-anatomy leftover **Not anatomy**. Re-open the same string — status stays resolved (hit count may rise).
+
+Doctor card (no curl):
+
+7. Open a patient with **Proposed plan**. Chips + autocomplete add two S (locale title + Latin on the chip).
+8. With ≥2 sites, **Together / In turn** chips appear; pick In turn (`növbəli`).
+9. Type a comment in **Note**; it stays after reload. Confirm the line — sites remain on the scheduled plan.
+10. Ozone / inhalation: **Note** still shows; site chips hide (`needsSite=false`). Amplipuls shows work-kind I–V + electrode 2/4, not a substance picker.
+11. On a laterality-enabled S (knee/shoulder), pick Left/Right/Both. A type without LATERALITY does not show side chips.
+12. After cutover `#23` import: open an imported slot whose WO nahiye was filled — **Note** still has the raw string even when chips matched. A blank WO nahiye does not invent a new S.
+
 

@@ -1,99 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <title>ERA Elektraweb Bridge — Setup</title>
-    <style>
-      :root {
-        font-family: Segoe UI, system-ui, sans-serif;
-        color: #1a1a1a;
-      }
-      body {
-        max-width: 440px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-      }
-      h1 {
-        font-size: 1.25rem;
-        margin-bottom: 0.25rem;
-      }
-      .muted {
-        color: #666;
-        font-size: 0.85rem;
-        margin-bottom: 1.25rem;
-      }
-      label {
-        display: block;
-        font-size: 0.8rem;
-        margin: 0.75rem 0 0.25rem;
-      }
-      input {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0.5rem 0.6rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-      }
-      button {
-        margin-top: 1rem;
-        padding: 0.55rem 1rem;
-        border: 0;
-        border-radius: 6px;
-        background: #0b5fff;
-        color: #fff;
-        cursor: pointer;
-        font-weight: 600;
-      }
-      button.secondary {
-        background: #555;
-        margin-left: 0.5rem;
-      }
-      .ok {
-        color: #0a7a2f;
-        margin-top: 0.75rem;
-        font-size: 0.9rem;
-      }
-      .err {
-        color: #b00020;
-        margin-top: 0.75rem;
-        font-size: 0.9rem;
-      }
-      .box {
-        background: #f5f7fa;
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        margin-top: 1rem;
-        font-size: 0.85rem;
-      }
-      code {
-        font-size: 0.8rem;
-      }
-    </style>
+    <title data-i18n="extName">ERA Elektraweb Bridge</title>
+    <link rel="stylesheet" href="settings.css" />
   </head>
-  <body>
-    <h1>ERA Elektraweb Bridge</h1>
-    <p class="muted">
-      Log in to <strong>your</strong> ERA Hotel PMS. The token is bound to that
-      deployment’s organization and Elektraweb hotel id — data cannot cross tenants.
-    </p>
+  <body class="ew-options">
+    <div class="ew-wrap">
+      <header class="ew-header">
+        <div>
+          <h1 data-i18n="extName">ERA Elektraweb Bridge</h1>
+          <p class="ew-tag" data-i18n="extTag">Temporary dual-run — not a product</p>
+        </div>
+        <div class="ew-lang" role="group" aria-label="Language">
+          <button type="button" data-locale="en">EN</button>
+          <button type="button" data-locale="ru">RU</button>
+          <button type="button" data-locale="az">AZ</button>
+        </div>
+      </header>
 
-    <label for="hotelBaseUrl">ERA Hotel PMS URL</label>
-    <input id="hotelBaseUrl" placeholder="http://127.0.0.1:3201" />
+      <section class="ew-card">
+        <h2 data-i18n="connection">Connection</h2>
+        <label class="ew-field" for="hotelBaseUrl" data-i18n="hotelUrl">ERA Hotel PMS URL</label>
+        <input id="hotelBaseUrl" type="url" data-i18n-placeholder="hotelUrl" placeholder="http://127.0.0.1:3201" />
 
-    <label for="login">ERA login</label>
-    <input id="login" autocomplete="username" />
+        <label class="ew-field" for="organizationId" data-i18n="organizationId">ERA organization ID</label>
+        <input id="organizationId" autocomplete="off" spellcheck="false" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
 
-    <label for="password">ERA password</label>
-    <input id="password" type="password" autocomplete="current-password" />
+        <label class="ew-field" for="login" data-i18n="login">ERA login</label>
+        <input id="login" autocomplete="username" />
 
-    <div>
-      <button id="btnLogin" type="button">Log in &amp; save</button>
-      <button id="btnLogout" class="secondary" type="button">Log out</button>
+        <label class="ew-field" for="password" data-i18n="password">ERA password</label>
+        <input id="password" type="password" autocomplete="current-password" />
+
+        <div class="ew-actions">
+          <button id="btnLogin" type="button" data-i18n="btnLogin">Log in &amp; save</button>
+          <button id="btnLogout" class="secondary" type="button" data-i18n="btnLogout">Log out</button>
+        </div>
+        <div id="msg" class="ew-msg"></div>
+        <div class="ew-session" id="session"></div>
+      </section>
+
+      <section class="ew-card">
+        <h2 data-i18n="desk">This desk</h2>
+        <p class="ew-hint" data-i18n="deskHint">
+          Pick where this PC sits. Write (SPA tickets) only runs on sanatorium reception.
+        </p>
+        <div class="ew-desks">
+          <label class="ew-desk">
+            <input type="radio" name="deskRole" value="hotel_fo" />
+            <div>
+              <strong data-i18n="deskFo">Hotel front office</strong>
+              <span data-i18n="deskFoHint">Inbound only: reservations, guests, folio grids → ERA.</span>
+            </div>
+          </label>
+          <label class="ew-desk">
+            <input type="radio" name="deskRole" value="sanatorium" />
+            <div>
+              <strong data-i18n="deskSan">Sanatorium reception</strong>
+              <span data-i18n="deskSanHint">SPA session. Extra tickets: guest folio, or house folio Tibbi Ambulator.</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="ew-card">
+        <h2 data-i18n="inbound">Inbound (Elektraweb → ERA)</h2>
+        <p class="ew-hint" data-i18n="inboundHint">
+          Forwards Elektraweb Select JSON to hotel ingest. Keep Elektraweb open on this PC.
+        </p>
+        <label class="ew-switch">
+          <input type="checkbox" id="enabled" />
+          <span data-i18n="inboundToggle">Capture &amp; sync</span>
+        </label>
+        <div class="ew-meta" id="inboundMeta"></div>
+        <div class="ew-actions">
+          <button id="flush" type="button" data-i18n="flushNow">Flush now</button>
+        </div>
+      </section>
+
+      <section class="ew-card" id="writeCard">
+        <h2 data-i18n="write">SPA write (ERA → Elektraweb)</h2>
+        <p class="ew-hint" data-i18n="writeHint">
+          Issues SPA folio lines from ERA “Issue ticket”: in-house guest, or walk-in onto Tibbi Ambulator house folio. Hotel FO never drains this
+          queue.
+        </p>
+        <label class="ew-switch">
+          <input type="checkbox" id="writeEnabled" />
+          <span data-i18n="writeToggle">Drain extra-ticket outbox</span>
+        </label>
+        <div class="ew-banner" id="writeBanner"></div>
+      </section>
+
+      <section class="ew-card">
+        <h2 data-i18n="cutover">Hour X</h2>
+        <p class="ew-hint" data-i18n="cutoverHint">
+          Disable inbound and write, uninstall this extension, revoke the bridge token. Clinic then posts extras to ERA folio.
+        </p>
+      </section>
     </div>
-
-    <div id="msg"></div>
-    <div class="box" id="session">Not logged in</div>
-
+    <script src="i18n.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

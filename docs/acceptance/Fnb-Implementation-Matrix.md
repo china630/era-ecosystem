@@ -19,7 +19,7 @@
 | AC-FNB-INV | Recipe depletion / stock events | ✅ | [ ] | `__tests__/fnb-inv-negative.spec.ts` | Negative: stock off unless enabled; VOID lines excluded |
 | AC-FNB-LABOR | Labor roster / PIN clock | ✅ | [ ] | `__tests__/fnb-labor-negative.spec.ts` | Negative: module gate; invalid PIN hash |
 
-**Topology note (out of BE rollup):** F&B tenant roots carry `organizationId` + kit filter (CP-TENANT-01 API). SHARED F&B pool not an AC this edition — see Fnb-Acceptance-System.
+**Topology note (out of BE rollup):** F&B tenant roots carry `organizationId` + kit filter (CP-TENANT-01 API). Wave 3: login/SSO JWT org + `enterSatelliteTenant` + ops `requestOrganizationId()`. SHARED F&B pool still not an AC this edition — see Fnb-Acceptance-System.
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
 Do not call this table «product readiness».
@@ -29,7 +29,7 @@ Do not call this table «product readiness».
 | AC | Residual | Severity | Status |
 |----|----------|----------|--------|
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
-| (no TENANT AC) | SHARED F&B pool | Out of BE rollup | Topology note only — not an AC this edition |
+| (no TENANT AC) | SHARED F&B pool | Out of BE rollup | Wave 3 request tenant code; topology note only — not an AC this edition |
 
 ### Negative-path proof index
 

@@ -8,6 +8,7 @@ const DEFAULT_GL_BY_CODE: Record<string, string> = {
   TREATMENT: '604',
   BOARD: '605',
   TRANSFER: '606',
+  TOUR: '606',
 };
 
 export async function listRevenueGlMappings() {

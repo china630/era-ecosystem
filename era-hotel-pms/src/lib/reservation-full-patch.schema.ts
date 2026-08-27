@@ -42,6 +42,7 @@ export const reservationFullPatchSchema = z.object({
   useManualRate: z.boolean().optional(),
   manualDailyRate: z.number().nullable().optional(),
   discountActive: z.boolean().optional(),
+  discountPercent: z.number().min(0).max(100).nullable().optional(),
   creditLimitAzn: z.number().nonnegative().nullable().optional(),
   isLocked: z.boolean().optional(),
   preferredLocation: z.string().nullable().optional(),

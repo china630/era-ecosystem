@@ -24,6 +24,16 @@ export type PatientTimelineEvent = {
   amountNet?: string;
   hasCritical?: boolean;
   resultSummary?: Array<{ code: string; value: string; flag?: string }>;
+  physio?: {
+    needsSite: boolean;
+    physioOrderFields: string[];
+    siteIds: string[];
+    siteApplyMode: "TOGETHER" | "TURN" | null;
+    siteLaterality: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+    physioFields: Record<string, unknown>;
+    note: string | null;
+    bodyPart: string | null;
+  };
 };
 
 export type PatientTimelineDay = {

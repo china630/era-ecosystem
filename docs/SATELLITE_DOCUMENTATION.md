@@ -21,6 +21,7 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | In-app user help (policy) | [USER_DOCUMENTATION.md](./USER_DOCUMENTATION.md) |
 | Control plane architecture | [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) |
 | Deployment topology (SHARED / DEDICATED / ONPREM) | [adr/deployment-topology.md](./adr/deployment-topology.md) — bind + runtime-config + PlacementJob **API scaffold** + host agent stub; **not** live SaaS pool / automated migrate sell |
+| SaaS request tenant + vendor bridges | [SAAS_SHARED_RUNTIME.md](./SAAS_SHARED_RUNTIME.md) · [adr/saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) · [acceptance/SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md) — Waves 1–11 runtime prep **landed**; sell SHARED pool / `ga` / field TENANT + HOT-06 SHIPPED still **open** |
 | Satellite org bind + boot hydrate | [adr/satellite-organization-bind.md](./adr/satellite-organization-bind.md) — Wave 3: request-time `satelliteOrganizationId()` (no import-time env for product handlers) |
 | CP-BILLING migration (archive) | [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) |
 | Platform add-ons | [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |

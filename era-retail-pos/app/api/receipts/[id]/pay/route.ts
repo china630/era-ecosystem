@@ -13,6 +13,7 @@ import {
 } from "@/integration/control-plane-platform.client";
 import { isRetailPreset } from "@/lib/retail-preset";
 import { postRoomCharge } from "@/lib/pms-bridge-client";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -51,12 +52,11 @@ export async function POST(
       isFiscalPaymentMethod,
       isFiscalSkipped,
       resolveOperatingMode,
-      satelliteOrganizationId,
       shouldFiscalizeOnParent,
       shouldRouteRevenueToParent,
     } = await import("@era/satellite-kit");
 
-    const orgId = satelliteOrganizationId();
+    const orgId = requestOrganizationId();
     const mode = await resolveOperatingMode(orgId);
     const amountNet = Number(receipt.amountNet);
     const method = body.paymentMethod.trim().toUpperCase();
@@ -140,93 +140,91 @@ export async function POST(
       },
     });
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const recipient =
       process.env.RETAIL_NOTIFY_RECIPIENT?.trim() || `receipt-${receipt.id}@local`;
     let payUrl: string | undefined;
-    if (organizationId) {
+    try {
+      const link = (await createPaymentLink(
+        {
+          amountAzn: amountNet,
+          sourceEntityType: "retail_receipt",
+          sourceEntityId: receipt.id,
+          description: `Receipt ${receipt.id}`,
+        },
+        { organizationId },
+      )) as { paymentUrl?: string; portalPayUrl?: string };
+      payUrl = link.paymentUrl ?? link.portalPayUrl;
+    } catch {
+      payUrl = undefined;
+    }
+    try {
+      await createPortalLink(
+        {
+          entityType: "retail_receipt",
+          entityId: receipt.id,
+        },
+        { organizationId },
+      );
+    } catch {
+      // optional portal link
+    }
+    try {
+      await createBookingSlot(
+        {
+          resourceKey: "pickup",
+          resourceName: "Click and collect",
+          startsAt: new Date(Date.now() + 3600_000).toISOString(),
+          endsAt: new Date(Date.now() + 7200_000).toISOString(),
+          capacity: 8,
+        },
+        { organizationId },
+      );
+    } catch {
+      // optional pickup slot
+    }
+    const wantsDelivery =
+      body.delivery === true || presetRaw === "ecommerce";
+    if (wantsDelivery) {
       try {
-        const link = (await createPaymentLink(
+        await createShipment(
           {
-            amountAzn: amountNet,
             sourceEntityType: "retail_receipt",
             sourceEntityId: receipt.id,
-            description: `Receipt ${receipt.id}`,
-          },
-          { organizationId },
-        )) as { paymentUrl?: string; portalPayUrl?: string };
-        payUrl = link.paymentUrl ?? link.portalPayUrl;
-      } catch {
-        payUrl = undefined;
-      }
-      try {
-        await createPortalLink(
-          {
-            entityType: "retail_receipt",
-            entityId: receipt.id,
+            externalRef: receipt.id,
+            recipientPhone: process.env.RETAIL_NOTIFY_PHONE?.trim(),
           },
           { organizationId },
         );
       } catch {
-        // optional portal link
+        // optional platform delivery
       }
+    }
+    try {
+      await createPromotion(
+        {
+          code: `RETAIL-SALE-${receipt.id.slice(0, 8)}`,
+          name: "Retail sale promotion",
+          discountType: "PERCENT",
+          discountValue: 5,
+          metadata: { receiptId: receipt.id },
+        },
+        { organizationId },
+      );
+    } catch {
+      // optional loyalty
+    }
+    if (body.customHostname?.trim()) {
       try {
-        await createBookingSlot(
+        await createCustomDomain(
           {
-            resourceKey: "pickup",
-            resourceName: "Click and collect",
-            startsAt: new Date(Date.now() + 3600_000).toISOString(),
-            endsAt: new Date(Date.now() + 7200_000).toISOString(),
-            capacity: 8,
-          },
-          { organizationId },
-        );
-      } catch {
-        // optional pickup slot
-      }
-      const wantsDelivery =
-        body.delivery === true || presetRaw === "ecommerce";
-      if (wantsDelivery) {
-        try {
-          await createShipment(
-            {
-              sourceEntityType: "retail_receipt",
-              sourceEntityId: receipt.id,
-              externalRef: receipt.id,
-              recipientPhone: process.env.RETAIL_NOTIFY_PHONE?.trim(),
-            },
-            { organizationId },
-          );
-        } catch {
-          // optional platform delivery
-        }
-      }
-      try {
-        await createPromotion(
-          {
-            code: `RETAIL-SALE-${receipt.id.slice(0, 8)}`,
-            name: "Retail sale promotion",
-            discountType: "PERCENT",
-            discountValue: 5,
+            hostname: body.customHostname.trim(),
             metadata: { receiptId: receipt.id },
           },
           { organizationId },
         );
       } catch {
-        // optional loyalty
-      }
-      if (body.customHostname?.trim()) {
-        try {
-          await createCustomDomain(
-            {
-              hostname: body.customHostname.trim(),
-              metadata: { receiptId: receipt.id },
-            },
-            { organizationId },
-          );
-        } catch {
-          // optional domain
-        }
+        // optional domain
       }
     }
     await trySendPlatformNotification({

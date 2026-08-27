@@ -3,7 +3,7 @@
 **Status:** Accepted (vocabulary + target architecture)  
 **Date:** 2026-08-17  
 **Implementation:** Not built. Current industry satellites are still mostly **one process + one DB + one org** (Nafta appliance).  
-**Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [era-bank-core.md](./era-bank-core.md) D8 · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
+**Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md) · [era-bank-core.md](./era-bank-core.md) D8 · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
 
 ## Context
 
@@ -52,7 +52,7 @@ ONPREM:     same binary                     → one organizationId + customer pe
 - Unique keys: `@@unique([organizationId, code])`, not global `@unique` on tenant codes (staff `User.phone` is `@@unique([organizationId, phone])`).
 - **Fail-closed Prisma filter:** kit `createSatelliteTenantExtension` throws `SatelliteOrganizationUnboundError` when org is missing or sentinel (`unbound` / production `demo-org`). It never skip-filters. `ERA_SKIP_TENANT_FILTER=1` is seed-only. Creates stamp context org (including nested `create` / `createMany.data` / `connectOrCreate.create`) and reject a client-supplied foreign `organizationId`. Postgres columns have **no** `@default` for org — the kit is the SoR. Call sites may omit `organizationId` on create; TypeScript uses `SatellitePrisma` / `asSatellitePrisma` so generated CreateInputs do not force a hand-written org on every write.
 - **Child tables / catalogs:** do **not** spray `organizationId` onto join rows (`RatePlanAddOn`, `RoomTypeRate`) or platform catalogs (`IcdCode`). Isolation is via parent FK + service invariant (no cross-org FK). Slice export joins from tenant roots. Postgres RLS (`SET LOCAL era.organization_id`) is the follow-up belt for raw SQL — not enabled this wave (would break migrate/seed without SET on every connection).
-- **Cron:** `runCronForEachTenant` — dedicated/on-prem uses bind; SHARED sets `ERA_CRON_ORGANIZATION_IDS`.
+- **Cron:** `runCronForEachTenant` — dedicated/on-prem uses bind; SHARED uses `ERA_CRON_ORGANIZATION_IDS` **or** app `listOrganizationIds` (DB User DISTINCT) then bind.
 - One **image**, different values. No `saas` vs `onprem` git branch.
 - Finance already has `organizationId` + Prisma tenant extension. Dedicated finance = **isolated Postgres + same binary**, not a schema without org.
 - Industry satellite **tenant roots** carry `organizationId` + kit filter (CP-TENANT-01 API). Live SHARED pool / field two-org UAT remain open (AC-*-TENANT 🟡).
@@ -108,9 +108,9 @@ Resolution order (target): memory → DB `_era_runtime_config` → file cache �
 
 Orchestrator sets **desired** placement and config. A **host agent / GitOps** applies it. Orchestrator must not SSH and rewrite compose (Deploy staging already proved this is fragile).
 
-**Host agent (Wave 11):** `scripts/era-placement-agent.mjs` polls `GET /v1/placement-agent/jobs` (Bearer `ERA_PLACEMENT_HOST_TOKEN` or `SATELLITE_EVENT_SERVICE_TOKEN`) for `PENDING` / `PROVISION` jobs and **logs** apply steps. Real compose/migrate/restore stays on the host. Advance state via Super-admin `POST /v1/admin/placement-jobs/:id/advance`. Kit stub: `@era/satellite-kit` `exportOrgSlice` — metadata only (`note: "not implemented full dump"`).
+**Host agent (Wave 11 topology waves):** `scripts/era-placement-agent.mjs` polls `GET /v1/placement-agent/jobs` (Bearer `ERA_PLACEMENT_HOST_TOKEN` or `SATELLITE_EVENT_SERVICE_TOKEN`) for `PENDING` / `PROVISION` jobs and **logs** apply steps. Real compose/migrate/restore stays on the host. Advance state via Super-admin `POST /v1/admin/placement-jobs/:id/advance`. Kit `exportOrgSlice` — hotel curated JSON v1 (role/user/guest); not a full property pg_dump.
 
-**PlacementJob API (Waves 11–15):** model + admin create/list/advance + hop reject for direct SHARED↔ONPREM. State stubs: freeze → exportSlice → markProvisioned → bindAndConfig (existing Sync) → cutoverEndpoint → smoke → complete. **Not** a live migrate product / not sellable. CP-PLACE-01 = **API**; AC-CP-TOPO stays open / 🟡 — not Scaffold ✅.
+**PlacementJob API (Waves 11–15 + SaaS Waves 7 + 11):** model + admin create/list/advance + hop reject for direct SHARED↔ONPREM. State: freeze → exportSlice (hotel JSON / lab) → markProvisioned → bindAndConfig → cutoverEndpoint → smoke → complete. **Host apply still open.** CP-PLACE-01 = **API**; AC-CP-TOPO 🟡 — not Scaffold ✅. Lab signoff: [`reports/placement-lab-hop-signoff.md`](../reports/placement-lab-hop-signoff.md).
 
 ### 5. Placement jobs (upgrade and downgrade)
 
@@ -166,6 +166,7 @@ Follow `.cursor/skills/era-git-ship`: kit+ADR, then **one satellite** schema PR,
 - Selling “SaaS then dedicated then on-prem” is allowed **as a roadmap**, not as a live automated product.
 - Nafta-style appliance is **ONPREM/DEDICATED**, useful, and not a mistake — it is one of three placements.
 - Claiming SHARED multi-tenant SaaS or one-click on-prem migrate while satellite tables lack `organizationId` is false-green.
+- **Also false-green:** `organizationId` columns + process bind only. SHARED ops require **request tenant** (org from session/JWT/body) and Super-Admin **per-org** vendor-bridge policy — [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md). Schema ≠ live pool.
 - Mixed hotel DEDICATED + clinic SHARED is a supported **sales** shape once endpoints and event contracts are topology-agnostic; it is not the Nafta default.
 
 ## Acceptance / coverage
@@ -176,7 +177,7 @@ Follow `.cursor/skills/era-git-ship`: kit+ADR, then **one satellite** schema PR,
 | CP-BIND-01 | Org UUID bind + Super-admin sync + kit boot hydrate (API; Nafta industry uses kit resolver) |
 | CP-CFG-01 | Runtime-config Sync fan-out to industry + Finance Nest (API — not SHIPPED) |
 | CP-LAUNCH-01 | Owner launcher base URL from SatelliteEndpoint + env fallback (API — not SHIPPED) |
-| CP-PLACE-01 | PlacementJob admin API + host agent poll + slice metadata stub (API — not SHIPPED; no live dump/migrate) |
+| CP-PLACE-01 | PlacementJob admin API + host agent poll + hotel curated JSON slice lab (API — not SHIPPED; host restore open) |
 | CP-TENANT-01 | Additive `organizationId` on clinic/hotel/fnb tenant roots + kit Prisma filter (API; live SHARED pool not done) |
 
-Product-Readiness: do **not** sell SHARED pool or automated topology migrate. Edition stays `mvp`. Live SHARED pool ops remain open (Wave 17).
+Product-Readiness: do **not** sell SHARED pool or automated topology migrate. Edition stays `mvp`. Live SHARED pool ops remain open. Request-tenant + org-scoped vendor bridges: [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md) (Waves 1–11 landed; sell still open — [SaaS-Honesty-Closeout.md](../acceptance/SaaS-Honesty-Closeout.md)).

@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-08-20
+**Last updated:** 2026-08-27
 
 ---
 
@@ -89,7 +89,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
 | CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
 | CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
-| CLI-47 | Procedure TTK (consumable BOM) → Finance stock | ADR clinic-procedure-consumable-ttk | Y consumables CRUD; resolve on COMPLETED; event lines; finance product proxy | — | Y `/admin/master-data` TTK BOM | — | — | API | Retail HTTP retired; Finance write-off W2; no UAT → not SHIPPED |
+| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `GET /api/lab-orders/:id/file` | Y patient card download | Y `/admin/import` 01–09 | — | — | SHIPPED | Binaries under `D:\ERA-BACKUP\NAFTA-START\clinic\dump\files\lab`; wizard copies to `ERA_CLINIC_DATA/lab-import` |
+| CLI-49 | Physio S + program/substance catalogs + order sites | ADR clinic-physio-site-catalog + physio-site-canon | Y `/api/admin/physio-sites`; `/api/admin/physio-lists`; `GET/PATCH /api/admin/physio-nahiye-queue`; `GET /api/physio-catalog`; `PATCH /api/procedures/:id` `siteIds` + `physioFields`; slots import `nahiye` | Y patient card chips + type-gated fields + `note` (WO nahiye preserved) | Y `/admin/physio-sites` tabs incl. Unmatched; procedure-type field MULTI | — | — | SHIPPED | W4 unmatched queue; UAT-SMOKE CLI-49 open |
 
 ### MDM natural-person identity
 
@@ -160,7 +161,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-03 | Guest notify H-BL-06 | Y | send pages | STUB | Twilio/SendGrid |
 | HOT-04 | e-qaimé H-BL-24 | stub | folio read-only | STUB | prod cert |
 | HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin only `/admin/import` |
-| HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | HEADLESS | Extension options + ingest/health API; no SatAdmin card (owner 2026-08-18). [ADR](./adr/hotel-elektraweb-live-bridge.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
+| HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | HEADLESS | Extension settings + ingest/health + outbox. Clinic Issue-ticket **SHOW** (Wave 6 lab). Super-Admin **per-org** policy **SHOW** (Wave 6 lab) + Sync → `ElektrawebBridgePolicy`. Hotel request tenant from JWT/session. Wave 8: ingest stamps ALS-first (`bridgeRequestOrganizationId`). Wave 9: field runbook [`reports/hot06-field-runbook.md`](../reports/hot06-field-runbook.md). **Not SHIPPED** (field SPA Insert open). Lab: [`reports/hot06-lab-signoff.md`](../reports/hot06-lab-signoff.md). [ADR saas](./adr/saas-request-tenant-and-vendor-bridges.md) · [inbound](./adr/hotel-elektraweb-live-bridge.md) · [reverse](./adr/hotel-elektraweb-reverse-folio-post.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
 | HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | — |
 | HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
 | HOT-BOOK-01 | Booking hierarchy (Block→Booking→RoomStay) | Y | Y card + `/admin/allotment-blocks` | SHIPPED | [ADR](./adr/hotel-booking-hierarchy.md); pickup UI; MASTER folio routing |
@@ -168,6 +169,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-FO-01 | Room type availability (Avl/Occ) | Y | Y /availability | SHIPPED | FO chain ADR; Occ includes unassigned |
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; block save when Avl=0 |
 | HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door inventory; UAT-SMOKE §30 not signed — not SHIPPED |
+| HOT-FO-04 | Stay amendment + Manual Price / stay % | Y ADR | Y relocate/amendments/pricing/spread | API | UI on card; UAT-SMOKE §35 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
 | HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | UAT-SMOKE §34 open — not SHIPPED |
 | HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |
@@ -395,8 +397,8 @@ Canon: [deployment-topology.md](./adr/deployment-topology.md). **Do not mark SHI
 | CP-BIND-01 | Satellite org UUID bind + Super-admin sync | ADR satellite-organization-bind | `POST/GET …/organization/bind`, Sync; kit boot on hotel/clinic/fnb + bank/dbo/bank-core; `industry_banking` in Sync keys | — | — | — | Y | API |
 | CP-CFG-01 | Desired-state runtime config (SSO, event token, edition, topology) | ADR satellite-organization-bind §8 + deployment-topology §4 | `POST/GET …/runtime-config` + Sync fan-out — hotel/clinic/fnb/finance + thin industry + bank/dbo/bank-core; payload may include `deploymentTopology` + `edition` (informational; never skip tenant filter). Finance orch URL = kit memory after Sync (`CONTROL_PLANE_URL` bootstrap only) | — | — | — | Y | API |
 | CP-LAUNCH-01 | Owner launcher base URL from SatelliteEndpoint (env fallback) | INTEGRATION_SSO_EVENTS; ECOSYSTEM_URLS | `GET /v1/satellites/launch-url`; workspace + `/industry/[vertical]` prefer registry | — | — | Y | — | API |
-| CP-PLACE-01 | PlacementJob: freeze, org slice, endpoint cutover, hop SHARED⇄DEDICATED⇄ONPREM | ADR deployment-topology §4–§5 | `POST/GET /v1/admin/orgs/:orgId/placement-jobs`, `POST …/placement-jobs/:id/advance`, `GET /v1/placement-agent/jobs`; host agent `scripts/era-placement-agent.mjs`; kit `exportOrgSlice` metadata stub; SHARED↔ONPREM → REJECTED | — | — | — | Y `/super-admin/orgs/{id}/placement` | API |
-| CP-TENANT-01 | `organizationId` on industry satellite ops rows + composite uniques | ADR deployment-topology §2 | Clinic/hotel/fnb/retail/crm/auto/construction/wholesale/logistics/bank/dbo/bank-core + **fail-closed** kit Prisma tenant extension (no `unbound` default; stamp+mismatch reject); staff `User.phone` unique per org; `runCronForEachTenant`; CI mergeWhere + `check:satellite-raw-sql`; clinic UAT-SMOKE two-org outline (pending field) | — | — | — | — | API |
+| CP-PLACE-01 | PlacementJob: freeze, org slice, endpoint cutover, hop SHARED⇄DEDICATED⇄ONPREM | ADR deployment-topology §4–§5 | `POST/GET /v1/admin/orgs/:orgId/placement-jobs`, `POST …/placement-jobs/:id/advance`, `GET /v1/placement-agent/jobs`; host agent `scripts/era-placement-agent.mjs`; kit hotel curated JSON slice v1 (Wave 11); SHARED↔ONPREM → REJECTED; Wave 7 lab full SHARED→DEDICATED advance | — | — | — | Y `/super-admin/orgs/{id}/placement` | API |
+| CP-TENANT-01 | `organizationId` on industry satellite ops rows + composite uniques | ADR deployment-topology §2 | Clinic/hotel/fnb/retail/crm/auto/construction/wholesale/logistics/bank/dbo/bank-core + **fail-closed** kit Prisma tenant extension (no `unbound` default; stamp+mismatch reject); staff `User.phone` unique per org; `runCronForEachTenant` + Wave 10 User DISTINCT discover; CI mergeWhere + Wave 9 live pool smoke; clinic/hotel UAT-SMOKE two-org (field pending) | — | — | — | — | API |
 
 Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool and automated migrate are **not** sellable. Waves 3–5 + remaining-satellite wave: tenant roots + composite uniques + kit Prisma filter + CI mergeWhere isolation. AC-*-TENANT stay 🟡 and out of BE rollup (no live two-org pool / field UAT). **Bank:** same ladder as other satellites (CAP-NFR-TOPO DECLARED = pool not built, not a special ban). Nafta entitlement gate: fail-closed `requireSatelliteModule` / cron skip (hotel/clinic/fnb/finance + thin industry module-gates) + Sync pushes `activeModules` into runtime-config; kit `ERA_DEV_UNLOCK_ALL_MODULES` refused when `NODE_ENV=production`.
 
@@ -499,6 +501,19 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-07-22 | CLI-35 sidebar cleanup: Setup→Catalogs/Rules; wards under Inpatient; `/executive` merged into Home (owners); `/admin/catalog-favorites` merged into diagnostic-catalog favorites tab; both routes removed |
 | 2026-07-22 | CLI-36 practitioner shift rotation: rule engine (weekly/parity/cycle) + exceptions; matrix off-shift block; booking guard; Shifts admin modal |
 | 2026-07-22 | CLI-37 UI list/filter standard: EraListFilterBar instant+inline Reset; clinic home shared date; name-first + icon actions |
+| 2026-08-27 | HOT-06: outbox + clinic `/reception/extra-tickets` Issue ticket + 3-copy print + nurse gate. Write drain live on sanatorium desk. Still HEADLESS (not SHIPPED). |
+| 2026-08-27 | SaaS Wave 1: hotel request tenant (JWT/session/`enterSatelliteTenant`); Super-Admin Elektraweb + clinic cutover policy + Sync row upsert; widget org login; property env stripped. HOT-06 still HEADLESS (SuperAdmin SCREEN). |
+| 2026-08-27 | SaaS Wave 2: clinic request tenant (login/SSO/JWT/middleware ALS; lifecycle S2S; ops stamps via `requestOrganizationId`). AC-CLI-TENANT still 🟡. |
+| 2026-08-27 | SaaS Wave 3: F&B/retail/CRM/wholesale/logistics/construction/auto request tenant; finance Nest ALS audited (no kit port). HOT-06 still HEADLESS; TENANT ACs still 🟡. |
+| 2026-08-27 | SaaS Wave 4: multi-org cron (`runCronForEachTenant` leftovers + `byOrganization`); SHARED list = `ERA_CRON_ORGANIZATION_IDS`. HOT-06 still HEADLESS; TENANT ACs still 🟡. |
+| 2026-08-28 | SaaS Wave 5: hotel+clinic lab two-org isolation CI + UAT lab/field split; signoff lab passed. Field UAT open; TENANT ACs still 🟡; no SHIPPED/`ga`. |
+| 2026-08-28 | SaaS Wave 6: HOT-06 lab SHOW path (SuperAdmin policy + clinic Issue-ticket); extension SPA Insert still HEADLESS; not SHIPPED/`ga`. |
+| 2026-08-28 | SaaS Wave 7: Placement lab hop SHARED→DEDICATED advance chain; slice stub; AC-CP-TOPO still 🟡; no live migrate sell. |
+| 2026-08-28 | SaaS Wave 8: EW ingest ALS stamps (`bridgeRequestOrganizationId`); HOT-06 still HEADLESS / not SHIPPED. |
+| 2026-08-28 | SaaS Wave 9: live pool smoke scripts (`ERA_WAVE9_POOL_SMOKE`) hotel+clinic + HOT-06 field runbook; TENANT still 🟡; HOT-06 not SHIPPED; no `ga`. |
+| 2026-08-28 | SaaS Wave 10: cron org DB-discover (`listOrganizationIds` / User DISTINCT); env override wins; TENANT still 🟡; no `ga`. |
+| 2026-08-28 | SaaS Wave 11: hotel curated JSON placement slice + orch sliceMeta; AC-CP-TOPO still 🟡; host apply open; no `ga`. |
+| 2026-08-28 | SaaS Wave 12: honesty closeout — status drift fix + `check:acceptance` SaaS bans; TENANT/TOPO 🟡; HOT-06 HEADLESS; no `ga`. |
 | 2026-08-23 | Hotel guest tours HOT-TOUR-01 SHIPPED: `/tours` roster + TOUR folio + `/fleet` + print; SKU hotel_transfers; AC-HOT-TOUR Scaffold ✅; UI SCREEN (not SHOW) |
 | 2026-08-19 | HOT-RPT-01/02 Hotel Management Reports W1–W3 (P0 ZIP + P1 catalog + cubes/3-year + email ZIP link HEADLESS); STUB → API — not SHIPPED (no UAT evidence) |
 | 2026-08-20 | HOT-AGP-01/02/03 Agency portal P0–P1 (CP grants + hotel book + FO inbox + passport scan); Status=API; AC-HOT-AGP 🟡; SKU `hotel_agency_portal` |

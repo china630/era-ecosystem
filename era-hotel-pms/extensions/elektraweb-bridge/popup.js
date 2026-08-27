@@ -1,41 +1,75 @@
 const $ = (id) => document.getElementById(id);
 
+function esc(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 async function render() {
   const s = await chrome.storage.local.get([
-    'enabled',
-    'token',
-    'organizationId',
-    'elektrawebHotelId',
-    'login',
-    'hotelBaseUrl',
-    'lastSyncAt',
-    'lastError',
+    "enabled",
+    "writeEnabled",
+    "deskRole",
+    "locale",
+    "token",
+    "organizationId",
+    "elektrawebHotelId",
+    "login",
+    "hotelBaseUrl",
+    "lastSyncAt",
+    "lastError",
   ]);
-  $('enabled').checked = !!s.enabled;
+  const locale = ewLocale(s.locale);
+  const sanatorium = s.deskRole === "sanatorium";
+  ewApplyI18n(document, locale);
+  document.documentElement.lang = locale;
+
+  $("enabled").checked = !!s.enabled;
+  $("writeRow").hidden = !sanatorium;
+  $("writeEnabled").checked = !!s.writeEnabled && sanatorium;
+  $("deskLabel").textContent = sanatorium ? ewT(locale, "deskSan") : ewT(locale, "deskFo");
+
   if (!s.token) {
-    $('status').innerHTML = '<p class="err">Not logged in — open settings.</p>';
+    $("status").innerHTML = `<p class="err">${esc(ewT(locale, "notLoggedIn"))}</p>`;
     return;
   }
-  $('status').innerHTML = `
-    <div class="row"><strong>${s.login || 'user'}</strong></div>
-    <div class="row">Org: <code>${s.organizationId || '—'}</code></div>
-    <div class="row">EW hotel: <code>${s.elektrawebHotelId || '—'}</code></div>
-    <div class="row">URL: <code>${s.hotelBaseUrl || '—'}</code></div>
-    <div class="row">${s.lastSyncAt ? 'Last sync: ' + s.lastSyncAt : 'No sync yet'}</div>
-    ${s.lastError ? `<div class="row err">${s.lastError}</div>` : '<div class="row ok">OK</div>'}
+  const sync = s.lastSyncAt || ewT(locale, "noSync");
+  const health = s.lastError
+    ? `<div class="ew-pop-row err">${esc(s.lastError)}</div>`
+    : `<div class="ew-pop-row ok">${esc(ewT(locale, "ok"))}</div>`;
+  $("status").innerHTML = `
+    <div class="ew-pop-row"><strong>${esc(s.login || "user")}</strong></div>
+    <div class="ew-pop-row">${esc(ewT(locale, "ewHotel"))}: <code>${esc(s.elektrawebHotelId || "—")}</code></div>
+    <div class="ew-pop-row">${esc(ewT(locale, "lastSync"))}: ${esc(sync)}</div>
+    ${health}
   `;
 }
 
-$('enabled').addEventListener('change', async () => {
-  await chrome.storage.local.set({ enabled: $('enabled').checked });
+$("enabled").addEventListener("change", async () => {
+  await chrome.storage.local.set({ enabled: $("enabled").checked });
 });
 
-$('openOptions').addEventListener('click', () => {
+$("writeEnabled").addEventListener("change", async () => {
+  const s = await chrome.storage.local.get(["deskRole"]);
+  if (s.deskRole !== "sanatorium") {
+    $("writeEnabled").checked = false;
+    return;
+  }
+  await chrome.storage.local.set({ writeEnabled: $("writeEnabled").checked });
+});
+
+$("openOptions").addEventListener("click", () => {
   chrome.runtime.openOptionsPage();
 });
 
-$('flush').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: 'flush' }, () => void render());
+$("flush").addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "flush" }, () => void render());
+});
+
+chrome.storage.onChanged.addListener(() => {
+  void render();
 });
 
 void render();

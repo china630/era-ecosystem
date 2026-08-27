@@ -475,3 +475,81 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 10. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
 11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
 
+## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
+
+ADR: [hotel-stay-amendment-and-pricing.md](../../docs/adr/hotel-stay-amendment-and-pricing.md). Do **not** mark SHIPPED until signed.
+
+1. In-house stay: rack DnD to another door of the **same** charged type → occupancy log APPLIED; folio sell unchanged.
+2. DnD to **other** type with `compUpgrade` → given type set; sell unchanged. Paid type change is **not** DnD — use **Change product from date**.
+3. Pricing tab: Manual Price nightly → Apply to all nights; Recalc skips locked nights. Stay % is mutually exclusive with Manual Price.
+4. Wizard: effective date = today or later; preview nights; apply. Past posted nights unchanged. If tonight already posted, folio shows one `RATE_ADJ` line.
+5. Medical package stay: night audit package lines sum to that night’s sell. Clinic remaining `PROPOSED`/`SCHEDULED` from effective date cancelled; completed procedures remain.
+
+## 36. HOT-06 Elektraweb dual-run (SaaS Wave 6 lab)
+
+**Lab:** CI `saas-wave6-hot06-lab` + Super-Admin policy UI. Signoff: [`reports/hot06-lab-signoff.md`](../../reports/hot06-lab-signoff.md).  
+**SHOW:** Super-Admin per-org EW policy (orch). Extension SPA Insert remains **HEADLESS** / field-open. **Not SHIPPED** / not `ga`.
+
+```bash
+cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
+```
+
+### Lab UI
+
+1. Super-Admin → org hub → Elektraweb / clinic cutover policy → save → Sync to hotel `ElektrawebBridgePolicy`.
+2. Confirm outbox enqueue requires `organizationId`; HOTELID must match **that** org policy (not process env).
+3. `writeEnabled=false` or `ELEKTRAWEB_BRIDGE_ENABLED=0` → no write drain.
+4. Widget settings path documented in [ELEKTRAWEB-LIVE-BRIDGE.md](./ELEKTRAWEB-LIVE-BRIDGE.md) (extension — HEADLESS).
+
+### Field (pending)
+
+Live SPA Insert on sanatorium desk — required before HOT-06 SHIPPED. Step-by-step: [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Preconditions: Super-Admin policy Sync, pool kill switch, extension Write ON.
+
+## 37. Topology — two-org isolation (CP-TENANT-01 / SaaS Waves 5 + 9)
+
+
+**Status:** **Lab** CI + **Live pool smoke** (opt-in); **Field** still **pending**. Does **not** unlock AC-HOT-TENANT Scaffold ✅, SHIPPED, or SHARED pool sell. Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md).
+
+### Lab (CI)
+
+```bash
+cd era-hotel-pms && npm test -- --testPathPattern=saas-wave5-two-org-isolation
+```
+
+Suite: `__tests__/saas-wave5-two-org-isolation.spec.ts` — real kit `mergeWhere` / ALS: Org B guest/reservation lists exclude Org A; cross-org get-by-id empty; ALS stamp wins over process bind.
+
+### Live pool smoke (Wave 9, opt-in)
+
+One DB + Prisma tenant extension (stronger than Wave 5 simulation). Skip (exit 0) unless `ERA_WAVE9_POOL_SMOKE=1`.
+
+```bash
+cd era-hotel-pms
+# DATABASE_URL = migrated hotel DB
+set ERA_WAVE9_POOL_SMOKE=1
+node scripts/saas-wave9-two-org-pool-smoke.mjs
+```
+
+Record result in signoff **Live pool smoke** section. Live smoke ≠ field; still not Scaffold ✅.
+
+### Field (pending)
+
+### Prerequisites
+
+- Hotel schema with `organizationId` on tenant roots + kit Prisma tenant extension.
+- Two org UUIDs (`ORG_A`, `ORG_B`) in one SHARED-ready DB (or sequential appliance binds).
+- FO login with JWT/`organizationId` (Wave 1 request tenant).
+
+### API outline
+
+1. Login as `ORG_A`; create guest / reservation tagged to `ORG_A`.
+2. Session as `ORG_B`; guests / reservations list must **not** return `ORG_A` rows.
+3. Cross-org GET/PATCH by id from `ORG_B` → 404 / empty.
+4. Product path uses kit filter (raw SQL without org out of scope).
+
+### UI outline
+
+1. FO `/fo` or guests as `ORG_A` — only A names.
+2. Org switch / second appliance → only B; no A leakage.
+3. Record field results in `reports/two-org-isolation-signoff.md` (lab alone ≠ Scaffold ✅).
+
+

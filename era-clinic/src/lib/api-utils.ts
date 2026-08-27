@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import {
   authCookieName,
+  enterSatelliteTenant,
   getBearerOrCookieToken,
   SATELLITE_ROLE,
   sessionHasRole,
@@ -14,6 +15,7 @@ import {
   sessionHasClinicRole,
   type ClinicRoleCode,
 } from "@/lib/clinic-roles";
+import { prisma } from "@/lib/prisma";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -49,6 +51,10 @@ export function handleRouteError(err: unknown) {
     const status = "status" in err && typeof err.status === "number" ? err.status : 400;
     return jsonError(err.message, status);
   }
+  if (err instanceof Error && err.name === "PhysioCatalogError") {
+    const status = "status" in err && typeof err.status === "number" ? err.status : 400;
+    return jsonError(err.message, status);
+  }
   const msg = err instanceof Error ? err.message : "Internal error";
   return jsonError(msg, 500);
 }
@@ -70,11 +76,35 @@ export async function getRouteSession(): Promise<SatelliteSessionPayload | null>
     authCookieName(),
   );
   if (!token) return null;
+  let session: SatelliteSessionPayload;
   try {
-    return await verifySatelliteSession(token);
+    session = await verifySatelliteSession(token);
   } catch {
     return null;
   }
+
+  let organizationId =
+    session.organizationId?.trim() ||
+    headerStore.get("x-era-organization-id")?.trim() ||
+    undefined;
+
+  // Legacy tokens (pre-org claim): resolve from user row only (no process bind).
+  if (!organizationId) {
+    const row = await prisma.user.findUnique({
+      where: { id: session.sub },
+      select: { organizationId: true },
+    });
+    organizationId = row?.organizationId || undefined;
+  }
+  if (!organizationId) {
+    // SHARED / multi-tenant: refuse silent process-bind; client must re-login.
+    return null;
+  }
+
+  enterSatelliteTenant({ organizationId });
+  session = { ...session, organizationId };
+
+  return session;
 }
 
 export function hasClinicAdminRole(session: SatelliteSessionPayload): boolean {

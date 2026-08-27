@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
       return jsonError("testCode or testCodes required", 400);
     }
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     let patient = await prisma.patientRef.findFirst({
       where: { organizationId, refCode: body.patientRefCode },
     });

@@ -252,7 +252,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] `TransferVehicle`, `TransferOrder` — IN/OUT directions, fleet assignment
 - [x] `/transfers` UI + `/api/transfers/*` — book, assign vehicle, complete
 - [x] Complete: posts `TRANSFER` revenue on folio when not yet charged
-- [x] Seed: 2 vehicles, sample IN transfer for in-house guest Ali Mammadov
+- [x] Seed: 2 vehicles, sample IN transfer for in-house guest Ali Mammadov; revenue codes `TRANSFER` + `TOUR` (distinct P&L, both NAS 606)
 - [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § TRANSFER
 
 **Migration:** `20260528130000_wave4_transfer`
@@ -332,12 +332,13 @@ Nafta dual-run (≤ ~2 weeks): MV3 browser extension intercepts Elektraweb XHR �
 - [x] ADR + operator guide (2026-07-15)
 - [x] Discovery HAR (reservations + in-house + guests + folio) → URL allowlist + field maps documented in ELEKTRAWEB-LIVE-BRIDGE §6
 - [x] `POST /api/integrations/elektraweb-bridge` + login + kill switch `ELEKTRAWEB_BRIDGE_ENABLED`
-- [x] Extension package `extensions/elektraweb-bridge/` (unpacked load; Options login form)
+- [x] Extension package `extensions/elektraweb-bridge/` (unpacked load; Options settings UI: desk, inbound, write toggle, locale)
 - [x] Status-diff → check-in/out / room-change / sanatorium booking events
 - [x] Health endpoint + FO dual-run checklist (docs)
+- [ ] Reverse SPA/Cash outbox Insert (HAR + API) — [ADR](../../docs/adr/hotel-elektraweb-reverse-folio-post.md)
 - [ ] Hour-X: disable bridge, revoke token, uninstall
 
-**Guide:** [ELEKTRAWEB-LIVE-BRIDGE.md](./ELEKTRAWEB-LIVE-BRIDGE.md) · **ADR:** [docs/adr/hotel-elektraweb-live-bridge.md](../../docs/adr/hotel-elektraweb-live-bridge.md) · **Coverage:** `HOT-06` API
+**Guide:** [ELEKTRAWEB-LIVE-BRIDGE.md](./ELEKTRAWEB-LIVE-BRIDGE.md) · **ADR:** [docs/adr/hotel-elektraweb-live-bridge.md](../../docs/adr/hotel-elektraweb-live-bridge.md) · **Reverse extras:** [hotel-elektraweb-reverse-folio-post.md](../../docs/adr/hotel-elektraweb-reverse-folio-post.md) · **Coverage:** `HOT-06` HEADLESS
 
 
 ## Platform add-ons (v1.0)

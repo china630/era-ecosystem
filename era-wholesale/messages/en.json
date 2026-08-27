@@ -1,6 +1,9 @@
 {
   "auth": {
     "loginFailed": "Login failed",
+    "organizationIdLabel": "Organization ID (wholesale)",
+    "organizationIdPlaceholder": "UUID — required on shared wholesale pool",
+    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",

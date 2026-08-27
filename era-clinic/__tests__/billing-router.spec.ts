@@ -23,9 +23,12 @@ jest.mock("@era/satellite-kit", () => ({
     hubOrganizationId: null,
     deferWalkInToHub: false,
   }),
-  satelliteOrganizationId: jest.fn().mockReturnValue("org1"),
   shouldRouteRevenueToParent: jest.fn().mockReturnValue(false),
   shouldDeferWalkInToHub: jest.fn().mockReturnValue(false),
+}));
+
+jest.mock("@/lib/request-organization", () => ({
+  requestOrganizationId: jest.fn().mockReturnValue("org1"),
 }));
 
 describe("billing-router", () => {

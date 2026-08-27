@@ -4,6 +4,7 @@ Entitlement keys: `hotel_distribution`, `hotel_banquets` (see `docs/adr/hotel-mo
 
 **Acceptance SSOT:** [Hotel-Acceptance-System](../../../docs/acceptance/Hotel-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Hotel-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Hotel-Implementation-Matrix.md) · edition [`docs/editions/hotel.yaml`](../../../docs/editions/hotel.yaml)
 
+**SaaS Wave 4 cron:** `PUT /api/service/recurring`, `POST /api/cron/auto-bar`, allotment cutoff, email-cron → `runCronForEachTenant` + `byOrganization` (`ERA_CRON_ORGANIZATION_IDS`). Not sellable SHARED pool.
 ## Menu IA canon
 
 SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/hk/*`, Cash=`/front-cash/*`, NA=`/night-audit/*`, Distribution=`/distribution/*`, Settings=`/settings/*`.
@@ -35,6 +36,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | /fo/rack | rack | Door tiles |
 | /fo/room-plan | room-plan API | Timeline bars; share twin two lanes + pool badge |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
+| Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes` | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
@@ -46,7 +48,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | `/distribution/channel` | `GET/POST/DELETE /api/channel/*`, `GET /api/channel/health`, `POST /api/channel/ota-cancel`, sync push/pull | Local CM (HOT-CH-01); live OTA STUB (HOT-CH-02) |
 | Groups / booking envelope | `GET/POST /api/reservation-groups`, `POST /api/reservation-groups/book`, `GET/PATCH/POST /api/reservation-groups/:id` | Booking = group; `/book` = envelope + N stays; POST id = add RoomStay |
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
-| Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff |
+| Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff; Wave 4 `runCronForEachTenant` → `byOrganization` |
 | Reservation card | `salesContractId` on `POST /api/reservations`, `PATCH …/full` | Tag booking under contract; StaysBar + names-incomplete gate |
 | `/admin/contract-pricing` | 410 redirect | Legacy — use `/admin/contracts` |
 | `/reports/agency-ledger`, `/reports/agency-profitability` | Finance city ledger reports | Agency AR boundary |
@@ -93,6 +95,8 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 |-------|-----|------|
 | (event consumer) | `POST /api/integration/staff-provision` | Upsert `User` keyed on `cpEmploymentId`; map `satelliteRole` → local RBAC |
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
+| (placement slice) | `POST /api/internal/v1/placement/export-slice`, `…/import-slice` | Hotel curated JSON org slice + host agent upsert path (AC-CP-TOPO Scaffold ✅ still open) |
+| (request org) | `src/lib/request-organization.ts` | SHARED ops stamps: ALS/`requestOrganizationId` (not process bind) |
 
 Policy: hire master = orchestrator CP; hotel admin user create remains secondary seat guard only.
 

@@ -17,6 +17,8 @@ const updateSchema = z.object({
   bodyPart: z.string().min(1).nullable().optional(),
   afterLunchAllowed: z.boolean().optional(),
   extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
+  needsSite: z.boolean().optional(),
+  physioOrderFields: z.array(z.string().min(1)).optional(),
 });
 
 export async function PATCH(

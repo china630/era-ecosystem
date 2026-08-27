@@ -9,6 +9,10 @@ import {
   type PatientTimelineEvent,
   type TimelineEventType,
 } from "@/domain/patient/patient-timeline.service";
+import {
+  PROCEDURE_PHYSIO_INCLUDE,
+  toPhysioOrderPayload,
+} from "@/domain/physio/physio-order-sites.service";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -99,6 +103,34 @@ function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
   };
 }
 
+function mapProcedureEvent(p: {
+  id: string;
+  scheduledAt: Date;
+  procedureName: string;
+  procedureCode: string;
+  status: string;
+  bodyPart: string | null;
+  note: string | null;
+  siteApplyMode: "TOGETHER" | "TURN" | null;
+  physioFields?: unknown;
+  amountNet: { toString(): string };
+  procedureType?: { needsSite: boolean; physioOrderFields?: string[] } | null;
+  sites: Array<{ siteId: string; laterality?: "LEFT" | "RIGHT" | "BOTH" | null }>;
+}): PatientTimelineEvent {
+  const siteCodes = p.sites.length ? `${p.sites.length} S` : null;
+  return {
+    id: `procedure:${p.id}`,
+    type: "procedure",
+    at: p.scheduledAt.toISOString(),
+    title: `Procedure · ${p.procedureName}`,
+    subtitle: [p.procedureCode, siteCodes, p.bodyPart].filter(Boolean).join(" · "),
+    status: p.status,
+    codes: [p.procedureCode],
+    amountNet: p.amountNet.toString(),
+    physio: toPhysioOrderPayload(p),
+  };
+}
+
 function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
   const dayMap = new Map<string, PatientTimelineEvent[]>();
   for (const ev of events) {
@@ -172,6 +204,7 @@ export async function getPatientCardSummary(patientRefId: string) {
         scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
+      include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
     }),
@@ -180,6 +213,7 @@ export async function getPatientCardSummary(patientRefId: string) {
         patientRefId,
         status: "PROPOSED",
       },
+      include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
     }),
@@ -229,30 +263,8 @@ export async function getPatientCardSummary(patientRefId: string) {
       },
     },
     resultsPreview: resultLabs.map((o) => mapLabEvent(o, catalog.items)).map(withTimeSubtitle),
-    planPreview: upcomingProcedures.map((p) =>
-      withTimeSubtitle({
-        id: `procedure:${p.id}`,
-        type: "procedure",
-        at: p.scheduledAt.toISOString(),
-        title: `Procedure · ${p.procedureName}`,
-        subtitle: p.procedureCode,
-        status: p.status,
-        codes: [p.procedureCode],
-        amountNet: p.amountNet.toString(),
-      }),
-    ),
-    proposedPreview: proposedProcedures.map((p) =>
-      withTimeSubtitle({
-        id: `procedure:${p.id}`,
-        type: "procedure",
-        at: p.scheduledAt.toISOString(),
-        title: `Procedure · ${p.procedureName}`,
-        subtitle: [p.procedureCode, p.bodyPart].filter(Boolean).join(" · "),
-        status: p.status,
-        codes: [p.procedureCode],
-        amountNet: p.amountNet.toString(),
-      }),
-    ),
+    planPreview: upcomingProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
+    proposedPreview: proposedProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
   };
 }
 
@@ -395,25 +407,14 @@ export async function getPatientPlanPage(
     prisma.procedureOrder.count({ where }),
     prisma.procedureOrder.findMany({
       where,
+      include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
       skip: offset,
       take: limit,
     }),
   ]);
 
-  const events: PatientTimelineEvent[] = rows.map((p) => ({
-    id: `procedure:${p.id}`,
-    type: "procedure",
-    at: p.scheduledAt.toISOString(),
-    title: `Procedure · ${p.procedureName}`,
-    subtitle: [p.procedureCode, p.bodyPart, p.status === "PROPOSED" ? "proposed" : null]
-      .filter(Boolean)
-      .join(" · "),
-    status: p.status,
-    codes: [p.procedureCode],
-    amountNet: p.amountNet.toString(),
-    href: undefined,
-  }));
+  const events: PatientTimelineEvent[] = rows.map((p) => mapProcedureEvent(p));
 
   const hasMore = offset + limit < total;
   return {

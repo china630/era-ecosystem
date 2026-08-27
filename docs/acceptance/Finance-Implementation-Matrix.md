@@ -27,6 +27,7 @@
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
 Do not call this table «product readiness».
 
+**SaaS Wave 3 (audit only):** Finance already request-tenants via Nest `TenantContextInterceptor` + membership ALS from JWT. Wave 3 did **not** port kit `enterSatelliteTenant`. No silent process-bind stamps via kit in production paths.
 ### Residual register
 
 | AC | Residual | Severity | Status |

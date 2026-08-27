@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { SATELLITE_WHOLESALE_ORDER_CONFIRMED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
@@ -46,7 +46,7 @@ export async function POST(
       },
     });
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const amountNet = Number(confirmed.amountNet);
     let payUrl: string | undefined;
     if (organizationId) {

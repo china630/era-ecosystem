@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { folioBalance, postPayment } from '@/lib/services/folio.service';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import type { PaymentMethod } from '@prisma/client';
 import { captureAuthorization } from '@/lib/services/card-auth.service';
 import { applyHeldDepositsToFolio } from '@/lib/services/folio-deposit.service';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =
@@ -12,7 +12,7 @@ const CP_TOKEN =
   process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
 
 async function burnLoyaltyPoints(customerRef: string, points: number, idempotencyKey: string) {
-  const orgId = satelliteOrganizationId();
+  const orgId = requestOrganizationId();
   if (!CP_URL || !CP_TOKEN || !orgId || orgId === 'demo-org') {
     return { burned: points, mode: 'mock' as const };
   }

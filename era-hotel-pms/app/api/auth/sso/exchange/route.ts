@@ -3,18 +3,20 @@ import {
   resolveVerifiedSsoFinanceRole,
   ssoExchangeBodySchema,
   satelliteOrganizationId,
-} from '@era/satellite-kit';
-import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
-import { signToken } from '@/lib/auth/jwt';
-import { prisma } from '@/lib/prisma';
+  satelliteRuntimeConfig,
+  enterSatelliteTenant,
+} from "@era/satellite-kit";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { signToken } from "@/lib/auth/jwt";
+import { prisma } from "@/lib/prisma";
 import {
   ROLE_CODES,
   permissionsForRole,
   serializePermissions,
-} from '@/lib/auth/permissions';
-import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
+} from "@/lib/auth/permissions";
+import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
 
-const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'era_session';
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "era_session";
 
 async function ensureRole(code: string) {
   const existing = await prisma.role.findFirst({ where: { code } });
@@ -22,7 +24,7 @@ async function ensureRole(code: string) {
   return prisma.role.create({
     data: {
       code,
-      name: code.replace(/_/g, ' '),
+      name: code.replace(/_/g, " "),
       permissionsJson: serializePermissions(permissionsForRole(code)),
     },
   });
@@ -30,13 +32,13 @@ async function ensureRole(code: string) {
 
 /**
  * SEC-SSO-02/01: Orchestrator mints HMAC (v2/v3); replay guard via consumeSsoSignatureOnce.
- * SEC-SSO-05: ticket org must match satelliteOrganizationId() when bound.
+ * SEC-SSO-05: on DEDICATED/ONPREM, ticket org must match process bind; SHARED accepts ticket org.
  */
 export async function POST(request: Request) {
   try {
     const body = ssoExchangeBodySchema.parse(await request.json());
     if (body.expiresAt < Math.floor(Date.now() / 1000)) {
-      return jsonError('SSO token expired', 401);
+      return jsonError("SSO token expired", 401);
     }
 
     const financeRole = resolveVerifiedSsoFinanceRole({
@@ -48,16 +50,30 @@ export async function POST(request: Request) {
       jti: body.jti,
     });
     if (!financeRole) {
-      return jsonError('Invalid SSO signature', 401);
+      return jsonError("Invalid SSO signature", 401);
     }
     if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
-      return jsonError('SSO ticket already used', 401);
+      return jsonError("SSO ticket already used", 401);
     }
 
-    const deployOrg = satelliteOrganizationId();
-    if (deployOrg && deployOrg !== 'demo-org' && body.organizationId !== deployOrg) {
-      return jsonError('SSO organization mismatch', 401);
+    const topology = satelliteRuntimeConfig().deploymentTopology;
+    let deployOrg: string | null = null;
+    try {
+      deployOrg = satelliteOrganizationId();
+    } catch {
+      deployOrg = null;
     }
+    if (
+      topology !== "SHARED" &&
+      deployOrg &&
+      deployOrg !== "demo-org" &&
+      body.organizationId !== deployOrg
+    ) {
+      return jsonError("SSO organization mismatch", 401);
+    }
+
+    const organizationId = body.organizationId;
+    enterSatelliteTenant({ organizationId });
 
     const email = body.email.trim().toLowerCase();
     const isPlatformSuperAdmin = isPlatformSuperAdminUser({
@@ -65,28 +81,27 @@ export async function POST(request: Request) {
       login: email,
     });
 
-    // Platform super-admins get full hotel ops; other launcher SSO users stay
-    // on Financial_Auditor (exec / read-oriented) until role mapping is expanded.
     const roleCode = isPlatformSuperAdmin
       ? ROLE_CODES.HOTEL_ADMIN
       : ROLE_CODES.FINANCIAL_AUDITOR;
     const role = await ensureRole(roleCode);
 
-    const login = `sso_${email.split('@')[0]}`;
+    const login = `sso_${email.split("@")[0]}`;
     let user = await prisma.user.findFirst({
-      where: { login },
+      where: { login, organizationId },
       include: { role: true },
     });
     if (!user) {
       user = await prisma.user.create({
         data: {
+          organizationId,
           login,
           email,
           fullName: body.fullName,
-          passwordHash: 'sso:no-password',
+          passwordHash: "sso:no-password",
           roleId: role.id,
           isCrossSystem: true,
-          status: 'ACTIVE',
+          status: "ACTIVE",
         },
         include: { role: true },
       });
@@ -97,7 +112,6 @@ export async function POST(request: Request) {
           lastLoginAt: new Date(),
           fullName: body.fullName,
           email,
-          // Re-assert role on every SSO so PSA is never stuck on read-only.
           roleId: role.id,
         },
         include: { role: true },
@@ -105,7 +119,7 @@ export async function POST(request: Request) {
     }
 
     if (!user) {
-      return jsonError('SSO user provisioning failed', 500);
+      return jsonError("SSO user provisioning failed", 500);
     }
 
     const token = await signToken({
@@ -114,6 +128,7 @@ export async function POST(request: Request) {
       role: user.role.code,
       fullName: user.fullName,
       email,
+      organizationId,
     });
 
     const res = jsonOk({
@@ -122,6 +137,7 @@ export async function POST(request: Request) {
         login: user.login,
         fullName: user.fullName,
         role: user.role.code,
+        organizationId,
         isPlatformSuperAdmin,
         financeRole,
       },
@@ -130,8 +146,8 @@ export async function POST(request: Request) {
 
     res.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
+      sameSite: "lax",
+      path: "/",
       maxAge: 60 * 60 * 4,
     });
 

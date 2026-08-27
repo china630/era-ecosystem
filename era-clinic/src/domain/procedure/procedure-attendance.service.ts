@@ -15,6 +15,10 @@ import {
   postProcedureFolioCharge,
   logProcedureCharge,
 } from "@/domain/procedure/procedure-charge.service";
+import {
+  extraNeedsPaperTicket,
+  isClinicElektrawebDualRun,
+} from "@/domain/procedure/extra-ticket";
 
 export {
   isWithinCheckInWindow,
@@ -37,7 +41,8 @@ export class ProcedureAttendanceError extends Error {
       | "CHECK_IN_MODE_MISMATCH"
       | "NOT_IN_CHECKIN_WINDOW"
       | "RESOURCE_BUSY"
-      | "OVERRIDE_FORBIDDEN",
+      | "OVERRIDE_FORBIDDEN"
+      | "TICKET_REQUIRED",
   ) {
     super(message);
     this.name = "ProcedureAttendanceError";
@@ -309,6 +314,19 @@ export async function checkInProcedureOrder(
   await assertCheckInWindow(order, channel);
   await assertResourceFreeForCheckIn(order);
 
+  if (await isClinicElektrawebDualRun()) {
+    const charge = await resolveProcedureCharge(order, { burnQuota: false });
+    if (
+      extraNeedsPaperTicket({ amountNet: charge.amountNet }) &&
+      !order.extraTicketIssuedAt
+    ) {
+      throw new ProcedureAttendanceError(
+        "Extra procedure requires an issued ticket (3 copies) before check-in",
+        "TICKET_REQUIRED",
+      );
+    }
+  }
+
   const now = new Date();
   const updated = await prisma.procedureOrder.update({
     where: { id: orderId },
@@ -384,7 +402,12 @@ export async function markProcedureNoShow(orderId: string, actor: AttendanceActo
   );
 
   const ticketId = `clinic-noshow-${order.id}`;
-  if (charge.shouldChargeFolio && order.reservationId) {
+  if (
+    charge.shouldChargeFolio &&
+    order.reservationId &&
+    !(await isClinicElektrawebDualRun()) &&
+    !order.extraTicketIssuedAt
+  ) {
     await postProcedureFolioCharge({
       reservationId: order.reservationId,
       amount: charge.amountNet,
@@ -502,6 +525,7 @@ export function mapAttendanceHttpStatus(err: ProcedureAttendanceError): number {
     case "CODE_MISMATCH":
     case "NOT_IN_CHECKIN_WINDOW":
     case "RESOURCE_BUSY":
+    case "TICKET_REQUIRED":
       return 409;
     case "CODE_DISABLED":
     case "CHECK_IN_MODE_MISMATCH":

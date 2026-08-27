@@ -37,6 +37,8 @@
 | Cashier | `/cashier` | 🟡 |
 | Print | `/print/*` | 🟡 |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
+| Physio sites S (CLI-49) | `/admin/physio-sites` (incl. Unmatched queue); patient card chips + type-gated fields | 🟡 SCREEN (UAT-SMOKE open) |
+| Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (Wave 6 lab; HOT-06 extension write still HEADLESS; not SHIPPED) |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA).
 

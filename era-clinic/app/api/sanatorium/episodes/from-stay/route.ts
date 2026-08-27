@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
+import { enterRequestTenant } from '@/lib/request-organization';
 import { openEpisodeFromStay } from '@/lib/services/sanatorium.service';
 
 const bodySchema = z.object({
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
   try {
     assertBridgeSecret(req);
     const body = bodySchema.parse(await req.json());
+    enterRequestTenant(body.organizationId);
     const episode = await openEpisodeFromStay(body);
     return jsonOk(episode);
   } catch (err) {

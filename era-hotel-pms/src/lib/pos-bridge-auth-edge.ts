@@ -4,6 +4,7 @@ export const POS_BRIDGE_API_PREFIXES = [
   "/api/pos/room-charge",
   "/api/settlement/pending",
   "/api/pms/",
+  "/api/integrations/elektraweb-bridge/outbox",
 ] as const;
 
 export function isPosBridgeApiPath(pathname: string): boolean {

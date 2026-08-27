@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  CatalogField,
   FieldSelect,
   LINK_ACCENT_CLASS,
   MODAL_CHECKBOX_CLASS,
@@ -14,11 +13,17 @@ import {
   SECONDARY_BUTTON_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
-  type CatalogOption,
 } from "@era/satellite-kit/ui";
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
+import {
+  PhysioSiteChips,
+  type PhysioCatalogListItem,
+  type PhysioCatalogSite,
+  type PhysioChipsLabels,
+  type PhysioChipsValue,
+} from "@/components/physio/PhysioSiteChips";
 
 type TimelineEvent = {
   id: string;
@@ -31,6 +36,7 @@ type TimelineEvent = {
   href?: string;
   hasCritical?: boolean;
   resultSummary?: Array<{ code: string; value: string; flag?: string }>;
+  physio?: PhysioChipsValue & { bodyPart?: string | null };
 };
 
 type TimelineDay = {
@@ -77,18 +83,15 @@ type CardSummary = {
   proposedPreview?: TimelineEvent[];
 };
 
-const BODY_PARTS_FALLBACK = [
-  "HEAD",
-  "NECK",
-  "CHEST",
-  "BACK",
-  "ABDOMEN",
-  "ARM_LEFT",
-  "ARM_RIGHT",
-  "LEG_LEFT",
-  "LEG_RIGHT",
-  "FULL_BODY",
-] as const;
+const EMPTY_PHYSIO: PhysioChipsValue = {
+  needsSite: true,
+  physioOrderFields: [],
+  siteIds: [],
+  siteApplyMode: null,
+  siteLaterality: {},
+  physioFields: {},
+  note: null,
+};
 
 function orderIdFromEvent(ev: TimelineEvent): string | null {
   if (!ev.id.startsWith("procedure:")) return null;
@@ -153,31 +156,94 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
   const [planHasMore, setPlanHasMore] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
   const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
-  const [bodyPartById, setBodyPartById] = useState<Record<string, string>>({});
-  const [bodyPartOptions, setBodyPartOptions] = useState<CatalogOption[]>(
-    BODY_PARTS_FALLBACK.map((bp) => ({ value: bp, label: bp })),
-  );
+  const [physioCatalog, setPhysioCatalog] = useState<PhysioCatalogSite[]>([]);
+  const [physioPrograms, setPhysioPrograms] = useState<PhysioCatalogListItem[]>([]);
+  const [physioSubstances, setPhysioSubstances] = useState<PhysioCatalogListItem[]>([]);
+  const [physioById, setPhysioById] = useState<Record<string, PhysioChipsValue>>({});
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
+
+  const physioLabels: PhysioChipsLabels = useMemo(
+    () => ({
+      sites: t("physioSites", { defaultValue: "Sites" }),
+      addSite: t("physioAddSite", { defaultValue: "Add site" }),
+      applyMode: t("physioApplyMode", { defaultValue: "Apply" }),
+      together: t("physioTogether", { defaultValue: "Together" }),
+      turn: t("physioTurn", { defaultValue: "In turn" }),
+      note: t("physioNote", { defaultValue: "Note" }),
+      noteHint: t("physioNoteHint", { defaultValue: "Comments and unmatched leftover" }),
+      remove: t("physioRemoveSite", { defaultValue: "Remove site" }),
+      laterality: t("physioLaterality", { defaultValue: "Side" }),
+      left: t("physioLeft", { defaultValue: "Left" }),
+      right: t("physioRight", { defaultValue: "Right" }),
+      both: t("physioBoth", { defaultValue: "Both" }),
+      workKind: t("physioWorkKind", { defaultValue: "Work kind" }),
+      deviceProgram: t("physioDeviceProgram", { defaultValue: "Program" }),
+      electrodeCount: t("physioElectrodeCount", { defaultValue: "Electrodes" }),
+      deviceParam: t("physioDeviceParam", { defaultValue: "Device param" }),
+      noAdditive: t("physioNoAdditive", { defaultValue: "No additive" }),
+      applicationSurface: t("physioApplicationSurface", { defaultValue: "Surface" }),
+      substance: t("physioSubstance", { defaultValue: "Substance" }),
+      extraOil: t("physioExtraOil", { defaultValue: "Extra oil" }),
+      holdOrStop: t("physioHoldOrStop", { defaultValue: "Hold / stop" }),
+      spineLevel: t("physioSpineLevel", { defaultValue: "Spine level" }),
+      dayBlock: t("physioDayBlock", { defaultValue: "Day block" }),
+      bathSequence: t("physioBathSequence", { defaultValue: "Bath sequence" }),
+      intensity: t("physioIntensity", { defaultValue: "Intensity" }),
+      smear: t("physioSmear", { defaultValue: "Smear" }),
+      yes: t("physioYes", { defaultValue: "Yes" }),
+      no: t("physioNo", { defaultValue: "No" }),
+      unset: t("physioUnset", { defaultValue: "—" }),
+      surfaceFrontBack: t("physioSurfaceFrontBack", { defaultValue: "Front / back" }),
+      surfaceUpper: t("physioSurfaceUpper", { defaultValue: "Upper" }),
+      surfaceLower: t("physioSurfaceLower", { defaultValue: "Lower" }),
+      dayBlockAlt: t("physioDayBlockAlt", { defaultValue: "Every other day" }),
+      dayBlockThen: t("physioDayBlockThen", { defaultValue: "5 days then" }),
+      bathSitzThenFull: t("physioBathSitzThenFull", { defaultValue: "Sitz then full" }),
+      intensityLight: t("physioIntensityLight", { defaultValue: "Light" }),
+      intensityWeak: t("physioIntensityWeak", { defaultValue: "Weak" }),
+      intensityNotHot: t("physioIntensityNotHot", { defaultValue: "Not hot" }),
+      intensityMedium: t("physioIntensityMedium", { defaultValue: "Medium" }),
+      intensityMore: t("physioIntensityMore", { defaultValue: "More" }),
+    }),
+    [t],
+  );
 
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch("/api/admin/lookups?kind=BODY_PART&activeOnly=1");
+        const res = await fetch("/api/physio-catalog");
         const data = await res.json();
-        const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
-        if (rows.length > 0) {
-          setBodyPartOptions(
-            rows.map((r: { code: string; name: string }) => ({
-              value: r.code,
-              label: r.name || r.code,
-            })),
-          );
-        }
+        const sites = (data.sites ?? data.data?.sites ?? []) as PhysioCatalogSite[];
+        const programs = (data.programs ?? data.data?.programs ?? []) as PhysioCatalogListItem[];
+        const substances = (data.substances ?? data.data?.substances ?? []) as PhysioCatalogListItem[];
+        setPhysioCatalog(Array.isArray(sites) ? sites : []);
+        setPhysioPrograms(Array.isArray(programs) ? programs : []);
+        setPhysioSubstances(Array.isArray(substances) ? substances : []);
       } catch {
-        /* keep fallback */
+        /* chips stay empty until catalog loads */
       }
     })();
+  }, []);
+
+  const mergePhysioFromEvents = useCallback((events: TimelineEvent[]) => {
+    setPhysioById((prev) => {
+      const next = { ...prev };
+      for (const ev of events) {
+        const oid = orderIdFromEvent(ev);
+        if (!oid || !ev.physio) continue;
+        next[oid] = {
+          needsSite: ev.physio.needsSite,
+          physioOrderFields: ev.physio.physioOrderFields ?? [],
+          siteIds: ev.physio.siteIds,
+          siteApplyMode: ev.physio.siteApplyMode,
+          siteLaterality: ev.physio.siteLaterality ?? {},
+          physioFields: ev.physio.physioFields ?? {},
+          note: ev.physio.note,
+        };
+      }
+      return next;
+    });
   }, []);
 
   const loadSummary = useCallback(async () => {
@@ -186,24 +252,40 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
     const data = await res.json();
     const row = (data.data ?? data) as CardSummary;
     setSummary(row);
-    const codes = new Set(bodyPartOptions.map((o) => o.value));
-    const nextBody: Record<string, string> = {};
-    for (const ev of row.proposedPreview ?? []) {
-      const oid = orderIdFromEvent(ev);
-      if (!oid) continue;
-      const part = (ev.subtitle ?? "").split(" · ").find((p) => codes.has(p));
-      if (part) nextBody[oid] = part;
-    }
-    setBodyPartById((prev) => ({ ...nextBody, ...prev }));
+    mergePhysioFromEvents([...(row.proposedPreview ?? []), ...(row.planPreview ?? [])]);
     setLoading(false);
-  }, [patientRefId, bodyPartOptions]);
+  }, [patientRefId, mergePhysioFromEvents]);
 
-  async function patchBodyPart(orderId: string, bodyPart: string) {
-    setBodyPartById((prev) => ({ ...prev, [orderId]: bodyPart }));
+  async function patchPhysio(
+    orderId: string,
+    patch: {
+      siteIds?: string[];
+      siteApplyMode?: "TOGETHER" | "TURN";
+      note?: string | null;
+      siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+      physioFields?: PhysioChipsValue["physioFields"];
+    },
+  ) {
+    setPhysioById((prev) => {
+      const cur = prev[orderId] ?? EMPTY_PHYSIO;
+      return {
+        ...prev,
+        [orderId]: {
+          ...cur,
+          ...(patch.siteIds !== undefined ? { siteIds: patch.siteIds } : {}),
+          ...(patch.siteApplyMode ? { siteApplyMode: patch.siteApplyMode } : {}),
+          ...(patch.note !== undefined ? { note: patch.note } : {}),
+          ...(patch.siteLaterality
+            ? { siteLaterality: { ...cur.siteLaterality, ...patch.siteLaterality } }
+            : {}),
+          ...(patch.physioFields !== undefined ? { physioFields: patch.physioFields } : {}),
+        },
+      };
+    });
     await fetch(`/api/procedures/${orderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bodyPart: bodyPart || null }),
+      body: JSON.stringify(patch),
     });
   }
 
@@ -288,11 +370,12 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       const row = data.data ?? data;
       const days = (row.days ?? []) as TimelineDay[];
       setPlanDays((prev) => (reset ? days : mergeDays(prev, days)));
+      mergePhysioFromEvents(days.flatMap((d) => d.events));
       setPlanOffset(row.nextOffset ?? offset);
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
     },
-    [patientRefId, planOffset],
+    [patientRefId, planOffset, mergePhysioFromEvents],
   );
 
   useEffect(() => {
@@ -457,6 +540,17 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
                         <span className={`ml-2 ${TEXT_DANGER_CLASS}`}>{t("critical")}</span>
                       ) : null}
                     </p>
+                    {ev.href && /lab-orders\//.test(ev.href) ? (
+                      <a
+                        href={`${ev.href.replace(/[?#].*$/, "")}/file`.replace(
+                          "/lab-orders/",
+                          "/api/lab-orders/",
+                        )}
+                        className={`mt-1 inline-block ${LINK_ACCENT_CLASS}`}
+                      >
+                        {t("downloadLabFile", { defaultValue: "Download lab file" })}
+                      </a>
+                    ) : null}
                   </div>
                   {labPrintHref(ev) ? (
                     <button
@@ -527,13 +621,21 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
                       <p className="text-[12px] text-amber-800">
                         {ev.subtitle} · {t("statusProposed", { defaultValue: "PROPOSED" })}
                       </p>
-                      <CatalogField
-                        kind="CLOSED_MEDIUM"
-                        label={t("bodyPart", { defaultValue: "Body part" })}
-                        className="mt-1 max-w-xs"
-                        value={bodyPartById[oid] ?? ""}
-                        onChange={(v) => void patchBodyPart(oid, String(v))}
-                        options={bodyPartOptions}
+                      <PhysioSiteChips
+                        value={physioById[oid] ?? ev.physio ?? EMPTY_PHYSIO}
+                        catalog={physioCatalog}
+                        programs={physioPrograms}
+                        substances={physioSubstances}
+                        locale={locale}
+                        editable
+                        labels={physioLabels}
+                        onSitesChange={(siteIds) => void patchPhysio(oid, { siteIds })}
+                        onModeChange={(siteApplyMode) => void patchPhysio(oid, { siteApplyMode })}
+                        onNoteBlur={(note) => void patchPhysio(oid, { note })}
+                        onLateralityChange={(siteId, laterality) =>
+                          void patchPhysio(oid, { siteLaterality: { [siteId]: laterality } })
+                        }
+                        onFieldsChange={(physioFields) => void patchPhysio(oid, { physioFields })}
                       />
                     </div>
                   </li>
@@ -699,10 +801,18 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           selectableProposed
           selectedProposed={selectedProposed}
           onToggleProposed={toggleProposed}
-          bodyPartById={bodyPartById}
-          onBodyPartChange={(id, part) => void patchBodyPart(id, part)}
-          bodyPartOptions={bodyPartOptions}
-          bodyPartLabel={t("bodyPart", { defaultValue: "Body part" })}
+          physioById={physioById}
+          physioCatalog={physioCatalog}
+          physioPrograms={physioPrograms}
+          physioSubstances={physioSubstances}
+          physioLabels={physioLabels}
+          onPhysioSitesChange={(id, siteIds) => void patchPhysio(id, { siteIds })}
+          onPhysioModeChange={(id, siteApplyMode) => void patchPhysio(id, { siteApplyMode })}
+          onPhysioNoteBlur={(id, note) => void patchPhysio(id, { note })}
+          onPhysioLateralityChange={(id, siteId, laterality) =>
+            void patchPhysio(id, { siteLaterality: { [siteId]: laterality } })
+          }
+          onPhysioFieldsChange={(id, physioFields) => void patchPhysio(id, { physioFields })}
           proposedLabel={t("statusProposed", { defaultValue: "PROPOSED" })}
         />
         {planHasMore ? (
@@ -753,10 +863,16 @@ function DayTimeline({
   selectableProposed,
   selectedProposed,
   onToggleProposed,
-  bodyPartById,
-  onBodyPartChange,
-  bodyPartOptions,
-  bodyPartLabel,
+  physioById,
+  physioCatalog,
+  physioPrograms,
+  physioSubstances,
+  physioLabels,
+  onPhysioSitesChange,
+  onPhysioModeChange,
+  onPhysioNoteBlur,
+  onPhysioLateralityChange,
+  onPhysioFieldsChange,
   proposedLabel,
 }: {
   days: TimelineDay[];
@@ -769,10 +885,20 @@ function DayTimeline({
   selectableProposed?: boolean;
   selectedProposed?: Set<string>;
   onToggleProposed?: (orderId: string) => void;
-  bodyPartById?: Record<string, string>;
-  onBodyPartChange?: (orderId: string, bodyPart: string) => void;
-  bodyPartOptions?: CatalogOption[];
-  bodyPartLabel?: string;
+  physioById?: Record<string, PhysioChipsValue>;
+  physioCatalog?: PhysioCatalogSite[];
+  physioPrograms?: PhysioCatalogListItem[];
+  physioSubstances?: PhysioCatalogListItem[];
+  physioLabels?: PhysioChipsLabels;
+  onPhysioSitesChange?: (orderId: string, siteIds: string[]) => void;
+  onPhysioModeChange?: (orderId: string, mode: "TOGETHER" | "TURN") => void;
+  onPhysioNoteBlur?: (orderId: string, note: string) => void;
+  onPhysioLateralityChange?: (
+    orderId: string,
+    siteId: string,
+    laterality: "LEFT" | "RIGHT" | "BOTH" | null,
+  ) => void;
+  onPhysioFieldsChange?: (orderId: string, fields: PhysioChipsValue["physioFields"]) => void;
   proposedLabel?: string;
 }) {
   if (loading && days.length === 0) {
@@ -823,17 +949,22 @@ function DayTimeline({
                       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                         {ev.subtitle} · {isProposed ? proposedLabel ?? ev.status : ev.status}
                       </p>
-                      {selectableProposed && isProposed && oid ? (
-                        <CatalogField
-                          kind="CLOSED_MEDIUM"
-                          label={bodyPartLabel ?? ""}
-                          className="mt-1 max-w-xs"
-                          value={bodyPartById?.[oid] ?? ""}
-                          onChange={(v) => onBodyPartChange?.(oid, String(v))}
-                          options={
-                            bodyPartOptions ??
-                            BODY_PARTS_FALLBACK.map((bp) => ({ value: bp, label: bp }))
+                      {oid && physioLabels && (isProposed || ev.status === "SCHEDULED") ? (
+                        <PhysioSiteChips
+                          value={physioById?.[oid] ?? ev.physio ?? EMPTY_PHYSIO}
+                          catalog={physioCatalog ?? []}
+                          programs={physioPrograms ?? []}
+                          substances={physioSubstances ?? []}
+                          locale={uiLocale}
+                          editable={isProposed || ev.status === "SCHEDULED"}
+                          labels={physioLabels}
+                          onSitesChange={(siteIds) => onPhysioSitesChange?.(oid, siteIds)}
+                          onModeChange={(mode) => onPhysioModeChange?.(oid, mode)}
+                          onNoteBlur={(note) => onPhysioNoteBlur?.(oid, note)}
+                          onLateralityChange={(siteId, laterality) =>
+                            onPhysioLateralityChange?.(oid, siteId, laterality)
                           }
+                          onFieldsChange={(fields) => onPhysioFieldsChange?.(oid, fields)}
                         />
                       ) : null}
                       {ev.resultSummary && ev.resultSummary.length > 0 ? (

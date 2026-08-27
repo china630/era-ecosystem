@@ -2,9 +2,9 @@ import {
   resolveOperatingMode,
   resolveSettlementPolicy,
   shouldDeferWalkInToHub,
-  satelliteOrganizationId,
   type OperatingModeSnapshot,
 } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import {
   resolveTicketSettlementSync,
   type TicketBillingShape,
@@ -30,17 +30,14 @@ export async function resolveTicketSettlement(
   ticket: TicketBillingShape,
   modeOverride?: OperatingModeSnapshot | null,
 ): Promise<TicketSettlement> {
-  const orgId = satelliteOrganizationId();
+  const orgId = requestOrganizationId();
   if (modeOverride !== undefined) {
-    const policy = orgId ? await resolveSettlementPolicy(orgId) : null;
+    const policy = await resolveSettlementPolicy(orgId);
     return resolveTicketSettlementSync(
       ticket,
       modeOverride,
-      policy ? shouldDeferWalkInToHub(policy) : false,
+      shouldDeferWalkInToHub(policy),
     );
-  }
-  if (!orgId) {
-    return resolveTicketSettlementSync(ticket, null, false);
   }
   const [mode, policy] = await Promise.all([
     resolveOperatingMode(orgId),

@@ -2,8 +2,8 @@ import {
   isValidAzFin,
   linkPersonIdentity,
   lookupGlobalPersonByFin,
-  satelliteOrganizationId,
 } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 
 export async function POST(request: Request) {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     };
     const fin = body.fin?.trim();
     const fullName = body.fullName?.trim();
-    const orgId = satelliteOrganizationId();
+    const orgId = requestOrganizationId();
 
     if (fin) {
       if (!isValidAzFin(fin)) {

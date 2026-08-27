@@ -3,15 +3,12 @@ import { NextResponse } from "next/server";
 import {
   resolveSettlementPolicy,
   shouldDeferWalkInToHub,
-  satelliteOrganizationId,
 } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 export async function GET() {
   await assertFnbEntitled();
-  const orgId = satelliteOrganizationId();
-  if (!orgId) {
-    return NextResponse.json({ deferWalkInToHub: false });
-  }
+  const orgId = requestOrganizationId();
   const policy = await resolveSettlementPolicy(orgId);
   return NextResponse.json({
     deferWalkInToHub: shouldDeferWalkInToHub(policy),

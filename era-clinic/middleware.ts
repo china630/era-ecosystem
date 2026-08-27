@@ -55,6 +55,9 @@ export async function middleware(request: NextRequest) {
       const headers = new Headers(reqHeaders);
       headers.set("x-user-id", session.sub);
       headers.set("x-user-role", session.role);
+      if (session.organizationId) {
+        headers.set("x-era-organization-id", session.organizationId);
+      }
       return NextResponse.next({ request: { headers } });
     } catch {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });

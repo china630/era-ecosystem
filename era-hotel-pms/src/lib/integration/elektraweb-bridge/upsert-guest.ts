@@ -9,7 +9,7 @@ export async function upsertGuestFromElektrawebRow(
   row: Record<string, unknown>,
 ): Promise<UpsertResult> {
   const hotelId = num(row.HOTELID) ?? num(row.OTELID);
-  if (hotelId != null) assertHotelIdMatches(hotelId);
+  if (hotelId != null) await assertHotelIdMatches(hotelId);
 
   const externalRef = str(row.GUESTID) ?? str(row.ID);
   if (!externalRef) throw new Error('Guest row missing ID/GUESTID');

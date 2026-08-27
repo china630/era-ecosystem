@@ -1,10 +1,10 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const schema = z.object({
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const subtotal = body.lines.reduce((s, l) => s + l.qty * l.unitPriceAzn, 0);
   const ticket = await prisma.ticket.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       outletId,
       serviceChannel: "ROOM_SERVICE",
       guestName: body.guestName ?? `Room ${body.roomNumber}`,

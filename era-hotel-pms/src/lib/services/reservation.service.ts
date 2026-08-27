@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
@@ -238,7 +238,7 @@ export async function createReservation(input: {
 
   const reservation = await prisma.reservation.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       roomTypeId: input.roomTypeId,
       guestId: input.guestId,
       ratePlanId,
@@ -289,6 +289,16 @@ export async function createReservation(input: {
     include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
   });
 
+  await prisma.reservationStaySlice.create({
+    data: {
+      reservationId: reservation.id,
+      fromDate: reservation.checkInDate,
+      toDate: reservation.checkOutDate,
+      roomTypeId: reservation.roomTypeId,
+      ratePlanId: reservation.ratePlanId,
+    },
+  });
+
   if (reservation.ratePlan.medicalFlag) {
     await assertSanatoriumBookingAllowed(reservation.checkInDate);
     void dispatchSanatoriumBookingCreated({
@@ -330,7 +340,17 @@ export async function assignRoom(reservationId: string, roomId: string) {
 
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) throw new Error('Room not found');
-  if (room.roomTypeId !== reservation.roomTypeId) throw new Error('Room type mismatch');
+  const otherType = room.roomTypeId !== reservation.roomTypeId;
+  if (otherType) {
+    const { physicalTypeAllowedForDoor } = await import('@/lib/services/door-type.policy');
+    const allowed = physicalTypeAllowedForDoor({
+      chargedRoomTypeId: reservation.roomTypeId,
+      givenRoomTypeId: reservation.givenRoomTypeId ?? room.roomTypeId,
+      doorRoomTypeId: room.roomTypeId,
+      compUpgrade: true,
+    });
+    if (!allowed.ok) throw new Error(allowed.error);
+  }
 
   const candidate = {
     shareEligible: reservation.shareEligible,
@@ -352,11 +372,27 @@ export async function assignRoom(reservationId: string, roomId: string) {
   }
   await assertNamedGuestsFreeOnStay(reservationId);
 
-  return prisma.reservation.update({
+  const fromRoomId = reservation.roomId;
+  const updated = await prisma.reservation.update({
     where: { id: reservationId },
-    data: { roomId, shareBedIndex },
+    data: {
+      roomId,
+      shareBedIndex,
+      ...(otherType ? { givenRoomTypeId: room.roomTypeId } : {}),
+    },
     include: { room: true, guest: true, roomType: true, ratePlan: true },
   });
+  if (fromRoomId !== roomId) {
+    const { recordRoomMove } = await import('@/lib/services/room-occupancy-log.service');
+    await recordRoomMove({
+      reservationId,
+      fromRoomId,
+      toRoomId: roomId,
+      notes: 'CARD_ASSIGN',
+      reasonCode: 'CARD_ASSIGN',
+    });
+  }
+  return updated;
 }
 
 export async function listArrivals(date: Date) {
@@ -628,7 +664,12 @@ export async function assertRoomFree(
 
 export async function updateReservationSchedule(
   id: string,
-  input: { checkInDate?: Date; checkOutDate?: Date; roomId?: string | null },
+  input: {
+    checkInDate?: Date;
+    checkOutDate?: Date;
+    roomId?: string | null;
+    allowCompUpgrade?: boolean;
+  },
 ) {
   const reservation = await getReservation(id);
   if (!SCHEDULABLE_STATUSES.includes(reservation.status as (typeof SCHEDULABLE_STATUSES)[number])) {
@@ -659,7 +700,14 @@ export async function updateReservationSchedule(
     const room = await prisma.room.findUnique({ where: { id: newRoomId } });
     if (!room) throw new Error('Room not found');
     if (room.roomTypeId !== reservation.roomTypeId) {
-      throw new Error('Room does not match reservation room type');
+      const { physicalTypeAllowedForDoor } = await import('@/lib/services/door-type.policy');
+      const allowed = physicalTypeAllowedForDoor({
+        chargedRoomTypeId: reservation.roomTypeId,
+        givenRoomTypeId: reservation.givenRoomTypeId,
+        doorRoomTypeId: room.roomTypeId,
+        compUpgrade: Boolean(input.allowCompUpgrade),
+      });
+      if (!allowed.ok) throw new Error(allowed.error);
     }
     if (
       BLOCKED_ROOM_STATUSES.includes(room.status as (typeof BLOCKED_ROOM_STATUSES)[number]) ||

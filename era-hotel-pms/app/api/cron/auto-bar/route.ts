@@ -1,8 +1,9 @@
 import { applyAutoBar } from "@/lib/services/auto-bar-engine.service";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { listCronOrganizationIdsFromDb, fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { runCronForEachTenant } from "@era/satellite-kit";
 
-/** Nightly auto-BAR job — respects MANUAL locks. */
+/** Nightly auto-BAR. SHARED: ERA_CRON_ORGANIZATION_IDS override or DB User DISTINCT. */
 export async function POST(req: Request) {
   try {
     const gate = await runCronForEachTenant(
@@ -11,14 +12,17 @@ export async function POST(req: Request) {
         moduleKey: "hotel_setup_advanced",
         authorization: req.headers.get("authorization"),
         cronSecretEnv: "HOTEL_CRON_SECRET",
+        listOrganizationIds: listCronOrganizationIdsFromDb,
+        fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
       },
-      async () => {
+      async (organizationId) => {
         const today = new Date();
         const from = new Date(today.toISOString().slice(0, 10));
         const to = new Date(from);
         to.setUTCDate(to.getUTCDate() + 90);
         const result = await applyAutoBar({ from, to });
         return {
+          organizationId,
           ...result,
           from: from.toISOString().slice(0, 10),
           to: to.toISOString().slice(0, 10),
@@ -32,7 +36,7 @@ export async function POST(req: Request) {
       }
       return jsonOk({ skipped: true, reason: gate.reason, moduleKey: gate.moduleKey });
     }
-    return jsonOk(gate.results[0]);
+    return jsonOk({ byOrganization: gate.results });
   } catch (err) {
     return handleRouteError(err);
   }

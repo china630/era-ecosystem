@@ -182,8 +182,15 @@ async function main() {
   const revBoard = await prisma.revenueCode.create({
     data: { code: 'BOARD', name: 'Included board', departmentId: deptRest.id },
   });
+  // Same SKU hotel_transfers / ACC department; distinct P&L articles (airport vs excursion).
+  const revTransfer = await prisma.revenueCode.create({
+    data: { code: 'TRANSFER', name: 'Airport transfer', taxTag: '18%', departmentId: deptAcc.id },
+  });
   const revTour = await prisma.revenueCode.create({
-    data: { code: 'TOUR', name: 'Guest tour', departmentId: deptAcc.id },
+    data: { code: 'TOUR', name: 'Guest tour', taxTag: '18%', departmentId: deptAcc.id },
+  });
+  await prisma.revenueCode.create({
+    data: { code: 'RATE_ADJ', name: 'Same-day rate adjustment', taxTag: '18%', departmentId: deptAcc.id },
   });
 
   await prisma.folioRoutingRule.create({
@@ -201,6 +208,7 @@ async function main() {
       { revenueCodeId: revPkg.id, glAccountCode: '601' },
       { revenueCodeId: revTreatment.id, glAccountCode: '604' },
       { revenueCodeId: revBoard.id, glAccountCode: '605' },
+      // NAS 606 = other hotel services. Split airport vs tour on RevenueCode, not GL.
       { revenueCodeId: revTransfer.id, glAccountCode: '606' },
       { revenueCodeId: revTour.id, glAccountCode: '606' },
     ],

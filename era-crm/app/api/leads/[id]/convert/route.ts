@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
 import { SATELLITE_CRM_LEAD_CONVERTED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
@@ -70,7 +70,7 @@ export async function POST(
       },
     });
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const amountNet = converted.estimatedAmount
       ? Number(converted.estimatedAmount)
       : 0;

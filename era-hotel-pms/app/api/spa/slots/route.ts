@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { satelliteOrganizationId, requireSatelliteModule } from "@era/satellite-kit";
+import { requestOrganizationId } from '@/lib/request-organization';
+import { requireSatelliteModule } from "@era/satellite-kit";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { createBookingSlot } from "@/integration/control-plane-platform.client";
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     await requireSatelliteModule("industry_hotel_pms");
     await requireSatelliteModule("hotel_spa_scheduling");
     const body = bodySchema.parse(await req.json());
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     if (!organizationId) {
       return jsonOk({ skipped: true, reason: "ERA_SATELLITE_ORGANIZATION_ID not set" });
     }

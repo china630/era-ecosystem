@@ -20,6 +20,7 @@ import {
 import { ReservationCardLeftPanel } from '@/components/reservation-card/ReservationCardLeftPanel';
 import { ReservationCardGuestsTab } from '@/components/reservation-card/ReservationCardGuestsTab';
 import { ReservationCardPricingTab } from '@/components/reservation-card/ReservationCardPricingTab';
+import { StayAmendmentModal } from '@/components/reservation-card/StayAmendmentModal';
 import { ReservationCardFolioTab } from '@/components/reservation-card/ReservationCardFolioTab';
 import { ReservationCardNotesTab } from '@/components/reservation-card/ReservationCardNotesTab';
 import { ReservationCardAttachPanel } from '@/components/reservation-card/ReservationCardAttachPanel';
@@ -150,7 +151,9 @@ export function ReservationCardEditor({
   const [isLocked, setIsLocked] = useState(false);
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualDailyRate, setManualDailyRate] = useState('');
+  const [discountPercent, setDiscountPercent] = useState('');
   const [discountActive, setDiscountActive] = useState(false);
+  const [amendOpen, setAmendOpen] = useState(false);
   const [dailyRates, setDailyRates] = useState<DailyRateRow[]>([]);
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
@@ -272,7 +275,8 @@ export function ReservationCardEditor({
     setIsLocked(Boolean(json.isLocked));
     setUseManualRate(Boolean(json.useManualRate));
     setManualDailyRate(json.manualDailyRate != null ? String(json.manualDailyRate) : '');
-    setDiscountActive(Boolean(json.discountActive));
+    setDiscountPercent(json.discountPercent != null ? String(json.discountPercent) : '');
+    setDiscountActive(Boolean(json.discountActive) || Number(json.discountPercent) > 0);
     setCreditLimitAzn(json.creditLimitAzn != null ? String(json.creditLimitAzn) : '');
     setDailyRates(
       (
@@ -725,6 +729,27 @@ export function ReservationCardEditor({
     const g = await fetch('/api/guests').then((r) => r.json());
     if (Array.isArray(g)) {
       setGuestOptions(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
+    }
+  }
+
+  async function spreadKind(kind: 'NIGHTLY' | 'STAY_TOTAL' | 'PERCENT', value: number) {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/pricing/spread`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, value }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      showSuccess(tc('success'));
+      await load();
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -1247,7 +1272,8 @@ export function ReservationCardEditor({
             creditLimitAzn.trim() === '' ? null : Math.round(Number(creditLimitAzn) * 100) / 100,
           useManualRate,
           manualDailyRate: manualDailyRate ? Number(manualDailyRate) : null,
-          discountActive,
+          discountPercent: discountPercent === '' ? null : Number(discountPercent),
+          discountActive: Number(discountPercent) > 0,
           children11_6: Number(children11_6) || 0,
           children5_2: Number(children5_2) || 0,
           children1_0: Number(children1_0) || 0,
@@ -1446,6 +1472,7 @@ export function ReservationCardEditor({
     onAttachToggle: reservationId ? () => setAttachOpen((o) => !o) : undefined,
     onRecalc: isCreate ? undefined : () => void recalcPricing(),
     onChargeAll: isCreate ? undefined : () => void chargeAll(),
+    onAmendProduct: isCreate ? undefined : () => setAmendOpen(true),
   };
 
   const body = (
@@ -1477,6 +1504,27 @@ export function ReservationCardEditor({
       {namesIncomplete ? (
         <div className="mb-3 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
           {tb('namesIncomplete')}
+        </div>
+      ) : null}
+
+      {!isCreate && Array.isArray(data?.roomChanges) && data.roomChanges.length > 0 ? (
+        <div className="mb-3 text-[12px] text-[#34495E]">
+          <p className="m-0 mb-1 font-semibold">{t('roomHistory')}</p>
+          <ul className="m-0 list-none p-0">
+            {(data.roomChanges as Array<{
+              id: string;
+              effectiveAt: string;
+              fromRoom?: { roomNumber: string } | null;
+              toRoom?: { roomNumber: string } | null;
+              reasonCode?: string | null;
+            }>).map((c) => (
+              <li key={c.id}>
+                {(c.fromRoom?.roomNumber ?? '—')} → {c.toRoom?.roomNumber ?? '—'}{' '}
+                {String(c.effectiveAt).slice(0, 16).replace('T', ' ')}
+                {c.reasonCode ? ` (${c.reasonCode})` : ''}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
@@ -1561,17 +1609,28 @@ export function ReservationCardEditor({
                   dailyRates={dailyRates}
                   useManualRate={useManualRate}
                   manualDailyRate={manualDailyRate}
-                  discountActive={discountActive}
+                  discountPercent={discountPercent}
                   busy={busy}
                   isLocked={isLocked}
                   onDailyRates={setDailyRates}
-                  onToggle={(key, value) => {
-                    if (key === 'useManualRate') setUseManualRate(value);
-                    else setDiscountActive(value);
+                  onToggleManual={(value) => {
+                    setUseManualRate(value);
+                    if (value) {
+                      const n = Number(manualDailyRate) || Number(dailyRates[0]?.amount) || 0;
+                      if (n > 0) void spreadKind('NIGHTLY', n);
+                    }
                   }}
                   onManualRate={setManualDailyRate}
+                  onDiscountPercent={setDiscountPercent}
+                  onSpreadNightly={() =>
+                    void spreadKind(
+                      'NIGHTLY',
+                      Number(manualDailyRate) || Number(dailyRates[0]?.amount) || 0,
+                    )
+                  }
+                  onSpreadTotal={(total) => void spreadKind('STAY_TOTAL', total)}
+                  onApplyPercent={() => void spreadKind('PERCENT', Number(discountPercent) || 0)}
                   onRecalc={() => void recalcPricing()}
-                  onChargeAll={() => void chargeAll()}
                 />
               )}
 
@@ -1603,9 +1662,22 @@ export function ReservationCardEditor({
           </div>
         </div>
       )}
+    </>
+  );
 
+  const extras = (
+    <>
       <ReservationCardSubModals {...subModalProps} />
-
+      <StayAmendmentModal
+        open={amendOpen}
+        reservationId={reservationId}
+        roomTypes={roomTypes}
+        ratePlans={ratePlans}
+        defaultRoomTypeId={roomTypeId}
+        defaultRatePlanId={ratePlanId}
+        onClose={() => setAmendOpen(false)}
+        onApplied={() => void load()}
+      />
       <GuestCardModal
         open={guestCardOpen}
         guestId={null}
@@ -1636,25 +1708,31 @@ export function ReservationCardEditor({
   if (layout === 'page') {
     if (!open) return null;
     return (
-      <div className="flex max-h-[calc(100vh-6rem)] min-h-[480px] flex-col overflow-hidden">
-        <ReservationCardToolbar subtitle={cardSubtitle} {...actionProps} />
-        {body}
-      </div>
+      <>
+        <div className="flex max-h-[calc(100vh-6rem)] min-h-[480px] flex-col overflow-hidden">
+          <ReservationCardToolbar subtitle={cardSubtitle} {...actionProps} />
+          {body}
+        </div>
+        {extras}
+      </>
     );
   }
 
   return (
-    <EraModal
-      open={open}
-      title={tb('reservationCardTitle')}
-      subtitle={cardSubtitle}
-      onClose={onClose}
-      maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
-      bodyClassName="mt-4 min-h-0 flex-1 overflow-hidden flex flex-col"
-      headerActions={<ReservationCardActions {...actionProps} mode="header" />}
-      footer={<ReservationCardActions {...actionProps} mode="footer" />}
-    >
-      {body}
-    </EraModal>
+    <>
+      <EraModal
+        open={open}
+        title={tb('reservationCardTitle')}
+        subtitle={cardSubtitle}
+        onClose={onClose}
+        maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
+        bodyClassName="mt-4 min-h-0 flex-1 overflow-hidden flex flex-col"
+        headerActions={<ReservationCardActions {...actionProps} mode="header" />}
+        footer={<ReservationCardActions {...actionProps} mode="footer" />}
+      >
+        {body}
+      </EraModal>
+      {extras}
+    </>
   );
 }

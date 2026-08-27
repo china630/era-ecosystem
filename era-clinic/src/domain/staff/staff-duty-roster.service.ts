@@ -1,6 +1,6 @@
 import type { PractitionerStaffKind, StaffAbsenceKind } from "@prisma/client";
-import { satelliteOrganizationId } from "@era/satellite-kit/orchestrator-gateway";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuYmd } from "@/domain/appointment/practitioner-schedule.service";
 import {
   isAbsentOnYmd,
@@ -130,7 +130,7 @@ async function seedLinesFromPrevious(
   const prev = await prisma.staffDutyRoster.findUnique({
     where: {
       organizationId_yearMonth_staffKind: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         yearMonth: previousYearMonth(yearMonth),
         staffKind,
       },
@@ -162,7 +162,7 @@ export async function getOrCreateDutyRoster(input: {
 }) {
   const yearMonth = assertYearMonth(input.yearMonth);
   const staffKind = input.staffKind ?? "NURSE";
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
 
   let roster = await prisma.staffDutyRoster.findUnique({
     where: {
@@ -372,7 +372,7 @@ export async function copyDutyRosterFromPrevious(input: {
   const prev = await prisma.staffDutyRoster.findUnique({
     where: {
       organizationId_yearMonth_staffKind: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         yearMonth: previousYearMonth(yearMonth),
         staffKind,
       },
@@ -469,7 +469,7 @@ export async function resolvePostedStaffForSlot(input: {
   const roster = await prisma.staffDutyRoster.findUnique({
     where: {
       organizationId_yearMonth_staffKind: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         yearMonth,
         staffKind,
       },

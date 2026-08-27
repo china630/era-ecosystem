@@ -21,7 +21,7 @@ alwaysApply: false
 | Tools | `app/api/tools/` | checkout |
 | Calendar | `app/api/calendar/` | bay calendar |
 | MDM | `mdm/voen-lookup` | counterparty |
-| Cron | `cron/service-due` | reminders |
+| Cron | `cron/service-due` | reminders; Wave 4 `runCronForEachTenant` → `byOrganization` |
 | Events | `events/dispatch` | orchestrator |
 | Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
 

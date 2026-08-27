@@ -8,7 +8,7 @@
  *
  *   node era-clinic/scripts/dump-webonly-patient-cards.cjs
  *   node era-clinic/scripts/dump-webonly-patient-cards.cjs --with-files
- *   node era-clinic/scripts/dump-webonly-patient-cards.cjs --limit 20
+ *   node era-clinic/scripts/dump-webonly-patient-cards.cjs --refresh-cards
  *   node era-clinic/scripts/dump-webonly-patient-cards.cjs --out "D:\\ERA-BACKUP\\wo-clinic"
  */
 
@@ -41,6 +41,7 @@ const LIMIT = Number(flag("--limit", 0)) || 0;
 const WITH_FILES = Boolean(flag("--with-files", false));
 const SKIP_CARDS = Boolean(flag("--skip-cards", false));
 const SKIP_BULK = Boolean(flag("--skip-bulk", false));
+const REFRESH_CARDS = Boolean(flag("--refresh-cards", false));
 
 const agent = new https.Agent({ keepAlive: true, maxSockets: CONCURRENCY + 2 });
 
@@ -62,6 +63,7 @@ function request(url, { method = "GET", headers = {}, maxRedirects = 3 } = {}) {
         headers: {
           "User-Agent": "era-clinic-webonly-cutover-dump/1.0",
           Accept: "application/json, application/pdf, */*",
+          ...(process.env.WO_COOKIE ? { Cookie: process.env.WO_COOKIE } : {}),
           ...headers,
         },
       },
@@ -247,7 +249,7 @@ async function dumpCards(ids, summary) {
   let errors = 0;
   await mapPool(ids, CONCURRENCY, async (id) => {
     const dest = path.join(cardsDir, `${id}.json`);
-    if (fs.existsSync(dest)) {
+    if (fs.existsSync(dest) && !REFRESH_CARDS) {
       done += 1;
       if (done % 100 === 0) console.log(`cards ${done}/${ids.length} (resume)`);
       return;
@@ -330,10 +332,11 @@ async function dumpFiles(summary) {
         });
         const ct = String(r.headers["content-type"] || "");
         const looksBinary =
-          r.body.length > 64 &&
+          r.body.length > 1024 &&
+          ((r.body[0] === 0x50 && r.body[1] === 0x4b) ||
+            r.body.slice(0, 5).toString("ascii") === "%PDF-") &&
           !ct.includes("json") &&
-          !ct.includes("text/html") &&
-          r.body[0] !== 0x7b;
+          !ct.includes("text/html");
         if (r.status >= 200 && r.status < 300 && looksBinary) {
           fs.writeFileSync(dest, r.body);
           labOk += 1;

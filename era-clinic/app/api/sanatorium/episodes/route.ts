@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { listOpenEpisodes, registerWalkInEpisode } from "@/lib/services/sanatorium.service";
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const body = walkInSchema.parse(await req.json());
     let boundOrg: string | undefined;
     try {
-      const id = satelliteOrganizationId();
+      const id = requestOrganizationId();
       boundOrg = id === "demo-org" ? undefined : id;
     } catch {
       boundOrg = undefined;

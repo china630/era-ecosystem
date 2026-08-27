@@ -400,7 +400,7 @@ Early 2024 Folio Transactions exports may be **F&B-heavy** (`999 FB` POS account
 Not a physical room. See [hotel-deferred-corporate-checkout ADR](../../docs/adr/hotel-deferred-corporate-checkout.md):
 
 - **Deferred settlement:** guest departed; agency/corporate invoice pending → import as `CHECKED_OUT` + settlement flag (planned); never assign `T{ResId}` to `Room`.
-- **System ledger:** `999 FB`, `DEBITORLAR`, `TIBB AMBULATOR FOLIO`, `Sanal Folyo` → skip reservation import.
+- **System ledger:** `999 FB`, `DEBITORLAR`, `TIBB AMBULATOR FOLIO`, `Sanal Folyo` → skip reservation import. Dual-run walk-in extras still **post onto** `TIBB AMBULATOR FOLIO` in Elektraweb (see [reverse folio ADR](../../docs/adr/hotel-elektraweb-reverse-folio-post.md)); do not recreate that dump as ERA product SoT.
 
 ### 15.4 Loyalty / visit history (bootstrap)
 

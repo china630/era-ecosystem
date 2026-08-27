@@ -1,5 +1,6 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { autoCompleteElapsedCheckedIn } from "@/domain/procedure/procedure-completion.service";
+import { listCronOrganizationIdsFromDb, fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { runCronForEachTenant } from "@era/satellite-kit";
 
 export async function POST(req: Request) {
@@ -10,8 +11,13 @@ export async function POST(req: Request) {
         moduleKey: "clinic_appointments",
         authorization: req.headers.get("authorization"),
         cronSecretEnv: "PLATFORM_CRON_SECRET",
+        listOrganizationIds: listCronOrganizationIdsFromDb,
+        fetchPoolOrganizationIds: fetchClinicPoolOrganizationIds,
       },
-      async () => autoCompleteElapsedCheckedIn(),
+      async (organizationId) => {
+        const result = await autoCompleteElapsedCheckedIn();
+        return { organizationId, ...result };
+      },
     );
     if (!gate.ok) {
       if (gate.status === 401) return new Response("Unauthorized", { status: 401 });
@@ -20,7 +26,7 @@ export async function POST(req: Request) {
       }
       return jsonOk({ skipped: true, reason: gate.reason, moduleKey: gate.moduleKey });
     }
-    return jsonOk(gate.results[0]);
+    return jsonOk({ byOrganization: gate.results });
   } catch (err) {
     return handleRouteError(err);
   }

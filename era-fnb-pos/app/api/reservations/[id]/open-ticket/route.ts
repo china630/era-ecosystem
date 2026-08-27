@@ -1,7 +1,7 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
-import { satelliteOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function POST(
@@ -34,7 +34,7 @@ export async function POST(
 
   const ticket = await prisma.ticket.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       outletId: reservation.table.outletId,
       tableId: reservation.tableId,
       covers: reservation.partySize,

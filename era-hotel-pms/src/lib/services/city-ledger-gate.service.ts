@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { resolveCreditLimitAzn } from '@/lib/services/guest-dedup.service';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 export type CityLedgerCounterparty = {
   agencyId?: string | null;
@@ -113,7 +113,7 @@ export async function assertCanTransferToCityLedger(
 
     const cached = reservation.agency!.financeCounterpartyId ?? null;
     if (!cached) {
-      const orgId = satelliteOrganizationId();
+      const orgId = requestOrganizationId();
       if (!orgId || orgId === 'demo-org') {
         throw new Error('ERA_SATELLITE_ORGANIZATION_ID is not configured for Finance lookup');
       }

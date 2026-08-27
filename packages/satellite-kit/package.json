@@ -65,7 +65,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/integration/org-entitlement-gate.test.js"
+    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/auth/login-user.test.js dist/integration/org-entitlement-gate.test.js dist/placement/slice-export.test.js"
   },
   "dependencies": {
     "@era/fiscal": "file:../era-fiscal",

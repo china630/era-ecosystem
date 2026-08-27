@@ -21,3 +21,5 @@ alwaysApply: false
 | Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
 
 Room charge when `shouldRouteRevenueToParent`; fiscal via `fiscalizeForSatellite`.
+
+**SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware `x-era-organization-id`; `assertRetailEntitled` → ALS; ops stamps via `requestOrganizationId()`. AC-RET-TENANT stays 🟡 — not sellable SHARED pool.
