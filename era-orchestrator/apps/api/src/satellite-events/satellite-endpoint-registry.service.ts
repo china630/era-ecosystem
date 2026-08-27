@@ -165,6 +165,30 @@ export class SatelliteEndpointRegistryService {
     }));
   }
 
+  /**
+   * SHARED pool SoR: org UUIDs registered on this satellite process URL.
+   * baseUrl normalized (trim, no trailing slash). Case-sensitive match on stored URL.
+   */
+  async listOrganizationIdsByEndpoint(input: {
+    satelliteKey: string;
+    baseUrl: string;
+  }): Promise<string[]> {
+    const satelliteKey = input.satelliteKey.trim();
+    const baseUrl = input.baseUrl.trim().replace(/\/$/, "");
+    if (!satelliteKey || !baseUrl) return [];
+    const rows = await this.prisma.satelliteEndpoint.findMany({
+      where: { satelliteKey, baseUrl, enabled: true },
+      select: { organizationId: true },
+    });
+    return [
+      ...new Set(
+        rows
+          .map((r) => r.organizationId?.trim())
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+  }
+
   async upsertEndpoint(input: {
     organizationId: string;
     satelliteKey: string;

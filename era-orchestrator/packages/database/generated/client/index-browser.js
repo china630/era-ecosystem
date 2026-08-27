@@ -605,6 +605,27 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ElektrawebBridgePolicyScalarFieldEnum = {
+  organizationId: 'organizationId',
+  inboundEnabled: 'inboundEnabled',
+  writeEnabled: 'writeEnabled',
+  elektrawebHotelId: 'elektrawebHotelId',
+  spaDepId: 'spaDepId',
+  spaCurrencyId: 'spaCurrencyId',
+  walkinResId: 'walkinResId',
+  walkinResNameId: 'walkinResNameId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ClinicCutoverPolicyScalarFieldEnum = {
+  organizationId: 'organizationId',
+  elektrawebDualRun: 'elektrawebDualRun',
+  hotelOrganizationId: 'hotelOrganizationId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -953,6 +974,28 @@ exports.Prisma.PlatformLoyaltyLedgerScalarFieldEnum = {
   reason: 'reason',
   promotionCode: 'promotionCode',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.AgencyPortalAccountScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  fullName: 'fullName',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AgencyPropertyGrantScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  organizationId: 'organizationId',
+  agencyVoen: 'agencyVoen',
+  localAgencyId: 'localAgencyId',
+  localAgencyCode: 'localAgencyCode',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -1334,6 +1377,8 @@ exports.Prisma.ModelName = {
   Permission: 'Permission',
   RolePermission: 'RolePermission',
   Organization: 'Organization',
+  ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
+  ClinicCutoverPolicy: 'ClinicCutoverPolicy',
   User: 'User',
   Holding: 'Holding',
   HoldingMembership: 'HoldingMembership',
@@ -1362,7 +1407,9 @@ exports.Prisma.ModelName = {
   PlatformShipment: 'PlatformShipment',
   PlatformAuditLog: 'PlatformAuditLog',
   PlatformIdempotencyRecord: 'PlatformIdempotencyRecord',
-  PlatformLoyaltyLedger: 'PlatformLoyaltyLedger'
+  PlatformLoyaltyLedger: 'PlatformLoyaltyLedger',
+  AgencyPortalAccount: 'AgencyPortalAccount',
+  AgencyPropertyGrant: 'AgencyPropertyGrant'
 };
 
 /**

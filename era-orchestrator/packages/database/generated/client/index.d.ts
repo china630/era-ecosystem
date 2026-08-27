@@ -204,6 +204,16 @@ export type RolePermission = $Result.DefaultSelection<Prisma.$RolePermissionPayl
  */
 export type Organization = $Result.DefaultSelection<Prisma.$OrganizationPayload>
 /**
+ * Model ElektrawebBridgePolicy
+ * Per-hotel-org Elektraweb dual-run policy (SaaS SoR). Synced to hotel satellite keyed by organizationId.
+ */
+export type ElektrawebBridgePolicy = $Result.DefaultSelection<Prisma.$ElektrawebBridgePolicyPayload>
+/**
+ * Model ClinicCutoverPolicy
+ * Per-clinic-org cutover: extras still route to Elektraweb via linked hotel org.
+ */
+export type ClinicCutoverPolicy = $Result.DefaultSelection<Prisma.$ClinicCutoverPolicyPayload>
+/**
  * Model User
  * Platform identity (shared `users` table during control-plane migration).
  */
@@ -348,6 +358,16 @@ export type PlatformIdempotencyRecord = $Result.DefaultSelection<Prisma.$Platfor
  * 
  */
 export type PlatformLoyaltyLedger = $Result.DefaultSelection<Prisma.$PlatformLoyaltyLedgerPayload>
+/**
+ * Model AgencyPortalAccount
+ * B2B travel-agency portal identity (not OrganizationMembership / staff User).
+ */
+export type AgencyPortalAccount = $Result.DefaultSelection<Prisma.$AgencyPortalAccountPayload>
+/**
+ * Model AgencyPropertyGrant
+ * Explicit per-hotel access for an agency portal account (multi-property chain).
+ */
+export type AgencyPropertyGrant = $Result.DefaultSelection<Prisma.$AgencyPropertyGrantPayload>
 
 /**
  * Enums
@@ -1475,6 +1495,26 @@ export class PrismaClient<
   get organization(): Prisma.OrganizationDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.elektrawebBridgePolicy`: Exposes CRUD operations for the **ElektrawebBridgePolicy** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ElektrawebBridgePolicies
+    * const elektrawebBridgePolicies = await prisma.elektrawebBridgePolicy.findMany()
+    * ```
+    */
+  get elektrawebBridgePolicy(): Prisma.ElektrawebBridgePolicyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.clinicCutoverPolicy`: Exposes CRUD operations for the **ClinicCutoverPolicy** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ClinicCutoverPolicies
+    * const clinicCutoverPolicies = await prisma.clinicCutoverPolicy.findMany()
+    * ```
+    */
+  get clinicCutoverPolicy(): Prisma.ClinicCutoverPolicyDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
@@ -1763,6 +1803,26 @@ export class PrismaClient<
     * ```
     */
   get platformLoyaltyLedger(): Prisma.PlatformLoyaltyLedgerDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.agencyPortalAccount`: Exposes CRUD operations for the **AgencyPortalAccount** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AgencyPortalAccounts
+    * const agencyPortalAccounts = await prisma.agencyPortalAccount.findMany()
+    * ```
+    */
+  get agencyPortalAccount(): Prisma.AgencyPortalAccountDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.agencyPropertyGrant`: Exposes CRUD operations for the **AgencyPropertyGrant** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AgencyPropertyGrants
+    * const agencyPropertyGrants = await prisma.agencyPropertyGrant.findMany()
+    * ```
+    */
+  get agencyPropertyGrant(): Prisma.AgencyPropertyGrantDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2235,6 +2295,8 @@ export namespace Prisma {
     Permission: 'Permission',
     RolePermission: 'RolePermission',
     Organization: 'Organization',
+    ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
+    ClinicCutoverPolicy: 'ClinicCutoverPolicy',
     User: 'User',
     Holding: 'Holding',
     HoldingMembership: 'HoldingMembership',
@@ -2263,7 +2325,9 @@ export namespace Prisma {
     PlatformShipment: 'PlatformShipment',
     PlatformAuditLog: 'PlatformAuditLog',
     PlatformIdempotencyRecord: 'PlatformIdempotencyRecord',
-    PlatformLoyaltyLedger: 'PlatformLoyaltyLedger'
+    PlatformLoyaltyLedger: 'PlatformLoyaltyLedger',
+    AgencyPortalAccount: 'AgencyPortalAccount',
+    AgencyPropertyGrant: 'AgencyPropertyGrant'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2279,7 +2343,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -5095,6 +5159,154 @@ export namespace Prisma {
           }
         }
       }
+      ElektrawebBridgePolicy: {
+        payload: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>
+        fields: Prisma.ElektrawebBridgePolicyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ElektrawebBridgePolicyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ElektrawebBridgePolicyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>
+          }
+          findFirst: {
+            args: Prisma.ElektrawebBridgePolicyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ElektrawebBridgePolicyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>
+          }
+          findMany: {
+            args: Prisma.ElektrawebBridgePolicyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>[]
+          }
+          create: {
+            args: Prisma.ElektrawebBridgePolicyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>
+          }
+          createMany: {
+            args: Prisma.ElektrawebBridgePolicyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ElektrawebBridgePolicyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>[]
+          }
+          delete: {
+            args: Prisma.ElektrawebBridgePolicyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>
+          }
+          update: {
+            args: Prisma.ElektrawebBridgePolicyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>
+          }
+          deleteMany: {
+            args: Prisma.ElektrawebBridgePolicyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ElektrawebBridgePolicyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ElektrawebBridgePolicyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>[]
+          }
+          upsert: {
+            args: Prisma.ElektrawebBridgePolicyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ElektrawebBridgePolicyPayload>
+          }
+          aggregate: {
+            args: Prisma.ElektrawebBridgePolicyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateElektrawebBridgePolicy>
+          }
+          groupBy: {
+            args: Prisma.ElektrawebBridgePolicyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ElektrawebBridgePolicyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ElektrawebBridgePolicyCountArgs<ExtArgs>
+            result: $Utils.Optional<ElektrawebBridgePolicyCountAggregateOutputType> | number
+          }
+        }
+      }
+      ClinicCutoverPolicy: {
+        payload: Prisma.$ClinicCutoverPolicyPayload<ExtArgs>
+        fields: Prisma.ClinicCutoverPolicyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ClinicCutoverPolicyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ClinicCutoverPolicyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>
+          }
+          findFirst: {
+            args: Prisma.ClinicCutoverPolicyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ClinicCutoverPolicyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>
+          }
+          findMany: {
+            args: Prisma.ClinicCutoverPolicyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>[]
+          }
+          create: {
+            args: Prisma.ClinicCutoverPolicyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>
+          }
+          createMany: {
+            args: Prisma.ClinicCutoverPolicyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ClinicCutoverPolicyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>[]
+          }
+          delete: {
+            args: Prisma.ClinicCutoverPolicyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>
+          }
+          update: {
+            args: Prisma.ClinicCutoverPolicyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>
+          }
+          deleteMany: {
+            args: Prisma.ClinicCutoverPolicyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ClinicCutoverPolicyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ClinicCutoverPolicyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>[]
+          }
+          upsert: {
+            args: Prisma.ClinicCutoverPolicyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ClinicCutoverPolicyPayload>
+          }
+          aggregate: {
+            args: Prisma.ClinicCutoverPolicyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateClinicCutoverPolicy>
+          }
+          groupBy: {
+            args: Prisma.ClinicCutoverPolicyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ClinicCutoverPolicyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ClinicCutoverPolicyCountArgs<ExtArgs>
+            result: $Utils.Optional<ClinicCutoverPolicyCountAggregateOutputType> | number
+          }
+        }
+      }
       User: {
         payload: Prisma.$UserPayload<ExtArgs>
         fields: Prisma.UserFieldRefs
@@ -7241,6 +7453,154 @@ export namespace Prisma {
           }
         }
       }
+      AgencyPortalAccount: {
+        payload: Prisma.$AgencyPortalAccountPayload<ExtArgs>
+        fields: Prisma.AgencyPortalAccountFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AgencyPortalAccountFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AgencyPortalAccountFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>
+          }
+          findFirst: {
+            args: Prisma.AgencyPortalAccountFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AgencyPortalAccountFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>
+          }
+          findMany: {
+            args: Prisma.AgencyPortalAccountFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>[]
+          }
+          create: {
+            args: Prisma.AgencyPortalAccountCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>
+          }
+          createMany: {
+            args: Prisma.AgencyPortalAccountCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AgencyPortalAccountCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>[]
+          }
+          delete: {
+            args: Prisma.AgencyPortalAccountDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>
+          }
+          update: {
+            args: Prisma.AgencyPortalAccountUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>
+          }
+          deleteMany: {
+            args: Prisma.AgencyPortalAccountDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AgencyPortalAccountUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AgencyPortalAccountUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>[]
+          }
+          upsert: {
+            args: Prisma.AgencyPortalAccountUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPortalAccountPayload>
+          }
+          aggregate: {
+            args: Prisma.AgencyPortalAccountAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAgencyPortalAccount>
+          }
+          groupBy: {
+            args: Prisma.AgencyPortalAccountGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AgencyPortalAccountGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AgencyPortalAccountCountArgs<ExtArgs>
+            result: $Utils.Optional<AgencyPortalAccountCountAggregateOutputType> | number
+          }
+        }
+      }
+      AgencyPropertyGrant: {
+        payload: Prisma.$AgencyPropertyGrantPayload<ExtArgs>
+        fields: Prisma.AgencyPropertyGrantFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AgencyPropertyGrantFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AgencyPropertyGrantFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>
+          }
+          findFirst: {
+            args: Prisma.AgencyPropertyGrantFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AgencyPropertyGrantFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>
+          }
+          findMany: {
+            args: Prisma.AgencyPropertyGrantFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>[]
+          }
+          create: {
+            args: Prisma.AgencyPropertyGrantCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>
+          }
+          createMany: {
+            args: Prisma.AgencyPropertyGrantCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AgencyPropertyGrantCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>[]
+          }
+          delete: {
+            args: Prisma.AgencyPropertyGrantDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>
+          }
+          update: {
+            args: Prisma.AgencyPropertyGrantUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>
+          }
+          deleteMany: {
+            args: Prisma.AgencyPropertyGrantDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AgencyPropertyGrantUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AgencyPropertyGrantUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>[]
+          }
+          upsert: {
+            args: Prisma.AgencyPropertyGrantUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgencyPropertyGrantPayload>
+          }
+          aggregate: {
+            args: Prisma.AgencyPropertyGrantAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAgencyPropertyGrant>
+          }
+          groupBy: {
+            args: Prisma.AgencyPropertyGrantGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AgencyPropertyGrantGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AgencyPropertyGrantCountArgs<ExtArgs>
+            result: $Utils.Optional<AgencyPropertyGrantCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -7387,6 +7747,8 @@ export namespace Prisma {
     permission?: PermissionOmit
     rolePermission?: RolePermissionOmit
     organization?: OrganizationOmit
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyOmit
+    clinicCutoverPolicy?: ClinicCutoverPolicyOmit
     user?: UserOmit
     holding?: HoldingOmit
     holdingMembership?: HoldingMembershipOmit
@@ -7416,6 +7778,8 @@ export namespace Prisma {
     platformAuditLog?: PlatformAuditLogOmit
     platformIdempotencyRecord?: PlatformIdempotencyRecordOmit
     platformLoyaltyLedger?: PlatformLoyaltyLedgerOmit
+    agencyPortalAccount?: AgencyPortalAccountOmit
+    agencyPropertyGrant?: AgencyPropertyGrantOmit
   }
 
   /* Types for Logging */
@@ -8075,7 +8439,9 @@ export namespace Prisma {
     workforceAssignments: number
     workforceEmployments: number
     orgUnitCommercialLinks: number
+    clinicCutoverAsHotel: number
     departments: number
+    agencyPropertyGrants: number
   }
 
   export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8106,7 +8472,9 @@ export namespace Prisma {
     workforceAssignments?: boolean | OrganizationCountOutputTypeCountWorkforceAssignmentsArgs
     workforceEmployments?: boolean | OrganizationCountOutputTypeCountWorkforceEmploymentsArgs
     orgUnitCommercialLinks?: boolean | OrganizationCountOutputTypeCountOrgUnitCommercialLinksArgs
+    clinicCutoverAsHotel?: boolean | OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs
     departments?: boolean | OrganizationCountOutputTypeCountDepartmentsArgs
+    agencyPropertyGrants?: boolean | OrganizationCountOutputTypeCountAgencyPropertyGrantsArgs
   }
 
   // Custom InputTypes
@@ -8312,8 +8680,22 @@ export namespace Prisma {
   /**
    * OrganizationCountOutputType without action
    */
+  export type OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ClinicCutoverPolicyWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
   export type OrganizationCountOutputTypeCountDepartmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrganizationWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountAgencyPropertyGrantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgencyPropertyGrantWhereInput
   }
 
 
@@ -8634,6 +9016,37 @@ export namespace Prisma {
    */
   export type BookingSlotCountOutputTypeCountAppointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BookingAppointmentWhereInput
+  }
+
+
+  /**
+   * Count Type AgencyPortalAccountCountOutputType
+   */
+
+  export type AgencyPortalAccountCountOutputType = {
+    grants: number
+  }
+
+  export type AgencyPortalAccountCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    grants?: boolean | AgencyPortalAccountCountOutputTypeCountGrantsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AgencyPortalAccountCountOutputType without action
+   */
+  export type AgencyPortalAccountCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccountCountOutputType
+     */
+    select?: AgencyPortalAccountCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AgencyPortalAccountCountOutputType without action
+   */
+  export type AgencyPortalAccountCountOutputTypeCountGrantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgencyPropertyGrantWhereInput
   }
 
 
@@ -51794,10 +52207,14 @@ export namespace Prisma {
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
+    elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
+    clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
+    clinicCutoverAsHotel?: boolean | Organization$clinicCutoverAsHotelArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
     holding?: boolean | Organization$holdingArgs<ExtArgs>
+    agencyPropertyGrants?: boolean | Organization$agencyPropertyGrantsArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -51924,10 +52341,14 @@ export namespace Prisma {
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
+    elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
+    clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
+    clinicCutoverAsHotel?: boolean | Organization$clinicCutoverAsHotelArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
     holding?: boolean | Organization$holdingArgs<ExtArgs>
+    agencyPropertyGrants?: boolean | Organization$agencyPropertyGrantsArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -51972,10 +52393,14 @@ export namespace Prisma {
       workforceAssignments: Prisma.$WorkforceAssignmentPayload<ExtArgs>[]
       workforceEmployments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       orgUnitCommercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
+      elektrawebBridgePolicy: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs> | null
+      clinicCutoverPolicy: Prisma.$ClinicCutoverPolicyPayload<ExtArgs> | null
+      clinicCutoverAsHotel: Prisma.$ClinicCutoverPolicyPayload<ExtArgs>[]
       owner: Prisma.$UserPayload<ExtArgs> | null
       parentOrg: Prisma.$OrganizationPayload<ExtArgs> | null
       departments: Prisma.$OrganizationPayload<ExtArgs>[]
       holding: Prisma.$HoldingPayload<ExtArgs> | null
+      agencyPropertyGrants: Prisma.$AgencyPropertyGrantPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -52432,10 +52857,14 @@ export namespace Prisma {
     workforceAssignments<T extends Organization$workforceAssignmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceEmployments<T extends Organization$workforceEmploymentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceEmploymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     orgUnitCommercialLinks<T extends Organization$orgUnitCommercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, Organization$orgUnitCommercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    elektrawebBridgePolicy<T extends Organization$elektrawebBridgePolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$elektrawebBridgePolicyArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    clinicCutoverPolicy<T extends Organization$clinicCutoverPolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverPolicyArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    clinicCutoverAsHotel<T extends Organization$clinicCutoverAsHotelArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverAsHotelArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     parentOrg<T extends Organization$parentOrgArgs<ExtArgs> = {}>(args?: Subset<T, Organization$parentOrgArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     departments<T extends Organization$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     holding<T extends Organization$holdingArgs<ExtArgs> = {}>(args?: Subset<T, Organization$holdingArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    agencyPropertyGrants<T extends Organization$agencyPropertyGrantsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$agencyPropertyGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -53559,6 +53988,68 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.elektrawebBridgePolicy
+   */
+  export type Organization$elektrawebBridgePolicyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    where?: ElektrawebBridgePolicyWhereInput
+  }
+
+  /**
+   * Organization.clinicCutoverPolicy
+   */
+  export type Organization$clinicCutoverPolicyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    where?: ClinicCutoverPolicyWhereInput
+  }
+
+  /**
+   * Organization.clinicCutoverAsHotel
+   */
+  export type Organization$clinicCutoverAsHotelArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    where?: ClinicCutoverPolicyWhereInput
+    orderBy?: ClinicCutoverPolicyOrderByWithRelationInput | ClinicCutoverPolicyOrderByWithRelationInput[]
+    cursor?: ClinicCutoverPolicyWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ClinicCutoverPolicyScalarFieldEnum | ClinicCutoverPolicyScalarFieldEnum[]
+  }
+
+  /**
    * Organization.owner
    */
   export type Organization$ownerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -53640,6 +54131,30 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.agencyPropertyGrants
+   */
+  export type Organization$agencyPropertyGrantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    where?: AgencyPropertyGrantWhereInput
+    orderBy?: AgencyPropertyGrantOrderByWithRelationInput | AgencyPropertyGrantOrderByWithRelationInput[]
+    cursor?: AgencyPropertyGrantWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgencyPropertyGrantScalarFieldEnum | AgencyPropertyGrantScalarFieldEnum[]
+  }
+
+  /**
    * Organization without action
    */
   export type OrganizationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -53655,6 +54170,2266 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: OrganizationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ElektrawebBridgePolicy
+   */
+
+  export type AggregateElektrawebBridgePolicy = {
+    _count: ElektrawebBridgePolicyCountAggregateOutputType | null
+    _avg: ElektrawebBridgePolicyAvgAggregateOutputType | null
+    _sum: ElektrawebBridgePolicySumAggregateOutputType | null
+    _min: ElektrawebBridgePolicyMinAggregateOutputType | null
+    _max: ElektrawebBridgePolicyMaxAggregateOutputType | null
+  }
+
+  export type ElektrawebBridgePolicyAvgAggregateOutputType = {
+    elektrawebHotelId: number | null
+    spaDepId: number | null
+    spaCurrencyId: number | null
+  }
+
+  export type ElektrawebBridgePolicySumAggregateOutputType = {
+    elektrawebHotelId: number | null
+    spaDepId: number | null
+    spaCurrencyId: number | null
+  }
+
+  export type ElektrawebBridgePolicyMinAggregateOutputType = {
+    organizationId: string | null
+    inboundEnabled: boolean | null
+    writeEnabled: boolean | null
+    elektrawebHotelId: number | null
+    spaDepId: number | null
+    spaCurrencyId: number | null
+    walkinResId: string | null
+    walkinResNameId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ElektrawebBridgePolicyMaxAggregateOutputType = {
+    organizationId: string | null
+    inboundEnabled: boolean | null
+    writeEnabled: boolean | null
+    elektrawebHotelId: number | null
+    spaDepId: number | null
+    spaCurrencyId: number | null
+    walkinResId: string | null
+    walkinResNameId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ElektrawebBridgePolicyCountAggregateOutputType = {
+    organizationId: number
+    inboundEnabled: number
+    writeEnabled: number
+    elektrawebHotelId: number
+    spaDepId: number
+    spaCurrencyId: number
+    walkinResId: number
+    walkinResNameId: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ElektrawebBridgePolicyAvgAggregateInputType = {
+    elektrawebHotelId?: true
+    spaDepId?: true
+    spaCurrencyId?: true
+  }
+
+  export type ElektrawebBridgePolicySumAggregateInputType = {
+    elektrawebHotelId?: true
+    spaDepId?: true
+    spaCurrencyId?: true
+  }
+
+  export type ElektrawebBridgePolicyMinAggregateInputType = {
+    organizationId?: true
+    inboundEnabled?: true
+    writeEnabled?: true
+    elektrawebHotelId?: true
+    spaDepId?: true
+    spaCurrencyId?: true
+    walkinResId?: true
+    walkinResNameId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ElektrawebBridgePolicyMaxAggregateInputType = {
+    organizationId?: true
+    inboundEnabled?: true
+    writeEnabled?: true
+    elektrawebHotelId?: true
+    spaDepId?: true
+    spaCurrencyId?: true
+    walkinResId?: true
+    walkinResNameId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ElektrawebBridgePolicyCountAggregateInputType = {
+    organizationId?: true
+    inboundEnabled?: true
+    writeEnabled?: true
+    elektrawebHotelId?: true
+    spaDepId?: true
+    spaCurrencyId?: true
+    walkinResId?: true
+    walkinResNameId?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ElektrawebBridgePolicyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ElektrawebBridgePolicy to aggregate.
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ElektrawebBridgePolicies to fetch.
+     */
+    orderBy?: ElektrawebBridgePolicyOrderByWithRelationInput | ElektrawebBridgePolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ElektrawebBridgePolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ElektrawebBridgePolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ElektrawebBridgePolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ElektrawebBridgePolicies
+    **/
+    _count?: true | ElektrawebBridgePolicyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ElektrawebBridgePolicyAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ElektrawebBridgePolicySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ElektrawebBridgePolicyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ElektrawebBridgePolicyMaxAggregateInputType
+  }
+
+  export type GetElektrawebBridgePolicyAggregateType<T extends ElektrawebBridgePolicyAggregateArgs> = {
+        [P in keyof T & keyof AggregateElektrawebBridgePolicy]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateElektrawebBridgePolicy[P]>
+      : GetScalarType<T[P], AggregateElektrawebBridgePolicy[P]>
+  }
+
+
+
+
+  export type ElektrawebBridgePolicyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ElektrawebBridgePolicyWhereInput
+    orderBy?: ElektrawebBridgePolicyOrderByWithAggregationInput | ElektrawebBridgePolicyOrderByWithAggregationInput[]
+    by: ElektrawebBridgePolicyScalarFieldEnum[] | ElektrawebBridgePolicyScalarFieldEnum
+    having?: ElektrawebBridgePolicyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ElektrawebBridgePolicyCountAggregateInputType | true
+    _avg?: ElektrawebBridgePolicyAvgAggregateInputType
+    _sum?: ElektrawebBridgePolicySumAggregateInputType
+    _min?: ElektrawebBridgePolicyMinAggregateInputType
+    _max?: ElektrawebBridgePolicyMaxAggregateInputType
+  }
+
+  export type ElektrawebBridgePolicyGroupByOutputType = {
+    organizationId: string
+    inboundEnabled: boolean
+    writeEnabled: boolean
+    elektrawebHotelId: number | null
+    spaDepId: number | null
+    spaCurrencyId: number | null
+    walkinResId: string | null
+    walkinResNameId: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ElektrawebBridgePolicyCountAggregateOutputType | null
+    _avg: ElektrawebBridgePolicyAvgAggregateOutputType | null
+    _sum: ElektrawebBridgePolicySumAggregateOutputType | null
+    _min: ElektrawebBridgePolicyMinAggregateOutputType | null
+    _max: ElektrawebBridgePolicyMaxAggregateOutputType | null
+  }
+
+  type GetElektrawebBridgePolicyGroupByPayload<T extends ElektrawebBridgePolicyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ElektrawebBridgePolicyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ElektrawebBridgePolicyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ElektrawebBridgePolicyGroupByOutputType[P]>
+            : GetScalarType<T[P], ElektrawebBridgePolicyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ElektrawebBridgePolicySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: boolean
+    spaDepId?: boolean
+    spaCurrencyId?: boolean
+    walkinResId?: boolean
+    walkinResNameId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["elektrawebBridgePolicy"]>
+
+  export type ElektrawebBridgePolicySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: boolean
+    spaDepId?: boolean
+    spaCurrencyId?: boolean
+    walkinResId?: boolean
+    walkinResNameId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["elektrawebBridgePolicy"]>
+
+  export type ElektrawebBridgePolicySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: boolean
+    spaDepId?: boolean
+    spaCurrencyId?: boolean
+    walkinResId?: boolean
+    walkinResNameId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["elektrawebBridgePolicy"]>
+
+  export type ElektrawebBridgePolicySelectScalar = {
+    organizationId?: boolean
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: boolean
+    spaDepId?: boolean
+    spaCurrencyId?: boolean
+    walkinResId?: boolean
+    walkinResNameId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ElektrawebBridgePolicyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "inboundEnabled" | "writeEnabled" | "elektrawebHotelId" | "spaDepId" | "spaCurrencyId" | "walkinResId" | "walkinResNameId" | "createdAt" | "updatedAt", ExtArgs["result"]["elektrawebBridgePolicy"]>
+  export type ElektrawebBridgePolicyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type ElektrawebBridgePolicyIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type ElektrawebBridgePolicyIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $ElektrawebBridgePolicyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ElektrawebBridgePolicy"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      inboundEnabled: boolean
+      writeEnabled: boolean
+      elektrawebHotelId: number | null
+      spaDepId: number | null
+      spaCurrencyId: number | null
+      walkinResId: string | null
+      walkinResNameId: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["elektrawebBridgePolicy"]>
+    composites: {}
+  }
+
+  type ElektrawebBridgePolicyGetPayload<S extends boolean | null | undefined | ElektrawebBridgePolicyDefaultArgs> = $Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload, S>
+
+  type ElektrawebBridgePolicyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ElektrawebBridgePolicyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ElektrawebBridgePolicyCountAggregateInputType | true
+    }
+
+  export interface ElektrawebBridgePolicyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ElektrawebBridgePolicy'], meta: { name: 'ElektrawebBridgePolicy' } }
+    /**
+     * Find zero or one ElektrawebBridgePolicy that matches the filter.
+     * @param {ElektrawebBridgePolicyFindUniqueArgs} args - Arguments to find a ElektrawebBridgePolicy
+     * @example
+     * // Get one ElektrawebBridgePolicy
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ElektrawebBridgePolicyFindUniqueArgs>(args: SelectSubset<T, ElektrawebBridgePolicyFindUniqueArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ElektrawebBridgePolicy that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ElektrawebBridgePolicyFindUniqueOrThrowArgs} args - Arguments to find a ElektrawebBridgePolicy
+     * @example
+     * // Get one ElektrawebBridgePolicy
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ElektrawebBridgePolicyFindUniqueOrThrowArgs>(args: SelectSubset<T, ElektrawebBridgePolicyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ElektrawebBridgePolicy that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyFindFirstArgs} args - Arguments to find a ElektrawebBridgePolicy
+     * @example
+     * // Get one ElektrawebBridgePolicy
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ElektrawebBridgePolicyFindFirstArgs>(args?: SelectSubset<T, ElektrawebBridgePolicyFindFirstArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ElektrawebBridgePolicy that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyFindFirstOrThrowArgs} args - Arguments to find a ElektrawebBridgePolicy
+     * @example
+     * // Get one ElektrawebBridgePolicy
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ElektrawebBridgePolicyFindFirstOrThrowArgs>(args?: SelectSubset<T, ElektrawebBridgePolicyFindFirstOrThrowArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ElektrawebBridgePolicies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ElektrawebBridgePolicies
+     * const elektrawebBridgePolicies = await prisma.elektrawebBridgePolicy.findMany()
+     * 
+     * // Get first 10 ElektrawebBridgePolicies
+     * const elektrawebBridgePolicies = await prisma.elektrawebBridgePolicy.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const elektrawebBridgePolicyWithOrganizationIdOnly = await prisma.elektrawebBridgePolicy.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends ElektrawebBridgePolicyFindManyArgs>(args?: SelectSubset<T, ElektrawebBridgePolicyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ElektrawebBridgePolicy.
+     * @param {ElektrawebBridgePolicyCreateArgs} args - Arguments to create a ElektrawebBridgePolicy.
+     * @example
+     * // Create one ElektrawebBridgePolicy
+     * const ElektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.create({
+     *   data: {
+     *     // ... data to create a ElektrawebBridgePolicy
+     *   }
+     * })
+     * 
+     */
+    create<T extends ElektrawebBridgePolicyCreateArgs>(args: SelectSubset<T, ElektrawebBridgePolicyCreateArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ElektrawebBridgePolicies.
+     * @param {ElektrawebBridgePolicyCreateManyArgs} args - Arguments to create many ElektrawebBridgePolicies.
+     * @example
+     * // Create many ElektrawebBridgePolicies
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ElektrawebBridgePolicyCreateManyArgs>(args?: SelectSubset<T, ElektrawebBridgePolicyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ElektrawebBridgePolicies and returns the data saved in the database.
+     * @param {ElektrawebBridgePolicyCreateManyAndReturnArgs} args - Arguments to create many ElektrawebBridgePolicies.
+     * @example
+     * // Create many ElektrawebBridgePolicies
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ElektrawebBridgePolicies and only return the `organizationId`
+     * const elektrawebBridgePolicyWithOrganizationIdOnly = await prisma.elektrawebBridgePolicy.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ElektrawebBridgePolicyCreateManyAndReturnArgs>(args?: SelectSubset<T, ElektrawebBridgePolicyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ElektrawebBridgePolicy.
+     * @param {ElektrawebBridgePolicyDeleteArgs} args - Arguments to delete one ElektrawebBridgePolicy.
+     * @example
+     * // Delete one ElektrawebBridgePolicy
+     * const ElektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.delete({
+     *   where: {
+     *     // ... filter to delete one ElektrawebBridgePolicy
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ElektrawebBridgePolicyDeleteArgs>(args: SelectSubset<T, ElektrawebBridgePolicyDeleteArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ElektrawebBridgePolicy.
+     * @param {ElektrawebBridgePolicyUpdateArgs} args - Arguments to update one ElektrawebBridgePolicy.
+     * @example
+     * // Update one ElektrawebBridgePolicy
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ElektrawebBridgePolicyUpdateArgs>(args: SelectSubset<T, ElektrawebBridgePolicyUpdateArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ElektrawebBridgePolicies.
+     * @param {ElektrawebBridgePolicyDeleteManyArgs} args - Arguments to filter ElektrawebBridgePolicies to delete.
+     * @example
+     * // Delete a few ElektrawebBridgePolicies
+     * const { count } = await prisma.elektrawebBridgePolicy.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ElektrawebBridgePolicyDeleteManyArgs>(args?: SelectSubset<T, ElektrawebBridgePolicyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ElektrawebBridgePolicies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ElektrawebBridgePolicies
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ElektrawebBridgePolicyUpdateManyArgs>(args: SelectSubset<T, ElektrawebBridgePolicyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ElektrawebBridgePolicies and returns the data updated in the database.
+     * @param {ElektrawebBridgePolicyUpdateManyAndReturnArgs} args - Arguments to update many ElektrawebBridgePolicies.
+     * @example
+     * // Update many ElektrawebBridgePolicies
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ElektrawebBridgePolicies and only return the `organizationId`
+     * const elektrawebBridgePolicyWithOrganizationIdOnly = await prisma.elektrawebBridgePolicy.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ElektrawebBridgePolicyUpdateManyAndReturnArgs>(args: SelectSubset<T, ElektrawebBridgePolicyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ElektrawebBridgePolicy.
+     * @param {ElektrawebBridgePolicyUpsertArgs} args - Arguments to update or create a ElektrawebBridgePolicy.
+     * @example
+     * // Update or create a ElektrawebBridgePolicy
+     * const elektrawebBridgePolicy = await prisma.elektrawebBridgePolicy.upsert({
+     *   create: {
+     *     // ... data to create a ElektrawebBridgePolicy
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ElektrawebBridgePolicy we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ElektrawebBridgePolicyUpsertArgs>(args: SelectSubset<T, ElektrawebBridgePolicyUpsertArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ElektrawebBridgePolicies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyCountArgs} args - Arguments to filter ElektrawebBridgePolicies to count.
+     * @example
+     * // Count the number of ElektrawebBridgePolicies
+     * const count = await prisma.elektrawebBridgePolicy.count({
+     *   where: {
+     *     // ... the filter for the ElektrawebBridgePolicies we want to count
+     *   }
+     * })
+    **/
+    count<T extends ElektrawebBridgePolicyCountArgs>(
+      args?: Subset<T, ElektrawebBridgePolicyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ElektrawebBridgePolicyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ElektrawebBridgePolicy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ElektrawebBridgePolicyAggregateArgs>(args: Subset<T, ElektrawebBridgePolicyAggregateArgs>): Prisma.PrismaPromise<GetElektrawebBridgePolicyAggregateType<T>>
+
+    /**
+     * Group by ElektrawebBridgePolicy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ElektrawebBridgePolicyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ElektrawebBridgePolicyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ElektrawebBridgePolicyGroupByArgs['orderBy'] }
+        : { orderBy?: ElektrawebBridgePolicyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ElektrawebBridgePolicyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetElektrawebBridgePolicyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ElektrawebBridgePolicy model
+   */
+  readonly fields: ElektrawebBridgePolicyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ElektrawebBridgePolicy.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ElektrawebBridgePolicyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ElektrawebBridgePolicy model
+   */
+  interface ElektrawebBridgePolicyFieldRefs {
+    readonly organizationId: FieldRef<"ElektrawebBridgePolicy", 'String'>
+    readonly inboundEnabled: FieldRef<"ElektrawebBridgePolicy", 'Boolean'>
+    readonly writeEnabled: FieldRef<"ElektrawebBridgePolicy", 'Boolean'>
+    readonly elektrawebHotelId: FieldRef<"ElektrawebBridgePolicy", 'Int'>
+    readonly spaDepId: FieldRef<"ElektrawebBridgePolicy", 'Int'>
+    readonly spaCurrencyId: FieldRef<"ElektrawebBridgePolicy", 'Int'>
+    readonly walkinResId: FieldRef<"ElektrawebBridgePolicy", 'String'>
+    readonly walkinResNameId: FieldRef<"ElektrawebBridgePolicy", 'String'>
+    readonly createdAt: FieldRef<"ElektrawebBridgePolicy", 'DateTime'>
+    readonly updatedAt: FieldRef<"ElektrawebBridgePolicy", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ElektrawebBridgePolicy findUnique
+   */
+  export type ElektrawebBridgePolicyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ElektrawebBridgePolicy to fetch.
+     */
+    where: ElektrawebBridgePolicyWhereUniqueInput
+  }
+
+  /**
+   * ElektrawebBridgePolicy findUniqueOrThrow
+   */
+  export type ElektrawebBridgePolicyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ElektrawebBridgePolicy to fetch.
+     */
+    where: ElektrawebBridgePolicyWhereUniqueInput
+  }
+
+  /**
+   * ElektrawebBridgePolicy findFirst
+   */
+  export type ElektrawebBridgePolicyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ElektrawebBridgePolicy to fetch.
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ElektrawebBridgePolicies to fetch.
+     */
+    orderBy?: ElektrawebBridgePolicyOrderByWithRelationInput | ElektrawebBridgePolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ElektrawebBridgePolicies.
+     */
+    cursor?: ElektrawebBridgePolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ElektrawebBridgePolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ElektrawebBridgePolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ElektrawebBridgePolicies.
+     */
+    distinct?: ElektrawebBridgePolicyScalarFieldEnum | ElektrawebBridgePolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ElektrawebBridgePolicy findFirstOrThrow
+   */
+  export type ElektrawebBridgePolicyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ElektrawebBridgePolicy to fetch.
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ElektrawebBridgePolicies to fetch.
+     */
+    orderBy?: ElektrawebBridgePolicyOrderByWithRelationInput | ElektrawebBridgePolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ElektrawebBridgePolicies.
+     */
+    cursor?: ElektrawebBridgePolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ElektrawebBridgePolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ElektrawebBridgePolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ElektrawebBridgePolicies.
+     */
+    distinct?: ElektrawebBridgePolicyScalarFieldEnum | ElektrawebBridgePolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ElektrawebBridgePolicy findMany
+   */
+  export type ElektrawebBridgePolicyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ElektrawebBridgePolicies to fetch.
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ElektrawebBridgePolicies to fetch.
+     */
+    orderBy?: ElektrawebBridgePolicyOrderByWithRelationInput | ElektrawebBridgePolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ElektrawebBridgePolicies.
+     */
+    cursor?: ElektrawebBridgePolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ElektrawebBridgePolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ElektrawebBridgePolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ElektrawebBridgePolicies.
+     */
+    distinct?: ElektrawebBridgePolicyScalarFieldEnum | ElektrawebBridgePolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ElektrawebBridgePolicy create
+   */
+  export type ElektrawebBridgePolicyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ElektrawebBridgePolicy.
+     */
+    data: XOR<ElektrawebBridgePolicyCreateInput, ElektrawebBridgePolicyUncheckedCreateInput>
+  }
+
+  /**
+   * ElektrawebBridgePolicy createMany
+   */
+  export type ElektrawebBridgePolicyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ElektrawebBridgePolicies.
+     */
+    data: ElektrawebBridgePolicyCreateManyInput | ElektrawebBridgePolicyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ElektrawebBridgePolicy createManyAndReturn
+   */
+  export type ElektrawebBridgePolicyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * The data used to create many ElektrawebBridgePolicies.
+     */
+    data: ElektrawebBridgePolicyCreateManyInput | ElektrawebBridgePolicyCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ElektrawebBridgePolicy update
+   */
+  export type ElektrawebBridgePolicyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ElektrawebBridgePolicy.
+     */
+    data: XOR<ElektrawebBridgePolicyUpdateInput, ElektrawebBridgePolicyUncheckedUpdateInput>
+    /**
+     * Choose, which ElektrawebBridgePolicy to update.
+     */
+    where: ElektrawebBridgePolicyWhereUniqueInput
+  }
+
+  /**
+   * ElektrawebBridgePolicy updateMany
+   */
+  export type ElektrawebBridgePolicyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ElektrawebBridgePolicies.
+     */
+    data: XOR<ElektrawebBridgePolicyUpdateManyMutationInput, ElektrawebBridgePolicyUncheckedUpdateManyInput>
+    /**
+     * Filter which ElektrawebBridgePolicies to update
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * Limit how many ElektrawebBridgePolicies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ElektrawebBridgePolicy updateManyAndReturn
+   */
+  export type ElektrawebBridgePolicyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * The data used to update ElektrawebBridgePolicies.
+     */
+    data: XOR<ElektrawebBridgePolicyUpdateManyMutationInput, ElektrawebBridgePolicyUncheckedUpdateManyInput>
+    /**
+     * Filter which ElektrawebBridgePolicies to update
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * Limit how many ElektrawebBridgePolicies to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ElektrawebBridgePolicy upsert
+   */
+  export type ElektrawebBridgePolicyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ElektrawebBridgePolicy to update in case it exists.
+     */
+    where: ElektrawebBridgePolicyWhereUniqueInput
+    /**
+     * In case the ElektrawebBridgePolicy found by the `where` argument doesn't exist, create a new ElektrawebBridgePolicy with this data.
+     */
+    create: XOR<ElektrawebBridgePolicyCreateInput, ElektrawebBridgePolicyUncheckedCreateInput>
+    /**
+     * In case the ElektrawebBridgePolicy was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ElektrawebBridgePolicyUpdateInput, ElektrawebBridgePolicyUncheckedUpdateInput>
+  }
+
+  /**
+   * ElektrawebBridgePolicy delete
+   */
+  export type ElektrawebBridgePolicyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+    /**
+     * Filter which ElektrawebBridgePolicy to delete.
+     */
+    where: ElektrawebBridgePolicyWhereUniqueInput
+  }
+
+  /**
+   * ElektrawebBridgePolicy deleteMany
+   */
+  export type ElektrawebBridgePolicyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ElektrawebBridgePolicies to delete
+     */
+    where?: ElektrawebBridgePolicyWhereInput
+    /**
+     * Limit how many ElektrawebBridgePolicies to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ElektrawebBridgePolicy without action
+   */
+  export type ElektrawebBridgePolicyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ElektrawebBridgePolicy
+     */
+    select?: ElektrawebBridgePolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ElektrawebBridgePolicy
+     */
+    omit?: ElektrawebBridgePolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ElektrawebBridgePolicyInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ClinicCutoverPolicy
+   */
+
+  export type AggregateClinicCutoverPolicy = {
+    _count: ClinicCutoverPolicyCountAggregateOutputType | null
+    _min: ClinicCutoverPolicyMinAggregateOutputType | null
+    _max: ClinicCutoverPolicyMaxAggregateOutputType | null
+  }
+
+  export type ClinicCutoverPolicyMinAggregateOutputType = {
+    organizationId: string | null
+    elektrawebDualRun: boolean | null
+    hotelOrganizationId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ClinicCutoverPolicyMaxAggregateOutputType = {
+    organizationId: string | null
+    elektrawebDualRun: boolean | null
+    hotelOrganizationId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ClinicCutoverPolicyCountAggregateOutputType = {
+    organizationId: number
+    elektrawebDualRun: number
+    hotelOrganizationId: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ClinicCutoverPolicyMinAggregateInputType = {
+    organizationId?: true
+    elektrawebDualRun?: true
+    hotelOrganizationId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ClinicCutoverPolicyMaxAggregateInputType = {
+    organizationId?: true
+    elektrawebDualRun?: true
+    hotelOrganizationId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ClinicCutoverPolicyCountAggregateInputType = {
+    organizationId?: true
+    elektrawebDualRun?: true
+    hotelOrganizationId?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ClinicCutoverPolicyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ClinicCutoverPolicy to aggregate.
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ClinicCutoverPolicies to fetch.
+     */
+    orderBy?: ClinicCutoverPolicyOrderByWithRelationInput | ClinicCutoverPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ClinicCutoverPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ClinicCutoverPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ClinicCutoverPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ClinicCutoverPolicies
+    **/
+    _count?: true | ClinicCutoverPolicyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ClinicCutoverPolicyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ClinicCutoverPolicyMaxAggregateInputType
+  }
+
+  export type GetClinicCutoverPolicyAggregateType<T extends ClinicCutoverPolicyAggregateArgs> = {
+        [P in keyof T & keyof AggregateClinicCutoverPolicy]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateClinicCutoverPolicy[P]>
+      : GetScalarType<T[P], AggregateClinicCutoverPolicy[P]>
+  }
+
+
+
+
+  export type ClinicCutoverPolicyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ClinicCutoverPolicyWhereInput
+    orderBy?: ClinicCutoverPolicyOrderByWithAggregationInput | ClinicCutoverPolicyOrderByWithAggregationInput[]
+    by: ClinicCutoverPolicyScalarFieldEnum[] | ClinicCutoverPolicyScalarFieldEnum
+    having?: ClinicCutoverPolicyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ClinicCutoverPolicyCountAggregateInputType | true
+    _min?: ClinicCutoverPolicyMinAggregateInputType
+    _max?: ClinicCutoverPolicyMaxAggregateInputType
+  }
+
+  export type ClinicCutoverPolicyGroupByOutputType = {
+    organizationId: string
+    elektrawebDualRun: boolean
+    hotelOrganizationId: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ClinicCutoverPolicyCountAggregateOutputType | null
+    _min: ClinicCutoverPolicyMinAggregateOutputType | null
+    _max: ClinicCutoverPolicyMaxAggregateOutputType | null
+  }
+
+  type GetClinicCutoverPolicyGroupByPayload<T extends ClinicCutoverPolicyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ClinicCutoverPolicyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ClinicCutoverPolicyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ClinicCutoverPolicyGroupByOutputType[P]>
+            : GetScalarType<T[P], ClinicCutoverPolicyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ClinicCutoverPolicySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    hotelOrganization?: boolean | ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>
+  }, ExtArgs["result"]["clinicCutoverPolicy"]>
+
+  export type ClinicCutoverPolicySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    hotelOrganization?: boolean | ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>
+  }, ExtArgs["result"]["clinicCutoverPolicy"]>
+
+  export type ClinicCutoverPolicySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    hotelOrganization?: boolean | ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>
+  }, ExtArgs["result"]["clinicCutoverPolicy"]>
+
+  export type ClinicCutoverPolicySelectScalar = {
+    organizationId?: boolean
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ClinicCutoverPolicyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "elektrawebDualRun" | "hotelOrganizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["clinicCutoverPolicy"]>
+  export type ClinicCutoverPolicyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    hotelOrganization?: boolean | ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>
+  }
+  export type ClinicCutoverPolicyIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    hotelOrganization?: boolean | ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>
+  }
+  export type ClinicCutoverPolicyIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    hotelOrganization?: boolean | ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>
+  }
+
+  export type $ClinicCutoverPolicyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ClinicCutoverPolicy"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      hotelOrganization: Prisma.$OrganizationPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      elektrawebDualRun: boolean
+      hotelOrganizationId: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["clinicCutoverPolicy"]>
+    composites: {}
+  }
+
+  type ClinicCutoverPolicyGetPayload<S extends boolean | null | undefined | ClinicCutoverPolicyDefaultArgs> = $Result.GetResult<Prisma.$ClinicCutoverPolicyPayload, S>
+
+  type ClinicCutoverPolicyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ClinicCutoverPolicyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ClinicCutoverPolicyCountAggregateInputType | true
+    }
+
+  export interface ClinicCutoverPolicyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ClinicCutoverPolicy'], meta: { name: 'ClinicCutoverPolicy' } }
+    /**
+     * Find zero or one ClinicCutoverPolicy that matches the filter.
+     * @param {ClinicCutoverPolicyFindUniqueArgs} args - Arguments to find a ClinicCutoverPolicy
+     * @example
+     * // Get one ClinicCutoverPolicy
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ClinicCutoverPolicyFindUniqueArgs>(args: SelectSubset<T, ClinicCutoverPolicyFindUniqueArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ClinicCutoverPolicy that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ClinicCutoverPolicyFindUniqueOrThrowArgs} args - Arguments to find a ClinicCutoverPolicy
+     * @example
+     * // Get one ClinicCutoverPolicy
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ClinicCutoverPolicyFindUniqueOrThrowArgs>(args: SelectSubset<T, ClinicCutoverPolicyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ClinicCutoverPolicy that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyFindFirstArgs} args - Arguments to find a ClinicCutoverPolicy
+     * @example
+     * // Get one ClinicCutoverPolicy
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ClinicCutoverPolicyFindFirstArgs>(args?: SelectSubset<T, ClinicCutoverPolicyFindFirstArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ClinicCutoverPolicy that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyFindFirstOrThrowArgs} args - Arguments to find a ClinicCutoverPolicy
+     * @example
+     * // Get one ClinicCutoverPolicy
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ClinicCutoverPolicyFindFirstOrThrowArgs>(args?: SelectSubset<T, ClinicCutoverPolicyFindFirstOrThrowArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ClinicCutoverPolicies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ClinicCutoverPolicies
+     * const clinicCutoverPolicies = await prisma.clinicCutoverPolicy.findMany()
+     * 
+     * // Get first 10 ClinicCutoverPolicies
+     * const clinicCutoverPolicies = await prisma.clinicCutoverPolicy.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const clinicCutoverPolicyWithOrganizationIdOnly = await prisma.clinicCutoverPolicy.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends ClinicCutoverPolicyFindManyArgs>(args?: SelectSubset<T, ClinicCutoverPolicyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ClinicCutoverPolicy.
+     * @param {ClinicCutoverPolicyCreateArgs} args - Arguments to create a ClinicCutoverPolicy.
+     * @example
+     * // Create one ClinicCutoverPolicy
+     * const ClinicCutoverPolicy = await prisma.clinicCutoverPolicy.create({
+     *   data: {
+     *     // ... data to create a ClinicCutoverPolicy
+     *   }
+     * })
+     * 
+     */
+    create<T extends ClinicCutoverPolicyCreateArgs>(args: SelectSubset<T, ClinicCutoverPolicyCreateArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ClinicCutoverPolicies.
+     * @param {ClinicCutoverPolicyCreateManyArgs} args - Arguments to create many ClinicCutoverPolicies.
+     * @example
+     * // Create many ClinicCutoverPolicies
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ClinicCutoverPolicyCreateManyArgs>(args?: SelectSubset<T, ClinicCutoverPolicyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ClinicCutoverPolicies and returns the data saved in the database.
+     * @param {ClinicCutoverPolicyCreateManyAndReturnArgs} args - Arguments to create many ClinicCutoverPolicies.
+     * @example
+     * // Create many ClinicCutoverPolicies
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ClinicCutoverPolicies and only return the `organizationId`
+     * const clinicCutoverPolicyWithOrganizationIdOnly = await prisma.clinicCutoverPolicy.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ClinicCutoverPolicyCreateManyAndReturnArgs>(args?: SelectSubset<T, ClinicCutoverPolicyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ClinicCutoverPolicy.
+     * @param {ClinicCutoverPolicyDeleteArgs} args - Arguments to delete one ClinicCutoverPolicy.
+     * @example
+     * // Delete one ClinicCutoverPolicy
+     * const ClinicCutoverPolicy = await prisma.clinicCutoverPolicy.delete({
+     *   where: {
+     *     // ... filter to delete one ClinicCutoverPolicy
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ClinicCutoverPolicyDeleteArgs>(args: SelectSubset<T, ClinicCutoverPolicyDeleteArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ClinicCutoverPolicy.
+     * @param {ClinicCutoverPolicyUpdateArgs} args - Arguments to update one ClinicCutoverPolicy.
+     * @example
+     * // Update one ClinicCutoverPolicy
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ClinicCutoverPolicyUpdateArgs>(args: SelectSubset<T, ClinicCutoverPolicyUpdateArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ClinicCutoverPolicies.
+     * @param {ClinicCutoverPolicyDeleteManyArgs} args - Arguments to filter ClinicCutoverPolicies to delete.
+     * @example
+     * // Delete a few ClinicCutoverPolicies
+     * const { count } = await prisma.clinicCutoverPolicy.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ClinicCutoverPolicyDeleteManyArgs>(args?: SelectSubset<T, ClinicCutoverPolicyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ClinicCutoverPolicies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ClinicCutoverPolicies
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ClinicCutoverPolicyUpdateManyArgs>(args: SelectSubset<T, ClinicCutoverPolicyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ClinicCutoverPolicies and returns the data updated in the database.
+     * @param {ClinicCutoverPolicyUpdateManyAndReturnArgs} args - Arguments to update many ClinicCutoverPolicies.
+     * @example
+     * // Update many ClinicCutoverPolicies
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ClinicCutoverPolicies and only return the `organizationId`
+     * const clinicCutoverPolicyWithOrganizationIdOnly = await prisma.clinicCutoverPolicy.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ClinicCutoverPolicyUpdateManyAndReturnArgs>(args: SelectSubset<T, ClinicCutoverPolicyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ClinicCutoverPolicy.
+     * @param {ClinicCutoverPolicyUpsertArgs} args - Arguments to update or create a ClinicCutoverPolicy.
+     * @example
+     * // Update or create a ClinicCutoverPolicy
+     * const clinicCutoverPolicy = await prisma.clinicCutoverPolicy.upsert({
+     *   create: {
+     *     // ... data to create a ClinicCutoverPolicy
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ClinicCutoverPolicy we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ClinicCutoverPolicyUpsertArgs>(args: SelectSubset<T, ClinicCutoverPolicyUpsertArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ClinicCutoverPolicies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyCountArgs} args - Arguments to filter ClinicCutoverPolicies to count.
+     * @example
+     * // Count the number of ClinicCutoverPolicies
+     * const count = await prisma.clinicCutoverPolicy.count({
+     *   where: {
+     *     // ... the filter for the ClinicCutoverPolicies we want to count
+     *   }
+     * })
+    **/
+    count<T extends ClinicCutoverPolicyCountArgs>(
+      args?: Subset<T, ClinicCutoverPolicyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ClinicCutoverPolicyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ClinicCutoverPolicy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ClinicCutoverPolicyAggregateArgs>(args: Subset<T, ClinicCutoverPolicyAggregateArgs>): Prisma.PrismaPromise<GetClinicCutoverPolicyAggregateType<T>>
+
+    /**
+     * Group by ClinicCutoverPolicy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ClinicCutoverPolicyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ClinicCutoverPolicyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ClinicCutoverPolicyGroupByArgs['orderBy'] }
+        : { orderBy?: ClinicCutoverPolicyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ClinicCutoverPolicyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetClinicCutoverPolicyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ClinicCutoverPolicy model
+   */
+  readonly fields: ClinicCutoverPolicyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ClinicCutoverPolicy.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ClinicCutoverPolicyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    hotelOrganization<T extends ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs> = {}>(args?: Subset<T, ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ClinicCutoverPolicy model
+   */
+  interface ClinicCutoverPolicyFieldRefs {
+    readonly organizationId: FieldRef<"ClinicCutoverPolicy", 'String'>
+    readonly elektrawebDualRun: FieldRef<"ClinicCutoverPolicy", 'Boolean'>
+    readonly hotelOrganizationId: FieldRef<"ClinicCutoverPolicy", 'String'>
+    readonly createdAt: FieldRef<"ClinicCutoverPolicy", 'DateTime'>
+    readonly updatedAt: FieldRef<"ClinicCutoverPolicy", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ClinicCutoverPolicy findUnique
+   */
+  export type ClinicCutoverPolicyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ClinicCutoverPolicy to fetch.
+     */
+    where: ClinicCutoverPolicyWhereUniqueInput
+  }
+
+  /**
+   * ClinicCutoverPolicy findUniqueOrThrow
+   */
+  export type ClinicCutoverPolicyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ClinicCutoverPolicy to fetch.
+     */
+    where: ClinicCutoverPolicyWhereUniqueInput
+  }
+
+  /**
+   * ClinicCutoverPolicy findFirst
+   */
+  export type ClinicCutoverPolicyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ClinicCutoverPolicy to fetch.
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ClinicCutoverPolicies to fetch.
+     */
+    orderBy?: ClinicCutoverPolicyOrderByWithRelationInput | ClinicCutoverPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ClinicCutoverPolicies.
+     */
+    cursor?: ClinicCutoverPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ClinicCutoverPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ClinicCutoverPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ClinicCutoverPolicies.
+     */
+    distinct?: ClinicCutoverPolicyScalarFieldEnum | ClinicCutoverPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ClinicCutoverPolicy findFirstOrThrow
+   */
+  export type ClinicCutoverPolicyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ClinicCutoverPolicy to fetch.
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ClinicCutoverPolicies to fetch.
+     */
+    orderBy?: ClinicCutoverPolicyOrderByWithRelationInput | ClinicCutoverPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ClinicCutoverPolicies.
+     */
+    cursor?: ClinicCutoverPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ClinicCutoverPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ClinicCutoverPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ClinicCutoverPolicies.
+     */
+    distinct?: ClinicCutoverPolicyScalarFieldEnum | ClinicCutoverPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ClinicCutoverPolicy findMany
+   */
+  export type ClinicCutoverPolicyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * Filter, which ClinicCutoverPolicies to fetch.
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ClinicCutoverPolicies to fetch.
+     */
+    orderBy?: ClinicCutoverPolicyOrderByWithRelationInput | ClinicCutoverPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ClinicCutoverPolicies.
+     */
+    cursor?: ClinicCutoverPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ClinicCutoverPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ClinicCutoverPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ClinicCutoverPolicies.
+     */
+    distinct?: ClinicCutoverPolicyScalarFieldEnum | ClinicCutoverPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ClinicCutoverPolicy create
+   */
+  export type ClinicCutoverPolicyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ClinicCutoverPolicy.
+     */
+    data: XOR<ClinicCutoverPolicyCreateInput, ClinicCutoverPolicyUncheckedCreateInput>
+  }
+
+  /**
+   * ClinicCutoverPolicy createMany
+   */
+  export type ClinicCutoverPolicyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ClinicCutoverPolicies.
+     */
+    data: ClinicCutoverPolicyCreateManyInput | ClinicCutoverPolicyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ClinicCutoverPolicy createManyAndReturn
+   */
+  export type ClinicCutoverPolicyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * The data used to create many ClinicCutoverPolicies.
+     */
+    data: ClinicCutoverPolicyCreateManyInput | ClinicCutoverPolicyCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ClinicCutoverPolicy update
+   */
+  export type ClinicCutoverPolicyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ClinicCutoverPolicy.
+     */
+    data: XOR<ClinicCutoverPolicyUpdateInput, ClinicCutoverPolicyUncheckedUpdateInput>
+    /**
+     * Choose, which ClinicCutoverPolicy to update.
+     */
+    where: ClinicCutoverPolicyWhereUniqueInput
+  }
+
+  /**
+   * ClinicCutoverPolicy updateMany
+   */
+  export type ClinicCutoverPolicyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ClinicCutoverPolicies.
+     */
+    data: XOR<ClinicCutoverPolicyUpdateManyMutationInput, ClinicCutoverPolicyUncheckedUpdateManyInput>
+    /**
+     * Filter which ClinicCutoverPolicies to update
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * Limit how many ClinicCutoverPolicies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ClinicCutoverPolicy updateManyAndReturn
+   */
+  export type ClinicCutoverPolicyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * The data used to update ClinicCutoverPolicies.
+     */
+    data: XOR<ClinicCutoverPolicyUpdateManyMutationInput, ClinicCutoverPolicyUncheckedUpdateManyInput>
+    /**
+     * Filter which ClinicCutoverPolicies to update
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * Limit how many ClinicCutoverPolicies to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ClinicCutoverPolicy upsert
+   */
+  export type ClinicCutoverPolicyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ClinicCutoverPolicy to update in case it exists.
+     */
+    where: ClinicCutoverPolicyWhereUniqueInput
+    /**
+     * In case the ClinicCutoverPolicy found by the `where` argument doesn't exist, create a new ClinicCutoverPolicy with this data.
+     */
+    create: XOR<ClinicCutoverPolicyCreateInput, ClinicCutoverPolicyUncheckedCreateInput>
+    /**
+     * In case the ClinicCutoverPolicy was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ClinicCutoverPolicyUpdateInput, ClinicCutoverPolicyUncheckedUpdateInput>
+  }
+
+  /**
+   * ClinicCutoverPolicy delete
+   */
+  export type ClinicCutoverPolicyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+    /**
+     * Filter which ClinicCutoverPolicy to delete.
+     */
+    where: ClinicCutoverPolicyWhereUniqueInput
+  }
+
+  /**
+   * ClinicCutoverPolicy deleteMany
+   */
+  export type ClinicCutoverPolicyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ClinicCutoverPolicies to delete
+     */
+    where?: ClinicCutoverPolicyWhereInput
+    /**
+     * Limit how many ClinicCutoverPolicies to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ClinicCutoverPolicy.hotelOrganization
+   */
+  export type ClinicCutoverPolicy$hotelOrganizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * ClinicCutoverPolicy without action
+   */
+  export type ClinicCutoverPolicyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClinicCutoverPolicy
+     */
+    select?: ClinicCutoverPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClinicCutoverPolicy
+     */
+    omit?: ClinicCutoverPolicyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClinicCutoverPolicyInclude<ExtArgs> | null
   }
 
 
@@ -86647,6 +89422,2230 @@ export namespace Prisma {
 
 
   /**
+   * Model AgencyPortalAccount
+   */
+
+  export type AggregateAgencyPortalAccount = {
+    _count: AgencyPortalAccountCountAggregateOutputType | null
+    _min: AgencyPortalAccountMinAggregateOutputType | null
+    _max: AgencyPortalAccountMaxAggregateOutputType | null
+  }
+
+  export type AgencyPortalAccountMinAggregateOutputType = {
+    id: string | null
+    email: string | null
+    passwordHash: string | null
+    fullName: string | null
+    active: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgencyPortalAccountMaxAggregateOutputType = {
+    id: string | null
+    email: string | null
+    passwordHash: string | null
+    fullName: string | null
+    active: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgencyPortalAccountCountAggregateOutputType = {
+    id: number
+    email: number
+    passwordHash: number
+    fullName: number
+    active: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AgencyPortalAccountMinAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    fullName?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgencyPortalAccountMaxAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    fullName?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgencyPortalAccountCountAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    fullName?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AgencyPortalAccountAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgencyPortalAccount to aggregate.
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPortalAccounts to fetch.
+     */
+    orderBy?: AgencyPortalAccountOrderByWithRelationInput | AgencyPortalAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AgencyPortalAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPortalAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPortalAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AgencyPortalAccounts
+    **/
+    _count?: true | AgencyPortalAccountCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AgencyPortalAccountMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AgencyPortalAccountMaxAggregateInputType
+  }
+
+  export type GetAgencyPortalAccountAggregateType<T extends AgencyPortalAccountAggregateArgs> = {
+        [P in keyof T & keyof AggregateAgencyPortalAccount]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAgencyPortalAccount[P]>
+      : GetScalarType<T[P], AggregateAgencyPortalAccount[P]>
+  }
+
+
+
+
+  export type AgencyPortalAccountGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgencyPortalAccountWhereInput
+    orderBy?: AgencyPortalAccountOrderByWithAggregationInput | AgencyPortalAccountOrderByWithAggregationInput[]
+    by: AgencyPortalAccountScalarFieldEnum[] | AgencyPortalAccountScalarFieldEnum
+    having?: AgencyPortalAccountScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AgencyPortalAccountCountAggregateInputType | true
+    _min?: AgencyPortalAccountMinAggregateInputType
+    _max?: AgencyPortalAccountMaxAggregateInputType
+  }
+
+  export type AgencyPortalAccountGroupByOutputType = {
+    id: string
+    email: string
+    passwordHash: string
+    fullName: string | null
+    active: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: AgencyPortalAccountCountAggregateOutputType | null
+    _min: AgencyPortalAccountMinAggregateOutputType | null
+    _max: AgencyPortalAccountMaxAggregateOutputType | null
+  }
+
+  type GetAgencyPortalAccountGroupByPayload<T extends AgencyPortalAccountGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AgencyPortalAccountGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AgencyPortalAccountGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AgencyPortalAccountGroupByOutputType[P]>
+            : GetScalarType<T[P], AgencyPortalAccountGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AgencyPortalAccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    fullName?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    grants?: boolean | AgencyPortalAccount$grantsArgs<ExtArgs>
+    _count?: boolean | AgencyPortalAccountCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agencyPortalAccount"]>
+
+  export type AgencyPortalAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    fullName?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["agencyPortalAccount"]>
+
+  export type AgencyPortalAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    fullName?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["agencyPortalAccount"]>
+
+  export type AgencyPortalAccountSelectScalar = {
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    fullName?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AgencyPortalAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "fullName" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["agencyPortalAccount"]>
+  export type AgencyPortalAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    grants?: boolean | AgencyPortalAccount$grantsArgs<ExtArgs>
+    _count?: boolean | AgencyPortalAccountCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type AgencyPortalAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AgencyPortalAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AgencyPortalAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AgencyPortalAccount"
+    objects: {
+      grants: Prisma.$AgencyPropertyGrantPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      email: string
+      passwordHash: string
+      fullName: string | null
+      active: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["agencyPortalAccount"]>
+    composites: {}
+  }
+
+  type AgencyPortalAccountGetPayload<S extends boolean | null | undefined | AgencyPortalAccountDefaultArgs> = $Result.GetResult<Prisma.$AgencyPortalAccountPayload, S>
+
+  type AgencyPortalAccountCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AgencyPortalAccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AgencyPortalAccountCountAggregateInputType | true
+    }
+
+  export interface AgencyPortalAccountDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AgencyPortalAccount'], meta: { name: 'AgencyPortalAccount' } }
+    /**
+     * Find zero or one AgencyPortalAccount that matches the filter.
+     * @param {AgencyPortalAccountFindUniqueArgs} args - Arguments to find a AgencyPortalAccount
+     * @example
+     * // Get one AgencyPortalAccount
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AgencyPortalAccountFindUniqueArgs>(args: SelectSubset<T, AgencyPortalAccountFindUniqueArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AgencyPortalAccount that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AgencyPortalAccountFindUniqueOrThrowArgs} args - Arguments to find a AgencyPortalAccount
+     * @example
+     * // Get one AgencyPortalAccount
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AgencyPortalAccountFindUniqueOrThrowArgs>(args: SelectSubset<T, AgencyPortalAccountFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgencyPortalAccount that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountFindFirstArgs} args - Arguments to find a AgencyPortalAccount
+     * @example
+     * // Get one AgencyPortalAccount
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AgencyPortalAccountFindFirstArgs>(args?: SelectSubset<T, AgencyPortalAccountFindFirstArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgencyPortalAccount that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountFindFirstOrThrowArgs} args - Arguments to find a AgencyPortalAccount
+     * @example
+     * // Get one AgencyPortalAccount
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AgencyPortalAccountFindFirstOrThrowArgs>(args?: SelectSubset<T, AgencyPortalAccountFindFirstOrThrowArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AgencyPortalAccounts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AgencyPortalAccounts
+     * const agencyPortalAccounts = await prisma.agencyPortalAccount.findMany()
+     * 
+     * // Get first 10 AgencyPortalAccounts
+     * const agencyPortalAccounts = await prisma.agencyPortalAccount.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const agencyPortalAccountWithIdOnly = await prisma.agencyPortalAccount.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AgencyPortalAccountFindManyArgs>(args?: SelectSubset<T, AgencyPortalAccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AgencyPortalAccount.
+     * @param {AgencyPortalAccountCreateArgs} args - Arguments to create a AgencyPortalAccount.
+     * @example
+     * // Create one AgencyPortalAccount
+     * const AgencyPortalAccount = await prisma.agencyPortalAccount.create({
+     *   data: {
+     *     // ... data to create a AgencyPortalAccount
+     *   }
+     * })
+     * 
+     */
+    create<T extends AgencyPortalAccountCreateArgs>(args: SelectSubset<T, AgencyPortalAccountCreateArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AgencyPortalAccounts.
+     * @param {AgencyPortalAccountCreateManyArgs} args - Arguments to create many AgencyPortalAccounts.
+     * @example
+     * // Create many AgencyPortalAccounts
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AgencyPortalAccountCreateManyArgs>(args?: SelectSubset<T, AgencyPortalAccountCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AgencyPortalAccounts and returns the data saved in the database.
+     * @param {AgencyPortalAccountCreateManyAndReturnArgs} args - Arguments to create many AgencyPortalAccounts.
+     * @example
+     * // Create many AgencyPortalAccounts
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AgencyPortalAccounts and only return the `id`
+     * const agencyPortalAccountWithIdOnly = await prisma.agencyPortalAccount.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AgencyPortalAccountCreateManyAndReturnArgs>(args?: SelectSubset<T, AgencyPortalAccountCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AgencyPortalAccount.
+     * @param {AgencyPortalAccountDeleteArgs} args - Arguments to delete one AgencyPortalAccount.
+     * @example
+     * // Delete one AgencyPortalAccount
+     * const AgencyPortalAccount = await prisma.agencyPortalAccount.delete({
+     *   where: {
+     *     // ... filter to delete one AgencyPortalAccount
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AgencyPortalAccountDeleteArgs>(args: SelectSubset<T, AgencyPortalAccountDeleteArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AgencyPortalAccount.
+     * @param {AgencyPortalAccountUpdateArgs} args - Arguments to update one AgencyPortalAccount.
+     * @example
+     * // Update one AgencyPortalAccount
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AgencyPortalAccountUpdateArgs>(args: SelectSubset<T, AgencyPortalAccountUpdateArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AgencyPortalAccounts.
+     * @param {AgencyPortalAccountDeleteManyArgs} args - Arguments to filter AgencyPortalAccounts to delete.
+     * @example
+     * // Delete a few AgencyPortalAccounts
+     * const { count } = await prisma.agencyPortalAccount.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AgencyPortalAccountDeleteManyArgs>(args?: SelectSubset<T, AgencyPortalAccountDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgencyPortalAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AgencyPortalAccounts
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AgencyPortalAccountUpdateManyArgs>(args: SelectSubset<T, AgencyPortalAccountUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgencyPortalAccounts and returns the data updated in the database.
+     * @param {AgencyPortalAccountUpdateManyAndReturnArgs} args - Arguments to update many AgencyPortalAccounts.
+     * @example
+     * // Update many AgencyPortalAccounts
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AgencyPortalAccounts and only return the `id`
+     * const agencyPortalAccountWithIdOnly = await prisma.agencyPortalAccount.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AgencyPortalAccountUpdateManyAndReturnArgs>(args: SelectSubset<T, AgencyPortalAccountUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AgencyPortalAccount.
+     * @param {AgencyPortalAccountUpsertArgs} args - Arguments to update or create a AgencyPortalAccount.
+     * @example
+     * // Update or create a AgencyPortalAccount
+     * const agencyPortalAccount = await prisma.agencyPortalAccount.upsert({
+     *   create: {
+     *     // ... data to create a AgencyPortalAccount
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AgencyPortalAccount we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AgencyPortalAccountUpsertArgs>(args: SelectSubset<T, AgencyPortalAccountUpsertArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AgencyPortalAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountCountArgs} args - Arguments to filter AgencyPortalAccounts to count.
+     * @example
+     * // Count the number of AgencyPortalAccounts
+     * const count = await prisma.agencyPortalAccount.count({
+     *   where: {
+     *     // ... the filter for the AgencyPortalAccounts we want to count
+     *   }
+     * })
+    **/
+    count<T extends AgencyPortalAccountCountArgs>(
+      args?: Subset<T, AgencyPortalAccountCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AgencyPortalAccountCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AgencyPortalAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AgencyPortalAccountAggregateArgs>(args: Subset<T, AgencyPortalAccountAggregateArgs>): Prisma.PrismaPromise<GetAgencyPortalAccountAggregateType<T>>
+
+    /**
+     * Group by AgencyPortalAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPortalAccountGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AgencyPortalAccountGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AgencyPortalAccountGroupByArgs['orderBy'] }
+        : { orderBy?: AgencyPortalAccountGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AgencyPortalAccountGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAgencyPortalAccountGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AgencyPortalAccount model
+   */
+  readonly fields: AgencyPortalAccountFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AgencyPortalAccount.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AgencyPortalAccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    grants<T extends AgencyPortalAccount$grantsArgs<ExtArgs> = {}>(args?: Subset<T, AgencyPortalAccount$grantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AgencyPortalAccount model
+   */
+  interface AgencyPortalAccountFieldRefs {
+    readonly id: FieldRef<"AgencyPortalAccount", 'String'>
+    readonly email: FieldRef<"AgencyPortalAccount", 'String'>
+    readonly passwordHash: FieldRef<"AgencyPortalAccount", 'String'>
+    readonly fullName: FieldRef<"AgencyPortalAccount", 'String'>
+    readonly active: FieldRef<"AgencyPortalAccount", 'Boolean'>
+    readonly createdAt: FieldRef<"AgencyPortalAccount", 'DateTime'>
+    readonly updatedAt: FieldRef<"AgencyPortalAccount", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AgencyPortalAccount findUnique
+   */
+  export type AgencyPortalAccountFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPortalAccount to fetch.
+     */
+    where: AgencyPortalAccountWhereUniqueInput
+  }
+
+  /**
+   * AgencyPortalAccount findUniqueOrThrow
+   */
+  export type AgencyPortalAccountFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPortalAccount to fetch.
+     */
+    where: AgencyPortalAccountWhereUniqueInput
+  }
+
+  /**
+   * AgencyPortalAccount findFirst
+   */
+  export type AgencyPortalAccountFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPortalAccount to fetch.
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPortalAccounts to fetch.
+     */
+    orderBy?: AgencyPortalAccountOrderByWithRelationInput | AgencyPortalAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgencyPortalAccounts.
+     */
+    cursor?: AgencyPortalAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPortalAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPortalAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgencyPortalAccounts.
+     */
+    distinct?: AgencyPortalAccountScalarFieldEnum | AgencyPortalAccountScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPortalAccount findFirstOrThrow
+   */
+  export type AgencyPortalAccountFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPortalAccount to fetch.
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPortalAccounts to fetch.
+     */
+    orderBy?: AgencyPortalAccountOrderByWithRelationInput | AgencyPortalAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgencyPortalAccounts.
+     */
+    cursor?: AgencyPortalAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPortalAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPortalAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgencyPortalAccounts.
+     */
+    distinct?: AgencyPortalAccountScalarFieldEnum | AgencyPortalAccountScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPortalAccount findMany
+   */
+  export type AgencyPortalAccountFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPortalAccounts to fetch.
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPortalAccounts to fetch.
+     */
+    orderBy?: AgencyPortalAccountOrderByWithRelationInput | AgencyPortalAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AgencyPortalAccounts.
+     */
+    cursor?: AgencyPortalAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPortalAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPortalAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgencyPortalAccounts.
+     */
+    distinct?: AgencyPortalAccountScalarFieldEnum | AgencyPortalAccountScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPortalAccount create
+   */
+  export type AgencyPortalAccountCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AgencyPortalAccount.
+     */
+    data: XOR<AgencyPortalAccountCreateInput, AgencyPortalAccountUncheckedCreateInput>
+  }
+
+  /**
+   * AgencyPortalAccount createMany
+   */
+  export type AgencyPortalAccountCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AgencyPortalAccounts.
+     */
+    data: AgencyPortalAccountCreateManyInput | AgencyPortalAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgencyPortalAccount createManyAndReturn
+   */
+  export type AgencyPortalAccountCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * The data used to create many AgencyPortalAccounts.
+     */
+    data: AgencyPortalAccountCreateManyInput | AgencyPortalAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgencyPortalAccount update
+   */
+  export type AgencyPortalAccountUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AgencyPortalAccount.
+     */
+    data: XOR<AgencyPortalAccountUpdateInput, AgencyPortalAccountUncheckedUpdateInput>
+    /**
+     * Choose, which AgencyPortalAccount to update.
+     */
+    where: AgencyPortalAccountWhereUniqueInput
+  }
+
+  /**
+   * AgencyPortalAccount updateMany
+   */
+  export type AgencyPortalAccountUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AgencyPortalAccounts.
+     */
+    data: XOR<AgencyPortalAccountUpdateManyMutationInput, AgencyPortalAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which AgencyPortalAccounts to update
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * Limit how many AgencyPortalAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgencyPortalAccount updateManyAndReturn
+   */
+  export type AgencyPortalAccountUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * The data used to update AgencyPortalAccounts.
+     */
+    data: XOR<AgencyPortalAccountUpdateManyMutationInput, AgencyPortalAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which AgencyPortalAccounts to update
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * Limit how many AgencyPortalAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgencyPortalAccount upsert
+   */
+  export type AgencyPortalAccountUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AgencyPortalAccount to update in case it exists.
+     */
+    where: AgencyPortalAccountWhereUniqueInput
+    /**
+     * In case the AgencyPortalAccount found by the `where` argument doesn't exist, create a new AgencyPortalAccount with this data.
+     */
+    create: XOR<AgencyPortalAccountCreateInput, AgencyPortalAccountUncheckedCreateInput>
+    /**
+     * In case the AgencyPortalAccount was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AgencyPortalAccountUpdateInput, AgencyPortalAccountUncheckedUpdateInput>
+  }
+
+  /**
+   * AgencyPortalAccount delete
+   */
+  export type AgencyPortalAccountDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+    /**
+     * Filter which AgencyPortalAccount to delete.
+     */
+    where: AgencyPortalAccountWhereUniqueInput
+  }
+
+  /**
+   * AgencyPortalAccount deleteMany
+   */
+  export type AgencyPortalAccountDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgencyPortalAccounts to delete
+     */
+    where?: AgencyPortalAccountWhereInput
+    /**
+     * Limit how many AgencyPortalAccounts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgencyPortalAccount.grants
+   */
+  export type AgencyPortalAccount$grantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    where?: AgencyPropertyGrantWhereInput
+    orderBy?: AgencyPropertyGrantOrderByWithRelationInput | AgencyPropertyGrantOrderByWithRelationInput[]
+    cursor?: AgencyPropertyGrantWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgencyPropertyGrantScalarFieldEnum | AgencyPropertyGrantScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPortalAccount without action
+   */
+  export type AgencyPortalAccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPortalAccount
+     */
+    select?: AgencyPortalAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPortalAccount
+     */
+    omit?: AgencyPortalAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPortalAccountInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AgencyPropertyGrant
+   */
+
+  export type AggregateAgencyPropertyGrant = {
+    _count: AgencyPropertyGrantCountAggregateOutputType | null
+    _min: AgencyPropertyGrantMinAggregateOutputType | null
+    _max: AgencyPropertyGrantMaxAggregateOutputType | null
+  }
+
+  export type AgencyPropertyGrantMinAggregateOutputType = {
+    id: string | null
+    accountId: string | null
+    organizationId: string | null
+    agencyVoen: string | null
+    localAgencyId: string | null
+    localAgencyCode: string | null
+    revokedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgencyPropertyGrantMaxAggregateOutputType = {
+    id: string | null
+    accountId: string | null
+    organizationId: string | null
+    agencyVoen: string | null
+    localAgencyId: string | null
+    localAgencyCode: string | null
+    revokedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgencyPropertyGrantCountAggregateOutputType = {
+    id: number
+    accountId: number
+    organizationId: number
+    agencyVoen: number
+    localAgencyId: number
+    localAgencyCode: number
+    revokedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AgencyPropertyGrantMinAggregateInputType = {
+    id?: true
+    accountId?: true
+    organizationId?: true
+    agencyVoen?: true
+    localAgencyId?: true
+    localAgencyCode?: true
+    revokedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgencyPropertyGrantMaxAggregateInputType = {
+    id?: true
+    accountId?: true
+    organizationId?: true
+    agencyVoen?: true
+    localAgencyId?: true
+    localAgencyCode?: true
+    revokedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgencyPropertyGrantCountAggregateInputType = {
+    id?: true
+    accountId?: true
+    organizationId?: true
+    agencyVoen?: true
+    localAgencyId?: true
+    localAgencyCode?: true
+    revokedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AgencyPropertyGrantAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgencyPropertyGrant to aggregate.
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPropertyGrants to fetch.
+     */
+    orderBy?: AgencyPropertyGrantOrderByWithRelationInput | AgencyPropertyGrantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AgencyPropertyGrantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPropertyGrants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPropertyGrants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AgencyPropertyGrants
+    **/
+    _count?: true | AgencyPropertyGrantCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AgencyPropertyGrantMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AgencyPropertyGrantMaxAggregateInputType
+  }
+
+  export type GetAgencyPropertyGrantAggregateType<T extends AgencyPropertyGrantAggregateArgs> = {
+        [P in keyof T & keyof AggregateAgencyPropertyGrant]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAgencyPropertyGrant[P]>
+      : GetScalarType<T[P], AggregateAgencyPropertyGrant[P]>
+  }
+
+
+
+
+  export type AgencyPropertyGrantGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgencyPropertyGrantWhereInput
+    orderBy?: AgencyPropertyGrantOrderByWithAggregationInput | AgencyPropertyGrantOrderByWithAggregationInput[]
+    by: AgencyPropertyGrantScalarFieldEnum[] | AgencyPropertyGrantScalarFieldEnum
+    having?: AgencyPropertyGrantScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AgencyPropertyGrantCountAggregateInputType | true
+    _min?: AgencyPropertyGrantMinAggregateInputType
+    _max?: AgencyPropertyGrantMaxAggregateInputType
+  }
+
+  export type AgencyPropertyGrantGroupByOutputType = {
+    id: string
+    accountId: string
+    organizationId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode: string | null
+    revokedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AgencyPropertyGrantCountAggregateOutputType | null
+    _min: AgencyPropertyGrantMinAggregateOutputType | null
+    _max: AgencyPropertyGrantMaxAggregateOutputType | null
+  }
+
+  type GetAgencyPropertyGrantGroupByPayload<T extends AgencyPropertyGrantGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AgencyPropertyGrantGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AgencyPropertyGrantGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AgencyPropertyGrantGroupByOutputType[P]>
+            : GetScalarType<T[P], AgencyPropertyGrantGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AgencyPropertyGrantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accountId?: boolean
+    organizationId?: boolean
+    agencyVoen?: boolean
+    localAgencyId?: boolean
+    localAgencyCode?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    account?: boolean | AgencyPortalAccountDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agencyPropertyGrant"]>
+
+  export type AgencyPropertyGrantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accountId?: boolean
+    organizationId?: boolean
+    agencyVoen?: boolean
+    localAgencyId?: boolean
+    localAgencyCode?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    account?: boolean | AgencyPortalAccountDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agencyPropertyGrant"]>
+
+  export type AgencyPropertyGrantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accountId?: boolean
+    organizationId?: boolean
+    agencyVoen?: boolean
+    localAgencyId?: boolean
+    localAgencyCode?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    account?: boolean | AgencyPortalAccountDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agencyPropertyGrant"]>
+
+  export type AgencyPropertyGrantSelectScalar = {
+    id?: boolean
+    accountId?: boolean
+    organizationId?: boolean
+    agencyVoen?: boolean
+    localAgencyId?: boolean
+    localAgencyCode?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AgencyPropertyGrantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "accountId" | "organizationId" | "agencyVoen" | "localAgencyId" | "localAgencyCode" | "revokedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["agencyPropertyGrant"]>
+  export type AgencyPropertyGrantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | AgencyPortalAccountDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type AgencyPropertyGrantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | AgencyPortalAccountDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type AgencyPropertyGrantIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | AgencyPortalAccountDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $AgencyPropertyGrantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AgencyPropertyGrant"
+    objects: {
+      account: Prisma.$AgencyPortalAccountPayload<ExtArgs>
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      accountId: string
+      organizationId: string
+      agencyVoen: string
+      localAgencyId: string
+      localAgencyCode: string | null
+      revokedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["agencyPropertyGrant"]>
+    composites: {}
+  }
+
+  type AgencyPropertyGrantGetPayload<S extends boolean | null | undefined | AgencyPropertyGrantDefaultArgs> = $Result.GetResult<Prisma.$AgencyPropertyGrantPayload, S>
+
+  type AgencyPropertyGrantCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AgencyPropertyGrantFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AgencyPropertyGrantCountAggregateInputType | true
+    }
+
+  export interface AgencyPropertyGrantDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AgencyPropertyGrant'], meta: { name: 'AgencyPropertyGrant' } }
+    /**
+     * Find zero or one AgencyPropertyGrant that matches the filter.
+     * @param {AgencyPropertyGrantFindUniqueArgs} args - Arguments to find a AgencyPropertyGrant
+     * @example
+     * // Get one AgencyPropertyGrant
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AgencyPropertyGrantFindUniqueArgs>(args: SelectSubset<T, AgencyPropertyGrantFindUniqueArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AgencyPropertyGrant that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AgencyPropertyGrantFindUniqueOrThrowArgs} args - Arguments to find a AgencyPropertyGrant
+     * @example
+     * // Get one AgencyPropertyGrant
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AgencyPropertyGrantFindUniqueOrThrowArgs>(args: SelectSubset<T, AgencyPropertyGrantFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgencyPropertyGrant that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantFindFirstArgs} args - Arguments to find a AgencyPropertyGrant
+     * @example
+     * // Get one AgencyPropertyGrant
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AgencyPropertyGrantFindFirstArgs>(args?: SelectSubset<T, AgencyPropertyGrantFindFirstArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgencyPropertyGrant that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantFindFirstOrThrowArgs} args - Arguments to find a AgencyPropertyGrant
+     * @example
+     * // Get one AgencyPropertyGrant
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AgencyPropertyGrantFindFirstOrThrowArgs>(args?: SelectSubset<T, AgencyPropertyGrantFindFirstOrThrowArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AgencyPropertyGrants that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AgencyPropertyGrants
+     * const agencyPropertyGrants = await prisma.agencyPropertyGrant.findMany()
+     * 
+     * // Get first 10 AgencyPropertyGrants
+     * const agencyPropertyGrants = await prisma.agencyPropertyGrant.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const agencyPropertyGrantWithIdOnly = await prisma.agencyPropertyGrant.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AgencyPropertyGrantFindManyArgs>(args?: SelectSubset<T, AgencyPropertyGrantFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AgencyPropertyGrant.
+     * @param {AgencyPropertyGrantCreateArgs} args - Arguments to create a AgencyPropertyGrant.
+     * @example
+     * // Create one AgencyPropertyGrant
+     * const AgencyPropertyGrant = await prisma.agencyPropertyGrant.create({
+     *   data: {
+     *     // ... data to create a AgencyPropertyGrant
+     *   }
+     * })
+     * 
+     */
+    create<T extends AgencyPropertyGrantCreateArgs>(args: SelectSubset<T, AgencyPropertyGrantCreateArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AgencyPropertyGrants.
+     * @param {AgencyPropertyGrantCreateManyArgs} args - Arguments to create many AgencyPropertyGrants.
+     * @example
+     * // Create many AgencyPropertyGrants
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AgencyPropertyGrantCreateManyArgs>(args?: SelectSubset<T, AgencyPropertyGrantCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AgencyPropertyGrants and returns the data saved in the database.
+     * @param {AgencyPropertyGrantCreateManyAndReturnArgs} args - Arguments to create many AgencyPropertyGrants.
+     * @example
+     * // Create many AgencyPropertyGrants
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AgencyPropertyGrants and only return the `id`
+     * const agencyPropertyGrantWithIdOnly = await prisma.agencyPropertyGrant.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AgencyPropertyGrantCreateManyAndReturnArgs>(args?: SelectSubset<T, AgencyPropertyGrantCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AgencyPropertyGrant.
+     * @param {AgencyPropertyGrantDeleteArgs} args - Arguments to delete one AgencyPropertyGrant.
+     * @example
+     * // Delete one AgencyPropertyGrant
+     * const AgencyPropertyGrant = await prisma.agencyPropertyGrant.delete({
+     *   where: {
+     *     // ... filter to delete one AgencyPropertyGrant
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AgencyPropertyGrantDeleteArgs>(args: SelectSubset<T, AgencyPropertyGrantDeleteArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AgencyPropertyGrant.
+     * @param {AgencyPropertyGrantUpdateArgs} args - Arguments to update one AgencyPropertyGrant.
+     * @example
+     * // Update one AgencyPropertyGrant
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AgencyPropertyGrantUpdateArgs>(args: SelectSubset<T, AgencyPropertyGrantUpdateArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AgencyPropertyGrants.
+     * @param {AgencyPropertyGrantDeleteManyArgs} args - Arguments to filter AgencyPropertyGrants to delete.
+     * @example
+     * // Delete a few AgencyPropertyGrants
+     * const { count } = await prisma.agencyPropertyGrant.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AgencyPropertyGrantDeleteManyArgs>(args?: SelectSubset<T, AgencyPropertyGrantDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgencyPropertyGrants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AgencyPropertyGrants
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AgencyPropertyGrantUpdateManyArgs>(args: SelectSubset<T, AgencyPropertyGrantUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgencyPropertyGrants and returns the data updated in the database.
+     * @param {AgencyPropertyGrantUpdateManyAndReturnArgs} args - Arguments to update many AgencyPropertyGrants.
+     * @example
+     * // Update many AgencyPropertyGrants
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AgencyPropertyGrants and only return the `id`
+     * const agencyPropertyGrantWithIdOnly = await prisma.agencyPropertyGrant.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AgencyPropertyGrantUpdateManyAndReturnArgs>(args: SelectSubset<T, AgencyPropertyGrantUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AgencyPropertyGrant.
+     * @param {AgencyPropertyGrantUpsertArgs} args - Arguments to update or create a AgencyPropertyGrant.
+     * @example
+     * // Update or create a AgencyPropertyGrant
+     * const agencyPropertyGrant = await prisma.agencyPropertyGrant.upsert({
+     *   create: {
+     *     // ... data to create a AgencyPropertyGrant
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AgencyPropertyGrant we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AgencyPropertyGrantUpsertArgs>(args: SelectSubset<T, AgencyPropertyGrantUpsertArgs<ExtArgs>>): Prisma__AgencyPropertyGrantClient<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AgencyPropertyGrants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantCountArgs} args - Arguments to filter AgencyPropertyGrants to count.
+     * @example
+     * // Count the number of AgencyPropertyGrants
+     * const count = await prisma.agencyPropertyGrant.count({
+     *   where: {
+     *     // ... the filter for the AgencyPropertyGrants we want to count
+     *   }
+     * })
+    **/
+    count<T extends AgencyPropertyGrantCountArgs>(
+      args?: Subset<T, AgencyPropertyGrantCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AgencyPropertyGrantCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AgencyPropertyGrant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AgencyPropertyGrantAggregateArgs>(args: Subset<T, AgencyPropertyGrantAggregateArgs>): Prisma.PrismaPromise<GetAgencyPropertyGrantAggregateType<T>>
+
+    /**
+     * Group by AgencyPropertyGrant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgencyPropertyGrantGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AgencyPropertyGrantGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AgencyPropertyGrantGroupByArgs['orderBy'] }
+        : { orderBy?: AgencyPropertyGrantGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AgencyPropertyGrantGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAgencyPropertyGrantGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AgencyPropertyGrant model
+   */
+  readonly fields: AgencyPropertyGrantFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AgencyPropertyGrant.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AgencyPropertyGrantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    account<T extends AgencyPortalAccountDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AgencyPortalAccountDefaultArgs<ExtArgs>>): Prisma__AgencyPortalAccountClient<$Result.GetResult<Prisma.$AgencyPortalAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AgencyPropertyGrant model
+   */
+  interface AgencyPropertyGrantFieldRefs {
+    readonly id: FieldRef<"AgencyPropertyGrant", 'String'>
+    readonly accountId: FieldRef<"AgencyPropertyGrant", 'String'>
+    readonly organizationId: FieldRef<"AgencyPropertyGrant", 'String'>
+    readonly agencyVoen: FieldRef<"AgencyPropertyGrant", 'String'>
+    readonly localAgencyId: FieldRef<"AgencyPropertyGrant", 'String'>
+    readonly localAgencyCode: FieldRef<"AgencyPropertyGrant", 'String'>
+    readonly revokedAt: FieldRef<"AgencyPropertyGrant", 'DateTime'>
+    readonly createdAt: FieldRef<"AgencyPropertyGrant", 'DateTime'>
+    readonly updatedAt: FieldRef<"AgencyPropertyGrant", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AgencyPropertyGrant findUnique
+   */
+  export type AgencyPropertyGrantFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPropertyGrant to fetch.
+     */
+    where: AgencyPropertyGrantWhereUniqueInput
+  }
+
+  /**
+   * AgencyPropertyGrant findUniqueOrThrow
+   */
+  export type AgencyPropertyGrantFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPropertyGrant to fetch.
+     */
+    where: AgencyPropertyGrantWhereUniqueInput
+  }
+
+  /**
+   * AgencyPropertyGrant findFirst
+   */
+  export type AgencyPropertyGrantFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPropertyGrant to fetch.
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPropertyGrants to fetch.
+     */
+    orderBy?: AgencyPropertyGrantOrderByWithRelationInput | AgencyPropertyGrantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgencyPropertyGrants.
+     */
+    cursor?: AgencyPropertyGrantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPropertyGrants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPropertyGrants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgencyPropertyGrants.
+     */
+    distinct?: AgencyPropertyGrantScalarFieldEnum | AgencyPropertyGrantScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPropertyGrant findFirstOrThrow
+   */
+  export type AgencyPropertyGrantFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPropertyGrant to fetch.
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPropertyGrants to fetch.
+     */
+    orderBy?: AgencyPropertyGrantOrderByWithRelationInput | AgencyPropertyGrantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgencyPropertyGrants.
+     */
+    cursor?: AgencyPropertyGrantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPropertyGrants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPropertyGrants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgencyPropertyGrants.
+     */
+    distinct?: AgencyPropertyGrantScalarFieldEnum | AgencyPropertyGrantScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPropertyGrant findMany
+   */
+  export type AgencyPropertyGrantFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * Filter, which AgencyPropertyGrants to fetch.
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgencyPropertyGrants to fetch.
+     */
+    orderBy?: AgencyPropertyGrantOrderByWithRelationInput | AgencyPropertyGrantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AgencyPropertyGrants.
+     */
+    cursor?: AgencyPropertyGrantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgencyPropertyGrants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgencyPropertyGrants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgencyPropertyGrants.
+     */
+    distinct?: AgencyPropertyGrantScalarFieldEnum | AgencyPropertyGrantScalarFieldEnum[]
+  }
+
+  /**
+   * AgencyPropertyGrant create
+   */
+  export type AgencyPropertyGrantCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AgencyPropertyGrant.
+     */
+    data: XOR<AgencyPropertyGrantCreateInput, AgencyPropertyGrantUncheckedCreateInput>
+  }
+
+  /**
+   * AgencyPropertyGrant createMany
+   */
+  export type AgencyPropertyGrantCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AgencyPropertyGrants.
+     */
+    data: AgencyPropertyGrantCreateManyInput | AgencyPropertyGrantCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgencyPropertyGrant createManyAndReturn
+   */
+  export type AgencyPropertyGrantCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * The data used to create many AgencyPropertyGrants.
+     */
+    data: AgencyPropertyGrantCreateManyInput | AgencyPropertyGrantCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AgencyPropertyGrant update
+   */
+  export type AgencyPropertyGrantUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AgencyPropertyGrant.
+     */
+    data: XOR<AgencyPropertyGrantUpdateInput, AgencyPropertyGrantUncheckedUpdateInput>
+    /**
+     * Choose, which AgencyPropertyGrant to update.
+     */
+    where: AgencyPropertyGrantWhereUniqueInput
+  }
+
+  /**
+   * AgencyPropertyGrant updateMany
+   */
+  export type AgencyPropertyGrantUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AgencyPropertyGrants.
+     */
+    data: XOR<AgencyPropertyGrantUpdateManyMutationInput, AgencyPropertyGrantUncheckedUpdateManyInput>
+    /**
+     * Filter which AgencyPropertyGrants to update
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * Limit how many AgencyPropertyGrants to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgencyPropertyGrant updateManyAndReturn
+   */
+  export type AgencyPropertyGrantUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * The data used to update AgencyPropertyGrants.
+     */
+    data: XOR<AgencyPropertyGrantUpdateManyMutationInput, AgencyPropertyGrantUncheckedUpdateManyInput>
+    /**
+     * Filter which AgencyPropertyGrants to update
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * Limit how many AgencyPropertyGrants to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AgencyPropertyGrant upsert
+   */
+  export type AgencyPropertyGrantUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AgencyPropertyGrant to update in case it exists.
+     */
+    where: AgencyPropertyGrantWhereUniqueInput
+    /**
+     * In case the AgencyPropertyGrant found by the `where` argument doesn't exist, create a new AgencyPropertyGrant with this data.
+     */
+    create: XOR<AgencyPropertyGrantCreateInput, AgencyPropertyGrantUncheckedCreateInput>
+    /**
+     * In case the AgencyPropertyGrant was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AgencyPropertyGrantUpdateInput, AgencyPropertyGrantUncheckedUpdateInput>
+  }
+
+  /**
+   * AgencyPropertyGrant delete
+   */
+  export type AgencyPropertyGrantDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+    /**
+     * Filter which AgencyPropertyGrant to delete.
+     */
+    where: AgencyPropertyGrantWhereUniqueInput
+  }
+
+  /**
+   * AgencyPropertyGrant deleteMany
+   */
+  export type AgencyPropertyGrantDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgencyPropertyGrants to delete
+     */
+    where?: AgencyPropertyGrantWhereInput
+    /**
+     * Limit how many AgencyPropertyGrants to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgencyPropertyGrant without action
+   */
+  export type AgencyPropertyGrantDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgencyPropertyGrant
+     */
+    select?: AgencyPropertyGrantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgencyPropertyGrant
+     */
+    omit?: AgencyPropertyGrantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgencyPropertyGrantInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -87259,6 +92258,33 @@ export namespace Prisma {
   export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
 
 
+  export const ElektrawebBridgePolicyScalarFieldEnum: {
+    organizationId: 'organizationId',
+    inboundEnabled: 'inboundEnabled',
+    writeEnabled: 'writeEnabled',
+    elektrawebHotelId: 'elektrawebHotelId',
+    spaDepId: 'spaDepId',
+    spaCurrencyId: 'spaCurrencyId',
+    walkinResId: 'walkinResId',
+    walkinResNameId: 'walkinResNameId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ElektrawebBridgePolicyScalarFieldEnum = (typeof ElektrawebBridgePolicyScalarFieldEnum)[keyof typeof ElektrawebBridgePolicyScalarFieldEnum]
+
+
+  export const ClinicCutoverPolicyScalarFieldEnum: {
+    organizationId: 'organizationId',
+    elektrawebDualRun: 'elektrawebDualRun',
+    hotelOrganizationId: 'hotelOrganizationId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ClinicCutoverPolicyScalarFieldEnum = (typeof ClinicCutoverPolicyScalarFieldEnum)[keyof typeof ClinicCutoverPolicyScalarFieldEnum]
+
+
   export const UserScalarFieldEnum: {
     id: 'id',
     email: 'email',
@@ -87694,6 +92720,34 @@ export namespace Prisma {
   };
 
   export type PlatformLoyaltyLedgerScalarFieldEnum = (typeof PlatformLoyaltyLedgerScalarFieldEnum)[keyof typeof PlatformLoyaltyLedgerScalarFieldEnum]
+
+
+  export const AgencyPortalAccountScalarFieldEnum: {
+    id: 'id',
+    email: 'email',
+    passwordHash: 'passwordHash',
+    fullName: 'fullName',
+    active: 'active',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AgencyPortalAccountScalarFieldEnum = (typeof AgencyPortalAccountScalarFieldEnum)[keyof typeof AgencyPortalAccountScalarFieldEnum]
+
+
+  export const AgencyPropertyGrantScalarFieldEnum: {
+    id: 'id',
+    accountId: 'accountId',
+    organizationId: 'organizationId',
+    agencyVoen: 'agencyVoen',
+    localAgencyId: 'localAgencyId',
+    localAgencyCode: 'localAgencyCode',
+    revokedAt: 'revokedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AgencyPropertyGrantScalarFieldEnum = (typeof AgencyPropertyGrantScalarFieldEnum)[keyof typeof AgencyPropertyGrantScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -91530,10 +96584,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
+    elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
+    clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
+    clinicCutoverAsHotel?: ClinicCutoverPolicyListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
     holding?: XOR<HoldingNullableScalarRelationFilter, HoldingWhereInput> | null
+    agencyPropertyGrants?: AgencyPropertyGrantListRelationFilter
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -91591,10 +96649,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentOrderByRelationAggregateInput
     workforceEmployments?: WorkforceEmploymentOrderByRelationAggregateInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyOrderByWithRelationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyOrderByWithRelationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyOrderByRelationAggregateInput
     owner?: UserOrderByWithRelationInput
     parentOrg?: OrganizationOrderByWithRelationInput
     departments?: OrganizationOrderByRelationAggregateInput
     holding?: HoldingOrderByWithRelationInput
+    agencyPropertyGrants?: AgencyPropertyGrantOrderByRelationAggregateInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -91655,10 +96717,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
+    elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
+    clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
+    clinicCutoverAsHotel?: ClinicCutoverPolicyListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
     holding?: XOR<HoldingNullableScalarRelationFilter, HoldingWhereInput> | null
+    agencyPropertyGrants?: AgencyPropertyGrantListRelationFilter
   }, "id" | "taxIdBlindIndex" | "drakarisClientId">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -91725,6 +96791,146 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Organization"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
+  }
+
+  export type ElektrawebBridgePolicyWhereInput = {
+    AND?: ElektrawebBridgePolicyWhereInput | ElektrawebBridgePolicyWhereInput[]
+    OR?: ElektrawebBridgePolicyWhereInput[]
+    NOT?: ElektrawebBridgePolicyWhereInput | ElektrawebBridgePolicyWhereInput[]
+    organizationId?: UuidFilter<"ElektrawebBridgePolicy"> | string
+    inboundEnabled?: BoolFilter<"ElektrawebBridgePolicy"> | boolean
+    writeEnabled?: BoolFilter<"ElektrawebBridgePolicy"> | boolean
+    elektrawebHotelId?: IntNullableFilter<"ElektrawebBridgePolicy"> | number | null
+    spaDepId?: IntNullableFilter<"ElektrawebBridgePolicy"> | number | null
+    spaCurrencyId?: IntNullableFilter<"ElektrawebBridgePolicy"> | number | null
+    walkinResId?: StringNullableFilter<"ElektrawebBridgePolicy"> | string | null
+    walkinResNameId?: StringNullableFilter<"ElektrawebBridgePolicy"> | string | null
+    createdAt?: DateTimeFilter<"ElektrawebBridgePolicy"> | Date | string
+    updatedAt?: DateTimeFilter<"ElektrawebBridgePolicy"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type ElektrawebBridgePolicyOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    inboundEnabled?: SortOrder
+    writeEnabled?: SortOrder
+    elektrawebHotelId?: SortOrderInput | SortOrder
+    spaDepId?: SortOrderInput | SortOrder
+    spaCurrencyId?: SortOrderInput | SortOrder
+    walkinResId?: SortOrderInput | SortOrder
+    walkinResNameId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type ElektrawebBridgePolicyWhereUniqueInput = Prisma.AtLeast<{
+    organizationId?: string
+    AND?: ElektrawebBridgePolicyWhereInput | ElektrawebBridgePolicyWhereInput[]
+    OR?: ElektrawebBridgePolicyWhereInput[]
+    NOT?: ElektrawebBridgePolicyWhereInput | ElektrawebBridgePolicyWhereInput[]
+    inboundEnabled?: BoolFilter<"ElektrawebBridgePolicy"> | boolean
+    writeEnabled?: BoolFilter<"ElektrawebBridgePolicy"> | boolean
+    elektrawebHotelId?: IntNullableFilter<"ElektrawebBridgePolicy"> | number | null
+    spaDepId?: IntNullableFilter<"ElektrawebBridgePolicy"> | number | null
+    spaCurrencyId?: IntNullableFilter<"ElektrawebBridgePolicy"> | number | null
+    walkinResId?: StringNullableFilter<"ElektrawebBridgePolicy"> | string | null
+    walkinResNameId?: StringNullableFilter<"ElektrawebBridgePolicy"> | string | null
+    createdAt?: DateTimeFilter<"ElektrawebBridgePolicy"> | Date | string
+    updatedAt?: DateTimeFilter<"ElektrawebBridgePolicy"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "organizationId">
+
+  export type ElektrawebBridgePolicyOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    inboundEnabled?: SortOrder
+    writeEnabled?: SortOrder
+    elektrawebHotelId?: SortOrderInput | SortOrder
+    spaDepId?: SortOrderInput | SortOrder
+    spaCurrencyId?: SortOrderInput | SortOrder
+    walkinResId?: SortOrderInput | SortOrder
+    walkinResNameId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ElektrawebBridgePolicyCountOrderByAggregateInput
+    _avg?: ElektrawebBridgePolicyAvgOrderByAggregateInput
+    _max?: ElektrawebBridgePolicyMaxOrderByAggregateInput
+    _min?: ElektrawebBridgePolicyMinOrderByAggregateInput
+    _sum?: ElektrawebBridgePolicySumOrderByAggregateInput
+  }
+
+  export type ElektrawebBridgePolicyScalarWhereWithAggregatesInput = {
+    AND?: ElektrawebBridgePolicyScalarWhereWithAggregatesInput | ElektrawebBridgePolicyScalarWhereWithAggregatesInput[]
+    OR?: ElektrawebBridgePolicyScalarWhereWithAggregatesInput[]
+    NOT?: ElektrawebBridgePolicyScalarWhereWithAggregatesInput | ElektrawebBridgePolicyScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"ElektrawebBridgePolicy"> | string
+    inboundEnabled?: BoolWithAggregatesFilter<"ElektrawebBridgePolicy"> | boolean
+    writeEnabled?: BoolWithAggregatesFilter<"ElektrawebBridgePolicy"> | boolean
+    elektrawebHotelId?: IntNullableWithAggregatesFilter<"ElektrawebBridgePolicy"> | number | null
+    spaDepId?: IntNullableWithAggregatesFilter<"ElektrawebBridgePolicy"> | number | null
+    spaCurrencyId?: IntNullableWithAggregatesFilter<"ElektrawebBridgePolicy"> | number | null
+    walkinResId?: StringNullableWithAggregatesFilter<"ElektrawebBridgePolicy"> | string | null
+    walkinResNameId?: StringNullableWithAggregatesFilter<"ElektrawebBridgePolicy"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ElektrawebBridgePolicy"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ElektrawebBridgePolicy"> | Date | string
+  }
+
+  export type ClinicCutoverPolicyWhereInput = {
+    AND?: ClinicCutoverPolicyWhereInput | ClinicCutoverPolicyWhereInput[]
+    OR?: ClinicCutoverPolicyWhereInput[]
+    NOT?: ClinicCutoverPolicyWhereInput | ClinicCutoverPolicyWhereInput[]
+    organizationId?: UuidFilter<"ClinicCutoverPolicy"> | string
+    elektrawebDualRun?: BoolFilter<"ClinicCutoverPolicy"> | boolean
+    hotelOrganizationId?: UuidNullableFilter<"ClinicCutoverPolicy"> | string | null
+    createdAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
+    updatedAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    hotelOrganization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+  }
+
+  export type ClinicCutoverPolicyOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    elektrawebDualRun?: SortOrder
+    hotelOrganizationId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    hotelOrganization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type ClinicCutoverPolicyWhereUniqueInput = Prisma.AtLeast<{
+    organizationId?: string
+    AND?: ClinicCutoverPolicyWhereInput | ClinicCutoverPolicyWhereInput[]
+    OR?: ClinicCutoverPolicyWhereInput[]
+    NOT?: ClinicCutoverPolicyWhereInput | ClinicCutoverPolicyWhereInput[]
+    elektrawebDualRun?: BoolFilter<"ClinicCutoverPolicy"> | boolean
+    hotelOrganizationId?: UuidNullableFilter<"ClinicCutoverPolicy"> | string | null
+    createdAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
+    updatedAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    hotelOrganization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+  }, "organizationId">
+
+  export type ClinicCutoverPolicyOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    elektrawebDualRun?: SortOrder
+    hotelOrganizationId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ClinicCutoverPolicyCountOrderByAggregateInput
+    _max?: ClinicCutoverPolicyMaxOrderByAggregateInput
+    _min?: ClinicCutoverPolicyMinOrderByAggregateInput
+  }
+
+  export type ClinicCutoverPolicyScalarWhereWithAggregatesInput = {
+    AND?: ClinicCutoverPolicyScalarWhereWithAggregatesInput | ClinicCutoverPolicyScalarWhereWithAggregatesInput[]
+    OR?: ClinicCutoverPolicyScalarWhereWithAggregatesInput[]
+    NOT?: ClinicCutoverPolicyScalarWhereWithAggregatesInput | ClinicCutoverPolicyScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"ClinicCutoverPolicy"> | string
+    elektrawebDualRun?: BoolWithAggregatesFilter<"ClinicCutoverPolicy"> | boolean
+    hotelOrganizationId?: UuidNullableWithAggregatesFilter<"ClinicCutoverPolicy"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ClinicCutoverPolicy"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ClinicCutoverPolicy"> | Date | string
   }
 
   export type UserWhereInput = {
@@ -94000,6 +99206,150 @@ export namespace Prisma {
     reason?: StringWithAggregatesFilter<"PlatformLoyaltyLedger"> | string
     promotionCode?: StringNullableWithAggregatesFilter<"PlatformLoyaltyLedger"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PlatformLoyaltyLedger"> | Date | string
+  }
+
+  export type AgencyPortalAccountWhereInput = {
+    AND?: AgencyPortalAccountWhereInput | AgencyPortalAccountWhereInput[]
+    OR?: AgencyPortalAccountWhereInput[]
+    NOT?: AgencyPortalAccountWhereInput | AgencyPortalAccountWhereInput[]
+    id?: UuidFilter<"AgencyPortalAccount"> | string
+    email?: StringFilter<"AgencyPortalAccount"> | string
+    passwordHash?: StringFilter<"AgencyPortalAccount"> | string
+    fullName?: StringNullableFilter<"AgencyPortalAccount"> | string | null
+    active?: BoolFilter<"AgencyPortalAccount"> | boolean
+    createdAt?: DateTimeFilter<"AgencyPortalAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"AgencyPortalAccount"> | Date | string
+    grants?: AgencyPropertyGrantListRelationFilter
+  }
+
+  export type AgencyPortalAccountOrderByWithRelationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    fullName?: SortOrderInput | SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    grants?: AgencyPropertyGrantOrderByRelationAggregateInput
+  }
+
+  export type AgencyPortalAccountWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    email?: string
+    AND?: AgencyPortalAccountWhereInput | AgencyPortalAccountWhereInput[]
+    OR?: AgencyPortalAccountWhereInput[]
+    NOT?: AgencyPortalAccountWhereInput | AgencyPortalAccountWhereInput[]
+    passwordHash?: StringFilter<"AgencyPortalAccount"> | string
+    fullName?: StringNullableFilter<"AgencyPortalAccount"> | string | null
+    active?: BoolFilter<"AgencyPortalAccount"> | boolean
+    createdAt?: DateTimeFilter<"AgencyPortalAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"AgencyPortalAccount"> | Date | string
+    grants?: AgencyPropertyGrantListRelationFilter
+  }, "id" | "email">
+
+  export type AgencyPortalAccountOrderByWithAggregationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    fullName?: SortOrderInput | SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AgencyPortalAccountCountOrderByAggregateInput
+    _max?: AgencyPortalAccountMaxOrderByAggregateInput
+    _min?: AgencyPortalAccountMinOrderByAggregateInput
+  }
+
+  export type AgencyPortalAccountScalarWhereWithAggregatesInput = {
+    AND?: AgencyPortalAccountScalarWhereWithAggregatesInput | AgencyPortalAccountScalarWhereWithAggregatesInput[]
+    OR?: AgencyPortalAccountScalarWhereWithAggregatesInput[]
+    NOT?: AgencyPortalAccountScalarWhereWithAggregatesInput | AgencyPortalAccountScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"AgencyPortalAccount"> | string
+    email?: StringWithAggregatesFilter<"AgencyPortalAccount"> | string
+    passwordHash?: StringWithAggregatesFilter<"AgencyPortalAccount"> | string
+    fullName?: StringNullableWithAggregatesFilter<"AgencyPortalAccount"> | string | null
+    active?: BoolWithAggregatesFilter<"AgencyPortalAccount"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"AgencyPortalAccount"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AgencyPortalAccount"> | Date | string
+  }
+
+  export type AgencyPropertyGrantWhereInput = {
+    AND?: AgencyPropertyGrantWhereInput | AgencyPropertyGrantWhereInput[]
+    OR?: AgencyPropertyGrantWhereInput[]
+    NOT?: AgencyPropertyGrantWhereInput | AgencyPropertyGrantWhereInput[]
+    id?: UuidFilter<"AgencyPropertyGrant"> | string
+    accountId?: UuidFilter<"AgencyPropertyGrant"> | string
+    organizationId?: UuidFilter<"AgencyPropertyGrant"> | string
+    agencyVoen?: StringFilter<"AgencyPropertyGrant"> | string
+    localAgencyId?: StringFilter<"AgencyPropertyGrant"> | string
+    localAgencyCode?: StringNullableFilter<"AgencyPropertyGrant"> | string | null
+    revokedAt?: DateTimeNullableFilter<"AgencyPropertyGrant"> | Date | string | null
+    createdAt?: DateTimeFilter<"AgencyPropertyGrant"> | Date | string
+    updatedAt?: DateTimeFilter<"AgencyPropertyGrant"> | Date | string
+    account?: XOR<AgencyPortalAccountScalarRelationFilter, AgencyPortalAccountWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type AgencyPropertyGrantOrderByWithRelationInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    organizationId?: SortOrder
+    agencyVoen?: SortOrder
+    localAgencyId?: SortOrder
+    localAgencyCode?: SortOrderInput | SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    account?: AgencyPortalAccountOrderByWithRelationInput
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type AgencyPropertyGrantWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    accountId_organizationId_localAgencyId?: AgencyPropertyGrantAccountIdOrganizationIdLocalAgencyIdCompoundUniqueInput
+    AND?: AgencyPropertyGrantWhereInput | AgencyPropertyGrantWhereInput[]
+    OR?: AgencyPropertyGrantWhereInput[]
+    NOT?: AgencyPropertyGrantWhereInput | AgencyPropertyGrantWhereInput[]
+    accountId?: UuidFilter<"AgencyPropertyGrant"> | string
+    organizationId?: UuidFilter<"AgencyPropertyGrant"> | string
+    agencyVoen?: StringFilter<"AgencyPropertyGrant"> | string
+    localAgencyId?: StringFilter<"AgencyPropertyGrant"> | string
+    localAgencyCode?: StringNullableFilter<"AgencyPropertyGrant"> | string | null
+    revokedAt?: DateTimeNullableFilter<"AgencyPropertyGrant"> | Date | string | null
+    createdAt?: DateTimeFilter<"AgencyPropertyGrant"> | Date | string
+    updatedAt?: DateTimeFilter<"AgencyPropertyGrant"> | Date | string
+    account?: XOR<AgencyPortalAccountScalarRelationFilter, AgencyPortalAccountWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "accountId_organizationId_localAgencyId">
+
+  export type AgencyPropertyGrantOrderByWithAggregationInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    organizationId?: SortOrder
+    agencyVoen?: SortOrder
+    localAgencyId?: SortOrder
+    localAgencyCode?: SortOrderInput | SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AgencyPropertyGrantCountOrderByAggregateInput
+    _max?: AgencyPropertyGrantMaxOrderByAggregateInput
+    _min?: AgencyPropertyGrantMinOrderByAggregateInput
+  }
+
+  export type AgencyPropertyGrantScalarWhereWithAggregatesInput = {
+    AND?: AgencyPropertyGrantScalarWhereWithAggregatesInput | AgencyPropertyGrantScalarWhereWithAggregatesInput[]
+    OR?: AgencyPropertyGrantScalarWhereWithAggregatesInput[]
+    NOT?: AgencyPropertyGrantScalarWhereWithAggregatesInput | AgencyPropertyGrantScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"AgencyPropertyGrant"> | string
+    accountId?: UuidWithAggregatesFilter<"AgencyPropertyGrant"> | string
+    organizationId?: UuidWithAggregatesFilter<"AgencyPropertyGrant"> | string
+    agencyVoen?: StringWithAggregatesFilter<"AgencyPropertyGrant"> | string
+    localAgencyId?: StringWithAggregatesFilter<"AgencyPropertyGrant"> | string
+    localAgencyCode?: StringNullableWithAggregatesFilter<"AgencyPropertyGrant"> | string | null
+    revokedAt?: DateTimeNullableWithAggregatesFilter<"AgencyPropertyGrant"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AgencyPropertyGrant"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AgencyPropertyGrant"> | Date | string
   }
 
   export type TenantBillingCreateInput = {
@@ -97340,10 +102690,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -97401,7 +102755,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -97456,10 +102814,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -97517,7 +102879,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -97600,6 +102966,150 @@ export namespace Prisma {
     settings?: JsonNullValueInput | InputJsonValue
     drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ElektrawebBridgePolicyCreateInput = {
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: number | null
+    spaDepId?: number | null
+    spaCurrencyId?: number | null
+    walkinResId?: string | null
+    walkinResNameId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutElektrawebBridgePolicyInput
+  }
+
+  export type ElektrawebBridgePolicyUncheckedCreateInput = {
+    organizationId: string
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: number | null
+    spaDepId?: number | null
+    spaCurrencyId?: number | null
+    walkinResId?: string | null
+    walkinResNameId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ElektrawebBridgePolicyUpdateInput = {
+    inboundEnabled?: BoolFieldUpdateOperationsInput | boolean
+    writeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    elektrawebHotelId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaDepId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaCurrencyId?: NullableIntFieldUpdateOperationsInput | number | null
+    walkinResId?: NullableStringFieldUpdateOperationsInput | string | null
+    walkinResNameId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutElektrawebBridgePolicyNestedInput
+  }
+
+  export type ElektrawebBridgePolicyUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    inboundEnabled?: BoolFieldUpdateOperationsInput | boolean
+    writeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    elektrawebHotelId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaDepId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaCurrencyId?: NullableIntFieldUpdateOperationsInput | number | null
+    walkinResId?: NullableStringFieldUpdateOperationsInput | string | null
+    walkinResNameId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ElektrawebBridgePolicyCreateManyInput = {
+    organizationId: string
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: number | null
+    spaDepId?: number | null
+    spaCurrencyId?: number | null
+    walkinResId?: string | null
+    walkinResNameId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ElektrawebBridgePolicyUpdateManyMutationInput = {
+    inboundEnabled?: BoolFieldUpdateOperationsInput | boolean
+    writeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    elektrawebHotelId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaDepId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaCurrencyId?: NullableIntFieldUpdateOperationsInput | number | null
+    walkinResId?: NullableStringFieldUpdateOperationsInput | string | null
+    walkinResNameId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ElektrawebBridgePolicyUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    inboundEnabled?: BoolFieldUpdateOperationsInput | boolean
+    writeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    elektrawebHotelId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaDepId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaCurrencyId?: NullableIntFieldUpdateOperationsInput | number | null
+    walkinResId?: NullableStringFieldUpdateOperationsInput | string | null
+    walkinResNameId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClinicCutoverPolicyCreateInput = {
+    elektrawebDualRun?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutClinicCutoverPolicyInput
+    hotelOrganization?: OrganizationCreateNestedOneWithoutClinicCutoverAsHotelInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedCreateInput = {
+    organizationId: string
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClinicCutoverPolicyUpdateInput = {
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutClinicCutoverPolicyNestedInput
+    hotelOrganization?: OrganizationUpdateOneWithoutClinicCutoverAsHotelNestedInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    hotelOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClinicCutoverPolicyCreateManyInput = {
+    organizationId: string
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClinicCutoverPolicyUpdateManyMutationInput = {
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    hotelOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -100082,6 +105592,162 @@ export namespace Prisma {
     reason?: StringFieldUpdateOperationsInput | string
     promotionCode?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPortalAccountCreateInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    fullName?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    grants?: AgencyPropertyGrantCreateNestedManyWithoutAccountInput
+  }
+
+  export type AgencyPortalAccountUncheckedCreateInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    fullName?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    grants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AgencyPortalAccountUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    grants?: AgencyPropertyGrantUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AgencyPortalAccountUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    grants?: AgencyPropertyGrantUncheckedUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AgencyPortalAccountCreateManyInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    fullName?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPortalAccountUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPortalAccountUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantCreateInput = {
+    id?: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    account: AgencyPortalAccountCreateNestedOneWithoutGrantsInput
+    organization: OrganizationCreateNestedOneWithoutAgencyPropertyGrantsInput
+  }
+
+  export type AgencyPropertyGrantUncheckedCreateInput = {
+    id?: string
+    accountId: string
+    organizationId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPropertyGrantUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    account?: AgencyPortalAccountUpdateOneRequiredWithoutGrantsNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutAgencyPropertyGrantsNestedInput
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accountId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantCreateManyInput = {
+    id?: string
+    accountId: string
+    organizationId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPropertyGrantUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accountId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -102895,6 +108561,22 @@ export namespace Prisma {
     none?: WorkforceAssignmentWhereInput
   }
 
+  export type ElektrawebBridgePolicyNullableScalarRelationFilter = {
+    is?: ElektrawebBridgePolicyWhereInput | null
+    isNot?: ElektrawebBridgePolicyWhereInput | null
+  }
+
+  export type ClinicCutoverPolicyNullableScalarRelationFilter = {
+    is?: ClinicCutoverPolicyWhereInput | null
+    isNot?: ClinicCutoverPolicyWhereInput | null
+  }
+
+  export type ClinicCutoverPolicyListRelationFilter = {
+    every?: ClinicCutoverPolicyWhereInput
+    some?: ClinicCutoverPolicyWhereInput
+    none?: ClinicCutoverPolicyWhereInput
+  }
+
   export type UserNullableScalarRelationFilter = {
     is?: UserWhereInput | null
     isNot?: UserWhereInput | null
@@ -102914,6 +108596,12 @@ export namespace Prisma {
   export type HoldingNullableScalarRelationFilter = {
     is?: HoldingWhereInput | null
     isNot?: HoldingWhereInput | null
+  }
+
+  export type AgencyPropertyGrantListRelationFilter = {
+    every?: AgencyPropertyGrantWhereInput
+    some?: AgencyPropertyGrantWhereInput
+    none?: AgencyPropertyGrantWhereInput
   }
 
   export type UsageMeterEventOrderByRelationAggregateInput = {
@@ -103000,7 +108688,15 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type ClinicCutoverPolicyOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type OrganizationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AgencyPropertyGrantOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -103135,6 +108831,81 @@ export namespace Prisma {
     _sum?: NestedBigIntFilter<$PrismaModel>
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type ElektrawebBridgePolicyCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    inboundEnabled?: SortOrder
+    writeEnabled?: SortOrder
+    elektrawebHotelId?: SortOrder
+    spaDepId?: SortOrder
+    spaCurrencyId?: SortOrder
+    walkinResId?: SortOrder
+    walkinResNameId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ElektrawebBridgePolicyAvgOrderByAggregateInput = {
+    elektrawebHotelId?: SortOrder
+    spaDepId?: SortOrder
+    spaCurrencyId?: SortOrder
+  }
+
+  export type ElektrawebBridgePolicyMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    inboundEnabled?: SortOrder
+    writeEnabled?: SortOrder
+    elektrawebHotelId?: SortOrder
+    spaDepId?: SortOrder
+    spaCurrencyId?: SortOrder
+    walkinResId?: SortOrder
+    walkinResNameId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ElektrawebBridgePolicyMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    inboundEnabled?: SortOrder
+    writeEnabled?: SortOrder
+    elektrawebHotelId?: SortOrder
+    spaDepId?: SortOrder
+    spaCurrencyId?: SortOrder
+    walkinResId?: SortOrder
+    walkinResNameId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ElektrawebBridgePolicySumOrderByAggregateInput = {
+    elektrawebHotelId?: SortOrder
+    spaDepId?: SortOrder
+    spaCurrencyId?: SortOrder
+  }
+
+  export type ClinicCutoverPolicyCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    elektrawebDualRun?: SortOrder
+    hotelOrganizationId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ClinicCutoverPolicyMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    elektrawebDualRun?: SortOrder
+    hotelOrganizationId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ClinicCutoverPolicyMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    elektrawebDualRun?: SortOrder
+    hotelOrganizationId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type HoldingListRelationFilter = {
@@ -104729,6 +110500,83 @@ export namespace Prisma {
 
   export type PlatformLoyaltyLedgerSumOrderByAggregateInput = {
     pointsDelta?: SortOrder
+  }
+
+  export type AgencyPortalAccountCountOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    fullName?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgencyPortalAccountMaxOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    fullName?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgencyPortalAccountMinOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    fullName?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgencyPortalAccountScalarRelationFilter = {
+    is?: AgencyPortalAccountWhereInput
+    isNot?: AgencyPortalAccountWhereInput
+  }
+
+  export type AgencyPropertyGrantAccountIdOrganizationIdLocalAgencyIdCompoundUniqueInput = {
+    accountId: string
+    organizationId: string
+    localAgencyId: string
+  }
+
+  export type AgencyPropertyGrantCountOrderByAggregateInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    organizationId?: SortOrder
+    agencyVoen?: SortOrder
+    localAgencyId?: SortOrder
+    localAgencyCode?: SortOrder
+    revokedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgencyPropertyGrantMaxOrderByAggregateInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    organizationId?: SortOrder
+    agencyVoen?: SortOrder
+    localAgencyId?: SortOrder
+    localAgencyCode?: SortOrder
+    revokedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgencyPropertyGrantMinOrderByAggregateInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    organizationId?: SortOrder
+    agencyVoen?: SortOrder
+    localAgencyId?: SortOrder
+    localAgencyCode?: SortOrder
+    revokedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type TenantBillingCreateactiveModulesInput = {
@@ -107109,6 +112957,25 @@ export namespace Prisma {
     connect?: OrgUnitCommercialLinkWhereUniqueInput | OrgUnitCommercialLinkWhereUniqueInput[]
   }
 
+  export type ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<ElektrawebBridgePolicyCreateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ElektrawebBridgePolicyCreateOrConnectWithoutOrganizationInput
+    connect?: ElektrawebBridgePolicyWhereUniqueInput
+  }
+
+  export type ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutOrganizationInput
+    connect?: ClinicCutoverPolicyWhereUniqueInput
+  }
+
+  export type ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput> | ClinicCutoverPolicyCreateWithoutHotelOrganizationInput[] | ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput[]
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput | ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput[]
+    createMany?: ClinicCutoverPolicyCreateManyHotelOrganizationInputEnvelope
+    connect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+  }
+
   export type UserCreateNestedOneWithoutOwnedOrganizationsInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -107132,6 +112999,13 @@ export namespace Prisma {
     create?: XOR<HoldingCreateWithoutOrganizationsInput, HoldingUncheckedCreateWithoutOrganizationsInput>
     connectOrCreate?: HoldingCreateOrConnectWithoutOrganizationsInput
     connect?: HoldingWhereUniqueInput
+  }
+
+  export type AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutOrganizationInput, AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput> | AgencyPropertyGrantCreateWithoutOrganizationInput[] | AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput | AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput[]
+    createMany?: AgencyPropertyGrantCreateManyOrganizationInputEnvelope
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
   }
 
   export type UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -107329,11 +113203,37 @@ export namespace Prisma {
     connect?: OrgUnitCommercialLinkWhereUniqueInput | OrgUnitCommercialLinkWhereUniqueInput[]
   }
 
+  export type ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<ElektrawebBridgePolicyCreateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ElektrawebBridgePolicyCreateOrConnectWithoutOrganizationInput
+    connect?: ElektrawebBridgePolicyWhereUniqueInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutOrganizationInput
+    connect?: ClinicCutoverPolicyWhereUniqueInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput> | ClinicCutoverPolicyCreateWithoutHotelOrganizationInput[] | ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput[]
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput | ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput[]
+    createMany?: ClinicCutoverPolicyCreateManyHotelOrganizationInputEnvelope
+    connect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+  }
+
   export type OrganizationUncheckedCreateNestedManyWithoutParentOrgInput = {
     create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
     connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
     createMany?: OrganizationCreateManyParentOrgInputEnvelope
     connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+  }
+
+  export type AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutOrganizationInput, AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput> | AgencyPropertyGrantCreateWithoutOrganizationInput[] | AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput | AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput[]
+    createMany?: AgencyPropertyGrantCreateManyOrganizationInputEnvelope
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
   }
 
   export type EnumOrgOperatingModeFieldUpdateOperationsInput = {
@@ -107745,6 +113645,40 @@ export namespace Prisma {
     deleteMany?: OrgUnitCommercialLinkScalarWhereInput | OrgUnitCommercialLinkScalarWhereInput[]
   }
 
+  export type ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<ElektrawebBridgePolicyCreateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ElektrawebBridgePolicyCreateOrConnectWithoutOrganizationInput
+    upsert?: ElektrawebBridgePolicyUpsertWithoutOrganizationInput
+    disconnect?: ElektrawebBridgePolicyWhereInput | boolean
+    delete?: ElektrawebBridgePolicyWhereInput | boolean
+    connect?: ElektrawebBridgePolicyWhereUniqueInput
+    update?: XOR<XOR<ElektrawebBridgePolicyUpdateToOneWithWhereWithoutOrganizationInput, ElektrawebBridgePolicyUpdateWithoutOrganizationInput>, ElektrawebBridgePolicyUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutOrganizationInput
+    upsert?: ClinicCutoverPolicyUpsertWithoutOrganizationInput
+    disconnect?: ClinicCutoverPolicyWhereInput | boolean
+    delete?: ClinicCutoverPolicyWhereInput | boolean
+    connect?: ClinicCutoverPolicyWhereUniqueInput
+    update?: XOR<XOR<ClinicCutoverPolicyUpdateToOneWithWhereWithoutOrganizationInput, ClinicCutoverPolicyUpdateWithoutOrganizationInput>, ClinicCutoverPolicyUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput> | ClinicCutoverPolicyCreateWithoutHotelOrganizationInput[] | ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput[]
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput | ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput[]
+    upsert?: ClinicCutoverPolicyUpsertWithWhereUniqueWithoutHotelOrganizationInput | ClinicCutoverPolicyUpsertWithWhereUniqueWithoutHotelOrganizationInput[]
+    createMany?: ClinicCutoverPolicyCreateManyHotelOrganizationInputEnvelope
+    set?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    disconnect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    delete?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    connect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    update?: ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput | ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput[]
+    updateMany?: ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput | ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput[]
+    deleteMany?: ClinicCutoverPolicyScalarWhereInput | ClinicCutoverPolicyScalarWhereInput[]
+  }
+
   export type UserUpdateOneWithoutOwnedOrganizationsNestedInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -107787,6 +113721,20 @@ export namespace Prisma {
     delete?: HoldingWhereInput | boolean
     connect?: HoldingWhereUniqueInput
     update?: XOR<XOR<HoldingUpdateToOneWithWhereWithoutOrganizationsInput, HoldingUpdateWithoutOrganizationsInput>, HoldingUncheckedUpdateWithoutOrganizationsInput>
+  }
+
+  export type AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutOrganizationInput, AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput> | AgencyPropertyGrantCreateWithoutOrganizationInput[] | AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput | AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput[]
+    upsert?: AgencyPropertyGrantUpsertWithWhereUniqueWithoutOrganizationInput | AgencyPropertyGrantUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: AgencyPropertyGrantCreateManyOrganizationInputEnvelope
+    set?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    disconnect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    delete?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    update?: AgencyPropertyGrantUpdateWithWhereUniqueWithoutOrganizationInput | AgencyPropertyGrantUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: AgencyPropertyGrantUpdateManyWithWhereWithoutOrganizationInput | AgencyPropertyGrantUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: AgencyPropertyGrantScalarWhereInput | AgencyPropertyGrantScalarWhereInput[]
   }
 
   export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -108177,6 +114125,40 @@ export namespace Prisma {
     deleteMany?: OrgUnitCommercialLinkScalarWhereInput | OrgUnitCommercialLinkScalarWhereInput[]
   }
 
+  export type ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<ElektrawebBridgePolicyCreateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ElektrawebBridgePolicyCreateOrConnectWithoutOrganizationInput
+    upsert?: ElektrawebBridgePolicyUpsertWithoutOrganizationInput
+    disconnect?: ElektrawebBridgePolicyWhereInput | boolean
+    delete?: ElektrawebBridgePolicyWhereInput | boolean
+    connect?: ElektrawebBridgePolicyWhereUniqueInput
+    update?: XOR<XOR<ElektrawebBridgePolicyUpdateToOneWithWhereWithoutOrganizationInput, ElektrawebBridgePolicyUpdateWithoutOrganizationInput>, ElektrawebBridgePolicyUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutOrganizationInput
+    upsert?: ClinicCutoverPolicyUpsertWithoutOrganizationInput
+    disconnect?: ClinicCutoverPolicyWhereInput | boolean
+    delete?: ClinicCutoverPolicyWhereInput | boolean
+    connect?: ClinicCutoverPolicyWhereUniqueInput
+    update?: XOR<XOR<ClinicCutoverPolicyUpdateToOneWithWhereWithoutOrganizationInput, ClinicCutoverPolicyUpdateWithoutOrganizationInput>, ClinicCutoverPolicyUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput = {
+    create?: XOR<ClinicCutoverPolicyCreateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput> | ClinicCutoverPolicyCreateWithoutHotelOrganizationInput[] | ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput[]
+    connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput | ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput[]
+    upsert?: ClinicCutoverPolicyUpsertWithWhereUniqueWithoutHotelOrganizationInput | ClinicCutoverPolicyUpsertWithWhereUniqueWithoutHotelOrganizationInput[]
+    createMany?: ClinicCutoverPolicyCreateManyHotelOrganizationInputEnvelope
+    set?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    disconnect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    delete?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    connect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+    update?: ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput | ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput[]
+    updateMany?: ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput | ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput[]
+    deleteMany?: ClinicCutoverPolicyScalarWhereInput | ClinicCutoverPolicyScalarWhereInput[]
+  }
+
   export type OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput = {
     create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
     connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
@@ -108189,6 +114171,64 @@ export namespace Prisma {
     update?: OrganizationUpdateWithWhereUniqueWithoutParentOrgInput | OrganizationUpdateWithWhereUniqueWithoutParentOrgInput[]
     updateMany?: OrganizationUpdateManyWithWhereWithoutParentOrgInput | OrganizationUpdateManyWithWhereWithoutParentOrgInput[]
     deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutOrganizationInput, AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput> | AgencyPropertyGrantCreateWithoutOrganizationInput[] | AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput | AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput[]
+    upsert?: AgencyPropertyGrantUpsertWithWhereUniqueWithoutOrganizationInput | AgencyPropertyGrantUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: AgencyPropertyGrantCreateManyOrganizationInputEnvelope
+    set?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    disconnect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    delete?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    update?: AgencyPropertyGrantUpdateWithWhereUniqueWithoutOrganizationInput | AgencyPropertyGrantUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: AgencyPropertyGrantUpdateManyWithWhereWithoutOrganizationInput | AgencyPropertyGrantUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: AgencyPropertyGrantScalarWhereInput | AgencyPropertyGrantScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutElektrawebBridgePolicyInput = {
+    create?: XOR<OrganizationCreateWithoutElektrawebBridgePolicyInput, OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutElektrawebBridgePolicyInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutElektrawebBridgePolicyNestedInput = {
+    create?: XOR<OrganizationCreateWithoutElektrawebBridgePolicyInput, OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutElektrawebBridgePolicyInput
+    upsert?: OrganizationUpsertWithoutElektrawebBridgePolicyInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutElektrawebBridgePolicyInput, OrganizationUpdateWithoutElektrawebBridgePolicyInput>, OrganizationUncheckedUpdateWithoutElektrawebBridgePolicyInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutClinicCutoverPolicyInput = {
+    create?: XOR<OrganizationCreateWithoutClinicCutoverPolicyInput, OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutClinicCutoverPolicyInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutClinicCutoverAsHotelInput = {
+    create?: XOR<OrganizationCreateWithoutClinicCutoverAsHotelInput, OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutClinicCutoverAsHotelInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutClinicCutoverPolicyNestedInput = {
+    create?: XOR<OrganizationCreateWithoutClinicCutoverPolicyInput, OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutClinicCutoverPolicyInput
+    upsert?: OrganizationUpsertWithoutClinicCutoverPolicyInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutClinicCutoverPolicyInput, OrganizationUpdateWithoutClinicCutoverPolicyInput>, OrganizationUncheckedUpdateWithoutClinicCutoverPolicyInput>
+  }
+
+  export type OrganizationUpdateOneWithoutClinicCutoverAsHotelNestedInput = {
+    create?: XOR<OrganizationCreateWithoutClinicCutoverAsHotelInput, OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutClinicCutoverAsHotelInput
+    upsert?: OrganizationUpsertWithoutClinicCutoverAsHotelInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutClinicCutoverAsHotelInput, OrganizationUpdateWithoutClinicCutoverAsHotelInput>, OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput>
   }
 
   export type OrganizationMembershipCreateNestedManyWithoutUserInput = {
@@ -109456,6 +115496,76 @@ export namespace Prisma {
     update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlatformLoyaltyLedgerInput, OrganizationUpdateWithoutPlatformLoyaltyLedgerInput>, OrganizationUncheckedUpdateWithoutPlatformLoyaltyLedgerInput>
   }
 
+  export type AgencyPropertyGrantCreateNestedManyWithoutAccountInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutAccountInput, AgencyPropertyGrantUncheckedCreateWithoutAccountInput> | AgencyPropertyGrantCreateWithoutAccountInput[] | AgencyPropertyGrantUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutAccountInput | AgencyPropertyGrantCreateOrConnectWithoutAccountInput[]
+    createMany?: AgencyPropertyGrantCreateManyAccountInputEnvelope
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+  }
+
+  export type AgencyPropertyGrantUncheckedCreateNestedManyWithoutAccountInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutAccountInput, AgencyPropertyGrantUncheckedCreateWithoutAccountInput> | AgencyPropertyGrantCreateWithoutAccountInput[] | AgencyPropertyGrantUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutAccountInput | AgencyPropertyGrantCreateOrConnectWithoutAccountInput[]
+    createMany?: AgencyPropertyGrantCreateManyAccountInputEnvelope
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+  }
+
+  export type AgencyPropertyGrantUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutAccountInput, AgencyPropertyGrantUncheckedCreateWithoutAccountInput> | AgencyPropertyGrantCreateWithoutAccountInput[] | AgencyPropertyGrantUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutAccountInput | AgencyPropertyGrantCreateOrConnectWithoutAccountInput[]
+    upsert?: AgencyPropertyGrantUpsertWithWhereUniqueWithoutAccountInput | AgencyPropertyGrantUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: AgencyPropertyGrantCreateManyAccountInputEnvelope
+    set?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    disconnect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    delete?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    update?: AgencyPropertyGrantUpdateWithWhereUniqueWithoutAccountInput | AgencyPropertyGrantUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: AgencyPropertyGrantUpdateManyWithWhereWithoutAccountInput | AgencyPropertyGrantUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: AgencyPropertyGrantScalarWhereInput | AgencyPropertyGrantScalarWhereInput[]
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<AgencyPropertyGrantCreateWithoutAccountInput, AgencyPropertyGrantUncheckedCreateWithoutAccountInput> | AgencyPropertyGrantCreateWithoutAccountInput[] | AgencyPropertyGrantUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: AgencyPropertyGrantCreateOrConnectWithoutAccountInput | AgencyPropertyGrantCreateOrConnectWithoutAccountInput[]
+    upsert?: AgencyPropertyGrantUpsertWithWhereUniqueWithoutAccountInput | AgencyPropertyGrantUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: AgencyPropertyGrantCreateManyAccountInputEnvelope
+    set?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    disconnect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    delete?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    connect?: AgencyPropertyGrantWhereUniqueInput | AgencyPropertyGrantWhereUniqueInput[]
+    update?: AgencyPropertyGrantUpdateWithWhereUniqueWithoutAccountInput | AgencyPropertyGrantUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: AgencyPropertyGrantUpdateManyWithWhereWithoutAccountInput | AgencyPropertyGrantUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: AgencyPropertyGrantScalarWhereInput | AgencyPropertyGrantScalarWhereInput[]
+  }
+
+  export type AgencyPortalAccountCreateNestedOneWithoutGrantsInput = {
+    create?: XOR<AgencyPortalAccountCreateWithoutGrantsInput, AgencyPortalAccountUncheckedCreateWithoutGrantsInput>
+    connectOrCreate?: AgencyPortalAccountCreateOrConnectWithoutGrantsInput
+    connect?: AgencyPortalAccountWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutAgencyPropertyGrantsInput = {
+    create?: XOR<OrganizationCreateWithoutAgencyPropertyGrantsInput, OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutAgencyPropertyGrantsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type AgencyPortalAccountUpdateOneRequiredWithoutGrantsNestedInput = {
+    create?: XOR<AgencyPortalAccountCreateWithoutGrantsInput, AgencyPortalAccountUncheckedCreateWithoutGrantsInput>
+    connectOrCreate?: AgencyPortalAccountCreateOrConnectWithoutGrantsInput
+    upsert?: AgencyPortalAccountUpsertWithoutGrantsInput
+    connect?: AgencyPortalAccountWhereUniqueInput
+    update?: XOR<XOR<AgencyPortalAccountUpdateToOneWithWhereWithoutGrantsInput, AgencyPortalAccountUpdateWithoutGrantsInput>, AgencyPortalAccountUncheckedUpdateWithoutGrantsInput>
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutAgencyPropertyGrantsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutAgencyPropertyGrantsInput, OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutAgencyPropertyGrantsInput
+    upsert?: OrganizationUpsertWithoutAgencyPropertyGrantsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutAgencyPropertyGrantsInput, OrganizationUpdateWithoutAgencyPropertyGrantsInput>, OrganizationUncheckedUpdateWithoutAgencyPropertyGrantsInput>
+  }
+
   export type NestedUuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -110667,10 +116777,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSubscriptionInput = {
@@ -110727,7 +116841,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSubscriptionInput = {
@@ -110797,10 +116915,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSubscriptionInput = {
@@ -110857,7 +116979,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {
@@ -111149,10 +117275,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput = {
@@ -111209,7 +117339,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput = {
@@ -111322,10 +117456,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput = {
@@ -111382,7 +117520,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutUsageMeterEventsInput = {
@@ -111436,10 +117578,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutUsageMeterEventsInput = {
@@ -111496,7 +117642,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutUsageMeterEventsInput = {
@@ -111566,10 +117716,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutUsageMeterEventsInput = {
@@ -111626,7 +117780,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type PricingBundleCreateWithoutOrganizationBundlesInput = {
@@ -111995,10 +118153,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput = {
@@ -112055,7 +118217,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSatelliteEntitlementsInput = {
@@ -112152,10 +118318,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput = {
@@ -112212,7 +118382,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type SatelliteUpsertWithoutEntitlementsInput = {
@@ -112299,10 +118473,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEndpointsInput = {
@@ -112359,7 +118537,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSatelliteEndpointsInput = {
@@ -112456,10 +118638,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput = {
@@ -112516,7 +118702,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type SatelliteUpsertWithoutEndpointsInput = {
@@ -112603,10 +118793,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlacementJobsInput = {
@@ -112663,7 +118857,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlacementJobsInput = {
@@ -112733,10 +118931,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlacementJobsInput = {
@@ -112793,7 +118995,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutWorkforceAssignmentsInput = {
@@ -112847,10 +119053,14 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
@@ -112907,7 +119117,11 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput = {
@@ -112977,10 +119191,14 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
@@ -113037,7 +119255,11 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrgUnitCreateWithoutWorkforceScopeInput = {
@@ -114170,10 +120392,14 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOrgUnitCommercialLinksInput = {
@@ -114230,7 +120456,11 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOrgUnitCommercialLinksInput = {
@@ -114374,10 +120604,14 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOrgUnitCommercialLinksInput = {
@@ -114434,7 +120668,11 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeUpsertWithoutCommercialLinksInput = {
@@ -115384,10 +121622,14 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceEmploymentsInput = {
@@ -115444,7 +121686,11 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceEmploymentsInput = {
@@ -115912,10 +122158,14 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceEmploymentsInput = {
@@ -115972,7 +122222,11 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeUpsertWithoutEmploymentsInput = {
@@ -117275,10 +123529,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPaymentOrdersInput = {
@@ -117335,7 +123593,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPaymentOrdersInput = {
@@ -117486,10 +123748,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPaymentOrdersInput = {
@@ -117546,7 +123812,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type SubscriptionInvoiceUpsertWithoutPaymentOrderInput = {
@@ -118783,6 +125053,78 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ElektrawebBridgePolicyCreateWithoutOrganizationInput = {
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: number | null
+    spaDepId?: number | null
+    spaCurrencyId?: number | null
+    walkinResId?: string | null
+    walkinResNameId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput = {
+    inboundEnabled?: boolean
+    writeEnabled?: boolean
+    elektrawebHotelId?: number | null
+    spaDepId?: number | null
+    spaCurrencyId?: number | null
+    walkinResId?: string | null
+    walkinResNameId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ElektrawebBridgePolicyCreateOrConnectWithoutOrganizationInput = {
+    where: ElektrawebBridgePolicyWhereUniqueInput
+    create: XOR<ElektrawebBridgePolicyCreateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyCreateWithoutOrganizationInput = {
+    elektrawebDualRun?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    hotelOrganization?: OrganizationCreateNestedOneWithoutClinicCutoverAsHotelInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput = {
+    elektrawebDualRun?: boolean
+    hotelOrganizationId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClinicCutoverPolicyCreateOrConnectWithoutOrganizationInput = {
+    where: ClinicCutoverPolicyWhereUniqueInput
+    create: XOR<ClinicCutoverPolicyCreateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyCreateWithoutHotelOrganizationInput = {
+    elektrawebDualRun?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutClinicCutoverPolicyInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput = {
+    organizationId: string
+    elektrawebDualRun?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput = {
+    where: ClinicCutoverPolicyWhereUniqueInput
+    create: XOR<ClinicCutoverPolicyCreateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyCreateManyHotelOrganizationInputEnvelope = {
+    data: ClinicCutoverPolicyCreateManyHotelOrganizationInput | ClinicCutoverPolicyCreateManyHotelOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserCreateWithoutOwnedOrganizationsInput = {
     id?: string
     email: string
@@ -118874,9 +125216,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutDepartmentsInput = {
@@ -118934,6 +125280,10 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDepartmentsInput = {
@@ -118993,9 +125343,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutParentOrgInput = {
@@ -119052,7 +125406,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutParentOrgInput = {
@@ -119092,6 +125450,38 @@ export namespace Prisma {
   export type HoldingCreateOrConnectWithoutOrganizationsInput = {
     where: HoldingWhereUniqueInput
     create: XOR<HoldingCreateWithoutOrganizationsInput, HoldingUncheckedCreateWithoutOrganizationsInput>
+  }
+
+  export type AgencyPropertyGrantCreateWithoutOrganizationInput = {
+    id?: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    account: AgencyPortalAccountCreateNestedOneWithoutGrantsInput
+  }
+
+  export type AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    accountId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPropertyGrantCreateOrConnectWithoutOrganizationInput = {
+    where: AgencyPropertyGrantWhereUniqueInput
+    create: XOR<AgencyPropertyGrantCreateWithoutOrganizationInput, AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type AgencyPropertyGrantCreateManyOrganizationInputEnvelope = {
+    data: AgencyPropertyGrantCreateManyOrganizationInput | AgencyPropertyGrantCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
   }
 
   export type UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -119897,6 +126287,93 @@ export namespace Prisma {
     data: XOR<OrgUnitCommercialLinkUpdateManyMutationInput, OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationInput>
   }
 
+  export type ElektrawebBridgePolicyUpsertWithoutOrganizationInput = {
+    update: XOR<ElektrawebBridgePolicyUpdateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ElektrawebBridgePolicyCreateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedCreateWithoutOrganizationInput>
+    where?: ElektrawebBridgePolicyWhereInput
+  }
+
+  export type ElektrawebBridgePolicyUpdateToOneWithWhereWithoutOrganizationInput = {
+    where?: ElektrawebBridgePolicyWhereInput
+    data: XOR<ElektrawebBridgePolicyUpdateWithoutOrganizationInput, ElektrawebBridgePolicyUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ElektrawebBridgePolicyUpdateWithoutOrganizationInput = {
+    inboundEnabled?: BoolFieldUpdateOperationsInput | boolean
+    writeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    elektrawebHotelId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaDepId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaCurrencyId?: NullableIntFieldUpdateOperationsInput | number | null
+    walkinResId?: NullableStringFieldUpdateOperationsInput | string | null
+    walkinResNameId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ElektrawebBridgePolicyUncheckedUpdateWithoutOrganizationInput = {
+    inboundEnabled?: BoolFieldUpdateOperationsInput | boolean
+    writeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    elektrawebHotelId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaDepId?: NullableIntFieldUpdateOperationsInput | number | null
+    spaCurrencyId?: NullableIntFieldUpdateOperationsInput | number | null
+    walkinResId?: NullableStringFieldUpdateOperationsInput | string | null
+    walkinResNameId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClinicCutoverPolicyUpsertWithoutOrganizationInput = {
+    update: XOR<ClinicCutoverPolicyUpdateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ClinicCutoverPolicyCreateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutOrganizationInput>
+    where?: ClinicCutoverPolicyWhereInput
+  }
+
+  export type ClinicCutoverPolicyUpdateToOneWithWhereWithoutOrganizationInput = {
+    where?: ClinicCutoverPolicyWhereInput
+    data: XOR<ClinicCutoverPolicyUpdateWithoutOrganizationInput, ClinicCutoverPolicyUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUpdateWithoutOrganizationInput = {
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    hotelOrganization?: OrganizationUpdateOneWithoutClinicCutoverAsHotelNestedInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateWithoutOrganizationInput = {
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    hotelOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClinicCutoverPolicyUpsertWithWhereUniqueWithoutHotelOrganizationInput = {
+    where: ClinicCutoverPolicyWhereUniqueInput
+    update: XOR<ClinicCutoverPolicyUpdateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedUpdateWithoutHotelOrganizationInput>
+    create: XOR<ClinicCutoverPolicyCreateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedCreateWithoutHotelOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput = {
+    where: ClinicCutoverPolicyWhereUniqueInput
+    data: XOR<ClinicCutoverPolicyUpdateWithoutHotelOrganizationInput, ClinicCutoverPolicyUncheckedUpdateWithoutHotelOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput = {
+    where: ClinicCutoverPolicyScalarWhereInput
+    data: XOR<ClinicCutoverPolicyUpdateManyMutationInput, ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationInput>
+  }
+
+  export type ClinicCutoverPolicyScalarWhereInput = {
+    AND?: ClinicCutoverPolicyScalarWhereInput | ClinicCutoverPolicyScalarWhereInput[]
+    OR?: ClinicCutoverPolicyScalarWhereInput[]
+    NOT?: ClinicCutoverPolicyScalarWhereInput | ClinicCutoverPolicyScalarWhereInput[]
+    organizationId?: UuidFilter<"ClinicCutoverPolicy"> | string
+    elektrawebDualRun?: BoolFilter<"ClinicCutoverPolicy"> | boolean
+    hotelOrganizationId?: UuidNullableFilter<"ClinicCutoverPolicy"> | string | null
+    createdAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
+    updatedAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
+  }
+
   export type UserUpsertWithoutOwnedOrganizationsInput = {
     update: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
     create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
@@ -120005,9 +126482,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDepartmentsInput = {
@@ -120065,6 +126546,10 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithWhereUniqueWithoutParentOrgInput = {
@@ -120148,6 +126633,817 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: HoldingMembershipUncheckedUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type AgencyPropertyGrantUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: AgencyPropertyGrantWhereUniqueInput
+    update: XOR<AgencyPropertyGrantUpdateWithoutOrganizationInput, AgencyPropertyGrantUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<AgencyPropertyGrantCreateWithoutOrganizationInput, AgencyPropertyGrantUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type AgencyPropertyGrantUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: AgencyPropertyGrantWhereUniqueInput
+    data: XOR<AgencyPropertyGrantUpdateWithoutOrganizationInput, AgencyPropertyGrantUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type AgencyPropertyGrantUpdateManyWithWhereWithoutOrganizationInput = {
+    where: AgencyPropertyGrantScalarWhereInput
+    data: XOR<AgencyPropertyGrantUpdateManyMutationInput, AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type AgencyPropertyGrantScalarWhereInput = {
+    AND?: AgencyPropertyGrantScalarWhereInput | AgencyPropertyGrantScalarWhereInput[]
+    OR?: AgencyPropertyGrantScalarWhereInput[]
+    NOT?: AgencyPropertyGrantScalarWhereInput | AgencyPropertyGrantScalarWhereInput[]
+    id?: UuidFilter<"AgencyPropertyGrant"> | string
+    accountId?: UuidFilter<"AgencyPropertyGrant"> | string
+    organizationId?: UuidFilter<"AgencyPropertyGrant"> | string
+    agencyVoen?: StringFilter<"AgencyPropertyGrant"> | string
+    localAgencyId?: StringFilter<"AgencyPropertyGrant"> | string
+    localAgencyCode?: StringNullableFilter<"AgencyPropertyGrant"> | string | null
+    revokedAt?: DateTimeNullableFilter<"AgencyPropertyGrant"> | Date | string | null
+    createdAt?: DateTimeFilter<"AgencyPropertyGrant"> | Date | string
+    updatedAt?: DateTimeFilter<"AgencyPropertyGrant"> | Date | string
+  }
+
+  export type OrganizationCreateWithoutElektrawebBridgePolicyInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutElektrawebBridgePolicyInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutElektrawebBridgePolicyInput, OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput>
+  }
+
+  export type OrganizationUpsertWithoutElektrawebBridgePolicyInput = {
+    update: XOR<OrganizationUpdateWithoutElektrawebBridgePolicyInput, OrganizationUncheckedUpdateWithoutElektrawebBridgePolicyInput>
+    create: XOR<OrganizationCreateWithoutElektrawebBridgePolicyInput, OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutElektrawebBridgePolicyInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutElektrawebBridgePolicyInput, OrganizationUncheckedUpdateWithoutElektrawebBridgePolicyInput>
+  }
+
+  export type OrganizationUpdateWithoutElektrawebBridgePolicyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutElektrawebBridgePolicyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutClinicCutoverPolicyInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutClinicCutoverPolicyInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutClinicCutoverPolicyInput, OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput>
+  }
+
+  export type OrganizationCreateWithoutClinicCutoverAsHotelInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutClinicCutoverAsHotelInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutClinicCutoverAsHotelInput, OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput>
+  }
+
+  export type OrganizationUpsertWithoutClinicCutoverPolicyInput = {
+    update: XOR<OrganizationUpdateWithoutClinicCutoverPolicyInput, OrganizationUncheckedUpdateWithoutClinicCutoverPolicyInput>
+    create: XOR<OrganizationCreateWithoutClinicCutoverPolicyInput, OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutClinicCutoverPolicyInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutClinicCutoverPolicyInput, OrganizationUncheckedUpdateWithoutClinicCutoverPolicyInput>
+  }
+
+  export type OrganizationUpdateWithoutClinicCutoverPolicyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutClinicCutoverPolicyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUpsertWithoutClinicCutoverAsHotelInput = {
+    update: XOR<OrganizationUpdateWithoutClinicCutoverAsHotelInput, OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput>
+    create: XOR<OrganizationCreateWithoutClinicCutoverAsHotelInput, OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutClinicCutoverAsHotelInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutClinicCutoverAsHotelInput, OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput>
+  }
+
+  export type OrganizationUpdateWithoutClinicCutoverAsHotelInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationMembershipCreateWithoutUserInput = {
@@ -120342,9 +127638,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOwnerInput = {
@@ -120401,7 +127701,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOwnerInput = {
@@ -120719,9 +128023,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutHoldingInput = {
@@ -120778,7 +128086,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutHoldingInput = {
@@ -121106,10 +128418,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -121166,7 +128482,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -121281,10 +128601,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -121341,7 +128665,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type ReferralCreateWithoutPartnerInput = {
@@ -121708,10 +129036,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -121768,7 +129100,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -121877,10 +129213,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -121937,7 +129277,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessEventsInput = {
@@ -122036,10 +129380,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -122096,7 +129444,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -122205,10 +129557,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -122265,7 +129621,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessSignupsInput = {
@@ -122364,10 +129724,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
@@ -122424,7 +129788,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
@@ -122533,10 +129901,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
@@ -122593,7 +129965,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutAuditLogsInput = {
@@ -122692,10 +130068,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationTemplatesInput = {
@@ -122752,7 +130132,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationTemplatesInput = {
@@ -122868,10 +130252,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationTemplatesInput = {
@@ -122928,7 +130316,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput = {
@@ -122998,10 +130390,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput = {
@@ -123058,7 +130454,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput = {
@@ -123189,10 +130589,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput = {
@@ -123249,7 +130653,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type NotificationTemplateUpsertWithoutOutboxEntriesInput = {
@@ -123397,10 +130805,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput = {
@@ -123457,7 +130869,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput = {
@@ -123574,10 +130990,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput = {
@@ -123634,7 +131054,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformPaymentLinksInput = {
@@ -123688,10 +131112,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput = {
@@ -123748,7 +131176,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput = {
@@ -123857,10 +131289,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput = {
@@ -123917,7 +131353,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type PaymentOrderUpsertWithoutPlatformPaymentLinksInput = {
@@ -124016,10 +131456,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPortalLinksInput = {
@@ -124076,7 +131520,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPortalLinksInput = {
@@ -124146,10 +131594,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput = {
@@ -124206,7 +131658,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutBookableResourcesInput = {
@@ -124260,10 +131716,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookableResourcesInput = {
@@ -124320,7 +131780,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookableResourcesInput = {
@@ -124458,10 +131922,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookableResourcesInput = {
@@ -124518,7 +131986,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type BookingSlotUpsertWithWhereUniqueWithoutResourceInput = {
@@ -124604,10 +132076,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingSlotsInput = {
@@ -124664,7 +132140,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingSlotsInput = {
@@ -124795,10 +132275,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingSlotsInput = {
@@ -124855,7 +132339,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type BookableResourceUpsertWithoutSlotsInput = {
@@ -124956,10 +132444,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingAppointmentsInput = {
@@ -125016,7 +132508,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingAppointmentsInput = {
@@ -125138,10 +132634,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingAppointmentsInput = {
@@ -125198,7 +132698,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type BookableResourceUpsertWithoutAppointmentsInput = {
@@ -125316,10 +132820,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPromotionsInput = {
@@ -125376,7 +132884,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPromotionsInput = {
@@ -125446,10 +132958,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPromotionsInput = {
@@ -125506,7 +133022,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformCustomDomainsInput = {
@@ -125560,10 +133080,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput = {
@@ -125620,7 +133144,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput = {
@@ -125690,10 +133218,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput = {
@@ -125750,7 +133282,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformShipmentsInput = {
@@ -125804,10 +133340,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformShipmentsInput = {
@@ -125864,7 +133404,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformShipmentsInput = {
@@ -125934,10 +133478,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformShipmentsInput = {
@@ -125994,7 +133542,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformAuditLogsInput = {
@@ -126048,10 +133600,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformAuditLogsInput = {
@@ -126108,7 +133664,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformAuditLogsInput = {
@@ -126178,10 +133738,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformAuditLogsInput = {
@@ -126238,7 +133802,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -126292,10 +133860,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -126352,7 +133924,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformIdempotencyRecordsInput = {
@@ -126422,10 +133998,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformIdempotencyRecordsInput = {
@@ -126482,7 +134062,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -126536,10 +134120,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -126596,7 +134184,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformLoyaltyLedgerInput = {
@@ -126666,10 +134258,14 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformLoyaltyLedgerInput = {
@@ -126726,6 +134322,374 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type AgencyPropertyGrantCreateWithoutAccountInput = {
+    id?: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutAgencyPropertyGrantsInput
+  }
+
+  export type AgencyPropertyGrantUncheckedCreateWithoutAccountInput = {
+    id?: string
+    organizationId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPropertyGrantCreateOrConnectWithoutAccountInput = {
+    where: AgencyPropertyGrantWhereUniqueInput
+    create: XOR<AgencyPropertyGrantCreateWithoutAccountInput, AgencyPropertyGrantUncheckedCreateWithoutAccountInput>
+  }
+
+  export type AgencyPropertyGrantCreateManyAccountInputEnvelope = {
+    data: AgencyPropertyGrantCreateManyAccountInput | AgencyPropertyGrantCreateManyAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AgencyPropertyGrantUpsertWithWhereUniqueWithoutAccountInput = {
+    where: AgencyPropertyGrantWhereUniqueInput
+    update: XOR<AgencyPropertyGrantUpdateWithoutAccountInput, AgencyPropertyGrantUncheckedUpdateWithoutAccountInput>
+    create: XOR<AgencyPropertyGrantCreateWithoutAccountInput, AgencyPropertyGrantUncheckedCreateWithoutAccountInput>
+  }
+
+  export type AgencyPropertyGrantUpdateWithWhereUniqueWithoutAccountInput = {
+    where: AgencyPropertyGrantWhereUniqueInput
+    data: XOR<AgencyPropertyGrantUpdateWithoutAccountInput, AgencyPropertyGrantUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type AgencyPropertyGrantUpdateManyWithWhereWithoutAccountInput = {
+    where: AgencyPropertyGrantScalarWhereInput
+    data: XOR<AgencyPropertyGrantUpdateManyMutationInput, AgencyPropertyGrantUncheckedUpdateManyWithoutAccountInput>
+  }
+
+  export type AgencyPortalAccountCreateWithoutGrantsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    fullName?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPortalAccountUncheckedCreateWithoutGrantsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    fullName?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPortalAccountCreateOrConnectWithoutGrantsInput = {
+    where: AgencyPortalAccountWhereUniqueInput
+    create: XOR<AgencyPortalAccountCreateWithoutGrantsInput, AgencyPortalAccountUncheckedCreateWithoutGrantsInput>
+  }
+
+  export type OrganizationCreateWithoutAgencyPropertyGrantsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutAgencyPropertyGrantsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutAgencyPropertyGrantsInput, OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput>
+  }
+
+  export type AgencyPortalAccountUpsertWithoutGrantsInput = {
+    update: XOR<AgencyPortalAccountUpdateWithoutGrantsInput, AgencyPortalAccountUncheckedUpdateWithoutGrantsInput>
+    create: XOR<AgencyPortalAccountCreateWithoutGrantsInput, AgencyPortalAccountUncheckedCreateWithoutGrantsInput>
+    where?: AgencyPortalAccountWhereInput
+  }
+
+  export type AgencyPortalAccountUpdateToOneWithWhereWithoutGrantsInput = {
+    where?: AgencyPortalAccountWhereInput
+    data: XOR<AgencyPortalAccountUpdateWithoutGrantsInput, AgencyPortalAccountUncheckedUpdateWithoutGrantsInput>
+  }
+
+  export type AgencyPortalAccountUpdateWithoutGrantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPortalAccountUncheckedUpdateWithoutGrantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUpsertWithoutAgencyPropertyGrantsInput = {
+    update: XOR<OrganizationUpdateWithoutAgencyPropertyGrantsInput, OrganizationUncheckedUpdateWithoutAgencyPropertyGrantsInput>
+    create: XOR<OrganizationCreateWithoutAgencyPropertyGrantsInput, OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutAgencyPropertyGrantsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutAgencyPropertyGrantsInput, OrganizationUncheckedUpdateWithoutAgencyPropertyGrantsInput>
+  }
+
+  export type OrganizationUpdateWithoutAgencyPropertyGrantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutAgencyPropertyGrantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -128655,6 +136619,13 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type ClinicCutoverPolicyCreateManyHotelOrganizationInput = {
+    organizationId: string
+    elektrawebDualRun?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrganizationCreateManyParentOrgInput = {
     id?: string
     name: string
@@ -128679,6 +136650,17 @@ export namespace Prisma {
     settings?: JsonNullValueInput | InputJsonValue
     drakarisClientId?: string | null
     deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPropertyGrantCreateManyOrganizationInput = {
+    id?: string
+    accountId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -129643,6 +137625,27 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ClinicCutoverPolicyUpdateWithoutHotelOrganizationInput = {
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutClinicCutoverPolicyNestedInput
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateWithoutHotelOrganizationInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationUpdateWithoutParentOrgInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -129695,9 +137698,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutParentOrgInput = {
@@ -129754,7 +137761,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutParentOrgInput = {
@@ -129781,6 +137792,39 @@ export namespace Prisma {
     settings?: JsonNullValueInput | InputJsonValue
     drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    account?: AgencyPortalAccountUpdateOneRequiredWithoutGrantsNestedInput
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accountId?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accountId?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -130081,9 +138125,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOwnerInput = {
@@ -130140,7 +138188,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
@@ -130327,9 +138379,13 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutHoldingInput = {
@@ -130386,7 +138442,11 @@ export namespace Prisma {
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutHoldingInput = {
@@ -130757,6 +138817,50 @@ export namespace Prisma {
     status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantCreateManyAccountInput = {
+    id?: string
+    organizationId: string
+    agencyVoen: string
+    localAgencyId: string
+    localAgencyCode?: string | null
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgencyPropertyGrantUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutAgencyPropertyGrantsNestedInput
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgencyPropertyGrantUncheckedUpdateManyWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agencyVoen?: StringFieldUpdateOperationsInput | string
+    localAgencyId?: StringFieldUpdateOperationsInput | string
+    localAgencyCode?: NullableStringFieldUpdateOperationsInput | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

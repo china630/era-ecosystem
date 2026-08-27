@@ -41,7 +41,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/settings/orders` | `app/settings/orders/page.tsx` | Payment orders registry |
 | `/super-admin/**` | `app/super-admin/**` | Platform admin |
 | `/super-admin/orgs` | `app/super-admin/orgs/page.tsx` | Org catalog (search name/UUID/VÖEN) |
-| `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, detach, departments, satellite endpoints, Sync bindings |
+| `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, detach, departments, satellite endpoints, Elektraweb bridge / clinic cutover policy, Sync bindings |
 | `/super-admin/referrals` | `app/super-admin/referrals/page.tsx` | Referral partners CRUD + QR |
 | `/super-admin/landing` | `app/super-admin/landing/page.tsx` | Landing module marketing copy |
 
@@ -102,10 +102,15 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `PATCH /v1/admin/organizations/:id/deployment-topology` | `admin-billing.controller.ts` — SHARED/DEDICATED/ONPREM; optional applyLicenseDefault |
 | `PATCH /v1/admin/config/trial-allowlist` | `admin-billing.controller.ts` |
 | `POST /v1/admin/organizations/:id/connect-preset/sanatorium` | `admin-billing.controller.ts` |
+| `GET/PUT /v1/admin/orgs/:orgId/elektraweb-bridge` | `elektraweb-bridge-policy.controller.ts` — hotel Elektraweb dual-run policy (PSA) |
+| `GET/PUT /v1/admin/orgs/:orgId/clinic-cutover` | `elektraweb-bridge-policy.controller.ts` — clinic dual-run + hotel org link |
+| `POST /v1/admin/orgs/:orgId/sync-satellite-bindings` | `satellite-org-bind-sync.controller.ts` — bind + runtime-config (incl. vendor policies) |
 | `POST /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` — create PlacementJob (SHARED↔ONPREM → REJECTED) |
 | `GET /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` |
 | `POST /v1/admin/placement-jobs/:id/advance` | `placement-job.controller.ts` — freeze/exportSlice/…/complete stubs |
-| `GET /v1/placement-agent/jobs` | `placement-agent.controller.ts` — host poll PENDING/PROVISION (Bearer host token) |
+| `GET /v1/placement-agent/jobs` | `placement-agent.controller.ts` — host poll EXPORT/PROVISION (Bearer host token) |
+| `POST /v1/placement-agent/jobs/:id/apply-log` | Host agent observable apply log |
+| `GET /v1/internal/satellite-pool/members` | Pool org list by `satelliteKey`+`baseUrl` (service token; cron SoR) |
 
 ## Platform catalog gateway (API — industry satellites)
 
