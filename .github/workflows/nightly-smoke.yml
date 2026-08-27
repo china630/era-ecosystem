@@ -49,6 +49,12 @@ jobs:
           chmod +x docker/scripts/migrate-all.sh
           COMPOSE_FILE=docker-compose.prod.yml ENV_FILE=.env.ci ./docker/scripts/migrate-all.sh
 
+      - name: Free runner disk
+        run: |
+          docker container prune -f || true
+          docker builder prune -af || true
+          df -h /
+
       - name: Start stack
         run: |
           docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d
