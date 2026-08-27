@@ -5,6 +5,8 @@ jest.mock("@era/satellite-kit", () => ({
   listPersonIdentifiers: jest.fn().mockResolvedValue({ identifiers: [] }),
   linkPersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
   satelliteOrganizationId: jest.fn().mockReturnValue("test-org"),
+  resolveSatelliteTenantOrgId: jest.fn().mockReturnValue("test-org"),
+  enterSatelliteTenant: jest.fn(),
 }));
 
 jest.mock("@/lib/prisma", () => ({

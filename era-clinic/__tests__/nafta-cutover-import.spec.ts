@@ -3,6 +3,8 @@ import { getImportAdapter } from "@/lib/import/adapters";
 
 jest.mock("@era/satellite-kit", () => ({
   satelliteOrganizationId: () => "org-test",
+  resolveSatelliteTenantOrgId: () => "org-test",
+  enterSatelliteTenant: () => undefined,
 }));
 
 describe("nafta cutover import rules", () => {

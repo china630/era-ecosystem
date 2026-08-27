@@ -25,10 +25,21 @@ jest.mock("@era/satellite-kit", () => ({
   }),
   shouldRouteRevenueToParent: jest.fn().mockReturnValue(false),
   shouldDeferWalkInToHub: jest.fn().mockReturnValue(false),
+  resolveSatelliteTenantOrgId: jest.fn().mockReturnValue("org1"),
+  satelliteOrganizationId: jest.fn().mockReturnValue("org1"),
+  enterSatelliteTenant: jest.fn(),
 }));
 
 jest.mock("@/lib/request-organization", () => ({
   requestOrganizationId: jest.fn().mockReturnValue("org1"),
+}));
+
+jest.mock("@/domain/physio/clinic-cutover.service", () => ({
+  getClinicHotelOrganizationId: jest
+    .fn()
+    .mockResolvedValue("hotel-org-1"),
+  resolveClinicCutoverOrgId: jest.fn().mockReturnValue("org1"),
+  isClinicElektrawebDualRun: jest.fn().mockResolvedValue(false),
 }));
 
 describe("billing-router", () => {
