@@ -25,7 +25,11 @@ COPY --from=app-deps /workspace/${SATELLITE_DIR}/node_modules ./${SATELLITE_DIR}
 COPY ${SATELLITE_DIR} ./${SATELLITE_DIR}
 WORKDIR /workspace/${SATELLITE_DIR}
 ENV NEXT_TELEMETRY_DISABLED=1
+# Dummy URL: generate + migrate diff use the datamodel, not a live DB.
+ENV DATABASE_URL=postgresql://prisma:prisma@127.0.0.1:5432/prisma
 RUN for i in 1 2 3 4 5; do ./node_modules/.bin/prisma generate && break || sleep 15; done \
+  && ./node_modules/.bin/prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/baseline.sql \
+  && grep -q CREATE prisma/baseline.sql \
   && npm run build
 
 FROM node:22-alpine AS runner
@@ -43,10 +47,10 @@ COPY --from=builder /workspace/${SATELLITE_DIR}/.next/standalone ./
 COPY --from=builder /workspace/${SATELLITE_DIR}/.next/static ./.next/static
 COPY --from=builder /workspace/${SATELLITE_DIR}/prisma ./prisma
 COPY docker/scripts/docker-migrate-deploy.mjs ./scripts/docker-migrate-deploy.mjs
+COPY docker/scripts/satellite-entrypoint.sh /app/docker-entrypoint.sh
 COPY --from=builder /workspace/${SATELLITE_DIR}/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /workspace/${SATELLITE_DIR}/package.json ./package.json
 COPY --from=builder /workspace/packages /packages
-COPY --from=builder /workspace/${SATELLITE_DIR}/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN mkdir -p ./node_modules/@era \
   && ln -sfn /packages/satellite-kit ./node_modules/@era/satellite-kit \
   && sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh \
