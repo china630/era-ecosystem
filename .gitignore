@@ -21,6 +21,9 @@ tmp/era-local-credentials.md
 # Docker persistent data (never commit)
 docker-data/
 
+# Generated at satellite image build / migrate-all host baseline (never commit)
+**/prisma/baseline.sql
+
 # Satellite runtime org bind file cache
 **/.data/
 

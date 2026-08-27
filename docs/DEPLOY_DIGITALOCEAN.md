@@ -79,7 +79,7 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 | Issue | Check |
 |-------|--------|
 | Pull 401 / `ghcr.io/v2/: denied` | Actions deploy logs in with the job `github.token` (not a stale `GHCR_PULL_TOKEN` PAT). Manual pull still needs a PAT with `read:packages`. `.env` is scp'd; login/pull run in `docker/scripts/deploy-droplet.sh`. |
-| Migrate fails | Container running? `DATABASE_URL` in `.env`, postgres healthy |
+| Migrate fails | Postgres up? `DATABASE_URL` in `.env`. Satellites without an init migration need `prisma/baseline.sql` (rebuild image) or host `migrate-all.sh` baseline via `npx prisma migrate diff`. |
 | OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |
 | Deploy SSH timeout | `dial tcp :22: i/o timeout` — open UFW/DO firewall port 22; verify `SSH_HOST` secret; optional `SSH_PORT` secret |
