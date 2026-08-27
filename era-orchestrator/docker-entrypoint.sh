@@ -5,6 +5,15 @@
 set -e
 cd /app
 
+# Workspace hoist puts prisma at /app/node_modules, not packages/*/node_modules.
+prisma_cli() {
+  if [ -f /app/node_modules/prisma/build/index.js ]; then
+    echo /app/node_modules/prisma/build/index.js
+  elif [ -f "$1/node_modules/prisma/build/index.js" ]; then
+    echo "$1/node_modules/prisma/build/index.js"
+  fi
+}
+
 migrate_pkg() {
   pkg="$1"
   label="$2"
@@ -14,8 +23,9 @@ migrate_pkg() {
   if [ ! -f "$pkg/prisma/schema.prisma" ]; then
     return 0
   fi
-  if [ -f "$pkg/node_modules/prisma/build/index.js" ]; then
-    (cd "$pkg" && node ./node_modules/prisma/build/index.js migrate deploy)
+  cli="$(prisma_cli "$pkg")"
+  if [ -n "$cli" ]; then
+    (cd "$pkg" && node "$cli" migrate deploy)
   elif [ -x "$pkg/node_modules/.bin/prisma" ]; then
     (cd "$pkg" && ./node_modules/.bin/prisma migrate deploy)
   else
