@@ -72,7 +72,7 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 | Task | Command |
 |------|---------|
 | Logs | `docker compose -f docker-compose.prod.yml logs -f orchestrator` |
-| Prune old images | `docker image prune -f` (also in deploy workflow) |
+| Prune old images | `docker image prune -af` (deploy does this **before** pull) |
 | Update stack | New `IMAGE_TAG` → `pull` → `migrate-all.sh` → `up -d` + `--wait` orchestrator |
 
 ## Troubleshooting
@@ -81,7 +81,7 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 |-------|--------|
 | Pull 401 / `ghcr.io/v2/: denied` | Actions deploy logs in with the job `github.token` (not a stale `GHCR_PULL_TOKEN` PAT). Manual pull still needs a PAT with `read:packages`. `.env` is scp'd; login/pull run in `docker/scripts/deploy-droplet.sh`. |
 | Migrate fails | Postgres up? `DATABASE_URL` in `.env`. Satellites without an init migration need `prisma/baseline.sql` (rebuild image) or host `migrate-all.sh` baseline via `npx prisma migrate diff`. |
-| OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
+| OOM / disk on pull | Droplet (or GHA) disk: `no space left on device` while extracting layers. Deploy now `docker image prune -af` **before** pull. Manual: `docker image prune -af && docker builder prune -af` then retry. Never `prune --volumes`. |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |
 | Deploy SSH timeout | `dial tcp :22: i/o timeout` — open UFW/DO firewall port 22; verify `SSH_HOST` secret; optional `SSH_PORT` secret |
 | Auto-deploy never fires | `workflow_run` only works from the **default branch** workflow file — ensure `deploy-staging.yml` is on `master` |

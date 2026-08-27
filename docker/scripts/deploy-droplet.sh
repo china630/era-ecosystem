@@ -51,6 +51,12 @@ echo "Deploy scope=$scope services=${services:-ALL}"
 echo "GHCR login as ${GH_ACTOR} (token length ${#GHCR_PULL_TOKEN})"
 echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
+echo "==> disk before pull"
+df -h /
+# Drop unused tags from prior IMAGE_TAG deploys so pull can extract layers.
+docker image prune -af || true
+docker builder prune -af || true
+
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env)
 
 if [ -z "$services" ]; then

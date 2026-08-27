@@ -79,7 +79,7 @@ After each successful [`build-images.yml`](../.github/workflows/build-images.yml
 
 1. Checks out the build commit  
 2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=dev-<sha>`  
-3. `docker login` GHCR → `compose pull` → `migrate-all.sh` → `up -d` + `--wait` orchestrator  
+3. `docker login` GHCR → prune unused images → `compose pull` → `migrate-all.sh` → `up -d` + `--wait` orchestrator  
 
 Manual: Actions → **Deploy staging** → `workflow_dispatch` (default **scope `finance`**, tag `dev`).  
 Choose `hotel` / `clinic` / … for one satellite, or `all` for the full stack.  
