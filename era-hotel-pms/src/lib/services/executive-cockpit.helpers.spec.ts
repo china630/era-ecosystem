@@ -7,6 +7,8 @@ import {
 describe('executive-cockpit helpers', () => {
   it('classifies revenue codes into flash buckets', () => {
     expect(revenueFlashBucket('ROOM', 'ACC')).toBe('room');
+    expect(revenueFlashBucket('TRANSFER', 'ACC')).toBe('room');
+    expect(revenueFlashBucket('TOUR', 'ACC')).toBe('other');
     expect(revenueFlashBucket('FOOD', 'REST')).toBe('fb');
     expect(revenueFlashBucket('TREATMENT', 'MED')).toBe('spa');
     expect(revenueFlashBucket('MEDICAL', 'MED')).toBe('medical');

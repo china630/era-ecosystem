@@ -64,7 +64,7 @@ Full GUEST folio settle to 0 (guest tender)  →  remaining TOUR lines Paid
 Balance 0 only via CL / COMPANY transfer  →  On city ledger (not desk-paid)
 ```
 
-Revenue code **`TOUR`** (18% as other extras). Do not reuse `TRANSFER` (airport vs excursion P&L). Price of the excursion **includes** restaurant lunch in the sell price — **one** folio line, no `FOOD` split.
+Revenue code **`TOUR`** (18% as other extras). Do not reuse `TRANSFER` (airport vs excursion P&L). Demo/reference seed must create **both** codes; night-audit maps both to NAS **606**, reports split on `RevenueCode`. Price of the excursion **includes** restaurant lunch in the sell price — **one** folio line, no `FOOD` split.
 
 Walk-in without stay: out of MVP.
 

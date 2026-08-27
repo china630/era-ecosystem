@@ -2,6 +2,14 @@ import type { TransferDirection } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
+import { assertVehicleSlotFree, TRANSFER_OCCUPANCY_MS } from '@/lib/services/tour.service';
+
+function transferOccupancyWindow(pickupAt: Date) {
+  return {
+    from: pickupAt,
+    to: new Date(pickupAt.getTime() + TRANSFER_OCCUPANCY_MS),
+  };
+}
 
 export async function listTransferOrders(filters?: {
   from?: Date;
@@ -59,6 +67,8 @@ export async function createTransferOrder(input: {
   if (input.vehicleId) {
     const vehicle = await prisma.transferVehicle.findUnique({ where: { id: input.vehicleId } });
     if (!vehicle || !vehicle.active) throw new Error('Vehicle not found or inactive');
+    const slot = transferOccupancyWindow(input.pickupAt);
+    await assertVehicleSlotFree({ vehicleId: input.vehicleId, ...slot });
   }
 
   return prisma.transferOrder.create({
@@ -88,6 +98,8 @@ export async function assignVehicle(id: string, vehicleId: string) {
 
   const vehicle = await prisma.transferVehicle.findUnique({ where: { id: vehicleId } });
   if (!vehicle || !vehicle.active) throw new Error('Vehicle not found or inactive');
+  const slot = transferOccupancyWindow(order.pickupAt);
+  await assertVehicleSlotFree({ vehicleId, ...slot, exceptTransferId: id });
 
   return prisma.transferOrder.update({
     where: { id },
