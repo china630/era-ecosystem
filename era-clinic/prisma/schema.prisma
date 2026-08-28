@@ -1281,6 +1281,7 @@ model ProgramInstance {
   episode         ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   procedureLines  ProgramProcedureBalance[]
 
+  @@unique([organizationId, episodeId])
   @@index([reservationId])
   @@index([organizationId])
 }

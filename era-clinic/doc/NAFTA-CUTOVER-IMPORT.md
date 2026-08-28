@@ -78,7 +78,7 @@ node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs
 node era-clinic/scripts/nafta-cutover/rebuild-derived.cjs
 ```
 
-Quota rule: do not burn twice. Historical COMPLETED / `IMPORTED_DONE` sets `importedHistorical` — no folio post, no nurse bonus.
+Quota rule: do not burn twice. Historical COMPLETED / `IMPORTED_DONE` sets `importedHistorical` — no folio post, no nurse bonus. `#38` upserts `ProgramProcedureBalance` on the cutover episode’s `ProgramInstance` (`findUnique` by episode, tenant-scoped via `organizationId` + `episodeId`).
 
 Ops slots in `#23`: **2026-08-25 … 2026-08-30** window; WO SCHEDULED data **25–29 Aug** (2373 rows). Pre-cutover → COMPLETED.
 
