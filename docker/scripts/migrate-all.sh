@@ -53,15 +53,18 @@ satellite_dir() {
 
 # Host-side current-schema SQL so Nightly/droplet can baseline empty DBs
 # even before GHCR images contain prisma/baseline.sql.
+# Cache key includes schema checksum — a stale /tmp file (wipe + new image)
+# would otherwise stamp later migrations without applying their SQL.
 ensure_host_baseline() {
   local svc="$1"
-  local dir schema out
+  local dir schema out hash
   dir="$(satellite_dir "$svc")"
   schema="$ROOT/$dir/prisma/schema.prisma"
-  out="/tmp/era-baseline-${svc}.sql"
   if [ -z "$dir" ] || [ ! -f "$schema" ]; then
     return 1
   fi
+  hash="$(sha256sum "$schema" | awk '{print $1}')"
+  out="/tmp/era-baseline-${svc}-${hash:0:16}.sql"
   if [ -f "$out" ] && grep -q CREATE "$out"; then
     echo "$out"
     return 0

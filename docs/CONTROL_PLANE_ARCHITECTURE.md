@@ -77,7 +77,7 @@ Two **independent** money flows per organization (VÖEN):
 
 | Aspect | Rule |
 |--------|------|
-| **Tier** | `TIER_0` … `TIER_3` sets **included quota ceilings** (users, invoices/month, storage, WhatsApp alerts, OCR, …) |
+| **Tier** | `TIER_0` … `TIER_3` sets **included quota ceilings** (users / workforce seats via Super-admin Billing → Quotas `maxEmployees`, invoices/month, storage, WhatsApp alerts, OCR, …) |
 | **Overlimit** | When usage exceeds tier included amount, **meter unit price** applies (`billing.meter_unit_pricing_v1`) |
 | **Accumulation** | Charges accrue to `accumulatedBalance` in current `billingPeriodKey` (Baku month) |
 | **Tier ceiling** | Each tier has a **max accumulated spend** cap for the period; hitting cap triggers tier upgrade path / block policy (see Finance PRD §16) |
