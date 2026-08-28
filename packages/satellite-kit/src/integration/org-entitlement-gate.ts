@@ -157,16 +157,30 @@ export async function assertEntitled(
   }
 }
 
+export type RequireSatelliteModuleOpts = {
+  /**
+   * Request org from session / header. Do not rely on ALS `enterWith`
+   * surviving the next `await` in Next.js App Router.
+   */
+  organizationId?: string;
+};
+
 /**
- * Request ALS org first (SHARED SSO / session header), then process bind.
- * Fallback env without ALS is fail-closed — that was a production hole.
- * Local unbound + DEV unlock may still pass via assertEntitled.
+ * Explicit request org first (SHARED SSO / session header), then ALS, then process bind.
+ * Fallback env without an org is fail-closed.
  */
-export async function requireSatelliteModule(moduleKey: string): Promise<void> {
+export async function requireSatelliteModule(
+  moduleKey: string,
+  opts?: RequireSatelliteModuleOpts,
+): Promise<void> {
   if (devUnlockAllModules()) return;
-  const alsOrg = getSatelliteTenantContext()?.organizationId?.trim();
-  if (alsOrg) {
-    await assertEntitled(alsOrg, moduleKey);
+  const org =
+    opts?.organizationId?.trim() ||
+    getSatelliteTenantContext()?.organizationId?.trim();
+  if (org) {
+    await runWithSatelliteTenant({ organizationId: org }, () =>
+      assertEntitled(org, moduleKey),
+    );
     return;
   }
   const { organizationId, source } = resolveSatelliteOrganizationId({

@@ -135,6 +135,31 @@ describe("resolveEntitlementActiveModules", () => {
       else process.env.ERA_DEV_UNLOCK_ALL_MODULES = prevUnlock;
     }
   });
+
+  it("requireSatelliteModule accepts explicit organizationId without ALS", async () => {
+    const prevOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    const prevUnlock = process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    const prevOrch = process.env.ORCHESTRATOR_EVENT_URL;
+    delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    delete process.env.ORCHESTRATOR_EVENT_URL;
+    try {
+      await applySatelliteRuntimeConfig({
+        config: { activeModules: ["industry_hotel_pms", "hotel_core"] },
+        updatedBy: "test",
+      });
+      await requireSatelliteModule("industry_hotel_pms", {
+        organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      });
+    } finally {
+      if (prevOrg === undefined) delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+      else process.env.ERA_SATELLITE_ORGANIZATION_ID = prevOrg;
+      if (prevUnlock === undefined) delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+      else process.env.ERA_DEV_UNLOCK_ALL_MODULES = prevUnlock;
+      if (prevOrch === undefined) delete process.env.ORCHESTRATOR_EVENT_URL;
+      else process.env.ORCHESTRATOR_EVENT_URL = prevOrch;
+    }
+  });
 });
 
 describe("IndustryModuleInactiveError", () => {
