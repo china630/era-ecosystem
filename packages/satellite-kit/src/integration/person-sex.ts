@@ -21,11 +21,23 @@ export function normalizePersonSex(raw: unknown): PersonSex | undefined {
   if (raw == null) return undefined;
   const s = foldSexToken(String(raw));
   if (!s) return undefined;
-  if (s === "M" || s === "MALE" || s === "MAN" || s === "BAY" || s === "MR" || s === "KISI") {
+  const token = s.split(/[\s\-–—(/]+/)[0] || s;
+  if (
+    s === "M" ||
+    s === "K" ||
+    token === "K" ||
+    s === "MALE" ||
+    s === "MAN" ||
+    s === "BAY" ||
+    s === "MR" ||
+    s === "KISI"
+  ) {
     return "MALE";
   }
   if (
     s === "F" ||
+    s === "Q" ||
+    token === "Q" ||
     s === "FEMALE" ||
     s === "WOMAN" ||
     s === "XANIM" ||

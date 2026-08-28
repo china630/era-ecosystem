@@ -26,6 +26,8 @@ Limit source: Super-admin **Billing → Quotas** `maxEmployees` for the org’s 
 
 Satellites call orchestrator when `cpEmploymentId` / `globalPersonId` present; local count fallback when orchestrator URL unset.
 
+**Headcount ≠ seat.** `hire()` always creates employment. A `WorkforceSeatAllocation` and `STAFF_PROVISIONED` are created only when `satelliteKeys` is non-empty and the person has no active seat. Cleaner / kitchen / security (and any second job `ADDITIONAL`) are MDM + employment only.
+
 ## UI
 
 Security Admin seats widget on `/workspace/workforce/security`.

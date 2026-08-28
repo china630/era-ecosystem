@@ -7,6 +7,8 @@ import {
 
 describe("MDM person core sex + birthDate", () => {
   it("maps M/F and AZ labels; OTHER becomes UNKNOWN; no third legal sex", () => {
+    expect(normalizePersonSex("K")).toBe("MALE");
+    expect(normalizePersonSex("Q")).toBe("FEMALE");
     expect(normalizePersonSex("M")).toBe("MALE");
     expect(normalizePersonSex("female")).toBe("FEMALE");
     expect(normalizePersonSex("kisi")).toBe("MALE");

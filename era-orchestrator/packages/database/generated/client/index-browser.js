@@ -269,6 +269,9 @@ exports.Prisma.PlacementJobScalarFieldEnum = {
   status: 'status',
   errorMessage: 'errorMessage',
   sliceMeta: 'sliceMeta',
+  artifactRef: 'artifactRef',
+  artifactJson: 'artifactJson',
+  applyLog: 'applyLog',
   targetBaseUrl: 'targetBaseUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

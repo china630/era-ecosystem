@@ -22732,6 +22732,8 @@ export namespace Prisma {
     toTopology: $Enums.DeploymentTopology | null
     status: $Enums.PlacementJobStatus | null
     errorMessage: string | null
+    artifactRef: string | null
+    applyLog: string | null
     targetBaseUrl: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -22745,6 +22747,8 @@ export namespace Prisma {
     toTopology: $Enums.DeploymentTopology | null
     status: $Enums.PlacementJobStatus | null
     errorMessage: string | null
+    artifactRef: string | null
+    applyLog: string | null
     targetBaseUrl: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -22759,6 +22763,9 @@ export namespace Prisma {
     status: number
     errorMessage: number
     sliceMeta: number
+    artifactRef: number
+    artifactJson: number
+    applyLog: number
     targetBaseUrl: number
     createdAt: number
     updatedAt: number
@@ -22774,6 +22781,8 @@ export namespace Prisma {
     toTopology?: true
     status?: true
     errorMessage?: true
+    artifactRef?: true
+    applyLog?: true
     targetBaseUrl?: true
     createdAt?: true
     updatedAt?: true
@@ -22787,6 +22796,8 @@ export namespace Prisma {
     toTopology?: true
     status?: true
     errorMessage?: true
+    artifactRef?: true
+    applyLog?: true
     targetBaseUrl?: true
     createdAt?: true
     updatedAt?: true
@@ -22801,6 +22812,9 @@ export namespace Prisma {
     status?: true
     errorMessage?: true
     sliceMeta?: true
+    artifactRef?: true
+    artifactJson?: true
+    applyLog?: true
     targetBaseUrl?: true
     createdAt?: true
     updatedAt?: true
@@ -22888,6 +22902,9 @@ export namespace Prisma {
     status: $Enums.PlacementJobStatus
     errorMessage: string | null
     sliceMeta: JsonValue | null
+    artifactRef: string | null
+    artifactJson: JsonValue | null
+    applyLog: string | null
     targetBaseUrl: string | null
     createdAt: Date
     updatedAt: Date
@@ -22919,6 +22936,9 @@ export namespace Prisma {
     status?: boolean
     errorMessage?: boolean
     sliceMeta?: boolean
+    artifactRef?: boolean
+    artifactJson?: boolean
+    applyLog?: boolean
     targetBaseUrl?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -22934,6 +22954,9 @@ export namespace Prisma {
     status?: boolean
     errorMessage?: boolean
     sliceMeta?: boolean
+    artifactRef?: boolean
+    artifactJson?: boolean
+    applyLog?: boolean
     targetBaseUrl?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -22949,6 +22972,9 @@ export namespace Prisma {
     status?: boolean
     errorMessage?: boolean
     sliceMeta?: boolean
+    artifactRef?: boolean
+    artifactJson?: boolean
+    applyLog?: boolean
     targetBaseUrl?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -22964,12 +22990,15 @@ export namespace Prisma {
     status?: boolean
     errorMessage?: boolean
     sliceMeta?: boolean
+    artifactRef?: boolean
+    artifactJson?: boolean
+    applyLog?: boolean
     targetBaseUrl?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PlacementJobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKey" | "fromTopology" | "toTopology" | "status" | "errorMessage" | "sliceMeta" | "targetBaseUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["placementJob"]>
+  export type PlacementJobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKey" | "fromTopology" | "toTopology" | "status" | "errorMessage" | "sliceMeta" | "artifactRef" | "artifactJson" | "applyLog" | "targetBaseUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["placementJob"]>
   export type PlacementJobInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
@@ -22994,9 +23023,21 @@ export namespace Prisma {
       status: $Enums.PlacementJobStatus
       errorMessage: string | null
       /**
-       * Metadata from exportSlice stub (not a full dump).
+       * Metadata from exportSlice (counts + format note).
        */
       sliceMeta: Prisma.JsonValue | null
+      /**
+       * Durable slice artifact path or opaque ref for host agent download.
+       */
+      artifactRef: string | null
+      /**
+       * Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
+       */
+      artifactJson: Prisma.JsonValue | null
+      /**
+       * Host agent apply log (observable provision step).
+       */
+      applyLog: string | null
       /**
        * Optional target URL for cutoverEndpoint.
        */
@@ -23435,6 +23476,9 @@ export namespace Prisma {
     readonly status: FieldRef<"PlacementJob", 'PlacementJobStatus'>
     readonly errorMessage: FieldRef<"PlacementJob", 'String'>
     readonly sliceMeta: FieldRef<"PlacementJob", 'Json'>
+    readonly artifactRef: FieldRef<"PlacementJob", 'String'>
+    readonly artifactJson: FieldRef<"PlacementJob", 'Json'>
+    readonly applyLog: FieldRef<"PlacementJob", 'String'>
     readonly targetBaseUrl: FieldRef<"PlacementJob", 'String'>
     readonly createdAt: FieldRef<"PlacementJob", 'DateTime'>
     readonly updatedAt: FieldRef<"PlacementJob", 'DateTime'>
@@ -91844,6 +91888,9 @@ export namespace Prisma {
     status: 'status',
     errorMessage: 'errorMessage',
     sliceMeta: 'sliceMeta',
+    artifactRef: 'artifactRef',
+    artifactJson: 'artifactJson',
+    applyLog: 'applyLog',
     targetBaseUrl: 'targetBaseUrl',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -94453,6 +94500,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
     errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
     sliceMeta?: JsonNullableFilter<"PlacementJob">
+    artifactRef?: StringNullableFilter<"PlacementJob"> | string | null
+    artifactJson?: JsonNullableFilter<"PlacementJob">
+    applyLog?: StringNullableFilter<"PlacementJob"> | string | null
     targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
     createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
@@ -94468,6 +94518,9 @@ export namespace Prisma {
     status?: SortOrder
     errorMessage?: SortOrderInput | SortOrder
     sliceMeta?: SortOrderInput | SortOrder
+    artifactRef?: SortOrderInput | SortOrder
+    artifactJson?: SortOrderInput | SortOrder
+    applyLog?: SortOrderInput | SortOrder
     targetBaseUrl?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -94486,6 +94539,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
     errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
     sliceMeta?: JsonNullableFilter<"PlacementJob">
+    artifactRef?: StringNullableFilter<"PlacementJob"> | string | null
+    artifactJson?: JsonNullableFilter<"PlacementJob">
+    applyLog?: StringNullableFilter<"PlacementJob"> | string | null
     targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
     createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
@@ -94501,6 +94557,9 @@ export namespace Prisma {
     status?: SortOrder
     errorMessage?: SortOrderInput | SortOrder
     sliceMeta?: SortOrderInput | SortOrder
+    artifactRef?: SortOrderInput | SortOrder
+    artifactJson?: SortOrderInput | SortOrder
+    applyLog?: SortOrderInput | SortOrder
     targetBaseUrl?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -94521,6 +94580,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusWithAggregatesFilter<"PlacementJob"> | $Enums.PlacementJobStatus
     errorMessage?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
     sliceMeta?: JsonNullableWithAggregatesFilter<"PlacementJob">
+    artifactRef?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
+    artifactJson?: JsonNullableWithAggregatesFilter<"PlacementJob">
+    applyLog?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
     targetBaseUrl?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PlacementJob"> | Date | string
@@ -100349,6 +100411,9 @@ export namespace Prisma {
     status?: $Enums.PlacementJobStatus
     errorMessage?: string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -100364,6 +100429,9 @@ export namespace Prisma {
     status?: $Enums.PlacementJobStatus
     errorMessage?: string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -100377,6 +100445,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -100392,6 +100463,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -100406,6 +100480,9 @@ export namespace Prisma {
     status?: $Enums.PlacementJobStatus
     errorMessage?: string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -100419,6 +100496,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -100433,6 +100513,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -106797,6 +106880,9 @@ export namespace Prisma {
     status?: SortOrder
     errorMessage?: SortOrder
     sliceMeta?: SortOrder
+    artifactRef?: SortOrder
+    artifactJson?: SortOrder
+    applyLog?: SortOrder
     targetBaseUrl?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -106810,6 +106896,8 @@ export namespace Prisma {
     toTopology?: SortOrder
     status?: SortOrder
     errorMessage?: SortOrder
+    artifactRef?: SortOrder
+    applyLog?: SortOrder
     targetBaseUrl?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -106823,6 +106911,8 @@ export namespace Prisma {
     toTopology?: SortOrder
     status?: SortOrder
     errorMessage?: SortOrder
+    artifactRef?: SortOrder
+    applyLog?: SortOrder
     targetBaseUrl?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -124879,6 +124969,9 @@ export namespace Prisma {
     status?: $Enums.PlacementJobStatus
     errorMessage?: string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -124892,6 +124985,9 @@ export namespace Prisma {
     status?: $Enums.PlacementJobStatus
     errorMessage?: string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -126201,6 +126297,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
     errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
     sliceMeta?: JsonNullableFilter<"PlacementJob">
+    artifactRef?: StringNullableFilter<"PlacementJob"> | string | null
+    artifactJson?: JsonNullableFilter<"PlacementJob">
+    applyLog?: StringNullableFilter<"PlacementJob"> | string | null
     targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
     createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
@@ -136569,6 +136668,9 @@ export namespace Prisma {
     status?: $Enums.PlacementJobStatus
     errorMessage?: string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -137443,6 +137545,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -137456,6 +137561,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -137469,6 +137577,9 @@ export namespace Prisma {
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -343,6 +343,7 @@ const patientsAdapter: ImportAdapter<{
   roomNumber: string;
   folioPerson: string;
   uniqueId: string;
+  passport: string;
   checkIn: string;
   checkOut: string;
   treatmentDaysCount: string;
@@ -375,6 +376,7 @@ const patientsAdapter: ImportAdapter<{
     "roomNumber",
     "folioPerson",
     "uniqueId",
+    "passport",
     "checkIn",
     "checkOut",
     "treatmentDaysCount",
@@ -403,6 +405,7 @@ const patientsAdapter: ImportAdapter<{
     roomNumber: z.string(),
     folioPerson: z.string(),
     uniqueId: z.string(),
+    passport: z.string(),
     checkIn: z.string(),
     checkOut: z.string(),
     treatmentDaysCount: z.string(),
@@ -431,6 +434,7 @@ const patientsAdapter: ImportAdapter<{
     roomNumber: optCell(raw, "roomNumber"),
     folioPerson: optCell(raw, "folioPerson"),
     uniqueId: optCell(raw, "uniqueId"),
+    passport: optCell(raw, "passport"),
     checkIn: optCell(raw, "checkIn"),
     checkOut: optCell(raw, "checkOut"),
     treatmentDaysCount: optCell(raw, "treatmentDaysCount"),
@@ -467,6 +471,7 @@ const patientsAdapter: ImportAdapter<{
           birthDate: row.birthDate,
           hotelResNo: row.hotelResNo,
           folioPerson: row.folioPerson,
+          passport: row.passport,
         });
         const patient = await tx.patientRef.create({
           data: {
@@ -525,6 +530,7 @@ const patientsAdapter: ImportAdapter<{
           birthDate: row.birthDate,
           hotelResNo: row.hotelResNo,
           folioPerson: row.folioPerson,
+          passport: row.passport,
           existingGlobalPersonId: existing?.globalPersonId,
         });
         await tx.patientRef.update({

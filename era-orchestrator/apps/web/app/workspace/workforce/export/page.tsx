@@ -10,7 +10,7 @@ import {
   parseApiError,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
-import { workforceFetch } from "../../../../lib/workforce-fetch";
+import { fileToWorkforceImportBody, workforceFetch } from "../../../../lib/workforce-fetch";
 
 type ImportRowResult = {
   index: number;
@@ -44,13 +44,13 @@ async function downloadExport(path: string, filename: string) {
 
 async function postImport(
   path: string,
-  csv: string,
+  body: { csv?: string; xlsxBase64?: string },
   dryRun: boolean,
 ): Promise<ImportResult> {
   const qs = dryRun ? "?dryRun=true" : "";
   const res = await workforceFetch(`${path}${qs}`, {
     method: "POST",
-    body: JSON.stringify({ csv }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     throw new Error(
@@ -71,8 +71,9 @@ function downloadBlob(filename: string, content: string) {
 }
 
 const ROSTER_TEMPLATE =
-  "fin,fullName,orgUnit,position,hireDate,satellites\n" +
-  "1A2B3C4,Example Person,Resepşn,Qeydiyyatçı,2026-07-01,industry_clinic|industry_hotel_pms\n";
+  "fin,fullName,sex,birthDate,orgUnit,position,hireDate,workplace,satellites\n" +
+  "1A2B3C4,Example Person,MALE,1990-01-15,Resepşn,Qeydiyyatçı,2026-07-01,PRIMARY,industry_hotel_pms\n" +
+  "5B6C7D8,Second Job,FEMALE,1992-03-20,Resepşn,Qeydiyyatçı,2026-07-01,ADDITIONAL,\n";
 
 const ABSENCE_TEMPLATE =
   "staffCode,kind,startDate,endDate,note\n" +
@@ -85,8 +86,10 @@ export default function WorkforceExportImportPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [rosterCsv, setRosterCsv] = useState("");
+  const [rosterXlsx, setRosterXlsx] = useState<string | null>(null);
   const [rosterName, setRosterName] = useState<string | null>(null);
   const [absenceCsv, setAbsenceCsv] = useState("");
+  const [absenceXlsx, setAbsenceXlsx] = useState<string | null>(null);
   const [absenceName, setAbsenceName] = useState<string | null>(null);
   const [rosterResult, setRosterResult] = useState<ImportResult | null>(null);
   const [absenceResult, setAbsenceResult] = useState<ImportResult | null>(null);
@@ -100,8 +103,8 @@ export default function WorkforceExportImportPage() {
   const from = `${year}-${String(month).padStart(2, "0")}-01`;
   const to = now.toISOString().slice(0, 10);
 
-  const rosterReady = rosterCsv.trim().length > 0;
-  const absenceReady = absenceCsv.trim().length > 0;
+  const rosterReady = rosterCsv.trim().length > 0 || Boolean(rosterXlsx);
+  const absenceReady = absenceCsv.trim().length > 0 || Boolean(absenceXlsx);
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
@@ -115,12 +118,16 @@ export default function WorkforceExportImportPage() {
     }
   }
 
-  async function runImport(kind: "roster" | "absences", csv: string, dryRun: boolean) {
-    if (!csv.trim()) {
+  async function runImport(
+    kind: "roster" | "absences",
+    body: { csv?: string; xlsxBase64?: string },
+    dryRun: boolean,
+  ) {
+    if (!body.csv?.trim() && !body.xlsxBase64?.trim()) {
       setError(t("importNeedFile"));
       return;
     }
-    const result = await postImport(`import/${kind}`, csv, dryRun);
+    const result = await postImport(`import/${kind}`, body, dryRun);
     if (kind === "roster") setRosterResult(result);
     else setAbsenceResult(result);
   }
@@ -128,17 +135,20 @@ export default function WorkforceExportImportPage() {
   async function onPickFile(
     file: File | null,
     setCsv: (v: string) => void,
+    setXlsx: (v: string | null) => void,
     setName: (v: string | null) => void,
     clearResult: () => void,
   ) {
     clearResult();
     if (!file) {
       setCsv("");
+      setXlsx(null);
       setName(null);
       return;
     }
-    const text = await file.text();
-    setCsv(text);
+    const body = await fileToWorkforceImportBody(file);
+    setCsv(body.csv ?? "");
+    setXlsx(body.xlsxBase64 ?? null);
     setName(file.name);
   }
 
@@ -229,24 +239,50 @@ export default function WorkforceExportImportPage() {
             t={t}
             onCsvChange={(v) => {
               setRosterCsv(v);
+              setRosterXlsx(null);
               setRosterName(null);
               setRosterResult(null);
             }}
             onPickClick={() => rosterInputRef.current?.click()}
             onFile={(file) =>
-              void onPickFile(file, setRosterCsv, setRosterName, () => setRosterResult(null))
+              void onPickFile(
+                file,
+                setRosterCsv,
+                setRosterXlsx,
+                setRosterName,
+                () => setRosterResult(null),
+              )
             }
             onLoadTemplate={() => {
               setRosterCsv(ROSTER_TEMPLATE);
+              setRosterXlsx(null);
               setRosterName("workforce-roster-template.csv");
               setRosterResult(null);
               downloadBlob("workforce-roster-template.csv", ROSTER_TEMPLATE);
             }}
             onValidate={() =>
-              void run("import-roster-dry", () => runImport("roster", rosterCsv, true))
+              void run("import-roster-dry", () =>
+                runImport(
+                  "roster",
+                  {
+                    ...(rosterCsv.trim() ? { csv: rosterCsv } : {}),
+                    ...(rosterXlsx ? { xlsxBase64: rosterXlsx } : {}),
+                  },
+                  true,
+                ),
+              )
             }
             onApply={() =>
-              void run("import-roster", () => runImport("roster", rosterCsv, false))
+              void run("import-roster", () =>
+                runImport(
+                  "roster",
+                  {
+                    ...(rosterCsv.trim() ? { csv: rosterCsv } : {}),
+                    ...(rosterXlsx ? { xlsxBase64: rosterXlsx } : {}),
+                  },
+                  false,
+                ),
+              )
             }
           />
 
@@ -263,26 +299,50 @@ export default function WorkforceExportImportPage() {
             t={t}
             onCsvChange={(v) => {
               setAbsenceCsv(v);
+              setAbsenceXlsx(null);
               setAbsenceName(null);
               setAbsenceResult(null);
             }}
             onPickClick={() => absenceInputRef.current?.click()}
             onFile={(file) =>
-              void onPickFile(file, setAbsenceCsv, setAbsenceName, () =>
-                setAbsenceResult(null),
+              void onPickFile(
+                file,
+                setAbsenceCsv,
+                setAbsenceXlsx,
+                setAbsenceName,
+                () => setAbsenceResult(null),
               )
             }
             onLoadTemplate={() => {
               setAbsenceCsv(ABSENCE_TEMPLATE);
+              setAbsenceXlsx(null);
               setAbsenceName("workforce-absences-template.csv");
               setAbsenceResult(null);
               downloadBlob("workforce-absences-template.csv", ABSENCE_TEMPLATE);
             }}
             onValidate={() =>
-              void run("import-abs-dry", () => runImport("absences", absenceCsv, true))
+              void run("import-abs-dry", () =>
+                runImport(
+                  "absences",
+                  {
+                    ...(absenceCsv.trim() ? { csv: absenceCsv } : {}),
+                    ...(absenceXlsx ? { xlsxBase64: absenceXlsx } : {}),
+                  },
+                  true,
+                ),
+              )
             }
             onApply={() =>
-              void run("import-abs", () => runImport("absences", absenceCsv, false))
+              void run("import-abs", () =>
+                runImport(
+                  "absences",
+                  {
+                    ...(absenceCsv.trim() ? { csv: absenceCsv } : {}),
+                    ...(absenceXlsx ? { xlsxBase64: absenceXlsx } : {}),
+                  },
+                  false,
+                ),
+              )
             }
           />
         </section>
@@ -343,7 +403,7 @@ function ImportCard({
       <input
         ref={inputRef}
         type="file"
-        accept=".csv,text/csv,text/plain"
+        accept=".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         className="sr-only"
         onChange={(e) => onFile(e.target.files?.[0] ?? null)}
       />
