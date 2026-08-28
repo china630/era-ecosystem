@@ -28,7 +28,7 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
     enterSatelliteTenant({ organizationId });
   }
 
-  await assertHotelApiEntitled();
+  await assertHotelApiEntitled(undefined, organizationId);
 
   return {
     sub: userId,

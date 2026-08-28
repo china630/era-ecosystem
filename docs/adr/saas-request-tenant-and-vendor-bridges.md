@@ -40,7 +40,7 @@ Operators on the property still use the **browser extension** (desk FO vs sanato
 For every hotel (then clinic) **HTTP request** in a SHARED pool:
 
 1. Resolve `organizationId` from **this request**: session user, SSO payload, bridge JWT, or clinic→hotel POST body — never from process bind.
-2. Wrap Prisma work in `runWithSatelliteTenant({ organizationId })` / `enterSatelliteTenant` (kit ALS already exists). **Enter ALS before** `requireSatelliteModule` — the gate prefers request org + CP `GET /internal/v1/subscription/snapshot`, then last Sync runtime-config cache. Process bind / Sync `activeModules` in memory is DEDICATED-only; after a SHARED container restart without ALS the old gate threw `Industry module not active` even when the org was entitled.
+2. Wrap Prisma work in `runWithSatelliteTenant({ organizationId })` (kit ALS already exists). **Pass that org into `requireSatelliteModule({ organizationId })`** — do not rely on `enterWith` surviving the next `await` in Next.js. The gate then `assertEntitled` via CP `GET /internal/v1/subscription/snapshot` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN` or control-plane token), then last Sync runtime-config cache. Process bind / Sync `activeModules` in memory is DEDICATED-only.
 3. Look up vendor-bridge policy with **that** id.
 
 Process bind (`POST /api/internal/v1/organization/bind`, `ERA_SATELLITE_ORGANIZATION_ID`) remains valid for **DEDICATED / ONPREM** (one org ≈ instance) and as **bootstrap** before the first request. It must **not** stamp ingest/outbox/folio for 120 tenants.

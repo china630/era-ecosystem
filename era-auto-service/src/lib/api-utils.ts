@@ -84,8 +84,8 @@ export async function enterAutoRequestTenant(): Promise<string | undefined> {
 
 /** Call at the start of authenticated API handlers (session helper). */
 export async function assertAutoEntitled(): Promise<void> {
-  await enterAutoRequestTenant();
-  await requireAutoSatellite();
+  const org = await enterAutoRequestTenant();
+  await requireAutoSatellite(org);
 }
 
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
