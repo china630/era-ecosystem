@@ -546,11 +546,12 @@ const patientsAdapter: ImportAdapter<{
           where: { patientRefId: id },
           orderBy: { openedAt: "desc" },
         });
+        const patientOrigin = inHouse ? ("IN_HOUSE" as const) : ("WALK_IN" as const);
         const episodeFields = {
           roomNumber: row.roomNumber || episode?.roomNumber || null,
           reservationId: row.hotelResNo || episode?.reservationId || null,
           programCode: row.programCode || episode?.programCode || null,
-          patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
+          patientOrigin,
           status: episodeState.status,
           closedAt: episodeState.closedAt,
           ...(checkIn ? { openedAt: checkIn } : {}),
@@ -579,7 +580,7 @@ const patientsAdapter: ImportAdapter<{
           closedAt: episodeState.closedAt,
           roomNumber: episodeFields.roomNumber,
           reservationId: episodeFields.reservationId,
-          patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
+          patientOrigin,
         });
       },
     ),
