@@ -37,6 +37,7 @@ PRD: [../PRD.md](../PRD.md)
 - [x] CLI-40 visit + inpatient + print + favorites — `VisitDiagnosis` / `AdmissionDiagnosis`; `/visits/[id]`; `/inpatient` diagnoses modal; print checkup diagnosis block; `/admin/icd-favorites` (pin + retire, no title CRUD)
 - [x] CLI-41 platform ICD-10 gateway — orchestrator `GET /platform/v1/catalog/icd10` in-process from shared generator (not data-hub); clinic optional sync
 - [x] CLI-42 diagnosis report — `/reports/diagnoses` + `GET /api/reports/diagnoses`
+- [x] CLI-49 physio S catalog + order sites — SatAdmin `/admin/physio-sites` (incl. Unmatched queue); `sites[]` + doctor chips + `note`; type-gated fields; `#23` nahiye matcher; coarse `bodyPart` derived
 - [x] Discount audit (K-13) — API + visit card modal UI
 - [x] Executive dashboard (K-14) — `ExecutiveDashboard` on Home `/` for owners (`canViewExecutive`) + `GET /api/executive/summary` (`BUSINESS_OWNER`); standalone `/executive` route removed (nav cleanup)
 - [x] Multi-room schedule (drag reschedule) — см. Product modules M9 (v1.0)
@@ -108,7 +109,7 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 ## Planned — v1.1
 
 - [x] M10: EHR templates / CPOE lite
-- [x] M10 pack: standard diagnostic + lab templates v1.1 — [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md) + `prisma/seed-data/diagnostic-lab-catalog.json` (85 studies, 45 lab panels, 13 visits, 7 packages → `ClinicalTemplate` + `ServiceCatalogCache`)
+- [x] M10 pack: standard diagnostic + lab templates v1.2 — [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md) + `prisma/seed-data/diagnostic-lab-catalog.json` (85 studies, 48 lab panels, ~362 analytes, 13 visits, 7 packages)
 - [x] Diagnostic catalog UI — picker on `/lab-orders`, template result form on `/lab-orders/[id]`, favorites tab on `/admin/diagnostic-catalog` (`Tenant.catalogFavoriteCodes` + mode; standalone `/admin/catalog-favorites` route removed)
 - [x] Diagnostic catalog **DB source of truth** (CLI-32) - Modality/DiagnosticService/DiagnosticAnalyte; seed from JSON; SatAdmin `/admin/diagnostic-catalog` CRUD - ADR [clinic-diagnostic-catalog-db.md](../../docs/adr/clinic-diagnostic-catalog-db.md)
 - [x] Lab order normalization (CLI-32) - `LabOrderItem` + `LabResult`; dual-write legacy `testCode`/`resultJson`; backfill; results read-only after PUBLISHED; `/lab-orders` DATA_TABLE + filters/pagination
@@ -156,6 +157,7 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 ### Sanatorium cross-satellite
 
 - [x] Billing router: `WALK_IN` → finance event; `IN_HOUSE` → hotel `room-charge` MEDICAL
+- [x] Nafta dual-run extra tickets: `/reception/extra-tickets` + hotel Elektraweb outbox at issue (not `COMPLETED`); nurse `TICKET_REQUIRED`. HOT-06 remains HEADLESS.
 - [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
 - [x] Plan 2.9: `notifyClinicCheckIn` removed; `ProcessedEvent` idempotency on lifecycle ingress
 - [x] `PRESCRIPTION_ISSUED` / `PROCEDURE_COMPLETED` + retail reserve/write-off endpoints
@@ -186,3 +188,15 @@ Trilingual print routes (lab/USM/checkup/procedures), tenant branding, qualitati
 ### Planned — CLI-47 procedure TTK
 
 Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic-procedure-consumable-ttk.md). Dummy `PROC-*` on complete remains until W1.
+
+### W3 — type-gated physio order fields (CLI-49)
+
+2026-08-27: `ProcedureOrder.physioFields` + per-site laterality; `ProcedureType.needsSite` / `physioOrderFields` seeded from SKU; doctor form shows only those fields (`CatalogField`); extra field → 400.
+
+### W4 — unmatched nahiye queue (CLI-49)
+
+2026-08-27: domain matcher (`nahiye-match.ts`) golden-locked to `nahiye-s-match.cjs`; `#23` slots carry `nahiye` (card join via `patientProcedureId`); import copies WO text into `note` (never wipe) and fills `sites[]` / `physioFields`; leftover → `PhysioNahiyeQueue`; SatAdmin Unmatched tab aliases an existing S or marks not-anatomy. Does not auto-mint S. Electro 2/4-pad routing still out of scope.
+
+### Nafta dual-run extra tickets (HOT-06)
+
+2026-08-27: Issue ticket at `/reception/extra-tickets` enqueues hotel `ElektrawebFolioOutbox`; widget `SP_SPA_SAVE`; 3-copy print; nurse gate. Not SHIPPED.

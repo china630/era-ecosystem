@@ -24,7 +24,7 @@
 | AC-CLI-CASH | Cashier settle / ops | ✅ | [ ] | `__tests__/cli-cash-negative.spec.ts` + CLI-33 | **Settle/ops only** — visit/shift deny; live fiscal = External |
 | AC-CLI-PRINT | Print forms + branding | ✅ | [ ] | `__tests__/cli-print-negative.spec.ts` + CLI-34 | Negative: missing source; unsupported lang |
 | AC-CLI-CAP | Clinic→hotel capacity foresight | ✅ | [ ] | `__tests__/cli-cap-negative.spec.ts` + CLI-27 | Negative: critical risk blocks booking |
-| AC-CLI-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; UAT-SMOKE two-org outline | **Excluded from Scaffold BE rollup.** Schema + filter landed (no `unbound` default); UAT outline + pending signoff (`reports/two-org-isolation-signoff.md`) — still not Scaffold ✅ (no field pass / live SHARED pool) |
+| AC-CLI-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 2 clinic login/JWT/`enterSatelliteTenant` + lifecycle ALS; Wave 4 cron + capacity POST multi-org; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT) → **✅**.  
 AC-CLI-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  
@@ -37,8 +37,10 @@ Do not call this table «product readiness».
 | AC-CLI-LAB / CLI-23 | HL7 production adapter | External ⏸ | Scope-cut (like Hotel HOT-02) — not AC-CLI-LAB ops |
 | AC-CLI-CASH / CLI-24 | Live fiscal KKM | External ⏸ | Scope-cut — not AC-CLI-CASH settle/ops |
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
-| AC-CLI-TENANT | Live SHARED pool + field isolation UAT | Out of BE rollup | Schema+filter only |
+| AC-CLI-TENANT | Live SHARED pool + field isolation UAT | Out of BE rollup | Wave 5 lab + Wave 9 live-smoke + Wave 10 cron discover; Scaffold ✅ still needs field pass |
 | CLI-47 | Procedure TTK → Finance inventory | Out of BE plan | ADR `clinic-procedure-consumable-ttk`; API W1 (BOM+event); Finance write-off W2 |
+| CLI-49 | Physio S + program/substance catalogs | Out of BE plan | W4 sites[] + type-gated fields + unmatched queue SHIPPED |
+| Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 
 ### Negative-path proof index
 

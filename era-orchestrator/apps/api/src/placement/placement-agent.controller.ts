@@ -1,7 +1,11 @@
 import {
+  Body,
   Controller,
   Get,
   Headers,
+  Param,
+  ParseUUIDPipe,
+  Post,
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -21,11 +25,19 @@ export class PlacementAgentController {
   ) {}
 
   @Get("jobs")
-  listPending(
+  listPending(@Headers("authorization") authorization?: string) {
+    this.assertHostToken(authorization);
+    return this.jobs.listForHostAgent();
+  }
+
+  @Post("jobs/:id/apply-log")
+  reportApply(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: { applyLog?: string },
     @Headers("authorization") authorization?: string,
   ) {
     this.assertHostToken(authorization);
-    return this.jobs.listForHostAgent();
+    return this.jobs.reportApplyLog(id, body.applyLog?.trim() || "(empty)");
   }
 
   private assertHostToken(authorization?: string): void {

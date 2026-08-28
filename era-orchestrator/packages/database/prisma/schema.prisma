@@ -381,6 +381,7 @@ model SatelliteEndpoint {
 
   @@unique([organizationId, satelliteKey])
   @@index([organizationId])
+  @@index([satelliteKey, baseUrl])
   @@map("satellite_endpoints")
 }
 
@@ -407,8 +408,14 @@ model PlacementJob {
   toTopology     DeploymentTopology @map("to_topology")
   status         PlacementJobStatus @default(PENDING)
   errorMessage   String?            @map("error_message")
-  /// Metadata from exportSlice stub (not a full dump).
+  /// Metadata from exportSlice (counts + format note).
   sliceMeta      Json?              @map("slice_meta")
+  /// Durable slice artifact path or opaque ref for host agent download.
+  artifactRef    String?            @map("artifact_ref")
+  /// Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
+  artifactJson   Json?              @map("artifact_json")
+  /// Host agent apply log (observable provision step).
+  applyLog       String?            @map("apply_log") @db.Text
   /// Optional target URL for cutoverEndpoint.
   targetBaseUrl  String?            @map("target_base_url")
   createdAt      DateTime           @default(now()) @map("created_at")
@@ -1044,6 +1051,9 @@ model Organization {
   workforceAssignments WorkforceAssignment[]
   workforceEmployments WorkforceEmployment[]
   orgUnitCommercialLinks OrgUnitCommercialLink[]
+  elektrawebBridgePolicy ElektrawebBridgePolicy?
+  clinicCutoverPolicy    ClinicCutoverPolicy?
+  clinicCutoverAsHotel   ClinicCutoverPolicy[] @relation("ClinicCutoverHotelOrg")
   owner              User?         @relation("OrganizationOwner", fields: [ownerId], references: [id])
   parentOrg          Organization?  @relation("OrgParent", fields: [parentOrgId], references: [id])
   departments        Organization[] @relation("OrgParent")
@@ -1054,6 +1064,37 @@ model Organization {
   @@index([parentOrgId])
   @@index([holdingId])
   @@map("organizations")
+}
+
+/// Per-hotel-org Elektraweb dual-run policy (SaaS SoR). Synced to hotel satellite keyed by organizationId.
+model ElektrawebBridgePolicy {
+  organizationId    String       @id @map("organization_id") @db.Uuid
+  inboundEnabled    Boolean      @default(false) @map("inbound_enabled")
+  writeEnabled      Boolean      @default(false) @map("write_enabled")
+  elektrawebHotelId Int?         @map("elektraweb_hotel_id")
+  spaDepId          Int?         @map("spa_dep_id")
+  spaCurrencyId     Int?         @map("spa_currency_id")
+  walkinResId       String?      @map("walkin_res_id") @db.VarChar(64)
+  walkinResNameId   String?      @map("walkin_res_name_id") @db.VarChar(64)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("elektraweb_bridge_policies")
+}
+
+/// Per-clinic-org cutover: extras still route to Elektraweb via linked hotel org.
+model ClinicCutoverPolicy {
+  organizationId      String        @id @map("organization_id") @db.Uuid
+  elektrawebDualRun   Boolean       @default(false) @map("elektraweb_dual_run")
+  hotelOrganizationId String?       @map("hotel_organization_id") @db.Uuid
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  hotelOrganization   Organization? @relation("ClinicCutoverHotelOrg", fields: [hotelOrganizationId], references: [id], onDelete: SetNull)
+
+  @@index([hotelOrganizationId])
+  @@map("clinic_cutover_policies")
 }
 
 /// Platform identity (shared `users` table during control-plane migration).

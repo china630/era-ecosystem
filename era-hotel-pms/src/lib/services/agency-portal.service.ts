@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { createReservation } from '@/lib/services/reservation.service';
 import { getAvailabilityWithContractAllotment } from '@/lib/services/contract-allotment.service';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
@@ -12,7 +12,7 @@ async function ensureAgencyBookingSource() {
   if (existing) return existing;
   return prisma.bookingSource.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       code: 'AGENCY',
       name: 'Travel Agency Portal',
     },
@@ -127,7 +127,7 @@ export async function createAgencyPortalReservation(input: {
 
   const guest = await prisma.guest.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       fullName: input.guest.fullName.trim(),
       phone: input.guest.phone?.trim() || null,
       email: input.guest.email?.trim() || null,

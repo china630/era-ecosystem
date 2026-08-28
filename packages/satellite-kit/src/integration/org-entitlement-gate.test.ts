@@ -12,7 +12,9 @@ import {
   isClinicModuleActive,
   resolveHotelModuleKey,
   IndustryModuleInactiveError,
+  runCronForEachTenant,
 } from "./org-entitlement-gate.js";
+import { resolveSatelliteTenantOrgId } from "../tenancy/satellite-tenant-context.js";
 import {
   applySatelliteRuntimeConfig,
   resetRuntimeConfigForTests,
@@ -86,5 +88,137 @@ describe("IndustryModuleInactiveError", () => {
     const err = new IndustryModuleInactiveError("clinic_lab");
     assert.equal(err.status, 403);
     assert.equal(err.moduleKey, "clinic_lab");
+  });
+});
+
+describe("runCronForEachTenant", () => {
+  const prevCronIds = process.env.ERA_CRON_ORGANIZATION_IDS;
+  const prevUnlock = process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+  const prevSecret = process.env.PLATFORM_CRON_SECRET;
+
+  beforeEach(() => {
+    process.env.ERA_DEV_UNLOCK_ALL_MODULES = "1";
+    delete process.env.PLATFORM_CRON_SECRET;
+  });
+
+  afterEach(() => {
+    if (prevCronIds === undefined) delete process.env.ERA_CRON_ORGANIZATION_IDS;
+    else process.env.ERA_CRON_ORGANIZATION_IDS = prevCronIds;
+    if (prevUnlock === undefined) delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    else process.env.ERA_DEV_UNLOCK_ALL_MODULES = prevUnlock;
+    if (prevSecret === undefined) delete process.env.PLATFORM_CRON_SECRET;
+    else process.env.PLATFORM_CRON_SECRET = prevSecret;
+  });
+
+  it("runs work once per ERA_CRON_ORGANIZATION_IDS with ALS bound", async () => {
+    const orgA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const orgB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    process.env.ERA_CRON_ORGANIZATION_IDS = `${orgA},${orgB}`;
+
+    const seen: string[] = [];
+    const gate = await runCronForEachTenant({}, async (organizationId) => {
+      seen.push(organizationId);
+      assert.equal(resolveSatelliteTenantOrgId(), organizationId);
+      return { organizationId, ok: true };
+    });
+
+    assert.equal(gate.ok, true);
+    if (!gate.ok) return;
+    assert.deepEqual(seen, [orgA, orgB]);
+    assert.deepEqual(gate.results, [
+      { organizationId: orgA, ok: true },
+      { organizationId: orgB, ok: true },
+    ]);
+  });
+
+  it("returns 401 when cron secret configured and Authorization missing", async () => {
+    process.env.ERA_CRON_ORGANIZATION_IDS = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    process.env.PLATFORM_CRON_SECRET = "cron-secret";
+    const gate = await runCronForEachTenant({}, async () => ({ ok: true }));
+    assert.equal(gate.ok, false);
+    if (gate.ok) return;
+    assert.equal(gate.status, 401);
+  });
+
+  it("uses listOrganizationIds when ERA_CRON_ORGANIZATION_IDS unset", async () => {
+    delete process.env.ERA_CRON_ORGANIZATION_IDS;
+    const orgA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const orgB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const seen: string[] = [];
+    const gate = await runCronForEachTenant(
+      {
+        listOrganizationIds: async () => [orgA, orgB, orgA],
+      },
+      async (organizationId) => {
+        seen.push(organizationId);
+        assert.equal(resolveSatelliteTenantOrgId(), organizationId);
+        return { organizationId };
+      },
+    );
+    assert.equal(gate.ok, true);
+    if (!gate.ok) return;
+    assert.deepEqual(seen, [orgA, orgB]);
+  });
+
+  it("env ERA_CRON_ORGANIZATION_IDS wins over listOrganizationIds", async () => {
+    const orgEnv = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const orgDiscover = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    process.env.ERA_CRON_ORGANIZATION_IDS = orgEnv;
+    const seen: string[] = [];
+    const gate = await runCronForEachTenant(
+      {
+        listOrganizationIds: async () => [orgDiscover],
+      },
+      async (organizationId) => {
+        seen.push(organizationId);
+        return { organizationId };
+      },
+    );
+    assert.equal(gate.ok, true);
+    if (!gate.ok) return;
+    assert.deepEqual(seen, [orgEnv]);
+  });
+
+  it("fetchPoolOrganizationIds wins over listOrganizationIds when env unset", async () => {
+    delete process.env.ERA_CRON_ORGANIZATION_IDS;
+    const orgPool = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+    const orgDiscover = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const seen: string[] = [];
+    const gate = await runCronForEachTenant(
+      {
+        fetchPoolOrganizationIds: async () => [orgPool],
+        listOrganizationIds: async () => [orgDiscover],
+      },
+      async (organizationId) => {
+        seen.push(organizationId);
+        return { organizationId };
+      },
+    );
+    assert.equal(gate.ok, true);
+    if (!gate.ok) return;
+    assert.deepEqual(seen, [orgPool]);
+  });
+
+  it("empty listOrganizationIds falls back to process bind", async () => {
+    delete process.env.ERA_CRON_ORGANIZATION_IDS;
+    const bound = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    process.env.ERA_SATELLITE_ORGANIZATION_ID = bound;
+    try {
+      const seen: string[] = [];
+      const gate = await runCronForEachTenant(
+        {
+          listOrganizationIds: async () => [],
+        },
+        async (organizationId) => {
+          seen.push(organizationId);
+          return { organizationId };
+        },
+      );
+      assert.equal(gate.ok, true);
+      if (!gate.ok) return;
+      assert.deepEqual(seen, [bound]);
+    } finally {
+      delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    }
   });
 });

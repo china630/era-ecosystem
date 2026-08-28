@@ -12,7 +12,7 @@ Living snapshot of **code + DELIVERY** readiness (engineering API levels and che
 
 Last updated: 2026-08-17 (topology waves 9–18 — PlacementJob API scaffold; CP-PLACE-01 = API; live SHARED pool open)
 
-> **Deployment topology (2026-08-17 waves 9–18):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + slice metadata stub (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md).
+> **Deployment topology (2026-08-17 waves 9–18 + SaaS Waves 7/11):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + hotel curated JSON slice lab (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md) · [acceptance/SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md).
 
 > **Workforce v3 (orchestrator):** Absence (A), org structure (B), role templates + CP provisioning + Security Admin (C), PII tiers (D), clean cutover (E) — see [COVERAGE_MATRIX CP-WF-*](./COVERAGE_MATRIX.md), master ADR [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md), runbook [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md).
 

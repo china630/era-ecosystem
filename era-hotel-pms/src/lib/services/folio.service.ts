@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { FolioType, PaymentMethod } from '@prisma/client';
@@ -47,7 +47,7 @@ export async function openFoliosForReservation(reservationId: string, guestVoen:
     types.map((type) =>
       prisma.folio.create({
         data: {
-          organizationId: satelliteOrganizationId(),
+          organizationId: requestOrganizationId(),
           reservationId,
           type,
           status: 'OPEN',
@@ -130,7 +130,7 @@ export async function postCharge(input: {
   } else if (!folio) {
     folio = await prisma.folio.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         reservationId: input.reservationId,
         type: targetType,
         status: 'OPEN',
@@ -239,7 +239,7 @@ export async function postPayment(input: {
     );
   }
 
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   if (organizationId && input.amount > 0 && kind === 'PAYMENT') {
     const { runHotelFolioPlatformHooks } = await import(
       '@/lib/integration/platform-commerce'

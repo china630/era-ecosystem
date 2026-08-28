@@ -166,6 +166,9 @@
   },
   "auth": {
     "loginFailed": "Ошибка входа",
+    "organizationIdLabel": "ID организации (CRM)",
+    "organizationIdPlaceholder": "UUID — обязателен в общем CRM pool",
+    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",

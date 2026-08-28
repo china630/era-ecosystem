@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Hour X staging gate: lab binaries + era-ready books + optional empty-DB import dry-run.
+ * Hour X staging gate: lab binaries + NAFTA-ERA-READY books + optional empty-DB import dry-run.
  *
  *   node era-clinic/scripts/nafta-cutover/staging-gate.cjs
  *   node era-clinic/scripts/nafta-cutover/staging-gate.cjs --apply
@@ -11,9 +11,10 @@ const fs = require("fs");
 const path = require("path");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
+const READY_ROOT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
 const LAB_DIR = path.join(START, "clinic", "dump", "files", "lab");
 const MANIFEST = path.join(LAB_DIR, "manifest.json");
-const READY = path.join(START, "era-ready", "clinic");
+const READY = path.join(READY_ROOT, "clinic");
 const APPLY = process.argv.includes("--apply");
 const MIN_OK = 2000;
 
@@ -25,18 +26,19 @@ function isLabBinary(buf) {
 
 function main() {
   const books = [
-    "01-procedures.xlsx",
-    "02-rooms.xlsx",
-    "03-practitioners.xlsx",
-    "04-patients.xlsx",
-    "05-quotas.xlsx",
-    "06-slots.xlsx",
-    "07-lab-catalog.xlsx",
-    "08-lab-orders.xlsx",
-    "09-diagnostics.xlsx",
-    "10-diagnoses.xlsx",
+    "21-patients.xlsx",
+    "23-slots.xlsx",
+    "24-lab-orders.xlsx",
+    "25-Treatments.xlsx",
+    "26-Rooms.xlsx",
+    "27-Doctors.xlsx",
+    "29-Analyses.xlsx",
+    "31-Diagnostics.xlsx",
+    "32-Diagnoses.xlsx",
+    "38-quotas.xlsx",
+    "39-lab-results.xlsx",
+    "40-Procedure-Requirements.xlsx",
   ];
-  const missingBooks = books.filter((b) => !fs.existsSync(path.join(READY, b)));
   let okFiles = 0;
   if (fs.existsSync(LAB_DIR)) {
     for (const name of fs.readdirSync(LAB_DIR)) {

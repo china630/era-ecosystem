@@ -1,3 +1,4 @@
+import { resolveSatelliteOrganizationId } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import {
@@ -8,6 +9,7 @@ import {
 } from '@/lib/auth/permissions';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 import { checkSeatQuota } from '@/lib/licensing/client';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 export async function listUsers() {
   return prisma.user.findMany({
@@ -24,16 +26,18 @@ export async function createUser(input: {
   email?: string;
   department?: string;
 }) {
-  const existing = await prisma.user.findFirst({ where: { login: input.login } });
+  const organizationId = requestOrganizationId();
+  const existing = await prisma.user.findFirst({
+    where: { organizationId, login: input.login },
+  });
   if (existing) throw new Error('Login already exists');
 
   const role = await prisma.role.findUnique({ where: { id: input.roleId } });
   if (!role) throw new Error('Role not found');
 
   if (role.code !== ROLE_CODES.FINANCIAL_AUDITOR) {
-    const profile = await prisma.hotelProfile.findFirst();
     const quota = await checkSeatQuota({
-      organizationId: profile?.organizationId ?? 'nafta-sanatorium-org',
+      organizationId,
       satelliteType: 'hotel_pms',
     });
     if (!quota.allowed) {
@@ -46,6 +50,7 @@ export async function createUser(input: {
   const passwordHash = await hashPassword(input.password);
   return prisma.user.create({
     data: {
+      organizationId,
       login: input.login,
       fullName: input.fullName,
       passwordHash,
@@ -107,11 +112,28 @@ export async function updateUser(
   });
 }
 
-export async function getUserByLogin(credential: string) {
+/**
+ * Resolve staff by login within one org.
+ * - With `organizationId`: only that org (SHARED / widget / explicit login).
+ * - Without: only process bind org (DEDICATED appliance) — never cross-org findFirst.
+ */
+export async function getUserByLogin(
+  credential: string,
+  organizationId?: string | null,
+) {
   const id = credential.trim();
   if (!id) return null;
+  let orgId = organizationId?.trim() || null;
+  if (!orgId) {
+    try {
+      orgId = resolveSatelliteOrganizationId().organizationId;
+    } catch {
+      return null;
+    }
+  }
   return prisma.user.findFirst({
     where: {
+      organizationId: orgId,
       OR: [{ login: id }, { email: id }, { phone: id }],
     },
     include: { role: true },

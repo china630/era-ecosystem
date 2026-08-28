@@ -53,6 +53,8 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 **Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped.
 
+**Physio / sanatorium sites (W2):** doctor picks protocol zones **S** (chips + autocomplete) on the patient card; `ProcedureOrder.sites[]` stores the list; coarse `bodyPart` is derived. Every order still has free-text `note`. Type-gated programs/substances are W3. See [physio-site-canon.md](doc/physio-site-canon.md).
+
 **Code packaging:** domain logic migrates to `era-clinic/src/domain/`; extract to `packages/clinic-domain` only after inpatient ADT API stabilizes (ADR D5).
 
 ---
@@ -214,6 +216,7 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 | 2026-06-16 | §1.4 product lines & presets; out-of-scope clarified (full HIS vs inpatient_day); M13 → PARTIAL |
 | 2026-07-14 | Standard diagnostic + lab template catalog (USG/CT/ECG/panels) — seed JSON + K-12 link |
 | 2026-07-14 | Catalog v1.1 P0+P1: 85 studies, 45 lab panels, 13 visits, 7 packages |
+| 2026-08-24 | Catalog v1.2 lab: 48 panels, ~362 analytes (MediClub/Exonlab/Nafta routine); smear + biochem-ext + celiac |
 | 2026-08-18 | CLI-39…42: WHO ICD-10 catalog + diagnosis recording (sanatorium/visit/inpatient/print/favorites/report + orch gateway) |
 
 

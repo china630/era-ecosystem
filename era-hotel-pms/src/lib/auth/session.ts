@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { enterSatelliteTenant } from "@era/satellite-kit";
 import type { SessionPayload } from "./jwt";
 import { prisma } from "@/lib/prisma";
 import { assertHotelApiEntitled } from "@/lib/hotel-module-gate";
@@ -11,16 +12,21 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
   const login = h.get("x-user-login");
   const fullName = h.get("x-user-fullname");
   let email = h.get("x-user-email")?.trim() || undefined;
+  let organizationId = h.get("x-era-organization-id")?.trim() || undefined;
   if (!userId || !role) return null;
 
-  // Legacy tokens (pre-email claim) and sso_* logins: resolve email so
-  // platform super-admin gates work without forcing an immediate re-login.
-  if (!email) {
+  // Legacy tokens (pre-email / pre-org claim): resolve from user row.
+  if (!email || !organizationId) {
     const row = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true },
+      select: { email: true, organizationId: true },
     });
-    email = row?.email?.trim() || undefined;
+    email = email || row?.email?.trim() || undefined;
+    organizationId = organizationId || row?.organizationId || undefined;
+  }
+
+  if (organizationId) {
+    enterSatelliteTenant({ organizationId });
   }
 
   return {
@@ -29,5 +35,6 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
     login: login ?? "",
     fullName: fullName ?? "",
     email,
+    organizationId,
   };
 }

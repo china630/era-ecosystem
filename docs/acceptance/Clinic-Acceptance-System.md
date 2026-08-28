@@ -15,6 +15,7 @@
 - In scope: ops clinic + sanatorium day-ops, SatAdmin catalogs, cashier settle/ops (stub fiscal), print forms, lab orders ops, Nafta pilot contours
 - Out of scope: live HL7 LIS vendor (CLI-23 External), real NBC fiscal / KKM (CLI-24 External), retail pharmacy / Rx reserve
 - **Declared, not built:** procedure TTK → Finance inventory — [clinic-procedure-consumable-ttk.md](../adr/clinic-procedure-consumable-ttk.md) (CLI-47 STUB)
+- **W4 landed:** unmatched WO nahiye queue + `#23` nahiye column (CLI-49). Product-Readiness remains SCREEN until UAT-SMOKE.
 - **Declared, not this edition:** SHARED multi-tenant clinic pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). Waves 3–5: tenant roots + kit filter (CP-TENANT-01 API / AC-CLI-TENANT 🟡); Nafta remains one-org DEDICATED/ONPREM. Do not sell SHARED clinic.
 
 ## Definition of Done (soft / scaffold)

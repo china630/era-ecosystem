@@ -110,6 +110,9 @@
   },
   "auth": {
     "loginFailed": "Ошибка входа",
+    "organizationIdLabel": "ID организации (construction)",
+    "organizationIdPlaceholder": "UUID — обязателен в общем construction pool",
+    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",

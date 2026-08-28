@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 export async function getHotelProfile() {
   return prisma.hotelProfile.findFirst();
@@ -12,7 +12,7 @@ export async function upsertHotelProfile(input: {
   propertyCode: string;
   roomCapacity?: number;
 }) {
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   const existing = await prisma.hotelProfile.findFirst();
   if (existing) {
     return prisma.hotelProfile.update({

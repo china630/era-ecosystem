@@ -197,7 +197,7 @@
  },
   {
   "code": "SVC-ULTRAFONOFOREZ",
-  "name": "Ultrafonoforez (Naftalan oil)",
+  "name": "Ultrafonoforez (Naftalan yağıyla)",
   "price": 12,
   "durationMin": 10,
   "resourceGapMinutes": 5,
@@ -205,7 +205,7 @@
  },
  {
   "code": "SVC-ULTRAFONOFOREZ-GEL",
-  "name": "Ultrafonoforez (gel)",
+  "name": "Ultrafonoforez (Gellə)",
   "price": 12,
   "durationMin": 10,
   "resourceGapMinutes": 0,

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import type { FiscalDocumentStatus } from '@prisma/client';
 import { dispatchInvoiceIssued } from '@/lib/integration/event-dispatcher';
 
@@ -141,7 +141,7 @@ export async function issueFolioInvoice(folioId: string) {
     console.error('Invoice issued dispatch failed', err),
   );
 
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   const amountAzn = folio.charges.reduce(
     (sum, c) => sum + Number(c.amount ?? 0),
     0,

@@ -2,6 +2,23 @@ import { CounterpartiesController } from "../../src/counterparties/counterpartie
 import { CounterpartyLegalForm, CounterpartyRole } from "@erafinance/database";
 
 describe("CounterpartiesController degraded mode", () => {
+  const prevBlind = process.env.PII_BLIND_INDEX_KEY;
+  const prevEnc = process.env.PII_ENCRYPTION_KEY;
+
+  beforeAll(() => {
+    process.env.PII_BLIND_INDEX_KEY =
+      prevBlind?.trim() || "test-pii-blind-index-key-32b!!!!!!!!";
+    process.env.PII_ENCRYPTION_KEY =
+      prevEnc?.trim() || "test-pii-encryption-key-32bytes!!!!";
+  });
+
+  afterAll(() => {
+    if (prevBlind === undefined) delete process.env.PII_BLIND_INDEX_KEY;
+    else process.env.PII_BLIND_INDEX_KEY = prevBlind;
+    if (prevEnc === undefined) delete process.env.PII_ENCRYPTION_KEY;
+    else process.env.PII_ENCRYPTION_KEY = prevEnc;
+  });
+
   it("creates counterparty manually and writes audit event when e-taxes path fails", async () => {
     const prisma = {
       counterparty: {

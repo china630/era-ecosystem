@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
@@ -238,7 +238,7 @@ export async function createReservation(input: {
 
   const reservation = await prisma.reservation.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       roomTypeId: input.roomTypeId,
       guestId: input.guestId,
       ratePlanId,

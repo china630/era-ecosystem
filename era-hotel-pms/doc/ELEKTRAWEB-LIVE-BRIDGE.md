@@ -12,6 +12,8 @@ Temporary **Chrome/Edge MV3** extension that intercepts Elektraweb SPA API traff
 
 **Not** a paid Eptera official API integration. **Not** a permanent product feature — disable at cutover.
 
+**Reverse extra tickets (sanatorium desk):** clinic extras are issued as SPA tickets in Elektraweb at **print time**, not on procedure `COMPLETED`. In-house → guest folio; walk-in → house folio `TIBB AMBULATOR FOLIO`. Hotel FO does not drain that queue. ADR: [hotel-elektraweb-reverse-folio-post.md](../../docs/adr/hotel-elektraweb-reverse-folio-post.md).
+
 ---
 
 ## Implementation status
@@ -27,18 +29,18 @@ Temporary **Chrome/Edge MV3** extension that intercepts Elektraweb SPA API traff
 
 ### Tenant binding (critical)
 
-Hotel PMS is a **single-org satellite**. Writes always use `ERA_SATELLITE_ORGANIZATION_ID`.
-
 | Check | Mechanism |
 |-------|-----------|
-| Which ERA org | Server env `ERA_SATELLITE_ORGANIZATION_ID` (never taken from Elektraweb) |
-| Which Elektraweb property | Env `ELEKTRAWEB_HOTEL_ID` (Nafta `31606`) |
-| Extension session | Login form → JWT embeds **both** org id + Elektraweb hotel id |
-| Every row | `HOTELID` in payload must equal `ELEKTRAWEB_HOTEL_ID` or ingest returns **409** |
+| Which ERA org | Bridge/staff JWT claim `organizationId` (login sends org UUID). Appliance may omit org on login → process bind only for that user lookup |
+| Which Elektraweb property | Super-Admin / Sync `ElektrawebBridgePolicy.elektrawebHotelId` for **that** org |
+| Extension session | Options: ERA Hotel URL + **organizationId** + staff login → JWT embeds org + policy hotel id |
+| Every row | `HOTELID` in payload must equal **that org’s** policy hotel id or ingest returns **409** |
+
+Process kill switch only: `ELEKTRAWEB_BRIDGE_ENABLED`. No property ids in env.
 
 ### Extension login form
 
-Yes — Options page: ERA Hotel URL + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Optional shared `ELEKTRAWEB_BRIDGE_TOKEN` without form.
+Yes — Options page: ERA Hotel URL + **ERA organizationId (UUID)** + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Shared process Bearer was removed (unsafe on multi-org pool).
 
 Docs: [extensions/elektraweb-bridge/README.md](../extensions/elektraweb-bridge/README.md)
 
@@ -46,11 +48,12 @@ Docs: [extensions/elektraweb-bridge/README.md](../extensions/elektraweb-bridge/R
 
 | Item | Value |
 |------|--------|
-| Coverage ID | `HOT-06` (API — extension MVP; UAT dual-run pending) |
+| Coverage ID | `HOT-06` (HEADLESS — extension settings UI; UAT dual-run pending) |
 | SoT during dual-run | Elektraweb |
 | SoT after hour X | ERA Hotel PMS |
 | Writer into ERA | Bridge ingest only (no FO dual-write in ERA UI) |
 | Clinic | ERA — episodes from `CHECKED_IN` / booking / checkout events |
+| Extra SPA/Cash tickets | Elektraweb until hotel hour X; ERA “Issue ticket” + widget write (not started) |
 
 ---
 
@@ -106,7 +109,8 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 | Same `externalRef` as Excel | Idempotent with bootstrap; no duplicate guests/res |
 | Order in each batch: guest → reservation → folio | Avoid orphan charges |
 | Hash / etag dedupe on server | Grids refetch often |
-| Read-only toward Elektraweb | No auto clicks Save/Post |
+| Read-only toward Elektraweb on **hotel FO** | No auto clicks Save/Post |
+| Sanatorium write (opt-in) | SPA Insert from outbox — [reverse folio ADR](../../docs/adr/hotel-elektraweb-reverse-folio-post.md). Sanatorium desk + `ELEKTRAWEB_BRIDGE_WRITE_ENABLED=1`. |
 
 ---
 
@@ -174,7 +178,7 @@ Exact Elektraweb status strings must be mapped via Discovery + `mapReservationSt
 
 | Item | Spec |
 |------|------|
-| Auth | `Authorization: Bearer <ELEKTRAWEB_BRIDGE_TOKEN>` (dedicated secret; not staff JWT) |
+| Auth | `Authorization: Bearer <bridge JWT or staff session JWT>` (org claim; not process shared token) |
 | Content-Type | `application/json` |
 | Body | See schema below |
 | Response 202/200 | `{ accepted, entity, upserted, skipped, eventsEmitted[], errors[] }` |
@@ -199,15 +203,17 @@ Optional batch endpoint: `POST .../elektraweb-bridge/batch` with `items: BridgeE
 
 Returns last success timestamp, counts (24h), last error — for FO supervisor / dual-run dashboard (minimal UI ok).
 
-### Env
+### Env / policy
 
-| Variable | Purpose |
-|----------|---------|
-| `ELEKTRAWEB_BRIDGE_TOKEN` | Shared secret for extension → hotel |
-| `ELEKTRAWEB_BRIDGE_ENABLED=1` | Kill switch (503 when off) |
-| `ELEKTRAWEB_BRIDGE_ALLOWED_ORIGINS` | Optional allowlist of Elektraweb hosts |
+| Setting | Where |
+|---------|--------|
+| `ELEKTRAWEB_BRIDGE_ENABLED=1` | Process kill switch (503 when off) |
+| inbound / write / hotel id / SPA / walk-in | Super-Admin → Sync → `ElektrawebBridgePolicy` row per org |
+| `ELEKTRAWEB_BRIDGE_ALLOWED_ORIGINS` | Optional allowlist of Elektraweb hosts (process) |
 
-Extension stores: hotel base URL + token in extension options (not in git).
+**Wave 1:** property ids are **not** in hotel env. See [saas-request-tenant-and-vendor-bridges.md](../../docs/adr/saas-request-tenant-and-vendor-bridges.md).
+
+Extension stores: hotel base URL + organizationId + token in extension options (not in git).
 
 ---
 
@@ -313,10 +319,58 @@ Sample day list: 73 lines, mostly `RESSTATEID=3` (in-house). Amount always on `C
 | Item | Why |
 |------|-----|
 | Revenue code crosswalk `REVCODE` ↔ ERA `RevenueCode.code` | folio upsert without unknown-code errors |
+| SPA product `ID` ↔ clinic `procedureCode` | `SP_SPA_SAVE` DETAIL.ID |
+| Walk-in extras | same `SP_SPA_SAVE` onto `TIBB AMBULATOR FOLIO` — ids in §6.6 |
 | FO PC list + hotel-pms staging URL | extension rollout |
 | ERA night audit posting **off** during dual-run | no double post |
 
 `RESSTATEID=4` / `CheckOut` confirmed via mixed HAR (`QA_HOTEL_RESERVATION_CHECKOUT`) — separate CheckOut-only capture not required.
+
+### 6.5 SPA extra → in-house folio — DONE (2026-08-27)
+
+Live CDP on `api.s12.elektraweb.com` (Nafta `HOTELID=31606`). Sanatorium **bulk sales**, not Quick Posting `toplu-islem-girisi`.
+
+Guest on stay is **`RESNAMEID`** (stay-guest row), not hotel `Reservation.externalRef` (`RESID`). Folio list still uses hotel `RESID` (`HOTEL_FOLIOTRANS`). In-house picker: `Select/QSPA_HOTEL_CHECKIN` (`ROOMNO`, `SPAINHOUSE`).
+
+| Step | Call | Role |
+|------|------|------|
+| Open bulk sales | `Execute/SP_SPA_GETBULKSALESDATA` | Form bootstrap (`DEPID`, staff, time) |
+| Post extras | `Execute/SP_SPA_SAVE` **without** `GETPAYMENTONLY` | Lines on guest; `WALKIN` / `POSCARDID` null |
+| Payment dialog | `Execute/SP_SPA_GETPAYMENTDATA` | `RESNAMEID` + SPA line `RESID` |
+| Tender / discount | `Execute/SP_SPA_SAVE` with `GETPAYMENTONLY=1` | Observed `PAYTYPE=3`, `ROOMPAYMENT=0` |
+| 3-copy print | `POST poswssvc.s12.elektraweb.com/saveCheck/{HOTELID}/{hash}` | `{ req: { PRINTCHECK: true, DATA: { CHECKID } } }` |
+
+Create-lines body (shape only):
+
+```text
+POST /Execute/SP_SPA_SAVE
+Action: Execute
+Object: SP_SPA_SAVE
+Parameters:
+  HOTELID, DEPID, CURRENCYID   // 10 = AZN in sample
+  RESNAMEID                    // in-house stay guest
+  POSCARDID, WALKIN, SPAINHOUSE, WALKINROOMNO  // null for in-house
+  TOTAL
+  DETAILDATA  JSON [{ ID: productId, SERVICENAME, PRICE, quantity, TYPEID }]
+  DATA.MASTER { RESNAMEID, DEPID, POSCARDID }
+  DATA.DETAIL [{ ID: productId, QUANTITY, PRICE, MAINCURRENCYPRICE }]
+  PACKAGEDATA: "[]"
+```
+
+One ticket can carry several `DETAIL` rows (sample: 1 line, then 2 lines). Print is often a **second** `SP_SPA_SAVE` (`GETPAYMENTONLY=1`) plus `saveCheck`. The Tibbi Ambulator sample folded `PAYTYPE=3` into the create-lines Save, then `saveCheck`.
+
+### 6.6 Tibbi Ambulator house folio — DONE (2026-08-27)
+
+Operator confirmed a new **Ozonterapiya 17 AZN** line on the Tibbi folio after SPA Save. Same Insert as in-house; `WALKIN` / `POSCARDID` null.
+
+| Key | Nafta (`HOTELID=31606`) |
+|-----|-------------------------|
+| Folio / hotel `RESID` | `66246938` |
+| SPA `RESNAMEID` | `100670215` |
+| Guest-name search | `GUESTNAMES LIKE tibb%` (in-house `RESSTATEID=3`) |
+| Sample product | `1516306` Ozonterapiya |
+
+Do **not** treat these ids as product defaults. Config / inbound name match on other properties. The 34 AZN Save earlier the same day used this `RESNAMEID` too — it was already the dump folio, not a second in-house guest.
 
 ---
 
@@ -324,25 +378,39 @@ Sample day list: 73 lines, mostly `RESSTATEID=3` (in-house). Amount always on `C
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3, host_permissions: app.elektraweb.com + api.*.elektraweb.com
-  background.js          # service worker: queue + POST bridge
-  content-or-hook.js     # response capture strategy
-  options.html           # hotel URL + token + enable toggle
-  README.md              # load unpacked steps
+  manifest.json          # MV3 v0.2; options_ui open_in_tab
+  background.js          # service worker: inbound queue + POST ingest
+  injected.js / content.js
+  options.html + settings.css + i18n.js + options.js   # settings UI
+  popup.html / popup.js
+  README.md
 ```
+
+### Settings UI (operator)
+
+Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
+
+| Block | Storage | Notes |
+|-------|---------|--------|
+| Connection | `hotelBaseUrl`, bridge JWT | Same login as before |
+| This desk | `deskRole` = `hotel_fo` \| `sanatorium` | Write ignored on FO |
+| Inbound | `enabled` | Capture Select JSON |
+| SPA write | `writeEnabled` | Sanatorium only; drains hotel outbox via `SP_SPA_SAVE` |
+
+Popup shows the same toggles in compact form.
 
 ### Install (operator)
 
 1. `chrome://extensions` → Developer mode → Load unpacked.
-2. Options: paste hotel URL + bridge token; Enable = on.
-3. Open Elektraweb grids (§2); perform normal FO work.
-4. Health: hotel admin ping or extension badge (green = last sync &lt; N min).
+2. Settings: ERA Hotel URL + staff login → **Log in & save**. Pick **This desk**.
+3. Hotel FO: open Elektraweb grids (§2). Sanatorium: keep SPA open (guest folio + Tibbi Ambulator).
+4. **Capture & sync** ON. Health: last sync / queue / last error on Settings and popup.
 
 ### Security
 
 - Token scoped to bridge route only; rotatable at cutover.
 - Do not log full `raw` bodies to browser console in production builds.
-- Uninstall extension on all FO machines at hour X; rotate/delete `ELEKTRAWEB_BRIDGE_TOKEN`.
+- Uninstall extension on all FO machines at hour X; turn off org policy write/inbound; set process `ELEKTRAWEB_BRIDGE_ENABLED=0` if retiring the install.
 
 ---
 
@@ -354,16 +422,18 @@ era-hotel-pms/extensions/elektraweb-bridge/
 2. Medical rate plans mapped (`medicalFlag` / `programCode`).
 3. Clinic bridge env set (`CLINIC_URL`, `CLINIC_BRIDGE_SECRET` / event bus).
 4. `ELEKTRAWEB_BRIDGE_ENABLED=1` + token set on hotel-pms.
-5. Extension on all agreed FO PCs.
+5. Extension on agreed **FO** PCs (inbound) and **sanatorium reception** PCs (SPA/Cash session + settings desk = sanatorium).
 
 ### 8.2 During dual-run
 
 | Do | Don't |
 |----|--------|
-| Work reservations/folio in Elektraweb | Edit same stays in ERA FO UI |
+| Work reservations/folio in Elektraweb (FO) | Edit same stays in ERA FO UI |
+| Sanatorium extras: Issue ticket in ERA Clinic `/reception/extra-tickets` → hotel outbox → widget `SP_SPA_SAVE` (guest folio or Tibbi Ambulator) | Drain write outbox from hotel FO |
 | Open guest/reservation/folio grids after busy periods | Assume background sync without any UI traffic |
 | Watch bridge health / error counts | Run ERA night audit on mirrored medical in-house |
-| Clinic ops entirely in ERA Clinic | Expect clinic without Guest Id / FIN on guest |
+| Clinic schedule in ERA Clinic | Expect clinic without Guest Id / FIN on guest |
+| Walk-in extra → EW `TIBB AMBULATOR FOLIO` | ERA cashier / settlement hub for dual-run extras |
 
 ### 8.3 Hour X (cutover)
 
@@ -421,7 +491,8 @@ Prefer shared normalize helpers over copy-paste when implementing.
 
 | Doc | Role |
 |-----|------|
-| [ADR hotel-elektraweb-live-bridge](../../docs/adr/hotel-elektraweb-live-bridge.md) | Decision |
+| [ADR hotel-elektraweb-live-bridge](../../docs/adr/hotel-elektraweb-live-bridge.md) | Inbound decision |
+| [ADR hotel-elektraweb-reverse-folio-post](../../docs/adr/hotel-elektraweb-reverse-folio-post.md) | Extra SPA/Cash tickets + settings desk |
 | [ELEKTRAWEB-IMPORT.md](./ELEKTRAWEB-IMPORT.md) | Bootstrap + externalRef |
 | [NAFTA_SANATORIUM_UAT.md](../../docs/NAFTA_SANATORIUM_UAT.md) §6.2 | Cutover scope |
 | [hotel-deferred-corporate-checkout.md](../../docs/adr/hotel-deferred-corporate-checkout.md) | T-room folio |

@@ -3,6 +3,9 @@ const MAX_QUEUE = 40;
 async function getSettings() {
   const data = await chrome.storage.local.get([
     'enabled',
+    'writeEnabled',
+    'deskRole',
+    'locale',
     'hotelBaseUrl',
     'token',
     'organizationId',
@@ -13,8 +16,12 @@ async function getSettings() {
     'lastError',
     'lastResult',
   ]);
+  const deskRole = data.deskRole === 'sanatorium' ? 'sanatorium' : 'hotel_fo';
   return {
     enabled: !!data.enabled,
+    writeEnabled: deskRole === 'sanatorium' && !!data.writeEnabled,
+    deskRole,
+    locale: data.locale === 'en' || data.locale === 'az' ? data.locale : 'ru',
     hotelBaseUrl: (data.hotelBaseUrl || '').replace(/\/$/, ''),
     token: data.token || '',
     organizationId: data.organizationId || '',
@@ -36,6 +43,67 @@ async function enqueue(payload) {
   queue.push(payload);
   while (queue.length > MAX_QUEUE) queue.shift();
   await chrome.storage.local.set({ queue });
+}
+
+async function getEwWriteSession() {
+  const sessionStore = chrome.storage.session
+    ? await chrome.storage.session.get(['ewLoginToken', 'ewApiHost'])
+    : {};
+  const local = await chrome.storage.local.get(['ewLoginToken', 'ewApiHost']);
+  return {
+    token: sessionStore.ewLoginToken || local.ewLoginToken || '',
+    apiHost: sessionStore.ewApiHost || local.ewApiHost || '',
+  };
+}
+
+async function drainOutbox() {
+  const settings = await getSettings();
+  if (!settings.writeEnabled || !settings.hotelBaseUrl || !settings.token) return;
+  const { token, apiHost } = await getEwWriteSession();
+  if (!token || !apiHost) {
+    await setPartial({ lastError: 'SPA write: no Elektraweb LoginToken yet — click in SPA' });
+    return;
+  }
+  try {
+    const res = await fetch(`${settings.hotelBaseUrl}/api/integrations/elektraweb-bridge/outbox`, {
+      headers: { Authorization: `Bearer ${settings.token}` },
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      await setPartial({ lastError: json.error || `Outbox HTTP ${res.status}` });
+      return;
+    }
+    const items = json.items || json.data?.items || [];
+    if (!json.writeEnabled && !items.length) return;
+    for (const item of items) {
+      const body = { ...(item.insert?.body || {}), LoginToken: token };
+      const ewRes = await fetch(`https://${apiHost}${item.insert?.urlPath || '/Execute/SP_SPA_SAVE'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const ewText = await ewRes.text();
+      await fetch(
+        `${settings.hotelBaseUrl}/api/integrations/elektraweb-bridge/outbox/${item.id}/ack`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${settings.token}`,
+          },
+          body: JSON.stringify({
+            ok: ewRes.ok,
+            error: ewRes.ok ? null : ewText.slice(0, 400),
+          }),
+        },
+      );
+    }
+    if (items.length) {
+      await setPartial({ lastSyncAt: new Date().toISOString(), lastError: null });
+    }
+  } catch (e) {
+    await setPartial({ lastError: e instanceof Error ? e.message : String(e) });
+  }
 }
 
 async function flushQueue() {
@@ -95,6 +163,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
       await enqueue(msg.payload);
       await flushQueue();
+      await drainOutbox();
+      sendResponse({ ok: true });
+    })();
+    return true;
+  }
+  if (msg?.type === 'elektraweb-token' && msg.payload) {
+    (async () => {
+      const patch = {
+        ewApiHost: msg.payload.apiHost || '',
+        ewLoginToken: msg.payload.loginToken || '',
+      };
+      if (chrome.storage.session) await chrome.storage.session.set(patch);
+      else await chrome.storage.local.set(patch);
+      await chrome.storage.local.set({ ewApiHost: patch.ewApiHost });
       sendResponse({ ok: true });
     })();
     return true;
@@ -104,7 +186,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
   if (msg?.type === 'flush') {
-    flushQueue().then(() => sendResponse({ ok: true }));
+    flushQueue()
+      .then(() => drainOutbox())
+      .then(() => sendResponse({ ok: true }));
     return true;
   }
   return false;
@@ -112,5 +196,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
 chrome.alarms.create('ew-bridge-flush', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'ew-bridge-flush') void flushQueue();
+  if (alarm.name === 'ew-bridge-flush') {
+    void flushQueue();
+    void drainOutbox();
+  }
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  void chrome.storage.local.get(['locale', 'deskRole']).then((data) => {
+    const patch = {};
+    if (!data.locale) patch.locale = 'ru';
+    if (!data.deskRole) patch.deskRole = 'hotel_fo';
+    if (Object.keys(patch).length) void chrome.storage.local.set(patch);
+  });
 });

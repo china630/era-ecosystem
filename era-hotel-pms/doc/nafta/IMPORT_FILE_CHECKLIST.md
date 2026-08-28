@@ -2,7 +2,7 @@
 
 Operator checklist for **Nafta** bootstrap. Hotel column is taken from `era-hotel-pms` Elektraweb import wizard (`IMPORT_PHASES` + adapters). Clinic / F&B do **not** have a satellite import module yet — listed as planned / data-only.
 
-**Pack:** `D:\ERA-BACKUP\NAFTA-START\` (`hotel/`, `clinic/`, `hr/`, `1c/`).  
+**Pack (raw):** `D:\ERA-BACKUP\NAFTA-START\` (`hotel/`, `clinic/`, `hr/`, `1c/`). **Wizard:** `D:\ERA-BACKUP\NAFTA-ERA-READY\`.  
 **Start inventory:** [START-DATA-INVENTORY.md](./START-DATA-INVENTORY.md) · **numbered checklist + accountant ask:** [START-FILE-CHECKLIST.md](./START-FILE-CHECKLIST.md).
 
 **Guest policy (locked):** for `Cancelled` / future without stay — import Guest Card only if **complete** (`Guest Id` + Name + Last Name + at least one of Passport / National Id / Phone); otherwise **skip**. See [ELEKTRAWEB-IMPORT.md](./ELEKTRAWEB-IMPORT.md) §15.5.
@@ -73,27 +73,26 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 
 ## B. Clinic / sanatorium — WebOnly (`WO`)
 
-**No `era-clinic` Excel import wizard yet.** Collect for upcoming idempotent import (`nafta-clinic:*` per [NAFTA_SANATORIUM_UAT.md](../../docs/NAFTA_SANATORIUM_UAT.md)).
+**Clinic wizard:** `era-clinic` `/admin/import` — see `NAFTA-ERA-READY/IMPORT-CHECKLIST.md`.  
+**Cutover:** 2026-08-25 · **WO dump refreshed:** 2026-08-25.
 
-| Dataset | File(s) | Status | Notes |
-|---------|---------|--------|-------|
-| Appointments | `clinic/dump/calendar/reservations-all.json` | [x] | Live calendar SoT (56 537). Stale Randevular Excel dropped |
-| Guests / patients | `clinic/dump/cards/` | [x] | Live cards SoT (1 588). Stale WO guests Excel dropped |
-| Procedures catalog | `clinic/catalogs/25-Treatments.xlsx` | [x] | Live WO API 2026-08-17: **154** |
-| Rooms / cabins | `clinic/catalogs/26-Rooms.xlsx` | [x] | |
-| Doctors | `clinic/catalogs/27-Doctors.csv` | [x] | |
-| Shifts | `clinic/catalogs/28-Shifts.csv` | [x] | |
-| Analyses | `clinic/catalogs/29-Analyses.csv` | [x] | |
-| Laboratory | `clinic/catalogs/30-Laboratory.xlsx` | [x] | |
-| Diagnostics | `clinic/catalogs/31-Diagnostics.xlsx` | [x] | |
-| Diagnoses | `clinic/catalogs/32-Diagnoses.xlsx` | [x] | |
-| Check-ups | `clinic/catalogs/33-CheckUps.xlsx` | [x] | |
-| Check-up details | `clinic/catalogs/34-CheckUp-Details.xlsx` | [x] | |
-| Product groups | `clinic/catalogs/35-Product-Groups.xlsx` | [x] | |
-| Products | `clinic/catalogs/36-Products.csv` | [x] | |
-| PDF dumps | — | [ ] | Dropped — screenshots superseded by API card dump |
-| **API card dump** | `clinic/dump/` | [x] | Live pull from `nafta-clinic.webonly.io`. Script: `era-clinic/scripts/dump-webonly-patient-cards.cjs`. **Do not commit.** |
-| **API procedure calendar** | `clinic/dump/calendar/reservations-all.json` | [x] | `/dashboard/clinic/clinic` day board. Script: `era-clinic/scripts/dump-webonly-clinic-calendar.cjs`. **Do not commit.** |
+| Dataset | File(s) | Status | Rows / notes |
+|---------|---------|--------|--------------|
+| Appointments | `clinic/dump/calendar/reservations-all.json` | [x] | **61 155** (2026-08-25). READY `#23` = **2373** ops (25–29 Aug) |
+| Guests / patients | `clinic/dump/cards/` + `bulk/patients.json` | [x] | **1665** full archive |
+| Procedures catalog | `clinic/reports/01-procedures.xlsx` (SSOT) → READY `#25` | [x] | **80** curated (WO ref 154) |
+| Procedure requirements | READY `40-Procedure-Requirements.xlsx` | [x] | **126** LOCATION rows |
+| Rooms / cabins | READY `26-Rooms.xlsx` | [x] | **63** (Kabina 14 for history) |
+| Doctors | `27-practitioners-roster.json` → READY `#27` | [x] | **8** clinical roster |
+| Shifts | `clinic/catalogs/28-Shifts.csv` | [x] | Ref only — not in ERA-READY |
+| Analyses | READY `29-Analyses.xlsx` | [x] | **58** |
+| Laboratory | `clinic/catalogs/30-Laboratory.xlsx` | [x] | Ref only — not in ERA-READY |
+| Diagnostics / Diagnoses | READY `#31` / `#32` | [x] | 370 / 372 |
+| Quotas / lab results | READY `#38` / `#39` | [x] | 8778 / 22620 |
+| Check-ups / products | `clinic/catalogs/33–36` | [x] | Ref only |
+| **API card dump** | `clinic/dump/` | [x] | `dump-webonly-patient-cards.cjs`. **Do not commit.** |
+| **API procedure calendar** | `clinic/dump/calendar/` | [x] | `dump-webonly-clinic-calendar.cjs`. **Do not commit.** |
+| Curated mirror | `clinic/reports/era-import/` | [x] | `#25`, `#26`, `#40` + `manifest.json` |
 
 ---
 

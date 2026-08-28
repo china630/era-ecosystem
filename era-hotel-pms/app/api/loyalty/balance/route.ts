@@ -1,9 +1,9 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const customerRef = new URL(request.url).searchParams.get('customerRef');
     if (!customerRef) throw new Error('customerRef required');
 
-    const orgId = satelliteOrganizationId();
+    const orgId = requestOrganizationId();
     if (!CP_URL || !CP_TOKEN || !orgId || orgId === 'demo-org') {
       return jsonOk({ balance: 0, maxRedeemableAzn: 0, mode: 'mock', pointsPerAzn: 100 });
     }

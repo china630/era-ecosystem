@@ -24,7 +24,7 @@
 | AC-CP-INT | Integration audit boundaries (MDM/hub/events) | ✅ | [ ] | `cp-int-negative.spec.ts` + `npm run audit:integration:strict` | Negative: catalog gateway wrong/missing token 401; CI audit gate |
 | AC-CP-BIND | Satellite org UUID bind + sync endpoints | ✅ | [ ] | `cp-bind-negative.spec.ts`; ADR satellite-organization-bind | Negative: POST organization/bind bad/missing Bearer → 401 |
 | AC-CP-CFG | Desired-state runtime config push (SSO secret, PSA, event URL/token) | ✅ | [ ] | `cp-cfg-negative.spec.ts`; CP-CFG-01 | Negative: runtime-config without Bearer 401; short SSO (<16) 400; Sync omits short secret |
-| AC-CP-TOPO | SHARED/DEDICATED/ONPREM placement + org slice + hops | 🟡 | [ ] | ADR §4–§5; SuperAdmin `/super-admin/orgs/{id}/placement`; SHARED↔ONPREM reject test | **In BE rollup.** UI SCREEN ≠ live hop/pool. Not Scaffold ✅. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
+| AC-CP-TOPO | SHARED/DEDICATED/ONPREM placement + org slice + hops | 🟡 | [ ] | ADR §4–§5; SuperAdmin `/super-admin/orgs/{id}/placement`; SHARED↔ONPREM reject; Wave 7 lab hop; Wave 11 hotel curated JSON slice | **In BE rollup.** Lab: [`reports/placement-lab-hop-signoff.md`](../../reports/placement-lab-hop-signoff.md). Not Scaffold ✅ (host apply + field UAT open). Not SaaS pool sellable. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
 
 **Edition / wave rollup (BE only)** = worst(AUTH, BILL, MDM, WF, SA, INT, BIND, CFG, TOPO) → **🟡** (TOPO).  
 AC-CP-TOPO is **in Scaffold BE rollup** (owner 2026-08-18). Do **not** mark TOPO Scaffold ✅ from API scaffold alone. TOPO ✅ (later) still ≠ SaaS pool sellable.  
@@ -42,7 +42,7 @@ Do not call this table «product readiness».
 | AC-CP-INT | Integration audit residual shrink (ongoing) | Code | Gate G1 + negative suite |
 | AC-CP-BIND | UAT bind smoke / field isolation | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-CFG | UAT runtime-config signoff | Code | Out of Scaffold ✅ (Pilot) |
-| AC-CP-TOPO | Live slice dump + host apply + lab hop UAT (pool ops = later sell) | Code | **In BE rollup** — [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
+| AC-CP-TOPO | Live slice dump + host apply + field migrate UAT (pool ops = later sell) | Code | Wave 7 hop + Wave 11 hotel JSON lab; residual = host apply + field |
 
 ### Negative-path proof index
 
@@ -56,4 +56,4 @@ Do not call this table «product readiness».
 | `era-orchestrator/apps/api/src/platform/catalog/cp-int-negative.spec.ts` | AC-CP-INT |
 | `era-orchestrator/apps/api/src/admin/cp-bind-negative.spec.ts` | AC-CP-BIND |
 | `era-orchestrator/apps/api/src/admin/cp-cfg-negative.spec.ts` | AC-CP-CFG |
-| `era-orchestrator/apps/api/src/placement/placement-job.service.spec.ts` (SHARED↔ONPREM) | AC-CP-TOPO (still 🟡) |
+| `era-orchestrator/apps/api/src/placement/placement-job.service.spec.ts` (SHARED↔ONPREM + Wave 7 advance chain) | AC-CP-TOPO (still 🟡) |

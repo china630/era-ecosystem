@@ -24,6 +24,7 @@ const PUBLIC_API_EXTRA = [
   '/api/integration/erp/inbound',
   '/api/integration/staff-provision',
   '/api/auth/agency-sso/exchange',
+  '/api/integrations/elektraweb-bridge',
 ];
 
 function isAgencyPath(pathname: string): boolean {
@@ -38,6 +39,33 @@ function isAgencyPath(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const reqHeaders = eraPathnameRequestHeaders(request.headers, pathname);
+
+  // Placement FREEZE: block mutating ops for listed orgs (host sets ERA_PLACEMENT_FROZEN_ORG_IDS).
+  const method = request.method.toUpperCase();
+  if (
+    method !== "GET" &&
+    method !== "HEAD" &&
+    method !== "OPTIONS" &&
+    pathname.startsWith("/api") &&
+    !pathname.startsWith("/api/internal/") &&
+    !pathname.startsWith("/api/auth/")
+  ) {
+    const frozen =
+      process.env.ERA_PLACEMENT_FROZEN_ORG_IDS?.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean) ?? [];
+    if (frozen.length) {
+      const org =
+        request.headers.get("x-era-organization-id")?.trim() ||
+        "";
+      if (org && frozen.includes(org)) {
+        return NextResponse.json(
+          { error: "Organization frozen for placement hop" },
+          { status: 423 },
+        );
+      }
+    }
+  }
 
   // Agency SSO callback is public HTML
   if (pathname === '/agency/sso/callback' || pathname.startsWith('/agency/sso/callback/')) {
@@ -98,6 +126,9 @@ export async function middleware(request: NextRequest) {
       headers.set('x-user-login', session.login);
       headers.set('x-user-fullname', session.fullName);
       if (session.email) headers.set('x-user-email', session.email);
+      if (session.organizationId) {
+        headers.set('x-era-organization-id', session.organizationId);
+      }
       headers.set('x-user-actor', 'staff');
       return NextResponse.next({ request: { headers } });
     } catch {

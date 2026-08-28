@@ -1,15 +1,20 @@
 import {
   authCookieName,
   consumeSsoSignatureOnce,
+  enterSatelliteTenant,
   executeSatelliteSsoExchange,
   resolveVerifiedSsoFinanceRole,
   satelliteOrganizationId,
+  satelliteRuntimeConfig,
   ssoExchangeBodySchema,
 } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
-/** SEC-SSO-02 + SEC-SSO-01: HMAC role bind + one-time signature consume. */
+/**
+ * SEC-SSO-02 + SEC-SSO-01.
+ * SEC-SSO-05: DEDICATED/ONPREM require ticket org == process bind; SHARED accepts ticket org.
+ */
 export async function POST(request: Request) {
   try {
     const body = ssoExchangeBodySchema.parse(await request.json());
@@ -31,10 +36,23 @@ export async function POST(request: Request) {
       return jsonError("SSO ticket already used", 401);
     }
 
-    const deployOrg = satelliteOrganizationId();
-    if (deployOrg && deployOrg !== "demo-org" && body.organizationId !== deployOrg) {
+    const topology = satelliteRuntimeConfig().deploymentTopology;
+    let deployOrg: string | null = null;
+    try {
+      deployOrg = satelliteOrganizationId();
+    } catch {
+      deployOrg = null;
+    }
+    if (
+      topology !== "SHARED" &&
+      deployOrg &&
+      deployOrg !== "demo-org" &&
+      body.organizationId !== deployOrg
+    ) {
       return jsonError("SSO organization mismatch", 401);
     }
+
+    enterSatelliteTenant({ organizationId: body.organizationId });
 
     const { token, user } = await executeSatelliteSsoExchange(
       { ...body, financeRole },

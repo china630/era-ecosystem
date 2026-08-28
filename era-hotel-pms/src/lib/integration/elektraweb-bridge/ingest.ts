@@ -10,6 +10,7 @@ import type { BridgeAuthContext } from '@/lib/integration/elektraweb-bridge/auth
 import { upsertGuestFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 import { upsertReservationFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-reservation';
 import { upsertFolioFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-folio';
+import { stampStayGuestResNameId } from '@/lib/integration/elektraweb-bridge/stamp-resnameid';
 
 export const bridgeEnvelopeSchema = z.object({
   capturedAt: z.string().min(1),
@@ -108,8 +109,8 @@ export async function ingestElektrawebBridgeEnvelope(
     const row = rows[i]!;
     try {
       const hid = rowHotelId(row);
-      if (hid != null) assertHotelIdMatches(hid);
-      // Detail payloads sometimes omit HOTELID — still OK if auth hotel matches env
+      if (hid != null) await assertHotelIdMatches(hid);
+      // Detail payloads sometimes omit HOTELID — still OK if auth hotel matches policy
 
       if (entity === 'guest') {
         const r = await upsertGuestFromElektrawebRow(row);
@@ -117,6 +118,9 @@ export async function ingestElektrawebBridgeEnvelope(
         if (r.action === 'created') summary.created += 1;
         else if (r.action === 'updated') summary.updated += 1;
         else summary.skipped += 1;
+        if (objectName === 'QA_HOTEL_RES_GUEST') {
+          await stampStayGuestResNameId(row);
+        }
       } else if (entity === 'reservation') {
         const r = await upsertReservationFromElektrawebRow(row);
         summary.accepted += 1;

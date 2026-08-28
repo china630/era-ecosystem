@@ -12,6 +12,7 @@ import { SatelliteEventsController } from "./satellite-events.controller";
 import { SatelliteEventsService } from "./satellite-events.service";
 import { SatelliteFanoutWorker } from "./satellite-fanout.worker";
 import { SatelliteLaunchUrlController } from "./satellite-launch-url.controller";
+import { SatellitePoolMembersController } from "./satellite-pool-members.controller";
 import { WorkforceModule } from "../workforce/workforce.module";
 
 @Module({
@@ -21,6 +22,7 @@ import { WorkforceModule } from "../workforce/workforce.module";
     SatelliteEndpointsController,
     SatelliteOrgBindSyncController,
     SatelliteLaunchUrlController,
+    SatellitePoolMembersController,
   ],
   providers: [
     SatelliteEventsService,

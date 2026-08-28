@@ -14,6 +14,8 @@ import {
   getSchedulingSettings,
   isDurationAlignedToSlot,
 } from "@/domain/settings/scheduling-settings";
+import { parsePhysioOrderFields } from "@/domain/physio/physio-order-fields";
+import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 
 export async function listPractitioners(staffKind?: "DOCTOR" | "NURSE" | "LAB") {
   return prisma.practitioner.findMany({
@@ -173,6 +175,8 @@ export async function createProcedureType(data: {
   bodyPart?: string | null;
   afterLunchAllowed?: boolean;
   extendedEndHour?: number | null;
+  needsSite?: boolean;
+  physioOrderFields?: string[];
 }) {
   const settings = await getSchedulingSettings();
   const durationMin =
@@ -195,9 +199,26 @@ export async function createProcedureType(data: {
     data.patientRestMinutes != null
       ? Math.min(240, Math.max(0, Math.floor(data.patientRestMinutes)))
       : 15;
-  const { resourceGapMinutes: _rg, patientRestMinutes: _pr, ...rest } = data;
+  const {
+    resourceGapMinutes: _rg,
+    patientRestMinutes: _pr,
+    needsSite: needsSiteIn,
+    physioOrderFields: fieldsIn,
+    ...rest
+  } = data;
+  const gate = inferPhysioTypeGate(data.code, data.name);
+  const needsSite = needsSiteIn ?? gate.needsSite;
+  const physioOrderFields =
+    fieldsIn != null ? parsePhysioOrderFields(fieldsIn) : gate.fields;
   const row = await prisma.procedureType.create({
-    data: { ...rest, durationMin, resourceGapMinutes, patientRestMinutes },
+    data: {
+      ...rest,
+      durationMin,
+      resourceGapMinutes,
+      patientRestMinutes,
+      needsSite,
+      physioOrderFields,
+    },
   });
   await ensureDefaultRequirements(row.id);
   return prisma.procedureType.findUniqueOrThrow({
@@ -222,6 +243,8 @@ export async function updateProcedureType(
     bodyPart?: string | null;
     afterLunchAllowed?: boolean;
     extendedEndHour?: number | null;
+    needsSite?: boolean;
+    physioOrderFields?: string[];
   },
 ) {
   const settings = await getSchedulingSettings();
@@ -233,8 +256,10 @@ export async function updateProcedureType(
       `durationMin must be a multiple of ${settings.schedulingSlotMinutes} minutes (got ${data.durationMin})`,
     );
   }
+  const { physioOrderFields: fieldsIn, ...rest } = data;
   const patch = {
-    ...data,
+    ...rest,
+    ...(fieldsIn !== undefined ? { physioOrderFields: parsePhysioOrderFields(fieldsIn) } : {}),
     ...(data.durationMin != null
       ? {
           durationMin: alignDurationToSlotMinutes(

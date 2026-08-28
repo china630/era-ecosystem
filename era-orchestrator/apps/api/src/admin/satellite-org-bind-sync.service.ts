@@ -213,6 +213,32 @@ export class SatelliteOrgBindSyncService {
       (sub?.currentTier ? String(sub.currentTier) : "");
     if (edition) body.edition = edition;
 
+    // Per-org vendor policies — satellite upserts the row for this organizationId.
+    const bridge = await this.prisma.elektrawebBridgePolicy.findUnique({
+      where: { organizationId },
+    });
+    if (bridge) {
+      body.elektrawebBridge = {
+        inboundEnabled: bridge.inboundEnabled,
+        writeEnabled: bridge.writeEnabled,
+        elektrawebHotelId: bridge.elektrawebHotelId,
+        spaDepId: bridge.spaDepId,
+        spaCurrencyId: bridge.spaCurrencyId,
+        walkinResId: bridge.walkinResId,
+        walkinResNameId: bridge.walkinResNameId,
+      };
+    }
+
+    const cutover = await this.prisma.clinicCutoverPolicy.findUnique({
+      where: { organizationId },
+    });
+    if (cutover) {
+      body.clinicCutover = {
+        elektrawebDualRun: cutover.elektrawebDualRun,
+        hotelOrganizationId: cutover.hotelOrganizationId,
+      };
+    }
+
     return body;
   }
 

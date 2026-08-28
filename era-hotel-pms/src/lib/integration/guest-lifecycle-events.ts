@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { requestOrganizationId } from '@/lib/request-organization';
 import {
   SATELLITE_HOTEL_GUEST_CHECKED_IN,
   SATELLITE_HOTEL_GUEST_CHECKED_OUT,
@@ -6,10 +7,10 @@ import {
   SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED,
   SATELLITE_HOTEL_STAY_PRODUCT_CHANGED,
 } from "@era/contracts";
-import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit/orchestrator-gateway";
+import { publishToOrchestratorGateway } from "@era/satellite-kit/orchestrator-gateway";
 
 async function publishLifecycle(event: Record<string, unknown>) {
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   if (!organizationId || organizationId === "demo-org") return;
   await publishToOrchestratorGateway({
     ...event,

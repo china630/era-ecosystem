@@ -15,6 +15,8 @@ import { OrgDepartmentsController } from "./org-departments.controller";
 import { OrgDepartmentsService } from "./org-departments.service";
 import { AdminOrganizationsController } from "./admin-organizations.controller";
 import { AdminOrganizationsService } from "./admin-organizations.service";
+import { ElektrawebBridgePolicyController } from "./elektraweb-bridge-policy.controller";
+import { ElektrawebBridgePolicyService } from "./elektraweb-bridge-policy.service";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 
 @Module({
@@ -27,6 +29,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     OrgOperatingModeController,
     OrgDepartmentsController,
     AdminOrganizationsController,
+    ElektrawebBridgePolicyController,
   ],
   providers: [
     AdminBillingService,
@@ -35,6 +38,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     OrgOperatingModeService,
     OrgDepartmentsService,
     AdminOrganizationsService,
+    ElektrawebBridgePolicyService,
     PermissionsGuard,
   ],
   exports: [
@@ -44,6 +48,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     OrgOperatingModeService,
     OrgDepartmentsService,
     AdminOrganizationsService,
+    ElektrawebBridgePolicyService,
   ],
 })
 export class AdminModule {}

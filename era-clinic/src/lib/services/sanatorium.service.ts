@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
@@ -239,7 +239,7 @@ export async function createEpisodeLabOrder(episodeId: string, testCode: string)
   const orderId = await prisma.$transaction(async (tx) => {
     const order = await tx.labOrder.create({
       data: {
-        organizationId: episode.organizationId || satelliteOrganizationId(),
+        organizationId: episode.organizationId || requestOrganizationId(),
         patientRefId,
         clinicalEpisodeId: episodeId,
         testCode,

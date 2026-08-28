@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
 import { toDecimal } from '@/lib/decimal';
-import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
+import { assertHotelIdMatches, bridgeRequestOrganizationId } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 
@@ -40,7 +39,7 @@ export async function upsertFolioFromElektrawebRow(
   row: Record<string, unknown>,
 ): Promise<UpsertResult> {
   const hotelId = num(row.HOTELID);
-  if (hotelId != null) assertHotelIdMatches(hotelId);
+  if (hotelId != null) await assertHotelIdMatches(hotelId);
 
   const externalRef = str(row.ID);
   if (!externalRef) throw new Error('Folio row missing ID');
@@ -68,7 +67,7 @@ export async function upsertFolioFromElektrawebRow(
   if (!folio) {
     folio = await prisma.folio.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: bridgeRequestOrganizationId(),
         reservationId: reservation.id,
         type: 'GUEST',
         status: 'OPEN',

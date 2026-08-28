@@ -24,7 +24,7 @@
 
 ## UI (short)
 
-**UI class rollup:** SHOW — HOT-06 Elektraweb bridge is **HEADLESS** (extension) — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+**UI class rollup:** SHOW — HOT-06 extension write remains **HEADLESS** (SPA Insert field-open). Super-Admin per-org EW policy **SHOW** (Wave 6 lab). Clinic Issue-ticket is clinic **SHOW** (Wave 6), not Hotel SHOW rollup. — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
 
 | Surface | Path | Level |
 |---------|------|-------|

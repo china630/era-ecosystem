@@ -1,11 +1,13 @@
 import { runCronForEachTenant } from "@era/satellite-kit";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { listCronOrganizationIdsFromDb, fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { prisma } from "@/lib/prisma";
 import {
   sendNotification,
   createBookingAppointment,
 } from "@/integration/control-plane-platform.client";
 
+/** SHARED: ERA_CRON_ORGANIZATION_IDS override or DB User DISTINCT. */
 export async function POST(req: Request) {
   try {
     const gate = await runCronForEachTenant(
@@ -14,6 +16,8 @@ export async function POST(req: Request) {
         moduleKey: "clinic_notifications",
         authorization: req.headers.get("authorization"),
         cronSecretEnv: "PLATFORM_CRON_SECRET",
+        listOrganizationIds: listCronOrganizationIdsFromDb,
+        fetchPoolOrganizationIds: fetchClinicPoolOrganizationIds,
       },
       async (organizationId) => {
         const now = new Date();
@@ -70,7 +74,7 @@ export async function POST(req: Request) {
           sent++;
         }
 
-        return { scanned: appointments.length, sent };
+        return { organizationId, scanned: appointments.length, sent };
       },
     );
     if (!gate.ok) {
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
       }
       return jsonOk({ skipped: true, reason: gate.reason, moduleKey: gate.moduleKey });
     }
-    return jsonOk(gate.results[0]);
+    return jsonOk({ byOrganization: gate.results });
   } catch (err) {
     return handleRouteError(err);
   }

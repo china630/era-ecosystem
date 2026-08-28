@@ -1,4 +1,5 @@
 import { verifyPassword } from "./password";
+import { resolveSatelliteOrganizationId } from "../tenancy/organization-bind-core";
 
 export type SatelliteUserRecord = {
   id: string;
@@ -8,11 +9,13 @@ export type SatelliteUserRecord = {
   fullName: string;
   passwordHash: string;
   status: string;
+  organizationId: string;
   role: { code: string };
 };
 
 type UserFindArgs = {
   where: {
+    organizationId: string;
     OR: Array<
       | { login: string }
       | { email: string }
@@ -22,18 +25,32 @@ type UserFindArgs = {
   include: { role: true };
 };
 
-/** Resolve user by login, email, or phone (exact match, trimmed). */
+/**
+ * Resolve user by login, email, or phone within one org.
+ * - With `organizationId`: only that org (SHARED / explicit login).
+ * - Without: process bind org only (DEDICATED appliance) — never cross-org findFirst.
+ */
 export async function findUserByCredential(
   prisma: unknown,
   credential: string,
+  organizationId?: string | null,
 ): Promise<SatelliteUserRecord | null> {
   const id = credential.trim();
   if (!id) return null;
+  let orgId = organizationId?.trim() || null;
+  if (!orgId) {
+    try {
+      orgId = resolveSatelliteOrganizationId().organizationId;
+    } catch {
+      return null;
+    }
+  }
   const db = prisma as {
     user: { findFirst(args: UserFindArgs): Promise<unknown> };
   };
   const row = await db.user.findFirst({
     where: {
+      organizationId: orgId,
       OR: [{ login: id }, { email: id }, { phone: id }],
     },
     include: { role: true },

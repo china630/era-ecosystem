@@ -1,6 +1,7 @@
 import type { Prisma, LabResultSource } from "@prisma/client";
-import { satelliteOrganizationId, type SatelliteTransactionClient } from "@era/satellite-kit";
+import { type SatelliteTransactionClient } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import {
   enrichResultLines,
   hasCriticalFlag,
@@ -201,7 +202,7 @@ export async function createLabOrderWithItems(
   const orderId = await prisma.$transaction(async (tx) => {
     const created = await tx.labOrder.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         patientRefId: params.patientRefId,
         visitId: params.visitId,
         clinicalEpisodeId: params.clinicalEpisodeId,
@@ -322,7 +323,7 @@ export async function createImportedLabOrder(params: {
   const orderId = await prisma.$transaction(async (tx) => {
     const created = await tx.labOrder.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         patientRefId: params.patientRefId,
         visitId: params.visitId,
         testCode: params.code,

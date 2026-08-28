@@ -4,8 +4,10 @@ import { serialize } from '@/lib/serialize';
 import { postRoomCharge } from '@/lib/services/pos.service';
 import { assertPosBridgeOrPermission } from '@/lib/pos-bridge-auth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { enterSatelliteTenant, satelliteRuntimeConfig } from '@era/satellite-kit';
 
 const schema = z.object({
+  organizationId: z.string().uuid().optional(),
   reservationId: z.string().uuid().optional(),
   roomNumber: z.string().optional(),
   revenueCode: z.string().min(1),
@@ -25,6 +27,21 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
     if (!body.reservationId && !body.roomNumber) {
       throw new Error('reservationId or roomNumber required');
+    }
+
+    const orgFromHeader = request.headers.get('x-era-organization-id')?.trim();
+    const organizationId = body.organizationId?.trim() || orgFromHeader || '';
+    if (
+      satelliteRuntimeConfig().deploymentTopology === 'SHARED' &&
+      !organizationId
+    ) {
+      return Response.json(
+        { error: 'organizationId required on SHARED pool' },
+        { status: 400 },
+      );
+    }
+    if (organizationId) {
+      enterSatelliteTenant({ organizationId });
     }
 
     const headerKey = request.headers.get('idempotency-key')?.trim();

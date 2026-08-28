@@ -1050,15 +1050,50 @@ model Organization {
   workforceAssignments       WorkforceAssignment[]
   workforceEmployments       WorkforceEmployment[]
   orgUnitCommercialLinks     OrgUnitCommercialLink[]
+  elektrawebBridgePolicy     ElektrawebBridgePolicy?
+  clinicCutoverPolicy        ClinicCutoverPolicy?
+  clinicCutoverAsHotel       ClinicCutoverPolicy[]              @relation("ClinicCutoverHotelOrg")
   owner                      User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
   parentOrg                  Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
   departments                Organization[]                     @relation("OrgParent")
   holding                    Holding?                           @relation(fields: [holdingId], references: [id], onDelete: SetNull)
+  agencyPropertyGrants       AgencyPropertyGrant[]
 
   @@index([ownerId])
   @@index([parentOrgId])
   @@index([holdingId])
   @@map("organizations")
+}
+
+/// Per-hotel-org Elektraweb dual-run policy (SaaS SoR). Synced to hotel satellite keyed by organizationId.
+model ElektrawebBridgePolicy {
+  organizationId    String       @id @map("organization_id") @db.Uuid
+  inboundEnabled    Boolean      @default(false) @map("inbound_enabled")
+  writeEnabled      Boolean      @default(false) @map("write_enabled")
+  elektrawebHotelId Int?         @map("elektraweb_hotel_id")
+  spaDepId          Int?         @map("spa_dep_id")
+  spaCurrencyId     Int?         @map("spa_currency_id")
+  walkinResId       String?      @map("walkin_res_id") @db.VarChar(64)
+  walkinResNameId   String?      @map("walkin_res_name_id") @db.VarChar(64)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("elektraweb_bridge_policies")
+}
+
+/// Per-clinic-org cutover: extras still route to Elektraweb via linked hotel org.
+model ClinicCutoverPolicy {
+  organizationId      String        @id @map("organization_id") @db.Uuid
+  elektrawebDualRun   Boolean       @default(false) @map("elektraweb_dual_run")
+  hotelOrganizationId String?       @map("hotel_organization_id") @db.Uuid
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  hotelOrganization   Organization? @relation("ClinicCutoverHotelOrg", fields: [hotelOrganizationId], references: [id], onDelete: SetNull)
+
+  @@index([hotelOrganizationId])
+  @@map("clinic_cutover_policies")
 }
 
 /// Platform identity (shared `users` table during control-plane migration).
@@ -1585,4 +1620,38 @@ model PlatformLoyaltyLedger {
 
   @@index([organizationId, customerRef])
   @@map("platform_loyalty_ledger")
+}
+
+/// B2B travel-agency portal identity (not OrganizationMembership / staff User).
+model AgencyPortalAccount {
+  id           String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email        String                @unique
+  passwordHash String                @map("password_hash")
+  fullName     String?               @map("full_name")
+  active       Boolean               @default(true)
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+  grants       AgencyPropertyGrant[]
+
+  @@map("agency_portal_accounts")
+}
+
+/// Explicit per-hotel access for an agency portal account (multi-property chain).
+model AgencyPropertyGrant {
+  id              String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  accountId       String              @map("account_id") @db.Uuid
+  organizationId  String              @map("organization_id") @db.Uuid
+  agencyVoen      String              @map("agency_voen") @db.VarChar(10)
+  localAgencyId   String              @map("local_agency_id")
+  localAgencyCode String?             @map("local_agency_code")
+  revokedAt       DateTime?           @map("revoked_at") @db.Timestamptz(6)
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  account         AgencyPortalAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, organizationId, localAgencyId])
+  @@index([organizationId])
+  @@index([agencyVoen])
+  @@map("agency_property_grants")
 }

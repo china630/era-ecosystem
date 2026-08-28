@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId, uploadSatelliteAttachment } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
+import { uploadSatelliteAttachment } from '@era/satellite-kit';
 
 export async function listReservationAttachments(reservationId: string) {
   return prisma.reservationAttachment.findMany({
@@ -39,7 +40,7 @@ export async function uploadReservationAttachmentFile(input: {
   kind?: 'PASSPORT_SCAN' | 'OTHER';
 }) {
   const uploaded = await uploadSatelliteAttachment({
-    organizationId: satelliteOrganizationId(),
+    organizationId: requestOrganizationId(),
     fileName: input.fileName,
     buffer: input.buffer,
     contentType: input.mimeType,

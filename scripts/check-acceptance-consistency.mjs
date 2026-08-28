@@ -164,6 +164,43 @@ function walkMdFiles(relRoot, excludeNames, out) {
   }
 }
 
+function lineAllowsBanContext(line) {
+  return /Forbidden|Banned|does not claim|do not claim|do\s*\*{0,2}\s*not|must not|≠|never|запрет|while yaml|No `ga`|not claimed|still \*{0,2}not\*{0,2}|still open|Honesty|required before|before AC-|before HOT-06| \|\s*\*\*Open\*\*|in BE rollup|Scaffold BE \*\*🟡|Still open|do not claim ready|claim HOT-06|host compose|host apply|field TENANT|field HOT-06/i.test(
+    line,
+  );
+}
+
+function isHot06FalseShippedClaim(line) {
+  if (!/HOT-06/i.test(line) || !/SHIPPED/i.test(line)) return false;
+  if (lineAllowsBanContext(line)) return false;
+  if (
+    /not\s+\*{0,2}SHIPPED|Not SHIPPED|HEADLESS|before SHIPPED|still HEADLESS|remain open|field open|field SPA|field UAT|field residual|field section|field runbook|Open\s*\(field|pool sell still open|false HOT-06/i.test(
+      line,
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function isTenantTopoFalseScaffoldClaim(line) {
+  if (
+    !/\b(AC-HOT-TENANT|AC-CLI-TENANT|AC-CP-TOPO)\b/.test(line) ||
+    !/Scaffold\s*✅/.test(line)
+  ) {
+    return false;
+  }
+  if (lineAllowsBanContext(line)) return false;
+  if (
+    /still not|needs field|remain open|not Scaffold|≠\s*Scaffold|until |out of BE|Excluded|later TOPO|not mark|stay[s]? 🟡|stays 🟡| \|\s*\*\*Open\*\*/i.test(
+      line,
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function checkBannedProse(cfg) {
   const check = "\u2705";
   const banned = [
@@ -178,6 +215,11 @@ function checkBannedProse(cfg) {
     { name: "matrix-all-green", pattern: /Matrix all (green|✅)/i },
     // Claim form only — not the phrase "product readiness"
     { name: "product-ready-claim", pattern: /\bproduct ready\b(?!ness)/i },
+    // SaaS Wave 12 honesty
+    {
+      name: "saas-pool-ready-claim",
+      pattern: /SaaS pool ready|SHARED pool ready|sellable SHARED pool/i,
+    },
   ];
 
   const files = [];
@@ -190,7 +232,7 @@ function checkBannedProse(cfg) {
       if (b.name === "product-ready-claim" && !strict) continue;
       if (
         b.name === "product-ready-claim" &&
-        (/Acceptance-Standard|acceptance[/\\]README|Honesty-Audit/i.test(rel) ||
+        (/Acceptance-Standard|acceptance[/\\]README|Honesty-Audit|SaaS-Honesty/i.test(rel) ||
           /Forbidden:|do not|must not|≠|!=/i.test(text))
       ) {
         // Still scan line-by-line for positive claims outside forbid context
@@ -198,7 +240,7 @@ function checkBannedProse(cfg) {
         let hit = false;
         for (const line of lines) {
           if (!b.pattern.test(line)) continue;
-          if (/Forbidden|do not|must not|≠|never|запрет/i.test(line)) continue;
+          if (lineAllowsBanContext(line)) continue;
           hit = true;
           break;
         }
@@ -210,12 +252,34 @@ function checkBannedProse(cfg) {
       let hit = false;
       for (const line of lines) {
         if (!b.pattern.test(line)) continue;
-        if (/Forbidden|Banned|do not|must not|≠|never|запрет|while yaml/i.test(line)) continue;
+        if (lineAllowsBanContext(line)) continue;
+        if (
+          b.name === "saas-pool-ready-claim" &&
+          (/SaaS-Honesty-Closeout\.md$/i.test(rel) ||
+            /Honesty-Closeout|do not mark|from this (ADR|document)|Forbidden|Claim freeze|positive claims/i.test(
+              line,
+            ))
+        ) {
+          continue;
+        }
         hit = true;
         break;
       }
       if (hit) fail(`${b.name} in ${rel}`);
     }
+
+    // SaaS Wave 12: HOT-06 / TENANT / TOPO false-green (line-aware)
+    const lines = text.split(/\r?\n/);
+    const isHonestyCanon = /SaaS-Honesty-Closeout\.md$/i.test(rel);
+    for (const line of lines) {
+      if (!isHonestyCanon && isHot06FalseShippedClaim(line)) {
+        fail(`hot06-shipped-claim in ${rel}: ${line.trim().slice(0, 120)}`);
+      }
+      if (!isHonestyCanon && isTenantTopoFalseScaffoldClaim(line)) {
+        fail(`tenant-topo-scaffold-claim in ${rel}: ${line.trim().slice(0, 120)}`);
+      }
+    }
+
     if (strict && /\ball\s+✅\b/i.test(text) && !/forbidden|do not|never|не /i.test(text)) {
       if (/Matrix|Scaffold|AC rollup|product/i.test(text)) {
         warn(`possible all-✅ status claim in ${rel}`);

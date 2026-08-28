@@ -6,22 +6,27 @@ globs: era-hotel-pms/extensions/elektraweb-bridge/**,era-hotel-pms/app/api/integ
 # Hotel PMS — Elektraweb live bridge
 
 **Operator / engineer guide:** [doc/ELEKTRAWEB-LIVE-BRIDGE.md](../../doc/ELEKTRAWEB-LIVE-BRIDGE.md)  
-**Extension install:** [extensions/elektraweb-bridge/README.md](../../extensions/elektraweb-bridge/README.md)  
-**ADR:** [docs/adr/hotel-elektraweb-live-bridge.md](../../../docs/adr/hotel-elektraweb-live-bridge.md)
+**Extension install + settings:** [extensions/elektraweb-bridge/README.md](../../extensions/elektraweb-bridge/README.md)  
+**ADR inbound:** [docs/adr/hotel-elektraweb-live-bridge.md](../../../docs/adr/hotel-elektraweb-live-bridge.md)  
+**ADR reverse extras:** [docs/adr/hotel-elektraweb-reverse-folio-post.md](../../../docs/adr/hotel-elektraweb-reverse-folio-post.md)  
+**SaaS Wave 1:** [docs/adr/saas-request-tenant-and-vendor-bridges.md](../../../docs/adr/saas-request-tenant-and-vendor-bridges.md)
 
-## Tenant binding
+## Tenant binding (Wave 1)
 
-| Source of truth | Env / token claim |
-|-----------------|-------------------|
-| ERA org | `ERA_SATELLITE_ORGANIZATION_ID` (deployment; never from Elektraweb) |
-| Elektraweb property | `ELEKTRAWEB_HOTEL_ID` (e.g. 31606) |
-| Bridge JWT | embeds both; ingest 409 if row `HOTELID` mismatches |
+| Source of truth | Mechanism |
+|-----------------|-----------|
+| ERA org | JWT / session / outbox body `organizationId` → `enterSatelliteTenant` |
+| Elektraweb property | `ElektrawebBridgePolicy` for that org (Super-Admin + Sync) |
+| Bridge JWT | embeds org + policy hotel id; ingest 409 if row `HOTELID` mismatches policy |
+| Appliance login without org | `getUserByLogin` scoped to process bind only |
 
 ## Auth
 
-- Options login form → `POST /api/integrations/elektraweb-bridge/login`
-- Ingest Bearer: bridge JWT or optional `ELEKTRAWEB_BRIDGE_TOKEN`
-- Kill switch: `ELEKTRAWEB_BRIDGE_ENABLED=1`
+- Options login → `POST /api/integrations/elektraweb-bridge/login` with `organizationId`
+- Ingest Bearer: bridge JWT or staff session JWT (no process-wide shared token)
+- Process kill: `ELEKTRAWEB_BRIDGE_ENABLED=1`
+- Org write: policy `inboundEnabled` + `writeEnabled`
+- Extension: `deskRole` (`hotel_fo` \| `sanatorium`), inbound, write (sanatorium only)
 
 ## API
 
@@ -30,5 +35,8 @@ globs: era-hotel-pms/extensions/elektraweb-bridge/**,era-hotel-pms/app/api/integ
 | POST | `/api/integrations/elektraweb-bridge/login` |
 | POST | `/api/integrations/elektraweb-bridge` |
 | GET | `/api/integrations/elektraweb-bridge/health` |
+| GET | `/api/integrations/elektraweb-bridge/outbox` (JWT; claims PENDING for JWT org) |
+| POST | `/api/integrations/elektraweb-bridge/outbox` (POS secret or JWT; **requires** `organizationId`) |
+| POST | `/api/integrations/elektraweb-bridge/outbox/[id]/ack` |
 
 Lifecycle on status-diff: `guest-lifecycle-events.ts` (not full native check-in posting).

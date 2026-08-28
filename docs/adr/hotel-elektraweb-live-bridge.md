@@ -3,7 +3,7 @@
 **Status:** Accepted (MVP implemented 2026-07-15)  
 **Date:** 2026-07-15  
 **Scope:** `era-hotel-pms` — temporary Nafta dual-run after Excel bootstrap; optional reuse for other Elektraweb → ERA cutovers  
-**Related:** [hotel-elektraweb-import.md](./hotel-elektraweb-import.md) · [hotel-ota-adapter-strategy.md](./hotel-ota-adapter-strategy.md) · operator guide [ELEKTRAWEB-LIVE-BRIDGE.md](../../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md)
+**Related:** [hotel-elektraweb-import.md](./hotel-elektraweb-import.md) · [hotel-elektraweb-reverse-folio-post.md](./hotel-elektraweb-reverse-folio-post.md) · [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md) · [hotel-ota-adapter-strategy.md](./hotel-ota-adapter-strategy.md) · operator guide [ELEKTRAWEB-LIVE-BRIDGE.md](../../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) (§6.5–6.6 SPA Save + Tibbi Ambulator ids captured 2026-08-27)
 
 ## Context
 
@@ -25,8 +25,8 @@ Alternatives considered: Playwright/Puppeteer on a VM (session + Authenticator o
 
 ### 1. Temporary browser extension (MV3) — not a product SoT
 
-- Chrome/Edge **Manifest V3** extension loaded **unpacked** (or private enterprise store) on Front Office PCs only.
-- Scope: **read/intercept** Elektraweb XHR/fetch JSON while staff use normal UI grids; **never** mutate Elektraweb.
+- Chrome/Edge **Manifest V3** extension loaded **unpacked** (or private enterprise store) on **hotel FO** and **sanatorium reception** PCs (desk role in extension settings).
+- Scope: **read/intercept** Elektraweb XHR/fetch JSON while staff use normal UI grids. **Do not mutate** Elektraweb except the SPA ticket Insert/Void in [reverse folio ADR](./hotel-elektraweb-reverse-folio-post.md) on a **sanatorium** desk (guest folio or `TIBB AMBULATOR FOLIO`).
 - Lifetime: dual-run only; uninstall + revoke ingest token at cutover.
 - COVERAGE status: **STUB / HEADLESS** bridge — not SHIPPED product capability.
 
@@ -34,7 +34,8 @@ Alternatives considered: Playwright/Puppeteer on a VM (session + Authenticator o
 
 | Contour | System of record (dual-run) | ERA role |
 |---------|----------------------------|----------|
-| Reservations, check-in/out, folio posts | Elektraweb | Mirror via bridge |
+| Reservations, check-in/out | Elektraweb | Mirror via inbound bridge |
+| Extra SPA tickets (guest folio or Tibbi Ambulator) | Elektraweb (sanatorium desk) | ERA prints + outbox; see reverse folio ADR |
 | Clinic episodes / procedures | ERA Clinic | Consumes hotel lifecycle |
 | Night audit / folio mutate in ERA | **Off** for mirrored stays | Enable after bridge off |
 
@@ -87,7 +88,11 @@ These grids are the primary surfaces operators open so the extension sees list/d
 
 ## Implementation status
 
-**MVP (2026-07-15):** extension + login + ingest + HOTELID/org binding. Dual-run UAT still open — see [ELEKTRAWEB-LIVE-BRIDGE.md](../../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md). COVERAGE `HOT-06` = API.
+**MVP (2026-07-15):** extension + login + ingest + HOTELID/org binding. Dual-run UAT still open — see [ELEKTRAWEB-LIVE-BRIDGE.md](../../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md). COVERAGE `HOT-06` = HEADLESS.
+
+**Settings UI (2026-08-27):** extension Options (open in tab) — locale, desk role, inbound toggle, write toggle (sanatorium outbox drain → `SP_SPA_SAVE`). Reverse write: [hotel-elektraweb-reverse-folio-post.md](./hotel-elektraweb-reverse-folio-post.md).
+
+**SaaS (Waves 1–11 landed; pool sell open):** Elektraweb property ids and write/inbound flags live on Super-Admin **per hotel org** + request tenant. Process env `ELEKTRAWEB_HOTEL_ID` / walk-in ids is appliance-only and **forbidden** on a hotel process that already hosts other orgs. Field SPA Insert / HOT-06 SHIPPED still open. [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md).
 
 ## References
 

@@ -1,7 +1,7 @@
 import type { PaymentMethod, TourBookingStatus, TourDepartureStatus } from '@prisma/client';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { folioBalance, postCharge, postPayment, voidCharge } from '@/lib/services/folio.service';
 
 export const TRANSFER_OCCUPANCY_MS = 90 * 60 * 1000;
@@ -20,7 +20,7 @@ async function tourRevenue() {
 }
 
 function orgId() {
-  return satelliteOrganizationId();
+  return requestOrganizationId();
 }
 
 function seatCap(departure: { capacity: number; vehicle: { maxSeats: number } | null }) {

@@ -5,12 +5,14 @@ import {
   SATELLITE_CLINIC_VISIT_COMPLETED,
 } from "@era/contracts";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { enterRequestTenant } from "@/lib/request-organization";
 
 const bodySchema = z.object({
   pendingId: z.string().min(1),
   sourceRef: z.string().min(1),
   paymentMethod: z.string().optional(),
   fiscalReceiptId: z.string().nullable().optional(),
+  organizationId: z.string().uuid().optional(),
 });
 
 function verifyBridge(request: Request): boolean {
@@ -36,6 +38,11 @@ export async function POST(request: Request) {
       include: { patientRef: true, serviceLines: true, receipts: true },
     });
     if (!visit) return jsonError("Visit not found", 404);
+
+    if (body.organizationId && body.organizationId !== visit.organizationId) {
+      return jsonError("organizationId mismatch", 409);
+    }
+    enterRequestTenant(body.organizationId ?? visit.organizationId);
 
     if (visit.settledAt) {
       return jsonOk({ ok: true, alreadySettled: true });

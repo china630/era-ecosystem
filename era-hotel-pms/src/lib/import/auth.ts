@@ -1,4 +1,5 @@
-import { assertHotelModuleActive, satelliteOrganizationId } from '@era/satellite-kit';
+import { assertHotelModuleActive } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 import { prisma } from '@/lib/prisma';
@@ -39,7 +40,7 @@ export async function assertHotelImportAccess(): Promise<HotelImportAccess> {
 
   let organizationId: string | undefined;
   try {
-    organizationId = satelliteOrganizationId();
+    organizationId = requestOrganizationId();
   } catch {
     organizationId = undefined;
   }
@@ -72,7 +73,7 @@ export async function canRunHotelImport(user: {
   if (!OWNER_IMPORT_ROLES.has(user.roleCode)) return false;
   let organizationId: string | undefined;
   try {
-    organizationId = satelliteOrganizationId();
+    organizationId = requestOrganizationId();
   } catch {
     return true;
   }

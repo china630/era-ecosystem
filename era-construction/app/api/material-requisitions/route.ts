@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { createShipment } from "@/integration/control-plane-platform.client";
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       include: { project: true },
     });
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     if (organizationId) {
       try {
         await createShipment(

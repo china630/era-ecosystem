@@ -66,5 +66,6 @@ Scaffold BE program (2026-08): Implementation-Matrix Residual register separates
 
 - Security & Hygiene program (AuthZ / SAST / DAST / remediation waves): [`SECURITY_HYGIENE_PROGRAM.md`](../SECURITY_HYGIENE_PROGRAM.md)
 - Deployment topology (SHARED / DEDICATED / ONPREM vs DEPARTMENT / Outlet): [`docs/adr/deployment-topology.md`](../adr/deployment-topology.md) — waves 0–5 + CP-LIC-01 license defaults (API); **not** a live SHARED SaaS pool
+- SaaS request tenant + Super-Admin vendor bridges (Waves 1–11 landed; sell open): [`docs/SAAS_SHARED_RUNTIME.md`](../SAAS_SHARED_RUNTIME.md) · [`docs/adr/saas-request-tenant-and-vendor-bridges.md`](../adr/saas-request-tenant-and-vendor-bridges.md) · [`SaaS-Honesty-Closeout.md`](./SaaS-Honesty-Closeout.md)
 - Return to OPEN + TOPO (in-rollup 🟡): [`BE-OPEN-AND-TOPO-RETURN.md`](./BE-OPEN-AND-TOPO-RETURN.md)
 - UI class board (NONE / SCREEN / SHOW vs sell): [`UI-COVERAGE-BOARD.md`](./UI-COVERAGE-BOARD.md)

@@ -192,26 +192,55 @@ export async function resolvePhysicalResource(input: {
   resourceKind?: "ROOM" | "EQUIPMENT" | null;
   preferredResourceId?: string | null;
 }): Promise<PhysicalResource | null> {
+  const list = await listPhysicalRequirementResources({
+    resourceCode: input.resourceCode,
+    resourceKind: input.resourceKind,
+  });
   if (input.preferredResourceId) {
-    const r = await prisma.resource.findUnique({
-      where: { id: input.preferredResourceId },
-    });
-    if (r) return r;
+    const hit = list.find((r) => r.id === input.preferredResourceId);
+    if (hit) return hit;
   }
-  if (input.resourceCode) {
-    const byCode = await prisma.resource.findFirst({
-      where: { code: input.resourceCode },
-    });
-    if (byCode) return byCode;
+  return list[0] ?? null;
+}
+
+type PhysicalRequirementSource = {
+  resourceCode?: string | null;
+  resourceKind?: "ROOM" | "EQUIPMENT" | null;
+  requirements?: Array<{
+    role: ProcedureRequirementRole;
+    resourceCode?: string | null;
+    resourceKind?: "ROOM" | "EQUIPMENT" | null;
+  }>;
+};
+
+/** All LOCATION/EQUIPMENT resources declared for scheduling (multi-cabinet procedures). */
+export async function listPhysicalRequirementResources(
+  source: PhysicalRequirementSource,
+): Promise<PhysicalResource[]> {
+  const codes = new Set<string>();
+  for (const req of source.requirements ?? []) {
+    if (req.role !== "LOCATION" && req.role !== "EQUIPMENT") continue;
+    const code = req.resourceCode?.trim();
+    if (code) codes.add(code);
   }
-  if (input.resourceKind) {
-    const byKind = await prisma.resource.findFirst({
-      where: { kind: input.resourceKind },
+  if (codes.size === 0 && source.resourceCode?.trim()) {
+    codes.add(source.resourceCode.trim());
+  }
+  const out: PhysicalResource[] = [];
+  for (const code of [...codes].sort()) {
+    const row = await prisma.resource.findFirst({ where: { code } });
+    if (row) out.push(row);
+  }
+  // Legacy types with only resourceKind and no requirement codes may pick any matching kind.
+  // When explicit cabinet codes exist (even if retired in DB), do not fall back to a random room.
+  if (out.length === 0 && source.resourceKind && codes.size === 0) {
+    const fallback = await prisma.resource.findFirst({
+      where: { kind: source.resourceKind },
       orderBy: { code: "asc" },
     });
-    if (byKind) return byKind;
+    if (fallback) out.push(fallback);
   }
-  return prisma.resource.findFirst({ orderBy: { code: "asc" } });
+  return out;
 }
 
 export type AllocationWrite = {

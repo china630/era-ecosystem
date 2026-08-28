@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
 import { LeadStage } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
@@ -36,7 +36,7 @@ export async function PATCH(
 
     if (process.env.WHATSAPP_BUSINESS_MODE === "live" && updated.contactRef) {
       const orch = process.env.ORCHESTRATOR_API_URL?.replace(/\/$/, "");
-      const orgId = satelliteOrganizationId();
+      const orgId = requestOrganizationId();
       if (orch && orgId) {
         await fetch(`${orch}/platform/notifications/v1/send`, {
           method: "POST",

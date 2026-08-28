@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import {
   assertGuestMdmStrict,
   enrichGuestWithMdmProfile,
@@ -64,7 +64,7 @@ export async function createGuest(input: CreateGuestInput) {
   return prisma.guest.create({
     data: {
       ...data,
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
     },
   });
 }

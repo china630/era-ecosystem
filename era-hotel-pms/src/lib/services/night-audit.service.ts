@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
@@ -10,7 +11,7 @@ import {
 } from '@/lib/services/business-date.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
-import { resolveSettlementPolicy, satelliteOrganizationId } from '@era/satellite-kit';
+import { resolveSettlementPolicy } from '@era/satellite-kit';
 
 export async function getNightAuditStatus() {
   const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
@@ -24,7 +25,7 @@ export async function getNightAuditStatus() {
   const pendingSummary = await getPendingSummary(currentBiz);
   const { getBusinessDateStatus } = await import('@/lib/services/business-date.service');
   const bizStatus = await getBusinessDateStatus();
-  const orgId = satelliteOrganizationId();
+  const orgId = requestOrganizationId();
   const settlementPolicy = orgId
     ? await resolveSettlementPolicy(orgId)
     : { pendingSettlementNaPolicy: 'BLOCK' as const };
@@ -100,7 +101,7 @@ export async function runNightAudit() {
   try {
     steps.push('Step 1: Pre-check cash + POS shifts — OK');
 
-    const orgId = satelliteOrganizationId();
+    const orgId = requestOrganizationId();
     const settlementPolicy = orgId
       ? await resolveSettlementPolicy(orgId)
       : { pendingSettlementNaPolicy: 'BLOCK' as const };

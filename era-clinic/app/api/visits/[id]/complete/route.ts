@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { completeVisitBilling } from "@/lib/billing-router";
 import {
@@ -35,7 +35,7 @@ export async function POST(
 
     const billing = await completeVisitBilling(completed.id);
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const amountNet = Number(completed.amountNet);
     if (organizationId && amountNet > 0 && billing.channel === "finance") {
       try {

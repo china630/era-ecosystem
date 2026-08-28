@@ -1,4 +1,5 @@
 import { appendFileSync, mkdirSync } from 'fs';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
@@ -19,7 +20,6 @@ import {
   envelopeToCityLedgerSnapshotEvent,
   publishToOrchestratorGateway,
 } from './orchestrator-gateway';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import type {
   IntegrationEnvelope,
   DispatchResult,
@@ -351,7 +351,7 @@ export async function publishEvent(
       envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT') &&
     eventGatewayMode() === 'orchestrator'
   ) {
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     if (!organizationId || organizationId === 'demo-org') {
       const msg = 'ERA_SATELLITE_ORGANIZATION_ID is not configured';
       appendFailedLog(envelope, msg);

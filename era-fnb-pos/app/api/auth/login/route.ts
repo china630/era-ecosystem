@@ -1,5 +1,6 @@
 import {
   authCookieName,
+  enterSatelliteTenant,
   findUserByCredential,
   isSatelliteUserLoginAllowed,
   signSatelliteSession,
@@ -9,12 +10,17 @@ import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
-const schema = z.object({ login: z.string().min(1), password: z.string().min(1) });
+const schema = z.object({
+  login: z.string().min(1),
+  password: z.string().min(1),
+  /** SHARED pool: which F&B org. Appliance: omit → process bind only. */
+  organizationId: z.string().uuid().optional(),
+});
 
 export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
-    const user = await findUserByCredential(prisma, body.login);
+    const user = await findUserByCredential(prisma, body.login, body.organizationId);
     if (!user || !isSatelliteUserLoginAllowed(user)) {
       return jsonError("Invalid credentials", 401);
     }
@@ -22,11 +28,17 @@ export async function POST(request: Request) {
     if (!valid) {
       return jsonError("Invalid credentials", 401);
     }
+
+    const organizationId = user.organizationId;
+    enterSatelliteTenant({ organizationId });
+
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.login,
+      email: user.email ?? undefined,
       role: user.role.code,
       fullName: user.fullName,
+      organizationId,
     });
     const res = jsonOk({
       user: {
@@ -34,6 +46,7 @@ export async function POST(request: Request) {
         login: user.login,
         fullName: user.fullName,
         role: user.role.code,
+        organizationId,
       },
       token,
     });

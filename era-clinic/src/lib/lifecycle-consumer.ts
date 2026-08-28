@@ -10,6 +10,7 @@ import { openEpisodeFromStay } from "@/lib/services/sanatorium.service";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import { buildProposedPlan } from "@/lib/treatment-planner.service";
 import { prisma } from "@/lib/prisma";
+import { enterRequestTenant } from "@/lib/request-organization";
 
 async function ensureEpisodeAndProgram(
   event: {
@@ -25,6 +26,7 @@ async function ensureEpisodeAndProgram(
     };
   },
 ) {
+  enterRequestTenant(event.organizationId);
   const p = event.payload;
   const episode = await openEpisodeFromStay({
     reservationId: p.reservationId,
@@ -71,6 +73,7 @@ export async function handleGuestCheckedIn(
 export async function handleGuestCheckedOut(
   event: SatelliteHotelGuestCheckedOutEvent,
 ) {
+  enterRequestTenant(event.organizationId);
   const p = event.payload;
   await prisma.clinicalEpisode.updateMany({
     where: { reservationId: p.reservationId, status: "OPEN" },
@@ -86,6 +89,7 @@ export async function handleGuestCheckedOut(
 }
 
 export async function handleRoomChanged(event: SatelliteHotelRoomChangedEvent) {
+  enterRequestTenant(event.organizationId);
   const p = event.payload;
   await prisma.visit.updateMany({
     where: { reservationId: p.reservationId, status: "IN_PROGRESS" },
@@ -100,6 +104,7 @@ export async function handleRoomChanged(event: SatelliteHotelRoomChangedEvent) {
 export async function handleStayProductChanged(
   event: SatelliteHotelStayProductChangedEvent,
 ) {
+  enterRequestTenant(event.organizationId);
   const p = event.payload;
   const effective = p.effectiveDate ? new Date(p.effectiveDate) : new Date();
   await prisma.clinicalEpisode.updateMany({

@@ -32,7 +32,9 @@ export async function listAvailableResourceSlots(input: {
   const dayStart = new Date(input.date);
   dayStart.setHours(0, 0, 0, 0);
 
-  const calendar = await getResourceCalendar(dayStart);
+  const calendar = await getResourceCalendar(dayStart, {
+    procedureCode: input.procedureCode,
+  });
   const resources = input.resourceId
     ? calendar.filter((r) => r.resourceId === input.resourceId)
     : calendar;

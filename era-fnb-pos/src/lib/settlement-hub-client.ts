@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 export type PostHotelPendingInput = {
   sourceSystem: "FNB_POS" | "CLINIC";
@@ -17,8 +17,7 @@ export async function postHotelSettlementPending(input: PostHotelPendingInput) {
   );
   const secret = process.env.POS_BRIDGE_SECRET;
   if (!secret) throw new Error("POS_BRIDGE_SECRET not configured");
-  const orgId = satelliteOrganizationId();
-  if (!orgId) throw new Error("ERA_SATELLITE_ORGANIZATION_ID not configured");
+  const orgId = requestOrganizationId();
 
   const res = await fetch(`${base}/api/settlement/pending`, {
     method: "POST",

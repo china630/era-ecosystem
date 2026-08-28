@@ -10,7 +10,7 @@ Nafta sanatorium needs printable clinical forms (lab CBC/UA/biochemistry, USM na
 
 ## Decision
 
-1. HTML print routes under app/print/* with @media print and window.print() (no PDF dependency). Query ?lang=az|ru|en&autoprint=1.
+1. HTML print routes under app/print/* with @media print and window.print() (no PDF dependency). Query ?lang=az|ru|en&autoprint=1. Extra-ticket combat copy: `/print/extra-ticket/[ticketId]` (3 copies: reception / nurse / guest). Dual-run EW `saveCheck` is not driven from ERA.
 2. PrintLanguageDialog on every print entry point (lab workflow modal, patient card results/plan).
 3. Tenant print branding fields (printLogoDataUrl, trilingual names/addresses/footers, signatures, checkupSectionsJson).
 4. Qualitative lab values stored as option codes (AnalyteValueOption trilingual labels) so reprints resolve to any language.

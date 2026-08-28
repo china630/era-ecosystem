@@ -1,10 +1,10 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET(request: Request) {
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 
   const ticket = await prisma.ticket.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       outletId: outlet.id,
       tableId: body.tableId,
       covers: body.covers ?? 1,

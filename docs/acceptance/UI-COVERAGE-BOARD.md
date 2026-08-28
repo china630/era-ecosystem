@@ -56,7 +56,7 @@ Worst **in-scope** class (NONE < PARTIAL < SCREEN < SHIPPED < SHOW). HEADLESS / 
 | Bank | ✅ lab | ✅ | **SHOW** | — | BANK-REF-01 **HEADLESS** (file/env snapshot); rails VENDOR; ≠ full ABS |
 | Bank DBO | ✅ lab | ✅ | **SHOW** | — | `/open-api` **SCREEN** (keys UI); AC-DBO-OPEN still Scaffold 🟡; ASAN VENDOR |
 | Platform | 🟡 | 🟡 | **SCREEN** | — | Placement `/super-admin/orgs/{id}/placement` **SCREEN**; AC-CP-TOPO still Scaffold 🟡 |
-| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (SatAdmin BOM; Finance write-off; UAT open → not SHOW) | Fiscal / HL7 VENDOR; Demo 🟡 |
+| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (SatAdmin BOM; Finance write-off; UAT open → not SHOW); CLI-49 physio sites **SCREEN** (SatAdmin + card chips + type-gated fields + unmatched queue; UAT open); extra tickets `/reception/extra-tickets` **SHOW** (Wave 6 HOT-06 lab; extension write HEADLESS) | Fiscal / HL7 VENDOR; Demo 🟡 |
 | Finance | 🟡 | ❌ | **SCREEN** | — (ERP paths exist) | tax/stat/contracts/EQF = SCREEN; worker HEADLESS; e-qaimé VENDOR |
 | F&B | 🟡 | 🟡 | **SCREEN** | — | Person card N/A (staff via HR); admin menu/tables/settings/daily-menu Done; KKM VENDOR |
 | Retail | 🟡 | 🟡 | **SCREEN** | — | No customer `globalPersonId` SoR; admin replenishment + supplier-match/settings/stock-check done; fiscal VENDOR |
@@ -78,8 +78,8 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | ID | Product | Needs show/edit | API | Screen | Class | Next close | Do not confuse with |
 |----|---------|-----------------|-----|--------|-------|------------|---------------------|
 | AC-DBO-OPEN | Bank DBO | API keys + Open API | Y `/dbo/open/*` | `/open-api` | **SCREEN** | UAT-SMOKE UI + `dbo-open-negative.spec.ts`; Scaffold still 🟡 | DBO retail/corp already SHOW |
-| CP-PLACE-01 | Platform | hop / freeze / slice | Y PlacementJob | `/super-admin/orgs/{id}/placement` | **SCREEN** | Lab hop UAT; slice dump still stub; Scaffold still 🟡 | BIND/CFG HEADLESS; not SaaS pool |
-| HOT-06 | Hotel | live bridge | Y ingest + MV3 | extension options | **HEADLESS** | Owner: extension-only — no SatAdmin card | HOT-05 import SuperAdmin SHIPPED |
+| CP-PLACE-01 | Platform | hop / freeze / slice | Y PlacementJob | `/super-admin/orgs/{id}/placement` | **SCREEN** | Wave 7 lab hop + Wave 11 hotel JSON slice; host restore still open; Scaffold still 🟡 | BIND/CFG HEADLESS; not SaaS pool |
+| HOT-06 | Hotel | live bridge | Y ingest + MV3 outbox | extension **settings** HEADLESS; clinic `/reception/extra-tickets` **SHOW** (Wave 6 lab); Super-Admin org hub policy **SHOW** (Wave 6 lab) | **HEADLESS** (extension write) | Field UAT of SPA Insert before SHIPPED; do not claim SHIPPED/`ga` | HOT-05 import SuperAdmin SHIPPED |
 | BANK-REF-01 | Bank | hub catalog snapshot | Y | file/env loader | **HEADLESS** | Owner: not a cashier workflow | BK-FX teller SHIPPED |
 | IND-MDM-PERSON | Thin industry | person card | CRM only | CRM Done; others N/A or legal VÖEN | **N/A** / **PARTIAL** | Re-audit 2026-08-18: do not invent person SoR | Hotel / Clinic / Finance person UI SHIPPED |
 | FIN-GL-02 | Finance | manual journal voucher | Y | `/accounting/adjustments` | **SCREEN** | Lab RT: preview, PDF, reverse, copy, basis links | wave 3 UX |
@@ -127,6 +127,9 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | Date | Change |
 |------|--------|
 | 2026-08-23 | HOT-TOUR-01 guest tours SHIPPED as SCREEN (`/tours` + `/fleet`); still out of Hotel SHOW rollup. |
+| 2026-08-27 | HOT-06 outbox drain + clinic `/reception/extra-tickets` SCREEN (dual-run). Hotel write remains HEADLESS (extension). Reverse folio ADR accepted. |
+| 2026-08-28 | SaaS Wave 6: HOT-06 lab — SuperAdmin EW policy + clinic Issue-ticket **SHOW**; extension SPA Insert still HEADLESS; not SHIPPED. |
+| 2026-08-28 | SaaS Wave 7: Placement lab hop CI (SHARED→DEDICATED advance); CP-PLACE SCREEN; AC-CP-TOPO still 🟡. |
 | 2026-08-22 | HOT-HK-01…05 Nafta HK deepen SCREEN (policy + needed-by); UAT §34 not signed. |
 | 2026-08-20 | Clinic patient card: ICD-10 after contraindications (CLI-39 SCREEN); contraindications collapsed by default. |
 | 2026-08-19 | D6 modal CRUD closeout: Logistics `/trips` create flow moved into `ModalShell`; all thin-industry PARTIAL CRUD rows cleared to SCREEN. |

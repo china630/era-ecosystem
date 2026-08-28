@@ -1,5 +1,5 @@
 import { SATELLITE_CLINIC_LAB_ORDER_COMPLETED } from "@era/contracts";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { createPaymentLink } from "@/integration/control-plane-platform.client";
@@ -52,7 +52,7 @@ export async function POST(
       },
     });
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const amountNet = Number(completed.amountNet);
     if (organizationId && amountNet > 0) {
       try {
