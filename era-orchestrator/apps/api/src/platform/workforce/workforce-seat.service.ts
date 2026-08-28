@@ -6,21 +6,56 @@ import { RoleBindingStatus, TariffTier } from "@era365/database";
 import { TARIFF_TIER_LIMITS } from "../../billing/tariff-limits";
 import { resolveOrganizationUuid } from "../../common/organization-id.util";
 import { PrismaService } from "../../prisma/prisma.service";
+import { SystemConfigService } from "../../system-config/system-config.service";
 
 const DEFAULT_SEAT_LIMIT = Number(process.env.WORKFORCE_SEATS_DEFAULT ?? "500");
 
+/** Org JSON override (`Quota overrides`) or Super-admin Billing → Quotas `maxEmployees`. */
+export function parseEmployeeCap(raw: unknown): number | null | undefined {
+  if (raw == null || typeof raw !== "object" || Array.isArray(raw)) {
+    return undefined;
+  }
+  const o = raw as Record<string, unknown>;
+  const v = "maxEmployees" in o ? o.maxEmployees : o.employees;
+  if (v === null || v === "" || v === "∞") return null;
+  if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+    return Math.floor(v);
+  }
+  if (typeof v === "string" && v.trim() !== "") {
+    const n = Number.parseInt(v, 10);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return undefined;
+}
+
 @Injectable()
 export class WorkforceSeatService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly systemConfig: SystemConfigService,
+  ) {}
 
-  private async seatLimitForOrg(organizationId: string): Promise<number> {
+  /**
+   * `null` = unlimited (empty / ∞ on Super-admin quotas).
+   * Org `quotaOverrides` wins over the tier matrix.
+   */
+  private async seatLimitForOrg(organizationId: string): Promise<number | null> {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) return DEFAULT_SEAT_LIMIT;
     const sub = await this.prisma.organizationSubscription.findUnique({
       where: { organizationId: orgId },
-      select: { currentTier: true },
+      select: { currentTier: true, quotaOverrides: true },
     });
+    const fromOrg = parseEmployeeCap(sub?.quotaOverrides);
+    if (fromOrg !== undefined) return fromOrg;
+
     const tier = sub?.currentTier ?? TariffTier.TIER_0;
+    try {
+      const quotas = await this.systemConfig.getTierQuotas(tier);
+      if (quotas.maxEmployees !== undefined) return quotas.maxEmployees;
+    } catch {
+      /* fall through to compiled defaults */
+    }
     return TARIFF_TIER_LIMITS[tier].maxUsers ?? DEFAULT_SEAT_LIMIT;
   }
 
@@ -46,7 +81,7 @@ export class WorkforceSeatService {
     const limit = organizationId
       ? await this.seatLimitForOrg(organizationId)
       : DEFAULT_SEAT_LIMIT;
-    if (used >= limit) {
+    if (limit != null && used >= limit) {
       throw new BadRequestException({
         code: "WORKFORCE_SEATS_FULL",
         message: "Workforce seat quota exceeded",
@@ -152,7 +187,7 @@ export class WorkforceSeatService {
       }
     }
 
-    if (usage.used >= usage.limit) {
+    if (usage.limit != null && usage.used >= usage.limit) {
       return {
         allowed: false,
         seatsUsed: usage.used,
