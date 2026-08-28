@@ -35,6 +35,13 @@ enum PersonSegment {
   UNVERIFIED
 }
 
+/// Legal sex for identity / rooming / clinical protocols. Azerbaijan: M/F only; UNKNOWN until identified. No OTHER.
+enum PersonSex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
 enum BloodGroup {
   A_POS
   A_NEG
@@ -75,6 +82,9 @@ model GlobalNaturalPerson {
   fullNameCipher     String?               @map("full_name_cipher")
   phoneCipher        String?               @map("phone_cipher")
   nationality        String?               @default("AZ")
+  /// SoR for legal sex (not HR profile). Satellites cache; do not invent a second identity card.
+  sex                PersonSex             @default(UNKNOWN)
+  birthDate          DateTime?             @map("birth_date") @db.Date
   personSegment      PersonSegment         @default(UNVERIFIED) @map("person_segment")
   mergedIntoPersonId String?               @map("merged_into_person_id") @db.Uuid
   createdAt          DateTime              @default(now()) @map("created_at")

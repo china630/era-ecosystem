@@ -17,6 +17,7 @@ Hotel `Guest` carries a large operational profile (CRM, visa, loyalty, tourism c
 | Layer | System of record | Stored on `Guest` (satellite DB) |
 |-------|------------------|----------------------------------|
 | **Identity** | MDM `GlobalNaturalPerson` + `PersonIdentifier` | **`globalPersonId` only** (no plaintext FIN/passport on `Guest` after W4) |
+| **Core demographics** | MDM `sex` + `birthDate` | Ops cache: `gender`, `birthDate` (share rooms / FO speed). Resolve writes MDM. |
 | **Operational cache** | Satellite (denormalized for ops) | `fullName`, name parts, `phone`, `email`, `nationality`, `birthDate`, visa fields, consent flags, loyalty, CRM extensions |
 | **Travel documents (non-primary)** | Satellite `GuestDocument` | Scanned copies, secondary permits — **not** primary identity SoR |
 
@@ -45,7 +46,7 @@ On `person-merge`, update `Guest.globalPersonId` only; refresh display names fro
 
 ### Import (ElectraWeb / Nafta)
 
-Guest import resolves identity via MDM; sets `globalPersonId`; **does not** persist FIN/passport on `Guest` row (Wave 4).
+Guest import resolves identity via MDM; sets `globalPersonId`; **does not** persist FIN/passport on `Guest` row (Wave 4). **Gender and birth date** go to MDM person core on resolve; `Guest.gender` / `Guest.birthDate` remain FO ops cache.
 
 ### Compliance exports
 

@@ -290,6 +290,8 @@ export async function createPatient(data: {
     passport: data.passportNumber,
     issuingCountry: data.issuingCountry,
     nationality: data.nationality,
+    sex: demo.sex,
+    birthDate: demo.birthDate ?? undefined,
   });
 
   const updated = await prisma.patientRef.findUniqueOrThrow({
@@ -336,6 +338,7 @@ export async function updatePatient(
     data.passportNumber !== undefined ||
     data.issuingCountry !== undefined ||
     data.phone !== undefined;
+  const demographicsTouched = data.sex !== undefined || data.birthDate !== undefined;
 
   const demo = demographicsWriteData(data);
   const updated = await prisma.patientRef.update({
@@ -358,7 +361,7 @@ export async function updatePatient(
     },
   });
 
-  if (identityTouched) {
+  if (identityTouched || demographicsTouched) {
     const globalPersonId = await linkPatientGlobalPerson({
       patientRefId: id,
       fin: identityInput.finCode,
@@ -367,9 +370,12 @@ export async function updatePatient(
       passport: identityInput.passportNumber,
       issuingCountry: identityInput.issuingCountry,
       nationality: updated.nationality ?? undefined,
+      sex: updated.sex,
+      birthDate: updated.birthDate,
+      globalPersonId: updated.globalPersonId,
     });
     const withMdm = await prisma.patientRef.findUniqueOrThrow({ where: { id } });
-    if (!withMdm.globalPersonId && !globalPersonId) {
+    if (identityTouched && !withMdm.globalPersonId && !globalPersonId) {
       throw new PatientMdmRequiredError();
     }
     return getPatient(id);

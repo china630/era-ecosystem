@@ -261,19 +261,22 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 
 ## MDM natural-person identity (internal API)
 
-**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md).
+**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Person core also stores **`sex`** (`MALE` \| `FEMALE` \| `UNKNOWN`; no OTHER) and **`birthDate`**. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) including gender/DOB cache — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md).
 
 **Auth:** `Authorization: Bearer` with `MDM_INTERNAL_SERVICE_TOKEN` (alias `SATELLITE_EVENT_SERVICE_TOKEN` in some apps).
 
-**Canonical client:** `linkPersonIdentity` in `@era/satellite-kit` — lookup FIN → else `resolvePersonIdentity`.
+**Canonical client:** `linkPersonIdentity` in `@era/satellite-kit` — resolve-or-create (writes sex/DOB when provided). Pass `globalPersonId` to fill an existing person.
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/internal/v1/mdm/health` | Liveness |
-| POST | `/internal/v1/mdm/persons/lookup-by-fin` | Consent-aware read / prefill |
-| POST | `/internal/v1/mdm/persons/resolve` | Find-or-create (FIN / passport / VNJ + fullName) |
+| POST | `/internal/v1/mdm/persons/lookup-by-fin` | Consent-aware read / prefill (includes sex + birthDate when granted) |
+| POST | `/internal/v1/mdm/persons/resolve` | Find-or-create (FIN / passport / VNJ + fullName + optional sex/birthDate); `globalPersonId` updates that row |
+| GET | `/internal/v1/mdm/persons/:id/ops-profile` | Masked identifiers + sex + birthDate |
 | POST | `/internal/v1/mdm/persons/merge` | Foreigner → citizen (explicit workflow) |
 | POST | `/internal/v1/mdm/organizations/register` | VÖEN → `GlobalLegalEntity` |
+
+**Clinic cutover `#21` glue (hotel stay → MDM person):** clinic wizard calls hotel `GET /api/internal/v1/stays/by-external-ref?externalRef=&organizationId=` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`) then `linkPersonIdentity` with that `globalPersonId` so re-import does not mint a second person. Import hotel guests/reservations before clinic patients.
 
 ### Holdings (S2S)
 

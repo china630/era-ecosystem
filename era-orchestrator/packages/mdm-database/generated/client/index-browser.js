@@ -127,6 +127,8 @@ exports.Prisma.GlobalNaturalPersonScalarFieldEnum = {
   fullNameCipher: 'fullNameCipher',
   phoneCipher: 'phoneCipher',
   nationality: 'nationality',
+  sex: 'sex',
+  birthDate: 'birthDate',
   personSegment: 'personSegment',
   mergedIntoPersonId: 'mergedIntoPersonId',
   createdAt: 'createdAt',
@@ -221,6 +223,12 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.PersonSex = exports.$Enums.PersonSex = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  UNKNOWN: 'UNKNOWN'
+};
+
 exports.PersonSegment = exports.$Enums.PersonSegment = {
   CITIZEN: 'CITIZEN',
   FOREIGNER: 'FOREIGNER',

@@ -232,6 +232,15 @@ export {
   type ComplianceIdentityResult,
 } from "./integration/mdm-lookup.client";
 export {
+  normalizePersonSex,
+  parsePersonBirthDate,
+  formatPersonBirthDate,
+  personCoreDemographicsWrite,
+  toBirthDateIso,
+  PERSON_SEX_VALUES,
+  type PersonSex,
+} from "./integration/person-sex";
+export {
   resolveGlobalPerson,
   issueGuestQrToken,
   verifyGuestQrToken,

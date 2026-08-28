@@ -9,6 +9,9 @@ export async function linkPatientGlobalPerson(input: {
   passport?: string;
   issuingCountry?: string;
   nationality?: string;
+  sex?: string;
+  birthDate?: string | Date | null;
+  globalPersonId?: string | null;
 }): Promise<string | null> {
   if (!input.fullName?.trim()) return null;
 
@@ -19,6 +22,9 @@ export async function linkPatientGlobalPerson(input: {
     fullName: input.fullName.trim(),
     phone: input.phone?.trim(),
     nationality: input.nationality?.trim(),
+    sex: input.sex,
+    birthDate: input.birthDate ?? undefined,
+    globalPersonId: input.globalPersonId?.trim() || undefined,
   });
 
   const persist: Record<string, string | null> = {};

@@ -95,6 +95,8 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 |-------|-----|------|
 | (event consumer) | `POST /api/integration/staff-provision` | Upsert `User` keyed on `cpEmploymentId`; map `satelliteRole` → local RBAC |
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
+| (clinic cutover glue) | `GET /api/internal/v1/stays/by-external-ref` | Clinic `#21` — Elektraweb RESID/RESNAMEID → `Guest.globalPersonId` (Bearer event token) |
+| (clinic cutover glue) | `GET /api/internal/v1/guests/by-identity` | Clinic `#21` — name + birthDate + optional phone → `Guest.globalPersonId` |
 | (placement slice) | `POST /api/internal/v1/placement/export-slice`, `…/import-slice` | Hotel curated JSON org slice + host agent upsert path (AC-CP-TOPO Scaffold ✅ still open) |
 | (request org) | `src/lib/request-organization.ts` | SHARED ops stamps: ALS/`requestOrganizationId` (not process bind) |
 

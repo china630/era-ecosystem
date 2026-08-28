@@ -110,22 +110,34 @@ export async function patchGuestFull(
     phone,
     ...rest
   } = input;
+  const gender = rest.gender;
 
   if (
     nationalIdFin !== undefined ||
     passportNumber !== undefined ||
+    gender !== undefined ||
+    birthDate !== undefined ||
     (fullName !== undefined && (nationalIdFin || passportNumber))
   ) {
     const existing = await prisma.guest.findUnique({ where: { id } });
     if (existing) {
-      await updateGuestIdentity(id, {
-        fullName: fullName ?? existing.fullName,
-        nationalIdFin: nationalIdFin ?? undefined,
-        passportNumber: passportNumber ?? undefined,
-        nationality: nationality ?? existing.nationality,
-        phone: phone ?? existing.phone,
-        globalPersonId: existing.globalPersonId,
-      });
+      const shouldLink = Boolean(
+        existing.globalPersonId ||
+          nationalIdFin?.trim() ||
+          passportNumber?.trim(),
+      );
+      if (shouldLink) {
+        await updateGuestIdentity(id, {
+          fullName: fullName ?? existing.fullName,
+          nationalIdFin: nationalIdFin ?? undefined,
+          passportNumber: passportNumber ?? undefined,
+          nationality: nationality ?? existing.nationality,
+          phone: phone ?? existing.phone,
+          globalPersonId: existing.globalPersonId,
+          gender: gender !== undefined ? gender : existing.gender,
+          birthDate: birthDate !== undefined ? birthDate : existing.birthDate,
+        });
+      }
     }
   }
 

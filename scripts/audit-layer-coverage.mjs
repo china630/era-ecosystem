@@ -28,6 +28,7 @@ const INTEGRATION_IDS = [
   "BANK-MDM-01",
   "ORCH-MDM-01",
   "ORCH-MDM-02",
+  "ORCH-MDM-03",
 ];
 
 function walkApiRoutes(appDir) {

@@ -7,6 +7,8 @@ import {
   resolveOrchestratorBaseUrl,
   resolveSatelliteEventServiceToken,
 } from "../tenancy/resolve-orchestrator-url";
+import type { PersonSex } from "./person-sex";
+import { normalizePersonSex, toBirthDateIso } from "./person-sex";
 
 export type PersonIdentityInput = {
   fin?: string;
@@ -17,6 +19,13 @@ export type PersonIdentityInput = {
   fullName: string;
   phone?: string;
   nationality?: string;
+  /** When set, resolve updates this person (fill sex/DOB) instead of creating a surrogate. */
+  globalPersonId?: string;
+  sex?: PersonSex | string;
+  /** Hotel ops cache uses `gender` (M/F); mapped to sex on the wire. */
+  gender?: string;
+  /** Calendar date YYYY-MM-DD or Date. */
+  birthDate?: string | Date | null;
 };
 
 export type MdmClientOptions = {
@@ -75,7 +84,25 @@ export async function lookupGlobalPersonByFin(
   return { globalPersonId: data.globalPersonId, masked: data.masked };
 }
 
-/** Resolve or create person by FIN / passport / residence permit. */
+function resolveBody(input: PersonIdentityInput) {
+  const sex = normalizePersonSex(input.sex ?? input.gender);
+  const birthDate = toBirthDateIso(input.birthDate);
+  return {
+    fin: input.fin,
+    passport: input.passport,
+    issuingCountry: input.issuingCountry,
+    residencePermit: input.residencePermit,
+    nationalId: input.nationalId,
+    fullName: input.fullName,
+    phone: input.phone,
+    nationality: input.nationality,
+    globalPersonId: input.globalPersonId?.trim() || undefined,
+    ...(sex ? { sex } : {}),
+    ...(birthDate ? { birthDate } : {}),
+  };
+}
+
+/** Resolve or create person by FIN / passport / residence permit. Writes sex/DOB when provided. */
 export async function resolvePersonIdentity(
   input: PersonIdentityInput,
   opts?: MdmClientOptions,
@@ -85,7 +112,7 @@ export async function resolvePersonIdentity(
   const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons/resolve`, {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify(input),
+    body: JSON.stringify(resolveBody(input)),
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) return { globalPersonId: null };
@@ -98,7 +125,7 @@ export function isValidAzFin(fin: string): boolean {
   return /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/.test(fin.trim());
 }
 
-/** Canonical: lookup FIN → else resolve-or-create. */
+/** Canonical: resolve-or-create (and fill sex/DOB). Lookup FIN first only to surface masked flag. */
 export async function linkPersonIdentity(
   input: PersonIdentityInput,
   opts?: MdmClientOptions & { requesterOrgId?: string; purpose?: string },
@@ -106,16 +133,18 @@ export async function linkPersonIdentity(
   if (!input.fullName?.trim()) {
     return { globalPersonId: null };
   }
-  if (input.fin?.trim()) {
+  let masked: boolean | undefined;
+  if (input.fin?.trim() && !input.globalPersonId?.trim()) {
     const lookup = await lookupGlobalPersonByFin(input.fin.trim(), opts);
     if (lookup.globalPersonId) {
-      return { globalPersonId: lookup.globalPersonId, masked: lookup.masked };
+      masked = lookup.masked;
     }
   }
   const resolved = await resolvePersonIdentity(input, opts);
   return {
     globalPersonId: resolved.globalPersonId,
     created: Boolean(resolved.globalPersonId),
+    masked,
   };
 }
 
@@ -159,6 +188,8 @@ export type PersonOpsProfile = {
   globalPersonId: string;
   fullName: string | null;
   phoneMasked: string | null;
+  sex?: PersonSex | null;
+  birthDate?: string | null;
   identifiers: Array<{
     type: string;
     maskedValue: string;

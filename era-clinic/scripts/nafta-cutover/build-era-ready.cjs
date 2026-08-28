@@ -17,9 +17,10 @@ const {
   roomCode,
   slotStatus,
   isOpsSlotDate,
-  mapSex,
   mapPractitionerRole,
   mapRosterRow,
+  mapPatientImportRow,
+  loadPatientCardIndex,
   isUsgExam,
   loadNahiyeByProcedureId,
   slotNahiye,
@@ -130,6 +131,7 @@ function main() {
   const calendarAll = readDumpJson("calendar/reservations-all.json");
   const slotsRaw = rowsOf(calendarAll);
   const nahiyeByProc = loadNahiyeByProcedureId(path.join(DUMP, "cards"));
+  const cardIndex = loadPatientCardIndex(path.join(DUMP, "cards"));
 
   const curatedProcPath = path.join(clinicOut, "25-Treatments.xlsx");
   const useCuratedProcedures = fs.existsSync(curatedProcPath);
@@ -215,17 +217,7 @@ function main() {
     XLSX,
     path.join(clinicOut, "21-patients.xlsx"),
     HEADERS.patients,
-    livePatients.map((p) => ({
-      externalRef: `wo:patient:${p.id}`,
-      fullName: p.fullName || "",
-      sex: mapSex(p.gender || p.sex),
-      birthDate: ymd(p.birthDate),
-      hotelResNo: p.reservationId ? String(p.reservationId) : "",
-      roomNumber: p.reservationRoomNumber || "",
-      checkIn: ymd(p.checkInDate),
-      checkOut: ymd(p.checkOutDate),
-      programCode: "",
-    })),
+    livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id))),
   );
 
   const quotaMap = new Map();

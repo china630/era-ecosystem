@@ -5,6 +5,7 @@ import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { getClinicSettings } from "@/domain/settings/settings.service";
 import {
   bakuDateKey,
+  mergeAppointmentVisitEvents,
   type PatientTimelineDay,
   type PatientTimelineEvent,
   type TimelineEventType,
@@ -287,13 +288,18 @@ export async function getPatientHistoryPage(
   const types = opts.types?.length ? new Set(opts.types) : null;
   const labFilter = opts.labFilter ?? "all";
 
+  const wantVisit = !types || types.has("visit");
+  const wantAppt = !types || types.has("appointment");
+  const loadEncounters = !types || wantVisit || wantAppt;
+
   const [visits, labOrders, appointments] = await Promise.all([
-    !types || types.has("visit")
+    loadEncounters
       ? prisma.visit.findMany({
           where: { patientRefId },
           include: {
             practitioner: { select: { fullName: true, code: true } },
             serviceLines: true,
+            appointment: { select: { scheduledAt: true, roomCode: true } },
           },
           orderBy: { createdAt: "desc" },
           take: 300,
@@ -306,10 +312,13 @@ export async function getPatientHistoryPage(
           take: 400,
         })
       : Promise.resolve([]),
-    !types || types.has("appointment")
+    loadEncounters
       ? prisma.appointment.findMany({
           where: { patientRefId },
-          include: { practitioner: { select: { fullName: true, code: true } } },
+          include: {
+            practitioner: { select: { fullName: true, code: true } },
+            visit: { select: { id: true } },
+          },
           orderBy: { scheduledAt: "desc" },
           take: 200,
         })
@@ -318,41 +327,21 @@ export async function getPatientHistoryPage(
 
   let events: PatientTimelineEvent[] = [];
 
-  for (const v of visits) {
-    const at = (v.completedAt ?? v.createdAt).toISOString();
-    const services = v.serviceLines.map((s) => s.serviceCode).filter(Boolean);
-    events.push({
-      id: `visit:${v.id}`,
-      type: "visit",
-      at,
-      title: `Visit · ${v.practitioner.fullName}`,
-      subtitle:
-        services.length > 0
-          ? services.slice(0, 6).join(", ") + (services.length > 6 ? "вЂ¦" : "")
-          : undefined,
-      status: v.status,
-      href: "/appointments",
-      codes: services,
-      amountNet: v.amountNet.toString(),
-    });
+  if (wantVisit || wantAppt) {
+    const merged = mergeAppointmentVisitEvents({ appointments, visits });
+    events.push(
+      ...merged.filter((ev) => {
+        if (ev.type === "visit") return wantVisit;
+        if (ev.type === "appointment") return wantAppt;
+        return false;
+      }),
+    );
   }
 
   for (const o of labOrders) {
     if (labFilter === "results" && !RESULT_STATUSES.has(o.status)) continue;
     if (labFilter === "pending" && !PENDING_LAB_STATUSES.has(o.status)) continue;
     events.push(mapLabEvent(o, catalog.items));
-  }
-
-  for (const a of appointments) {
-    events.push({
-      id: `appointment:${a.id}`,
-      type: "appointment",
-      at: a.scheduledAt.toISOString(),
-      title: `Appointment · ${a.practitioner.fullName}`,
-      subtitle: a.roomCode ? `Room ${a.roomCode}` : a.practitioner.code,
-      status: a.status,
-      href: "/appointments",
-    });
   }
 
   if (opts.from) {

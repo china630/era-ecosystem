@@ -18,6 +18,7 @@ describe('guests import adapter', () => {
         externalRef: 'EW-1',
         firstName: 'Ali',
         lastName: 'Mammadov',
+        middleName: null,
         fullName: 'Ali Mammadov',
         title: null,
         gender: 'M',
@@ -40,7 +41,34 @@ describe('guests import adapter', () => {
     expect(upsertArg.create.globalPersonId).toBe('mdm-person-1');
     expect(upsertArg.create).not.toHaveProperty('nationalIdFin');
     expect(upsertArg.create).not.toHaveProperty('passportNumber');
+    const { resolvePersonIdentity } = jest.requireMock('@era/satellite-kit');
+    expect(resolvePersonIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gender: 'M',
+        fin: 'ABC1234',
+        passport: 'AA1234567',
+      }),
+    );
     expect(upsertArg.update).not.toHaveProperty('nationalIdFin');
     expect(upsertArg.update).not.toHaveProperty('passportNumber');
+  });
+
+  it('mapRow classifies documents and orders given + patronymic + surname', async () => {
+    const { guestsAdapter } = await import('@/lib/import/adapters/guests.adapter');
+    const row = guestsAdapter.mapRow({
+      externalRef: '1',
+      firstName: 'Ali Vali',
+      lastName: 'Mammadov',
+      nationalIdFin: 'AA1234567',
+      passportNumber: null,
+      nationality: 'Azerbaijan',
+      birthDate: '2001-01-01',
+    });
+    expect(row.nationalIdFin).toBeNull();
+    expect(row.passportNumber).toBe('AA1234567');
+    expect(row.firstName).toBe('Ali');
+    expect(row.middleName).toBe('Vali');
+    expect(row.fullName).toBe('Ali Vali Mammadov');
+    expect(row.nationality).toBe('AZ');
   });
 });

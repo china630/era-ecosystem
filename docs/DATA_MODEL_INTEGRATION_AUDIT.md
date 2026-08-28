@@ -51,7 +51,7 @@ Living audit of **schema → service → API → UI → enforcement → docs** a
 
 From [mdm-satellite-integration-contract.md](./adr/mdm-satellite-integration-contract.md) and [era-common-laws](../.cursor/rules/era-common-laws.mdc):
 
-1. Industry satellites store **`globalPersonId`** for natural-person identity links; **identifier values (FIN, passport) live in MDM**, not duplicated as plaintext on satellite models (see [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md) for hotel ops-cache exception).
+1. Industry satellites store **`globalPersonId`** for natural-person identity links; **identifier values (FIN, passport) live in MDM**, not duplicated as plaintext on satellite models (see [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md) for hotel ops-cache exception). **Legal sex and birthDate** live on MDM `GlobalNaturalPerson` (`MALE`/`FEMALE`/`UNKNOWN`; no OTHER); satellite gender/DOB columns are cache.
 2. Client pattern: **`linkPersonIdentity`** (lookup FIN → else resolve-or-create) — not lookup-only on create routes.
 3. **Anti-pattern:** duplicate FIN/passport **plaintext** in satellite DB when MDM-linked.
 4. Reference data: industry satellites **must not** call `era-data-hub` or `era-finance-core` for **sync global catalog reads** (calendar, FX display convert, VÖEN directory). Use **Orchestrator Platform Gateway** `GET /platform/v1/catalog/*` via `@era/satellite-kit` — [orchestrator-platform-integration-gateway.md](./adr/orchestrator-platform-integration-gateway.md). HS tariff preview and tenant counterparty operations remain Finance-only.

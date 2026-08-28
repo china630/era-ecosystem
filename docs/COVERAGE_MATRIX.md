@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-08-28
 
 ---
 
@@ -72,7 +72,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-22 | Insurance eligibility M12 | PRD | Y | Y visit panel | — | — | — | SHIPPED | Finance proxy |
 | CLI-23 | HL7 LIS prod | PRD deferred | STUB | — | — | — | — | STUB | vendor |
 | CLI-24 | Real NBC fiscal | ADR | STUB | Y cashier mock | — | — | — | STUB | external |
-| CLI-25 | Patient card clinical sections (now/next, results, plan) | PRD M1/M5 | Y `/api/patients/:id/card-summary`, `…/card-feed` | Y `/patients/[id]` | Y settings limits | — | — | SHIPPED | Pending labs (ORDERED…) in Now/next; results preview = with results only; history filter pending |
+| CLI-25 | Patient card clinical sections (now/next, results, plan) | PRD M1/M5 | Y `/api/patients/:id/card-summary`, `…/card-feed`, `…/timeline` | Y `/patients/[id]` | Y settings limits | — | — | SHIPPED | History/timeline: linked Appointment+Visit collapse to one Visit row (`/visits/[id]`, slot date); pending labs in Now/next |
 | CLI-26 | Procedure day-ops (reception matrix + nurse attendance) | ADR clinic-procedure-day-ops + clinic-scheduling-time-layers | Y check-in→CHECKED_IN; auto-complete by endsAt; no-show burns quota; MANUAL channel; cron sweeps; procedures?mine=1; per-type resourceGap on check-in grace | Y `/nurse` agenda+kanban; `/sanatorium/resources` + fullscreen; `/sanatorium` courses table | Y procedure type duration/resourceGap/patientRest | — | — | SHIPPED | Check-in atomic; COMPLETED at endsAt; bonus = checkedInAt + CHECKED_IN/COMPLETED |
 | CLI-30 | Multi-resource scheduling (A sanatorium / B outpatient) | ADR clinic-multi-resource-scheduling + clinic-scheduling-time-layers | Y allocations/skills/requirements; planner+slots honor STAFF HARD/SOFT + occupying-tail resource gap; Appt.resourceId | Y `/admin/master-data` Add+Edit reqs + backfill + time-layer fields | — | — | — | SHIPPED | SOFT = shared nurse pool; physical capacity still scarce; SOFT does not inherit cabin resource gap |
 | CLI-31 | Doctor-confirm FIFO planning (PROPOSED → place) | ADR clinic-doctor-confirmed-fifo-planning | Y confirm, bulk-cancel, PATCH procedure; rotation/substitution; labs 90d/fasting | Y doctor/reception: patient card confirm; sanatorium bulk cancel+replace | Y `/admin/procedure-rules` rotation+substitution; peak settings | — | — | SHIPPED | Package → PROPOSED; doctor confirm places; incremental context |
@@ -80,7 +80,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-34 | Print forms (lab/USM/checkup/procedures) + branding | ADR clinic-print-forms | Y print loaders; qualitative options; ImagingPhrase | Y /print/* + language dialog on card/lab | Y print branding settings; phrase/analyte options | — | — | SHIPPED | Lang at print time; logo data URL |
 | CLI-33 | Cashier ops (queue, shifts, multi-channel settle, over-quota) | ADR clinic-cashier-ops | Y queue/bills/shifts/receipts/over-quota; unified bill; split pay; ProcedureChargeLog | Y `/cashier` tabs + settle modal; X/Z shift | — | — | — | SHIPPED | Fiscal still STUB (CLI-24); folio/hub void at hotel |
 | CLI-27 | Clinic→hotel capacity foresight | ADR clinic-hotel-capacity-foresight | Y `/api/capacity/summary` (+ remaining%) | — | — | Y executive banner | — | SHIPPED | Soft warn ≤15% remaining; critical blocks medical booking; bus CAPACITY_CHANGED |
-| CLI-28 | Patient clinical demographics (sex, age, blood, emergency) | ADR clinic-patient-clinical-demographics | Y patients CRUD fields + `ageYears` | Y `/patients`, `/patients/[id]` | — | — | — | SHIPPED | Ops cache on PatientRef; identifiers stay MDM |
+| CLI-28 | Patient clinical demographics (sex, age, blood, emergency) | ADR clinic-patient-clinical-demographics | Y patients CRUD fields + `ageYears` | Y `/patients`, `/patients/[id]` | — | — | — | SHIPPED | Ops cache on PatientRef; sex/DOB SoR = MDM person core |
 | CLI-29 | Ops home day dashboard (Ana səhifə) | PRD ops | Y `/api/ops/day-summary` | Y `/` KPI + by-type | — | — | — | SHIPPED | Asia/Baku day; appointments/procedures/queue/labs/overdue; preset inpatient beds |
 | CLI-36 | Practitioner shift rotation | ADR clinic-practitioner-shifts | Y rule engine (weekly/week-parity/month-parity/cycle) + exceptions; matrix off-shift block; booking guard 409 | Y `/appointments` off-shift slots blocked | Y `/admin/master-data` **Shifts** modal + `GET/PUT …/[id]/schedule` | — | — | SHIPPED | Unrestricted when no rules (back-compat); outpatient appts only |
 | CLI-37 | UI list/filter standard (3-tier) | DESIGN + UI_PLAYBOOK | — | Y instant `EraListFilterBar`; name-first; icon row actions; home full-width + shared date | Y same on SatAdmin lists | — | — | SHIPPED | Global kit: no Apply; Reset inline; `useDebouncedValue` 300ms |
@@ -89,7 +89,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
 | CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
 | CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
-| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `GET /api/lab-orders/:id/file` | Y patient card download | Y `/admin/import` 01–09 | — | — | SHIPPED | Binaries under `D:\ERA-BACKUP\NAFTA-START\clinic\dump\files\lab`; wizard copies to `ERA_CLINIC_DATA/lab-import` |
+| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `GET /api/lab-orders/:id/file`; hotel `GET /api/internal/v1/stays/by-external-ref` | Y patient card download | Y `/admin/import` 01–09 | — | — | SHIPPED | `#21` MDM via hotel stay; past `checkOut` → `IMPORTED_CLOSED`; attending = first Visit from `#27` `wo:doctor:{id}` |
 | CLI-49 | Physio S + program/substance catalogs + order sites | ADR clinic-physio-site-catalog + physio-site-canon | Y `/api/admin/physio-sites`; `/api/admin/physio-lists`; `GET/PATCH /api/admin/physio-nahiye-queue`; `GET /api/physio-catalog`; `PATCH /api/procedures/:id` `siteIds` + `physioFields`; slots import `nahiye` | Y patient card chips + type-gated fields + `note` (WO nahiye preserved) | Y `/admin/physio-sites` tabs incl. Unmatched; procedure-type field MULTI | — | — | SHIPPED | W4 unmatched queue; UAT-SMOKE CLI-49 open |
 
 ### MDM natural-person identity
@@ -97,7 +97,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status | Blocker |
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------|
 | CLI-MDM-01 | Practitioner MDM link | ADR | Y | — | Y `/admin/master-data` | — | — | SHIPPED | — |
-| CLI-MDM-02 | Patient intake resolve | PRD M1 | Y | Y `/patients` | Y | — | — | SHIPPED | — |
+| CLI-MDM-02 | Patient intake resolve | PRD M1 | Y | Y `/patients` | Y | — | — | SHIPPED | Cutover `#21` reuses hotel guest person; walk-in surrogate if no stay |
 | HOT-MDM-01 | Guest create/edit MDM link + masked ops-profile | ADR | Y | Y GuestCardModal | Y | — | — | SHIPPED | UAT-SMOKE §2 guest MDM |
 | FIN-CIT-01 | Natural person via MDM (HR/CP) | TZ §28.2 | Y | — | Y | Y | — | SHIPPED | — |
 | FIN-HR-MDM-01 | Employee payroll mirror + MDM person read-through | ADR | Y | — | Y | Y | — | SHIPPED | Plan D — no local FIN/name |
@@ -137,7 +137,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | BANK-WEALTH-01 | Safekeeping FOP | BE roadmap | Y | Y `/wealth` | — | — | — | SHIPPED | thin custody |
 | BANK-AML-RTF-01 | Fraud score lab | BE roadmap | Y | Y `/aml/cases` | — | — | — | API | score engine; cases UI |
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | ADR | Y | — | — | Y | Y | SHIPPED | — |
-| ORCH-MDM-02 | internal resolve/merge API | ADR | Y | — | — | — | HEADLESS | HEADLESS | service token |
+| ORCH-MDM-02 | internal resolve/merge API | ADR | Y | — | — | — | HEADLESS | HEADLESS | service token; resolve writes sex/DOB |
+| ORCH-MDM-03 | Person core sex + birthDate (M/F/UNKNOWN) | ADR era-mdm-natural-person-identity | Y resolve + ops-profile | — | — | — | HEADLESS | API | no OTHER; fill-not-clear; hotel/clinic cache |
 
 ### Presets (product lines)
 
@@ -378,6 +379,7 @@ ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-p
 | ORCH-03 | MDM persons write | — | Y | SHIPPED |
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | Y | Y | SHIPPED |
 | ORCH-MDM-02 | internal resolve/merge API | — | HEADLESS | `[h]` |
+| ORCH-MDM-03 | Person core sex + birthDate | — | HEADLESS | `[h]` |
 | ORCH-04 | Vendor SMS/email prod | — | — | STUB |
 | ORCH-05 | Login onboarding 0/1/N + company-less gate | Y | — | SHIPPED |
 | ORCH-06 | Pending invites accept (invited accountant) | Y | — | SHIPPED |
@@ -455,6 +457,12 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-28 | CLI-25: patient card timeline/history collapse Appointment+Visit to one «Приём» row (slot date, `/visits/[id]`). |
+| 2026-08-28 | CLI-48: `#21` attending doctor = one Visit on check-in from `#27` `wo:doctor:{id}` (not a PatientRef field). |
+| 2026-08-28 | CLI-48: `#21` re-import updates latest episode any status (dates/status/room/stay); no clinic wipe. |
+| 2026-08-28 | CLI-48: `#21` past `checkOut` (Asia/Baku) → episode `IMPORTED_CLOSED` + `closedAt`; live checkout stays `CLOSED`. |
+| 2026-08-28 | CLI-48 / CLI-MDM-02: clinic `#21` cutover links MDM via hotel stay (`GET /api/internal/v1/stays/by-external-ref`) then `linkPersonIdentity`; re-import keeps existing `PatientRef.globalPersonId`. |
+| 2026-08-28 | ORCH-MDM-03: MDM person core `sex` (MALE/FEMALE/UNKNOWN, no OTHER) + `birthDate`; resolve/ops-profile SoR; hotel/clinic ops cache. CLI-28 note. |
 | 2026-08-28 | Clinic quota import: ProgramInstance `@@unique([organizationId, episodeId])`; kit tenant findUnique no longer invents a missing compound unique for 1:1 FKs (CLI-48). CP-TENANT-01 stays API. |
 | 2026-08-22 | HOT-HK-05 linen/deep policy SCREEN; sheet duty + needed-by; still not SHIPPED. |
 | 2026-08-21 | Fail-closed tenant filter (no unbound default; stamp+mismatch reject); User.phone unique per org; runCronForEachTenant; check:satellite-raw-sql. Bank CAP-NFR-TOPO: same ladder as hotel (pool not built, not a special ban). CP-TENANT-01 stays API; AC-*-TENANT stay 🟡 |
