@@ -22,7 +22,7 @@ Hotel per-satellite seat count double-charged when CP provisions same person to 
 | POST | `/internal/v1/licensing/seats/check` |
 | GET | `/platform/v1/workforce/seats/usage` |
 
-Limit source: subscription tier `maxUsers` (workforce seats) with `WorkforceSeatAllocation` registry.
+Limit source: Super-admin **Billing → Quotas** `maxEmployees` for the org’s `currentTier` (`SystemConfig` / `getTierQuotas`), with compiled `TARIFF_TIER_LIMITS.maxUsers` as fallback. Org `quotaOverrides.maxEmployees` (or `employees`) wins when set. Registry: `WorkforceSeatAllocation`.
 
 Satellites call orchestrator when `cpEmploymentId` / `globalPersonId` present; local count fallback when orchestrator URL unset.
 
