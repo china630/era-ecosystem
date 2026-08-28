@@ -439,8 +439,6 @@ const quotasAdapter: ImportAdapter<{
     quotaLeft: "quotaLeft",
     quotaTotal: "quotaTotal",
     quotaUsed: "quotaUsed",
-    quotaTotal: "quotaTotal",
-    quotaUsed: "quotaUsed",
   },
   rowSchema: z.object({
     patientRef: z.string().min(1),
