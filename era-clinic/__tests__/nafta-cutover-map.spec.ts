@@ -16,6 +16,34 @@ describe("nafta cutover column map", () => {
     expect(HEADERS.slots).toContain("nahiye");
     expect(HEADERS.labOrders).toContain("panel");
     expect(HEADERS.labResultLines).toContain("orderRef");
+    expect(HEADERS.patients).toEqual([
+      "externalRef",
+      "woId",
+      "fullName",
+      "givenName",
+      "surname",
+      "sex",
+      "birthDate",
+      "nationality",
+      "phone",
+      "hotelResNo",
+      "roomNumber",
+      "folioPerson",
+      "uniqueId",
+      "checkIn",
+      "checkOut",
+      "treatmentDaysCount",
+      "nightCount",
+      "isReservationPatient",
+      "doctorId",
+      "doctorName",
+      "doctorFormCreatedAt",
+      "checkUpId",
+      "checkUpName",
+      "programCode",
+      "latestPainDegree",
+      "latestPainDegreeCreatedAt",
+    ]);
     expect(HEADERS.roster).toEqual([
       "fin",
       "fullName",
@@ -80,5 +108,49 @@ describe("nafta cutover column map", () => {
     expect(slotNahiye({ patientProcedureId: 10 }, map)).toBe("boyun");
     expect(slotNahiye({ patientProcedureId: 99 }, map)).toBe("");
     expect(slotNahiye({}, map)).toBe("");
+  });
+
+  it("maps card gender Female to FEMALE not MALE", () => {
+    const { mapSex, mapPatientImportRow } = require("../scripts/nafta-cutover/map.cjs");
+    expect(mapSex("Female")).toBe("FEMALE");
+    expect(mapSex("Male")).toBe("MALE");
+    expect(mapSex("qadın")).toBe("FEMALE");
+    const row = mapPatientImportRow(
+      {
+        id: 2148,
+        fullName: "RAFIL KURBANOV",
+        reservationId: null,
+        reservationRoomNumber: "711",
+        nationality: "Russian",
+        phoneNumber: "",
+        birthDate: "1970-04-13T00:00:00",
+        doctorName: "Yoxdur",
+        nightCount: 8,
+        isReservationPatient: true,
+      },
+      {
+        patient: {
+          id: 2148,
+          name: "RAFIL",
+          surname: "KURBANOV",
+          gender: "Male",
+          nationality: "Russian",
+          phoneNumber: "",
+          birthDate: "1970-04-13T00:00:00",
+          reservationId: 11112877,
+          reservationRoomNumber: "711",
+          folioPerson: 1,
+          isReservationPatient: true,
+          doctorId: 3,
+          checkInDate: "2026-08-27T08:55:00",
+          checkOutDate: "2026-09-04T12:00:00",
+        },
+        treatmentInfo: [],
+      },
+    );
+    expect(row.sex).toBe("MALE");
+    expect(row.hotelResNo).toBe("11112877");
+    expect(row.givenName).toBe("RAFIL");
+    expect(row.folioPerson).toBe(1);
   });
 });

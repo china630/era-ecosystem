@@ -80,7 +80,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — filter bar (sex, blood, MDM, age) + paginated grid; **Open card** modal; anamnesis required on demographics edit. **`/patients/[id]`** deep link still works via shared `PatientCardBody`.
+3. **`/patients`** — filter bar (sex, blood, MDM, age) + paginated grid; **Open card** modal; anamnesis required on demographics edit. **`/patients/[id]`** deep link still works via shared `PatientCardBody`. History/timeline: one row per encounter when a Visit exists («Приём · doctor», slot date, opens `/visits/[id]`); Appointment-only if no visit.
 4. **`/appointments`** — practitioner day matrix; click free cell → **New appointment** modal (prefilled); occupied → check-in / cancel; DnD reschedule.
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.

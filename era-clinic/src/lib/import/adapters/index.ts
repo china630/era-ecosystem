@@ -4,6 +4,9 @@ import { cellNumber, cellString, parseDateCell } from "@/lib/import/helpers";
 import { bindImportRecord, findImportRecordId } from "@/lib/import/keys";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { applyNahiyeToProcedureOrder } from "@/domain/physio/nahiye-cutover.service";
+import { resolveCutoverPatientMdm } from "@/lib/import/cutover-patient-mdm";
+import { cutoverEpisodeFromCheckout } from "@/lib/import/cutover-episode-status";
+import { ensureCutoverAttendingVisit } from "@/lib/import/cutover-attending-visit";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -317,16 +320,42 @@ const practitionersAdapter: ImportAdapter<{
     ),
 };
 
+function toPatientSex(raw: string): "MALE" | "FEMALE" | "OTHER" | "UNKNOWN" {
+  if (raw === "MALE" || raw === "FEMALE" || raw === "OTHER") return raw;
+  return "UNKNOWN";
+}
+
+function optCell(raw: Record<string, unknown>, key: string): string {
+  return cellString(raw[key]) ?? "";
+}
+
 const patientsAdapter: ImportAdapter<{
   externalRef: string;
+  woId: string;
   fullName: string;
+  givenName: string;
+  surname: string;
   sex: string;
   birthDate: string;
+  nationality: string;
+  phone: string;
   hotelResNo: string;
   roomNumber: string;
+  folioPerson: string;
+  uniqueId: string;
   checkIn: string;
   checkOut: string;
+  treatmentDaysCount: string;
+  nightCount: string;
+  isReservationPatient: string;
+  doctorId: string;
+  doctorName: string;
+  doctorFormCreatedAt: string;
+  checkUpId: string;
+  checkUpName: string;
   programCode: string;
+  latestPainDegree: string;
+  latestPainDegreeCreatedAt: string;
 }> = {
   entity: "patients",
   label: "Patients",
@@ -334,36 +363,87 @@ const patientsAdapter: ImportAdapter<{
   templateHint: "21-patients.xlsx",
   headerAliases: aliases(
     "externalRef",
+    "woId",
     "fullName",
+    "givenName",
+    "surname",
     "sex",
     "birthDate",
+    "nationality",
+    "phone",
     "hotelResNo",
     "roomNumber",
+    "folioPerson",
+    "uniqueId",
     "checkIn",
     "checkOut",
+    "treatmentDaysCount",
+    "nightCount",
+    "isReservationPatient",
+    "doctorId",
+    "doctorName",
+    "doctorFormCreatedAt",
+    "checkUpId",
+    "checkUpName",
     "programCode",
+    "latestPainDegree",
+    "latestPainDegreeCreatedAt",
   ),
   rowSchema: z.object({
     externalRef: z.string().min(1),
+    woId: z.string(),
     fullName: z.string().min(1),
+    givenName: z.string(),
+    surname: z.string(),
     sex: z.string(),
     birthDate: z.string(),
+    nationality: z.string(),
+    phone: z.string(),
     hotelResNo: z.string(),
     roomNumber: z.string(),
+    folioPerson: z.string(),
+    uniqueId: z.string(),
     checkIn: z.string(),
     checkOut: z.string(),
+    treatmentDaysCount: z.string(),
+    nightCount: z.string(),
+    isReservationPatient: z.string(),
+    doctorId: z.string(),
+    doctorName: z.string(),
+    doctorFormCreatedAt: z.string(),
+    checkUpId: z.string(),
+    checkUpName: z.string(),
     programCode: z.string(),
+    latestPainDegree: z.string(),
+    latestPainDegreeCreatedAt: z.string(),
   }),
   mapRow: (raw) => ({
     externalRef: req(raw.externalRef),
+    woId: optCell(raw, "woId"),
     fullName: req(raw.fullName),
+    givenName: optCell(raw, "givenName"),
+    surname: optCell(raw, "surname"),
     sex: cellString(raw.sex) ?? "UNKNOWN",
-    birthDate: cellString(raw.birthDate) ?? "",
-    hotelResNo: cellString(raw.hotelResNo) ?? "",
-    roomNumber: cellString(raw.roomNumber) ?? "",
-    checkIn: cellString(raw.checkIn) ?? "",
-    checkOut: cellString(raw.checkOut) ?? "",
-    programCode: cellString(raw.programCode) ?? "",
+    birthDate: optCell(raw, "birthDate"),
+    nationality: optCell(raw, "nationality"),
+    phone: optCell(raw, "phone"),
+    hotelResNo: optCell(raw, "hotelResNo"),
+    roomNumber: optCell(raw, "roomNumber"),
+    folioPerson: optCell(raw, "folioPerson"),
+    uniqueId: optCell(raw, "uniqueId"),
+    checkIn: optCell(raw, "checkIn"),
+    checkOut: optCell(raw, "checkOut"),
+    treatmentDaysCount: optCell(raw, "treatmentDaysCount"),
+    nightCount: optCell(raw, "nightCount"),
+    isReservationPatient: optCell(raw, "isReservationPatient"),
+    doctorId: optCell(raw, "doctorId"),
+    doctorName: optCell(raw, "doctorName"),
+    doctorFormCreatedAt: optCell(raw, "doctorFormCreatedAt"),
+    checkUpId: optCell(raw, "checkUpId"),
+    checkUpName: optCell(raw, "checkUpName"),
+    programCode: optCell(raw, "programCode"),
+    latestPainDegree: optCell(raw, "latestPainDegree"),
+    latestPainDegreeCreatedAt: optCell(raw, "latestPainDegreeCreatedAt"),
   }),
   upsert: (tx, row, dryRun) =>
     upsertByRef(
@@ -372,14 +452,22 @@ const patientsAdapter: ImportAdapter<{
       row.externalRef,
       dryRun,
       async () => {
-        const sex =
-          row.sex === "MALE" || row.sex === "FEMALE" || row.sex === "OTHER"
-            ? row.sex
-            : row.sex === "MALE"
-              ? "MALE"
-              : row.sex === "FEMALE"
-                ? "FEMALE"
-                : "UNKNOWN";
+        const sex = toPatientSex(row.sex);
+        const checkIn = parseDateCell(row.checkIn);
+        const checkOut = parseDateCell(row.checkOut);
+        const episodeState = cutoverEpisodeFromCheckout(checkOut);
+        const inHouse = row.isReservationPatient !== "false";
+        const globalPersonId = await resolveCutoverPatientMdm({
+          fullName: row.fullName,
+          givenName: row.givenName,
+          surname: row.surname,
+          phone: row.phone,
+          nationality: row.nationality,
+          sex,
+          birthDate: row.birthDate,
+          hotelResNo: row.hotelResNo,
+          folioPerson: row.folioPerson,
+        });
         const patient = await tx.patientRef.create({
           data: {
             organizationId: orgId(),
@@ -387,7 +475,10 @@ const patientsAdapter: ImportAdapter<{
             fullName: row.fullName,
             sex,
             birthDate: parseDateCell(row.birthDate),
-            anamnesisText: "Nafta cutover import (MDM deferred)",
+            nationality: row.nationality || "AZ",
+            phone: row.phone || null,
+            globalPersonId,
+            anamnesisText: "Nafta cutover import",
             anamnesisUpdatedAt: new Date(),
           },
         });
@@ -398,26 +489,98 @@ const patientsAdapter: ImportAdapter<{
             roomNumber: row.roomNumber || null,
             reservationId: row.hotelResNo || null,
             programCode: row.programCode || null,
-            patientOrigin: "IN_HOUSE",
-            status: "OPEN",
+            patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
+            status: episodeState.status,
+            globalPersonId,
+            ...(checkIn ? { openedAt: checkIn } : {}),
+            ...(episodeState.closedAt ? { closedAt: episodeState.closedAt } : {}),
           },
+        });
+        await ensureCutoverAttendingVisit(tx, {
+          patientRefId: patient.id,
+          patientExternalRef: row.externalRef,
+          doctorId: row.doctorId,
+          checkIn,
+          episodeStatus: episodeState.status,
+          closedAt: episodeState.closedAt,
+          roomNumber: row.roomNumber || null,
+          reservationId: row.hotelResNo || null,
+          patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
         });
         return patient.id;
       },
       async (id) => {
-        await tx.patientRef.update({ where: { id }, data: { fullName: row.fullName } });
-        const episode = await tx.clinicalEpisode.findFirst({
-          where: { patientRefId: id, status: "OPEN" },
+        const sex = toPatientSex(row.sex);
+        const existing = await tx.patientRef.findUnique({
+          where: { id },
+          select: { globalPersonId: true },
         });
+        const globalPersonId = await resolveCutoverPatientMdm({
+          fullName: row.fullName,
+          givenName: row.givenName,
+          surname: row.surname,
+          phone: row.phone,
+          nationality: row.nationality,
+          sex,
+          birthDate: row.birthDate,
+          hotelResNo: row.hotelResNo,
+          folioPerson: row.folioPerson,
+          existingGlobalPersonId: existing?.globalPersonId,
+        });
+        await tx.patientRef.update({
+          where: { id },
+          data: {
+            fullName: row.fullName,
+            sex,
+            birthDate: parseDateCell(row.birthDate),
+            ...(row.nationality ? { nationality: row.nationality } : {}),
+            ...(row.phone ? { phone: row.phone } : {}),
+            ...(globalPersonId ? { globalPersonId } : {}),
+          },
+        });
+        const checkIn = parseDateCell(row.checkIn);
+        const checkOut = parseDateCell(row.checkOut);
+        const episodeState = cutoverEpisodeFromCheckout(checkOut);
+        const inHouse = row.isReservationPatient !== "false";
+        const episode = await tx.clinicalEpisode.findFirst({
+          where: { patientRefId: id },
+          orderBy: { openedAt: "desc" },
+        });
+        const episodeFields = {
+          roomNumber: row.roomNumber || episode?.roomNumber || null,
+          reservationId: row.hotelResNo || episode?.reservationId || null,
+          programCode: row.programCode || episode?.programCode || null,
+          patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
+          status: episodeState.status,
+          closedAt: episodeState.closedAt,
+          ...(checkIn ? { openedAt: checkIn } : {}),
+          ...(globalPersonId ? { globalPersonId } : {}),
+        };
         if (episode) {
           await tx.clinicalEpisode.update({
             where: { id: episode.id },
+            data: episodeFields,
+          });
+        } else {
+          await tx.clinicalEpisode.create({
             data: {
-              roomNumber: row.roomNumber || episode.roomNumber,
-              programCode: row.programCode || episode.programCode,
+              organizationId: orgId(),
+              patientRefId: id,
+              ...episodeFields,
             },
           });
         }
+        await ensureCutoverAttendingVisit(tx, {
+          patientRefId: id,
+          patientExternalRef: row.externalRef,
+          doctorId: row.doctorId,
+          checkIn,
+          episodeStatus: episodeState.status,
+          closedAt: episodeState.closedAt,
+          roomNumber: episodeFields.roomNumber,
+          reservationId: episodeFields.reservationId,
+          patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
+        });
       },
     ),
 };

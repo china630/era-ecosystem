@@ -25,7 +25,7 @@ Built by [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) → [ClinicOpsShell
 | Rules & data | admin/owner | `/admin/procedure-rules`, `/admin/lis-profiles`, `/admin/master-data` |
 | Platform | admin/owner | `/admin/audit`, `/admin/settings` |
 
-Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`; `GET/POST /api/internal/v1/runtime-config` (incl. `clinicCutover` upsert).
+Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`; `GET/POST /api/internal/v1/runtime-config` (incl. `clinicCutover` upsert). Cutover `#21` calls hotel `GET /api/internal/v1/stays/by-external-ref` then MDM `linkPersonIdentity`.
 
 **SaaS Wave 2 request tenant:** staff `/api/auth/login` (+ optional `organizationId`) and SSO put org on JWT; middleware `x-era-organization-id`; `getRouteSession` → `enterSatelliteTenant`; lifecycle/from-stay/settlement enter ALS from event/body org; ops stamps via `requestOrganizationId()`. Cron remains appliance/DEDICATED-oriented. Not SHIPPED pool / AC-CLI-TENANT still 🟡.
 
@@ -42,7 +42,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
 | `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
 | `/patients` | `/api/patients` — paginated list (`q`, sex, blood, MDM, age, `roomNumber` when sanatorium) + register; modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`) |
-| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`) |
+| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`) |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |

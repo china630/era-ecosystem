@@ -51,25 +51,33 @@ Writes `NAFTA-ERA-READY/clinic/25-Treatments.xlsx`, `26-Rooms.xlsx`, `40-Procedu
 
 ## Clinic files (`NAFTA-ERA-READY/clinic/`) — same numbers as START checklist
 
-| File | Rows (2026-08-25) | START source | Columns |
+| File | Rows (2026-08-28 dump) | START source | Columns |
 |------|------------------:|----------------|---------|
-| 21-patients.xlsx | 1665 | dump cards/patients | externalRef, fullName, sex, birthDate, hotelResNo, roomNumber, checkIn, checkOut, programCode |
-| 23-slots.xlsx | 2373 | dump calendar | externalRef, date, startTime, patientRef, procedureCode, roomCode, status |
-| 24-lab-orders.xlsx | 2153 | dump lab-results + files/lab | externalRef, patientRef, testCode, status, panel, takenAt |
+| 21-patients.xlsx | 1714 | dump `cards/{id}.json` `slices.patient` joined onto `bulk/patients.json` | externalRef, woId, fullName, givenName, surname, sex, birthDate, nationality, phone, hotelResNo, roomNumber, folioPerson, uniqueId, checkIn, checkOut, treatmentDaysCount, nightCount, isReservationPatient, doctorId, doctorName, doctorFormCreatedAt, checkUpId, checkUpName, programCode, latestPainDegree, latestPainDegreeCreatedAt |
+| 23-slots.xlsx | 2802 | dump calendar | externalRef, date, startTime, patientRef, procedureCode, roomCode, status |
+| 24-lab-orders.xlsx | 2354 | dump lab-results + files/lab | externalRef, patientRef, testCode, status, panel, takenAt |
 | 25-Treatments.xlsx | 80 | `01-procedures.xlsx` SSOT | externalRef, code, nameAz, durationMin, resourceGapMinutes, patientRestMinutes, price |
 | 26-Rooms.xlsx | 63 | SSOT + calendar history | externalRef, code, name |
 | 40-Procedure-Requirements.xlsx | 126 | `01-procedures.xlsx` cabinets | procedureCode, resourceCode, role, quantity |
 | 27-Doctors.xlsx | 8 | `27-practitioners-roster.json` + HR | externalRef, fin, fullName, role |
 | 29-Analyses.xlsx | 58 | catalogs/29 + ERA panel codes | externalRef, code, name, group |
-| 31-Diagnostics.xlsx | 370 | dump exam forms (USG) | externalRef, patientRef, code, name, resultText, takenAt |
-| 32-Diagnoses.xlsx | 372 | dump exam forms | patientRef, rawText, icd10, recordedAt |
-| 38-quotas.xlsx | 8778 | derived from calendar | patientRef, procedureCode, quotaTotal, quotaUsed, quotaLeft |
+| 31-Diagnostics.xlsx | 426 | dump exam forms (USG) | externalRef, patientRef, code, name, resultText, takenAt |
+| 32-Diagnoses.xlsx | 428 | dump exam forms | patientRef, rawText, icd10, recordedAt |
+| 38-quotas.xlsx | 9108 | derived from calendar | patientRef, procedureCode, quotaTotal, quotaUsed, quotaLeft |
 | 39-lab-results.xlsx | 22620 | Word tables | orderRef, code, label, value, unit, refMin, refMax |
 | 28, 30 | — | **Dropped** from ERA-READY (WO reference only; no wizard entity) |
 | 33–36 | copy catalogs | as in START |
 | `../hr/hr-01-Employees.xlsx` | START `hr/37-Employees.xlsx` | fin, fullName, orgUnit, position, hireDate, satellites |
 | `../hotel/01–20` | hotel/01–20 | EW wizard |
 | `../1c/40–53` | 1c | as received |
+
+`#21` joins card `GET /api/Patient/{id}` onto list `get-all`. The list omits `gender`, `name`/`surname`, `folioPerson`, and often `reservationId`; those live on the card. `sex` is `MALE`/`FEMALE`/`UNKNOWN` from card `gender` (Female must not be treated as male — the substring `male` sits inside `female`). Extra columns stay on the book for ops/MDM; wizard persist: name, sex, birthDate, nationality, phone, hotelResNo, room, program, stay dates.
+
+Episode status on `#21` (Asia/Baku calendar day): `checkOut` **before today** → `IMPORTED_CLOSED` + `closedAt` (archive; drops off live OPEN lists). Empty / today / future → `OPEN` (no `closedAt`). Live hotel checkout still writes `CLOSED`. Not the same as procedure `IMPORTED_DONE` → `COMPLETED` + `importedHistorical`.
+
+Attending doctor is **not** a field on `PatientRef`. Same as live ops: reception assigns the episode doctor via the **first Visit**. `#21` `doctorId` → `#27` `wo:doctor:{id}` → one idempotent Visit on check-in (`attending-visits` / `{patientRef}:attending`). OPEN → `IN_PROGRESS`; archive → `COMPLETED`. No Appointment (calendar stays clean). Empty/`0` doctorId or missing `#27` row → skip. Wizard already imports `#27` before `#21`.
+
+MDM on `#21`: match hotel `Guest` by **given + surname (+ patronymic in given) + birthDate + optional phone** (`GET /api/internal/v1/guests/by-identity`), then fall back to `hotelResNo` stay (`GET /api/internal/v1/stays/by-external-ref`). WO `hotelResNo` is not Elektraweb `Res Id`. Then `linkPersonIdentity` (idempotent via existing `PatientRef.globalPersonId`). No FIN in WO — walk-ins without a hotel match get an MDM surrogate. Import hotel `#10` first (guests → MDM). Anamnesis stamp is `Nafta cutover import`.
 
 Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-URINE` + analyte aliases (`LYM%`→`LYMPH%`). **Ignored:** orders without parseable Word (~170) — no #39 lines, still importable via #24 as header-only orders.
 
@@ -95,7 +103,7 @@ Ops slots in `#23`: **2026-08-25 … 2026-08-30** window; WO SCHEDULED data **25
 1. Freeze WebOnly writes.
 2. Lab files: `WO_COOKIE=… node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs` (gate ≥2000).
 3. Build packs: `node era-clinic/scripts/nafta-cutover/build-era-ready.cjs`.
-4. Staging: `node era-clinic/scripts/nafta-cutover/staging-gate.cjs`. Empty clinic DB → wizard by entity (25 … 40 procedure-requirements … 39 lab-results). Spot-check 3 in-house guests + lab fields (WBC).
+4. Staging: `node era-clinic/scripts/nafta-cutover/staging-gate.cjs`. Hotel wizard `#10`/`#11` first (guest MDM). Empty clinic DB → wizard by entity (25 … 40 procedure-requirements … 39 lab-results). Spot-check 3 in-house guests share `globalPersonId` with hotel + lab fields (WBC).
 5. Hotel FO stays Elektraweb. Do not dual-run the WO calendar.
 6. Super-admin “Muslim schedule” later must not reset `quotaUsed` / historical COMPLETED.
 
@@ -105,11 +113,11 @@ Admin → Cutover import (`/admin/import`). Clinic admin write.
 
 1. Dictionaries: 25 → 26 → **40** (procedure → room requirements)  
 2. Staff: 27  
-3. Patients: 21  
+3. Patients: 21 (after hotel `#10`/`#11`; MDM from stay or surrogate; attending Visit from `#27`)  
 4. Quotas + slots: 38 + 23  
 5. Lab / USG / diagnoses: 29, 24, 39, 31, 32  
 
-Re-upload of the same `externalRef` updates, does not duplicate.
+Re-upload of the same `externalRef` updates, does not duplicate. `#21` finds the latest episode **any** status (`openedAt` desc) and applies status / dates / room / reservation / program — re-upload `#21` only, no clinic DB wipe. Missing episode is created.
 
 ## Runbook (ops vs archive)
 

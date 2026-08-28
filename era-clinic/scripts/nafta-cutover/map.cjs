@@ -22,14 +22,31 @@ const HEADERS = {
   practitioners: ["externalRef", "fin", "fullName", "role"],
   patients: [
     "externalRef",
+    "woId",
     "fullName",
+    "givenName",
+    "surname",
     "sex",
     "birthDate",
+    "nationality",
+    "phone",
     "hotelResNo",
     "roomNumber",
+    "folioPerson",
+    "uniqueId",
     "checkIn",
     "checkOut",
+    "treatmentDaysCount",
+    "nightCount",
+    "isReservationPatient",
+    "doctorId",
+    "doctorName",
+    "doctorFormCreatedAt",
+    "checkUpId",
+    "checkUpName",
     "programCode",
+    "latestPainDegree",
+    "latestPainDegreeCreatedAt",
   ],
   quotas: ["patientRef", "procedureCode", "quotaTotal", "quotaUsed", "quotaLeft"],
   slots: [
@@ -73,10 +90,117 @@ function isOpsSlotDate(dateYmd) {
 }
 
 function mapSex(raw) {
-  const s = String(raw || "").toLowerCase();
-  if (s.startsWith("m") || s.includes("male") || s === "kişi") return "MALE";
-  if (s.startsWith("f") || s.includes("female") || s === "qadın") return "FEMALE";
+  const s = String(raw ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/i̇/g, "i");
+  if (!s) return "UNKNOWN";
+  // Female before male: "female" contains "male".
+  if (
+    s === "f" ||
+    s === "2" ||
+    s.startsWith("fem") ||
+    s === "woman" ||
+    s === "qadin" ||
+    s === "qadın" ||
+    s === "xanim" ||
+    s === "xanım"
+  ) {
+    return "FEMALE";
+  }
+  if (s === "m" || s === "1" || s === "male" || s === "man" || s === "kisi" || s === "kişi" || s === "bay") {
+    return "MALE";
+  }
   return "UNKNOWN";
+}
+
+function cell(value) {
+  if (value == null || value === "") return "";
+  return String(value).trim();
+}
+
+function isoStamp(value) {
+  if (!value) return "";
+  return String(value).replace("T", " ").slice(0, 19);
+}
+
+/** Card GET /api/Patient/{id} + list row + treatment-info fallback. */
+function loadPatientCardIndex(cardsDir) {
+  const fs = require("fs");
+  const path = require("path");
+  const map = new Map();
+  if (!fs.existsSync(cardsDir)) return map;
+  for (const file of fs.readdirSync(cardsDir)) {
+    if (!file.endsWith(".json")) continue;
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(path.join(cardsDir, file), "utf8"));
+    } catch {
+      continue;
+    }
+    const id = json.patientId != null ? Number(json.patientId) : Number(String(file).replace(/\.json$/, ""));
+    if (!Number.isFinite(id)) continue;
+    map.set(id, {
+      patient: json.slices && json.slices.patient && typeof json.slices.patient === "object" ? json.slices.patient : null,
+      listRow: json.listRow && typeof json.listRow === "object" ? json.listRow : null,
+      treatmentInfo: Array.isArray(json.treatmentInfoBulk) ? json.treatmentInfoBulk : [],
+    });
+  }
+  return map;
+}
+
+function pickCheckUpName(treatmentInfo) {
+  if (!Array.isArray(treatmentInfo)) return "";
+  for (let i = treatmentInfo.length - 1; i >= 0; i -= 1) {
+    const name = cell(treatmentInfo[i] && treatmentInfo[i].checkUpName);
+    if (name) return name;
+  }
+  return "";
+}
+
+function mapPatientImportRow(listRow, card) {
+  const list = listRow && typeof listRow === "object" ? listRow : {};
+  const c = card && card.patient && typeof card.patient === "object" ? card.patient : {};
+  const ti0 = Array.isArray(card && card.treatmentInfo) && card.treatmentInfo.length ? card.treatmentInfo[0] : {};
+  const id = list.id != null ? list.id : c.id;
+  const givenName = cell(c.name);
+  const surname = cell(c.surname);
+  const fullName =
+    cell(list.fullName) ||
+    [givenName, surname].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+  const reservationId = c.reservationId != null && c.reservationId !== "" ? c.reservationId : list.reservationId;
+  const checkUpName = pickCheckUpName(card && card.treatmentInfo);
+  const gender = c.gender || ti0.gender || list.gender || list.sex;
+  const isRes = c.isReservationPatient != null ? c.isReservationPatient : list.isReservationPatient;
+  return {
+    externalRef: `wo:patient:${id}`,
+    woId: id != null ? id : "",
+    fullName,
+    givenName,
+    surname,
+    sex: mapSex(gender),
+    birthDate: ymd(c.birthDate || list.birthDate),
+    nationality: cell(c.nationality || list.nationality),
+    phone: cell(c.phoneNumber || list.phoneNumber),
+    hotelResNo: reservationId != null && reservationId !== "" ? String(reservationId) : "",
+    roomNumber: cell(c.reservationRoomNumber || list.reservationRoomNumber),
+    folioPerson: c.folioPerson != null ? c.folioPerson : "",
+    uniqueId: cell(c.uniqueId || list.uniqueId),
+    checkIn: ymd(c.checkInDate || list.checkInDate),
+    checkOut: ymd(c.checkOutDate || list.checkOutDate),
+    treatmentDaysCount: c.treatmentDaysCount != null ? c.treatmentDaysCount : list.treatmentDaysCount ?? "",
+    nightCount: c.nightCount != null ? c.nightCount : list.nightCount ?? "",
+    isReservationPatient: isRes === true || isRes === "true" ? "true" : isRes === false || isRes === "false" ? "false" : "",
+    doctorId: c.doctorId != null ? c.doctorId : list.doctorId ?? "",
+    doctorName: cell(list.doctorName || ti0.mainDoctorName),
+    doctorFormCreatedAt: isoStamp(list.doctorFormCreatedAt || c.doctorFormCreatedAt),
+    checkUpId: c.checkUpId != null ? c.checkUpId : list.checkUpId ?? "",
+    checkUpName,
+    programCode: checkUpName,
+    latestPainDegree:
+      c.latestPainDegree != null ? c.latestPainDegree : list.latestPainDegree != null ? list.latestPainDegree : "",
+    latestPainDegreeCreatedAt: isoStamp(c.latestPainDegreeCreatedAt || list.latestPainDegreeCreatedAt),
+  };
 }
 
 function mapPractitionerRole(position) {
@@ -164,6 +288,8 @@ module.exports = {
   slotStatus,
   isOpsSlotDate,
   mapSex,
+  mapPatientImportRow,
+  loadPatientCardIndex,
   mapPractitionerRole,
   mapRosterRow,
   isUsgExam,

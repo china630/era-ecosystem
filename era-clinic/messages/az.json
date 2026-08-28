@@ -1119,7 +1119,7 @@
     "tzHint": "Gün və saat Asia/Baku ilə göstərilir.",
     "filters": {
       "all": "Hamısı",
-      "visit": "Vizitlər",
+      "visit": "Qəbullar",
       "lab_order": "Analizlər / müayinələr",
       "procedure": "Prosedurlar",
       "appointment": "Qeydiyyatlar",
@@ -1149,7 +1149,7 @@
     "historyEmpty": "Bu filtrlərə uyğun hadisə yoxdur.",
     "filterLab": "Analizlər / müayinələr",
     "filterLabVisit": "Analizlər + vizitlər",
-    "filterVisit": "Vizitlər",
+    "filterVisit": "Qəbullar",
     "filterAppointment": "Qəbullar",
     "filterAllTypes": "Analizlər + vizitlər + qəbullar",
     "labAll": "Analizlər: bütün statuslar",

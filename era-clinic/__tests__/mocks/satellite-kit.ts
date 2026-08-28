@@ -101,6 +101,17 @@ export const shouldDeferWalkInToHub = jest.fn().mockReturnValue(false);
 export const shouldRouteRevenueToParent = jest.fn().mockReturnValue(false);
 export const linkPersonIdentity = jest.fn();
 export const getPersonOpsProfile = jest.fn().mockResolvedValue(null);
+export function normalizePersonSex(raw: unknown): "MALE" | "FEMALE" | "UNKNOWN" | undefined {
+  if (raw == null || raw === "") return undefined;
+  const s = String(raw).trim().toUpperCase();
+  if (s === "M" || s === "MALE") return "MALE";
+  if (s === "F" || s === "FEMALE") return "FEMALE";
+  if (s === "OTHER" || s === "UNKNOWN") return "UNKNOWN";
+  return undefined;
+}
+export function parsePersonBirthDate(): Date | undefined {
+  return undefined;
+}
 export const fetchControlPlaneOrganizationName = jest
   .fn()
   .mockResolvedValue(null);
