@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { assertHotelApiEntitled } from "@/lib/hotel-module-gate";
 
 export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
-  await assertHotelApiEntitled();
   const h = await headers();
   const userId = h.get("x-user-id");
   const role = h.get("x-user-role");
@@ -28,6 +27,8 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
   if (organizationId) {
     enterSatelliteTenant({ organizationId });
   }
+
+  await assertHotelApiEntitled();
 
   return {
     sub: userId,

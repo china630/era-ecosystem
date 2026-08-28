@@ -4,6 +4,7 @@ import {
   IndustryModuleInactiveError,
   resolveHotelModuleKey,
   resolveHotelModuleForPathname,
+  enterSatelliteTenant,
 } from "@era/satellite-kit";
 
 export { IndustryModuleInactiveError };
@@ -17,16 +18,27 @@ const AUTH_EXEMPT_PREFIXES = [
   "/sso",
 ];
 
+async function enterTenantFromRequestHeaders(): Promise<void> {
+  try {
+    const org = (await headers()).get("x-era-organization-id")?.trim();
+    if (org) enterSatelliteTenant({ organizationId: org });
+  } catch {
+    /* Next headers() throws outside a request (tests / cron). */
+  }
+}
+
 /**
  * Fail-closed hotel submodule gate. Bound org required
  * (no silent skip on env fallback).
  */
 export async function requireHotelModule(moduleKey: string): Promise<void> {
+  await enterTenantFromRequestHeaders();
   await requireSatelliteModule(resolveHotelModuleKey(moduleKey));
 }
 
 /** Always require satellite gate; submodule when path maps. */
 export async function assertHotelApiEntitled(pathname?: string | null): Promise<void> {
+  await enterTenantFromRequestHeaders();
   const path =
     pathname?.trim() ||
     (await headers()).get(ERA_PATHNAME_HEADER)?.trim() ||
