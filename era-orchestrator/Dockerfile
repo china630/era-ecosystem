@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-# ERA Orchestrator — control plane (API :4000 + Web :3000). Build from repo root.
+# Control plane (API :4000 + Web :3000). Prisma clients generated in builder;
+# runner entrypoint must not prisma generate (see docker-entrypoint.sh).
 #   docker build -f era-orchestrator/Dockerfile -t era-orchestrator .
 
 FROM node:22-alpine AS builder
@@ -92,7 +93,7 @@ USER era
 
 EXPOSE 3000 4000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=6 \
   CMD wget -qO- http://127.0.0.1:4000/health || exit 1
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

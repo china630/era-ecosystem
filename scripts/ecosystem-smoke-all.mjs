@@ -3,6 +3,7 @@
  * Full ecosystem HTTP health smoke (platform + all industry satellites).
  * Usage: node scripts/ecosystem-smoke-all.mjs
  * Env: BASE_URL (optional host prefix), or per-service *_URL overrides.
+ *      SMOKE_WAIT_MS — how long to wait for orchestrator before checking the rest.
  * See docs/ECOSYSTEM_URLS.md for default ports.
  */
 const base = (process.env.BASE_URL ?? "http://127.0.0.1").replace(/\/$/, "");
@@ -27,22 +28,59 @@ const targets = [
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const attempts = Number(process.env.SMOKE_ATTEMPTS ?? 20);
+const waitMs = Number(process.env.SMOKE_WAIT_MS ?? 180000);
+
+async function probe(url) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  return res;
+}
+
+async function waitUntilReachable(url, label, budgetMs) {
+  const deadline = Date.now() + budgetMs;
+  let lastErr;
+  while (Date.now() < deadline) {
+    try {
+      const res = await probe(url);
+      if (res.status >= 200 && res.status < 500) {
+        console.log(`WAIT ${label} ready ${url}`);
+        return;
+      }
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastErr = err;
+    }
+    await sleep(2000);
+  }
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr ?? "timeout");
+  throw new Error(`${label} not reachable within ${budgetMs}ms (${msg})`);
+}
 
 let failed = 0;
 let okCount = 0;
 
+const orch = targets[0];
+const orchUrl = `${orch.url.replace(/\/$/, "")}${orch.path}`;
+try {
+  await waitUntilReachable(orchUrl, orch.name, waitMs);
+} catch (err) {
+  console.log(`FAIL ${orch.name} ${orchUrl} — ${err instanceof Error ? err.message : err}`);
+  failed++;
+}
+
 for (const t of targets) {
+  if (t === orch && failed > 0) continue;
   const url = `${t.url.replace(/\/$/, "")}${t.path}`;
   let lastErr;
   let res;
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
-      res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      res = await probe(url);
       lastErr = undefined;
       break;
     } catch (err) {
       lastErr = err;
-      if (attempt < 4) await sleep(3000);
+      if (attempt < attempts - 1) await sleep(2000);
     }
   }
   try {

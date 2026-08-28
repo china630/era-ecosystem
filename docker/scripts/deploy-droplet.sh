@@ -51,6 +51,12 @@ echo "Deploy scope=$scope services=${services:-ALL}"
 echo "GHCR login as ${GH_ACTOR} (token length ${#GHCR_PULL_TOKEN})"
 echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
+echo "==> disk before pull"
+df -h /
+# Drop unused tags from prior IMAGE_TAG deploys so pull can extract layers.
+docker image prune -af || true
+docker builder prune -af || true
+
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env)
 
 if [ -z "$services" ]; then
@@ -66,6 +72,7 @@ COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
 
 if [ -z "$services" ]; then
   "${COMPOSE[@]}" up -d --remove-orphans
+  "${COMPOSE[@]}" up -d --wait --wait-timeout 180 orchestrator
   docker image prune -af || true
   node scripts/ecosystem-smoke-all.mjs || echo "WARN: ecosystem-smoke-all failed (non-blocking)"
 else
@@ -73,5 +80,5 @@ else
   # --no-deps: scoped IMAGE_TAG only exists for the rebuilt service; pulling
   # depends_on siblings (e.g. finance-web → finance-core) 404s on GHCR.
   # shellcheck disable=SC2086
-  "${COMPOSE[@]}" up -d --no-deps $services
+  "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services
 fi
