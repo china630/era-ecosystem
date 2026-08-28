@@ -455,6 +455,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-28 | Clinic quota import: ProgramInstance `@@unique([organizationId, episodeId])`; kit tenant findUnique no longer invents a missing compound unique for 1:1 FKs (CLI-48). CP-TENANT-01 stays API. |
 | 2026-08-22 | HOT-HK-05 linen/deep policy SCREEN; sheet duty + needed-by; still not SHIPPED. |
 | 2026-08-21 | Fail-closed tenant filter (no unbound default; stamp+mismatch reject); User.phone unique per org; runCronForEachTenant; check:satellite-raw-sql. Bank CAP-NFR-TOPO: same ladder as hotel (pool not built, not a special ban). CP-TENANT-01 stays API; AC-*-TENANT stay 🟡 |
 | 2026-08-21 | Clinic scheduling time layers ADR: occupancy vs per-type resource gap vs patient rest vs pair rules; UFF gel 5/0/15; SOFT nurse ≠ cabin gap. CLI-26/30 stay SHIPPED; schema split not built |

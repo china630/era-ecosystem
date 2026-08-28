@@ -65,6 +65,7 @@ export {
   createSatelliteTenantExtension,
   mergeWhere,
   mergeWhereForUnique,
+  uniqueSelectorNames,
 } from "./tenancy/satellite-tenant-extension";
 export {
   assertTenantRawOrganizationId,

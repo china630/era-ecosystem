@@ -13,13 +13,25 @@ export {
   type WithOptionalOrganizationId,
 } from "./satellite-prisma-types";
 
+type DmmfField = {
+  name: string;
+  kind: string;
+  type: string;
+  isId?: boolean;
+  isUnique?: boolean;
+};
+
+type DmmfModel = {
+  name: string;
+  fields: ReadonlyArray<DmmfField>;
+  uniqueFields?: ReadonlyArray<ReadonlyArray<string>>;
+  uniqueIndexes?: ReadonlyArray<{ name?: string | null; fields: ReadonlyArray<string> }>;
+};
+
 type PrismaLike = {
   dmmf: {
     datamodel: {
-      models: ReadonlyArray<{
-        name: string;
-        fields: ReadonlyArray<{ name: string; kind: string; type: string }>;
-      }>;
+      models: ReadonlyArray<DmmfModel>;
     };
   };
   defineExtension: (args: unknown) => unknown;
@@ -40,6 +52,47 @@ function isPlainRecord(v: unknown): v is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
+/** Prisma client names for unique selectors on one model (`id`, `episodeId`, `organizationId_code`). */
+export function uniqueSelectorNames(model: DmmfModel): Set<string> {
+  const names = new Set<string>();
+  for (const f of model.fields) {
+    if (f.isId || f.isUnique) names.add(f.name);
+  }
+  for (const fields of model.uniqueFields ?? []) {
+    if (fields.length > 0) names.add(fields.join("_"));
+  }
+  for (const idx of model.uniqueIndexes ?? []) {
+    if (idx.fields.length > 0) names.add(idx.fields.join("_"));
+  }
+  return names;
+}
+
+function compoundOrgName(field: string): string {
+  return `organizationId_${field}`;
+}
+
+/**
+ * Remap `{ code }` → `{ organizationId_code: { organizationId, code } }` when that compound unique exists.
+ * 1:1 FK uniques (`episodeId @unique`) have no compound — use extendedWhereUnique `{ episodeId, organizationId }`.
+ * When `uniqueNames` is omitted, keep the historic remap (unit tests / unknown models).
+ */
+function rewriteScalarUnique(
+  field: string,
+  value: unknown,
+  orgId: string,
+  uniqueNames?: ReadonlySet<string>,
+): Record<string, unknown> {
+  if (field === "id") {
+    return { id: value, organizationId: orgId };
+  }
+  const compound = compoundOrgName(field);
+  const useCompound = uniqueNames == null || uniqueNames.has(compound);
+  if (useCompound) {
+    return { [compound]: { organizationId: orgId, [field]: value } };
+  }
+  return { [field]: value, organizationId: orgId };
+}
+
 /**
  * findUnique / update / delete: Prisma needs a unique selector.
  * After @@unique([organizationId, code]), `{ code }` becomes `{ organizationId_code: { organizationId, code } }`.
@@ -48,6 +101,7 @@ function isPlainRecord(v: unknown): v is Record<string, unknown> {
 export function mergeWhereForUnique(
   where: unknown,
   orgId: string,
+  uniqueNames?: ReadonlySet<string>,
 ): Record<string, unknown> {
   if (where == null || typeof where !== "object") {
     return { organizationId: orgId };
@@ -59,7 +113,7 @@ export function mergeWhereForUnique(
     const field = keys.find((k) => k !== "organizationId")!;
     const v = w[field];
     if (field !== "id" && !field.startsWith("organizationId_") && !isPlainRecord(v)) {
-      return { [`organizationId_${field}`]: { organizationId: orgId, [field]: v } };
+      return rewriteScalarUnique(field, v, orgId, uniqueNames);
     }
   }
 
@@ -76,7 +130,7 @@ export function mergeWhereForUnique(
       return { [k]: { ...v, organizationId: orgId } };
     }
     if (!isPlainRecord(v)) {
-      return { [`organizationId_${k}`]: { organizationId: orgId, [k]: v } };
+      return rewriteScalarUnique(k, v, orgId, uniqueNames);
     }
   }
   return { ...w, organizationId: orgId };
@@ -104,6 +158,10 @@ export function createSatelliteTenantExtension(
   opts: { excludeModels?: string[] } = {},
 ): unknown {
   const TENANT_MODELS = tenantModelNames(Prisma, opts.excludeModels ?? []);
+  const uniqueByModel = new Map<string, Set<string>>();
+  for (const model of Prisma.dmmf.datamodel.models) {
+    uniqueByModel.set(model.name, uniqueSelectorNames(model));
+  }
 
   return Prisma.defineExtension({
     query: {
@@ -143,7 +201,10 @@ export function createSatelliteTenantExtension(
             case "findUniqueOrThrow":
             case "update":
             case "delete":
-              return query({ ...a, where: mergeWhereForUnique(a.where, orgId) });
+              return query({
+                ...a,
+                where: mergeWhereForUnique(a.where, orgId, uniqueByModel.get(model)),
+              });
             case "create": {
               return query({
                 ...a,
@@ -160,7 +221,7 @@ export function createSatelliteTenantExtension(
             case "upsert": {
               return query({
                 ...a,
-                where: mergeWhereForUnique(a.where, orgId),
+                where: mergeWhereForUnique(a.where, orgId, uniqueByModel.get(model)),
                 create: stampTenantCreateTree(a.create ?? {}, orgId),
                 update: a.update,
               });

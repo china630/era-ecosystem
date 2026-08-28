@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { mergeWhere, mergeWhereForUnique } from "./satellite-tenant-extension";
+import {
+  mergeWhere,
+  mergeWhereForUnique,
+  uniqueSelectorNames,
+} from "./satellite-tenant-extension";
 import {
   isSentinelOrganizationId,
   stampTenantCreateData,
@@ -69,6 +73,39 @@ describe("satellite tenant where merge", () => {
     );
     assert.deepEqual(mergeWhereForUnique({ roomNumber: code }, "org-b"), {
       organizationId_roomNumber: { organizationId: "org-b", roomNumber: code },
+    });
+  });
+
+  it("uses extendedWhereUnique when the scalar is already unique (ProgramInstance.episodeId)", () => {
+    const uniques = uniqueSelectorNames({
+      name: "ProgramInstance",
+      fields: [
+        { name: "id", kind: "scalar", type: "String", isId: true },
+        { name: "episodeId", kind: "scalar", type: "String", isUnique: true },
+        { name: "organizationId", kind: "scalar", type: "String" },
+      ],
+      uniqueFields: [],
+      uniqueIndexes: [],
+    });
+    assert.deepEqual(mergeWhereForUnique({ episodeId: "ep-1" }, "org-a", uniques), {
+      episodeId: "ep-1",
+      organizationId: "org-a",
+    });
+  });
+
+  it("still remaps when DMMF has organizationId_code", () => {
+    const uniques = uniqueSelectorNames({
+      name: "PatientRef",
+      fields: [
+        { name: "id", kind: "scalar", type: "String", isId: true },
+        { name: "refCode", kind: "scalar", type: "String" },
+        { name: "organizationId", kind: "scalar", type: "String" },
+      ],
+      uniqueFields: [["organizationId", "refCode"]],
+      uniqueIndexes: [{ name: null, fields: ["organizationId", "refCode"] }],
+    });
+    assert.deepEqual(mergeWhereForUnique({ refCode: "P1" }, "org-a", uniques), {
+      organizationId_refCode: { organizationId: "org-a", refCode: "P1" },
     });
   });
 });
