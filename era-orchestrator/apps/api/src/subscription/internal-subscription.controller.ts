@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, Post, Query } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
-import { assertInternalServiceToken } from "../common/utils/internal-service-token.util";
+import { assertMatchingServiceToken } from "../common/utils/internal-service-token.util";
 import { SubscriptionAccessService } from "./subscription-access.service";
 import { TrialProvisionService } from "./trial-provision.service";
 
@@ -18,11 +18,7 @@ export class InternalSubscriptionController {
   ) {}
 
   private guard(auth?: string, xToken?: string) {
-    assertInternalServiceToken(
-      auth,
-      "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN",
-      xToken,
-    );
+    assertMatchingServiceToken(auth, xToken);
   }
 
   @Post("provision-trial")

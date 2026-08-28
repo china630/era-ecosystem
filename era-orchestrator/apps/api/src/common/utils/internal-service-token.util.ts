@@ -11,6 +11,42 @@ export function extractServiceToken(
   return authorization?.trim();
 }
 
+/** Env keys satellites and finance may present as Bearer to CP internal routes. */
+export const CONTROL_PLANE_SERVICE_TOKEN_ENV_KEYS = [
+  "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN",
+  "CONTROL_PLANE_SERVICE_TOKEN",
+  "SATELLITE_EVENT_SERVICE_TOKEN",
+] as const;
+
+/**
+ * Accept any configured control-plane / satellite event token.
+ * Snapshot is called by industry satellites with SATELLITE_EVENT_SERVICE_TOKEN
+ * and by Finance with CONTROL_PLANE_SERVICE_TOKEN — those secrets differ in prod.
+ */
+export function assertMatchingServiceToken(
+  authorization: string | undefined,
+  xServiceToken?: string,
+  envKeys: readonly string[] = CONTROL_PLANE_SERVICE_TOKEN_ENV_KEYS,
+): void {
+  const presented = extractServiceToken(authorization, xServiceToken);
+  const expected = [
+    ...new Set(
+      envKeys
+        .map((k) => process.env[k]?.trim())
+        .filter((s): s is string => Boolean(s)),
+    ),
+  ];
+  if (expected.length === 0) {
+    if (process.env.NODE_ENV === "production") {
+      throw new UnauthorizedException("Internal service token not configured");
+    }
+    return;
+  }
+  if (!presented || !expected.includes(presented)) {
+    throw new UnauthorizedException("Invalid internal service token");
+  }
+}
+
 export function assertInternalServiceToken(
   authorization: string | undefined,
   envKey = "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN",

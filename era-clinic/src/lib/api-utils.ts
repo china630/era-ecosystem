@@ -103,7 +103,7 @@ export async function getRouteSession(): Promise<SatelliteSessionPayload | null>
   session = { ...session, organizationId };
 
   const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
-  await assertClinicApiEntitled();
+  await assertClinicApiEntitled(undefined, organizationId);
 
   return session;
 }

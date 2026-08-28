@@ -26,7 +26,7 @@ ERA **cloud**: one process per satellite type, many orgs. Staff use the same sat
 | HOT-06 lab SHOW; extension write HEADLESS | |
 | Placement: hotel curated JSON slice + **artifact on job** + host agent import-slice + apply log | Field migrate UAT; multi-sat slices |
 | EW ingest ALS-first; Sync **skips** `applyOrganizationBind` when topology SHARED | |
-| Entitlement: request ALS + CP snapshot (hotel/clinic session/header before gate); Sync `activeModules` = cache | Sync bind required after every SHARED restart |
+| Entitlement: request org argument + CP snapshot (hotel/clinic session/header); Sync `activeModules` = cache | Sync bind required after every SHARED restart |
 | Live pool smoke scripts (Wave 9) | Field signoff pass / sell pool |
 
 ## Finance (Wave 3 audit)

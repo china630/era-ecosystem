@@ -80,6 +80,6 @@ export async function enterFnbRequestTenant(): Promise<string | undefined> {
 
 /** Call at the start of operational F&B API handlers. */
 export async function assertFnbEntitled(): Promise<void> {
-  await enterFnbRequestTenant();
-  await requireFnbSatellite();
+  const org = await enterFnbRequestTenant();
+  await requireFnbSatellite(org);
 }

@@ -84,8 +84,8 @@ export async function enterCrmRequestTenant(): Promise<string | undefined> {
 
 /** Call at the start of authenticated API handlers (session helper). */
 export async function assertCrmEntitled(): Promise<void> {
-  await enterCrmRequestTenant();
-  await requireCrmSatellite();
+  const org = await enterCrmRequestTenant();
+  await requireCrmSatellite(org);
 }
 
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
