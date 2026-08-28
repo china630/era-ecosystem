@@ -1,11 +1,11 @@
 import { z } from 'zod';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -50,7 +50,7 @@ export async function POST(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         email: body.email,
         fullName: body.fullName,
         password: body.password,

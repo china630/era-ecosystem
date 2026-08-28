@@ -16,6 +16,7 @@ import {
   Users,
   Database,
   BookOpen,
+  MapPin,
   Beaker,
   ScrollText,
   Shield,
@@ -125,6 +126,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Wallet,
     group: "frontdesk",
     roles: [CLINIC_ROLE.RECEPTION],
+  },
+  {
+    href: "/reception/extra-tickets",
+    labelKey: "extraTickets",
+    icon: ScrollText,
+    group: "frontdesk",
+    roles: [CLINIC_ROLE.RECEPTION],
+    preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
   },
 
   // Clinical — DOCTOR / NURSE
@@ -286,6 +295,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     href: "/admin/lookups",
     labelKey: "lookups",
     icon: BookOpen,
+    group: "setup:catalogs",
+    adminOnly: true,
+  },
+  {
+    href: "/admin/physio-sites",
+    labelKey: "physioSites",
+    icon: MapPin,
     group: "setup:catalogs",
     adminOnly: true,
   },

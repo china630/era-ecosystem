@@ -1,24 +1,30 @@
 # Diagnostic & laboratory standard catalog (ERA Clinic)
 
-**Version:** 1.1.0 (P0+P1 outpatient / sanatorium / check-up)  
+**Version:** 1.2.0 (AZ clinic + MediClub/Exonlab routine layer)  
 Source of truth: [`../prisma/seed-data/diagnostic-lab-catalog.json`](../prisma/seed-data/diagnostic-lab-catalog.json)  
 Seed: `prisma/seed-vnext.ts` → `ClinicalTemplate` + `ServiceCatalogCache`  
-Expand helper: `prisma/scripts/expand-diagnostic-catalog.mjs` (idempotent re-apply)
+P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
+Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 
-Prices stay in Finance; this catalog owns **codes + form fields / analytes / packages**.
+Prices stay in Finance; this catalog owns **codes + form fields / analytes / packages**.  
+Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the rest). Rare send-out: SatAdmin add, not this JSON.
+
+**v1.2 sources:** Nafta Analyses price list; Exonlab special panels; MediClub public lab menus (biochem, general clinical, infections); Liv/Eurolab category pages. Not Referans 7000 / LOINC.
 
 ---
 
-## Counts (v1.1)
+## Counts (v1.2)
 
 | Layer | Count |
 |-------|------:|
 | Modalities | 9 |
 | Study templates (imaging / functional / endoscopy) | 85 |
-| Lab panels | 45 |
-| Lab analytes | ~265 |
+| Lab panels | 48 |
+| Lab analytes | ~362 |
 | Visit templates | 13 |
 | Check-up packages | 7 |
+
+v1.2 lab adds: Sysmex CBC extras (`MCV`…`PLT-PCT`), Nafta liver/renal/cardiac/electrolyte fields (`IBIL`, `TCO2`, `VLDL`, `LDH`/`HBDH`/`CK`, `TT3`/`TT4`), urine mucus/salts, `LAB-SMEAR`, `LAB-BIOCHEM-EXT`, `LAB-CELIAC`.
 
 ---
 
@@ -66,16 +72,16 @@ EGD, colonoscopy (+ polyps table), bronchoscopy
 
 ---
 
-## 2. Laboratory panels (45)
+## 2. Laboratory panels (48)
 
 | Group | Codes (examples) |
 |-------|------------------|
-| Core | `LAB-CBC`, `LAB-BIOCHEM`, `LAB-ELECTRO`, `LAB-COAG`, `LAB-GLUCOSE`, `LAB-URINE` |
+| Core | `LAB-CBC`, `LAB-BIOCHEM`, `LAB-BIOCHEM-EXT`, `LAB-ELECTRO`, `LAB-COAG`, `LAB-GLUCOSE`, `LAB-URINE`, `LAB-SMEAR` |
 | Organs | `LAB-LIVER`, `LAB-LIPID`, `LAB-RENAL`, `LAB-CARDIAC`, `LAB-INFLAM` |
 | Hormones | `LAB-THYROID`, `LAB-SEX-HORM`, `LAB-ENDO-HORM`, `LAB-BHCG` |
 | Infection | `LAB-INFECT`, `LAB-TORCH`, `LAB-HEP-EXT`, `LAB-INFECT-REG`, `LAB-TB-IGRA`, `LAB-RESP-PCR`, `LAB-PCR-STI` |
 | Allergy | `LAB-ALLERGY`, `LAB-ALLERGY-FOOD`, `LAB-ALLERGY-INH`, `LAB-ALLERGY-PED` |
-| Specialty | `LAB-RHEUMA`, `LAB-TUMOR`, `LAB-TUMOR-EXT`, `LAB-VITMIN`, `LAB-TRACE`, `LAB-IG`, `LAB-HOMOC` |
+| Specialty | `LAB-RHEUMA`, `LAB-TUMOR`, `LAB-TUMOR-EXT`, `LAB-VITMIN`, `LAB-TRACE`, `LAB-IG`, `LAB-HOMOC`, `LAB-CELIAC` |
 | Micro / GI / gyn | `LAB-URINE-CULT`, `LAB-MICRO-CULT`, `LAB-STOOL`, `LAB-COPROG`, `LAB-SPUTUM`, `LAB-GYN-SMEAR`, `LAB-HPV`, `LAB-CYTOLOGY`, `LAB-HISTO`, `LAB-SEMEN`, `LAB-BG`, `LAB-DRUG-SCR` |
 
 ---

@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
- * ERA placement host agent (GitOps stub).
+ * ERA placement host agent.
  *
- * Polls orchestrator for PlacementJob rows in PENDING/PROVISION and logs
- * apply steps. Does NOT SSH from orchestrator — real apply is host-side
- * (compose pull, migrate, bind). See docs/adr/deployment-topology.md §4–§5.
+ * Polls orchestrator for PlacementJob rows in EXPORT/PROVISION, applies
+ * curated JSON slice via hotel import-slice when artifact + target URL exist,
+ * reports apply log, and leaves SuperAdmin to advance bind/cutover/smoke.
  *
  * Env:
- *   ORCHESTRATOR_URL / CONTROL_PLANE_URL — orch API base (default http://127.0.0.1:4000)
+ *   ORCHESTRATOR_URL / CONTROL_PLANE_URL — orch API base
  *   ERA_PLACEMENT_HOST_TOKEN — Bearer (falls back to SATELLITE_EVENT_SERVICE_TOKEN)
+ *   ERA_PLACEMENT_TARGET_HOTEL_URL — hotel pool URL for import-slice (optional; else job.targetBaseUrl)
  *   ERA_PLACEMENT_POLL_MS — poll interval (default 15000); 0 = single poll then exit
  *
  * Usage: node scripts/era-placement-agent.mjs
@@ -26,6 +27,61 @@ const token =
   "";
 
 const pollMs = Number(process.env.ERA_PLACEMENT_POLL_MS ?? "15000");
+const defaultHotelUrl = (
+  process.env.ERA_PLACEMENT_TARGET_HOTEL_URL ||
+  process.env.ERA_HOTEL_PMS_ORIGIN ||
+  ""
+).replace(/\/$/, "");
+
+async function reportApplyLog(jobId, applyLog) {
+  const res = await fetch(`${base}/v1/placement-agent/jobs/${jobId}/apply-log`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ applyLog }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`[era-placement-agent] apply-log failed ${res.status}: ${text}`);
+  }
+}
+
+async function applyHotelSlice(job) {
+  const hotelUrl = (job.targetBaseUrl || defaultHotelUrl || "").replace(/\/$/, "");
+  const artifact = job.artifactJson;
+  if (!hotelUrl) {
+    return "skip: no target hotel URL (set ERA_PLACEMENT_TARGET_HOTEL_URL or job.targetBaseUrl)";
+  }
+  if (!artifact || typeof artifact !== "object") {
+    return "skip: no artifactJson on job (run exportSlice with includeRows first)";
+  }
+  const slice = {
+    organizationId: artifact.organizationId || job.organizationId,
+    formatVersion: artifact.formatVersion || 1,
+    tables: artifact.tables || [],
+    rows: artifact.rows || {},
+    note: artifact.note || "hotel curated json slice v1",
+  };
+  const res = await fetch(`${hotelUrl}/api/internal/v1/placement/import-slice`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      organizationId: job.organizationId,
+      mode: "upsert",
+      slice,
+    }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    return `import-slice FAILED ${res.status}: ${text.slice(0, 500)}`;
+  }
+  return `import-slice OK ${text.slice(0, 300)}`;
+}
 
 async function pollOnce() {
   if (!token) {
@@ -45,19 +101,32 @@ async function pollOnce() {
   }
   const jobs = await res.json();
   if (!Array.isArray(jobs) || jobs.length === 0) {
-    console.log(`[era-placement-agent] no PENDING/PROVISION jobs @ ${new Date().toISOString()}`);
+    console.log(
+      `[era-placement-agent] no EXPORT/PROVISION jobs @ ${new Date().toISOString()}`,
+    );
     return;
   }
   for (const job of jobs) {
     console.log(
-      `[era-placement-agent] job=${job.id} org=${job.organizationId} sat=${job.satelliteKey} ${job.fromTopology}->${job.toTopology} status=${job.status}`,
+      `[era-placement-agent] job=${job.id} org=${job.organizationId} sat=${job.satelliteKey} ${job.fromTopology}->${job.toTopology} status=${job.status} artifactRef=${job.artifactRef || "-"}`,
     );
-    console.log(
-      `  apply steps (host-side stub): provision stack → restore/slice → bind+runtime-config → cutover SatelliteEndpoint → smoke`,
+    const lines = [];
+    lines.push(`status=${job.status}`);
+    lines.push(`artifactRef=${job.artifactRef || "none"}`);
+    if (
+      job.satelliteKey === "industry_hotel_pms" ||
+      job.satelliteKey === "industry_hotel"
+    ) {
+      const result = await applyHotelSlice(job);
+      console.log(`  ${result}`);
+      lines.push(result);
+    } else {
+      lines.push(`skip: slice apply not implemented for ${job.satelliteKey}`);
+    }
+    lines.push(
+      `next: SuperAdmin advance markProvisioned → bindAndConfig → cutover → smoke → complete`,
     );
-    console.log(
-      `  note: orch does not SSH; advance via POST /v1/admin/placement-jobs/${job.id}/advance after local apply`,
-    );
+    await reportApplyLog(job.id, lines.join("\n"));
   }
 }
 

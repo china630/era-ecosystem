@@ -1,5 +1,5 @@
 import type { TimesheetEntry } from "@prisma/client";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { isConstructionWorkingDay } from "@/lib/production-calendar";
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       await dispatchSatelliteEvent({
         type: WORKFORCE_TIMESHEET_BATCH_IMPORTED,
         payload: {
-          organizationId: satelliteOrganizationId(),
+          organizationId: requestOrganizationId(),
           projectId: body.projectId,
           entries: linked.map((c: TimesheetEntry) => ({
             cpEmploymentId: c.cpEmploymentId ?? undefined,

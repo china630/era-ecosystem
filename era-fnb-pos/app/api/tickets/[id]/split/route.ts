@@ -2,8 +2,8 @@ import type { TicketLine } from "@prisma/client";
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
@@ -49,7 +49,7 @@ export async function POST(
   const splitTicket = await prisma.$transaction(async (tx) => {
     const created = await tx.ticket.create({
       data: {
-        organizationId: source.organizationId || satelliteOrganizationId(),
+        organizationId: source.organizationId || requestOrganizationId(),
         outletId: source.outletId,
         tableId: null,
         covers: source.covers,

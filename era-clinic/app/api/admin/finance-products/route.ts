@@ -1,5 +1,5 @@
 import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 type FinanceProductRow = {
   id: string;
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     const token =
       process.env.FINANCE_SERVICE_TOKEN ??
       process.env.SATELLITE_EVENT_SERVICE_TOKEN;
-    const orgId = satelliteOrganizationId();
+    const orgId = requestOrganizationId();
 
     const params = new URLSearchParams({
       isService: "false",

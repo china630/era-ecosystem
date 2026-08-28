@@ -10,7 +10,7 @@ import {
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
 import { checkInProcedureOrder, mapAttendanceHttpStatus, ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
 import { prisma } from "@/lib/prisma";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const ACCESS_CODE_RE = new RegExp(`^[${ACCESS_CODE_ALPHABET}]{5}$`);
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     const { code } = schema.parse(await req.json());
     const normalized = code.toUpperCase();
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
 
     const order = await prisma.procedureOrder.findFirst({
       where: {

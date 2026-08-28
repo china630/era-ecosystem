@@ -2,8 +2,9 @@ import type { TicketLine } from "@prisma/client";
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { runPlatformCommerceHooks, satelliteOrganizationId } from "@era/satellite-kit";
+import { runPlatformCommerceHooks } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { dispatchFbSaleCompleted } from "@/lib/fb-finance-events";
@@ -49,7 +50,7 @@ export async function POST(
   }
 
   const amount = body.amount ?? Number(ticket.totalAzn);
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
 
   const settlement = await resolveTicketSettlement(ticket);
   const payBlock = payBlockedReason(settlement);

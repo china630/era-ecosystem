@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { trySendPlatformNotification, runCronForEachTenant } from "@era/satellite-kit";
+import { listCronOrganizationIdsFromDb, fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 
 /**
  * v1.1 — scheduled email reports hook (WA0345+).
@@ -23,8 +24,10 @@ export async function POST(req: Request) {
     {
       satelliteKey: "industry_hotel_pms",
       moduleKey: "hotel_core",
+      listOrganizationIds: listCronOrganizationIdsFromDb,
+        fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
     },
-    async () => {
+    async (organizationId) => {
       const to = process.env.HOTEL_REPORT_EMAIL_TO ?? "manager@demo.local";
       const rawLocale = (process.env.HOTEL_REPORT_EMAIL_LOCALE ?? "az").trim();
       const locale = rawLocale === "ru" || rawLocale === "en" || rawLocale === "az" ? rawLocale : "az";
@@ -46,7 +49,7 @@ export async function POST(req: Request) {
         subject: "ERA Hotel — nightly report pack",
         body: `Nightly report pack ZIP (locale=${locale}): ${zipUrl}`,
       });
-      return { queued: true, recipient: to, zipUrl, locale };
+      return { organizationId, queued: true, recipient: to, zipUrl, locale };
     },
   );
   if (!gate.ok) {
@@ -60,11 +63,10 @@ export async function POST(req: Request) {
       moduleKey: gate.moduleKey,
     });
   }
-  const result = gate.results[0];
 
   return NextResponse.json({
     ok: true,
     sentAt: new Date().toISOString(),
-    notification: result,
+    byOrganization: gate.results,
   });
 }

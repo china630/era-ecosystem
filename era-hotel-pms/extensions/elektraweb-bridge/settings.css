@@ -1,0 +1,252 @@
+:root {
+  --ew-bg: #f4f6f8;
+  --ew-card: #fff;
+  --ew-ink: #1a2332;
+  --ew-muted: #5c6b7a;
+  --ew-line: #d7dee6;
+  --ew-accent: #0b5fff;
+  --ew-accent-ink: #fff;
+  --ew-ok: #0a7a2f;
+  --ew-err: #b00020;
+  --ew-warn: #8a5a00;
+  --ew-warn-bg: #fff6e5;
+  --ew-radius: 10px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--ew-ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.ew-options {
+  margin: 0;
+  background: var(--ew-bg);
+}
+
+.ew-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2.5rem;
+}
+
+.ew-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.ew-header h1 {
+  font-size: 1.35rem;
+  margin: 0 0 0.25rem;
+}
+
+.ew-tag {
+  color: var(--ew-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.ew-lang {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.ew-lang button {
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--ew-line);
+  background: var(--ew-card);
+  color: var(--ew-ink);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ew-lang button[aria-pressed="true"] {
+  background: var(--ew-accent);
+  border-color: var(--ew-accent);
+  color: var(--ew-accent-ink);
+}
+
+.ew-card {
+  background: var(--ew-card);
+  border: 1px solid var(--ew-line);
+  border-radius: var(--ew-radius);
+  padding: 1rem 1.1rem 1.15rem;
+  margin-bottom: 0.9rem;
+}
+
+.ew-card h2 {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+}
+
+.ew-hint {
+  color: var(--ew-muted);
+  font-size: 0.8rem;
+  margin: 0 0 0.85rem;
+  line-height: 1.4;
+}
+
+label.ew-field {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 0.7rem 0 0.25rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="url"] {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--ew-line);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.ew-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+button {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ew-accent);
+  color: var(--ew-accent-ink);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+button.secondary {
+  background: #4b5563;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ew-msg {
+  min-height: 1.2rem;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.ok {
+  color: var(--ew-ok);
+}
+
+.err {
+  color: var(--ew-err);
+}
+
+.ew-session {
+  background: #f5f7fa;
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.ew-session code {
+  font-size: 0.76rem;
+}
+
+.ew-desks {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ew-desk {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem 0.7rem;
+  border: 1px solid var(--ew-line);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  cursor: pointer;
+}
+
+.ew-desk:has(input:checked) {
+  border-color: var(--ew-accent);
+  background: #f0f5ff;
+}
+
+.ew-desk strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.ew-desk span {
+  display: block;
+  color: var(--ew-muted);
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.ew-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.ew-banner {
+  background: var(--ew-warn-bg);
+  color: var(--ew-warn);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin-top: 0.55rem;
+}
+
+.ew-meta {
+  font-size: 0.8rem;
+  color: var(--ew-muted);
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+body.ew-popup {
+  width: 320px;
+  margin: 0;
+  padding: 12px;
+  font-size: 13px;
+  background: var(--ew-card);
+}
+
+body.ew-popup h1 {
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.ew-pop-row {
+  margin: 6px 0;
+}
+
+.ew-pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+body.ew-popup button {
+  margin: 0;
+}

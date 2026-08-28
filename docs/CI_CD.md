@@ -79,7 +79,7 @@ After each successful [`build-images.yml`](../.github/workflows/build-images.yml
 
 1. Checks out the build commit  
 2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=dev-<sha>`  
-3. `docker login` GHCR → prune unused images → `compose pull` → `migrate-all.sh` → `up -d` + `--wait` orchestrator  
+3. `docker login` GHCR → `compose pull` → `migrate-all.sh` → `up -d`  
 
 Manual: Actions → **Deploy staging** → `workflow_dispatch` (default **scope `finance`**, tag `dev`).  
 Choose `hotel` / `clinic` / … for one satellite, or `all` for the full stack.  
@@ -107,7 +107,6 @@ Environment **`staging`** (and **`production`** for prod):
 - **Shared packages** ([`scripts/ci-build-packages.sh`](../scripts/ci-build-packages.sh)): `era-contracts` → `i18n-common` → `era-storage` → `satellite-kit`. Runs in `packages`, `orchestrator`, `satellite`, and **`finance`** jobs (`@era/contracts`, `@era/storage` need `dist/`; not committed).
 - **Finance unit tests**: before Jest, [`scripts/ci-prepare-finance-api-tests.sh`](../scripts/ci-prepare-finance-api-tests.sh) builds `@erafinance/api-contracts` (`dist/`) and installs `@prisma/client` + `@prisma/client-runtime-utils` only under `era-orchestrator/packages/database` (for the committed generated client). Do **not** run `prisma generate` there — avoids a second generated client in the finance tree.
 - **Data Hub** depends on `@erafinance/database` via `file:../../../era-finance-core/packages/database`. CI runs [`scripts/ci-prepare-finance-database.sh`](../scripts/ci-prepare-finance-database.sh) before `npm ci` in `era-data-hub`, so `prisma` exists when npm links the package.
-- **Orchestrator image** (`era-orchestrator/docker-entrypoint.sh`): Prisma clients are baked at build. Boot must not `prisma generate` or `npx prisma` (Nightly race: generate ran while smoke hit `:4000` and got `ECONNREFUSED` in ~12s). `migrate-all.sh` runs the **hoisted** CLI (`cd /app/packages/database && node /app/node_modules/prisma/build/index.js`) — npm workspaces do not put prisma under `packages/*/node_modules`. Compose starts orchestrator with Postgres + Redis only (not finance-core healthy). Nightly `up -d` then `--wait` on **orchestrator only** (full-stack `--wait` would block on clinic seed). CI env `SKIP_PRISMA_MIGRATE=1`. Smoke waits up to 180s for orch `/health` before the rest.
 - **GHCR satellite images** use shared [`docker/scripts/docker-migrate-deploy.mjs`](../docker/scripts/docker-migrate-deploy.mjs) (copied in `docker/Dockerfile.satellite`). Empty satellite DBs (no init migration, first SQL is `ALTER`) are **baselined** from `prisma/baseline.sql` (generated at image build via `prisma migrate diff --from-empty`) and every migration folder is stamped applied. [`migrate-all.sh`](../docker/scripts/migrate-all.sh) starts Postgres first, always `compose run --no-deps` (not exec into a stale container), and bind-mounts a host-generated baseline so Nightly works even before new `:master` images. Do not call `npx prisma` in the runner entrypoint — there is no Prisma CLI and npx hangs downloading. **Data Hub** image: `era-data-hub/Dockerfile` installs `@erafinance/database` with `npm install --ignore-scripts`, then `prisma generate` + `build:chart` (needs `prisma.config.ts`, `tsconfig.chart.json`, and `index.js` — not `index.ts`).
 
 ## Related docs

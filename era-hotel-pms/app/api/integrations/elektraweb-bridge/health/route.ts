@@ -1,33 +1,38 @@
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { resolveSatelliteOrganizationId } from '@era/satellite-kit';
-import { authenticateBridgeRequest } from '@/lib/integration/elektraweb-bridge/auth';
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { resolveSatelliteOrganizationId } from "@era/satellite-kit";
+import { authenticateBridgeRequest } from "@/lib/integration/elektraweb-bridge/auth";
 import {
-  getBridgeOrganizationId,
-  getExpectedElektrawebHotelId,
+  getElektrawebBridgePolicy,
   isElektrawebBridgeEnabled,
-} from '@/lib/integration/elektraweb-bridge/config';
-import { getBridgeHealth } from '@/lib/integration/elektraweb-bridge/ingest';
+  isPolicyWriteEnabled,
+} from "@/lib/integration/elektraweb-bridge/config";
+import { getBridgeHealth } from "@/lib/integration/elektraweb-bridge/ingest";
+import { countOutboxByStatus } from "@/lib/integration/elektraweb-bridge/outbox.service";
 
 export async function GET(request: Request) {
   try {
-    // Allow unauthenticated read of enabled flag only; full health needs auth
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (!authHeader) {
       return jsonOk({
         enabled: isElektrawebBridgeEnabled(),
-        organizationIdConfigured: resolveSatelliteOrganizationId({ allowFallback: true }).source !== 'fallback',
-        elektrawebHotelIdConfigured: !!process.env.ELEKTRAWEB_HOTEL_ID?.trim(),
+        organizationIdConfigured:
+          resolveSatelliteOrganizationId({ allowFallback: true }).source !== "fallback",
+        policyStore: "ElektrawebBridgePolicy",
       });
     }
 
     const auth = await authenticateBridgeRequest(request);
     const health = getBridgeHealth();
+    const policy = await getElektrawebBridgePolicy(auth.organizationId);
+    const outbox = await countOutboxByStatus(auth.organizationId);
     return jsonOk({
       ...health,
+      writeEnabled: isPolicyWriteEnabled(policy),
+      inboundEnabled: !!policy?.inboundEnabled,
+      outbox,
       organizationId: auth.organizationId,
       elektrawebHotelId: auth.elektrawebHotelId,
-      expectedOrganizationId: getBridgeOrganizationId(),
-      expectedElektrawebHotelId: getExpectedElektrawebHotelId(),
+      policyHotelId: policy?.elektrawebHotelId ?? null,
       authVia: auth.via,
       login: auth.login,
     });

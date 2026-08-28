@@ -3,8 +3,8 @@ import {
   fiscalizeForSatellite,
   isFiscalPaymentMethod,
   isFiscalSkipped,
-  satelliteOrganizationId,
 } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
@@ -45,7 +45,7 @@ export async function POST(
           paymentMethod: method,
           outletCode: "COUNTER",
         },
-        satelliteOrganizationId(),
+        requestOrganizationId(),
       );
       if (!isFiscalSkipped(outcome)) {
         fiscalNumber = outcome.receiptId;

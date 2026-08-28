@@ -185,7 +185,26 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:3202/api/inter
 # expect 400
 ```
 
-AC-CP-TOPO remains **not** Scaffold ✅ — do not treat PlacementJob API as SHARED pool sell.
+AC-CP-TOPO remains **not** Scaffold ✅ — do not treat PlacementJob API as SHARED pool sell. Host apply / field migrate still open.
+
+### Lab hop (SaaS Wave 7)
+
+CI: `placement-job.service.spec.ts` — SHARED→DEDICATED full advance chain; SHARED↔ONPREM REJECTED. Signoff: [`reports/placement-lab-hop-signoff.md`](../../reports/placement-lab-hop-signoff.md).
+
+```bash
+cd era-orchestrator/apps/api && npm test -- --testPathPattern=placement-job.service
+```
+
+### Lab dump (SaaS Wave 11) — hotel curated JSON slice
+
+Between Wave 7 hop and field host apply:
+
+1. Hotel CI: `npm test -- --testPathPattern=saas-wave11-placement-slice` in `era-hotel-pms`.
+2. Orch CI with `ERA_PLACEMENT_SLICE_LAB=1` (suite sets this) — `sliceMeta.note` matches `hotel curated json slice v1`, not `not implemented full dump`.
+3. Live hotel (optional): `POST {hotel}/api/internal/v1/placement/export-slice` with Bearer `SATELLITE_EVENT_SERVICE_TOKEN` and `{ "organizationId": "<uuid>", "includeRows": false }` → `rowCounts` + `formatVersion: 1`.
+
+Curated models: role → user → guest. Host compose/restore still **pending**.
+Host agent `scripts/era-placement-agent.mjs` polls PENDING/PROVISION and **logs** apply steps only (no live dump/compose).
 
 ## UI paths (SCREEN — no Demo/TE sign-off yet)
 
@@ -201,4 +220,4 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 | Referrals | `/super-admin/referrals` | list |
 | Landing | `/super-admin/landing` | list |
 | Owner billing | `/settings/subscription`, `/settings/invoices`, `/settings/orders` | pages load for owner |
-| Placement hop | `/super-admin/orgs/{id}/placement` | create SHARED→DEDICATED; create SHARED→ONPREM shows REJECTED |
+| Placement hop | `/super-admin/orgs/{id}/placement` | create SHARED→DEDICATED; advance lab states; create SHARED→ONPREM shows REJECTED (Wave 7 lab) |

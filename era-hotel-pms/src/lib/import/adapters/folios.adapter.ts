@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellNumber, cellString, parseDateCell } from '@/lib/import/helpers';
 import { toDecimal } from '@/lib/decimal';
@@ -71,7 +71,7 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (!folio && !dryRun) {
       folio = await tx.folio.create({
         data: {
-          organizationId: satelliteOrganizationId(),
+          organizationId: requestOrganizationId(),
           reservationId: reservation.id,
           type: 'GUEST',
           status: 'OPEN',

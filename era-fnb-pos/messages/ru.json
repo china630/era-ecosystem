@@ -232,6 +232,9 @@
   },
   "auth": {
     "loginFailed": "Ошибка входа",
+    "organizationIdLabel": "ID организации (F&B)",
+    "organizationIdPlaceholder": "UUID — обязателен в общем F&B pool",
+    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",

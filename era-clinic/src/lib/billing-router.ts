@@ -7,11 +7,12 @@ import {
   resolveSettlementPolicy,
   shouldDeferWalkInToHub,
   shouldRouteRevenueToParent,
-  satelliteOrganizationId,
 } from "@era/satellite-kit";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
+import { getClinicHotelOrganizationId } from "@/domain/physio/clinic-cutover.service";
 
 export type BillingTargetKind = "FINANCE" | "HOTEL_FOLIO" | "SETTLEMENT_HUB";
 
@@ -80,21 +81,33 @@ export async function postHotelRoomCharge(input: {
   amount: number;
   description: string;
   externalTicketId: string;
+  /** Hotel org in SHARED pool (required). */
+  hotelOrganizationId?: string;
 }) {
-  const base = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(
-    /\/$/,
-    "",
-  );
+  const base = (
+    process.env.HOTEL_PMS_URL?.trim() ||
+    process.env.ERA_HOTEL_PMS_ORIGIN?.trim() ||
+    "http://127.0.0.1:3201"
+  ).replace(/\/$/, "");
   const secret = process.env.POS_BRIDGE_SECRET ?? process.env.CLINIC_BRIDGE_SECRET;
   if (!secret) throw new Error("POS_BRIDGE_SECRET not configured");
+  const hotelOrganizationId =
+    input.hotelOrganizationId?.trim() ||
+    (await getClinicHotelOrganizationId()) ||
+    undefined;
+  if (!hotelOrganizationId) {
+    throw new Error("hotelOrganizationId required for hotel room charge");
+  }
   const res = await fetch(`${base}/api/pos/room-charge`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-pos-bridge-secret": secret,
+      "x-era-organization-id": hotelOrganizationId,
       "Idempotency-Key": input.externalTicketId,
     },
     body: JSON.stringify({
+      organizationId: hotelOrganizationId,
       reservationId: input.reservationId,
       roomNumber: input.roomNumber,
       revenueCode: "MEDICAL",
@@ -118,18 +131,16 @@ export async function resolveBillingTarget(
   origin: PatientOrigin,
 ): Promise<BillingTargetKind> {
   if (origin === "IN_HOUSE") {
-    const mode = await resolveOperatingMode(satelliteOrganizationId());
+    const mode = await resolveOperatingMode(requestOrganizationId());
     return shouldRouteRevenueToParent(mode) ? "HOTEL_FOLIO" : "FINANCE";
   }
-  const orgId = satelliteOrganizationId();
-  if (!orgId) return "FINANCE";
+  const orgId = requestOrganizationId();
   const policy = await resolveSettlementPolicy(orgId);
   return shouldDeferWalkInToHub(policy) ? "SETTLEMENT_HUB" : "FINANCE";
 }
 
 export async function isWalkInDeferredToHub(): Promise<boolean> {
-  const orgId = satelliteOrganizationId();
-  if (!orgId) return false;
+  const orgId = requestOrganizationId();
   const policy = await resolveSettlementPolicy(orgId);
   return shouldDeferWalkInToHub(policy);
 }

@@ -1,13 +1,14 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { runPlatformCommerceHooks, satelliteOrganizationId } from "@era/satellite-kit";
+import { runPlatformCommerceHooks } from "@era/satellite-kit";
 import { postRoomCharge, fetchGuestEntitlements } from "@/lib/pms-bridge-client";
 import { prisma } from "@/lib/prisma";
 import {
   roomChargeBlockedReason,
   resolveTicketSettlement,
 } from "@/lib/billing-router";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
 
 const bodySchema = z
@@ -115,7 +116,7 @@ export async function POST(
   });
   await releaseTableForTicket(id, ticket.tableId);
 
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   if (organizationId) {
     void runPlatformCommerceHooks({
       organizationId,

@@ -14,26 +14,43 @@ export type ProcedureChargeContext = {
 /**
  * Resolve quota burn + list/package pricing for a procedure order.
  * Shared by COMPLETED and NO_SHOW (client-fault still burns quota / may charge).
+ * Pass `{ burnQuota: false }` for Issue-ticket / nurse gate so listing a ticket does not consume quota.
  */
-export async function resolveProcedureCharge(order: {
-  id: string;
-  procedureCode: string;
-  procedureName: string;
-  reservationId: string | null;
-  patientOrigin: string;
-  amountNet: unknown;
-}): Promise<ProcedureChargeContext> {
+export async function resolveProcedureCharge(
+  order: {
+    id: string;
+    procedureCode: string;
+    procedureName: string;
+    reservationId: string | null;
+    patientOrigin: string;
+    amountNet: unknown;
+  },
+  opts?: { burnQuota?: boolean },
+): Promise<ProcedureChargeContext> {
+  const burnQuota = opts?.burnQuota !== false;
   let overQuota = false;
   if (order.reservationId) {
     const program = await prisma.programInstance.findFirst({
       where: { reservationId: order.reservationId },
     });
     if (program) {
-      const quota = await useProcedureQuota({
-        instanceId: program.id,
-        procedureCode: order.procedureCode,
-      });
-      overQuota = quota.overQuota;
+      if (burnQuota) {
+        const quota = await useProcedureQuota({
+          instanceId: program.id,
+          procedureCode: order.procedureCode,
+        });
+        overQuota = quota.overQuota;
+      } else {
+        const line = await prisma.programProcedureBalance.findUnique({
+          where: {
+            instanceId_procedureCode: {
+              instanceId: program.id,
+              procedureCode: order.procedureCode,
+            },
+          },
+        });
+        overQuota = !!line && line.quotaUsed >= line.quotaTotal;
+      }
     }
   }
 

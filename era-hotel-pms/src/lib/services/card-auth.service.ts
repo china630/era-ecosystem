@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =
@@ -12,7 +12,7 @@ async function callPlatformAuth(
   method: 'POST',
   body?: Record<string, unknown>,
 ): Promise<{ externalAuthId: string } | null> {
-  const orgId = satelliteOrganizationId();
+  const orgId = requestOrganizationId();
   if (!CP_URL || !CP_TOKEN || !orgId || orgId === 'demo-org') {
     return { externalAuthId: `mock-auth-${Date.now()}` };
   }

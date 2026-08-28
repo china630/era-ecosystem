@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { runCronForEachTenant } from "@era/satellite-kit";
+import { listCronOrganizationIdsFromDb, fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 
-/** Service-token cron stub for catalog sync (delegates to admin sync). */
+/** Service-token cron stub. SHARED: ERA_CRON_ORGANIZATION_IDS or DB User DISTINCT. */
 export async function POST(req: Request) {
   const gate = await runCronForEachTenant(
     {
@@ -9,14 +10,20 @@ export async function POST(req: Request) {
       moduleKey: "clinic_service_catalog",
       authorization: req.headers.get("authorization"),
       cronSecretEnv: "PLATFORM_CRON_SECRET",
+      listOrganizationIds: listCronOrganizationIdsFromDb,
+        fetchPoolOrganizationIds: fetchClinicPoolOrganizationIds,
     },
-    async () => {
+    async (organizationId) => {
       const base = process.env.ERA_CLINIC_URL ?? "http://127.0.0.1:3203";
       const res = await fetch(`${base.replace(/\/$/, "")}/api/catalog/sync`, {
         method: "POST",
         headers: { cookie: req.headers.get("cookie") ?? "" },
       });
-      return { status: res.status, data: await res.json() };
+      return {
+        organizationId,
+        status: res.status,
+        data: await res.json(),
+      };
     },
   );
   if (!gate.ok) {
@@ -32,6 +39,5 @@ export async function POST(req: Request) {
       moduleKey: gate.moduleKey,
     });
   }
-  const first = gate.results[0]!;
-  return NextResponse.json(first.data, { status: first.status });
+  return NextResponse.json({ byOrganization: gate.results });
 }

@@ -92,6 +92,9 @@
   },
   "auth": {
     "loginFailed": "Ошибка входа",
+    "organizationIdLabel": "ID организации (автосервис)",
+    "organizationIdPlaceholder": "UUID — обязателен в общем auto-service pool",
+    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",

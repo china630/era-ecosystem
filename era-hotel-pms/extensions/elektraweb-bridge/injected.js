@@ -34,6 +34,31 @@
     return 'unknown';
   }
 
+  function captureToken(url, postText) {
+    if (!url || !/elektraweb\.com/i.test(String(url))) return;
+    if (typeof postText !== 'string' || postText[0] !== '{') return;
+    try {
+      const body = JSON.parse(postText);
+      if (!body || typeof body.LoginToken !== 'string' || !body.LoginToken) return;
+      let apiHost = '';
+      try {
+        apiHost = new URL(url, location.href).host;
+      } catch {
+        apiHost = '';
+      }
+      window.postMessage(
+        {
+          source: 'era-ew-bridge',
+          type: 'elektraweb-token',
+          payload: { apiHost, hasToken: true, loginToken: body.LoginToken },
+        },
+        '*',
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
   function emit(sourceUrl, method, raw) {
     if (!SELECT_RE.test(sourceUrl)) return;
     const objectName = objectFromUrl(sourceUrl);
@@ -58,6 +83,14 @@
 
   const origFetch = window.fetch;
   window.fetch = async function (...args) {
+    try {
+      const req = args[0];
+      const url = typeof req === 'string' ? req : req?.url;
+      const init = args[1] || {};
+      if (typeof init.body === 'string') captureToken(String(url || ''), init.body);
+    } catch {
+      /* ignore */
+    }
     const res = await origFetch.apply(this, args);
     try {
       const req = args[0];
@@ -89,6 +122,11 @@
       method = String(m || 'GET').toUpperCase();
       url = String(u || '');
       return open.call(xhr, m, u, ...rest);
+    };
+    const send = xhr.send;
+    xhr.send = function (body) {
+      if (typeof body === 'string') captureToken(url, body);
+      return send.call(xhr, body);
     };
     xhr.addEventListener('load', function () {
       if (!SELECT_RE.test(url)) return;

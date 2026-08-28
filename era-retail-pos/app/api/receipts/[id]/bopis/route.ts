@@ -1,10 +1,10 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
 import {
   createBookingSlot,
   createShipment,
 } from "@/integration/control-plane-platform.client";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -39,33 +39,31 @@ export async function POST(
       },
     });
 
-    const organizationId = satelliteOrganizationId();
-    if (organizationId) {
-      try {
-        await createBookingSlot(
-          {
-            resourceKey: body.pickupSlotKey,
-            label: `Pickup ${receipt.id.slice(0, 8)}`,
-            metadata: { receiptId: receipt.id },
-          },
-          { organizationId },
-        );
-      } catch {
-        // optional CP booking
-      }
-      try {
-        await createShipment(
-          {
-            sourceEntityType: "retail_receipt",
-            sourceEntityId: receipt.id,
-            externalRef: body.customerPhone ?? receipt.id,
-            metadata: { fulfillmentType: "BOPIS" },
-          },
-          { organizationId },
-        );
-      } catch {
-        // optional CP delivery
-      }
+    const organizationId = requestOrganizationId();
+    try {
+      await createBookingSlot(
+        {
+          resourceKey: body.pickupSlotKey,
+          label: `Pickup ${receipt.id.slice(0, 8)}`,
+          metadata: { receiptId: receipt.id },
+        },
+        { organizationId },
+      );
+    } catch {
+      // optional CP booking
+    }
+    try {
+      await createShipment(
+        {
+          sourceEntityType: "retail_receipt",
+          sourceEntityId: receipt.id,
+          externalRef: body.customerPhone ?? receipt.id,
+          metadata: { fulfillmentType: "BOPIS" },
+        },
+        { organizationId },
+      );
+    } catch {
+      // optional CP delivery
     }
 
     return jsonOk(updated);

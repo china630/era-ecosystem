@@ -1,19 +1,25 @@
 # Nafta — единый чеклист файлов на старт контура
 
-Срез: **2026-08-17**. Корень пакета: `D:\ERA-BACKUP\NAFTA-START\`.
+Срез: **2026-08-25** (cutover). Сырьё: `D:\ERA-BACKUP\NAFTA-START\`. Книги wizard: `D:\ERA-BACKUP\NAFTA-ERA-READY\`.  
+Готовый чеклист: `NAFTA-ERA-READY\IMPORT-CHECKLIST.md`.
 
 ```
-NAFTA-START/
-  hotel/                 Elektraweb → era-hotel-pms
-  clinic/
-    dump/                живой API WebOnly (карточки, календарь, лаб)
-    catalogs/            справочники — по одному номеру на файл
-  hr/                    кадры
-  1c/                    ждать бухгалтера
+D:\ERA-BACKUP\
+  NAFTA-START\           сырьё (не грузить wizard’ом как есть)
+    hotel/               Elektraweb
+    clinic/dump|catalogs WebOnly
+    hr/                  кадры
+    1c/                  1С
+  NAFTA-ERA-READY\       те же номера, что в чеклисте
+    IMPORT-CHECKLIST.md  мастер (clinic + hotel + hr)
+    hotel/01–20          = START/hotel
+    clinic/21–40         = dump + curated SSOT
+    hr/37-Employees.xlsx
+    1c/40–53
 ```
 
 Легенда: `[x]` файл на диске · `[ ]` просить.  
-Колонка **Файл** — путь от `NAFTA-START\`.  
+Колонка **Файл** — путь от `NAFTA-START\` (сырьё). Готовый импорт: тот же номер в `NAFTA-ERA-READY\` (`hotel/`, `clinic/`, `hr/`, `1c/`).  
 Колонка **Бух** — что сказать бухгалтеру (пусто = не просить).
 
 Инвентарь: [START-DATA-INVENTORY.md](./START-DATA-INVENTORY.md).
@@ -38,7 +44,7 @@ NAFTA-START/
 | 12 | [x] | `hotel/12-Folio-Transactions.merged.xlsx` (95 793) | Hotel wizard, **открытые** фолио на hour X | — |
 | 13 | [x] | `hotel/13-Package-Prices-2026.csv` | Hotel rate plans + Clinic `ProgramTemplate` | — |
 | 14 | [x] | `hotel/14-BAR-Derived-2026.csv` (+ `.md`) | Hotel BAR (учётная лестница) | — |
-| 15 | [x] | `hotel/15-Hizmet-Tanimlari.xlsx` — EW **2026-08-21** | Clinic catalog + Hotel `SPA MEDIKAL` | — |
+| 15 | [x] | `hotel/15-Hizmet-Tanimlari.xlsx` — EW **2026-08-21** (Hizmet Tanımları; не путать с WO #25) | Hotel `SPA MEDIKAL` extra; сверка имён с #25 | — |
 | 16 | [x] | `hotel/16-FnB-Transactions.merged.xlsx` (22 219) | Сверка F&B, **не** меню | — |
 | 17 | [x] | `hotel/17-ProFolio-Transactions.xlsx` | Только сверка ROOM, не грузить как folio | — |
 | 18 | [x] | `hotel/18-Contract-Details.xlsx` | Справка | — |
@@ -49,31 +55,33 @@ NAFTA-START/
 
 ## B. Clinic — `clinic\` → `era-clinic`
 
-### B1. Живой дамп API (`clinic/dump\`)
+### B1. Живой дамп API (`clinic/dump\`) — обновлено **2026-08-25**
 
-| # | Есть | Файл | Куда | Бух |
-|---|:---:|------|------|-----|
-| 21 | [x] | `clinic/dump/cards/` (1 588) | Clinic карточки | — |
-| 22 | [x] | `clinic/dump/bulk/examination-forms.json` (311) | Анамнез / диагнозы | — |
-| 23 | [x] | `clinic/dump/calendar/reservations-all.json` (56 537) | Расписание процедур | — |
-| 24 | [x] | `clinic/dump/bulk/lab-tests.json` + `clinic/dump/files/lab/` (1 857) | Лаб. заказы и файлы | — |
+| # | Есть | Файл | READY | Строк | Бух |
+|---|:---:|------|-------|------:|-----|
+| 21 | [x] | `clinic/dump/cards/` + `bulk/patients.json` | `clinic/21-patients.xlsx` | **1665** | — |
+| 22 | [x] | `clinic/dump/bulk/examination-forms.json` | #31 + #32 | 311 forms | — |
+| 23 | [x] | `clinic/dump/calendar/reservations-all.json` (61 155) | `clinic/23-slots.xlsx` | **2373** ops | Ops **25–30.08**; WO слотов на 30 нет |
+| 24 | [x] | `clinic/dump/files/lab/` + `bulk/lab-results.json` | `24-lab-orders.xlsx` | **2153** | ~170 без Word — не импортируем |
 
-### B2. Справочники (`clinic/catalogs\`) — один номер = один файл
+### B2. Справочники и curated pack
 
-| # | Есть | Файл | Куда | Бух |
-|---|:---:|------|------|-----|
-| 25 | [x] | `clinic/catalogs/25-Treatments.xlsx` (154; + `dump/catalogs/treatments.json`) | Каталог процедур (сверить с #15) | — |
-| 26 | [x] | `clinic/catalogs/26-Rooms.xlsx` | Кабинеты / ресурсы | — |
-| 27 | [x] | `clinic/catalogs/27-Doctors.csv` (+ `dump/catalogs/doctors.json`, 6) | Practitioners | — |
-| 28 | [x] | `clinic/catalogs/28-Shifts.csv` (+ `dump/calendar/shifts.json`) | Смены | — |
-| 29 | [x] | `clinic/catalogs/29-Analyses.csv` | Анализы | — |
-| 30 | [x] | `clinic/catalogs/30-Laboratory.xlsx` | Лаборатория | — |
-| 31 | [x] | `clinic/catalogs/31-Diagnostics.xlsx` | Диагностика / УЗИ | — |
-| 32 | [x] | `clinic/catalogs/32-Diagnoses.xlsx` | Диагнозы | — |
-| 33 | [x] | `clinic/catalogs/33-CheckUps.xlsx` | Чек-апы | — |
-| 34 | [x] | `clinic/catalogs/34-CheckUp-Details.xlsx` (2 строки состава; старый POS-файл заменён) | Состав чек-апов | — |
-| 35 | [x] | `clinic/catalogs/35-Product-Groups.xlsx` (33) | Группы товаров клиники | — |
-| 36 | [x] | `clinic/catalogs/36-Products.csv` (48) | Товары клиники | — |
+| # | Есть | Файл (START) | READY | Строк | Бух |
+|---|:---:|--------------|-------|------:|-----|
+| 25 | [x] | **`clinic/reports/01-procedures.xlsx`** (SSOT) · ref WO `dump/catalogs/treatments.json` (154) | `25-Treatments.xlsx` | **80** | Кураторский каталог; не весь WO |
+| 26 | [x] | SSOT кабинеты + история календаря | `26-Rooms.xlsx` | **63** | Kabina 14 — для истории #23 |
+| 27 | [x] | `clinic/reports/27-practitioners-roster.json` + HR | `27-Doctors.xlsx` | **8** | — |
+| 28 | [x] | `clinic/catalogs/28-Shifts.csv` + dump | — | ref | **Не** в ERA-READY |
+| 29 | [x] | `dump/catalogs/analyses.json` → map | `29-Analyses.xlsx` | **58** | — |
+| 30 | [x] | `clinic/catalogs/30-Laboratory.xlsx` | — | ref | **Не** в ERA-READY |
+| 31 | [x] | dump forms (USG) | `31-Diagnostics.xlsx` | **370** | — |
+| 32 | [x] | dump forms | `32-Diagnoses.xlsx` | **372** | — |
+| 33–36 | [x] | `clinic/catalogs/33–36` | copy | ref | Ref only |
+| 38 | [x] | calendar flatten | `38-quotas.xlsx` | **8778** | 97.8% match #25 |
+| 39 | [x] | Word lab flatten | `39-lab-results.xlsx` | **22620** | — |
+| **40** | [x] | из `01-procedures.xlsx` (кабинеты) | `40-Procedure-Requirements.xlsx` | **126** | После #25+#26; **новое** планирование |
+
+Зеркало curated: `clinic/reports/era-import/` (#25, #26, #40 + `manifest.json`).
 
 ---
 
@@ -100,8 +108,8 @@ NAFTA-START/
 | 46 | [ ] | `1c/46-1C-Trial-Balance.xlsx` | Finance | **ОСВ по всем счетам** на дату среза, с субсчетами. Колонки: счёт, субсчёт, наименование, сальдо нач. дебет/кредит, оборот д/к, сальдо кон. д/к. Одна книга, не по журналам. |
 | 47 | [ ] | `1c/47-1C-Cash-Banks.xlsx` | Finance | **Остатки денег, счета 50, 51, 57.** По каждой операционной кассе (имя кассы), каждому расчётному счёту (IBAN), эквайринг «в пути». Сумма AZN на дату среза. |
 | 48 | [ ] | `1c/48-1C-CoA-Mapping.xlsx` | Finance | **План счетов 1С** (код, имя, тип) — чтобы свести на счета ERA. Не выгрузка EW Chart of Accounts. Можно тем же файлом, что ОСВ, если счета там полные. |
-| 49 | [x] | `1c/49-1C-VAT.xlsx` (из `ƏV.xlsx`, 2026-08-23) | Finance | Ставки / справочник ƏDV (НДС). Не заменяет ОСВ (#46) и план счетов (#48). |
-| 50 | [ ] | `1c/50-1C-Fixed-Assets.xlsx` | Finance | **Основные средства и инвентарь (01, 02, МЦ.04).** На дату среза: инвентарный номер, наименование, дата ввода, первоначальная / остаточная стоимость, МОЛ (ФИО + FİN если есть), место (корпус / склад / кабинет), счёт учёта. Без списанных. |
+| 49 | [ ] | `1c/49-1C-VAT.xlsx` | Finance | **Ставки / справочник ƏDV (НДС).** Файл `ƏV.xlsx` оказался **ОС**, не НДС — см. #50. НДС отдельно, если нужен. |
+| 50 | [x] | `1c/50-1C-Fixed-Assets.xlsx` (из `ƏV.xlsx` / Əsas Vəsait, 2026-08-23; ранее ошибочно как #49 VAT) | Finance | **Основные средства и инвентарь.** Сверить колонки: инв. номер, наименование, дата ввода, стоимость, МОЛ, место. |
 | 51 | [ ] | `1c/51-1C-Housekeeping-Stock.xlsx` | Hotel / Finance | **Остатки хозсклада.** Бельё, косметика для номеров, хозинвентарь. Сч. 10, не кухня и не аптека. Разрез: склад → код → наименование → ед. изм. → количество → учётная цена → сумма. |
 | 52 | [ ] | `1c/52-1C-Pharmacy-Stock.xlsx` | Retail / Clinic | **Остатки аптеки / медсклада** на дату среза. Сч. 10: код, наименование, ед. изм., количество, учётная цена, сумма, серия и срок годности если есть. Отдельно от F&B (#43) и хозсклада (#51). |
 | 53 | [x] | `1c/53-1C-Procedure-Consumables.docx` (из `texniki terkib tibb.docx`, 2026-08-23) | Clinic / Retail | Техсостав медицины (Word, не Excel). Разобрать в нормы «процедура → ТМЦ → кол-во»; Excel-форму чеклиста пока нет. |

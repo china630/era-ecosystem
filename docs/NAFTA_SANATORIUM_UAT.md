@@ -18,7 +18,7 @@ Extends [QUARTET_UAT.md](./QUARTET_UAT.md) with clinic, pharmacy retail, and **p
 
 Parent flags for departments: `revenueRouting=PARENT`, `fiscalRouting=PARENT`.
 
-This table is **axis A** (`STANDALONE` / `DEPARTMENT`). **Placement** for the droplet is **ONPREM/DEDICATED** (one org per satellite DB), not SHARED. Do not read DEPARTMENT as “own VM”.
+This table is **axis A** (`STANDALONE` / `DEPARTMENT`). **Placement** for a Nafta **appliance** droplet is **ONPREM/DEDICATED** (one org per satellite DB), not SHARED. **ERA cloud SaaS** (many orgs in one hotel process) has request tenant + Super-Admin per-org vendor bridges **landed as runtime prep** (Waves 1–11); **selling** the SHARED pool / edition `ga` is still forbidden — [SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md). Env Elektraweb property ids remain appliance-only / forbidden on a multi-org hotel process. Do not read DEPARTMENT as “own VM”. See [deployment-topology.md](./adr/deployment-topology.md) · [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md).
 
 **Mixed F&B:** in-house → room charge → folio; walk-in → **hotel Front Cash pending queue** when `settlementHub=HOTEL_FRONT_CASH` ([ADR unified-settlement-hub](./adr/unified-settlement-hub.md)); else local pay + KKM ([ADR fb-mixed-settlement-routing](./adr/fb-mixed-settlement-routing.md)).
 
@@ -152,7 +152,7 @@ Pre-merge: `era-hotel-pms/scripts/merge-*.js` — see [ELEKTRAWEB-IMPORT.md](../
 
 After go-live, ERA is source of truth; Elektraweb read-only until decommission.
 
-**Dual-run (optional, ≤ ~2 weeks before hour X):** after Excel bootstrap, keep FO on Elektraweb while mirroring guests / reservations / open folio into ERA via browser extension so clinic can run on ERA. Runbook: [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](./adr/hotel-elektraweb-live-bridge.md). During dual-run do not dual-write stays in ERA FO or night-audit-post mirrored medical folios.
+**Dual-run (optional, ≤ ~2 weeks before hour X):** after Excel bootstrap, keep FO on Elektraweb while mirroring guests / reservations / open folio into ERA via browser extension so clinic can run on ERA. Sanatorium extras still go to EW SPA at issue ticket (not on `COMPLETED`): in-house → guest folio; walk-in → house folio `TIBB AMBULATOR FOLIO` (not ERA hub). Runbook: [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) · [inbound ADR](./adr/hotel-elektraweb-live-bridge.md) · [reverse extras](./adr/hotel-elektraweb-reverse-folio-post.md). During dual-run do not dual-write stays in ERA FO or night-audit-post mirrored medical folios.
 
 Product traceability: [era-hotel-pms/doc/nafta/README.md](../era-hotel-pms/doc/nafta/README.md)
 

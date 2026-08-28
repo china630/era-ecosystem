@@ -7,14 +7,14 @@ export type ImportPhaseDef = {
 };
 
 export const IMPORT_PHASES: ImportPhaseDef[] = [
-  { id: "dictionaries", strictOrder: false, entities: ["procedures", "rooms"] },
+  { id: "dictionaries", strictOrder: true, entities: ["procedures", "rooms", "procedure-requirements"] },
   { id: "master", strictOrder: true, entities: ["practitioners"] },
   { id: "patients", strictOrder: true, entities: ["patients"] },
   { id: "quotas", strictOrder: true, entities: ["quotas", "slots"] },
   {
     id: "clinical",
     strictOrder: true,
-    entities: ["lab-catalog", "lab-orders", "diagnostics", "diagnoses"],
+    entities: ["lab-catalog", "lab-orders", "lab-results", "diagnostics", "diagnoses"],
   },
 ];
 

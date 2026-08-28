@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ERA Elektraweb Bridge",
-  "version": "0.1.0",
-  "description": "Temporary dual-run: mirror Elektraweb guests/reservations/folios into ERA Hotel PMS",
+  "version": "0.3.1",
+  "description": "Temporary dual-run: Elektraweb ↔ ERA (inbound mirror + sanatorium SPA extra Insert)",
   "permissions": ["storage", "alarms"],
   "host_permissions": [
     "https://app.elektraweb.com/*",
@@ -20,7 +20,10 @@
     "default_popup": "popup.html",
     "default_title": "ERA Elektraweb Bridge"
   },
-  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": ["https://app.elektraweb.com/*"],

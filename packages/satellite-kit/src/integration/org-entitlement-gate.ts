@@ -180,6 +180,16 @@ export type CronEntitlementOpts = {
   authorization?: string | null;
   /** Env var holding expected Bearer secret (checked when set) */
   cronSecretEnv?: string;
+  /**
+   * SHARED pool: discover org UUIDs from the satellite DB when
+   * `ERA_CRON_ORGANIZATION_IDS` is unset. Env always wins over this callback.
+   */
+  listOrganizationIds?: () => Promise<string[]>;
+  /**
+   * Orch SoR pool members (preferred after env, before DB discover).
+   * Typically `fetchPoolOrganizationIdsFromOrch`.
+   */
+  fetchPoolOrganizationIds?: () => Promise<string[]>;
 };
 
 export type CronEntitlementResult =
@@ -227,12 +237,44 @@ export async function runCronIfEntitled(
   }
 }
 
-function listCronOrganizationIds(): string[] {
+async function listCronOrganizationIds(
+  listOrganizationIds?: () => Promise<string[]>,
+  fetchPoolOrganizationIds?: () => Promise<string[]>,
+): Promise<string[]> {
   const extra =
     process.env.ERA_CRON_ORGANIZATION_IDS?.split(",")
       .map((s) => s.trim())
       .filter(Boolean) ?? [];
-  if (extra.length) return extra;
+  if (extra.length) return [...new Set(extra)];
+
+  if (fetchPoolOrganizationIds) {
+    try {
+      const fromOrch = await fetchPoolOrganizationIds();
+      const ids = [
+        ...new Set(
+          (fromOrch ?? [])
+            .map((s) => (typeof s === "string" ? s.trim() : ""))
+            .filter(Boolean),
+        ),
+      ];
+      if (ids.length) return ids;
+    } catch {
+      // Fall through to DB discover / bind.
+    }
+  }
+
+  if (listOrganizationIds) {
+    const discovered = await listOrganizationIds();
+    const ids = [
+      ...new Set(
+        (discovered ?? [])
+          .map((s) => (typeof s === "string" ? s.trim() : ""))
+          .filter(Boolean),
+      ),
+    ];
+    if (ids.length) return ids;
+  }
+
   const filter = resolveSatelliteTenantFilter();
   if (filter.mode === "skip") {
     throw new SatelliteOrganizationUnboundError(
@@ -244,7 +286,8 @@ function listCronOrganizationIds(): string[] {
 
 /**
  * Entitlement gate + fail-closed tenant ALS for each org.
- * Dedicated/on-prem: one bound org. SHARED: set `ERA_CRON_ORGANIZATION_IDS`.
+ * Dedicated/on-prem: one bound org.
+ * SHARED: `ERA_CRON_ORGANIZATION_IDS` → orch pool members → `listOrganizationIds` → process bind.
  */
 export async function runCronForEachTenant<T>(
   opts: CronEntitlementOpts,
@@ -256,7 +299,10 @@ export async function runCronForEachTenant<T>(
   const gate = await runCronIfEntitled(opts);
   if (!gate.ok) return gate;
   try {
-    const ids = listCronOrganizationIds();
+    const ids = await listCronOrganizationIds(
+      opts.listOrganizationIds,
+      opts.fetchPoolOrganizationIds,
+    );
     const results: T[] = [];
     for (const organizationId of ids) {
       const part = await runWithSatelliteTenant({ organizationId }, () =>

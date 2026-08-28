@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import {
   createPortalLink,
@@ -31,7 +31,7 @@ export async function POST(
     const publishBlock = labPublishDenied(order.status, Boolean(order.resultJson));
     if (publishBlock) return jsonError(publishBlock, 400);
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const phone = order.patientRef.phone?.trim();
     let portalUrl: string | undefined;
     if (organizationId && phone) {
@@ -91,32 +91,38 @@ export async function POST(
           // optional domain
         }
       }
-      await trySendPlatformNotification({
-        templateKey: "clinic.lab.results.ready",
-        channel: "WHATSAPP",
-        messageClass: "TRANSACTIONAL",
-        recipient: phone,
-        sourceEntityType: "lab_order",
-        sourceEntityId: order.id,
-        body: portalUrl
-          ? `Lab results ready: ${portalUrl}`
-          : "Lab results are ready in the patient portal.",
-        payload: { portalUrl },
-      });
-      if (phone.includes("@")) {
-        await trySendPlatformNotification({
+      await trySendPlatformNotification(
+        {
           templateKey: "clinic.lab.results.ready",
-          channel: "EMAIL",
+          channel: "WHATSAPP",
           messageClass: "TRANSACTIONAL",
           recipient: phone,
           sourceEntityType: "lab_order",
           sourceEntityId: order.id,
-          subject: "Lab results ready",
           body: portalUrl
-            ? `Your lab results are ready: ${portalUrl}`
-            : "Your lab results are ready in the patient portal.",
+            ? `Lab results ready: ${portalUrl}`
+            : "Lab results are ready in the patient portal.",
           payload: { portalUrl },
-        });
+        },
+        { organizationId },
+      );
+      if (phone.includes("@")) {
+        await trySendPlatformNotification(
+          {
+            templateKey: "clinic.lab.results.ready",
+            channel: "EMAIL",
+            messageClass: "TRANSACTIONAL",
+            recipient: phone,
+            sourceEntityType: "lab_order",
+            sourceEntityId: order.id,
+            subject: "Lab results ready",
+            body: portalUrl
+              ? `Your lab results are ready: ${portalUrl}`
+              : "Your lab results are ready in the patient portal.",
+            payload: { portalUrl },
+          },
+          { organizationId },
+        );
       }
     }
 

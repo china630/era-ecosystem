@@ -57,6 +57,11 @@ const EN: Dict = {
   specialty_dermatoneurologist: "Dermatoneurologist",
   specialty_cosmetologist: "Cosmetologist",
   specialty_manual_therapist: "Manual therapist",
+  extraTicket: "Extra procedure ticket",
+  copyReception: "Copy 1 — reception",
+  copyNurse: "Copy 2 — nurse",
+  copyGuest: "Copy 3 — guest",
+  ticketNo: "Ticket",
 };
 
 const RU: Dict = {
@@ -114,6 +119,11 @@ const RU: Dict = {
   specialty_dermatoneurologist: "Дерматоневролог",
   specialty_cosmetologist: "Косметолог",
   specialty_manual_therapist: "Мануальный терапевт",
+  extraTicket: "Чек дополнительной процедуры",
+  copyReception: "Копия 1 — ресепшен",
+  copyNurse: "Копия 2 — медсестра",
+  copyGuest: "Копия 3 — гость",
+  ticketNo: "Чек",
 };
 
 const AZ: Dict = {
@@ -171,6 +181,11 @@ const AZ: Dict = {
   specialty_dermatoneurologist: "Dermatonevroloq",
   specialty_cosmetologist: "Kosmetoloq",
   specialty_manual_therapist: "Manual terapevt",
+  extraTicket: "Əlavə prosedur çeki",
+  copyReception: "Nüsxə 1 — resepsiya",
+  copyNurse: "Nüsxə 2 — tibb bacısı",
+  copyGuest: "Nüsxə 3 — qonaq",
+  ticketNo: "Çek",
 };
 
 const BY_LANG: Record<PrintLang, Dict> = { en: EN, ru: RU, az: AZ };

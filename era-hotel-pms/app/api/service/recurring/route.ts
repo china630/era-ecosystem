@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { runCronForEachTenant } from '@era/satellite-kit';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
+import { listCronOrganizationIdsFromDb, fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { prisma } from '@/lib/prisma';
 import { runDueRecurringSchedules } from '@/lib/services/service-work-order.service';
 
@@ -48,20 +50,49 @@ export async function POST(req: Request) {
   return NextResponse.json(row, { status: 201 });
 }
 
-/** Cron hook: generate work orders for due schedules. */
+/**
+ * Cron hook: generate work orders for due schedules (multi-org via ERA_CRON_ORGANIZATION_IDS).
+ * Auth: Authorization Bearer SERVICE_CRON_SECRET, or legacy x-service-cron-secret = raw secret.
+ */
 export async function PUT(req: Request) {
-  const secret = req.headers.get('x-service-cron-secret');
-  if (
-    process.env.SERVICE_CRON_SECRET?.trim() &&
-    secret !== process.env.SERVICE_CRON_SECRET
-  ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const legacy = req.headers.get('x-service-cron-secret');
+  const authorization =
+    req.headers.get('authorization') ??
+    (legacy ? `Bearer ${legacy}` : null);
+
+  const gate = await runCronForEachTenant(
+    {
+      satelliteKey: 'industry_hotel_pms',
+      moduleKey: 'hotel_service',
+      authorization,
+      cronSecretEnv: 'SERVICE_CRON_SECRET',
+      listOrganizationIds: listCronOrganizationIdsFromDb,
+        fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
+    },
+    async (organizationId) => {
+      const created = await runDueRecurringSchedules();
+      return {
+        organizationId,
+        generated: created.length,
+        ids: created.map((c) => c.id),
+      };
+    },
+  );
+
+  if (!gate.ok) {
+    if (gate.status === 401) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (gate.status === 503) {
+      return NextResponse.json({ error: 'satellite_unbound' }, { status: 503 });
+    }
+    return NextResponse.json({
+      generated: 0,
+      skipped: true,
+      reason: gate.reason,
+      moduleKey: gate.moduleKey,
+    });
   }
-  try {
-    await requireHotelModule('hotel_service');
-  } catch {
-    return NextResponse.json({ generated: 0, skipped: true, reason: 'module_inactive' });
-  }
-  const created = await runDueRecurringSchedules();
-  return NextResponse.json({ generated: created.length, ids: created.map((c) => c.id) });
+
+  return NextResponse.json({ byOrganization: gate.results });
 }

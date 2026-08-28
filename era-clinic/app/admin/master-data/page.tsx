@@ -6,6 +6,8 @@ import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
 import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModal";
+import { PHYSIO_ORDER_FIELD_CODES } from "@/domain/physio/physio-order-fields";
+import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -75,6 +77,8 @@ type ProcedureType = {
   patientRestMinutes?: number;
   resourceCode?: string | null;
   bodyPart?: string | null;
+  needsSite?: boolean;
+  physioOrderFields?: string[];
   extendedEndHour?: number | null;
   skillCoverage?: number | null;
   requirements?: RequirementRow[];
@@ -170,6 +174,8 @@ export default function MasterDataPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [needsSite, setNeedsSite] = useState(true);
+  const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
   const [identifierTypes, setIdentifierTypes] = useState<IdentifierChip[]>([]);
@@ -289,6 +295,8 @@ export default function MasterDataPage() {
     setConsumables([]);
     setFinanceProductQ("");
     setSkillCoverageMsg(null);
+    setNeedsSite(true);
+    setPhysioOrderFields([]);
   }
 
   function openCreate() {
@@ -381,6 +389,8 @@ export default function MasterDataPage() {
       bodyPart: row.bodyPart ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
     });
+    setNeedsSite(row.needsSite !== false);
+    setPhysioOrderFields(row.physioOrderFields ?? []);
     setMdmStatus(null);
     setGlobalPersonId(null);
     setIdentifierTypes([]);
@@ -495,6 +505,8 @@ export default function MasterDataPage() {
           resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
           patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
           bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
+          needsSite,
+          physioOrderFields,
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
@@ -534,6 +546,8 @@ export default function MasterDataPage() {
         resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
         patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
+        needsSite,
+        ...(physioOrderFields.length ? { physioOrderFields } : {}),
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
           : null,
@@ -952,7 +966,10 @@ export default function MasterDataPage() {
                 if (!code) return;
                 const match = catalogOptions.find((c) => c.code === code);
                 if (match) {
+                  const gate = inferPhysioTypeGate(match.code, match.description);
                   setForm({ ...form, code: match.code, name: match.description });
+                  setNeedsSite(gate.needsSite);
+                  setPhysioOrderFields(gate.fields);
                 }
               }}
             >
@@ -1183,6 +1200,27 @@ export default function MasterDataPage() {
                   </option>
                 ))}
               </FieldSelect>
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={needsSite}
+                  onChange={(e) => setNeedsSite(e.target.checked)}
+                />
+                {t("needsSite")}
+              </label>
+              <CatalogField
+                kind="MULTI"
+                label={t("physioOrderFields")}
+                value={physioOrderFields}
+                onChange={(next) =>
+                  setPhysioOrderFields(Array.isArray(next) ? next.map(String) : next ? [String(next)] : [])
+                }
+                options={PHYSIO_ORDER_FIELD_CODES.map((code) => ({
+                  value: code,
+                  label: t(`physioField_${code}` as "physioOrderFields", { defaultValue: code }),
+                }))}
+              />
               <Field
                 label={t("extendedEndHour")}
                 preset="count"

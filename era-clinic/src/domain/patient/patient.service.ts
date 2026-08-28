@@ -1,7 +1,8 @@
-import { listPersonIdentifiers, satelliteOrganizationId } from "@era/satellite-kit";
+import { listPersonIdentifiers } from "@era/satellite-kit";
 import type { PatientBloodGroup, PatientSex, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { linkPatientGlobalPerson } from "@/lib/patient-identity";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
 import {
   ageYearsFromBirthDate,
@@ -266,7 +267,7 @@ export async function createPatient(data: {
   const demo = demographicsWriteData(data);
   const patient = await prisma.patientRef.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       refCode: data.refCode,
       fullName: data.fullName,
       phone: data.phone,

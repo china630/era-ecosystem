@@ -1,6 +1,9 @@
 {
   "auth": {
     "loginFailed": "Login failed",
+    "organizationIdLabel": "Organization ID (logistics)",
+    "organizationIdPlaceholder": "UUID — required on shared logistics pool",
+    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",

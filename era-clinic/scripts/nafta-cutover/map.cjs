@@ -1,8 +1,12 @@
 "use strict";
 
+/** W4: procedure-order nahiye → S is nahiye-s-match.cjs + physio-zones-s.json, not this Excel column mapper.
+ *  #40 LOCATION codes are room ids (WO-ROOM-*). Electro 2-pad vs 4-pad (canon §9) is not a column here. */
+
 const CUTOVER = "2026-08-25";
-const OPS_SLOT_FROM = "2026-08-24";
-const OPS_SLOT_TO = "2026-08-31";
+/** Ops import window: today through Saturday (Asia/Baku week). */
+const OPS_SLOT_FROM = "2026-08-25";
+const OPS_SLOT_TO = "2026-08-30";
 
 const HEADERS = {
   procedures: [
@@ -36,12 +40,15 @@ const HEADERS = {
     "procedureCode",
     "roomCode",
     "status",
+    "nahiye",
   ],
   labCatalog: ["externalRef", "code", "name", "group"],
-  labOrders: ["externalRef", "patientRef", "testCode", "status", "resultText", "takenAt", "fileRel"],
+  labOrders: ["externalRef", "patientRef", "testCode", "status", "panel", "takenAt"],
+  labResultLines: ["orderRef", "code", "label", "value", "unit", "refMin", "refMax"],
   diagnostics: ["externalRef", "patientRef", "code", "name", "resultText", "takenAt"],
   diagnoses: ["patientRef", "rawText", "icd10", "recordedAt"],
   roster: ["fin", "fullName", "orgUnit", "position", "hireDate", "satellites"],
+  procedureRequirements: ["procedureCode", "resourceCode", "role", "quantity"],
 };
 
 function ymd(value) {
@@ -115,6 +122,37 @@ function labFileRel(row) {
   return `dump/files/lab/${row.id}_${name}`;
 }
 
+/** Card procedure.id → nahiye. Calendar rows join via patientProcedureId. */
+function loadNahiyeByProcedureId(cardsDir) {
+  const fs = require("fs");
+  const path = require("path");
+  const map = new Map();
+  if (!fs.existsSync(cardsDir)) return map;
+  for (const file of fs.readdirSync(cardsDir)) {
+    if (!file.endsWith(".json")) continue;
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(path.join(cardsDir, file), "utf8"));
+    } catch {
+      continue;
+    }
+    const slices = json && json.slices && Array.isArray(json.slices.procedures) ? json.slices.procedures : [];
+    for (const node of slices) {
+      if (!node || typeof node !== "object") continue;
+      if (!Object.prototype.hasOwnProperty.call(node, "nahiye")) continue;
+      if (node.id == null) continue;
+      map.set(Number(node.id), node.nahiye == null ? "" : String(node.nahiye));
+    }
+  }
+  return map;
+}
+
+function slotNahiye(row, nahiyeByProc) {
+  const pid = row.patientProcedureId != null ? Number(row.patientProcedureId) : NaN;
+  if (Number.isFinite(pid) && nahiyeByProc.has(pid)) return nahiyeByProc.get(pid);
+  return "";
+}
+
 module.exports = {
   CUTOVER,
   OPS_SLOT_FROM,
@@ -130,8 +168,6 @@ module.exports = {
   mapRosterRow,
   isUsgExam,
   labFileRel,
-  procedureCode: procedureCode,
-  roomCode: roomCode,
-  slotStatus: slotStatus,
-  isOpsSlotDate: isOpsSlotDate,
+  loadNahiyeByProcedureId,
+  slotNahiye,
 };

@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from '@/lib/request-organization';
 
 type ClinicCheckInInput = {
   reservationId: string;
@@ -31,7 +31,7 @@ export async function notifyClinicCheckIn(input: ClinicCheckInInput): Promise<vo
   let organizationId = input.organizationId;
   if (!organizationId) {
     try {
-      organizationId = satelliteOrganizationId();
+      organizationId = requestOrganizationId();
     } catch {
       console.warn("notifyClinicCheckIn skipped: organizationId missing");
       return;

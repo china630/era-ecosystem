@@ -1,55 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <title>Bridge</title>
-    <style>
-      body {
-        font-family: Segoe UI, system-ui, sans-serif;
-        width: 280px;
-        margin: 0;
-        padding: 12px;
-        font-size: 13px;
-      }
-      h1 {
-        font-size: 14px;
-        margin: 0 0 8px;
-      }
-      .row {
-        margin: 6px 0;
-      }
-      .ok {
-        color: #0a7a2f;
-      }
-      .err {
-        color: #b00020;
-      }
-      button {
-        margin-top: 8px;
-        margin-right: 6px;
-        padding: 6px 10px;
-        border: 0;
-        border-radius: 6px;
-        background: #0b5fff;
-        color: #fff;
-        cursor: pointer;
-      }
-      button.secondary {
-        background: #555;
-      }
-      code {
-        font-size: 11px;
-      }
-    </style>
+    <title data-i18n="extName">Bridge</title>
+    <link rel="stylesheet" href="settings.css" />
   </head>
-  <body>
-    <h1>ERA ↔ Elektraweb</h1>
+  <body class="ew-popup">
+    <h1 data-i18n="extName">ERA ↔ Elektraweb</h1>
+    <p class="ew-tag" id="deskLabel"></p>
     <div id="status">…</div>
-    <div class="row">
-      <label><input type="checkbox" id="enabled" /> Capture &amp; sync</label>
+    <label class="ew-switch">
+      <input type="checkbox" id="enabled" />
+      <span data-i18n="inboundToggle">Capture &amp; sync</span>
+    </label>
+    <label class="ew-switch" id="writeRow">
+      <input type="checkbox" id="writeEnabled" />
+      <span data-i18n="writeToggle">Drain extra-ticket outbox</span>
+    </label>
+    <div class="ew-pop-actions">
+      <button id="openOptions" class="secondary" type="button" data-i18n="openSettings">Login / settings</button>
+      <button id="flush" type="button" data-i18n="flushNow">Flush now</button>
     </div>
-    <button id="openOptions" class="secondary" type="button">Login / settings</button>
-    <button id="flush" type="button">Flush now</button>
+    <script src="i18n.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

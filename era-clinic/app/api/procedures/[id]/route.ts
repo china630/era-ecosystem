@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
-import { prisma } from "@/lib/prisma";
+import { jsonOk, handleRouteError, getRouteSession, requireClinicRole } from "@/lib/api-utils";
+import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { patchProcedureOrderPhysio, toPhysioOrderPayload } from "@/domain/physio/physio-order-sites.service";
 
 const patchSchema = z.object({
   bodyPart: z
@@ -18,30 +19,29 @@ const patchSchema = z.object({
     ])
     .nullable()
     .optional(),
+  siteIds: z.array(z.string().min(1)).optional(),
+  siteApplyMode: z.enum(["TOGETHER", "TURN"]).nullable().optional(),
+  siteLaterality: z.record(z.enum(["LEFT", "RIGHT", "BOTH"]).nullable()).optional(),
+  physioFields: z.record(z.unknown()).nullable().optional(),
+  note: z.string().max(4000).nullable().optional(),
 });
 
-/** Patch PROPOSED (or SCHEDULED) order fields such as bodyPart before confirm. */
+/** Patch PROPOSED/SCHEDULED order: S chips, type-gated fields, note. */
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const denied = requireClinicRole(session, [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.RECEPTION]);
+    if (denied) return denied;
     const { id } = await params;
     const body = patchSchema.parse(await req.json());
-    const order = await prisma.procedureOrder.findUnique({ where: { id } });
-    if (!order) return jsonError("Procedure order not found", 404);
-    if (!["PROPOSED", "SCHEDULED"].includes(order.status)) {
-      return jsonError(`Cannot patch bodyPart in status ${order.status}`, 400);
-    }
-    const updated = await prisma.procedureOrder.update({
-      where: { id },
-      data: {
-        ...(body.bodyPart !== undefined ? { bodyPart: body.bodyPart } : {}),
-      },
+    const updated = await patchProcedureOrderPhysio(id, body);
+    return jsonOk({
+      ...updated,
+      physio: toPhysioOrderPayload(updated),
     });
-    return jsonOk(updated);
   } catch (err) {
     return handleRouteError(err);
   }

@@ -10,6 +10,21 @@ import {
 } from "./runtime-config-core";
 import { applyOrganizationBind, type OrgBindPrisma } from "./organization-bind-core";
 
+const elektrawebBridgeSchema = z.object({
+  inboundEnabled: z.boolean(),
+  writeEnabled: z.boolean(),
+  elektrawebHotelId: z.number().int().positive().nullable().optional(),
+  spaDepId: z.number().int().positive().nullable().optional(),
+  spaCurrencyId: z.number().int().positive().nullable().optional(),
+  walkinResId: z.string().max(64).nullable().optional(),
+  walkinResNameId: z.string().max(64).nullable().optional(),
+});
+
+const clinicCutoverSchema = z.object({
+  elektrawebDualRun: z.boolean(),
+  hotelOrganizationId: z.string().uuid().nullable().optional(),
+});
+
 const runtimeBodySchema = z.object({
   organizationId: z.string().uuid().optional(),
   orchestratorEventUrl: z.string().url().optional(),
@@ -22,10 +37,28 @@ const runtimeBodySchema = z.object({
   deploymentTopology: z.enum(["SHARED", "DEDICATED", "ONPREM"]).optional(),
   edition: z.string().min(1).max(120).optional(),
   updatedBy: z.string().max(200).optional(),
+  /** Per-org Elektraweb dual-run policy — upserted by satellite handler, not process-wide memory. */
+  elektrawebBridge: elektrawebBridgeSchema.optional(),
+  /** Per-org clinic cutover — upserted by clinic satellite handler. */
+  clinicCutover: clinicCutoverSchema.optional(),
 });
+
+export type ElektrawebBridgeSyncPayload = z.infer<typeof elektrawebBridgeSchema>;
+export type ClinicCutoverSyncPayload = z.infer<typeof clinicCutoverSchema>;
+export type RuntimeConfigBody = z.infer<typeof runtimeBodySchema>;
 
 export type RuntimeConfigHandlerOptions = {
   getPrisma?: () => OrgBindPrisma | null | undefined;
+  /** Hotel: upsert ElektrawebBridgePolicy for body.organizationId. */
+  onElektrawebBridge?: (
+    organizationId: string,
+    policy: ElektrawebBridgeSyncPayload,
+  ) => Promise<void>;
+  /** Clinic: upsert ClinicCutoverPolicy for body.organizationId. */
+  onClinicCutover?: (
+    organizationId: string,
+    policy: ClinicCutoverSyncPayload,
+  ) => Promise<void>;
 };
 
 export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = {}) {
@@ -68,8 +101,12 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       return NextResponse.json({ error: message }, { status: 400 });
     }
     const prisma = opts.getPrisma?.() ?? null;
+    const topology =
+      body.deploymentTopology ?? satelliteRuntimeConfig().deploymentTopology;
+    const isShared = topology === "SHARED";
     const patch: SatelliteRuntimeConfig = {
-      organizationId: body.organizationId,
+      // SHARED: do not stamp process-wide blob with last Sync org id.
+      organizationId: isShared ? undefined : body.organizationId,
       orchestratorEventUrl: body.orchestratorEventUrl,
       publicBaseUrl: body.publicBaseUrl,
       platformSuperAdminEmails: body.platformSuperAdminEmails,
@@ -78,14 +115,21 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       activeModules: body.activeModules,
       hotelModules: body.hotelModules,
       deploymentTopology: body.deploymentTopology,
-      edition: body.edition,
+      edition: isShared ? undefined : body.edition,
     };
-    if (body.organizationId) {
+    if (body.organizationId && !isShared) {
       await applyOrganizationBind({
         organizationId: body.organizationId,
         boundBy: body.updatedBy ?? "runtime-config",
         prisma,
       });
+    }
+    // SHARED: skip process bind — per-org vendor/cutover policies still upsert below.
+    if (body.organizationId && body.elektrawebBridge && opts.onElektrawebBridge) {
+      await opts.onElektrawebBridge(body.organizationId, body.elektrawebBridge);
+    }
+    if (body.organizationId && body.clinicCutover && opts.onClinicCutover) {
+      await opts.onClinicCutover(body.organizationId, body.clinicCutover);
     }
     const cfg = await applySatelliteRuntimeConfig({
       config: patch,

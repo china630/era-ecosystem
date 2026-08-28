@@ -245,6 +245,9 @@
   },
   "auth": {
     "loginFailed": "Login failed",
+    "organizationIdLabel": "Organization ID (F&B)",
+    "organizationIdPlaceholder": "UUID — required on shared F&B pool",
+    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",

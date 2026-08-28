@@ -1,4 +1,5 @@
-import { runPlatformCommerceHooks, satelliteOrganizationId } from '@era/satellite-kit';
+import { runPlatformCommerceHooks } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 export type HotelFolioHookInput = {
   folioId: string;
@@ -13,7 +14,7 @@ export type HotelFolioHookInput = {
 export async function runHotelFolioPlatformHooks(
   input: HotelFolioHookInput,
 ): Promise<{ payUrl?: string }> {
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requestOrganizationId();
   if (!organizationId || input.amountAzn <= 0) return {};
 
   return runPlatformCommerceHooks({

@@ -1,14 +1,15 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify } from "jose";
 import {
-  getBridgeOrganizationId,
-  getExpectedElektrawebHotelId,
-  getOptionalBridgeSharedToken,
+  enterBridgeTenant,
+  getElektrawebBridgePolicy,
   isElektrawebBridgeEnabled,
+  isPolicyInboundEnabled,
+  requirePolicyHotelId,
   roleMayUseBridge,
-} from '@/lib/integration/elektraweb-bridge/config';
-import { verifyToken as verifySessionToken, type SessionPayload } from '@/lib/auth/jwt';
+} from "@/lib/integration/elektraweb-bridge/config";
+import { verifyToken as verifySessionToken, type SessionPayload } from "@/lib/auth/jwt";
 
-const PURPOSE = 'elektraweb-bridge';
+const PURPOSE = "elektraweb-bridge";
 
 export type BridgeAuthContext = {
   organizationId: string;
@@ -16,13 +17,13 @@ export type BridgeAuthContext = {
   login: string;
   role: string;
   userId?: string;
-  via: 'bridge_jwt' | 'shared_token' | 'session_jwt';
+  via: "bridge_jwt" | "session_jwt";
 };
 
 function getSecret() {
   const secret = process.env.AUTH_JWT_SECRET;
   if (!secret || secret.length < 16) {
-    throw new Error('AUTH_JWT_SECRET must be set (min 16 chars)');
+    throw new Error("AUTH_JWT_SECRET must be set (min 16 chars)");
   }
   return new TextEncoder().encode(secret);
 }
@@ -32,81 +33,72 @@ export async function signBridgeToken(input: {
   login: string;
   role: string;
   fullName: string;
+  organizationId: string;
+  elektrawebHotelId: number;
 }): Promise<string> {
-  const organizationId = getBridgeOrganizationId();
-  const elektrawebHotelId = getExpectedElektrawebHotelId();
   return new SignJWT({
     purpose: PURPOSE,
     login: input.login,
     role: input.role,
     fullName: input.fullName,
-    organizationId,
-    elektrawebHotelId,
+    organizationId: input.organizationId,
+    elektrawebHotelId: input.elektrawebHotelId,
   })
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: "HS256" })
     .setSubject(input.userId)
     .setIssuedAt()
-    .setExpirationTime('12h')
+    .setExpirationTime("12h")
     .sign(getSecret());
 }
 
 function bearer(request: Request): string | null {
-  const auth = request.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) return null;
+  const auth = request.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ")) return null;
   return auth.slice(7).trim() || null;
 }
 
 export async function authenticateBridgeRequest(request: Request): Promise<BridgeAuthContext> {
   if (!isElektrawebBridgeEnabled()) {
-    throw new Error('Elektraweb bridge is disabled (ELEKTRAWEB_BRIDGE_ENABLED≠1)');
+    throw new Error("Elektraweb bridge is disabled (ELEKTRAWEB_BRIDGE_ENABLED≠1)");
   }
 
-  const organizationId = getBridgeOrganizationId();
-  const elektrawebHotelId = getExpectedElektrawebHotelId();
   const token = bearer(request);
-  if (!token) throw new Error('Unauthorized');
-
-  const shared = getOptionalBridgeSharedToken();
-  if (shared && token === shared) {
-    return {
-      organizationId,
-      elektrawebHotelId,
-      login: 'bridge-token',
-      role: 'bridge',
-      via: 'shared_token',
-    };
-  }
+  if (!token) throw new Error("Unauthorized");
 
   try {
     const { payload } = await jwtVerify(token, getSecret());
     if (payload.purpose === PURPOSE) {
-      const org = String(payload.organizationId ?? '');
+      const organizationId = String(payload.organizationId ?? "");
       const hotelId = Number(payload.elektrawebHotelId);
-      if (org !== organizationId) {
+      if (!organizationId) throw new Error("Forbidden: bridge token missing organizationId");
+      const policy = await getElektrawebBridgePolicy(organizationId);
+      if (!isPolicyInboundEnabled(policy) || !policy) {
+        throw new Error("Forbidden: Elektraweb bridge inbound is off for this organization");
+      }
+      const expectedHotelId = requirePolicyHotelId(policy);
+      if (hotelId !== expectedHotelId) {
         throw new Error(
-          `Forbidden: bridge token org ${org} does not match deployment ${organizationId}`,
+          `Forbidden: bridge token hotel ${hotelId} does not match policy ${expectedHotelId}`,
         );
       }
-      if (hotelId !== elektrawebHotelId) {
-        throw new Error(
-          `Forbidden: bridge token hotel ${hotelId} does not match ELEKTRAWEB_HOTEL_ID ${elektrawebHotelId}`,
-        );
+      const role = String(payload.role ?? "");
+      if (!roleMayUseBridge(role) && role !== "bridge") {
+        throw new Error("Forbidden: insufficient role for Elektraweb bridge");
       }
-      const role = String(payload.role ?? '');
-      if (!roleMayUseBridge(role) && role !== 'bridge') {
-        throw new Error('Forbidden: insufficient role for Elektraweb bridge');
-      }
+      enterBridgeTenant(organizationId);
       return {
         organizationId,
-        elektrawebHotelId,
-        login: String(payload.login ?? ''),
+        elektrawebHotelId: expectedHotelId,
+        login: String(payload.login ?? ""),
         role,
-        userId: typeof payload.sub === 'string' ? payload.sub : undefined,
-        via: 'bridge_jwt',
+        userId: typeof payload.sub === "string" ? payload.sub : undefined,
+        via: "bridge_jwt",
       };
     }
   } catch (err) {
-    if (err instanceof Error && err.message.startsWith('Forbidden')) throw err;
+    if (err instanceof Error && err.message.startsWith("Forbidden")) throw err;
+    if (err instanceof Error && err.message.includes("not configured")) throw err;
+    if (err instanceof Error && err.message.includes("inbound is off")) throw err;
     // fall through to session JWT
   }
 
@@ -114,17 +106,26 @@ export async function authenticateBridgeRequest(request: Request): Promise<Bridg
   try {
     session = await verifySessionToken(token);
   } catch {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
   if (!roleMayUseBridge(session.role)) {
-    throw new Error('Forbidden: insufficient role for Elektraweb bridge');
+    throw new Error("Forbidden: insufficient role for Elektraweb bridge");
   }
+  const organizationId = session.organizationId;
+  if (!organizationId) {
+    throw new Error("Forbidden: session missing organizationId — re-login with org");
+  }
+  const policy = await getElektrawebBridgePolicy(organizationId);
+  if (!isPolicyInboundEnabled(policy) || !policy) {
+    throw new Error("Forbidden: Elektraweb bridge inbound is off for this organization");
+  }
+  enterBridgeTenant(organizationId);
   return {
     organizationId,
-    elektrawebHotelId,
+    elektrawebHotelId: requirePolicyHotelId(policy),
     login: session.login,
     role: session.role,
     userId: session.sub,
-    via: 'session_jwt',
+    via: "session_jwt",
   };
 }

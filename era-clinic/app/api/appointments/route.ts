@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { detectSchedulingConflict } from "@/lib/scheduling.service";
 import { isWithinShift } from "@/domain/appointment/practitioner-schedule.service";
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 const createSchema = z
   .object({
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
 
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     const patient = body.patientRefId
       ? await prisma.patientRef.findUnique({ where: { id: body.patientRefId } })
       : await prisma.patientRef.findFirst({
@@ -119,16 +119,19 @@ export async function POST(req: Request) {
 
     const phone = patient.phone?.trim();
     if (phone) {
-      await trySendPlatformNotification({
-        templateKey: "clinic.appointment.confirmed",
-        channel: "SMS",
-        messageClass: "TRANSACTIONAL",
-        recipient: phone,
-        sourceEntityType: "appointment",
-        sourceEntityId: appointment.id,
-        body: `Appointment confirmed ${scheduledAt.toISOString().slice(0, 16)} with ${practitioner.fullName}`,
-        payload: { appointmentId: appointment.id, scheduledAt: scheduledAt.toISOString() },
-      });
+      await trySendPlatformNotification(
+        {
+          templateKey: "clinic.appointment.confirmed",
+          channel: "SMS",
+          messageClass: "TRANSACTIONAL",
+          recipient: phone,
+          sourceEntityType: "appointment",
+          sourceEntityId: appointment.id,
+          body: `Appointment confirmed ${scheduledAt.toISOString().slice(0, 16)} with ${practitioner.fullName}`,
+          payload: { appointmentId: appointment.id, scheduledAt: scheduledAt.toISOString() },
+        },
+        { organizationId },
+      );
     }
 
     return jsonOk(appointment, 201);

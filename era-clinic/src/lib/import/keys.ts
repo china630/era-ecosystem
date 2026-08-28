@@ -1,4 +1,4 @@
-import { satelliteOrganizationId } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 import type { ImportTx } from "@/lib/import/types";
 
 export async function findImportRecordId(
@@ -32,6 +32,6 @@ export async function bindImportRecord(
     return;
   }
   await tx.cutoverImportKey.create({
-    data: { entity, externalRef, recordId, organizationId: satelliteOrganizationId() },
+    data: { entity, externalRef, recordId, organizationId: requestOrganizationId() },
   });
 }

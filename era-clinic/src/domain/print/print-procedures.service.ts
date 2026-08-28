@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import {
+  formatLateralityLabel,
+  formatPhysioFieldsPrint,
+  readPhysioFields,
+} from "@/domain/physio/physio-order-fields";
 
 export type PrintProcedureRow = {
   no: number;
@@ -55,9 +60,24 @@ export async function buildProceduresPrint(
       resource: { include: { room: true } },
       allocations: { include: { practitioner: true } },
       resourceBooking: { include: { practitioner: true } },
+      sites: { orderBy: { sortOrder: "asc" }, include: { site: true } },
     },
     orderBy: { scheduledAt: "asc" },
   });
+
+  const listIds = [
+    ...new Set(
+      orders.flatMap((o) => {
+        const f = readPhysioFields(o.physioFields);
+        return [f.deviceProgramId, f.substanceId].filter((id): id is string => Boolean(id));
+      }),
+    ),
+  ];
+  const listItems = listIds.length
+    ? await prisma.physioListItem.findMany({ where: { id: { in: listIds } } })
+    : [];
+  const listById = new Map(listItems.map((r) => [r.id, r]));
+  const printLang = lang === "ru" || lang === "az" ? lang : "en";
 
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
@@ -72,6 +92,38 @@ export async function buildProceduresPrint(
       o.resource?.code ??
       "—";
     const ends = o.endsAt ? `-${bakuTime(o.endsAt)}` : "";
+    const siteBits = o.sites.map((row) => {
+      const title =
+        lang === "ru"
+          ? `${row.site.titleRu} / ${row.site.titleLa}`
+          : lang === "az"
+            ? `${row.site.titleAz} / ${row.site.titleLa}`
+            : `${row.site.titleEn} / ${row.site.titleLa}`;
+      const lat = formatLateralityLabel(printLang, row.laterality);
+      return lat ? `${title} (${lat})` : title;
+    });
+    const mode =
+      o.siteApplyMode === "TURN" ? (lang === "ru" ? "по очереди" : lang === "az" ? "növbəli" : "in turn") : "";
+    const fields = readPhysioFields(o.physioFields);
+    const program = fields.deviceProgramId ? listById.get(fields.deviceProgramId) : null;
+    const substance = fields.substanceId ? listById.get(fields.substanceId) : null;
+    const fieldBits = formatPhysioFieldsPrint(printLang, fields, {
+      program: program
+        ? lang === "ru"
+          ? program.titleRu
+          : lang === "az"
+            ? program.titleAz
+            : program.titleEn
+        : null,
+      substance: substance
+        ? lang === "ru"
+          ? substance.titleRu
+          : lang === "az"
+            ? substance.titleAz
+            : substance.titleEn
+        : null,
+    });
+    const noteParts = [...siteBits, mode, ...fieldBits, o.note ?? ""].filter(Boolean);
     const row: PrintProcedureRow = {
       no: no++,
       date,
@@ -81,7 +133,7 @@ export async function buildProceduresPrint(
       room,
       doctor,
       price: `${Number(o.amountNet).toFixed(2)} AZN`,
-      note: o.note ?? "",
+      note: noteParts.join(" · "),
     };
     const list = map.get(date) ?? [];
     list.push(row);

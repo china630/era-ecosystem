@@ -70,6 +70,12 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
       organizationSubscription: {
         findUnique: jest.fn().mockResolvedValue(null),
       },
+      elektrawebBridgePolicy: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      clinicCutoverPolicy: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
     };
     const config = {
       get: (key: string) => {

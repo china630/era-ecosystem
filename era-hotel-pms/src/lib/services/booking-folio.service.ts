@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
+import { requestOrganizationId } from '@/lib/request-organization';
 import type { FolioType } from '@prisma/client';
 
 /** Heuristic: room & tax vs extras for MASTER / SPLIT booking folio mode. */
@@ -34,7 +34,7 @@ export async function ensureOpenFolio(reservationId: string, type: FolioType) {
   if (existing) return existing;
   return prisma.folio.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       reservationId,
       type,
       status: 'OPEN',
@@ -68,7 +68,7 @@ export async function ensurePartyGuestFolios(reservationId: string) {
     created.push(
       await prisma.folio.create({
         data: {
-          organizationId: satelliteOrganizationId(),
+          organizationId: requestOrganizationId(),
           reservationId,
           reservationGuestId: g.id,
           type: 'GUEST',

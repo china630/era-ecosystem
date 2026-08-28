@@ -14,12 +14,13 @@ export type SsoExchangePrisma = {
   };
   user: {
     findFirst(args: {
-      where: { login: string };
+      where: { login: string; organizationId?: string };
       include: { role: true };
     }): Promise<{
       id: string;
       login: string;
       fullName: string;
+      organizationId?: string;
       role: { code: string };
     } | null>;
     create(args: {
@@ -30,12 +31,14 @@ export type SsoExchangePrisma = {
         passwordHash: string;
         roleId: string;
         isCrossSystem: boolean;
+        organizationId?: string;
       };
       include: { role: true };
     }): Promise<{
       id: string;
       login: string;
       fullName: string;
+      organizationId?: string;
       role: { code: string };
     }>;
     update(args: {
@@ -50,6 +53,7 @@ export type SsoExchangePrisma = {
       id: string;
       login: string;
       fullName: string;
+      organizationId?: string;
       role: { code: string };
     }>;
   };
@@ -65,6 +69,7 @@ export type SsoExchangeResult = {
     roles: string[];
     isOwner: boolean;
     financeRole?: string;
+    organizationId?: string;
   };
 };
 
@@ -74,6 +79,7 @@ export async function executeSatelliteSsoExchange(
   prisma: SsoExchangePrisma,
 ): Promise<SsoExchangeResult> {
   const financeRole = body.financeRole ?? "USER";
+  const organizationId = body.organizationId;
   // Platform super-admins get full satellite access everywhere (BUSINESS_OWNER),
   // regardless of their finance membership role.
   const isPlatformSuperAdmin = isPlatformSuperAdminUser({
@@ -111,12 +117,13 @@ export async function executeSatelliteSsoExchange(
 
   const login = `sso_${body.email.split("@")[0]}`;
   let user = await prisma.user.findFirst({
-    where: { login },
+    where: { login, organizationId },
     include: { role: true },
   });
   if (!user) {
     user = await prisma.user.create({
       data: {
+        organizationId,
         login,
         email: body.email,
         fullName: body.fullName,
@@ -145,7 +152,7 @@ export async function executeSatelliteSsoExchange(
     role: satelliteRole,
     roles: roleCodes,
     fullName: user.fullName,
-    organizationId: body.organizationId,
+    organizationId,
     isOwner,
     financeRole,
   });
@@ -160,6 +167,7 @@ export async function executeSatelliteSsoExchange(
       roles: roleCodes,
       isOwner,
       financeRole,
+      organizationId,
     },
   };
 }

@@ -881,6 +881,86 @@ model ClinicLookup {
   @@index([organizationId])
 }
 
+/// Device program vs electrophoresis/inhalation substance (not stuffed into ClinicLookup).
+enum PhysioListKind {
+  DEVICE_PROGRAM
+  SUBSTANCE
+}
+
+/// CIS protocol site S (USSR 817 / Shcherbak / hydro / local). Retire, do not delete.
+model PhysioSite {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  code           String
+  kind           String
+  prikaz817      Int?              @map("prikaz_817")
+  laterality     Boolean           @default(false)
+  titleAz        String            @map("title_az")
+  titleRu        String            @map("title_ru")
+  titleEn        String            @map("title_en")
+  titleLa        String            @map("title_la")
+  boundary       String?           @db.Text
+  coarse         String[]
+  anatomyJson    String?           @map("anatomy_json") @db.Text
+  active         Boolean           @default(true)
+  sortOrder      Int               @default(0) @map("sort_order")
+  aliases        PhysioSiteAlias[]
+  orderSites     ProcedureOrderSite[]
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId, active, sortOrder])
+  @@map("physio_site")
+}
+
+model PhysioSiteAlias {
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  siteId         String     @map("site_id")
+  alias          String
+  site           PhysioSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  @@unique([organizationId, alias])
+  @@index([siteId])
+  @@map("physio_site_alias")
+}
+
+/// Named stim program or substance/additive — SatAdmin CRUD (WO tail is open-ended).
+model PhysioListItem {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  listKind       PhysioListKind    @map("list_kind")
+  code           String
+  titleAz        String            @map("title_az")
+  titleRu        String            @map("title_ru")
+  titleEn        String            @map("title_en")
+  active         Boolean           @default(true)
+  sortOrder      Int               @default(0) @map("sort_order")
+  aliases        PhysioListAlias[]
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@unique([organizationId, listKind, code])
+  @@index([organizationId, listKind, active])
+  @@map("physio_list_item")
+}
+
+model PhysioListAlias {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  itemId         String         @map("item_id")
+  listKind       PhysioListKind @map("list_kind")
+  alias          String
+  item           PhysioListItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@unique([organizationId, listKind, alias])
+  @@index([itemId])
+  @@map("physio_list_alias")
+}
+
 enum ProcedureRuleKind {
   SEQUENCE_GAP
   MUTUAL_EXCLUSION
@@ -923,6 +1003,10 @@ model ProcedureType {
   resourceCode       String?
   /// ClinicLookup BODY_PART code
   bodyPart           String?
+  /// When false, doctor does not pick S (ozone, inhalation, IV). Seeded from SKU; SatAdmin can override.
+  needsSite          Boolean       @default(true) @map("needs_site")
+  /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
+  physioOrderFields  String[]      @default([]) @map("physio_order_fields")
   afterLunchAllowed  Boolean       @default(true)
   /// When false, slot must start at or after lunchEndHour (men 4-chamber after lunch).
   beforeLunchAllowed Boolean       @default(true) @map("before_lunch_allowed")
@@ -1223,14 +1307,18 @@ model ProcedureOrder {
   scheduledAt      DateTime
   endsAt           DateTime?
   sequenceIndex    Int?
-  /// ClinicLookup BODY_PART code
+  /// ClinicLookup BODY_PART code — derived from sites[] (first unique coarse; FULL_BODY wins)
   bodyPart         String?
+  /// TURN = növbəli (same slot, sites in turn). TOGETHER = simultaneous. Null when <2 sites.
+  siteApplyMode    ProcedureSiteApplyMode? @map("site_apply_mode")
   status           ProcedureOrderStatus @default(SCHEDULED)
   /// 5-char access code (Crockford-like, case-insensitive) assigned when the order becomes SCHEDULED.
   accessCode      String?             @map("access_code")
   amountNet        Decimal              @default(0) @db.Decimal(12, 2)
   /// Therapist instruction / clinical note for print schedule
   note             String?              @db.Text
+  /// Type-gated physio values (program, substance, work-kind, …). W3.
+  physioFields     Json?                @map("physio_fields")
   quantity         Int                  @default(1)
   patientOrigin    PatientOrigin        @default(WALK_IN)
   reservationId    String?
@@ -1250,6 +1338,9 @@ model ProcedureOrder {
   completedByUserId String?             @map("completed_by_user_id")
   /// Cutover import: historical COMPLETED rows skip folio posting and nurse bonus.
   importedHistorical Boolean             @default(false) @map("imported_historical")
+  /// Dual-run extra ticket issued (3 copies). Charge is EW SPA, not COMPLETED.
+  extraTicketIssuedAt DateTime?          @map("extra_ticket_issued_at")
+  extraTicketId       String?            @map("extra_ticket_id")
   noShowAt         DateTime?            @map("no_show_at")
   noShowByUserId   String?              @map("no_show_by_user_id")
   cancelledAt      DateTime?            @map("cancelled_at")
@@ -1262,6 +1353,7 @@ model ProcedureOrder {
   resource         Resource?            @relation(fields: [resourceId], references: [id])
   resourceBooking  ResourceBooking?
   allocations      ProcedureAllocation[]
+  sites            ProcedureOrderSite[]
   createdAt        DateTime             @default(now())
 
   @@unique([organizationId, accessCode])
@@ -1271,6 +1363,7 @@ model ProcedureOrder {
   @@index([status, scheduledAt])
   @@index([prescribedByPractitionerId, scheduledAt])
   @@index([organizationId])
+  @@index([extraTicketId])
 }
 
 model ProcedureAllocation {
@@ -1289,6 +1382,61 @@ model ProcedureAllocation {
   @@index([resourceId, startsAt, endsAt])
   @@index([practitionerId, startsAt, endsAt])
   @@map("procedure_allocation")
+}
+
+enum ProcedureSiteApplyMode {
+  TOGETHER
+  TURN
+}
+
+enum ProcedureSiteLaterality {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+/// Ordered S chips on a procedure order. Laterality only when the site catalog allows it.
+model ProcedureOrderSite {
+  id               String                   @id @default(cuid())
+  organizationId   String                   @map("organization_id")
+  procedureOrderId String                   @map("procedure_order_id")
+  siteId           String                   @map("site_id")
+  sortOrder        Int                      @default(0) @map("sort_order")
+  laterality       ProcedureSiteLaterality?
+  procedureOrder   ProcedureOrder           @relation(fields: [procedureOrderId], references: [id], onDelete: Cascade)
+  site             PhysioSite               @relation(fields: [siteId], references: [id], onDelete: Restrict)
+
+  @@unique([procedureOrderId, siteId])
+  @@index([procedureOrderId, sortOrder])
+  @@index([organizationId])
+  @@map("procedure_order_site")
+}
+
+enum PhysioNahiyeQueueStatus {
+  OPEN
+  RESOLVED
+  NOT_ANATOMY
+}
+
+/// SatAdmin synonym queue for unmatched / partial WO nahiye (CLI-49 W4).
+model PhysioNahiyeQueue {
+  id                   String                   @id @default(cuid())
+  organizationId       String                   @map("organization_id")
+  normalizedText       String                   @map("normalized_text")
+  sampleRaw            String                   @map("sample_raw") @db.Text
+  residue              String                   @db.Text
+  bucket               String
+  sampleProcedureName  String?                  @map("sample_procedure_name")
+  hitCount             Int                      @default(1) @map("hit_count")
+  status               PhysioNahiyeQueueStatus  @default(OPEN)
+  suggestedSiteCode    String?                  @map("suggested_site_code")
+  lastOrderId          String?                  @map("last_order_id")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([organizationId, normalizedText])
+  @@index([organizationId, status, hitCount])
+  @@map("physio_nahiye_queue")
 }
 
 enum InpatientAdmissionStatus {
@@ -1587,4 +1735,15 @@ model CutoverImportKey {
   @@unique([organizationId, entity, externalRef])
   @@index([organizationId])
   @@map("cutover_import_key")
+}
+
+/// Per-org clinic cutover (Super-Admin / Sync). Not CLINIC_ELEKTRAWEB_DUAL_RUN env.
+model ClinicCutoverPolicy {
+  organizationId        String   @id @map("organization_id")
+  elektrawebDualRun     Boolean  @default(false) @map("elektraweb_dual_run")
+  hotelOrganizationId   String?  @map("hotel_organization_id")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("clinic_cutover_policy")
 }

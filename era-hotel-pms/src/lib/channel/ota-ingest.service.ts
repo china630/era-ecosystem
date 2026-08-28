@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import { logSyncError } from '@/lib/services/channel.service';
 import type { OtaReservationPayload } from '@/lib/channel/adapters/types';
@@ -74,7 +74,7 @@ async function upsertGuest(payload: OtaReservationPayload) {
 
   return prisma.guest.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       externalRef,
       fullName: payload.guest.fullName,
       email: payload.guest.email,
@@ -138,7 +138,7 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
 
   const created = await prisma.reservation.create({
     data: {
-      organizationId: satelliteOrganizationId(),
+      organizationId: requestOrganizationId(),
       externalRef: payload.externalReservationId,
       roomTypeId,
       ratePlanId,

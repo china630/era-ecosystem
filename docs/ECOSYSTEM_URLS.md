@@ -152,7 +152,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Class | Variables | Role |
 |-------|-----------|------|
 | **Required at install** | Orchestrator base URL (`CONTROL_PLANE_URL` / `ORCHESTRATOR_URL` / `ORCHESTRATOR_INTERNAL_URL`), handshake token (`SATELLITE_EVENT_SERVICE_TOKEN` or Finance `CONTROL_PLANE_SERVICE_TOKEN`), `DATABASE_URL`, Redis URL (where used), listen `PORT` | First boot + Sync fan-out only |
-| **Optional / emergency** | `ERA_SATELLITE_ORGANIZATION_ID` (or bank alias), `ERA_SSO_SHARED_SECRET`, event token override | Prefer Super-admin **Sync** bind + runtime-config |
+| **Optional / emergency** | `ERA_SATELLITE_ORGANIZATION_ID` (or bank alias), `ERA_SSO_SHARED_SECRET`, event token override | Prefer Super-admin **Sync** bind + runtime-config. SHARED ops HTTP must not treat this as the request tenant — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) |
 | **After first Sync** | `CONTROL_PLANE_URL` / orch URL in compose may stay as bootstrap; live readers prefer kit runtime-config memory (`orchestratorEventUrl`, tokens, SSO, PSA, `deploymentTopology`, `edition`) | Do not treat compose as SoR for desired state |
 
 `CONTROL_PLANE_URL` = **install bootstrap** for Finance Nest (and industry env fallback). After Sync, `@era/satellite-kit` `resolveOrchestratorBaseUrl()` prefers runtime-config memory.

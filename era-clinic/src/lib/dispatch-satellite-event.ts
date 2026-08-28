@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
-import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit";
+import { publishToOrchestratorGateway } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 export async function dispatchSatelliteEvent(event: {
   type: string;
@@ -11,7 +12,7 @@ export async function dispatchSatelliteEvent(event: {
   const { correlationId, ...rest } = event;
   return publishToOrchestratorGateway({
     ...rest,
-    organizationId: satelliteOrganizationId(),
+    organizationId: requestOrganizationId(),
     correlationId: correlationId?.trim() || randomUUID(),
     occurredAt: new Date().toISOString(),
   });

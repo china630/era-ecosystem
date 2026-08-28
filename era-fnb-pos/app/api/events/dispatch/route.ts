@@ -5,8 +5,8 @@ import { isSatelliteEvent } from "@era/contracts";
 import {
   assertEnvServiceToken,
   publishToOrchestratorGateway,
-  satelliteOrganizationId,
 } from "@era/satellite-kit";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 /** SEC-SAT-01: require service token; never trust client organizationId. */
 export async function POST(req: Request) {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const body = (await req.json()) as Record<string, unknown>;
   const event = {
     ...body,
-    organizationId: satelliteOrganizationId(),
+    organizationId: requestOrganizationId(),
     correlationId:
       typeof body.correlationId === "string" ? body.correlationId : randomUUID(),
     occurredAt:

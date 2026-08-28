@@ -16,16 +16,18 @@ Built by [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) → [ClinicOpsShell
 | Group | Visibility | Routes |
 |-------|------------|--------|
 | Flat top | all authenticated | `/` (Home — full-width; shared date toolbar; for owner/`canViewExecutive`, `ExecutiveDashboard` first block above ops summary), `/patients` |
-| Front desk | `RECEPTION` (+ admin/owner) | `/appointments` (practitioner day matrix), `/reception/queue`, `/cashier` |
+| Front desk | `RECEPTION` (+ admin/owner) | `/appointments` (practitioner day matrix), `/reception/queue`, `/cashier`, `/reception/extra-tickets` (sanatorium dual-run extras) |
 | Clinical | `DOCTOR` / `NURSE` (+ admin/owner) | `/doctor` (DOCTOR), `/nurse` (NURSE), `/lab-orders`, `/reports/diagnoses` (DOCTOR; admin via `seesAll`) |
 | Sanatorium | preset `sanatorium_clinical` | `/sanatorium` (RECEPTION, DOCTOR), `/sanatorium/resources` (RECEPTION), `/sanatorium/nurse-roster` (DOCTOR + admin — monthly nurse/lab duty matrix) |
 | Inpatient | preset `inpatient_day` | `/inpatient` (ward tiles + admission diagnoses modal), `/inpatient/census`, `/admin/wards` (admin-only) |
 | Wellness | preset `wellness` | placeholder (no routes yet — section auto-hides) |
-| Catalogs | admin/owner | `/admin/catalog` (service prices), `/admin/diagnostic-catalog` (modalities/services/analytes/**favorites** tab), `/admin/icd-favorites` (ICD-10 pin + catalog sync/retire; no title CRUD), `/admin/templates` |
+| Catalogs | admin/owner | `/admin/catalog` (service prices), `/admin/diagnostic-catalog` (modalities/services/analytes/**favorites** tab), `/admin/icd-favorites` (ICD-10 pin + catalog sync/retire; no title CRUD), `/admin/templates`, `/admin/lookups` (BODY_PART), `/admin/physio-sites` (S + programs + substances + unmatched nahiye queue) |
 | Rules & data | admin/owner | `/admin/procedure-rules`, `/admin/lis-profiles`, `/admin/master-data` |
 | Platform | admin/owner | `/admin/audit`, `/admin/settings` |
 
-Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`.
+Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`; `GET/POST /api/internal/v1/runtime-config` (incl. `clinicCutover` upsert).
+
+**SaaS Wave 2 request tenant:** staff `/api/auth/login` (+ optional `organizationId`) and SSO put org on JWT; middleware `x-era-organization-id`; `getRouteSession` → `enterSatelliteTenant`; lifecycle/from-stay/settlement enter ALS from event/body org; ops stamps via `requestOrganizationId()`. Cron remains appliance/DEDICATED-oriented. Not SHIPPED pool / AC-CLI-TENANT still 🟡.
 
 Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-favorites` (now a tab on `/admin/diagnostic-catalog`). Both routes deleted — no redirect.
 
@@ -40,7 +42,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
 | `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
 | `/patients` | `/api/patients` — paginated list (`q`, sex, blood, MDM, age, `roomNumber` when sanatorium) + register; modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`) |
-| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses` |
+| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`) |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |
@@ -52,6 +54,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/visits/[id]` | Visit card; diagnoses panel `GET/POST/DELETE /api/visits/[id]/diagnoses` (`VisitDiagnosis`, selectable CATEGORY/LEAF only) |
 | `/reports/diagnoses` | `GET /api/reports/diagnoses` — ICD usage by episode / visit / admission (date + chapter + source) |
 | `/cashier` | Queue / history / over-quota tabs; shift open+close (X/Z); settle modal by channel (`LOCAL` / `HOTEL_FOLIO` / `SETTLEMENT_HUB`); `GET /api/cashier/queue`, `…/shifts/current`, `…/shifts/[id]/close|report`, `…/bills/[visitId]` (+ settle), `…/receipts` (+ void/reprint), `…/over-quota` (+ settle); hub banner informational |
+| `/reception/extra-tickets` | Sanatorium dual-run extras. `GET/POST /api/procedures/issue-ticket`; print `/print/extra-ticket/[ticketId]`. Enqueues hotel Elektraweb outbox when `ClinicCutoverPolicy.elektrawebDualRun` (Sync). Not SHIPPED / not cashier SoT |
 | Executive (`GET /api/executive/summary?date=&practitionerId=`) | client `ExecutiveDashboard`; OrgOwner (`canViewExecutive`); rendered on Home `/` (no standalone `/executive` route) |
 
 ## Preset `sanatorium_clinical`
@@ -74,17 +77,19 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 
 | Route | API |
 |-------|-----|
-| `/admin/master-data` | `/api/admin/practitioners` (**403 POST** when `cp_workforce`; ops PATCH specialty/slots/**staffKind**); `GET /api/admin/workforce-policy`; rooms, resources (PATCH roomId); practitioners/[id]/skills GET/PUT; practitioners/[id]/**schedule** GET/PUT (CLI-36); **Shifts** modal; procedure-types (+requirements); link → `/admin/wards` + `/sanatorium/nurse-roster`; hire → orchestrator `/workspace/workforce` |
+| `/admin/master-data` | `/api/admin/practitioners` (**403 POST** when `cp_workforce`; ops PATCH specialty/slots/**staffKind**); `GET /api/admin/workforce-policy`; rooms, resources (PATCH roomId); practitioners/[id]/skills GET/PUT; practitioners/[id]/**schedule** GET/PUT (CLI-36); **Shifts** modal; procedure-types (+requirements + `needsSite` / `physioOrderFields`); link → `/admin/wards` + `/sanatorium/nurse-roster`; hire → orchestrator `/workspace/workforce` |
 | `/admin/wards` | `/api/admin/wards`, `/api/admin/wards/[id]`, `/api/admin/beds/[id]` (modal CRUD) |
 | `/admin/catalog` | `/api/admin/catalog`, `/api/catalog/sync`, `POST /api/admin/catalog/import-nafta` |
 | `/admin/diagnostic-catalog` (tab `favorites`) | `/api/admin/catalog-favorites` — favorite modalities/categories (`first` \| `only`); no standalone `/admin/catalog-favorites` route |
 | `/admin/icd-favorites` | `GET/PUT /api/admin/icd-favorites`; `POST ?action=sync` (orch gateway or local generator); `POST ?action=retire` (`active=false` + `retiredAt`). SatAdmin does **not** CRUD 14k WHO titles |
 | `/admin/templates` | `/api/admin/clinical-templates`, program-templates (+ PATCH `[id]`) — seed pack: `prisma/seed-data/diagnostic-lab-catalog.json` ([DIAGNOSTIC_AND_LAB_CATALOG](../../doc/DIAGNOSTIC_AND_LAB_CATALOG.md)) |
-| `/admin/import` | `GET /api/import`, `POST /api/import/[entity]?dryRun=1` — Nafta cutover xlsx wizard ([NAFTA-CUTOVER-IMPORT](../../doc/NAFTA-CUTOVER-IMPORT.md)) |
+| `/admin/import` | Nafta cutover xlsx — clinic 21–40 incl. `procedure-requirements` ([NAFTA-CUTOVER-IMPORT](../../doc/NAFTA-CUTOVER-IMPORT.md)) |
 | `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`), `/api/admin/procedure-rotation-rules` (+ `[id]`), `/api/admin/procedure-substitution-rules` (+ `[id]`) |
 | `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, card limits) |
 | `/admin/audit` | `/api/audit` |
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |
+| `/admin/lookups` | `/api/admin/lookups` BODY_PART |
+| `/admin/physio-sites` | CLI-49 — `GET/POST /api/admin/physio-sites`, `GET/PATCH/DELETE …/[id]` (DELETE = retire); lists `GET/POST /api/admin/physio-lists`; unmatched `GET /api/admin/physio-nahiye-queue`, `PATCH …/[id]` (`ignore` \| `alias` existing S only); ops `GET /api/physio-catalog`. W4: `#23` slots `nahiye` → `note` + matcher. Seed `npx tsx prisma/seed-physio-catalog.ts` |
 
 ## Integration
 
@@ -96,19 +101,19 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/billing/context` | session — `deferWalkInToHub` for cashier gate |
 | `/api/procedures/confirm` | session **DOCTOR** (+ admin) — confirm `PROPOSED` → `placeConfirmedProcedures` FIFO |
 | `/api/procedures/bulk-cancel` | session **RECEPTION** (+ admin) — bulk cancel + optional replace code |
-| `PATCH /api/procedures/[id]` | session doctor/reception — edit proposed/scheduled line (code, bodyPart, etc.) |
+| `PATCH /api/procedures/[id]` | session **DOCTOR** / **RECEPTION** (+ admin) — PROPOSED/SCHEDULED: `siteIds[]`, `siteApplyMode` (TURN/TOGETHER), `note`, legacy `bodyPart` (derived from sites when `siteIds` sent) |
 | `/api/procedures/[id]/reschedule` | session **RECEPTION** (+ admin) — matrix slot move (`resourceId` optional) |
 | `/api/procedures/[id]/cancel` | session **RECEPTION** |
 | `/api/procedures/[id]/check-in` | session NURSE — QR / MANUAL (`checkInRequiresQr=false`) / override; channel-aware window; **atomic → `CHECKED_IN`** (no auto-complete) |
 | `/api/procedures/[id]/start` | alias of check-in |
 | `/api/procedures/[id]/complete` | session NURSE — stuck `CHECKED_IN` fallback only (happy path = auto by `endsAt`) |
 | `/api/nurse/qr-scan` | session NURSE — verifyGuestQrToken; returns `qrToken` for check-in |
-| `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED` |
+| `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED`; Wave 4 `byOrganization` |
 | Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products`; complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
-| `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota) |
+| `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota); Wave 4 `byOrganization` |
 | `/api/procedures/[id]/no-show` | session NURSE — burns quota + may charge folio |
 | `/api/sanatorium/resources/available-slots` | session RECEPTION — free inventory (exhausted omitted) |
-| `/api/capacity/summary` | bridge secret — GET remaining%/risk; POST evaluate+publish `CAPACITY_CHANGED` |
+| `/api/capacity/summary` | bridge secret — GET remaining%/risk (`x-era-organization-id` or process bind); POST `runCronForEachTenant` → `byOrganization` |
 
 ## Preset gating
 

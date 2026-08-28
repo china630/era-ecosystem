@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { createBookingAppointment, satelliteOrganizationId } from "@era/satellite-kit";
+import { createBookingAppointment } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 const schema = z.object({
   customerRef: z.string().min(1).max(64),
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
     let orgId: string | undefined;
     try {
-      const id = satelliteOrganizationId();
+      const id = requestOrganizationId();
       orgId = id === "demo-org" ? undefined : id;
     } catch {
       orgId = undefined;
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     // Pending patient stub — no MDM link from public path
-    const organizationId = satelliteOrganizationId();
+    const organizationId = requestOrganizationId();
     let patient = await prisma.patientRef.findFirst({
       where: { organizationId, refCode: body.customerRef },
     });

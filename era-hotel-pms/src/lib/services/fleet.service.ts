@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { TourConflictError } from '@/lib/services/tour.service';
 
 function orgId() {
-  return satelliteOrganizationId();
+  return requestOrganizationId();
 }
 
 export async function listFleetVehicles(activeOnly = false) {

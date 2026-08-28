@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { satelliteOrganizationId } from '@era/satellite-kit';
 import { toDecimal } from '@/lib/decimal';
-import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
+import { assertHotelIdMatches, bridgeRequestOrganizationId } from '@/lib/integration/elektraweb-bridge/config';
 import {
   mapElektrawebReservationStatus,
   num,
@@ -43,7 +42,7 @@ async function resolveGuestId(row: Record<string, unknown>): Promise<string> {
       ([str(row.NAME), str(row.LNAME)].filter(Boolean).join(' ') || `Guest ${guestExt}`);
     const created = await prisma.guest.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: bridgeRequestOrganizationId(),
         externalRef: guestExt,
         fullName: name,
         firstName: str(row.NAME) ?? undefined,
@@ -108,7 +107,7 @@ export async function upsertReservationFromElektrawebRow(
   row: Record<string, unknown>,
 ): Promise<ReservationBridgeResult> {
   const hotelId = num(row.HOTELID);
-  if (hotelId != null) assertHotelIdMatches(hotelId);
+  if (hotelId != null) await assertHotelIdMatches(hotelId);
 
   const externalRef = str(row.RESID) ?? str(row.ID);
   if (!externalRef) throw new Error('Reservation row missing RESID/ID');
@@ -154,7 +153,7 @@ export async function upsertReservationFromElektrawebRow(
   });
 
   const data = {
-    organizationId: satelliteOrganizationId(),
+    organizationId: bridgeRequestOrganizationId(),
     externalRef,
     roomTypeId,
     roomId,
@@ -198,7 +197,7 @@ export async function upsertReservationFromElektrawebRow(
   if (folios.length === 0) {
     await prisma.folio.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: bridgeRequestOrganizationId(),
         reservationId: reservation.id,
         type: 'GUEST',
         status: 'OPEN',

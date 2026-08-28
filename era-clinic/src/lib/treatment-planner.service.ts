@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { satelliteOrganizationId } from "@era/satellite-kit/orchestrator-gateway";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
 import { bakuDayBounds } from "@/lib/baku-day";
@@ -15,6 +15,7 @@ import {
 import {
   countResourceAllocations,
   findSkilledFreePractitioner,
+  listPhysicalRequirementResources,
   replaceProcedureAllocations,
   resolvePhysicalResource,
 } from "@/domain/procedure/procedure-allocation.service";
@@ -337,7 +338,7 @@ export async function buildProposedPlan(instanceId: string): Promise<number> {
     const proposedAt = await nextWorkSlot(cursor, workHours);
     await prisma.procedureOrder.create({
       data: {
-        organizationId: satelliteOrganizationId(),
+        organizationId: requestOrganizationId(),
         patientRefId,
         procedureCode: item.procedureCode,
         procedureName: item.procedureName,
@@ -486,11 +487,8 @@ export async function placeConfirmedProcedures(
             ? "LOCATION"
             : "EQUIPMENT";
 
-    const resource = await resolvePhysicalResource({
-      resourceCode: physicalReq?.resourceCode ?? pt.resourceCode,
-      resourceKind: physicalReq?.resourceKind ?? pt.resourceKind ?? null,
-    });
-    if (!resource) continue;
+    const physicalResources = await listPhysicalRequirementResources(pt);
+    if (physicalResources.length === 0) continue;
 
     const duration = alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes);
     const typeHours = {
@@ -500,7 +498,7 @@ export async function placeConfirmedProcedures(
     };
     const dayEnd = resolveEffectiveDayEndHour(typeHours, {
       procedureExtendedEndHour: pt.extendedEndHour,
-      resourceExtendedEndHour: resource.extendedEndHour,
+      resourceExtendedEndHour: physicalResources[0]?.extendedEndHour,
     });
 
     let slotStart = await nextWorkSlot(cursor, typeHours, dayEnd);
@@ -512,7 +510,8 @@ export async function placeConfirmedProcedures(
       slotStart.setHours(typeHours.lunchEndHour, 0, 0, 0);
     }
 
-    for (let attempt = 0; attempt < 96; attempt++) {
+    let orderPlaced = false;
+    for (let attempt = 0; attempt < 96 && !orderPlaced; attempt++) {
       slotStart = avoidLunchOverlap(slotStart, duration, typeHours);
       if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
         slotStart.setDate(slotStart.getDate() + 1);
@@ -546,19 +545,11 @@ export async function placeConfirmedProcedures(
         context: rotationContext,
       });
       if (!rotation.ok) {
-        // Shift to next day when consecutive-day rule blocks
         slotStart.setDate(slotStart.getDate() + 1);
         slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
         slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
-
-      const used = await countResourceAllocations(
-        resource.id,
-        slotStart,
-        slotEnd,
-      );
-      const busy = used >= resource.capacity;
 
       const staffMode =
         pt.requirements?.find((r) => r.role === "STAFF")?.staffMode ?? "HARD";
@@ -619,59 +610,75 @@ export async function placeConfirmedProcedures(
         candidatePatientRestMinutes: patientRest,
       });
 
-      if (!busy && ruleOk && compatOk && !gapErr) {
-        const accessCode =
-          order.accessCode?.trim() ||
-          (await generateUniqueAccessCode(order.organizationId));
-        await prisma.procedureOrder.update({
-          where: { id: order.id },
-          data: {
-            status: "SCHEDULED",
-            scheduledAt: slotStart,
-            endsAt: slotEnd,
-            resourceId: resource.id,
-            confirmedAt: now,
-            confirmedByUserId: opts?.confirmedByUserId,
-            prescribedByPractitionerId,
-            accessCode,
-            bodyPart: order.bodyPart ?? pt.bodyPart ?? undefined,
-          },
-        });
-        await replaceProcedureAllocations(order.id, [
-          {
-            role: physicalRole,
-            resourceId: resource.id,
-            startsAt: slotStart,
-            endsAt: slotEnd,
-          },
-          {
-            role: "STAFF",
-            practitionerId: staff.id,
-            startsAt: slotStart,
-            endsAt: slotEnd,
-          },
-        ]);
-
-        const placedSlot = {
-          code: order.procedureCode,
-          bodyPart: order.bodyPart ?? pt.bodyPart,
-          start: slotStart,
-          end: slotEnd,
-          patientRestMinutes: patientRest,
-        };
-        scheduledPatient.push(placedSlot);
-        rotationContext.push({
-          procedureCode: placedSlot.code,
-          bodyPart: placedSlot.bodyPart,
-          startAt: placedSlot.start,
-          endAt: placedSlot.end,
-        });
-        cursor = addMinutes(slotEnd, patientRest);
-        placed++;
-        break;
+      if (!ruleOk || !compatOk || gapErr) {
+        slotStart = addMinutes(slotStart, slotMinutes);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
+        continue;
       }
-      slotStart = addMinutes(slotStart, slotMinutes);
-      slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
+
+      let pickedResource: (typeof physicalResources)[number] | null = null;
+      for (const resource of physicalResources) {
+        const used = await countResourceAllocations(resource.id, slotStart, slotEnd);
+        if (used < resource.capacity) {
+          pickedResource = resource;
+          break;
+        }
+      }
+      if (!pickedResource) {
+        slotStart = addMinutes(slotStart, slotMinutes);
+        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
+        continue;
+      }
+
+      const accessCode =
+        order.accessCode?.trim() ||
+        (await generateUniqueAccessCode(order.organizationId));
+      await prisma.procedureOrder.update({
+        where: { id: order.id },
+        data: {
+          status: "SCHEDULED",
+          scheduledAt: slotStart,
+          endsAt: slotEnd,
+          resourceId: pickedResource.id,
+          confirmedAt: now,
+          confirmedByUserId: opts?.confirmedByUserId,
+          prescribedByPractitionerId,
+          accessCode,
+          bodyPart: order.bodyPart ?? pt.bodyPart ?? undefined,
+        },
+      });
+      await replaceProcedureAllocations(order.id, [
+        {
+          role: physicalRole,
+          resourceId: pickedResource.id,
+          startsAt: slotStart,
+          endsAt: slotEnd,
+        },
+        {
+          role: "STAFF",
+          practitionerId: staff.id,
+          startsAt: slotStart,
+          endsAt: slotEnd,
+        },
+      ]);
+
+      const placedSlot = {
+        code: order.procedureCode,
+        bodyPart: order.bodyPart ?? pt.bodyPart,
+        start: slotStart,
+        end: slotEnd,
+        patientRestMinutes: patientRest,
+      };
+      scheduledPatient.push(placedSlot);
+      rotationContext.push({
+        procedureCode: placedSlot.code,
+        bodyPart: placedSlot.bodyPart,
+        startAt: placedSlot.start,
+        endAt: placedSlot.end,
+      });
+      cursor = addMinutes(slotEnd, patientRest);
+      placed++;
+      orderPlaced = true;
     }
   }
 
