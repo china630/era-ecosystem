@@ -39,8 +39,14 @@ export function handleRouteError(err: unknown) {
 
 /** Resolve org from JWT / header / user / bind and enter ALS. */
 export async function enterLogisticsRequestTenant(): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
+  let cookieStore: Awaited<ReturnType<typeof cookies>>;
+  let headerStore: Awaited<ReturnType<typeof headers>>;
+  try {
+    cookieStore = await cookies();
+    headerStore = await headers();
+  } catch {
+    return undefined;
+  }
   let organizationId = headerStore.get("x-era-organization-id")?.trim() || undefined;
 
   const token = getBearerOrCookieToken(
@@ -78,8 +84,8 @@ export async function enterLogisticsRequestTenant(): Promise<string | undefined>
 
 /** Call at the start of authenticated API handlers (session helper). */
 export async function assertLogisticsEntitled(): Promise<void> {
-  await requireLogisticsSatellite();
   await enterLogisticsRequestTenant();
+  await requireLogisticsSatellite();
 }
 
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {

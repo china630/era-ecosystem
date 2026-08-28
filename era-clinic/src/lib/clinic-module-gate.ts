@@ -3,6 +3,7 @@ import {
   requireSatelliteModule,
   IndustryModuleInactiveError,
   resolveClinicModuleForPathname,
+  enterSatelliteTenant,
 } from "@era/satellite-kit";
 
 export { IndustryModuleInactiveError };
@@ -20,12 +21,23 @@ const AUTH_EXEMPT_PREFIXES = [
   "/sso",
 ];
 
+async function enterTenantFromRequestHeaders(): Promise<void> {
+  try {
+    const org = (await headers()).get("x-era-organization-id")?.trim();
+    if (org) enterSatelliteTenant({ organizationId: org });
+  } catch {
+    /* Next headers() throws outside a request (tests / cron). */
+  }
+}
+
 /** Satellite entitlement gate — fail-closed (AC Scaffold BE). */
 export async function requireClinicSatellite(): Promise<void> {
+  await enterTenantFromRequestHeaders();
   await requireSatelliteModule("industry_clinic");
 }
 
 export async function requireClinicModule(moduleKey: string): Promise<void> {
+  await enterTenantFromRequestHeaders();
   await requireSatelliteModule(moduleKey);
 }
 

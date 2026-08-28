@@ -13,12 +13,14 @@ import {
   resolveHotelModuleKey,
   IndustryModuleInactiveError,
   runCronForEachTenant,
+  requireSatelliteModule,
 } from "./org-entitlement-gate.js";
-import { resolveSatelliteTenantOrgId } from "../tenancy/satellite-tenant-context.js";
+import { resolveSatelliteTenantOrgId, runWithSatelliteTenant } from "../tenancy/satellite-tenant-context.js";
 import {
   applySatelliteRuntimeConfig,
   resetRuntimeConfigForTests,
 } from "../tenancy/runtime-config-core.js";
+import { resetOrganizationBindForTests } from "../tenancy/organization-bind-core.js";
 
 describe("industry module key aliases", () => {
   it("maps legacy industry slugs to canonical", () => {
@@ -49,7 +51,9 @@ describe("resolveEntitlementActiveModules", () => {
   beforeEach(() => {
     cfgFile = path.join(os.tmpdir(), `era-runtime-config-test-${process.pid}-${Date.now()}.json`);
     process.env.ERA_RUNTIME_CONFIG_FILE = cfgFile;
+    process.env.ERA_ORG_BIND_FILE = path.join(os.tmpdir(), `era-bind-missing-${process.pid}.json`);
     resetRuntimeConfigForTests();
+    resetOrganizationBindForTests();
   });
 
   afterEach(() => {
@@ -59,7 +63,9 @@ describe("resolveEntitlementActiveModules", () => {
       /* missing ok */
     }
     delete process.env.ERA_RUNTIME_CONFIG_FILE;
+    delete process.env.ERA_ORG_BIND_FILE;
     resetRuntimeConfigForTests();
+    resetOrganizationBindForTests();
   });
 
   it("prefers snapshot activeModules", () => {
@@ -80,6 +86,54 @@ describe("resolveEntitlementActiveModules", () => {
 
   it("returns null when no snapshot and no cache (fail-closed)", () => {
     assert.equal(resolveEntitlementActiveModules(null), null);
+  });
+
+  it("requireSatelliteModule uses request ALS when process bind is fallback", async () => {
+    const prevOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    const prevUnlock = process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    const prevOrch = process.env.ORCHESTRATOR_EVENT_URL;
+    delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    delete process.env.ORCHESTRATOR_EVENT_URL;
+    try {
+      await applySatelliteRuntimeConfig({
+        config: { activeModules: ["industry_hotel_pms", "hotel_core"] },
+        updatedBy: "test",
+      });
+      await runWithSatelliteTenant(
+        { organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+        async () => {
+          await requireSatelliteModule("industry_hotel_pms");
+        },
+      );
+    } finally {
+      if (prevOrg === undefined) delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+      else process.env.ERA_SATELLITE_ORGANIZATION_ID = prevOrg;
+      if (prevUnlock === undefined) delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+      else process.env.ERA_DEV_UNLOCK_ALL_MODULES = prevUnlock;
+      if (prevOrch === undefined) delete process.env.ORCHESTRATOR_EVENT_URL;
+      else process.env.ORCHESTRATOR_EVENT_URL = prevOrch;
+    }
+  });
+
+  it("requireSatelliteModule throws on fallback without ALS", async () => {
+    const prevOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    const prevUnlock = process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+    delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+    try {
+      await assert.rejects(
+        () => requireSatelliteModule("industry_clinic"),
+        (err: unknown) =>
+          err instanceof IndustryModuleInactiveError &&
+          err.moduleKey === "industry_clinic",
+      );
+    } finally {
+      if (prevOrg === undefined) delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+      else process.env.ERA_SATELLITE_ORGANIZATION_ID = prevOrg;
+      if (prevUnlock === undefined) delete process.env.ERA_DEV_UNLOCK_ALL_MODULES;
+      else process.env.ERA_DEV_UNLOCK_ALL_MODULES = prevUnlock;
+    }
   });
 });
 

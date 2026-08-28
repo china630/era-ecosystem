@@ -16,6 +16,7 @@ import {
   SatelliteOrganizationUnboundError,
 } from "../tenancy/organization-bind-core";
 import {
+  getSatelliteTenantContext,
   resolveSatelliteTenantFilter,
   runWithSatelliteTenant,
 } from "../tenancy/satellite-tenant-context";
@@ -157,11 +158,17 @@ export async function assertEntitled(
 }
 
 /**
- * Bound org required. Does NOT skip on fallback — that was a production hole.
+ * Request ALS org first (SHARED SSO / session header), then process bind.
+ * Fallback env without ALS is fail-closed — that was a production hole.
  * Local unbound + DEV unlock may still pass via assertEntitled.
  */
 export async function requireSatelliteModule(moduleKey: string): Promise<void> {
   if (devUnlockAllModules()) return;
+  const alsOrg = getSatelliteTenantContext()?.organizationId?.trim();
+  if (alsOrg) {
+    await assertEntitled(alsOrg, moduleKey);
+    return;
+  }
   const { organizationId, source } = resolveSatelliteOrganizationId({
     allowFallback: true,
   });
