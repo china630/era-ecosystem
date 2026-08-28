@@ -26,7 +26,7 @@ export async function upsertGuestFromElektrawebRow(
   const { firstName, middleName } = splitGivenAndPatronymic(givenField);
   const composed = composePersonFullName(firstName, middleName, lastName);
   const fullName =
-    str(row.FULLNAME) ?? str(row.GUESTNAMES) ?? composed || 'Unknown Guest';
+    (str(row.FULLNAME) ?? str(row.GUESTNAMES) ?? composed) || 'Unknown Guest';
 
   const docs = classifyPersonDocuments({
     nationalId: str(row.NATIONALIDNO),
