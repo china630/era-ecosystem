@@ -30,6 +30,7 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] Separate DB `era_mdm` — package `@era365/mdm-database`
 - [x] Models: `GlobalNaturalPerson`, `GlobalLegalEntity`, consent stubs (`PersonAccessRequest`, `PersonAccessGrant`, `PersonAccessLog`)
+- [x] Person core `sex` (`MALE`/`FEMALE`/`UNKNOWN`, no OTHER) + `birthDate`; resolve/ops-profile fill-not-clear
 - [x] `MdmModule` — `GET /internal/v1/mdm/health`, `POST .../organizations/register`, `POST .../persons`, `POST .../access-requests`
 - [x] Super-admin write — `POST /v1/admin/mdm/persons/lookup-by-fin|resolve|merge`, `GET .../persons/:id/identifiers`; UI `/super-admin/mdm/persons`
 - [x] PII encrypt + blind index (see [doc/adr/era-mdm-phase1.md](adr/era-mdm-phase1.md))
