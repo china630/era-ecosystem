@@ -106,7 +106,7 @@ Env (orchestrator): `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. Industry: `ORC
 - [x] `WorkforceScope`, `OrgUnit`, `OrgUnitCommercialLink`, `WorkforcePosition` schema
 - [x] `GET/POST /platform/v1/workforce/scope/*`, `/org-units/*`, `/positions/*`, employment `transfer`
 - [x] `WORKFORCE_ORG_UNIT_*`, `WORKFORCE_POSITION_*`, `WORKFORCE_EMPLOYMENT_TRANSFERRED` events
-- [x] Web `/workspace/workforce/org-structure`, `/positions`; employments hire requires orgUnit + position + i18n en/az/ru
+- [x] Web `/workspace/workforce/org-structure`, `/positions`; xlsx/csv import of units+positions; employments hire requires orgUnit + position; satellite checkboxes optional (headcount without seat); i18n en/az/ru
 - [x] UAT — [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) `CP-WF-ORG-01`, `CP-WF-POS-01`
 
 ## CP-WF-SEC — Role templates, hire, Security Admin (Plan C)
@@ -114,7 +114,7 @@ Env (orchestrator): `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. Industry: `ORC
 - [x] `SatelliteRoleTemplate`, `WorkforceRoleBinding`, `ManualGrant`, `WorkforceSeatAllocation` schema
 - [x] `POST /platform/v1/workforce/employments/hire`, terminate, reprovision; role-templates; manual-grants; security overview
 - [x] `STAFF_PROVISIONED` v2 (`cpEmploymentId`) published from CP; `WorkforceAssignment` registry upgrade
-- [x] Web `/workspace/workforce/security`; employments hire wizard + satellite checkboxes + i18n en
+- [x] Web `/workspace/workforce/security`; employments hire wizard + optional satellite checkboxes + i18n en/az/ru
 
 ## CP-WF-HUB — v3 Workforce clean cutover (Plan E)
 
@@ -129,7 +129,7 @@ Env (orchestrator): `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. Industry: `ORC
 - [x] F6: `platform_workforce` SKU + workspace tile; strict entitlement guard
 - [x] F4: `WorkforceSeatService` + `POST /internal/v1/licensing/seats/check` + Security seats widget
 - [x] F5: `WorkforceAuditLog` correlation fields + `/workspace/workforce/security/audit` + satellite-kit stamp
-- [x] F1: Export API + `/workspace/workforce/export` UI; Nafta §7
+- [x] F1: Export API + `/workspace/workforce/export` UI (xlsx/csv roster+absences import); Nafta §7
 - [x] F3: ƏMAS boundary ADR + `getEmasPrefill` cpEmploymentId + absence mirror
 - [x] F2: `WORKFORCE_TIMESHEET_*` events + construction import publish + Finance consumer
 - [x] ADRs F1–F5; COVERAGE `CP-WF-EXP-01`, `CP-WF-SEAT-01`, `CN-CAL-02`

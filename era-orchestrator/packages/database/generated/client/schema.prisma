@@ -387,6 +387,7 @@ model SatelliteEndpoint {
 
   @@unique([organizationId, satelliteKey])
   @@index([organizationId])
+  @@index([satelliteKey, baseUrl])
   @@map("satellite_endpoints")
 }
 
@@ -413,8 +414,14 @@ model PlacementJob {
   toTopology     DeploymentTopology @map("to_topology")
   status         PlacementJobStatus @default(PENDING)
   errorMessage   String?            @map("error_message")
-  /// Metadata from exportSlice stub (not a full dump).
+  /// Metadata from exportSlice (counts + format note).
   sliceMeta      Json?              @map("slice_meta")
+  /// Durable slice artifact path or opaque ref for host agent download.
+  artifactRef    String?            @map("artifact_ref")
+  /// Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
+  artifactJson   Json?              @map("artifact_json")
+  /// Host agent apply log (observable provision step).
+  applyLog       String?            @map("apply_log") @db.Text
   /// Optional target URL for cutoverEndpoint.
   targetBaseUrl  String?            @map("target_base_url")
   createdAt      DateTime           @default(now()) @map("created_at")

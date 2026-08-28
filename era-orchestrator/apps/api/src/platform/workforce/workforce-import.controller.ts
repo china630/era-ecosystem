@@ -27,7 +27,7 @@ export class WorkforceImportController {
   @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
   @ApiOperation({
     summary:
-      "Import roster from CSV (dryRun supported). New hires need fin+fullName; existing persons may use globalPersonId.",
+      "Import roster from CSV/xlsx (dryRun supported). New hires need fin+fullName; empty satellites = headcount (no seat); ADDITIONAL workplace = second job without a seat.",
   })
   async roster(
     @OrganizationId() organizationId: string,
@@ -53,6 +53,26 @@ export class WorkforceImportController {
     @Body() body: ImportCsvDto,
   ) {
     return this.importService.importAbsences(
+      organizationId,
+      user.sub,
+      csvFromWorkforceImportBody(body),
+      dryRun === "true" || dryRun === "1",
+    );
+  }
+
+  @Post("org-structure")
+  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @ApiOperation({
+    summary:
+      "Import org units + positions from CSV/xlsx (dryRun supported). Idempotent upsert by name; does not delete extra rows.",
+  })
+  async orgStructure(
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Query("dryRun") dryRun: string | undefined,
+    @Body() body: ImportCsvDto,
+  ) {
+    return this.importService.importOrgStructure(
       organizationId,
       user.sub,
       csvFromWorkforceImportBody(body),

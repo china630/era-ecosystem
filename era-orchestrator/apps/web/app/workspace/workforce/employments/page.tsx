@@ -136,11 +136,7 @@ export default function WorkforceEmploymentsPage() {
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
   const [notEntitled, setNotEntitled] = useState(false);
   const [enabling, setEnabling] = useState(false);
-  const [satelliteKeys, setSatelliteKeys] = useState<string[]>([
-    "industry_clinic",
-    "industry_hotel_pms",
-    "industry_fnb_pos",
-  ]);
+  const [satelliteKeys, setSatelliteKeys] = useState<string[]>([]);
 
   const [filterText, setFilterText] = useState("");
   const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
@@ -276,7 +272,7 @@ export default function WorkforceEmploymentsPage() {
     setResolvedLabel(null);
     setPositionId("");
     setHireDate(new Date().toISOString().slice(0, 10));
-    setSatelliteKeys(["industry_clinic", "industry_hotel_pms", "industry_fnb_pos"]);
+    setSatelliteKeys([]);
     setError(null);
     setHireOpen(true);
   }
@@ -330,6 +326,7 @@ export default function WorkforceEmploymentsPage() {
       return;
     }
     setGlobalPersonId("");
+    setSatelliteKeys([]);
     setHireOpen(false);
     await load();
     setBusy(false);
@@ -769,6 +766,7 @@ export default function WorkforceEmploymentsPage() {
             <legend className="px-1 text-xs font-medium text-[#34495E]">
               {t("satelliteAccess")}
             </legend>
+            <p className="mb-2 text-xs text-[#7F8C8D]">{t("satelliteAccessHint")}</p>
             <div className="flex flex-wrap gap-4">
               {SATELLITE_OPTIONS.map((s) => (
                 <label key={s.key} className="flex items-center gap-2 text-xs text-[#34495E]">
