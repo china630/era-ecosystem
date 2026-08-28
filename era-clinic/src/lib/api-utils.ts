@@ -66,8 +66,6 @@ export async function assertClinicEntitled(): Promise<void> {
 }
 
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
-  const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
-  await assertClinicApiEntitled();
   const cookieStore = await cookies();
   const headerStore = await headers();
   const token = getBearerOrCookieToken(
@@ -103,6 +101,9 @@ export async function getRouteSession(): Promise<SatelliteSessionPayload | null>
 
   enterSatelliteTenant({ organizationId });
   session = { ...session, organizationId };
+
+  const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
+  await assertClinicApiEntitled();
 
   return session;
 }

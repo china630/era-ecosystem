@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requestOrganizationId } from '@/lib/request-organization';
-import { requireSatelliteModule } from "@era/satellite-kit";
+import { requireHotelModule } from "@/lib/hotel-module-gate";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { createBookingSlot } from "@/integration/control-plane-platform.client";
 
@@ -14,8 +14,8 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await requireSatelliteModule("industry_hotel_pms");
-    await requireSatelliteModule("hotel_spa_scheduling");
+    await requireHotelModule("industry_hotel_pms");
+    await requireHotelModule("hotel_spa_scheduling");
     const body = bodySchema.parse(await req.json());
     const organizationId = requestOrganizationId();
     if (!organizationId) {
