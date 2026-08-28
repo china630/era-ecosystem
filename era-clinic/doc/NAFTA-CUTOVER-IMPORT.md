@@ -37,7 +37,7 @@ Practitioners (#27) from human roster SSOT:
 node era-clinic/scripts/nafta-cutover/build-practitioners-import.cjs
 ```
 
-Source: `NAFTA-START/clinic/reports/27-practitioners-roster.json` + FIN from `hr/37-Employees.xlsx`.
+Source: `NAFTA-START/clinic/reports/27-practitioners-roster.json` + FIN from the latest START HR workbook (`Əməkdaşların yenilənmiş siyahı…` / `37-Employees.xlsx`).
 
 Full patient archive is default (`NAFTA_PATIENTS_ALL=0` to restore live filter).
 
@@ -67,7 +67,8 @@ Writes `NAFTA-ERA-READY/clinic/25-Treatments.xlsx`, `26-Rooms.xlsx`, `40-Procedu
 | 39-lab-results.xlsx | 22620 | Word tables | orderRef, code, label, value, unit, refMin, refMax |
 | 28, 30 | — | **Dropped** from ERA-READY (WO reference only; no wizard entity) |
 | 33–36 | copy catalogs | as in START |
-| `../hr/hr-01-Employees.xlsx` | START `hr/37-Employees.xlsx` | fin, fullName, orgUnit, position, hireDate, satellites |
+| `../hr/37-Employees.xlsx` | START `hr/37-Employees.xlsx` (133; FİN + Cins K/Q + DOB + hire) | fin, fullName, sex, birthDate, orgUnit, position, hireDate, workplace, satellites. Dates are Excel date cells `YYYY-MM-DD` (serials + `DD.MM.YYYY` converted; empty only `NAN`/`0`). Empty `satellites` = employment, no login seat. `workplace` `ADDITIONAL` = second job, no seat. Rebuild: `node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs` |
+| `../hr/org-structure.xlsx` | START `hr/Ştat vahidləri Nafta 28.08.2026.xlsx` | orgUnit, position, totalSlots. Import **before** roster. Upsert by name; does not delete extra units. |
 | `../hotel/01–20` | hotel/01–20 | EW wizard |
 | `../1c/40–53` | 1c | as received |
 
@@ -77,7 +78,7 @@ Episode status on `#21` (Asia/Baku calendar day): `checkOut` **before today** �
 
 Attending doctor is **not** a field on `PatientRef`. Same as live ops: reception assigns the episode doctor via the **first Visit**. `#21` `doctorId` → `#27` `wo:doctor:{id}` → one idempotent Visit on check-in (`attending-visits` / `{patientRef}:attending`). OPEN → `IN_PROGRESS`; archive → `COMPLETED`. No Appointment (calendar stays clean). Empty/`0` doctorId or missing `#27` row → skip. Wizard already imports `#27` before `#21`.
 
-MDM on `#21`: match hotel `Guest` by **given + surname (+ patronymic in given) + birthDate + optional phone** (`GET /api/internal/v1/guests/by-identity`), then fall back to `hotelResNo` stay (`GET /api/internal/v1/stays/by-external-ref`). WO `hotelResNo` is not Elektraweb `Res Id`. Then `linkPersonIdentity` (idempotent via existing `PatientRef.globalPersonId`). No FIN in WO — walk-ins without a hotel match get an MDM surrogate. Import hotel `#10` first (guests → MDM). Anamnesis stamp is `Nafta cutover import`.
+MDM on `#21`: stamp FO `uniqueId` + `passport` via `apply-wo-fo-guest-bridge.cjs` (dump `GET https://nafta-frontoffice.webonly.io/api/GuestCard`). Import hotel `#10` first — FO-only cards are appended as `Guest Id=wo:fo:{id}` with passport filled. Then `linkPersonIdentity` with that passport/FIN so clinic and hotel share MDM. Name+DOB hotel lookup and `hotelResNo` stay remain fallbacks. Walk-ins without FO/EW get a surrogate. Anamnesis stamp is `Nafta cutover import`.
 
 Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-URINE` + analyte aliases (`LYM%`→`LYMPH%`). **Ignored:** orders without parseable Word (~170) — no #39 lines, still importable via #24 as header-only orders.
 
@@ -102,8 +103,8 @@ Ops slots in `#23`: **2026-08-25 … 2026-08-30** window; WO SCHEDULED data **25
 
 1. Freeze WebOnly writes.
 2. Lab files: `WO_COOKIE=… node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs` (gate ≥2000).
-3. Build packs: `node era-clinic/scripts/nafta-cutover/build-era-ready.cjs`.
-4. Staging: `node era-clinic/scripts/nafta-cutover/staging-gate.cjs`. Hotel wizard `#10`/`#11` first (guest MDM). Empty clinic DB → wizard by entity (25 … 40 procedure-requirements … 39 lab-results). Spot-check 3 in-house guests share `globalPersonId` with hotel + lab fields (WBC).
+3. Build packs: `node era-clinic/scripts/nafta-cutover/build-era-ready.cjs` (runs FO passport bridge if `hotel/dump/guest-cards.json` exists). Refresh FO cards: `WO_BEARER=… node era-hotel-pms/scripts/dump-webonly-fo-guest-cards.cjs`.
+4. Staging: `node era-clinic/scripts/nafta-cutover/staging-gate.cjs`. Hotel wizard `#10`/`#11` first (EW + `wo:fo:*` guests → MDM). Empty clinic DB → wizard by entity (25 … 40 procedure-requirements … 39 lab-results). Spot-check 3 in-house guests share `globalPersonId` with hotel + lab fields (WBC).
 5. Hotel FO stays Elektraweb. Do not dual-run the WO calendar.
 6. Super-admin “Muslim schedule” later must not reset `quotaUsed` / historical COMPLETED.
 
@@ -113,7 +114,7 @@ Admin → Cutover import (`/admin/import`). Clinic admin write.
 
 1. Dictionaries: 25 → 26 → **40** (procedure → room requirements)  
 2. Staff: 27  
-3. Patients: 21 (after hotel `#10`/`#11`; MDM from stay or surrogate; attending Visit from `#27`)  
+3. Patients: 21 (after hotel `#10`/`#11`; FO `passport`/`uniqueId` → MDM; attending Visit from `#27`)  
 4. Quotas + slots: 38 + 23  
 5. Lab / USG / diagnoses: 29, 24, 39, 31, 32  
 
@@ -125,7 +126,13 @@ Hour X: upload `NAFTA-ERA-READY/hotel/*` in hotel wizard and `clinic/01–10` in
 
 Patients `/patients`: filter hotel room (existing) + program/package (`programCode`) on OPEN episodes.
 
-Roster mapping (`Vəzifə` → satellites) lives in `scripts/nafta-cutover/roster-map.cjs`. Orchestrator workforce import accepts the same CSV columns; xlsx is converted to CSV in the API.
+Roster mapping lives in `scripts/nafta-cutover/map.cjs` (`mapRosterRow` / `mapOrgStructureRow`). Rebuild only HR books (do **not** run full `build-era-ready.cjs` for a HR refresh — it wipes hotel READY):
+
+```
+node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs
+```
+
+**Workforce import order (Orchestrator):** org-structure (`hr/org-structure.xlsx`) → roster (`hr/37-Employees.xlsx`). Empty `satellites` = MDM + employment, no login seat. Dual job = one FIN, two positions (`PRIMARY` / `ADDITIONAL`); one seat per person. Sex: `MALE` / `FEMALE` / `UNKNOWN` (HR `K`/`Q`). Orchestrator accepts xlsx or CSV; Excel serials and `DD.MM.YYYY` → `YYYY-MM-DD`.
 
 ## Procedure site (`nahiye`) — wizard `#23` slots
 

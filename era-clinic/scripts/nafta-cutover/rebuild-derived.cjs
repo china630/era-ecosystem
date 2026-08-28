@@ -472,6 +472,12 @@ function main() {
 
   fs.writeFileSync(path.join(CLINIC_OUT, "rebuild-derived-report.json"), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
+
+  const bridge = path.join(__dirname, "../../../era-hotel-pms/scripts/apply-wo-fo-guest-bridge.cjs");
+  if (fs.existsSync(bridge)) {
+    const r = require("child_process").spawnSync(process.execPath, [bridge], { stdio: "inherit" });
+    if (r.status) process.exit(r.status);
+  }
 }
 
 main();

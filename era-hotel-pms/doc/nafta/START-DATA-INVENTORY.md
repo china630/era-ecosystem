@@ -97,7 +97,8 @@ Ops contour **starts without** these. Request for Finance go-live (Gemini pack, 
 | Trial balance (ОСВ) | All GL accounts + subaccounts at cutover date | Finance opening journals | **ASK** — not Phase-1 UAT |
 | AR/AP (60, 62, 76) | Counterparty → contract → source doc → debit/credit | Finance AR/AP. Hotel city ledger = agencies | **ASK**. EW `Agency Statement` is a stale hint |
 | Cash (50, 51, 57) | Each till, IBAN, acquiring-in-transit | Finance cash / banks | **ASK** |
-| Employees | `hr/37-Employees.xlsx` (126; FİN + dept + title) | Orchestrator Workforce → satellite logins. Clinic doctors still bind to WO API (6) | HAVE. No tab number / MOL / email — hire in CP by FİN |
+| Employees | `hr/Əməkdaşların yenilənmiş siyahı Nafta 28.08.2026.xlsx` (FİN + Cins K/Q + DOB + hire + dept + title + əsas/əlavə; READY `hr/37-Employees.xlsx`) | Orchestrator Workforce. Seat only when `satellites` filled. Clinic doctors still bind to WO API (6) | HAVE. Dates: Excel serial + `DD.MM.YYYY` → `YYYY-MM-DD`. No tab number / MOL / email — hire in CP by FİN |
+| Staff units | `hr/Ştat vahidləri Nafta 28.08.2026.xlsx` → READY `hr/org-structure.xlsx` | CP org-structure import before roster | HAVE. Columns orgUnit, position, totalSlots |
 | Fixed assets (01, 02, МЦ.04) | `1c/50-1C-Fixed-Assets.xlsx` (ƏV.xlsx / Əsas Vəsait; was mislabeled #49 VAT) | Finance FA | HAVE — review columns; VAT (#49) still missing |
 | Housekeeping / linen / cosmetics stock | Сч. 10 by storage → `1c/51-1C-Housekeeping-Stock.xlsx` | Finance / hotel stock | **ASK** |
 | CoA mapping | 1C account → ERA revenue/expense | Finance | **ASK** when posting starts. Ignore EW Chart of Accounts |

@@ -25,7 +25,8 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | 30 | `agencies` | `07-Travel-Agencies.xlsx` | [x] | |
 | 31 | `product-cards` | `08-Product-Cards.xlsx` | [x] | SELLABLE |
 | 32 | `stock-cards` | `09-Stock-Cards.xlsx` | [x] | STOCK |
-| 40 | `guests` | `10-Guest-Cards.merged.xlsx` | [x] | **7 723** `Guest Id`. Dates rewritten as Excel date cells (merge had stripped serials). Overlay 2026-08-28: 0 new ids. |
+| 40 | `guests` | `10-Guest-Cards.merged.xlsx` | [x] | **7 723** EW + **407** FO-only (`wo:fo:{id}`). FO dump stamps passports (`apply-wo-fo-guest-bridge.cjs`). |
+
 | 50 | `reservations` | `11-Reservations.merged.xlsx` | [x] | Cutover 2026-08-17: **6 117** `Res Id` (74 InHouse, 568 Reservation) |
 | 60 | `folios` | `12-Folio-Transactions.merged.xlsx` | [x] | Cutover 2026-08-17: hotel **95 793** ids, 2024-07-12 … 2026-08-17; no ≥3d gaps |
 
@@ -42,7 +43,7 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | `13-Package-Prices-2026.csv` | [x] | Parsed package/FB rates from commercial PDF (seed pricing later) |
 | Room-only BAR (RO / no board) | [ ] | **Not sold** commercially. Derived **BAR BB / BAR FB** proposal: [BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md) + `14-BAR-Derived-2026.csv` — confirm with hotel before seeding |
 | `15-Hizmet-Tanimlari.xlsx` | [x] | EW SPA/medical services (287). Seed clinic catalog + hotel `SPA MEDIKAL` prices; not a wizard step |
-| `hr/37-Employees.xlsx` | [x] | 126 staff (FİN, şöbə, vəzifə) → CP Workforce |
+| `hr/37-Employees.xlsx` | [x] | READY `hr/37-Employees.xlsx` (fin, sex, workplace, satellites) + `hr/org-structure.xlsx` → CP Workforce. Import org-structure first. Empty satellites = no login seat. |
 
 ---
 
@@ -92,6 +93,7 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 | Check-ups / products | `clinic/catalogs/33–36` | [x] | Ref only |
 | **API card dump** | `clinic/dump/` | [x] | `dump-webonly-patient-cards.cjs`. **Do not commit.** |
 | **API procedure calendar** | `clinic/dump/calendar/` | [x] | `dump-webonly-clinic-calendar.cjs`. **Do not commit.** |
+| **WO FO guest cards** | `hotel/dump/guest-cards.json` | [x] | UI `/en/dashboard/frontoffice/guestcard` → `dump-webonly-fo-guest-cards.cjs` (Bearer). **1 598** cards, passport+DOB on all. Match vs EW: `match-wo-fo-ew-guests.cjs`. Not a wizard step. |
 | Curated mirror | `clinic/reports/era-import/` | [x] | `#25`, `#26`, `#40` + `manifest.json` |
 
 ---

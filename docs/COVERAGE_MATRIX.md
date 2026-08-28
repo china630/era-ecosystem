@@ -47,8 +47,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-WF-01 | Practitioner hire (CP workforce → provision) | ADR cp-core-workforce-hub | Y CP hire + STAFF_PROVISIONED | — | — | Y (payroll mirror optional) | — | SHIPPED | UAT: Workspace hire → clinic DOCTOR login |
 | CP-WF-HUB-01 | CP Workforce hub end-to-end (hire, org, absence, security) | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | Plan E clean cutover |
 | CP-WF-EXP-01 | Workforce CSV export (roster, absences, timesheet) | ADR F1 | Y | — | — | Y `/workspace/workforce/export` | — | SHIPPED | No FIN in default CSV |
-| CP-WF-IMP-01 | Workforce CSV import (roster, absences) | ADR F1 | Y dry-run + apply | — | — | Y `/workspace/workforce/export` import column | — | SHIPPED | Template + validate + apply |
-| CP-WF-SEAT-01 | Unified seat licensing + Security Admin widget | ADR F4 | Y | — | — | Y `/workspace/workforce/security` | — | SHIPPED | `POST /internal/v1/licensing/seats/check` |
+| CP-WF-IMP-01 | Workforce CSV/xlsx import (roster, absences, org-structure) | ADR F1 | Y dry-run + apply | — | — | Y `/workspace/workforce/export` + `/workspace/workforce/org-structure` | — | SHIPPED | xlsx or CSV; empty satellites = no seat; org-structure before roster |
+| CP-WF-SEAT-01 | Unified seat licensing + Security Admin widget | ADR F4 | Y | — | — | Y `/workspace/workforce/security` | — | SHIPPED | One seat per person; empty hire satellites = headcount, not a seat |
 | CLI-02 | Rooms master | PRD M2 | Y | — | Y | — | — | SHIPPED | — |
 | CLI-03 | Resources (equipment) | vNext | Y | — | Y | — | — | SHIPPED | — |
 | CLI-04 | Procedure types | vNext | Y | — | Y Add+Edit reqs (resource + STAFF mode) | — | — | SHIPPED | Backfill missing requirements on SatAdmin list |
@@ -416,10 +416,10 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 | CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-TS-01 | Timesheet draft approve | ADR | `GET/POST …/timesheets/*` | — | — | Y `/workspace/workforce/timesheets` | — | UI landed; status API until UAT-SMOKE |
-| CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*` | — | — | Y | — | bootstrap scope → create tree on `/workspace/workforce/org-structure` |
+| CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*`, `POST …/import/org-structure` | — | — | Y | — | bootstrap + xlsx/csv import on `/workspace/workforce/org-structure`; upsert by name, no deletes |
 | CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` | — | — | Y | — | create position on `/workspace/workforce/positions` |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Split UI: `/security` matrix (neutral No access), `/security/grants`, `/security/bindings`, `/security/audit` |
-| CP-WF-HIRE-01 | CP hire + STAFF_PROVISIONED | ADR cp-workforce-role-templates-and-security-admin | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | hire wizard with satellite checkboxes → clinic login |
+| CP-WF-HIRE-01 | CP hire + STAFF_PROVISIONED | ADR cp-workforce-role-templates-and-security-admin | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | hire wizard: satellite checkboxes optional; empty = employment without satellite login |
 
 ## era-finance-core HR mirror (Plan A + B + C)
 
