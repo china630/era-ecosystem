@@ -25,7 +25,7 @@ function req(value: unknown): string {
 async function ensureCutoverEpisode(tx: ImportTx, patientId: string) {
   const existing = await tx.clinicalEpisode.findFirst({
     where: { patientRefId: patientId },
-    orderBy: { createdAt: "desc" },
+    orderBy: { openedAt: "desc" },
   });
   if (existing) return existing;
   return tx.clinicalEpisode.create({
