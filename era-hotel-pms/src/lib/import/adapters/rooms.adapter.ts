@@ -1,11 +1,6 @@
 import { z } from 'zod';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import {
-  cellBool,
-  cellNumber,
-  cellString,
-  mapRoomStatus,
-} from '@/lib/import/helpers';
+import { cellBool, cellNumber, cellString } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
 import { isShareRoomNumberSuffix } from '@/lib/integration/elektraweb-share-map';
 
@@ -14,8 +9,7 @@ const rowSchema = z.object({
   roomTypeCode: z.string().min(1),
   floor: z.number().int().optional(),
   description: z.string().optional().nullable(),
-  roomState: z.string().optional().nullable(),
-  maxBed: z.number().int().optional().nullable(),
+  maxBed: z.number().int().positive().optional().nullable(),
   bedTypeCode: z.string().optional().nullable(),
   location: z.string().optional().nullable(),
   viewCode: z.string().optional().nullable(),
@@ -34,7 +28,6 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     'Room Type': 'roomTypeCode',
     Description: 'description',
     Floor: 'floor',
-    'Room State': 'roomState',
     'Max Bed': 'maxBed',
     'Bed Type': 'bedTypeCode',
     Location: 'location',
@@ -43,19 +36,22 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     Deleted: 'deleted',
   },
   rowSchema,
-  mapRow: (raw) => ({
-    roomNumber: cellString(raw.roomNumber),
-    roomTypeCode: cellString(raw.roomTypeCode),
-    floor: cellNumber(raw.floor) ?? 1,
-    description: cellString(raw.description),
-    roomState: cellString(raw.roomState),
-    maxBed: cellNumber(raw.maxBed),
-    bedTypeCode: cellString(raw.bedTypeCode)?.toUpperCase(),
-    location: cellString(raw.location),
-    viewCode: cellString(raw.viewCode),
-    disabled: cellBool(raw.disabled),
-    deleted: cellBool(raw.deleted),
-  }),
+  mapRow: (raw) => {
+    const maxBedRaw = cellNumber(raw.maxBed);
+    return {
+      roomNumber: cellString(raw.roomNumber),
+      roomTypeCode: cellString(raw.roomTypeCode),
+      floor: cellNumber(raw.floor) ?? 1,
+      description: cellString(raw.description),
+      // EW often exports Max Bed=0; 0 would collapse share capacity to 1. Omit and use RoomType.adultCapacity.
+      maxBed: maxBedRaw != null && maxBedRaw > 0 ? Math.trunc(maxBedRaw) : null,
+      bedTypeCode: cellString(raw.bedTypeCode)?.toUpperCase(),
+      location: cellString(raw.location),
+      viewCode: cellString(raw.viewCode),
+      disabled: cellBool(raw.disabled),
+      deleted: cellBool(raw.deleted),
+    };
+  },
   upsert: async (tx, row, dryRun) => {
     // EW FO list suffix 707S is not a master room — skip virtual share labels.
     if (isShareRoomNumberSuffix(row.roomNumber)) {
@@ -76,9 +72,8 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     const data = {
       roomTypeId: roomType.id,
       floor: row.floor ?? 1,
-      status: mapRoomStatus(row.roomState),
       description: row.description ?? undefined,
-      maxBed: row.maxBed ?? undefined,
+      maxBed: row.maxBed && row.maxBed > 0 ? row.maxBed : undefined,
       bedTypeCode: row.bedTypeCode ?? undefined,
       location: row.location ?? undefined,
       viewCode: row.viewCode ?? undefined,

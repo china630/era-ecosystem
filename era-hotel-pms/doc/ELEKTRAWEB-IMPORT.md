@@ -124,11 +124,11 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Room Views.xlsx | `room-views` | `RoomView` | `code` | Also in reference seed |
 | Room Types.xlsx | `room-types` | `RoomType` | `code` | |
 | Rate Codes.xlsx | `rate-plans` | `RatePlan` | `code` | Legacy flat price fields |
-| Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode`. **Skip** virtual share labels (`707S`) — not master rooms |
+| Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode`. **Skip** virtual share labels (`707S`) — not master rooms. Nafta cutover: keep `Room No` / `Room Type` / `Floor` / `Bed Type` only. Ignore EW `Max Bed=0` (use `RoomType.adultCapacity`) and `Room State` HK snapshot (import leaves `AVAILABLE`). |
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | |
 | Product Cards.xlsx | `product-cards` | `Product` | `code` | `productType = SELLABLE` |
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
-| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**; FIN/passport resolve via MDM only (W4 — not persisted on `Guest`). **Gender** column → `Guest.gender` (share M/F) |
+| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. `Birth Date` Excel serials are restored to calendar dates on the Nafta merged book. MDM `fullName` fill-not-clear adds patronymic when incoming name is longer. |
 | Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
 | Folios.xlsx | `folios` | `FolioCharge` | `externalRef` | Elektraweb folio/charge id |
 | Chart of Accounts | — | — | — | **Excluded** — finance-core |
@@ -160,7 +160,7 @@ Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assign
 
 - **Reservations** resolve RoomType (code/name), optional Room, Agency, Guest (name or existing guest).
 - **Folios** resolve Reservation by `externalRef`, RevenueCode by `code`.
-- **Guests** import resolves `globalPersonId` via MDM when FIN or passport is present (`resolvePersonIdentity` from `@era/satellite-kit`).
+- **Guests** import resolves `globalPersonId` via MDM when FIN or passport is present (`resolvePersonIdentity` from `@era/satellite-kit`), and writes **sex + birthDate** to MDM person core.
 
 Missing references surface as **per-row errors** in preview/import summary.
 

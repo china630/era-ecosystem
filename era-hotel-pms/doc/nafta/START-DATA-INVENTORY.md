@@ -1,7 +1,7 @@
 # Nafta contour — start data inventory
 
 **Cutover snapshot:** 2026-08-25 (clinic ops week 25–30 Aug)  
-**Previous EW hotel export:** 2026-08-17  
+**Previous EW hotel export:** 2026-08-17 · **Guest Cards overlay:** 2026-08-28  
 **Pack (raw):** `D:\ERA-BACKUP\NAFTA-START\` (`hotel/` Elektraweb, `clinic/dump|catalogs` WebOnly, `hr/`, `1c/`). **Wizard books:** `D:\ERA-BACKUP\NAFTA-ERA-READY\`. Numbered names: [START-FILE-CHECKLIST.md](./START-FILE-CHECKLIST.md).  
 **Delta after Excel:** Elektraweb browser plugin ([ELEKTRAWEB-LIVE-BRIDGE.md](../ELEKTRAWEB-LIVE-BRIDGE.md)).  
 **Wizard file names:** [IMPORT_FILE_CHECKLIST.md](./IMPORT_FILE_CHECKLIST.md).  
@@ -33,12 +33,12 @@ Upload via `/admin/import` unless noted.
 | Bed types | `hotel/02-Bed-Types.xlsx` | EW | Hotel wizard | HAVE |
 | Room views | `hotel/03-Room-Views.xlsx` | EW | Hotel wizard | HAVE |
 | Room types | `hotel/04-Room-Types.xlsx` | EW | Hotel wizard | HAVE |
-| Rooms | `hotel/05-Rooms.xlsx` | EW | Hotel wizard | HAVE |
+| Rooms | `hotel/05-Rooms.xlsx` | EW | Hotel wizard | HAVE. Wizard book: 78 rooms, 4 columns (`Room No`, `Room Type`, `Floor`, `Bed Type`). Dropped EW hardware/HK extras; `Max Bed` was all 0 (would break share); `Room State` was export-day Dirty/Clean, not inventory. |
 | Rate codes | `hotel/06-Rate-Codes.xlsx` | EW | Hotel wizard | HAVE |
 | Travel agencies | `hotel/07-Travel-Agencies.xlsx` | EW | Hotel wizard | HAVE |
 | Product cards (sellable) | `hotel/08-Product-Cards.xlsx` | EW | Hotel wizard | HAVE |
 | Stock cards | `hotel/09-Stock-Cards.xlsx` | EW | Hotel wizard | HAVE |
-| Guest registry | `hotel/10-Guest-Cards.merged.xlsx` (7 723) | EW | Hotel wizard `guests` + MDM link | HAVE. Aug-17 export hit 1000-row cap — plugin catches new cards |
+| Guest registry | `hotel/10-Guest-Cards.merged.xlsx` (7 723) | EW | Hotel wizard `guests` + MDM link | HAVE. Overlay **2026-08-28** 900-row export: 0 new `Guest Id`; cell-fill 69 cards. Merge had stripped Excel date formats to serials; **rewritten as date cells** (START + READY). Summary JSON: `10-Guest-Cards.merged.summary.json`. |
 | Reservations / FOCP | `hotel/11-Reservations.merged.xlsx` (6 117; 74 InHouse, 568 future) | EW | Hotel wizard `reservations` | HAVE. Filter 2026+ or active |
 | Folio lines | `hotel/12-Folio-Transactions.merged.xlsx` (95 793 hotel) | EW | Hotel wizard `folios` | HAVE through 2026-08-17. Load **open / in-house** at hour X, not full archive |
 | Package / FB sell prices | `hotel/13-Package-Prices-2026.csv` | Commercial PDF (parsed) | Hotel rate plans + clinic `ProgramTemplate` | HAVE |

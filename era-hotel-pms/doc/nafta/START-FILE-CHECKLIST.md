@@ -34,12 +34,12 @@ D:\ERA-BACKUP\
 | 02 | [x] | `hotel/02-Bed-Types.xlsx` | Hotel wizard | — |
 | 03 | [x] | `hotel/03-Room-Views.xlsx` | Hotel wizard | — |
 | 04 | [x] | `hotel/04-Room-Types.xlsx` | Hotel wizard | — |
-| 05 | [x] | `hotel/05-Rooms.xlsx` | Hotel wizard | — |
+| 05 | [x] | `hotel/05-Rooms.xlsx` | Hotel wizard | Stripped to `Room No` / `Room Type` / `Floor` / `Bed Type`. Do not re-add EW `Max Bed` (zeros) or `Room State`. |
 | 06 | [x] | `hotel/06-Rate-Codes.xlsx` | Hotel wizard | — |
 | 07 | [x] | `hotel/07-Travel-Agencies.xlsx` | Hotel wizard | — |
 | 08 | [x] | `hotel/08-Product-Cards.xlsx` (+ `08-Product-Group-List.xlsx`) — EW **2026-08-21** | Hotel wizard SELLABLE | — |
 | 09 | [x] | `hotel/09-Stock-Cards.xlsx` — EW Ürün Tanımları **2026-08-21** | Hotel wizard STOCK | — |
-| 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723) | Hotel wizard `guests` + MDM | — |
+| 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723; overlay 2026-08-28) | Hotel wizard `guests` + MDM | — |
 | 11 | [x] | `hotel/11-Reservations.merged.xlsx` (6 117) | Hotel wizard, 2026+ / InHouse / future | — |
 | 12 | [x] | `hotel/12-Folio-Transactions.merged.xlsx` (95 793) | Hotel wizard, **открытые** фолио на hour X | — |
 | 13 | [x] | `hotel/13-Package-Prices-2026.csv` | Hotel rate plans + Clinic `ProgramTemplate` | — |
