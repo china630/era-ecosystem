@@ -27,6 +27,11 @@ import {
   inferPersonSegment,
   type ResolvePersonInput,
 } from "./mdm-person-identity.types";
+import {
+  formatPersonBirthDate,
+  personCoreDemographicsWrite,
+} from "./mdm-person-sex";
+import { mergeFullNameWithPatronymic } from "./mdm-person-name";
 import { decryptText } from "../security/pii-crypto.util";
 import { blindIndexForVoen } from "../common/utils/voen-blind-index";
 import {
@@ -257,6 +262,8 @@ export class MdmService {
         globalPersonId: person.id,
         fullName: null,
         phone: null,
+        sex: null,
+        birthDate: null,
         masked: true,
       };
     }
@@ -268,6 +275,8 @@ export class MdmService {
       phone: person.phoneCipher
         ? maskPhone(decryptText(person.phoneCipher))
         : null,
+      sex: person.sex,
+      birthDate: formatPersonBirthDate(person.birthDate),
       masked: false,
     };
   }
@@ -295,25 +304,8 @@ export class MdmService {
   }
 
   /** @deprecated Prefer resolvePersonIdentity — kept for backward compatibility. */
-  async upsertNaturalPerson(input: {
-    fin?: string;
-    fullName: string;
-    phone?: string;
-    passport?: string;
-    issuingCountry?: string;
-    nationality?: string;
-  }) {
-    return this.resolveOrCreatePerson(
-      {
-        fin: input.fin,
-        fullName: input.fullName,
-        phone: input.phone,
-        passport: input.passport,
-        issuingCountry: input.issuingCountry,
-        nationality: input.nationality,
-      },
-      true,
-    );
+  async upsertNaturalPerson(input: ResolvePersonInput) {
+    return this.resolveOrCreatePerson(input, true);
   }
 
   private async resolveOrCreatePerson(
@@ -322,6 +314,15 @@ export class MdmService {
   ) {
     const fullName = input.fullName.trim();
     if (!fullName) throw new BadRequestException("fullName required");
+
+    if (input.globalPersonId?.trim()) {
+      const canonicalId = await this.resolveCanonicalPersonId(
+        input.globalPersonId.trim(),
+      );
+      const identifiers = collectIdentifierInputs(input);
+      await this.updatePersonDemographics(canonicalId, input, identifiers);
+      return this.mapPersonResponse({ id: canonicalId });
+    }
 
     const identifiers = collectIdentifierInputs(input);
     if (identifiers.length === 0 && !allowSurrogate) {
@@ -359,6 +360,12 @@ export class MdmService {
     const segment = inferPersonSegment(input.nationality, identifiers);
     const finBlindIndex = finIdent ? blindIndexFin(finIdent.value) : null;
 
+    const demo = personCoreDemographicsWrite({
+      sex: input.sex,
+      gender: input.gender,
+      birthDate: input.birthDate,
+    });
+
     const created = await this.mdm.globalNaturalPerson.create({
       data: {
         finBlindIndex,
@@ -367,6 +374,8 @@ export class MdmService {
         phoneCipher: input.phone ? encryptText(input.phone.trim()) : null,
         nationality: (input.nationality ?? "AZ").trim().toUpperCase(),
         personSegment: segment as PersonSegment,
+        sex: demo.sex ?? "UNKNOWN",
+        birthDate: demo.birthDate ?? null,
       },
     });
 
@@ -401,12 +410,29 @@ export class MdmService {
     input: ResolvePersonInput,
     identifiers: ReturnType<typeof collectIdentifierInputs>,
   ) {
+    const existing = await this.mdm.globalNaturalPerson.findUnique({
+      where: { id: personId },
+    });
+    if (!existing) throw new NotFoundException("person not found");
+    const demo = personCoreDemographicsWrite({
+      sex: input.sex,
+      gender: input.gender,
+      birthDate: input.birthDate,
+      existingSex: existing?.sex,
+    });
+    const existingName = existing.fullNameCipher
+      ? decryptText(existing.fullNameCipher)
+      : null;
+    const fullName = mergeFullNameWithPatronymic(
+      existingName,
+      input.fullName.trim(),
+    );
     const segment = inferPersonSegment(input.nationality, identifiers);
     const finIdent = identifiers.find((i) => i.type === "AZ_FIN");
     await this.mdm.globalNaturalPerson.update({
       where: { id: personId },
       data: {
-        fullNameCipher: encryptText(input.fullName.trim()),
+        fullNameCipher: encryptText(fullName),
         phoneCipher: input.phone
           ? encryptText(input.phone.trim())
           : undefined,
@@ -414,6 +440,8 @@ export class MdmService {
           ? input.nationality.trim().toUpperCase()
           : undefined,
         personSegment: segment as PersonSegment,
+        ...(demo.sex ? { sex: demo.sex } : {}),
+        ...(demo.birthDate ? { birthDate: demo.birthDate } : {}),
         ...(finIdent
           ? {
               finBlindIndex: blindIndexFin(finIdent.value),
@@ -1045,6 +1073,8 @@ export class MdmService {
         !accessDenied && person.phoneCipher
           ? maskPhone(decryptText(person.phoneCipher))
           : null,
+      sex: accessDenied ? null : person.sex,
+      birthDate: accessDenied ? null : formatPersonBirthDate(person.birthDate),
       identifiers,
       accessDenied,
       hrProfile,

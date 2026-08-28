@@ -21,11 +21,11 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | 20 | `room-types` | `04-Room-Types.xlsx` | [x] | |
 | 20.5 | `bar-bootstrap` | *(fileless)* | [x] | Creates empty `BAR` base plan — **not** package prices from PDF |
 | 21 | `rate-plans` | `06-Rate-Codes.xlsx` | [x] | EW rate codes; package/FB BAR from PDF is separate feed |
-| 22 | `rooms` | `05-Rooms.xlsx` | [x] | |
+| 22 | `rooms` | `05-Rooms.xlsx` | [x] | Inventory only: `Room No`, `Room Type`, `Floor`, `Bed Type`. EW extras + `Max Bed` (all 0) + `Room State` (HK snapshot) stripped. Capacity from `04` `Max Adult`. |
 | 30 | `agencies` | `07-Travel-Agencies.xlsx` | [x] | |
 | 31 | `product-cards` | `08-Product-Cards.xlsx` | [x] | SELLABLE |
 | 32 | `stock-cards` | `09-Stock-Cards.xlsx` | [x] | STOCK |
-| 40 | `guests` | `10-Guest-Cards.merged.xlsx` | [x] | Cutover 2026-08-17: **7 723** `Guest Id`. Wizard hint `Guests.xlsx` |
+| 40 | `guests` | `10-Guest-Cards.merged.xlsx` | [x] | **7 723** `Guest Id`. Dates rewritten as Excel date cells (merge had stripped serials). Overlay 2026-08-28: 0 new ids. |
 | 50 | `reservations` | `11-Reservations.merged.xlsx` | [x] | Cutover 2026-08-17: **6 117** `Res Id` (74 InHouse, 568 Reservation) |
 | 60 | `folios` | `12-Folio-Transactions.merged.xlsx` | [x] | Cutover 2026-08-17: hotel **95 793** ids, 2024-07-12 … 2026-08-17; no ≥3d gaps |
 

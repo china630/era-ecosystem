@@ -9,6 +9,11 @@ export type ResolvePersonInput = {
   fullName: string;
   phone?: string;
   nationality?: string;
+  /** Update this person when already linked (hotel/clinic card edit without re-entering FIN). */
+  globalPersonId?: string;
+  sex?: string;
+  gender?: string;
+  birthDate?: string | Date | null;
 };
 
 export type IdentifierInput = {

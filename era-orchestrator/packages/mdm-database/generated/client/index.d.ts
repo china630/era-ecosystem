@@ -96,6 +96,15 @@ export const PersonSegment: {
 export type PersonSegment = (typeof PersonSegment)[keyof typeof PersonSegment]
 
 
+export const PersonSex: {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  UNKNOWN: 'UNKNOWN'
+};
+
+export type PersonSex = (typeof PersonSex)[keyof typeof PersonSex]
+
+
 export const BloodGroup: {
   A_POS: 'A_POS',
   A_NEG: 'A_NEG',
@@ -156,6 +165,10 @@ export const IdentifierTrust: typeof $Enums.IdentifierTrust
 export type PersonSegment = $Enums.PersonSegment
 
 export const PersonSegment: typeof $Enums.PersonSegment
+
+export type PersonSex = $Enums.PersonSex
+
+export const PersonSex: typeof $Enums.PersonSex
 
 export type BloodGroup = $Enums.BloodGroup
 
@@ -1714,6 +1727,8 @@ export namespace Prisma {
     fullNameCipher: string | null
     phoneCipher: string | null
     nationality: string | null
+    sex: $Enums.PersonSex | null
+    birthDate: Date | null
     personSegment: $Enums.PersonSegment | null
     mergedIntoPersonId: string | null
     createdAt: Date | null
@@ -1727,6 +1742,8 @@ export namespace Prisma {
     fullNameCipher: string | null
     phoneCipher: string | null
     nationality: string | null
+    sex: $Enums.PersonSex | null
+    birthDate: Date | null
     personSegment: $Enums.PersonSegment | null
     mergedIntoPersonId: string | null
     createdAt: Date | null
@@ -1740,6 +1757,8 @@ export namespace Prisma {
     fullNameCipher: number
     phoneCipher: number
     nationality: number
+    sex: number
+    birthDate: number
     personSegment: number
     mergedIntoPersonId: number
     createdAt: number
@@ -1755,6 +1774,8 @@ export namespace Prisma {
     fullNameCipher?: true
     phoneCipher?: true
     nationality?: true
+    sex?: true
+    birthDate?: true
     personSegment?: true
     mergedIntoPersonId?: true
     createdAt?: true
@@ -1768,6 +1789,8 @@ export namespace Prisma {
     fullNameCipher?: true
     phoneCipher?: true
     nationality?: true
+    sex?: true
+    birthDate?: true
     personSegment?: true
     mergedIntoPersonId?: true
     createdAt?: true
@@ -1781,6 +1804,8 @@ export namespace Prisma {
     fullNameCipher?: true
     phoneCipher?: true
     nationality?: true
+    sex?: true
+    birthDate?: true
     personSegment?: true
     mergedIntoPersonId?: true
     createdAt?: true
@@ -1867,6 +1892,8 @@ export namespace Prisma {
     fullNameCipher: string | null
     phoneCipher: string | null
     nationality: string | null
+    sex: $Enums.PersonSex
+    birthDate: Date | null
     personSegment: $Enums.PersonSegment
     mergedIntoPersonId: string | null
     createdAt: Date
@@ -1897,6 +1924,8 @@ export namespace Prisma {
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
+    sex?: boolean
+    birthDate?: boolean
     personSegment?: boolean
     mergedIntoPersonId?: boolean
     createdAt?: boolean
@@ -1919,6 +1948,8 @@ export namespace Prisma {
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
+    sex?: boolean
+    birthDate?: boolean
     personSegment?: boolean
     mergedIntoPersonId?: boolean
     createdAt?: boolean
@@ -1933,6 +1964,8 @@ export namespace Prisma {
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
+    sex?: boolean
+    birthDate?: boolean
     personSegment?: boolean
     mergedIntoPersonId?: boolean
     createdAt?: boolean
@@ -1947,13 +1980,15 @@ export namespace Prisma {
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
+    sex?: boolean
+    birthDate?: boolean
     personSegment?: boolean
     mergedIntoPersonId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "fullNameCipher" | "phoneCipher" | "nationality" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
+  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "fullNameCipher" | "phoneCipher" | "nationality" | "sex" | "birthDate" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
   export type GlobalNaturalPersonInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     identifiers?: boolean | GlobalNaturalPerson$identifiersArgs<ExtArgs>
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
@@ -1994,6 +2029,11 @@ export namespace Prisma {
       fullNameCipher: string | null
       phoneCipher: string | null
       nationality: string | null
+      /**
+       * SoR for legal sex (not HR profile). Satellites cache; do not invent a second identity card.
+       */
+      sex: $Enums.PersonSex
+      birthDate: Date | null
       personSegment: $Enums.PersonSegment
       mergedIntoPersonId: string | null
       createdAt: Date
@@ -2435,6 +2475,8 @@ export namespace Prisma {
     readonly fullNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly phoneCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly nationality: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly sex: FieldRef<"GlobalNaturalPerson", 'PersonSex'>
+    readonly birthDate: FieldRef<"GlobalNaturalPerson", 'DateTime'>
     readonly personSegment: FieldRef<"GlobalNaturalPerson", 'PersonSegment'>
     readonly mergedIntoPersonId: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly createdAt: FieldRef<"GlobalNaturalPerson", 'DateTime'>
@@ -10669,6 +10711,8 @@ export namespace Prisma {
     fullNameCipher: 'fullNameCipher',
     phoneCipher: 'phoneCipher',
     nationality: 'nationality',
+    sex: 'sex',
+    birthDate: 'birthDate',
     personSegment: 'personSegment',
     mergedIntoPersonId: 'mergedIntoPersonId',
     createdAt: 'createdAt',
@@ -10817,16 +10861,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'PersonSegment'
+   * Reference to a field of type 'PersonSex'
    */
-  export type EnumPersonSegmentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSegment'>
+  export type EnumPersonSexFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSex'>
     
 
 
   /**
-   * Reference to a field of type 'PersonSegment[]'
+   * Reference to a field of type 'PersonSex[]'
    */
-  export type ListEnumPersonSegmentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSegment[]'>
+  export type ListEnumPersonSexFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSex[]'>
     
 
 
@@ -10841,6 +10885,20 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonSegment'
+   */
+  export type EnumPersonSegmentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSegment'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonSegment[]'
+   */
+  export type ListEnumPersonSegmentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSegment[]'>
     
 
 
@@ -10976,6 +11034,8 @@ export namespace Prisma {
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    sex?: EnumPersonSexFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
+    birthDate?: DateTimeNullableFilter<"GlobalNaturalPerson"> | Date | string | null
     personSegment?: EnumPersonSegmentFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
     mergedIntoPersonId?: UuidNullableFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
@@ -10997,6 +11057,8 @@ export namespace Prisma {
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
     nationality?: SortOrderInput | SortOrder
+    sex?: SortOrder
+    birthDate?: SortOrderInput | SortOrder
     personSegment?: SortOrder
     mergedIntoPersonId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -11021,6 +11083,8 @@ export namespace Prisma {
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    sex?: EnumPersonSexFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
+    birthDate?: DateTimeNullableFilter<"GlobalNaturalPerson"> | Date | string | null
     personSegment?: EnumPersonSegmentFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
     mergedIntoPersonId?: UuidNullableFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
@@ -11042,6 +11106,8 @@ export namespace Prisma {
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
     nationality?: SortOrderInput | SortOrder
+    sex?: SortOrder
+    birthDate?: SortOrderInput | SortOrder
     personSegment?: SortOrder
     mergedIntoPersonId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -11061,6 +11127,8 @@ export namespace Prisma {
     fullNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    sex?: EnumPersonSexWithAggregatesFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
+    birthDate?: DateTimeNullableWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string | null
     personSegment?: EnumPersonSegmentWithAggregatesFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
     mergedIntoPersonId?: UuidNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string
@@ -11549,6 +11617,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -11569,6 +11639,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -11589,6 +11661,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11609,6 +11683,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11629,6 +11705,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -11642,6 +11720,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11654,6 +11734,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12199,6 +12281,24 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type EnumPersonSexFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSex | EnumPersonSexFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSexFilter<$PrismaModel> | $Enums.PersonSex
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type EnumPersonSegmentFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonSegment | EnumPersonSegmentFieldRefInput<$PrismaModel>
     in?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
@@ -12311,6 +12411,8 @@ export namespace Prisma {
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
     nationality?: SortOrder
+    sex?: SortOrder
+    birthDate?: SortOrder
     personSegment?: SortOrder
     mergedIntoPersonId?: SortOrder
     createdAt?: SortOrder
@@ -12324,6 +12426,8 @@ export namespace Prisma {
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
     nationality?: SortOrder
+    sex?: SortOrder
+    birthDate?: SortOrder
     personSegment?: SortOrder
     mergedIntoPersonId?: SortOrder
     createdAt?: SortOrder
@@ -12337,6 +12441,8 @@ export namespace Prisma {
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
     nationality?: SortOrder
+    sex?: SortOrder
+    birthDate?: SortOrder
     personSegment?: SortOrder
     mergedIntoPersonId?: SortOrder
     createdAt?: SortOrder
@@ -12374,6 +12480,30 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPersonSexWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSex | EnumPersonSexFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSexWithAggregatesFilter<$PrismaModel> | $Enums.PersonSex
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonSexFilter<$PrismaModel>
+    _max?: NestedEnumPersonSexFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type EnumPersonSegmentWithAggregatesFilter<$PrismaModel = never> = {
@@ -12716,17 +12846,6 @@ export namespace Prisma {
     not?: NestedEnumPersonAccessRequestStatusFilter<$PrismaModel> | $Enums.PersonAccessRequestStatus
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type PersonAccessRequestCountOrderByAggregateInput = {
     id?: SortOrder
     personId?: SortOrder
@@ -12765,20 +12884,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPersonAccessRequestStatusFilter<$PrismaModel>
     _max?: NestedEnumPersonAccessRequestStatusFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type PersonAccessGrantPersonIdGranteeOrgIdCompoundUniqueInput = {
@@ -12945,6 +13050,14 @@ export namespace Prisma {
 
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+  }
+
+  export type EnumPersonSexFieldUpdateOperationsInput = {
+    set?: $Enums.PersonSex
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type EnumPersonSegmentFieldUpdateOperationsInput = {
@@ -13238,10 +13351,6 @@ export namespace Prisma {
     set?: $Enums.PersonAccessRequestStatus
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type GlobalNaturalPersonUpdateOneRequiredWithoutAccessRequestsNestedInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutAccessRequestsInput, GlobalNaturalPersonUncheckedCreateWithoutAccessRequestsInput>
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutAccessRequestsInput
@@ -13301,6 +13410,24 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedEnumPersonSexFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSex | EnumPersonSexFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSexFilter<$PrismaModel> | $Enums.PersonSex
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedEnumPersonSegmentFilter<$PrismaModel = never> = {
@@ -13397,6 +13524,30 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedEnumPersonSexWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSex | EnumPersonSexFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSex[] | ListEnumPersonSexFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSexWithAggregatesFilter<$PrismaModel> | $Enums.PersonSex
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonSexFilter<$PrismaModel>
+    _max?: NestedEnumPersonSexFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumPersonSegmentWithAggregatesFilter<$PrismaModel = never> = {
@@ -13559,17 +13710,6 @@ export namespace Prisma {
     not?: NestedEnumPersonAccessRequestStatusFilter<$PrismaModel> | $Enums.PersonAccessRequestStatus
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedEnumPersonAccessRequestStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonAccessRequestStatus | EnumPersonAccessRequestStatusFieldRefInput<$PrismaModel>
     in?: $Enums.PersonAccessRequestStatus[] | ListEnumPersonAccessRequestStatusFieldRefInput<$PrismaModel>
@@ -13578,20 +13718,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPersonAccessRequestStatusFilter<$PrismaModel>
     _max?: NestedEnumPersonAccessRequestStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type PersonIdentifierCreateWithoutPersonInput = {
@@ -13772,6 +13898,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13791,6 +13919,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -13815,6 +13945,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13834,6 +13966,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14055,6 +14189,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14074,6 +14210,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14112,6 +14250,8 @@ export namespace Prisma {
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    sex?: EnumPersonSexFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
+    birthDate?: DateTimeNullableFilter<"GlobalNaturalPerson"> | Date | string | null
     personSegment?: EnumPersonSegmentFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
     mergedIntoPersonId?: UuidNullableFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
@@ -14125,6 +14265,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14144,6 +14286,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -14179,6 +14323,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14198,6 +14344,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14217,6 +14365,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14236,6 +14386,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -14271,6 +14423,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14290,6 +14444,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14309,6 +14465,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14328,6 +14486,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -14363,6 +14523,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14382,6 +14544,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14401,6 +14565,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14420,6 +14586,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -14455,6 +14623,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14474,6 +14644,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14493,6 +14665,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14512,6 +14686,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -14547,6 +14723,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14566,6 +14744,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14585,6 +14765,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14604,6 +14786,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     mergedIntoPersonId?: string | null
     createdAt?: Date | string
@@ -14639,6 +14823,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14658,6 +14844,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14723,6 +14911,8 @@ export namespace Prisma {
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
     personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14873,6 +15063,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14892,6 +15084,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14911,6 +15105,8 @@ export namespace Prisma {
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

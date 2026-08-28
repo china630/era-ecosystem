@@ -20,6 +20,8 @@ export type TransientGuestIdentity = {
   phone?: string | null;
   nationality?: string;
   globalPersonId?: string | null;
+  gender?: string | null;
+  birthDate?: string | Date | null;
 };
 
 function toIssuingCountry(nationality?: string): string | undefined {
@@ -30,10 +32,10 @@ function toIssuingCountry(nationality?: string): string | undefined {
 export async function linkGuestPersonIdentity(
   input: TransientGuestIdentity,
 ): Promise<string | null> {
-  if (input.globalPersonId?.trim()) return input.globalPersonId.trim();
   const fin = input.nationalIdFin?.trim();
   const passport = input.passportNumber?.trim();
-  if (!fin && !passport && !input.fullName?.trim()) return null;
+  const globalPersonId = input.globalPersonId?.trim();
+  if (!fin && !passport && !globalPersonId && !input.fullName?.trim()) return null;
 
   const linked = await linkPersonIdentity({
     fin: fin || undefined,
@@ -42,8 +44,11 @@ export async function linkGuestPersonIdentity(
     fullName: input.fullName.trim(),
     phone: input.phone ?? undefined,
     nationality: input.nationality === 'AZ' ? 'AZ' : 'OTHER',
+    globalPersonId: globalPersonId || undefined,
+    gender: input.gender ?? undefined,
+    birthDate: input.birthDate ?? undefined,
   });
-  return linked.globalPersonId;
+  return linked.globalPersonId ?? globalPersonId ?? null;
 }
 
 export async function updateGuestIdentity(

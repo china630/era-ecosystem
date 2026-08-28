@@ -2,6 +2,13 @@ import { resolvePersonIdentity } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
+import { genderFromElektrawebGuest } from '@/lib/integration/elektraweb-share-map';
+import {
+  classifyPersonDocuments,
+  composePersonFullName,
+  mapNationalityToIso,
+  splitGivenAndPatronymic,
+} from '@/lib/person-documents';
 
 export type UpsertResult = { action: 'created' | 'updated' | 'skipped'; key: string };
 
@@ -14,45 +21,48 @@ export async function upsertGuestFromElektrawebRow(
   const externalRef = str(row.GUESTID) ?? str(row.ID);
   if (!externalRef) throw new Error('Guest row missing ID/GUESTID');
 
-  const firstName = str(row.NAME) ?? str(row.ID_FIRSTNAME);
+  const givenField = str(row.NAME) ?? str(row.ID_FIRSTNAME);
   const lastName = str(row.LNAME) ?? str(row.ID_LASTNAME);
+  const { firstName, middleName } = splitGivenAndPatronymic(givenField);
+  const composed = composePersonFullName(firstName, middleName, lastName);
   const fullName =
-    str(row.FULLNAME) ??
-    str(row.GUESTNAMES) ??
-    ([firstName, lastName].filter(Boolean).join(' ').trim() || 'Unknown Guest');
+    (str(row.FULLNAME) ?? str(row.GUESTNAMES) ?? composed) || 'Unknown Guest';
 
-  const passportNumber = str(row.PASSPORTNO) ?? str(row.ID_NUMBER);
-  const nationalIdFin = str(row.NATIONALIDNO);
-  const nationality =
+  const docs = classifyPersonDocuments({
+    nationalId: str(row.NATIONALIDNO),
+    passportNo: str(row.PASSPORTNO) ?? str(row.ID_NUMBER),
+  });
+  const iso = mapNationalityToIso(
     str(row.GUEST_NATIONALITY_CODE2) ??
-    str(row.COUNTRYCODE) ??
-    str(row.NATIONALITY) ??
-    'AZ';
+      str(row.COUNTRYCODE) ??
+      str(row.NATIONALITY),
+  );
   const phone = str(row.PHONE) ?? str(row.CONTACTPHONE) ?? str(row.PHONE_CALCULATED);
   const email = str(row.EMAIL);
   const birthDate = parseElektrawebDate(row.BIRTHDATE);
+  const gender =
+    genderFromElektrawebGuest({
+      gender: str(row.GENDER) ?? str(row.SEX) ?? str(row.GENDERCODE),
+      title: str(row.TITLE) ?? str(row.ID_TITLE),
+    }) ?? str(row.GENDER) ?? str(row.SEX);
 
   const existing = await prisma.guest.findFirst({ where: { externalRef } });
   let globalPersonId: string | null = existing?.globalPersonId ?? null;
-  if (nationalIdFin || passportNumber) {
-    try {
-      const resolved = await resolvePersonIdentity({
-        fin: nationalIdFin || undefined,
-        passport: passportNumber || undefined,
-        issuingCountry:
-          nationality === 'AZ' || nationality === 'AZE'
-            ? 'AZ'
-            : nationality !== 'OTHER'
-              ? nationality.slice(0, 2)
-              : undefined,
-        fullName,
-        phone: phone ?? undefined,
-        nationality: nationality === 'AZ' || nationality === 'AZE' ? 'AZ' : 'OTHER',
-      });
-      globalPersonId = resolved.globalPersonId ?? globalPersonId;
-    } catch (e) {
-      console.warn('elektraweb-bridge MDM resolve failed', externalRef, e);
-    }
+  try {
+    const resolved = await resolvePersonIdentity({
+      fin: docs.fin,
+      passport: docs.passport,
+      issuingCountry: iso,
+      fullName,
+      phone: phone ?? undefined,
+      nationality: iso === 'AZ' ? 'AZ' : 'OTHER',
+      globalPersonId: globalPersonId || undefined,
+      gender: gender ?? undefined,
+      birthDate: birthDate ?? undefined,
+    });
+    globalPersonId = resolved.globalPersonId ?? globalPersonId;
+  } catch (e) {
+    console.warn('elektraweb-bridge MDM resolve failed', externalRef, e);
   }
 
   const data = {
@@ -61,8 +71,10 @@ export async function upsertGuestFromElektrawebRow(
     fullName,
     firstName: firstName ?? undefined,
     lastName: lastName ?? undefined,
+    middleName: middleName ?? undefined,
+    gender: gender ?? undefined,
     birthDate: birthDate ?? undefined,
-    nationality: nationality === 'AZE' ? 'AZ' : nationality,
+    nationality: iso,
     phone: phone ?? undefined,
     email: email ?? undefined,
   };
@@ -75,6 +87,8 @@ export async function upsertGuestFromElektrawebRow(
       fullName: data.fullName,
       firstName: data.firstName,
       lastName: data.lastName,
+      middleName: data.middleName,
+      gender: data.gender,
       birthDate: data.birthDate,
       nationality: data.nationality,
       phone: data.phone,

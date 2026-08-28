@@ -65,6 +65,88 @@ function bakuTimeLabel(isoOrDate: Date | string): string {
   }).format(d);
 }
 
+export type TimelineAppointmentInput = {
+  id: string;
+  scheduledAt: Date;
+  roomCode: string | null;
+  status: string;
+  practitioner: { fullName: string; code: string };
+  visit?: { id: string } | null;
+};
+
+export type TimelineVisitInput = {
+  id: string;
+  appointmentId: string | null;
+  createdAt: Date;
+  completedAt: Date | null;
+  status: string;
+  amountNet: { toString(): string };
+  practitioner: { fullName: string; code: string };
+  serviceLines: Array<{ serviceCode: string }>;
+  appointment?: { scheduledAt: Date; roomCode: string | null } | null;
+};
+
+/**
+ * One row per encounter: visit wins (slot date + /visits/[id]).
+ * Appointment-only rows stay for slots with no visit (no-show / not yet opened).
+ */
+export function mergeAppointmentVisitEvents(input: {
+  appointments: TimelineAppointmentInput[];
+  visits: TimelineVisitInput[];
+}): PatientTimelineEvent[] {
+  const events: PatientTimelineEvent[] = [];
+  const visitAppointmentIds = new Set<string>();
+
+  for (const v of input.visits) {
+    if (v.appointmentId) visitAppointmentIds.add(v.appointmentId);
+    const slot = v.appointment?.scheduledAt ?? v.completedAt ?? v.createdAt;
+    const services = v.serviceLines.map((s) => s.serviceCode).filter(Boolean);
+    const room = v.appointment?.roomCode ?? null;
+    const name = v.practitioner.fullName;
+    events.push({
+      id: `visit:${v.id}`,
+      type: "visit",
+      at: slot.toISOString(),
+      title: `Visit · ${name}`,
+      titleL10n: {
+        en: `Visit · ${name}`,
+        ru: `Приём · ${name}`,
+        az: `Qəbul · ${name}`,
+      },
+      subtitle:
+        services.length > 0
+          ? services.slice(0, 6).join(", ") + (services.length > 6 ? "…" : "")
+          : room
+            ? `Room ${room}`
+            : v.practitioner.code,
+      status: v.status,
+      href: `/visits/${v.id}`,
+      codes: services,
+      amountNet: v.amountNet.toString(),
+    });
+  }
+
+  for (const a of input.appointments) {
+    if (a.visit?.id || visitAppointmentIds.has(a.id)) continue;
+    events.push({
+      id: `appointment:${a.id}`,
+      type: "appointment",
+      at: a.scheduledAt.toISOString(),
+      title: `Appointment · ${a.practitioner.fullName}`,
+      titleL10n: {
+        en: `Appointment · ${a.practitioner.fullName}`,
+        ru: `Запись · ${a.practitioner.fullName}`,
+        az: `Yazı · ${a.practitioner.fullName}`,
+      },
+      subtitle: a.roomCode ? `Room ${a.roomCode}` : a.practitioner.code,
+      status: a.status,
+      href: "/appointments",
+    });
+  }
+
+  return events;
+}
+
 function parseResultLines(resultJson: string | null): ResultLineInput[] {
   if (!resultJson) return [];
   try {
@@ -102,7 +184,10 @@ export async function getPatientTimeline(
   const [appointments, visits, labOrders, procedures, episodes] = await Promise.all([
     prisma.appointment.findMany({
       where: { patientRefId },
-      include: { practitioner: { select: { fullName: true, code: true } } },
+      include: {
+        practitioner: { select: { fullName: true, code: true } },
+        visit: { select: { id: true } },
+      },
       orderBy: { scheduledAt: "desc" },
       take: 200,
     }),
@@ -111,6 +196,7 @@ export async function getPatientTimeline(
       include: {
         practitioner: { select: { fullName: true, code: true } },
         serviceLines: true,
+        appointment: { select: { scheduledAt: true, roomCode: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 200,
@@ -140,38 +226,10 @@ export async function getPatientTimeline(
     }),
   ]);
 
-  const events: PatientTimelineEvent[] = [];
-
-  for (const a of appointments) {
-    events.push({
-      id: `appointment:${a.id}`,
-      type: "appointment",
-      at: a.scheduledAt.toISOString(),
-      title: `Appointment · ${a.practitioner.fullName}`,
-      subtitle: a.roomCode ? `Room ${a.roomCode}` : a.practitioner.code,
-      status: a.status,
-      href: "/appointments",
-    });
-  }
-
-  for (const v of visits) {
-    const at = (v.completedAt ?? v.createdAt).toISOString();
-    const services = v.serviceLines.map((s) => s.serviceCode).filter(Boolean);
-    events.push({
-      id: `visit:${v.id}`,
-      type: "visit",
-      at,
-      title: `Visit · ${v.practitioner.fullName}`,
-      subtitle:
-        services.length > 0
-          ? services.slice(0, 6).join(", ") + (services.length > 6 ? "…" : "")
-          : undefined,
-      status: v.status,
-      href: "/appointments",
-      codes: services,
-      amountNet: v.amountNet.toString(),
-    });
-  }
+  const events: PatientTimelineEvent[] = mergeAppointmentVisitEvents({
+    appointments,
+    visits,
+  });
 
   for (const o of labOrders) {
     const at = (

@@ -1119,7 +1119,7 @@
     "tzHint": "Даты и время — Asia/Baku.",
     "filters": {
       "all": "Все",
-      "visit": "Визиты",
+      "visit": "Приёмы",
       "lab_order": "Анализы / исследования",
       "procedure": "Процедуры",
       "appointment": "Записи",
@@ -1149,7 +1149,7 @@
     "historyEmpty": "Нет событий по фильтрам.",
     "filterLab": "Анализы / исследования",
     "filterLabVisit": "Анализы + визиты",
-    "filterVisit": "Визиты",
+    "filterVisit": "Приёмы",
     "filterAppointment": "Записи",
     "filterAllTypes": "Анализы + визиты + записи",
     "labAll": "Анализы: все статусы",

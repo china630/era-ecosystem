@@ -7,9 +7,9 @@ Amends the clinic side of [era-mdm-natural-person-identity.md](./era-mdm-natural
 
 ## Context
 
-Patient card identity showed MDM link, phone, and identifier *types*, but not sex or age. Care staff (nurse, doctor, reception) need sex and age at a glance for protocols, dosing context, and sanatorium rooming. MDM `GlobalNaturalPerson` does not yet store sex/DOB at person core (blood lives only on optional HR profile).
+Patient card identity showed MDM link, phone, and identifier *types*, but not sex or age. Care staff (nurse, doctor, reception) need sex and age at a glance for protocols, dosing context, and sanatorium rooming.
 
-Clinic already keeps a minimal ops display cache: `fullName`, `phone`, `nationality` on `PatientRef`, while **identifiers** (FIN/passport) stay MDM-only after Wave 1.
+Clinic keeps a minimal ops display cache: `fullName`, `phone`, `nationality`, `sex`, `birthDate` on `PatientRef`, while **identifiers** (FIN/passport) stay MDM-only after Wave 1. **Legal sex and birthDate SoR is MDM** person core (`MALE`/`FEMALE`/`UNKNOWN`).
 
 ## Decision
 
@@ -23,11 +23,11 @@ Add a **clinical demographics ops cache** on `PatientRef`:
 | `emergencyContactName` / `emergencyContactPhone` | Sanatorium emergency reachability |
 | `nationality` | Already present — surface on card |
 
-**Not stored locally:** FIN, passport, issuing country (remain MDM / transient intake).
+**Not stored locally as SoR:** FIN, passport, issuing country (remain MDM / transient intake). **Sex and birthDate** are MDM person-core SoR (`MALE`/`FEMALE`/`UNKNOWN` — no OTHER); `PatientRef` columns remain an ops cache filled from resolve/ops-profile.
 
 **Not in this wave:** height/weight, pregnancy status, preferred language, allergy free-text (structured contraindications + procedures already cover care alerts).
 
-When MDM gains person-level sex/DOB, clinic should prefer resolve-from-MDM and treat local columns as cache (same path as hotel guest ops-profile).
+Clinic prefers resolve-from-MDM and treats local columns as cache (same path as hotel guest ops-profile).
 
 ## Consequences
 

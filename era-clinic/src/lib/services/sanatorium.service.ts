@@ -1,9 +1,36 @@
 import { prisma } from '@/lib/prisma';
 import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
 import { requestOrganizationId } from '@/lib/request-organization';
+import { linkPatientGlobalPerson } from '@/lib/patient-identity';
+import { getPersonOpsProfile, normalizePersonSex, parsePersonBirthDate } from '@era/satellite-kit';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
+}
+
+async function applyMdmDemographicsCache(
+  patientId: string,
+  globalPersonId: string | null | undefined,
+) {
+  if (!globalPersonId?.trim()) return;
+  const profile = await getPersonOpsProfile(globalPersonId.trim());
+  if (!profile || profile.accessDenied) return;
+  const sex = normalizePersonSex(profile.sex);
+  const birthDate = parsePersonBirthDate(profile.birthDate);
+  const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
+  if (!patient) return;
+  const nextSex =
+    sex === "MALE" || sex === "FEMALE"
+      ? sex
+      : undefined;
+  await prisma.patientRef.update({
+    where: { id: patientId },
+    data: {
+      ...(nextSex && patient.sex === "UNKNOWN" ? { sex: nextSex } : {}),
+      ...(!patient.birthDate && birthDate ? { birthDate } : {}),
+      globalPersonId: globalPersonId.trim(),
+    },
+  });
 }
 
 function walkInRefCode(finOrPassport: string): string {
@@ -54,6 +81,8 @@ export async function openEpisodeFromStay(input: {
     });
   }
   if (!patient) throw new Error("Failed to ensure patient ref");
+
+  await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
 
   return prisma.clinicalEpisode.create({
     data: {
@@ -123,10 +152,23 @@ export async function registerWalkInEpisode(input: {
   }
   if (!patient) throw new Error("Failed to ensure patient ref");
 
+  const globalPersonId = await linkPatientGlobalPerson({
+    patientRefId: patient.id,
+    fin: input.fin,
+    fullName: input.fullName,
+    phone: input.phone,
+    passport: input.passport,
+    issuingCountry: input.issuingCountry,
+    nationality: input.nationality,
+    sex: input.sex,
+    birthDate: birthDate ?? input.birthDate,
+    globalPersonId: input.globalPersonId,
+  });
+
   const episode = await prisma.clinicalEpisode.create({
     data: {
       patientRefId: patient.id,
-      globalPersonId: input.globalPersonId ?? patient.globalPersonId,
+      globalPersonId: globalPersonId ?? input.globalPersonId ?? patient.globalPersonId,
       organizationId: input.organizationId,
       patientOrigin: "WALK_IN",
       programCode: input.programCode ?? null,
