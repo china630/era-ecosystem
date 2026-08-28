@@ -22,6 +22,8 @@ export type ResolvePersonInput = {
   fullName: string;
   phone?: string;
   nationality?: string;
+  sex?: string;
+  birthDate?: string | Date | null;
 };
 
 @Injectable()

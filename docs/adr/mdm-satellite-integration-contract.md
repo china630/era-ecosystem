@@ -20,6 +20,7 @@ import { linkPersonIdentity } from "@era/satellite-kit";
 
 const { globalPersonId } = await linkPersonIdentity({
   fin, passport, issuingCountry, fullName, phone, nationality,
+  sex, birthDate, globalPersonId: existingId,
 }, { requesterOrgId, purpose: "intake" });
 ```
 
