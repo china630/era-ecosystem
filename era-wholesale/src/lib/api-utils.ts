@@ -84,8 +84,8 @@ export async function enterWholesaleRequestTenant(): Promise<string | undefined>
 
 /** Call at the start of authenticated API handlers (session helper). */
 export async function assertWholesaleEntitled(): Promise<void> {
-  await enterWholesaleRequestTenant();
-  await requireWholesaleSatellite();
+  const org = await enterWholesaleRequestTenant();
+  await requireWholesaleSatellite(org);
 }
 
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {

@@ -77,6 +77,6 @@ export async function enterRetailRequestTenant(): Promise<string | undefined> {
 
 /** Call at the start of operational retail API handlers. Fail-closed. */
 export async function assertRetailEntitled(): Promise<void> {
-  await enterRetailRequestTenant();
-  await requireRetailSatellite();
+  const org = await enterRetailRequestTenant();
+  await requireRetailSatellite(org);
 }

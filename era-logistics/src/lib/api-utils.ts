@@ -84,8 +84,8 @@ export async function enterLogisticsRequestTenant(): Promise<string | undefined>
 
 /** Call at the start of authenticated API handlers (session helper). */
 export async function assertLogisticsEntitled(): Promise<void> {
-  await enterLogisticsRequestTenant();
-  await requireLogisticsSatellite();
+  const org = await enterLogisticsRequestTenant();
+  await requireLogisticsSatellite(org);
 }
 
 export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
