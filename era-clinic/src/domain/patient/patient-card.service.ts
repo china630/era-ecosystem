@@ -14,19 +14,11 @@ import {
   PROCEDURE_PHYSIO_INCLUDE,
   toPhysioOrderPayload,
 } from "@/domain/physio/physio-order-sites.service";
+import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
+import { bakuDateTimeLabel } from "@/lib/baku-day";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
-
-function bakuTimeLabel(isoOrDate: Date | string): string {
-  const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Baku",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(d);
-}
 
 function parseResultLines(resultJson: string | null): ResultLineInput[] {
   if (!resultJson) return [];
@@ -99,8 +91,8 @@ function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
   return {
     ...ev,
     subtitle: ev.subtitle
-      ? `${bakuTimeLabel(ev.at)} · ${ev.subtitle}`
-      : bakuTimeLabel(ev.at),
+      ? `${bakuDateTimeLabel(ev.at)} · ${ev.subtitle}`
+      : bakuDateTimeLabel(ev.at),
   };
 }
 
@@ -124,7 +116,9 @@ function mapProcedureEvent(p: {
     type: "procedure",
     at: p.scheduledAt.toISOString(),
     title: `Procedure · ${p.procedureName}`,
-    subtitle: [p.procedureCode, siteCodes, p.bodyPart].filter(Boolean).join(" · "),
+    subtitle: [p.procedureCode ? `type ${p.procedureCode}` : null, siteCodes, p.bodyPart]
+      .filter(Boolean)
+      .join(" · "),
     status: p.status,
     codes: [p.procedureCode],
     amountNet: p.amountNet.toString(),
@@ -141,15 +135,16 @@ function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
     dayMap.set(key, list);
   }
   const todayKey = bakuDateKey(new Date());
-  return [...dayMap.keys()]
-    .sort((a, b) => b.localeCompare(a))
-    .map((date) => ({
-      date,
-      labelHint: date === todayKey ? "today" : "",
-      events: (dayMap.get(date) ?? []).sort(
-        (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
-      ),
-    }));
+  const keys = [...dayMap.keys()];
+  const upcoming = keys.filter((d) => d >= todayKey).sort((a, b) => a.localeCompare(b));
+  const archive = keys.filter((d) => d < todayKey).sort((a, b) => b.localeCompare(a));
+  return [...upcoming, ...archive].map((date) => ({
+    date,
+    labelHint: date === todayKey ? "today" : date > todayKey ? "upcoming" : "past",
+    events: (dayMap.get(date) ?? []).sort(
+      (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+    ),
+  }));
 }
 
 export async function getPatientCardSummary(patientRefId: string) {
@@ -164,6 +159,7 @@ export async function getPatientCardSummary(patientRefId: string) {
     resultLabs,
     upcomingProcedures,
     proposedProcedures,
+    intakeChecklist,
   ] = await Promise.all([
     prisma.appointment.findFirst({
       where: {
@@ -181,6 +177,7 @@ export async function getPatientCardSummary(patientRefId: string) {
     prisma.procedureOrder.findFirst({
       where: {
         patientRefId,
+        scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       orderBy: { scheduledAt: "asc" },
@@ -205,6 +202,7 @@ export async function getPatientCardSummary(patientRefId: string) {
     prisma.procedureOrder.findMany({
       where: {
         patientRefId,
+        scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
@@ -220,6 +218,7 @@ export async function getPatientCardSummary(patientRefId: string) {
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
     }),
+    getIntakeChecklist(patientRefId),
   ]);
 
   return {
@@ -235,6 +234,7 @@ export async function getPatientCardSummary(patientRefId: string) {
         ? {
             id: nextAppointment.id,
             at: nextAppointment.scheduledAt.toISOString(),
+            atLabel: bakuDateTimeLabel(nextAppointment.scheduledAt),
             status: nextAppointment.status,
             practitionerName: nextAppointment.practitioner.fullName,
             roomCode: nextAppointment.roomCode,
@@ -255,6 +255,7 @@ export async function getPatientCardSummary(patientRefId: string) {
         ? {
             id: nextProcedure.id,
             at: nextProcedure.scheduledAt.toISOString(),
+            atLabel: bakuDateTimeLabel(nextProcedure.scheduledAt),
             name: nextProcedure.procedureName,
             code: nextProcedure.procedureCode,
             status: nextProcedure.status,
@@ -268,6 +269,7 @@ export async function getPatientCardSummary(patientRefId: string) {
     resultsPreview: resultLabs.map((o) => mapLabEvent(o, catalog.items)).map(withTimeSubtitle),
     planPreview: upcomingProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
     proposedPreview: proposedProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
+    intakeChecklist,
   };
 }
 

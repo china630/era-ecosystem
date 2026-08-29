@@ -43,6 +43,14 @@ export function physioFieldsFromFlags(
   if (has("HOLD_OR_STOP")) out.holdOrStop = true;
   if (has("SMEAR")) out.smear = true;
   if (has("BATH_SEQUENCE")) out.bathSequence = "SITZ_THEN_FULL";
+  // Single-fill naftalan (not multi-day sequence): tam | oturaq | qurşaq.
+  if (!out.bathSequence) {
+    if (firstWhole(n, ["tam", "tam beden", "tan beden", "tam bedn"])) out.naftalanFill = "TAM";
+    else if (firstWhole(n, ["oturaq", "otraq", "3oturaq", "3 oturaq"])) out.naftalanFill = "OTURAQ";
+    else if (firstWhole(n, ["qursaq", "qursaga kimi", "qursaga qeder", "qursagaqeder"])) {
+      out.naftalanFill = "QURSAQ";
+    }
+  }
   if (has("APPLICATION_SURFACE")) {
     if (firstWhole(n, ["on ve arxa", "on ve arxa", "front"])) out.applicationSurface = "FRONT_BACK";
     else if (firstWhole(n, ["yuxari hisse", "yuxari"])) out.applicationSurface = "UPPER";

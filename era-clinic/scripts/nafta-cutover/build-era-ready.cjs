@@ -20,7 +20,6 @@ const {
   mapPractitionerRole,
   mapPatientImportRow,
   loadPatientCardIndex,
-  isUsgExam,
   loadNahiyeByProcedureId,
   slotNahiye,
 } = require("./map.cjs");
@@ -366,44 +365,13 @@ function main() {
     labLineRows,
   );
 
-  const examForms = rowsOf(readDumpJson("bulk/examination-forms.json"));
-  const usgRows = [];
-  const dxRows = [];
-  for (const form of examForms) {
-    const takenAt = ymd(form.date) || checkInByWoId.get(String(form.patientId)) || "";
-    if (isUsgExam(form)) {
-      usgRows.push({
-        externalRef: `wo:usg:${form.id}`,
-        patientRef: `wo:patient:${form.patientId}`,
-        code: "USG",
-        name: "USM",
-        resultText: String(form.notes || "").trim(),
-        takenAt,
-      });
-    }
-    const note = String(form.notes || "").trim();
-    if (note) {
-      dxRows.push({
-        patientRef: `wo:patient:${form.patientId}`,
-        rawText: note,
-        icd10: "",
-        recordedAt: takenAt,
-      });
-    }
-  }
-
-  const nDxImg = writeSheet(
-    XLSX,
-    path.join(clinicOut, "31-Diagnostics.xlsx"),
-    HEADERS.diagnostics,
-    usgRows,
-  );
-  const nDx = writeSheet(
-    XLSX,
-    path.join(clinicOut, "32-Diagnoses.xlsx"),
-    HEADERS.diagnoses,
-    dxRows,
-  );
+  const usgRun = require("child_process").spawnSync(process.execPath, [path.join(__dirname, "rebuild-usg.cjs")], {
+    stdio: "inherit",
+  });
+  if (usgRun.status) process.exit(usgRun.status);
+  const usgReport = JSON.parse(fs.readFileSync(path.join(clinicOut, "rebuild-usg-report.json"), "utf8"));
+  const nDxImg = usgReport.diagnostics;
+  const nDx = usgReport.diagnoses;
 
   const catDir = path.join(START, "clinic", "catalogs");
   for (const base of ["33-CheckUps", "34-CheckUp-Details", "35-Product-Groups", "36-Products"]) {

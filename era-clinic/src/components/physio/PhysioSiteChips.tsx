@@ -14,6 +14,7 @@ import {
   DEVICE_PARAM_CODES,
   ELECTRODE_COUNTS,
   INTENSITY_CODES,
+  NAFTALAN_FILL_CODES,
   SPINE_LEVEL_CODES,
   type PhysioLateralityCode,
   type PhysioOrderFieldCode,
@@ -74,6 +75,7 @@ export type PhysioChipsLabels = {
   spineLevel: string;
   dayBlock: string;
   bathSequence: string;
+  naftalanFill: string;
   intensity: string;
   smear: string;
   yes: string;
@@ -85,6 +87,11 @@ export type PhysioChipsLabels = {
   dayBlockAlt: string;
   dayBlockThen: string;
   bathSitzThenFull: string;
+  fillTam: string;
+  fillOturaq: string;
+  fillQursaq: string;
+  catalogEmpty: string;
+  catalogEmptyLink: string;
   intensityLight: string;
   intensityWeak: string;
   intensityNotHot: string;
@@ -254,18 +261,27 @@ export function PhysioSiteChips({
               : null}
           </div>
           {editable ? (
-            <CatalogField
-              kind="SEARCHABLE"
-              label={labels.addSite}
-              value=""
-              onChange={(next) => {
-                const id = String(next);
-                if (!id || value.siteIds.includes(id)) return;
-                onSitesChange([...value.siteIds, id]);
-              }}
-              options={options}
-              emptyLabel={null}
-            />
+            catalog.length === 0 ? (
+              <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[12px] text-amber-900">
+                {labels.catalogEmpty}{" "}
+                <a href="/admin/physio-sites" className="underline">
+                  {labels.catalogEmptyLink}
+                </a>
+              </p>
+            ) : (
+              <CatalogField
+                kind="SEARCHABLE"
+                label={labels.addSite}
+                value=""
+                onChange={(next) => {
+                  const id = String(next);
+                  if (!id || value.siteIds.includes(id)) return;
+                  onSitesChange([...value.siteIds, id]);
+                }}
+                options={options}
+                emptyLabel={null}
+              />
+            )
           ) : null}
           {value.siteIds.length >= 2 && editable ? (
             <CatalogField
@@ -386,6 +402,19 @@ export function PhysioSiteChips({
           options={BATH_SEQUENCE_CODES.map((v) => ({
             value: v,
             label: labels.bathSitzThenFull,
+          }))}
+          disabled={!editable}
+        />
+      ) : null}
+      {hasField(allowed, "NAFTALAN_FILL") ? (
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={labels.naftalanFill}
+          value={fields.naftalanFill ?? ""}
+          onChange={(next) => patchFields({ naftalanFill: pickOpt(NAFTALAN_FILL_CODES, next) })}
+          options={NAFTALAN_FILL_CODES.map((v) => ({
+            value: v,
+            label: v === "TAM" ? labels.fillTam : v === "OTURAQ" ? labels.fillOturaq : labels.fillQursaq,
           }))}
           disabled={!editable}
         />
