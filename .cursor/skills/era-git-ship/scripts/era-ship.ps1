@@ -3,10 +3,13 @@
 #   .\era-ship.ps1 -ListScopes
 #   .\era-ship.ps1 -Scope orchestrator -Subject "pricing seeds" [-Branch integration/my-wave]
 #   .\era-ship.ps1 -Wave full -Subject "ecosystem integration wave" [-Branch integration/ecosystem-wave]
-#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates]
+#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates] [-WaitStaging]
 #   .\era-ship.ps1 -PublishImages -Services orchestrator [-Head dev]
 #   .\era-ship.ps1 -PublishDeploy -DeployScope orchestrator [-ImageTag dev] [-Head dev]
 #   .\era-ship.ps1 -PublishMaster -Head dev [-SkipGates]
+#
+# PublishDev always waits for PR checks then merges (does not stop at --auto).
+# -WaitStaging: after merge, wait for Build and push images + Deploy staging on that SHA.
 
 param(
     [switch]$ListScopes,
@@ -26,6 +29,7 @@ param(
     [string]$Services = "",
     [string]$DeployScope = "",
     [string]$ImageTag = "",
+    [switch]$WaitStaging,
     [switch]$DryRun,
     [switch]$SkipGates
 )
@@ -46,7 +50,7 @@ function Install-EraGitHook {
 function Invoke-ShipPrepush {
     param([switch]$QualityOnly)
     if ($SkipGates -or $env:ERA_SHIP_SKIP_GATES -eq "1") {
-        Write-Warning "SkipGates / ERA_SHIP_SKIP_GATES — not running local ship gates."
+        Write-Warning "SkipGates / ERA_SHIP_SKIP_GATES -- not running local ship gates."
         return
     }
     $script = Join-Path $RepoRoot "scripts\era-ship-prepush.mjs"
@@ -60,7 +64,7 @@ function Invoke-ShipPrepush {
     Write-Host "==> local ship gates (quality-gates + scoped test/build)"
     node @gateArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "Local ship gates FAILED — not pushing. Fix, new commit, re-run. Do not skip unless the user explicitly said SkipGates."
+        throw "Local ship gates FAILED -- not pushing. Fix, new commit, re-run. Do not skip unless the user explicitly said SkipGates."
     }
     $env:ERA_SHIP_GATES_DONE = "1"
 }
@@ -76,7 +80,7 @@ function Ensure-GhAuth {
         }
     }
     catch {
-        # fall through — gh auth status will report clearly
+        # fall through -- gh auth status will report clearly
     }
 }
 
@@ -131,7 +135,7 @@ function Read-YamlManifest {
             if ($section -eq 'scopes') {
                 if ($currentKey -eq 'paths' -or $line -match '^\s+paths:') { } 
                 if ($line -match 'paths:' -or ($result.scopes[$current].paths.Count -eq 0 -and $trim -notmatch 'also_stage|path_globs|commit_prefix|label|aliases')) {
-                    # detect list context from previous line — simplified: append to last opened list key
+                    # detect list context from previous line -- simplified: append to last opened list key
                 }
             }
         }
@@ -195,7 +199,7 @@ function Get-Manifest {
 
 function Test-NeverCommit {
     param([string]$Path, [string[]]$Patterns)
-    # Prefix / glob only — never bare substring (e.g. "data/" must not exclude "database/" or "admin/data/").
+    # Prefix / glob only -- never bare substring (e.g. "data/" must not exclude "database/" or "admin/data/").
     $normPath = ($Path -replace '\\', '/').TrimStart('./')
     foreach ($p in $Patterns) {
         $pat = ($p -replace '\\', '/').Trim()
@@ -315,6 +319,105 @@ function Ensure-Branch {
     }
 }
 
+function Wait-PrChecksThenMerge {
+    param([string]$PrRef)
+    Write-Host "Waiting for PR checks to pass ($PrRef)..."
+    gh pr checks $PrRef --watch --interval 20
+    if ($LASTEXITCODE -ne 0) { throw "PR checks failed for $PrRef -- not merging." }
+    Write-Host "Merging $PrRef..."
+    gh pr merge $PrRef --merge
+    if ($LASTEXITCODE -ne 0) { throw "gh pr merge failed for $PrRef" }
+    $state = gh pr view $PrRef --json state,mergedAt,mergeCommit --jq '{state,mergedAt,sha:.mergeCommit.oid}'
+    Write-Host "Merged: $state"
+    return (gh pr view $PrRef --json mergeCommit --jq ".mergeCommit.oid")
+}
+
+function Wait-WorkflowOnSha {
+    param(
+        [string]$WorkflowName,
+        [string]$Sha,
+        [string]$Branch = "dev",
+        [int]$TimeoutSec = 3600
+    )
+    Write-Host "Waiting for workflow '$WorkflowName' on $Sha..."
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    $runId = $null
+    while ((Get-Date) -lt $deadline) {
+        $json = gh run list --workflow $WorkflowName --branch $Branch --limit 15 --json databaseId,headSha,status,conclusion,url,createdAt |
+            ConvertFrom-Json
+        $hit = $json | Where-Object { $_.headSha -eq $Sha } | Select-Object -First 1
+        if ($hit) {
+            $runId = $hit.databaseId
+            if ($hit.status -eq "completed") {
+                if ($hit.conclusion -eq "success") {
+                    Write-Host ("OK {0}: {1}" -f $WorkflowName, $hit.url)
+                    return $hit
+                }
+                if ($hit.conclusion -eq "failure" -or $hit.conclusion -eq "cancelled") {
+                    # One automatic rerun for transient infra (e.g. Docker Hub timeout)
+                    Write-Warning "$WorkflowName concluded $($hit.conclusion); rerunning failed jobs once..."
+                    gh run rerun $runId --failed 2>$null
+                    Start-Sleep -Seconds 15
+                    gh run watch $runId --exit-status
+                    if ($LASTEXITCODE -ne 0) { throw ("{0} failed after rerun: {1}" -f $WorkflowName, $hit.url) }
+                    Write-Host ("OK {0} after rerun: {1}" -f $WorkflowName, $hit.url)
+                    return $hit
+                }
+            }
+            else {
+                gh run watch $runId --exit-status
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Warning "$WorkflowName watch failed; attempting one rerun of failed jobs..."
+                    gh run rerun $runId --failed 2>$null
+                    Start-Sleep -Seconds 15
+                    gh run watch $runId --exit-status
+                    if ($LASTEXITCODE -ne 0) { throw ("{0} failed: see Actions for run {1}" -f $WorkflowName, $runId) }
+                }
+                Write-Host ("OK {0} (watched)" -f $WorkflowName)
+                return $hit
+            }
+        }
+        Start-Sleep -Seconds 15
+    }
+    throw ("Timeout waiting for '{0}' on sha {1}" -f $WorkflowName, $Sha)
+}
+
+function Wait-DeployStagingAfterBuild {
+    param([string]$Sha, [int]$TimeoutSec = 2400)
+    Write-Host "Waiting for Deploy staging after build of $Sha..."
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        $json = gh run list --workflow "deploy-staging.yml" --limit 10 --json databaseId,status,conclusion,url,createdAt,displayTitle,event |
+            ConvertFrom-Json
+        # Prefer newest in_progress/queued, else newest success after now-5m
+        $active = $json | Where-Object { $_.status -in @("queued", "in_progress", "waiting", "pending") } | Select-Object -First 1
+        if ($active) {
+            Write-Host "Watching Deploy staging $($active.databaseId)..."
+            gh run watch $active.databaseId --exit-status
+            if ($LASTEXITCODE -ne 0) { throw "Deploy staging failed: $($active.url)" }
+            Write-Host ("OK Deploy staging: {0}" -f $active.url)
+            return
+        }
+        $done = $json | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "success" } | Select-Object -First 1
+        if ($done) {
+            $created = [datetime]::Parse($done.createdAt).ToUniversalTime()
+            if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-45)) {
+                Write-Host ("OK Deploy staging (recent success): {0}" -f $done.url)
+                return
+            }
+        }
+        $failed = $json | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "failure" } | Select-Object -First 1
+        if ($failed) {
+            $created = [datetime]::Parse($failed.createdAt).ToUniversalTime()
+            if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-45)) {
+                throw "Deploy staging failed: $($failed.url)"
+            }
+        }
+        Start-Sleep -Seconds 20
+    }
+    throw "Timeout waiting for Deploy staging"
+}
+
 function Invoke-PublishDev {
     param([string]$HeadBranch, [string]$PrTitle, [string]$PrBody)
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "gh CLI not found. Run: gh auth login" }
@@ -328,15 +431,43 @@ function Invoke-PublishDev {
     if ($DryRun) {
         Write-Host "[dry-run] git push -u origin $HeadBranch"
         Write-Host "[dry-run] gh pr create --base dev --head $HeadBranch ..."
-        Write-Host "[dry-run] gh pr merge --merge (after CI green; --auto if repo allows)"
+        Write-Host "[dry-run] wait PR checks -> gh pr merge --merge"
+        if ($WaitStaging) { Write-Host "[dry-run] wait Build and push images + Deploy staging" }
         return
     }
     git push -u origin $HeadBranch
-    $prArgs = @('pr', 'create', '--base', 'dev', '--head', $HeadBranch, '--title', $PrTitle)
-    if ($PrBody) { $prArgs += @('--body', $PrBody) }
-    $prUrl = gh @prArgs
-    Write-Host $prUrl
-    gh pr merge --merge --auto
+    $existing = gh pr list --base dev --head $HeadBranch --state open --json number,url --jq ".[0]"
+    $prRef = $null
+    if ($existing -and $existing -ne "null") {
+        $prObj = $existing | ConvertFrom-Json
+        $prRef = $prObj.number
+        Write-Host "Reusing open PR #$prRef $($prObj.url)"
+    }
+    else {
+        $prArgs = @('pr', 'create', '--base', 'dev', '--head', $HeadBranch, '--title', $PrTitle)
+        if ($PrBody) { $prArgs += @('--body', $PrBody) }
+        $prUrl = gh @prArgs
+        Write-Host $prUrl
+        $prRef = gh pr view --head $HeadBranch --json number --jq ".number"
+    }
+
+    # --auto is optional and often rejected; never treat open PR as completion.
+    gh pr merge $prRef --merge --auto 2>$null | Out-Null
+    $prState = gh pr view $prRef --json state,mergeCommit | ConvertFrom-Json
+    $mergedSha = $null
+    if ($prState.state -eq "MERGED" -and $prState.mergeCommit) {
+        $mergedSha = $prState.mergeCommit.oid
+        Write-Host "PR already merged (auto): $mergedSha"
+    }
+    else {
+        $mergedSha = Wait-PrChecksThenMerge -PrRef $prRef
+    }
+
+    if ($WaitStaging) {
+        Wait-WorkflowOnSha -WorkflowName "Build and push images" -Sha $mergedSha -Branch "dev"
+        Wait-DeployStagingAfterBuild -Sha $mergedSha
+        Write-Host "Staging deploy complete for $mergedSha"
+    }
 }
 
 function Invoke-PublishImages {
@@ -390,7 +521,8 @@ function Invoke-PublishMaster {
     }
     $prUrl = gh pr create --base master --head $HeadBranch --title $title --body "Promote integrated dev branch to master after CI green."
     Write-Host $prUrl
-    gh pr merge --merge
+    $prRef = gh pr view --json number --jq ".number"
+    Wait-PrChecksThenMerge -PrRef $prRef | Out-Null
 }
 
 $manifest = Get-Manifest
