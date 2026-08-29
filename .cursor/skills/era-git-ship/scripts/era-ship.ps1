@@ -448,11 +448,19 @@ function Invoke-PublishDev {
         if ($PrBody) { $prArgs += @('--body', $PrBody) }
         $prUrl = gh @prArgs
         Write-Host $prUrl
-        $prRef = gh pr view --head $HeadBranch --json number --jq ".number"
+        if ($prUrl -match '/pull/(\d+)') {
+            $prRef = $Matches[1]
+        }
+        else {
+            $prRef = gh pr view $HeadBranch --json number --jq ".number"
+        }
     }
 
     # --auto is optional and often rejected; never treat open PR as completion.
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     gh pr merge $prRef --merge --auto 2>$null | Out-Null
+    $ErrorActionPreference = $prevEap
     $prState = gh pr view $prRef --json state,mergeCommit | ConvertFrom-Json
     $mergedSha = $null
     if ($prState.state -eq "MERGED" -and $prState.mergeCommit) {
