@@ -162,6 +162,37 @@ describe("nafta cutover column map", () => {
     });
     expect(dotted.hireDate).toBe("2024-06-07");
     expect(dotted.birthDate).toBe("1974-11-30");
+    expect(excelDateYmd("1976-09-16T04:00:00.000Z")).toBe("1976-09-16");
+  });
+
+  it("writes roster sex and YYYY-MM-DD date strings (no ISO timestamps)", () => {
+    const fs = require("fs");
+    const os = require("os");
+    const path = require("path");
+    const XLSX = require("xlsx");
+    const { writeRosterSheet } = require("../scripts/nafta-cutover/build-hr-roster.cjs");
+    const tmp = path.join(os.tmpdir(), `era-hr-roster-${Date.now()}.xlsx`);
+    writeRosterSheet(XLSX, tmp, HEADERS.roster, [
+      {
+        fin: "119TS86",
+        fullName: "Nəzərov Nail Nizami oğlu",
+        sex: "MALE",
+        birthDate: "1976-09-16",
+        orgUnit: "Əyləncə",
+        position: "Əyləncə üzrə menecer",
+        hireDate: "2026-05-12",
+        workplace: "PRIMARY",
+        satellites: "",
+      },
+    ]);
+    const wb = XLSX.readFile(tmp, { cellDates: false });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: true });
+    fs.unlinkSync(tmp);
+    expect(rows[0].sex).toBe("MALE");
+    expect(rows[0].birthDate).toBe("1976-09-16");
+    expect(rows[0].hireDate).toBe("2026-05-12");
+    expect(String(rows[0].birthDate)).not.toMatch(/T/);
+    expect(String(rows[0].hireDate)).not.toMatch(/T/);
   });
 
   it("joins calendar slots to card procedure nahiye", () => {

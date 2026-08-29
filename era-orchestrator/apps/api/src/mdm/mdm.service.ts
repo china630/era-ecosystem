@@ -899,6 +899,8 @@ export class MdmService {
     identifiers: Array<{ maskedValue: string; isPrimary: boolean }>;
     accessDenied: boolean;
     hrProfile: PersonHrProfileView | null;
+    sex?: string | null;
+    birthDate?: string | null;
   }) {
     const primary =
       profile.identifiers.find((i) => i.isPrimary) ?? profile.identifiers[0];
@@ -908,6 +910,8 @@ export class MdmService {
       primaryIdentifierMasked: primary?.maskedValue ?? null,
       accessDenied: profile.accessDenied,
       hrProfile: profile.accessDenied ? null : profile.hrProfile,
+      sex: profile.accessDenied ? null : (profile.sex ?? null),
+      birthDate: profile.accessDenied ? null : (profile.birthDate ?? null),
     };
   }
 
@@ -923,6 +927,8 @@ export class MdmService {
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
         hrProfile: PersonHrProfileView | null;
+        sex: string | null;
+        birthDate: string | null;
       }
     >
   > {
@@ -937,6 +943,8 @@ export class MdmService {
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
         hrProfile: PersonHrProfileView | null;
+        sex: string | null;
+        birthDate: string | null;
       }
     > = {};
     let logPersonId: string | null = null;
@@ -952,6 +960,8 @@ export class MdmService {
           primaryIdentifierMasked: null,
           accessDenied: true,
           hrProfile: null,
+          sex: null,
+          birthDate: null,
         };
       }
     }

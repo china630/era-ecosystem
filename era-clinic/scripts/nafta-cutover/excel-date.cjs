@@ -67,6 +67,11 @@ function excelDateYmd(raw) {
   return d ? d.toISOString().slice(0, 10) : "";
 }
 
+/**
+ * Force calendar-day strings `YYYY-MM-DD`.
+ * Do not use `cell.t = "d"` + `cellDates` write: SheetJS then emits ISO timestamps
+ * with a timezone offset (`1976-09-16T04:00:00.000Z` on Asia/Baku).
+ */
 function stampDateCells(XLSX, ws, headers, dateCols) {
   const dateIdx = dateCols.map((c) => headers.indexOf(c)).filter((i) => i >= 0);
   if (!ws["!ref"] || !dateIdx.length) return;
@@ -76,11 +81,15 @@ function stampDateCells(XLSX, ws, headers, dateCols) {
       const addr = XLSX.utils.encode_cell({ r: R, c: C });
       const cell = ws[addr];
       if (!cell || cell.v == null || cell.v === "") continue;
-      const d = fromExcelSerial(cell.v);
-      if (!d) continue;
-      cell.t = "d";
-      cell.v = d;
-      cell.z = "YYYY-MM-DD";
+      const ymd = excelDateYmd(cell.v);
+      if (!ymd) {
+        delete ws[addr];
+        continue;
+      }
+      cell.t = "s";
+      cell.v = ymd;
+      cell.w = ymd;
+      delete cell.z;
     }
   }
 }

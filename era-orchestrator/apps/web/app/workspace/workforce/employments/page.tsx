@@ -45,15 +45,17 @@ type EmploymentRow = {
 
 type ListResponse = {
   items: EmploymentRow[];
-  persons: Record<
-    string,
-    {
-      globalPersonId: string;
-      displayName: string | null;
-      finMasked?: string | null;
-      accessDenied: boolean;
-    }
-  >;
+      persons: Record<
+        string,
+        {
+          globalPersonId: string;
+          displayName: string | null;
+          finMasked?: string | null;
+          accessDenied: boolean;
+          sex?: string | null;
+          birthDate?: string | null;
+        }
+      >;
 };
 
 function orgIdFromToken(token: string | null): string | null {
@@ -581,6 +583,8 @@ export default function WorkforceEmploymentsPage() {
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFinMasked")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSex")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colBirthDate")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHireDate")}</th>
@@ -599,6 +603,12 @@ export default function WorkforceEmploymentsPage() {
                   </td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
                     {persons[r.globalPersonId]?.finMasked ?? "—"}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {persons[r.globalPersonId]?.sex ?? "—"}
+                  </td>
+                  <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
+                    {persons[r.globalPersonId]?.birthDate ?? "—"}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.orgUnit?.name ?? "—"}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.position?.name ?? "—"}</td>
