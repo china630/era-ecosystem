@@ -209,11 +209,15 @@ function main() {
     }
   }
   const livePatients = patientsAll ? patients : patients.filter((p) => liveIds.has(p.id));
+  const patientRows = livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id)));
+  const checkInByWoId = new Map(
+    livePatients.map((p, i) => [String(p.id), patientRows[i].checkIn || ""]),
+  );
   const nPat = writeSheet(
     XLSX,
     path.join(clinicOut, "21-patients.xlsx"),
     HEADERS.patients,
-    livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id))),
+    patientRows,
   );
 
   const quotaMap = new Map();
@@ -351,7 +355,7 @@ function main() {
         testCode,
         status: "COMPLETED",
         panel,
-        takenAt: ymd(r.resultDate),
+        takenAt: ymd(r.resultDate) || checkInByWoId.get(String(r.patientId)) || "",
       };
     }),
   );
@@ -366,7 +370,7 @@ function main() {
   const usgRows = [];
   const dxRows = [];
   for (const form of examForms) {
-    const takenAt = ymd(form.date);
+    const takenAt = ymd(form.date) || checkInByWoId.get(String(form.patientId)) || "";
     if (isUsgExam(form)) {
       usgRows.push({
         externalRef: `wo:usg:${form.id}`,

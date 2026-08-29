@@ -255,7 +255,7 @@
     "colPatient": "Patient",
     "colType": "Type",
     "colAmount": "Amount",
-    "colCreated": "Created",
+    "colCreated": "Date",
     "openOrder": "Open"
   },
   "labOrdersDetail": {

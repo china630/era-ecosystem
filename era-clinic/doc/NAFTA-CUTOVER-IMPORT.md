@@ -82,6 +82,8 @@ MDM on `#21`: stamp FO `uniqueId` + `passport` via `apply-wo-fo-guest-bridge.cjs
 
 Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-URINE` + analyte aliases (`LYM%`→`LYMPH%`). **Ignored:** orders without parseable Word (~170) — no #39 lines, still importable via #24 as header-only orders.
 
+Lab / USG list date: WO patients grid has no analysis column. `#24` `takenAt` is WO `LabResult.resultDate` (file date; present on the API even when the UI hides it). Empty `takenAt` → stay **check-in** (`ClinicalEpisode.openedAt` from `#21`). Import stamps `collectedAt` / `resultDate` / `createdAt` to that clinical day so `/lab-orders` “Tarix” is not the Apply timestamp. Date filters use `collectedAt` (fallback `createdAt`). Re-Apply `#24` (and `#31` for USG) after deploy to backfill already-imported rows.
+
 ```
 node era-clinic/scripts/nafta-cutover/fetch-lab-files.cjs
 node era-clinic/scripts/nafta-cutover/rebuild-derived.cjs

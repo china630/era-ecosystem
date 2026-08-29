@@ -219,7 +219,7 @@
     "colPatient": "Пациент",
     "colType": "Тип",
     "colAmount": "Сумма",
-    "colCreated": "Создан",
+    "colCreated": "Дата",
     "openOrder": "Открыть"
   },
   "labOrdersDetail": {

@@ -47,7 +47,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |
 | `/appointments` | Practitioner **day matrix** (`GET /api/appointments/calendar`); create/reschedule/check-in/cancel. CLI-36: off-shift slots `blocked` (offShift); create + reschedule reject off-shift (409) |
-| `/lab-orders` | `GET /api/lab-orders` (paged `{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo filters; items+results+modality include), `/api/diagnostic-catalog` (picker + favorites sort); row opens **LabOrderWorkflowModal** |
+| `/lab-orders` | `GET /api/lab-orders` (paged `{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo on `collectedAt` with `createdAt` fallback; items+results+modality include), `/api/diagnostic-catalog` (picker + favorites sort); row opens **LabOrderWorkflowModal** |
 | `/lab-orders/[id]` | Redirect → `/lab-orders?order=` + same modal (`GET /api/lab-orders/[id]`, collect/results/publish/complete) |
 | `/reception/queue` | `/api/queue/*` |
 | `/doctor`, `/nurse` | role-guarded |
