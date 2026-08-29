@@ -1,4 +1,13 @@
+import { ewApplyI18n, ewLocale, ewT } from "./i18n.js";
+import { lampTitle, resolveBridgeLamp } from "./lamp.js";
+
 const $ = (id) => document.getElementById(id);
+
+function paintLamp(data, locale) {
+  const { color } = resolveBridgeLamp(data);
+  $("lampDot").setAttribute("data-color", color);
+  $("lampHint").textContent = lampTitle(locale, color);
+}
 
 function esc(value) {
   return String(value ?? "")
@@ -9,7 +18,7 @@ function esc(value) {
 }
 
 async function loadState() {
-  return chrome.storage.local.get([
+  const data = await chrome.storage.local.get([
     "token",
     "organizationId",
     "elektrawebHotelId",
@@ -23,7 +32,13 @@ async function loadState() {
     "lastSyncAt",
     "lastError",
     "queue",
+    "ewLoginToken",
   ]);
+  const sessionStore = chrome.storage.session
+    ? await chrome.storage.session.get(["ewLoginToken"])
+    : {};
+  data.ewLoginToken = sessionStore.ewLoginToken || data.ewLoginToken || "";
+  return data;
 }
 
 function deskRoleOf(data) {
@@ -78,6 +93,7 @@ async function render() {
   const locale = ewLocale(data.locale);
   ewApplyI18n(document, locale);
   applyLocaleButtons(locale);
+  paintLamp(data, locale);
 
   if (data.hotelBaseUrl) $("hotelBaseUrl").value = data.hotelBaseUrl;
   if (data.organizationId) $("organizationId").value = data.organizationId;

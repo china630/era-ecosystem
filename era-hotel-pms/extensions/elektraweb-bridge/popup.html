@@ -6,8 +6,14 @@
     <link rel="stylesheet" href="settings.css" />
   </head>
   <body class="ew-popup">
-    <h1 data-i18n="extName">ERA ↔ Elektraweb</h1>
-    <p class="ew-tag" id="deskLabel"></p>
+    <div class="ew-pop-head">
+      <span id="lampDot" class="ew-lamp" data-color="gray" aria-hidden="true"></span>
+      <div>
+        <h1 data-i18n="extName">ERA ↔ Elektraweb</h1>
+        <p class="ew-tag" id="deskLabel"></p>
+      </div>
+    </div>
+    <p id="lampHint" class="ew-lamp-hint"></p>
     <div id="status">…</div>
     <label class="ew-switch">
       <input type="checkbox" id="enabled" />
@@ -21,7 +27,6 @@
       <button id="openOptions" class="secondary" type="button" data-i18n="openSettings">Login / settings</button>
       <button id="flush" type="button" data-i18n="flushNow">Flush now</button>
     </div>
-    <script src="i18n.js"></script>
-    <script src="popup.js"></script>
+    <script type="module" src="popup.js"></script>
   </body>
 </html>

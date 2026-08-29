@@ -2,7 +2,18 @@
 
 Temporary dual-run extension: Elektraweb session on the desk PC ↔ this hotel-pms deployment.
 
-**Settings UI:** toolbar icon → **Open settings** (full tab). Locale EN / RU / AZ. Desk role, inbound capture, SPA write toggle.
+**Settings UI:** toolbar **lamp** (gray / yellow / green / red) → click for popup → **Open settings** (full tab). Locale EN / RU / AZ. Desk role, inbound capture, SPA write toggle.
+
+**Toolbar lamp**
+
+| Color | Meaning | Operator action |
+|-------|---------|-----------------|
+| Gray | No ERA login | Settings → **Log in & save** |
+| Yellow | Logged in but Capture off, or sanatorium write waiting for Elektraweb SPA session | Turn **Capture & sync** ON; on SPA desk open Elektraweb SPA |
+| Green | ERA session live, capture on, no sync error | None |
+| Red | JWT expired (~12h) or last ingest/outbox error | Settings → log in again, or fix the error shown in popup |
+
+Tooltip on the icon repeats the same text (EN / RU / AZ). Popup and Settings show a matching dot.
 
 **Login:** Options asks for ERA Hotel PMS URL + staff login/password. Server returns a **bridge JWT** that embeds:
 
@@ -38,7 +49,7 @@ Write must **not** run on FO: extras need the three-copy SPA ticket on the sanat
 2. Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → this folder.
 3. Extension **Settings** → URL + **ERA organization ID (hotel UUID)** + ERA reception/admin login → **Log in & save**.
 4. Pick **This desk**. Hotel FO: open Elektraweb grids (reservations / in-house / checkout / guests / folio). Sanatorium: keep SPA open (guest folio and Tibbi Ambulator).
-5. Popup or Settings → **Capture & sync** ON. Sanatorium: **Write** ON and keep SPA open so `LoginToken` exists.
+5. Popup or Settings → **Capture & sync** ON. Toolbar lamp should turn **green** (yellow if capture is still off; red if login expired). Sanatorium: **Write** ON and keep SPA open so `LoginToken` exists.
 
 Clinic dual-run: Super-Admin `ClinicCutoverPolicy` (Sync) + `HOTEL_PMS_URL` + same `POS_BRIDGE_SECRET`. Reception: `/reception/extra-tickets`.
 

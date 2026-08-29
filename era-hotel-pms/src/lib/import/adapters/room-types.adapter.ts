@@ -6,7 +6,8 @@ import type { ImportAdapter } from '@/lib/import/types';
 const rowSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
-  baseQuota: z.number().int().positive(),
+  /** 0 is valid: EW BANQUET / function space has Room Count=0. */
+  baseQuota: z.number().int().nonnegative(),
   adultCapacity: z.number().int().positive().optional(),
 });
 
@@ -23,12 +24,22 @@ export const roomTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     'Room Count': 'baseQuota',
   },
   rowSchema,
-  mapRow: (raw) => ({
-    code: cellString(raw.code)?.toUpperCase(),
-    name: cellString(raw.name),
-    baseQuota: cellNumber(raw.baseQuota) ?? 1,
-    adultCapacity: cellNumber(raw.adultCapacity) ?? 2,
-  }),
+  mapRow: (raw) => {
+    const code = cellString(raw.code)?.toUpperCase();
+    const name = cellString(raw.name);
+    // EW appends a totals footer (Id empty, Room Count = hotel inventory sum).
+    if (!code && !name) return null;
+    const quotaRaw = cellNumber(raw.baseQuota);
+    const capRaw = cellNumber(raw.adultCapacity);
+    return {
+      code,
+      name: name ?? code,
+      // Missing quota → 1. Explicit 0 (BANQUET) stays 0 — do not coerce; `?? 1` would not run on 0 anyway.
+      baseQuota: quotaRaw == null ? 1 : Math.max(0, Math.trunc(quotaRaw)),
+      // EW footer / unused types often have Max Adult=0; same pattern as Rooms Max Bed=0.
+      adultCapacity: capRaw != null && capRaw > 0 ? Math.trunc(capRaw) : 2,
+    };
+  },
   upsert: async (tx, row, dryRun) => {
     const existing = await tx.roomType.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';

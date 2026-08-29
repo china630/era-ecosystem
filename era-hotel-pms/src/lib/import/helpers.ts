@@ -57,6 +57,17 @@ export function parseDateCell(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** First non-empty string among alias keys (case-insensitive, including original Excel headers). */
+export function firstCellString(raw: Record<string, unknown>, keys: string[]): string | null {
+  const wanted = new Set(keys.map((k) => normalizeHeader(k)));
+  for (const [key, val] of Object.entries(raw)) {
+    if (!wanted.has(normalizeHeader(key))) continue;
+    const s = cellString(val);
+    if (s) return s;
+  }
+  return null;
+}
+
 export function mapHeaders(
   row: Record<string, unknown>,
   aliases: Record<string, string>,
@@ -67,6 +78,7 @@ export function mapHeaders(
   }
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(row)) {
+    out[key] = val;
     const field = aliasMap.get(normalizeHeader(key));
     if (field) out[field] = val;
   }
