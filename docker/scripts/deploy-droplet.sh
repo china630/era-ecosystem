@@ -5,7 +5,9 @@
 #
 # DEPLOY_SCOPE (default all):
 #   all | finance | orchestrator | data-hub | hotel | clinic | fnb | retail |
-#   logistics | construction | crm | auto | wholesale | bank
+#   logistics | construction | crm | auto | wholesale | bank | custom
+# DEPLOY_SERVICES: optional space-separated compose service names. When set,
+#   this list wins over DEPLOY_SCOPE mapping (path-filtered auto-deploy).
 set -euo pipefail
 cd /opt/era-ecosystem
 
@@ -24,28 +26,33 @@ fi
 
 scope="${DEPLOY_SCOPE:-all}"
 services=""
-case "$scope" in
-  all) services="" ;;
-  finance) services="orchestrator finance-core finance-web" ;;
-  finance-core) services="finance-core" ;;
-  finance-web) services="finance-web" ;;
-  orchestrator) services="orchestrator" ;;
-  data-hub) services="data-hub" ;;
-  hotel) services="hotel-pms" ;;
-  clinic) services="clinic" ;;
-  fnb) services="fnb-pos" ;;
-  retail) services="retail-pos" ;;
-  logistics) services="logistics" ;;
-  construction) services="construction" ;;
-  crm) services="crm" ;;
-  auto) services="auto-service" ;;
-  wholesale) services="wholesale" ;;
-  bank) services="bank-core bank bank-dbo" ;;
-  *)
-    echo "Unknown DEPLOY_SCOPE=$scope" >&2
-    exit 1
-    ;;
-esac
+if [ -n "${DEPLOY_SERVICES:-}" ]; then
+  services="$DEPLOY_SERVICES"
+  scope="${DEPLOY_SCOPE:-custom}"
+else
+  case "$scope" in
+    all) services="" ;;
+    finance) services="orchestrator finance-core finance-web" ;;
+    finance-core) services="finance-core" ;;
+    finance-web) services="finance-web" ;;
+    orchestrator) services="orchestrator" ;;
+    data-hub) services="data-hub" ;;
+    hotel) services="hotel-pms" ;;
+    clinic) services="clinic" ;;
+    fnb) services="fnb-pos" ;;
+    retail) services="retail-pos" ;;
+    logistics) services="logistics" ;;
+    construction) services="construction" ;;
+    crm) services="crm" ;;
+    auto) services="auto-service" ;;
+    wholesale) services="wholesale" ;;
+    bank) services="bank-core bank bank-dbo" ;;
+    *)
+      echo "Unknown DEPLOY_SCOPE=$scope" >&2
+      exit 1
+      ;;
+  esac
+fi
 
 echo "Deploy scope=$scope services=${services:-ALL}"
 echo "GHCR login as ${GH_ACTOR} (token length ${#GHCR_PULL_TOKEN})"
@@ -53,9 +60,11 @@ echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
 echo "==> disk before pull"
 df -h /
-# Drop unused tags from prior IMAGE_TAG deploys so pull can extract layers.
-docker image prune -af || true
-docker builder prune -af || true
+if [ -z "$services" ]; then
+  # Full stack: drop unused tags so pull can extract layers.
+  docker image prune -af || true
+  docker builder prune -af || true
+fi
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env)
 
