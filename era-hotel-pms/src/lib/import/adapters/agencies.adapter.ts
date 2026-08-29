@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { cellBool, cellString } from '@/lib/import/helpers';
+import { cellBool, cellString, firstCellString } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
 
 const rowSchema = z.object({
@@ -20,7 +20,10 @@ export const agenciesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   templateHint: 'Travel Agencies.xlsx',
   headerAliases: {
     'Agent Code': 'code',
+    'Agency Code': 'code',
     'Full Name': 'name',
+    'Agency Name': 'name',
+    'Agent Name': 'name',
     'Acc Code': 'voen',
     Phone: 'phone',
     Email: 'email',
@@ -28,14 +31,19 @@ export const agenciesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     'Is Deleted': 'deletedFlag',
   },
   rowSchema,
-  mapRow: (raw) => ({
-    code: cellString(raw.code)?.toUpperCase(),
-    name: cellString(raw.name),
-    voen: cellString(raw.voen),
-    phone: cellString(raw.phone),
-    email: cellString(raw.email),
-    active: !(cellBool(raw.passiveFlag) || cellBool(raw.deletedFlag)),
-  }),
+  mapRow: (raw) => {
+    const code = firstCellString(raw, ['code', 'Agent Code', 'Agency Code']);
+    const name = firstCellString(raw, ['name', 'Full Name', 'Agency Name', 'Agent Name']);
+    if (!code && !name) return null;
+    return {
+      code: (code ?? name)?.toUpperCase(),
+      name: name ?? code,
+      voen: cellString(raw.voen) ?? firstCellString(raw, ['Acc Code', 'VOEN', 'VÖEN']),
+      phone: cellString(raw.phone),
+      email: cellString(raw.email),
+      active: !(cellBool(raw.passiveFlag) || cellBool(raw.deletedFlag)),
+    };
+  },
   upsert: async (tx, row, dryRun) => {
     const existing = await tx.agency.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';

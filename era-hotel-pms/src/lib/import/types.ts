@@ -34,7 +34,8 @@ export type ImportAdapter<T> = {
   fileless?: boolean;
   headerAliases: Record<string, string>;
   rowSchema: z.ZodType<T>;
-  mapRow: (raw: Record<string, unknown>) => unknown;
+  /** Return `null` to skip a row (EW totals footer, virtual types). */
+  mapRow: (raw: Record<string, unknown>) => unknown | null;
   upsert: (tx: ImportTx, row: T, dryRun: boolean) => Promise<UpsertOutcome>;
 };
 

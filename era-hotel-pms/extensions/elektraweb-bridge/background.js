@@ -1,3 +1,5 @@
+import { LAMP_PATHS, NO_EW_TOKEN_ERROR, lampTitle, resolveBridgeLamp } from './lamp.js';
+
 const MAX_QUEUE = 40;
 
 async function getSettings() {
@@ -15,7 +17,11 @@ async function getSettings() {
     'lastSyncAt',
     'lastError',
     'lastResult',
+    'ewLoginToken',
   ]);
+  const sessionStore = chrome.storage.session
+    ? await chrome.storage.session.get(['ewLoginToken'])
+    : {};
   const deskRole = data.deskRole === 'sanatorium' ? 'sanatorium' : 'hotel_fo';
   return {
     enabled: !!data.enabled,
@@ -31,7 +37,19 @@ async function getSettings() {
     lastSyncAt: data.lastSyncAt || null,
     lastError: data.lastError || null,
     lastResult: data.lastResult || null,
+    ewLoginToken: sessionStore.ewLoginToken || data.ewLoginToken || '',
   };
+}
+
+async function refreshToolbarLamp() {
+  const s = await getSettings();
+  const { color } = resolveBridgeLamp(s);
+  try {
+    await chrome.action.setIcon({ path: LAMP_PATHS[color] });
+    await chrome.action.setTitle({ title: lampTitle(s.locale, color) });
+  } catch {
+    /* icon files missing or action unavailable */
+  }
 }
 
 async function setPartial(patch) {
@@ -61,7 +79,7 @@ async function drainOutbox() {
   if (!settings.writeEnabled || !settings.hotelBaseUrl || !settings.token) return;
   const { token, apiHost } = await getEwWriteSession();
   if (!token || !apiHost) {
-    await setPartial({ lastError: 'SPA write: no Elektraweb LoginToken yet — click in SPA' });
+    await setPartial({ lastError: NO_EW_TOKEN_ERROR });
     return;
   }
   try {
@@ -164,6 +182,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       await enqueue(msg.payload);
       await flushQueue();
       await drainOutbox();
+      await refreshToolbarLamp();
       sendResponse({ ok: true });
     })();
     return true;
@@ -177,6 +196,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       if (chrome.storage.session) await chrome.storage.session.set(patch);
       else await chrome.storage.local.set(patch);
       await chrome.storage.local.set({ ewApiHost: patch.ewApiHost });
+      await refreshToolbarLamp();
       sendResponse({ ok: true });
     })();
     return true;
@@ -188,6 +208,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type === 'flush') {
     flushQueue()
       .then(() => drainOutbox())
+      .then(() => refreshToolbarLamp())
       .then(() => sendResponse({ ok: true }));
     return true;
   }
@@ -197,9 +218,16 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 chrome.alarms.create('ew-bridge-flush', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'ew-bridge-flush') {
-    void flushQueue();
-    void drainOutbox();
+    void flushQueue().then(() => drainOutbox()).then(() => refreshToolbarLamp());
   }
+});
+
+chrome.storage.onChanged.addListener(() => {
+  void refreshToolbarLamp();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void refreshToolbarLamp();
 });
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -208,5 +236,8 @@ chrome.runtime.onInstalled.addListener(() => {
     if (!data.locale) patch.locale = 'ru';
     if (!data.deskRole) patch.deskRole = 'hotel_fo';
     if (Object.keys(patch).length) void chrome.storage.local.set(patch);
+    void refreshToolbarLamp();
   });
 });
+
+void refreshToolbarLamp();

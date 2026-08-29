@@ -8,9 +8,13 @@
   <body class="ew-options">
     <div class="ew-wrap">
       <header class="ew-header">
-        <div>
-          <h1 data-i18n="extName">ERA Elektraweb Bridge</h1>
-          <p class="ew-tag" data-i18n="extTag">Temporary dual-run — not a product</p>
+        <div class="ew-header-main">
+          <span id="lampDot" class="ew-lamp ew-lamp-lg" data-color="gray" aria-hidden="true"></span>
+          <div>
+            <h1 data-i18n="extName">ERA Elektraweb Bridge</h1>
+            <p class="ew-tag" data-i18n="extTag">Temporary dual-run — not a product</p>
+            <p id="lampHint" class="ew-lamp-hint"></p>
+          </div>
         </div>
         <div class="ew-lang" role="group" aria-label="Language">
           <button type="button" data-locale="en">EN</button>
@@ -99,7 +103,6 @@
         </p>
       </section>
     </div>
-    <script src="i18n.js"></script>
-    <script src="options.js"></script>
+    <script type="module" src="options.js"></script>
   </body>
 </html>

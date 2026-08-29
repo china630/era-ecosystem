@@ -128,13 +128,13 @@ Options page (open in tab) is the operator control surface — not a SatAdmin ho
 | Inbound capture | `enabled` | Select JSON → ERA ingest |
 | Write / outbox drain | `writeEnabled` | SPA Insert (guest or Tibbi Ambulator); **ignored unless** `deskRole=sanatorium` |
 
-Popup: compact status + same toggles + open settings. Sanatorium drain is live when `ELEKTRAWEB_BRIDGE_WRITE_ENABLED=1` and the extension has a page `LoginToken`. Insert shape is `SP_SPA_SAVE` for both origins; Nafta walk-in target is house `RESNAMEID` 100670215 (`RESID` 66246938). ERA prints 3 copies at issue (combat copy); Elektraweb `saveCheck` is not driven by the widget.
+Popup: compact status + toolbar lamp (gray/yellow/green/red) + same toggles + open settings. Sanatorium drain is live when `ELEKTRAWEB_BRIDGE_WRITE_ENABLED=1` and the extension has a page `LoginToken`. Insert shape is `SP_SPA_SAVE` for both origins; Nafta walk-in target is house `RESNAMEID` 100670215 (`RESID` 66246938). ERA prints 3 copies at issue (combat copy); Elektraweb `saveCheck` is not driven by the widget.
 
 ### 7. Observability (not an EW checkout lock)
 
 Elektraweb cannot block checkout on our queue.
 
-- Extension badge / settings: pending age, last error.
+- Extension toolbar lamp + settings: session color, pending age, last error.
 - Hotel `GET …/health`: inbound + `writeEnabled` + outbox counts by status.
 - Operational rule: do not check out an in-house stay with clinic extras while sanatorium write health is red / pending &gt; N minutes.
 
