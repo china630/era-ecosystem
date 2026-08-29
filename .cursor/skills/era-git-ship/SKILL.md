@@ -3,7 +3,8 @@ name: era-git-ship
 description: >-
   Ordered git commits and PR workflow for ERA ecosystem (orchestrator → data-hub → MDM → rest),
   plus per-core and per-satellite commits. Use when the user says полный коммит, коммит всех
-  сателлит, сделай шип, шип и пуш, шип + пуш, пуш на гит, коммит оркестратор/data-hub/mdm/finance/hotel/clinic,
+  сателлит, сделай шип, шип и пуш, шип + пуш, шип оркестратор, собери образы,
+  задеплой, пуш на гит, коммит оркестратор/data-hub/mdm/finance/hotel/clinic,
   PR на dev, merge master, or era-git-ship. Before every push: local ship gates
   (`npm run ship:prepush`); on FAIL fix and do not push.
 ---
@@ -16,7 +17,10 @@ description: >-
 |-----------|--------|
 | **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + **local ship gates** + push + PR → dev → wait CI green → merge + PR dev → master → wait CI → merge |
 | **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит**, **ship and push** | Same as full wave if there are uncommitted changes; if tree is already committed, **gates then PublishDev** (and master after CI) |
-| **коммит оркестратор** / **orch commit** | Single scope `orchestrator` + optional publish |
+| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → PR → `dev` → merge. **Do not** promote `master` unless the user said so. After merge, GitHub path-filter rebuilds **only** matching GHCR images and deploys those services. Wait for that Actions run; do not dispatch a full 16-image build. |
+| **собери образы оркестратор** (or `hotel`, `clinic`, …) | Manual `era-ship.ps1 -PublishImages -Services <ghcr>` (only if auto path-filter did not run) |
+| **задеплой оркестратор** | Manual `era-ship.ps1 -PublishDeploy -DeployScope orchestrator -ImageTag <tag>` |
+| **коммит оркестратор** / **orch commit** | Single scope `orchestrator` commit only (no PR unless also asked to push) |
 | **коммит data-hub** / **дата-хаб** | Single scope `data-hub` |
 | **коммит mdm** / **мдм** | Single scope `mdm` |
 | **коммит finance** / **финансы** | Single scope `finance` |
@@ -126,6 +130,33 @@ Satellite scope names: `hotel`, `clinic`, `wholesale`, `logistics`, `constructio
 Core scope names: `orchestrator`, `data-hub`, `mdm`, `finance`, `bank-core`, `bank`, `packages`, `platform`.
 
 List all: `era-ship.ps1 -ListScopes`
+
+## Scoped images + deploy (after merge to `dev`)
+
+Path-filter lives in [`scripts/ci-changed-ghcr-services.mjs`](../../../scripts/ci-changed-ghcr-services.mjs). Push to `dev`/`master` rebuilds only touched GHCR services; deploy pulls those compose services (`DEPLOY_SERVICES`), not the whole stack.
+
+**Do not** `gh workflow run` a full image build after a scoped merge — wait for the automatic run.
+
+Manual override (rebuild/redeploy without a new push):
+
+```powershell
+.cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishImages -Services orchestrator -Head dev
+.cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishDeploy -DeployScope orchestrator -ImageTag dev -Head dev
+```
+
+Skill scope → GHCR `services=` / deploy `scope`:
+
+| Skill `-Scope` | `-PublishImages -Services` | `-PublishDeploy -DeployScope` |
+|----------------|----------------------------|-------------------------------|
+| `orchestrator` / `mdm` | `orchestrator` | `orchestrator` |
+| `data-hub` | `data-hub` | `data-hub` |
+| `finance` | `finance-core,finance-web` | `finance` |
+| `hotel` | `hotel-pms` | `hotel` |
+| `clinic` | `clinic` | `clinic` |
+| `fnb-pos` | `fnb-pos` | `fnb` |
+| `packages` | _(empty = all)_ | `all` |
+
+`workflow_run` **Deploy staging** is read from the **default branch** (`master`). A path-filtered build on `dev` is only safe after this wiring has been merged to `master`; otherwise auto-deploy still uses `scope=all` and 404s missing tags.
 
 ## PR → dev → merge
 

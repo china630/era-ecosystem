@@ -58,8 +58,10 @@ node scripts/ecosystem-smoke-all.mjs
 
 Configure environment **staging** secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `ENV_FILE`, `GHCR_PULL_TOKEN`), then:
 
-1. Merge to **`dev`** → **Build and push images** runs automatically  
-2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `pull` → migrate → `up -d` with `IMAGE_TAG=dev-<sha>`  
+1. Merge to **`dev`** → **Build and push images** path-filters changed services  
+2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `pull` those services → migrate → `up` with `IMAGE_TAG=dev-<sha>`  
+
+This `deploy-staging.yml` listener is read from **`master`**. After changing it, promote `dev` → `master` before the next scoped (non-all) image build.
 
 Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`, **scope default `finance`**). Use `all` only when the whole stack must move.  
 Production: **Deploy production** remains manual only.

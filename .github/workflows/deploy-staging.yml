@@ -37,6 +37,7 @@ on:
 permissions:
   contents: read
   packages: read
+  actions: read
 
 jobs:
   deploy:
@@ -71,16 +72,28 @@ jobs:
 
       - name: Resolve deploy scope
         id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "value=${{ inputs.scope }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=all" >> "$GITHUB_OUTPUT"
+            echo "services=" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          mkdir -p /tmp/deploy-scope
+          gh run download "$RUN_ID" -n deploy-scope -D /tmp/deploy-scope
+          # shellcheck disable=SC1091
+          . /tmp/deploy-scope/deploy-scope.env
+          echo "skip=${SKIP:-false}" >> "$GITHUB_OUTPUT"
+          echo "value=${DEPLOY_SCOPE:-all}" >> "$GITHUB_OUTPUT"
+          echo "services=${DEPLOY_SERVICES:-}" >> "$GITHUB_OUTPUT"
 
       # Write .env on the runner and scp it — do not pass the file through SSH envs
       # (huge ERA_ENV_B64 was logged and can truncate sibling vars like the GHCR token).
       - name: Write droplet env file
+        if: steps.scope.outputs.skip != 'true'
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
@@ -94,6 +107,7 @@ jobs:
           } > "${GITHUB_WORKSPACE}/era.droplet.env"
 
       - name: Copy env to droplet
+        if: steps.scope.outputs.skip != 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -106,6 +120,7 @@ jobs:
           timeout: 60s
 
       - name: Deploy over SSH
+        if: steps.scope.outputs.skip != 'true'
         uses: appleboy/ssh-action@v1.2.0
         env:
           # Always the job token — a stale GHCR_PULL_TOKEN PAT would win over github.token
@@ -114,6 +129,7 @@ jobs:
           GIT_SHA: ${{ steps.sha.outputs.value }}
           GH_ACTOR: ${{ github.actor }}
           DEPLOY_SCOPE: ${{ steps.scope.outputs.value }}
+          DEPLOY_SERVICES: ${{ steps.scope.outputs.services }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -122,7 +138,7 @@ jobs:
           timeout: 60s
           command_timeout: 30m
           script_stop: false
-          envs: GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR,DEPLOY_SCOPE
+          envs: GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR,DEPLOY_SCOPE,DEPLOY_SERVICES
           script: |
             set -euo pipefail
             cd /opt/era-ecosystem
