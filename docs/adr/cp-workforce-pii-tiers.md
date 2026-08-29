@@ -42,7 +42,8 @@ Four tiers for workforce identity:
 |----------|---------|
 | `POST /internal/v1/mdm/persons/ops-profile/batch` | Workforce table display |
 | `POST /internal/v1/mdm/persons/workforce-resolve` | Hire FIN/passport intake |
-| `POST /api/platform/mdm/workforce/*` (orch web BFF) | Browser-safe proxy |
+| `POST /api/platform/mdm/workforce/*` (orch web BFF) | Browser-safe proxy (JWT + service token; `organizationId` query) |
+| `GET /v1/admin/mdm/persons` | Super-admin paginated directory (decrypt for operators) |
 | `POST /api/hr/employees/resolve-person` (finance) | Payroll hire MDM lookup |
 
 ## Compliance export

@@ -26,6 +26,35 @@ export class AdminMdmController {
     return this.mdm.listLegalEntities({ page, pageSize });
   }
 
+  @Get("persons")
+  @ApiOperation({
+    summary: "Paginated natural persons directory (super-admin)",
+  })
+  listPersons(
+    @Query("page") pageRaw?: string,
+    @Query("pageSize") pageSizeRaw?: string,
+    @Query("fin") fin?: string,
+    @Query("fullName") fullName?: string,
+    @Query("phone") phone?: string,
+    @Query("birthDate") birthDate?: string,
+    @Query("includeMerged") includeMerged?: string,
+  ) {
+    const page = Math.max(1, Number.parseInt(pageRaw ?? "1", 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number.parseInt(pageSizeRaw ?? "25", 10) || 25),
+    );
+    return this.mdm.listNaturalPersons({
+      page,
+      pageSize,
+      fin,
+      fullName,
+      phone,
+      birthDate,
+      includeMerged: includeMerged === "1" || includeMerged === "true",
+    });
+  }
+
   @Get("health")
   health() {
     return this.mdm.healthCheck();
