@@ -512,7 +512,7 @@ describe("nafta cutover import rules", () => {
         data: expect.objectContaining({
           labOrderId: "lab1",
           serviceCode: "LAB-CBC",
-          diagnosticService: { connect: { id: "svc1" } },
+          diagnosticServiceId: "svc1",
         }),
       }),
     );

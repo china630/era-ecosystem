@@ -26,8 +26,8 @@ function req(value: unknown): string {
 
 /**
  * LabOrderItem is not tenant-scoped. Nested `items.create` under LabOrder is stamped
- * with organizationId and rejected; Prisma nested input also wants
- * `diagnosticService: { connect }` rather than scalar `diagnosticServiceId`.
+ * with organizationId and rejected. Top-level item create is UncheckedCreateInput:
+ * scalar `diagnosticServiceId` + `labOrderId`, not `diagnosticService.connect`.
  */
 async function createImportedLabOrder(
   tx: ImportTx,
@@ -56,9 +56,7 @@ async function createImportedLabOrder(
     data: {
       labOrderId: order.id,
       serviceCode: input.testCode,
-      ...(input.diagnosticServiceId
-        ? { diagnosticService: { connect: { id: input.diagnosticServiceId } } }
-        : {}),
+      ...(input.diagnosticServiceId ? { diagnosticServiceId: input.diagnosticServiceId } : {}),
     },
   });
   return order.id;
