@@ -29,7 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | Workspace / org hub | `/workspace, /organizations` | 🟡 |
-| Workforce | `/workspace/workforce/*` | 🟡 |
+| Workforce | `/workspace/workforce/*` | 🟡 — hire/import xlsx landed (optional seat); not sell-ready |
 | Super-admin | `/super-admin/*` | 🟡 |
 | Placement hop / freeze | `/super-admin/orgs/[orgId]/placement` | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
 

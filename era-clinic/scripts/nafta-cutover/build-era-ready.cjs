@@ -18,7 +18,6 @@ const {
   slotStatus,
   isOpsSlotDate,
   mapPractitionerRole,
-  mapRosterRow,
   mapPatientImportRow,
   loadPatientCardIndex,
   isUsgExam,
@@ -27,6 +26,7 @@ const {
 } = require("./map.cjs");
 const { parseLabDocxFile, testCodeFromPanel, panelFromName } = require("./parse-lab-docx.cjs");
 const { eraCodeForWoAnalysis } = require("./wo-era-lab-map.cjs");
+const { buildHrRoster, loadMappedRoster } = require("./build-hr-roster.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -170,13 +170,9 @@ function main() {
     fullName: d.fullName || "",
     role: mapPractitionerRole(d.position),
   }));
-  const hrPathEarly = path.join(START, "hr", "37-Employees.xlsx");
-  if (fs.existsSync(hrPathEarly)) {
-    const wb = XLSX.readFile(hrPathEarly);
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const hrRows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-    for (const raw of hrRows) {
-      const mapped = mapRosterRow(raw);
+  const { rows: hrMappedEarly } = loadMappedRoster(XLSX, START);
+  if (hrMappedEarly.length) {
+    for (const mapped of hrMappedEarly) {
       if (!mapped.fin || mapped.satellites !== "industry_clinic") continue;
       if (practRows.some((p) => p.fullName === mapped.fullName)) {
         const hit = practRows.find((p) => p.fullName === mapped.fullName);
@@ -413,19 +409,8 @@ function main() {
     }
   }
 
-  const hrPath = path.join(START, "hr", "37-Employees.xlsx");
-  let nRoster = 0;
-  if (fs.existsSync(hrPath)) {
-    const wb = XLSX.readFile(hrPath);
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const hrRows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-    nRoster = writeSheet(
-      XLSX,
-      path.join(OUT, "hr", "hr-01-Employees.xlsx"),
-      HEADERS.roster,
-      hrRows.map(mapRosterRow).filter((r) => r.fin),
-    );
-  }
+  const hrBuilt = buildHrRoster(XLSX, START, OUT);
+  const nRoster = hrBuilt.n;
 
   const hotelSrc = path.join(START, "hotel");
   const hotelOut = path.join(OUT, "hotel");
@@ -480,6 +465,12 @@ function main() {
   if (fs.existsSync(readme)) fs.unlinkSync(readme);
   fs.writeFileSync(path.join(OUT, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
   console.log(JSON.stringify(summary, null, 2));
+
+  const bridge = path.join(__dirname, "../../../era-hotel-pms/scripts/apply-wo-fo-guest-bridge.cjs");
+  if (fs.existsSync(bridge)) {
+    const r = require("child_process").spawnSync(process.execPath, [bridge], { stdio: "inherit" });
+    if (r.status) process.exit(r.status);
+  }
 }
 
 main();

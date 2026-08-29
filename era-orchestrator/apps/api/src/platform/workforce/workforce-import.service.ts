@@ -2,13 +2,17 @@ import {
   BadRequestException,
   Injectable,
 } from "@nestjs/common";
-import { WorkforceAbsenceKind, WorkforceEmploymentStatus } from "@era365/database";
+import { WorkforceAbsenceKind, WorkforceEmploymentStatus, OrgUnitStatus } from "@era365/database";
 import { MdmService } from "../../mdm/mdm.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceAbsencesService } from "./workforce-absences.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import { WorkforceOrgUnitsService } from "./workforce-org-units.service";
+import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
+import { normalizeDateOnly } from "./workforce-date";
+import { rosterSatelliteKeys } from "./workforce-satellite-keys";
 
 export type ImportRowResult = {
   index: number;
@@ -69,10 +73,37 @@ function parseCsv(text: string): string[][] {
   return rows;
 }
 
+function foldHeader(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/i̇/g, "i")
+    .replace(/ə/g, "e")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i");
+}
+
 function headerIndex(headers: string[], ...names: string[]): number {
-  const lower = headers.map((h) => h.toLowerCase().replace(/\s+/g, ""));
+  const lower = headers.map((h) => foldHeader(h));
   for (const name of names) {
-    const i = lower.indexOf(name.toLowerCase().replace(/\s+/g, ""));
+    const i = lower.indexOf(foldHeader(name));
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+function headerIndexContains(headers: string[], ...names: string[]): number {
+  const exact = headerIndex(headers, ...names);
+  if (exact >= 0) return exact;
+  const lower = headers.map((h) => foldHeader(h));
+  for (const name of names) {
+    const n = foldHeader(name);
+    if (n.length < 4) continue;
+    const i = lower.findIndex((h) => h.includes(n));
     if (i >= 0) return i;
   }
   return -1;
@@ -91,6 +122,8 @@ export class WorkforceImportService {
     private readonly scope: WorkforceScopeService,
     private readonly provision: WorkforceProvisionService,
     private readonly absences: WorkforceAbsencesService,
+    private readonly orgUnits: WorkforceOrgUnitsService,
+    private readonly positions: WorkforcePositionsService,
   ) {}
 
   async importRoster(
@@ -112,6 +145,9 @@ export class WorkforceImportService {
     const iUnit = headerIndex(headers, "orgUnit", "orgunit", "unit");
     const iPos = headerIndex(headers, "position");
     const iHire = headerIndex(headers, "hireDate", "hiredate");
+    const iBirth = headerIndex(headers, "birthDate", "birthdate");
+    const iSex = headerIndex(headers, "sex", "gender", "cins", "cinsi");
+    const iWorkplace = headerIndex(headers, "workplace", "employmentkind");
     const iSats = headerIndex(headers, "satellites", "satelliteKeys", "satellitekeys");
     if ((iFin < 0 && iPerson < 0) || iUnit < 0 || iPos < 0 || iHire < 0) {
       throw new BadRequestException(
@@ -141,16 +177,23 @@ export class WorkforceImportService {
       const fullName = iName >= 0 ? (cols[iName] ?? "").trim() : "";
       const orgUnitName = cols[iUnit] ?? "";
       const positionName = cols[iPos] ?? "";
-      const hireDate = cols[iHire] ?? "";
+      const hireRaw = cols[iHire] ?? "";
+      const hireDate = normalizeDateOnly(hireRaw);
+      const birthDate =
+        iBirth >= 0 ? normalizeDateOnly(cols[iBirth] ?? "") : "";
+      const sex = iSex >= 0 ? (cols[iSex] ?? "").trim() : "";
+      const workplace = (iWorkplace >= 0 ? (cols[iWorkplace] ?? "") : "")
+        .trim()
+        .toUpperCase();
       const satsRaw = iSats >= 0 ? cols[iSats] ?? "" : "";
       const label = fullName || globalPersonId || fin || `row ${index}`;
 
-      if ((!fin && !globalPersonId) || !orgUnitName || !positionName || !hireDate) {
+      if (!fin && !globalPersonId) {
         errors++;
         results.push({
           index,
           status: "error",
-          message: "Missing required field(s): need fin or globalPersonId, orgUnit, position, hireDate",
+          message: "Missing required field(s): need fin or globalPersonId",
         });
         continue;
       }
@@ -160,6 +203,41 @@ export class WorkforceImportService {
           index,
           status: "error",
           message: "fullName is required when hiring by fin",
+        });
+        continue;
+      }
+
+      let personId = globalPersonId;
+      if (!dryRun && fullName) {
+        try {
+          const resolved = await this.mdm.workforceResolvePerson({
+            organizationId,
+            ...(globalPersonId ? { globalPersonId } : {}),
+            fin,
+            fullName,
+            ...(birthDate ? { birthDate } : {}),
+            ...(sex ? { sex } : {}),
+          });
+          personId = resolved.globalPersonId;
+        } catch (err) {
+          errors++;
+          results.push({
+            index,
+            status: "error",
+            message: err instanceof Error ? err.message : "MDM resolve failed",
+          });
+          continue;
+        }
+      }
+
+      if (!orgUnitName || !positionName || !hireDate) {
+        errors++;
+        results.push({
+          index,
+          status: "error",
+          message: hireRaw.trim() && !hireDate
+            ? `Invalid hireDate (YYYY-MM-DD): ${hireRaw}`
+            : "Missing required field(s): orgUnit, position, hireDate",
         });
         continue;
       }
@@ -199,42 +277,32 @@ export class WorkforceImportService {
         results.push({
           index,
           status: "error",
-          message: `Invalid hireDate (YYYY-MM-DD): ${hireDate}`,
+          message: `Invalid hireDate (YYYY-MM-DD): ${hireRaw || hireDate}`,
         });
         continue;
       }
 
-      const satelliteKeys = satsRaw
-        ? satsRaw
-            .split(/[|;]/)
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined;
+      const satelliteKeys = rosterSatelliteKeys(workplace, satsRaw);
 
       if (dryRun) {
         created++;
         results.push({
           index,
           status: "created",
-          message: `OK (dry-run): ${label} → ${unit.name}/${position.name}`,
+          message: `OK (dry-run): ${label} → ${unit.name}/${position.name}${
+            satelliteKeys.length ? "" : " (headcount, no seat)"
+          }`,
         });
         continue;
       }
 
       try {
-        let personId = globalPersonId;
-        if (!personId) {
-          const resolved = await this.mdm.workforceResolvePerson({
-            organizationId,
-            fin,
-            fullName,
-          });
-          personId = resolved.globalPersonId;
-        }
         const existing = await this.prisma.workforceEmployment.findFirst({
           where: {
             organizationId,
             globalPersonId: personId,
+            orgUnitId: unit.id,
+            positionId: position.id,
             status: WorkforceEmploymentStatus.ACTIVE,
           },
         });
@@ -243,7 +311,7 @@ export class WorkforceImportService {
           results.push({
             index,
             status: "skipped",
-            message: "Active employment already exists",
+            message: "Active employment already exists for this unit/position (MDM updated)",
           });
           continue;
         }
@@ -258,7 +326,9 @@ export class WorkforceImportService {
         results.push({
           index,
           status: "created",
-          message: `Hired ${label}`,
+          message: satelliteKeys?.length
+            ? `Hired ${label}`
+            : `Hired ${label} (headcount, no seat)`,
         });
       } catch (err) {
         errors++;
@@ -266,6 +336,156 @@ export class WorkforceImportService {
           index,
           status: "error",
           message: err instanceof Error ? err.message : "Hire failed",
+        });
+      }
+    }
+
+    return { dryRun, created, skipped, errors, rows: results };
+  }
+
+  async importOrgStructure(
+    organizationId: string,
+    actorUserId: string,
+    csvText: string,
+    dryRun: boolean,
+  ): Promise<ImportResult> {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
+    const parsed = parseCsv(csvText);
+    if (parsed.length < 2) {
+      throw new BadRequestException("CSV must include a header and at least one data row");
+    }
+    const headers = parsed[0];
+    const iUnit = headerIndexContains(headers, "orgUnit", "orgunit", "unit", "şöbə", "soba");
+    const iPos = headerIndexContains(headers, "position", "vəzifə", "vezife");
+    const iSlots = headerIndexContains(
+      headers,
+      "totalSlots",
+      "totalslots",
+      "slots",
+      "ştatvahidi",
+      "statvahidi",
+    );
+    if (iUnit < 0 || iPos < 0) {
+      throw new BadRequestException(
+        "CSV header must include orgUnit and position (or Şöbə / Vəzifə)",
+      );
+    }
+
+    const existingUnits = await this.prisma.orgUnit.findMany({
+      where: { workforceScopeId: link.workforceScopeId },
+    });
+    const existingPositions = await this.prisma.workforcePosition.findMany({
+      where: { orgUnit: { workforceScopeId: link.workforceScopeId } },
+    });
+
+    const results: ImportRowResult[] = [];
+    let created = 0;
+    let skipped = 0;
+    let errors = 0;
+    const unitCache = [...existingUnits];
+    const positionCache = [...existingPositions];
+
+    for (let r = 1; r < parsed.length; r++) {
+      const cols = parsed[r];
+      const index = r + 1;
+      const orgUnitName = (cols[iUnit] ?? "").trim();
+      const positionName = (cols[iPos] ?? "").trim();
+      const slotsRaw = iSlots >= 0 ? (cols[iSlots] ?? "").trim() : "";
+      const slotsNum = Number(String(slotsRaw).replace(",", "."));
+      const totalSlots =
+        Number.isFinite(slotsNum) && slotsNum > 0 ? Math.max(1, Math.round(slotsNum)) : 1;
+
+      if (!orgUnitName || !positionName) {
+        errors++;
+        results.push({
+          index,
+          status: "error",
+          message: "Missing orgUnit or position",
+        });
+        continue;
+      }
+
+      if (dryRun) {
+        created++;
+        results.push({
+          index,
+          status: "created",
+          message: `OK (dry-run): ${orgUnitName} / ${positionName} ×${totalSlots}`,
+        });
+        continue;
+      }
+
+      try {
+        let unit = unitCache.find(
+          (u) => u.name.toLowerCase() === orgUnitName.toLowerCase(),
+        );
+        const notes: string[] = [];
+        if (!unit) {
+          unit = await this.orgUnits.create(organizationId, actorUserId, {
+            name: orgUnitName,
+          });
+          unitCache.push(unit);
+          notes.push("org unit created");
+        } else if (unit.status !== OrgUnitStatus.ACTIVE) {
+          unit = await this.prisma.orgUnit.update({
+            where: { id: unit.id },
+            data: { status: OrgUnitStatus.ACTIVE },
+          });
+          const idx = unitCache.findIndex((u) => u.id === unit!.id);
+          if (idx >= 0) unitCache[idx] = unit;
+          notes.push("org unit reactivated");
+        }
+
+        const pos = positionCache.find(
+          (p) =>
+            p.orgUnitId === unit.id &&
+            p.name.toLowerCase() === positionName.toLowerCase(),
+        );
+        if (!pos) {
+          const createdPos = await this.positions.create(organizationId, actorUserId, {
+            orgUnitId: unit.id,
+            name: positionName,
+            totalSlots,
+          });
+          positionCache.push(createdPos);
+          notes.push("position created");
+          created++;
+          results.push({
+            index,
+            status: "created",
+            message: `${orgUnitName} / ${positionName} ×${totalSlots} (${notes.join(", ")})`,
+          });
+          continue;
+        }
+        if (pos.totalSlots !== totalSlots) {
+          await this.positions.update(organizationId, pos.id, actorUserId, {
+            totalSlots,
+          });
+          pos.totalSlots = totalSlots;
+          notes.push(`slots → ${totalSlots}`);
+        }
+        if (notes.length) {
+          skipped++;
+          results.push({
+            index,
+            status: "skipped",
+            message: `${orgUnitName} / ${positionName} (${notes.join(", ")})`,
+          });
+        } else {
+          skipped++;
+          results.push({
+            index,
+            status: "skipped",
+            message: `Already exists: ${orgUnitName} / ${positionName}`,
+          });
+        }
+      } catch (err) {
+        errors++;
+        results.push({
+          index,
+          status: "error",
+          message: err instanceof Error ? err.message : "Org structure import failed",
         });
       }
     }
@@ -316,8 +536,8 @@ export class WorkforceImportService {
       const staffCode = iStaff >= 0 ? (cols[iStaff] ?? "").toUpperCase() : "";
       const globalPersonId = iPerson >= 0 ? cols[iPerson] ?? "" : "";
       const kind = (cols[iKind] ?? "").toUpperCase();
-      const startDate = cols[iStart] ?? "";
-      const endDate = cols[iEnd] ?? "";
+      const startDate = normalizeDateOnly(cols[iStart] ?? "");
+      const endDate = normalizeDateOnly(cols[iEnd] ?? "");
       const note = iNote >= 0 ? cols[iNote] ?? "" : "";
 
       const employment =

@@ -3,6 +3,8 @@
 /** W4: procedure-order nahiye → S is nahiye-s-match.cjs + physio-zones-s.json, not this Excel column mapper.
  *  #40 LOCATION codes are room ids (WO-ROOM-*). Electro 2-pad vs 4-pad (canon §9) is not a column here. */
 
+const { excelDateYmd } = require("./excel-date.cjs");
+
 const CUTOVER = "2026-08-25";
 /** Ops import window: today through Saturday (Asia/Baku week). */
 const OPS_SLOT_FROM = "2026-08-25";
@@ -34,6 +36,7 @@ const HEADERS = {
     "roomNumber",
     "folioPerson",
     "uniqueId",
+    "passport",
     "checkIn",
     "checkOut",
     "treatmentDaysCount",
@@ -64,7 +67,18 @@ const HEADERS = {
   labResultLines: ["orderRef", "code", "label", "value", "unit", "refMin", "refMax"],
   diagnostics: ["externalRef", "patientRef", "code", "name", "resultText", "takenAt"],
   diagnoses: ["patientRef", "rawText", "icd10", "recordedAt"],
-  roster: ["fin", "fullName", "orgUnit", "position", "hireDate", "satellites"],
+  roster: [
+    "fin",
+    "fullName",
+    "sex",
+    "birthDate",
+    "orgUnit",
+    "position",
+    "hireDate",
+    "workplace",
+    "satellites",
+  ],
+  orgStructure: ["orgUnit", "position", "totalSlots"],
   procedureRequirements: ["procedureCode", "resourceCode", "role", "quantity"],
 };
 
@@ -95,23 +109,49 @@ function mapSex(raw) {
     .toLowerCase()
     .replace(/i̇/g, "i");
   if (!s) return "UNKNOWN";
-  // Female before male: "female" contains "male".
+  const token = s.split(/[\s\-–—(/]+/)[0] || s;
+  // Female before male: "female" contains "male". Nafta HR: Q = qadın, K = kişi.
   if (
-    s === "f" ||
+    token === "f" ||
+    token === "q" ||
     s === "2" ||
     s.startsWith("fem") ||
     s === "woman" ||
-    s === "qadin" ||
-    s === "qadın" ||
+    s.includes("qadin") ||
+    s.includes("qadın") ||
     s === "xanim" ||
     s === "xanım"
   ) {
     return "FEMALE";
   }
-  if (s === "m" || s === "1" || s === "male" || s === "man" || s === "kisi" || s === "kişi" || s === "bay") {
+  if (
+    token === "m" ||
+    token === "k" ||
+    s === "1" ||
+    s === "male" ||
+    s === "man" ||
+    s.includes("kisi") ||
+    s.includes("kişi") ||
+    s === "bay"
+  ) {
     return "MALE";
   }
   return "UNKNOWN";
+}
+
+function mapWorkplace(raw) {
+  const s = String(raw ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/i̇/g, "i");
+  if (!s) return "";
+  if (s.includes("əlavə") || s.includes("elave") || s.includes("additional") || s === "2") {
+    return "ADDITIONAL";
+  }
+  if (s.includes("əsas") || s.includes("esas") || s.includes("primary") || s === "1") {
+    return "PRIMARY";
+  }
+  return "";
 }
 
 function cell(value) {
@@ -186,6 +226,7 @@ function mapPatientImportRow(listRow, card) {
     roomNumber: cell(c.reservationRoomNumber || list.reservationRoomNumber),
     folioPerson: c.folioPerson != null ? c.folioPerson : "",
     uniqueId: cell(c.uniqueId || list.uniqueId),
+    passport: cell(c.passport || list.passport),
     checkIn: ymd(c.checkInDate || list.checkInDate),
     checkOut: ymd(c.checkOutDate || list.checkOutDate),
     treatmentDaysCount: c.treatmentDaysCount != null ? c.treatmentDaysCount : list.treatmentDaysCount ?? "",
@@ -210,27 +251,70 @@ function mapPractitionerRole(position) {
   return "DOCTOR";
 }
 
+function cellByHeader(row, ...needles) {
+  if (!row || typeof row !== "object") return "";
+  const keys = Object.keys(row);
+  for (const needle of needles) {
+    if (Object.prototype.hasOwnProperty.call(row, needle) && row[needle] != null && row[needle] !== "") {
+      return row[needle];
+    }
+  }
+  const norms = needles.map((n) => n.toLowerCase().replace(/\s+/g, " ").trim());
+  for (const k of keys) {
+    const kn = k.toLowerCase().replace(/\s+/g, " ").trim();
+    if (norms.includes(kn) && row[k] != null && row[k] !== "") return row[k];
+  }
+  for (const k of keys) {
+    const kn = k.toLowerCase().replace(/\s+/g, " ");
+    for (const n of norms) {
+      if (n.length >= 5 && kn.includes(n) && row[k] != null && row[k] !== "") return row[k];
+    }
+  }
+  return "";
+}
+
 function mapRosterRow(row) {
-  const title = String(row["Vəzifə"] || row.position || "");
-  const dept = String(row["Şöbə"] || row.orgUnit || "");
+  const title = String(cellByHeader(row, "Vəzifə", "position") || "");
+  const dept = String(cellByHeader(row, "Şöbə", "orgUnit") || "");
+  const workplace = mapWorkplace(
+    cellByHeader(row, "workplace", "İş yeri: əsas və ya əlavə", "iş yeri"),
+  );
   const low = `${title} ${dept}`.toLowerCase();
   let satellites = "";
-  if (
-    /həkim|hekim|tibb|bacısı|bacisi|vanna|reabilit|ginek|laborant|terapevt|nurse|doctor/.test(
-      low,
-    )
-  ) {
-    satellites = "industry_clinic";
-  } else if (/qeydiyyat|qəbul|qeBul|reception|reseps/.test(low)) {
-    satellites = "industry_hotel_pms";
+  if (workplace !== "ADDITIONAL") {
+    if (
+      /həkim|hekim|tibb|bacısı|bacisi|vanna|reabilit|ginek|laborant|terapevt|nurse|doctor/.test(
+        low,
+      )
+    ) {
+      satellites = "industry_clinic";
+    } else if (/qeydiyyat|qəbul|qeBul|reception|reseps/.test(low)) {
+      satellites = "industry_hotel_pms";
+    }
   }
   return {
-    fin: String(row["FİN"] || row.FIN || row.fin || "").trim(),
-    fullName: String(row["Tam adı"] || row.fullName || "").trim(),
+    fin: String(cellByHeader(row, "FİN", "FIN", "fin") || "").trim(),
+    fullName: String(cellByHeader(row, "Tam adı", "fullName") || "").trim(),
+    sex: mapSex(cellByHeader(row, "sex", "gender", "Cins", "Cinsi", "Cinsiyyət", "cinsi")),
     orgUnit: dept.trim(),
     position: title.trim(),
-    hireDate: "2020-01-01",
+    hireDate: excelDateYmd(
+      cellByHeader(row, "hireDate", "İşə qəbul  tarixi", "İşə qəbul tarixi", "işə qəbul"),
+    ),
+    birthDate: excelDateYmd(cellByHeader(row, "birthDate", "Doğum tarixi", "doğum")),
+    workplace,
     satellites,
+  };
+}
+
+function mapOrgStructureRow(row) {
+  const slotsRaw = cellByHeader(row, "totalSlots", "slots", "Ştat vahidi", "ştat vahidi");
+  const n = Number(String(slotsRaw ?? "").replace(",", "."));
+  const totalSlots = Number.isFinite(n) && n > 0 ? Math.max(1, Math.round(n)) : 1;
+  return {
+    orgUnit: String(cellByHeader(row, "orgUnit", "Şöbə") || "").trim(),
+    position: String(cellByHeader(row, "position", "Vəzifə") || "").trim(),
+    totalSlots,
   };
 }
 
@@ -288,10 +372,13 @@ module.exports = {
   slotStatus,
   isOpsSlotDate,
   mapSex,
+  mapWorkplace,
   mapPatientImportRow,
   loadPatientCardIndex,
   mapPractitionerRole,
   mapRosterRow,
+  mapOrgStructureRow,
+  cellByHeader,
   isUsgExam,
   labFileRel,
   loadNahiyeByProcedureId,

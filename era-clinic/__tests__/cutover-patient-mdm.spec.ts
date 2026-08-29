@@ -1,5 +1,6 @@
 jest.mock("@era/satellite-kit", () => ({
   linkPersonIdentity: jest.fn(),
+  isValidAzFin: (v: string) => /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/.test(String(v || "").trim()),
 }));
 
 jest.mock("@/lib/hotel-stay-person", () => ({
@@ -67,7 +68,32 @@ describe("resolveCutoverPatientMdm", () => {
       }),
     );
     expect(hotelLookup).not.toHaveBeenCalled();
+    expect(link).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fullName: "Gülarə Həşimova",
+        globalPersonId: "gp-name",
+      }),
+    );
     expect(id).toBe("gp-name");
+  });
+
+  it("passes FO passport into MDM resolve", async () => {
+    identityLookup.mockResolvedValue("gp-name");
+    link.mockResolvedValue({ globalPersonId: "gp-name" });
+    await resolveCutoverPatientMdm({
+      fullName: "Gülarə Həşimova",
+      givenName: "Gülarə",
+      surname: "Həşimova",
+      birthDate: "1972-08-05",
+      passport: "AA5678987",
+      sex: "FEMALE",
+    });
+    expect(link).toHaveBeenCalledWith(
+      expect.objectContaining({
+        passport: "AA5678987",
+        globalPersonId: "gp-name",
+      }),
+    );
   });
 
   it("falls back to stay lookup when name+DOB misses", async () => {

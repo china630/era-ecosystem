@@ -69,7 +69,10 @@ export class WorkforceEmploymentsController {
 
   @Post("hire")
   @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
-  @ApiOperation({ summary: "Hire with satellite provision (CP master)" })
+  @ApiOperation({
+    summary:
+      "Hire (headcount always; satellite provision only when satelliteKeys set)",
+  })
   hire(
     @OrganizationId() organizationId: string,
     @CurrentUser() user: EraJwtPayload,

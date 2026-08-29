@@ -15,6 +15,7 @@ D:\ERA-BACKUP\
     hotel/01–20          = START/hotel
     clinic/21–40         = dump + curated SSOT
     hr/37-Employees.xlsx
+    hr/org-structure.xlsx
     1c/40–53
 ```
 
@@ -39,7 +40,7 @@ D:\ERA-BACKUP\
 | 07 | [x] | `hotel/07-Travel-Agencies.xlsx` | Hotel wizard | — |
 | 08 | [x] | `hotel/08-Product-Cards.xlsx` (+ `08-Product-Group-List.xlsx`) — EW **2026-08-21** | Hotel wizard SELLABLE | — |
 | 09 | [x] | `hotel/09-Stock-Cards.xlsx` — EW Ürün Tanımları **2026-08-21** | Hotel wizard STOCK | — |
-| 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723; overlay 2026-08-28) | Hotel wizard `guests` + MDM | — |
+| 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723 EW + 407 FO-only `wo:fo:*`) | Hotel wizard `guests` + MDM | FO passports applied; dump `hotel/dump/guest-cards.json` |
 | 11 | [x] | `hotel/11-Reservations.merged.xlsx` (6 117) | Hotel wizard, 2026+ / InHouse / future | — |
 | 12 | [x] | `hotel/12-Folio-Transactions.merged.xlsx` (95 793) | Hotel wizard, **открытые** фолио на hour X | — |
 | 13 | [x] | `hotel/13-Package-Prices-2026.csv` | Hotel rate plans + Clinic `ProgramTemplate` | — |
@@ -89,7 +90,7 @@ D:\ERA-BACKUP\
 
 | # | Есть | Файл | Куда | Бух |
 |---|:---:|------|------|-----|
-| 37 | [x] | `hr/37-Employees.xlsx` (126, FİN) | CP hire по FİN → логины Hotel/Clinic/FnB | Табель / МОЛ / email — только если без них не заведём сотрудника в CP. **Полный список заново не просить.** |
+| 37 | [x] | `hr/37-Employees.xlsx` + `hr/Əməkdaşların yenilənmiş siyahı Nafta 28.08.2026.xlsx` (FİN + Cins K/Q + DOB + hire + şöbə + vəzifə + əsas/əlavə) | CP: сначала `org-structure.xlsx`, затем roster. Пустые satellites = штат без логина. ƏLAVƏ = вторая должность, без seat. Даты: сериал Excel и `ДД.ММ.ГГГГ` → `YYYY-MM-DD`. | Табель / МОЛ / email — только если без них не заведём сотрудника в CP. **Ştat vahidləri** → READY `hr/org-structure.xlsx`. |
 
 ---
 

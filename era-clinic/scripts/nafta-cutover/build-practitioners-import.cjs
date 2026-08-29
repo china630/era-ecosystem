@@ -10,12 +10,12 @@
 
 const fs = require("fs");
 const path = require("path");
-const { HEADERS, mapRosterRow } = require("./map.cjs");
+const { HEADERS } = require("./map.cjs");
+const { loadMappedRoster } = require("./build-hr-roster.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const READY = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
 const ROSTER = path.join(START, "clinic", "reports", "27-practitioners-roster.json");
-const HR_PATH = path.join(START, "hr", "37-Employees.xlsx");
 const MIRROR = path.join(START, "clinic", "reports", "era-import");
 
 function loadXlsx() {
@@ -51,10 +51,7 @@ function nameTokens(fullName) {
 }
 
 function loadHrIndex(XLSX) {
-  if (!fs.existsSync(HR_PATH)) return [];
-  const wb = XLSX.readFile(HR_PATH);
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(sheet, { defval: "" }).map(mapRosterRow).filter((r) => r.fin);
+  return loadMappedRoster(XLSX, START).rows;
 }
 
 function findFin(fullName, hrRows) {

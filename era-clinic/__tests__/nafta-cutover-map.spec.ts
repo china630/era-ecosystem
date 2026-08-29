@@ -30,6 +30,7 @@ describe("nafta cutover column map", () => {
       "roomNumber",
       "folioPerson",
       "uniqueId",
+      "passport",
       "checkIn",
       "checkOut",
       "treatmentDaysCount",
@@ -47,11 +48,15 @@ describe("nafta cutover column map", () => {
     expect(HEADERS.roster).toEqual([
       "fin",
       "fullName",
+      "sex",
+      "birthDate",
       "orgUnit",
       "position",
       "hireDate",
+      "workplace",
       "satellites",
     ]);
+    expect(HEADERS.orgStructure).toEqual(["orgUnit", "position", "totalSlots"]);
   });
 
   it("maps WO Word analyte slugs to ERA seed codes", () => {
@@ -97,9 +102,66 @@ describe("nafta cutover column map", () => {
       "Tam adı": "Rəna Kəngərli",
       Şöbə: "Tibb",
       Vəzifə: "Baş həkim",
+      Cinsi: "Q",
     });
     expect(row.satellites).toBe("industry_clinic");
     expect(row.fin).toBe("4QK1E9C");
+    expect(row.sex).toBe("FEMALE");
+    expect(row.workplace).toBe("");
+  });
+
+  it("maps HR K/Q sex and ADDITIONAL workplace without satellites", () => {
+    const { mapSex, mapWorkplace, mapOrgStructureRow } = require("../scripts/nafta-cutover/map.cjs");
+    expect(mapSex("K")).toBe("MALE");
+    expect(mapSex("Q")).toBe("FEMALE");
+    expect(mapWorkplace("ƏSAS")).toBe("PRIMARY");
+    expect(mapWorkplace("ƏLAVƏ")).toBe("ADDITIONAL");
+    const extra = mapRosterRow({
+      FİN: "1A2B3C4",
+      "Tam adı": "Dual Job",
+      Şöbə: "Tibb",
+      Vəzifə: "Həkim",
+      "İş yeri: əsas və ya əlavə": "ƏLAVƏ",
+      Cinsi: "K",
+    });
+    expect(extra.workplace).toBe("ADDITIONAL");
+    expect(extra.satellites).toBe("");
+    expect(extra.sex).toBe("MALE");
+    expect(
+      mapOrgStructureRow({
+        Şöbə: "Resepşn",
+        Vəzifə: "Qeydiyyatçı",
+        "Ştat vahidi": 2,
+      }),
+    ).toEqual({ orgUnit: "Resepşn", position: "Qeydiyyatçı", totalSlots: 2 });
+  });
+
+  it("maps HR Excel serials and dotted AZ dates to YYYY-MM-DD", () => {
+    const { excelDateYmd } = require("../scripts/nafta-cutover/excel-date.cjs");
+    expect(excelDateYmd(28019)).toBe("1976-09-16");
+    expect(excelDateYmd(46154)).toBe("2026-05-12");
+    expect(excelDateYmd("07.06.2024")).toBe("2024-06-07");
+    expect(excelDateYmd("NAN")).toBe("");
+    expect(excelDateYmd(0)).toBe("");
+    const row = mapRosterRow({
+      FİN: "119TS86",
+      "Tam adı": "Nəzərov Nail Nizami oğlu",
+      Şöbə: "Əyləncə",
+      Vəzifə: "Əyləncə üzrə menecer",
+      "Doğum tarixi": 28019,
+      "İşə qəbul  tarixi": 46154,
+    });
+    expect(row.hireDate).toBe("2026-05-12");
+    expect(row.birthDate).toBe("1976-09-16");
+    expect(row.hireDate).not.toBe("2020-01-01");
+    const dotted = mapRosterRow({
+      FİN: "5DL988R",
+      "Tam adı": "Süleymanova",
+      "İşə qəbul  tarixi": "07.06.2024",
+      "Doğum tarixi": 27363,
+    });
+    expect(dotted.hireDate).toBe("2024-06-07");
+    expect(dotted.birthDate).toBe("1974-11-30");
   });
 
   it("joins calendar slots to card procedure nahiye", () => {

@@ -1,9 +1,8 @@
-import { IsOptional, IsString, MinLength } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
 export class ImportCsvDto {
   @IsOptional()
   @IsString()
-  @MinLength(1)
   csv?: string;
 
   /** Base64 .xlsx (same columns as CSV). Converted server-side. */

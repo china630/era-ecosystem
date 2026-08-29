@@ -69,3 +69,21 @@ export async function enableWorkforceModule(): Promise<boolean> {
   }).catch(() => null);
   return Boolean(res?.ok);
 }
+
+/** CSV text or xlsx base64 for workforce import endpoints. */
+export async function fileToWorkforceImportBody(
+  file: File,
+): Promise<{ csv?: string; xlsxBase64?: string }> {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return { xlsxBase64: btoa(binary) };
+  }
+  return { csv: await file.text() };
+}

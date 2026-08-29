@@ -128,7 +128,7 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | |
 | Product Cards.xlsx | `product-cards` | `Product` | `code` | `productType = SELLABLE` |
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
-| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. `Birth Date` Excel serials are restored to calendar dates on the Nafta merged book. MDM `fullName` fill-not-clear adds patronymic when incoming name is longer. |
+| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
 | Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
 | Folios.xlsx | `folios` | `FolioCharge` | `externalRef` | Elektraweb folio/charge id |
 | Chart of Accounts | — | — | — | **Excluded** — finance-core |

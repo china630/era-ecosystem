@@ -26,6 +26,7 @@ import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceRoleTemplateService } from "./workforce-role-template.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceSeatService } from "./workforce-seat.service";
+import { filterEntitledSatellites, shouldAllocateNewSeat } from "./workforce-satellite-keys";
 
 function parseDateOnly(iso: string): Date {
   const d = iso.slice(0, 10);
@@ -85,30 +86,6 @@ export class WorkforceProvisionService {
     if (!unit) throw new BadRequestException("Invalid orgUnitId");
 
     await this.positions.assertSlotAvailable(dto.positionId);
-    try {
-      await this.seats.assertSeatAvailable(
-        link.workforceScopeId,
-        globalPersonId,
-        organizationId,
-      );
-    } catch (err) {
-      await this.audit.log({
-        organizationId,
-        workforceScopeId: link.workforceScopeId,
-        actorUserId,
-        action: "SEAT_DENY",
-        entityType: "EMPLOYMENT",
-        entityId: globalPersonId,
-        globalPersonId,
-        payload: {
-          code:
-            err instanceof BadRequestException
-              ? (err.getResponse() as { code?: string })?.code
-              : "WORKFORCE_SEATS_FULL",
-        },
-      });
-      throw err;
-    }
 
     const position = await this.prisma.workforcePosition.findUnique({
       where: { id: dto.positionId },
@@ -120,8 +97,39 @@ export class WorkforceProvisionService {
       organizationId,
       dto.satelliteKeys,
     );
-    if (entitledKeys.length === 0) {
-      throw new BadRequestException("No entitled satellites selected for provision");
+    const existingSeat = await this.prisma.workforceSeatAllocation.findFirst({
+      where: {
+        workforceScopeId: link.workforceScopeId,
+        globalPersonId,
+        status: RoleBindingStatus.ACTIVE,
+      },
+    });
+    const needsNewSeat = shouldAllocateNewSeat(entitledKeys, Boolean(existingSeat));
+    if (needsNewSeat) {
+      try {
+        await this.seats.assertSeatAvailable(
+          link.workforceScopeId,
+          globalPersonId,
+          organizationId,
+        );
+      } catch (err) {
+        await this.audit.log({
+          organizationId,
+          workforceScopeId: link.workforceScopeId,
+          actorUserId,
+          action: "SEAT_DENY",
+          entityType: "EMPLOYMENT",
+          entityId: globalPersonId,
+          globalPersonId,
+          payload: {
+            code:
+              err instanceof BadRequestException
+                ? (err.getResponse() as { code?: string })?.code
+                : "WORKFORCE_SEATS_FULL",
+          },
+        });
+        throw err;
+      }
     }
 
     const hireDate = parseDateOnly(dto.hireDate);
@@ -140,14 +148,16 @@ export class WorkforceProvisionService {
         },
         include: { orgUnit: true, position: true },
       });
-      await tx.workforceSeatAllocation.create({
-        data: {
-          workforceScopeId: link.workforceScopeId,
-          globalPersonId,
-          employmentId: row.id,
-          status: RoleBindingStatus.ACTIVE,
-        },
-      });
+      if (needsNewSeat) {
+        await tx.workforceSeatAllocation.create({
+          data: {
+            workforceScopeId: link.workforceScopeId,
+            globalPersonId,
+            employmentId: row.id,
+            status: RoleBindingStatus.ACTIVE,
+          },
+        });
+      }
       return row;
     });
 
@@ -379,8 +389,6 @@ export class WorkforceProvisionService {
         entitled.push(key);
       }
     }
-    if (!requested?.length) return entitled;
-    const set = new Set(requested.map((k) => k.trim()).filter(Boolean));
-    return entitled.filter((k) => set.has(k));
+    return filterEntitledSatellites(entitled, requested);
   }
 }
