@@ -56,7 +56,7 @@ Worst **in-scope** class (NONE < PARTIAL < SCREEN < SHIPPED < SHOW). HEADLESS / 
 | Bank | ✅ lab | ✅ | **SHOW** | — | BANK-REF-01 **HEADLESS** (file/env snapshot); rails VENDOR; ≠ full ABS |
 | Bank DBO | ✅ lab | ✅ | **SHOW** | — | `/open-api` **SCREEN** (keys UI); AC-DBO-OPEN still Scaffold 🟡; ASAN VENDOR |
 | Platform | 🟡 | 🟡 | **SCREEN** | — | Placement `/super-admin/orgs/{id}/placement` **SCREEN**; AC-CP-TOPO still Scaffold 🟡 |
-| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (SatAdmin BOM; Finance write-off; UAT open → not SHOW); CLI-49 physio sites **SCREEN** (SatAdmin + card chips + type-gated fields + unmatched queue; UAT open); extra tickets `/reception/extra-tickets` **SHOW** (Wave 6 HOT-06 lab; extension write HEADLESS) | Fiscal / HL7 VENDOR; Demo 🟡 |
+| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (UAT open → not SHOW); CLI-49 physio **SCREEN** (S admin + chips + empty-catalog + rematch; UAT open); CLI-25/32/34 intake checklist + checkup print **SCREEN** (UAT open); CLI-25/48 Baku slots **SCREEN**; extra tickets `/reception/extra-tickets` **SHOW** (HOT-06 extension HEADLESS) | Fiscal / HL7 VENDOR; Demo 🟡 |
 | Finance | 🟡 | ❌ | **SCREEN** | — (ERP paths exist) | tax/stat/contracts/EQF = SCREEN; worker HEADLESS; e-qaimé VENDOR |
 | F&B | 🟡 | 🟡 | **SCREEN** | — | Person card N/A (staff via HR); admin menu/tables/settings/daily-menu Done; KKM VENDOR |
 | Retail | 🟡 | 🟡 | **SCREEN** | — | No customer `globalPersonId` SoR; admin replenishment + supplier-match/settings/stock-check done; fiscal VENDOR |
@@ -126,6 +126,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-08-30 | Clinic Nafta card wave SCREEN: intake checklist (`PKG-NAFTA-INTAKE`), physio empty-catalog/Solyuks, Baku `#23` clock — UAT open; not SHOW / not GA. |
 | 2026-08-23 | HOT-TOUR-01 guest tours SHIPPED as SCREEN (`/tours` + `/fleet`); still out of Hotel SHOW rollup. |
 | 2026-08-27 | HOT-06 outbox drain + clinic `/reception/extra-tickets` SCREEN (dual-run). Hotel write remains HEADLESS (extension). Reverse folio ADR accepted. |
 | 2026-08-28 | SaaS Wave 6: HOT-06 lab — SuperAdmin EW policy + clinic Issue-ticket **SHOW**; extension SPA Insert still HEADLESS; not SHIPPED. |

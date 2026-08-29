@@ -20,9 +20,9 @@
           "code": "USG-ABD",
           "category": "abdomen",
           "title": {
-            "en": "Abdominal ultrasound",
-            "ru": "УЗИ брюшной полости",
-            "az": "Qarın boşluğu USM"
+            "en": "Abdominal + pelvic ultrasound (Nafta)",
+            "ru": "УЗИ живота и малого таза (Nafta)",
+            "az": "Qarın boşluğu və kiçik çanaq USM"
           },
           "serviceCode": "USG-ABD",
           "fields": [
@@ -63,6 +63,60 @@
               }
             },
             {
+              "key": "rightKidney",
+              "type": "textarea",
+              "label": {
+                "en": "Right kidney",
+                "ru": "Правая почка",
+                "az": "Sağ böyrək"
+              }
+            },
+            {
+              "key": "leftKidney",
+              "type": "textarea",
+              "label": {
+                "en": "Left kidney",
+                "ru": "Левая почка",
+                "az": "Sol böyrək"
+              }
+            },
+            {
+              "key": "bladder",
+              "type": "textarea",
+              "label": {
+                "en": "Bladder",
+                "ru": "Мочевой пузырь",
+                "az": "Sidik kisəsi"
+              }
+            },
+            {
+              "key": "prostate",
+              "type": "textarea",
+              "label": {
+                "en": "Prostate",
+                "ru": "Простата",
+                "az": "Prostata"
+              }
+            },
+            {
+              "key": "uterus",
+              "type": "textarea",
+              "label": {
+                "en": "Uterus",
+                "ru": "Матка",
+                "az": "Uterus"
+              }
+            },
+            {
+              "key": "ovaries",
+              "type": "textarea",
+              "label": {
+                "en": "Ovaries",
+                "ru": "Яичники",
+                "az": "Overlər"
+              }
+            },
+            {
               "key": "freeFluid",
               "type": "select",
               "label": {
@@ -92,6 +146,15 @@
                 "en": "Recommendations",
                 "ru": "Рекомендации",
                 "az": "Tövsiyələr"
+              }
+            },
+            {
+              "key": "sourceNote",
+              "type": "textarea",
+              "label": {
+                "en": "Original note (WO Qeyd)",
+                "ru": "Исходный текст (WO Qeyd)",
+                "az": "Orijinal qeyd (WO)"
               }
             }
           ]
@@ -219,6 +282,15 @@
                 "az": "Nəticə"
               },
               "required": true
+            },
+            {
+              "key": "sourceNote",
+              "type": "textarea",
+              "label": {
+                "en": "Original note (WO Qeyd)",
+                "ru": "Исходный текст (WO Qeyd)",
+                "az": "Orijinal qeyd (WO)"
+              }
             }
           ]
         },
@@ -286,6 +358,15 @@
                 "az": "Nəticə"
               },
               "required": true
+            },
+            {
+              "key": "sourceNote",
+              "type": "textarea",
+              "label": {
+                "en": "Original note (WO Qeyd)",
+                "ru": "Исходный текст (WO Qeyd)",
+                "az": "Orijinal qeyd (WO)"
+              }
             }
           ]
         },
@@ -482,6 +563,15 @@
                 "az": "Nəticə"
               },
               "required": true
+            },
+            {
+              "key": "sourceNote",
+              "type": "textarea",
+              "label": {
+                "en": "Original note (WO Qeyd)",
+                "ru": "Исходный текст (WO Qeyd)",
+                "az": "Orijinal qeyd (WO)"
+              }
             }
           ]
         },
@@ -590,6 +680,15 @@
                 "az": "Nəticə"
               },
               "required": true
+            },
+            {
+              "key": "sourceNote",
+              "type": "textarea",
+              "label": {
+                "en": "Original note (WO Qeyd)",
+                "ru": "Исходный текст (WO Qeyd)",
+                "az": "Orijinal qeyd (WO)"
+              }
             }
           ]
         },
@@ -9250,6 +9349,20 @@
         "ECG-12",
         "XR-FLUORO",
         "SANATORIUM-INTAKE"
+      ]
+    },
+    {
+      "code": "PKG-NAFTA-INTAKE",
+      "title": {
+        "en": "Nafta initial diagnostic procedures (check-in)",
+        "ru": "Nafta первичные диагностические процедуры (заезд)",
+        "az": "İlkin diaqnostik prosedurlar (Check-up)"
+      },
+      "includes": [
+        "SANATORIUM-INTAKE",
+        "GYN-OR-URO",
+        "ECG-12",
+        "USG-ABD"
       ]
     }
   ]

@@ -33,7 +33,8 @@ UI: `CatalogField` SEARCHABLE / MULTI chips. Locale title + Latin on the chip. S
 - **Nafta `boyun`** = **collar** (trapezius / scalenus). `ZONE-NECK` stays 817 §3 for explicit neck-only; no WO alias `boyun`.
 - **Coccyx** is its own S. `bel oma` does not include it.
 - **Panty (Shcherbak)** ≠ sitz bath ≠ hip joint — three codes.
-- **Naftalan fill (practice):** two values — lying **full body** (`tam` / typo `tan beden`) vs sitting **to the waist** (`oturaq` / `otraq` / `qursaga kimi` / `qurşagaqədər`). Four-chamber is a **different procedure**, not a naftalan fill. WO `4kamerali` on a naftalan card means **4 kameralı naftalan** (`ZONE-FOUR-CHAMBER`), not tam/oturaq.
+- **Naftalan fill (practice):** values `TAM` | `OTURAQ` | `QURSAQ` on order field **`NAFTALAN_FILL`** (closed select). Matcher also maps bare `tam` / `oturaq` / `qurşaq` → chips `ZONE-FULL-BODY` / `ZONE-SITZ` (+ fill field). Multi-day «1 ci oturaq son tam» stays **`BATH_SEQUENCE=SITZ_THEN_FULL`** only — do not set `NAFTALAN_FILL` for that phrase. Four-chamber is a **different procedure** (`ZONE-FOUR-CHAMBER`), not a fill.
+- **`belinə` / `beline`** → **`ZONE-LUMBOSACRAL`** (same as `bel`).
 - **`ayaqlara qarina`** = legs + abdomen (`ZONE-LOWER-LIMB` + `ZONE-ABDOMEN`). `qarina` is dative of `qarın`.
 - **`böyrəküstü` / `böyrək üstü` / `öyrəküstü`** = lumbar / above the kidneys → **`ZONE-LUMBOSACRAL`**. Not a new S.
 - **`şanaq` / `sanaq`** = `çanaq` → **`ZONE-HIP-GLUTEAL`**.
@@ -79,7 +80,8 @@ Shown only when the procedure type needs them. Managed lists, not free text.
 | Hold / stop | `dayandirilsin` / `ombaya olmaz` | Order action, not a site |
 | Spine level | `l4 l5`, `c3 c4 c5` | Qualifier on spine S — **not** work-kind IV |
 | Day block | `3 gün` / `5 gün` / `günaşiri` / `5 gün ardından` | Paraffin / darsonval protocol, not a zone |
-| Bath day sequence | `1 ci oturaq son tam`, `1 ci dün`, `sonr4a` | Naftalan: sitz then full |
+| Bath day sequence | `1 ci oturaq son tam`, `1 ci dün`, `sonr4a` | Naftalan: `BATH_SEQUENCE=SITZ_THEN_FULL` (multi-day) |
+| Naftalan fill | bare `tam` / `oturaq` / `qurşaq` | `NAFTALAN_FILL` closed select + chips FULL-BODY / SITZ |
 | Intensity | `yungul` (light), `zəif` (weak), `isti olmasin` (not hot) | Small select |
 | Smear | `surtulsun`; `siyine` = shoulder | Flag + remaining sites |
 
@@ -117,7 +119,7 @@ Re-run after alias changes: `nahiye-s-coverage.cjs` then `export-nahiye-s-xlsx.c
 ### 6.2 Rules
 
 1. **Every procedure order has free-text `note`** (`ProcedureOrder.note`, already in schema). Shown on ozone, 4-chamber, Massaj 30 — not only when a site S is required. `CatalogFieldKind` `FREE_TEXT`.
-2. Import: copy WO `nahiye` into `note`. Matcher fills `sites[]` and order fields from that text. **Do not wipe `note`** after a successful match. Unmatched / residue stays in `note`; doctors edit the same field for their comments.
+2. Import: match WO `nahiye` → `sites[]` + order fields. Fresh import stores **residue** in `note` (not a duplicate of resolved S tokens). An existing doctor `note` is never wiped. Unmatched residue stays editable; doctors use the same field for comments.
 3. Persist matcher output: site codes, order-field codes, **residue**, bucket (for the SatAdmin synonym queue). Ops UI shows `note`, not a second shadow box.
 4. **Unknown and leftover residue** also go to a SatAdmin **synonym queue** (`/admin/physio-sites` → Unmatched). Alias an existing S; never mint a new zone from the queue.
 5. Do **not** auto-create a new S from the long tail (named fingers, quadriceps/biceps, etc.) without review. `böyrəküstü` is **already** `ZONE-LUMBOSACRAL`.

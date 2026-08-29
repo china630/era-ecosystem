@@ -65,7 +65,7 @@ const HEADERS = {
   labCatalog: ["externalRef", "code", "name", "group"],
   labOrders: ["externalRef", "patientRef", "testCode", "status", "panel", "takenAt"],
   labResultLines: ["orderRef", "code", "label", "value", "unit", "refMin", "refMax"],
-  diagnostics: ["externalRef", "patientRef", "code", "name", "resultText", "takenAt"],
+  diagnostics: ["externalRef", "patientRef", "code", "name", "resultText", "resultJson", "takenAt"],
   diagnoses: ["patientRef", "rawText", "icd10", "recordedAt"],
   roster: [
     "fin",
@@ -318,11 +318,10 @@ function mapOrgStructureRow(row) {
   };
 }
 
+const { mapWoUsgServiceCode } = require("./wo-era-usg-map.cjs");
+
 function isUsgExam(form) {
-  const diagnoses = Array.isArray(form?.diagnoses) ? form.diagnoses : [];
-  const names = diagnoses.map((d) => String(d.diagnosisName || d.name || "")).join(" ");
-  const blob = `${names} ${form?.notes || form?.note || ""}`;
-  return /USM|USG|USİ|USI|ultrason/i.test(blob);
+  return mapWoUsgServiceCode(form) != null;
 }
 
 function labFileRel(row) {

@@ -39,7 +39,8 @@ Do not call this table «product readiness».
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | AC-CLI-TENANT | Live SHARED pool + field isolation UAT | Out of BE rollup | Wave 5 lab + Wave 9 live-smoke + Wave 10 cron discover; Scaffold ✅ still needs field pass |
 | CLI-47 | Procedure TTK → Finance inventory | Out of BE plan | ADR `clinic-procedure-consumable-ttk`; API W1 (BOM+event); Finance write-off W2 |
-| CLI-49 | Physio S + program/substance catalogs | Out of BE plan | W4 sites[] + type-gated fields + unmatched queue SHIPPED |
+| CLI-49 | Physio S + program/substance catalogs | Out of BE plan | Nafta card wave: Solyuks/`belinə`/`NAFTALAN_FILL`; empty-catalog UX; `#23` always `replaceSites`; UAT open until droplet seed + re-Apply proof |
+| CLI-32 / CLI-34 / CLI-25 | Nafta intake checklist + Baku slots | Out of BE plan | `PKG-NAFTA-INTAKE` card/print + live instantiate; `#23` `parseBakuDateTime(+04:00)` + PLAN/now `gte now` — UAT punch in `UAT-SMOKE.md` |
 | Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 
 ### Negative-path proof index

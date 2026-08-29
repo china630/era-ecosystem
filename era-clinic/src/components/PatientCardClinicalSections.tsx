@@ -45,6 +45,16 @@ type TimelineDay = {
   events: TimelineEvent[];
 };
 
+type IntakeChecklistItem = {
+  slot: string;
+  resolvedCode: string;
+  kind: string;
+  title: L10n;
+  status: "DONE" | "ORDERED" | "MISSING";
+  href: string | null;
+  recordId: string | null;
+};
+
 type CardSummary = {
   limits: {
     resultsPreview: number;
@@ -56,6 +66,7 @@ type CardSummary = {
     nextAppointment: {
       id: string;
       at: string;
+      atLabel?: string;
       status: string;
       practitionerName: string;
       roomCode: string | null;
@@ -72,6 +83,7 @@ type CardSummary = {
     nextProcedure: {
       id: string;
       at: string;
+      atLabel?: string;
       name: string;
       code: string;
       status: string;
@@ -81,6 +93,11 @@ type CardSummary = {
   resultsPreview: TimelineEvent[];
   planPreview: TimelineEvent[];
   proposedPreview?: TimelineEvent[];
+  intakeChecklist?: {
+    packageCode: string;
+    packageTitle: L10n | null;
+    items: IntakeChecklistItem[];
+  };
 };
 
 const EMPTY_PHYSIO: PhysioChipsValue = {
@@ -189,6 +206,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       spineLevel: t("physioSpineLevel", { defaultValue: "Spine level" }),
       dayBlock: t("physioDayBlock", { defaultValue: "Day block" }),
       bathSequence: t("physioBathSequence", { defaultValue: "Bath sequence" }),
+      naftalanFill: t("physioNaftalanFill", { defaultValue: "Naftalan fill" }),
       intensity: t("physioIntensity", { defaultValue: "Intensity" }),
       smear: t("physioSmear", { defaultValue: "Smear" }),
       yes: t("physioYes", { defaultValue: "Yes" }),
@@ -200,6 +218,13 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       dayBlockAlt: t("physioDayBlockAlt", { defaultValue: "Every other day" }),
       dayBlockThen: t("physioDayBlockThen", { defaultValue: "5 days then" }),
       bathSitzThenFull: t("physioBathSitzThenFull", { defaultValue: "Sitz then full" }),
+      fillTam: t("physioFillTam", { defaultValue: "Full body (tam)" }),
+      fillOturaq: t("physioFillOturaq", { defaultValue: "Sitz (oturaq)" }),
+      fillQursaq: t("physioFillQursaq", { defaultValue: "To waist (qurşaq)" }),
+      catalogEmpty: t("physioCatalogEmpty", {
+        defaultValue: "Physio site catalog is not seeded.",
+      }),
+      catalogEmptyLink: t("physioCatalogEmptyLink", { defaultValue: "Open Physio sites" }),
       intensityLight: t("physioIntensityLight", { defaultValue: "Light" }),
       intensityWeak: t("physioIntensityWeak", { defaultValue: "Weak" }),
       intensityNotHot: t("physioIntensityNotHot", { defaultValue: "Not hot" }),
@@ -408,6 +433,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
 
   const { nowNext, resultsPreview, planPreview } = summary;
   const proposedPreview = summary.proposedPreview ?? [];
+  const intakeChecklist = summary.intakeChecklist;
   const pending = nowNext.pendingLabs;
   const allProposedIds = proposedPreview
     .map(orderIdFromEvent)
@@ -430,7 +456,8 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
               <li className="rounded border border-amber-200 bg-amber-50/60 px-3 py-2">
                 <span className="font-medium">{t("nextAppointment")}: </span>
                 {nowNext.nextAppointment.practitionerName} ·{" "}
-                {new Date(nowNext.nextAppointment.at).toLocaleString()} ({nowNext.nextAppointment.status})
+                {nowNext.nextAppointment.atLabel ?? nowNext.nextAppointment.at} (
+                {nowNext.nextAppointment.status})
                 <Link href={nowNext.nextAppointment.href} className={`ml-2 ${LINK_ACCENT_CLASS}`}>
                   {t("open")}
                 </Link>
@@ -451,7 +478,11 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             {nowNext.nextProcedure ? (
               <li className="rounded border px-3 py-2">
                 <span className="font-medium">{t("nextProcedure")}: </span>
-                {nowNext.nextProcedure.name} · {new Date(nowNext.nextProcedure.at).toLocaleString()}
+                {nowNext.nextProcedure.name} ·{" "}
+                {nowNext.nextProcedure.atLabel ?? nowNext.nextProcedure.at}
+                {nowNext.nextProcedure.code
+                  ? ` · ${t("procedureTypeCode", { defaultValue: "type" })} ${nowNext.nextProcedure.code}`
+                  : ""}
               </li>
             ) : null}
             {pending.count > 0 ? (
@@ -568,6 +599,65 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
         </div>
       </section>
 
+      {intakeChecklist?.items?.length ? (
+        <section className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+              {t("intakeChecklistTitle", {
+                defaultValue: intakeChecklist.packageTitle
+                  ? pickL10n(intakeChecklist.packageTitle, locale)
+                  : "Initial diagnostics",
+              })}
+            </h2>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => openPrint(`/print/checkup/${patientRefId}`)}
+            >
+              {t("printCheckup", { defaultValue: "Print check-up" })}
+            </button>
+          </div>
+          <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+            <ul className="divide-y divide-slate-100">
+              {intakeChecklist.items.map((item) => {
+                const statusLabel =
+                  item.status === "DONE"
+                    ? t("intakeStatusDone", { defaultValue: "Done" })
+                    : item.status === "ORDERED"
+                      ? t("intakeStatusOrdered", { defaultValue: "Ordered" })
+                      : t("intakeStatusMissing", { defaultValue: "Missing" });
+                const statusClass =
+                  item.status === "DONE"
+                    ? "text-emerald-700"
+                    : item.status === "ORDERED"
+                      ? "text-amber-700"
+                      : TEXT_MUTED_CLASS;
+                return (
+                  <li
+                    key={item.slot}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2 text-[13px] first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0 flex-1">
+                      {item.href ? (
+                        <Link href={item.href} className={`font-medium ${LINK_ACCENT_CLASS}`}>
+                          {pickL10n(item.title, locale)}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{pickL10n(item.title, locale)}</span>
+                      )}
+                      <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{item.resolvedCode}</p>
+                    </div>
+                    <span className={`shrink-0 text-[12px] font-medium ${statusClass}`}>
+                      {statusLabel}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+      ) : null}
+
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -667,20 +757,47 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("planEmpty")}</p>
           ) : (
             <ul className="space-y-2">
-              {planPreview.map((ev) => (
+              {planPreview.map((ev) => {
+                const physio = ev.physio ?? (ev.id.startsWith("procedure:") ? physioById[ev.id.slice("procedure:".length)] : undefined);
+                const siteLabels =
+                  physio?.siteIds
+                    ?.map((id) => {
+                      const site = physioCatalog.find((s) => s.id === id);
+                      if (!site) return null;
+                      const loc = locale.startsWith("ru")
+                        ? site.titleRu
+                        : locale.startsWith("az")
+                          ? site.titleAz
+                          : site.titleEn;
+                      return `${loc} / ${site.titleLa}`;
+                    })
+                    .filter(Boolean) ?? [];
+                return (
                 <li
                   key={ev.id}
                   className="flex items-start gap-2 rounded border border-emerald-100 bg-emerald-50/40 px-3 py-2 text-[13px]"
                 >
                   <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <span className="font-medium">{eventTitle(ev, locale)}</span>
                     <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {ev.subtitle} · {ev.status}
                     </p>
+                    {siteLabels.length > 0 ? (
+                      <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        {t("physioSites", { defaultValue: "Sites" })}: {siteLabels.join(" · ")}
+                      </p>
+                    ) : physio?.needsSite ? (
+                      <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        {t("planSitesInFullPlan", {
+                          defaultValue: "Sites — open full plan",
+                        })}
+                      </p>
+                    ) : null}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>

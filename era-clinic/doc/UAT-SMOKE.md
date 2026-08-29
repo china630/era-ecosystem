@@ -262,9 +262,15 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 ## Nafta cutover import
 
+**Nafta card wave (2026-08-30) — after deploy:** seed diagnostic + physio catalogs → re-Apply `#23` → optionally `#31` (skip `#32`/`#33`/`#34` for intake). See `NAFTA-CUTOVER-IMPORT.md` § Post-deploy.
+
 1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes).
 2. `/patients`: filter by hotel room and program/package (`programCode`).
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
+4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time.
+5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`SANATORIUM-INTAKE`, `GYN-OR-URO`, `ECG-12`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Print check-up lists the same four enabled sections.
+6. Live check-in (hotel stay / walk-in): open episode → ECG-12 + USG-ABD appear as ORDERED if missing; second open does not duplicate; physio FIFO still requires complete-checkup / program path (not auto from intake).
+7. After re-Apply `#23` (Baku `+04:00` slot parse): Yağmur — two Solyuks times both visible; compact PLAN date+time matches modal for the same `procedure:{id}`; **Növbəti** is nearest `scheduledAt >= now` in Baku (not a 2024 leftover). No 18:36↔10:36 jump after re-import.
 
 ## CLI-49 — Physio sites (W2–W4)
 
@@ -284,6 +290,7 @@ Doctor card (no curl):
 9. Type a comment in **Note**; it stays after reload. Confirm the line — sites remain on the scheduled plan.
 10. Ozone / inhalation: **Note** still shows; site chips hide (`needsSite=false`). Amplipuls shows work-kind I–V + electrode 2/4, not a substance picker.
 11. On a laterality-enabled S (knee/shoulder), pick Left/Right/Both. A type without LATERALITY does not show side chips.
-12. After cutover `#23` import: open an imported slot whose WO nahiye was filled — **Note** still has the raw string even when chips matched. A blank WO nahiye does not invent a new S.
+12. After cutover `#23` import (seed physio catalog **first**): Solyuks with `Belinə` / `Başına` shows lumbosacral / head chips; naftalan `Tam` shows full-body chip (+ fill `TAM` when gated). **Note** keeps unmatched residue only (not a duplicate of resolved S tokens). Empty catalog UI says catalog not seeded — not «No matches».
+13. Compact PLAN on the card lists site chip titles (or «sites — open full plan» when none). BODY_PART contraindications map is **not** the zone picker.
 
 
