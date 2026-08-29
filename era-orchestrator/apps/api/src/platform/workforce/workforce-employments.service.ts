@@ -205,6 +205,8 @@ export class WorkforceEmploymentsService {
         displayName: string | null;
         finMasked: string | null;
         accessDenied: boolean;
+        sex: string | null;
+        birthDate: string | null;
       }
     >
   > {
@@ -219,6 +221,8 @@ export class WorkforceEmploymentsService {
         displayName: string | null;
         finMasked: string | null;
         accessDenied: boolean;
+        sex: string | null;
+        birthDate: string | null;
       }
     > = {};
     for (const [id, row] of Object.entries(profiles)) {
@@ -227,6 +231,8 @@ export class WorkforceEmploymentsService {
         displayName: row.displayName,
         finMasked: row.primaryIdentifierMasked,
         accessDenied: row.accessDenied,
+        sex: row.sex,
+        birthDate: row.birthDate,
       };
     }
     return out;

@@ -90,7 +90,7 @@ D:\ERA-BACKUP\
 
 | # | Есть | Файл | Куда | Бух |
 |---|:---:|------|------|-----|
-| 37 | [x] | `hr/37-Employees.xlsx` + `hr/Əməkdaşların yenilənmiş siyahı Nafta 28.08.2026.xlsx` (FİN + Cins K/Q + DOB + hire + şöbə + vəzifə + əsas/əlavə) | CP: сначала `org-structure.xlsx`, затем roster. Пустые satellites = штат без логина. ƏLAVƏ = вторая должность, без seat. Даты: сериал Excel и `ДД.ММ.ГГГГ` → `YYYY-MM-DD`. | Табель / МОЛ / email — только если без них не заведём сотрудника в CP. **Ştat vahidləri** → READY `hr/org-structure.xlsx`. |
+| 37 | [x] | `hr/37-Employees.xlsx` + `hr/Əməkdaşların yenilənmiş siyahı Nafta 28.08.2026.xlsx` (FİN + Cins K/Q + DOB + hire + şöbə + vəzifə + əsas/əlavə) | CP: сначала `org-structure.xlsx`, затем roster. Пустые satellites = штат без логина. ƏLAVƏ = вторая должность, без seat. Даты: сериал Excel и `ДД.ММ.ГГГГ` → строки `YYYY-MM-DD` (не ISO с часовым поясом). | Табель / МОЛ / email — только если без них не заведём сотрудника в CP. **Ştat vahidləri** → READY `hr/org-structure.xlsx`. |
 
 ---
 

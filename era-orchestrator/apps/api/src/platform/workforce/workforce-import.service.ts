@@ -307,11 +307,23 @@ export class WorkforceImportService {
           },
         });
         if (existing) {
+          const prevHire =
+            existing.hireDate instanceof Date
+              ? existing.hireDate.toISOString().slice(0, 10)
+              : String(existing.hireDate ?? "").slice(0, 10);
+          const notes = ["MDM updated"];
+          if (hireDate && prevHire !== hireDate) {
+            await this.prisma.workforceEmployment.update({
+              where: { id: existing.id },
+              data: { hireDate: new Date(`${hireDate}T00:00:00.000Z`) },
+            });
+            notes.push(`hireDate ${prevHire || "—"} → ${hireDate}`);
+          }
           skipped++;
           results.push({
             index,
             status: "skipped",
-            message: "Active employment already exists for this unit/position (MDM updated)",
+            message: `Active employment already exists for this unit/position (${notes.join("; ")})`,
           });
           continue;
         }

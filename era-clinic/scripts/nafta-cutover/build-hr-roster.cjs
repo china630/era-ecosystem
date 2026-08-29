@@ -2,7 +2,7 @@
 
 /**
  * Convert START HR workbooks → READY workforce import books.
- * Dates stay calendar days (Excel date cells, format YYYY-MM-DD) — not serials.
+ * Dates stay calendar-day strings YYYY-MM-DD (not Excel serials, not ISO timestamps).
  *
  *   node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs
  */
@@ -78,11 +78,11 @@ function loadMappedOrgStructure(XLSX, startRoot) {
 function writeRosterSheet(XLSX, outFile, headers, rows) {
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   const aoa = [headers, ...rows.map((r) => headers.map((h) => (r[h] == null ? "" : r[h])))];
-  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
   stampDateCells(XLSX, ws, headers, ["hireDate", "birthDate"]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "import");
-  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx", cellDates: true });
+  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
   fs.writeFileSync(outFile, buf);
   return rows.length;
 }
