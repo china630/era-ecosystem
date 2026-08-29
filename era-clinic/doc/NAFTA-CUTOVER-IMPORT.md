@@ -67,7 +67,7 @@ Writes `NAFTA-ERA-READY/clinic/25-Treatments.xlsx`, `26-Rooms.xlsx`, `40-Procedu
 | 39-lab-results.xlsx | 22620 | Word tables | orderRef, code, label, value, unit, refMin, refMax |
 | 28, 30 | — | **Dropped** from ERA-READY (WO reference only; no wizard entity) |
 | 33–36 | copy catalogs | as in START |
-| `../hr/37-Employees.xlsx` | START `hr/37-Employees.xlsx` (133; FİN + Cins K/Q + DOB + hire) | fin, fullName, sex, birthDate, orgUnit, position, hireDate, workplace, satellites. Dates are Excel date cells `YYYY-MM-DD` (serials + `DD.MM.YYYY` converted; empty only `NAN`/`0`). Empty `satellites` = employment, no login seat. `workplace` `ADDITIONAL` = second job, no seat. Rebuild: `node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs` |
+| `../hr/37-Employees.xlsx` | START `hr/37-Employees.xlsx` (133; FİN + Cins K/Q + DOB + hire) | fin, fullName, sex, birthDate, orgUnit, position, hireDate, workplace, satellites. Dates are calendar strings `YYYY-MM-DD` (Excel serials + `DD.MM.YYYY` converted; empty only `NAN`/`0`). Do not write Date cells/`cellDates` — SheetJS emits `…T04:00:00.000Z`. Empty `satellites` = employment, no login seat. `workplace` `ADDITIONAL` = second job, no seat. Rebuild: `node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs` |
 | `../hr/org-structure.xlsx` | START `hr/Ştat vahidləri Nafta 28.08.2026.xlsx` | orgUnit, position, totalSlots. Import **before** roster. Upsert by name; does not delete extra units. |
 | `../hotel/01–20` | hotel/01–20 | EW wizard |
 | `../1c/40–53` | 1c | as received |
@@ -132,7 +132,7 @@ Roster mapping lives in `scripts/nafta-cutover/map.cjs` (`mapRosterRow` / `mapOr
 node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs
 ```
 
-**Workforce import order (Orchestrator):** org-structure (`hr/org-structure.xlsx`) → roster (`hr/37-Employees.xlsx`). Empty `satellites` = MDM + employment, no login seat. Dual job = one FIN, two positions (`PRIMARY` / `ADDITIONAL`); one seat per person. Sex: `MALE` / `FEMALE` / `UNKNOWN` (HR `K`/`Q`). Orchestrator accepts xlsx or CSV; Excel serials and `DD.MM.YYYY` → `YYYY-MM-DD`.
+**Workforce import order (Orchestrator):** org-structure (`hr/org-structure.xlsx`) → roster (`hr/37-Employees.xlsx`). Empty `satellites` = MDM + employment, no login seat. Dual job = one FIN, two positions (`PRIMARY` / `ADDITIONAL`); one seat per person. Sex: `MALE` / `FEMALE` / `UNKNOWN` (HR `K`/`Q`). Re-import is idempotent: updates MDM sex/DOB (fill-not-clear) and `hireDate` on the existing employment; does not duplicate the same unit/position. Orchestrator accepts xlsx or CSV; READY dates are `YYYY-MM-DD` strings.
 
 ## Procedure site (`nahiye`) — wizard `#23` slots
 

@@ -15,7 +15,7 @@ describe("WorkforceImportService.importRoster", () => {
   const prisma = {
     orgUnit: { findMany: jest.fn() },
     workforcePosition: { findMany: jest.fn() },
-    workforceEmployment: { findFirst: jest.fn() },
+    workforceEmployment: { findFirst: jest.fn(), update: jest.fn() },
   };
   const mdm = { workforceResolvePerson: jest.fn() };
   const entitlement = { assertWorkforceHub: jest.fn() };
@@ -72,11 +72,15 @@ describe("WorkforceImportService.importRoster", () => {
   });
 
   it("skips hire for the same person+unit+position after MDM update", async () => {
-    prisma.workforceEmployment.findFirst.mockResolvedValue({ id: "emp-existing" });
+    prisma.workforceEmployment.findFirst.mockResolvedValue({
+      id: "emp-existing",
+      hireDate: new Date("2026-01-01T00:00:00.000Z"),
+    });
     const csv = `${HEADER}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-01-01,PRIMARY,`;
     const result = await svc.importRoster(ORG, "actor1", csv, false);
     expect(mdm.workforceResolvePerson).toHaveBeenCalled();
     expect(provision.hire).not.toHaveBeenCalled();
+    expect(prisma.workforceEmployment.update).not.toHaveBeenCalled();
     expect(result.skipped).toBe(1);
     expect(result.rows[0].message).toMatch(/MDM updated/);
     expect(prisma.workforceEmployment.findFirst).toHaveBeenCalledWith(
@@ -91,9 +95,31 @@ describe("WorkforceImportService.importRoster", () => {
     );
   });
 
+  it("updates hireDate on an existing employment when the roster date changed", async () => {
+    prisma.workforceEmployment.findFirst.mockResolvedValue({
+      id: "emp-existing",
+      hireDate: new Date("2024-01-13T00:00:00.000Z"),
+    });
+    prisma.workforceEmployment.update.mockResolvedValue({ id: "emp-existing" });
+    const csv = `${HEADER}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-05-12,PRIMARY,`;
+    const result = await svc.importRoster(ORG, "actor1", csv, false);
+    expect(provision.hire).not.toHaveBeenCalled();
+    expect(prisma.workforceEmployment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "emp-existing" },
+        data: { hireDate: new Date("2026-05-12T00:00:00.000Z") },
+      }),
+    );
+    expect(result.skipped).toBe(1);
+    expect(result.rows[0].message).toMatch(/hireDate 2024-01-13 → 2026-05-12/);
+  });
+
   it("creates a second employment for the same FIN on another position", async () => {
     prisma.workforceEmployment.findFirst
-      .mockResolvedValueOnce({ id: "emp-existing" })
+      .mockResolvedValueOnce({
+        id: "emp-existing",
+        hireDate: new Date("2026-01-01T00:00:00.000Z"),
+      })
       .mockResolvedValueOnce(null);
     const csv =
       `${HEADER}\n` +

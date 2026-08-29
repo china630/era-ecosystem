@@ -24,6 +24,8 @@ type LookupResult = {
   globalPersonId?: string;
   fullName?: string | null;
   phone?: string | null;
+  sex?: string | null;
+  birthDate?: string | null;
   masked?: boolean;
 };
 
@@ -162,6 +164,10 @@ export default function SuperAdminMdmPersonsPage() {
             <dd className="text-[#34495E]">{lookup.fullName ?? "—"}</dd>
             <dt className="text-[#7F8C8D]">{t("phone")}</dt>
             <dd className="text-[#34495E]">{lookup.phone ?? "—"}</dd>
+            <dt className="text-[#7F8C8D]">{t("sex")}</dt>
+            <dd className="text-[#34495E]">{lookup.sex ?? "—"}</dd>
+            <dt className="text-[#7F8C8D]">{t("birthDate")}</dt>
+            <dd className="text-[#34495E]">{lookup.birthDate ?? "—"}</dd>
             {lookup.masked ? (
               <>
                 <dt className="text-[#7F8C8D]">{t("masked")}</dt>
