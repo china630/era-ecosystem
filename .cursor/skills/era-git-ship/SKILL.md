@@ -17,7 +17,7 @@ description: >-
 |-----------|--------|
 | **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + **local ship gates** + push + PR → dev → wait CI green → merge + PR dev → master → wait CI → merge |
 | **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит**, **ship and push** | Same as full wave if there are uncommitted changes; if tree is already committed, **gates then PublishDev** (and master after CI) |
-| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → PR → `dev` → merge. **Do not** promote `master` unless the user said so. After merge, GitHub path-filter rebuilds **only** matching GHCR images and deploys those services. Wait for that Actions run; do not dispatch a full 16-image build. |
+| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → `-PublishDev -WaitStaging` (wait CI → merge → Build images → Deploy staging). **Do not** promote `master` unless the user said so. **Do not** stop at an open PR URL. Path-filter rebuilds only matching GHCR services — do not dispatch a full 16-image build. |
 | **собери образы оркестратор** (or `hotel`, `clinic`, …) | Manual `era-ship.ps1 -PublishImages -Services <ghcr>` (only if auto path-filter did not run) |
 | **задеплой оркестратор** | Manual `era-ship.ps1 -PublishDeploy -DeployScope orchestrator -ImageTag <tag>` |
 | **коммит оркестратор** / **orch commit** | Single scope `orchestrator` commit only (no PR unless also asked to push) |
@@ -94,9 +94,10 @@ git checkout -b integration/ecosystem-wave-<slug>   # if not already on feature 
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -Wave -Subject "ecosystem integration wave" -Body "See COVERAGE_MATRIX and audit scripts."
 
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishDev -Head (git branch --show-current) -Title "feat: ecosystem integration wave" -Body "Ordered: orchestrator, data-hub, MDM, satellites."
-# PublishDev runs npm run ship:prepush first (quality-gates + scoped tests). On FAIL it does not push.
+# PublishDev: ship:prepush → push → PR → wait checks → merge. Does NOT exit on --auto alone.
+# For «на сервер» / scoped ship to droplet, add -WaitStaging (blocks until Build images + Deploy staging).
 
-# After dev PR merged and CI green:
+# After dev PR merged and CI green (and only if user asked for master):
 git checkout dev; git pull origin dev
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishMaster -Head dev
 ```
@@ -135,6 +136,8 @@ List all: `era-ship.ps1 -ListScopes`
 
 Path-filter lives in [`scripts/ci-changed-ghcr-services.mjs`](../../../scripts/ci-changed-ghcr-services.mjs). Push to `dev`/`master` rebuilds only touched GHCR services; deploy pulls those compose services (`DEPLOY_SERVICES`), not the whole stack.
 
+**CI (`ci.yml`) is not path-filtered.** A hotel-only merge still runs the full test matrix (`finance`, all satellites). That is tests, not a finance image rebuild. Scoped GHCR is `Build and push images` / `Deploy staging` only.
+
 **Do not** `gh workflow run` a full image build after a scoped merge — wait for the automatic run.
 
 Manual override (rebuild/redeploy without a new push):
@@ -168,13 +171,22 @@ git push -u origin HEAD
 
 Then:
 
+Preferred (blocks until merged; use `-WaitStaging` when user expects the droplet):
+
 ```powershell
-gh pr create --base dev --head <branch> --title "..." --body "..."
-# Wait until gh pr checks <n> is all pass, then:
-gh pr merge <n> --merge
+.cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishDev -Head <branch> -Title "..." -Body "..." -WaitStaging
 ```
 
-`--auto` is optional; this repo may reject `enablePullRequestAutoMerge`. Never merge a red PR.
+Manual equivalent:
+
+```powershell
+gh pr create --base dev --head <branch> --title "..." --body "..."
+gh pr checks <n> --watch
+gh pr merge <n> --merge
+# then wait Build and push images + Deploy staging on the merge SHA
+```
+
+**Hard rule for agents:** creating a PR is not done. `--auto` alone is not done. Turn ends only after merge (and after staging when user said «на сервер» / scoped ship). This repo often rejects `enablePullRequestAutoMerge`. Never merge a red PR.
 
 PR body should mention:
 - commit order (orchestrator → data-hub → MDM → rest)
@@ -257,6 +269,9 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 | `gh auth login` required | Stop; user must authenticate; give PR compare URL |
 | `push declined` branch rules | Never push to dev/master directly; use PR |
 | Empty scope bucket | Skip commit for that bucket |
+| `enablePullRequestAutoMerge` rejected | Expected — `PublishDev` waits checks then `gh pr merge` without relying on `--auto` |
+| Build images Docker Hub timeout | `-WaitStaging` reruns failed jobs once; if still red, diagnose Actions log |
+| Agent turn ends on open PR | Bug — re-run `-PublishDev` (reuses open PR) or merge + `-WaitStaging`; do not ask user to click merge |
 | Shared index spans waves | Split per "Shared package index splitting" above |
 | Pre-commit hook fail | Fix issues; **new** commit (never amend unless user rule allows) |
 
