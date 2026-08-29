@@ -23,20 +23,69 @@ export class WorkforcePositionsService {
     private readonly satelliteEvents: SatelliteEventsService,
   ) {}
 
-  async list(organizationId: string, orgUnitId?: string) {
+  async list(
+    organizationId: string,
+    orgUnitId?: string,
+    status?: OrgUnitStatus,
+  ) {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
     return this.prisma.workforcePosition.findMany({
       where: {
         ...(orgUnitId
           ? { orgUnitId }
           : { orgUnit: { workforceScopeId: link.workforceScopeId } }),
+        ...(status ? { status } : {}),
       },
       include: {
         orgUnit: true,
-        _count: { select: { employments: true } },
+        _count: {
+          select: {
+            employments: {
+              where: { status: WorkforceEmploymentStatus.ACTIVE },
+            },
+          },
+        },
       },
       orderBy: [{ orgUnitId: "asc" }, { name: "asc" }],
     });
+  }
+
+  async archive(organizationId: string, id: string, actorUserId: string) {
+    const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
+    const existing = await this.prisma.workforcePosition.findFirst({
+      where: {
+        id,
+        orgUnit: { workforceScopeId: link.workforceScopeId },
+      },
+    });
+    if (!existing) throw new NotFoundException("Position not found");
+    if (existing.status === OrgUnitStatus.ARCHIVED) {
+      return existing;
+    }
+    const activeEmployments = await this.prisma.workforceEmployment.count({
+      where: {
+        positionId: id,
+        status: WorkforceEmploymentStatus.ACTIVE,
+      },
+    });
+    if (activeEmployments > 0) {
+      throw new BadRequestException(
+        "Cannot archive position with active employments",
+      );
+    }
+    const row = await this.prisma.workforcePosition.update({
+      where: { id },
+      data: { status: OrgUnitStatus.ARCHIVED },
+    });
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "POSITION_ARCHIVED",
+      entityType: "POSITION",
+      entityId: id,
+    });
+    await this.emitUpsert(link.workforceScope.anchorOrganizationId, row);
+    return row;
   }
 
   async create(

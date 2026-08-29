@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
+import { UserRole, OrgUnitStatus } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
@@ -34,8 +34,13 @@ export class WorkforcePositionsController {
   list(
     @OrganizationId() organizationId: string,
     @Query("orgUnitId") orgUnitId?: string,
+    @Query("status") statusRaw?: string,
   ) {
-    return this.positions.list(organizationId, orgUnitId?.trim());
+    const status =
+      statusRaw === "ACTIVE" || statusRaw === "ARCHIVED"
+        ? (statusRaw as OrgUnitStatus)
+        : undefined;
+    return this.positions.list(organizationId, orgUnitId?.trim(), status);
   }
 
   @Post()
@@ -57,5 +62,16 @@ export class WorkforcePositionsController {
     @Body() dto: UpdateWorkforcePositionDto,
   ) {
     return this.positions.update(organizationId, id, user.sub, dto);
+  }
+
+  @Post(":id/archive")
+  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @ApiOperation({ summary: "Archive position (no active employments)" })
+  archive(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+  ) {
+    return this.positions.archive(organizationId, id, user.sub);
   }
 }

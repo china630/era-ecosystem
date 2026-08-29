@@ -139,6 +139,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | ADR | Y | — | — | Y | Y | SHIPPED | — |
 | ORCH-MDM-02 | internal resolve/merge API | ADR | Y | — | — | — | HEADLESS | HEADLESS | service token; resolve writes sex/DOB |
 | ORCH-MDM-03 | Person core sex + birthDate (M/F/UNKNOWN) | ADR era-mdm-natural-person-identity | Y resolve + ops-profile | — | — | — | HEADLESS | API | no OTHER; fill-not-clear; hotel/clinic cache |
+| ORCH-MDM-04 | Super-admin persons directory | ADR | Y `GET /v1/admin/mdm/persons` | — | — | — | Y `/super-admin/mdm/persons` | API | list + FIN/name/DOB/phone filters; resolve/merge modals |
 
 ### Presets (product lines)
 
@@ -380,6 +381,7 @@ ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-p
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | Y | Y | SHIPPED |
 | ORCH-MDM-02 | internal resolve/merge API | — | HEADLESS | `[h]` |
 | ORCH-MDM-03 | Person core sex + birthDate | — | HEADLESS | `[h]` |
+| ORCH-MDM-04 | Super-admin persons directory | — | Y `/super-admin/mdm/persons` | API |
 | ORCH-04 | Vendor SMS/email prod | — | — | STUB |
 | ORCH-05 | Login onboarding 0/1/N + company-less gate | Y | — | SHIPPED |
 | ORCH-06 | Pending invites accept (invited accountant) | Y | — | SHIPPED |
@@ -410,14 +412,14 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
-| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments` | — | — | Y | — | Workspace → employments → hire; transfer/terminate/reprovision/HR profile modals (API UI, no UAT-SMOKE yet) |
+| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | Workspace → employments: hire (sex/DOB/optional blood), employee card, transfer/terminate; reprovision in overflow; filters sex/age/org/position (API UI, no UAT-SMOKE yet) |
 | CP-WF-ABS-01 | Absence workflow (7 TK AZ kinds, modal CRUD) | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | create/edit via modal on `/workspace/workforce/absences`; kinds: VACATION/SICK/UNPAID/SOCIAL_LEAVE/EDUCATIONAL_LEAVE/BUSINESS_TRIP/ADMINISTRATIVE |
 | CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-TS-01 | Timesheet draft approve | ADR | `GET/POST …/timesheets/*` | — | — | Y `/workspace/workforce/timesheets` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*`, `POST …/import/org-structure` | — | — | Y | — | bootstrap + xlsx/csv import on `/workspace/workforce/org-structure`; upsert by name, no deletes |
-| CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` | — | — | Y | — | create position on `/workspace/workforce/positions` |
+| CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` (+ archive) | — | — | Y | — | create/edit/archive on `/workspace/workforce/positions`; drill-down from org-structure; link to employments |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Split UI: `/security` matrix (neutral No access), `/security/grants`, `/security/bindings`, `/security/audit` |
 | CP-WF-HIRE-01 | CP hire + STAFF_PROVISIONED | ADR cp-workforce-role-templates-and-security-admin | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | hire wizard: satellite checkboxes optional; empty = employment without satellite login |
 
@@ -457,6 +459,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-29 | ORCH-MDM-04: super-admin persons directory; CP-WF-EMP-01 employee card + filters; CP-WF-POS-01 archive + drill-down. |
 | 2026-08-28 | CLI-25: patient card timeline/history collapse Appointment+Visit to one «Приём» row (slot date, `/visits/[id]`). |
 | 2026-08-28 | CLI-48: `#21` attending doctor = one Visit on check-in from `#27` `wo:doctor:{id}` (not a PatientRef field). |
 | 2026-08-28 | CLI-48: `#21` re-import updates latest episode any status (dates/status/room/stay); no clinic wipe. |

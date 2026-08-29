@@ -57,7 +57,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/super-admin/billing/trial-allowlist` | `app/super-admin/billing/trial-allowlist/page.tsx` | Trial-eligible modules per core/satellite |
 | `/super-admin/mdm` | `app/super-admin/mdm/page.tsx` | MDM health overview |
 | `/super-admin/mdm/companies` | `app/super-admin/mdm/companies/page.tsx` | Legal entities |
-| `/super-admin/mdm/persons` | `app/super-admin/mdm/persons/page.tsx` | Natural persons |
+| `/super-admin/mdm/persons` | `app/super-admin/mdm/persons/page.tsx` | Natural persons directory + resolve/merge modals |
 
 ## Super-admin trial
 
@@ -132,7 +132,7 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET/POST /platform/v1/workforce/staff-schedule/*` | ştat cədvəli revisions (occupied/vacant snapshot) + approve + PDF |
 | `GET/POST /platform/v1/workforce/scope/*` | `workforce-org.controller.ts` |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/org-units/*` | `workforce-org-units.service.ts` + controller |
-| `GET/POST/PATCH /platform/v1/workforce/positions/*` | `workforce-positions.controller.ts` |
+| `GET/POST/PATCH/POST archive /platform/v1/workforce/positions/*` | `workforce-positions.controller.ts` — `?orgUnitId=` / `?status=`; archive rejects active employments |
 | `PATCH /platform/v1/workforce/employments/:id/reprovision` | `workforce-provision.service.ts` |
 | `GET/PUT/DELETE /platform/v1/workforce/role-templates/*` | `workforce-role-templates.controller.ts` |
 | `GET/POST /platform/v1/workforce/manual-grants/*` | `workforce-manual-grants.controller.ts` |
@@ -145,9 +145,9 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/security/grants` | manual grants |
 | Web `/workspace/workforce/security/bindings` | effective bindings |
 | Web `/workspace/workforce/security/audit` | audit log |
-| Web `/workspace/workforce/org-structure` | tree + xlsx/csv import (`import/org-structure`) |
-| Web `/workspace/workforce/positions` | `apps/web/app/workspace/workforce/positions/page.tsx` |
-| Web `/workspace/workforce/employments` | hire modal; satellite checkboxes default off (headcount without seat) |
+| Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |
+| Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
+| Web `/workspace/workforce/employments` | hire (sex/DOB/optional blood); employee card; icon actions; age/sex filters; deep-link `?orgUnitId=` / `?positionId=` |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
 | Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
 | Web `/workspace/workforce/personnel-orders` | create/issue/PDF |
@@ -155,7 +155,9 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/timesheets` | draft approve |
 | Web `/workspace/workforce/export` | export + import roster/absences (xlsx/csv) |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
-| BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` |
+| BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |
+| `GET /v1/admin/mdm/persons` | `admin-mdm.controller.ts` — paginated directory (FIN/DOB/name/phone filters) |
+| `POST /v1/admin/mdm/persons/lookup-by-fin\|resolve\|merge` | super-admin write; UI `/super-admin/mdm/persons` |
 | `POST /internal/v1/mdm/persons/ops-profile/batch` | `mdm.controller.ts` — workforce batch display (+ `hrProfile` when grant allows) |
 | `GET/PATCH /internal/v1/mdm/persons/:id/hr-profile` | `mdm.controller.ts` — grant-gated PersonHrProfile + PersonAddress |
 | `POST /internal/v1/mdm/persons/workforce-resolve` | `mdm.controller.ts` — hire intake |

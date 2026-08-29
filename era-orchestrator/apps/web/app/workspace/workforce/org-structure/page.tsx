@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Archive, Pencil, Plus } from "lucide-react";
@@ -395,11 +396,30 @@ export default function OrgStructurePage() {
             <tbody>
               {paged.map((u) => (
                 <tr key={u.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{u.name}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <Link
+                      href={`/workspace/workforce/positions?orgUnitId=${encodeURIComponent(u.id)}`}
+                      className="text-[#2980B9] hover:underline"
+                    >
+                      {u.name}
+                    </Link>
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>{u.code ?? "—"}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{u.status}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
-                    {u._count?.employments ?? 0} / {u._count?.positions ?? 0}
+                    <Link
+                      href={`/workspace/workforce/employments?orgUnitId=${encodeURIComponent(u.id)}`}
+                      className="text-[#2980B9] hover:underline"
+                    >
+                      {u._count?.employments ?? 0}
+                    </Link>
+                    {" / "}
+                    <Link
+                      href={`/workspace/workforce/positions?orgUnitId=${encodeURIComponent(u.id)}`}
+                      className="text-[#2980B9] hover:underline"
+                    >
+                      {u._count?.positions ?? 0}
+                    </Link>
                   </td>
                   <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                     {u.status === "ACTIVE" ? (

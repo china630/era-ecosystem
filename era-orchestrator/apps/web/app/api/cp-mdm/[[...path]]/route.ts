@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ORCH_API_URL } from "../../../../lib/orch-api";
 
+/** Align with MdmService.assertServiceToken → assertInternalServiceToken. */
 const MDM_SERVICE_TOKEN =
   process.env.MDM_INTERNAL_SERVICE_TOKEN ??
+  process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN ??
+  process.env.CONTROL_PLANE_SERVICE_TOKEN ??
   process.env.SATELLITE_EVENT_SERVICE_TOKEN ??
   "";
 
@@ -27,6 +30,11 @@ async function proxy(
     url.searchParams.set(k, v);
   });
 
+  const orgId = request.headers.get("x-organization-id")?.trim();
+  if (orgId && !url.searchParams.has("organizationId")) {
+    url.searchParams.set("organizationId", orgId);
+  }
+
   const headers = new Headers();
   headers.set("Authorization", callerAuth);
   if (MDM_SERVICE_TOKEN) {
@@ -37,12 +45,25 @@ async function proxy(
       { status: 503 },
     );
   }
+  if (orgId) headers.set("x-organization-id", orgId);
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
 
   const init: RequestInit = { method: request.method, headers };
   if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = await request.text();
+    let bodyText = await request.text();
+    if (orgId && bodyText) {
+      try {
+        const parsed = JSON.parse(bodyText) as Record<string, unknown>;
+        if (!parsed.organizationId) {
+          parsed.organizationId = orgId;
+          bodyText = JSON.stringify(parsed);
+        }
+      } catch {
+        /* pass through */
+      }
+    }
+    init.body = bodyText;
   }
 
   const res = await fetch(url.toString(), init);

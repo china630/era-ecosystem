@@ -873,6 +873,149 @@ export class MdmService {
     return { total, page, pageSize, items };
   }
 
+  /**
+   * Super-admin person directory. Decrypts name/phone for operators only.
+   * FIN / DOB narrow in SQL; name/phone filter after decrypt (capped scan).
+   */
+  async listNaturalPersons(input: {
+    page: number;
+    pageSize: number;
+    fin?: string;
+    fullName?: string;
+    phone?: string;
+    birthDate?: string;
+    includeMerged?: boolean;
+  }) {
+    const page = Math.max(1, input.page);
+    const pageSize = Math.min(100, Math.max(1, input.pageSize));
+
+    const where: {
+      mergedIntoPersonId?: null;
+      finBlindIndex?: string;
+      birthDate?: Date;
+    } = {};
+    if (!input.includeMerged) {
+      where.mergedIntoPersonId = null;
+    }
+    if (input.fin?.trim()) {
+      const fin = input.fin.trim().toUpperCase();
+      if (!FIN_PATTERN.test(fin)) {
+        throw new BadRequestException("Invalid FIN format");
+      }
+      where.finBlindIndex = blindIndexFin(fin);
+    }
+    if (input.birthDate?.trim()) {
+      const raw = input.birthDate.trim().slice(0, 10);
+      const parts = raw.split("-").map(Number);
+      if (parts.length === 3 && parts.every((n) => Number.isFinite(n))) {
+        where.birthDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      }
+    }
+
+    const nameQ = input.fullName?.trim().toLowerCase() ?? "";
+    const phoneDigits = (input.phone ?? "").replace(/\D/g, "");
+    const needsDecryptFilter = Boolean(nameQ || phoneDigits);
+
+    type PersonRow = {
+      id: string;
+      fullNameCipher: string | null;
+      phoneCipher: string | null;
+      finCipher: string | null;
+      sex: string;
+      birthDate: Date | null;
+      personSegment: string;
+      mergedIntoPersonId: string | null;
+      updatedAt: Date;
+    };
+
+    const mapItem = (r: PersonRow) => {
+      const fullName = r.fullNameCipher
+        ? (decryptText(r.fullNameCipher) ?? "").trim() || null
+        : null;
+      const phonePlain = r.phoneCipher
+        ? decryptText(r.phoneCipher)
+        : null;
+      const finPlain = r.finCipher ? decryptText(r.finCipher) : null;
+      return {
+        id: r.id,
+        fullName,
+        finMasked: finPlain ? maskIdentifierValue(finPlain) : null,
+        phoneMasked: maskPhone(phonePlain),
+        sex: r.sex,
+        birthDate: formatPersonBirthDate(r.birthDate),
+        personSegment: r.personSegment,
+        mergedIntoPersonId: r.mergedIntoPersonId,
+        updatedAt: r.updatedAt.toISOString(),
+      };
+    };
+
+    let items: ReturnType<typeof mapItem>[];
+    let total: number;
+
+    if (!needsDecryptFilter) {
+      const [count, rows] = await Promise.all([
+        this.mdm.globalNaturalPerson.count({ where }),
+        this.mdm.globalNaturalPerson.findMany({
+          where,
+          orderBy: { updatedAt: "desc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          select: {
+            id: true,
+            fullNameCipher: true,
+            phoneCipher: true,
+            finCipher: true,
+            sex: true,
+            birthDate: true,
+            personSegment: true,
+            mergedIntoPersonId: true,
+            updatedAt: true,
+          },
+        }),
+      ]);
+      total = count;
+      items = rows.map(mapItem);
+    } else {
+      const candidates = await this.mdm.globalNaturalPerson.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        take: 2000,
+        select: {
+          id: true,
+          fullNameCipher: true,
+          phoneCipher: true,
+          finCipher: true,
+          sex: true,
+          birthDate: true,
+          personSegment: true,
+          mergedIntoPersonId: true,
+          updatedAt: true,
+        },
+      });
+      const filtered = candidates.filter((r) => {
+        if (nameQ) {
+          const name = r.fullNameCipher
+            ? (decryptText(r.fullNameCipher) ?? "").toLowerCase()
+            : "";
+          if (!name.includes(nameQ)) return false;
+        }
+        if (phoneDigits) {
+          const phone = r.phoneCipher
+            ? (decryptText(r.phoneCipher) ?? "").replace(/\D/g, "")
+            : "";
+          if (!phone.includes(phoneDigits)) return false;
+        }
+        return true;
+      });
+      total = filtered.length;
+      items = filtered
+        .slice((page - 1) * pageSize, page * pageSize)
+        .map(mapItem);
+    }
+
+    return { total, page, pageSize, items };
+  }
+
   async getPersonOpsProfile(personId: string, requesterOrgId?: string) {
     const profile = await this.resolveOpsProfileData(
       personId,

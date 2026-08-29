@@ -276,6 +276,16 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 | POST | `/internal/v1/mdm/persons/merge` | Foreigner → citizen (explicit workflow) |
 | POST | `/internal/v1/mdm/organizations/register` | VÖEN → `GlobalLegalEntity` |
 
+**Super-admin MDM (JWT + SuperAdminGuard, not service token):**
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/v1/admin/mdm/persons` | Paginated directory (`fin`, `fullName`, `phone`, `birthDate`, `includeMerged`); decrypts name for operators |
+| POST | `/v1/admin/mdm/persons/lookup-by-fin` | Exact FIN lookup |
+| POST | `/v1/admin/mdm/persons/resolve` | Resolve/create |
+| POST | `/v1/admin/mdm/persons/merge` | Merge duplicates |
+| GET | `/v1/admin/mdm/persons/:id/identifiers` | Identifier rows |
+
 **Clinic cutover `#21` glue (hotel stay → MDM person):** clinic wizard calls hotel `GET /api/internal/v1/stays/by-external-ref?externalRef=&organizationId=` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`) then `linkPersonIdentity` with that `globalPersonId` so re-import does not mint a second person. Import hotel guests/reservations before clinic patients.
 
 ### Holdings (S2S)
