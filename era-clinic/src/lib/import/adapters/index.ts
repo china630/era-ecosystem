@@ -24,6 +24,46 @@ function req(value: unknown): string {
   return s;
 }
 
+/**
+ * LabOrderItem is not tenant-scoped. Nested `items.create` under LabOrder is stamped
+ * with organizationId and rejected; Prisma nested input also wants
+ * `diagnosticService: { connect }` rather than scalar `diagnosticServiceId`.
+ */
+async function createImportedLabOrder(
+  tx: ImportTx,
+  input: {
+    patientId: string;
+    testCode: string;
+    status: "COMPLETED" | "ORDERED";
+    resultJson: string;
+    collectedAt: Date | null | undefined;
+    resultDate?: Date | null;
+    diagnosticServiceId?: string | null;
+  },
+): Promise<string> {
+  const order = await tx.labOrder.create({
+    data: {
+      organizationId: orgId(),
+      patientRefId: input.patientId,
+      testCode: input.testCode,
+      status: input.status,
+      resultJson: input.resultJson,
+      collectedAt: input.collectedAt,
+      ...(input.resultDate ? { resultDate: input.resultDate } : {}),
+    },
+  });
+  await tx.labOrderItem.create({
+    data: {
+      labOrderId: order.id,
+      serviceCode: input.testCode,
+      ...(input.diagnosticServiceId
+        ? { diagnosticService: { connect: { id: input.diagnosticServiceId } } }
+        : {}),
+    },
+  });
+  return order.id;
+}
+
 /** Cutover import: attach clinical history to any episode (OPEN or CLOSED), create archive episode if missing. */
 async function ensureCutoverEpisode(tx: ImportTx, patientId: string) {
   const existing = await tx.clinicalEpisode.findFirst({
@@ -903,23 +943,18 @@ const labOrdersAdapter: ImportAdapter<{
       "lab-orders",
       row.externalRef,
       dryRun,
-      async () =>
-        (
-          await tx.labOrder.create({
-            data: {
-              organizationId: orgId(),
-              patientRefId: patientId,
-              testCode: row.testCode,
-              status: done ? "COMPLETED" : "ORDERED",
-              resultJson: JSON.stringify([]),
-              collectedAt: parseDateCell(row.takenAt),
-              resultDate: parseDateCell(row.takenAt),
-              items: {
-                create: { serviceCode: row.testCode, diagnosticServiceId: svc?.id },
-              },
-            },
-          })
-        ).id,
+      async () => {
+        const takenAt = parseDateCell(row.takenAt);
+        return createImportedLabOrder(tx, {
+          patientId,
+          testCode: row.testCode,
+          status: done ? "COMPLETED" : "ORDERED",
+          resultJson: JSON.stringify([]),
+          collectedAt: takenAt,
+          resultDate: takenAt ?? undefined,
+          diagnosticServiceId: svc?.id,
+        });
+      },
       async (id) => {
         await tx.labOrder.update({
           where: { id },
@@ -1063,19 +1098,14 @@ const diagnosticsAdapter: ImportAdapter<{
           });
         }
         if (!svc) throw new Error(`Could not resolve diagnostic service ${row.code}`);
-        return (
-          await tx.labOrder.create({
-            data: {
-              organizationId: orgId(),
-              patientRefId: patientId,
-              testCode: row.code,
-              status: "COMPLETED",
-              resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }),
-              collectedAt: parseDateCell(row.takenAt),
-              items: { create: { serviceCode: row.code, diagnosticServiceId: svc.id } },
-            },
-          })
-        ).id;
+        return createImportedLabOrder(tx, {
+          patientId,
+          testCode: row.code,
+          status: "COMPLETED",
+          resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }),
+          collectedAt: parseDateCell(row.takenAt),
+          diagnosticServiceId: svc.id,
+        });
       },
       async (id) => {
         await tx.labOrder.update({

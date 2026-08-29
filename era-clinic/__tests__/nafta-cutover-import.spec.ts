@@ -484,7 +484,8 @@ describe("nafta cutover import rules", () => {
       takenAt: "2026-02-18",
     });
     const row = adapter.rowSchema.parse(mapped);
-    const create = jest.fn().mockResolvedValue({ id: "lab1" });
+    const createOrder = jest.fn().mockResolvedValue({ id: "lab1" });
+    const createItem = jest.fn().mockResolvedValue({ id: "item1" });
     const tx = {
       cutoverImportKey: {
         findFirst: jest.fn(async ({ where }: { where: { entity: string } }) =>
@@ -493,14 +494,25 @@ describe("nafta cutover import rules", () => {
         create: jest.fn(),
       },
       diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc1" }) },
-      labOrder: { create, update: jest.fn() },
+      labOrder: { create: createOrder, update: jest.fn() },
+      labOrderItem: { create: createItem },
     };
     await adapter.upsert(tx as never, row, false);
-    expect(create).toHaveBeenCalledWith(
+    expect(createOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           testCode: "LAB-CBC",
           resultJson: "[]",
+        }),
+      }),
+    );
+    expect(createOrder.mock.calls[0][0].data.items).toBeUndefined();
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          labOrderId: "lab1",
+          serviceCode: "LAB-CBC",
+          diagnosticService: { connect: { id: "svc1" } },
         }),
       }),
     );
