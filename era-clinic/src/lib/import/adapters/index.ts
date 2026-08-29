@@ -49,6 +49,10 @@ async function createImportedLabOrder(
       status: input.status,
       resultJson: input.resultJson,
       collectedAt: input.collectedAt,
+      ...(input.collectedAt ? { createdAt: input.collectedAt } : {}),
+      ...(input.status === "COMPLETED" && input.collectedAt
+        ? { completedAt: input.collectedAt }
+        : {}),
       ...(input.resultDate ? { resultDate: input.resultDate } : {}),
     },
   });
@@ -62,7 +66,22 @@ async function createImportedLabOrder(
   return order.id;
 }
 
-/** Cutover import: attach clinical history to any episode (OPEN or CLOSED), create archive episode if missing. */
+/** WO patients grid has no lab date; LabResult.resultDate → takenAt. Else stay check-in. */
+async function resolveImportedLabAt(
+  tx: ImportTx,
+  patientId: string,
+  takenAt: Date | null,
+): Promise<Date> {
+  if (takenAt && !Number.isNaN(takenAt.getTime())) return takenAt;
+  const episode = await tx.clinicalEpisode.findFirst({
+    where: { patientRefId: patientId },
+    orderBy: { openedAt: "desc" },
+    select: { openedAt: true },
+  });
+  if (episode?.openedAt) return episode.openedAt;
+  return new Date();
+}
+
 async function ensureCutoverEpisode(tx: ImportTx, patientId: string) {
   const existing = await tx.clinicalEpisode.findFirst({
     where: { patientRefId: patientId },
@@ -936,27 +955,34 @@ const labOrdersAdapter: ImportAdapter<{
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
     const svc = await tx.diagnosticService.findFirst({ where: { code: row.testCode } });
     const done = row.status.toUpperCase() === "COMPLETED";
+    const clinicalAt = await resolveImportedLabAt(tx, patientId, parseDateCell(row.takenAt));
     return upsertByRef(
       tx,
       "lab-orders",
       row.externalRef,
       dryRun,
       async () => {
-        const takenAt = parseDateCell(row.takenAt);
         return createImportedLabOrder(tx, {
           patientId,
           testCode: row.testCode,
           status: done ? "COMPLETED" : "ORDERED",
           resultJson: JSON.stringify([]),
-          collectedAt: takenAt,
-          resultDate: takenAt ?? undefined,
+          collectedAt: clinicalAt,
+          resultDate: clinicalAt,
           diagnosticServiceId: svc?.id,
         });
       },
       async (id) => {
         await tx.labOrder.update({
           where: { id },
-          data: { testCode: row.testCode, status: done ? "COMPLETED" : "ORDERED" },
+          data: {
+            testCode: row.testCode,
+            status: done ? "COMPLETED" : "ORDERED",
+            collectedAt: clinicalAt,
+            resultDate: clinicalAt,
+            createdAt: clinicalAt,
+            ...(done ? { completedAt: clinicalAt } : {}),
+          },
         });
       },
     );
@@ -1018,7 +1044,10 @@ const labResultsAdapter: ImportAdapter<{
         data: { labOrderItemId: item.id, code: row.code, ...data },
       });
     }
-    const order = await tx.labOrder.findUnique({ where: { id: orderId }, select: { resultJson: true } });
+    const order = await tx.labOrder.findUnique({
+      where: { id: orderId },
+      select: { resultJson: true, publishedAt: true, completedAt: true, collectedAt: true },
+    });
     let lines: Array<Record<string, string>> = [];
     try {
       const parsed = JSON.parse(order?.resultJson || "[]");
@@ -1035,7 +1064,16 @@ const labResultsAdapter: ImportAdapter<{
       refMin: row.refMin,
       refMax: row.refMax,
     });
-    await tx.labOrder.update({ where: { id: orderId }, data: { resultJson: JSON.stringify(next) } });
+    const clinicalAt = order?.collectedAt ?? order?.completedAt ?? new Date();
+    await tx.labOrder.update({
+      where: { id: orderId },
+      data: {
+        resultJson: JSON.stringify(next),
+        status: "COMPLETED",
+        publishedAt: order?.publishedAt ?? clinicalAt,
+        completedAt: order?.completedAt ?? clinicalAt,
+      },
+    });
     return existing ? "updated" : "created";
   },
 };
@@ -1072,6 +1110,7 @@ const diagnosticsAdapter: ImportAdapter<{
   upsert: async (tx, row, dryRun) => {
     const patientId = await findImportRecordId(tx, "patients", row.patientRef);
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
+    const clinicalAt = await resolveImportedLabAt(tx, patientId, parseDateCell(row.takenAt));
     return upsertByRef(
       tx,
       "diagnostics",
@@ -1101,14 +1140,21 @@ const diagnosticsAdapter: ImportAdapter<{
           testCode: row.code,
           status: "COMPLETED",
           resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }),
-          collectedAt: parseDateCell(row.takenAt),
+          collectedAt: clinicalAt,
+          resultDate: clinicalAt,
           diagnosticServiceId: svc.id,
         });
       },
       async (id) => {
         await tx.labOrder.update({
           where: { id },
-          data: { resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }) },
+          data: {
+            resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }),
+            collectedAt: clinicalAt,
+            resultDate: clinicalAt,
+            createdAt: clinicalAt,
+            completedAt: clinicalAt,
+          },
         });
       },
     );

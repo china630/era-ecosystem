@@ -31,7 +31,7 @@
 4. `POST /api/lab-orders/[id]/results` with `{ lines: [{ code, value }] }` → `RESULT_READY`
 5. `POST /api/lab-orders/[id]/publish` → `PUBLISHED`, `publishedAt` set; if patient `phone` is email-shaped → orchestrator notification (EMAIL) when `CONTROL_PLANE_URL` + token configured
 6. `POST /api/lab-orders/[id]/complete` → `COMPLETED` + `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` event
-7. **`/lab-orders`** — DATA_TABLE list (services/patient/modality/status/amount/created), filter bar (status, critical only, modality, patient, date from/to) + Apply/Reset, `ListPaginationFooter` page/pageSize
+7. **`/lab-orders`** — DATA_TABLE list (services/patient/modality/status/amount/date=`collectedAt`), filter bar (status, critical only, modality, patient, date from/to on collectedAt) + Apply/Reset, `ListPaginationFooter` page/pageSize
 8. **`/lab-orders/[id]`** — structural results table (no raw JSON); results re-editable while `RESULT_READY` (before publish); read-only once `PUBLISHED`/`COMPLETED`; Print button shows "coming soon" notice; step chips show role hint
 
 ## K2b — Appointment notifications (Nafta W0)

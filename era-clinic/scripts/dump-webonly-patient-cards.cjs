@@ -64,6 +64,9 @@ function request(url, { method = "GET", headers = {}, maxRedirects = 3 } = {}) {
           "User-Agent": "era-clinic-webonly-cutover-dump/1.0",
           Accept: "application/json, application/pdf, */*",
           ...(process.env.WO_COOKIE ? { Cookie: process.env.WO_COOKIE } : {}),
+          ...(process.env.WO_BEARER || process.env.WO_TOKEN
+            ? { Authorization: `Bearer ${process.env.WO_BEARER || process.env.WO_TOKEN}` }
+            : {}),
           ...headers,
         },
       },

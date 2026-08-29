@@ -24,7 +24,7 @@ PRD: [../PRD.md](../PRD.md)
 - [x] K-10 — `POST /api/lab-orders/[id]/publish`
 - [x] K-11 — `POST /api/lab-orders/[id]/complete` → `SATELLITE_CLINIC_LAB_ORDER_COMPLETED`
 - [x] K-06…K-11 UI — `/lab-orders/[id]` stepper workflow; step chips carry role hints (nurse/lab tech/doctor/cashier); structural results table (`items[].results`, fallback `resultJson`) replaces raw JSON dump; Print stub
-- [x] Lab orders list — `GET /api/lab-orders` paged (`{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo); DATA_TABLE columns (services, patient, modality, status, amount, created); `GET /api/lab-orders/[id]` for the detail page
+- [x] Lab orders list — `GET /api/lab-orders` paged (`{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo on collectedAt); DATA_TABLE columns (services, patient, modality, status, amount, date); `GET /api/lab-orders/[id]` for the detail page
 
 ## K3
 

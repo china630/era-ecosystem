@@ -181,7 +181,6 @@ export async function getPatientCardSummary(patientRefId: string) {
     prisma.procedureOrder.findFirst({
       where: {
         patientRefId,
-        scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       orderBy: { scheduledAt: "asc" },
@@ -195,6 +194,10 @@ export async function getPatientCardSummary(patientRefId: string) {
       where: {
         patientRefId,
         status: { in: ["RESULT_READY", "PUBLISHED", "COMPLETED"] },
+        OR: [
+          { items: { some: { results: { some: {} } } } },
+          { AND: [{ resultJson: { not: null } }, { NOT: { resultJson: { in: ["", "[]"] } } }] },
+        ],
       },
       orderBy: [{ publishedAt: "desc" }, { completedAt: "desc" }, { createdAt: "desc" }],
       take: settings.patientCardResultsPreview,
@@ -202,7 +205,6 @@ export async function getPatientCardSummary(patientRefId: string) {
     prisma.procedureOrder.findMany({
       where: {
         patientRefId,
-        scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
@@ -376,7 +378,6 @@ export async function getPatientPlanPage(
   const settings = await getClinicSettings();
   const limit = opts.limit ?? settings.patientCardPlanPageSize;
   const offset = opts.offset ?? 0;
-  const now = new Date();
 
   const where = {
     patientRefId,
@@ -384,10 +385,14 @@ export async function getPatientPlanPage(
       { status: "PROPOSED" as const },
       {
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
-        scheduledAt: {
-          gte: opts.from && opts.from > now ? opts.from : now,
-          ...(opts.to ? { lte: opts.to } : {}),
-        },
+        ...(opts.from || opts.to
+          ? {
+              scheduledAt: {
+                ...(opts.from ? { gte: opts.from } : {}),
+                ...(opts.to ? { lte: opts.to } : {}),
+              },
+            }
+          : {}),
       },
     ],
   };

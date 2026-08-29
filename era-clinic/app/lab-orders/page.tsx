@@ -49,9 +49,18 @@ type LabOrder = {
   status: string;
   amountNet: string;
   createdAt?: string;
+  collectedAt?: string | null;
+  resultDate?: string | null;
   patientRef: { refCode: string; fullName: string };
   items?: LabOrderItem[];
 };
+
+function labOrderListDate(order: LabOrder): Date | null {
+  const raw = order.collectedAt || order.resultDate || order.createdAt;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 type PatientOption = { id: string; refCode: string; fullName: string };
 
@@ -398,7 +407,7 @@ export default function LabOrdersPage() {
                   <td className={DATA_TABLE_TD_CLASS}>{order.status}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{order.amountNet} AZN</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
+                    {labOrderListDate(order)?.toLocaleDateString() ?? "—"}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <div className="flex flex-wrap items-center gap-1">
