@@ -4,6 +4,8 @@
 #   .\era-ship.ps1 -Scope orchestrator -Subject "pricing seeds" [-Branch integration/my-wave]
 #   .\era-ship.ps1 -Wave full -Subject "ecosystem integration wave" [-Branch integration/ecosystem-wave]
 #   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates]
+#   .\era-ship.ps1 -PublishImages -Services orchestrator [-Head dev]
+#   .\era-ship.ps1 -PublishDeploy -DeployScope orchestrator [-ImageTag dev] [-Head dev]
 #   .\era-ship.ps1 -PublishMaster -Head dev [-SkipGates]
 
 param(
@@ -17,8 +19,13 @@ param(
     [string]$Branch = "",
     [switch]$PublishDev,
     [switch]$PublishMaster,
+    [switch]$PublishImages,
+    [switch]$PublishDeploy,
     [string]$Head = "",
     [string]$Title = "",
+    [string]$Services = "",
+    [string]$DeployScope = "",
+    [string]$ImageTag = "",
     [switch]$DryRun,
     [switch]$SkipGates
 )
@@ -332,6 +339,39 @@ function Invoke-PublishDev {
     gh pr merge --merge --auto
 }
 
+function Invoke-PublishImages {
+    param([string]$HeadBranch, [string]$ServiceList)
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "gh CLI not found. Run: gh auth login" }
+    Ensure-GhAuth
+    if (-not $HeadBranch) { $HeadBranch = "dev" }
+    $wfArgs = @("workflow", "run", "build-images.yml", "--ref", $HeadBranch)
+    if ($ServiceList) { $wfArgs += @("-f", "services=$ServiceList") }
+    if ($DryRun) {
+        Write-Host "[dry-run] gh $($wfArgs -join ' ')"
+        return
+    }
+    gh @wfArgs
+    if ($LASTEXITCODE -ne 0) { throw "gh workflow run build-images.yml failed" }
+    Write-Host "Dispatched Build and push images (ref=$HeadBranch services=$ServiceList)."
+}
+
+function Invoke-PublishDeploy {
+    param([string]$HeadBranch, [string]$ScopeName, [string]$Tag)
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "gh CLI not found. Run: gh auth login" }
+    Ensure-GhAuth
+    if (-not $HeadBranch) { $HeadBranch = "dev" }
+    if (-not $ScopeName) { $ScopeName = "orchestrator" }
+    if (-not $Tag) { $Tag = "dev" }
+    $wfArgs = @("workflow", "run", "deploy-staging.yml", "--ref", $HeadBranch, "-f", "scope=$ScopeName", "-f", "image_tag=$Tag")
+    if ($DryRun) {
+        Write-Host "[dry-run] gh $($wfArgs -join ' ')"
+        return
+    }
+    gh @wfArgs
+    if ($LASTEXITCODE -ne 0) { throw "gh workflow run deploy-staging.yml failed" }
+    Write-Host "Dispatched Deploy staging (ref=$HeadBranch scope=$ScopeName tag=$Tag)."
+}
+
 function Invoke-PublishMaster {
     param([string]$HeadBranch)
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "gh CLI not found. Run: gh auth login" }
@@ -367,7 +407,7 @@ if ($ListScopes) {
 Ensure-Branch $Branch
 
 $changed = @(Get-ChangedFiles)
-if ($changed.Count -eq 0 -and -not $PublishDev -and -not $PublishMaster) {
+if ($changed.Count -eq 0 -and -not $PublishDev -and -not $PublishMaster -and -not $PublishImages -and -not $PublishDeploy) {
     Write-Host "Nothing to commit (working tree clean or only excluded paths)."
     exit 0
 }
@@ -406,8 +446,16 @@ elseif ($PublishMaster) {
     if (-not $Head) { $Head = 'dev' }
     Invoke-PublishMaster -HeadBranch $Head
 }
+elseif ($PublishImages) {
+    if (-not $Head) { $Head = "dev" }
+    Invoke-PublishImages -HeadBranch $Head -ServiceList $Services
+}
+elseif ($PublishDeploy) {
+    if (-not $Head) { $Head = "dev" }
+    Invoke-PublishDeploy -HeadBranch $Head -ScopeName $DeployScope -Tag $ImageTag
+}
 else {
-    Write-Host "Specify -ListScopes, -Scope, -Wave, -PublishDev, or -PublishMaster. See SKILL.md."
+    Write-Host "Specify -ListScopes, -Scope, -Wave, -PublishDev, -PublishMaster, -PublishImages, or -PublishDeploy. See SKILL.md."
     exit 1
 }
 

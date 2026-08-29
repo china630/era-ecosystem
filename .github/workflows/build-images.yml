@@ -18,7 +18,64 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.plan.outputs.skip }}
+      rebuild_packages: ${{ steps.plan.outputs.rebuild_packages }}
+      deploy_scope: ${{ steps.plan.outputs.deploy_scope }}
+      deploy_services: ${{ steps.plan.outputs.deploy_services }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      package_image_fallback: ${{ steps.plan.outputs.package_image_fallback }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_SERVICES: ${{ github.event_name == 'workflow_dispatch' && inputs.services || '' }}
+          BEFORE: ${{ github.event.before || '' }}
+          SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          owner=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')
+          echo "package_image_fallback=${{ env.REGISTRY }}/${owner}/era-ecosystem/workspace-packages:${REF_NAME}" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            plan=$(node scripts/ci-changed-ghcr-services.mjs --dispatch-services "$DISPATCH_SERVICES")
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            plan=$(node scripts/ci-changed-ghcr-services.mjs --all)
+          else
+            git diff --name-only "$BEFORE" "$SHA" > /tmp/changed-files.txt
+            plan=$(node scripts/ci-changed-ghcr-services.mjs --files-from /tmp/changed-files.txt)
+          fi
+          echo "$plan"
+          skip=$(echo "$plan" | jq -r '.skip')
+          rebuild=$(echo "$plan" | jq -r '.rebuildPackages')
+          echo "skip=${skip}" >> "$GITHUB_OUTPUT"
+          echo "rebuild_packages=${rebuild}" >> "$GITHUB_OUTPUT"
+          echo "deploy_scope=$(echo "$plan" | jq -r '.deployScope')" >> "$GITHUB_OUTPUT"
+          echo "deploy_services=$(echo "$plan" | jq -r '.deployServices')" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(echo "$plan" | jq -c '.matrix')" >> "$GITHUB_OUTPUT"
+          {
+            echo "SKIP=${skip}"
+            echo "DEPLOY_SCOPE=$(echo "$plan" | jq -r '.deployScope')"
+            echo "DEPLOY_SERVICES=$(echo "$plan" | jq -r '.deployServices')"
+          } > deploy-scope.env
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deploy-scope
+          path: deploy-scope.env
+          if-no-files-found: error
+
   build-packages-base:
+    needs: detect
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.rebuild_packages == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -65,7 +122,12 @@ jobs:
           echo "image=${{ env.REGISTRY }}/${owner}/era-ecosystem/workspace-packages:${{ github.ref_name }}-${short}" >> "$GITHUB_OUTPUT"
 
   build:
-    needs: build-packages-base
+    needs: [detect, build-packages-base]
+    if: |
+      always() &&
+      needs.detect.result == 'success' &&
+      needs.detect.outputs.skip != 'true' &&
+      (needs.build-packages-base.result == 'success' || needs.build-packages-base.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -74,105 +136,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - service: orchestrator
-            dockerfile: era-orchestrator/Dockerfile
-            satellite_dir: ""
-            satellite_port: ""
-          - service: data-hub
-            dockerfile: era-data-hub/Dockerfile
-            satellite_dir: ""
-            satellite_port: ""
-          - service: finance-core
-            dockerfile: era-finance-core/Dockerfile
-            satellite_dir: ""
-            satellite_port: ""
-          - service: finance-web
-            dockerfile: era-finance-core/Dockerfile.web
-            satellite_dir: ""
-            satellite_port: ""
-          - service: hotel-pms
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-hotel-pms
-            satellite_port: "3201"
-          - service: fnb-pos
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-fnb-pos
-            satellite_port: "3202"
-          - service: clinic
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-clinic
-            satellite_port: "3203"
-          - service: retail-pos
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-retail-pos
-            satellite_port: "3204"
-          - service: logistics
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-logistics
-            satellite_port: "3205"
-          - service: construction
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-construction
-            satellite_port: "3206"
-          - service: crm
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-crm
-            satellite_port: "3207"
-          - service: auto-service
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-auto-service
-            satellite_port: "3208"
-          - service: wholesale
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-wholesale
-            satellite_port: "3209"
-          - service: bank-core
-            dockerfile: era-bank-core/Dockerfile
-            satellite_dir: ""
-            satellite_port: ""
-          - service: bank
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-bank
-            satellite_port: "3210"
-          - service: bank-dbo
-            dockerfile: docker/Dockerfile.satellite
-            satellite_dir: era-bank-dbo
-            satellite_port: "3211"
+        include: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
-      - id: gate
-        env:
-          SERVICE: ${{ matrix.service }}
-          SERVICES: ${{ github.event_name == 'workflow_dispatch' && inputs.services || '' }}
-        run: |
-          if [ -z "$SERVICES" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          case ",$SERVICES," in
-            *",$SERVICE,"*) echo "run=true" >> "$GITHUB_OUTPUT" ;;
-            *) echo "run=false" >> "$GITHUB_OUTPUT" ;;
-          esac
+      - uses: actions/checkout@v4
 
-      - if: steps.gate.outputs.run == 'true'
-        uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
 
-      - if: steps.gate.outputs.run == 'true'
-        uses: docker/setup-buildx-action@v3
-
-      - if: steps.gate.outputs.run == 'true'
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - if: steps.gate.outputs.run == 'true'
-        id: lowercase
+      - id: lowercase
         run: echo "owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - if: steps.gate.outputs.run == 'true'
-        id: meta
+      - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.owner }}/era-ecosystem/${{ matrix.service }}
@@ -181,8 +160,7 @@ jobs:
             type=sha,format=short
             type=raw,value=${{ github.ref_name }},enable=${{ github.ref_name == 'dev' || github.ref_name == 'master' }}
 
-      - if: steps.gate.outputs.run == 'true'
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -190,7 +168,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            PACKAGE_IMAGE=${{ needs.build-packages-base.outputs.package_image }}
+            PACKAGE_IMAGE=${{ needs.build-packages-base.outputs.package_image || needs.detect.outputs.package_image_fallback }}
             NEXT_PUBLIC_ORCH_API_URL=https://api.era-365.online
             NEXT_PUBLIC_FINANCE_WEB_URL=https://finance-core.era-365.online
             NEXT_PUBLIC_API_URL=http://finance-core:4100

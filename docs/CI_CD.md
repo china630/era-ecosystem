@@ -26,10 +26,10 @@ git push -u origin feature/my-change
 | Workflow | Trigger | Role |
 |----------|---------|------|
 | [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, orchestrator/finance tests, satellite build+jest |
-| [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR. Manual `services` can limit to e.g. `orchestrator,finance-core,finance-web` |
+| [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Path-filter: rebuild only changed GHCR services (`scripts/ci-changed-ghcr-services.mjs`). `packages/` or `docker/Dockerfile.satellite` still rebuilds **all**. Manual `services` can limit to e.g. `orchestrator,finance-core,finance-web` |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
 | [`design-regression.yml`](../.github/workflows/design-regression.yml) | Cron 02:00 UTC, manual | Bootstrap hotel+clinic; Playwright **smoke** (structure only). Pixel snapshots are local (`npm run test:design-regression:update`) |
-| [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images** on `dev` (`scope=all`), or manual | SSH pull + migrate + `up -d`. Manual `scope`: `finance` (orch+finance), one satellite, or `all` |
+| [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images**, or manual | SSH pull + migrate + `up`. Auto scope comes from the image-build artifact (`DEPLOY_SERVICES`), not always `all`. Manual `scope`: `finance` (orch+finance), one satellite, or `all` |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | Manual only | Prod deploy + environment approval |
 
 Deprecated: [`ecosystem-smoke.yml`](../.github/workflows/ecosystem-smoke.yml) (noop). Finance-only CI moved from `era-finance-core/.github/workflows/ci.yml` to root `ci.yml`.
@@ -75,11 +75,13 @@ node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 
 ## Staging auto-deploy
 
-After each successful [`build-images.yml`](../.github/workflows/build-images.yml) run on **`dev`**, [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) SSHs to the droplet and:
+After each successful [`build-images.yml`](../.github/workflows/build-images.yml) run on **`dev` or `master`**, [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) SSHs to the droplet and:
 
 1. Checks out the build commit  
-2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=dev-<sha>`  
-3. `docker login` GHCR → `compose pull` → `migrate-all.sh` → `up -d`  
+2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=<branch>-<sha>`  
+3. `docker login` GHCR → `compose pull` (only services listed in the build artifact, or all) → `migrate-all.sh` → `up -d`  
+
+Docs-only pushes skip image build and skip droplet SSH.
 
 Manual: Actions → **Deploy staging** → `workflow_dispatch` (default **scope `finance`**, tag `dev`).  
 Choose `hotel` / `clinic` / … for one satellite, or `all` for the full stack.  
@@ -87,7 +89,7 @@ Production stays **manual** (`deploy-production.yml`).
 
 `ENV_FILE` is base64-packed on the runner and decoded on the droplet — do **not** expand a multi-line secret into the SSH `script:` body when `script_stop: true` (appleboy injects exit checks between lines and corrupts `.env`).
 
-`workflow_run` workflows must live on the **default branch** (`master`) to fire — merge this wiring via PR → `dev` → `master`.
+`workflow_run` workflows must live on the **default branch** (`master`) to fire — merge this wiring via PR → `dev` → `master` **in the same wave**. Until `deploy-staging.yml` is on `master`, a path-filtered image build on `dev` must not run: auto-deploy would still `pull` every service at the new `IMAGE_TAG` and 404.
 
 ## GitHub secrets (staging / production)
 
