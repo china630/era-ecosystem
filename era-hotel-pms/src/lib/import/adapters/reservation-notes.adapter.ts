@@ -12,7 +12,7 @@ import { stampMedicalPackagesForReservation } from "@/lib/services/medical-packa
 const rowSchema = z.object({
   externalRef: z.string().min(1),
   noteType: z.string().min(1),
-  text: z.string().default(""),
+  text: z.string(),
 });
 
 function parseResIdFromInfo(info: string | null | undefined): string | null {
