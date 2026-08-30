@@ -9,6 +9,7 @@
     "stockCheck": "Stock check",
     "replenishment": "Replenishment",
     "settings": "Settings",
+    "import": "Cutover import",
     "executive": "Executive"
   },
   "login": {
@@ -165,5 +166,41 @@
       "edit": "Edit",
       "save": "Save"
     }
+  },
+  "cutoverImport": {
+    "title": "Elektraweb import",
+    "subtitle": "Nafta cutover — upload READY #33 stock cards. Idempotent upsert.",
+    "loading": "Loading…",
+    "loadError": "Failed to load import catalog",
+    "superAdminOnly": "Platform super-admin or outlet admin only",
+    "intro": "Upload the shop stock cards book. Progress is saved in this browser.",
+    "verifyMasterData": "Open POS",
+    "resetProgress": "Reset progress",
+    "resetConfirm": "Clear saved import progress for this browser?",
+    "coaNote": "Naftalan shop cards only. Pharmacy 1C stock is a later ASK. Empty Ürün Kodu becomes ERA-STK-{Id}.",
+    "templateFile": "Template",
+    "preview": "Preview",
+    "importConfirm": "Import",
+    "back": "Back",
+    "reimport": "Re-import",
+    "rows": "Rows",
+    "created": "Created",
+    "updated": "Updated",
+    "skipped": "Skipped",
+    "errors": "Errors",
+    "stepCompleted": "Imported — created {created}, updated {updated}, errors {errors}",
+    "orderWarning": "Recommended: complete these steps first: {steps}",
+    "pickFileHint": "Elektraweb .xlsx export for this step.",
+    "pickFileHintMultiple": "Select multiple files at once.",
+    "runBootstrap": "Run bootstrap",
+    "phase": {
+      "catalog": {
+        "title": "Phase 1 — Stock cards",
+        "hint": "#33-Stock-Cards.xlsx — EW Ürün Tanımları."
+      }
+    },
+    "nextPhase": "Next phase",
+    "prevPhase": "Previous phase",
+    "phaseProgress": "Phase {current} of {total}"
   }
 }

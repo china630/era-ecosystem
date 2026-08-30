@@ -14,7 +14,7 @@ alwaysApply: false
 | Auth / SSO | `app/api/auth/` | `User`, `Role` |
 | Receipts / pay | `app/api/receipts/` | `Receipt`, lines, fiscal, room charge |
 | Shifts | `app/api/shifts/` | open/close, X-report |
-| Products / stock | `products/`, `stock/` | search, check, replenishment |
+| Products / stock | `products/`, `stock/`, `/api/import` (`stock-cards`) | search, check, replenishment; Nafta `#33` cutover wizard `/admin/import` |
 | Integrations | `integrations/marketplace`, `integration/` | prescription, stock write-off |
 | Offline | `offline/sync` | edge replay |
 | Events | `events/dispatch` | sale completed → orchestrator |

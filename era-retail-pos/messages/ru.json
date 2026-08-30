@@ -126,5 +126,50 @@
       "unknownSku": "Неизвестный SKU",
       "empty": "Нет рекомендаций (stub или запас достаточен)."
     }
+  },
+  "nav": {
+    "home": "Главная",
+    "pos": "POS",
+    "stockCheck": "Сток",
+    "replenishment": "Пополнение",
+    "import": "Импорт cutover",
+    "settings": "Настройки",
+    "executive": "Executive"
+  },
+  "cutoverImport": {
+    "title": "Импорт Elektraweb",
+    "subtitle": "Cutover Nafta — загрузите READY #33 stock cards. Идемпотентный upsert.",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить каталог импорта",
+    "superAdminOnly": "Только супер-админ платформы или админ точки",
+    "intro": "Загрузите книгу карточек магазина. Прогресс сохраняется в браузере.",
+    "verifyMasterData": "Открыть POS",
+    "resetProgress": "Сбросить прогресс",
+    "resetConfirm": "Очистить сохранённый прогресс импорта в этом браузере?",
+    "coaNote": "Только карточки магазина Naftalan. Аптечный 1С — отдельный ASK. Пустой Ürün Kodu → ERA-STK-{Id}.",
+    "templateFile": "Шаблон",
+    "preview": "Превью",
+    "importConfirm": "Импорт",
+    "back": "Назад",
+    "reimport": "Перезагрузить",
+    "rows": "Строк",
+    "created": "Создано",
+    "updated": "Обновлено",
+    "skipped": "Пропущено",
+    "errors": "Ошибки",
+    "stepCompleted": "Импортировано — создано {created}, обновлено {updated}, ошибок {errors}",
+    "orderWarning": "Рекомендуется сначала выполнить: {steps}",
+    "pickFileHint": "Выгрузка Elektraweb .xlsx для этого шага.",
+    "pickFileHintMultiple": "Можно выбрать несколько файлов сразу.",
+    "runBootstrap": "Запустить bootstrap",
+    "phase": {
+      "catalog": {
+        "title": "Фаза 1 — Карточки стока",
+        "hint": "#33-Stock-Cards.xlsx — EW Ürün Tanımları."
+      }
+    },
+    "nextPhase": "Следующая фаза",
+    "prevPhase": "Предыдущая фаза",
+    "phaseProgress": "Фаза {current} из {total}"
   }
 }
