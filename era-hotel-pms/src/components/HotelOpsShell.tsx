@@ -640,6 +640,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
             {
+              id: 'set-agency-medical-sku',
+              href: '/settings/agency-medical-sku',
+              labelKey: 'agencyMedicalSku',
+              icon: Banknote,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
               id: 'set-users',
               href: '/settings/users',
               labelKey: 'users',

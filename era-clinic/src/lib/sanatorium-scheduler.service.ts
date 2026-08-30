@@ -1,20 +1,54 @@
 import { prisma } from "@/lib/prisma";
 import { planProgramFifo } from "@/lib/treatment-planner.service";
+import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
 
 export async function instantiateProgramFromTemplate(input: {
   episodeId: string;
   programCode: string;
   reservationId?: string;
   startsOn: Date;
+  /** Hotel check-out — Wave B endsOn + nights. */
+  checkOutDate?: Date;
+  checkInDate?: Date;
+  nights?: number;
 }) {
   const template = await prisma.programTemplate.findFirst({
     where: { code: input.programCode },
-    include: { procedures: true },
+    include: { procedures: true, quotaKnots: true },
   });
   if (!template) throw new Error(`Program template ${input.programCode} not found`);
 
-  const endsOn = new Date(input.startsOn);
-  endsOn.setDate(endsOn.getDate() + template.durationDays);
+  const checkIn = input.checkInDate ?? input.startsOn;
+  const checkOut =
+    input.checkOutDate ??
+    (() => {
+      const d = new Date(input.startsOn);
+      d.setDate(d.getDate() + template.durationDays);
+      return d;
+    })();
+  const nights =
+    input.nights ??
+    (nightsBetween(checkIn, checkOut) || template.durationDays);
+
+  const endsOn = checkOut;
+
+  const balanceRows = template.procedures.map((p) => {
+    let quotaTotal = p.quotaTotal;
+    if (template.quotaKnots.length > 0) {
+      quotaTotal = quotaFor({
+        knots: template.quotaKnots,
+        nights,
+        procedureCode: p.procedureCode,
+        minNights: template.minNights,
+        maxNights: template.maxNights,
+      });
+    }
+    return {
+      procedureCode: p.procedureCode,
+      quotaTotal,
+      quotaUsed: 0,
+    };
+  });
 
   const instance = await prisma.programInstance.create({
     data: {
@@ -25,11 +59,7 @@ export async function instantiateProgramFromTemplate(input: {
       startsOn: input.startsOn,
       endsOn,
       procedureLines: {
-        create: template.procedures.map((p) => ({
-          procedureCode: p.procedureCode,
-          quotaTotal: p.quotaTotal,
-          quotaUsed: 0,
-        })),
+        create: balanceRows,
       },
     },
     include: { procedureLines: true },
@@ -42,6 +72,107 @@ export async function instantiateProgramFromTemplate(input: {
 
   await scheduleProgramProcedures(instance.id, input.startsOn);
   return instance;
+}
+
+/**
+ * Recalculate balances after nights or package change.
+ * Never decreases quotaUsed; does not cancel SCHEDULED.
+ * Drops only PROPOSED for codes removed from the new package.
+ */
+export async function recalcProgramQuotas(
+  instanceId: string,
+  opts: {
+    nights: number;
+    programCode?: string;
+    endsOn?: Date;
+    reservationId?: string | null;
+  },
+) {
+  const instance = await prisma.programInstance.findUnique({
+    where: { id: instanceId },
+    include: { procedureLines: true },
+  });
+  if (!instance) throw new Error("Program instance not found");
+
+  const code = opts.programCode ?? instance.programCode;
+  const template = await prisma.programTemplate.findFirst({
+    where: { code },
+    include: { procedures: true, quotaKnots: true },
+  });
+  if (!template) throw new Error(`Program template ${code} not found`);
+
+  const newCodes = new Set(template.procedures.map((p) => p.procedureCode));
+  const existingByCode = new Map(
+    instance.procedureLines.map((l) => [l.procedureCode, l]),
+  );
+
+  for (const p of template.procedures) {
+    let newTotal = p.quotaTotal;
+    if (template.quotaKnots.length > 0) {
+      newTotal = quotaFor({
+        knots: template.quotaKnots,
+        nights: opts.nights,
+        procedureCode: p.procedureCode,
+        minNights: template.minNights,
+        maxNights: template.maxNights,
+      });
+    }
+    const existing = existingByCode.get(p.procedureCode);
+    if (existing) {
+      const { quotaTotal } = applyQuotaRecalc(existing.quotaUsed, newTotal);
+      await prisma.programProcedureBalance.update({
+        where: { id: existing.id },
+        data: { quotaTotal },
+      });
+    } else {
+      await prisma.programProcedureBalance.create({
+        data: {
+          instanceId,
+          procedureCode: p.procedureCode,
+          quotaTotal: newTotal,
+          quotaUsed: 0,
+        },
+      });
+    }
+  }
+
+  // Codes only in old package: remaining 0 (keep used for history)
+  for (const line of instance.procedureLines) {
+    if (!newCodes.has(line.procedureCode)) {
+      await prisma.programProcedureBalance.update({
+        where: { id: line.id },
+        data: { quotaTotal: Math.max(line.quotaUsed, 0) },
+      });
+      if (opts.reservationId ?? instance.reservationId) {
+        await prisma.procedureOrder.updateMany({
+          where: {
+            reservationId: opts.reservationId ?? instance.reservationId!,
+            procedureCode: line.procedureCode,
+            status: "PROPOSED",
+          },
+          data: {
+            status: "CANCELLED",
+            cancelledAt: new Date(),
+            cancelReason: "package_code_dropped",
+          },
+        });
+      }
+    }
+  }
+
+  await prisma.programInstance.update({
+    where: { id: instanceId },
+    data: {
+      programCode: code,
+      templateId: template.id,
+      ...(opts.endsOn ? { endsOn: opts.endsOn } : {}),
+    },
+  });
+
+  return prisma.programInstance.findUnique({
+    where: { id: instanceId },
+    include: { procedureLines: true },
+  });
 }
 
 export async function scheduleProgramProcedures(

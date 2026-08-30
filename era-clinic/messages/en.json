@@ -673,12 +673,15 @@
     "colStatus": "Status",
     "sexRequired": "Sex is required",
     "walkInSexEmpty": "Select…",
-    "programSelect": "Program",
+    "programSelect": "Program / medical package",
+    "programSelectHint": "PKG-STANDART, PKG-PREMIUM, PKG-DERMO, or PKG-DETOKS",
     "finOrPassportRequired": "FIN or passport is required",
     "proposedPlanTitle": "Proposed plan",
     "proposedEmpty": "No proposed procedures.",
     "confirmSelected": "Confirm selected",
     "confirmAll": "Confirm all",
+    "firstDayConfirmHint": "First day: confirm 2–3 procedures (FIFO prefix).",
+    "day1SoftWarn": "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
     "planConfirmed": "Plan confirmed",
     "statusProposed": "Proposed",
     "bulkCancel": "Bulk cancel",
@@ -714,6 +717,11 @@
     "defaultProcedureGapMinutes": "Default cabin idle for new procedure types (minutes)",
     "defaultAppointmentSlotMinutes": "Default doctor reception slot (minutes)",
     "procedureCheckInMode": "Procedure check-in mode",
+    "programSchedulingMode": "Program scheduling mode",
+    "programSchedulingModeAfterCheckup": "AFTER_CHECKUP (Nafta — after doctor checkup)",
+    "programSchedulingModeOnCheckin": "ON_CHECKIN (place on check-in)",
+    "doctorBonusPercentInHouse": "Doctor bonus % (in-house extras)",
+    "doctorBonusPercentWalkIn": "Doctor bonus % (walk-in extras)",
     "peakModeEnabled": "Peak mode enabled",
     "peakDayEndHour": "Peak day end hour",
     "printBrandTitle": "Print branding",
@@ -1191,6 +1199,8 @@
     "proposedEmpty": "No proposed procedures awaiting confirmation.",
     "confirmSelected": "Confirm selected",
     "confirmAll": "Confirm all",
+    "firstDayConfirmHint": "First day: confirm 2–3 procedures (FIFO prefix).",
+    "day1SoftWarn": "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
     "confirmOk": "Plan confirmed",
     "confirmFailed": "Confirm failed",
     "bodyPart": "Body part",
@@ -1300,10 +1310,19 @@
     "specialty": "Specialty",
     "name": "Name",
     "durationDays": "Duration (days)",
+    "minNights": "Min nights",
+    "maxNights": "Max nights",
+    "proceduresJson": "Procedures JSON (multi — do not wipe lines)",
+    "knotsJson": "Quota knots JSON (nights × procedure × qty)",
     "procedureCode": "Procedure code",
     "procedureName": "Procedure name",
     "quotaTotal": "Quota",
-    "bodyJson": "Body JSON"
+    "bodyJson": "Body JSON",
+    "proceduresMatrix": "Procedures",
+    "knotsMatrix": "Quota knots (nights × qty)",
+    "addProcedure": "Add procedure",
+    "addProcedureFirst": "Add procedures before editing knots",
+    "customNights": "Custom nights"
   },
   "audit": {
     "title": "Audit log",
@@ -1383,17 +1402,29 @@
     "prevPhase": "Previous phase",
     "nextPhase": "Next phase",
     "resetConfirm": "Clear wizard progress?",
-    "resetProgress": "Reset progress",
     "phaseProgress": "Phase {current} of {total}",
-    "prevPhase": "Previous phase",
-    "nextPhase": "Next phase",
     "coaNote": "Ops week: 24–31 Aug 2026 SCHEDULED. Past slots COMPLETED without folio. Archive files after go-live.",
     "phase": {
-      "dictionaries": { "title": "Dictionaries", "hint": "25 procedures, 26 rooms, 40 procedure→room requirements" },
-      "master": { "title": "Staff", "hint": "Practitioners (03)" },
-      "patients": { "title": "Patients", "hint": "In-house patients (04)" },
-      "quotas": { "title": "Quotas and slots", "hint": "05 quotas then 06 ops slots. Do not burn quota twice." },
-      "clinical": { "title": "Lab and diagnoses", "hint": "07–10 catalog, orders, USG text, ICD notes" }
+      "dictionaries": {
+        "title": "Dictionaries",
+        "hint": "25 procedures, 26 rooms, 40 procedure→room requirements"
+      },
+      "master": {
+        "title": "Staff",
+        "hint": "Practitioners (03)"
+      },
+      "patients": {
+        "title": "Patients",
+        "hint": "In-house patients (04)"
+      },
+      "quotas": {
+        "title": "Quotas and slots",
+        "hint": "05 quotas then 06 ops slots. Do not burn quota twice."
+      },
+      "clinical": {
+        "title": "Lab and diagnoses",
+        "hint": "07–10 catalog, orders, USG text, ICD notes"
+      }
     }
   }
 }

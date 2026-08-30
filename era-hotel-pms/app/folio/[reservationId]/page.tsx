@@ -82,6 +82,10 @@ export default function FolioPage() {
     { method: string; amount: string; bankReference: string }[]
   >([{ method: 'CASH', amount: '', bankReference: '' }]);
   const [pricingCurrency, setPricingCurrency] = useState('AZN');
+  const [packageCompose, setPackageCompose] = useState<{
+    total: number;
+    lines: Array<{ role: string; code: string; amount: number; note: string }>;
+  } | null>(null);
   const [applyDeposits, setApplyDeposits] = useState(true);
   const [discountAmount, setDiscountAmount] = useState('');
   const [transferToCl, setTransferToCl] = useState(true);
@@ -158,6 +162,11 @@ export default function FolioPage() {
       .map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase())
       .find((c) => c !== 'AZN');
     setPricingCurrency(foreign ?? rates[0]?.currencyCode?.trim().toUpperCase() ?? 'AZN');
+    const compose = resData?.packageCompose as
+      | { total: number; lines: Array<{ role: string; code: string; amount: number; note: string }> }
+      | null
+      | undefined;
+    setPackageCompose(compose ?? null);
   }, [reservationId, tc]);
 
   useEffect(() => {
@@ -386,6 +395,21 @@ export default function FolioPage() {
             ({t('ratesIn', { currency: pricingCurrency })}{' '}
             <FxEquivalentBadge amount={Math.abs(totalBalance)} currencyCode="AZN" to={pricingCurrency} label="≈" />)
           </span>
+        ) : null}
+        {packageCompose ? (
+          <div className="mt-2 text-[13px]">
+            <div>
+              {t('packageComposeSell', { defaultValue: 'Package nightly sell' })}:{' '}
+              <strong>{packageCompose.total.toFixed(2)} AZN</strong>
+            </div>
+            <ul className="mt-1 list-inside list-disc opacity-90">
+              {packageCompose.lines.map((l, i) => (
+                <li key={`${l.code}-${i}`}>
+                  {l.code}: {l.amount.toFixed(2)} — {l.note}
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : null}
         {Math.abs(totalBalance) < 0.01 ? t('readyCheckout') : t('paymentRequired')}
         {heldDeposits > 0 ? (

@@ -137,7 +137,8 @@
     "reportsReconciliation": "Сверка",
     "reportsOccupancyGrid": "Сетка загрузки",
     "agencyInbox": "Входящие агентств",
-    "foLaundry": "Очередь прачечной гостя"
+    "foLaundry": "Очередь прачечной гостя",
+    "agencyMedicalSku": "Agency→SKU"
   },
   "auth": {
     "signInHint": "Sign in with your hotel account",
@@ -540,7 +541,8 @@
     "earlyCheckoutReason": "Причина возврата",
     "checkoutClConfirmWarn": "Баланс уйдёт на City Ledger / AR. Проверьте gate контракта.",
     "bankReference": "Референс банка / перевода",
-    "bankReferencePlaceholder": "ПП / банковский реф"
+    "bankReferencePlaceholder": "ПП / банковский реф",
+    "packageComposeSell": "Package nightly sell"
   },
   "operations": {
     "title": "Operations",
@@ -923,7 +925,8 @@
     "staysList": "Проживания",
     "addStay": "Добавить проживание",
     "folioMode": "Режим фолио",
-    "availableAfterSave": "Доступно после сохранения брони"
+    "availableAfterSave": "Доступно после сохранения брони",
+    "medicalPackageCode": "Medical package"
   },
   "guestCard": {
     "title": "Карточка гостя",
@@ -2655,5 +2658,14 @@
     "seats": "Места",
     "active": "Активна",
     "retire": "Снять"
+  },
+  "agencyMedicalSku": {
+    "title": "Agency → medical SKU rules",
+    "subtitle": "Agency name prefix → PKG-* (empty table keeps code defaults)",
+    "prefix": "Prefix",
+    "packageCode": "Package",
+    "sortOrder": "Sort",
+    "retire": "Retire",
+    "add": "Add"
   }
 }

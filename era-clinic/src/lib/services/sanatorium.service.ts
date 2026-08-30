@@ -9,6 +9,22 @@ function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
 }
 
+/** Wave E — stable PatientRef code for in-house pax (MDM > paxKey > passport). */
+export function resolveHotelPatientRefCode(input: {
+  reservationId: string;
+  globalPersonId?: string | null;
+  paxKey?: string | null;
+  passportNumber?: string | null;
+}): string {
+  if (input.globalPersonId?.trim()) {
+    return `MDM-${input.globalPersonId.trim().slice(0, 40)}`;
+  }
+  if (input.paxKey?.trim()) {
+    return `HOTEL-${input.reservationId.slice(0, 8)}-${input.paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
+  }
+  return refCodeFromPassport(input.passportNumber?.trim() || input.reservationId);
+}
+
 async function safeInstantiateIntake(episodeId: string) {
   try {
     await instantiateIntakePackage(episodeId);
@@ -56,9 +72,47 @@ export async function openEpisodeFromStay(input: {
   globalPersonId?: string | null;
   programCode?: string | null;
   roomNumber?: string | null;
+  /** Wave E — stable pax key when no MDM (defaults to passport/reservation). */
+  paxKey?: string | null;
 }) {
+  const refCode = resolveHotelPatientRefCode({
+    reservationId: input.reservationId,
+    globalPersonId: input.globalPersonId,
+    paxKey: input.paxKey,
+    passportNumber: input.passportNumber,
+  });
+
+  const patient =
+    (await prisma.patientRef.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        OR: [
+          ...(input.globalPersonId?.trim()
+            ? [{ globalPersonId: input.globalPersonId.trim() }]
+            : []),
+          { refCode },
+        ],
+      },
+    })) ??
+    (await prisma.patientRef.create({
+      data: {
+        organizationId: input.organizationId,
+        refCode,
+        fullName: input.guestName,
+        phone: input.phone ?? null,
+        globalPersonId: input.globalPersonId ?? null,
+      },
+    }));
+
+  await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
+
+  // Wave E: OPEN episode keyed by reservation + patient (not reservation-only)
   const existing = await prisma.clinicalEpisode.findFirst({
-    where: { reservationId: input.reservationId, status: 'OPEN' },
+    where: {
+      reservationId: input.reservationId,
+      patientRefId: patient.id,
+      status: "OPEN",
+    },
   });
   if (existing) {
     if (input.roomNumber && existing.roomNumber !== input.roomNumber) {
@@ -73,40 +127,27 @@ export async function openEpisodeFromStay(input: {
       await safeInstantiateIntake(updated.id);
       return updated;
     }
+    if (input.programCode && !existing.programCode) {
+      await prisma.clinicalEpisode.update({
+        where: { id: existing.id },
+        data: { programCode: input.programCode },
+      });
+    }
     await safeInstantiateIntake(existing.id);
     return existing;
   }
 
-  const refCode = refCodeFromPassport(input.passportNumber);
-  let patient = await prisma.patientRef.findFirst({
-    where: { organizationId: input.organizationId, refCode },
-  });
-  if (!patient) {
-    patient = await prisma.patientRef.create({
-      data: {
-        organizationId: input.organizationId,
-        refCode,
-        fullName: input.guestName,
-        phone: input.phone ?? null,
-        globalPersonId: input.globalPersonId ?? null,
-      },
-    });
-  }
-  if (!patient) throw new Error("Failed to ensure patient ref");
-
-  await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
-
   const created = await prisma.clinicalEpisode.create({
     data: {
+      organizationId: input.organizationId,
       patientRefId: patient.id,
       globalPersonId: input.globalPersonId ?? patient.globalPersonId,
-      hotelStayId: input.hotelStayId ?? null,
+      hotelStayId: input.hotelStayId ?? input.reservationId,
       reservationId: input.reservationId,
       roomNumber: input.roomNumber ?? null,
-      organizationId: input.organizationId,
-      patientOrigin: 'IN_HOUSE',
+      patientOrigin: "IN_HOUSE",
       programCode: input.programCode ?? null,
-      status: 'OPEN',
+      status: "OPEN",
     },
     include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
   });

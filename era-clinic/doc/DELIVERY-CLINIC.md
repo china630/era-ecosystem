@@ -159,14 +159,16 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 - [x] Billing router: `WALK_IN` → finance event; `IN_HOUSE` → hotel `room-charge` MEDICAL
 - [x] Nafta dual-run extra tickets: `/reception/extra-tickets` + hotel Elektraweb outbox at issue (not `COMPLETED`); nurse `TICKET_REQUIRED`. HOT-06 remains HEADLESS.
 - [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
+- [~] Wave A dual-run (CLI-50 SCREEN): episode always opens without hotel `programCode`; staff Select `PKG-STANDART|PREMIUM|DERMO|DETOKS` on `/sanatorium`; `?episode=` opens treatment chart; ADR [nafta-medical-sku-dual-run.md](../../docs/adr/nafta-medical-sku-dual-run.md)
+- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `recalcProgramQuotas` on stay-product/date change (no cancel SCHEDULED); free = remaining quota; `/admin/templates` multi-procedure + knots JSON; ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
 - [x] Plan 2.9: `notifyClinicCheckIn` removed; `ProcessedEvent` idempotency on lifecycle ingress
 - [x] `PRESCRIPTION_ISSUED` / `PROCEDURE_COMPLETED` + retail reserve/write-off endpoints
 
 ### Hotel / retail enablers
 
 - [x] Lifecycle dispatch on check-in/out/relocate; orchestrator-gateway mappers for lifecycle events
-- [x] `programCode` from `ratePlan.code` when `medicalFlag`
-- [x] `SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED` — early program FIFO on medical reservation (not only check-in)
+- [x] `programCode` from resolved medical SKU (notes/agency) — **not** EW `medicalFlag` / Rate Code as SoT (HOT-PKG-02)
+- [x] `SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED` when resolved package present (early path); check-in always opens episode
 - [x] `ProcedureType` / `ProcedureRule` / `PatientContraindication`; FIFO `treatment-planner.service`; `useProcedureQuota` on procedure complete
 - [x] Capacity risk: `GET /api/capacity/summary`, Home executive band 120–125 guest-equiv/week
 - [x] Patient card `/patients/[id]` — body-map contraindications UI

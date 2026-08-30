@@ -765,6 +765,21 @@ model Agency {
   @@index([organizationId])
 }
 
+/** Editable agency-name prefix → medical SKU (pilot polish #20). */
+model AgencyMedicalSkuRule {
+  id               String   @id @default(uuid())
+  organizationId   String
+  agencyNamePrefix String
+  packageCode      String
+  sortOrder        Int      @default(0)
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([organizationId, active])
+  @@index([agencyNamePrefix])
+}
+
 enum ContractPricingRuleType {
   DISCOUNT
   SUPPLEMENT
@@ -1382,6 +1397,10 @@ model Reservation {
   givenRoomTypeId   String?
   givenRoomType     RoomType?       @relation("GivenRoomType", fields: [givenRoomTypeId], references: [id], onDelete: SetNull)
   contractRef       String?
+  /** Resolved Nafta medical SKU (PKG-STANDART|…) when unanimous across pax; null if mix/unresolved. */
+  medicalPackageCode String?
+  /** True when FO notes/agency did not yield a single SKU for check-in programCode. */
+  medicalPackageUnresolved Boolean @default(true)
   stay          Stay?
   attachments   ReservationAttachment[]
   paxGuests     ReservationGuest[]
@@ -1487,6 +1506,8 @@ model ReservationGuest {
   /** Owns a personal GUEST folio (all true in EQUAL; only primary in PRIMARY). */
   ownsFolio     Boolean     @default(false)
   sortOrder     Int         @default(0)
+  /** Nafta commercial medical package (PKG-STANDART|PKG-PREMIUM|PKG-DERMO|PKG-DETOKS). */
+  medicalPackageCode String?
   folio         Folio?
 
   @@index([reservationId])

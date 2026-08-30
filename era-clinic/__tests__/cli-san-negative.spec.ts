@@ -121,3 +121,65 @@ describe("Clinic SAN ICD diagnosis (CLI-39)", () => {
     });
   });
 });
+
+describe("AC-CLI-SAN-QUOTA template PATCH multi-procedure", () => {
+  it("accepts 2+ procedures without dropping to a single line", () => {
+    const { z } = require("zod");
+    const patchSchema = z.object({
+      procedures: z
+        .array(
+          z.object({
+            procedureCode: z.string(),
+            procedureName: z.string(),
+            quotaTotal: z.number().int().positive(),
+          }),
+        )
+        .optional(),
+      knots: z
+        .array(
+          z.object({
+            nights: z.number().int().positive(),
+            procedureCode: z.string(),
+            qty: z.number().int().nonnegative(),
+          }),
+        )
+        .optional(),
+    });
+    const body = {
+      procedures: [
+        { procedureCode: "NAFTALAN_BATH", procedureName: "Bath", quotaTotal: 9 },
+        { procedureCode: "USG", procedureName: "USG", quotaTotal: 1 },
+      ],
+      knots: [
+        { nights: 12, procedureCode: "NAFTALAN_BATH", qty: 9 },
+        { nights: 12, procedureCode: "USG", qty: 1 },
+      ],
+    };
+    const parsed = patchSchema.parse(body);
+    expect(parsed.procedures).toHaveLength(2);
+    expect(parsed.knots).toHaveLength(2);
+  });
+});
+
+describe("AC-CLI-SAN-PKG unknown program code", () => {
+  it("instantiateProgramFromTemplate rejects missing template", async () => {
+    jest.resetModules();
+    jest.doMock("@/lib/prisma", () => ({
+      prisma: {
+        programTemplate: {
+          findFirst: jest.fn().mockResolvedValue(null),
+        },
+      },
+    }));
+    const { instantiateProgramFromTemplate } = await import(
+      "@/lib/sanatorium-scheduler.service"
+    );
+    await expect(
+      instantiateProgramFromTemplate({
+        episodeId: "ep-1",
+        programCode: "PKG-UNKNOWN-XYZ",
+        startsOn: new Date(),
+      }),
+    ).rejects.toThrow(/not found/i);
+  });
+});

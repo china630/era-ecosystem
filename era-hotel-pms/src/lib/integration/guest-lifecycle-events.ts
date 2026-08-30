@@ -28,6 +28,8 @@ export async function dispatchGuestCheckedIn(input: {
   guestName?: string;
   checkInDate?: string;
   checkOutDate?: string;
+  /** Wave E — ReservationGuest.id (or similar) when MDM missing */
+  paxKey?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_GUEST_CHECKED_IN,
@@ -40,6 +42,7 @@ export async function dispatchGuestCheckedIn(input: {
       guestName: input.guestName,
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
+      paxKey: input.paxKey,
     },
   };
   await publishLifecycle(event);

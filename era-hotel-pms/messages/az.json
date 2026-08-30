@@ -137,7 +137,8 @@
     "reportsReconciliation": "Üzləşmə",
     "reportsOccupancyGrid": "Doluluq cədvəli",
     "agencyInbox": "Agentlik gələnləri",
-    "foLaundry": "Qonaq camaşırxanası növbəsi"
+    "foLaundry": "Qonaq camaşırxanası növbəsi",
+    "agencyMedicalSku": "Agency→SKU"
   },
   "auth": {
     "signInHint": "Sign in with your hotel account",
@@ -540,7 +541,8 @@
     "earlyCheckoutReason": "Qaytarma səbəbi",
     "checkoutClConfirmWarn": "Balans City Ledger / AR-a keçəcək. Müqavilə şərtini yoxlayın.",
     "bankReference": "Bank / köçürmə istinadı",
-    "bankReferencePlaceholder": "Ödəniş tapşırığı / bank ref"
+    "bankReferencePlaceholder": "Ödəniş tapşırığı / bank ref",
+    "packageComposeSell": "Package nightly sell"
   },
   "operations": {
     "title": "Operations",
@@ -923,7 +925,8 @@
     "staysList": "Otaq qalmaları",
     "addStay": "Qalma əlavə et",
     "folioMode": "Folio rejimi",
-    "availableAfterSave": "Rezervasiya saxlanılandan sonra əlçatandır"
+    "availableAfterSave": "Rezervasiya saxlanılandan sonra əlçatandır",
+    "medicalPackageCode": "Medical package"
   },
   "guestCard": {
     "title": "Qonaq kartı",
@@ -2655,5 +2658,14 @@
     "seats": "Yer",
     "active": "Aktiv",
     "retire": "İşdən çıxar"
+  },
+  "agencyMedicalSku": {
+    "title": "Agency → medical SKU rules",
+    "subtitle": "Agency name prefix → PKG-* (empty table keeps code defaults)",
+    "prefix": "Prefix",
+    "packageCode": "Package",
+    "sortOrder": "Sort",
+    "retire": "Retire",
+    "add": "Add"
   }
 }

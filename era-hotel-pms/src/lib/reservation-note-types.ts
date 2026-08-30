@@ -18,3 +18,7 @@ export const RESERVATION_NOTE_TYPES = [
 ] as const;
 
 export type ReservationNoteTypeCode = (typeof RESERVATION_NOTE_TYPES)[number];
+
+export function isReservationNoteType(code: string): code is ReservationNoteTypeCode {
+  return (RESERVATION_NOTE_TYPES as readonly string[]).includes(code);
+}

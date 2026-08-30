@@ -130,6 +130,7 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
 | Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
 | Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
+| Notes dump / FO-with-Notes | `reservation-notes` | `ReservationNote` | `(reservationId, noteType)` | Extra Req / Res / CIn / Price → medical SKU resolve (HOT-PKG-02). See [ERA-PKG-FO-CHEATSHEET.md](./nafta/ERA-PKG-FO-CHEATSHEET.md) |
 | Folios.xlsx | `folios` | `FolioCharge` | `externalRef` | Elektraweb folio/charge id |
 | Chart of Accounts | — | — | — | **Excluded** — finance-core |
 

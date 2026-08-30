@@ -9,6 +9,8 @@ export const PRICING_COMPONENT_CODES = {
   MEAL_DINNER: 'MEAL_DINNER',
   FOOD_COGS_DAY: 'FOOD_COGS_DAY',
   MEDICAL_COGS: 'MEDICAL_COGS',
+  /** Wave D — Standart companion add-on when mixed packages (not half of 239). */
+  STANDART_COMPANION: 'STANDART_COMPANION',
 } as const;
 
 type SeedDef = {
@@ -75,6 +77,15 @@ const DEFAULTS: SeedDef[] = [
     sortOrder: 60,
     sellAmount: null,
     cogsAmount: 20,
+  },
+  {
+    code: PRICING_COMPONENT_CODES.STANDART_COMPANION,
+    name: 'Standart companion (mixed package sell)',
+    kind: 'OTHER',
+    unit: 'PER_PERSON_NIGHT',
+    sortOrder: 70,
+    sellAmount: 96,
+    cogsAmount: null,
   },
 ];
 

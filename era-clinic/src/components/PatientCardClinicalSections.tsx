@@ -328,8 +328,18 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       setConfirmMsg(t("confirmFailed", { defaultValue: "Confirm failed" }));
       return;
     }
+    const data = (await res.json().catch(() => ({}))) as {
+      softWarn?: string;
+    };
     setSelectedProposed(new Set());
-    setConfirmMsg(t("confirmOk", { defaultValue: "Plan confirmed" }));
+    setConfirmMsg(
+      data.softWarn
+        ? t("day1SoftWarn", {
+            defaultValue:
+              "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
+          })
+        : t("confirmOk", { defaultValue: "Plan confirmed" }),
+    );
     await loadSummary();
     if (planOpen) await loadPlan(true);
   }
@@ -664,23 +674,20 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             {t("proposedPlanTitle", { defaultValue: "Proposed plan" })}
           </h2>
           {allProposedIds.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                className={PRIMARY_BUTTON_CLASS}
                 disabled={confirmBusy || selectedProposed.size === 0}
                 onClick={() => void confirmOrders([...selectedProposed])}
               >
                 {t("confirmSelected", { defaultValue: "Confirm selected" })}
               </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={confirmBusy}
-                onClick={() => void confirmOrders(allProposedIds)}
-              >
-                {t("confirmAll", { defaultValue: "Confirm all" })}
-              </button>
+              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {t("firstDayConfirmHint", {
+                  defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
+                })}
+              </p>
             </div>
           ) : null}
         </div>
@@ -887,23 +894,20 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             .filter((id): id is string => Boolean(id));
           if (modalProposed.length === 0) return null;
           return (
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                className={PRIMARY_BUTTON_CLASS}
                 disabled={confirmBusy || selectedProposed.size === 0}
                 onClick={() => void confirmOrders([...selectedProposed])}
               >
                 {t("confirmSelected", { defaultValue: "Confirm selected" })}
               </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={confirmBusy}
-                onClick={() => void confirmOrders(modalProposed)}
-              >
-                {t("confirmAll", { defaultValue: "Confirm all" })}
-              </button>
+              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {t("firstDayConfirmHint", {
+                  defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
+                })}
+              </p>
             </div>
           );
         })()}

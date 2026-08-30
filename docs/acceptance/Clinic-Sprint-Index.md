@@ -30,5 +30,10 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-8 | Physio S catalog (CLI-49) | [~] | W4 + Nafta card wave: Solyuks/`belinə`/`NAFTALAN_FILL`/empty-catalog; always rematch `#23`; UAT-SMOKE CLI-49 open |
 | S-9 | Nafta card wave — intake + Baku slots (CLI-25/32/34/48) | [~] | `PKG-NAFTA-INTAKE` checklist/print/live instantiate; `#23` `parseBakuDateTime`; now/PLAN `gte now`; ops: seed catalogs → re-Apply `#23` (+ `#31` if USG) |
 | S-10 | Catalog seed layers base + Nafta overlay | [~] | ADR clinic-catalog-base-and-org-overlay-seeds; `db:seed:physio` / `db:seed:diagnostic-catalog` = base then org overlay |
+| S-11 | Nafta medical SKU dual-run assign (Wave A) | [~] | CLI-50 SCREEN; AC-CLI-SAN-PKG 🟡; `/sanatorium` Select 4 SKUs + `?episode=`; **pilot punch open** |
+| S-12 | Nafta PDF quota knots (Wave B) | [~] | CLI-51 API; AC-CLI-SAN-QUOTA 🟡; knots **matrix** UI; UAT open |
+| S-13 | Nafta doctor first-day confirm (Wave C) | [~] | CLI-52 SCREEN; AC-CLI-SAN-DAY1 🟡; no Confirm all; AFTER_CHECKUP settings |
+| S-14 | Nafta doctor bonus extras (Wave D) | [~] | CLI-53 SCREEN; AC-CLI-BONUS 🟡; bonusEligible; % stay 0 until FO |
+| S-15 | Nafta one stay two episodes (Wave E) | [~] | CLI-54 SCREEN; AC-CLI-SAN-PAX 🟡; openEpisode per patient; **pilot punch open** |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
