@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { Prisma, type ProcedureSiteLaterality } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -21,13 +19,13 @@ import {
 } from "./nahiye-match-values";
 import { deriveCoarseBodyPart, resolveSiteApplyMode, uniqueOrderedIds } from "./physio-order-sites";
 import { parseAliasList, PhysioCatalogError } from "./physio-catalog";
+import { loadMergedPhysioZonesCatalog } from "./physio-catalog-layers";
 
 let catalogCache: NahiyeMatchCatalog | null = null;
 
 export function loadNahiyeCatalogJson(): NahiyeMatchCatalog {
   if (catalogCache) return catalogCache;
-  const p = join(process.cwd(), "prisma", "seed-data", "nafta", "physio-zones-s.json");
-  catalogCache = JSON.parse(readFileSync(p, "utf8")) as NahiyeMatchCatalog;
+  catalogCache = loadMergedPhysioZonesCatalog(process.cwd());
   return catalogCache;
 }
 

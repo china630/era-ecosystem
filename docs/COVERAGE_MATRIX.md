@@ -528,6 +528,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-08-28 | SaaS Wave 12: honesty closeout — status drift fix + `check:acceptance` SaaS bans; TENANT/TOPO 🟡; HOT-06 HEADLESS; no `ga`. |
 | 2026-08-23 | Hotel guest tours HOT-TOUR-01 SHIPPED: `/tours` roster + TOUR folio + `/fleet` + print; SKU hotel_transfers; AC-HOT-TOUR Scaffold ✅; UI SCREEN (not SHOW) |
 | 2026-08-30 | Nafta card wave (3): (1) CLI-32/34 intake checklist `PKG-NAFTA-INTAKE` + live instantiate; (2) CLI-49 Solyuks/`belinə`/`NAFTALAN_FILL`/empty-catalog UX + always rematch on `#23`; (3) CLI-25/48 Baku `parseBakuDateTime` + now/PLAN `gte now`. Ops: seed catalogs then re-Apply `#23` (+ `#31` if USG). Not Pilot-ready / not GA. |
+| 2026-08-30 | Clinic catalog seed layers: satellite **base** + Nafta **org overlay** (ADR clinic-catalog-base-and-org-overlay-seeds). Wrappers `db:seed:physio` / `db:seed:diagnostic-catalog` run both. |
 | 2026-08-19 | HOT-RPT-01/02 Hotel Management Reports W1–W3 (P0 ZIP + P1 catalog + cubes/3-year + email ZIP link HEADLESS); STUB → API — not SHIPPED (no UAT evidence) |
 | 2026-08-20 | HOT-AGP-01/02/03 Agency portal P0–P1 (CP grants + hotel book + FO inbox + passport scan); Status=API; AC-HOT-AGP 🟡; SKU `hotel_agency_portal` |
 | 2026-08-17 | CLI-38 staff kind + monthly nurse/lab duty roster (`/sanatorium/nurse-roster`); clinic-local absences; planner honors approved posting |

@@ -89,7 +89,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/audit` | `/api/audit` |
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |
 | `/admin/lookups` | `/api/admin/lookups` BODY_PART |
-| `/admin/physio-sites` | CLI-49 — `GET/POST /api/admin/physio-sites`, `GET/PATCH/DELETE …/[id]` (DELETE = retire); lists `GET/POST /api/admin/physio-lists`; unmatched `GET /api/admin/physio-nahiye-queue`, `PATCH …/[id]` (`ignore` \| `alias` existing S only); ops `GET /api/physio-catalog`. W4: `#23` slots `nahiye` → `note` + matcher. Seed `npx tsx prisma/seed-physio-catalog.ts` |
+| `/admin/physio-sites` | CLI-49 — `GET/POST /api/admin/physio-sites`, `GET/PATCH/DELETE …/[id]` (DELETE = retire); lists `GET/POST /api/admin/physio-lists`; unmatched `GET /api/admin/physio-nahiye-queue`, `PATCH …/[id]` (`ignore` \| `alias` existing S only); ops `GET /api/physio-catalog`. W4: `#23` slots `nahiye` → `note` + matcher. Seed `npm run db:seed:physio` (= base + Nafta overlay). ADR clinic-catalog-base-and-org-overlay-seeds |
 
 ## Integration
 

@@ -1,11 +1,9 @@
 {
-  "id": "physio-list-items-merged",
-  "layer": "merged",
+  "id": "physio-list-items-base",
+  "layer": "base",
   "notProductSoR": true,
   "notes": [
-    "Starter DEVICE_PROGRAM and SUBSTANCE rows for SatAdmin. WO tail is open-ended — add via CRUD, do not hardcode Select options.",
-    "Generic tokens (rej, proqrami, pr ile, bare b) stay matcher strippers, not catalog codes.",
-    "VARIANT_B is the unnamed device-program variant (b) / brej — not Amplipuls work-kind."
+    "Satellite base DEVICE_PROGRAM / SUBSTANCE codes. Aliases live in Nafta overlay."
   ],
   "items": [
     {
@@ -15,22 +13,7 @@
       "titleRu": "ЧЭНС (TENS)",
       "titleEn": "TENS",
       "sortOrder": 10,
-      "aliases": [
-        "tens proqrami ile",
-        "tens proqrami ilə",
-        "tens proqrami",
-        "tens proq",
-        "tens üsulu ilə",
-        "tens usulu ile",
-        "tens üsulu",
-        "tenslə",
-        "tens le",
-        "tens rej",
-        "tenis rej",
-        "tens proqtami ile",
-        "tens",
-        "tenis"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -39,34 +22,7 @@
       "titleRu": "Программа артроз",
       "titleEn": "Arthrosis program",
       "sortOrder": 20,
-      "aliases": [
-        "artroz rej b",
-        "artroz reh",
-        "artroz rej",
-        "artroz proqrtami ile",
-        "artroz proqrtamı ilə",
-        "artroz pr ilə",
-        "artroz proqrami ilə(b)",
-        "artroz proqrami ile b",
-        "artroz b rej",
-        "artroz re",
-        "artrooz rej",
-        "artroz proqrami",
-        "artroz pr ilə(b)",
-        "artroz pr ile b",
-        "artrroz pr ilə",
-        "artrroz pr ile",
-        "astroz rej",
-        "qartroz",
-        "artroz",
-        "art pr ilə",
-        "art pr ilə(b)",
-        "art pr ile b",
-        "art rejimilə",
-        "art rejimile",
-        "artr pr",
-        "art"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -75,29 +31,7 @@
       "titleRu": "Программа артрит",
       "titleEn": "Arthritis program",
       "sortOrder": 30,
-      "aliases": [
-        "artrit pr ilə",
-        "artrit proqramile",
-        "artrit proqrami ilə",
-        "artrit proqrami ile",
-        "artrit proqrami ile b",
-        "artrit proqrami ilə(b)",
-        "artrit proqrqmi",
-        "artrit proq",
-        "artrit proqramiyla",
-        "artrit proqramıyla",
-        "artrit pr ile b",
-        "artrit pr ilə b",
-        "artrit pr ilə(b)",
-        "artrit rejimile",
-        "artrit rejimilə",
-        "artrit rej",
-        "artrir b rej",
-        "ortrit pr",
-        "rematidniy artrir b rej",
-        "rematidniy artrit b rej",
-        "artrit"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -106,14 +40,7 @@
       "titleRu": "Программа рубец",
       "titleEn": "Scar program",
       "sortOrder": 40,
-      "aliases": [
-        "capiq rej",
-        "capiq rejim",
-        "çapıq rejim",
-        "çapıq rej",
-        "kelloid capiq pr",
-        "capiq"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -122,21 +49,7 @@
       "titleRu": "Программа экзема",
       "titleEn": "Eczema program",
       "sortOrder": 50,
-      "aliases": [
-        "ekzem proqramiyla",
-        "ekzem proqramı ilə",
-        "ekzem pr ilə",
-        "eqzem pr ile",
-        "eqzema rej",
-        "ekzema proqrami",
-        "ekzem proqrami",
-        "ekz rej",
-        "ekzo rej",
-        "ekz pr ile",
-        "ekz pr",
-        "ekzema pr ile",
-        "ekzem"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -145,17 +58,7 @@
       "titleRu": "Программа дерматит",
       "titleEn": "Dermatitis program",
       "sortOrder": 60,
-      "aliases": [
-        "dermatit",
-        "dermatit pr ile",
-        "dermatit proqrami ilə",
-        "dermatit proqrami",
-        "dermatit pr il",
-        "dermo pr ilə",
-        "dermo pr ile",
-        "dermo rej",
-        "dermo"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -164,12 +67,7 @@
       "titleRu": "Программа подагра",
       "titleEn": "Gout program",
       "sortOrder": 70,
-      "aliases": [
-        "padaqra rej",
-        "padaqra re",
-        "podaqra",
-        "padaqra"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -178,11 +76,7 @@
       "titleRu": "Неврологическая программа",
       "titleEn": "Neurological program",
       "sortOrder": 80,
-      "aliases": [
-        "nevraloji rej",
-        "nevroloji rej",
-        "raloji rej"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -191,12 +85,7 @@
       "titleRu": "Русский ток (Kotz)",
       "titleEn": "Russian current (Kotz)",
       "sortOrder": 90,
-      "aliases": [
-        "rus akimi ilə",
-        "rus akimi ile",
-        "rus akimi",
-        "rus akiimi"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -205,11 +94,7 @@
       "titleRu": "Интерференц",
       "titleEn": "Interferential",
       "sortOrder": 100,
-      "aliases": [
-        "enterferensial proqramo",
-        "enterferensial proqrami",
-        "enterferensial"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -218,10 +103,7 @@
       "titleRu": "Программа розацеа",
       "titleEn": "Rosacea program",
       "sortOrder": 110,
-      "aliases": [
-        "rozesea proqrami",
-        "rozasea proqrami"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -230,13 +112,7 @@
       "titleRu": "Программа отёк",
       "titleEn": "Edema program",
       "sortOrder": 120,
-      "aliases": [
-        "odem usulu",
-        "ödem üsulu",
-        "odem pr ile",
-        "ödem pr ilə",
-        "odem pr"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -245,10 +121,7 @@
       "titleRu": "Миоспазм",
       "titleEn": "Myospasm",
       "sortOrder": 130,
-      "aliases": [
-        "miospazm rejimiylə",
-        "miospazm rej"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -257,9 +130,7 @@
       "titleRu": "Программа боль",
       "titleEn": "Pain program",
       "sortOrder": 140,
-      "aliases": [
-        "agri rejimi"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -268,9 +139,7 @@
       "titleRu": "Люмбалгия",
       "titleEn": "Lumbalgia",
       "sortOrder": 150,
-      "aliases": [
-        "lumbalgiya"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -279,9 +148,7 @@
       "titleRu": "Спортивная программа",
       "titleEn": "Sport program",
       "sortOrder": 160,
-      "aliases": [
-        "spor rej"
-      ]
+      "aliases": []
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -290,11 +157,7 @@
       "titleRu": "Вариант программы B",
       "titleEn": "Device program variant B",
       "sortOrder": 170,
-      "aliases": [
-        "rej brej",
-        "b rej",
-        "brej"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -303,16 +166,7 @@
       "titleRu": "Травы / растения",
       "titleEn": "Herbal / plants",
       "sortOrder": 10,
-      "aliases": [
-        "bitkilərlə",
-        "otlar",
-        "bitkilerle",
-        "bitkiler",
-        "bitkilrlə",
-        "bitkilrle",
-        "coban yastigi",
-        "çoban yastığı"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -321,14 +175,7 @@
       "titleRu": "Никотиновая кислота",
       "titleEn": "Nicotinic acid",
       "sortOrder": 20,
-      "aliases": [
-        "nikatinle",
-        "nikotinlə",
-        "nikarinle",
-        "nikatin",
-        "nikatin kislata ile",
-        "nikatin kislata"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -337,14 +184,7 @@
       "titleRu": "Йодид калия",
       "titleEn": "Potassium iodide",
       "sortOrder": 30,
-      "aliases": [
-        "kali yodla",
-        "kaliyod",
-        "kyodla",
-        "ky-la",
-        "ky la",
-        "ky"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -353,16 +193,7 @@
       "titleRu": "Кальций",
       "titleEn": "Calcium",
       "sortOrder": 40,
-      "aliases": [
-        "kalsiilə",
-        "kalsiiləe",
-        "kalsi ilə",
-        "kalsilə",
-        "kalsiile",
-        "kalsi",
-        "calsi",
-        "x kalsi"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -371,18 +202,7 @@
       "titleRu": "Новокаин",
       "titleEn": "Novocaine",
       "sortOrder": 50,
-      "aliases": [
-        "novakainlə",
-        "novokoinle",
-        "novakoinle",
-        "navakainle",
-        "navakain",
-        "navakayinla",
-        "navakayin",
-        "novakayinlə",
-        "novokain ilə",
-        "novakainləə"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -391,21 +211,7 @@
       "titleRu": "Карипазим",
       "titleEn": "Karipazim",
       "sortOrder": 60,
-      "aliases": [
-        "karipazimlə",
-        "karipazimle",
-        "karipazinle",
-        "karpazinlə",
-        "karipazin",
-        "karirazim",
-        "karirazimlə",
-        "karirazimle",
-        "karipazim",
-        "karpazimle",
-        "karipazlmle",
-        "karpazim",
-        "kariipazimlə"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -414,10 +220,7 @@
       "titleRu": "Нафталан",
       "titleEn": "Naftalan",
       "sortOrder": 70,
-      "aliases": [
-        "naft",
-        "nftal"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -426,13 +229,7 @@
       "titleRu": "Димексид",
       "titleEn": "Dimexide",
       "sortOrder": 80,
-      "aliases": [
-        "dimeksid ile",
-        "dimeksid ilə",
-        "dimeksidiki",
-        "dimeksid",
-        "dimeksid iile"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -441,13 +238,7 @@
       "titleRu": "Гидрокортизон",
       "titleEn": "Hydrocortisone",
       "sortOrder": 90,
-      "aliases": [
-        "hidrokortizonla",
-        "hidrokartizonla",
-        "qidrokartizonla",
-        "qidrokartizonle",
-        "gidrokartizonla"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -456,17 +247,7 @@
       "titleRu": "Магний",
       "titleEn": "Magnesium",
       "sortOrder": 100,
-      "aliases": [
-        "mg ile",
-        "maqniy ilə",
-        "maqni sulfatla",
-        "maqnezi sulfatla",
-        "maqnezi ilə",
-        "maqneziile",
-        "jmaqnezi sulfatla",
-        "mg-le",
-        "mg le"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -475,9 +256,7 @@
       "titleRu": "Эуфиллин",
       "titleEn": "Eufillin",
       "sortOrder": 110,
-      "aliases": [
-        "eufillin"
-      ]
+      "aliases": []
     },
     {
       "listKind": "SUBSTANCE",
@@ -486,18 +265,7 @@
       "titleRu": "Своя мазь",
       "titleEn": "Own ointment",
       "sortOrder": 120,
-      "aliases": [
-        "oz mazi ile",
-        "oz mazi",
-        "öz dərmani ilə",
-        "oz dermani ile",
-        "oz mazil ile",
-        "öz mazı ilə",
-        "ozunun mazi ile",
-        "özünün mazı ilə",
-        "mazi ile",
-        "maz ilə"
-      ]
+      "aliases": []
     }
   ]
 }

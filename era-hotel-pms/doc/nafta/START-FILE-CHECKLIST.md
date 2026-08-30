@@ -42,7 +42,7 @@ D:\ERA-BACKUP\
 | 09 | [x] | `hotel/09-Stock-Cards.xlsx` — EW Ürün Tanımları **2026-08-21** | Hotel wizard STOCK | — |
 | 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723 EW + 407 FO-only `wo:fo:*`) | Hotel wizard `guests` + MDM | FO passports applied; dump `hotel/dump/guest-cards.json` |
 | 11 | [x] | `hotel/11-Reservations.merged.xlsx` (6 117) | Hotel wizard, 2026+ / InHouse / future | — |
-| 12 | [x] | `hotel/12-Folio-Transactions.merged.xlsx` (95 793) | Hotel wizard, **открытые** фолио на hour X | — |
+| 12 | [x] | `hotel/12-Folio-Transactions.hotel.xlsx` (wizard) · archive `12-Folio-Transactions.merged.xlsx` (95 793) | Hotel wizard `folios`. Только брони из `#11`; без `TIBB AMBULATOR` / `999 FB` / CASH/DEBITOR. | — |
 | 13 | [x] | `hotel/13-Package-Prices-2026.csv` | Hotel rate plans + Clinic `ProgramTemplate` | — |
 | 14 | [x] | `hotel/14-BAR-Derived-2026.csv` (+ `.md`) | Hotel BAR (учётная лестница) | — |
 | 15 | [x] | `hotel/15-Hizmet-Tanimlari.xlsx` — EW **2026-08-21** (Hizmet Tanımları; не путать с WO #25) | Hotel `SPA MEDIKAL` extra; сверка имён с #25 | — |

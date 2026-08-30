@@ -9,12 +9,14 @@
 const fs = require("fs");
 const path = require("path");
 const { norm, fold, buildMatcher, bucketOf } = require("./nahiye-s-match.cjs");
+const { loadMergedPhysioZonesCatalog } = require("../../src/domain/physio/physio-catalog-layers.cjs");
 
 const CARDS = "D:/ERA-BACKUP/NAFTA-START/clinic/dump/cards";
 const OUT = "D:/ERA-BACKUP/NAFTA-START/clinic/reports";
-const CAT = path.join(__dirname, "../../prisma/seed-data/nafta/physio-zones-s.json");
+const CAT_DOC = "physio-zones base + nafta overlay (merged)";
 const CSV_IN = path.join(OUT, "nahiye-freq-normalized.csv");
 const DOC = path.join(__dirname, "../../doc/physio-zone-s-coverage.md");
+const cat = loadMergedPhysioZonesCatalog(path.join(__dirname, "../.."));
 
 function parseCsv(text) {
   const rows = [];
@@ -223,7 +225,6 @@ function scanCards() {
 }
 
 function main() {
-  const cat = JSON.parse(fs.readFileSync(CAT, "utf8"));
   const { match } = buildMatcher(cat);
 
   const csvRows = parseCsv(fs.readFileSync(CSV_IN, "utf8"));
@@ -331,7 +332,7 @@ function main() {
   md.push("# WO nahiye → S coverage");
   md.push("");
   md.push("**Canon:** [physio-site-canon.md](./physio-site-canon.md) §6 unmatched.");
-  md.push("Matcher adapter: `scripts/nafta-cutover/nahiye-s-match.cjs` (driven by `physio-zones-s.json`). Report: `nahiye-s-coverage.cjs`.");
+  md.push(`Matcher adapter: \`scripts/nafta-cutover/nahiye-s-match.cjs\` (driven by ${CAT_DOC}). Report: \`nahiye-s-coverage.cjs\`.`);
   md.push("");
   md.push("Unmatched is **in scope**. Excel (A→Z): `D:/ERA-BACKUP/NAFTA-START/clinic/reports/nahiye-s-unknown.xlsx`, `nahiye-s-partial.xlsx`, `nahiye-s-empty.xlsx` (Needs site vs N/A). Re-export: `scripts/nafta-cutover/export-nahiye-s-xlsx.cjs`.");
   md.push("");

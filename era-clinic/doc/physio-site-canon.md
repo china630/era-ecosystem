@@ -21,7 +21,9 @@ UI: `CatalogField` SEARCHABLE / MULTI chips. Locale title + Latin on the chip. S
 
 | Artifact | Role |
 |----------|------|
-| `prisma/seed-data/nafta/physio-zones-s.json` | One-shot seed + matcher input. Not product SoR after load |
+| `prisma/seed-data/base/physio-zones-s.json` | Satellite base: 31 S codes (no WO aliases) |
+| `prisma/seed-data/nafta/physio-zones-overlay.json` | Nafta org overlay: WO aliases + matcher extras |
+| Merged via `physio-catalog-layers` | Matcher / coverage input. Not product SoR after DB load |
 | Clinic DB lookup + alias rows | Runtime SoR (SatAdmin can add synonyms, not invent anatomy) |
 | Raw WO `nahiye` on imported orders | Audit shadow — never discarded |
 

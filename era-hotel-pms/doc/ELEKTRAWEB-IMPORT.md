@@ -384,7 +384,7 @@ node era-hotel-pms/scripts/merge-ew-cutover.js --dir "D:/ERA-BACKUP/NAFTA-START/
 
 When the last chunk has **< ~850 rows**, the export is likely complete for that filter. Chunks with **900–1000 rows** usually need another date slice.
 
-**Hotel vs FnB split (`--ew`):** house-ledger `999 FB` / `FB999` and walk-in restaurant cash (`CASH FOLIO` + F&B dept / `RESTORAN*` without `Res Id`) go to **`FnB Transactions.merged.xlsx`** (archive for future `era-fnb-pos` import — not hotel wizard). F&B **room charges on a real guest/`Res Id`** stay in **`Folio Transactions.merged.xlsx`** for hotel-pms `folios` import. Do not upload `Folios.xlsx` / `ProFolio Transactions.xlsx` as substitutes for Folio Transactions.
+**Hotel vs FnB split (`--ew`):** house-ledger `999 FB` / `FB999` and walk-in restaurant cash (`CASH FOLIO` + F&B dept / `RESTORAN*` without `Res Id`) go to **`FnB Transactions.merged.xlsx`** (archive for future `era-fnb-pos` import — not hotel wizard). F&B **room charges on a real guest/`Res Id`** stay in **`Folio Transactions.merged.xlsx`**. Wizard book for Nafta: `12-Folio-Transactions.hotel.xlsx` (`filter-hotel-folio-only.cjs`) — only `#11` `Res Id`, no Tibb Ambulator / CASH / DEBITOR house ledgers. Do not upload `Folios.xlsx` / `ProFolio Transactions.xlsx` as substitutes for Folio Transactions.
 
 ### 15.2 Report types (do not confuse)
 

@@ -29,5 +29,6 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-7 | Procedure TTK → Finance stock (CLI-47) | [~] | ADR clinic-procedure-consumable-ttk; W1 BOM+event API; Finance write-off W2 |
 | S-8 | Physio S catalog (CLI-49) | [~] | W4 + Nafta card wave: Solyuks/`belinə`/`NAFTALAN_FILL`/empty-catalog; always rematch `#23`; UAT-SMOKE CLI-49 open |
 | S-9 | Nafta card wave — intake + Baku slots (CLI-25/32/34/48) | [~] | `PKG-NAFTA-INTAKE` checklist/print/live instantiate; `#23` `parseBakuDateTime`; now/PLAN `gte now`; ops: seed catalogs → re-Apply `#23` (+ `#31` if USG) |
+| S-10 | Catalog seed layers base + Nafta overlay | [~] | ADR clinic-catalog-base-and-org-overlay-seeds; `db:seed:physio` / `db:seed:diagnostic-catalog` = base then org overlay |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

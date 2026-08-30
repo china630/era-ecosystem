@@ -1,6 +1,6 @@
 {
-  "id": "physio-zones-s-v0",
-  "status": "draft-for-review",
+  "id": "physio-zones-s-merged",
+  "layer": "merged",
   "notProductSoR": true,
   "sources": [
     {
@@ -22,19 +22,10 @@
     }
   ],
   "notes": [
-    "S is doctor-facing. A (FMA/TA) is a pre-bound underlay — not picked on the visit.",
-    "Prikaz 817 items 15 and 18 (segmental massage) are the same sites as 14 and 17 — method, not extra S codes.",
-    "fmaId is a lookup hint, not a licensed SNOMED identifier. Confirm against FMA/BioPortal before seed.",
-    "Canon era-clinic/doc/physio-site-canon.md wins if this file disagrees.",
-    "4 lü = electrode count, not Amplipuls work-kind IV (that is 4 cu rej).",
-    "Sock/glove strings alias foot/hand S. APPLICATION_CUT is legacy; matcher still maps those phrases to S.",
-    "böyrəküstü / böyrək üstü = lumbosacral (above the kidneys), not a new S.",
-    "sadə on inhalation = no additive, not a site. rus akimi = Kotz, not SMT I–V.",
-    "dizdən aşağı / asagi eyaqlar = below the knee → ZONE-FOOT-LEG, not the whole lower limb.",
-    "baldır = crus (ZONE-FOOT-LEG). bud = thigh / hip-gluteal. Not the same S.",
-    "artroz pr / artrit rej = stim program, not PRP (SVC-PRP-TERAPIYA is a different SKU).",
-    "BTL 4000: any electro procedures in parallel on the two split-room outputs. 4-pad capability only 12/13; those couches also serve 2-pad. FIFO, no hold.",
-    "Resource occupancy is planning-only in naftaResourceSketch — not runtime schema."
+    "Satellite base: CIS spa S codes (817 / Shcherbak / hydro). No WO aliases.",
+    "Nafta WO aliases + matcher extras: prisma/seed-data/nafta/physio-zones-overlay.json",
+    "Canon: era-clinic/doc/physio-site-canon.md",
+    "Merged base + nafta overlay (generated). Prefer loading via merge helper."
   ],
   "orderFieldsNotZones": [
     {
