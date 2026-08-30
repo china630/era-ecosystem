@@ -1495,6 +1495,7 @@ const programTemplatesAdapter: ImportAdapter<{
         },
       });
     }
+    if (!template) throw new Error(`Could not resolve program template ${row.templateCode}`);
     const line = await tx.programTemplateProcedure.findFirst({
       where: { templateId: template.id, procedureCode: row.procedureCode },
     });
