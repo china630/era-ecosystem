@@ -56,7 +56,7 @@ Worst **in-scope** class (NONE < PARTIAL < SCREEN < SHIPPED < SHOW). HEADLESS / 
 | Bank | ✅ lab | ✅ | **SHOW** | — | BANK-REF-01 **HEADLESS** (file/env snapshot); rails VENDOR; ≠ full ABS |
 | Bank DBO | ✅ lab | ✅ | **SHOW** | — | `/open-api` **SCREEN** (keys UI); AC-DBO-OPEN still Scaffold 🟡; ASAN VENDOR |
 | Platform | 🟡 | 🟡 | **SCREEN** | — | Placement `/super-admin/orgs/{id}/placement` **SCREEN**; AC-CP-TOPO still Scaffold 🟡 |
-| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (UAT open → not SHOW); CLI-49 physio **SCREEN** (S admin + chips + empty-catalog + rematch; UAT open); CLI-25/32/34 intake checklist + checkup print **SCREEN** (UAT open); CLI-25/48 Baku slots **SCREEN**; CLI-50 Nafta package Select + `?episode=` **SCREEN** (NONE→SCREEN Wave A); CLI-51 program quota knots `/admin/templates` **SCREEN** (Wave B); CLI-52 first-day confirm **SCREEN** (Wave C; no Confirm all); CLI-53 doctor bonus extras **SCREEN** (Wave D); CLI-54 multi-episode sanatorium list **SCREEN** (Wave E); extra tickets `/reception/extra-tickets` **SHOW** (HOT-06 extension HEADLESS) | Fiscal / HL7 VENDOR; Demo 🟡 |
+| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (UAT open → not SHOW); CLI-49 physio **SCREEN** (S admin + chips + empty-catalog + rematch; UAT open); CLI-25/32/34 intake checklist + checkup print **SCREEN** (UAT open); CLI-25/48 Baku slots **SCREEN**; CLI-50 Nafta package Select + `?episode=` **SCREEN** (NONE→SCREEN Wave A); CLI-51 program quota knots `/admin/templates` **SCREEN** (Wave B); CLI-52 first-day confirm **SCREEN** (Wave C; no Confirm all); CLI-53 doctor bonus extras **SCREEN** (Wave D); CLI-54 multi-episode sanatorium list **SCREEN** (Wave E); CLI-55 episode-as-course card switcher + walk-in close **SCREEN** (UAT open → not SHOW); extra tickets `/reception/extra-tickets` **SHOW** (HOT-06 extension HEADLESS) | Fiscal / HL7 VENDOR; Demo 🟡 |
 | Finance | 🟡 | ❌ | **SCREEN** | — (ERP paths exist) | tax/stat/contracts/EQF = SCREEN; worker HEADLESS; e-qaimé VENDOR |
 | F&B | 🟡 | 🟡 | **SCREEN** | — | Person card N/A (staff via HR); admin menu/tables/settings/daily-menu Done; KKM VENDOR |
 | Retail | 🟡 | 🟡 | **SCREEN** | — | No customer `globalPersonId` SoR; admin replenishment + supplier-match/settings/stock-check done; fiscal VENDOR |
@@ -102,6 +102,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CLI-52 | Clinic | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP; 4th same-day paid | Y exam-prefix + daily-cap + POST guard | `/sanatorium` + card + `/admin/settings` | **SCREEN** | UAT CLI-52 open; AC-CLI-SAN-DAY1 🟡 | Wave C; FIFO unchanged |
 | CLI-53 | Clinic | Doctor bonus extras-only + origin buckets | Y `bonusEligible` + % settings | `/reports/procedures` doctor-bonus | **SCREEN** | UAT CLI-53 open; AC-CLI-BONUS 🟡 | Wave D |
 | CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E |
+| CLI-55 | Clinic | Episode as care course (switcher, children, walk-in close) | Y | Y | **SCREEN** | Card CatalogField + Close + cron; UAT open → not SHOW | not CLI-54 list rows alone |
 | HOT-PKG-02 | Hotel | Medical SKU resolve + notes | Y resolve + notes import | import wizard / notes tab | **SCREEN** | UAT §38 open; AC-HOT-PKG-NAFTA 🟡 | Wave A |
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |
 | HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey` | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
@@ -134,6 +135,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | Clinic CLI-55 episode-as-course **SCREEN** (W1–W5); UAT open → not SHOW. |
 | 2026-08-30 | Clinic Nafta card wave SCREEN: intake checklist (`PKG-NAFTA-INTAKE`), physio empty-catalog/Solyuks, Baku `#23` clock — UAT open; not SHOW / not GA. |
 | 2026-08-23 | HOT-TOUR-01 guest tours SHIPPED as SCREEN (`/tours` + `/fleet`); still out of Hotel SHOW rollup. |
 | 2026-08-27 | HOT-06 outbox drain + clinic `/reception/extra-tickets` SCREEN (dual-run). Hotel write remains HEADLESS (extension). Reverse folio ADR accepted. |
