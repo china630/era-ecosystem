@@ -5,7 +5,9 @@
     "ru",
     "az"
   ],
-  "notes": "ERA Clinic diagnostic & lab catalog v1.2 (AZ clinic + MediClub/Exonlab routine layer). kinds: imaging|functional|endoscopy|lab_panel|visit. packages[] = checkup compositions. Rare send-out stays admin-added.",
+  "notes": [
+    "Base diagnostic catalog (satellite bootstrap). Nafta package/USG patches: nafta/diagnostic-overlay.json"
+  ],
   "modalities": [
     {
       "code": "USG",
@@ -20,9 +22,9 @@
           "code": "USG-ABD",
           "category": "abdomen",
           "title": {
-            "en": "Abdominal + pelvic ultrasound (Nafta)",
-            "ru": "УЗИ живота и малого таза (Nafta)",
-            "az": "Qarın boşluğu və kiçik çanaq USM"
+            "en": "Abdominal ultrasound",
+            "ru": "УЗИ органов брюшной полости",
+            "az": "Qarın boşluğu USM"
           },
           "serviceCode": "USG-ABD",
           "fields": [
@@ -146,15 +148,6 @@
                 "en": "Recommendations",
                 "ru": "Рекомендации",
                 "az": "Tövsiyələr"
-              }
-            },
-            {
-              "key": "sourceNote",
-              "type": "textarea",
-              "label": {
-                "en": "Original note (WO Qeyd)",
-                "ru": "Исходный текст (WO Qeyd)",
-                "az": "Orijinal qeyd (WO)"
               }
             }
           ]
@@ -282,15 +275,6 @@
                 "az": "Nəticə"
               },
               "required": true
-            },
-            {
-              "key": "sourceNote",
-              "type": "textarea",
-              "label": {
-                "en": "Original note (WO Qeyd)",
-                "ru": "Исходный текст (WO Qeyd)",
-                "az": "Orijinal qeyd (WO)"
-              }
             }
           ]
         },
@@ -358,15 +342,6 @@
                 "az": "Nəticə"
               },
               "required": true
-            },
-            {
-              "key": "sourceNote",
-              "type": "textarea",
-              "label": {
-                "en": "Original note (WO Qeyd)",
-                "ru": "Исходный текст (WO Qeyd)",
-                "az": "Orijinal qeyd (WO)"
-              }
             }
           ]
         },
@@ -563,15 +538,6 @@
                 "az": "Nəticə"
               },
               "required": true
-            },
-            {
-              "key": "sourceNote",
-              "type": "textarea",
-              "label": {
-                "en": "Original note (WO Qeyd)",
-                "ru": "Исходный текст (WO Qeyd)",
-                "az": "Orijinal qeyd (WO)"
-              }
             }
           ]
         },
@@ -680,15 +646,6 @@
                 "az": "Nəticə"
               },
               "required": true
-            },
-            {
-              "key": "sourceNote",
-              "type": "textarea",
-              "label": {
-                "en": "Original note (WO Qeyd)",
-                "ru": "Исходный текст (WO Qeyd)",
-                "az": "Orijinal qeyd (WO)"
-              }
             }
           ]
         },
@@ -9350,20 +9307,7 @@
         "XR-FLUORO",
         "SANATORIUM-INTAKE"
       ]
-    },
-    {
-      "code": "PKG-NAFTA-INTAKE",
-      "title": {
-        "en": "Nafta initial diagnostic procedures (check-in)",
-        "ru": "Nafta первичные диагностические процедуры (заезд)",
-        "az": "İlkin diaqnostik prosedurlar (Check-up)"
-      },
-      "includes": [
-        "SANATORIUM-INTAKE",
-        "GYN-OR-URO",
-        "ECG-12",
-        "USG-ABD"
-      ]
     }
-  ]
+  ],
+  "layer": "base"
 }

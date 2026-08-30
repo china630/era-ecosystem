@@ -322,14 +322,16 @@ function Ensure-Branch {
 function Wait-PrChecksThenMerge {
     param([string]$PrRef)
     Write-Host "Waiting for PR checks to pass ($PrRef)..."
-    gh pr checks $PrRef --watch --interval 20
+    # Pipe to Out-Host: gh stdout must not enter the function success stream
+    # (PowerShell `return` concatenates all success output; that poisoned WaitStaging SHA).
+    gh pr checks $PrRef --watch --interval 20 | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "PR checks failed for $PrRef -- not merging." }
     Write-Host "Merging $PrRef..."
-    gh pr merge $PrRef --merge
+    gh pr merge $PrRef --merge | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "gh pr merge failed for $PrRef" }
-    $state = gh pr view $PrRef --json state,mergedAt,mergeCommit --jq '{state,mergedAt,sha:.mergeCommit.oid}'
-    Write-Host "Merged: $state"
-    return (gh pr view $PrRef --json mergeCommit --jq ".mergeCommit.oid")
+    $sha = (gh pr view $PrRef --json mergeCommit --jq ".mergeCommit.oid").Trim()
+    Write-Host "Merged: $sha"
+    return $sha
 }
 
 function Wait-WorkflowOnSha {

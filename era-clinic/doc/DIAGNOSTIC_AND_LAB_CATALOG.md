@@ -49,7 +49,7 @@ Labels: `en` + `ru` + `az` on every title/field/analyte.
 Baseline abdomen/kidney/thyroid/breast/pelvic/obstetric/soft/prostate/doppler/MSK/hip-infant  
 **+** retroperitoneal, pleura, salivary/neck, TRUS, BCA Doppler, LL veins, obst T1/T2/T3, folliculometry, liver elastography, orbit, cervical LN
 
-Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. Seed: `node prisma/seed-diagnostic-catalog.cjs`.
+Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. **Layers:** base `diagnostic-lab-catalog.json` + org overlay `nafta/diagnostic-overlay.json`. Seed: `node prisma/seed-diagnostic-catalog.cjs` (base then Nafta). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
 
 ### X-ray (`XR`)
 Chest, spine, extremity, sinus, abdomen  
@@ -105,9 +105,9 @@ EGD, colonoscopy (+ polyps table), bronchoscopy
 | `PKG-PREOP` | CBC, coag, glucose, BG, infect screen, ECG, chest XR |
 | `PKG-EMPLOY` | CBC, urine, infect, fluoro, ECG, ophth, ENT |
 | `PKG-SAN-ADM` | CBC, biochem, urine, ECG, fluoro, sanatorium intake |
-| `PKG-NAFTA-INTAKE` | Nafta check-in checklist: `SANATORIUM-INTAKE`, `GYN-OR-URO` (→ GYN/URO by sex), `ECG-12`, `USG-ABD`. WO source = PatientDiagnostic «İlkin diaqnostik prosedurlar», **not** CheckUp `#33`. |
+| `PKG-NAFTA-INTAKE` | Nafta check-in checklist: `SANATORIUM-INTAKE`, `GYN-OR-URO` (→ GYN/URO by sex), `ECG-12`, `USG-ABD`. WO source = PatientDiagnostic «İlkin diaqnostik prosedurlar», **not** CheckUp `#33`. Lives in **Nafta overlay** seed, not base catalog. |
 
-Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. Seed: `node prisma/seed-diagnostic-catalog.cjs`.
+Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. **Layers:** base `diagnostic-lab-catalog.json` + org overlay `nafta/diagnostic-overlay.json`. Seed: `node prisma/seed-diagnostic-catalog.cjs` (base then Nafta). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
 ---
 
 ## 5. Explicitly deferred (P2 / tertiary)

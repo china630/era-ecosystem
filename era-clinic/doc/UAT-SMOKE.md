@@ -277,7 +277,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 SatAdmin:
 
 1. Sign in as `CLINIC_ADMIN`. Open **Catalogs → Physio sites** (`/admin/physio-sites`).
-2. Tabs **Sites / Programs / Substances** list seeded rows (after `npx tsx prisma/seed-physio-catalog.ts`).
+2. Tabs **Sites / Programs / Substances** list seeded rows (after `npm run db:seed:physio` = base + Nafta overlay).
 3. Open a site: titles az/ru/en/la, kind Select, coarse MULTI, aliases textarea. Save.
 4. Add a substance. Retire it (row stays, picker drops it).
 5. `/admin/master-data` → Procedure types → Amplipuls: **Needs site chips** on; order fields include work-kind + electrodes. Ozone: chips off.

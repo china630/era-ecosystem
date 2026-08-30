@@ -10,7 +10,7 @@ Sources: Minzdrav USSR **817/1987**; **Shcherbak** collar+panty; hydro fill. 817
 
 Counts: **31** S codes. 817 §15 and §18 share sites with §14 and §17 — not extra codes.
 
-Data: `prisma/seed-data/nafta/physio-zones-s.json` (seed only). Unmatched WO: [physio-zone-s-coverage.md](./physio-zone-s-coverage.md).
+Data: base `prisma/seed-data/base/physio-zones-s.json` + Nafta overlay `prisma/seed-data/nafta/physio-zones-overlay.json` (merge helper). Unmatched WO: [physio-zone-s-coverage.md](./physio-zone-s-coverage.md). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
 
 ## Closed catalog rules
 

@@ -24,16 +24,19 @@ Clinic pack checklist on disk: `NAFTA-ERA-READY/IMPORT-CHECKLIST.md` (mirror: `N
 
 Do **not** run full `rebuild-derived` only for this wave. Seed catalogs, then re-Apply the Excel books below.
 
-1. **Diagnostic catalog** (intake package + USG fields):
+1. **Diagnostic catalog** (base + Nafta overlay → `PKG-NAFTA-INTAKE` + USG patches):
 
 ```bash
 cd era-clinic && node prisma/seed-diagnostic-catalog.cjs
+# or explicitly:
+# node prisma/seed-diagnostic-catalog-base.cjs && node prisma/seed-diagnostic-catalog-nafta.cjs
 ```
 
-2. **Physio S catalog** (~31 zones + type gates, Solyuks / `NAFTALAN_FILL`):
+2. **Physio S catalog** (base 31 S + Nafta WO aliases / type gates):
 
 ```bash
 cd era-clinic && npx tsx prisma/seed-physio-catalog.ts
+# or: npm run db:seed:physio:base && npm run db:seed:physio:nafta
 ```
 
 3. **Verify:** `/admin/physio-sites` ≈ 31; `/admin/diagnostic-catalog` has `PKG-NAFTA-INTAKE`; `GET /api/physio-catalog` → non-empty `sites`.
@@ -182,6 +185,7 @@ WO free-text `nahiye` is **not** dropped on cutover. Canon: [physio-site-canon.m
 
 ```bash
 cd era-clinic && npx tsx prisma/seed-physio-catalog.ts
+# base then Nafta overlay (same as npm run db:seed:physio)
 ```
 
 Check: `/admin/physio-sites` ≈ 31 zones; `GET /api/physio-catalog` returns non-empty `sites`. Empty catalog → UI shows «catalog not seeded» (not SEARCHABLE «No matches»). Then **re-Apply `#23`** with `replaceSites: true` so `nahiye` is rematched against DB rows. Spot: Yağmur Cəfərli — naftalan `Tam` / Solyuks `Belinə`/`Başına` show chips; Qeyd keeps residue only.
