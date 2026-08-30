@@ -1,5 +1,5 @@
 /**
- * Write NAFTA-ERA-READY clinic/31-Diagnostics.xlsx (+ empty 32-Diagnoses.xlsx).
+ * Write NAFTA-ERA-READY clinic/29-Diagnostics.xlsx (USG). Skip diagnoses leftover.
  * Parses WO Qeyd into resultJson lines. Run: node scripts/nafta-cutover/rebuild-usg.cjs
  */
 
@@ -15,7 +15,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
 const DUMP = path.join(START, "clinic", "dump");
-const CLINIC_OUT = path.join(OUT, "clinic");
+
+const { FILES } = require("./pack-layout.cjs") as { FILES: Record<string, string> };
 
 const { HEADERS, ymd, mapPatientImportRow, loadPatientCardIndex } = require("./map.cjs") as {
   HEADERS: { diagnostics: string[]; diagnoses: string[]; patients: string[] };
@@ -123,8 +124,8 @@ function main() {
     }
   }
 
-  const diagnostics = writeSheet(XLSX, path.join(CLINIC_OUT, "31-Diagnostics.xlsx"), HEADERS.diagnostics, usgRows);
-  const diagnosesOut = writeSheet(XLSX, path.join(CLINIC_OUT, "32-Diagnoses.xlsx"), HEADERS.diagnoses, dxRows);
+  const diagnostics = writeSheet(XLSX, path.join(OUT, FILES.clinicDiagnostics), HEADERS.diagnostics, usgRows);
+  const diagnosesOut = 0;
   const sample2019 = usgRows
     .filter((r) => r.patientRef === "wo:patient:2019")
     .map((r) => ({
@@ -133,7 +134,7 @@ function main() {
       fieldCodes: (JSON.parse(String(r.resultJson || "[]")) as Array<{ code: string }>).map((l) => l.code),
     }));
   const report = { diagnostics, diagnoses: diagnosesOut, usgByCode, woNameCounts, parsedFields, sample2019 };
-  fs.writeFileSync(path.join(CLINIC_OUT, "rebuild-usg-report.json"), `${JSON.stringify(report, null, 2)}\n`);
+  fs.writeFileSync(path.join(OUT, "clinic", "rebuild-usg-report.json"), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
 }
 

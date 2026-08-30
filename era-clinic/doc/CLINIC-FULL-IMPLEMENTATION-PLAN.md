@@ -109,6 +109,8 @@ Depends: orchestrator fan-out (sanatorium-vnext wave 2).
 
 Preset gate: sanatorium nav hidden unless `sanatorium_clinical` or bundle entitled.
 
+**Later overlay (not this 2026-06 phase):** CLI-55 episode-as-course — [ADR](../../docs/adr/clinic-episode-as-clinical-course.md). Wave plan TBD; do not fold into P3 SHIPPED.
+
 ---
 
 ## Phase 4 — Inpatient day preset (3–4 weeks)

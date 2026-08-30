@@ -12,6 +12,10 @@ jest.mock("@/lib/import/cutover-patient-mdm", () => ({
   resolveCutoverPatientMdm: jest.fn().mockResolvedValue("gp-cutover"),
 }));
 
+jest.mock("@/domain/physio/nahiye-cutover.service", () => ({
+  applyNahiyeToProcedureOrder: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe("nafta cutover import rules", () => {
   it("maps patient card fields including sex nationality phone", () => {
     const adapter = getImportAdapter("patients")!;
@@ -494,6 +498,9 @@ describe("nafta cutover import rules", () => {
         create: jest.fn(),
       },
       diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc1" }) },
+      clinicalEpisode: {
+        findFirst: jest.fn().mockResolvedValue({ id: "ep1", openedAt: new Date("2026-02-18") }),
+      },
       labOrder: { create: createOrder, update: jest.fn() },
       labOrderItem: { create: createItem },
     };
@@ -503,6 +510,7 @@ describe("nafta cutover import rules", () => {
         data: expect.objectContaining({
           testCode: "LAB-CBC",
           resultJson: "[]",
+          clinicalEpisodeId: "ep1",
           collectedAt: expect.any(Date),
           createdAt: expect.any(Date),
         }),
@@ -545,7 +553,7 @@ describe("nafta cutover import rules", () => {
       },
       diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc1" }) },
       clinicalEpisode: {
-        findFirst: jest.fn().mockResolvedValue({ openedAt: checkIn }),
+        findFirst: jest.fn().mockResolvedValue({ id: "ep1", openedAt: checkIn }),
       },
       labOrder: { create: createOrder, update: jest.fn() },
       labOrderItem: { create: jest.fn().mockResolvedValue({ id: "item1" }) },
@@ -586,6 +594,113 @@ describe("nafta cutover import rules", () => {
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ code: "WBC", value: "6.7" }),
+      }),
+    );
+  });
+
+  it("re-Apply slots stamps clinicalEpisodeId on existing ProcedureOrder", async () => {
+    const adapter = getImportAdapter("slots")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:slot:1",
+      date: "2026-08-20",
+      startTime: "10:00:00",
+      patientRef: "wo:patient:1",
+      procedureCode: "WO-TR-10",
+      roomCode: "WO-ROOM-1",
+      status: "COMPLETED",
+      nahiye: "",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const update = jest.fn();
+    const tx = {
+      cutoverImportKey: {
+        findFirst: jest.fn(async ({ where }: { where: { entity: string } }) => {
+          if (where.entity === "patients") return { recordId: "pat1" };
+          if (where.entity === "slots") return { recordId: "ord1" };
+          return null;
+        }),
+      },
+      procedureType: { findFirst: jest.fn().mockResolvedValue({ id: "pt1", name: "Vanna", durationMin: 15 }) },
+      resource: { findFirst: jest.fn().mockResolvedValue({ id: "res1" }) },
+      clinicalEpisode: { findFirst: jest.fn().mockResolvedValue({ id: "ep-archive" }) },
+      procedureOrder: {
+        findFirst: jest.fn().mockResolvedValue({ id: "ord1", note: null, sites: [] }),
+        update,
+      },
+    };
+    await adapter.upsert(tx as never, row, false);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "ord1" },
+        data: expect.objectContaining({ clinicalEpisodeId: "ep-archive" }),
+      }),
+    );
+  });
+
+  it("re-Apply lab-orders stamps clinicalEpisodeId on existing LabOrder", async () => {
+    const adapter = getImportAdapter("lab-orders")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:lab:9",
+      patientRef: "wo:patient:1",
+      testCode: "LAB-CBC",
+      status: "COMPLETED",
+      panel: "QAN",
+      takenAt: "2026-02-18",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const update = jest.fn();
+    const tx = {
+      cutoverImportKey: {
+        findFirst: jest.fn(async ({ where }: { where: { entity: string } }) => {
+          if (where.entity === "patients") return { recordId: "pat1" };
+          if (where.entity === "lab-orders") return { recordId: "lab9" };
+          return null;
+        }),
+      },
+      diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc1" }) },
+      clinicalEpisode: { findFirst: jest.fn().mockResolvedValue({ id: "ep-archive" }) },
+      labOrder: { create: jest.fn(), update },
+    };
+    await adapter.upsert(tx as never, row, false);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "lab9" },
+        data: expect.objectContaining({ clinicalEpisodeId: "ep-archive" }),
+      }),
+    );
+  });
+
+  it("re-Apply diagnostics stamps clinicalEpisodeId on existing LabOrder", async () => {
+    const adapter = getImportAdapter("diagnostics")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:usg:1",
+      patientRef: "wo:patient:1",
+      code: "USG-ABD",
+      name: "USM",
+      resultText: "",
+      resultJson: "[]",
+      takenAt: "2026-02-18",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const update = jest.fn();
+    const tx = {
+      cutoverImportKey: {
+        findFirst: jest.fn(async ({ where }: { where: { entity: string } }) => {
+          if (where.entity === "patients") return { recordId: "pat1" };
+          if (where.entity === "diagnostics") return { recordId: "usg1" };
+          return null;
+        }),
+      },
+      clinicalEpisode: { findFirst: jest.fn().mockResolvedValue({ id: "ep-archive" }) },
+      labOrder: { update },
+      labOrderItem: { findFirst: jest.fn().mockResolvedValue({ id: "item1" }) },
+      labResult: { deleteMany: jest.fn(), findUnique: jest.fn().mockResolvedValue(null), create: jest.fn() },
+    };
+    await adapter.upsert(tx as never, row, false);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "usg1" },
+        data: expect.objectContaining({ clinicalEpisodeId: "ep-archive" }),
       }),
     );
   });

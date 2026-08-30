@@ -3,7 +3,7 @@ import { getPatientCardSummary } from "@/domain/patient/patient-card.service";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -15,7 +15,8 @@ export async function GET(
       select: { id: true },
     });
     if (!exists) return jsonError("Not found", 404);
-    return jsonOk(await getPatientCardSummary(id));
+    const episodeId = new URL(req.url).searchParams.get("episode") ?? undefined;
+    return jsonOk(await getPatientCardSummary(id, { episodeId }));
   } catch (err) {
     return handleRouteError(err);
   }

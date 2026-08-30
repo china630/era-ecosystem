@@ -1,6 +1,7 @@
 /**
- * Cutover #21 episode status: past checkOut → IMPORTED_CLOSED (archive).
- * Live hotel checkout still writes CLOSED. Empty / today / future stay OPEN.
+ * Cutover episode status: checkout already in the past → IMPORTED_CLOSED (archive).
+ * Live hotel checkout still writes CLOSED. Empty / future stay OPEN.
+ * Date-only midnight values mean end of that Baku calendar day (WO often sends T00:00:00).
  */
 
 const BAKU_TZ = "Asia/Baku";
@@ -16,6 +17,20 @@ export function ymdBaku(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: BAKU_TZ }).format(d);
 }
 
+function isDateOnlyMidnight(d: Date): boolean {
+  const utcMid =
+    d.getUTCHours() === 0 &&
+    d.getUTCMinutes() === 0 &&
+    d.getUTCSeconds() === 0 &&
+    d.getUTCMilliseconds() === 0;
+  const localMid =
+    d.getHours() === 0 &&
+    d.getMinutes() === 0 &&
+    d.getSeconds() === 0 &&
+    d.getMilliseconds() === 0;
+  return utcMid || localMid;
+}
+
 export function cutoverEpisodeFromCheckout(
   checkOut: Date | null,
   asOf = new Date(),
@@ -23,7 +38,12 @@ export function cutoverEpisodeFromCheckout(
   if (!checkOut) {
     return { status: CUTOVER_EPISODE_OPEN, closedAt: null };
   }
-  if (ymdBaku(checkOut) < ymdBaku(asOf)) {
+  let instant = checkOut;
+  if (isDateOnlyMidnight(checkOut)) {
+    const ymd = ymdBaku(checkOut);
+    instant = new Date(`${ymd}T23:59:59.999+04:00`);
+  }
+  if (instant.getTime() < asOf.getTime()) {
     return { status: CUTOVER_EPISODE_IMPORTED_CLOSED, closedAt: checkOut };
   }
   return { status: CUTOVER_EPISODE_OPEN, closedAt: null };

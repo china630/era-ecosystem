@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
 import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
+import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   Field,
   FieldRow,
@@ -53,6 +55,13 @@ export type PatientCardPatient = {
   identifiersSummary?: Array<{ type: string; issuingCountry: string | null; isPrimary: boolean }>;
 };
 
+type EpisodeOption = {
+  id: string;
+  label: string;
+  status: string;
+  anamnesisText: string | null;
+};
+
 const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
   A_POS: "A+",
   A_NEG: "A-",
@@ -83,7 +92,6 @@ const emptyForm = {
   finCode: "",
   passportNumber: "",
   issuingCountry: "AZ",
-  anamnesisText: "",
 };
 
 type Props = {
@@ -102,12 +110,28 @@ export function PatientCardBody({
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
+  const [episodes, setEpisodes] = useState<EpisodeOption[]>([]);
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
+  const [anamnesis, setAnamnesis] = useState("");
+  const [anamnesisSaving, setAnamnesisSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [ciOpen, setCiOpen] = useState(false);
   const [ciCount, setCiCount] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+
+  const selectedEpisode = useMemo(
+    () => episodes.find((e) => e.id === selectedEpisodeId) ?? null,
+    [episodes, selectedEpisodeId],
+  );
+  const episodeReadOnly = selectedEpisode?.status !== "OPEN";
+  const anamnesisOk = Boolean(anamnesis.trim());
+  const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
+  const episodeOptions = useMemo(
+    () => episodes.map((e) => ({ value: e.id, label: e.label })),
+    [episodes],
+  );
 
   const sexLabel = useCallback(
     (sex: PatientSex | undefined) => {
@@ -124,6 +148,22 @@ export function PatientCardBody({
     },
     [t],
   );
+
+  const loadEpisodes = useCallback(async () => {
+    if (!patientId) return;
+    const res = await fetch(`/api/patients/${patientId}/episodes`);
+    if (!res.ok) return;
+    const parsed = await res.json();
+    const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
+    setEpisodes(items);
+    if (items.length > 0) {
+      setSelectedEpisodeId(items[0].id);
+      setAnamnesis(items[0].anamnesisText ?? "");
+    } else {
+      setSelectedEpisodeId(null);
+      setAnamnesis("");
+    }
+  }, [patientId]);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -145,13 +185,44 @@ export function PatientCardBody({
       finCode: "",
       passportNumber: "",
       issuingCountry: "AZ",
-      anamnesisText: p.anamnesisText ?? "",
     });
-  }, [patientId, onPatientLoaded]);
+    await loadEpisodes();
+  }, [patientId, onPatientLoaded, loadEpisodes]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  function onEpisodeChange(nextId: string) {
+    setSelectedEpisodeId(nextId);
+    const ep = episodes.find((e) => e.id === nextId);
+    setAnamnesis(ep?.anamnesisText ?? "");
+    setMsg(null);
+  }
+
+  async function saveAnamnesis() {
+    if (!selectedEpisodeId || selectedEpisode?.status !== "OPEN") return;
+    setAnamnesisSaving(true);
+    setMsg(null);
+    const trimmed = anamnesis.trim();
+    const res = await fetch(`/api/sanatorium/episodes/${selectedEpisodeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ anamnesisText: trimmed }),
+    });
+    const data = await res.json();
+    setAnamnesisSaving(false);
+    if (!res.ok) {
+      setMsg(data.error ?? data.message ?? tc("saveFailed"));
+      return;
+    }
+    setEpisodes((prev) =>
+      prev.map((e) =>
+        e.id === selectedEpisodeId ? { ...e, anamnesisText: trimmed || null } : e,
+      ),
+    );
+    setMsg(tc("saved"));
+  }
 
   async function lookupMdm() {
     if (!form.fullName.trim()) {
@@ -214,10 +285,6 @@ export function PatientCardBody({
 
   async function savePatient() {
     if (!patient) return;
-    if (!form.anamnesisText.trim()) {
-      setMsg(t("anamnesisRequired"));
-      return;
-    }
     setMsg(null);
     const res = await fetch(`/api/patients/${patient.id}`, {
       method: "PATCH",
@@ -234,7 +301,6 @@ export function PatientCardBody({
         finCode: form.finCode.trim() || null,
         passportNumber: form.passportNumber.trim() || null,
         issuingCountry: form.issuingCountry.trim() || null,
-        anamnesisText: form.anamnesisText.trim(),
       }),
     });
     const data = await res.json();
@@ -314,14 +380,6 @@ export function PatientCardBody({
               </p>
             ) : null}
           </div>
-          {patient.anamnesisText ? (
-            <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
-              <p className="mb-1 font-semibold">{t("anamnesis")}</p>
-              <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>{patient.anamnesisText}</p>
-            </div>
-          ) : (
-            <p className="text-amber-700">{t("anamnesisMissing")}</p>
-          )}
           {patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
             <p className={TEXT_MUTED_CLASS}>
               {patient.identifiersSummary.map((i) => i.type).join(", ")}
@@ -329,6 +387,54 @@ export function PatientCardBody({
           ) : null}
           {msg ? <p>{msg}</p> : null}
         </div>
+
+        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+          {episodes.length > 0 ? (
+            <CatalogField
+              kind={episodeFieldKind}
+              label={t("episodeSelect")}
+              value={selectedEpisodeId ?? ""}
+              onChange={(next) => onEpisodeChange(String(next))}
+              options={episodeOptions}
+            />
+          ) : (
+            <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
+          )}
+        </section>
+
+        {selectedEpisode ? (
+          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+            {selectedEpisode.status === "OPEN" ? (
+              <>
+                <FieldTextarea
+                  label={t("anamnesis")}
+                  rows={4}
+                  value={anamnesis}
+                  onChange={(e) => setAnamnesis(e.target.value)}
+                  placeholder={t("anamnesisHint")}
+                />
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={anamnesisSaving}
+                  onClick={() => void saveAnamnesis()}
+                >
+                  {t("anamnesisSave")}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold">{t("anamnesis")}</p>
+                <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
+                <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
+                  <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
+                    {anamnesis.trim() || "—"}
+                  </p>
+                </div>
+              </>
+            )}
+          </section>
+        ) : null}
 
         <section
           className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
@@ -355,27 +461,37 @@ export function PatientCardBody({
           </div>
           <PatientContraindicationsPanel
             patientRefId={patient.id}
+            episodeId={selectedEpisodeId}
+            readOnly={episodeReadOnly}
             expanded={ciOpen}
             onCountChange={setCiCount}
           />
         </section>
 
-        <PatientCardDiagnoses patientRefId={patient.id} />
+        <PatientCardComplaints
+          patientRefId={patient.id}
+          episodeId={selectedEpisodeId}
+          readOnly={episodeReadOnly}
+        />
 
-        <PatientCardClinicalSections patientRefId={patient.id} panel={panel} />
+        <PatientCardDiagnoses
+          patientRefId={patient.id}
+          episodeId={selectedEpisodeId}
+          readOnly={episodeReadOnly}
+        />
+
+        <PatientCardClinicalSections
+          patientRefId={patient.id}
+          panel={panel}
+          episodeId={selectedEpisodeId}
+          readOnly={episodeReadOnly}
+          anamnesisOk={anamnesisOk}
+        />
       </div>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>
         <div className="space-y-4">
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("demographicsHint")}</p>
-          <FieldTextarea
-            label={t("anamnesis")}
-            required
-            rows={4}
-            value={form.anamnesisText}
-            onChange={(e) => setForm({ ...form, anamnesisText: e.target.value })}
-            placeholder={t("anamnesisHint")}
-          />
           <Field
             label={t("fullName")}
             preset="shortText"

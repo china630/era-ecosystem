@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Rebuild only clinic #31 / empty #32 (USG Müayinə Anketi). Does not touch lab or hotel READY.
+ * Rebuild only clinic #29 (USG Müayinə Anketi). Does not touch lab or hotel READY.
  *
  *   node era-clinic/scripts/nafta-cutover/rebuild-usg.cjs
  */

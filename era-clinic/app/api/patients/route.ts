@@ -35,7 +35,6 @@ const createSchema = z
     finCode: z.string().optional(),
     passportNumber: z.string().optional(),
     issuingCountry: z.string().optional(),
-    anamnesisText: z.string().nullable().optional(),
   })
   .refine((d) => patientHasMdmIdentifier(d), {
     message: "Provide FIN, passport+country, or phone for MDM resolve",

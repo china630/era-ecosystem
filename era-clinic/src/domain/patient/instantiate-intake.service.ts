@@ -27,18 +27,18 @@ async function resolveDefaultPractitioner(
 
 async function hasVisitLine(
   patientRefId: string,
+  clinicalEpisodeId: string,
   serviceCode: string,
 ): Promise<boolean> {
   const row = await prisma.visitServiceLine.findFirst({
-    where: { serviceCode, visit: { patientRefId, status: { not: "CANCELLED" } } },
-    select: { id: true },
-  });
-  return Boolean(row);
-}
-
-async function hasAnyVisit(patientRefId: string): Promise<boolean> {
-  const row = await prisma.visit.findFirst({
-    where: { patientRefId, status: { not: "CANCELLED" } },
+    where: {
+      serviceCode,
+      visit: {
+        patientRefId,
+        clinicalEpisodeId,
+        status: { not: "CANCELLED" },
+      },
+    },
     select: { id: true },
   });
   return Boolean(row);
@@ -60,18 +60,7 @@ async function hasLabOrder(
     },
     select: { id: true },
   });
-  if (byEpisode) return true;
-  const byPatient = await prisma.labOrder.findFirst({
-    where: {
-      patientRefId,
-      OR: [
-        { testCode },
-        { items: { some: { serviceCode: testCode } } },
-      ],
-    },
-    select: { id: true },
-  });
-  return Boolean(byPatient);
+  return Boolean(byEpisode);
 }
 
 const VISIT_TITLES: Record<string, string> = {
@@ -108,15 +97,7 @@ export async function instantiateIntakePackage(
   const visitCodes = naftaIntakeVisitCodes(sex);
 
   for (const code of visitCodes) {
-    if (code === "SANATORIUM-INTAKE") {
-      const exists =
-        (await hasVisitLine(patientRefId, "SANATORIUM-INTAKE")) ||
-        (await hasAnyVisit(patientRefId));
-      if (exists) {
-        skippedVisitCodes.push(code);
-        continue;
-      }
-    } else if (await hasVisitLine(patientRefId, code)) {
+    if (await hasVisitLine(patientRefId, episodeId, code)) {
       skippedVisitCodes.push(code);
       continue;
     }
@@ -131,6 +112,7 @@ export async function instantiateIntakePackage(
         organizationId,
         patientRefId,
         practitionerId,
+        clinicalEpisodeId: episodeId,
         status: "IN_PROGRESS",
         patientOrigin: episode.patientOrigin,
         reservationId: episode.reservationId,

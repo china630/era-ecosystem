@@ -56,10 +56,10 @@ describe("Clinic PT negative paths (AC-CLI-PT)", () => {
       expect(patientCreateDenied({ hasIdentifier: true, fullName: "Ali" })).toBeNull();
     });
 
-    it("refuses empty anamnesis when updating clinical demographics", async () => {
+    it("does not gate demographics PATCH on anamnesis (CLI-55 episode-scoped)", async () => {
       const { patientAnamnesisDenied } = await import("@/lib/patient-card-gates");
-      expect(patientAnamnesisDenied("   ", true)).toMatch(/Anamnesis/);
-      expect(patientAnamnesisDenied("ok", true)).toBeNull();
+      expect(patientAnamnesisDenied("   ", true)).toBeNull();
+      expect(patientAnamnesisDenied("", true)).toBeNull();
       expect(patientAnamnesisDenied("", false)).toBeNull();
     });
 

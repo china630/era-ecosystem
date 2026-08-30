@@ -68,12 +68,7 @@ function demographicsWriteData(data: PatientClinicalDemographicsInput) {
     bloodGroup: data.bloodGroup,
     emergencyContactName: data.emergencyContactName,
     emergencyContactPhone: data.emergencyContactPhone,
-    ...(data.anamnesisText !== undefined
-      ? {
-          anamnesisText: data.anamnesisText?.trim() || null,
-          anamnesisUpdatedAt: data.anamnesisText?.trim() ? new Date() : null,
-        }
-      : {}),
+    // CLI-55: do not write anamnesis onto PatientRef (lives on ClinicalEpisode).
   };
 }
 
@@ -277,8 +272,6 @@ export async function createPatient(data: {
       bloodGroup: demo.bloodGroup,
       emergencyContactName: demo.emergencyContactName ?? undefined,
       emergencyContactPhone: demo.emergencyContactPhone ?? undefined,
-      anamnesisText: demo.anamnesisText ?? undefined,
-      anamnesisUpdatedAt: demo.anamnesisUpdatedAt ?? undefined,
     },
   });
 
@@ -323,9 +316,7 @@ export async function updatePatient(
     anamnesisText?: string | null;
   },
 ) {
-  if (clinicalFieldsTouched(data) && !data.anamnesisText?.trim()) {
-    throw new PatientAnamnesisRequiredError();
-  }
+  // CLI-55: anamnesis is episode-scoped; demographics PATCH no longer requires it.
 
   const identityInput: PatientIdentifierInput = {
     finCode: data.finCode ?? undefined,
@@ -352,12 +343,6 @@ export async function updatePatient(
       bloodGroup: demo.bloodGroup,
       emergencyContactName: demo.emergencyContactName,
       emergencyContactPhone: demo.emergencyContactPhone,
-      ...(data.anamnesisText !== undefined
-        ? {
-            anamnesisText: demo.anamnesisText,
-            anamnesisUpdatedAt: demo.anamnesisUpdatedAt,
-          }
-        : {}),
     },
   });
 

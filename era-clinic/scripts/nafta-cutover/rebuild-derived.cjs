@@ -1,12 +1,12 @@
 "use strict";
 
 /**
- * Rebuild derived clinic import books without touching curated #25/#26/#27.
+ * Rebuild derived clinic import books without touching curated #19/#20/#21/#22.
  *
  *   node era-clinic/scripts/nafta-cutover/rebuild-derived.cjs
  *   NAFTA_PATIENTS_ALL=1 node era-clinic/scripts/nafta-cutover/rebuild-derived.cjs
  *
- * Outputs: 21, 23, 24, 29, 31, 32, 38, 39 + summary snippet + lab verify report.
+ * Outputs: 16, 24, 25, 26, 27, 28, 29 + summary snippet + lab verify report.
  */
 
 const fs = require("fs");
@@ -26,6 +26,7 @@ const {
 } = require("./map.cjs");
 const { parseLabDocxFile, testCodeFromPanel, panelFromName } = require("./parse-lab-docx.cjs");
 const { eraCodeForWoAnalysis, eraAnalyteCode } = require("./wo-era-lab-map.cjs");
+const { FILES } = require("./pack-layout.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -86,7 +87,7 @@ function baseName(s) {
 }
 
 function loadCuratedProcedureMap(XLSX) {
-  const file = path.join(CLINIC_OUT, "25-Treatments.xlsx");
+  const file = path.join(OUT, FILES.clinicTreatments);
   if (!fs.existsSync(file)) return { codes: new Set(), woIdToCode: new Map() };
   const wb = XLSX.readFile(file);
   const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
@@ -177,7 +178,7 @@ function main() {
 
   const { codes: curatedCodes, woIdToCode } = loadCuratedProcedureMap(XLSX);
   if (!curatedCodes.size) {
-    console.warn("WARN: 25-Treatments.xlsx missing or empty — quotas/slots will use all WO-TR-* codes");
+    console.warn("WARN: 19-Treatments.xlsx missing or empty — quotas/slots will use all WO-TR-* codes");
   }
 
   const patients = rowsOf(readDumpJson("bulk/patients.json"));
@@ -195,7 +196,7 @@ function main() {
   );
   const nPat = writeSheet(
     XLSX,
-    path.join(CLINIC_OUT, "21-patients.xlsx"),
+    path.join(OUT, FILES.clinicPatients),
     HEADERS.patients,
     patientRows,
   );
@@ -203,10 +204,11 @@ function main() {
   let slotsDropped = 0;
   let slotsOrphanCodes = new Set();
   const quotaMap = new Map();
-  const opsSlots = [];
+  const allSlots = [];
   for (const s of slotsRaw) {
     const date = ymd(s.date);
-    const status = slotStatus(date);
+    const startTime = String(s.startTime || "").slice(0, 8);
+    const status = slotStatus(date, startTime);
     const procedureCd =
       curatedCodes.size > 0
         ? resolveSlotProcedureCode(s.treatmentId, woIdToCode)
@@ -220,14 +222,14 @@ function main() {
     const row = {
       externalRef: `wo:res:${s.id}`,
       date,
-      startTime: String(s.startTime || "").slice(0, 8),
+      startTime,
       patientRef,
       procedureCode: procedureCd,
       roomCode: roomCode(s.roomId),
       status,
       nahiye: slotNahiye(s, nahiyeByProc),
     };
-    if (isOpsSlotDate(date) && status === "SCHEDULED") opsSlots.push(row);
+    allSlots.push(row);
 
     const key = `${patientRef}|${procedureCd}`;
     const cur = quotaMap.get(key) || { total: 0, used: 0 };
@@ -261,8 +263,9 @@ function main() {
       return true;
     });
 
-  const nQuota = writeSheet(XLSX, path.join(CLINIC_OUT, "38-quotas.xlsx"), HEADERS.quotas, quotaRows);
-  const nSlots = writeSheet(XLSX, path.join(CLINIC_OUT, "23-slots.xlsx"), HEADERS.slots, opsSlots);
+  const historicalSlots = allSlots.filter((r) => r.status === "COMPLETED");
+  const nQuota = writeSheet(XLSX, path.join(OUT, FILES.clinicQuotas), HEADERS.quotas, quotaRows);
+  const nSlots = writeSheet(XLSX, path.join(OUT, FILES.clinicSlots), HEADERS.slots, historicalSlots);
 
   const seedLab = loadSeedLabIndex();
   const labCatRows = [];
@@ -309,7 +312,7 @@ function main() {
   const orderTestCodes = new Set();
   const nLabOrd = writeSheet(
     XLSX,
-    path.join(CLINIC_OUT, "24-lab-orders.xlsx"),
+    path.join(OUT, FILES.clinicLabOrders),
     HEADERS.labOrders,
     labMeta.map((r) => {
       const abs = labById.get(String(r.id));
@@ -359,13 +362,13 @@ function main() {
   }
   const nLabCat = writeSheet(
     XLSX,
-    path.join(CLINIC_OUT, "29-Analyses.xlsx"),
+    path.join(OUT, FILES.clinicCatalog),
     HEADERS.labCatalog,
     labCatRows,
   );
   const nLabLines = writeSheet(
     XLSX,
-    path.join(CLINIC_OUT, "39-lab-results.xlsx"),
+    path.join(OUT, FILES.clinicLabResults),
     HEADERS.labResultLines,
     labLineRows,
   );
@@ -393,7 +396,7 @@ function main() {
   const opsMissing = new Map();
   for (const s of slotsRaw) {
     const date = ymd(s.date);
-    if (!isOpsSlotDate(date) || slotStatus(date) !== "SCHEDULED") continue;
+    if (!isOpsSlotDate(date) || slotStatus(date, String(s.startTime || "").slice(0, 8)) !== "SCHEDULED") continue;
     const procedureCd = resolveSlotProcedureCode(s.treatmentId, woIdToCode);
     if (procedureCd) continue;
     const tid = Number(s.treatmentId);
@@ -422,7 +425,9 @@ function main() {
         : 100,
     },
     slots: {
-      opsRows: nSlots,
+      rows: nSlots,
+      completed: historicalSlots.length,
+      scheduledHeldForTemplates: allSlots.filter((r) => r.status === "SCHEDULED").length,
       droppedUnmapped: slotsDropped,
       orphanWoCodes: [...slotsOrphanCodes].sort().slice(0, 30),
       opsWeekMissingTreatments,

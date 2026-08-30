@@ -46,16 +46,28 @@ async function ensureEpisodeAndProgram(
   });
   const autoInstantiate = await shouldAutoInstantiateProgramOnCheckin();
   if (p.programCode && !existingProgram && autoInstantiate) {
-    await instantiateProgramFromTemplate({
-      episodeId: episode.id,
-      programCode: p.programCode,
-      reservationId: p.reservationId,
-      startsOn: p.checkInDate ? new Date(p.checkInDate) : new Date(),
-    });
-    await prisma.clinicalEpisode.update({
+    const fresh = await prisma.clinicalEpisode.findUnique({
       where: { id: episode.id },
-      data: { checkupCompletedAt: new Date() },
+      select: { anamnesisText: true },
     });
+    // CLI-55: open episode + intake always; skip physio FIFO until anamnesis filled.
+    if (fresh?.anamnesisText?.trim()) {
+      await instantiateProgramFromTemplate({
+        episodeId: episode.id,
+        programCode: p.programCode,
+        reservationId: p.reservationId,
+        startsOn: p.checkInDate ? new Date(p.checkInDate) : new Date(),
+      });
+      await prisma.clinicalEpisode.update({
+        where: { id: episode.id },
+        data: { checkupCompletedAt: new Date() },
+      });
+    } else {
+      await prisma.clinicalEpisode.update({
+        where: { id: episode.id },
+        data: { programCode: p.programCode },
+      });
+    }
   }
   return episode;
 }
@@ -158,6 +170,13 @@ export async function handleStayProductChanged(
     const nights = nightsBetween(checkIn, checkOut) || 1;
 
     try {
+      const fresh = await prisma.clinicalEpisode.findUnique({
+        where: { id: episode.id },
+        select: { anamnesisText: true },
+      });
+      // CLI-55: skip physio FIFO until anamnesis filled for this course.
+      if (!fresh?.anamnesisText?.trim()) continue;
+
       if (existing) {
         await recalcProgramQuotas(existing.id, {
           nights,

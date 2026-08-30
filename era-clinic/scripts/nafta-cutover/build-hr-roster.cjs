@@ -11,6 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const { HEADERS, mapRosterRow, mapOrgStructureRow } = require("./map.cjs");
 const { stampDateCells } = require("./excel-date.cjs");
+const { readyFile } = require("./pack-layout.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -42,7 +43,7 @@ function findHrEmployeesPath(startRoot) {
     );
     return path.join(dir, updated[0]);
   }
-  const classic = names.find((n) => n === "37-Employees.xlsx");
+  const classic = names.find((n) => n === "02-Employees.xlsx" || n === "37-Employees.xlsx");
   return classic ? path.join(dir, classic) : null;
 }
 
@@ -101,13 +102,15 @@ function writeSheet(XLSX, outFile, headers, rows) {
 function buildHrRoster(XLSX, startRoot, outRoot) {
   const hrDir = path.join(outRoot, "hr");
   fs.mkdirSync(hrDir, { recursive: true });
-  const stale = path.join(hrDir, "hr-01-Employees.xlsx");
-  if (fs.existsSync(stale)) fs.unlinkSync(stale);
+  for (const stale of ["hr-01-Employees.xlsx", "37-Employees.xlsx", "org-structure.xlsx"]) {
+    const p = path.join(hrDir, stale);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
 
   const roster = loadMappedRoster(XLSX, startRoot);
   const org = loadMappedOrgStructure(XLSX, startRoot);
-  const outRoster = path.join(hrDir, "37-Employees.xlsx");
-  const outOrg = path.join(hrDir, "org-structure.xlsx");
+  const outRoster = readyFile(outRoot, "hrEmployees");
+  const outOrg = readyFile(outRoot, "hrOrg");
   const nRoster = roster.path ? writeRosterSheet(XLSX, outRoster, HEADERS.roster, roster.rows) : 0;
   const nOrg = org.path ? writeSheet(XLSX, outOrg, HEADERS.orgStructure, org.rows) : 0;
   return {

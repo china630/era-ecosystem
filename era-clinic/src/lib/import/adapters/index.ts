@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ImportAdapter, ImportEntityMeta, ImportTx, UpsertOutcome } from "@/lib/import/types";
-import { cellNumber, cellString, parseDateCell } from "@/lib/import/helpers";
+import { cellBool, cellNumber, cellString, parseDateCell } from "@/lib/import/helpers";
 import { bindImportRecord, findImportRecordId } from "@/lib/import/keys";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { applyNahiyeToProcedureOrder } from "@/domain/physio/nahiye-cutover.service";
@@ -43,10 +43,12 @@ async function createImportedLabOrder(
     diagnosticServiceId?: string | null;
   },
 ): Promise<string> {
+  const episode = await ensureCutoverEpisode(tx, input.patientId);
   const order = await tx.labOrder.create({
     data: {
       organizationId: orgId(),
       patientRefId: input.patientId,
+      clinicalEpisodeId: episode.id,
       testCode: input.testCode,
       status: input.status,
       resultJson: input.resultJson,
@@ -184,8 +186,8 @@ const proceduresAdapter: ImportAdapter<{
 }> = {
   entity: "procedures",
   label: "Procedures",
-  order: 10,
-  templateHint: "25-Treatments.xlsx",
+  order: 4,
+  templateHint: "19-Treatments.xlsx — WO clinic/reports/01-procedures.xlsx",
   headerAliases: aliases(
     "externalRef",
     "code",
@@ -250,8 +252,8 @@ const proceduresAdapter: ImportAdapter<{
 const roomsAdapter: ImportAdapter<{ externalRef: string; code: string; name: string }> = {
   entity: "rooms",
   label: "Rooms",
-  order: 11,
-  templateHint: "26-Rooms.xlsx",
+  order: 5,
+  templateHint: "20-Clinic-Rooms.xlsx — WO rooms catalog + SSOT cabinets",
   headerAliases: aliases("externalRef", "code", "name"),
   rowSchema: z.object({
     externalRef: z.string().min(1),
@@ -315,8 +317,8 @@ const procedureRequirementsAdapter: ImportAdapter<{
 }> = {
   entity: "procedure-requirements",
   label: "Procedure requirements",
-  order: 12,
-  templateHint: "40-Procedure-Requirements.xlsx",
+  order: 6,
+  templateHint: "21-Procedure-Requirements.xlsx — WO 01-procedures cabinets",
   headerAliases: aliases("procedureCode", "resourceCode", "role", "quantity"),
   rowSchema: z.object({
     procedureCode: z.string().min(1),
@@ -384,8 +386,8 @@ const practitionersAdapter: ImportAdapter<{
 }> = {
   entity: "practitioners",
   label: "Practitioners",
-  order: 20,
-  templateHint: "27-Doctors.xlsx",
+  order: 7,
+  templateHint: "22-Doctors.xlsx — WO 27-practitioners-roster.json + HR",
   headerAliases: aliases("externalRef", "fin", "fullName", "role"),
   rowSchema: z.object({
     externalRef: z.string().min(1),
@@ -465,8 +467,8 @@ const patientsAdapter: ImportAdapter<{
 }> = {
   entity: "patients",
   label: "Patients",
-  order: 30,
-  templateHint: "21-patients.xlsx",
+  order: 9,
+  templateHint: "24-Patients.xlsx — WO dump cards + bulk/patients.json",
   headerAliases: aliases(
     "externalRef",
     "woId",
@@ -592,7 +594,7 @@ const patientsAdapter: ImportAdapter<{
             anamnesisUpdatedAt: new Date(),
           },
         });
-        await tx.clinicalEpisode.create({
+        const episode = await tx.clinicalEpisode.create({
           data: {
             organizationId: orgId(),
             patientRefId: patient.id,
@@ -602,6 +604,8 @@ const patientsAdapter: ImportAdapter<{
             patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
             status: episodeState.status,
             globalPersonId,
+            anamnesisText: "Nafta cutover import",
+            anamnesisUpdatedAt: new Date(),
             ...(checkIn ? { openedAt: checkIn } : {}),
             ...(episodeState.closedAt ? { closedAt: episodeState.closedAt } : {}),
           },
@@ -616,6 +620,7 @@ const patientsAdapter: ImportAdapter<{
           roomNumber: row.roomNumber || null,
           reservationId: row.hotelResNo || null,
           patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
+          clinicalEpisodeId: episode.id,
         });
         return patient.id;
       },
@@ -653,34 +658,36 @@ const patientsAdapter: ImportAdapter<{
         const checkOut = parseDateCell(row.checkOut);
         const episodeState = cutoverEpisodeFromCheckout(checkOut);
         const inHouse = row.isReservationPatient !== "false";
-        const episode = await tx.clinicalEpisode.findFirst({
+        const existingEpisode = await tx.clinicalEpisode.findFirst({
           where: { patientRefId: id },
           orderBy: { openedAt: "desc" },
         });
         const patientOrigin = inHouse ? ("IN_HOUSE" as const) : ("WALK_IN" as const);
         const episodeFields = {
-          roomNumber: row.roomNumber || episode?.roomNumber || null,
-          reservationId: row.hotelResNo || episode?.reservationId || null,
-          programCode: row.programCode || episode?.programCode || null,
+          roomNumber: row.roomNumber || existingEpisode?.roomNumber || null,
+          reservationId: row.hotelResNo || existingEpisode?.reservationId || null,
+          programCode: row.programCode || existingEpisode?.programCode || null,
           patientOrigin,
           status: episodeState.status,
           closedAt: episodeState.closedAt,
           ...(checkIn ? { openedAt: checkIn } : {}),
           ...(globalPersonId ? { globalPersonId } : {}),
         };
-        if (episode) {
+        let episodeId = existingEpisode?.id;
+        if (existingEpisode) {
           await tx.clinicalEpisode.update({
-            where: { id: episode.id },
+            where: { id: existingEpisode.id },
             data: episodeFields,
           });
         } else {
-          await tx.clinicalEpisode.create({
+          const created = await tx.clinicalEpisode.create({
             data: {
               organizationId: orgId(),
               patientRefId: id,
               ...episodeFields,
             },
           });
+          episodeId = created.id;
         }
         await ensureCutoverAttendingVisit(tx, {
           patientRefId: id,
@@ -692,6 +699,7 @@ const patientsAdapter: ImportAdapter<{
           roomNumber: episodeFields.roomNumber,
           reservationId: episodeFields.reservationId,
           patientOrigin,
+          clinicalEpisodeId: episodeId,
         });
       },
     ),
@@ -706,8 +714,8 @@ const quotasAdapter: ImportAdapter<{
 }> = {
   entity: "quotas",
   label: "Quotas",
-  order: 40,
-  templateHint: "38-quotas.xlsx",
+  order: 10,
+  templateHint: "25-Quotas.xlsx — derived from WO calendar (not EW)",
   headerAliases: {
     patientRef: "patientRef",
     procedureCode: "procedureCode",
@@ -793,8 +801,8 @@ const slotsAdapter: ImportAdapter<{
 }> = {
   entity: "slots",
   label: "Slots",
-  order: 41,
-  templateHint: "23-slots.xlsx",
+  order: 11,
+  templateHint: "26-Slots.xlsx — WO calendar COMPLETED (not EW)",
   headerAliases: {
     ...aliases(
       "externalRef",
@@ -839,7 +847,8 @@ const slotsAdapter: ImportAdapter<{
     const hhmm = row.startTime.length === 5 ? `${row.startTime}:00` : row.startTime.slice(0, 8);
     const start = parseBakuDateTime(row.date, hhmm);
     const st = row.status.toUpperCase();
-    const historical = st === "COMPLETED" || st === "IMPORTED_DONE";
+    const pastAppointment = start.getTime() < Date.now();
+    const historical = st === "COMPLETED" || st === "IMPORTED_DONE" || pastAppointment;
     const endsAt = new Date(start.getTime() + (proc?.durationMin ?? 10) * 60000);
     return upsertByRef(
       tx,
@@ -847,10 +856,12 @@ const slotsAdapter: ImportAdapter<{
       row.externalRef,
       dryRun,
       async () => {
+        const episode = await ensureCutoverEpisode(tx, patientId);
         const created = await tx.procedureOrder.create({
           data: {
             organizationId: orgId(),
             patientRefId: patientId,
+            clinicalEpisodeId: episode.id,
             procedureTypeId: proc?.id,
             procedureCode: row.procedureCode,
             procedureName: proc?.name ?? row.procedureCode,
@@ -878,6 +889,7 @@ const slotsAdapter: ImportAdapter<{
           where: { id },
           include: { sites: true },
         });
+        const episode = await ensureCutoverEpisode(tx, patientId);
         await tx.procedureOrder.update({
           where: { id },
           data: {
@@ -886,6 +898,7 @@ const slotsAdapter: ImportAdapter<{
             status: historical ? "COMPLETED" : "SCHEDULED",
             importedHistorical: historical,
             resourceId: resource?.id,
+            clinicalEpisodeId: episode.id,
             ...(historical ? { completedAt: start } : {}),
           },
         });
@@ -925,8 +938,8 @@ const labCatalogAdapter: ImportAdapter<{
 }> = {
   entity: "lab-catalog",
   label: "Lab catalog",
-  order: 50,
-  templateHint: "29-Analyses.xlsx",
+  order: 1,
+  templateHint: "16-Diagnostic-Lab-Catalog.xlsx — clinic seed (not EW)",
   headerAliases: aliases("externalRef", "code", "name", "group"),
   rowSchema: z.object({
     externalRef: z.string().min(1),
@@ -983,8 +996,8 @@ const labOrdersAdapter: ImportAdapter<{
 }> = {
   entity: "lab-orders",
   label: "Lab orders",
-  order: 51,
-  templateHint: "24-lab-orders.xlsx",
+  order: 12,
+  templateHint: "27-Lab-Orders.xlsx — WO lab-results dump",
   headerAliases: aliases("externalRef", "patientRef", "testCode", "status", "panel", "takenAt"),
   rowSchema: z.object({
     externalRef: z.string().min(1),
@@ -1025,6 +1038,7 @@ const labOrdersAdapter: ImportAdapter<{
         });
       },
       async (id) => {
+        const episode = await ensureCutoverEpisode(tx, patientId);
         await tx.labOrder.update({
           where: { id },
           data: {
@@ -1033,6 +1047,7 @@ const labOrdersAdapter: ImportAdapter<{
             collectedAt: clinicalAt,
             resultDate: clinicalAt,
             createdAt: clinicalAt,
+            clinicalEpisodeId: episode.id,
             ...(done ? { completedAt: clinicalAt } : {}),
           },
         });
@@ -1052,8 +1067,8 @@ const labResultsAdapter: ImportAdapter<{
 }> = {
   entity: "lab-results",
   label: "Lab result fields",
-  order: 52,
-  templateHint: "39-lab-results.xlsx",
+  order: 13,
+  templateHint: "28-Lab-Results.xlsx — WO Word tables",
   headerAliases: aliases("orderRef", "code", "label", "value", "unit", "refMin", "refMax"),
   rowSchema: z.object({
     orderRef: z.string().min(1),
@@ -1141,8 +1156,8 @@ const diagnosticsAdapter: ImportAdapter<{
 }> = {
   entity: "diagnostics",
   label: "Diagnostics",
-  order: 53,
-  templateHint: "31-Diagnostics.xlsx",
+  order: 14,
+  templateHint: "29-Diagnostics.xlsx — WO Müayinə Anketi (USG)",
   headerAliases: aliases("externalRef", "patientRef", "code", "name", "resultText", "resultJson", "takenAt"),
   rowSchema: z.object({
     externalRef: z.string().min(1),
@@ -1213,6 +1228,7 @@ const diagnosticsAdapter: ImportAdapter<{
         return id;
       },
       async (id) => {
+        const episode = await ensureCutoverEpisode(tx, patientId);
         await tx.labOrder.update({
           where: { id },
           data: {
@@ -1222,6 +1238,7 @@ const diagnosticsAdapter: ImportAdapter<{
             resultDate: clinicalAt,
             createdAt: clinicalAt,
             completedAt: clinicalAt,
+            clinicalEpisodeId: episode.id,
           },
         });
         await persistImagingResultLines(tx, id, lines);
@@ -1238,8 +1255,8 @@ const diagnosesAdapter: ImportAdapter<{
 }> = {
   entity: "diagnoses",
   label: "Diagnoses",
-  order: 60,
-  templateHint: "32-Diagnoses.xlsx",
+  order: 99,
+  templateHint: "skip — leftover diagnoses (not Nafta Apply)",
   headerAliases: aliases("patientRef", "rawText", "icd10", "recordedAt"),
   rowSchema: z.object({
     patientRef: z.string().min(1),
@@ -1286,15 +1303,255 @@ const diagnosesAdapter: ImportAdapter<{
   },
 };
 
+const physioSitesAdapter: ImportAdapter<{
+  code: string;
+  kind: string;
+  prikaz817: number | null;
+  laterality: boolean;
+  titleAz: string;
+  titleRu: string;
+  titleEn: string;
+  titleLa: string;
+  boundary: string | null;
+  coarse: string[];
+  woAliases: string[];
+  sortOrder: number;
+}> = {
+  entity: "physio-sites",
+  label: "Physio sites",
+  order: 2,
+  templateHint: "17-Physio-Sites.xlsx — seed physio-zones-s.json (not EW)",
+  headerAliases: aliases(
+    "code",
+    "kind",
+    "prikaz817",
+    "laterality",
+    "titleAz",
+    "titleRu",
+    "titleEn",
+    "titleLa",
+    "boundary",
+    "coarse",
+    "woAliases",
+    "sortOrder",
+  ),
+  rowSchema: z.object({
+    code: z.string().min(1),
+    kind: z.string(),
+    prikaz817: z.number().nullable(),
+    laterality: z.boolean(),
+    titleAz: z.string().min(1),
+    titleRu: z.string(),
+    titleEn: z.string(),
+    titleLa: z.string(),
+    boundary: z.string().nullable(),
+    coarse: z.array(z.string()),
+    woAliases: z.array(z.string()),
+    sortOrder: z.number(),
+  }),
+  mapRow: (raw) => {
+    const split = (value: unknown) =>
+      (cellString(value) ?? "")
+        .split(/[|,]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    return {
+      code: req(raw.code).toUpperCase(),
+      kind: cellString(raw.kind) ?? "USSR-817",
+      prikaz817: cellNumber(raw.prikaz817),
+      laterality: cellBool(raw.laterality),
+      titleAz: req(raw.titleAz),
+      titleRu: cellString(raw.titleRu) ?? "",
+      titleEn: cellString(raw.titleEn) ?? "",
+      titleLa: cellString(raw.titleLa) ?? "",
+      boundary: cellString(raw.boundary),
+      coarse: split(raw.coarse).map((s) => s.toUpperCase()),
+      woAliases: split(raw.woAliases),
+      sortOrder: cellNumber(raw.sortOrder) ?? 0,
+    };
+  },
+  upsert: async (tx, row, dryRun) => {
+    const existing = await tx.physioSite.findUnique({
+      where: { organizationId_code: { organizationId: orgId(), code: row.code } },
+    });
+    if (dryRun) return existing ? "updated" : "created";
+    const site = await tx.physioSite.upsert({
+      where: { organizationId_code: { organizationId: orgId(), code: row.code } },
+      create: {
+        organizationId: orgId(),
+        code: row.code,
+        kind: row.kind,
+        prikaz817: row.prikaz817,
+        laterality: row.laterality,
+        titleAz: row.titleAz,
+        titleRu: row.titleRu,
+        titleEn: row.titleEn,
+        titleLa: row.titleLa,
+        boundary: row.boundary,
+        coarse: row.coarse,
+        sortOrder: row.sortOrder,
+      },
+      update: {
+        kind: row.kind,
+        prikaz817: row.prikaz817,
+        laterality: row.laterality,
+        titleAz: row.titleAz,
+        titleRu: row.titleRu,
+        titleEn: row.titleEn,
+        titleLa: row.titleLa,
+        boundary: row.boundary,
+        coarse: row.coarse,
+        sortOrder: row.sortOrder,
+        active: true,
+      },
+    });
+    await tx.physioSiteAlias.deleteMany({ where: { siteId: site.id } });
+    if (row.woAliases.length) {
+      await tx.physioSiteAlias.createMany({
+        data: row.woAliases.map((alias) => ({
+          organizationId: orgId(),
+          siteId: site.id,
+          alias: alias.toLowerCase(),
+        })),
+        skipDuplicates: true,
+      });
+    }
+    return existing ? "updated" : "created";
+  },
+};
+
+const programTemplatesAdapter: ImportAdapter<{
+  templateCode: string;
+  templateName: string;
+  minNights: number;
+  maxNights: number;
+  durationDays: number;
+  nights: number;
+  procedureCode: string;
+  procedureName: string;
+  qty: number;
+}> = {
+  entity: "program-templates",
+  label: "Program templates",
+  order: 8,
+  templateHint: "23-Program-Templates.xlsx — PDF package_inclusion (not EW)",
+  headerAliases: aliases(
+    "templateCode",
+    "templateName",
+    "minNights",
+    "maxNights",
+    "durationDays",
+    "nights",
+    "procedureCode",
+    "procedureName",
+    "qty",
+  ),
+  rowSchema: z.object({
+    templateCode: z.string().min(1),
+    templateName: z.string().min(1),
+    minNights: z.number(),
+    maxNights: z.number(),
+    durationDays: z.number(),
+    nights: z.number(),
+    procedureCode: z.string().min(1),
+    procedureName: z.string().min(1),
+    qty: z.number(),
+  }),
+  mapRow: (raw) => ({
+    templateCode: req(raw.templateCode).toUpperCase(),
+    templateName: req(raw.templateName),
+    minNights: cellNumber(raw.minNights) ?? 5,
+    maxNights: cellNumber(raw.maxNights) ?? 21,
+    durationDays: cellNumber(raw.durationDays) ?? 10,
+    nights: cellNumber(raw.nights) ?? 0,
+    procedureCode: req(raw.procedureCode),
+    procedureName: req(raw.procedureName),
+    qty: cellNumber(raw.qty) ?? 0,
+  }),
+  upsert: async (tx, row, dryRun) => {
+    if (dryRun) return "updated";
+    let template = await tx.programTemplate.findFirst({
+      where: { organizationId: orgId(), code: row.templateCode },
+    });
+    if (!template) {
+      template = await tx.programTemplate.create({
+        data: {
+          organizationId: orgId(),
+          code: row.templateCode,
+          name: row.templateName,
+          durationDays: row.durationDays,
+          minNights: row.minNights,
+          maxNights: row.maxNights,
+        },
+      });
+    } else {
+      await tx.programTemplate.update({
+        where: { id: template.id },
+        data: {
+          name: row.templateName,
+          durationDays: row.durationDays,
+          minNights: row.minNights,
+          maxNights: row.maxNights,
+        },
+      });
+    }
+    const line = await tx.programTemplateProcedure.findFirst({
+      where: { templateId: template.id, procedureCode: row.procedureCode },
+    });
+    if (!line) {
+      await tx.programTemplateProcedure.create({
+        data: {
+          templateId: template.id,
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          quotaTotal: row.qty,
+        },
+      });
+    } else if (row.qty > line.quotaTotal) {
+      await tx.programTemplateProcedure.update({
+        where: { id: line.id },
+        data: { quotaTotal: row.qty, procedureName: row.procedureName },
+      });
+    }
+    const knot = await tx.programTemplateQuotaKnot.findUnique({
+      where: {
+        templateId_nights_procedureCode: {
+          templateId: template.id,
+          nights: row.nights,
+          procedureCode: row.procedureCode,
+        },
+      },
+    });
+    if (knot) {
+      await tx.programTemplateQuotaKnot.update({
+        where: { id: knot.id },
+        data: { qty: row.qty },
+      });
+      return "updated";
+    }
+    await tx.programTemplateQuotaKnot.create({
+      data: {
+        templateId: template.id,
+        nights: row.nights,
+        procedureCode: row.procedureCode,
+        qty: row.qty,
+      },
+    });
+    return "created";
+  },
+};
+
 const ADAPTERS = [
+  labCatalogAdapter,
+  physioSitesAdapter,
   proceduresAdapter,
   roomsAdapter,
   procedureRequirementsAdapter,
+  programTemplatesAdapter,
   practitionersAdapter,
   patientsAdapter,
   quotasAdapter,
   slotsAdapter,
-  labCatalogAdapter,
   labOrdersAdapter,
   labResultsAdapter,
   diagnosticsAdapter,

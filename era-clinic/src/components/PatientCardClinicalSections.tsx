@@ -145,9 +145,19 @@ function typeDot(type: string): string {
 type Props = {
   patientRefId: string;
   panel?: string | null;
+  episodeId?: string | null;
+  /** When false, confirm procedures buttons are disabled (ANAMNESIS_REQUIRED). */
+  anamnesisOk?: boolean;
+  readOnly?: boolean;
 };
 
-export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
+export function PatientCardClinicalSections({
+  patientRefId,
+  panel,
+  episodeId,
+  anamnesisOk = true,
+  readOnly = false,
+}: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -273,13 +283,14 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/patients/${patientRefId}/card-summary`);
+    const q = episodeId ? `?episode=${encodeURIComponent(episodeId)}` : "";
+    const res = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
     const data = await res.json();
     const row = (data.data ?? data) as CardSummary;
     setSummary(row);
     mergePhysioFromEvents([...(row.proposedPreview ?? []), ...(row.planPreview ?? [])]);
     setLoading(false);
-  }, [patientRefId, mergePhysioFromEvents]);
+  }, [patientRefId, episodeId, mergePhysioFromEvents]);
 
   async function patchPhysio(
     orderId: string,
@@ -380,6 +391,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
         offset: String(offset),
       });
       if (fromIso) params.set("from", fromIso);
+      if (episodeId) params.set("episode", episodeId);
       const res = await fetch(`/api/patients/${patientRefId}/card-feed?${params}`);
       const data = await res.json();
       const row = data.data ?? data;
@@ -389,7 +401,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       setHistHasMore(Boolean(row.hasMore));
       setHistLoading(false);
     },
-    [patientRefId, histTypes, labFilter, fromIso, histOffset],
+    [patientRefId, episodeId, histTypes, labFilter, fromIso, histOffset],
   );
 
   const loadPlan = useCallback(
@@ -400,6 +412,7 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
         section: "plan",
         offset: String(offset),
       });
+      if (episodeId) params.set("episode", episodeId);
       const res = await fetch(`/api/patients/${patientRefId}/card-feed?${params}`);
       const data = await res.json();
       const row = data.data ?? data;
@@ -410,18 +423,18 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
     },
-    [patientRefId, planOffset, mergePhysioFromEvents],
+    [patientRefId, episodeId, planOffset, mergePhysioFromEvents],
   );
 
   useEffect(() => {
     if (historyOpen) void loadHistory(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- open + filters only
-  }, [historyOpen, histTypes, labFilter, period]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset feed when filters/episode change
+  }, [historyOpen, histTypes, labFilter, period, episodeId]);
 
   useEffect(() => {
     if (planOpen) void loadPlan(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planOpen]);
+  }, [planOpen, episodeId]);
 
   if (loading || !summary) {
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
@@ -554,7 +567,11 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            onClick={() => openPrint(`/print/checkup/${patientRefId}`)}
+            onClick={() =>
+              openPrint(
+                `/print/checkup/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
+              )
+            }
           >
             {t("printCheckup", { defaultValue: "Print check-up" })}
           </button>
@@ -622,7 +639,11 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
-              onClick={() => openPrint(`/print/checkup/${patientRefId}`)}
+              onClick={() =>
+              openPrint(
+                `/print/checkup/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
+              )
+            }
             >
               {t("printCheckup", { defaultValue: "Print check-up" })}
             </button>
@@ -678,16 +699,29 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
-                disabled={confirmBusy || selectedProposed.size === 0}
+                disabled={
+                  confirmBusy ||
+                  selectedProposed.size === 0 ||
+                  !anamnesisOk ||
+                  readOnly
+                }
                 onClick={() => void confirmOrders([...selectedProposed])}
               >
                 {t("confirmSelected", { defaultValue: "Confirm selected" })}
               </button>
+              {!anamnesisOk ? (
+                <p className={`text-[12px] text-amber-700`}>
+                  {t("anamnesisRequiredForConfirm", {
+                    defaultValue: "Fill anamnesis for this course before confirming procedures.",
+                  })}
+                </p>
+              ) : (
               <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                 {t("firstDayConfirmHint", {
                   defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
                 })}
               </p>
+              )}
             </div>
           ) : null}
         </div>
@@ -754,7 +788,11 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            onClick={() => openPrint(`/print/procedures/${patientRefId}`)}
+            onClick={() =>
+              openPrint(
+                `/print/procedures/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
+              )
+            }
           >
             {t("printProcedures", { defaultValue: "Print schedule" })}
           </button>
@@ -898,16 +936,29 @@ export function PatientCardClinicalSections({ patientRefId, panel }: Props) {
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
-                disabled={confirmBusy || selectedProposed.size === 0}
+                disabled={
+                  confirmBusy ||
+                  selectedProposed.size === 0 ||
+                  !anamnesisOk ||
+                  readOnly
+                }
                 onClick={() => void confirmOrders([...selectedProposed])}
               >
                 {t("confirmSelected", { defaultValue: "Confirm selected" })}
               </button>
+              {!anamnesisOk ? (
+                <p className={`text-[12px] text-amber-700`}>
+                  {t("anamnesisRequiredForConfirm", {
+                    defaultValue: "Fill anamnesis for this course before confirming procedures.",
+                  })}
+                </p>
+              ) : (
               <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                 {t("firstDayConfirmHint", {
                   defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
                 })}
               </p>
+              )}
             </div>
           );
         })()}
