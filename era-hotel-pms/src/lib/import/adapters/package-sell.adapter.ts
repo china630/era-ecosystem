@@ -85,6 +85,7 @@ export const packageSellAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         },
       });
     }
+    if (!plan) throw new Error(`Rate plan missing: ${row.packageCode}`);
     const effectiveFrom = seasonFrom(row.season);
     const note = [row.season, row.roomType, row.source].filter(Boolean).join(" | ") || null;
     const existing = await tx.ratePlanSellVersion.findFirst({
