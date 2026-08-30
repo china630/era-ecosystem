@@ -1,0 +1,30 @@
+{
+  "total": 1678,
+  "withMigrationSku": 1151,
+  "agencyPrefixHits": 140,
+  "mixHints": 95,
+  "leisureSkip": 207,
+  "needsFoReview": 707,
+  "coveragePct": 68.6,
+  "bySku": {
+    "PKG-DERMO": 70,
+    "PKG-STANDART": 931,
+    "PKG-PREMIUM": 149,
+    "PKG-DETOKS": 1
+  },
+  "bySource": {
+    "agency-prefix": 140,
+    "price-note": 790,
+    "agency-medical-default": 167,
+    "leisure-skip": 207,
+    "phrase": 50,
+    "price-mix": 38,
+    "mix-hint": 14,
+    "ERA-PKG": 4
+  },
+  "byConf": {
+    "high": 490,
+    "med": 368,
+    "low": 345
+  }
+}

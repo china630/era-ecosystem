@@ -61,6 +61,17 @@ describe("medical-package-resolve", () => {
     expect(resolveAgencyPackageCode("Premium Facebook")).toBe("PKG-PREMIUM");
   });
 
+  it("agency token anywhere: Premium/Dermo mid-name", () => {
+    expect(resolveAgencyPackageCode("Premium Naftalan Kamel")).toBe("PKG-PREMIUM");
+    expect(resolveAgencyPackageCode("Premium Sultan Travel medical")).toBe(
+      "PKG-PREMIUM",
+    );
+    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Sanatoriums booking leisure")).toBeNull();
+    expect(resolveAgencyPackageCode("Walkin medical")).toBeNull();
+  });
+
   it("Həmkarlar falls back to STANDART when no Extra Req", () => {
     const r = resolveMedicalSku({
       notes: [],
