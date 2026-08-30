@@ -12,6 +12,7 @@
     "tables": "Tables",
     "dailyMenu": "Daily menu",
     "integration": "Integration",
+    "import": "Cutover import",
     "calendar": "Reservations",
     "brand": "ERA F&B POS"
   },
@@ -294,5 +295,45 @@
         "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
       }
     }
+  },
+  "cutoverImport": {
+    "title": "Elektraweb import",
+    "subtitle": "Nafta cutover — upload READY #30–#32 in order. Idempotent upsert.",
+    "loading": "Loading…",
+    "loadError": "Failed to load import catalog",
+    "superAdminOnly": "Platform super-admin or F&B manager only",
+    "intro": "Work one phase at a time. Progress is saved in this browser.",
+    "verifyMasterData": "Verify menu",
+    "resetProgress": "Reset progress",
+    "resetConfirm": "Clear saved import progress for this browser?",
+    "coaNote": "Walk-in POS only (999 FB / Xudmani CASH). Named in-house extras stay on hotel folio #13. Re-uploading updates existing rows.",
+    "templateFile": "Template",
+    "preview": "Preview",
+    "importConfirm": "Import",
+    "back": "Back",
+    "reimport": "Re-import",
+    "rows": "Rows",
+    "created": "Created",
+    "updated": "Updated",
+    "skipped": "Skipped",
+    "errors": "Errors",
+    "stepCompleted": "Imported — created {created}, updated {updated}, errors {errors}",
+    "orderWarning": "Recommended: complete these steps first: {steps}",
+    "pickFileHint": "Elektraweb .xlsx export for this step.",
+    "pickFileHintMultiple": "Select multiple files at once.",
+    "runBootstrap": "Run bootstrap",
+    "phase": {
+      "catalog": {
+        "title": "Phase 1 — Menu catalog",
+        "hint": "Groups then product cards (#30 then #31)."
+      },
+      "archive": {
+        "title": "Phase 2 — POS archive",
+        "hint": "#32 FnB Transactions — walk-in cheques, not hotel folio."
+      }
+    },
+    "nextPhase": "Next phase",
+    "prevPhase": "Previous phase",
+    "phaseProgress": "Phase {current} of {total}"
   }
 }

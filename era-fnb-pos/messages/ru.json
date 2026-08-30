@@ -22,6 +22,7 @@
     "tables": "Столы",
     "dailyMenu": "Меню дня",
     "integration": "Интеграция",
+    "import": "Импорт cutover",
     "calendar": "Бронь столов",
     "brand": "ERA F&B POS"
   },
@@ -254,5 +255,45 @@
     "localeAz": "AZ",
     "localeRu": "RU",
     "localeEn": "EN"
+  },
+  "cutoverImport": {
+    "title": "Импорт Elektraweb",
+    "subtitle": "Cutover Nafta — загрузите READY #30–#32 по порядку. Идемпотентный upsert.",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить каталог импорта",
+    "superAdminOnly": "Только супер-админ платформы или менеджер F&B",
+    "intro": "Работайте по одной фазе. Прогресс сохраняется в браузере.",
+    "verifyMasterData": "Проверить меню",
+    "resetProgress": "Сбросить прогресс",
+    "resetConfirm": "Очистить сохранённый прогресс импорта в этом браузере?",
+    "coaNote": "Только walk-in POS (999 FB / Xudmani CASH). Именные in-house extras остаются на hotel folio #13. Повторная загрузка обновляет строки.",
+    "templateFile": "Шаблон",
+    "preview": "Превью",
+    "importConfirm": "Импорт",
+    "back": "Назад",
+    "reimport": "Перезагрузить",
+    "rows": "Строк",
+    "created": "Создано",
+    "updated": "Обновлено",
+    "skipped": "Пропущено",
+    "errors": "Ошибки",
+    "stepCompleted": "Импортировано — создано {created}, обновлено {updated}, ошибок {errors}",
+    "orderWarning": "Рекомендуется сначала выполнить: {steps}",
+    "pickFileHint": "Выгрузка Elektraweb .xlsx для этого шага.",
+    "pickFileHintMultiple": "Можно выбрать несколько файлов сразу.",
+    "runBootstrap": "Запустить bootstrap",
+    "phase": {
+      "catalog": {
+        "title": "Фаза 1 — Меню",
+        "hint": "Группы, затем карточки (#30, затем #31)."
+      },
+      "archive": {
+        "title": "Фаза 2 — Архив POS",
+        "hint": "#32 FnB Transactions — walk-in чеки, не hotel folio."
+      }
+    },
+    "nextPhase": "Следующая фаза",
+    "prevPhase": "Предыдущая фаза",
+    "phaseProgress": "Фаза {current} из {total}"
   }
 }

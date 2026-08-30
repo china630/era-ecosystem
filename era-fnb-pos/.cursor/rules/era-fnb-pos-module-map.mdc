@@ -6,6 +6,7 @@
 | `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel | Waiter / manager |
 | `/kds` | kds fire | Kitchen |
 | `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — categories/items modal CRUD, price history, recipeSku, imageUrl |
+| `/admin/import` | `/api/import`, `/api/import/[entity]` | Manager / super-admin — Nafta cutover `#30`–`#32` (groups, cards, walk-in cheques) |
 | `/admin/tables` | `/api/tables`, `/api/tables/[id]` | Manager — static table master CRUD |
 | `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |
 | `/admin/settings` | outlet config | Admin |
