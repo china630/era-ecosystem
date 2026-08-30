@@ -55,6 +55,12 @@ export const CLINIC_MODULE_BY_ROUTE: Record<string, string> = {
   "/telehealth": "clinic_telehealth",
   "/ehr": "clinic_ehr",
   "/insurance": "clinic_insurance",
+  "/api/cron/procedure-auto-complete": "clinic_appointments",
+  "/api/cron/procedure-no-show-sweep": "clinic_appointments",
+  "/api/cron/episode-walkin-close": "clinic_inpatient",
+  "/api/cron/appointment-reminders": "clinic_notifications",
+  "/api/cron/inpatient-daily-charges": "clinic_inpatient",
+  "/api/cron/catalog-sync": "clinic_service_catalog",
 };
 
 export function resolveClinicModuleForPathname(pathname: string): string | null {
