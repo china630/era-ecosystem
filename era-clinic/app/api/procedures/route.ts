@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   jsonOk,
+  jsonError,
   handleRouteError,
   getRouteSession,
   requireClinicRole,
@@ -191,6 +192,26 @@ export async function POST(req: Request) {
   try {
     await getRouteSession();
     const body = createSchema.parse(await req.json());
+
+    // Wave C/E: package-quota codes cannot land SCHEDULED via manual POST — doctor confirm only.
+    // Scope balance to this patient's OPEN instance when patientRefId known (not reservation findFirst).
+    if (body.reservationId || body.patientRefId) {
+      const balance = await prisma.programProcedureBalance.findFirst({
+        where: {
+          procedureCode: body.procedureCode,
+          instance: body.patientRefId
+            ? { episode: { patientRefId: body.patientRefId, status: "OPEN" } }
+            : { reservationId: body.reservationId! },
+        },
+      });
+      if (balance && balance.quotaUsed < balance.quotaTotal) {
+        return jsonError(
+          "Package procedures must be doctor-confirmed from PROPOSED (cannot manual-schedule in-quota codes)",
+          409,
+        );
+      }
+    }
+
     let amountNet = body.amountNet;
     if (amountNet == null) {
       const resolved = await resolveProcedureAmount(body.procedureCode);

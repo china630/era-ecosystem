@@ -23,6 +23,8 @@ export type PaxRow = {
   isPrimary: boolean;
   /** Owns a personal GUEST folio (EQUAL: all; PRIMARY: only primary). */
   ownsFolio?: boolean;
+  /** Medical package SKU (PKG-STANDART | PKG-PREMIUM | PKG-DERMO | PKG-DETOKS). */
+  medicalPackageCode?: string;
 };
 
 export type DailyRateRow = {

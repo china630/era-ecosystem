@@ -73,6 +73,10 @@ model Tenant {
   printSignatureDoctor     String?                  @map("print_signature_doctor")
   /// Ordered checkup sections JSON: [{ specialty, enabled }]
   checkupSectionsJson      String?                  @map("checkup_sections_json") @db.Text
+  /// Doctor bonus % of COMPLETED extras (IN_HOUSE) — Wave D; default 0 until FO sets
+  doctorBonusPercentInHouse Float                   @default(0) @map("doctor_bonus_percent_in_house")
+  /// Doctor bonus % of COMPLETED extras (WALK_IN) — Wave D; default 0 until FO sets
+  doctorBonusPercentWalkIn  Float                   @default(0) @map("doctor_bonus_percent_walk_in")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
   icdFavoriteCodes         String[]                 @default([]) @map("icd_favorite_codes")
   icd10Version             String?                  @map("icd10_version")
@@ -757,6 +761,7 @@ model ClinicalEpisode {
 
   @@index([reservationId])
   @@index([organizationId, status])
+  @@index([reservationId, patientRefId, status])
 }
 
 model ClinicalComplaint {
@@ -1249,10 +1254,26 @@ model ProgramTemplate {
   code        String
   name        String
   durationDays Int
+  /** Wave B — PDF stay window; instantiate refuses below min, clamps to max. */
+  minNights   Int?
+  maxNights   Int?
   procedures  ProgramTemplateProcedure[]
+  quotaKnots  ProgramTemplateQuotaKnot[]
   instances   ProgramInstance[]
   @@unique([organizationId, code])
   @@index([organizationId])
+}
+
+model ProgramTemplateQuotaKnot {
+  id            String          @id @default(cuid())
+  templateId    String
+  nights        Int
+  procedureCode String
+  qty           Int
+  template      ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, nights, procedureCode])
+  @@index([templateId])
 }
 
 model ProgramTemplateProcedure {
@@ -1260,6 +1281,7 @@ model ProgramTemplateProcedure {
   templateId       String
   procedureCode    String
   procedureName    String
+  /** Legacy flat qty — Wave B live SoT is ProgramTemplateQuotaKnot. */
   quotaTotal       Int
   minGapMinutes    Int?
   avoidAfterHour   Int?
@@ -1316,6 +1338,8 @@ model ProcedureOrder {
   /// 5-char access code (Crockford-like, case-insensitive) assigned when the order becomes SCHEDULED.
   accessCode      String?             @map("access_code")
   amountNet        Decimal              @default(0) @db.Decimal(12, 2)
+  /// Wave D: true when COMPLETED extra (over-quota / not-in-package / 4th same-day) — doctor bonus.
+  bonusEligible    Boolean              @default(false) @map("bonus_eligible")
   /// Therapist instruction / clinical note for print schedule
   note             String?              @db.Text
   /// Type-gated physio values (program, substance, work-kind, …). W3.

@@ -17,6 +17,15 @@ const createSchema = z.object({
       }),
     )
     .default([]),
+  knots: z
+    .array(
+      z.object({
+        nights: z.number().int().positive(),
+        procedureCode: z.string().min(1),
+        qty: z.number().int().nonnegative(),
+      }),
+    )
+    .optional(),
 });
 
 export async function GET() {
@@ -25,7 +34,7 @@ export async function GET() {
     if (guard.error) return guard.error;
     const rows = await prisma.programTemplate.findMany({
       orderBy: { code: "asc" },
-      include: { procedures: true },
+      include: { procedures: true, quotaKnots: true },
     });
     return jsonOk(rows);
   } catch (err) {
@@ -44,8 +53,19 @@ export async function POST(req: Request) {
         name: body.name,
         durationDays: body.durationDays,
         procedures: { create: body.procedures },
+        ...(body.knots?.length
+          ? {
+              quotaKnots: {
+                create: body.knots.map((k) => ({
+                  nights: k.nights,
+                  procedureCode: k.procedureCode,
+                  qty: k.qty,
+                })),
+              },
+            }
+          : {}),
       },
-      include: { procedures: true },
+      include: { procedures: true, quotaKnots: true },
     });
     return jsonOk(row, 201);
   } catch (err) {

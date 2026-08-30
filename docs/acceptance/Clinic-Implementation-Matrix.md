@@ -21,13 +21,23 @@
 | AC-CLI-PT | Patients / clinical card / demographics | ✅ | [ ] | `__tests__/cli-pt-negative.spec.ts` + CLI-06,25,28,40 | Negative: module gate; MDM identifier / anamnesis deny; visit diagnoses CLI-40 (`__tests__/icd10-catalog.spec.ts`); card ICD write without open episode |
 | AC-CLI-LAB | Lab orders ops + diagnostic catalog | ✅ | [ ] | `__tests__/cli-lab-negative.spec.ts` + CLI-11,12,32 | **Ops only** — illegal publish / collect / complete; not live HL7 |
 | AC-CLI-SAN | Sanatorium chart + doctor-confirm FIFO | ✅ | [ ] | `__tests__/cli-san-negative.spec.ts` + CLI-13,31,38,39 | Negative: FIFO skip → 409; module gate; ICD empty/chapter reject (`__tests__/icd10-catalog.spec.ts`) |
+| AC-CLI-SAN-PKG | Staff assign 4 Nafta SKUs + episode without hotel program (Wave A) | 🟡 | [ ] | `cli-san-negative` unknown template; CLI-50 | **Out of AC-CLI-SAN rollup** — dual-run assign; do not flip SAN |
+| AC-CLI-SAN-QUOTA | PDF knots + nights recalc + charge by quota (Wave B) | 🟡 | [ ] | `__tests__/program-quota.spec.ts`; CLI-51 | **Out of AC-CLI-SAN rollup** |
+| AC-CLI-SAN-DAY1 | Doctor first-day 2–3 confirm; no Confirm all (Wave C) | 🟡 | [ ] | FIFO gates unchanged; CLI-52 | **Out of AC-CLI-SAN rollup** — does not reopen SAN ✅ |
+| AC-CLI-BONUS | Doctor bonus extras-only buckets (Wave D) | 🟡 | [ ] | CLI-53; bonusEligible | **Out of AC-CLI-SAN rollup** |
+| AC-CLI-SAN-PAX | One stay two episodes (Wave E) | 🟡 | [ ] | CLI-54; openEpisode per patient | **Out of AC-CLI-SAN rollup** |
 | AC-CLI-CASH | Cashier settle / ops | ✅ | [ ] | `__tests__/cli-cash-negative.spec.ts` + CLI-33 | **Settle/ops only** — visit/shift deny; live fiscal = External |
 | AC-CLI-PRINT | Print forms + branding | ✅ | [ ] | `__tests__/cli-print-negative.spec.ts` + CLI-34 | Negative: missing source; unsupported lang |
 | AC-CLI-CAP | Clinic→hotel capacity foresight | ✅ | [ ] | `__tests__/cli-cap-negative.spec.ts` + CLI-27 | Negative: critical risk blocks booking |
 | AC-CLI-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 2 clinic login/JWT/`enterSatelliteTenant` + lifecycle ALS; Wave 4 cron + capacity POST multi-org; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 
-**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT) → **✅**.  
-AC-CLI-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  
+**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT, AC-CLI-SAN-PKG, AC-CLI-SAN-QUOTA, AC-CLI-SAN-DAY1, AC-CLI-BONUS, AC-CLI-SAN-PAX) → **✅**.
+AC-CLI-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.
+AC-CLI-SAN-PKG is 🟡 and stays **out of Scaffold BE rollup** (does not reopen AC-CLI-SAN).
+AC-CLI-SAN-QUOTA is 🟡 and stays **out of Scaffold BE rollup**.
+AC-CLI-SAN-DAY1 is 🟡 and stays **out of Scaffold BE rollup**.
+AC-CLI-BONUS is 🟡 and stays **out of Scaffold BE rollup**.
+AC-CLI-SAN-PAX is 🟡 and stays **out of Scaffold BE rollup**.
 Do not call this table «product readiness».
 
 ### Residual register

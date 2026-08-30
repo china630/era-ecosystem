@@ -637,12 +637,15 @@
     "colStatus": "Status",
     "sexRequired": "Cins seçilməlidir",
     "walkInSexEmpty": "Seçin…",
-    "programSelect": "Proqram",
+    "programSelect": "Proqram / tibbi paket",
+    "programSelectHint": "PKG-STANDART, PKG-PREMIUM, PKG-DERMO və ya PKG-DETOKS",
     "finOrPassportRequired": "FIN və ya pasport tələb olunur",
     "proposedPlanTitle": "Təklif olunan plan",
     "proposedEmpty": "Təklif olunan prosedur yoxdur.",
     "confirmSelected": "Seçilənləri təsdiqlə",
     "confirmAll": "Hamısını təsdiqlə",
+    "firstDayConfirmHint": "Birinci gün: 2–3 prosedur təsdiqləyin (FIFO prefiks).",
+    "day1SoftWarn": "Plan təsdiqləndi (yumşaq xəbərdarlıq: Nafta birinci gün defolt 2–3 prosedur).",
     "planConfirmed": "Plan təsdiqləndi",
     "statusProposed": "Təklif",
     "bulkCancel": "Kütləvi ləğv",
@@ -678,6 +681,11 @@
     "defaultProcedureGapMinutes": "Yeni prosedur tipləri üçün kabinə boşluğu (dəqiqə)",
     "defaultAppointmentSlotMinutes": "Qəbul slotu müddəti (dəqiqə)",
     "procedureCheckInMode": "Prosedur çek-in rejimi",
+    "programSchedulingMode": "Proqram planlaşdırma rejimi",
+    "programSchedulingModeAfterCheckup": "AFTER_CHECKUP (Nafta — müayinədən sonra)",
+    "programSchedulingModeOnCheckin": "ON_CHECKIN (çek-ində yerləşdir)",
+    "doctorBonusPercentInHouse": "Həkim bonusu % (otel ekstra)",
+    "doctorBonusPercentWalkIn": "Həkim bonusu % (walk-in ekstra)",
     "peakModeEnabled": "Pik rejim aktivdir",
     "peakDayEndHour": "Pik günün bitmə saatı",
     "printBrandTitle": "Çap brendinqi",
@@ -1168,6 +1176,8 @@
     "proposedEmpty": "Təsdiq gözləyən təklif olunan prosedur yoxdur.",
     "confirmSelected": "Seçilənləri təsdiqlə",
     "confirmAll": "Hamısını təsdiqlə",
+    "firstDayConfirmHint": "Birinci gün: 2–3 prosedur təsdiqləyin (FIFO prefiks).",
+    "day1SoftWarn": "Plan təsdiqləndi (yumşaq xəbərdarlıq: Nafta birinci gün defolt 2–3 prosedur).",
     "confirmOk": "Plan təsdiqləndi",
     "confirmFailed": "Təsdiq alınmadı",
     "bodyPart": "Bədən hissəsi",
@@ -1277,10 +1287,19 @@
     "specialty": "İxtisas",
     "name": "Ad",
     "durationDays": "Gün",
+    "minNights": "Min gecə",
+    "maxNights": "Max gecə",
+    "proceduresJson": "Prosedurlar JSON (çox sətir — silinməsin)",
+    "knotsJson": "Kvota düyünləri JSON (gecə × prosedur × qty)",
     "procedureCode": "Prosedur kodu",
     "quotaTotal": "Kvota",
     "procedureName": "Prosedur adı",
-    "bodyJson": "Body JSON"
+    "bodyJson": "Body JSON",
+    "proceduresMatrix": "Prosedurlar",
+    "knotsMatrix": "Kvota düyünləri (gecə × say)",
+    "addProcedure": "Prosedur əlavə et",
+    "addProcedureFirst": "Əvvəlcə prosedur əlavə edin",
+    "customNights": "Digər gecə"
   },
   "audit": {
     "title": "Audit jurnalı",
@@ -1363,11 +1382,26 @@
     "nextPhase": "Növbəti faza",
     "coaNote": "Ops həftə: 24–31.08.2026 SCHEDULED. Keçmiş COMPLETED folio-suz.",
     "phase": {
-      "dictionaries": { "title": "Soraqçalar", "hint": "25 prosedur, 26 otaq, 40 prosedur→otaq tələbləri" },
-      "master": { "title": "Heyət", "hint": "Həkimlər (03)" },
-      "patients": { "title": "Pasiyentlər", "hint": "In-house (04)" },
-      "quotas": { "title": "Kvota və slotlar", "hint": "05 sonra 06. Kvota iki dəfə yanmasın." },
-      "clinical": { "title": "Lab və diaqnozlar", "hint": "07–10" }
+      "dictionaries": {
+        "title": "Soraqçalar",
+        "hint": "25 prosedur, 26 otaq, 40 prosedur→otaq tələbləri"
+      },
+      "master": {
+        "title": "Heyət",
+        "hint": "Həkimlər (03)"
+      },
+      "patients": {
+        "title": "Pasiyentlər",
+        "hint": "In-house (04)"
+      },
+      "quotas": {
+        "title": "Kvota və slotlar",
+        "hint": "05 sonra 06. Kvota iki dəfə yanmasın."
+      },
+      "clinical": {
+        "title": "Lab və diaqnozlar",
+        "hint": "07–10"
+      }
     }
   }
 }

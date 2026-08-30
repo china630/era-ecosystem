@@ -208,6 +208,8 @@ const guestLifecycleBasePayload = z.object({
   guestName: z.string().optional(),
   checkInDate: z.string().optional(),
   checkOutDate: z.string().optional(),
+  /** Wave E — stable pax id when no MDM (ReservationGuest.id). One check-in event per pax. */
+  paxKey: z.string().min(1).optional(),
 });
 
 export const SATELLITE_HOTEL_GUEST_CHECKED_IN =

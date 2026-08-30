@@ -59,6 +59,8 @@ export async function completeProcedureOrder(
   }
 
   const amountNet = body.amountNet ?? charge.amountNet;
+  const { resolveBonusEligible } = await import("@/lib/doctor-bonus");
+  const bonusEligible = resolveBonusEligible({ amountNet });
   // Explicit caller lines win; else resolve TTK BOM. Empty BOM → [] (never PROC-{code}).
   const lines =
     body.consumableLines ??
@@ -73,6 +75,7 @@ export async function completeProcedureOrder(
     data: {
       status: "COMPLETED",
       amountNet,
+      bonusEligible,
       completedAt: now,
       completedByUserId: actor.userId,
     },

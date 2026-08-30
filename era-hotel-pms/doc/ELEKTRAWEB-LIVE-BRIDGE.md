@@ -139,7 +139,8 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 | Status | State | **Critical** for lifecycle |
 | Adults / children | Adult, TChd | |
 | Agency / voucher | Agency, Voucher | Soft |
-| Rate / package | Rate code if in payload | Map to `RatePlan`; medical → `programCode` |
+| Rate / package | Notes Extra Req / agency | Resolve `PKG-*` via Wave A dual-run; **not** EW rate as medical SKU |
+| Notes | Extra Req, Res Note, CIn, Price | Upsert `ReservationNote`; stamp `medicalPackageCode` |
 
 **Status-diff → events** (must call hotel service paths, not silent Prisma-only write):
 

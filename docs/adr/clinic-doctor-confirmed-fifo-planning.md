@@ -8,6 +8,8 @@ Related: [clinic-multi-resource-scheduling.md](./clinic-multi-resource-schedulin
 
 Amended 2026-08-21 — consecutive patient gap is layer 3 (patient rest), not cabin turnover.
 
+Amended 2026-08-30 (Wave C / Nafta): first-day confirm is a **FIFO prefix of 2–3** procedures (exam/intake sorted first). **Confirm all** removed from sanatorium UI and patient card. Soft hint only — do not hard-block >3. Nafta keeps `AFTER_CHECKUP` (exposed in `/admin/settings`). Same-day 4th in-package procedure charges list price and does not consume knot. Package-quota codes cannot be manually POSTed to SCHEDULED.
+
 ## Context
 
 Sanatorium program instantiation used to place procedures onto resources immediately (one-shot FIFO). Doctors need to review package lines first: adjust codes/body parts, cancel and replace, and only then commit scarce cabin/equipment capacity. Placement must respect already-scheduled orders for the same patient (incremental planning), consecutive-day rotation (naftalan baths, body-part therapies), contraindication-driven substitution, peak/extended hours, and lab intake rules for external results and fasting panels.
@@ -22,7 +24,7 @@ Sanatorium program instantiation used to place procedures onto resources immedia
 
 ### Doctor confirm → placement
 
-1. Doctor (or authorized ops) confirms selected/all proposed IDs via `POST /api/procedures/confirm`.
+1. Doctor (or authorized ops) confirms a **selected FIFO prefix** of proposed IDs via `POST /api/procedures/confirm` (no Confirm-all in UI). Batches >3 return `softWarn` but still place.
 2. Confirm calls **`placeConfirmedProcedures`**, which runs FIFO placement onto resources (Pattern A multi-resource allocations).
 3. Successful placement moves orders to **`SCHEDULED`** (with `confirmedAt` / `confirmedByUserId`).
 4. Reception may **bulk-cancel** proposed/scheduled lines and optionally **replace** with another procedure code (`POST /api/procedures/bulk-cancel`). Individual edits use `PATCH /api/procedures/[id]`.

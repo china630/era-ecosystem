@@ -36,7 +36,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | /fo/rack | rack | Door tiles |
 | /fo/room-plan | room-plan API | Timeline bars; share twin two lanes + pool badge |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
-| Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes` | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
+| Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes`; date amend via `PATCH` reservation-full → `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` (checkIn/checkOut) for clinic quota recalc (CLI-51) | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
@@ -96,6 +96,9 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | (event consumer) | `POST /api/integration/staff-provision` | Upsert `User` keyed on `cpEmploymentId`; map `satelliteRole` → local RBAC |
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
 | (clinic cutover glue) | `GET /api/internal/v1/stays/by-external-ref` | Clinic `#21` — Elektraweb RESID/RESNAMEID → `Guest.globalPersonId` (Bearer event token) |
+| Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |
+| Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO `/folio/[id]` `packageCompose` | Wave D; not SHIPPED |
+| Per-pax lifecycle (HOT-PKG-04) | check-in **N events** per `ReservationGuest` (`programCode` + `paxKey` + `globalPersonId`); clinic opens one episode per pax | Wave E; share rooms stay two reservations |
 | (clinic cutover glue) | `GET /api/internal/v1/guests/by-identity` | Clinic `#21` — name + birthDate + optional phone → `Guest.globalPersonId` |
 | (placement slice) | `POST /api/internal/v1/placement/export-slice`, `…/import-slice` | Hotel curated JSON org slice + host agent upsert path (AC-CP-TOPO Scaffold ✅ still open) |
 | (request org) | `src/lib/request-organization.ts` | SHARED ops stamps: ALS/`requestOrganizationId` (not process bind) |
@@ -159,6 +162,7 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 | `/settings/pricing-policy` | `GET/PATCH /api/admin/pricing-policy` | Feature flags: occupancy / load yield / child absolute |
 | `/settings/pricing-components` | `GET /api/admin/pricing-components`, `POST …/[code]/versions` | Versioned service fee, meals, COGS (+ history/audit) |
 | `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell + costFloor versions |
+| `/settings/agency-medical-sku` | `GET/POST/DELETE /api/admin/agency-medical-sku-rules` | Agency name prefix → PKG-* (SatAdmin) |
 | `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
 | `/distribution/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount) |
 | `/distribution/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON) |

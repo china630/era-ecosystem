@@ -552,4 +552,46 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 2. Org switch / second appliance → only B; no A leakage.
 3. Record field results in `reports/two-org-isolation-signoff.md` (lab alone ≠ Scaffold ✅).
 
+## 38. Medical package SKU dual-run (HOT-PKG-02 / Wave A)
+
+**Status:** Engineering open — not SHIPPED.
+
+1. Import Notes dump or FO-with-Notes: Extra Req `ERA-PKG STANDART` → reservation note + `medicalPackageCode` stamped.
+2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`; `Walkin leisure` stays unresolved **and** check-in does **not** emit sanatorium lifecycle (`stayKind: leisure`).
+3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
+4. Check-in lifecycle sends `programCode` only when unanimous; EW Rate Code alone never becomes SKU.
+5. SatAdmin `/settings/agency-medical-sku`: edit prefix→SKU; resolver prefers DB rules then code defaults.
+6. FO Guests tab: Select medical package per pax → Save → `dailyRates` / folio `packageCompose` refresh.
+7. FO cheat-sheet: [`nafta/ERA-PKG-FO-CHEATSHEET.md`](./nafta/ERA-PKG-FO-CHEATSHEET.md).
+
+## 39. Stay date amend → clinic quota nights (CLI-51 / Wave B)
+
+**Status:** Engineering API — not SHIPPED.
+
+1. FO card: change check-out (extend or shorten) on an in-house medical stay.
+2. Hotel publishes `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` with `checkInDate` / `checkOutDate` + current `programCode`.
+3. Clinic recalculates `ProgramProcedureBalance.quotaTotal` from PDF knots; **SCHEDULED** procedures remain (not cancelled).
+4. Sanatorium chart quota bars reflect new totals / remaining.
+5. **Mid-stay SKU:** Guests tab Premium→Standart companion → Save → folio nightly sell updates + clinic quotas recalc (no cancel of SCHEDULED).
+
+## 40. Composed package nightly sell (HOT-PKG-03 / Wave D)
+
+**Status:** Engineering API — not SHIPPED.
+
+1. Premium + Standart pax → FO folio / dailyRates nightly sell **289** (193+96); breakdown lists main + companion.
+2. Night audit posts package lines scaled to **289** (resolved SKU, not only `medicalFlag`). Prefer **main** (highest occ-1) SKU rate-plan lines when present.
+3. Dermo + Detoks → **340** (180+160). Same SKU double Standart → **239**.
+4. EW Rate Code alone does not invent compose sell.
+5. Catalog prefers `RatePlanSellVersion` occ1/2/3 for PKG-* when seeded; else `DEFAULT_NAFTA_PACKAGE_SELL`.
+
+## 41. One stay two episodes (HOT-PKG-04 / CLI-54 / Wave E)
+
+**Status:** Engineering API/SCREEN — not SHIPPED.
+
+1. One FO card, husband Standart + wife Premium → check-in emits **two** lifecycle events (`paxKey` + per-pax `programCode`).
+2. Clinic `/sanatorium` shows **two** rows (same room); each has own chart / Select / program.
+3. Folio nightly sell still **289** (Wave D compose) — one folio, not split.
+4. Share `707`/`707S` still two reservations / two episodes (no merge).
+5. Checkout closes **both** OPEN episodes for the reservation.
+
 

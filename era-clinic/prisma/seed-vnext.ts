@@ -425,6 +425,158 @@ async function main() {
     },
   });
 
+  /** Nafta commercial medical packages (Wave A) — quotas filled in Wave B. */
+  const naftaPackages: Array<{ code: string; name: string; durationDays: number }> = [
+    { code: "PKG-STANDART", name: "Nafta Standart", durationDays: 10 },
+    { code: "PKG-PREMIUM", name: "Nafta Premium", durationDays: 10 },
+    { code: "PKG-DERMO", name: "Nafta Dermo", durationDays: 10 },
+    { code: "PKG-DETOKS", name: "Nafta Detoks", durationDays: 10 },
+  ];
+  for (const pkg of naftaPackages) {
+    const existing = await prisma.programTemplate.findFirst({ where: { code: pkg.code } });
+    if (!existing) {
+      await prisma.programTemplate.create({
+        data: {
+          code: pkg.code,
+          name: pkg.name,
+          durationDays: pkg.durationDays,
+          minNights: pkg.code === "PKG-STANDART" ? 5 : 7,
+          maxNights: 21,
+        },
+      });
+    } else {
+      await prisma.programTemplate.update({
+        where: { id: existing.id },
+        data: {
+          minNights: existing.minNights ?? (pkg.code === "PKG-STANDART" ? 5 : 7),
+          maxNights: existing.maxNights ?? 21,
+        },
+      });
+    }
+  }
+
+  /** Seed representative PDF bath knots for Standart / Premium (Wave B). */
+  async function seedBathKnots(
+    code: string,
+    knots: Array<{ nights: number; qty: number }>,
+  ) {
+    const tpl = await prisma.programTemplate.findFirst({ where: { code } });
+    if (!tpl) return;
+    const hasProc = await prisma.programTemplateProcedure.findFirst({
+      where: { templateId: tpl.id, procedureCode: "NAFTALAN_BATH" },
+    });
+    if (!hasProc) {
+      await prisma.programTemplateProcedure.create({
+        data: {
+          templateId: tpl.id,
+          procedureCode: "NAFTALAN_BATH",
+          procedureName: "Naftalan bath",
+          quotaTotal: knots[0]?.qty ?? 1,
+        },
+      });
+    }
+    for (const k of knots) {
+      const existingKnot = await prisma.programTemplateQuotaKnot.findFirst({
+        where: {
+          templateId: tpl.id,
+          nights: k.nights,
+          procedureCode: "NAFTALAN_BATH",
+        },
+      });
+      if (!existingKnot) {
+        await prisma.programTemplateQuotaKnot.create({
+          data: {
+            templateId: tpl.id,
+            nights: k.nights,
+            procedureCode: "NAFTALAN_BATH",
+            qty: k.qty,
+          },
+        });
+      }
+    }
+  }
+
+  await seedBathKnots("PKG-STANDART", [
+    { nights: 5, qty: 4 },
+    { nights: 7, qty: 5 },
+    { nights: 8, qty: 6 },
+    { nights: 9, qty: 7 },
+    { nights: 10, qty: 8 },
+    { nights: 11, qty: 8 },
+    { nights: 12, qty: 9 },
+    { nights: 14, qty: 10 },
+    { nights: 21, qty: 14 },
+  ]);
+  await seedBathKnots("PKG-PREMIUM", [
+    { nights: 7, qty: 5 },
+    { nights: 10, qty: 8 },
+    { nights: 14, qty: 12 },
+    { nights: 21, qty: 16 },
+  ]);
+  await seedBathKnots("PKG-DERMO", [
+    { nights: 7, qty: 5 },
+    { nights: 10, qty: 8 },
+    { nights: 14, qty: 10 },
+    { nights: 21, qty: 14 },
+  ]);
+  await seedBathKnots("PKG-DETOKS", [
+    { nights: 7, qty: 5 },
+    { nights: 10, qty: 8 },
+    { nights: 14, qty: 10 },
+    { nights: 21, qty: 14 },
+  ]);
+
+  /** Exam-block lines: qty=1 on every knot night (Wave B — not a 5th sell SKU). */
+  const EXAM_CODES: Array<{ code: string; name: string }> = [
+    { code: "THERAPIST", name: "Therapist exam" },
+    { code: "GYN", name: "Gyn/Uro exam" },
+    { code: "ECG", name: "ECG" },
+    { code: "USG", name: "Ultrasound" },
+    { code: "LAB", name: "Lab panel" },
+  ];
+  async function seedExamKnots(pkgCode: string, nightCols: number[]) {
+    const tpl = await prisma.programTemplate.findFirst({ where: { code: pkgCode } });
+    if (!tpl) return;
+    for (const exam of EXAM_CODES) {
+      const hasProc = await prisma.programTemplateProcedure.findFirst({
+        where: { templateId: tpl.id, procedureCode: exam.code },
+      });
+      if (!hasProc) {
+        await prisma.programTemplateProcedure.create({
+          data: {
+            templateId: tpl.id,
+            procedureCode: exam.code,
+            procedureName: exam.name,
+            quotaTotal: 1,
+          },
+        });
+      }
+      for (const nights of nightCols) {
+        const existingKnot = await prisma.programTemplateQuotaKnot.findFirst({
+          where: {
+            templateId: tpl.id,
+            nights,
+            procedureCode: exam.code,
+          },
+        });
+        if (!existingKnot) {
+          await prisma.programTemplateQuotaKnot.create({
+            data: {
+              templateId: tpl.id,
+              nights,
+              procedureCode: exam.code,
+              qty: 1,
+            },
+          });
+        }
+      }
+    }
+  }
+  await seedExamKnots("PKG-STANDART", [5, 7, 8, 9, 10, 11, 12, 14, 21]);
+  await seedExamKnots("PKG-PREMIUM", [7, 10, 14, 21]);
+  await seedExamKnots("PKG-DERMO", [7, 10, 14, 21]);
+  await seedExamKnots("PKG-DETOKS", [7, 10, 14, 21]);
+
   const diagnosticCatalog = loadDiagnosticCatalog();
   const seeded = await seedDiagnosticCatalog(diagnosticCatalog);
 

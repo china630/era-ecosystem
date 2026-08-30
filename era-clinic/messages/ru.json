@@ -637,12 +637,15 @@
     "colStatus": "Статус",
     "sexRequired": "Выберите пол",
     "walkInSexEmpty": "Выберите…",
-    "programSelect": "Программа",
+    "programSelect": "Программа / медпакет",
+    "programSelectHint": "PKG-STANDART, PKG-PREMIUM, PKG-DERMO или PKG-DETOKS",
     "finOrPassportRequired": "Нужен FIN или паспорт",
     "proposedPlanTitle": "Предложенный план",
     "proposedEmpty": "Нет предложенных процедур.",
     "confirmSelected": "Подтвердить выбранные",
     "confirmAll": "Подтвердить все",
+    "firstDayConfirmHint": "Первый день: подтвердите 2–3 процедуры (FIFO-префикс).",
+    "day1SoftWarn": "План подтверждён (мягкое предупреждение: по умолчанию Nafta — 2–3 процедуры в первый день).",
     "planConfirmed": "План подтверждён",
     "statusProposed": "Предложено",
     "bulkCancel": "Массовая отмена",
@@ -678,6 +681,11 @@
     "defaultProcedureGapMinutes": "Пауза кабинета по умолчанию для новых типов (мин)",
     "defaultAppointmentSlotMinutes": "Длительность слота приёма (мин)",
     "procedureCheckInMode": "Режим чек-ина процедур",
+    "programSchedulingMode": "Режим планирования программы",
+    "programSchedulingModeAfterCheckup": "AFTER_CHECKUP (Nafta — после осмотра)",
+    "programSchedulingModeOnCheckin": "ON_CHECKIN (размещение при заезде)",
+    "doctorBonusPercentInHouse": "Бонус врача % (extras in-house)",
+    "doctorBonusPercentWalkIn": "Бонус врача % (extras walk-in)",
     "peakModeEnabled": "Пиковый режим включён",
     "peakDayEndHour": "Конец дня в пиковом режиме",
     "printBrandTitle": "Брендинг печати",
@@ -1168,6 +1176,8 @@
     "proposedEmpty": "Нет предложенных процедур, ожидающих подтверждения.",
     "confirmSelected": "Подтвердить выбранные",
     "confirmAll": "Подтвердить все",
+    "firstDayConfirmHint": "Первый день: подтвердите 2–3 процедуры (FIFO-префикс).",
+    "day1SoftWarn": "План подтверждён (мягкое предупреждение: по умолчанию Nafta — 2–3 процедуры в первый день).",
     "confirmOk": "План подтверждён",
     "confirmFailed": "Не удалось подтвердить",
     "bodyPart": "Часть тела",
@@ -1277,10 +1287,19 @@
     "specialty": "Специальность",
     "name": "Название",
     "durationDays": "Дней",
+    "minNights": "Мин. ночей",
+    "maxNights": "Макс. ночей",
+    "proceduresJson": "Procedures JSON (несколько — не затирать)",
+    "knotsJson": "Узлы квот JSON (ночи × процедура × qty)",
     "procedureCode": "Код процедуры",
     "quotaTotal": "Квота",
     "procedureName": "Название процедуры",
-    "bodyJson": "Body JSON"
+    "bodyJson": "Body JSON",
+    "proceduresMatrix": "Процедуры",
+    "knotsMatrix": "Квоты по ночам (ночи × кол-во)",
+    "addProcedure": "Добавить процедуру",
+    "addProcedureFirst": "Сначала добавьте процедуры",
+    "customNights": "Свои ночи"
   },
   "audit": {
     "title": "Журнал аудита",
@@ -1363,11 +1382,26 @@
     "nextPhase": "Следующая фаза",
     "coaNote": "Операционная неделя: 24–31.08.2026 SCHEDULED. Прошлые слоты COMPLETED без folio.",
     "phase": {
-      "dictionaries": { "title": "Справочники", "hint": "25 процедуры, 26 кабинеты, 40 привязки процедура→кабинет" },
-      "master": { "title": "Персонал", "hint": "Врачи (03)" },
-      "patients": { "title": "Пациенты", "hint": "Проживающие (04)" },
-      "quotas": { "title": "Квоты и слоты", "hint": "05 затем 06. Квоту не сжигать дважды." },
-      "clinical": { "title": "Лаборатория и диагнозы", "hint": "07–10" }
+      "dictionaries": {
+        "title": "Справочники",
+        "hint": "25 процедуры, 26 кабинеты, 40 привязки процедура→кабинет"
+      },
+      "master": {
+        "title": "Персонал",
+        "hint": "Врачи (03)"
+      },
+      "patients": {
+        "title": "Пациенты",
+        "hint": "Проживающие (04)"
+      },
+      "quotas": {
+        "title": "Квоты и слоты",
+        "hint": "05 затем 06. Квоту не сжигать дважды."
+      },
+      "clinical": {
+        "title": "Лаборатория и диагнозы",
+        "hint": "07–10"
+      }
     }
   }
 }

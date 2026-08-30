@@ -6,6 +6,7 @@ import { guestsAdapter } from '@/lib/import/adapters/guests.adapter';
 import { productCardsAdapter, stockCardsAdapter } from '@/lib/import/adapters/products.adapter';
 import { ratePlansAdapter } from '@/lib/import/adapters/rate-plans.adapter';
 import { reservationsAdapter } from '@/lib/import/adapters/reservations.adapter';
+import { reservationNotesAdapter } from '@/lib/import/adapters/reservation-notes.adapter';
 import { revenueCodesAdapter } from '@/lib/import/adapters/revenue-codes.adapter';
 import { roomTypesAdapter } from '@/lib/import/adapters/room-types.adapter';
 import { roomViewsAdapter } from '@/lib/import/adapters/room-views.adapter';
@@ -25,6 +26,7 @@ const ADAPTERS = [
   stockCardsAdapter,
   guestsAdapter,
   reservationsAdapter,
+  reservationNotesAdapter,
   foliosAdapter,
 ] as ImportAdapter<unknown>[];
 
@@ -57,5 +59,6 @@ export {
   stockCardsAdapter,
   guestsAdapter,
   reservationsAdapter,
+  reservationNotesAdapter,
   foliosAdapter,
 };

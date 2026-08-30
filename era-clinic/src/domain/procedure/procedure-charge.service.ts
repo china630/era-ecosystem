@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { useProcedureQuota } from "@/lib/sanatorium-scheduler.service";
 import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
+import { isSameDayFourthOrLater } from "@/lib/sanatorium-day1";
 
 const DEFAULT_OVER_QUOTA_AZN = 25;
 
@@ -28,29 +29,40 @@ export async function resolveProcedureCharge(
   opts?: { burnQuota?: boolean },
 ): Promise<ProcedureChargeContext> {
   const burnQuota = opts?.burnQuota !== false;
+  // Wave E / Wave B: prefer patientRef-scoped program instance over reservation-only findFirst
   let overQuota = false;
-  if (order.reservationId) {
-    const program = await prisma.programInstance.findFirst({
-      where: { reservationId: order.reservationId },
-    });
-    if (program) {
-      if (burnQuota) {
-        const quota = await useProcedureQuota({
-          instanceId: program.id,
-          procedureCode: order.procedureCode,
-        });
-        overQuota = quota.overQuota;
-      } else {
-        const line = await prisma.programProcedureBalance.findUnique({
-          where: {
-            instanceId_procedureCode: {
-              instanceId: program.id,
-              procedureCode: order.procedureCode,
-            },
+  const orderFull = await prisma.procedureOrder.findUnique({
+    where: { id: order.id },
+    select: { patientRefId: true },
+  });
+  const program = orderFull?.patientRefId
+    ? await prisma.programInstance.findFirst({
+        where: {
+          episode: { patientRefId: orderFull.patientRefId, status: "OPEN" },
+        },
+      })
+    : order.reservationId
+      ? await prisma.programInstance.findFirst({
+          where: { reservationId: order.reservationId },
+        })
+      : null;
+  if (program) {
+    if (burnQuota) {
+      const quota = await useProcedureQuota({
+        instanceId: program.id,
+        procedureCode: order.procedureCode,
+      });
+      overQuota = quota.overQuota;
+    } else {
+      const line = await prisma.programProcedureBalance.findUnique({
+        where: {
+          instanceId_procedureCode: {
+            instanceId: program.id,
+            procedureCode: order.procedureCode,
           },
-        });
-        overQuota = !!line && line.quotaUsed >= line.quotaTotal;
-      }
+        },
+      });
+      overQuota = !!line && line.quotaUsed >= line.quotaTotal;
     }
   }
 
@@ -59,7 +71,19 @@ export async function resolveProcedureCharge(
   });
   let amountNet = Number(order.amountNet);
 
-  if (catalog) {
+  // Wave E: free = remaining quota on *this* patient's program instance
+  const hasProgramBalance =
+    !!program &&
+    !!(await prisma.programProcedureBalance.findFirst({
+      where: {
+        procedureCode: order.procedureCode,
+        instanceId: program.id,
+      },
+    }));
+
+  if (hasProgramBalance && !overQuota) {
+    amountNet = 0;
+  } else if (catalog) {
     if (catalog.packageIncluded) {
       if (!overQuota) {
         amountNet = 0;
@@ -67,9 +91,51 @@ export async function resolveProcedureCharge(
         const listPrice = Number(catalog.amount);
         amountNet = listPrice > 0 ? listPrice : DEFAULT_OVER_QUOTA_AZN;
       }
-    } else if (amountNet <= 0) {
-      amountNet = Number(catalog.amount);
+    } else if (amountNet <= 0 || overQuota) {
+      const listPrice = Number(catalog.amount);
+      amountNet = listPrice > 0 ? listPrice : amountNet;
     }
+  }
+
+  // Wave C: PDF >3 same calendar day (Asia/Baku) → 4th+ paid even if quota remains; do not burn knot further.
+  if (hasProgramBalance && amountNet === 0 && order.patientOrigin === "IN_HOUSE") {
+    const { bakuDayBounds, todayBakuYmd } = await import("@/domain/ops/day-summary.service");
+    const { start, end } = bakuDayBounds(todayBakuYmd());
+    const sameDayCount = await prisma.procedureOrder.count({
+      where: {
+        patientRefId: orderFull?.patientRefId,
+        status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
+        scheduledAt: { gte: start, lt: end },
+        id: { not: order.id },
+      },
+    });
+    if (isSameDayFourthOrLater(sameDayCount)) {
+      const listPrice = catalog ? Number(catalog.amount) : 0;
+      amountNet = listPrice > 0 ? listPrice : DEFAULT_OVER_QUOTA_AZN;
+      // Refund the knot burn on *this* patient's instance
+      if (burnQuota && program) {
+        const line = await prisma.programProcedureBalance.findUnique({
+          where: {
+            instanceId_procedureCode: {
+              instanceId: program.id,
+              procedureCode: order.procedureCode,
+            },
+          },
+        });
+        if (line && line.quotaUsed > 0) {
+          await prisma.programProcedureBalance.update({
+            where: { id: line.id },
+            data: { quotaUsed: { decrement: 1 } },
+          });
+        }
+      }
+    }
+  }
+
+  // Walk-in without program balance → always list price when amount unset
+  if (order.patientOrigin === "WALK_IN" && !hasProgramBalance && amountNet <= 0) {
+    const listPrice = catalog ? Number(catalog.amount) : 0;
+    amountNet = listPrice > 0 ? listPrice : DEFAULT_OVER_QUOTA_AZN;
   }
 
   if (overQuota && amountNet <= 0) {

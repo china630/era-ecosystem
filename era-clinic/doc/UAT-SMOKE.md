@@ -293,4 +293,56 @@ Doctor card (no curl):
 12. After cutover `#23` import (seed physio catalog **first**): Solyuks with `Belinə` / `Başına` shows lumbosacral / head chips; naftalan `Tam` shows full-body chip (+ fill `TAM` when gated). **Note** keeps unmatched residue only (not a duplicate of resolved S tokens). Empty catalog UI says catalog not seeded — not «No matches».
 13. Compact PLAN on the card lists site chip titles (or «sites — open full plan» when none). BODY_PART contraindications map is **not** the zone picker.
 
+## Medical package assign without hotel SKU (CLI-50 / Wave A)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Hotel check-in without resolved `programCode` → `/sanatorium` shows OPEN episode (patient not dropped).
+2. **Complete checkup** → Select one of `PKG-STANDART` / `PKG-PREMIUM` / `PKG-DERMO` / `PKG-DETOKS` (empty allowed until submit; ICD/complaint still required).
+3. Walk-in registration uses the same four-code Select.
+4. Open `/sanatorium?episode=<id>` → treatment chart modal opens (not only PatientCard).
+5. Patient card «Gün planını aç» href lands on that deep link.
+
+## Program quota knots (CLI-51 / Wave B)
+
+**Status:** Engineering API — not SHIPPED.
+
+1. `/admin/templates` program tab — edit multi-procedure JSON + knots JSON; Save keeps all lines.
+2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
+3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
+4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.
+5. In-quota procedure charge = 0 AZN; over-quota = list price; walk-in without package paid.
+
+## Doctor first-day confirm (CLI-52 / Wave C)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. After checkup, proposed list sorted with exam/intake first; default checkbox first 2–3.
+2. **Confirm selected** only — **Confirm all** removed on `/sanatorium` and patient card.
+3. Confirming a later ID while earlier PROPOSED exists still 409 (FIFO unchanged).
+4. `/admin/settings` shows Program scheduling mode; Nafta stays **AFTER_CHECKUP** (do not enable ON_CHECKIN for Nafta).
+5. Fourth same-day in-package procedure → list price; does not burn remaining knot.
+6. Soft warn (not hard-block) if confirm batch >3 procedures.
+7. Manual `POST /api/procedures` for in-quota package codes stays PROPOSED / 409 — nurse cannot SCHEDULE without doctor confirm.
+
+## Doctor bonus extras (CLI-53 / Wave D)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Package-only day (all in-quota COMPLETED, amountNet 0) → doctor-bonus view **0** (bonusEligible false).
+2. Over-quota / walk-in extra / 4th same-day paid → appears in IN_HOUSE or WALK_IN bucket.
+3. `/admin/settings` doctor bonus % defaults **0**; report shows base AZN × % columns when set. FO must supply % before pilot — engineering does not invent (see `reports/nafta-pkg-pilot-punch.md`).
+4. Confirming PROPOSED package lines does not add those lines to bonus.
+5. PATCH doctorBonusPercentInHouse / WalkIn works; i18n en/az/ru present.
+
+## One stay two episodes (CLI-54 / Wave E)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Mix card (Premium + Standart) → two `/sanatorium` rows, same room; two PatientRef / ProgramInstance.
+2. Extra charge on wife does **not** burn husband’s quota.
+3. Checkout closes both OPEN episodes.
+4. Same-SKU couple (both Standart) still two charts.
+5. Share rooms remain two reservations (regression).
+
 

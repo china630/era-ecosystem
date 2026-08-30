@@ -39,20 +39,81 @@ export async function postNightlyPackageCharges(
           where: { id: ratePlanId },
           include: { packageLines: { include: { revenueCode: true } } },
         });
-  if (!ratePlan?.medicalFlag) {
+  if (!ratePlan?.medicalFlag && !reservation.medicalPackageCode) {
+    const anyPaxSku = await prisma.reservationGuest.findFirst({
+      where: { reservationId, medicalPackageCode: { not: null } },
+      select: { id: true },
+    });
+    if (!anyPaxSku) {
+      return { posted: 0, skipped: true };
+    }
+  }
+  if (!ratePlan) {
     return { posted: 0, skipped: true };
   }
 
   const lines = ratePlan.packageLines;
   const pkgCode = await prisma.revenueCode.findFirst({ where: { code: 'PKG' } });
+
+  // Wave D: prefer composed sell from pax medicalPackageCode when daily rate missing
+  let sellAmount: number;
+  let mainSkuCode: string | null = null;
+  const pax = await prisma.reservationGuest.findMany({
+    where: { reservationId },
+    select: { medicalPackageCode: true },
+    orderBy: { sortOrder: 'asc' },
+  });
   const sellRow = reservation.dailyRates.find((d) => sameCalendarDay(d.stayDate, businessDate));
-  const sellAmount = sellRow
-    ? decimalToNumber(sellRow.amount)
-    : decimalToNumber(ratePlan.pricePerNight);
+  if (sellRow) {
+    sellAmount = decimalToNumber(sellRow.amount);
+  } else {
+    const { composeNaftaPackageNightlySell } = await import(
+      '@/lib/services/nafta-package-compose.service'
+    );
+    const { resolveStandartCompanionAzn, loadNaftaPackageSellCatalog } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const companion = await resolveStandartCompanionAzn(businessDate);
+    const catalog = await loadNaftaPackageSellCatalog(businessDate);
+    const composed = composeNaftaPackageNightlySell(
+      [...pax.map((g) => g.medicalPackageCode), reservation.medicalPackageCode],
+      catalog,
+      companion,
+    );
+    sellAmount =
+      composed ?? decimalToNumber(ratePlan.pricePerNight);
+  }
+
+  // Pilot polish P1.3: package line split from **main** (highest occ-1) SKU rate plan
+  {
+    const { loadNaftaPackageSellCatalog } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const { composeNaftaPackageNightlySellBreakdown } = await import(
+      '@/lib/services/nafta-package-compose.service'
+    );
+    const catalog = await loadNaftaPackageSellCatalog(businessDate);
+    const breakdown = composeNaftaPackageNightlySellBreakdown(
+      [...pax.map((g) => g.medicalPackageCode), reservation.medicalPackageCode],
+      catalog,
+    );
+    mainSkuCode = breakdown?.lines.find((l) => l.role === 'main')?.code ?? null;
+  }
+
+  let packageLines = lines;
+  if (mainSkuCode) {
+    const mainPlan = await prisma.ratePlan.findFirst({
+      where: { code: mainSkuCode },
+      include: { packageLines: { include: { revenueCode: true } } },
+    });
+    if (mainPlan?.packageLines?.length) {
+      packageLines = mainPlan.packageLines;
+    }
+  }
 
   const rawLines =
-    lines.length > 0
-      ? lines.map((l) => ({
+    packageLines.length > 0
+      ? packageLines.map((l) => ({
           revenueCodeId: l.revenueCodeId,
           code: l.revenueCode.code,
           amount: decimalToNumber(l.amount),

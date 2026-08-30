@@ -39,6 +39,8 @@
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
 | Nafta HK deepen | `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open) |
 | Management reports catalog / nightly ZIP | `/reports/*` hubs + nightly pack + cubes (HOT-RPT W1–W3) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
+| Composed package sell (HOT-PKG-03 / Wave D) | `/folio/[id]` packageCompose breakdown | 🟡 SCREEN (API on COVERAGE until UAT §40; not SHIPPED) |
+| Per-pax medical stay (HOT-PKG-04 / Wave E) | check-in fan-out + FO pax SKU | 🟡 API (UAT §41; not SHIPPED; share rooms unchanged) |
 
 Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab still requires UAT-SMOKE §27 artifact.  
 HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW rollup only if Demo-TE not refreshed; does not claim GA.

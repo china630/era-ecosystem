@@ -212,13 +212,38 @@ export async function upsertReservationFromElektrawebRow(
     shareNo: shareNo ?? null,
   });
 
+  // Live-bridge notes → ReservationNote + medical SKU stamp (Wave A)
+  const noteFields: Array<[string, string | null | undefined]> = [
+    ['EXTRA_REQ', str(row.EXTRAREQ) ?? str(row.EXTRA_REQ) ?? str(row.EXTRAREQUEST)],
+    ['RES_NOTE', str(row.RESNOTE) ?? str(row.RES_NOTE) ?? str(row.NOTES)],
+    ['CIN_NOTE', str(row.CINNOTE) ?? str(row.CIN_NOTE) ?? str(row.CHECKINNOTE)],
+    ['PRICE_NOTE', str(row.PRICENOTE) ?? str(row.PRICE_NOTE)],
+    ['ROOM_NOTE', str(row.ROOMNOTE) ?? str(row.ROOM_NOTE)],
+  ];
+  for (const [noteType, text] of noteFields) {
+    if (!text?.trim()) continue;
+    await prisma.reservationNote.upsert({
+      where: {
+        reservationId_noteType: {
+          reservationId: reservation.id,
+          noteType,
+        },
+      },
+      create: { reservationId: reservation.id, noteType, text: text.trim() },
+      update: { text: text.trim() },
+    });
+  }
+
+  const { stampMedicalPackagesForReservation } = await import(
+    '@/lib/services/medical-package-stamp.service'
+  );
+  const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
+  const programCode = stamped.programCode;
+
   const events: string[] = [];
   const prevStatus = existing?.status;
   const prevRoom = existing?.room?.roomNumber ?? null;
   const newRoom = reservation.room?.roomNumber ?? doorNumber ?? null;
-  const programCode = reservation.ratePlan.medicalFlag
-    ? reservation.ratePlan.code
-    : undefined;
 
   if (status === 'IN_HOUSE' && prevStatus !== 'IN_HOUSE') {
     await dispatchGuestCheckedIn({
@@ -238,14 +263,10 @@ export async function upsertReservationFromElektrawebRow(
         globalPersonId: reservation.guest.globalPersonId,
       }).catch((e) => console.error('clinic bridge', e));
     }
-  } else if (
-    status === 'CONFIRMED' &&
-    !existing &&
-    reservation.ratePlan.medicalFlag
-  ) {
+  } else if (status === 'CONFIRMED' && !existing && programCode) {
     await dispatchSanatoriumBookingCreated({
       reservationId: reservation.id,
-      programCode: reservation.ratePlan.code,
+      programCode,
       globalPersonId: reservation.guest.globalPersonId ?? undefined,
       guestName: reservation.guest.fullName,
       checkInDate: checkInDate.toISOString(),

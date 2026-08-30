@@ -159,12 +159,22 @@ export async function GET(req: Request) {
 
     if (view === "doctor-bonus") {
       const doctorId = await resolveDoctorPractitionerId();
-      if (!doctorId) return jsonOk({ view, items: [], grandTotal: 0 });
+      if (!doctorId) {
+        return jsonOk({
+          view,
+          items: [],
+          grandTotal: 0,
+          grandTotalInHouse: 0,
+          grandTotalWalkIn: 0,
+        });
+      }
 
       const rows = await prisma.procedureOrder.findMany({
         where: {
           prescribedByPractitionerId: doctorId,
           status: "COMPLETED",
+          bonusEligible: true,
+          amountNet: { gt: 0 },
           completedAt: { gte: start, lt: end },
           ...(procedureQ ? { procedureCode: procedureQ } : {}),
         },
@@ -173,6 +183,7 @@ export async function GET(req: Request) {
           procedureName: true,
           quantity: true,
           amountNet: true,
+          patientOrigin: true,
         },
       });
 
@@ -186,7 +197,14 @@ export async function GET(req: Request) {
         }
       >();
 
+      let grandTotalInHouse = 0;
+      let grandTotalWalkIn = 0;
+
       for (const r of rows) {
+        const amt = r.amountNet.toNumber();
+        if (r.patientOrigin === "IN_HOUSE") grandTotalInHouse += amt;
+        else grandTotalWalkIn += amt;
+
         const key = r.procedureCode;
         const existing = byCode.get(key);
         if (!existing) {
@@ -194,11 +212,11 @@ export async function GET(req: Request) {
             procedureCode: key,
             procedureName: r.procedureName,
             quantity: r.quantity,
-            totalAmount: r.amountNet.toNumber(),
+            totalAmount: amt,
           });
         } else {
           existing.quantity += r.quantity;
-          existing.totalAmount += r.amountNet.toNumber();
+          existing.totalAmount += amt;
         }
       }
 
@@ -208,8 +226,30 @@ export async function GET(req: Request) {
         price: g.quantity > 0 ? g.totalAmount / g.quantity : 0,
         totalAmount: g.totalAmount,
       }));
-      const grandTotal = items.reduce((sum, i) => sum + i.totalAmount, 0);
-      return jsonOk({ view, items, grandTotal });
+      const grandTotal = grandTotalInHouse + grandTotalWalkIn;
+      const { getClinicSettings } = await import("@/domain/settings/settings.service");
+      const { applyBonusPercents } = await import("@/lib/doctor-bonus");
+      const settings = await getClinicSettings();
+      const percentInHouse = settings.doctorBonusPercentInHouse ?? 0;
+      const percentWalkIn = settings.doctorBonusPercentWalkIn ?? 0;
+      const bonuses = applyBonusPercents({
+        grandTotalInHouse,
+        grandTotalWalkIn,
+        percentInHouse,
+        percentWalkIn,
+      });
+      return jsonOk({
+        view,
+        items,
+        grandTotal,
+        grandTotalInHouse,
+        grandTotalWalkIn,
+        doctorBonusPercentInHouse: percentInHouse,
+        doctorBonusPercentWalkIn: percentWalkIn,
+        bonusInHouse: bonuses.bonusInHouse,
+        bonusWalkIn: bonuses.bonusWalkIn,
+        bonusTotal: bonuses.bonusTotal,
+      });
     }
 
     if (view === "by-procedure") {
