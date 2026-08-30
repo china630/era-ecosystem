@@ -30,6 +30,8 @@
 | Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | 🟡 |
 | МКБ санаторий | `/sanatorium` | 🟡 |
 | МКБ карточка пациента | `/patients/[id]` (after contraindications) | 🟡 |
+| Nafta intake checklist (CLI-25/32/34) | `/patients/[id]` İlkin diaqnostik prosedurlar; `/print/checkup/[patientId]` 4 sections | 🟡 SCREEN (not WO `#33`; UAT open) |
+| Nafta slots clock (CLI-25/48) | Card now/next + compact PLAN — Baku labels, `scheduledAt >= now` | 🟡 SCREEN (re-Apply `#23` required on droplet) |
 | МКБ визит/стационар | `/visits/[id]`, `/inpatient` | 🟡 |
 | МКБ отчёт | `/reports/diagnoses` | 🟡 |
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
@@ -37,7 +39,7 @@
 | Cashier | `/cashier` | 🟡 |
 | Print | `/print/*` | 🟡 |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
-| Physio sites S (CLI-49) | `/admin/physio-sites` (incl. Unmatched queue); patient card chips + type-gated fields | 🟡 SCREEN (UAT-SMOKE open) |
+| Physio sites S (CLI-49) | `/admin/physio-sites` (Unmatched); card chips + Solyuks/`NAFTALAN_FILL` + empty-catalog banner + PLAN site titles | 🟡 SCREEN (seed S then re-Apply `#23`; UAT open) |
 | Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (Wave 6 lab; HOT-06 extension write still HEADLESS; not SHIPPED) |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA).

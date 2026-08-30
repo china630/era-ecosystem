@@ -161,7 +161,11 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
 
         if (found.resultJson) {
           try {
-            const parsed = JSON.parse(found.resultJson) as ResultLineState[];
+            const raw: unknown =
+              typeof found.resultJson === "string"
+                ? JSON.parse(found.resultJson)
+                : found.resultJson;
+            const parsed = Array.isArray(raw) ? (raw as ResultLineState[]) : [];
             if (item?.kind === "lab_panel") {
               setResultLines(parsed);
             } else {
@@ -225,15 +229,10 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     if (fromItems.length > 0) return fromItems.map(mapRow);
     if (!order.resultJson) return [];
     try {
-      const parsed = JSON.parse(order.resultJson) as Array<{
-        code: string;
-        value: string;
-        unit?: string;
-        refMin?: string;
-        refMax?: string;
-        flag?: string;
-      }>;
-      return parsed.map(mapRow);
+      const raw: unknown =
+        typeof order.resultJson === "string" ? JSON.parse(order.resultJson) : order.resultJson;
+      if (!Array.isArray(raw)) return [];
+      return raw.map(mapRow);
     } catch {
       return [];
     }

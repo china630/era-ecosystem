@@ -40,7 +40,7 @@ Upload via `/admin/import` unless noted.
 | Stock cards | `hotel/09-Stock-Cards.xlsx` | EW | Hotel wizard | HAVE |
 | Guest registry | `hotel/10-Guest-Cards.merged.xlsx` (7 723) | EW | Hotel wizard `guests` + MDM link | HAVE. Overlay **2026-08-28** 900-row export: 0 new `Guest Id`; cell-fill 69 cards. Merge had stripped Excel date formats to serials; **rewritten as date cells** (START + READY). Summary JSON: `10-Guest-Cards.merged.summary.json`. |
 | Reservations / FOCP | `hotel/11-Reservations.merged.xlsx` (6 117; 74 InHouse, 568 future) | EW | Hotel wizard `reservations` | HAVE. Filter 2026+ or active |
-| Folio lines | `hotel/12-Folio-Transactions.merged.xlsx` (95 793 hotel) | EW | Hotel wizard `folios` | HAVE through 2026-08-17. Load **open / in-house** at hour X, not full archive |
+| Folio lines | `hotel/12-Folio-Transactions.hotel.xlsx` (guest stays in `#11`) · archive `12-Folio-Transactions.merged.xlsx` (95 793) | EW | Hotel wizard `folios` | HAVE. House ledgers (`TIBB AMBULATOR`, `999 FB` → `#16`, CASH/DEBITOR) excluded from wizard book |
 | Package / FB sell prices | `hotel/13-Package-Prices-2026.csv` | Commercial PDF (parsed) | Hotel rate plans + clinic `ProgramTemplate` | HAVE |
 | BAR ladder (accounting) | `hotel/14-BAR-Derived-2026.csv` | Derived | Hotel BAR calendar | HAVE — confirm with hotel before seed |
 | Agency / city ledger | `hotel/19-Agency-Statement.xlsx` | EW | Finance AR later (not hotel wizard) | PARTIAL (15.06, not cutover date) |

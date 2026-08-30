@@ -1,5 +1,6 @@
 {
-  "id": "physio-list-items-w1",
+  "id": "physio-list-items-merged",
+  "layer": "merged",
   "notProductSoR": true,
   "notes": [
     "Starter DEVICE_PROGRAM and SUBSTANCE rows for SatAdmin. WO tail is open-ended — add via CRUD, do not hardcode Select options.",
@@ -105,7 +106,14 @@
       "titleRu": "Программа рубец",
       "titleEn": "Scar program",
       "sortOrder": 40,
-      "aliases": ["capiq rej", "capiq rejim", "çapıq rejim", "çapıq rej", "kelloid capiq pr", "capiq"]
+      "aliases": [
+        "capiq rej",
+        "capiq rejim",
+        "çapıq rejim",
+        "çapıq rej",
+        "kelloid capiq pr",
+        "capiq"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -156,7 +164,12 @@
       "titleRu": "Программа подагра",
       "titleEn": "Gout program",
       "sortOrder": 70,
-      "aliases": ["padaqra rej", "padaqra re", "podaqra", "padaqra"]
+      "aliases": [
+        "padaqra rej",
+        "padaqra re",
+        "podaqra",
+        "padaqra"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -165,7 +178,11 @@
       "titleRu": "Неврологическая программа",
       "titleEn": "Neurological program",
       "sortOrder": 80,
-      "aliases": ["nevraloji rej", "nevroloji rej", "raloji rej"]
+      "aliases": [
+        "nevraloji rej",
+        "nevroloji rej",
+        "raloji rej"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -174,7 +191,12 @@
       "titleRu": "Русский ток (Kotz)",
       "titleEn": "Russian current (Kotz)",
       "sortOrder": 90,
-      "aliases": ["rus akimi ilə", "rus akimi ile", "rus akimi", "rus akiimi"]
+      "aliases": [
+        "rus akimi ilə",
+        "rus akimi ile",
+        "rus akimi",
+        "rus akiimi"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -183,7 +205,11 @@
       "titleRu": "Интерференц",
       "titleEn": "Interferential",
       "sortOrder": 100,
-      "aliases": ["enterferensial proqramo", "enterferensial proqrami", "enterferensial"]
+      "aliases": [
+        "enterferensial proqramo",
+        "enterferensial proqrami",
+        "enterferensial"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -192,7 +218,10 @@
       "titleRu": "Программа розацеа",
       "titleEn": "Rosacea program",
       "sortOrder": 110,
-      "aliases": ["rozesea proqrami", "rozasea proqrami"]
+      "aliases": [
+        "rozesea proqrami",
+        "rozasea proqrami"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -201,7 +230,13 @@
       "titleRu": "Программа отёк",
       "titleEn": "Edema program",
       "sortOrder": 120,
-      "aliases": ["odem usulu", "ödem üsulu", "odem pr ile", "ödem pr ilə", "odem pr"]
+      "aliases": [
+        "odem usulu",
+        "ödem üsulu",
+        "odem pr ile",
+        "ödem pr ilə",
+        "odem pr"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -210,7 +245,10 @@
       "titleRu": "Миоспазм",
       "titleEn": "Myospasm",
       "sortOrder": 130,
-      "aliases": ["miospazm rejimiylə", "miospazm rej"]
+      "aliases": [
+        "miospazm rejimiylə",
+        "miospazm rej"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -219,7 +257,9 @@
       "titleRu": "Программа боль",
       "titleEn": "Pain program",
       "sortOrder": 140,
-      "aliases": ["agri rejimi"]
+      "aliases": [
+        "agri rejimi"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -228,7 +268,9 @@
       "titleRu": "Люмбалгия",
       "titleEn": "Lumbalgia",
       "sortOrder": 150,
-      "aliases": ["lumbalgiya"]
+      "aliases": [
+        "lumbalgiya"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -237,7 +279,9 @@
       "titleRu": "Спортивная программа",
       "titleEn": "Sport program",
       "sortOrder": 160,
-      "aliases": ["spor rej"]
+      "aliases": [
+        "spor rej"
+      ]
     },
     {
       "listKind": "DEVICE_PROGRAM",
@@ -246,7 +290,11 @@
       "titleRu": "Вариант программы B",
       "titleEn": "Device program variant B",
       "sortOrder": 170,
-      "aliases": ["rej brej", "b rej", "brej"]
+      "aliases": [
+        "rej brej",
+        "b rej",
+        "brej"
+      ]
     },
     {
       "listKind": "SUBSTANCE",
@@ -289,7 +337,14 @@
       "titleRu": "Йодид калия",
       "titleEn": "Potassium iodide",
       "sortOrder": 30,
-      "aliases": ["kali yodla", "kaliyod", "kyodla", "ky-la", "ky la", "ky"]
+      "aliases": [
+        "kali yodla",
+        "kaliyod",
+        "kyodla",
+        "ky-la",
+        "ky la",
+        "ky"
+      ]
     },
     {
       "listKind": "SUBSTANCE",
@@ -298,7 +353,16 @@
       "titleRu": "Кальций",
       "titleEn": "Calcium",
       "sortOrder": 40,
-      "aliases": ["kalsiilə", "kalsiiləe", "kalsi ilə", "kalsilə", "kalsiile", "kalsi", "calsi", "x kalsi"]
+      "aliases": [
+        "kalsiilə",
+        "kalsiiləe",
+        "kalsi ilə",
+        "kalsilə",
+        "kalsiile",
+        "kalsi",
+        "calsi",
+        "x kalsi"
+      ]
     },
     {
       "listKind": "SUBSTANCE",
@@ -350,7 +414,10 @@
       "titleRu": "Нафталан",
       "titleEn": "Naftalan",
       "sortOrder": 70,
-      "aliases": ["naft", "nftal"]
+      "aliases": [
+        "naft",
+        "nftal"
+      ]
     },
     {
       "listKind": "SUBSTANCE",
@@ -359,7 +426,13 @@
       "titleRu": "Димексид",
       "titleEn": "Dimexide",
       "sortOrder": 80,
-      "aliases": ["dimeksid ile", "dimeksid ilə", "dimeksidiki", "dimeksid", "dimeksid iile"]
+      "aliases": [
+        "dimeksid ile",
+        "dimeksid ilə",
+        "dimeksidiki",
+        "dimeksid",
+        "dimeksid iile"
+      ]
     },
     {
       "listKind": "SUBSTANCE",
@@ -402,7 +475,9 @@
       "titleRu": "Эуфиллин",
       "titleEn": "Eufillin",
       "sortOrder": 110,
-      "aliases": ["eufillin"]
+      "aliases": [
+        "eufillin"
+      ]
     },
     {
       "listKind": "SUBSTANCE",

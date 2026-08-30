@@ -105,11 +105,18 @@ export function expandPackageCodes(
   items: DiagnosticCatalogItem[],
 ): string[] {
   const byCode = new Map(items.map((i) => [i.code, i]));
+  const orderable = new Set(["lab_panel", "imaging", "functional", "endoscopy"]);
   const out: string[] = [];
   for (const code of codes) {
     const item = byCode.get(code);
     if (item?.kind === "package" && item.includes?.length) {
       for (const child of item.includes) {
+        const childItem = byCode.get(child);
+        // Skip visit templates / pseudo-slots (e.g. GYN-OR-URO) — not LabOrder rows.
+        if (childItem && !orderable.has(childItem.kind)) continue;
+        if (!childItem && (child.includes("VISIT") || child === "GYN-OR-URO" || child === "SANATORIUM-INTAKE")) {
+          continue;
+        }
         if (!out.includes(child)) out.push(child);
       }
     } else if (!out.includes(code)) {

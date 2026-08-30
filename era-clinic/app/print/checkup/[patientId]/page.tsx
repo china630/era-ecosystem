@@ -47,30 +47,29 @@ export default async function PrintCheckupPage({ params, searchParams }: Props) 
         {doc.diagnoses.length > 0 ? doc.diagnoses.join("; ") : "—"}
       </div>
       <ol className="m-0 list-decimal space-y-4 pl-5">
-        {doc.sections.map((sec) => (
+        {doc.sections
+          .filter((sec) => sec.enabled)
+          .map((sec) => (
           <li key={sec.specialty} className="text-[11px]">
             <div className="font-semibold uppercase">
               {sec.title}
               {sec.doctorName ? ` — ${sec.doctorName}` : ""}
               {sec.scheduleHint ? ` (${sec.scheduleHint})` : ""}
+              {sec.status ? ` [${sec.status}]` : ""}
             </div>
-            {!sec.enabled ? (
-              <p className="italic">{printLabel(lang, "temporarilyUnavailable")}</p>
-            ) : (
-              <div className="mt-1 space-y-1">
-                {sec.specialty === "therapist" ? (
-                  <>
-                    <p>
-                      {printLabel(lang, "bloodPressure")}: __________ {printLabel(lang, "pulse")}: __________{" "}
-                      {printLabel(lang, "respiration")}: __________
-                    </p>
-                    <p>{printLabel(lang, "exam")}: _______________________________________________</p>
-                  </>
-                ) : null}
-                <p>{printLabel(lang, "naftalanOpinion")}: _______________________________________</p>
-                <p>{printLabel(lang, "doctorComment")}: _________________________________________</p>
-              </div>
-            )}
+            <div className="mt-1 space-y-1">
+              {sec.specialty === "therapist" ? (
+                <>
+                  <p>
+                    {printLabel(lang, "bloodPressure")}: __________ {printLabel(lang, "pulse")}: __________{" "}
+                    {printLabel(lang, "respiration")}: __________
+                  </p>
+                  <p>{printLabel(lang, "exam")}: _______________________________________________</p>
+                </>
+              ) : null}
+              <p>{printLabel(lang, "naftalanOpinion")}: _______________________________________</p>
+              <p>{printLabel(lang, "doctorComment")}: _________________________________________</p>
+            </div>
           </li>
         ))}
       </ol>

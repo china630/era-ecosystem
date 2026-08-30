@@ -15,6 +15,7 @@ export const PHYSIO_ORDER_FIELD_CODES = [
   "SPINE_LEVEL",
   "DAY_BLOCK",
   "BATH_SEQUENCE",
+  "NAFTALAN_FILL",
   "INTENSITY",
   "SMEAR",
 ] as const;
@@ -40,6 +41,7 @@ export const DEVICE_PARAM_CODES = [
 export const APPLICATION_SURFACE_CODES = ["FRONT_BACK", "UPPER", "LOWER"] as const;
 export const DAY_BLOCK_CODES = ["3", "5", "ALTERNATING", "5_THEN"] as const;
 export const BATH_SEQUENCE_CODES = ["SITZ_THEN_FULL"] as const;
+export const NAFTALAN_FILL_CODES = ["TAM", "OTURAQ", "QURSAQ"] as const;
 export const INTENSITY_CODES = ["LIGHT", "WEAK", "NOT_HOT", "MEDIUM", "MORE"] as const;
 export const SPINE_LEVEL_CODES = [
   "C3-C4",
@@ -69,6 +71,7 @@ const JSON_KEY_TO_FIELD: Record<string, PhysioOrderFieldCode> = {
   spineLevel: "SPINE_LEVEL",
   dayBlock: "DAY_BLOCK",
   bathSequence: "BATH_SEQUENCE",
+  naftalanFill: "NAFTALAN_FILL",
   intensity: "INTENSITY",
   smear: "SMEAR",
 };
@@ -86,6 +89,7 @@ export type PhysioOrderFields = {
   spineLevel?: (typeof SPINE_LEVEL_CODES)[number] | null;
   dayBlock?: (typeof DAY_BLOCK_CODES)[number] | null;
   bathSequence?: (typeof BATH_SEQUENCE_CODES)[number] | null;
+  naftalanFill?: (typeof NAFTALAN_FILL_CODES)[number] | null;
   intensity?: (typeof INTENSITY_CODES)[number] | null;
   smear?: boolean | null;
 };
@@ -165,6 +169,10 @@ function parseIncomingValue(key: string, raw: unknown): unknown {
     case "bathSequence": {
       const s = asOptionalString(raw);
       return s ? inSet(BATH_SEQUENCE_CODES, s) : null;
+    }
+    case "naftalanFill": {
+      const s = asOptionalString(raw);
+      return s ? inSet(NAFTALAN_FILL_CODES, s) : null;
     }
     case "intensity": {
       const s = asOptionalString(raw);
@@ -316,6 +324,9 @@ const PRINT_FIELD_LABEL: Record<string, Record<"en" | "az" | "ru", string>> = {
   ALTERNATING: { en: "every other day", az: "günaşırı", ru: "через день" },
   "5_THEN": { en: "5 days then", az: "5 gün ardından", ru: "5 дней затем" },
   SITZ_THEN_FULL: { en: "sitz then full", az: "oturaq sonra tam", ru: "сидячая, затем полная" },
+  TAM: { en: "full body fill", az: "tam", ru: "полный налив" },
+  OTURAQ: { en: "sitz fill", az: "oturaq", ru: "сидячий налив" },
+  QURSAQ: { en: "to waist", az: "qurşaq", ru: "до пояса" },
   FREQ_1_MHZ: { en: "1 MHz", az: "1 MHz", ru: "1 МГц" },
   FREQ_1_5_MHZ: { en: "1.5 MHz", az: "1.5 MHz", ru: "1.5 МГц" },
   FREQ_3_MHZ: { en: "3 MHz", az: "3 MHz", ru: "3 МГц" },
@@ -357,6 +368,7 @@ export function formatPhysioFieldsPrint(
   if (fields.spineLevel) bits.push(fields.spineLevel);
   if (fields.dayBlock) bits.push(loc(lang, fields.dayBlock));
   if (fields.bathSequence) bits.push(loc(lang, fields.bathSequence));
+  if (fields.naftalanFill) bits.push(loc(lang, fields.naftalanFill));
   if (fields.intensity) bits.push(loc(lang, fields.intensity));
   if (fields.smear) bits.push(lang === "ru" ? "смазать" : lang === "az" ? "sürtülsün" : "smear");
   return bits;

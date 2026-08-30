@@ -48,9 +48,17 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
     );
   });
 
+  it("infers Solyuks (one l) like Sollyuks", () => {
+    const gate = inferPhysioTypeGate("WO-TR-129", "Solyuks");
+    expect(gate.needsSite).toBe(true);
+    expect(gate.fields).toEqual(
+      expect.arrayContaining(["LATERALITY", "DEVICE_PROGRAM", "DEVICE_PARAMS", "APPLICATION_SURFACE"]),
+    );
+  });
+
   it("infers naftalan bath sequence but not four-chamber", () => {
     expect(inferPhysioTypeGate("SVC-TAM-BEDEN-NAFTALAN-VANNASI", "Tam bədən naftalan vannası").fields).toEqual(
-      expect.arrayContaining(["BATH_SEQUENCE", "SMEAR"]),
+      expect.arrayContaining(["BATH_SEQUENCE", "SMEAR", "NAFTALAN_FILL"]),
     );
     expect(
       inferPhysioTypeGate("SVC-4-KAMERALI-NAFTALAN-VANNASI", "4 kameralı naftalan vannası").fields,

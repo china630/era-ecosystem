@@ -28,7 +28,7 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | 40 | `guests` | `10-Guest-Cards.merged.xlsx` | [x] | **7 723** EW + **407** FO-only (`wo:fo:{id}`). FO dump stamps passports (`apply-wo-fo-guest-bridge.cjs`). |
 
 | 50 | `reservations` | `11-Reservations.merged.xlsx` | [x] | Cutover 2026-08-17: **6 117** `Res Id` (74 InHouse, 568 Reservation) |
-| 60 | `folios` | `12-Folio-Transactions.merged.xlsx` | [x] | Cutover 2026-08-17: hotel **95 793** ids, 2024-07-12 … 2026-08-17; no ≥3d gaps |
+| 60 | `folios` | `12-Folio-Transactions.hotel.xlsx` | [x] | Wizard book: guest stays whose `Res Id` is in `#11`. Rebuild: `node era-hotel-pms/scripts/filter-hotel-folio-only.cjs`. Archive (unfiltered): `12-Folio-Transactions.merged.xlsx` (95 793). **Do not** load `999 FB` (`#16`), Tibb Ambulator, CASH/DEBITOR house ledgers. |
 
 ### Hotel — related files (not wizard steps)
 

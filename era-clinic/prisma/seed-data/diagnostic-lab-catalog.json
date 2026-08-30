@@ -5,7 +5,9 @@
     "ru",
     "az"
   ],
-  "notes": "ERA Clinic diagnostic & lab catalog v1.2 (AZ clinic + MediClub/Exonlab routine layer). kinds: imaging|functional|endoscopy|lab_panel|visit. packages[] = checkup compositions. Rare send-out stays admin-added.",
+  "notes": [
+    "Base diagnostic catalog (satellite bootstrap). Nafta package/USG patches: nafta/diagnostic-overlay.json"
+  ],
   "modalities": [
     {
       "code": "USG",
@@ -21,7 +23,7 @@
           "category": "abdomen",
           "title": {
             "en": "Abdominal ultrasound",
-            "ru": "УЗИ брюшной полости",
+            "ru": "УЗИ органов брюшной полости",
             "az": "Qarın boşluğu USM"
           },
           "serviceCode": "USG-ABD",
@@ -60,6 +62,60 @@
                 "en": "Spleen",
                 "ru": "Селезёнка",
                 "az": "Dalaq"
+              }
+            },
+            {
+              "key": "rightKidney",
+              "type": "textarea",
+              "label": {
+                "en": "Right kidney",
+                "ru": "Правая почка",
+                "az": "Sağ böyrək"
+              }
+            },
+            {
+              "key": "leftKidney",
+              "type": "textarea",
+              "label": {
+                "en": "Left kidney",
+                "ru": "Левая почка",
+                "az": "Sol böyrək"
+              }
+            },
+            {
+              "key": "bladder",
+              "type": "textarea",
+              "label": {
+                "en": "Bladder",
+                "ru": "Мочевой пузырь",
+                "az": "Sidik kisəsi"
+              }
+            },
+            {
+              "key": "prostate",
+              "type": "textarea",
+              "label": {
+                "en": "Prostate",
+                "ru": "Простата",
+                "az": "Prostata"
+              }
+            },
+            {
+              "key": "uterus",
+              "type": "textarea",
+              "label": {
+                "en": "Uterus",
+                "ru": "Матка",
+                "az": "Uterus"
+              }
+            },
+            {
+              "key": "ovaries",
+              "type": "textarea",
+              "label": {
+                "en": "Ovaries",
+                "ru": "Яичники",
+                "az": "Overlər"
               }
             },
             {
@@ -9252,5 +9308,6 @@
         "SANATORIUM-INTAKE"
       ]
     }
-  ]
+  ],
+  "layer": "base"
 }

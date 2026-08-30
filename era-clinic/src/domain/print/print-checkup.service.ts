@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getCheckupSectionsConfig, getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
+import { printSpecialtyForIntakeSlot } from "@/lib/import/nafta-intake-map";
 
 export type PrintCheckupSection = {
   specialty: string;
@@ -9,6 +11,7 @@ export type PrintCheckupSection = {
   enabled: boolean;
   doctorName: string | null;
   scheduleHint: string | null;
+  status?: string | null;
 };
 
 export type PrintCheckupDocument = {
@@ -25,7 +28,7 @@ function specialtyAliases(specialty: string): string[] {
   const map: Record<string, string[]> = {
     therapist: ["therapist", "terapevt", "gp", "general"],
     cardiologist: ["cardio", "kardioloq", "cardiologist"],
-    gynecologist: ["gyne", "gine", "ginekoloq"],
+    gynecologist: ["gyne", "gine", "ginekoloq", "uro"],
     usm: ["usm", "usg", "ultrasound", "radiolog"],
     dermatoneurologist: ["dermato", "dermatonevro"],
     cosmetologist: ["cosmo", "kosmeto"],
@@ -40,6 +43,15 @@ function matchesSpecialty(practitionerSpecialty: string | null | undefined, key:
   return specialtyAliases(key).some((a) => hay.includes(a));
 }
 
+function pickTitle(
+  lang: PrintLang,
+  title: { en: string; ru: string; az: string },
+): string {
+  if (lang === "ru") return title.ru;
+  if (lang === "az") return title.az;
+  return title.en;
+}
+
 export async function buildCheckupPrint(
   patientId: string,
   lang: PrintLang,
@@ -49,33 +61,47 @@ export async function buildCheckupPrint(
 
   const branding = await getPrintBranding(lang);
   const config = await getCheckupSectionsConfig();
-  const episode = await prisma.clinicalEpisode.findFirst({
-    where: { patientRefId: patientId },
-    orderBy: { openedAt: "desc" },
-    include: {
-      diagnoses: {
-        include: { icdCode: true },
-        orderBy: { recordedAt: "asc" },
+  const [episode, appointments, intake] = await Promise.all([
+    prisma.clinicalEpisode.findFirst({
+      where: { patientRefId: patientId },
+      orderBy: { openedAt: "desc" },
+      include: {
+        diagnoses: {
+          include: { icdCode: true },
+          orderBy: { recordedAt: "asc" },
+        },
       },
-    },
-  });
+    }),
+    prisma.appointment.findMany({
+      where: { patientRefId: patientId },
+      include: { practitioner: true },
+      orderBy: { scheduledAt: "asc" },
+    }),
+    getIntakeChecklist(patientId),
+  ]);
 
-  const appointments = await prisma.appointment.findMany({
-    where: { patientRefId: patientId },
-    include: { practitioner: true },
-    orderBy: { scheduledAt: "asc" },
-  });
+  const intakeBySpecialty = new Map(
+    intake.items.map((item) => [printSpecialtyForIntakeSlot(item.slot), item]),
+  );
 
   const sections = config.map((cfg) => {
     const apt = appointments.find((a) => matchesSpecialty(a.practitioner.specialty, cfg.specialty));
+    const intakeItem = intakeBySpecialty.get(cfg.specialty);
     return {
       specialty: cfg.specialty,
-      title: printLabel(lang, `specialty_${cfg.specialty}`),
+      title: intakeItem
+        ? pickTitle(lang, intakeItem.title)
+        : printLabel(lang, `specialty_${cfg.specialty}`),
       enabled: cfg.enabled,
       doctorName: apt?.practitioner.fullName ?? null,
       scheduleHint: apt
-        ? apt.scheduledAt.toLocaleString("en-GB", { timeZone: "Asia/Baku", hour: "2-digit", minute: "2-digit" })
+        ? apt.scheduledAt.toLocaleString("en-GB", {
+            timeZone: "Asia/Baku",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
         : null,
+      status: intakeItem?.status ?? null,
     };
   });
 

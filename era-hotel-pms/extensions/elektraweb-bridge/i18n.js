@@ -152,16 +152,16 @@ const EW_BRIDGE_I18N = {
   },
 };
 
-function ewLocale(raw) {
+export function ewLocale(raw) {
   return raw === "ru" || raw === "az" || raw === "en" ? raw : "ru";
 }
 
-function ewT(locale, key) {
+export function ewT(locale, key) {
   const pack = EW_BRIDGE_I18N[ewLocale(locale)] || EW_BRIDGE_I18N.ru;
   return pack[key] || EW_BRIDGE_I18N.en[key] || key;
 }
 
-function ewApplyI18n(root, locale) {
+export function ewApplyI18n(root, locale) {
   const loc = ewLocale(locale);
   root.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = ewT(loc, el.getAttribute("data-i18n"));

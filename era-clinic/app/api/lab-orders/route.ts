@@ -79,11 +79,15 @@ export async function GET(req: Request) {
       if (dateTo && Number.isNaN(dateTo.getTime())) {
         return jsonError("Invalid dateTo", 400);
       }
+      const range = {
+        ...(dateFrom ? { gte: dateFrom } : {}),
+        ...(dateTo ? { lte: dateTo } : {}),
+      };
       conditions.push({
-        createdAt: {
-          ...(dateFrom ? { gte: dateFrom } : {}),
-          ...(dateTo ? { lte: dateTo } : {}),
-        },
+        OR: [
+          { collectedAt: range },
+          { AND: [{ collectedAt: null }, { createdAt: range }] },
+        ],
       });
     }
     if (query.modality) {
@@ -119,7 +123,7 @@ export async function GET(req: Request) {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ collectedAt: "desc" }, { createdAt: "desc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),

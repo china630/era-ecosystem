@@ -1,4 +1,13 @@
+import { ewApplyI18n, ewLocale, ewT } from "./i18n.js";
+import { lampTitle, resolveBridgeLamp } from "./lamp.js";
+
 const $ = (id) => document.getElementById(id);
+
+function paintLamp(state, locale) {
+  const { color } = resolveBridgeLamp(state);
+  $("lampDot").setAttribute("data-color", color);
+  $("lampHint").textContent = lampTitle(locale, color);
+}
 
 function esc(value) {
   return String(value ?? "")
@@ -20,11 +29,17 @@ async function render() {
     "hotelBaseUrl",
     "lastSyncAt",
     "lastError",
+    "ewLoginToken",
   ]);
+  const sessionStore = chrome.storage.session
+    ? await chrome.storage.session.get(["ewLoginToken"])
+    : {};
+  s.ewLoginToken = sessionStore.ewLoginToken || s.ewLoginToken || "";
   const locale = ewLocale(s.locale);
   const sanatorium = s.deskRole === "sanatorium";
   ewApplyI18n(document, locale);
   document.documentElement.lang = locale;
+  paintLamp(s, locale);
 
   $("enabled").checked = !!s.enabled;
   $("writeRow").hidden = !sanatorium;

@@ -21,7 +21,6 @@ const {
   isOpsSlotDate,
   mapPatientImportRow,
   loadPatientCardIndex,
-  isUsgExam,
   loadNahiyeByProcedureId,
   slotNahiye,
 } = require("./map.cjs");
@@ -190,11 +189,15 @@ function main() {
   const patientsAll = process.env.NAFTA_PATIENTS_ALL !== "0";
 
   const livePatients = patientsAll ? patients : patients;
+  const patientRows = livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id)));
+  const checkInByWoId = new Map(
+    livePatients.map((p, i) => [String(p.id), patientRows[i].checkIn || ""]),
+  );
   const nPat = writeSheet(
     XLSX,
     path.join(CLINIC_OUT, "21-patients.xlsx"),
     HEADERS.patients,
-    livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id))),
+    patientRows,
   );
 
   let slotsDropped = 0;
@@ -344,7 +347,7 @@ function main() {
         testCode,
         status: "COMPLETED",
         panel,
-        takenAt: ymd(r.resultDate),
+        takenAt: ymd(r.resultDate) || checkInByWoId.get(String(r.patientId)) || "",
       };
     }),
   );
@@ -367,43 +370,14 @@ function main() {
     labLineRows,
   );
 
-  const examForms = rowsOf(readDumpJson("bulk/examination-forms.json"));
-  const usgRows = [];
-  const dxRows = [];
-  for (const form of examForms) {
-    const takenAt = ymd(form.date);
-    if (isUsgExam(form)) {
-      usgRows.push({
-        externalRef: `wo:usg:${form.id}`,
-        patientRef: `wo:patient:${form.patientId}`,
-        code: "USG",
-        name: "USM",
-        resultText: String(form.notes || "").trim(),
-        takenAt,
-      });
-    }
-    const note = String(form.notes || "").trim();
-    if (note) {
-      dxRows.push({
-        patientRef: `wo:patient:${form.patientId}`,
-        rawText: note,
-        icd10: "",
-        recordedAt: takenAt,
-      });
-    }
-  }
-  const nDxImg = writeSheet(
-    XLSX,
-    path.join(CLINIC_OUT, "31-Diagnostics.xlsx"),
-    HEADERS.diagnostics,
-    usgRows,
-  );
-  const nDx = writeSheet(
-    XLSX,
-    path.join(CLINIC_OUT, "32-Diagnoses.xlsx"),
-    HEADERS.diagnoses,
-    dxRows,
-  );
+  const usgRun = require("child_process").spawnSync(process.execPath, [path.join(__dirname, "rebuild-usg.cjs")], {
+    stdio: "inherit",
+  });
+  if (usgRun.status) process.exit(usgRun.status);
+  const usgReport = JSON.parse(fs.readFileSync(path.join(CLINIC_OUT, "rebuild-usg-report.json"), "utf8"));
+  const nDxImg = usgReport.diagnostics;
+  const nDx = usgReport.diagnoses;
+  const usgByCode = usgReport.usgByCode || {};
 
   const analyteCodes = [...new Set(labLineRows.map((r) => r.code))].sort();
   const missAnalytes = analyteCodes.filter((c) => !seedLab.analytes.has(c));
@@ -468,6 +442,7 @@ function main() {
     },
     diagnostics: nDxImg,
     diagnoses: nDx,
+    usgByCode,
   };
 
   fs.writeFileSync(path.join(CLINIC_OUT, "rebuild-derived-report.json"), `${JSON.stringify(report, null, 2)}\n`);

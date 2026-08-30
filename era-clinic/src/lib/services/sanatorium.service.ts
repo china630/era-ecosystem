@@ -3,9 +3,18 @@ import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.servi
 import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { getPersonOpsProfile, normalizePersonSex, parsePersonBirthDate } from '@era/satellite-kit';
+import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
+}
+
+async function safeInstantiateIntake(episodeId: string) {
+  try {
+    await instantiateIntakePackage(episodeId);
+  } catch (err) {
+    console.error("[sanatorium] instantiateIntakePackage failed", episodeId, err);
+  }
 }
 
 async function applyMdmDemographicsCache(
@@ -53,7 +62,7 @@ export async function openEpisodeFromStay(input: {
   });
   if (existing) {
     if (input.roomNumber && existing.roomNumber !== input.roomNumber) {
-      return prisma.clinicalEpisode.update({
+      const updated = await prisma.clinicalEpisode.update({
         where: { id: existing.id },
         data: {
           roomNumber: input.roomNumber,
@@ -61,7 +70,10 @@ export async function openEpisodeFromStay(input: {
         },
         include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
       });
+      await safeInstantiateIntake(updated.id);
+      return updated;
     }
+    await safeInstantiateIntake(existing.id);
     return existing;
   }
 
@@ -84,7 +96,7 @@ export async function openEpisodeFromStay(input: {
 
   await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
 
-  return prisma.clinicalEpisode.create({
+  const created = await prisma.clinicalEpisode.create({
     data: {
       patientRefId: patient.id,
       globalPersonId: input.globalPersonId ?? patient.globalPersonId,
@@ -98,6 +110,8 @@ export async function openEpisodeFromStay(input: {
     },
     include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
   });
+  await safeInstantiateIntake(created.id);
+  return created;
 }
 
 export async function registerWalkInEpisode(input: {
@@ -176,6 +190,7 @@ export async function registerWalkInEpisode(input: {
     },
     include: { patientRef: true },
   });
+  await safeInstantiateIntake(episode.id);
   return episode;
 }
 

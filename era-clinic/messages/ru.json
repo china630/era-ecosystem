@@ -219,7 +219,7 @@
     "colPatient": "Пациент",
     "colType": "Тип",
     "colAmount": "Сумма",
-    "colCreated": "Создан",
+    "colCreated": "Дата",
     "openOrder": "Открыть"
   },
   "labOrdersDetail": {
@@ -1127,6 +1127,7 @@
     }
   },
   "patientCard": {
+    "procedureTypeCode": "тип",
     "nowNextTitle": "Сейчас / далее",
     "nowNextEmpty": "Сейчас ничего не запланировано.",
     "nextAppointment": "Следующая запись",
@@ -1205,6 +1206,13 @@
     "physioDayBlockAlt": "Через день",
     "physioDayBlockThen": "5 дней затем",
     "physioBathSitzThenFull": "Сидячая, затем полная",
+    "physioNaftalanFill": "Налив нафталана",
+    "physioFillTam": "Полный (tam)",
+    "physioFillOturaq": "Сидячий (oturaq)",
+    "physioFillQursaq": "До пояса (qurşaq)",
+    "physioCatalogEmpty": "Каталог зон не засеян.",
+    "physioCatalogEmptyLink": "Открыть Physio sites",
+    "planSitesInFullPlan": "Зоны — в полном плане",
     "physioIntensityLight": "Лёгкий",
     "physioIntensityWeak": "Слабый",
     "physioIntensityNotHot": "Не горячо",
@@ -1212,6 +1220,10 @@
     "physioIntensityMore": "Сильнее",
     "statusProposed": "ПРЕДЛОЖЕНО",
     "printCheckup": "Печать чек-апа",
+    "intakeChecklistTitle": "Первичные диагностические процедуры",
+    "intakeStatusDone": "Выполнено",
+    "intakeStatusOrdered": "Назначено",
+    "intakeStatusMissing": "Нет",
     "printProcedures": "Печать графика",
     "print": "Печать",
     "downloadLabFile": "Скачать файл анализа",

@@ -72,12 +72,12 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-22 | Insurance eligibility M12 | PRD | Y | Y visit panel | — | — | — | SHIPPED | Finance proxy |
 | CLI-23 | HL7 LIS prod | PRD deferred | STUB | — | — | — | — | STUB | vendor |
 | CLI-24 | Real NBC fiscal | ADR | STUB | Y cashier mock | — | — | — | STUB | external |
-| CLI-25 | Patient card clinical sections (now/next, results, plan) | PRD M1/M5 | Y `/api/patients/:id/card-summary`, `…/card-feed`, `…/timeline` | Y `/patients/[id]` | Y settings limits | — | — | SHIPPED | History/timeline: linked Appointment+Visit collapse to one Visit row (`/visits/[id]`, slot date); pending labs in Now/next |
+| CLI-25 | Patient card clinical sections (now/next, results, plan) | PRD M1/M5 | Y `/api/patients/:id/card-summary` (+ `intakeChecklist`, Baku `atLabel`), `…/card-feed`, `…/timeline` | Y `/patients/[id]` — intake checklist; PLAN site titles; now/next + planPreview `scheduledAt >= now` (server Baku labels) | Y settings limits | — | — | SHIPPED | Visit collapse; Nafta intake + slot clock; droplet UAT after seed/re-Apply |
 | CLI-26 | Procedure day-ops (reception matrix + nurse attendance) | ADR clinic-procedure-day-ops + clinic-scheduling-time-layers | Y check-in→CHECKED_IN; auto-complete by endsAt; no-show burns quota; MANUAL channel; cron sweeps; procedures?mine=1; per-type resourceGap on check-in grace | Y `/nurse` agenda+kanban; `/sanatorium/resources` + fullscreen; `/sanatorium` courses table | Y procedure type duration/resourceGap/patientRest | — | — | SHIPPED | Check-in atomic; COMPLETED at endsAt; bonus = checkedInAt + CHECKED_IN/COMPLETED |
 | CLI-30 | Multi-resource scheduling (A sanatorium / B outpatient) | ADR clinic-multi-resource-scheduling + clinic-scheduling-time-layers | Y allocations/skills/requirements; planner+slots honor STAFF HARD/SOFT + occupying-tail resource gap; Appt.resourceId | Y `/admin/master-data` Add+Edit reqs + backfill + time-layer fields | — | — | — | SHIPPED | SOFT = shared nurse pool; physical capacity still scarce; SOFT does not inherit cabin resource gap |
 | CLI-31 | Doctor-confirm FIFO planning (PROPOSED → place) | ADR clinic-doctor-confirmed-fifo-planning | Y confirm, bulk-cancel, PATCH procedure; rotation/substitution; labs 90d/fasting | Y doctor/reception: patient card confirm; sanatorium bulk cancel+replace | Y `/admin/procedure-rules` rotation+substitution; peak settings | — | — | SHIPPED | Package → PROPOSED; doctor confirm places; incremental context |
-| CLI-32 | Diagnostic catalog DB + normalized lab orders | ADR clinic-diagnostic-catalog-db | Y LabOrderItem/LabResult; paged list filters; dual-write legacy | Y /lab-orders table+filters; detail blank read-only after publish | Y /admin/diagnostic-catalog CRUD | — | — | SHIPPED | Catalog SoT in DB; print via CLI-34 |
-| CLI-34 | Print forms (lab/USM/checkup/procedures) + branding | ADR clinic-print-forms | Y print loaders; qualitative options; ImagingPhrase | Y /print/* + language dialog on card/lab | Y print branding settings; phrase/analyte options | — | — | SHIPPED | Lang at print time; logo data URL |
+| CLI-32 | Diagnostic catalog DB + normalized lab orders | ADR clinic-diagnostic-catalog-db | Y LabOrderItem/LabResult; dual-write; package `PKG-NAFTA-INTAKE` | Y /lab-orders; card intake checklist (not WO `#33`) | Y /admin/diagnostic-catalog CRUD | — | — | SHIPPED | Seed `seed-diagnostic-catalog.cjs`; print CLI-34 |
+| CLI-34 | Print forms (lab/USM/checkup/procedures) + branding | ADR clinic-print-forms | Y print loaders; ImagingPhrase; checkup ← Nafta intake 4 | Y /print/*; checkup default therapist/gyn/cardio/usm | Y print branding; phrase/analyte options | — | — | SHIPPED | Tenant `checkupSectionsJson` overlay OK |
 | CLI-33 | Cashier ops (queue, shifts, multi-channel settle, over-quota) | ADR clinic-cashier-ops | Y queue/bills/shifts/receipts/over-quota; unified bill; split pay; ProcedureChargeLog | Y `/cashier` tabs + settle modal; X/Z shift | — | — | — | SHIPPED | Fiscal still STUB (CLI-24); folio/hub void at hotel |
 | CLI-27 | Clinic→hotel capacity foresight | ADR clinic-hotel-capacity-foresight | Y `/api/capacity/summary` (+ remaining%) | — | — | Y executive banner | — | SHIPPED | Soft warn ≤15% remaining; critical blocks medical booking; bus CAPACITY_CHANGED |
 | CLI-28 | Patient clinical demographics (sex, age, blood, emergency) | ADR clinic-patient-clinical-demographics | Y patients CRUD fields + `ageYears` | Y `/patients`, `/patients/[id]` | — | — | — | SHIPPED | Ops cache on PatientRef; sex/DOB SoR = MDM person core |
@@ -89,8 +89,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
 | CLI-41 | Platform ICD-10 catalog gateway | ADR clinic-icd10-catalog + orch gateway | Y `GET /platform/v1/catalog/icd10` in-process generator | — | — | — | — | HEADLESS | Not data-hub; clinic optional sync |
 | CLI-42 | Diagnosis report | ADR clinic-icd10-catalog | Y `GET /api/reports/diagnoses` | Y `/reports/diagnoses` | — | — | — | SHIPPED | UAT-SMOKE ICD; DOCTOR + admin `seesAll` |
-| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `GET /api/lab-orders/:id/file`; hotel `GET /api/internal/v1/stays/by-external-ref` | Y patient card download | Y `/admin/import` 01–09 | — | — | SHIPPED | `#21` MDM via hotel stay; past `checkOut` → `IMPORTED_CLOSED`; attending = first Visit from `#27` `wo:doctor:{id}` |
-| CLI-49 | Physio S + program/substance catalogs + order sites | ADR clinic-physio-site-catalog + physio-site-canon | Y `/api/admin/physio-sites`; `/api/admin/physio-lists`; `GET/PATCH /api/admin/physio-nahiye-queue`; `GET /api/physio-catalog`; `PATCH /api/procedures/:id` `siteIds` + `physioFields`; slots import `nahiye` | Y patient card chips + type-gated fields + `note` (WO nahiye preserved) | Y `/admin/physio-sites` tabs incl. Unmatched; procedure-type field MULTI | — | — | SHIPPED | W4 unmatched queue; UAT-SMOKE CLI-49 open |
+| CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `#23` `parseBakuDateTime(+04:00)` + always `replaceSites`; lab file; hotel stay bridge | Y patient card download | Y `/admin/import` | — | — | SHIPPED | Re-Apply `#23` rewrites clock + rematches S; `#31` closes intake USM |
+| CLI-49 | Physio S + program/substance catalogs + order sites | ADR clinic-physio-site-catalog + physio-site-canon | Y physio admin/catalog/nahiye-queue APIs; `physioFields` incl. `NAFTALAN_FILL`; `#23` nahiye | Y card chips (Solyuks gate); empty-catalog banner; PLAN site titles; note = residue | Y `/admin/physio-sites` + Unmatched | — | — | SHIPPED | Seed S **before** `#23`; UAT open until droplet proof |
 
 ### MDM natural-person identity
 
@@ -139,6 +139,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | ADR | Y | — | — | Y | Y | SHIPPED | — |
 | ORCH-MDM-02 | internal resolve/merge API | ADR | Y | — | — | — | HEADLESS | HEADLESS | service token; resolve writes sex/DOB |
 | ORCH-MDM-03 | Person core sex + birthDate (M/F/UNKNOWN) | ADR era-mdm-natural-person-identity | Y resolve + ops-profile | — | — | — | HEADLESS | API | no OTHER; fill-not-clear; hotel/clinic cache |
+| ORCH-MDM-04 | Super-admin persons directory | ADR | Y `GET /v1/admin/mdm/persons` | — | — | — | Y `/super-admin/mdm/persons` | API | list + FIN/name/DOB/phone filters; resolve/merge modals |
 
 ### Presets (product lines)
 
@@ -380,6 +381,7 @@ ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-p
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | Y | Y | SHIPPED |
 | ORCH-MDM-02 | internal resolve/merge API | — | HEADLESS | `[h]` |
 | ORCH-MDM-03 | Person core sex + birthDate | — | HEADLESS | `[h]` |
+| ORCH-MDM-04 | Super-admin persons directory | — | Y `/super-admin/mdm/persons` | API |
 | ORCH-04 | Vendor SMS/email prod | — | — | STUB |
 | ORCH-05 | Login onboarding 0/1/N + company-less gate | Y | — | SHIPPED |
 | ORCH-06 | Pending invites accept (invited accountant) | Y | — | SHIPPED |
@@ -410,14 +412,14 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
-| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments` | — | — | Y | — | Workspace → employments → hire; transfer/terminate/reprovision/HR profile modals (API UI, no UAT-SMOKE yet) |
+| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | Workspace → employments: hire (sex/DOB/optional blood), employee card, transfer/terminate; reprovision in overflow; filters sex/age/org/position (API UI, no UAT-SMOKE yet) |
 | CP-WF-ABS-01 | Absence workflow (7 TK AZ kinds, modal CRUD) | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | create/edit via modal on `/workspace/workforce/absences`; kinds: VACATION/SICK/UNPAID/SOCIAL_LEAVE/EDUCATIONAL_LEAVE/BUSINESS_TRIP/ADMINISTRATIVE |
 | CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-TS-01 | Timesheet draft approve | ADR | `GET/POST …/timesheets/*` | — | — | Y `/workspace/workforce/timesheets` | — | UI landed; status API until UAT-SMOKE |
 | CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*`, `POST …/import/org-structure` | — | — | Y | — | bootstrap + xlsx/csv import on `/workspace/workforce/org-structure`; upsert by name, no deletes |
-| CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` | — | — | Y | — | create position on `/workspace/workforce/positions` |
+| CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` (+ archive) | — | — | Y | — | create/edit/archive on `/workspace/workforce/positions`; drill-down from org-structure; link to employments |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Split UI: `/security` matrix (neutral No access), `/security/grants`, `/security/bindings`, `/security/audit` |
 | CP-WF-HIRE-01 | CP hire + STAFF_PROVISIONED | ADR cp-workforce-role-templates-and-security-admin | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | hire wizard: satellite checkboxes optional; empty = employment without satellite login |
 
@@ -457,6 +459,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-29 | ORCH-MDM-04: super-admin persons directory; CP-WF-EMP-01 employee card + filters; CP-WF-POS-01 archive + drill-down. |
 | 2026-08-28 | CLI-25: patient card timeline/history collapse Appointment+Visit to one «Приём» row (slot date, `/visits/[id]`). |
 | 2026-08-28 | CLI-48: `#21` attending doctor = one Visit on check-in from `#27` `wo:doctor:{id}` (not a PatientRef field). |
 | 2026-08-28 | CLI-48: `#21` re-import updates latest episode any status (dates/status/room/stay); no clinic wipe. |
@@ -524,6 +527,8 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-08-28 | SaaS Wave 11: hotel curated JSON placement slice + orch sliceMeta; AC-CP-TOPO still 🟡; host apply open; no `ga`. |
 | 2026-08-28 | SaaS Wave 12: honesty closeout — status drift fix + `check:acceptance` SaaS bans; TENANT/TOPO 🟡; HOT-06 HEADLESS; no `ga`. |
 | 2026-08-23 | Hotel guest tours HOT-TOUR-01 SHIPPED: `/tours` roster + TOUR folio + `/fleet` + print; SKU hotel_transfers; AC-HOT-TOUR Scaffold ✅; UI SCREEN (not SHOW) |
+| 2026-08-30 | Nafta card wave (3): (1) CLI-32/34 intake checklist `PKG-NAFTA-INTAKE` + live instantiate; (2) CLI-49 Solyuks/`belinə`/`NAFTALAN_FILL`/empty-catalog UX + always rematch on `#23`; (3) CLI-25/48 Baku `parseBakuDateTime` + now/PLAN `gte now`. Ops: seed catalogs then re-Apply `#23` (+ `#31` if USG). Not Pilot-ready / not GA. |
+| 2026-08-30 | Clinic catalog seed layers: satellite **base** + Nafta **org overlay** (ADR clinic-catalog-base-and-org-overlay-seeds). Wrappers `db:seed:physio` / `db:seed:diagnostic-catalog` run both. |
 | 2026-08-19 | HOT-RPT-01/02 Hotel Management Reports W1–W3 (P0 ZIP + P1 catalog + cubes/3-year + email ZIP link HEADLESS); STUB → API — not SHIPPED (no UAT evidence) |
 | 2026-08-20 | HOT-AGP-01/02/03 Agency portal P0–P1 (CP grants + hotel book + FO inbox + passport scan); Status=API; AC-HOT-AGP 🟡; SKU `hotel_agency_portal` |
 | 2026-08-17 | CLI-38 staff kind + monthly nurse/lab duty roster (`/sanatorium/nurse-roster`); clinic-local absences; planner honors approved posting |

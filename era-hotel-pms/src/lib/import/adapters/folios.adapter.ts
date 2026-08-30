@@ -39,10 +39,14 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     const guestName = cellString(raw.guestName);
     const docNote = cellString(raw.docNote);
     const notes = cellString(raw.notes);
+    // EW often leaves Revenue Code empty and puts catalog name in Income (ROOM, SPA MEDIKAL).
+    const revenueCode =
+      cellString(raw.revenueCode)?.toUpperCase() ??
+      (cellNumber(raw.amount) == null ? cellString(raw.Income)?.toUpperCase() ?? cellString(raw.amount)?.toUpperCase() : null);
     return {
       externalRef: cellString(raw.externalRef),
       reservationExternalRef: cellString(raw.reservationExternalRef),
-      revenueCode: cellString(raw.revenueCode)?.toUpperCase(),
+      revenueCode,
       amount,
       description: [guestName, docNote, notes].filter(Boolean).join(' — ') || 'Imported folio line',
       businessDate,

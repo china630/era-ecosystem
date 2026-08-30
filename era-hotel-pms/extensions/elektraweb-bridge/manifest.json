@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ERA Elektraweb Bridge",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Temporary dual-run: Elektraweb ↔ ERA (inbound mirror + sanatorium SPA extra Insert)",
   "permissions": ["storage", "alarms"],
   "host_permissions": [
@@ -18,7 +18,15 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "ERA Elektraweb Bridge"
+    "default_title": "ERA Elektraweb Bridge",
+    "default_icon": {
+      "16": "icons/lamp-gray-16.png",
+      "32": "icons/lamp-gray-32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/lamp-gray-16.png",
+    "32": "icons/lamp-gray-32.png"
   },
   "options_ui": {
     "page": "options.html",

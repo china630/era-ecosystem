@@ -25,6 +25,10 @@ export async function runImport<T>(
     try {
       const mapped = mapHeaders(rows[i], adapter.headerAliases);
       const transformed = adapter.mapRow(mapped);
+      if (transformed == null) {
+        result.skipped += 1;
+        continue;
+      }
       const row = adapter.rowSchema.parse(transformed);
       const outcome = await adapter.upsert(prisma, row, dryRun);
       if (outcome === 'created') result.created += 1;

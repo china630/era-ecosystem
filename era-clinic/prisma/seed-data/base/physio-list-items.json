@@ -1,0 +1,271 @@
+{
+  "id": "physio-list-items-base",
+  "layer": "base",
+  "notProductSoR": true,
+  "notes": [
+    "Satellite base DEVICE_PROGRAM / SUBSTANCE codes. Aliases live in Nafta overlay."
+  ],
+  "items": [
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "TENS",
+      "titleAz": "TENS",
+      "titleRu": "ЧЭНС (TENS)",
+      "titleEn": "TENS",
+      "sortOrder": 10,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "ARTROZ",
+      "titleAz": "Artroz proqramı",
+      "titleRu": "Программа артроз",
+      "titleEn": "Arthrosis program",
+      "sortOrder": 20,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "ARTRIT",
+      "titleAz": "Artrit proqramı",
+      "titleRu": "Программа артрит",
+      "titleEn": "Arthritis program",
+      "sortOrder": 30,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "CAPIQ",
+      "titleAz": "Çapıq proqramı",
+      "titleRu": "Программа рубец",
+      "titleEn": "Scar program",
+      "sortOrder": 40,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "EKZEMA",
+      "titleAz": "Ekzema proqramı",
+      "titleRu": "Программа экзема",
+      "titleEn": "Eczema program",
+      "sortOrder": 50,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "DERMATIT",
+      "titleAz": "Dermatit proqramı",
+      "titleRu": "Программа дерматит",
+      "titleEn": "Dermatitis program",
+      "sortOrder": 60,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "PODAGRA",
+      "titleAz": "Podaqra proqramı",
+      "titleRu": "Программа подагра",
+      "titleEn": "Gout program",
+      "sortOrder": 70,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "NEVROLOJI",
+      "titleAz": "Nevroloji proqram",
+      "titleRu": "Неврологическая программа",
+      "titleEn": "Neurological program",
+      "sortOrder": 80,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "KOTZ",
+      "titleAz": "Rus axımı (Kotz)",
+      "titleRu": "Русский ток (Kotz)",
+      "titleEn": "Russian current (Kotz)",
+      "sortOrder": 90,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "INTERFERENTIAL",
+      "titleAz": "Interferensial",
+      "titleRu": "Интерференц",
+      "titleEn": "Interferential",
+      "sortOrder": 100,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "ROSACEA",
+      "titleAz": "Rozasea proqramı",
+      "titleRu": "Программа розацеа",
+      "titleEn": "Rosacea program",
+      "sortOrder": 110,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "EDEMA",
+      "titleAz": "Ödem proqramı",
+      "titleRu": "Программа отёк",
+      "titleEn": "Edema program",
+      "sortOrder": 120,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "MYOSPASM",
+      "titleAz": "Miospazm",
+      "titleRu": "Миоспазм",
+      "titleEn": "Myospasm",
+      "sortOrder": 130,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "PAIN",
+      "titleAz": "Ağrı rejimı",
+      "titleRu": "Программа боль",
+      "titleEn": "Pain program",
+      "sortOrder": 140,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "LUMBALGIA",
+      "titleAz": "Lumbalgiya",
+      "titleRu": "Люмбалгия",
+      "titleEn": "Lumbalgia",
+      "sortOrder": 150,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "SPORT",
+      "titleAz": "İdman rejimı",
+      "titleRu": "Спортивная программа",
+      "titleEn": "Sport program",
+      "sortOrder": 160,
+      "aliases": []
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "VARIANT_B",
+      "titleAz": "Proqram variantı B",
+      "titleRu": "Вариант программы B",
+      "titleEn": "Device program variant B",
+      "sortOrder": 170,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "HERBAL",
+      "titleAz": "Bitkilər / otlar",
+      "titleRu": "Травы / растения",
+      "titleEn": "Herbal / plants",
+      "sortOrder": 10,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "NICOTINE",
+      "titleAz": "Nikotin turşusu",
+      "titleRu": "Никотиновая кислота",
+      "titleEn": "Nicotinic acid",
+      "sortOrder": 20,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "POTASSIUM_IODIDE",
+      "titleAz": "Kalium yodid",
+      "titleRu": "Йодид калия",
+      "titleEn": "Potassium iodide",
+      "sortOrder": 30,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "CALCIUM",
+      "titleAz": "Kalsium",
+      "titleRu": "Кальций",
+      "titleEn": "Calcium",
+      "sortOrder": 40,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "NOVOCAINE",
+      "titleAz": "Novokain",
+      "titleRu": "Новокаин",
+      "titleEn": "Novocaine",
+      "sortOrder": 50,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "KARIPAZIM",
+      "titleAz": "Karipazim",
+      "titleRu": "Карипазим",
+      "titleEn": "Karipazim",
+      "sortOrder": 60,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "NAFTALAN",
+      "titleAz": "Naftalan",
+      "titleRu": "Нафталан",
+      "titleEn": "Naftalan",
+      "sortOrder": 70,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "DIMEXIDE",
+      "titleAz": "Dimeksid",
+      "titleRu": "Димексид",
+      "titleEn": "Dimexide",
+      "sortOrder": 80,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "HYDROCORTISONE",
+      "titleAz": "Hidrokortizon",
+      "titleRu": "Гидрокортизон",
+      "titleEn": "Hydrocortisone",
+      "sortOrder": 90,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "MAGNESIUM",
+      "titleAz": "Maqnezium",
+      "titleRu": "Магний",
+      "titleEn": "Magnesium",
+      "sortOrder": 100,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "EUFILLIN",
+      "titleAz": "Eufillin",
+      "titleRu": "Эуфиллин",
+      "titleEn": "Eufillin",
+      "sortOrder": 110,
+      "aliases": []
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "OWN_OINTMENT",
+      "titleAz": "Öz mazı",
+      "titleRu": "Своя мазь",
+      "titleEn": "Own ointment",
+      "sortOrder": 120,
+      "aliases": []
+    }
+  ]
+}

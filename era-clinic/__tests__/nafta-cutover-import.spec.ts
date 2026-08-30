@@ -484,7 +484,8 @@ describe("nafta cutover import rules", () => {
       takenAt: "2026-02-18",
     });
     const row = adapter.rowSchema.parse(mapped);
-    const create = jest.fn().mockResolvedValue({ id: "lab1" });
+    const createOrder = jest.fn().mockResolvedValue({ id: "lab1" });
+    const createItem = jest.fn().mockResolvedValue({ id: "item1" });
     const tx = {
       cutoverImportKey: {
         findFirst: jest.fn(async ({ where }: { where: { entity: string } }) =>
@@ -493,17 +494,65 @@ describe("nafta cutover import rules", () => {
         create: jest.fn(),
       },
       diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc1" }) },
-      labOrder: { create, update: jest.fn() },
+      labOrder: { create: createOrder, update: jest.fn() },
+      labOrderItem: { create: createItem },
     };
     await adapter.upsert(tx as never, row, false);
-    expect(create).toHaveBeenCalledWith(
+    expect(createOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           testCode: "LAB-CBC",
           resultJson: "[]",
+          collectedAt: expect.any(Date),
+          createdAt: expect.any(Date),
         }),
       }),
     );
+    expect(createOrder.mock.calls[0][0].data.createdAt.getTime()).toBe(
+      createOrder.mock.calls[0][0].data.collectedAt.getTime(),
+    );
+    expect(createOrder.mock.calls[0][0].data.items).toBeUndefined();
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          labOrderId: "lab1",
+          serviceCode: "LAB-CBC",
+          diagnosticServiceId: "svc1",
+        }),
+      }),
+    );
+  });
+
+  it("lab upsert uses episode check-in when takenAt is empty", async () => {
+    const adapter = getImportAdapter("lab-orders")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:lab:2",
+      patientRef: "wo:patient:1",
+      testCode: "LAB-CBC",
+      status: "COMPLETED",
+      panel: "QAN",
+      takenAt: "",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const checkIn = new Date("2024-08-12T00:00:00.000Z");
+    const createOrder = jest.fn().mockResolvedValue({ id: "lab2" });
+    const tx = {
+      cutoverImportKey: {
+        findFirst: jest.fn(async ({ where }: { where: { entity: string } }) =>
+          where.entity === "patients" ? { recordId: "pat1" } : null,
+        ),
+        create: jest.fn(),
+      },
+      diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc1" }) },
+      clinicalEpisode: {
+        findFirst: jest.fn().mockResolvedValue({ openedAt: checkIn }),
+      },
+      labOrder: { create: createOrder, update: jest.fn() },
+      labOrderItem: { create: jest.fn().mockResolvedValue({ id: "item1" }) },
+    };
+    await adapter.upsert(tx as never, row, false);
+    expect(createOrder.mock.calls[0][0].data.collectedAt).toEqual(checkIn);
+    expect(createOrder.mock.calls[0][0].data.createdAt).toEqual(checkIn);
   });
 
   it("lab result line upsert writes LabResult fields", async () => {

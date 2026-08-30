@@ -55,4 +55,47 @@ describe("WorkforcePositionsService", () => {
       svc.update("org1", "p1", "u1", { totalSlots: 1 }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it("archive rejects when active employments exist", async () => {
+    prisma.workforcePosition.findFirst.mockResolvedValue({
+      id: "p1",
+      status: "ACTIVE",
+      name: "Nurse",
+      code: null,
+      totalSlots: 2,
+      orgUnitId: "u1",
+    });
+    prisma.workforceEmployment.count.mockResolvedValue(1);
+
+    await expect(svc.archive("org1", "p1", "actor")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it("archive sets ARCHIVED when no active employments", async () => {
+    prisma.workforcePosition.findFirst.mockResolvedValue({
+      id: "p1",
+      status: "ACTIVE",
+      name: "Nurse",
+      code: "N1",
+      totalSlots: 2,
+      orgUnitId: "u1",
+    });
+    prisma.workforceEmployment.count.mockResolvedValue(0);
+    prisma.workforcePosition.update.mockResolvedValue({
+      id: "p1",
+      status: "ARCHIVED",
+      name: "Nurse",
+      code: "N1",
+      totalSlots: 2,
+      orgUnitId: "u1",
+    });
+
+    const row = await svc.archive("org1", "p1", "actor");
+    expect(row.status).toBe("ARCHIVED");
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "POSITION_ARCHIVED" }),
+    );
+    expect(satelliteEvents.enqueue).toHaveBeenCalled();
+  });
 });

@@ -42,12 +42,12 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
 | `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
 | `/patients` | `/api/patients` — paginated list (`q`, sex, blood, MDM, age, `roomNumber` when sanatorium) + register; modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`) |
-| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`) |
+| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); `intakeChecklist` (`PKG-NAFTA-INTAKE`); now/next + PLAN preview Baku `atLabel` / `scheduledAt >= now`; card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`) |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |
 | `/appointments` | Practitioner **day matrix** (`GET /api/appointments/calendar`); create/reschedule/check-in/cancel. CLI-36: off-shift slots `blocked` (offShift); create + reschedule reject off-shift (409) |
-| `/lab-orders` | `GET /api/lab-orders` (paged `{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo filters; items+results+modality include), `/api/diagnostic-catalog` (picker + favorites sort); row opens **LabOrderWorkflowModal** |
+| `/lab-orders` | `GET /api/lab-orders` (paged `{data,total,page,pageSize}`; status/criticalOnly/modality/patientRefId/dateFrom/dateTo on `collectedAt` with `createdAt` fallback; items+results+modality include), `/api/diagnostic-catalog` (picker + favorites sort); row opens **LabOrderWorkflowModal**. Cutover `#31` USG studies use catalog codes `USG-ABD`/`USG-THYROID`/`USG-BREAST`/`USG-DOPPLER`/`USG-SOFT` with parsed organ fields |
 | `/lab-orders/[id]` | Redirect → `/lab-orders?order=` + same modal (`GET /api/lab-orders/[id]`, collect/results/publish/complete) |
 | `/reception/queue` | `/api/queue/*` |
 | `/doctor`, `/nurse` | role-guarded |
@@ -89,7 +89,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/audit` | `/api/audit` |
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |
 | `/admin/lookups` | `/api/admin/lookups` BODY_PART |
-| `/admin/physio-sites` | CLI-49 — `GET/POST /api/admin/physio-sites`, `GET/PATCH/DELETE …/[id]` (DELETE = retire); lists `GET/POST /api/admin/physio-lists`; unmatched `GET /api/admin/physio-nahiye-queue`, `PATCH …/[id]` (`ignore` \| `alias` existing S only); ops `GET /api/physio-catalog`. W4: `#23` slots `nahiye` → `note` + matcher. Seed `npx tsx prisma/seed-physio-catalog.ts` |
+| `/admin/physio-sites` | CLI-49 — `GET/POST /api/admin/physio-sites`, `GET/PATCH/DELETE …/[id]` (DELETE = retire); lists `GET/POST /api/admin/physio-lists`; unmatched `GET /api/admin/physio-nahiye-queue`, `PATCH …/[id]` (`ignore` \| `alias` existing S only); ops `GET /api/physio-catalog`. W4: `#23` slots `nahiye` → `note` + matcher. Seed `npm run db:seed:physio` (= base + Nafta overlay). ADR clinic-catalog-base-and-org-overlay-seeds |
 
 ## Integration
 
@@ -125,7 +125,9 @@ Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav regist
 - GET /api/imaging-phrases (ops phrase picker)
 - Analyte section / valueType / AnalyteValueOption via analytes admin API
 - ADR: docs/adr/clinic-print-forms.md
-- Print checkup (`/print/checkup/[patientId]`) includes episode ICD diagnoses (`print-checkup.service`)
+- Print checkup (`/print/checkup/[patientId]`) includes episode ICD diagnoses (`print-checkup.service`); default sections = Nafta intake 4 (`therapist` / `gynecologist` / `cardiologist` / `usm`)
+- Patient card `GET /api/patients/[id]/card-summary` → `intakeChecklist` from `PKG-NAFTA-INTAKE` (Visit + LabOrder status). Live: `instantiateIntakePackage` on `openEpisodeFromStay` / walk-in (idempotent ECG/USG; no physio FIFO)
+- Cutover report: `scripts/nafta-cutover/rebuild-intake.cjs` (cards `slices.diagnostics`); map `src/lib/import/nafta-intake-map.ts`
 
 ## ICD-10 catalog (CLI-39…42)
 

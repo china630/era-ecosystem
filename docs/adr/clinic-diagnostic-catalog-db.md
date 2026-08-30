@@ -16,7 +16,7 @@ esultJson blob. Filtering by modality, paginating with accurate totals, and trea
 ### Catalog source of truth
 
 1. Tables Modality, DiagnosticService, DiagnosticAnalyte, DiagnosticMetaField hold the catalog in Postgres.
-2. JSON seed remains the bootstrap source via prisma/seed-diagnostic-catalog.cjs (idempotent upsert by code).
+2. JSON seed remains the bootstrap source via prisma/seed-diagnostic-catalog.cjs (base `diagnostic-lab-catalog.json` then Nafta `nafta/diagnostic-overlay.json`; see [clinic-catalog-base-and-org-overlay-seeds.md](./clinic-catalog-base-and-org-overlay-seeds.md)).
 3. SatAdmin CRUD at /admin/diagnostic-catalog (API under /api/admin/diagnostic-catalog/*) mutates the DB and invalidates the in-memory catalog cache.
 4. getDiagnosticCatalog() / indCatalogItem() are async DB readers with cache; picker and TemplateResultForm keep the same DTO shape.
 

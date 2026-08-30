@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   buildMatcher,
@@ -8,7 +7,8 @@ import {
   overlayZoneAliases,
   type NahiyeMatchCatalog,
 } from "@/domain/physio/nahiye-match";
-import { inferLateralityFromText, siteApplyModeFromFlags } from "@/domain/physio/nahiye-match-values";
+import { inferLateralityFromText, physioFieldsFromFlags, siteApplyModeFromFlags } from "@/domain/physio/nahiye-match-values";
+import { loadMergedPhysioZonesCatalog } from "@/domain/physio/physio-catalog-layers";
 
 const cjs = require("../scripts/nafta-cutover/nahiye-s-match.cjs") as {
   buildMatcher: (cat: NahiyeMatchCatalog) => {
@@ -21,9 +21,7 @@ const cjs = require("../scripts/nafta-cutover/nahiye-s-match.cjs") as {
   };
 };
 
-const cat = JSON.parse(
-  readFileSync(join(__dirname, "../prisma/seed-data/nafta/physio-zones-s.json"), "utf8"),
-) as NahiyeMatchCatalog;
+const cat = loadMergedPhysioZonesCatalog(join(__dirname, "..")) as NahiyeMatchCatalog;
 
 describe("nahiye matcher (CLI-49 W4)", () => {
   const tsMatcher = buildMatcher(cat);
@@ -92,6 +90,22 @@ describe("nahiye matcher (CLI-49 W4)", () => {
     const collar = over.zones?.find((z) => z.code === "ZONE-COLLAR");
     expect(collar?.woAliases).toEqual(expect.arrayContaining(["boyun", "sheya"]));
     expect(over.zones?.some((z) => z.code === "ZONE-KNEE")).toBe(true);
+  });
+
+  it("matches Belinə / Başına / Tam to S codes", () => {
+    expect(tsMatcher.match("Belinə").chips).toContain("ZONE-LUMBOSACRAL");
+    expect(tsMatcher.match("Başına").chips).toContain("ZONE-HEAD");
+    expect(tsMatcher.match("Tam").chips).toContain("ZONE-FULL-BODY");
+    expect(tsMatcher.match("oturaq").chips).toContain("ZONE-SITZ");
+  });
+
+  it("sets NAFTALAN_FILL for bare tam/oturaq but not for sitz-then-full sequence", () => {
+    expect(physioFieldsFromFlags([], "Tam", []).naftalanFill).toBe("TAM");
+    expect(physioFieldsFromFlags([], "oturaq", []).naftalanFill).toBe("OTURAQ");
+    expect(physioFieldsFromFlags(["BATH_SEQUENCE"], "1 ci oturaq son tam", []).naftalanFill).toBeUndefined();
+    expect(physioFieldsFromFlags(["BATH_SEQUENCE"], "1 ci oturaq son tam", []).bathSequence).toBe(
+      "SITZ_THEN_FULL",
+    );
   });
 
   it("buckets mapped vs unknown the same in TS and CJS", () => {

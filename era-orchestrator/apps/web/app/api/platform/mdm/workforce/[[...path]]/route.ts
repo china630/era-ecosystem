@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ORCH_API_URL } from "../../../../../../lib/orch-api";
 
+/**
+ * Align with MdmService.assertServiceToken → assertInternalServiceToken:
+ * ORCHESTRATOR_INTERNAL_SERVICE_TOKEN (fallback CONTROL_PLANE_SERVICE_TOKEN).
+ * Prefer MDM_INTERNAL_SERVICE_TOKEN when set to the same value in ops.
+ */
 const MDM_SERVICE_TOKEN =
   process.env.MDM_INTERNAL_SERVICE_TOKEN ??
+  process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN ??
+  process.env.CONTROL_PLANE_SERVICE_TOKEN ??
   process.env.SATELLITE_EVENT_SERVICE_TOKEN ??
   "";
 
@@ -24,6 +31,12 @@ async function proxy(
     url.searchParams.set(k, v);
   });
 
+  const orgId = request.headers.get("x-organization-id")?.trim();
+  // GET/PATCH hr-profile require organizationId query (not header alone).
+  if (orgId && !url.searchParams.has("organizationId")) {
+    url.searchParams.set("organizationId", orgId);
+  }
+
   const headers = new Headers();
   headers.set("Authorization", callerAuth);
   if (MDM_SERVICE_TOKEN) {
@@ -34,7 +47,6 @@ async function proxy(
       { status: 503 },
     );
   }
-  const orgId = request.headers.get("x-organization-id");
   if (orgId) headers.set("x-organization-id", orgId);
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
@@ -74,6 +86,11 @@ export async function GET(request: NextRequest, ctx: RouteCtx) {
 }
 
 export async function POST(request: NextRequest, ctx: RouteCtx) {
+  const { path = [] } = await ctx.params;
+  return proxy(request, path);
+}
+
+export async function PATCH(request: NextRequest, ctx: RouteCtx) {
   const { path = [] } = await ctx.params;
   return proxy(request, path);
 }

@@ -1,0 +1,224 @@
+{
+  "id": "diagnostic-nafta-overlay",
+  "layer": "nafta",
+  "notProductSoR": true,
+  "notes": [
+    "Org overlay: check-in package + Nafta USG form patches (WO sourceNote).",
+    "Apply after seed-diagnostic-catalog base."
+  ],
+  "packages": [
+    {
+      "code": "PKG-NAFTA-INTAKE",
+      "title": {
+        "en": "Nafta initial diagnostic procedures (check-in)",
+        "ru": "Nafta первичные диагностические процедуры (заезд)",
+        "az": "İlkin diaqnostik prosedurlar (Check-up)"
+      },
+      "includes": [
+        "SANATORIUM-INTAKE",
+        "GYN-OR-URO",
+        "ECG-12",
+        "USG-ABD"
+      ]
+    }
+  ],
+  "servicePatches": [
+    {
+      "code": "USG-ABD",
+      "title": {
+        "en": "Abdominal + pelvic ultrasound (Nafta)",
+        "ru": "УЗИ живота и малого таза (Nafta)",
+        "az": "Qarın boşluğu və kiçik çanaq USM"
+      },
+      "fields": [
+        {
+          "key": "liver",
+          "type": "textarea",
+          "label": {
+            "en": "Liver",
+            "ru": "Печень",
+            "az": "Qaraciyər"
+          }
+        },
+        {
+          "key": "gallbladder",
+          "type": "textarea",
+          "label": {
+            "en": "Gallbladder / bile ducts",
+            "ru": "Жёлчный пузырь / протоки",
+            "az": "Öd kisəsi / axarlar"
+          }
+        },
+        {
+          "key": "pancreas",
+          "type": "textarea",
+          "label": {
+            "en": "Pancreas",
+            "ru": "Поджелудочная",
+            "az": "Mədəaltı vəzi"
+          }
+        },
+        {
+          "key": "spleen",
+          "type": "textarea",
+          "label": {
+            "en": "Spleen",
+            "ru": "Селезёнка",
+            "az": "Dalaq"
+          }
+        },
+        {
+          "key": "rightKidney",
+          "type": "textarea",
+          "label": {
+            "en": "Right kidney",
+            "ru": "Правая почка",
+            "az": "Sağ böyrək"
+          }
+        },
+        {
+          "key": "leftKidney",
+          "type": "textarea",
+          "label": {
+            "en": "Left kidney",
+            "ru": "Левая почка",
+            "az": "Sol böyrək"
+          }
+        },
+        {
+          "key": "bladder",
+          "type": "textarea",
+          "label": {
+            "en": "Bladder",
+            "ru": "Мочевой пузырь",
+            "az": "Sidik kisəsi"
+          }
+        },
+        {
+          "key": "prostate",
+          "type": "textarea",
+          "label": {
+            "en": "Prostate",
+            "ru": "Простата",
+            "az": "Prostata"
+          }
+        },
+        {
+          "key": "uterus",
+          "type": "textarea",
+          "label": {
+            "en": "Uterus",
+            "ru": "Матка",
+            "az": "Uterus"
+          }
+        },
+        {
+          "key": "ovaries",
+          "type": "textarea",
+          "label": {
+            "en": "Ovaries",
+            "ru": "Яичники",
+            "az": "Overlər"
+          }
+        },
+        {
+          "key": "freeFluid",
+          "type": "select",
+          "label": {
+            "en": "Free fluid",
+            "ru": "Свободная жидкость",
+            "az": "Sərbəst maye"
+          },
+          "options": [
+            "none",
+            "present"
+          ]
+        },
+        {
+          "key": "conclusion",
+          "type": "textarea",
+          "label": {
+            "en": "Conclusion",
+            "ru": "Заключение",
+            "az": "Nəticə"
+          },
+          "required": true
+        },
+        {
+          "key": "recommendations",
+          "type": "textarea",
+          "label": {
+            "en": "Recommendations",
+            "ru": "Рекомендации",
+            "az": "Tövsiyələr"
+          }
+        },
+        {
+          "key": "sourceNote",
+          "type": "textarea",
+          "label": {
+            "en": "Original note (WO Qeyd)",
+            "ru": "Исходный текст (WO Qeyd)",
+            "az": "Orijinal qeyd (WO)"
+          }
+        }
+      ]
+    },
+    {
+      "code": "USG-THYROID",
+      "fieldsAppend": [
+        {
+          "key": "sourceNote",
+          "type": "textarea",
+          "label": {
+            "en": "Original note (WO Qeyd)",
+            "ru": "Исходный текст (WO Qeyd)",
+            "az": "Orijinal qeyd (WO)"
+          }
+        }
+      ]
+    },
+    {
+      "code": "USG-BREAST",
+      "fieldsAppend": [
+        {
+          "key": "sourceNote",
+          "type": "textarea",
+          "label": {
+            "en": "Original note (WO Qeyd)",
+            "ru": "Исходный текст (WO Qeyd)",
+            "az": "Orijinal qeyd (WO)"
+          }
+        }
+      ]
+    },
+    {
+      "code": "USG-SOFT",
+      "fieldsAppend": [
+        {
+          "key": "sourceNote",
+          "type": "textarea",
+          "label": {
+            "en": "Original note (WO Qeyd)",
+            "ru": "Исходный текст (WO Qeyd)",
+            "az": "Orijinal qeyd (WO)"
+          }
+        }
+      ]
+    },
+    {
+      "code": "USG-DOPPLER",
+      "fieldsAppend": [
+        {
+          "key": "sourceNote",
+          "type": "textarea",
+          "label": {
+            "en": "Original note (WO Qeyd)",
+            "ru": "Исходный текст (WO Qeyd)",
+            "az": "Orijinal qeyd (WO)"
+          }
+        }
+      ]
+    }
+  ]
+}

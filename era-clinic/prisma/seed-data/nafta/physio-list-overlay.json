@@ -1,0 +1,385 @@
+{
+  "id": "physio-list-items-nafta-overlay",
+  "layer": "nafta",
+  "notProductSoR": true,
+  "notes": [
+    "WO / reception aliases for physio list items."
+  ],
+  "itemAliases": [
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "TENS",
+      "aliases": [
+        "tens proqrami ile",
+        "tens proqrami ilə",
+        "tens proqrami",
+        "tens proq",
+        "tens üsulu ilə",
+        "tens usulu ile",
+        "tens üsulu",
+        "tenslə",
+        "tens le",
+        "tens rej",
+        "tenis rej",
+        "tens proqtami ile",
+        "tens",
+        "tenis"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "ARTROZ",
+      "aliases": [
+        "artroz rej b",
+        "artroz reh",
+        "artroz rej",
+        "artroz proqrtami ile",
+        "artroz proqrtamı ilə",
+        "artroz pr ilə",
+        "artroz proqrami ilə(b)",
+        "artroz proqrami ile b",
+        "artroz b rej",
+        "artroz re",
+        "artrooz rej",
+        "artroz proqrami",
+        "artroz pr ilə(b)",
+        "artroz pr ile b",
+        "artrroz pr ilə",
+        "artrroz pr ile",
+        "astroz rej",
+        "qartroz",
+        "artroz",
+        "art pr ilə",
+        "art pr ilə(b)",
+        "art pr ile b",
+        "art rejimilə",
+        "art rejimile",
+        "artr pr",
+        "art"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "ARTRIT",
+      "aliases": [
+        "artrit pr ilə",
+        "artrit proqramile",
+        "artrit proqrami ilə",
+        "artrit proqrami ile",
+        "artrit proqrami ile b",
+        "artrit proqrami ilə(b)",
+        "artrit proqrqmi",
+        "artrit proq",
+        "artrit proqramiyla",
+        "artrit proqramıyla",
+        "artrit pr ile b",
+        "artrit pr ilə b",
+        "artrit pr ilə(b)",
+        "artrit rejimile",
+        "artrit rejimilə",
+        "artrit rej",
+        "artrir b rej",
+        "ortrit pr",
+        "rematidniy artrir b rej",
+        "rematidniy artrit b rej",
+        "artrit"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "CAPIQ",
+      "aliases": [
+        "capiq rej",
+        "capiq rejim",
+        "çapıq rejim",
+        "çapıq rej",
+        "kelloid capiq pr",
+        "capiq"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "EKZEMA",
+      "aliases": [
+        "ekzem proqramiyla",
+        "ekzem proqramı ilə",
+        "ekzem pr ilə",
+        "eqzem pr ile",
+        "eqzema rej",
+        "ekzema proqrami",
+        "ekzem proqrami",
+        "ekz rej",
+        "ekzo rej",
+        "ekz pr ile",
+        "ekz pr",
+        "ekzema pr ile",
+        "ekzem"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "DERMATIT",
+      "aliases": [
+        "dermatit",
+        "dermatit pr ile",
+        "dermatit proqrami ilə",
+        "dermatit proqrami",
+        "dermatit pr il",
+        "dermo pr ilə",
+        "dermo pr ile",
+        "dermo rej",
+        "dermo"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "PODAGRA",
+      "aliases": [
+        "padaqra rej",
+        "padaqra re",
+        "podaqra",
+        "padaqra"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "NEVROLOJI",
+      "aliases": [
+        "nevraloji rej",
+        "nevroloji rej",
+        "raloji rej"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "KOTZ",
+      "aliases": [
+        "rus akimi ilə",
+        "rus akimi ile",
+        "rus akimi",
+        "rus akiimi"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "INTERFERENTIAL",
+      "aliases": [
+        "enterferensial proqramo",
+        "enterferensial proqrami",
+        "enterferensial"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "ROSACEA",
+      "aliases": [
+        "rozesea proqrami",
+        "rozasea proqrami"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "EDEMA",
+      "aliases": [
+        "odem usulu",
+        "ödem üsulu",
+        "odem pr ile",
+        "ödem pr ilə",
+        "odem pr"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "MYOSPASM",
+      "aliases": [
+        "miospazm rejimiylə",
+        "miospazm rej"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "PAIN",
+      "aliases": [
+        "agri rejimi"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "LUMBALGIA",
+      "aliases": [
+        "lumbalgiya"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "SPORT",
+      "aliases": [
+        "spor rej"
+      ]
+    },
+    {
+      "listKind": "DEVICE_PROGRAM",
+      "code": "VARIANT_B",
+      "aliases": [
+        "rej brej",
+        "b rej",
+        "brej"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "HERBAL",
+      "aliases": [
+        "bitkilərlə",
+        "otlar",
+        "bitkilerle",
+        "bitkiler",
+        "bitkilrlə",
+        "bitkilrle",
+        "coban yastigi",
+        "çoban yastığı"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "NICOTINE",
+      "aliases": [
+        "nikatinle",
+        "nikotinlə",
+        "nikarinle",
+        "nikatin",
+        "nikatin kislata ile",
+        "nikatin kislata"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "POTASSIUM_IODIDE",
+      "aliases": [
+        "kali yodla",
+        "kaliyod",
+        "kyodla",
+        "ky-la",
+        "ky la",
+        "ky"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "CALCIUM",
+      "aliases": [
+        "kalsiilə",
+        "kalsiiləe",
+        "kalsi ilə",
+        "kalsilə",
+        "kalsiile",
+        "kalsi",
+        "calsi",
+        "x kalsi"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "NOVOCAINE",
+      "aliases": [
+        "novakainlə",
+        "novokoinle",
+        "novakoinle",
+        "navakainle",
+        "navakain",
+        "navakayinla",
+        "navakayin",
+        "novakayinlə",
+        "novokain ilə",
+        "novakainləə"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "KARIPAZIM",
+      "aliases": [
+        "karipazimlə",
+        "karipazimle",
+        "karipazinle",
+        "karpazinlə",
+        "karipazin",
+        "karirazim",
+        "karirazimlə",
+        "karirazimle",
+        "karipazim",
+        "karpazimle",
+        "karipazlmle",
+        "karpazim",
+        "kariipazimlə"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "NAFTALAN",
+      "aliases": [
+        "naft",
+        "nftal"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "DIMEXIDE",
+      "aliases": [
+        "dimeksid ile",
+        "dimeksid ilə",
+        "dimeksidiki",
+        "dimeksid",
+        "dimeksid iile"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "HYDROCORTISONE",
+      "aliases": [
+        "hidrokortizonla",
+        "hidrokartizonla",
+        "qidrokartizonla",
+        "qidrokartizonle",
+        "gidrokartizonla"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "MAGNESIUM",
+      "aliases": [
+        "mg ile",
+        "maqniy ilə",
+        "maqni sulfatla",
+        "maqnezi sulfatla",
+        "maqnezi ilə",
+        "maqneziile",
+        "jmaqnezi sulfatla",
+        "mg-le",
+        "mg le"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "EUFILLIN",
+      "aliases": [
+        "eufillin"
+      ]
+    },
+    {
+      "listKind": "SUBSTANCE",
+      "code": "OWN_OINTMENT",
+      "aliases": [
+        "oz mazi ile",
+        "oz mazi",
+        "öz dərmani ilə",
+        "oz dermani ile",
+        "oz mazil ile",
+        "öz mazı ilə",
+        "ozunun mazi ile",
+        "özünün mazı ilə",
+        "mazi ile",
+        "maz ilə"
+      ]
+    }
+  ]
+}

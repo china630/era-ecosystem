@@ -30,12 +30,57 @@ body.ew-options {
   padding: 1.25rem 1rem 2.5rem;
 }
 
+.ew-lamp {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--ew-line);
+}
+
+.ew-lamp-lg {
+  width: 18px;
+  height: 18px;
+  margin-top: 0.35rem;
+}
+
+.ew-lamp[data-color="gray"] {
+  background: #6b7280;
+}
+
+.ew-lamp[data-color="green"] {
+  background: #16a34a;
+}
+
+.ew-lamp[data-color="yellow"] {
+  background: #ca8a04;
+}
+
+.ew-lamp[data-color="red"] {
+  background: #dc2626;
+}
+
+.ew-lamp-hint {
+  color: var(--ew-muted);
+  font-size: 0.8rem;
+  margin: 0.35rem 0 0.5rem;
+  line-height: 1.35;
+}
+
 .ew-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.25rem;
+}
+
+.ew-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .ew-header h1 {
@@ -229,6 +274,13 @@ body.ew-popup {
   padding: 12px;
   font-size: 13px;
   background: var(--ew-card);
+}
+
+.ew-pop-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
 body.ew-popup h1 {

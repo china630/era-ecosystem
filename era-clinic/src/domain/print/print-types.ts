@@ -35,4 +35,12 @@ export type CheckupSectionConfig = {
   enabled: boolean;
 };
 
-export const DEFAULT_CHECKUP_SECTIONS: CheckupSectionConfig[] = [{"specialty":"therapist","enabled":true},{"specialty":"cardiologist","enabled":true},{"specialty":"gynecologist","enabled":true},{"specialty":"usm","enabled":true},{"specialty":"dermatoneurologist","enabled":true},{"specialty":"cosmetologist","enabled":false},{"specialty":"manual_therapist","enabled":true}];
+export const DEFAULT_CHECKUP_SECTIONS: CheckupSectionConfig[] = [
+  { specialty: "therapist", enabled: true },
+  { specialty: "gynecologist", enabled: true },
+  { specialty: "cardiologist", enabled: true },
+  { specialty: "usm", enabled: true },
+  { specialty: "dermatoneurologist", enabled: false },
+  { specialty: "cosmetologist", enabled: false },
+  { specialty: "manual_therapist", enabled: false },
+];

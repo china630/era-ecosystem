@@ -7,6 +7,8 @@ import { applyNahiyeToProcedureOrder } from "@/domain/physio/nahiye-cutover.serv
 import { resolveCutoverPatientMdm } from "@/lib/import/cutover-patient-mdm";
 import { cutoverEpisodeFromCheckout } from "@/lib/import/cutover-episode-status";
 import { ensureCutoverAttendingVisit } from "@/lib/import/cutover-attending-visit";
+import { parseWoUsgNoteWithFallback, withRawQeydFallback, type WoUsgResultLine, type WoUsgServiceCode } from "@/lib/import/parse-wo-usg-note";
+import { parseBakuDateTime } from "@/lib/baku-day";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -24,7 +26,110 @@ function req(value: unknown): string {
   return s;
 }
 
-/** Cutover import: attach clinical history to any episode (OPEN or CLOSED), create archive episode if missing. */
+/**
+ * LabOrderItem is not tenant-scoped. Nested `items.create` under LabOrder is stamped
+ * with organizationId and rejected. Top-level item create is UncheckedCreateInput:
+ * scalar `diagnosticServiceId` + `labOrderId`, not `diagnosticService.connect`.
+ */
+async function createImportedLabOrder(
+  tx: ImportTx,
+  input: {
+    patientId: string;
+    testCode: string;
+    status: "COMPLETED" | "ORDERED";
+    resultJson: string;
+    collectedAt: Date | null | undefined;
+    resultDate?: Date | null;
+    diagnosticServiceId?: string | null;
+  },
+): Promise<string> {
+  const order = await tx.labOrder.create({
+    data: {
+      organizationId: orgId(),
+      patientRefId: input.patientId,
+      testCode: input.testCode,
+      status: input.status,
+      resultJson: input.resultJson,
+      collectedAt: input.collectedAt,
+      ...(input.collectedAt ? { createdAt: input.collectedAt } : {}),
+      ...(input.status === "COMPLETED" && input.collectedAt
+        ? { completedAt: input.collectedAt }
+        : {}),
+      ...(input.resultDate ? { resultDate: input.resultDate } : {}),
+    },
+  });
+  await tx.labOrderItem.create({
+    data: {
+      labOrderId: order.id,
+      serviceCode: input.testCode,
+      ...(input.diagnosticServiceId ? { diagnosticServiceId: input.diagnosticServiceId } : {}),
+    },
+  });
+  return order.id;
+}
+
+async function persistImagingResultLines(
+  tx: ImportTx,
+  orderId: string,
+  lines: WoUsgResultLine[],
+): Promise<void> {
+  const item = await tx.labOrderItem.findFirst({ where: { labOrderId: orderId } });
+  if (!item) throw new Error(`Lab order ${orderId} has no item`);
+  const keep = new Set(lines.map((l) => l.code));
+  await tx.labResult.deleteMany({
+    where: { labOrderItemId: item.id, NOT: { code: { in: [...keep] } } },
+  });
+  for (const line of lines) {
+    const existing = await tx.labResult.findUnique({
+      where: { labOrderItemId_code: { labOrderItemId: item.id, code: line.code } },
+    });
+    const data = { label: line.label, value: line.value };
+    if (existing) {
+      await tx.labResult.update({ where: { id: existing.id }, data });
+    } else {
+      await tx.labResult.create({
+        data: { labOrderItemId: item.id, code: line.code, ...data },
+      });
+    }
+  }
+}
+
+function parseDiagnosticResultJson(raw: string): WoUsgResultLine[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((row): row is WoUsgResultLine =>
+        Boolean(row && typeof row === "object" && typeof (row as WoUsgResultLine).code === "string"),
+      )
+      .map((row) => ({
+        code: row.code,
+        label: row.label || row.code,
+        value: String(row.value ?? ""),
+      }))
+      .filter((row) => row.value);
+  } catch {
+    return [];
+  }
+}
+
+/** WO patients grid has no lab date; LabResult.resultDate → takenAt. Else stay check-in. */
+async function resolveImportedLabAt(
+  tx: ImportTx,
+  patientId: string,
+  takenAt: Date | null,
+): Promise<Date> {
+  if (takenAt && !Number.isNaN(takenAt.getTime())) return takenAt;
+  const episode = await tx.clinicalEpisode.findFirst({
+    where: { patientRefId: patientId },
+    orderBy: { openedAt: "desc" },
+    select: { openedAt: true },
+  });
+  if (episode?.openedAt) return episode.openedAt;
+  return new Date();
+}
+
 async function ensureCutoverEpisode(tx: ImportTx, patientId: string) {
   const existing = await tx.clinicalEpisode.findFirst({
     where: { patientRefId: patientId },
@@ -731,10 +836,11 @@ const slotsAdapter: ImportAdapter<{
     const resource = row.roomCode
       ? await tx.resource.findFirst({ where: { code: row.roomCode } })
       : null;
-    const hhmm = row.startTime.length === 5 ? `${row.startTime}:00` : row.startTime;
-    const start = new Date(`${row.date}T${hhmm}`);
+    const hhmm = row.startTime.length === 5 ? `${row.startTime}:00` : row.startTime.slice(0, 8);
+    const start = parseBakuDateTime(row.date, hhmm);
     const st = row.status.toUpperCase();
     const historical = st === "COMPLETED" || st === "IMPORTED_DONE";
+    const endsAt = new Date(start.getTime() + (proc?.durationMin ?? 10) * 60000);
     return upsertByRef(
       tx,
       "slots",
@@ -749,7 +855,7 @@ const slotsAdapter: ImportAdapter<{
             procedureCode: row.procedureCode,
             procedureName: proc?.name ?? row.procedureCode,
             scheduledAt: start,
-            endsAt: new Date(start.getTime() + (proc?.durationMin ?? 10) * 60000),
+            endsAt,
             status: historical ? "COMPLETED" : "SCHEDULED",
             completedAt: historical ? start : null,
             importedHistorical: historical,
@@ -776,9 +882,11 @@ const slotsAdapter: ImportAdapter<{
           where: { id },
           data: {
             scheduledAt: start,
+            endsAt,
             status: historical ? "COMPLETED" : "SCHEDULED",
             importedHistorical: historical,
             resourceId: resource?.id,
+            ...(historical ? { completedAt: start } : {}),
           },
         });
         await applyNahiyeToProcedureOrder(tx, id, {
@@ -786,7 +894,8 @@ const slotsAdapter: ImportAdapter<{
           procedureName: proc?.name ?? row.procedureCode,
           procedureTypeId: proc?.id,
           existingNote: existing?.note,
-          replaceSites: !existing?.sites.length,
+          // Always rematch on re-Apply #23 (seed S catalog, Baku clock, aliases).
+          replaceSites: true,
         });
       },
     );
@@ -898,32 +1007,34 @@ const labOrdersAdapter: ImportAdapter<{
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
     const svc = await tx.diagnosticService.findFirst({ where: { code: row.testCode } });
     const done = row.status.toUpperCase() === "COMPLETED";
+    const clinicalAt = await resolveImportedLabAt(tx, patientId, parseDateCell(row.takenAt));
     return upsertByRef(
       tx,
       "lab-orders",
       row.externalRef,
       dryRun,
-      async () =>
-        (
-          await tx.labOrder.create({
-            data: {
-              organizationId: orgId(),
-              patientRefId: patientId,
-              testCode: row.testCode,
-              status: done ? "COMPLETED" : "ORDERED",
-              resultJson: JSON.stringify([]),
-              collectedAt: parseDateCell(row.takenAt),
-              resultDate: parseDateCell(row.takenAt),
-              items: {
-                create: { serviceCode: row.testCode, diagnosticServiceId: svc?.id },
-              },
-            },
-          })
-        ).id,
+      async () => {
+        return createImportedLabOrder(tx, {
+          patientId,
+          testCode: row.testCode,
+          status: done ? "COMPLETED" : "ORDERED",
+          resultJson: JSON.stringify([]),
+          collectedAt: clinicalAt,
+          resultDate: clinicalAt,
+          diagnosticServiceId: svc?.id,
+        });
+      },
       async (id) => {
         await tx.labOrder.update({
           where: { id },
-          data: { testCode: row.testCode, status: done ? "COMPLETED" : "ORDERED" },
+          data: {
+            testCode: row.testCode,
+            status: done ? "COMPLETED" : "ORDERED",
+            collectedAt: clinicalAt,
+            resultDate: clinicalAt,
+            createdAt: clinicalAt,
+            ...(done ? { completedAt: clinicalAt } : {}),
+          },
         });
       },
     );
@@ -985,7 +1096,10 @@ const labResultsAdapter: ImportAdapter<{
         data: { labOrderItemId: item.id, code: row.code, ...data },
       });
     }
-    const order = await tx.labOrder.findUnique({ where: { id: orderId }, select: { resultJson: true } });
+    const order = await tx.labOrder.findUnique({
+      where: { id: orderId },
+      select: { resultJson: true, publishedAt: true, completedAt: true, collectedAt: true },
+    });
     let lines: Array<Record<string, string>> = [];
     try {
       const parsed = JSON.parse(order?.resultJson || "[]");
@@ -1002,7 +1116,16 @@ const labResultsAdapter: ImportAdapter<{
       refMin: row.refMin,
       refMax: row.refMax,
     });
-    await tx.labOrder.update({ where: { id: orderId }, data: { resultJson: JSON.stringify(next) } });
+    const clinicalAt = order?.collectedAt ?? order?.completedAt ?? new Date();
+    await tx.labOrder.update({
+      where: { id: orderId },
+      data: {
+        resultJson: JSON.stringify(next),
+        status: "COMPLETED",
+        publishedAt: order?.publishedAt ?? clinicalAt,
+        completedAt: order?.completedAt ?? clinicalAt,
+      },
+    });
     return existing ? "updated" : "created";
   },
 };
@@ -1013,19 +1136,21 @@ const diagnosticsAdapter: ImportAdapter<{
   code: string;
   name: string;
   resultText: string;
+  resultJson: string;
   takenAt: string;
 }> = {
   entity: "diagnostics",
   label: "Diagnostics",
   order: 53,
   templateHint: "31-Diagnostics.xlsx",
-  headerAliases: aliases("externalRef", "patientRef", "code", "name", "resultText", "takenAt"),
+  headerAliases: aliases("externalRef", "patientRef", "code", "name", "resultText", "resultJson", "takenAt"),
   rowSchema: z.object({
     externalRef: z.string().min(1),
     patientRef: z.string().min(1),
     code: z.string().min(1),
     name: z.string(),
     resultText: z.string(),
+    resultJson: z.string(),
     takenAt: z.string(),
   }),
   mapRow: (raw) => ({
@@ -1034,54 +1159,72 @@ const diagnosticsAdapter: ImportAdapter<{
     code: req(raw.code),
     name: cellString(raw.name) ?? "",
     resultText: cellString(raw.resultText) ?? "",
+    resultJson: cellString(raw.resultJson) ?? "",
     takenAt: cellString(raw.takenAt) ?? "",
   }),
   upsert: async (tx, row, dryRun) => {
     const patientId = await findImportRecordId(tx, "patients", row.patientRef);
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
+    const clinicalAt = await resolveImportedLabAt(tx, patientId, parseDateCell(row.takenAt));
+    const serviceCode: WoUsgServiceCode | string =
+      row.code === "USG" || row.code === "USM" ? "USG-ABD" : row.code;
+    const fromBook = parseDiagnosticResultJson(row.resultJson);
+    const lines: WoUsgResultLine[] = withRawQeydFallback(
+      fromBook.length
+        ? fromBook
+        : parseWoUsgNoteWithFallback(serviceCode as WoUsgServiceCode, row.resultText),
+      row.resultText,
+    );
+    const resultJson = JSON.stringify(lines);
     return upsertByRef(
       tx,
       "diagnostics",
       row.externalRef,
       dryRun,
       async () => {
-        const modality = await ensureModality(tx, "USG", "USG", "Ultrasound");
-        let svc = await tx.diagnosticService.findFirst({ where: { code: row.code } });
+        const modality = await ensureModality(tx, "USG", "imaging", "Ultrasound");
+        let svc = await tx.diagnosticService.findFirst({ where: { code: serviceCode } });
         if (!svc) {
           svc = await tx.diagnosticService.create({
             data: {
               organizationId: orgId(),
-              code: row.code,
+              code: serviceCode,
               modalityId: modality.id,
               category: "imaging",
-              kind: "USG",
-              titleEn: row.name || row.code,
-              titleRu: row.name || row.code,
-              titleAz: row.name || row.code,
-              serviceCode: row.code,
+              kind: "imaging",
+              titleEn: row.name || serviceCode,
+              titleRu: row.name || serviceCode,
+              titleAz: row.name || serviceCode,
+              serviceCode,
             },
           });
         }
-        if (!svc) throw new Error(`Could not resolve diagnostic service ${row.code}`);
-        return (
-          await tx.labOrder.create({
-            data: {
-              organizationId: orgId(),
-              patientRefId: patientId,
-              testCode: row.code,
-              status: "COMPLETED",
-              resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }),
-              collectedAt: parseDateCell(row.takenAt),
-              items: { create: { serviceCode: row.code, diagnosticServiceId: svc.id } },
-            },
-          })
-        ).id;
+        if (!svc) throw new Error(`Could not resolve diagnostic service ${serviceCode}`);
+        const id = await createImportedLabOrder(tx, {
+          patientId,
+          testCode: serviceCode,
+          status: "COMPLETED",
+          resultJson,
+          collectedAt: clinicalAt,
+          resultDate: clinicalAt,
+          diagnosticServiceId: svc.id,
+        });
+        await persistImagingResultLines(tx, id, lines);
+        return id;
       },
       async (id) => {
         await tx.labOrder.update({
           where: { id },
-          data: { resultJson: JSON.stringify({ note: row.resultText || null, kind: "USG" }) },
+          data: {
+            testCode: serviceCode,
+            resultJson,
+            collectedAt: clinicalAt,
+            resultDate: clinicalAt,
+            createdAt: clinicalAt,
+            completedAt: clinicalAt,
+          },
         });
+        await persistImagingResultLines(tx, id, lines);
       },
     );
   },

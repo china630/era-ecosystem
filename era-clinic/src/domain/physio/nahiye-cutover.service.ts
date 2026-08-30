@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { Prisma, type ProcedureSiteLaterality } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -21,13 +19,13 @@ import {
 } from "./nahiye-match-values";
 import { deriveCoarseBodyPart, resolveSiteApplyMode, uniqueOrderedIds } from "./physio-order-sites";
 import { parseAliasList, PhysioCatalogError } from "./physio-catalog";
+import { loadMergedPhysioZonesCatalog } from "./physio-catalog-layers";
 
 let catalogCache: NahiyeMatchCatalog | null = null;
 
 export function loadNahiyeCatalogJson(): NahiyeMatchCatalog {
   if (catalogCache) return catalogCache;
-  const p = join(process.cwd(), "prisma", "seed-data", "nafta", "physio-zones-s.json");
-  catalogCache = JSON.parse(readFileSync(p, "utf8")) as NahiyeMatchCatalog;
+  catalogCache = loadMergedPhysioZonesCatalog(process.cwd());
   return catalogCache;
 }
 
@@ -92,7 +90,6 @@ export async function applyNahiyeToProcedureOrder(
   },
 ) {
   const organizationId = requestOrganizationId();
-  const note = fillImportedNote(input.existingNote, input.nahiye);
   const raw = (input.nahiye ?? "").trim();
 
   const [dbSites, programs, substances, procType] = await Promise.all([
@@ -154,6 +151,28 @@ export async function applyNahiyeToProcedureOrder(
   const orderedSites = orderedCodes.map((c) => byCode.get(c)!);
   const bodyPart = deriveCoarseBodyPart(orderedSites);
   const siteApplyMode = resolveSiteApplyMode(orderedSites.length, flaggedMode);
+  // JSON matched but catalog empty → chips dropped; keep WO text for re-Apply after seed.
+  const catalogMiss = chips.length > 0 && orderedSites.length === 0;
+
+  // Prefer an intentional doctor note. Same text as WO nahiye = import echo (re-derive).
+  const existingTrim = (input.existingNote ?? "").trim();
+  const hadDoctorNote =
+    Boolean(existingTrim) && fold(existingTrim) !== fold(raw);
+  let note: string | null;
+  if (hadDoctorNote) {
+    note = existingTrim;
+  } else if (!raw) {
+    note = fillImportedNote(input.existingNote, input.nahiye);
+  } else if (catalogMiss) {
+    note = raw;
+  } else {
+    note = residue.trim() || null;
+  }
+
+  if (catalogMiss) {
+    bucket = dbSites.length === 0 ? "unknown" : "partial";
+    residue = residue.trim() || raw;
+  }
 
   if (input.replaceSites) {
     await tx.procedureOrderSite.deleteMany({ where: { procedureOrderId: orderId } });

@@ -378,17 +378,28 @@ Do **not** treat these ids as product defaults. Config / inbound name match on o
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3 v0.2; options_ui open_in_tab
-  background.js          # service worker: inbound queue + POST ingest
+  manifest.json          # MV3 v0.3.2; options_ui open_in_tab; toolbar lamp icons
+  background.js          # service worker: inbound queue + POST ingest + lamp
   injected.js / content.js
-  options.html + settings.css + i18n.js + options.js   # settings UI
+  lamp.js                # gray/yellow/green/red status
+  options.html + settings.css + i18n.js + options.js
   popup.html / popup.js
+  icons/lamp-*.png
   README.md
 ```
 
 ### Settings UI (operator)
 
 Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
+
+Toolbar **lamp** (the action icon is a circle; hover tooltip):
+
+| Color | Meaning |
+|-------|---------|
+| Gray | Not logged in |
+| Yellow | Logged in, Capture off — or SPA desk waiting for Elektraweb `LoginToken` |
+| Green | Session live (Capture on, no last error) |
+| Red | JWT expired (~12h) or sync/outbox error — open settings |
 
 | Block | Storage | Notes |
 |-------|---------|--------|
@@ -397,14 +408,14 @@ Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
 | Inbound | `enabled` | Capture Select JSON |
 | SPA write | `writeEnabled` | Sanatorium only; drains hotel outbox via `SP_SPA_SAVE` |
 
-Popup shows the same toggles in compact form.
+Popup shows the same toggles plus a matching lamp.
 
 ### Install (operator)
 
 1. `chrome://extensions` → Developer mode → Load unpacked.
 2. Settings: ERA Hotel URL + staff login → **Log in & save**. Pick **This desk**.
 3. Hotel FO: open Elektraweb grids (§2). Sanatorium: keep SPA open (guest folio + Tibbi Ambulator).
-4. **Capture & sync** ON. Health: last sync / queue / last error on Settings and popup.
+4. **Capture & sync** ON. Health: toolbar lamp green; last sync / queue / last error on Settings and popup.
 
 ### Security
 

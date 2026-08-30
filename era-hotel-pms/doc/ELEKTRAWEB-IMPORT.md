@@ -122,10 +122,10 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Revenue Code Definitions.xlsx | `revenue-codes` | `RevenueCode` | `code` | Also in reference seed |
 | Bed Type.xlsx | `bed-types` | `BedType` | `code` | Also in reference seed |
 | Room Views.xlsx | `room-views` | `RoomView` | `code` | Also in reference seed |
-| Room Types.xlsx | `room-types` | `RoomType` | `code` | |
+| Room Types.xlsx | `room-types` | `RoomType` | `code` | EW export includes **BANQUET** (`Room Count=0`, keep as quota 0) and a **totals footer** (empty code/name, `Room Count` = inventory sum) — footer is skipped, not an error. |
 | Rate Codes.xlsx | `rate-plans` | `RatePlan` | `code` | Legacy flat price fields |
 | Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode`. **Skip** virtual share labels (`707S`) — not master rooms. Nafta cutover: keep `Room No` / `Room Type` / `Floor` / `Bed Type` only. Ignore EW `Max Bed=0` (use `RoomType.adultCapacity`) and `Room State` HK snapshot (import leaves `AVAILABLE`). |
-| Travel Agencies.xlsx | `agencies` | `Agency` | `code` | |
+| Travel Agencies.xlsx | `agencies` | `Agency` | `code` | EW columns **Agent Code** + **Full Name** (Nafta READY: 212 rows). Footer/blank rows skipped. |
 | Product Cards.xlsx | `product-cards` | `Product` | `code` | `productType = SELLABLE` |
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
 | Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
@@ -326,6 +326,8 @@ Run reference seed on **every new deployment** before or alongside first propert
 | No guests in database | Guests step skipped | Import Guests.xlsx before Reservations |
 | MDM not linked | Missing FIN/passport in row | Expected; link manually via guest card / person lookup |
 | Duplicate key errors | Changed upsert key in source | Fix Excel or clear conflicting row in DB |
+| Room Types rows 7–9 fail (`baseQuota` too small / `code` required) | Raw EW file: BANQUET with `Room Count=0` plus totals footer | Re-run after adapter skip/0-quota fix; or upload READY `04-Room-Types.xlsx` (5 guest types only) |
+| Travel Agencies: every row `code`/`name` null | Header bind dropped `Agent Code` / `Full Name` | Adapter reads those columns directly; re-upload `07-Travel-Agencies.xlsx` after deploy |
 | Headers not mapped | Column rename in Elektraweb export | Update `headerAliases` in adapter |
 | Preview OK, many errors on import | FK / missing parent rows | Complete earlier wizard steps |
 
@@ -382,7 +384,7 @@ node era-hotel-pms/scripts/merge-ew-cutover.js --dir "D:/ERA-BACKUP/NAFTA-START/
 
 When the last chunk has **< ~850 rows**, the export is likely complete for that filter. Chunks with **900–1000 rows** usually need another date slice.
 
-**Hotel vs FnB split (`--ew`):** house-ledger `999 FB` / `FB999` and walk-in restaurant cash (`CASH FOLIO` + F&B dept / `RESTORAN*` without `Res Id`) go to **`FnB Transactions.merged.xlsx`** (archive for future `era-fnb-pos` import — not hotel wizard). F&B **room charges on a real guest/`Res Id`** stay in **`Folio Transactions.merged.xlsx`** for hotel-pms `folios` import. Do not upload `Folios.xlsx` / `ProFolio Transactions.xlsx` as substitutes for Folio Transactions.
+**Hotel vs FnB split (`--ew`):** house-ledger `999 FB` / `FB999` and walk-in restaurant cash (`CASH FOLIO` + F&B dept / `RESTORAN*` without `Res Id`) go to **`FnB Transactions.merged.xlsx`** (archive for future `era-fnb-pos` import — not hotel wizard). F&B **room charges on a real guest/`Res Id`** stay in **`Folio Transactions.merged.xlsx`**. Wizard book for Nafta: `12-Folio-Transactions.hotel.xlsx` (`filter-hotel-folio-only.cjs`) — only `#11` `Res Id`, no Tibb Ambulator / CASH / DEBITOR house ledgers. Do not upload `Folios.xlsx` / `ProFolio Transactions.xlsx` as substitutes for Folio Transactions.
 
 ### 15.2 Report types (do not confuse)
 

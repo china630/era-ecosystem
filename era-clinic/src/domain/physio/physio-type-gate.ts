@@ -56,12 +56,13 @@ export function inferPhysioTypeGate(code: string, name = ""): PhysioTypeGate {
     fields.push("DAY_BLOCK", "APPLICATION_SURFACE");
   }
   if (/naftalan/.test(hay) && /vanna/.test(hay) && !/4.?kamerali/.test(hay)) {
-    fields.push("BATH_SEQUENCE", "SMEAR");
+    // BATH_SEQUENCE = multi-day sitz→full; NAFTALAN_FILL = single fill (tam|oturaq|qurşaq).
+    fields.push("BATH_SEQUENCE", "SMEAR", "NAFTALAN_FILL");
   }
   if (/massaj|masaj/.test(hay)) {
     fields.push("INTENSITY", "HOLD_OR_STOP", "APPLICATION_SURFACE");
   }
-  if (/lazer|infra|maqnit|super.?inductive|zerbe|vakuum|sollyuks/.test(hay)) {
+  if (/lazer|infra|maqnit|super.?inductive|zerbe|vakuum|sollyuks|solyuks/.test(hay)) {
     fields.push("DEVICE_PROGRAM", "DEVICE_PARAMS", "APPLICATION_SURFACE");
   }
   if (/turunda/.test(hay)) {

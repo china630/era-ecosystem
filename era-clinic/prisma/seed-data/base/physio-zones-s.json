@@ -1,0 +1,800 @@
+{
+  "id": "physio-zones-s-base",
+  "layer": "base",
+  "notProductSoR": true,
+  "sources": [
+    {
+      "id": "USSR-817-1987",
+      "title": "Minzdrav USSR order 18.06.1987 No. 817 — massage load units (zone list with anatomical bounds)",
+      "legal": "Repealed in RF (Minzdrav 15.12.2023 No. 697). Still the de-facto CIS spa/physio zone vocabulary."
+    },
+    {
+      "id": "SHCHERBAK",
+      "title": "A.E. Shcherbak segmental galvanization / electrophoresis (collar + panty zones)"
+    },
+    {
+      "id": "PELOID-CLOTHING",
+      "title": "CIS peloid/paraffin application names (collar, panties, trousers, gloves, socks)"
+    },
+    {
+      "id": "HYDRO",
+      "title": "Balneology fill/site: full bath, sitz, to-waist, four-chamber"
+    }
+  ],
+  "notes": [
+    "Satellite base: CIS spa S codes (817 / Shcherbak / hydro). No WO aliases.",
+    "Nafta WO aliases + matcher extras: prisma/seed-data/nafta/physio-zones-overlay.json",
+    "Canon: era-clinic/doc/physio-site-canon.md"
+  ],
+  "zones": [
+    {
+      "code": "ZONE-HEAD",
+      "kind": "USSR-817",
+      "prikaz817": 1,
+      "laterality": false,
+      "titleAz": "Baş",
+      "titleRu": "Голова",
+      "titleEn": "Head",
+      "titleLa": "Caput",
+      "boundary": "Fronto-temporal and occipito-parietal regions (817 §1).",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Head",
+          "ta": "Caput",
+          "fmaId": "FMA:7154"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-SCALP",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Başın tüklü hissəsi",
+      "titleRu": "Волосистая часть головы",
+      "titleEn": "Scalp (hairy part of head)",
+      "titleLa": "Regio capillata capitis",
+      "boundary": "Hairy scalp — darsonval / solux local, narrower than 817 head.",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Scalp",
+          "ta": "Scalp",
+          "fmaId": "FMA:54237"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-FACE",
+      "kind": "USSR-817",
+      "prikaz817": 2,
+      "laterality": false,
+      "titleAz": "Üz",
+      "titleRu": "Лицо",
+      "titleEn": "Face",
+      "titleLa": "Facies",
+      "boundary": "Frontal, peri-orbital, maxillary regions (817 §2).",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Face",
+          "ta": "Facies",
+          "fmaId": "FMA:24763"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-NECK",
+      "kind": "USSR-817",
+      "prikaz817": 3,
+      "laterality": false,
+      "titleAz": "Boyun",
+      "titleRu": "Шея",
+      "titleEn": "Neck",
+      "titleLa": "Collum",
+      "boundary": "Neck only, without collar flap (817 §3).",
+      "coarse": [
+        "NECK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Neck",
+          "ta": "Collum",
+          "fmaId": "FMA:7155"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-COLLAR",
+      "kind": "USSR-817",
+      "prikaz817": 4,
+      "laterality": false,
+      "titleAz": "Yaxalıq (boyun-çiyin) nahiyəsi",
+      "titleRu": "Воротниковая зона",
+      "titleEn": "Cervical collar region (Shcherbak / 817 §4)",
+      "titleLa": "Regio cervicalis posterior et pars superior dorsi",
+      "boundary": "Posterior neck, back down to Th IV, anterior chest to 2nd rib (817 §4). Same patch as Shcherbak collar electrode.",
+      "coarse": [
+        "NECK",
+        "BACK",
+        "CHEST"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Cervical region of back",
+          "ta": "Regio cervicalis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Trapezius",
+          "ta": "M. trapezius",
+          "fmaId": "FMA:9625"
+        },
+        {
+          "fmaLabel": "Scalene muscles",
+          "ta": "Mm. scaleni",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-UPPER-LIMB",
+      "kind": "USSR-817",
+      "prikaz817": 5,
+      "laterality": true,
+      "titleAz": "Yuxarı ətraf",
+      "titleRu": "Верхняя конечность",
+      "titleEn": "Upper limb",
+      "titleLa": "Membrum superius",
+      "boundary": "Whole upper limb (817 §5).",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Upper limb",
+          "ta": "Membrum superius",
+          "fmaId": "FMA:7183"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-UPPER-LIMB-SCAPULA",
+      "kind": "USSR-817",
+      "prikaz817": 6,
+      "laterality": true,
+      "titleAz": "Yuxarı ətraf, çiyin və kürək",
+      "titleRu": "Верхняя конечность, надплечье и лопатка",
+      "titleEn": "Upper limb, shoulder girdle and scapula",
+      "titleLa": "Membrum superius et scapula",
+      "boundary": "817 §6 — limb plus shoulder girdle and scapular region.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Upper limb",
+          "ta": "Membrum superius",
+          "fmaId": "FMA:7183"
+        },
+        {
+          "fmaLabel": "Scapula",
+          "ta": "Scapula",
+          "fmaId": "FMA:13310"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-SHOULDER",
+      "kind": "USSR-817",
+      "prikaz817": 7,
+      "laterality": true,
+      "titleAz": "Çiyin oynağı",
+      "titleRu": "Плечевой сустав",
+      "titleEn": "Shoulder joint",
+      "titleLa": "Articulatio humeri",
+      "boundary": "Upper third of arm, shoulder joint, ipsilateral girdle (817 §7).",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Glenohumeral joint",
+          "ta": "Articulatio humeri",
+          "fmaId": "FMA:25580"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-ELBOW",
+      "kind": "USSR-817",
+      "prikaz817": 8,
+      "laterality": true,
+      "titleAz": "Dirsək oynağı",
+      "titleRu": "Локтевой сустав",
+      "titleEn": "Elbow joint",
+      "titleLa": "Articulatio cubiti",
+      "boundary": "817 §8.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Elbow joint",
+          "ta": "Articulatio cubiti",
+          "fmaId": "FMA:34898"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-WRIST",
+      "kind": "USSR-817",
+      "prikaz817": 9,
+      "laterality": true,
+      "titleAz": "Bilək oynağı",
+      "titleRu": "Лучезапястный сустав",
+      "titleEn": "Wrist joint",
+      "titleLa": "Articulatio radiocarpalis",
+      "boundary": "817 §9.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Radiocarpal joint",
+          "ta": "Articulatio radiocarpalis",
+          "fmaId": "FMA:25521"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-HAND-FOREARM",
+      "kind": "USSR-817",
+      "prikaz817": 10,
+      "laterality": true,
+      "titleAz": "Əl və önqol",
+      "titleRu": "Кисть и предплечье",
+      "titleEn": "Hand and forearm",
+      "titleLa": "Manus et antebrachium",
+      "boundary": "817 §10. Glove strings (əlcək, elcek) are aliases of this S, not a separate cut field.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Hand",
+          "ta": "Manus",
+          "fmaId": "FMA:9712"
+        },
+        {
+          "fmaLabel": "Forearm",
+          "ta": "Antebrachium",
+          "fmaId": "FMA:24923"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-CHEST",
+      "kind": "USSR-817",
+      "prikaz817": 11,
+      "laterality": false,
+      "titleAz": "Döş qəfəsi",
+      "titleRu": "Грудная клетка",
+      "titleEn": "Chest",
+      "titleLa": "Thorax",
+      "boundary": "Anterior chest from girdle to costal arches + back C7–L1 (817 §11).",
+      "coarse": [
+        "CHEST",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Thorax",
+          "ta": "Thorax",
+          "fmaId": "FMA:11391"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-BACK",
+      "kind": "USSR-817",
+      "prikaz817": 12,
+      "laterality": false,
+      "titleAz": "Kürək",
+      "titleRu": "Спина",
+      "titleEn": "Back",
+      "titleLa": "Dorsum",
+      "boundary": "C7–L1 between mid-axillary lines (817 §12). Not the full spine strip.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Back",
+          "ta": "Dorsum",
+          "fmaId": "FMA:14181"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-ABDOMEN",
+      "kind": "USSR-817",
+      "prikaz817": 13,
+      "laterality": false,
+      "titleAz": "Qarın",
+      "titleRu": "Передняя брюшная стенка",
+      "titleEn": "Anterior abdominal wall",
+      "titleLa": "Paries anterior abdominis",
+      "boundary": "817 §13.",
+      "coarse": [
+        "ABDOMEN"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Anterior abdominal wall",
+          "ta": "Paries abdominalis anterior",
+          "fmaId": "FMA:25905"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-LUMBOSACRAL",
+      "kind": "USSR-817",
+      "prikaz817": 14,
+      "laterality": false,
+      "titleAz": "Bel-oma nahiyəsi",
+      "titleRu": "Пояснично-крестцовая область",
+      "titleEn": "Lumbosacral region",
+      "titleLa": "Regio lumbosacralis",
+      "boundary": "L1 to inferior gluteal folds (817 §14). Segmental massage (817 §15) is the same site.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Sacral region",
+          "ta": "Regio sacralis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-BACK-AND-LUMBAR",
+      "kind": "USSR-817",
+      "prikaz817": 16,
+      "laterality": false,
+      "titleAz": "Kürək və bel",
+      "titleRu": "Спина и поясница",
+      "titleEn": "Back and lumbar region",
+      "titleLa": "Dorsum et regio lumbalis",
+      "boundary": "C7 to sacral base, mid-axillary to mid-axillary (817 §16).",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Back",
+          "ta": "Dorsum",
+          "fmaId": "FMA:14181"
+        },
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-CERVICOTHORACIC",
+      "kind": "USSR-817",
+      "prikaz817": 17,
+      "laterality": false,
+      "titleAz": "Boyun-döş onurğa",
+      "titleRu": "Шейно-грудной отдел позвоночника",
+      "titleEn": "Cervicothoracic spine",
+      "titleLa": "Columna vertebralis cervicalis et thoracica",
+      "boundary": "Posterior neck and back to L1 between posterior axillary lines (817 §17). §18 segmental = same site.",
+      "coarse": [
+        "NECK",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Vertebral column",
+          "ta": "Columna vertebralis",
+          "fmaId": "FMA:13478"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-SPINE-FULL",
+      "kind": "USSR-817",
+      "prikaz817": 19,
+      "laterality": false,
+      "titleAz": "Onurğa boyu (tam sütun)",
+      "titleRu": "Область позвоночника (вдоль столба)",
+      "titleEn": "Full spine / paravertebral strip",
+      "titleLa": "Columna vertebralis",
+      "boundary": "Posterior neck + back + lumbosacral between posterior axillary lines (817 §19).",
+      "coarse": [
+        "NECK",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Vertebral column",
+          "ta": "Columna vertebralis",
+          "fmaId": "FMA:13478"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-LOWER-LIMB",
+      "kind": "USSR-817",
+      "prikaz817": 20,
+      "laterality": true,
+      "titleAz": "Aşağı ətraf",
+      "titleRu": "Нижняя конечность",
+      "titleEn": "Lower limb",
+      "titleLa": "Membrum inferius",
+      "boundary": "817 §20.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lower limb",
+          "ta": "Membrum inferius",
+          "fmaId": "FMA:7184"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-LOWER-LIMB-LUMBAR",
+      "kind": "USSR-817",
+      "prikaz817": 21,
+      "laterality": true,
+      "titleAz": "Aşağı ətraf və bel",
+      "titleRu": "Нижняя конечность и поясница",
+      "titleEn": "Lower limb and lumbar region",
+      "titleLa": "Membrum inferius et regio lumbalis",
+      "boundary": "Foot, leg, thigh, gluteal and lumbosacral (817 §21).",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lower limb",
+          "ta": "Membrum inferius",
+          "fmaId": "FMA:7184"
+        },
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-HIP-GLUTEAL",
+      "kind": "USSR-817",
+      "prikaz817": 22,
+      "laterality": true,
+      "titleAz": "Bud-çanaq oynağı",
+      "titleRu": "Тазобедренный сустав и ягодичная область",
+      "titleEn": "Hip joint and gluteal region",
+      "titleLa": "Articulatio coxae et regio glutealis",
+      "boundary": "817 §22 hip joint + gluteal. WO bud / quadriseps / hamstring (thigh) alias here. Not baldır (crus), not Shcherbak panty, not bare biceps (arm).",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Hip joint",
+          "ta": "Articulatio coxae",
+          "fmaId": "FMA:25511"
+        },
+        {
+          "fmaLabel": "Gluteal region",
+          "ta": "Regio glutealis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-KNEE",
+      "kind": "USSR-817",
+      "prikaz817": 23,
+      "laterality": true,
+      "titleAz": "Diz oynağı",
+      "titleRu": "Коленный сустав",
+      "titleEn": "Knee joint",
+      "titleLa": "Articulatio genus",
+      "boundary": "817 §23.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Knee joint",
+          "ta": "Articulatio genus",
+          "fmaId": "FMA:32564"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-ANKLE",
+      "kind": "USSR-817",
+      "prikaz817": 24,
+      "laterality": true,
+      "titleAz": "Aşil / topuq oynağı",
+      "titleRu": "Голеностопный сустав",
+      "titleEn": "Ankle joint",
+      "titleLa": "Articulatio talocruralis",
+      "boundary": "817 §24.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Ankle joint",
+          "ta": "Articulatio talocruralis",
+          "fmaId": "FMA:35179"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-FOOT-LEG",
+      "kind": "USSR-817",
+      "prikaz817": 25,
+      "laterality": true,
+      "titleAz": "Ayaq və baldır",
+      "titleRu": "Стопа и голень",
+      "titleEn": "Foot and leg (crus)",
+      "titleLa": "Pes et crus",
+      "boundary": "817 §25. Sock strings (corab, noski) are aliases of this S, not a separate cut field. baldır = crus, not thigh. dizdən aşağı / asagi eyaqlar belong here, not ZONE-LOWER-LIMB.",
+      "coarse": [
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Foot",
+          "ta": "Pes",
+          "fmaId": "FMA:9664"
+        },
+        {
+          "fmaLabel": "Leg",
+          "ta": "Crus",
+          "fmaId": "FMA:24979"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-PANTIES",
+      "kind": "SHCHERBAK",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Tuman (trusi) zonası",
+      "titleRu": "Трусиковая зона (гальванический пояс по Щербаку)",
+      "titleEn": "Panty / girdle zone (Shcherbak)",
+      "titleLa": "Regio lumbosacralis et femora proxima",
+      "boundary": "Shcherbak girdle: lumbar electrode + upper-thigh electrodes. Not a bath (ZONE-SITZ) and not a hip joint (ZONE-HIP-GLUTEAL). Rare in WO nahiye; keep for electro/galvano.",
+      "coarse": [
+        "BACK",
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lumbar region of back",
+          "ta": "Regio lumbalis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Sacral region",
+          "ta": "Regio sacralis",
+          "fmaId": null
+        },
+        {
+          "fmaLabel": "Thigh",
+          "ta": "Femur (regio femoralis)",
+          "fmaId": "FMA:24967"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-SITZ",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Oturacaq / oturaq vanna",
+      "titleRu": "Сидячая ванна",
+      "titleEn": "Sitz bath",
+      "titleLa": "Balneum sessile",
+      "boundary": "Immersion of pelvic region only (naftalan sitz). Related to panty zone but a bath fill, not an electrode patch.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Pelvis",
+          "ta": "Pelvis",
+          "fmaId": "FMA:9578"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-TO-WAIST",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Qurşağa qədər",
+      "titleRu": "До пояса",
+      "titleEn": "To the waist (half bath)",
+      "titleLa": "Balneum ad cingulum",
+      "boundary": "Water line at waist — lower trunk + lower limbs.",
+      "coarse": [
+        "ABDOMEN",
+        "LEG_LEFT",
+        "LEG_RIGHT",
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Lower half of body",
+          "ta": "Dimidium inferius corporis",
+          "fmaId": null
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-FULL-BODY",
+      "kind": "HYDRO",
+      "prikaz817": 26,
+      "laterality": false,
+      "titleAz": "Tam bədən",
+      "titleRu": "Общая (всё тело)",
+      "titleEn": "Full body",
+      "titleLa": "Corpus totum",
+      "boundary": "General bath / general massage. 817 §26 is paediatric general massage — same site idea.",
+      "coarse": [
+        "FULL_BODY"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Human body",
+          "ta": "Corpus humanum",
+          "fmaId": "FMA:20394"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-FOUR-CHAMBER",
+      "kind": "HYDRO",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "4 kameralı vanna",
+      "titleRu": "Четырёхкамерная ванна",
+      "titleEn": "Four-chamber bath (hands + feet)",
+      "titleLa": "Manus et pedes (balneum quadriloculare)",
+      "boundary": "Both hands and both feet in four cells — not a single anatomical region.",
+      "coarse": [
+        "ARM_LEFT",
+        "ARM_RIGHT",
+        "LEG_LEFT",
+        "LEG_RIGHT"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Hand",
+          "ta": "Manus",
+          "fmaId": "FMA:9712"
+        },
+        {
+          "fmaLabel": "Foot",
+          "ta": "Pes",
+          "fmaId": "FMA:9664"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-COCCYX",
+      "kind": "LOCAL",
+      "prikaz817": null,
+      "laterality": false,
+      "titleAz": "Büzdüm sümüyü",
+      "titleRu": "Копчик",
+      "titleEn": "Coccyx",
+      "titleLa": "Os coccygis",
+      "boundary": "WO BodyParts id=9. Local point, not 817 §14. bel oma does not imply coccyx; 'büzdüm bel oma' is two chips.",
+      "coarse": [
+        "BACK"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Coccyx",
+          "ta": "Os coccygis",
+          "fmaId": "FMA:20229"
+        }
+      ],
+      "woAliases": []
+    },
+    {
+      "code": "ZONE-EAR",
+      "kind": "LOCAL",
+      "prikaz817": null,
+      "laterality": true,
+      "titleAz": "Qulaq",
+      "titleRu": "Ухо",
+      "titleEn": "Ear",
+      "titleLa": "Auris",
+      "boundary": "WO BodyParts (sağ/sol qulaq) — local, not in 817 massage list.",
+      "coarse": [
+        "HEAD"
+      ],
+      "anatomy": [
+        {
+          "fmaLabel": "Ear",
+          "ta": "Auris",
+          "fmaId": "FMA:52780"
+        }
+      ],
+      "woAliases": []
+    }
+  ]
+}
