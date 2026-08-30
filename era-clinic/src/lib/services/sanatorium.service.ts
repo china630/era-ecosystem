@@ -82,19 +82,19 @@ export async function openEpisodeFromStay(input: {
     passportNumber: input.passportNumber,
   });
 
-  let patient = await prisma.patientRef.findFirst({
-    where: {
-      organizationId: input.organizationId,
-      OR: [
-        ...(input.globalPersonId?.trim()
-          ? [{ globalPersonId: input.globalPersonId.trim() }]
-          : []),
-        { refCode },
-      ],
-    },
-  });
-  if (!patient) {
-    patient = await prisma.patientRef.create({
+  const patient =
+    (await prisma.patientRef.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        OR: [
+          ...(input.globalPersonId?.trim()
+            ? [{ globalPersonId: input.globalPersonId.trim() }]
+            : []),
+          { refCode },
+        ],
+      },
+    })) ??
+    (await prisma.patientRef.create({
       data: {
         organizationId: input.organizationId,
         refCode,
@@ -102,8 +102,7 @@ export async function openEpisodeFromStay(input: {
         phone: input.phone ?? null,
         globalPersonId: input.globalPersonId ?? null,
       },
-    });
-  }
+    }));
 
   await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
 

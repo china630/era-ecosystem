@@ -321,7 +321,7 @@ export function resolveMedicalSku(
   }
 
   // 2. Unstructured Extra / Res / CIn (and Price as last phrase hint)
-  if (!anyHit || perGuestCodes.every((c) => c == null)) {
+  if (!anyHit || perGuestCodes.every((c): boolean => c == null)) {
     const phraseSources = [extraReq, resNote, cinNote, priceNote];
     for (const src of phraseSources) {
       const phrase = parseUnstructuredPhrases(src);
@@ -341,7 +341,7 @@ export function resolveMedicalSku(
   }
 
   // 3–4. Agency prefix / Həmkarlar — all pax when Extra did not set codes
-  if (perGuestCodes.every((c) => c == null)) {
+  if (perGuestCodes.every((c): boolean => c == null)) {
     const agencyCode = resolveAgencyPackageCode(input.agencyName, input.agencyRules);
     if (agencyCode) {
       anyHit = true;

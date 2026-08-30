@@ -28,8 +28,7 @@ export async function instantiateProgramFromTemplate(input: {
     })();
   const nights =
     input.nights ??
-    nightsBetween(checkIn, checkOut) ||
-    template.durationDays;
+    (nightsBetween(checkIn, checkOut) || template.durationDays);
 
   const endsOn = checkOut;
 

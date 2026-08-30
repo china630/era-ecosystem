@@ -1103,6 +1103,7 @@ export default function SanatoriumPage() {
         <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
           <FieldSelect
             label={t("programSelect")}
+            preset="select"
             value={programCode || selected?.programCode || ""}
             onChange={(e) => setProgramCode(e.target.value)}
             required
