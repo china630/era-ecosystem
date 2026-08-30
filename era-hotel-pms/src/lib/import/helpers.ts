@@ -24,33 +24,49 @@ export function cellNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** EW money: `20,311.60` (thousands comma) or `111.10`. */
+export function cellMoney(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const s = String(value).trim().replace(/\s/g, '');
+  if (!s || /^nan$/i.test(s)) return null;
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) {
+    const n = Number(s.replace(/,/g, ''));
+    return Number.isFinite(n) ? n : null;
+  }
+  return cellNumber(s);
+}
+
 export function cellBool(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   const s = String(value).trim().toLowerCase();
   return s === 'true' || s === '1' || s === 'yes';
 }
 
-/** Excel 1900-system serial (Elektraweb). Date-only UTC. Serial 36892 = 2001-01-01. */
-function fromExcelSerial(serial: number): Date | null {
+/** Excel 1900-system serial (Elektraweb). Keeps the time-of-day fraction. */
+function fromExcelSerial(serial: number, dateOnly = false): Date | null {
   if (!Number.isFinite(serial)) return null;
   // ~1954-12 … 2119 — skips 0 / NAN leftovers and unix-ms mistaken as serial.
   if (serial < 20000 || serial > 80000) return null;
-  const days = Math.floor(serial);
-  const utc = Date.UTC(1899, 11, 30) + days * 86400000;
+  const n = dateOnly ? Math.floor(serial) : serial;
+  const utc = Date.UTC(1899, 11, 30) + n * 86400000;
   const d = new Date(utc);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function parseDateCell(value: unknown): Date | null {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return fromExcelSerial(value);
+export function parseDateCell(value: unknown, opts?: { dateOnly?: boolean }): Date | null {
+  const dateOnly = Boolean(opts?.dateOnly);
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    if (!dateOnly) return value;
+    return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return fromExcelSerial(value, dateOnly);
   }
   const s = cellString(value);
   if (!s) return null;
-  if (/^nan$/i.test(s) || s === '0') return null;
+  if (/^nan$/i.test(s) || s === "0") return null;
   if (/^\d+(\.\d+)?$/.test(s)) {
-    const serial = fromExcelSerial(Number(s));
+    const serial = fromExcelSerial(Number(s), dateOnly);
     if (serial) return serial;
   }
   const d = new Date(s);

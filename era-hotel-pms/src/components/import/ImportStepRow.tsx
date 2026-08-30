@@ -28,6 +28,7 @@ type Props = {
   label: string;
   templateHint: string;
   fileless?: boolean;
+  allowMultiple?: boolean;
   strictOrder: boolean;
   isLastInPhase: boolean;
   storedStatus: StoredImportStepStatus | null;
@@ -57,6 +58,7 @@ export function ImportStepRow({
   label,
   templateHint,
   fileless = false,
+  allowMultiple = false,
   strictOrder,
   isLastInPhase,
   storedStatus,
@@ -67,6 +69,7 @@ export function ImportStepRow({
   const [phase, setPhase] = useState<RowPhase>(() => (storedStatus ? 'done' : 'idle'));
   const [expanded, setExpanded] = useState(() => !storedStatus);
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<ImportSummary | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(storedStatus ? null : null);
   const [busy, setBusy] = useState(false);
@@ -102,11 +105,12 @@ export function ImportStepRow({
       await handleFilelessRun(true);
       return;
     }
-    if (!file) return;
+    const upload = allowMultiple ? files : file;
+    if (!upload || (Array.isArray(upload) && upload.length === 0)) return;
     setBusy(true);
     setError(null);
     try {
-      const s = await uploadImportFile(entity, file, true);
+      const s = await uploadImportFile(entity, upload, true);
       setPreview(s);
       setPhase('preview');
       setExpanded(true);
@@ -122,14 +126,16 @@ export function ImportStepRow({
       await handleFilelessRun(false);
       return;
     }
-    if (!file) return;
+    const upload = allowMultiple ? files : file;
+    if (!upload || (Array.isArray(upload) && upload.length === 0)) return;
     setBusy(true);
     setError(null);
     try {
-      const s = await uploadImportFile(entity, file, false);
+      const s = await uploadImportFile(entity, upload, false);
       setResult(s);
       setPhase('done');
-      const stored = saveImportStepStatus(entity, s, file.name);
+      const storedName = Array.isArray(upload) ? upload.map((f) => f.name).join(', ') : upload.name;
+      const stored = saveImportStepStatus(entity, s, storedName);
       onStatusChange(entity, stored);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -141,6 +147,7 @@ export function ImportStepRow({
   function handleReimport() {
     setPhase('idle');
     setFile(null);
+    setFiles([]);
     setPreview(null);
     setResult(null);
     setError(null);
@@ -220,14 +227,20 @@ export function ImportStepRow({
                 <input
                   type="file"
                   accept=".xlsx,.xls"
+                  multiple={allowMultiple}
                   className={MODAL_INPUT_CLASS}
                   onChange={(e) => {
-                    setFile(e.target.files?.[0] ?? null);
+                    const picked = Array.from(e.target.files ?? []);
+                    setFiles(picked);
+                    setFile(picked[0] ?? null);
                     setPreview(null);
                     setError(null);
                     if (phase === 'preview') setPhase('idle');
                   }}
                 />
+                {allowMultiple && files.length > 0 ? (
+                  <p className="text-[13px] text-[#34495E]">{files.map((f) => f.name).join(', ')}</p>
+                ) : null}
                 <p className="text-[13px] text-[#7F8C8D]">{labels.pickFileHint}</p>
               </div>
             )}
@@ -245,7 +258,7 @@ export function ImportStepRow({
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
-                  disabled={(fileless ? false : !file) || busy}
+                  disabled={(fileless ? false : allowMultiple ? files.length === 0 : !file) || busy}
                   onClick={() => void handlePreview()}
                 >
                   {fileless ? labels.runBootstrap : labels.preview}

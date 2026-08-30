@@ -19,7 +19,8 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   label: 'Folios',
   order: 60,
   permission: PERMISSIONS.FOLIO_CHARGE,
-  templateHint: 'Folios.xlsx',
+  templateHint: '13-Folio-p01.xlsx … p12 — EW Folio Transactions (multi)',
+  allowMultiple: true,
   headerAliases: {
     Id: 'externalRef',
     'Res Id': 'reservationExternalRef',

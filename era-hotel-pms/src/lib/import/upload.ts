@@ -2,11 +2,12 @@ import type { ImportSummary } from '@/components/import/ImportModal';
 
 export async function uploadImportFile(
   entity: string,
-  file: File,
+  file: File | File[],
   dryRun: boolean,
 ): Promise<ImportSummary> {
   const form = new FormData();
-  form.append('file', file);
+  const files = Array.isArray(file) ? file : [file];
+  for (const f of files) form.append('file', f);
   const res = await fetch(`/api/import/${entity}?dryRun=${dryRun ? '1' : '0'}`, {
     method: 'POST',
     body: form,

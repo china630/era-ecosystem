@@ -31,13 +31,13 @@ v1: **platform super-admin only**. Future: organization owners via Orchestrator 
 | GET | `/api/import` | platform super-admin |
 | POST | `/api/import/[entity]?dryRun=1` | platform super-admin |
 
-Entity slugs (v1): `revenue-codes`, … `folios`. **Planned (Nafta):** `bar-bootstrap`, `bar-rates`, `sales-contracts`, `meal-add-ons` — see IMPORT-PRICING-MAP.
+Entity slugs (v1): `revenue-codes`, … `folios`, `agency-statement`. **Planned (Nafta):** `bar-bootstrap`, `bar-rates`, `sales-contracts`, `meal-add-ons` — see IMPORT-PRICING-MAP.
 
 ## Phases (`src/lib/import/phases.ts`)
 
 1. **dictionaries** — flexible order  
 2. **master** — strict top→bottom  
-3. **transactional** — guests → reservations → folios  
+3. **transactional** — guests → reservations → reservation-notes → folios → **agency-statement** (EW city ledger, not 1C)  
 
 ## Core files
 

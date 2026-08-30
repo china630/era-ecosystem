@@ -1,7 +1,7 @@
 # Nafta contour — start data inventory
 
 **Cutover snapshot:** 2026-08-25 (clinic ops week 25–30 Aug)  
-**Previous EW hotel export:** 2026-08-17 · **Guest Cards overlay:** 2026-08-28  
+**Previous EW hotel export:** 2026-08-17 · **Guest Cards overlay:** 2026-08-28 · **WO dump:** 2026-08-30  
 **Pack (raw):** `D:\ERA-BACKUP\NAFTA-START\` (`hotel/` Elektraweb, `clinic/dump|catalogs` WebOnly, `hr/`, `1c/`). **Wizard books:** `D:\ERA-BACKUP\NAFTA-ERA-READY\`. Numbered names: [START-FILE-CHECKLIST.md](./START-FILE-CHECKLIST.md).  
 **Delta after Excel:** Elektraweb browser plugin ([ELEKTRAWEB-LIVE-BRIDGE.md](../ELEKTRAWEB-LIVE-BRIDGE.md)).  
 **Wizard file names:** [IMPORT_FILE_CHECKLIST.md](./IMPORT_FILE_CHECKLIST.md).  
@@ -43,7 +43,7 @@ Upload via `/admin/import` unless noted.
 | Folio lines | `hotel/12-Folio-Transactions.hotel.xlsx` (guest stays in `#11`) · archive `12-Folio-Transactions.merged.xlsx` (95 793) | EW | Hotel wizard `folios` | HAVE. House ledgers (`TIBB AMBULATOR`, `999 FB` → `#16`, CASH/DEBITOR) excluded from wizard book |
 | Package / FB sell prices | `hotel/13-Package-Prices-2026.csv` | Commercial PDF (parsed) | Hotel rate plans + clinic `ProgramTemplate` | HAVE |
 | BAR ladder (accounting) | `hotel/14-BAR-Derived-2026.csv` | Derived | Hotel BAR calendar | HAVE — confirm with hotel before seed |
-| Agency / city ledger | `hotel/19-Agency-Statement.xlsx` | EW | Finance AR later (not hotel wizard) | PARTIAL (15.06, not cutover date) |
+| Agency / city ledger | `hotel/15-Agency-Statement.xlsx` (EW 2026-08-31; also START `_source/Agency-Statement.2026-08-31.xlsx`) | EW WA0118 remaining | Hotel wizard `agency-statement` → AGENCY folio (ops city ledger). Finance AR aging / invoice matching stays 1C `#39` ASK | HAVE |
 | Guest deposits / open folio | In-house rows in Reservations + open Folio lines | EW | Hotel folio | HAVE at 17.08; refresh via plugin at hour X |
 | ProFolio (ROOM-only) | `hotel/17-ProFolio-Transactions.xlsx` | EW | Cross-check only | HAVE — do not upload as folios |
 | Chart of Accounts | `hotel/20-DO-NOT-IMPORT-Chart-of-Accounts.xlsx` | EW | — | Skip. Finance CoA ≠ EW |
@@ -58,17 +58,17 @@ No Excel wizard yet. Load via upcoming `nafta-clinic:*` import or seed scripts. 
 
 | Data | File / dump | Source | Put in | Status |
 |------|-------------|--------|--------|--------|
-| Patient cards (interior) | `clinic/dump/cards/` (1 665) + `bulk/patients.json` | WO API **2026-08-25** | Clinic `PatientRef` + forms / pain / body parts | HAVE — full archive |
-| Doctor forms + diagnoses | `clinic/dump/bulk/examination-forms.json` (311) | WO API | Clinic episode / anamnesis | HAVE |
-| Procedure calendar | `clinic/dump/calendar/reservations-all.json` (61 155; refreshed 2026-08-25) | WO API `/clinic/clinic` | Clinic `ProcedureOrder` / bookings | HAVE — READY #23 = 2373 ops slots (25–29 Aug) |
-| Lab orders + files | `clinic/dump/bulk/lab-tests.json`, `clinic/dump/files/lab/` | WO API | Clinic lab | HAVE — #24 2153; ~170 without Word ignored |
+| Patient cards (interior) | `clinic/dump/cards/` (1 722) + `bulk/patients.json` | WO API **2026-08-30** | Clinic `PatientRef` + forms / pain / body parts | HAVE — full archive |
+| Doctor forms + diagnoses | `clinic/dump/bulk/examination-forms.json` (431) | WO API | Clinic episode / anamnesis (USG) | HAVE |
+| Procedure calendar | `clinic/dump/calendar/reservations-all.json` (62 166; refreshed 2026-08-30; max 2026-09-10) | WO API `/clinic/clinic` | Clinic `ProcedureOrder` / bookings | HAVE — READY `#26` **60 480** historical COMPLETED; 1 169 WO future not planted |
+| Lab orders + files | `clinic/dump/bulk/lab-results.json` (2369) + `clinic/dump/files/lab/` (2200 Word) | WO API | Clinic lab | HAVE — ~169 without Word ignored |
 | Procedure catalog | **`clinic/reports/01-procedures.xlsx`** (SSOT 81→80) · ref WO dump 154 | Curated + WO | Clinic planner = READY **#25** only | HAVE |
 | Procedure → cabinet rules | `40-Procedure-Requirements.xlsx` (126 rows) | SSOT cabinets | Future FIFO placement (`placeConfirmedProcedures`) | HAVE |
 | Rooms / cabins | READY `26-Rooms.xlsx` (63; incl. Kabina 14 history) | SSOT + calendar | Clinic resources | HAVE |
 | Doctors | `27-practitioners-roster.json` → READY `27-Doctors.xlsx` (8) | Roster + HR | Clinic practitioners + CP hire | HAVE |
 | Shifts | `clinic/catalogs/28-Shifts.csv` + dump | WO | Ref only — **not** in ERA-READY | HAVE ref |
-| Analyses / lab / USG / check-ups | READY #29–#39; catalogs 33–36 ref | WO **2026-08-25** | Clinic wizard | HAVE |
-| Package inclusions | `NAFTA_PRICE_PACKAGES_2026_rows.csv` `package_inclusion` | PDF | Clinic `ProgramTemplate` | HAVE — seed **before** in-house check-in |
+| Analyses / lab / USG / check-ups | READY #29–#39; catalogs 33–36 ref | WO **2026-08-30** | Clinic wizard | HAVE |
+| Package inclusions | START `hotel/14-Package-Prices-2026.csv` `package_inclusion` (PDF `NAFTA PRICE & PACKAGES LIST - 2026`) | PDF | Clinic `ProgramTemplate` | HAVE — READY `#23` **233** knots (PKG-STANDART/PREMIUM/DERMO/DETOKS). Apply before in-house check-in |
 | Procedure consumable norms | `1c/53-1C-Procedure-Consumables.xlsx` | 1C | Clinic / Retail — норма на сеанс | **ASK** |
 | Pharmacy / med warehouse stock | `1c/52-1C-Pharmacy-Stock.xlsx` | 1C сч. 10 | `era-retail-pos` pharmacy | **ASK** |
 
@@ -78,8 +78,8 @@ No Excel wizard yet. Load via upcoming `nafta-clinic:*` import or seed scripts. 
 
 | Data | File | Source | Put in | Status |
 |------|------|--------|--------|--------|
-| House / walk-in POS ledger | `hotel/16-FnB-Transactions.merged.xlsx` (22 219) | EW folio split | Reconciliation only — **not** menu seed | HAVE |
-| Menu + PLU by outlet | — | 1C or F&B manager | FnB outlets | **ASK** — blocks F&B start |
+| House / walk-in POS ledger | READY `fnb/32-FnB-Transactions.xlsx` (**8 559**) | `START/fnb/_source/ew-2026-999-fb` (Jan–3 Jul, 5 860) + `ew-2026-xudmani` CASH FOLIO (Jul–Aug, 1 219) + prior CASH FOLIO. From ~July EW stopped guest `999 FB` and punches department Xudmani | **FnB wizard** `fnb-transactions` — **not** hotel folio | HAVE |
+| Menu groups + PLU | READY `fnb/30-Product-Group-List.xlsx` + `fnb/31-Product-Cards.xlsx` | EW 31.08 | FnB wizard `/admin/import` (`product-groups` → `product-cards`). Empty code → `ERA-FNB-{Id}` until 1C | HAVE |
 | Recipes / TTK (brutto/netto, yield) | — | 1C or chef | FnB recipes | **ASK** — needed for cost; POS can start on PLU-only |
 | F&B stock by warehouse | — | 1C сч. 10/41/43 | FnB stock | **ASK** for valued stock; ops can start at zero + count |
 | Retail price list (restaurant, lobby, RS) | — | 1C / current menu | FnB prices | **ASK** |

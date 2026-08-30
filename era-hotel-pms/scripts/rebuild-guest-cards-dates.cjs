@@ -19,8 +19,8 @@ const DATE_COLS = [
 ];
 
 const PATHS = [
-  "D:/ERA-BACKUP/NAFTA-ERA-READY/hotel/10-Guest-Cards.merged.xlsx",
-  "D:/ERA-BACKUP/NAFTA-START/hotel/10-Guest-Cards.merged.xlsx",
+  "D:/ERA-BACKUP/NAFTA-ERA-READY/hotel/10-Guest-Cards.xlsx",
+  "D:/ERA-BACKUP/NAFTA-START/hotel/10-Guest-Cards.xlsx",
 ];
 
 function fromExcelSerial(raw) {
