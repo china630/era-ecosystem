@@ -84,8 +84,19 @@ jobs:
           fi
           mkdir -p /tmp/deploy-scope
           gh run download "$RUN_ID" -n deploy-scope -D /tmp/deploy-scope
-          # shellcheck disable=SC1091
-          . /tmp/deploy-scope/deploy-scope.env
+          # Parse KEY=value lines. Do not `source` the file: DEPLOY_SERVICES is
+          # space-separated (e.g. hotel-pms clinic) and unquoted assignment
+          # would execute the second token (exit 127: clinic: command not found).
+          SKIP=false
+          DEPLOY_SCOPE=all
+          DEPLOY_SERVICES=
+          while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in
+              SKIP=*) SKIP="${line#SKIP=}" ;;
+              DEPLOY_SCOPE=*) DEPLOY_SCOPE="${line#DEPLOY_SCOPE=}" ;;
+              DEPLOY_SERVICES=*) DEPLOY_SERVICES="${line#DEPLOY_SERVICES=}" ;;
+            esac
+          done < /tmp/deploy-scope/deploy-scope.env
           echo "skip=${SKIP:-false}" >> "$GITHUB_OUTPUT"
           echo "value=${DEPLOY_SCOPE:-all}" >> "$GITHUB_OUTPUT"
           echo "services=${DEPLOY_SERVICES:-}" >> "$GITHUB_OUTPUT"
