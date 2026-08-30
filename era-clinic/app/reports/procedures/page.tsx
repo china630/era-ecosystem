@@ -48,6 +48,13 @@ type ApiResponse = {
   view: string;
   items: any[];
   grandTotal?: number;
+  grandTotalInHouse?: number;
+  grandTotalWalkIn?: number;
+  doctorBonusPercentInHouse?: number;
+  doctorBonusPercentWalkIn?: number;
+  bonusInHouse?: number;
+  bonusWalkIn?: number;
+  bonusTotal?: number;
 };
 
 function todayIsoBaku() {
@@ -91,6 +98,15 @@ export default function ProceduresReportPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [grandTotal, setGrandTotal] = useState<number | null>(null);
+  const [bonusBuckets, setBonusBuckets] = useState<{
+    inHouse: number;
+    walkIn: number;
+    pctInHouse: number;
+    pctWalkIn: number;
+    bonusInHouse: number;
+    bonusWalkIn: number;
+    bonusTotal: number;
+  } | null>(null);
 
   const url = useMemo(() => {
     const params = new URLSearchParams({
@@ -135,6 +151,7 @@ export default function ProceduresReportPage() {
     setMsg(null);
     setItems([]);
     setGrandTotal(null);
+    setBonusBuckets(null);
     try {
       const res = await fetch(url);
       const d = (await res.json()) as ApiResponse;
@@ -144,6 +161,17 @@ export default function ProceduresReportPage() {
       }
       setItems(d.items ?? []);
       setGrandTotal(typeof d.grandTotal === "number" ? d.grandTotal : null);
+      if (view === "doctor-bonus") {
+        setBonusBuckets({
+          inHouse: d.grandTotalInHouse ?? 0,
+          walkIn: d.grandTotalWalkIn ?? 0,
+          pctInHouse: d.doctorBonusPercentInHouse ?? 0,
+          pctWalkIn: d.doctorBonusPercentWalkIn ?? 0,
+          bonusInHouse: d.bonusInHouse ?? 0,
+          bonusWalkIn: d.bonusWalkIn ?? 0,
+          bonusTotal: d.bonusTotal ?? 0,
+        });
+      }
     } catch {
       setMsg("Load failed");
     } finally {
@@ -320,6 +348,21 @@ export default function ProceduresReportPage() {
         </div>
 
         {grandTotal != null ? <p className="mt-3 text-sm">Grand total: {grandTotal}</p> : null}
+        {bonusBuckets ? (
+          <div className={`mt-2 space-y-1 text-sm ${TEXT_MUTED_CLASS}`}>
+            <p>
+              In-house extras base: {bonusBuckets.inHouse.toFixed(2)} AZN ×{" "}
+              {bonusBuckets.pctInHouse}% = {bonusBuckets.bonusInHouse.toFixed(2)} AZN
+            </p>
+            <p>
+              Walk-in extras base: {bonusBuckets.walkIn.toFixed(2)} AZN ×{" "}
+              {bonusBuckets.pctWalkIn}% = {bonusBuckets.bonusWalkIn.toFixed(2)} AZN
+            </p>
+            <p className="font-medium text-[inherit]">
+              Bonus total: {bonusBuckets.bonusTotal.toFixed(2)} AZN
+            </p>
+          </div>
+        ) : null}
       </div>
     </>
   );

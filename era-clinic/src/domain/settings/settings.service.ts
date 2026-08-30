@@ -96,6 +96,8 @@ export async function getClinicSettings() {
     printSignatureLab: tenant.printSignatureLab ?? null,
     printSignatureDoctor: tenant.printSignatureDoctor ?? null,
     checkupSectionsJson: tenant.checkupSectionsJson ?? null,
+    doctorBonusPercentInHouse: tenant.doctorBonusPercentInHouse ?? 0,
+    doctorBonusPercentWalkIn: tenant.doctorBonusPercentWalkIn ?? 0,
   };
 }
 
@@ -148,6 +150,8 @@ export async function updateClinicSettings(input: {
   printSignatureLab?: string | null;
   printSignatureDoctor?: string | null;
   checkupSectionsJson?: string | null;
+  doctorBonusPercentInHouse?: number;
+  doctorBonusPercentWalkIn?: number;
 }) {
   const presets = input.enabledPresets?.filter(isClinicPreset) ?? undefined;
   if (input.enabledPresets && presets && presets.length !== input.enabledPresets.length) {
@@ -272,6 +276,22 @@ export async function updateClinicSettings(input: {
         : {}),
       ...(input.checkupSectionsJson !== undefined
         ? { checkupSectionsJson: input.checkupSectionsJson }
+        : {}),
+      ...(input.doctorBonusPercentInHouse != null
+        ? {
+            doctorBonusPercentInHouse: Math.min(
+              100,
+              Math.max(0, Number(input.doctorBonusPercentInHouse)),
+            ),
+          }
+        : {}),
+      ...(input.doctorBonusPercentWalkIn != null
+        ? {
+            doctorBonusPercentWalkIn: Math.min(
+              100,
+              Math.max(0, Number(input.doctorBonusPercentWalkIn)),
+            ),
+          }
         : {}),
     },
   });

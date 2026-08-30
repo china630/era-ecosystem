@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CalendarClock,
   ClipboardList,
@@ -156,8 +157,10 @@ export default function SanatoriumPage() {
   const [testCode, setTestCode] = useState("");
   const [labCatalogItems, setLabCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
-  const [programCode, setProgramCode] = useState("DETOX-7");
+  const [programCode, setProgramCode] = useState("");
   const [programStartsOn, setProgramStartsOn] = useState(todayIso());
+  const searchParams = useSearchParams();
+  const deepLinkHandled = useRef(false);
   const [msg, setMsg] = useState("");
   const [complaintModalOpen, setComplaintModalOpen] = useState(false);
   const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
@@ -242,7 +245,8 @@ export default function SanatoriumPage() {
         scheduledAt: ev.at,
       }));
     setProposedOrders(proposed);
-    setSelectedProposed(new Set());
+    // Wave C: default-select first 2–3 for day-1 confirm
+    setSelectedProposed(new Set(proposed.slice(0, 3).map((o) => o.id)));
   }, []);
 
   useEffect(() => {
@@ -267,6 +271,24 @@ export default function SanatoriumPage() {
         setProgramTemplates(Array.isArray(rows) ? rows : []);
       });
   }, []);
+
+  /** Deep link /sanatorium?episode=… opens treatment chart (not only PatientCard). */
+  useEffect(() => {
+    const ep = searchParams.get("episode");
+    if (!ep || deepLinkHandled.current) return;
+    deepLinkHandled.current = true;
+    void (async () => {
+      setSelectedId(ep);
+      setChartModalOpen(true);
+      await loadDetail(ep);
+    })();
+  }, [searchParams, loadDetail]);
+
+  const naftaPackageTemplates = useMemo(() => {
+    const codes = new Set(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMO", "PKG-DETOKS"]);
+    const filtered = programTemplates.filter((p) => codes.has(p.code));
+    return filtered.length > 0 ? filtered : programTemplates;
+  }, [programTemplates]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -340,13 +362,25 @@ export default function SanatoriumPage() {
       body: JSON.stringify({ orderIds }),
     });
     setBusy(false);
-    setMsg(res.ok ? t("planConfirmed", { defaultValue: "Plan confirmed" }) : t("failed"));
-    if (res.ok) {
-      setSelectedProposed(new Set());
-      const patientRefId = selected?.patientRef?.id;
-      if (patientRefId) await loadProposed(patientRefId);
-      if (selectedId) await loadSchedule(selectedId, chartDate);
+    if (!res.ok) {
+      setMsg(t("failed"));
+      return;
     }
+    const data = (await res.json().catch(() => ({}))) as {
+      softWarn?: string;
+    };
+    setMsg(
+      data.softWarn
+        ? t("day1SoftWarn", {
+            defaultValue:
+              "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
+          })
+        : t("planConfirmed", { defaultValue: "Plan confirmed" }),
+    );
+    setSelectedProposed(new Set());
+    const patientRefId = selected?.patientRef?.id;
+    if (patientRefId) await loadProposed(patientRefId);
+    if (selectedId) await loadSchedule(selectedId, chartDate);
   }
 
   async function submitBulkCancel() {
@@ -749,23 +783,20 @@ export default function SanatoriumPage() {
                       {t("proposedPlanTitle", { defaultValue: "Proposed plan" })}
                     </h3>
                     {proposedOrders.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          className={SECONDARY_BUTTON_CLASS}
+                          className={PRIMARY_BUTTON_CLASS}
                           disabled={busy || selectedProposed.size === 0}
                           onClick={() => void confirmProposed([...selectedProposed])}
                         >
                           {t("confirmSelected", { defaultValue: "Confirm selected" })}
                         </button>
-                        <button
-                          type="button"
-                          className={PRIMARY_BUTTON_CLASS}
-                          disabled={busy}
-                          onClick={() => void confirmProposed(proposedOrders.map((o) => o.id))}
-                        >
-                          {t("confirmAll", { defaultValue: "Confirm all" })}
-                        </button>
+                        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                          {t("firstDayConfirmHint", {
+                            defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
+                          })}
+                        </p>
                       </div>
                     ) : null}
                   </div>
@@ -1059,23 +1090,30 @@ export default function SanatoriumPage() {
             onCancel={() => setProgramModalOpen(false)}
             onSubmit={() =>
               void postAction("complete-checkup", {
-                programCode: programCode || selected?.programCode || "DETOX-7",
+                programCode: programCode || selected?.programCode || undefined,
                 startsOn: new Date(`${programStartsOn}T09:00:00`).toISOString(),
               })
             }
             busy={busy}
-            submitDisabled={!canCompleteCheckup}
+            submitDisabled={!canCompleteCheckup || !(programCode || selected?.programCode)}
             submitLabel={t("completeCheckupSchedule")}
           />
         }
       >
         <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
-          <Field
-            label={t("programCode")}
-            preset="code"
-            value={programCode}
+          <FieldSelect
+            label={t("programSelect")}
+            value={programCode || selected?.programCode || ""}
             onChange={(e) => setProgramCode(e.target.value)}
-          />
+            required
+          >
+            <option value="">—</option>
+            {naftaPackageTemplates.map((p) => (
+              <option key={p.code} value={p.code}>
+                {p.code} — {p.name}
+              </option>
+            ))}
+          </FieldSelect>
           <DatePicker
             label={t("startsOn")}
             value={programStartsOn}
@@ -1169,7 +1207,7 @@ export default function SanatoriumPage() {
               onChange={(e) => setWalkIn({ ...walkIn, programCode: e.target.value })}
             >
               <option value="">—</option>
-              {programTemplates.map((p) => (
+              {naftaPackageTemplates.map((p) => (
                 <option key={p.code} value={p.code}>
                   {p.code} — {p.name}
                 </option>

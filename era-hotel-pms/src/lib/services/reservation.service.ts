@@ -299,16 +299,22 @@ export async function createReservation(input: {
     },
   });
 
-  if (reservation.ratePlan.medicalFlag) {
-    await assertSanatoriumBookingAllowed(reservation.checkInDate);
-    void dispatchSanatoriumBookingCreated({
-      reservationId: reservation.id,
-      programCode: reservation.ratePlan.code,
-      globalPersonId: reservation.guest.globalPersonId ?? undefined,
-      guestName: reservation.guest.fullName,
-      checkInDate: reservation.checkInDate.toISOString(),
-      checkOutDate: reservation.checkOutDate.toISOString(),
-    }).catch(() => null);
+  {
+    const { stampMedicalPackagesForReservation } = await import(
+      '@/lib/services/medical-package-stamp.service'
+    );
+    const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
+    if (stamped.programCode) {
+      await assertSanatoriumBookingAllowed(reservation.checkInDate);
+      void dispatchSanatoriumBookingCreated({
+        reservationId: reservation.id,
+        programCode: stamped.programCode,
+        globalPersonId: reservation.guest.globalPersonId ?? undefined,
+        guestName: reservation.guest.fullName,
+        checkInDate: reservation.checkInDate.toISOString(),
+        checkOutDate: reservation.checkOutDate.toISOString(),
+      }).catch(() => null);
+    }
   }
 
   return reservation;
@@ -481,18 +487,68 @@ export async function checkInReservation(id: string) {
     const result = await getReservation(id);
     const { submitTourismCheckIn } = await import('@/lib/services/tourism.service');
     void submitTourismCheckIn(id).catch((e) => console.error('Tourism check-in failed', e));
-    const { dispatchGuestCheckedIn } = await import(
-      '@/lib/integration/guest-lifecycle-events'
+    const { stampMedicalPackagesForReservation } = await import(
+      '@/lib/services/medical-package-stamp.service'
     );
-    void dispatchGuestCheckedIn({
-      reservationId: id,
-      roomNumber: updated.room?.roomNumber ?? undefined,
-      programCode: updated.ratePlan.medicalFlag ? updated.ratePlan.code : undefined,
-      globalPersonId: updated.guest.globalPersonId ?? undefined,
-      guestName: updated.guest.fullName,
-      checkInDate: reservation.checkInDate.toISOString(),
-      checkOutDate: reservation.checkOutDate.toISOString(),
-    }).catch((e) => console.error('Guest lifecycle check-in failed', e));
+    const stamped = await stampMedicalPackagesForReservation(prisma, id);
+    const full = await prisma.reservation.findUnique({
+      where: { id },
+      include: {
+        guest: true,
+        room: true,
+        paxGuests: {
+          orderBy: { sortOrder: 'asc' },
+          include: { guest: true },
+        },
+      },
+    });
+    // Pilot polish: Walkin leisure → no sanatorium lifecycle (clinic stays quiet)
+    if (stamped.stayKind !== 'leisure') {
+      const { dispatchGuestCheckedIn } = await import(
+        '@/lib/integration/guest-lifecycle-events'
+      );
+      const paxList =
+        full && full.paxGuests.length > 0
+          ? full.paxGuests
+          : full
+            ? [
+                {
+                  medicalPackageCode: full.medicalPackageCode,
+                  firstName: full.guest.firstName,
+                  lastName: full.guest.lastName,
+                  guest: full.guest,
+                },
+              ]
+            : [];
+      for (const pax of paxList) {
+        const name =
+          [pax.firstName, pax.lastName].filter(Boolean).join(' ') ||
+          pax.guest?.fullName ||
+          full?.guest.fullName ||
+          'Guest';
+        const paxKey =
+          'id' in pax && typeof (pax as { id?: string }).id === 'string'
+            ? (pax as { id: string }).id
+            : pax.guest?.id ?? undefined;
+        void dispatchGuestCheckedIn({
+          reservationId: id,
+          roomNumber: updated.room?.roomNumber ?? undefined,
+          programCode: pax.medicalPackageCode ?? stamped.programCode,
+          globalPersonId:
+            pax.guest?.globalPersonId ?? updated.guest.globalPersonId ?? undefined,
+          guestName: name,
+          checkInDate: reservation.checkInDate.toISOString(),
+          checkOutDate: reservation.checkOutDate.toISOString(),
+          paxKey,
+        }).catch((e) => console.error('Guest lifecycle check-in failed', e));
+      }
+      if (full) {
+        const { syncComposedDailyRates } = await import(
+          '@/lib/services/nafta-package-compose-apply.service'
+        );
+        await syncComposedDailyRates(id);
+      }
+    }
     if (
       process.env.ERA_DOOR_LOCK_ENABLED === '1' &&
       updated.room?.roomNumber

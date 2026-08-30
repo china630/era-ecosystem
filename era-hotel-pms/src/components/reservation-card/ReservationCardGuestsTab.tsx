@@ -7,6 +7,7 @@ import {
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
   CHIP_GROUP_CLASS,
+  CatalogField,
   Field,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -22,6 +23,13 @@ import {
 import type { PartyBillingMode, PaxRow, SelectOption } from './types';
 
 export { emptyPax } from '@/components/reservation-card/party-pax';
+
+const MEDICAL_PKG_OPTIONS = [
+  { value: 'PKG-STANDART', label: 'PKG-STANDART' },
+  { value: 'PKG-PREMIUM', label: 'PKG-PREMIUM' },
+  { value: 'PKG-DERMO', label: 'PKG-DERMO' },
+  { value: 'PKG-DETOKS', label: 'PKG-DETOKS' },
+];
 
 type PaxGridRow = PaxRow & Record<string, unknown> & { _idx: number };
 
@@ -227,6 +235,28 @@ export function ReservationCardGuestsTab({
         key: 'passportNo',
         header: t('passport'),
         render: (row) => row.passportNo || row.idCardNo || '—',
+      },
+      {
+        key: 'medicalPackageCode',
+        header: t('medicalPackageCode'),
+        className: 'min-w-[9rem]',
+        render: (row) => (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            name={`pax-pkg-${row._idx}`}
+            label={t('medicalPackageCode')}
+            value={row.medicalPackageCode ?? ''}
+            onChange={(v) => {
+              const next = pax.map((p, i) =>
+                i === row._idx ? { ...p, medicalPackageCode: String(v ?? '') } : p,
+              );
+              onPax(next);
+            }}
+            options={MEDICAL_PKG_OPTIONS}
+            emptyLabel="—"
+            className="mb-0"
+          />
+        ),
       },
       {
         key: 'payStatus',

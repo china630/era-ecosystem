@@ -48,6 +48,19 @@ RO (room only, shared per room)
 - Soft or hard guard: warn/block when `sellPrice < costFloor` (policy TBD).
 - Clinic program quotas still keyed by package code (existing SAN-PKG bridge).
 
+### 3b. Composed nightly sell from per-pax medical SKUs (Wave D / Nafta)
+
+When guests on one reservation have different `medicalPackageCode` values, **one nightly sell** is composed (not two BAR rates):
+
+| Rule | Amount |
+|------|--------|
+| Main | Highest occupancy-1 sell of that guest’s SKU |
+| Companion Standart | +96 AZN (`STANDART_COMPANION` versioned component) |
+| Other companion | Half of that SKU’s occupancy-2 (reception qapik → 160 for Dermo/Detoks) |
+| Identical SKUs | Occupancy N sell from `RatePlanSellVersion` |
+
+SoT for the stay night = composed amount in `ReservationDailyRate` (and night-audit package split scaled to it). FO folio surfaces `packageCompose` breakdown. See [nafta-compose-sell-and-doctor-bonus.md](./nafta-compose-sell-and-doctor-bonus.md).
+
 ### 4. Cash integrity
 
 Reservation **sell** is the posting ceiling for the stay. Night audit / folio lines use BAR (and package floor) for **split**, then residual to medical / discount / override so **Σ postings = sell**. Silent divergence is forbidden.

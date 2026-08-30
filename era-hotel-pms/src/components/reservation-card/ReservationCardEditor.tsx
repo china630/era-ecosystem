@@ -333,6 +333,8 @@ export function ReservationCardEditor({
           isPrimary: true,
           ownsFolio: true,
           guestId: String(json.guestId ?? masterGuest.id ?? ''),
+          medicalPackageCode:
+            (json as { medicalPackageCode?: string | null }).medicalPackageCode ?? '',
         },
       ];
     } else {
@@ -354,6 +356,8 @@ export function ReservationCardEditor({
         guestState: (g as { guestState?: string }).guestState ?? '',
         isPrimary: g.isPrimary ?? false,
         ownsFolio: g.ownsFolio ?? Boolean(g.isPrimary),
+        medicalPackageCode:
+          (g as { medicalPackageCode?: string | null }).medicalPackageCode ?? '',
       }));
       nextPax = hydratePaxNames(nextPax, {
         id: masterGuest?.id ?? String(json.guestId ?? ''),
@@ -1313,6 +1317,9 @@ export function ReservationCardEditor({
             guestState: p.guestState || null,
             isPrimary: p.isPrimary,
             ownsFolio: p.ownsFolio ?? false,
+            medicalPackageCode: p.medicalPackageCode?.trim()
+              ? p.medicalPackageCode.trim().toUpperCase()
+              : null,
           })),
         }),
       });

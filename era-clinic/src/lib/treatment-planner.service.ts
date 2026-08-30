@@ -24,6 +24,7 @@ import {
   type RotationContextSlot,
 } from "@/lib/procedure-rotation.service";
 import { resolveProcedureSubstitution } from "@/lib/procedure-substitution.service";
+import { sortLinesExamPrefixFirst } from "@/lib/sanatorium-day1";
 
 type PlannedSlot = {
   procedureCode: string;
@@ -243,9 +244,12 @@ async function expandProposedSlots(instanceId: string): Promise<{
   });
   const typeByCode = new Map(types.map((t) => [t.code, t]));
 
+  /** Wave C: exam/intake codes get lowest sequenceIndex so doctor can confirm first 2–3. */
+  const sortedLines = sortLinesExamPrefixFirst(instance.procedureLines);
+
   const planned: PlannedSlot[] = [];
   let seq = 0;
-  for (const line of instance.procedureLines) {
+  for (const line of sortedLines) {
     const meta = instance.template.procedures.find(
       (p: { procedureCode: string }) => p.procedureCode === line.procedureCode,
     );

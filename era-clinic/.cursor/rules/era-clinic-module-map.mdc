@@ -61,7 +61,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 
 | Route | API |
 |-------|-----|
-| `/sanatorium` | Table of open courses (`EraListFilterBar` + row actions: chart / procedures / patient modal); walk-in modal (sex required M/F, DatePicker, program select, lab catalog); ICD-10 diagnosis via `IcdPicker` (`CatalogField` **SEARCHABLE**, `GET /api/icd`); `/api/sanatorium/episodes`, `POST …/[id]?action=diagnosis`, `GET /api/sanatorium/program-templates`, `POST ?action=complete-checkup`. Patient registry `/patients` also filters by hotel `roomNumber` when this preset is on |
+| `/sanatorium` | Table of open courses (`EraListFilterBar` + row actions: chart / procedures / patient modal); walk-in modal (sex required M/F, DatePicker, program select, lab catalog); ICD-10 diagnosis via `IcdPicker` (`CatalogField` **SEARCHABLE**, `GET /api/icd`); `/api/sanatorium/episodes`, `POST …/[id]?action=diagnosis`, `GET /api/sanatorium/program-templates`, `POST ?action=complete-checkup`. Deep link **`/sanatorium?episode=`** opens treatment chart (CLI-50). Checkup/walk-in Select prefers `PKG-STANDART|PREMIUM|DERMO|DETOKS`. **Wave E / CLI-54:** one list row per OPEN episode (two names, same room on mix card). Patient registry `/patients` also filters by hotel `roomNumber` when this preset is on |
 | `/nurse` | Agenda (prev→EOD) + kanban; check-in while window open (endsAt +gap if next free); no nurse No-show; `GET /api/procedures?mine=1` |
 | `/sanatorium/nurse-roster` | CLI-38 monthly duty matrix (paper physio nurse rotation). `GET/PUT/POST /api/sanatorium/nurse-roster`; absences `POST/DELETE /api/sanatorium/staff-absences`. Approve → planner prefers posted nurse |
 | `/sanatorium/resources` | Location **day matrix board** (`ResourceDayMatrix`) + optional **fullscreen** overlay; horizon (rest/+1h/+3h) + patient filter; `GET …/calendar` uses Tenant working hours; DnD / move / cancel |
@@ -82,10 +82,11 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/catalog` | `/api/admin/catalog`, `/api/catalog/sync`, `POST /api/admin/catalog/import-nafta` |
 | `/admin/diagnostic-catalog` (tab `favorites`) | `/api/admin/catalog-favorites` — favorite modalities/categories (`first` \| `only`); no standalone `/admin/catalog-favorites` route |
 | `/admin/icd-favorites` | `GET/PUT /api/admin/icd-favorites`; `POST ?action=sync` (orch gateway or local generator); `POST ?action=retire` (`active=false` + `retiredAt`). SatAdmin does **not** CRUD 14k WHO titles |
-| `/admin/templates` | `/api/admin/clinical-templates`, program-templates (+ PATCH `[id]`) — seed pack: `prisma/seed-data/diagnostic-lab-catalog.json` ([DIAGNOSTIC_AND_LAB_CATALOG](../../doc/DIAGNOSTIC_AND_LAB_CATALOG.md)) |
+| `/admin/templates` | `/api/admin/clinical-templates`, program-templates (+ PATCH `[id]` with `procedures[]`, `knots[]`, `minNights`/`maxNights`) — Wave B PDF quota knots (CLI-51). Seed pack: `prisma/seed-data/diagnostic-lab-catalog.json` ([DIAGNOSTIC_AND_LAB_CATALOG](../../doc/DIAGNOSTIC_AND_LAB_CATALOG.md)) |
 | `/admin/import` | Nafta cutover xlsx — clinic 21–40 incl. `procedure-requirements` ([NAFTA-CUTOVER-IMPORT](../../doc/NAFTA-CUTOVER-IMPORT.md)) |
 | `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`), `/api/admin/procedure-rotation-rules` (+ `[id]`), `/api/admin/procedure-substitution-rules` (+ `[id]`) |
-| `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, card limits) |
+| `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, card limits, **`programSchedulingMode`** AFTER_CHECKUP \| ON_CHECKIN — Wave C / CLI-52; Nafta default AFTER_CHECKUP; **`doctorBonusPercentInHouse` / `doctorBonusPercentWalkIn`** — Wave D / CLI-53, default 0) |
+| `/reports/procedures` | doctor-bonus view: `bonusEligible` extras only; IN_HOUSE / WALK_IN buckets + % (CLI-53) |
 | `/admin/audit` | `/api/audit` |
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |
 | `/admin/lookups` | `/api/admin/lookups` BODY_PART |

@@ -13,6 +13,7 @@ import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
+  CatalogField,
   Field,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
@@ -53,6 +54,9 @@ type SchedulingDefaults = {
   procedureCheckInMode: "QR" | "CODE" | "MANUAL";
   peakModeEnabled: boolean;
   peakDayEndHour: number;
+  programSchedulingMode: "AFTER_CHECKUP" | "ON_CHECKIN";
+  doctorBonusPercentInHouse: number;
+  doctorBonusPercentWalkIn: number;
 };
 
 const CARD_DEFAULTS: CardLimits = {
@@ -76,6 +80,9 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   procedureCheckInMode: "QR",
   peakModeEnabled: false,
   peakDayEndHour: 22,
+  programSchedulingMode: "AFTER_CHECKUP",
+  doctorBonusPercentInHouse: 0,
+  doctorBonusPercentWalkIn: 0,
 };
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -144,6 +151,10 @@ export default function ClinicAdminSettingsPage() {
             (row.checkInRequiresQr === false ? "MANUAL" : "QR"),
           peakModeEnabled: Boolean(row.peakModeEnabled ?? SCHED_DEFAULTS.peakModeEnabled),
           peakDayEndHour: row.peakDayEndHour ?? SCHED_DEFAULTS.peakDayEndHour,
+          programSchedulingMode:
+            row.programSchedulingMode === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
+          doctorBonusPercentInHouse: Number(row.doctorBonusPercentInHouse ?? 0),
+          doctorBonusPercentWalkIn: Number(row.doctorBonusPercentWalkIn ?? 0),
         };
         setSchedDefaults(sched);
         setDraftSched(sched);
@@ -210,6 +221,14 @@ export default function ClinicAdminSettingsPage() {
           row.procedureCheckInMode ?? draftSched.procedureCheckInMode,
         peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
         peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
+        programSchedulingMode:
+          row.programSchedulingMode === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
+        doctorBonusPercentInHouse: Number(
+          row.doctorBonusPercentInHouse ?? draftSched.doctorBonusPercentInHouse,
+        ),
+        doctorBonusPercentWalkIn: Number(
+          row.doctorBonusPercentWalkIn ?? draftSched.doctorBonusPercentWalkIn,
+        ),
       });
       setOpen(false);
       setMsg(tc("saved"));
@@ -300,6 +319,20 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("procedureCheckInMode")}</td>
             <td className="p-3">{schedDefaults.procedureCheckInMode}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">
+              {t("programSchedulingMode", { defaultValue: "Program scheduling mode" })}
+            </td>
+            <td className="p-3">{schedDefaults.programSchedulingMode}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("doctorBonusPercentInHouse")}</td>
+            <td className="p-3">{schedDefaults.doctorBonusPercentInHouse}%</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("doctorBonusPercentWalkIn")}</td>
+            <td className="p-3">{schedDefaults.doctorBonusPercentWalkIn}%</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("peakModeEnabled")}</td>
@@ -441,6 +474,30 @@ export default function ClinicAdminSettingsPage() {
               <option value="MANUAL">MANUAL</option>
             </select>
           </label>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("programSchedulingMode")}
+            value={draftSched.programSchedulingMode}
+            emptyLabel={null}
+            options={[
+              {
+                value: "AFTER_CHECKUP",
+                label: t("programSchedulingModeAfterCheckup"),
+              },
+              {
+                value: "ON_CHECKIN",
+                label: t("programSchedulingModeOnCheckin"),
+              },
+            ]}
+            onChange={(next) => {
+              const v = Array.isArray(next) ? next[0] : next;
+              setDraftSched((prev) => ({
+                ...prev,
+                programSchedulingMode:
+                  v === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
+              }));
+            }}
+          />
           <label className="flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"
@@ -463,6 +520,36 @@ export default function ClinicAdminSettingsPage() {
               setDraftSched((prev) => ({
                 ...prev,
                 peakDayEndHour: Number(e.target.value) || prev.peakDayEndHour,
+              }))
+            }
+          />
+          <Field
+            label={t("doctorBonusPercentInHouse")}
+            preset="count"
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            value={draftSched.doctorBonusPercentInHouse}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                doctorBonusPercentInHouse: Number(e.target.value) || 0,
+              }))
+            }
+          />
+          <Field
+            label={t("doctorBonusPercentWalkIn")}
+            preset="count"
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            value={draftSched.doctorBonusPercentWalkIn}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                doctorBonusPercentWalkIn: Number(e.target.value) || 0,
               }))
             }
           />

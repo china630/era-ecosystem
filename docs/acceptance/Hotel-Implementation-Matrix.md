@@ -25,6 +25,9 @@
 | AC-HOT-TENANT | SHARED pool: `organizationId` on ops rows | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 1 hotel session/JWT `enterSatelliteTenant`; Wave 4 cron `runCronForEachTenant` + `byOrganization`; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 | AC-HOT-AGP | Agency portal (CP grant + PMS book + FO inbox) | 🟡 | [ ] | ADR hotel-agency-portal; HOT-AGP-01/02/03; `__tests__/agency-portal-negative.spec.ts` | Negatives landed (SSO HMAC + auto-confirm default OFF); Scaffold ✅ after fuller isolation suite + UAT §31 |
 | AC-HOT-TOUR | Guest group tours (Nafta roster + TOUR folio) | ✅ | [ ] | ADR hotel-guest-tours; `__tests__/tours-money.spec.ts` + `tours-negative.spec.ts`; UAT-SMOKE §14b | **Out of Scaffold BE rollup** — Nafta add-on; not in FO/CASH worst-of. Edition stays `mvp`. |
+| AC-HOT-PKG-NAFTA | Medical SKU resolve + notes import (Wave A) | 🟡 | [ ] | `__tests__/medical-package-resolve.spec.ts` + `reservation-notes-import-adapter.spec.ts`; ADR nafta-medical-sku-dual-run | **Out of Scaffold BE rollup** — dual-run Nafta; not FO money scaffold |
+| AC-HOT-PKG-COMPOSE | Composed nightly sell mix (Wave D) | 🟡 | [ ] | `__tests__/nafta-package-compose.spec.ts`; HOT-PKG-03 | **Out of Scaffold BE rollup** |
+| AC-HOT-PKG-PAX | Per-pax check-in events for multi-program stay (Wave E) | 🟡 | [ ] | HOT-PKG-04; `paxKey` on lifecycle payload | **Out of Scaffold BE rollup** — note under HOT-PKG; not FO scaffold flip |
 | AC-HOT-CO-EARLY | Early unused-nights refund (net VAT, all folios) | 🟡 | [ ] | `__tests__/early-checkout-unused-nights.spec.ts` + HOT-CO-04 | **Out of Scaffold BE rollup** until fuller void/lump/CL negatives; does not reopen AC-HOT-CASH |
 | AC-HOT-AMEND | Mid-stay product change + Manual Price bar | 🟡 | [ ] | `__tests__/stay-amendment-policy.spec.ts` + HOT-FO-04 | **Not Scaffold ✅** — field-intent Nafta FO; UAT §35 open |
 
@@ -34,6 +37,9 @@ AC-HOT-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** (d
 AC-HOT-AGP is 🟡 (P0–P1 landing) and stays **out of Scaffold BE rollup** until negative suite is green.  
 AC-HOT-CO-EARLY is 🟡 and stays **out of Scaffold BE rollup**.  
 AC-HOT-TOUR is Scaffold ✅ (negatives + UAT UI path) and stays **out of Scaffold BE rollup**.
+AC-HOT-PKG-NAFTA is 🟡 and stays **out of Scaffold BE rollup**.
+AC-HOT-PKG-COMPOSE is 🟡 and stays **out of Scaffold BE rollup**.
+AC-HOT-PKG-PAX is 🟡 and stays **out of Scaffold BE rollup**.
 
 Do not call this table «product readiness» (UI / Pilot still separate).
 

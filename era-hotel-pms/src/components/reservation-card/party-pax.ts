@@ -30,6 +30,7 @@ export function emptyPax(partial?: Partial<PaxRow>): PaxRow {
     guestState: '',
     isPrimary: false,
     ownsFolio: false,
+    medicalPackageCode: '',
     ...partial,
   };
 }

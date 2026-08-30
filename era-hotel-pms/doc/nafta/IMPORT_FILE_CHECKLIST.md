@@ -128,10 +128,10 @@ Commercial package on the hotel reservation is **not** just a folio price. Selec
 
 | Side | What | How today |
 |------|------|-----------|
-| **Hotel** | Rate plan = package (e.g. Standart / Premium / Dermo / Detoks) | `RatePlan.medicalFlag=true`; night posts via `RatePlanPackageLine` (SAN-PKG); check-in/lifecycle sends `programCode` (= rate plan `code`) to clinic |
-| **Clinic** | Program template = inclusion list | `ProgramTemplate` + lines (`procedureCode`, `quotaTotal`); `instantiateProgramFromTemplate` → FIFO schedule over `startsOn`…`endsOn` |
-| **Trigger** | When slots appear | Setting `programSchedulingMode`: `ON_CHECKIN` (auto) or `AFTER_CHECKUP` (Nafta default — after complaint/ICD) |
-| **Price CSV** | Source of quotas | Rows `section=package_inclusion` in `NAFTA_PRICE_PACKAGES_2026_rows.csv`: package × **nights** × procedure × **qty** → seed `ProgramTemplate` (one template per package×duration, e.g. `STANDART-7`, or stay-length lookup) |
+| **Hotel** | Commercial medical SKU from Extra Req / agency (`PKG-STANDART`…) — **not** EW Rate Code | Wave A dual-run: `resolveMedicalSku` → `ReservationGuest.medicalPackageCode`; check-in sends resolved `programCode` (or omit if unresolved). FO cheat-sheet: [ERA-PKG-FO-CHEATSHEET.md](./ERA-PKG-FO-CHEATSHEET.md). Import entity `reservation-notes`. |
+| **Clinic** | Always open episode; staff Select if hotel omitted | Templates `PKG-STANDART` / `PREMIUM` / `DERMO` / `DETOKS`; `programSchedulingMode=AFTER_CHECKUP` (Nafta — no auto-instantiate on check-in) |
+| **Trigger** | When slots appear | After checkup complete + doctor confirm (Wave C); not ON_CHECKIN for Nafta |
+| **Price CSV** | Source of quotas (Wave B knots) | Rows `section=package_inclusion` → `ProgramTemplateQuotaKnot` / procedure lines |
 
 **Import rule:** seed hotel medical rate plans and clinic program templates **from the same package codes** before cutover stays; otherwise check-in opens an episode with no schedule. Clinic Excel import for historical `Randevular` is separate (past appointments); **forward** scheduling for new stays comes from templates above, not from WO dumps.
 

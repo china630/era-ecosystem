@@ -69,7 +69,7 @@ export async function getReservationFull(id: string) {
     }));
   }
 
-  return {
+  const result = {
     ...reservation,
     totalAmount: decimalToNumber(reservation.totalAmount),
     discountPercent: reservation.discountPercent
@@ -91,10 +91,25 @@ export async function getReservationFull(id: string) {
       discountPct: d.discountPct ? decimalToNumber(d.discountPct) : null,
       manualFlag: d.manualFlag,
     })),
+    packageCompose: null as null | {
+      total: number;
+      lines: Array<{ role: string; code: string; amount: number; note: string }>;
+    },
     attachments: reservation.attachments,
     notesMap,
     shareNeighbors,
   };
+
+  try {
+    const { previewComposedPackageSell } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    result.packageCompose = await previewComposedPackageSell(reservation.id);
+  } catch {
+    result.packageCompose = null;
+  }
+
+  return result;
 }
 
 export async function patchReservationFull(
@@ -167,6 +182,8 @@ export async function patchReservationFull(
       guestState?: string | null;
       isPrimary?: boolean;
       ownsFolio?: boolean;
+      /** FO Guests tab medical SKU (PKG-* or empty). */
+      medicalPackageCode?: string | null;
     }>;
     dailyRates?: Array<{
       stayDate: string;
@@ -391,6 +408,9 @@ export async function patchReservationFull(
           /** Contact / PRIMARY-mode folio owner */
           isPrimary,
           ownsFolio,
+          medicalPackageCode: p.medicalPackageCode?.trim()
+            ? p.medicalPackageCode.trim().toUpperCase()
+            : null,
           sortOrder: i,
         };
       }),
@@ -436,6 +456,65 @@ export async function patchReservationFull(
         },
       });
     }
+  }
+
+  const datesChanged =
+    (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
+    (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
+  const prevPaxCodes = existing.paxGuests
+    .map((g) => (g.medicalPackageCode ?? '').toUpperCase())
+    .join('|');
+  const nextPaxCodes = (paxGuests ?? [])
+    .map((p) => (p.medicalPackageCode ?? '').trim().toUpperCase())
+    .join('|');
+  const paxSkuChanged = Boolean(paxGuests) && prevPaxCodes !== nextPaxCodes;
+  const foSkuOverride =
+    paxGuests?.some((p) => Boolean(p.medicalPackageCode?.trim())) ?? false;
+
+  if (datesChanged || paxSkuChanged || foSkuOverride) {
+    const { stampMedicalPackagesForReservation } = await import(
+      '@/lib/services/medical-package-stamp.service'
+    );
+    const stamped = await stampMedicalPackagesForReservation(
+      prisma,
+      id,
+      foSkuOverride && paxGuests
+        ? { foPerGuestCodes: paxGuests.map((p) => p.medicalPackageCode ?? null) }
+        : undefined,
+    );
+    if (stamped.stayKind !== 'leisure') {
+      const { dispatchStayProductChanged } = await import(
+        '@/lib/integration/guest-lifecycle-events'
+      );
+      const updated = await prisma.reservation.findUnique({
+        where: { id },
+        include: { guest: true, room: true, paxGuests: { orderBy: { sortOrder: 'asc' } } },
+      });
+      if (updated) {
+        const previousProgram =
+          existing.medicalPackageCode ??
+          existing.paxGuests.find((g) => g.medicalPackageCode)?.medicalPackageCode ??
+          undefined;
+        void dispatchStayProductChanged({
+          reservationId: id,
+          programCode: stamped.programCode ?? updated.medicalPackageCode ?? undefined,
+          previousProgramCode: previousProgram ?? undefined,
+          effectiveDate: new Date().toISOString(),
+          globalPersonId: updated.guest.globalPersonId ?? undefined,
+          roomNumber: updated.room?.roomNumber ?? undefined,
+          checkInDate: updated.checkInDate.toISOString(),
+          checkOutDate: updated.checkOutDate.toISOString(),
+        }).catch((e) => console.error('stay-product amend failed', e));
+      }
+    }
+  }
+
+  // Wave D: refresh composed nightly sell when SKUs or dates known (skip if FO sent manual dailyRates)
+  if (!dailyRates?.length) {
+    const { syncComposedDailyRates } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    await syncComposedDailyRates(id);
   }
 
   return getReservationFull(id);

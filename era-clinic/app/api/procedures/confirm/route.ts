@@ -5,6 +5,7 @@ import {
   fifoConfirmBlockedReason,
   procedureConfirmHttpStatus,
 } from "@/lib/sanatorium-fifo-gates";
+import { day1ConfirmSoftWarn } from "@/lib/sanatorium-day1";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
 
 const bodySchema = z.object({
@@ -39,10 +40,17 @@ export async function POST(req: Request) {
       return jsonError(fifoBlock, procedureConfirmHttpStatus(fifoBlock));
     }
 
+    // Soft warn only — never 4xx for >3 (contra / doctor may need 4).
+    const softWarn = day1ConfirmSoftWarn(body.orderIds.length);
+
     const placed = await placeConfirmedProcedures(body.orderIds, {
       confirmedByUserId: session.sub,
     });
-    return jsonOk({ placed, orderIds: body.orderIds });
+    return jsonOk({
+      placed,
+      orderIds: body.orderIds,
+      ...(softWarn ? { softWarn } : {}),
+    });
   } catch (err) {
     return handleRouteError(err);
   }
