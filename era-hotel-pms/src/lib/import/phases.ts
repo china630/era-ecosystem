@@ -23,7 +23,7 @@ export const IMPORT_PHASES: ImportPhaseDef[] = [
   {
     id: 'transactional',
     strictOrder: true,
-    entities: ['guests', 'reservations', 'folios'],
+    entities: ['guests', 'reservations', 'reservation-notes', 'folios'],
   },
 ];
 

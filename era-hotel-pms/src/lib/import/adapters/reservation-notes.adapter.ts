@@ -8,12 +8,53 @@ import { stampMedicalPackagesForReservation } from "@/lib/services/medical-packa
 /**
  * FO Notes dump / FO-with-Notes columns → ReservationNote upsert by (reservationId, noteType).
  * After notes write, re-run medical SKU resolver.
+ *
+ * EW «Front office with notes» wide columns (2026 dump):
+ * Extra Req, Res Note, Price Note, CIn Note, #COut Note#, Room Note,
+ * Cancel Note, Payment Note, Invoice Note.
  */
 const rowSchema = z.object({
   externalRef: z.string().min(1),
   noteType: z.string().min(1),
   text: z.string(),
 });
+
+/** ERA noteType ← EW / alias headers */
+export const EW_NOTE_COLUMN_TO_ERA: Record<string, string> = {
+  EXTRA_REQ: "EXTRA_REQ",
+  "EXTRA REQUEST": "EXTRA_REQ",
+  EXTRAREQ: "EXTRA_REQ",
+  RES_NOTE: "RES_NOTE",
+  "RES NOTE": "RES_NOTE",
+  RESNOTE: "RES_NOTE",
+  CIN_NOTE: "CIN_NOTE",
+  "CIN NOTE": "CIN_NOTE",
+  "CHECK IN NOTE": "CIN_NOTE",
+  CHECKINNOTE: "CIN_NOTE",
+  COUT_NOTE: "COUT_NOTE",
+  "COUT NOTE": "COUT_NOTE",
+  "#COUT NOTE#": "COUT_NOTE",
+  "CHECK OUT NOTE": "COUT_NOTE",
+  CHECKOUTNOTE: "COUT_NOTE",
+  ROOM_NOTE: "ROOM_NOTE",
+  "ROOM NOTE": "ROOM_NOTE",
+  ROOMNOTE: "ROOM_NOTE",
+  CANCEL_NOTE: "CANCEL_NOTE",
+  "CANCEL NOTE": "CANCEL_NOTE",
+  CANCELNOTE: "CANCEL_NOTE",
+  PAYMENT_NOTE: "PAYMENT_NOTE",
+  "PAYMENT NOTE": "PAYMENT_NOTE",
+  PAYMENTNOTE: "PAYMENT_NOTE",
+  PRICE_NOTE: "PRICE_NOTE",
+  "PRICE NOTE": "PRICE_NOTE",
+  PRICENOTE: "PRICE_NOTE",
+  INVOICE_NOTE: "INVOICE_NOTE",
+  "INVOICE NOTE": "INVOICE_NOTE",
+  INVOICENOTE: "INVOICE_NOTE",
+  CONFIRMATION: "CONFIRMATION",
+  GENERAL_NOTE: "GENERAL_NOTE",
+  "GENERAL NOTE": "GENERAL_NOTE",
+};
 
 function parseResIdFromInfo(info: string | null | undefined): string | null {
   if (!info?.trim()) return null;
@@ -26,26 +67,26 @@ function parseResIdFromInfo(info: string | null | undefined): string | null {
 
 function mapNoteType(raw: string): string | null {
   const t = raw.trim().toUpperCase().replace(/\s+/g, "_");
-  const aliases: Record<string, string> = {
-    EXTRA_REQ: "EXTRA_REQ",
-    "EXTRA REQUEST": "EXTRA_REQ",
-    EXTRAREQ: "EXTRA_REQ",
-    RES_NOTE: "RES_NOTE",
-    "RES NOTE": "RES_NOTE",
-    RESNOTE: "RES_NOTE",
-    CIN_NOTE: "CIN_NOTE",
-    "CIN NOTE": "CIN_NOTE",
-    "CHECK IN NOTE": "CIN_NOTE",
-    COUT_NOTE: "COUT_NOTE",
-    PRICE_NOTE: "PRICE_NOTE",
-    "PRICE NOTE": "PRICE_NOTE",
-    ROOM_NOTE: "ROOM_NOTE",
-    GENERAL_NOTE: "GENERAL_NOTE",
-    CONFIRMATION: "CONFIRMATION",
-  };
-  const mapped = aliases[t] ?? aliases[raw.trim().toUpperCase()] ?? t;
+  const stripped = t.replace(/^#+|#+$/g, "");
+  const mapped =
+    EW_NOTE_COLUMN_TO_ERA[t] ??
+    EW_NOTE_COLUMN_TO_ERA[stripped] ??
+    EW_NOTE_COLUMN_TO_ERA[raw.trim().toUpperCase()] ??
+    stripped;
   return isReservationNoteType(mapped) ? mapped : null;
 }
+
+const WIDE_NOTE_KEYS = [
+  "EXTRA_REQ",
+  "RES_NOTE",
+  "CIN_NOTE",
+  "COUT_NOTE",
+  "ROOM_NOTE",
+  "CANCEL_NOTE",
+  "PAYMENT_NOTE",
+  "PRICE_NOTE",
+  "INVOICE_NOTE",
+] as const;
 
 export const reservationNotesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: "reservation-notes",
@@ -60,32 +101,40 @@ export const reservationNotesAdapter: ImportAdapter<z.infer<typeof rowSchema>> =
     "Reservation Info": "reservationInfo",
     EXTRA_REQ: "extraReq",
     "Extra Request": "extraReq",
+    "Extra Req": "extraReq",
     "Res Note": "resNote",
     "CIn Note": "cinNote",
+    "COut Note": "coutNote",
+    "#COut Note#": "coutNote",
+    "Room Note": "roomNote",
+    "Cancel Note": "cancelNote",
+    "Payment Note": "paymentNote",
     "Price Note": "priceNote",
+    "Invoice Note": "invoiceNote",
   },
   rowSchema,
   mapRow: (raw) => {
-    // Wide FO-with-Notes: one row per reservation with typed columns
-    const wideExtra = cellString(raw.extraReq);
-    const wideRes = cellString(raw.resNote);
-    const wideCin = cellString(raw.cinNote);
-    const widePrice = cellString(raw.priceNote);
-    if (wideExtra || wideRes || wideCin || widePrice) {
+    const wideBag: Record<string, string> = {
+      EXTRA_REQ: cellString(raw.extraReq) ?? "",
+      RES_NOTE: cellString(raw.resNote) ?? "",
+      CIN_NOTE: cellString(raw.cinNote) ?? "",
+      COUT_NOTE: cellString(raw.coutNote) ?? "",
+      ROOM_NOTE: cellString(raw.roomNote) ?? "",
+      CANCEL_NOTE: cellString(raw.cancelNote) ?? "",
+      PAYMENT_NOTE: cellString(raw.paymentNote) ?? "",
+      PRICE_NOTE: cellString(raw.priceNote) ?? "",
+      INVOICE_NOTE: cellString(raw.invoiceNote) ?? "",
+    };
+    const hasWide = WIDE_NOTE_KEYS.some((k) => wideBag[k]?.trim());
+    if (hasWide) {
       const externalRef =
         cellString(raw.externalRef) ||
         parseResIdFromInfo(cellString(raw.reservationInfo) ?? undefined);
       if (!externalRef) return null;
-      // Emit a sentinel row; upsert expands wide columns
       return {
         externalRef,
         noteType: "__WIDE__",
-        text: JSON.stringify({
-          EXTRA_REQ: wideExtra ?? "",
-          RES_NOTE: wideRes ?? "",
-          CIN_NOTE: wideCin ?? "",
-          PRICE_NOTE: widePrice ?? "",
-        }),
+        text: JSON.stringify(wideBag),
       };
     }
 
@@ -99,7 +148,6 @@ export const reservationNotesAdapter: ImportAdapter<z.infer<typeof rowSchema>> =
     if (!externalRef || !noteTypeRaw) return null;
     const noteType = mapNoteType(noteTypeRaw);
     if (!noteType) return null;
-    // Channel Room Detail — store as ROOM_NOTE if typed that way; parser ignores as SKU
     return { externalRef, noteType, text };
   },
   upsert: async (tx, row, dryRun) => {
@@ -117,6 +165,7 @@ export const reservationNotesAdapter: ImportAdapter<z.infer<typeof rowSchema>> =
       let outcome: "created" | "updated" = "updated";
       for (const [noteType, text] of Object.entries(bag)) {
         if (!text?.trim()) continue;
+        if (!isReservationNoteType(noteType)) continue;
         const existing = await tx.reservationNote.findUnique({
           where: {
             reservationId_noteType: {

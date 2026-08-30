@@ -213,12 +213,17 @@ export async function upsertReservationFromElektrawebRow(
   });
 
   // Live-bridge notes → ReservationNote + medical SKU stamp (Wave A)
+  // Align with EW FO-with-Notes columns (all nine note fields).
   const noteFields: Array<[string, string | null | undefined]> = [
     ['EXTRA_REQ', str(row.EXTRAREQ) ?? str(row.EXTRA_REQ) ?? str(row.EXTRAREQUEST)],
     ['RES_NOTE', str(row.RESNOTE) ?? str(row.RES_NOTE) ?? str(row.NOTES)],
     ['CIN_NOTE', str(row.CINNOTE) ?? str(row.CIN_NOTE) ?? str(row.CHECKINNOTE)],
-    ['PRICE_NOTE', str(row.PRICENOTE) ?? str(row.PRICE_NOTE)],
+    ['COUT_NOTE', str(row.COUTNOTE) ?? str(row.COUT_NOTE) ?? str(row.CHECKOUTNOTE)],
     ['ROOM_NOTE', str(row.ROOMNOTE) ?? str(row.ROOM_NOTE)],
+    ['CANCEL_NOTE', str(row.CANCELNOTE) ?? str(row.CANCEL_NOTE)],
+    ['PAYMENT_NOTE', str(row.PAYMENTNOTE) ?? str(row.PAYMENT_NOTE)],
+    ['PRICE_NOTE', str(row.PRICENOTE) ?? str(row.PRICE_NOTE)],
+    ['INVOICE_NOTE', str(row.INVOICENOTE) ?? str(row.INVOICE_NOTE)],
   ];
   for (const [noteType, text] of noteFields) {
     if (!text?.trim()) continue;

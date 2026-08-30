@@ -7,22 +7,44 @@ import {
 } from "@/lib/services/medical-package-resolve.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 
-/** Default seed rows when table empty (Wave A hardcoded prefixes). */
+/**
+ * Default seed when AgencyMedicalSkuRule table empty.
+ * Longest prefixes first in resolve; include EW 2026 FO-with-Notes agency labels.
+ */
 export const DEFAULT_AGENCY_SKU_RULES: Array<{
   agencyNamePrefix: string;
   packageCode: MedicalPackageCode;
   sortOrder: number;
 }> = [
-  { agencyNamePrefix: "Premium", packageCode: "PKG-PREMIUM", sortOrder: 10 },
-  { agencyNamePrefix: "Premium paket Walkin", packageCode: "PKG-PREMIUM", sortOrder: 11 },
-  { agencyNamePrefix: "Premium Facebook", packageCode: "PKG-PREMIUM", sortOrder: 12 },
-  { agencyNamePrefix: "Dermo", packageCode: "PKG-DERMO", sortOrder: 20 },
-  { agencyNamePrefix: "Dermo paket Walkin", packageCode: "PKG-DERMO", sortOrder: 21 },
-  { agencyNamePrefix: "Fecebook Dermo", packageCode: "PKG-DERMO", sortOrder: 22 },
-  { agencyNamePrefix: "Detox", packageCode: "PKG-DETOKS", sortOrder: 30 },
-  { agencyNamePrefix: "Detoks", packageCode: "PKG-DETOKS", sortOrder: 31 },
-  { agencyNamePrefix: "Həmkarlar", packageCode: "PKG-STANDART", sortOrder: 40 },
-  { agencyNamePrefix: "Hemkarlar", packageCode: "PKG-STANDART", sortOrder: 41 },
+  // Premium (specific → broad)
+  { agencyNamePrefix: "Premium paket Walkin", packageCode: "PKG-PREMIUM", sortOrder: 10 },
+  { agencyNamePrefix: "Premium Facebook", packageCode: "PKG-PREMIUM", sortOrder: 11 },
+  { agencyNamePrefix: "Premium Sultan Travel", packageCode: "PKG-PREMIUM", sortOrder: 12 },
+  { agencyNamePrefix: "Premium Naftalan Kamel", packageCode: "PKG-PREMIUM", sortOrder: 13 },
+  { agencyNamePrefix: "Premium Naftalan Med", packageCode: "PKG-PREMIUM", sortOrder: 14 },
+  { agencyNamePrefix: "Premium Akmaral", packageCode: "PKG-PREMIUM", sortOrder: 15 },
+  { agencyNamePrefix: "Premium", packageCode: "PKG-PREMIUM", sortOrder: 19 },
+  // Dermo
+  { agencyNamePrefix: "Dermo paket Walkin", packageCode: "PKG-DERMO", sortOrder: 20 },
+  { agencyNamePrefix: "Dermo Naftalanium", packageCode: "PKG-DERMO", sortOrder: 21 },
+  { agencyNamePrefix: "Dermo Naftalan Med", packageCode: "PKG-DERMO", sortOrder: 22 },
+  { agencyNamePrefix: "Dermo Naftalan Kamel", packageCode: "PKG-DERMO", sortOrder: 23 },
+  { agencyNamePrefix: "Dermo Nafdan", packageCode: "PKG-DERMO", sortOrder: 24 },
+  { agencyNamePrefix: "Dermo RN", packageCode: "PKG-DERMO", sortOrder: 25 },
+  { agencyNamePrefix: "Fecebook Dermo", packageCode: "PKG-DERMO", sortOrder: 26 },
+  { agencyNamePrefix: "Facebook Dermo", packageCode: "PKG-DERMO", sortOrder: 27 },
+  { agencyNamePrefix: "Dermo", packageCode: "PKG-DERMO", sortOrder: 29 },
+  // Detoks
+  { agencyNamePrefix: "Detox paket Walkin", packageCode: "PKG-DETOKS", sortOrder: 30 },
+  { agencyNamePrefix: "Detoks paket Walkin", packageCode: "PKG-DETOKS", sortOrder: 31 },
+  { agencyNamePrefix: "Detox", packageCode: "PKG-DETOKS", sortOrder: 32 },
+  { agencyNamePrefix: "Detoks", packageCode: "PKG-DETOKS", sortOrder: 33 },
+  // Həmkarlar → Standart
+  { agencyNamePrefix: "Həmkarlar İttifaqı", packageCode: "PKG-STANDART", sortOrder: 40 },
+  { agencyNamePrefix: "Həmkarlar", packageCode: "PKG-STANDART", sortOrder: 41 },
+  { agencyNamePrefix: "Hemkarlar", packageCode: "PKG-STANDART", sortOrder: 42 },
+  // Standart walk-in label
+  { agencyNamePrefix: "Standart paket Walkin", packageCode: "PKG-STANDART", sortOrder: 50 },
 ];
 
 export async function ensureAgencyMedicalSkuRulesSeeded() {

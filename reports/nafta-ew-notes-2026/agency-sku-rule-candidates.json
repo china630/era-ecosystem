@@ -1,0 +1,77 @@
+[
+  {
+    "agencyNamePrefix": "Həmkarlar İttifaqı  Konfederasiyası",
+    "packageCode": "PKG-STANDART",
+    "reservationCount": 87
+  },
+  {
+    "agencyNamePrefix": "Dermo paket Walkin",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 17
+  },
+  {
+    "agencyNamePrefix": "Premium Naftalan Kamel",
+    "packageCode": "PKG-PREMIUM",
+    "reservationCount": 11
+  },
+  {
+    "agencyNamePrefix": "Premium paket Walkin",
+    "packageCode": "PKG-PREMIUM",
+    "reservationCount": 9
+  },
+  {
+    "agencyNamePrefix": "Premium Sultan Travel medical",
+    "packageCode": "PKG-PREMIUM",
+    "reservationCount": 3
+  },
+  {
+    "agencyNamePrefix": "Dermo Naftalanium medical",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 2
+  },
+  {
+    "agencyNamePrefix": "Premium Naftalan Med medical",
+    "packageCode": "PKG-PREMIUM",
+    "reservationCount": 2
+  },
+  {
+    "agencyNamePrefix": "Dermo RN travel",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 2
+  },
+  {
+    "agencyNamePrefix": "Dermo Nafdan travel",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 1
+  },
+  {
+    "agencyNamePrefix": "Dermo Naftalan Med medical",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 1
+  },
+  {
+    "agencyNamePrefix": "Dermo Naftalan Kamel",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 1
+  },
+  {
+    "agencyNamePrefix": "Premium Facebook",
+    "packageCode": "PKG-PREMIUM",
+    "reservationCount": 1
+  },
+  {
+    "agencyNamePrefix": "Premium Akmaral Sayahat Medical",
+    "packageCode": "PKG-PREMIUM",
+    "reservationCount": 1
+  },
+  {
+    "agencyNamePrefix": "Fecebook Dermo paket",
+    "packageCode": "PKG-DERMO",
+    "reservationCount": 1
+  },
+  {
+    "agencyNamePrefix": "Detox paket Walkin",
+    "packageCode": "PKG-DETOKS",
+    "reservationCount": 1
+  }
+]

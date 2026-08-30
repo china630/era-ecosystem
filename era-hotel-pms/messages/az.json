@@ -2056,8 +2056,8 @@
         "hint": "Yuxarıdan aşağı. Agentliklər və məhsul kartları otaqlardan sonra."
       },
       "transactional": {
-        "title": "Faza 3 — Qonaqlar, rezervasiyalar, folio",
-        "hint": "Sıxı sıra: qonaqlar → rezervasiyalar → folio."
+        "title": "Faza 3 — Qonaqlar, rezervasiyalar, qeydlər, folio",
+        "hint": "Sıra: qonaqlar → rezervasiyalar → rezervasiya qeydləri → folio. Qeydlər: FO-with-Notes / Notes dump."
       }
     },
     "nextPhase": "Növbəti faza",

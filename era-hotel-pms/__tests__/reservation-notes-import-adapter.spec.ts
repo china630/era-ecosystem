@@ -37,15 +37,45 @@ describe("reservation-notes import adapter", () => {
     ).toBeNull();
   });
 
-  it("expands wide FO-with-Notes columns", () => {
+  it("expands wide FO-with-Notes columns including COut/Room/Cancel/Payment/Invoice", () => {
     const row = reservationNotesAdapter.mapRow({
       externalRef: "55",
       extraReq: "ERA-PKG PREMIUM",
       resNote: "vip",
+      coutNote: "left key",
+      roomNote: "high floor",
+      cancelNote: "",
+      paymentNote: "cash",
+      priceNote: "2*289 AZN",
+      invoiceNote: "VOEN",
     });
     expect(row).toMatchObject({ externalRef: "55", noteType: "__WIDE__" });
     const bag = JSON.parse((row as { text: string }).text);
     expect(bag.EXTRA_REQ).toBe("ERA-PKG PREMIUM");
     expect(bag.RES_NOTE).toBe("vip");
+    expect(bag.COUT_NOTE).toBe("left key");
+    expect(bag.ROOM_NOTE).toBe("high floor");
+    expect(bag.PAYMENT_NOTE).toBe("cash");
+    expect(bag.PRICE_NOTE).toBe("2*289 AZN");
+    expect(bag.INVOICE_NOTE).toBe("VOEN");
+  });
+
+  it("maps #COut Note# alias to COUT_NOTE in long dump", () => {
+    const mapped = mapHeaders(
+      {
+        "Note Type": "#COut Note#",
+        Notes: "taxi",
+        "Res Id": "77",
+      },
+      reservationNotesAdapter.headerAliases,
+    );
+    // Note Type alias not in headerAliases — mapRow uses noteType raw
+    const row = reservationNotesAdapter.mapRow({
+      noteType: "#COut Note#",
+      text: "taxi",
+      externalRef: "77",
+    });
+    expect(row).toMatchObject({ externalRef: "77", noteType: "COUT_NOTE", text: "taxi" });
+    void mapped;
   });
 });

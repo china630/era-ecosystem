@@ -2083,8 +2083,8 @@
         "hint": "Top to bottom. Agencies and product cards can follow rooms."
       },
       "transactional": {
-        "title": "Phase 3 — Guests, reservations, folios",
-        "hint": "Strict order: guests before reservations before folios."
+        "title": "Phase 3 — Guests, reservations, notes, folios",
+        "hint": "Strict order: guests → reservations → reservation notes → folios. Notes: FO-with-Notes / Notes dump."
       }
     },
     "nextPhase": "Next phase",

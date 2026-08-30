@@ -81,10 +81,11 @@ Phase 2 — Hotel master data (recommended top → bottom)
 Phase 3 — Transactional (strict order)
   40  Guests             Guests.xlsx
   50  Reservations       Reservations.xlsx
+  55  Reservation notes  FO-with-Notes / Notes dump (.xlsx)
   60  Folios             Folios.xlsx
 ```
 
-Numbers match adapter `order` field in code.
+Numbers match adapter `order` field in code. **Reservation notes** runs after reservations (needs `Res Id` → `externalRef`) and before folios; stamps medical SKU from Extra/agency when present.
 
 ### 3.3 Per-step workflow
 
@@ -130,7 +131,7 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
 | Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
 | Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
-| Notes dump / FO-with-Notes | `reservation-notes` | `ReservationNote` | `(reservationId, noteType)` | Extra Req / Res / CIn / Price → medical SKU resolve (HOT-PKG-02). See [ERA-PKG-FO-CHEATSHEET.md](./nafta/ERA-PKG-FO-CHEATSHEET.md) |
+| Notes dump / FO-with-Notes | `reservation-notes` | `ReservationNote` | `(reservationId, noteType)` | All nine EW note columns → ERA types (`EXTRA_REQ`…`INVOICE_NOTE`); then medical SKU stamp (HOT-PKG-02). Field map + 2026 extract: [`reports/nafta-ew-notes-2026/README.md`](../../reports/nafta-ew-notes-2026/README.md). Cheatsheet: [ERA-PKG-FO-CHEATSHEET.md](./nafta/ERA-PKG-FO-CHEATSHEET.md) |
 | Folios.xlsx | `folios` | `FolioCharge` | `externalRef` | Elektraweb folio/charge id |
 | Chart of Accounts | — | — | — | **Excluded** — finance-core |
 
@@ -229,7 +230,7 @@ Excel row numbers in `errors[].row` are **1-based sheet rows** (header = row 1, 
 
 ### Entity slugs
 
-`revenue-codes`, `bed-types`, `room-views`, `room-types`, `rate-plans`, `rooms`, `agencies`, `product-cards`, `stock-cards`, `guests`, `reservations`, `folios`.
+`revenue-codes`, `bed-types`, `room-views`, `room-types`, `rate-plans`, `rooms`, `agencies`, `product-cards`, `stock-cards`, `guests`, `reservations`, `reservation-notes`, `folios`.
 
 ---
 
