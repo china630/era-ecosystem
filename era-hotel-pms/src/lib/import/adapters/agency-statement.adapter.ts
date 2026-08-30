@@ -115,6 +115,7 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
         },
       });
     }
+    if (!folio) throw new Error("Could not resolve agency folio");
 
     const description = [
       "EW Agency Statement remaining",
