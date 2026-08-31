@@ -59,6 +59,7 @@ See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-
 | `FNB_POS_API_URL` | orchestrator | `http://fnb-pos:3202` |
 | `SATELLITE_BRIDGE_SECRET` | orchestrator + clinic + hotel-pms + fnb-pos | same value; header `x-satellite-bridge-secret` |
 | `CLINIC_BRIDGE_SECRET` | clinic (alias for staff-provision) + hotel → clinic lifecycle | may match `SATELLITE_BRIDGE_SECRET` |
+| `ELEKTRAWEB_BRIDGE_ENABLED` | hotel-pms | `1` = process kill switch on (HOT-06); per-org hotel ids are Super-Admin `ElektrawebBridgePolicy`, not env |
 
 Public `ERA_CLINIC_ORIGIN` / launcher URLs are **not** the staff fan-out target.
 
