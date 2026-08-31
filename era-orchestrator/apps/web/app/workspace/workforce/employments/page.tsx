@@ -164,6 +164,17 @@ export default function WorkforceEmploymentsPage() {
   const [cardOpen, setCardOpen] = useState(false);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!moreMenuId) return;
+    function onDocMouseDown(e: MouseEvent) {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest("[data-employment-more-menu]")) return;
+      setMoreMenuId(null);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [moreMenuId]);
+
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [resolveFin, setResolveFin] = useState("");
   const [resolveName, setResolveName] = useState("");
@@ -853,6 +864,13 @@ export default function WorkforceEmploymentsPage() {
             <tbody>
               {pagedRows.map((r) => {
                 const hasBindings = (r.roleBindings?.length ?? 0) > 0;
+                const canReprovision =
+                  r.status !== "TERMINATED" && hasBindings;
+                const reprovisionTitle = !canReprovision
+                  ? r.status === "TERMINATED"
+                    ? t("reprovisionTerminated")
+                    : t("reprovisionNoBindings")
+                  : t("reprovision");
                 return (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>
@@ -930,40 +948,39 @@ export default function WorkforceEmploymentsPage() {
                             aria-hidden
                           />
                         </button>
-                        {hasBindings ? (
-                          <div className="relative">
-                            <button
-                              type="button"
-                              className={TABLE_ROW_ICON_BTN_CLASS}
-                              title={t("moreActions")}
-                              aria-label={t("moreActions")}
-                              disabled={busy}
-                              onClick={() =>
-                                setMoreMenuId((id) =>
-                                  id === r.id ? null : r.id,
-                                )
-                              }
-                            >
-                              <MoreHorizontal
-                                className="h-4 w-4 text-[#7F8C8D]"
-                                aria-hidden
-                              />
-                            </button>
-                            {moreMenuId === r.id ? (
-                              <div className="absolute right-0 z-10 mt-1 min-w-[10rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7]"
-                                  disabled={busy}
-                                  onClick={() => void reprovisionEmployment(r)}
-                                >
-                                  <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-                                  {t("reprovision")}
-                                </button>
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
+                        <div className="relative" data-employment-more-menu="">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("moreActions")}
+                            aria-label={t("moreActions")}
+                            disabled={busy}
+                            onClick={() =>
+                              setMoreMenuId((id) =>
+                                id === r.id ? null : r.id,
+                              )
+                            }
+                          >
+                            <MoreHorizontal
+                              className="h-4 w-4 text-[#7F8C8D]"
+                              aria-hidden
+                            />
+                          </button>
+                          {moreMenuId === r.id ? (
+                            <div className="absolute right-0 z-10 mt-1 min-w-[10rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || !canReprovision}
+                                title={reprovisionTitle}
+                                onClick={() => void reprovisionEmployment(r)}
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                                {t("reprovision")}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
                   </tr>

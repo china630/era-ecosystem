@@ -134,6 +134,11 @@ export type WorkforceEmployment = $Result.DefaultSelection<Prisma.$WorkforceEmpl
  */
 export type WorkforceAbsence = $Result.DefaultSelection<Prisma.$WorkforceAbsencePayload>
 /**
+ * Model WorkforceTimesheet
+ * Month header for CP attendance grid (SoR). Finance mirrors approved rows when hr_full.
+ */
+export type WorkforceTimesheet = $Result.DefaultSelection<Prisma.$WorkforceTimesheetPayload>
+/**
  * Model WorkforceTimesheetEntry
  * 
  */
@@ -684,6 +689,25 @@ export const WorkforceTimesheetEntryStatus: {
 export type WorkforceTimesheetEntryStatus = (typeof WorkforceTimesheetEntryStatus)[keyof typeof WorkforceTimesheetEntryStatus]
 
 
+export const WorkforceTimesheetStatus: {
+  DRAFT: 'DRAFT',
+  APPROVED: 'APPROVED'
+};
+
+export type WorkforceTimesheetStatus = (typeof WorkforceTimesheetStatus)[keyof typeof WorkforceTimesheetStatus]
+
+
+export const WorkforceTimesheetEntryType: {
+  WORK: 'WORK',
+  VACATION: 'VACATION',
+  SICK: 'SICK',
+  OFF: 'OFF',
+  BUSINESS_TRIP: 'BUSINESS_TRIP'
+};
+
+export type WorkforceTimesheetEntryType = (typeof WorkforceTimesheetEntryType)[keyof typeof WorkforceTimesheetEntryType]
+
+
 export const WorkforceVacationPlanStatus: {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
@@ -936,6 +960,14 @@ export const WorkforceAbsenceStatus: typeof $Enums.WorkforceAbsenceStatus
 export type WorkforceTimesheetEntryStatus = $Enums.WorkforceTimesheetEntryStatus
 
 export const WorkforceTimesheetEntryStatus: typeof $Enums.WorkforceTimesheetEntryStatus
+
+export type WorkforceTimesheetStatus = $Enums.WorkforceTimesheetStatus
+
+export const WorkforceTimesheetStatus: typeof $Enums.WorkforceTimesheetStatus
+
+export type WorkforceTimesheetEntryType = $Enums.WorkforceTimesheetEntryType
+
+export const WorkforceTimesheetEntryType: typeof $Enums.WorkforceTimesheetEntryType
 
 export type WorkforceVacationPlanStatus = $Enums.WorkforceVacationPlanStatus
 
@@ -1353,6 +1385,16 @@ export class PrismaClient<
     * ```
     */
   get workforceAbsence(): Prisma.WorkforceAbsenceDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceTimesheet`: Exposes CRUD operations for the **WorkforceTimesheet** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceTimesheets
+    * const workforceTimesheets = await prisma.workforceTimesheet.findMany()
+    * ```
+    */
+  get workforceTimesheet(): Prisma.WorkforceTimesheetDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.workforceTimesheetEntry`: Exposes CRUD operations for the **WorkforceTimesheetEntry** model.
@@ -2281,6 +2323,7 @@ export namespace Prisma {
     WorkforceSeatAllocation: 'WorkforceSeatAllocation',
     WorkforceEmployment: 'WorkforceEmployment',
     WorkforceAbsence: 'WorkforceAbsence',
+    WorkforceTimesheet: 'WorkforceTimesheet',
     WorkforceTimesheetEntry: 'WorkforceTimesheetEntry',
     WorkforceVacationPlan: 'WorkforceVacationPlan',
     WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',
@@ -2343,7 +2386,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4120,6 +4163,80 @@ export namespace Prisma {
           count: {
             args: Prisma.WorkforceAbsenceCountArgs<ExtArgs>
             result: $Utils.Optional<WorkforceAbsenceCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceTimesheet: {
+        payload: Prisma.$WorkforceTimesheetPayload<ExtArgs>
+        fields: Prisma.WorkforceTimesheetFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceTimesheetFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceTimesheetFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceTimesheetFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceTimesheetFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceTimesheetFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceTimesheetCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceTimesheetCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceTimesheetCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceTimesheetDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>
+          }
+          update: {
+            args: Prisma.WorkforceTimesheetUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceTimesheetDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceTimesheetUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceTimesheetUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceTimesheetUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceTimesheetPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceTimesheetAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceTimesheet>
+          }
+          groupBy: {
+            args: Prisma.WorkforceTimesheetGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceTimesheetGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceTimesheetCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceTimesheetCountAggregateOutputType> | number
           }
         }
       }
@@ -7733,6 +7850,7 @@ export namespace Prisma {
     workforceSeatAllocation?: WorkforceSeatAllocationOmit
     workforceEmployment?: WorkforceEmploymentOmit
     workforceAbsence?: WorkforceAbsenceOmit
+    workforceTimesheet?: WorkforceTimesheetOmit
     workforceTimesheetEntry?: WorkforceTimesheetEntryOmit
     workforceVacationPlan?: WorkforceVacationPlanOmit
     workforceVacationPlanLine?: WorkforceVacationPlanLineOmit
@@ -8253,6 +8371,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type WorkforceTimesheetCountOutputType
+   */
+
+  export type WorkforceTimesheetCountOutputType = {
+    entries: number
+  }
+
+  export type WorkforceTimesheetCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    entries?: boolean | WorkforceTimesheetCountOutputTypeCountEntriesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WorkforceTimesheetCountOutputType without action
+   */
+  export type WorkforceTimesheetCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheetCountOutputType
+     */
+    select?: WorkforceTimesheetCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceTimesheetCountOutputType without action
+   */
+  export type WorkforceTimesheetCountOutputTypeCountEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceTimesheetEntryWhereInput
+  }
+
+
+  /**
    * Count Type WorkforceVacationPlanCountOutputType
    */
 
@@ -8438,6 +8587,7 @@ export namespace Prisma {
     satelliteEntitlements: number
     workforceAssignments: number
     workforceEmployments: number
+    workforceTimesheets: number
     orgUnitCommercialLinks: number
     clinicCutoverAsHotel: number
     departments: number
@@ -8471,6 +8621,7 @@ export namespace Prisma {
     satelliteEntitlements?: boolean | OrganizationCountOutputTypeCountSatelliteEntitlementsArgs
     workforceAssignments?: boolean | OrganizationCountOutputTypeCountWorkforceAssignmentsArgs
     workforceEmployments?: boolean | OrganizationCountOutputTypeCountWorkforceEmploymentsArgs
+    workforceTimesheets?: boolean | OrganizationCountOutputTypeCountWorkforceTimesheetsArgs
     orgUnitCommercialLinks?: boolean | OrganizationCountOutputTypeCountOrgUnitCommercialLinksArgs
     clinicCutoverAsHotel?: boolean | OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs
     departments?: boolean | OrganizationCountOutputTypeCountDepartmentsArgs
@@ -8668,6 +8819,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountWorkforceEmploymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkforceEmploymentWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountWorkforceTimesheetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceTimesheetWhereInput
   }
 
   /**
@@ -37118,6 +37276,1163 @@ export namespace Prisma {
 
 
   /**
+   * Model WorkforceTimesheet
+   */
+
+  export type AggregateWorkforceTimesheet = {
+    _count: WorkforceTimesheetCountAggregateOutputType | null
+    _avg: WorkforceTimesheetAvgAggregateOutputType | null
+    _sum: WorkforceTimesheetSumAggregateOutputType | null
+    _min: WorkforceTimesheetMinAggregateOutputType | null
+    _max: WorkforceTimesheetMaxAggregateOutputType | null
+  }
+
+  export type WorkforceTimesheetAvgAggregateOutputType = {
+    year: number | null
+    month: number | null
+  }
+
+  export type WorkforceTimesheetSumAggregateOutputType = {
+    year: number | null
+    month: number | null
+  }
+
+  export type WorkforceTimesheetMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    year: number | null
+    month: number | null
+    status: $Enums.WorkforceTimesheetStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceTimesheetMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    year: number | null
+    month: number | null
+    status: $Enums.WorkforceTimesheetStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceTimesheetCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    year: number
+    month: number
+    status: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceTimesheetAvgAggregateInputType = {
+    year?: true
+    month?: true
+  }
+
+  export type WorkforceTimesheetSumAggregateInputType = {
+    year?: true
+    month?: true
+  }
+
+  export type WorkforceTimesheetMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    year?: true
+    month?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceTimesheetMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    year?: true
+    month?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceTimesheetCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    year?: true
+    month?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceTimesheetAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceTimesheet to aggregate.
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceTimesheets to fetch.
+     */
+    orderBy?: WorkforceTimesheetOrderByWithRelationInput | WorkforceTimesheetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceTimesheetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceTimesheets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceTimesheets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceTimesheets
+    **/
+    _count?: true | WorkforceTimesheetCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceTimesheetAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceTimesheetSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceTimesheetMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceTimesheetMaxAggregateInputType
+  }
+
+  export type GetWorkforceTimesheetAggregateType<T extends WorkforceTimesheetAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceTimesheet]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceTimesheet[P]>
+      : GetScalarType<T[P], AggregateWorkforceTimesheet[P]>
+  }
+
+
+
+
+  export type WorkforceTimesheetGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceTimesheetWhereInput
+    orderBy?: WorkforceTimesheetOrderByWithAggregationInput | WorkforceTimesheetOrderByWithAggregationInput[]
+    by: WorkforceTimesheetScalarFieldEnum[] | WorkforceTimesheetScalarFieldEnum
+    having?: WorkforceTimesheetScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceTimesheetCountAggregateInputType | true
+    _avg?: WorkforceTimesheetAvgAggregateInputType
+    _sum?: WorkforceTimesheetSumAggregateInputType
+    _min?: WorkforceTimesheetMinAggregateInputType
+    _max?: WorkforceTimesheetMaxAggregateInputType
+  }
+
+  export type WorkforceTimesheetGroupByOutputType = {
+    id: string
+    organizationId: string
+    year: number
+    month: number
+    status: $Enums.WorkforceTimesheetStatus
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceTimesheetCountAggregateOutputType | null
+    _avg: WorkforceTimesheetAvgAggregateOutputType | null
+    _sum: WorkforceTimesheetSumAggregateOutputType | null
+    _min: WorkforceTimesheetMinAggregateOutputType | null
+    _max: WorkforceTimesheetMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceTimesheetGroupByPayload<T extends WorkforceTimesheetGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceTimesheetGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceTimesheetGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceTimesheetGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceTimesheetGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceTimesheetSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    year?: boolean
+    month?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    entries?: boolean | WorkforceTimesheet$entriesArgs<ExtArgs>
+    _count?: boolean | WorkforceTimesheetCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceTimesheet"]>
+
+  export type WorkforceTimesheetSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    year?: boolean
+    month?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceTimesheet"]>
+
+  export type WorkforceTimesheetSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    year?: boolean
+    month?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceTimesheet"]>
+
+  export type WorkforceTimesheetSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    year?: boolean
+    month?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceTimesheetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "year" | "month" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceTimesheet"]>
+  export type WorkforceTimesheetInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    entries?: boolean | WorkforceTimesheet$entriesArgs<ExtArgs>
+    _count?: boolean | WorkforceTimesheetCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type WorkforceTimesheetIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceTimesheetIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceTimesheetPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceTimesheet"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      entries: Prisma.$WorkforceTimesheetEntryPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      year: number
+      month: number
+      status: $Enums.WorkforceTimesheetStatus
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceTimesheet"]>
+    composites: {}
+  }
+
+  type WorkforceTimesheetGetPayload<S extends boolean | null | undefined | WorkforceTimesheetDefaultArgs> = $Result.GetResult<Prisma.$WorkforceTimesheetPayload, S>
+
+  type WorkforceTimesheetCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceTimesheetFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceTimesheetCountAggregateInputType | true
+    }
+
+  export interface WorkforceTimesheetDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceTimesheet'], meta: { name: 'WorkforceTimesheet' } }
+    /**
+     * Find zero or one WorkforceTimesheet that matches the filter.
+     * @param {WorkforceTimesheetFindUniqueArgs} args - Arguments to find a WorkforceTimesheet
+     * @example
+     * // Get one WorkforceTimesheet
+     * const workforceTimesheet = await prisma.workforceTimesheet.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceTimesheetFindUniqueArgs>(args: SelectSubset<T, WorkforceTimesheetFindUniqueArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceTimesheet that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceTimesheetFindUniqueOrThrowArgs} args - Arguments to find a WorkforceTimesheet
+     * @example
+     * // Get one WorkforceTimesheet
+     * const workforceTimesheet = await prisma.workforceTimesheet.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceTimesheetFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceTimesheetFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceTimesheet that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetFindFirstArgs} args - Arguments to find a WorkforceTimesheet
+     * @example
+     * // Get one WorkforceTimesheet
+     * const workforceTimesheet = await prisma.workforceTimesheet.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceTimesheetFindFirstArgs>(args?: SelectSubset<T, WorkforceTimesheetFindFirstArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceTimesheet that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetFindFirstOrThrowArgs} args - Arguments to find a WorkforceTimesheet
+     * @example
+     * // Get one WorkforceTimesheet
+     * const workforceTimesheet = await prisma.workforceTimesheet.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceTimesheetFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceTimesheetFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceTimesheets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceTimesheets
+     * const workforceTimesheets = await prisma.workforceTimesheet.findMany()
+     * 
+     * // Get first 10 WorkforceTimesheets
+     * const workforceTimesheets = await prisma.workforceTimesheet.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceTimesheetWithIdOnly = await prisma.workforceTimesheet.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceTimesheetFindManyArgs>(args?: SelectSubset<T, WorkforceTimesheetFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceTimesheet.
+     * @param {WorkforceTimesheetCreateArgs} args - Arguments to create a WorkforceTimesheet.
+     * @example
+     * // Create one WorkforceTimesheet
+     * const WorkforceTimesheet = await prisma.workforceTimesheet.create({
+     *   data: {
+     *     // ... data to create a WorkforceTimesheet
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceTimesheetCreateArgs>(args: SelectSubset<T, WorkforceTimesheetCreateArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceTimesheets.
+     * @param {WorkforceTimesheetCreateManyArgs} args - Arguments to create many WorkforceTimesheets.
+     * @example
+     * // Create many WorkforceTimesheets
+     * const workforceTimesheet = await prisma.workforceTimesheet.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceTimesheetCreateManyArgs>(args?: SelectSubset<T, WorkforceTimesheetCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceTimesheets and returns the data saved in the database.
+     * @param {WorkforceTimesheetCreateManyAndReturnArgs} args - Arguments to create many WorkforceTimesheets.
+     * @example
+     * // Create many WorkforceTimesheets
+     * const workforceTimesheet = await prisma.workforceTimesheet.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceTimesheets and only return the `id`
+     * const workforceTimesheetWithIdOnly = await prisma.workforceTimesheet.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceTimesheetCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceTimesheetCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceTimesheet.
+     * @param {WorkforceTimesheetDeleteArgs} args - Arguments to delete one WorkforceTimesheet.
+     * @example
+     * // Delete one WorkforceTimesheet
+     * const WorkforceTimesheet = await prisma.workforceTimesheet.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceTimesheet
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceTimesheetDeleteArgs>(args: SelectSubset<T, WorkforceTimesheetDeleteArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceTimesheet.
+     * @param {WorkforceTimesheetUpdateArgs} args - Arguments to update one WorkforceTimesheet.
+     * @example
+     * // Update one WorkforceTimesheet
+     * const workforceTimesheet = await prisma.workforceTimesheet.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceTimesheetUpdateArgs>(args: SelectSubset<T, WorkforceTimesheetUpdateArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceTimesheets.
+     * @param {WorkforceTimesheetDeleteManyArgs} args - Arguments to filter WorkforceTimesheets to delete.
+     * @example
+     * // Delete a few WorkforceTimesheets
+     * const { count } = await prisma.workforceTimesheet.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceTimesheetDeleteManyArgs>(args?: SelectSubset<T, WorkforceTimesheetDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceTimesheets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceTimesheets
+     * const workforceTimesheet = await prisma.workforceTimesheet.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceTimesheetUpdateManyArgs>(args: SelectSubset<T, WorkforceTimesheetUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceTimesheets and returns the data updated in the database.
+     * @param {WorkforceTimesheetUpdateManyAndReturnArgs} args - Arguments to update many WorkforceTimesheets.
+     * @example
+     * // Update many WorkforceTimesheets
+     * const workforceTimesheet = await prisma.workforceTimesheet.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceTimesheets and only return the `id`
+     * const workforceTimesheetWithIdOnly = await prisma.workforceTimesheet.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceTimesheetUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceTimesheetUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceTimesheet.
+     * @param {WorkforceTimesheetUpsertArgs} args - Arguments to update or create a WorkforceTimesheet.
+     * @example
+     * // Update or create a WorkforceTimesheet
+     * const workforceTimesheet = await prisma.workforceTimesheet.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceTimesheet
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceTimesheet we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceTimesheetUpsertArgs>(args: SelectSubset<T, WorkforceTimesheetUpsertArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceTimesheets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetCountArgs} args - Arguments to filter WorkforceTimesheets to count.
+     * @example
+     * // Count the number of WorkforceTimesheets
+     * const count = await prisma.workforceTimesheet.count({
+     *   where: {
+     *     // ... the filter for the WorkforceTimesheets we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceTimesheetCountArgs>(
+      args?: Subset<T, WorkforceTimesheetCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceTimesheetCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceTimesheet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceTimesheetAggregateArgs>(args: Subset<T, WorkforceTimesheetAggregateArgs>): Prisma.PrismaPromise<GetWorkforceTimesheetAggregateType<T>>
+
+    /**
+     * Group by WorkforceTimesheet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceTimesheetGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceTimesheetGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceTimesheetGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceTimesheetGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceTimesheetGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceTimesheetGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceTimesheet model
+   */
+  readonly fields: WorkforceTimesheetFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceTimesheet.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceTimesheetClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    entries<T extends WorkforceTimesheet$entriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceTimesheet$entriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceTimesheet model
+   */
+  interface WorkforceTimesheetFieldRefs {
+    readonly id: FieldRef<"WorkforceTimesheet", 'String'>
+    readonly organizationId: FieldRef<"WorkforceTimesheet", 'String'>
+    readonly year: FieldRef<"WorkforceTimesheet", 'Int'>
+    readonly month: FieldRef<"WorkforceTimesheet", 'Int'>
+    readonly status: FieldRef<"WorkforceTimesheet", 'WorkforceTimesheetStatus'>
+    readonly createdAt: FieldRef<"WorkforceTimesheet", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceTimesheet", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceTimesheet findUnique
+   */
+  export type WorkforceTimesheetFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceTimesheet to fetch.
+     */
+    where: WorkforceTimesheetWhereUniqueInput
+  }
+
+  /**
+   * WorkforceTimesheet findUniqueOrThrow
+   */
+  export type WorkforceTimesheetFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceTimesheet to fetch.
+     */
+    where: WorkforceTimesheetWhereUniqueInput
+  }
+
+  /**
+   * WorkforceTimesheet findFirst
+   */
+  export type WorkforceTimesheetFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceTimesheet to fetch.
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceTimesheets to fetch.
+     */
+    orderBy?: WorkforceTimesheetOrderByWithRelationInput | WorkforceTimesheetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceTimesheets.
+     */
+    cursor?: WorkforceTimesheetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceTimesheets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceTimesheets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceTimesheets.
+     */
+    distinct?: WorkforceTimesheetScalarFieldEnum | WorkforceTimesheetScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceTimesheet findFirstOrThrow
+   */
+  export type WorkforceTimesheetFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceTimesheet to fetch.
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceTimesheets to fetch.
+     */
+    orderBy?: WorkforceTimesheetOrderByWithRelationInput | WorkforceTimesheetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceTimesheets.
+     */
+    cursor?: WorkforceTimesheetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceTimesheets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceTimesheets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceTimesheets.
+     */
+    distinct?: WorkforceTimesheetScalarFieldEnum | WorkforceTimesheetScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceTimesheet findMany
+   */
+  export type WorkforceTimesheetFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceTimesheets to fetch.
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceTimesheets to fetch.
+     */
+    orderBy?: WorkforceTimesheetOrderByWithRelationInput | WorkforceTimesheetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceTimesheets.
+     */
+    cursor?: WorkforceTimesheetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceTimesheets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceTimesheets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceTimesheets.
+     */
+    distinct?: WorkforceTimesheetScalarFieldEnum | WorkforceTimesheetScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceTimesheet create
+   */
+  export type WorkforceTimesheetCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceTimesheet.
+     */
+    data: XOR<WorkforceTimesheetCreateInput, WorkforceTimesheetUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceTimesheet createMany
+   */
+  export type WorkforceTimesheetCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceTimesheets.
+     */
+    data: WorkforceTimesheetCreateManyInput | WorkforceTimesheetCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceTimesheet createManyAndReturn
+   */
+  export type WorkforceTimesheetCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceTimesheets.
+     */
+    data: WorkforceTimesheetCreateManyInput | WorkforceTimesheetCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceTimesheet update
+   */
+  export type WorkforceTimesheetUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceTimesheet.
+     */
+    data: XOR<WorkforceTimesheetUpdateInput, WorkforceTimesheetUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceTimesheet to update.
+     */
+    where: WorkforceTimesheetWhereUniqueInput
+  }
+
+  /**
+   * WorkforceTimesheet updateMany
+   */
+  export type WorkforceTimesheetUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceTimesheets.
+     */
+    data: XOR<WorkforceTimesheetUpdateManyMutationInput, WorkforceTimesheetUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceTimesheets to update
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * Limit how many WorkforceTimesheets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceTimesheet updateManyAndReturn
+   */
+  export type WorkforceTimesheetUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceTimesheets.
+     */
+    data: XOR<WorkforceTimesheetUpdateManyMutationInput, WorkforceTimesheetUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceTimesheets to update
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * Limit how many WorkforceTimesheets to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceTimesheet upsert
+   */
+  export type WorkforceTimesheetUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceTimesheet to update in case it exists.
+     */
+    where: WorkforceTimesheetWhereUniqueInput
+    /**
+     * In case the WorkforceTimesheet found by the `where` argument doesn't exist, create a new WorkforceTimesheet with this data.
+     */
+    create: XOR<WorkforceTimesheetCreateInput, WorkforceTimesheetUncheckedCreateInput>
+    /**
+     * In case the WorkforceTimesheet was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceTimesheetUpdateInput, WorkforceTimesheetUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceTimesheet delete
+   */
+  export type WorkforceTimesheetDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceTimesheet to delete.
+     */
+    where: WorkforceTimesheetWhereUniqueInput
+  }
+
+  /**
+   * WorkforceTimesheet deleteMany
+   */
+  export type WorkforceTimesheetDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceTimesheets to delete
+     */
+    where?: WorkforceTimesheetWhereInput
+    /**
+     * Limit how many WorkforceTimesheets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceTimesheet.entries
+   */
+  export type WorkforceTimesheet$entriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheetEntry
+     */
+    select?: WorkforceTimesheetEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheetEntry
+     */
+    omit?: WorkforceTimesheetEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetEntryInclude<ExtArgs> | null
+    where?: WorkforceTimesheetEntryWhereInput
+    orderBy?: WorkforceTimesheetEntryOrderByWithRelationInput | WorkforceTimesheetEntryOrderByWithRelationInput[]
+    cursor?: WorkforceTimesheetEntryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceTimesheetEntryScalarFieldEnum | WorkforceTimesheetEntryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceTimesheet without action
+   */
+  export type WorkforceTimesheetDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model WorkforceTimesheetEntry
    */
 
@@ -37140,9 +38455,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryMinAggregateOutputType = {
     id: string | null
     organizationId: string | null
+    timesheetId: string | null
     employmentId: string | null
     workDate: Date | null
     hours: Decimal | null
+    type: $Enums.WorkforceTimesheetEntryType | null
+    lockedFromAbsence: boolean | null
     source: string | null
     sourceRef: string | null
     status: $Enums.WorkforceTimesheetEntryStatus | null
@@ -37153,9 +38471,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryMaxAggregateOutputType = {
     id: string | null
     organizationId: string | null
+    timesheetId: string | null
     employmentId: string | null
     workDate: Date | null
     hours: Decimal | null
+    type: $Enums.WorkforceTimesheetEntryType | null
+    lockedFromAbsence: boolean | null
     source: string | null
     sourceRef: string | null
     status: $Enums.WorkforceTimesheetEntryStatus | null
@@ -37166,9 +38487,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryCountAggregateOutputType = {
     id: number
     organizationId: number
+    timesheetId: number
     employmentId: number
     workDate: number
     hours: number
+    type: number
+    lockedFromAbsence: number
     source: number
     sourceRef: number
     status: number
@@ -37189,9 +38513,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryMinAggregateInputType = {
     id?: true
     organizationId?: true
+    timesheetId?: true
     employmentId?: true
     workDate?: true
     hours?: true
+    type?: true
+    lockedFromAbsence?: true
     source?: true
     sourceRef?: true
     status?: true
@@ -37202,9 +38529,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryMaxAggregateInputType = {
     id?: true
     organizationId?: true
+    timesheetId?: true
     employmentId?: true
     workDate?: true
     hours?: true
+    type?: true
+    lockedFromAbsence?: true
     source?: true
     sourceRef?: true
     status?: true
@@ -37215,9 +38545,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryCountAggregateInputType = {
     id?: true
     organizationId?: true
+    timesheetId?: true
     employmentId?: true
     workDate?: true
     hours?: true
+    type?: true
+    lockedFromAbsence?: true
     source?: true
     sourceRef?: true
     status?: true
@@ -37315,9 +38648,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryGroupByOutputType = {
     id: string
     organizationId: string
+    timesheetId: string
     employmentId: string
     workDate: Date
     hours: Decimal
+    type: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence: boolean
     source: string
     sourceRef: string | null
     status: $Enums.WorkforceTimesheetEntryStatus
@@ -37347,51 +38683,66 @@ export namespace Prisma {
   export type WorkforceTimesheetEntrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     organizationId?: boolean
+    timesheetId?: boolean
     employmentId?: boolean
     workDate?: boolean
     hours?: boolean
+    type?: boolean
+    lockedFromAbsence?: boolean
     source?: boolean
     sourceRef?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    timesheet?: boolean | WorkforceTimesheetDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceTimesheetEntry"]>
 
   export type WorkforceTimesheetEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     organizationId?: boolean
+    timesheetId?: boolean
     employmentId?: boolean
     workDate?: boolean
     hours?: boolean
+    type?: boolean
+    lockedFromAbsence?: boolean
     source?: boolean
     sourceRef?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    timesheet?: boolean | WorkforceTimesheetDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceTimesheetEntry"]>
 
   export type WorkforceTimesheetEntrySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     organizationId?: boolean
+    timesheetId?: boolean
     employmentId?: boolean
     workDate?: boolean
     hours?: boolean
+    type?: boolean
+    lockedFromAbsence?: boolean
     source?: boolean
     sourceRef?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    timesheet?: boolean | WorkforceTimesheetDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceTimesheetEntry"]>
 
   export type WorkforceTimesheetEntrySelectScalar = {
     id?: boolean
     organizationId?: boolean
+    timesheetId?: boolean
     employmentId?: boolean
     workDate?: boolean
     hours?: boolean
+    type?: boolean
+    lockedFromAbsence?: boolean
     source?: boolean
     sourceRef?: boolean
     status?: boolean
@@ -37399,28 +38750,35 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WorkforceTimesheetEntryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "workDate" | "hours" | "source" | "sourceRef" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceTimesheetEntry"]>
+  export type WorkforceTimesheetEntryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "timesheetId" | "employmentId" | "workDate" | "hours" | "type" | "lockedFromAbsence" | "source" | "sourceRef" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceTimesheetEntry"]>
   export type WorkforceTimesheetEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    timesheet?: boolean | WorkforceTimesheetDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
   export type WorkforceTimesheetEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    timesheet?: boolean | WorkforceTimesheetDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
   export type WorkforceTimesheetEntryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    timesheet?: boolean | WorkforceTimesheetDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
 
   export type $WorkforceTimesheetEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "WorkforceTimesheetEntry"
     objects: {
+      timesheet: Prisma.$WorkforceTimesheetPayload<ExtArgs>
       employment: Prisma.$WorkforceEmploymentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       organizationId: string
+      timesheetId: string
       employmentId: string
       workDate: Date
       hours: Prisma.Decimal
+      type: $Enums.WorkforceTimesheetEntryType
+      lockedFromAbsence: boolean
       source: string
       sourceRef: string | null
       status: $Enums.WorkforceTimesheetEntryStatus
@@ -37820,6 +39178,7 @@ export namespace Prisma {
    */
   export interface Prisma__WorkforceTimesheetEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    timesheet<T extends WorkforceTimesheetDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceTimesheetDefaultArgs<ExtArgs>>): Prisma__WorkforceTimesheetClient<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     employment<T extends WorkforceEmploymentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmploymentDefaultArgs<ExtArgs>>): Prisma__WorkforceEmploymentClient<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -37852,9 +39211,12 @@ export namespace Prisma {
   interface WorkforceTimesheetEntryFieldRefs {
     readonly id: FieldRef<"WorkforceTimesheetEntry", 'String'>
     readonly organizationId: FieldRef<"WorkforceTimesheetEntry", 'String'>
+    readonly timesheetId: FieldRef<"WorkforceTimesheetEntry", 'String'>
     readonly employmentId: FieldRef<"WorkforceTimesheetEntry", 'String'>
     readonly workDate: FieldRef<"WorkforceTimesheetEntry", 'DateTime'>
     readonly hours: FieldRef<"WorkforceTimesheetEntry", 'Decimal'>
+    readonly type: FieldRef<"WorkforceTimesheetEntry", 'WorkforceTimesheetEntryType'>
+    readonly lockedFromAbsence: FieldRef<"WorkforceTimesheetEntry", 'Boolean'>
     readonly source: FieldRef<"WorkforceTimesheetEntry", 'String'>
     readonly sourceRef: FieldRef<"WorkforceTimesheetEntry", 'String'>
     readonly status: FieldRef<"WorkforceTimesheetEntry", 'WorkforceTimesheetEntryStatus'>
@@ -52250,6 +53612,7 @@ export namespace Prisma {
     satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
+    workforceTimesheets?: boolean | Organization$workforceTimesheetsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
@@ -52384,6 +53747,7 @@ export namespace Prisma {
     satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
+    workforceTimesheets?: boolean | Organization$workforceTimesheetsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
@@ -52436,6 +53800,7 @@ export namespace Prisma {
       satelliteEntitlements: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>[]
       workforceAssignments: Prisma.$WorkforceAssignmentPayload<ExtArgs>[]
       workforceEmployments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
+      workforceTimesheets: Prisma.$WorkforceTimesheetPayload<ExtArgs>[]
       orgUnitCommercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
       elektrawebBridgePolicy: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs> | null
       clinicCutoverPolicy: Prisma.$ClinicCutoverPolicyPayload<ExtArgs> | null
@@ -52900,6 +54265,7 @@ export namespace Prisma {
     satelliteEntitlements<T extends Organization$satelliteEntitlementsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEntitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceAssignments<T extends Organization$workforceAssignmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceEmployments<T extends Organization$workforceEmploymentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceEmploymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    workforceTimesheets<T extends Organization$workforceTimesheetsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceTimesheetsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     orgUnitCommercialLinks<T extends Organization$orgUnitCommercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, Organization$orgUnitCommercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     elektrawebBridgePolicy<T extends Organization$elektrawebBridgePolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$elektrawebBridgePolicyArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     clinicCutoverPolicy<T extends Organization$clinicCutoverPolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverPolicyArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -54005,6 +55371,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkforceEmploymentScalarFieldEnum | WorkforceEmploymentScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.workforceTimesheets
+   */
+  export type Organization$workforceTimesheetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceTimesheet
+     */
+    select?: WorkforceTimesheetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceTimesheet
+     */
+    omit?: WorkforceTimesheetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceTimesheetInclude<ExtArgs> | null
+    where?: WorkforceTimesheetWhereInput
+    orderBy?: WorkforceTimesheetOrderByWithRelationInput | WorkforceTimesheetOrderByWithRelationInput[]
+    cursor?: WorkforceTimesheetWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceTimesheetScalarFieldEnum | WorkforceTimesheetScalarFieldEnum[]
   }
 
   /**
@@ -92072,12 +93462,28 @@ export namespace Prisma {
   export type WorkforceAbsenceScalarFieldEnum = (typeof WorkforceAbsenceScalarFieldEnum)[keyof typeof WorkforceAbsenceScalarFieldEnum]
 
 
+  export const WorkforceTimesheetScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    year: 'year',
+    month: 'month',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceTimesheetScalarFieldEnum = (typeof WorkforceTimesheetScalarFieldEnum)[keyof typeof WorkforceTimesheetScalarFieldEnum]
+
+
   export const WorkforceTimesheetEntryScalarFieldEnum: {
     id: 'id',
     organizationId: 'organizationId',
+    timesheetId: 'timesheetId',
     employmentId: 'employmentId',
     workDate: 'workDate',
     hours: 'hours',
+    type: 'type',
+    lockedFromAbsence: 'lockedFromAbsence',
     source: 'source',
     sourceRef: 'sourceRef',
     status: 'status',
@@ -93134,6 +94540,34 @@ export namespace Prisma {
    * Reference to a field of type 'WorkforceAbsenceStatus[]'
    */
   export type ListEnumWorkforceAbsenceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceAbsenceStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceTimesheetStatus'
+   */
+  export type EnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceTimesheetStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceTimesheetStatus[]'
+   */
+  export type ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceTimesheetStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceTimesheetEntryType'
+   */
+  export type EnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceTimesheetEntryType'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceTimesheetEntryType[]'
+   */
+  export type ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceTimesheetEntryType[]'>
     
 
 
@@ -95556,60 +96990,147 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceAbsence"> | Date | string
   }
 
+  export type WorkforceTimesheetWhereInput = {
+    AND?: WorkforceTimesheetWhereInput | WorkforceTimesheetWhereInput[]
+    OR?: WorkforceTimesheetWhereInput[]
+    NOT?: WorkforceTimesheetWhereInput | WorkforceTimesheetWhereInput[]
+    id?: UuidFilter<"WorkforceTimesheet"> | string
+    organizationId?: UuidFilter<"WorkforceTimesheet"> | string
+    year?: IntFilter<"WorkforceTimesheet"> | number
+    month?: IntFilter<"WorkforceTimesheet"> | number
+    status?: EnumWorkforceTimesheetStatusFilter<"WorkforceTimesheet"> | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFilter<"WorkforceTimesheet"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceTimesheet"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    entries?: WorkforceTimesheetEntryListRelationFilter
+  }
+
+  export type WorkforceTimesheetOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    year?: SortOrder
+    month?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    entries?: WorkforceTimesheetEntryOrderByRelationAggregateInput
+  }
+
+  export type WorkforceTimesheetWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_year_month?: WorkforceTimesheetOrganizationIdYearMonthCompoundUniqueInput
+    AND?: WorkforceTimesheetWhereInput | WorkforceTimesheetWhereInput[]
+    OR?: WorkforceTimesheetWhereInput[]
+    NOT?: WorkforceTimesheetWhereInput | WorkforceTimesheetWhereInput[]
+    organizationId?: UuidFilter<"WorkforceTimesheet"> | string
+    year?: IntFilter<"WorkforceTimesheet"> | number
+    month?: IntFilter<"WorkforceTimesheet"> | number
+    status?: EnumWorkforceTimesheetStatusFilter<"WorkforceTimesheet"> | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFilter<"WorkforceTimesheet"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceTimesheet"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    entries?: WorkforceTimesheetEntryListRelationFilter
+  }, "id" | "organizationId_year_month">
+
+  export type WorkforceTimesheetOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    year?: SortOrder
+    month?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceTimesheetCountOrderByAggregateInput
+    _avg?: WorkforceTimesheetAvgOrderByAggregateInput
+    _max?: WorkforceTimesheetMaxOrderByAggregateInput
+    _min?: WorkforceTimesheetMinOrderByAggregateInput
+    _sum?: WorkforceTimesheetSumOrderByAggregateInput
+  }
+
+  export type WorkforceTimesheetScalarWhereWithAggregatesInput = {
+    AND?: WorkforceTimesheetScalarWhereWithAggregatesInput | WorkforceTimesheetScalarWhereWithAggregatesInput[]
+    OR?: WorkforceTimesheetScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceTimesheetScalarWhereWithAggregatesInput | WorkforceTimesheetScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceTimesheet"> | string
+    organizationId?: UuidWithAggregatesFilter<"WorkforceTimesheet"> | string
+    year?: IntWithAggregatesFilter<"WorkforceTimesheet"> | number
+    month?: IntWithAggregatesFilter<"WorkforceTimesheet"> | number
+    status?: EnumWorkforceTimesheetStatusWithAggregatesFilter<"WorkforceTimesheet"> | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceTimesheet"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceTimesheet"> | Date | string
+  }
+
   export type WorkforceTimesheetEntryWhereInput = {
     AND?: WorkforceTimesheetEntryWhereInput | WorkforceTimesheetEntryWhereInput[]
     OR?: WorkforceTimesheetEntryWhereInput[]
     NOT?: WorkforceTimesheetEntryWhereInput | WorkforceTimesheetEntryWhereInput[]
     id?: UuidFilter<"WorkforceTimesheetEntry"> | string
     organizationId?: UuidFilter<"WorkforceTimesheetEntry"> | string
+    timesheetId?: UuidFilter<"WorkforceTimesheetEntry"> | string
     employmentId?: UuidFilter<"WorkforceTimesheetEntry"> | string
     workDate?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
     hours?: DecimalFilter<"WorkforceTimesheetEntry"> | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFilter<"WorkforceTimesheetEntry"> | boolean
     source?: StringFilter<"WorkforceTimesheetEntry"> | string
     sourceRef?: StringNullableFilter<"WorkforceTimesheetEntry"> | string | null
     status?: EnumWorkforceTimesheetEntryStatusFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryStatus
     createdAt?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
+    timesheet?: XOR<WorkforceTimesheetScalarRelationFilter, WorkforceTimesheetWhereInput>
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
   }
 
   export type WorkforceTimesheetEntryOrderByWithRelationInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    timesheetId?: SortOrder
     employmentId?: SortOrder
     workDate?: SortOrder
     hours?: SortOrder
+    type?: SortOrder
+    lockedFromAbsence?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrderInput | SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    timesheet?: WorkforceTimesheetOrderByWithRelationInput
     employment?: WorkforceEmploymentOrderByWithRelationInput
   }
 
   export type WorkforceTimesheetEntryWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    timesheetId_employmentId_workDate?: WorkforceTimesheetEntryTimesheetIdEmploymentIdWorkDateCompoundUniqueInput
     AND?: WorkforceTimesheetEntryWhereInput | WorkforceTimesheetEntryWhereInput[]
     OR?: WorkforceTimesheetEntryWhereInput[]
     NOT?: WorkforceTimesheetEntryWhereInput | WorkforceTimesheetEntryWhereInput[]
     organizationId?: UuidFilter<"WorkforceTimesheetEntry"> | string
+    timesheetId?: UuidFilter<"WorkforceTimesheetEntry"> | string
     employmentId?: UuidFilter<"WorkforceTimesheetEntry"> | string
     workDate?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
     hours?: DecimalFilter<"WorkforceTimesheetEntry"> | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFilter<"WorkforceTimesheetEntry"> | boolean
     source?: StringFilter<"WorkforceTimesheetEntry"> | string
     sourceRef?: StringNullableFilter<"WorkforceTimesheetEntry"> | string | null
     status?: EnumWorkforceTimesheetEntryStatusFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryStatus
     createdAt?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
+    timesheet?: XOR<WorkforceTimesheetScalarRelationFilter, WorkforceTimesheetWhereInput>
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
-  }, "id">
+  }, "id" | "timesheetId_employmentId_workDate">
 
   export type WorkforceTimesheetEntryOrderByWithAggregationInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    timesheetId?: SortOrder
     employmentId?: SortOrder
     workDate?: SortOrder
     hours?: SortOrder
+    type?: SortOrder
+    lockedFromAbsence?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrderInput | SortOrder
     status?: SortOrder
@@ -95628,9 +97149,12 @@ export namespace Prisma {
     NOT?: WorkforceTimesheetEntryScalarWhereWithAggregatesInput | WorkforceTimesheetEntryScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"WorkforceTimesheetEntry"> | string
     organizationId?: UuidWithAggregatesFilter<"WorkforceTimesheetEntry"> | string
+    timesheetId?: UuidWithAggregatesFilter<"WorkforceTimesheetEntry"> | string
     employmentId?: UuidWithAggregatesFilter<"WorkforceTimesheetEntry"> | string
     workDate?: DateTimeWithAggregatesFilter<"WorkforceTimesheetEntry"> | Date | string
     hours?: DecimalWithAggregatesFilter<"WorkforceTimesheetEntry"> | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeWithAggregatesFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolWithAggregatesFilter<"WorkforceTimesheetEntry"> | boolean
     source?: StringWithAggregatesFilter<"WorkforceTimesheetEntry"> | string
     sourceRef?: StringNullableWithAggregatesFilter<"WorkforceTimesheetEntry"> | string | null
     status?: EnumWorkforceTimesheetEntryStatusWithAggregatesFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryStatus
@@ -96645,6 +98169,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
+    workforceTimesheets?: WorkforceTimesheetListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
@@ -96710,6 +98235,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementOrderByRelationAggregateInput
     workforceAssignments?: WorkforceAssignmentOrderByRelationAggregateInput
     workforceEmployments?: WorkforceEmploymentOrderByRelationAggregateInput
+    workforceTimesheets?: WorkforceTimesheetOrderByRelationAggregateInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOrderByWithRelationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyOrderByWithRelationInput
@@ -96778,6 +98304,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
+    workforceTimesheets?: WorkforceTimesheetListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
@@ -101574,25 +103101,104 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceTimesheetCreateInput = {
+    id?: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceTimesheetsInput
+    entries?: WorkforceTimesheetEntryCreateNestedManyWithoutTimesheetInput
+  }
+
+  export type WorkforceTimesheetUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    entries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutTimesheetInput
+  }
+
+  export type WorkforceTimesheetUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceTimesheetsNestedInput
+    entries?: WorkforceTimesheetEntryUpdateManyWithoutTimesheetNestedInput
+  }
+
+  export type WorkforceTimesheetUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutTimesheetNestedInput
+  }
+
+  export type WorkforceTimesheetCreateManyInput = {
+    id?: string
+    organizationId: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceTimesheetUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceTimesheetUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type WorkforceTimesheetEntryCreateInput = {
     id?: string
     organizationId: string
     workDate: Date | string
-    hours: Decimal | DecimalJsLike | number | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
     source?: string
     sourceRef?: string | null
     status?: $Enums.WorkforceTimesheetEntryStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    timesheet: WorkforceTimesheetCreateNestedOneWithoutEntriesInput
     employment: WorkforceEmploymentCreateNestedOneWithoutTimesheetEntriesInput
   }
 
   export type WorkforceTimesheetEntryUncheckedCreateInput = {
     id?: string
     organizationId: string
+    timesheetId: string
     employmentId: string
     workDate: Date | string
-    hours: Decimal | DecimalJsLike | number | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
     source?: string
     sourceRef?: string | null
     status?: $Enums.WorkforceTimesheetEntryStatus
@@ -101605,20 +103211,26 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    timesheet?: WorkforceTimesheetUpdateOneRequiredWithoutEntriesNestedInput
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutTimesheetEntriesNestedInput
   }
 
   export type WorkforceTimesheetEntryUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    timesheetId?: StringFieldUpdateOperationsInput | string
     employmentId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
@@ -101629,9 +103241,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryCreateManyInput = {
     id?: string
     organizationId: string
+    timesheetId: string
     employmentId: string
     workDate: Date | string
-    hours: Decimal | DecimalJsLike | number | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
     source?: string
     sourceRef?: string | null
     status?: $Enums.WorkforceTimesheetEntryStatus
@@ -101644,6 +103259,8 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
@@ -101654,9 +103271,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    timesheetId?: StringFieldUpdateOperationsInput | string
     employmentId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
@@ -102772,6 +104392,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -102837,6 +104458,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -102896,6 +104518,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -102961,6 +104584,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -107724,6 +109348,76 @@ export namespace Prisma {
     _max?: NestedEnumWorkforceAbsenceStatusFilter<$PrismaModel>
   }
 
+  export type EnumWorkforceTimesheetStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetStatus | EnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel> | $Enums.WorkforceTimesheetStatus
+  }
+
+  export type WorkforceTimesheetOrganizationIdYearMonthCompoundUniqueInput = {
+    organizationId: string
+    year: number
+    month: number
+  }
+
+  export type WorkforceTimesheetCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    year?: SortOrder
+    month?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceTimesheetAvgOrderByAggregateInput = {
+    year?: SortOrder
+    month?: SortOrder
+  }
+
+  export type WorkforceTimesheetMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    year?: SortOrder
+    month?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceTimesheetMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    year?: SortOrder
+    month?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceTimesheetSumOrderByAggregateInput = {
+    year?: SortOrder
+    month?: SortOrder
+  }
+
+  export type EnumWorkforceTimesheetStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetStatus | EnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceTimesheetStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceTimesheetEntryTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetEntryType | EnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel> | $Enums.WorkforceTimesheetEntryType
+  }
+
   export type EnumWorkforceTimesheetEntryStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceTimesheetEntryStatus | EnumWorkforceTimesheetEntryStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceTimesheetEntryStatus[] | ListEnumWorkforceTimesheetEntryStatusFieldRefInput<$PrismaModel>
@@ -107731,12 +109425,26 @@ export namespace Prisma {
     not?: NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel> | $Enums.WorkforceTimesheetEntryStatus
   }
 
+  export type WorkforceTimesheetScalarRelationFilter = {
+    is?: WorkforceTimesheetWhereInput
+    isNot?: WorkforceTimesheetWhereInput
+  }
+
+  export type WorkforceTimesheetEntryTimesheetIdEmploymentIdWorkDateCompoundUniqueInput = {
+    timesheetId: string
+    employmentId: string
+    workDate: Date | string
+  }
+
   export type WorkforceTimesheetEntryCountOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    timesheetId?: SortOrder
     employmentId?: SortOrder
     workDate?: SortOrder
     hours?: SortOrder
+    type?: SortOrder
+    lockedFromAbsence?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrder
     status?: SortOrder
@@ -107751,9 +109459,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryMaxOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    timesheetId?: SortOrder
     employmentId?: SortOrder
     workDate?: SortOrder
     hours?: SortOrder
+    type?: SortOrder
+    lockedFromAbsence?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrder
     status?: SortOrder
@@ -107764,9 +109475,12 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryMinOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    timesheetId?: SortOrder
     employmentId?: SortOrder
     workDate?: SortOrder
     hours?: SortOrder
+    type?: SortOrder
+    lockedFromAbsence?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrder
     status?: SortOrder
@@ -107776,6 +109490,16 @@ export namespace Prisma {
 
   export type WorkforceTimesheetEntrySumOrderByAggregateInput = {
     hours?: SortOrder
+  }
+
+  export type EnumWorkforceTimesheetEntryTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetEntryType | EnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetEntryTypeWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceTimesheetEntryType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel>
   }
 
   export type EnumWorkforceTimesheetEntryStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -108651,6 +110375,12 @@ export namespace Prisma {
     none?: WorkforceAssignmentWhereInput
   }
 
+  export type WorkforceTimesheetListRelationFilter = {
+    every?: WorkforceTimesheetWhereInput
+    some?: WorkforceTimesheetWhereInput
+    none?: WorkforceTimesheetWhereInput
+  }
+
   export type ElektrawebBridgePolicyNullableScalarRelationFilter = {
     is?: ElektrawebBridgePolicyWhereInput | null
     isNot?: ElektrawebBridgePolicyWhereInput | null
@@ -108775,6 +110505,10 @@ export namespace Prisma {
   }
 
   export type WorkforceAssignmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceTimesheetOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -112418,14 +114152,92 @@ export namespace Prisma {
     update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutAbsencesInput, WorkforceEmploymentUpdateWithoutAbsencesInput>, WorkforceEmploymentUncheckedUpdateWithoutAbsencesInput>
   }
 
+  export type OrganizationCreateNestedOneWithoutWorkforceTimesheetsInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceTimesheetsInput, OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceTimesheetsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type WorkforceTimesheetEntryCreateNestedManyWithoutTimesheetInput = {
+    create?: XOR<WorkforceTimesheetEntryCreateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput> | WorkforceTimesheetEntryCreateWithoutTimesheetInput[] | WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput[]
+    connectOrCreate?: WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput | WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput[]
+    createMany?: WorkforceTimesheetEntryCreateManyTimesheetInputEnvelope
+    connect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+  }
+
+  export type WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutTimesheetInput = {
+    create?: XOR<WorkforceTimesheetEntryCreateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput> | WorkforceTimesheetEntryCreateWithoutTimesheetInput[] | WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput[]
+    connectOrCreate?: WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput | WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput[]
+    createMany?: WorkforceTimesheetEntryCreateManyTimesheetInputEnvelope
+    connect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+  }
+
+  export type EnumWorkforceTimesheetStatusFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceTimesheetStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutWorkforceTimesheetsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceTimesheetsInput, OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceTimesheetsInput
+    upsert?: OrganizationUpsertWithoutWorkforceTimesheetsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutWorkforceTimesheetsInput, OrganizationUpdateWithoutWorkforceTimesheetsInput>, OrganizationUncheckedUpdateWithoutWorkforceTimesheetsInput>
+  }
+
+  export type WorkforceTimesheetEntryUpdateManyWithoutTimesheetNestedInput = {
+    create?: XOR<WorkforceTimesheetEntryCreateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput> | WorkforceTimesheetEntryCreateWithoutTimesheetInput[] | WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput[]
+    connectOrCreate?: WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput | WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput[]
+    upsert?: WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput | WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput[]
+    createMany?: WorkforceTimesheetEntryCreateManyTimesheetInputEnvelope
+    set?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    disconnect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    delete?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    connect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    update?: WorkforceTimesheetEntryUpdateWithWhereUniqueWithoutTimesheetInput | WorkforceTimesheetEntryUpdateWithWhereUniqueWithoutTimesheetInput[]
+    updateMany?: WorkforceTimesheetEntryUpdateManyWithWhereWithoutTimesheetInput | WorkforceTimesheetEntryUpdateManyWithWhereWithoutTimesheetInput[]
+    deleteMany?: WorkforceTimesheetEntryScalarWhereInput | WorkforceTimesheetEntryScalarWhereInput[]
+  }
+
+  export type WorkforceTimesheetEntryUncheckedUpdateManyWithoutTimesheetNestedInput = {
+    create?: XOR<WorkforceTimesheetEntryCreateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput> | WorkforceTimesheetEntryCreateWithoutTimesheetInput[] | WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput[]
+    connectOrCreate?: WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput | WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput[]
+    upsert?: WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput | WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput[]
+    createMany?: WorkforceTimesheetEntryCreateManyTimesheetInputEnvelope
+    set?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    disconnect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    delete?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    connect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+    update?: WorkforceTimesheetEntryUpdateWithWhereUniqueWithoutTimesheetInput | WorkforceTimesheetEntryUpdateWithWhereUniqueWithoutTimesheetInput[]
+    updateMany?: WorkforceTimesheetEntryUpdateManyWithWhereWithoutTimesheetInput | WorkforceTimesheetEntryUpdateManyWithWhereWithoutTimesheetInput[]
+    deleteMany?: WorkforceTimesheetEntryScalarWhereInput | WorkforceTimesheetEntryScalarWhereInput[]
+  }
+
+  export type WorkforceTimesheetCreateNestedOneWithoutEntriesInput = {
+    create?: XOR<WorkforceTimesheetCreateWithoutEntriesInput, WorkforceTimesheetUncheckedCreateWithoutEntriesInput>
+    connectOrCreate?: WorkforceTimesheetCreateOrConnectWithoutEntriesInput
+    connect?: WorkforceTimesheetWhereUniqueInput
+  }
+
   export type WorkforceEmploymentCreateNestedOneWithoutTimesheetEntriesInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutTimesheetEntriesInput, WorkforceEmploymentUncheckedCreateWithoutTimesheetEntriesInput>
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutTimesheetEntriesInput
     connect?: WorkforceEmploymentWhereUniqueInput
   }
 
+  export type EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceTimesheetEntryType
+  }
+
   export type EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput = {
     set?: $Enums.WorkforceTimesheetEntryStatus
+  }
+
+  export type WorkforceTimesheetUpdateOneRequiredWithoutEntriesNestedInput = {
+    create?: XOR<WorkforceTimesheetCreateWithoutEntriesInput, WorkforceTimesheetUncheckedCreateWithoutEntriesInput>
+    connectOrCreate?: WorkforceTimesheetCreateOrConnectWithoutEntriesInput
+    upsert?: WorkforceTimesheetUpsertWithoutEntriesInput
+    connect?: WorkforceTimesheetWhereUniqueInput
+    update?: XOR<XOR<WorkforceTimesheetUpdateToOneWithWhereWithoutEntriesInput, WorkforceTimesheetUpdateWithoutEntriesInput>, WorkforceTimesheetUncheckedUpdateWithoutEntriesInput>
   }
 
   export type WorkforceEmploymentUpdateOneRequiredWithoutTimesheetEntriesNestedInput = {
@@ -113040,6 +114852,13 @@ export namespace Prisma {
     connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
   }
 
+  export type WorkforceTimesheetCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceTimesheetCreateWithoutOrganizationInput, WorkforceTimesheetUncheckedCreateWithoutOrganizationInput> | WorkforceTimesheetCreateWithoutOrganizationInput[] | WorkforceTimesheetUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceTimesheetCreateOrConnectWithoutOrganizationInput | WorkforceTimesheetCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceTimesheetCreateManyOrganizationInputEnvelope
+    connect?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+  }
+
   export type OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<OrgUnitCommercialLinkCreateWithoutOrganizationInput, OrgUnitCommercialLinkUncheckedCreateWithoutOrganizationInput> | OrgUnitCommercialLinkCreateWithoutOrganizationInput[] | OrgUnitCommercialLinkUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: OrgUnitCommercialLinkCreateOrConnectWithoutOrganizationInput | OrgUnitCommercialLinkCreateOrConnectWithoutOrganizationInput[]
@@ -113284,6 +115103,13 @@ export namespace Prisma {
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutOrganizationInput | WorkforceEmploymentCreateOrConnectWithoutOrganizationInput[]
     createMany?: WorkforceEmploymentCreateManyOrganizationInputEnvelope
     connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+  }
+
+  export type WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceTimesheetCreateWithoutOrganizationInput, WorkforceTimesheetUncheckedCreateWithoutOrganizationInput> | WorkforceTimesheetCreateWithoutOrganizationInput[] | WorkforceTimesheetUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceTimesheetCreateOrConnectWithoutOrganizationInput | WorkforceTimesheetCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceTimesheetCreateManyOrganizationInputEnvelope
+    connect?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
   }
 
   export type OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -113719,6 +115545,20 @@ export namespace Prisma {
     update?: WorkforceEmploymentUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceEmploymentUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: WorkforceEmploymentUpdateManyWithWhereWithoutOrganizationInput | WorkforceEmploymentUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: WorkforceEmploymentScalarWhereInput | WorkforceEmploymentScalarWhereInput[]
+  }
+
+  export type WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceTimesheetCreateWithoutOrganizationInput, WorkforceTimesheetUncheckedCreateWithoutOrganizationInput> | WorkforceTimesheetCreateWithoutOrganizationInput[] | WorkforceTimesheetUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceTimesheetCreateOrConnectWithoutOrganizationInput | WorkforceTimesheetCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceTimesheetUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceTimesheetUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceTimesheetCreateManyOrganizationInputEnvelope
+    set?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    disconnect?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    delete?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    connect?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    update?: WorkforceTimesheetUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceTimesheetUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceTimesheetUpdateManyWithWhereWithoutOrganizationInput | WorkforceTimesheetUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceTimesheetScalarWhereInput | WorkforceTimesheetScalarWhereInput[]
   }
 
   export type OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput = {
@@ -114199,6 +116039,20 @@ export namespace Prisma {
     update?: WorkforceEmploymentUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceEmploymentUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: WorkforceEmploymentUpdateManyWithWhereWithoutOrganizationInput | WorkforceEmploymentUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: WorkforceEmploymentScalarWhereInput | WorkforceEmploymentScalarWhereInput[]
+  }
+
+  export type WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceTimesheetCreateWithoutOrganizationInput, WorkforceTimesheetUncheckedCreateWithoutOrganizationInput> | WorkforceTimesheetCreateWithoutOrganizationInput[] | WorkforceTimesheetUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceTimesheetCreateOrConnectWithoutOrganizationInput | WorkforceTimesheetCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceTimesheetUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceTimesheetUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceTimesheetCreateManyOrganizationInputEnvelope
+    set?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    disconnect?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    delete?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    connect?: WorkforceTimesheetWhereUniqueInput | WorkforceTimesheetWhereUniqueInput[]
+    update?: WorkforceTimesheetUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceTimesheetUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceTimesheetUpdateManyWithWhereWithoutOrganizationInput | WorkforceTimesheetUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceTimesheetScalarWhereInput | WorkforceTimesheetScalarWhereInput[]
   }
 
   export type OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -116229,11 +118083,45 @@ export namespace Prisma {
     _max?: NestedEnumWorkforceAbsenceStatusFilter<$PrismaModel>
   }
 
+  export type NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetStatus | EnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel> | $Enums.WorkforceTimesheetStatus
+  }
+
+  export type NestedEnumWorkforceTimesheetStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetStatus | EnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetStatus[] | ListEnumWorkforceTimesheetStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceTimesheetStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceTimesheetStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetEntryType | EnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel> | $Enums.WorkforceTimesheetEntryType
+  }
+
   export type NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceTimesheetEntryStatus | EnumWorkforceTimesheetEntryStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceTimesheetEntryStatus[] | ListEnumWorkforceTimesheetEntryStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.WorkforceTimesheetEntryStatus[] | ListEnumWorkforceTimesheetEntryStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel> | $Enums.WorkforceTimesheetEntryStatus
+  }
+
+  export type NestedEnumWorkforceTimesheetEntryTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceTimesheetEntryType | EnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceTimesheetEntryType[] | ListEnumWorkforceTimesheetEntryTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceTimesheetEntryTypeWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceTimesheetEntryType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceTimesheetEntryTypeFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceTimesheetEntryStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -116866,6 +118754,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -116930,6 +118819,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -117004,6 +118894,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -117068,6 +118959,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -117364,6 +119256,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -117428,6 +119321,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -117545,6 +119439,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -117609,6 +119504,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -117667,6 +119563,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -117731,6 +119628,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -117805,6 +119703,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -117869,6 +119768,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -118242,6 +120142,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -118306,6 +120207,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -118407,6 +120309,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -118471,6 +120374,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -118562,6 +120466,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -118626,6 +120531,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -118727,6 +120633,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -118791,6 +120698,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -118882,6 +120790,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -118946,6 +120855,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -119020,6 +120930,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -119084,6 +120995,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -119142,6 +121054,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -119206,6 +121119,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -119280,6 +121194,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -119344,6 +121259,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -120482,6 +122398,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -120546,6 +122463,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -120694,6 +122612,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -120758,6 +122677,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -121711,6 +123631,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -121775,6 +123696,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -122082,19 +124004,25 @@ export namespace Prisma {
     id?: string
     organizationId: string
     workDate: Date | string
-    hours: Decimal | DecimalJsLike | number | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
     source?: string
     sourceRef?: string | null
     status?: $Enums.WorkforceTimesheetEntryStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    timesheet: WorkforceTimesheetCreateNestedOneWithoutEntriesInput
   }
 
   export type WorkforceTimesheetEntryUncheckedCreateWithoutEmploymentInput = {
     id?: string
     organizationId: string
+    timesheetId: string
     workDate: Date | string
-    hours: Decimal | DecimalJsLike | number | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
     source?: string
     sourceRef?: string | null
     status?: $Enums.WorkforceTimesheetEntryStatus
@@ -122247,6 +124175,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -122311,6 +124240,7 @@ export namespace Prisma {
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -122593,9 +124523,12 @@ export namespace Prisma {
     NOT?: WorkforceTimesheetEntryScalarWhereInput | WorkforceTimesheetEntryScalarWhereInput[]
     id?: UuidFilter<"WorkforceTimesheetEntry"> | string
     organizationId?: UuidFilter<"WorkforceTimesheetEntry"> | string
+    timesheetId?: UuidFilter<"WorkforceTimesheetEntry"> | string
     employmentId?: UuidFilter<"WorkforceTimesheetEntry"> | string
     workDate?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
     hours?: DecimalFilter<"WorkforceTimesheetEntry"> | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFilter<"WorkforceTimesheetEntry"> | boolean
     source?: StringFilter<"WorkforceTimesheetEntry"> | string
     sourceRef?: StringNullableFilter<"WorkforceTimesheetEntry"> | string | null
     status?: EnumWorkforceTimesheetEntryStatusFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryStatus
@@ -122757,6 +124690,351 @@ export namespace Prisma {
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
+  export type OrganizationCreateWithoutWorkforceTimesheetsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceTimesheetsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceTimesheetsInput, OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput>
+  }
+
+  export type WorkforceTimesheetEntryCreateWithoutTimesheetInput = {
+    id?: string
+    organizationId: string
+    workDate: Date | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
+    source?: string
+    sourceRef?: string | null
+    status?: $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employment: WorkforceEmploymentCreateNestedOneWithoutTimesheetEntriesInput
+  }
+
+  export type WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput = {
+    id?: string
+    organizationId: string
+    employmentId: string
+    workDate: Date | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
+    source?: string
+    sourceRef?: string | null
+    status?: $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceTimesheetEntryCreateOrConnectWithoutTimesheetInput = {
+    where: WorkforceTimesheetEntryWhereUniqueInput
+    create: XOR<WorkforceTimesheetEntryCreateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput>
+  }
+
+  export type WorkforceTimesheetEntryCreateManyTimesheetInputEnvelope = {
+    data: WorkforceTimesheetEntryCreateManyTimesheetInput | WorkforceTimesheetEntryCreateManyTimesheetInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutWorkforceTimesheetsInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceTimesheetsInput, OrganizationUncheckedUpdateWithoutWorkforceTimesheetsInput>
+    create: XOR<OrganizationCreateWithoutWorkforceTimesheetsInput, OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceTimesheetsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceTimesheetsInput, OrganizationUncheckedUpdateWithoutWorkforceTimesheetsInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceTimesheetsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceTimesheetsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput = {
+    where: WorkforceTimesheetEntryWhereUniqueInput
+    update: XOR<WorkforceTimesheetEntryUpdateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedUpdateWithoutTimesheetInput>
+    create: XOR<WorkforceTimesheetEntryCreateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedCreateWithoutTimesheetInput>
+  }
+
+  export type WorkforceTimesheetEntryUpdateWithWhereUniqueWithoutTimesheetInput = {
+    where: WorkforceTimesheetEntryWhereUniqueInput
+    data: XOR<WorkforceTimesheetEntryUpdateWithoutTimesheetInput, WorkforceTimesheetEntryUncheckedUpdateWithoutTimesheetInput>
+  }
+
+  export type WorkforceTimesheetEntryUpdateManyWithWhereWithoutTimesheetInput = {
+    where: WorkforceTimesheetEntryScalarWhereInput
+    data: XOR<WorkforceTimesheetEntryUpdateManyMutationInput, WorkforceTimesheetEntryUncheckedUpdateManyWithoutTimesheetInput>
+  }
+
+  export type WorkforceTimesheetCreateWithoutEntriesInput = {
+    id?: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceTimesheetsInput
+  }
+
+  export type WorkforceTimesheetUncheckedCreateWithoutEntriesInput = {
+    id?: string
+    organizationId: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceTimesheetCreateOrConnectWithoutEntriesInput = {
+    where: WorkforceTimesheetWhereUniqueInput
+    create: XOR<WorkforceTimesheetCreateWithoutEntriesInput, WorkforceTimesheetUncheckedCreateWithoutEntriesInput>
+  }
+
   export type WorkforceEmploymentCreateWithoutTimesheetEntriesInput = {
     id?: string
     globalPersonId: string
@@ -122806,6 +125084,37 @@ export namespace Prisma {
   export type WorkforceEmploymentCreateOrConnectWithoutTimesheetEntriesInput = {
     where: WorkforceEmploymentWhereUniqueInput
     create: XOR<WorkforceEmploymentCreateWithoutTimesheetEntriesInput, WorkforceEmploymentUncheckedCreateWithoutTimesheetEntriesInput>
+  }
+
+  export type WorkforceTimesheetUpsertWithoutEntriesInput = {
+    update: XOR<WorkforceTimesheetUpdateWithoutEntriesInput, WorkforceTimesheetUncheckedUpdateWithoutEntriesInput>
+    create: XOR<WorkforceTimesheetCreateWithoutEntriesInput, WorkforceTimesheetUncheckedCreateWithoutEntriesInput>
+    where?: WorkforceTimesheetWhereInput
+  }
+
+  export type WorkforceTimesheetUpdateToOneWithWhereWithoutEntriesInput = {
+    where?: WorkforceTimesheetWhereInput
+    data: XOR<WorkforceTimesheetUpdateWithoutEntriesInput, WorkforceTimesheetUncheckedUpdateWithoutEntriesInput>
+  }
+
+  export type WorkforceTimesheetUpdateWithoutEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceTimesheetsNestedInput
+  }
+
+  export type WorkforceTimesheetUncheckedUpdateWithoutEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WorkforceEmploymentUpsertWithoutTimesheetEntriesInput = {
@@ -123618,6 +125927,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -123682,6 +125992,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -123837,6 +126148,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -123901,6 +126213,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -125121,6 +127434,36 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkforceTimesheetCreateWithoutOrganizationInput = {
+    id?: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    entries?: WorkforceTimesheetEntryCreateNestedManyWithoutTimesheetInput
+  }
+
+  export type WorkforceTimesheetUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    entries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutTimesheetInput
+  }
+
+  export type WorkforceTimesheetCreateOrConnectWithoutOrganizationInput = {
+    where: WorkforceTimesheetWhereUniqueInput
+    create: XOR<WorkforceTimesheetCreateWithoutOrganizationInput, WorkforceTimesheetUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceTimesheetCreateManyOrganizationInputEnvelope = {
+    data: WorkforceTimesheetCreateManyOrganizationInput | WorkforceTimesheetCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrgUnitCommercialLinkCreateWithoutOrganizationInput = {
     id?: string
     linkMode?: $Enums.OrgCommercialLinkMode
@@ -125311,6 +127654,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -125375,6 +127719,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -125438,6 +127783,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -125501,6 +127847,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -126370,6 +128717,35 @@ export namespace Prisma {
     data: XOR<WorkforceEmploymentUpdateManyMutationInput, WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationInput>
   }
 
+  export type WorkforceTimesheetUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceTimesheetWhereUniqueInput
+    update: XOR<WorkforceTimesheetUpdateWithoutOrganizationInput, WorkforceTimesheetUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<WorkforceTimesheetCreateWithoutOrganizationInput, WorkforceTimesheetUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceTimesheetUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceTimesheetWhereUniqueInput
+    data: XOR<WorkforceTimesheetUpdateWithoutOrganizationInput, WorkforceTimesheetUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceTimesheetUpdateManyWithWhereWithoutOrganizationInput = {
+    where: WorkforceTimesheetScalarWhereInput
+    data: XOR<WorkforceTimesheetUpdateManyMutationInput, WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type WorkforceTimesheetScalarWhereInput = {
+    AND?: WorkforceTimesheetScalarWhereInput | WorkforceTimesheetScalarWhereInput[]
+    OR?: WorkforceTimesheetScalarWhereInput[]
+    NOT?: WorkforceTimesheetScalarWhereInput | WorkforceTimesheetScalarWhereInput[]
+    id?: UuidFilter<"WorkforceTimesheet"> | string
+    organizationId?: UuidFilter<"WorkforceTimesheet"> | string
+    year?: IntFilter<"WorkforceTimesheet"> | number
+    month?: IntFilter<"WorkforceTimesheet"> | number
+    status?: EnumWorkforceTimesheetStatusFilter<"WorkforceTimesheet"> | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFilter<"WorkforceTimesheet"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceTimesheet"> | Date | string
+  }
+
   export type OrgUnitCommercialLinkUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: OrgUnitCommercialLinkWhereUniqueInput
     update: XOR<OrgUnitCommercialLinkUpdateWithoutOrganizationInput, OrgUnitCommercialLinkUncheckedUpdateWithoutOrganizationInput>
@@ -126580,6 +128956,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -126644,6 +129021,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -126816,6 +129194,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -126880,6 +129259,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -126954,6 +129334,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -127018,6 +129399,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -127076,6 +129458,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -127140,6 +129523,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -127203,6 +129587,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -127267,6 +129652,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -127341,6 +129727,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -127405,6 +129792,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -127474,6 +129862,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -127538,6 +129927,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -127736,6 +130126,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -127799,6 +130190,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -128121,6 +130513,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -128184,6 +130577,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -128516,6 +130910,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -128580,6 +130975,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -128699,6 +131095,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -128763,6 +131160,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -129134,6 +131532,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -129198,6 +131597,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -129311,6 +131711,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -129375,6 +131776,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -129478,6 +131880,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -129542,6 +131945,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -129655,6 +132059,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -129719,6 +132124,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -129822,6 +132228,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -129886,6 +132293,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -129999,6 +132407,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -130063,6 +132472,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -130166,6 +132576,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -130230,6 +132641,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -130350,6 +132762,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -130414,6 +132827,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -130488,6 +132902,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -130552,6 +132967,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -130687,6 +133103,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -130751,6 +133168,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -130903,6 +133321,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -130967,6 +133386,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -131088,6 +133508,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -131152,6 +133573,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -131210,6 +133632,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -131274,6 +133697,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -131387,6 +133811,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -131451,6 +133876,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -131554,6 +133980,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -131618,6 +134045,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -131692,6 +134120,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -131756,6 +134185,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -131814,6 +134244,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -131878,6 +134309,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -132020,6 +134452,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -132084,6 +134517,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -132174,6 +134608,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -132238,6 +134673,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -132373,6 +134809,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -132437,6 +134874,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -132542,6 +134980,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -132606,6 +135045,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -132732,6 +135172,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -132796,6 +135237,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -132918,6 +135360,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -132982,6 +135425,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -133056,6 +135500,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -133120,6 +135565,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -133178,6 +135624,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -133242,6 +135689,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -133316,6 +135764,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -133380,6 +135829,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -133438,6 +135888,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -133502,6 +135953,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -133576,6 +136028,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -133640,6 +136093,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -133698,6 +136152,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -133762,6 +136217,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -133836,6 +136292,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -133900,6 +136357,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -133958,6 +136416,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -134022,6 +136481,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -134096,6 +136556,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -134160,6 +136621,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -134218,6 +136680,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -134282,6 +136745,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -134356,6 +136820,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -134420,6 +136885,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -134552,6 +137018,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -134616,6 +137083,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -134721,6 +137189,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -134785,6 +137254,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -135888,8 +138358,11 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryCreateManyEmploymentInput = {
     id?: string
     organizationId: string
+    timesheetId: string
     workDate: Date | string
-    hours: Decimal | DecimalJsLike | number | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
     source?: string
     sourceRef?: string | null
     status?: $Enums.WorkforceTimesheetEntryStatus
@@ -136112,18 +138585,24 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    timesheet?: WorkforceTimesheetUpdateOneRequiredWithoutEntriesNestedInput
   }
 
   export type WorkforceTimesheetEntryUncheckedUpdateWithoutEmploymentInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    timesheetId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
@@ -136134,8 +138613,11 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    timesheetId?: StringFieldUpdateOperationsInput | string
     workDate?: DateTimeFieldUpdateOperationsInput | Date | string
     hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
@@ -136220,6 +138702,66 @@ export namespace Prisma {
     documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
     issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceTimesheetEntryCreateManyTimesheetInput = {
+    id?: string
+    organizationId: string
+    employmentId: string
+    workDate: Date | string
+    hours?: Decimal | DecimalJsLike | number | string
+    type?: $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: boolean
+    source?: string
+    sourceRef?: string | null
+    status?: $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceTimesheetEntryUpdateWithoutTimesheetInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employment?: WorkforceEmploymentUpdateOneRequiredWithoutTimesheetEntriesNestedInput
+  }
+
+  export type WorkforceTimesheetEntryUncheckedUpdateWithoutTimesheetInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    workDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceTimesheetEntryUncheckedUpdateManyWithoutTimesheetInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    workDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    hours?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumWorkforceTimesheetEntryTypeFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryType
+    lockedFromAbsence?: BoolFieldUpdateOperationsInput | boolean
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -136708,6 +139250,15 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceTimesheetCreateManyOrganizationInput = {
+    id?: string
+    year: number
+    month: number
+    status?: $Enums.WorkforceTimesheetStatus
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -137709,6 +140260,35 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceTimesheetUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: WorkforceTimesheetEntryUpdateManyWithoutTimesheetNestedInput
+  }
+
+  export type WorkforceTimesheetUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutTimesheetNestedInput
+  }
+
+  export type WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    month?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceTimesheetStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrgUnitCommercialLinkUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
     linkMode?: EnumOrgCommercialLinkModeFieldUpdateOperationsInput | $Enums.OrgCommercialLinkMode
@@ -137808,6 +140388,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -137871,6 +140452,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -138235,6 +140817,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -138298,6 +140881,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -138489,6 +141073,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -138552,6 +141137,7 @@ export namespace Prisma {
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput

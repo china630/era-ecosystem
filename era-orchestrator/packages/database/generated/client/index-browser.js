@@ -417,12 +417,25 @@ exports.Prisma.WorkforceAbsenceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkforceTimesheetScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  year: 'year',
+  month: 'month',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforceTimesheetEntryScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
+  timesheetId: 'timesheetId',
   employmentId: 'employmentId',
   workDate: 'workDate',
   hours: 'hours',
+  type: 'type',
+  lockedFromAbsence: 'lockedFromAbsence',
   source: 'source',
   sourceRef: 'sourceRef',
   status: 'status',
@@ -1131,6 +1144,19 @@ exports.WorkforceAbsenceStatus = exports.$Enums.WorkforceAbsenceStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.WorkforceTimesheetStatus = exports.$Enums.WorkforceTimesheetStatus = {
+  DRAFT: 'DRAFT',
+  APPROVED: 'APPROVED'
+};
+
+exports.WorkforceTimesheetEntryType = exports.$Enums.WorkforceTimesheetEntryType = {
+  WORK: 'WORK',
+  VACATION: 'VACATION',
+  SICK: 'SICK',
+  OFF: 'OFF',
+  BUSINESS_TRIP: 'BUSINESS_TRIP'
+};
+
 exports.WorkforceTimesheetEntryStatus = exports.$Enums.WorkforceTimesheetEntryStatus = {
   DRAFT: 'DRAFT',
   APPROVED: 'APPROVED'
@@ -1366,6 +1392,7 @@ exports.Prisma.ModelName = {
   WorkforceSeatAllocation: 'WorkforceSeatAllocation',
   WorkforceEmployment: 'WorkforceEmployment',
   WorkforceAbsence: 'WorkforceAbsence',
+  WorkforceTimesheet: 'WorkforceTimesheet',
   WorkforceTimesheetEntry: 'WorkforceTimesheetEntry',
   WorkforceVacationPlan: 'WorkforceVacationPlan',
   WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',

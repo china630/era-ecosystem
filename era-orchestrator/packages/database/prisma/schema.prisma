@@ -481,6 +481,19 @@ enum WorkforceTimesheetEntryStatus {
   APPROVED
 }
 
+enum WorkforceTimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+enum WorkforceTimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
 enum WorkforceVacationPlanStatus {
   DRAFT
   SUBMITTED
@@ -731,19 +744,41 @@ model WorkforceAbsence {
   @@map("workforce_absences")
 }
 
-model WorkforceTimesheetEntry {
-  id             String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String                        @map("organization_id") @db.Uuid
-  employmentId   String                        @map("employment_id") @db.Uuid
-  workDate       DateTime                      @map("work_date") @db.Date
-  hours          Decimal                       @db.Decimal(10, 2)
-  source         String                        @default("construction_csv")
-  sourceRef      String?                       @map("source_ref")
-  status         WorkforceTimesheetEntryStatus @default(DRAFT)
-  createdAt      DateTime                      @default(now()) @map("created_at")
-  updatedAt      DateTime                      @updatedAt @map("updated_at")
-  employment     WorkforceEmployment           @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+/// Month header for CP attendance grid (SoR). Finance mirrors approved rows when hr_full.
+model WorkforceTimesheet {
+  id             String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  year           Int
+  month          Int
+  status         WorkforceTimesheetStatus @default(DRAFT)
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entries        WorkforceTimesheetEntry[]
 
+  @@unique([organizationId, year, month])
+  @@index([organizationId, status])
+  @@map("workforce_timesheets")
+}
+
+model WorkforceTimesheetEntry {
+  id                String                         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String                         @map("organization_id") @db.Uuid
+  timesheetId       String                         @map("timesheet_id") @db.Uuid
+  employmentId      String                         @map("employment_id") @db.Uuid
+  workDate          DateTime                       @map("work_date") @db.Date
+  hours             Decimal                        @default(8) @db.Decimal(10, 2)
+  type              WorkforceTimesheetEntryType    @default(WORK)
+  lockedFromAbsence Boolean                        @default(false) @map("locked_from_absence")
+  source            String                         @default("ops_grid")
+  sourceRef         String?                        @map("source_ref")
+  status            WorkforceTimesheetEntryStatus  @default(DRAFT)
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  timesheet         WorkforceTimesheet             @relation(fields: [timesheetId], references: [id], onDelete: Cascade)
+  employment        WorkforceEmployment            @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+
+  @@unique([timesheetId, employmentId, workDate])
   @@index([organizationId, employmentId, workDate])
   @@index([organizationId, status])
   @@map("workforce_timesheet_entries")
@@ -1050,6 +1085,7 @@ model Organization {
   satelliteEntitlements OrganizationSatelliteEntitlement[]
   workforceAssignments WorkforceAssignment[]
   workforceEmployments WorkforceEmployment[]
+  workforceTimesheets  WorkforceTimesheet[]
   orgUnitCommercialLinks OrgUnitCommercialLink[]
   elektrawebBridgePolicy ElektrawebBridgePolicy?
   clinicCutoverPolicy    ClinicCutoverPolicy?

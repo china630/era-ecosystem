@@ -16,6 +16,7 @@ import {
   registerUnicodeFonts,
 } from "../../reporting/pdf-font.util";
 import { WorkforceAuditService } from "./workforce-audit.service";
+import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import type {
@@ -35,12 +36,13 @@ export class WorkforcePersonnelOrdersService {
     private readonly audit: WorkforceAuditService,
     private readonly scopeService: WorkforceScopeService,
     private readonly mdm: MdmService,
+    private readonly employments: WorkforceEmploymentsService,
   ) {}
 
   async list(organizationId: string, query: ListPersonnelOrdersQueryDto) {
     await this.entitlement.assertWorkforceHub(organizationId);
     const link = await this.scopeService.resolveScopeForCommercialOrg(organizationId);
-    return this.prisma.workforcePersonnelOrder.findMany({
+    const items = await this.prisma.workforcePersonnelOrder.findMany({
       where: {
         workforceScopeId: link.workforceScope.id,
         ...(query.type ? { type: query.type } : {}),
@@ -53,6 +55,11 @@ export class WorkforcePersonnelOrdersService {
         },
       },
     });
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      items.map((o) => o.employment.globalPersonId),
+    );
+    return { items, persons };
   }
 
   async getOne(organizationId: string, id: string) {

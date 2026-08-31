@@ -13,12 +13,14 @@ describe("WorkforceAbsencesService", () => {
   const entitlement = { assertWorkforceHub: jest.fn().mockResolvedValue(undefined) };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const satelliteEvents = { enqueue: jest.fn().mockResolvedValue({ jobId: "j1" }) };
+  const timesheets = { unlockAbsenceRange: jest.fn().mockResolvedValue(undefined) };
 
   const svc = new WorkforceAbsencesService(
     prisma as never,
     entitlement as never,
     audit as never,
     satelliteEvents as never,
+    timesheets as never,
   );
 
   beforeEach(() => {

@@ -11,6 +11,7 @@ import {
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
+import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import type {
@@ -38,6 +39,7 @@ export class WorkforceVacationPlansService {
     private readonly audit: WorkforceAuditService,
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly scopeService: WorkforceScopeService,
+    private readonly employments: WorkforceEmploymentsService,
   ) {}
 
   async list(
@@ -47,7 +49,7 @@ export class WorkforceVacationPlansService {
     await this.entitlement.assertWorkforceHub(organizationId);
     const link = await this.scopeService.resolveScopeForCommercialOrg(organizationId);
     const scope = link.workforceScope;
-    return this.prisma.workforceVacationPlan.findMany({
+    const items = await this.prisma.workforceVacationPlan.findMany({
       where: {
         workforceScopeId: scope.id,
         ...(query.year != null ? { year: query.year } : {}),
@@ -59,6 +61,14 @@ export class WorkforceVacationPlansService {
       },
       orderBy: [{ year: "desc" }, { createdAt: "desc" }],
     });
+    const personIds = items.flatMap((p) =>
+      p.lines.map((l) => l.employment.globalPersonId),
+    );
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      personIds,
+    );
+    return { items, persons };
   }
 
   async getOne(organizationId: string, id: string) {

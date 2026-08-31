@@ -20,6 +20,7 @@ CP publishes **`STAFF_PROVISIONED` / `STAFF_DEACTIVATED`** with **`cpEmploymentI
 
 - `POST /platform/v1/workforce/employments/hire` — employment + seat + bindings + provision
 - `POST .../terminate`, `PATCH .../reprovision`
+- `GET .../employments` and `GET .../employments/:id` include **active** `roleBindings` so workspace Employments ⋯ overflow (Reprovision) and the satellite filter work
 - `WorkforceSeatAllocation` — 1 seat per `globalPersonId` per scope
 - `WorkforceAssignment` registry keyed by `cpEmploymentId`
 

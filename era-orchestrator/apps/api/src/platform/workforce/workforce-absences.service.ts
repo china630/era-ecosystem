@@ -17,6 +17,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
 import type {
   CreateWorkforceAbsenceDto,
   ListWorkforceAbsencesQueryDto,
@@ -40,6 +41,7 @@ export class WorkforceAbsencesService {
     private readonly entitlement: WorkforceEntitlementService,
     private readonly audit: WorkforceAuditService,
     private readonly satelliteEvents: SatelliteEventsService,
+    private readonly timesheets: WorkforceTimesheetsService,
   ) {}
 
   async list(
@@ -271,6 +273,12 @@ export class WorkforceAbsencesService {
       updated,
       cancelledAt,
       actorUserId,
+    );
+    await this.timesheets.unlockAbsenceRange(
+      organizationId,
+      updated.employmentId,
+      updated.startDate,
+      updated.endDate,
     );
     return updated;
   }
