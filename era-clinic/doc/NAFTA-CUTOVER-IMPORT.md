@@ -125,7 +125,7 @@ MDM on `#24`: stamp FO `uniqueId` + `passport` via `apply-wo-fo-guest-bridge.cjs
 
 Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-URINE` + analyte aliases (`LYM%`→`LYMPH%`). Urine Word tables: join `w:t` runs without spaces, start at row `№=1`, drop `Tarix` / date grids (do not emit `U-DATE`). **Ignored:** orders without parseable Word (~170) — no #28 lines, still importable via #27 as header-only orders.
 
-**Import hardening (required before re-Apply `#27`):** middleware must pass `/api/import` without cloning request headers (Cookie + multipart). `#27`/`#29` upserts run inside `prisma.$transaction` and create `LabOrder` + `LabOrderItem` in one nested write so a failed bind cannot leave empty COMPLETED shells.
+**Import hardening (required before re-Apply `#27`):** middleware must pass `/api/import` without cloning request headers (Cookie + multipart). `#27`/`#29` upserts run inside `prisma.$transaction`: `LabOrder.create` then top-level `LabOrderItem.create` (scalar `diagnosticServiceId`). Nested `items.create` is rejected — tenant stamp adds `organizationId` to a non-tenant model, and nested Prisma input wants `diagnosticService.connect`, not the FK.
 
 Lab / USG list date: WO patients grid has no analysis column. `#27` `takenAt` is WO `LabResult.resultDate` (file date; present on the API even when the UI hides it). Empty `takenAt` → stay **check-in** (`ClinicalEpisode.openedAt` from `#24`). Import stamps `collectedAt` / `resultDate` / `createdAt` to that clinical day so `/lab-orders` “Tarix” is not the Apply timestamp. Date filters use `collectedAt` (fallback `createdAt`). Re-Apply `#27` (and `#29` for USG) after deploy to backfill already-imported rows.
 
