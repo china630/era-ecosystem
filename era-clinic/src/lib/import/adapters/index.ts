@@ -109,13 +109,12 @@ async function createImportedLabOrder(
         ? { completedAt: input.collectedAt }
         : {}),
       ...(input.resultDate ? { resultDate: input.resultDate } : {}),
-    },
-  });
-  await tx.labOrderItem.create({
-    data: {
-      labOrderId: order.id,
-      serviceCode: input.testCode,
-      ...(input.diagnosticServiceId ? { diagnosticServiceId: input.diagnosticServiceId } : {}),
+      items: {
+        create: {
+          serviceCode: input.testCode,
+          ...(input.diagnosticServiceId ? { diagnosticServiceId: input.diagnosticServiceId } : {}),
+        },
+      },
     },
   });
   return order.id;
@@ -906,7 +905,7 @@ const slotsAdapter: ImportAdapter<{
   entity: "slots",
   label: "Slots",
   order: 11,
-  templateHint: "26-Slots-p01.xlsx … — WO calendar COMPLETED, 5k-row chunks",
+  templateHint: "clinic/26-Slots/26-Slots-p01.xlsx … — WO calendar COMPLETED, 5k-row chunks",
   allowMultiple: true,
   headerAliases: {
     ...aliases(
@@ -1103,6 +1102,7 @@ const labOrdersAdapter: ImportAdapter<{
   entity: "lab-orders",
   label: "Lab orders",
   order: 12,
+  atomicUpsert: true,
   templateHint: "27-Lab-Orders.xlsx — WO lab-results dump",
   headerAliases: aliases("externalRef", "patientRef", "testCode", "status", "panel", "takenAt"),
   rowSchema: z.object({
@@ -1228,7 +1228,7 @@ const labResultsAdapter: ImportAdapter<{
     } catch {
       lines = [];
     }
-    const next = lines.filter((l) => l.code !== row.code);
+    const next = lines.filter((l) => l.code !== row.code && l.code !== "U-DATE");
     next.push({
       code: row.code,
       label: data.label,
@@ -1263,6 +1263,7 @@ const diagnosticsAdapter: ImportAdapter<{
   entity: "diagnostics",
   label: "Diagnostics",
   order: 14,
+  atomicUpsert: true,
   templateHint: "29-Diagnostics.xlsx — WO Müayinə Anketi (USG)",
   headerAliases: aliases("externalRef", "patientRef", "code", "name", "resultText", "resultJson", "takenAt"),
   rowSchema: z.object({

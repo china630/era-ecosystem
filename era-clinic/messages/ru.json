@@ -1441,7 +1441,7 @@
     "stepCompleted": "Готово: {created} создано, {updated} обновлено, {errors} ошибок",
     "orderWarning": "Сначала закройте шаги: {steps}",
     "pickFileHint": "Выберите соответствующий .xlsx",
-    "pickFileHintMultiple": "Выберите сразу все чанки слотов (26-Slots-p01.xlsx …). Каждый файл уходит отдельным запросом.",
+    "pickFileHintMultiple": "Выберите сразу все чанки из clinic/26-Slots/ (26-Slots-p01.xlsx …). Каждый файл уходит отдельным запросом.",
     "chunkProgress": "Чанк {current} из {total}: {name}",
     "runBootstrap": "Запуск",
     "verifyMasterData": "Каталоги",

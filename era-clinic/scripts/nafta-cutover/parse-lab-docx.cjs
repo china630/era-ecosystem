@@ -39,17 +39,19 @@ function decodeXmlEntities(s) {
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 }
 
+function joinRuns(texts) {
+  return texts.join("").replace(/\s+/g, " ").trim();
+}
+
 function extractParagraphs(xml) {
   const paras = [];
-  const pRe = /<w:p[\s>]/g;
-  let m;
   const parts = xml.split(/<\/w:p>/);
   for (const part of parts) {
     const texts = [];
     const tRe = /<w:t[^>]*>([^<]*)<\/w:t>/g;
     let tm;
     while ((tm = tRe.exec(part))) texts.push(decodeXmlEntities(tm[1]));
-    const line = texts.join("").replace(/\s+/g, " ").trim();
+    const line = joinRuns(texts);
     if (line) paras.push(line);
   }
   return paras;
@@ -68,7 +70,7 @@ function extractTableRows(xml) {
       const tRe = /<w:t[^>]*>([^<]*)<\/w:t>/g;
       let tm;
       while ((tm = tRe.exec(tc))) texts.push(decodeXmlEntities(tm[1]));
-      cells.push(texts.join(" ").replace(/\s+/g, " ").trim());
+      cells.push(joinRuns(texts));
     }
     if (cells.length) rows.push(cells);
   }
@@ -96,65 +98,115 @@ function isHeaderRow(cells) {
   return /parametr|nəticə|netice|norma|result/.test(blob);
 }
 
-function resultsFromDocxBuffer(buf, fileName) {
-  const { lines, tableRows } = linesFromDocxBuffer(buf);
-  const out = [];
-  const seen = new Set();
-  function push(label, rawValue, refRange) {
-    const lab = String(label || "").trim();
-    if (!lab || lab.length > 120) return;
-    if (/^(ad|soyad|yaş|yas|cins|tarix|date|patient|həkim|hekim|parametr|nəticə|norma)/i.test(lab)) return;
-    if (/^\d+$/.test(lab)) return;
-    const { value, unit } = parseValueUnit(rawValue);
-    if (!value || /^norma$/i.test(value)) return;
-    if (refRange && value === String(refRange).trim()) return;
-    const code = analyteCode(lab);
-    const key = `${code}|${value}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push({
-      code,
-      label: lab,
-      value,
-      unit,
-      refRange: String(refRange || "").trim(),
-    });
+function isIndexCell(s) {
+  return /^\d+$/.test(String(s || "").trim());
+}
+
+function looksLikeDateValue(s) {
+  return /\d{1,2}\s*[.\-/]\s*\d{1,2}\s*[.\-/]\s*20\d{2}/.test(String(s || ""));
+}
+
+function isJunkResultLabel(lab) {
+  const t = String(lab || "").trim();
+  if (!t || t.length > 120) return true;
+  if (/^\d+$/.test(t)) return true;
+  if (/\btarix\b|\bdate\b/i.test(t)) return true;
+  if (/fiziki[- ]?kimyəvi|mikroskopiya/i.test(t)) return true;
+  if (/^(ad|soyad|yaş|yas|cins|patient|həkim|hekim|həkim laborant|parametr|nəticə|norma)/i.test(t)) {
+    return true;
   }
+  return false;
+}
+
+function parseValueUnit(raw) {
+  const s = String(raw || "").trim().replace(/\s+/g, " ");
+  if (!s) return { value: "", unit: "" };
+  const compact = s.replace(/\s/g, "");
+  if (/^\d{1,2}[.\-/]\d{1,2}[.\-/]20\d{2}$/.test(compact)) {
+    return { value: "", unit: "" };
+  }
+  if (/^\d+\s*-\s*\d+$/.test(s)) {
+    return { value: s.replace(/\s/g, ""), unit: "" };
+  }
+  if (/^[+\-]+$/.test(s) || /^(yoxdur|neg|pos|n\/?a|—|–|-)$/i.test(s)) {
+    return { value: s, unit: "" };
+  }
+  if (/^-?\d+[.,]\d+$/.test(compact)) {
+    return { value: compact.replace(",", "."), unit: "" };
+  }
+  const withUnit = s.match(/^(-?\d+(?:[.,]\d+)?)\s+(\S.*)$/);
+  if (withUnit && /[A-Za-zµμ%\/°^]/.test(withUnit[2])) {
+    return { value: withUnit[1].replace(",", "."), unit: withUnit[2].trim() };
+  }
+  const numOnly = s.match(/^(-?\d+(?:[.,]\d+)?)$/);
+  if (numOnly) return { value: numOnly[1].replace(",", "."), unit: "" };
+  return { value: s, unit: "" };
+}
+
+function pushResult(out, seen, label, rawValue, refRange) {
+  const lab = String(label || "").trim();
+  if (isJunkResultLabel(lab)) return;
+  if (looksLikeDateValue(lab) || looksLikeDateValue(rawValue)) return;
+  const { value, unit } = parseValueUnit(rawValue);
+  if (!value || /^norma$/i.test(value)) return;
+  if (refRange && value === String(refRange).trim()) return;
+  const code = analyteCode(lab);
+  if (code === "U-DATE") return;
+  let valueOut = value;
+  if (code === "U-SG" && /^1\d{3}$/.test(valueOut)) {
+    valueOut = `${valueOut[0]}.${valueOut.slice(1)}`;
+  }
+  const key = `${code}|${valueOut}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  out.push({
+    code,
+    label: lab,
+    value: valueOut,
+    unit,
+    refRange: String(refRange || "").trim(),
+  });
+}
+
+function ingestNumberedRows(tableRows, out, seen) {
+  let started = false;
+  let n = 0;
+  for (const cells of tableRows) {
+    if (isHeaderRow(cells)) continue;
+    const first = String(cells[0] || "").trim();
+    if (!started) {
+      if (isIndexCell(first) && first === "1") started = true;
+      else continue;
+    }
+    if (!isIndexCell(first)) continue;
+    n += 1;
+    if (cells.length >= 4) pushResult(out, seen, cells[1] || cells[0], cells[2], cells[3]);
+    else if (cells.length === 3) pushResult(out, seen, cells[1], cells[2], "");
+  }
+  return n;
+}
+
+function ingestLegacyRows(tableRows, out, seen) {
   for (const cells of tableRows) {
     if (isHeaderRow(cells)) continue;
     if (cells.length >= 4) {
-      push(cells[1] || cells[0], cells[2], cells[3]);
+      pushResult(out, seen, cells[1] || cells[0], cells[2], cells[3]);
       continue;
     }
     if (cells.length === 3) {
-      push(cells[0], cells[1], cells[2]);
+      pushResult(out, seen, cells[0], cells[1], cells[2]);
       continue;
     }
-    if (cells.length === 2) push(cells[0], cells[1], "");
+    if (cells.length === 2) pushResult(out, seen, cells[0], cells[1], "");
   }
-  if (out.length < 3) {
-    for (const line of lines) {
-      const pair = splitLabelValue(line);
-      if (pair) push(pair.label, pair.value, "");
-    }
-  }
-  return { panel: panelFromName(fileName), results: out, lineCount: lines.length, tableRowCount: tableRows.length };
 }
 
-function slugCode(label) {
-  const s = String(label || "")
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9\u0400-\u04FF\u018F\u011E\u0130\u015E]+/g, "_")
-    .replace(/^_|_$/g, "");
-  return (s || "LINE").slice(0, 48);
-}
-
-function looksNumeric(value) {
-  const s = String(value || "").trim().replace(",", ".");
-  if (!s || s.length > 24) return false;
-  if (/^(n\/?a|neg|pos|-|—|–)$/i.test(s)) return true;
-  return /^-?\d+(\.\d+)?(%|x10\^\d+)?$/i.test(s) || /^-?\d+\s*-\s*\d+/.test(s);
+function resultsFromTableRows(tableRows) {
+  const out = [];
+  const seen = new Set();
+  const numbered = ingestNumberedRows(tableRows, out, seen);
+  if (numbered < 3) ingestLegacyRows(tableRows, out, seen);
+  return out;
 }
 
 function splitLabelValue(line) {
@@ -169,11 +221,33 @@ function splitLabelValue(line) {
   return null;
 }
 
-function parseValueUnit(raw) {
-  const s = String(raw || "").trim();
-  const m = s.match(/^(-?\d+(?:[.,]\d+)?)(?:\s*(.+))?$/);
-  if (!m) return { value: s, unit: "" };
-  return { value: m[1].replace(",", "."), unit: (m[2] || "").trim() };
+function looksNumeric(value) {
+  const s = String(value || "").trim().replace(",", ".");
+  if (!s || s.length > 24) return false;
+  if (/^(n\/?a|neg|pos|-|—|–)$/i.test(s)) return true;
+  return /^-?\d+(\.\d+)?(%|x10\^\d+)?$/i.test(s) || /^-?\d+\s*-\s*\d+/.test(s);
+}
+
+function resultsFromDocxBuffer(buf, fileName) {
+  const { lines, tableRows } = linesFromDocxBuffer(buf);
+  const out = resultsFromTableRows(tableRows);
+  if (out.length < 3) {
+    const seen = new Set(out.map((r) => `${r.code}|${r.value}`));
+    for (const line of lines) {
+      const pair = splitLabelValue(line);
+      if (pair) pushResult(out, seen, pair.label, pair.value, "");
+    }
+  }
+  return { panel: panelFromName(fileName), results: out, lineCount: lines.length, tableRowCount: tableRows.length };
+}
+
+function slugCode(label) {
+  const s = String(label || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9\u0400-\u04FF\u018F\u011E\u0130\u015E]+/g, "_")
+    .replace(/^_|_$/g, "");
+  return (s || "LINE").slice(0, 48);
 }
 
 function panelFromName(fileName) {
@@ -208,7 +282,10 @@ module.exports = {
   testCodeFromPanel,
   parseLabDocxFile,
   resultsFromDocxBuffer,
+  resultsFromTableRows,
   linesFromDocxBuffer,
+  parseValueUnit,
+  isJunkResultLabel,
   slugCode,
 };
 

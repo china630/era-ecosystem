@@ -1441,7 +1441,7 @@
     "stepCompleted": "Hazır: {created} yeni, {updated} yeniləmə, {errors} xəta",
     "orderWarning": "Əvvəlki addımlar: {steps}",
     "pickFileHint": "Uyğun .xlsx seçin",
-    "pickFileHintMultiple": "Bütün slot hissələrini bir dəfə seçin (26-Slots-p01.xlsx …). Hər fayl ayrı sorğu ilə gedir.",
+    "pickFileHintMultiple": "Bütün slot hissələrini clinic/26-Slots/ qovluğundan bir dəfə seçin (26-Slots-p01.xlsx …). Hər fayl ayrı sorğu ilə gedir.",
     "chunkProgress": "Hissə {current} / {total}: {name}",
     "runBootstrap": "İşlət",
     "verifyMasterData": "Kataloqlar",

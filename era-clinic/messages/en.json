@@ -1464,7 +1464,7 @@
     "stepCompleted": "Done: {created} created, {updated} updated, {errors} errors",
     "orderWarning": "Complete prior steps first: {steps}",
     "pickFileHint": "Choose the matching .xlsx",
-    "pickFileHintMultiple": "Select all slot chunks (26-Slots-p01.xlsx …) at once. Each file is posted separately.",
+    "pickFileHintMultiple": "Select all slot chunks from clinic/26-Slots/ (26-Slots-p01.xlsx …) at once. Each file is posted separately.",
     "chunkProgress": "Chunk {current} of {total}: {name}",
     "runBootstrap": "Run",
     "verifyMasterData": "Open catalogs",
