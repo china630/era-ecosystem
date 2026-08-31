@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -10,7 +11,7 @@ import {
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
@@ -35,6 +36,7 @@ export function PatientCardComplaints({
   );
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -61,25 +63,55 @@ export function PatientCardComplaints({
     void load();
   }, [load]);
 
-  async function add() {
-    if (!text.trim() || !resolvedEpisodeId) return;
+  function openCreate() {
+    setEditingId(null);
+    setText("");
+    setMsg("");
+    setOpen(true);
+  }
+
+  function openEdit(row: Row) {
+    setEditingId(row.id);
+    setText(row.text);
+    setMsg("");
+    setOpen(true);
+  }
+
+  async function save() {
+    if (!text.trim()) return;
     setBusy(true);
     setMsg("");
-    const res = await fetch(
-      `/api/patients/${patientRefId}/complaints?episode=${encodeURIComponent(resolvedEpisodeId)}`,
-      {
-        method: "POST",
+    if (editingId) {
+      const res = await fetch(`/api/patients/${patientRefId}/complaints`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim(), episodeId: resolvedEpisodeId }),
-      },
-    );
-    setBusy(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setMsg(data.error ?? tc("failed"));
-      return;
+        body: JSON.stringify({ id: editingId, text: text.trim() }),
+      });
+      setBusy(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMsg(data.error ?? tc("failed"));
+        return;
+      }
+    } else {
+      if (!resolvedEpisodeId) return;
+      const res = await fetch(
+        `/api/patients/${patientRefId}/complaints?episode=${encodeURIComponent(resolvedEpisodeId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text.trim(), episodeId: resolvedEpisodeId }),
+        },
+      );
+      setBusy(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMsg(data.error ?? tc("failed"));
+        return;
+      }
     }
     setOpen(false);
+    setEditingId(null);
     setText("");
     await load();
   }
@@ -93,47 +125,66 @@ export function PatientCardComplaints({
   }
 
   return (
-    <section className={`${CARD_CONTAINER_CLASS} space-y-2 p-4`}>
+    <section className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">{t("complaintsTitle")}</h3>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+          {t("complaintsTitle")}
+        </h2>
         {!readOnly && resolvedEpisodeId ? (
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             {t("addComplaint")}
           </button>
         ) : null}
       </div>
-      {loading ? (
-        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
-      ) : !resolvedEpisodeId ? (
-        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
-          {t("complaintsNoEpisode")}{" "}
-          <Link href="/sanatorium" className={LINK_ACCENT_CLASS}>
-            {t("diagnosesOpenSanatorium")}
-          </Link>
-        </p>
-      ) : (
-        <ul className="list-disc space-y-1 pl-5 text-sm">
-          {items.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-baseline gap-2">
-              <span>{c.text}</span>
-              {!readOnly ? (
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  onClick={() => void remove(c.id)}
-                >
-                  {tc("delete")}
-                </button>
-              ) : null}
-            </li>
-          ))}
-          {items.length === 0 ? (
-            <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
-          ) : null}
-        </ul>
-      )}
-      {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
-      <ModalShell open={open} title={t("addComplaint")} onClose={() => setOpen(false)}>
+      <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4`}>
+        {loading ? (
+          <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
+        ) : !resolvedEpisodeId ? (
+          <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+            {t("complaintsNoEpisode")}{" "}
+            <Link href="/sanatorium" className={LINK_ACCENT_CLASS}>
+              {t("diagnosesOpenSanatorium")}
+            </Link>
+          </p>
+        ) : (
+          <ul className="list-disc space-y-1 pl-5 text-sm">
+            {items.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-baseline gap-2">
+                <span>{c.text}</span>
+                {!readOnly ? (
+                  <>
+                    <button
+                      type="button"
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      aria-label={tc("edit")}
+                      onClick={() => openEdit(c)}
+                    >
+                      <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      aria-label={tc("delete")}
+                      onClick={() => void remove(c.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                    </button>
+                  </>
+                ) : null}
+              </li>
+            ))}
+            {items.length === 0 ? (
+              <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
+            ) : null}
+          </ul>
+        )}
+        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
+      </div>
+      <ModalShell
+        open={open}
+        title={editingId ? tc("edit") : t("addComplaint")}
+        onClose={() => setOpen(false)}
+      >
         <FieldTextarea
           label={t("complaintsTitle")}
           rows={3}
@@ -142,7 +193,7 @@ export function PatientCardComplaints({
         />
         <ModalFooter
           onCancel={() => setOpen(false)}
-          onSubmit={() => void add()}
+          onSubmit={() => void save()}
           busy={busy}
           submitLabel={tc("save")}
         />

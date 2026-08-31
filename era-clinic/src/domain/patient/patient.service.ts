@@ -86,6 +86,10 @@ function withDerivedDemographics<T extends { birthDate?: Date | null }>(row: T) 
   };
 }
 
+/**
+ * Inclusive age filter: age >= ageMin and age <= ageMax.
+ * birthDate range is derived from whole years as of today (Asia/Baku calendar day not required for ops filter).
+ */
 function birthDateRangeForAge(ageMin?: number, ageMax?: number): { gte?: Date; lte?: Date } | undefined {
   if (ageMin == null && ageMax == null) return undefined;
   const today = new Date();
@@ -121,9 +125,15 @@ export async function listPatients(query?: string) {
   return result.items;
 }
 
-export async function listProgramCodes(): Promise<string[]> {
+export async function listProgramCodes(
+  episodeStatus: "OPEN" | "CLOSED" | "ALL" = "OPEN",
+): Promise<string[]> {
+  const where =
+    episodeStatus === "ALL"
+      ? { programCode: { not: null } }
+      : { status: episodeStatus, programCode: { not: null } };
   const rows = await prisma.clinicalEpisode.findMany({
-    where: { status: "OPEN", programCode: { not: null } },
+    where,
     select: { programCode: true },
   });
   return [
@@ -135,9 +145,15 @@ export async function listProgramCodes(): Promise<string[]> {
   ].sort((a, b) => a.localeCompare(b));
 }
 
-export async function listHotelRoomNumbers(): Promise<string[]> {
+export async function listHotelRoomNumbers(
+  episodeStatus: "OPEN" | "CLOSED" | "ALL" = "OPEN",
+): Promise<string[]> {
+  const where =
+    episodeStatus === "ALL"
+      ? { roomNumber: { not: null } }
+      : { status: episodeStatus, roomNumber: { not: null } };
   const rows = await prisma.clinicalEpisode.findMany({
-    where: { status: "OPEN", roomNumber: { not: null } },
+    where,
     select: { roomNumber: true },
   });
   return [
@@ -173,7 +189,8 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   const birthRange = birthDateRangeForAge(input.ageMin, input.ageMax);
   if (birthRange) where.birthDate = birthRange;
 
-  const episodeStatus = input.episodeStatus ?? "OPEN";
+  // Registry default = entire base; course filters belong on /sanatorium.
+  const episodeStatus = input.episodeStatus ?? "ALL";
   const roomNumber = input.roomNumber?.trim();
   const programCode = input.programCode?.trim();
 
@@ -185,11 +202,9 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   }
   if (roomNumber) {
     episodeSome.roomNumber = { equals: roomNumber, mode: "insensitive" };
-    if (!episodeSome.status) episodeSome.status = "OPEN";
   }
   if (programCode) {
     episodeSome.programCode = { equals: programCode, mode: "insensitive" };
-    if (!episodeSome.status) episodeSome.status = "OPEN";
   }
 
   const hasEpisodeSome = Object.keys(episodeSome).length > 0;
@@ -202,13 +217,6 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
     where.episodes = { some: episodeSome };
   }
 
-  const episodeIncludeWhere: Prisma.ClinicalEpisodeWhereInput | undefined =
-    episodeStatus === "OPEN"
-      ? { status: "OPEN" }
-      : episodeStatus === "CLOSED"
-        ? { status: "CLOSED" }
-        : undefined;
-
   const [rows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
       where,
@@ -217,37 +225,27 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
       take: pageSize,
       include: {
         episodes: {
-          ...(episodeIncludeWhere ? { where: episodeIncludeWhere } : {}),
-          select: {
-            roomNumber: true,
-            programCode: true,
-            openedAt: true,
-            closedAt: true,
-            reservationId: true,
-            programInstance: { select: { endsOn: true } },
-          },
-          orderBy: { openedAt: "desc" },
+          where: { status: "OPEN" },
+          select: { id: true },
           take: 1,
         },
       },
     }),
     prisma.patientRef.count({ where }),
-    input.includeHotelRooms ? listHotelRoomNumbers() : Promise.resolve(undefined),
-    input.includeProgramCodes ? listProgramCodes() : Promise.resolve(undefined),
+    input.includeHotelRooms
+      ? listHotelRoomNumbers(episodeStatus)
+      : Promise.resolve(undefined),
+    input.includeProgramCodes
+      ? listProgramCodes(episodeStatus)
+      : Promise.resolve(undefined),
   ]);
 
   return {
     items: rows.map((row) => {
       const { episodes, ...patient } = row;
-      const ep = episodes[0];
-      const hotelGuest = Boolean(ep?.roomNumber || ep?.reservationId);
-      const checkOut = ep?.closedAt ?? ep?.programInstance?.endsOn ?? null;
       return {
         ...withDerivedDemographics(patient),
-        hotelRoomNumber: ep?.roomNumber ?? null,
-        programCode: ep?.programCode ?? null,
-        checkInAt: hotelGuest && ep?.openedAt ? ep.openedAt.toISOString() : null,
-        checkOutAt: hotelGuest && checkOut ? checkOut.toISOString() : null,
+        hasOpenEpisode: episodes.length > 0,
       };
     }),
     total,

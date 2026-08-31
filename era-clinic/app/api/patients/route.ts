@@ -66,7 +66,7 @@ export async function GET(req: Request) {
       episodeStatusRaw === "CLOSED" ||
       episodeStatusRaw === "ALL"
         ? episodeStatusRaw
-        : "OPEN";
+        : "ALL";
 
     const result = await listPatientsPaged({
       q,

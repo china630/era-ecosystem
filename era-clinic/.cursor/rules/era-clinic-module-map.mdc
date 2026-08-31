@@ -41,8 +41,8 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 |-------|-----|
 | `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
 | `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
-| `/patients` | `/api/patients` — paginated list (`q` name parts + refCode, sex, blood, MDM **admin-only**, age, `roomNumber` when sanatorium) + register (Ad/Soyad/Ata adı, auto `P-######`); modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`). Reception: no MDM column/filter |
-| `/patients/[id]` | `/api/patients/[id]` PATCH (**today:** anamnesis required on demographics; **CLI-55:** anamnesis on episode, not this PATCH); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); `intakeChecklist` (`PKG-NAFTA-INTAKE`); now/next + PLAN preview Baku `atLabel` / `scheduledAt >= now`; card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`). **CLI-55 PLANNED:** episode select + archive blocks — [ADR](../../../docs/adr/clinic-episode-as-clinical-course.md) |
+| `/patients` | `/api/patients` — identity registry (default `episodeStatus=ALL`); `q` name parts + refCode, sex, blood, age inclusive ≥/≤, MDM **platform Super-Admin only**; `hasOpenEpisode` badge; register Ad/Soyad/Ata adı + auto `P-######`; modal `PatientCardModal`. Room/program filters live on `/sanatorium`. Reception: no MDM column/filter |
+| `/patients/[id]` | `/api/patients/[id]` PATCH demographics; shared `PatientCardBody`; contraindications collapsed; ICD-10 on episode `GET/POST/PATCH/DELETE /api/patients/[id]/diagnoses`; complaints `GET/POST/PATCH/DELETE /api/patients/[id]/complaints`; CLI-49 physio S chips; `intakeChecklist` (`PKG-NAFTA-INTAKE`); now/next + PLAN Baku `atLabel`. Card: episode selector (print/history CLOSED). **CLI-55:** anamnesis on episode — [ADR](../../../docs/adr/clinic-episode-as-clinical-course.md) |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |
@@ -61,7 +61,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 
 | Route | API |
 |-------|-----|
-| `/sanatorium` | Table of open courses (`EraListFilterBar` + row actions: chart / procedures / patient modal); walk-in modal (sex required M/F, DatePicker, program select, lab catalog); ICD-10 diagnosis via `IcdPicker` (`CatalogField` **SEARCHABLE**, `GET /api/icd`); `/api/sanatorium/episodes`, `POST …/[id]?action=diagnosis`, `GET /api/sanatorium/program-templates`, `POST ?action=complete-checkup`. Deep link **`/sanatorium?episode=`** opens treatment chart (CLI-50). Checkup/walk-in Select prefers `PKG-STANDART|PREMIUM|DERMO|DETOKS`. **Wave E / CLI-54:** one list row per OPEN episode (two names, same room on mix card). Patient registry `/patients` also filters by hotel `roomNumber` when this preset is on |
+| `/sanatorium` | Open courses (`EraListFilterBar` + **hotel room** + **program/package** filters; pager does not echo `page` from API); row actions: chart / procedures / patient modal; walk-in modal (sex M/F, DatePicker, program select, lab catalog); ICD via `IcdPicker` (`CatalogField` **SEARCHABLE**); `GET /api/sanatorium/episodes` (`roomNumber`, `programCode`, `includeHotelRooms=1`, `includeProgramCodes=1`); `POST …/[id]?action=diagnosis`; complete-checkup. Deep link **`/sanatorium?episode=`** (CLI-50). Checkup/walk-in Select prefers PKG-STANDART / PREMIUM / DERMO / DETOKS. **Wave E / CLI-54:** one row per OPEN episode |
 | `/nurse` | Agenda (prev→EOD) + kanban; check-in while window open (endsAt +gap if next free); no nurse No-show; `GET /api/procedures?mine=1` |
 | `/sanatorium/nurse-roster` | CLI-38 monthly duty matrix (paper physio nurse rotation). `GET/PUT/POST /api/sanatorium/nurse-roster`; absences `POST/DELETE /api/sanatorium/staff-absences`. Approve → planner prefers posted nurse |
 | `/sanatorium/resources` | Location **day matrix board** (`ResourceDayMatrix`) + optional **fullscreen** overlay; horizon (rest/+1h/+3h) + patient filter; `GET …/calendar` uses Tenant working hours; DnD / move / cancel |
@@ -114,7 +114,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products`; complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
 | `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota); Wave 4 `byOrganization` |
 | `/api/cron/episode-walkin-close` | Bearer `PLATFORM_CRON_SECRET` — idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55; refuses live procedures/labs); path→module `clinic_inpatient` |
-| `GET/POST/DELETE /api/patients/[id]/complaints` | session — course complaints (`?episode=`); CLOSED read-only |
+| `GET/POST/PATCH/DELETE /api/patients/[id]/complaints` | session — course complaints (`?episode=`); CLOSED read-only |
 | `POST /api/sanatorium/episodes/[id]?action=close` | session RECEPTION/DOCTOR — close idle walk-in course |
 | `GET /api/patients/[id]/episodes` | session — all care courses for card selector (CLI-55) |
 | `PATCH /api/sanatorium/episodes/[id]` | session — OPEN episode anamnesis |

@@ -147,4 +147,28 @@ describe("stamp clinic program from EW notes", () => {
     overlayPatientProgramCodes(rows, stamps);
     expect(rows[0].programCode).toBe("PKG-STANDART");
   });
+
+  it("overwrites a previous SKU when Operator/phrase stamp differs", () => {
+    const stamps = [
+      {
+        guests: "Test Guest",
+        arrival: "9/15/26",
+        room: "501",
+        migrationSku: "PKG-PREMIUM",
+        migrationSource: "phrase",
+        stayKind: "medical",
+      },
+    ];
+    const rows = [
+      {
+        fullName: "Test Guest",
+        checkIn: "2026-09-15T14:00:00+04:00",
+        roomNumber: "501",
+        programCode: "PKG-STANDART",
+      },
+    ];
+    const stats = overlayPatientProgramCodes(rows, stamps);
+    expect(rows[0].programCode).toBe("PKG-PREMIUM");
+    expect(stats.overwritten).toBe(1);
+  });
 });

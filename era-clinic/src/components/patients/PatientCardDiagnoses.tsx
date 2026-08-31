@@ -37,8 +37,7 @@ export function PatientCardDiagnoses({
       return;
     }
     let cancelled = false;
-    const q = "";
-    void fetch(`/api/patients/${patientRefId}/diagnoses${q}`)
+    void fetch(`/api/patients/${patientRefId}/diagnoses`)
       .then(async (res) => (res.ok ? res.json() : null))
       .then((raw) => {
         if (cancelled || !raw) {
@@ -61,29 +60,30 @@ export function PatientCardDiagnoses({
     : `/api/patients/${patientRefId}/diagnoses`;
 
   return (
-    <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-      {resolvedEpisodeId ? (
-        <DiagnosisPanel
-          apiBase={apiBase}
-          title={t("diagnosesTitle")}
-          showRole={false}
-          readOnly={readOnly}
-        />
-      ) : (
-        <>
-          <h3 className="font-semibold">{t("diagnosesTitle")}</h3>
-          {resolvedEpisodeId === undefined ? (
-            <p className={`mt-2 text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
-          ) : (
-            <p className={`mt-2 text-sm ${TEXT_MUTED_CLASS}`}>
-              {t("diagnosesNoEpisode")}{" "}
-              <Link href="/sanatorium" className={LINK_ACCENT_CLASS}>
-                {t("diagnosesOpenSanatorium")}
-              </Link>
-            </p>
-          )}
-        </>
-      )}
+    <section className="space-y-2">
+      <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+        {t("diagnosesTitle")}
+      </h2>
+      <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+        {resolvedEpisodeId ? (
+          <DiagnosisPanel
+            apiBase={apiBase}
+            title={t("diagnosesTitle")}
+            showRole={false}
+            readOnly={readOnly}
+            hideTitle
+          />
+        ) : resolvedEpisodeId === undefined ? (
+          <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
+        ) : (
+          <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+            {t("diagnosesNoEpisode")}{" "}
+            <Link href="/sanatorium" className={LINK_ACCENT_CLASS}>
+              {t("diagnosesOpenSanatorium")}
+            </Link>
+          </p>
+        )}
+      </div>
     </section>
   );
 }
