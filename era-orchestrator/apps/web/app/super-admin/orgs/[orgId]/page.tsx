@@ -103,6 +103,19 @@ function parseOptionalInt(raw: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+type FieldNotice = { kind: "ok" | "err"; text: string };
+
+async function noticeFromFailedResponse(res: Response): Promise<string> {
+  try {
+    const body = (await res.json()) as { message?: string | string[] };
+    if (typeof body.message === "string" && body.message.trim()) return body.message.trim();
+    if (Array.isArray(body.message) && body.message[0]) return String(body.message[0]);
+  } catch {
+    /* ignore non-JSON */
+  }
+  return "";
+}
+
 export default function SuperAdminOrgHubPage() {
   const params = useParams();
   const orgId = String(params.orgId ?? "");
@@ -118,6 +131,8 @@ export default function SuperAdminOrgHubPage() {
   const [cutoverDraft, setCutoverDraft] = useState<CutoverDraft>(EMPTY_CUTOVER);
   const [industries, setIndustries] = useState<string[]>([]);
   const [message, setMessage] = useState("");
+  const [bridgeNotice, setBridgeNotice] = useState<FieldNotice | null>(null);
+  const [cutoverNotice, setCutoverNotice] = useState<FieldNotice | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [savingBridge, setSavingBridge] = useState(false);
@@ -283,7 +298,7 @@ export default function SuperAdminOrgHubPage() {
   async function saveElektrawebBridge() {
     if (!token) return;
     setSavingBridge(true);
-    setMessage("");
+    setBridgeNotice(null);
     try {
       const res = await orchFetch(`/v1/admin/orgs/${orgId}/elektraweb-bridge`, {
         token,
@@ -299,10 +314,17 @@ export default function SuperAdminOrgHubPage() {
         }),
       });
       if (!res.ok) {
-        setMessage(t("bridgeSaveFailed", { status: res.status }));
+        const detail = await noticeFromFailedResponse(res);
+        setBridgeNotice({
+          kind: "err",
+          text: t("bridgeSaveFailed", {
+            status: res.status,
+            detail: detail ? `: ${detail}` : "",
+          }),
+        });
         return;
       }
-      setMessage(t("bridgeSaved"));
+      setBridgeNotice({ kind: "ok", text: t("bridgeSaved") });
       await reload();
     } finally {
       setSavingBridge(false);
@@ -312,7 +334,7 @@ export default function SuperAdminOrgHubPage() {
   async function saveClinicCutover() {
     if (!token) return;
     setSavingCutover(true);
-    setMessage("");
+    setCutoverNotice(null);
     try {
       const hotelId = cutoverDraft.hotelOrganizationId.trim();
       const res = await orchFetch(`/v1/admin/orgs/${orgId}/clinic-cutover`, {
@@ -324,10 +346,17 @@ export default function SuperAdminOrgHubPage() {
         }),
       });
       if (!res.ok) {
-        setMessage(t("cutoverSaveFailed", { status: res.status }));
+        const detail = await noticeFromFailedResponse(res);
+        setCutoverNotice({
+          kind: "err",
+          text: t("cutoverSaveFailed", {
+            status: res.status,
+            detail: detail ? `: ${detail}` : "",
+          }),
+        });
         return;
       }
-      setMessage(t("cutoverSaved"));
+      setCutoverNotice({ kind: "ok", text: t("cutoverSaved") });
       await reload();
     } finally {
       setSavingCutover(false);
@@ -604,6 +633,14 @@ export default function SuperAdminOrgHubPage() {
               {t("saveThenSync")}
             </button>
           </div>
+          {bridgeNotice ? (
+            <p
+              className={`text-sm ${bridgeNotice.kind === "err" ? "text-red-700" : "text-emerald-700"}`}
+              role={bridgeNotice.kind === "err" ? "alert" : undefined}
+            >
+              {bridgeNotice.text}
+            </p>
+          ) : null}
         </section>
       ) : null}
 
@@ -650,6 +687,14 @@ export default function SuperAdminOrgHubPage() {
               {t("saveThenSync")}
             </button>
           </div>
+          {cutoverNotice ? (
+            <p
+              className={`text-sm ${cutoverNotice.kind === "err" ? "text-red-700" : "text-emerald-700"}`}
+              role={cutoverNotice.kind === "err" ? "alert" : undefined}
+            >
+              {cutoverNotice.text}
+            </p>
+          ) : null}
         </section>
       ) : null}
     </div>
