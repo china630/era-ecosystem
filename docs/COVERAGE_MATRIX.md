@@ -431,7 +431,7 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
-| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | Workspace → employments: hire (sex/DOB/optional blood), employee card, transfer/terminate; ⋯ overflow always visible (Reprovision disabled until active satellite bindings); list/detail include active roleBindings; filters sex/age/org/position (API UI, no UAT-SMOKE yet) |
+| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | Workspace → employments: hire (sex/DOB/optional blood), employee card, transfer/terminate; ⋯ overflow always visible (Reprovision disabled until active satellite bindings); ⋯ Login & access shows `emp-{staffCode}` + active satellite roles (PIN hint 0000); list/detail include active roleBindings; filters sex/age/org/position (API UI, no UAT-SMOKE yet) |
 | CP-WF-ABS-01 | Absence workflow (7 TK AZ kinds, modal CRUD) | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | table+CatalogField; cancel unlocks timesheet cells; not a timesheet grid |
 | CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | multi-line modal + status gates; list `{ items, persons }`; API until UAT-SMOKE |
 | CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | status gates; list `{ items, persons }`; API until UAT-SMOKE |
@@ -478,6 +478,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-01 | CP-WF-EMP-01: employments ⋯ Login & access (`emp-{staffCode}` + satellite roles, PIN 0000). Status API — not SHIPPED. |
 | 2026-08-31 | CP-WF-TS harden: APPROVED cells immutable; cherry-pick approve 410; empty approve 400; absence cancel unlock + sync reconcile; Finance UI link-only + EN banner; vacation multi-line + status gates. Status API — not SHIPPED. |
 | 2026-08-31 | CP-WF-TS-01 month grid is CP attendance SoR (Finance 409 `TIMESHEET_MASTER_IS_CP` when `platform_workforce`); VAC/ORD/STAT table+modal; ABS table header + CatalogField. Status API — not SHIPPED (no UAT-SMOKE). |
 | 2026-08-31 | CLI-WF-PWD-01 clinic `/account/password`; hotel/fnb STAFF_PROVISIONED scrypt + tenant; other satellites documented as no local login fan-out. |

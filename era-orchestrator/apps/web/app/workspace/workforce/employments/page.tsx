@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowRightLeft,
+  KeyRound,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -56,7 +57,7 @@ type EmploymentRow = {
   position?: { name: string; id?: string } | null;
   orgUnitId?: string;
   positionId?: string;
-  roleBindings?: Array<{ satelliteKey: string }>;
+  roleBindings?: Array<{ satelliteKey: string; satelliteRole?: string }>;
 };
 
 type ListResponse = {
@@ -79,6 +80,23 @@ const SATELLITE_OPTIONS = [
   { key: "industry_hotel_pms", label: "Hotel PMS" },
   { key: "industry_fnb_pos", label: "F&B POS" },
 ] as const;
+
+/** Same formula as WorkforceProvisionService.staffCodeFromEmployment + login. */
+function staffLoginFromEmploymentId(employmentId: string): string {
+  const staffCode = employmentId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `emp-${staffCode.toLowerCase()}`;
+}
+
+function satelliteLabel(key: string): string {
+  return SATELLITE_OPTIONS.find((s) => s.key === key)?.label ?? key;
+}
+
+function humanizeRole(code: string): string {
+  return code
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
 
 const SEX_VALUES = ["MALE", "FEMALE", "UNKNOWN"] as const;
 const BLOOD_VALUES = [
@@ -163,6 +181,9 @@ export default function WorkforceEmploymentsPage() {
   const [transferPositionId, setTransferPositionId] = useState("");
   const [cardOpen, setCardOpen] = useState(false);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginEmp, setLoginEmp] = useState<EmploymentRow | null>(null);
+  const [loginCopied, setLoginCopied] = useState(false);
 
   useEffect(() => {
     if (!moreMenuId) return;
@@ -967,7 +988,20 @@ export default function WorkforceEmploymentsPage() {
                             />
                           </button>
                           {moreMenuId === r.id ? (
-                            <div className="absolute right-0 z-10 mt-1 min-w-[10rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                            <div className="absolute right-0 z-10 mt-1 min-w-[11rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7]"
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  setLoginEmp(r);
+                                  setLoginCopied(false);
+                                  setLoginOpen(true);
+                                }}
+                              >
+                                <KeyRound className="h-3.5 w-3.5" aria-hidden />
+                                {t("loginInfo")}
+                              </button>
                               <button
                                 type="button"
                                 className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
@@ -1357,6 +1391,86 @@ export default function WorkforceEmploymentsPage() {
             </button>
           </div>
         </form>
+      </ModalShell>
+
+      <ModalShell
+        open={loginOpen && !!loginEmp}
+        title={t("loginInfoTitle")}
+        subtitle={t("loginInfoSubtitle")}
+        onClose={() => {
+          setLoginOpen(false);
+          setLoginEmp(null);
+          setLoginCopied(false);
+        }}
+        closeLabel={tCommon("close")}
+      >
+        {loginEmp ? (
+          <div className="space-y-4 text-[13px] text-[#34495E]">
+            <div>
+              <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                {t("loginLabel")}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <code className="rounded bg-[#F4F6F7] px-2 py-1 font-mono text-[14px] text-[#2C3E50]">
+                  {staffLoginFromEmploymentId(loginEmp.id)}
+                </code>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    const login = staffLoginFromEmploymentId(loginEmp.id);
+                    void navigator.clipboard?.writeText(login).then(() => {
+                      setLoginCopied(true);
+                      window.setTimeout(() => setLoginCopied(false), 2000);
+                    });
+                  }}
+                >
+                  {loginCopied ? t("loginCopied") : t("copyLogin")}
+                </button>
+              </div>
+            </div>
+            <p className="text-[#7F8C8D]">{t("defaultPinHint")}</p>
+            <div>
+              <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                {t("satellitesAccess")}
+              </div>
+              {(loginEmp.roleBindings ?? []).length === 0 ? (
+                <p className="text-[#7F8C8D]">{t("noSatelliteAccess")}</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {(loginEmp.roleBindings ?? []).map((b) => (
+                    <li
+                      key={`${b.satelliteKey}:${b.satelliteRole ?? ""}`}
+                      className="flex items-center justify-between gap-3 rounded-md border border-[#E8ECF0] px-3 py-2"
+                    >
+                      <span className="font-medium text-[#2C3E50]">
+                        {satelliteLabel(b.satelliteKey)}
+                      </span>
+                      <span className="text-[#7F8C8D]">
+                        {b.satelliteRole
+                          ? humanizeRole(b.satelliteRole)
+                          : t("roleUnset")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => {
+                  setLoginOpen(false);
+                  setLoginEmp(null);
+                  setLoginCopied(false);
+                }}
+              >
+                {tCommon("close")}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </ModalShell>
     </>
   );

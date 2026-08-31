@@ -150,7 +150,7 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/security/audit` | audit log |
 | Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |
 | Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
-| Web `/workspace/workforce/employments` | hire (sex/DOB/optional blood); employee card; icon actions; age/sex filters; deep-link `?orgUnitId=` / `?positionId=` |
+| Web `/workspace/workforce/employments` | hire (sex/DOB/optional blood); employee card; ⋯ Login & access (`emp-{staffCode}` + satellite roles); icon actions; age/sex filters; deep-link `?orgUnitId=` / `?positionId=` |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
 | Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
 | Web `/workspace/workforce/personnel-orders` | create/issue/PDF |
