@@ -22,7 +22,7 @@ Four tiers for workforce identity:
 ### Rules
 
 1. Identifier values (FIN, passport) — **only MDM**; never on CP `WorkforceEmployment` / `WorkforceAbsence`; never plaintext on Finance `Employee`.
-2. CP workforce UI lists use `POST /internal/v1/mdm/persons/ops-profile/batch` (max 100 ids, single `WORKFORCE_OPS_PROFILE_BATCH` access log per call).
+2. CP workforce UI lists use `POST /internal/v1/mdm/persons/ops-profile/batch` (**HTTP max 100 ids**, one `WORKFORCE_OPS_PROFILE_BATCH` access log per call). Server-side list/export (`batchGetPersonOpsProfile`) **chunks by 100** so a roster larger than 100 still gets display names — do not show `globalPersonId` prefixes in pickers.
 3. Hire intake uses `POST /internal/v1/mdm/persons/workforce-resolve` → `globalPersonId` before CP employment persist.
 4. `STAFF_PROVISIONED.payload.fullName` is a **T3 display stamp only** (from MDM at provision time); not authoritative.
 5. Finance Employee create/update rejects body fields `finCode`, `firstName`, `lastName`, `passportNumber`; list/get enrich via MDM batch on the server.

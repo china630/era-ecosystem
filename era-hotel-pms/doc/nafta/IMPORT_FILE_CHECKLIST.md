@@ -15,27 +15,27 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 
 | Order | Entity | File on disk | Status | Notes |
 |------:|--------|--------------|--------|-------|
-| 10 | `revenue-codes` | `03-Revenue-Codes.xlsx` | [x] | Also optional `db:seed:reference` |
-| 11 | `bed-types` | `04-Bed-Types.xlsx` | [x] | |
-| 12 | `room-views` | `05-Room-Views.xlsx` | [x] | |
-| 20 | `room-types` | `06-Room-Types.xlsx` | [x] | |
-| 21 | `rate-plans` | `07-Rate-Codes.xlsx` | [x] | EW Rate Codes |
-| 21.5 | `package-sell` | `14-Package-Sell-2026.xlsx` | [x] | Desk sell from PDF (not EW). Adapter skips `desk=N`. **Extra bed:** Standart **96 AZN**, other packages **48** (half, rounded). |
-| 22 | `rooms` | `08-Rooms.xlsx` | [x] | Inventory only: `Room No`, `Room Type`, `Floor`, `Bed Type`. |
-| 30 | `agencies` | `09-Travel-Agencies.xlsx` | [x] | |
-| 40 | `guests` | `10-Guest-Cards.xlsx` | [x] | **8 782** after August overlay + FO-only `wo:fo:{id}`. |
-| 50 | `reservations` | `11-Reservations.xlsx` | [x] | **6 158** `Res Id` (August FOCP overlay + 41 new) |
-| 55 | `reservation-notes` | `12-Reservation-Notes.xlsx` | [x] | YTD EW Notes → matched Res Id (skip Channel / empty type). 1 225 packed rows. |
-| 60 | `folios` | `hotel/13-folio-parts/13-Folio-p01.xlsx` … | [x] | Чанки Apply. Archive START `13-Folio-Transactions.merged.xlsx`. Splitter input: START `13-Folio-Transactions.hotel.xlsx`. |
-| 65 | `agency-statement` | `15-Agency-Statement.xlsx` | [x] | EW **Agency Statement** 2026-08-31. **Hotel FO city ledger**, not 1C. Remaining > 0 → AGENCY folio (`ew:agency-stmt:{ResId}`). Skip Remaining ≤ 0. Missing reservation = per-row error. |
+| 3 | `revenue-codes` | `03-Revenue-Codes.xlsx` | [x] | Also optional `db:seed:reference` |
+| 4 | `bed-types` | `04-Bed-Types.xlsx` | [x] | |
+| 5 | `room-views` | `05-Room-Views.xlsx` | [x] | |
+| 6 | `room-types` | `06-Room-Types.xlsx` | [x] | |
+| 7 | `rate-plans` | `07-Rate-Codes.xlsx` | [x] | EW Rate Codes |
+| 8 | `rooms` | `08-Rooms.xlsx` | [x] | Inventory only: `Room No`, `Room Type`, `Floor`, `Bed Type`. |
+| 9 | `agencies` | `09-Travel-Agencies.xlsx` | [x] | |
+| 10 | `guests` | `10-Guest-Cards.xlsx` | [x] | **8 782** after August overlay + FO-only `wo:fo:{id}`. |
+| 11 | `reservations` | `11-Reservations.xlsx` | [x] | **6 158** `Res Id` (August FOCP overlay + 41 new) |
+| 12 | `reservation-notes` | `12-Reservation-Notes.xlsx` | [x] | YTD EW Notes → matched Res Id (skip Channel / empty type). 1 225 packed rows. |
+| 13 | `folios` | `hotel/13-folio-parts/13-Folio-p01.xlsx` … | [x] | Чанки Apply. Archive START `13-Folio-Transactions.merged.xlsx`. Splitter input: START `13-Folio-Transactions.hotel.xlsx`. |
+| 14 | `package-sell` | `14-Package-Sell-2026.xlsx` | [x] | After folios. Desk sell from PDF (not EW). Adapter skips `desk=N`. **Extra bed:** Standart **96 AZN**, other packages **48** (half, rounded). |
+| 15 | `agency-statement` | `15-Agency-Statement.xlsx` | [x] | EW **Agency Statement** 2026-08-31. **Hotel FO city ledger**, not 1C. Remaining > 0 → AGENCY folio (`ew:agency-stmt:{ResId}`). Skip Remaining ≤ 0. Missing reservation = per-row error. |
 
 ### Hotel — related files (not hotel wizard)
 
 | File | Status | Use |
 |------|--------|-----|
 | `fnb/32-FnB-Transactions.xlsx` | [x] | **8 559** walk-in POS (`merge-fnb-2026.cjs`: `START/fnb/_source/ew-2026-999-fb` Jan–3 Jul + `ew-2026-xudmani` CASH FOLIO Jul–Aug). Named Xudmani in-house extras go to hotel `#13`. **Apply on F&B** `/admin/import` entity `fnb-transactions` — **not** hotel guest folio |
-| `fnb/30-Product-Group-List.xlsx` + `31-Product-Cards.xlsx` | [x] | EW 31.08 groups + 200 cards. Empty `Ürün Kodu` stamped `ERA-FNB-{Id}` until 1C. **Apply on F&B** `/admin/import` (`product-groups` → `product-cards`). Hotel master still has a copy for hotel `Product` SKUs. |
-| `retail/33-Stock-Cards.xlsx` | [x] | Retail (naftalan shop), not pharmacy 1C. **Apply on Retail** `/admin/import` entity `stock-cards`. Empty code → `ERA-STK-{Id}`. |
+| `fnb/30-Product-Group-List.xlsx` + `31-Product-Cards.xlsx` | [x] | EW 31.08 groups + 200 cards. Empty `Ürün Kodu` stamped `ERA-FNB-{Id}` until 1C. **Apply on F&B** `/admin/import` (`product-groups` → `product-cards`). **Not** on hotel `/settings/import`. |
+| `retail/33-Stock-Cards.xlsx` | [x] | Retail (naftalan shop), not pharmacy 1C. **Apply on Retail** `/admin/import` entity `stock-cards`. Empty code → `ERA-STK-{Id}`. **Not** on hotel `/settings/import`. |
 | `hotel/15-Agency-Statement.xlsx` | [x] | EW Agency Statement **2026-08-31** (518 Res Id / 256 Remaining > 0). **Hotel wizard** `agency-statement` — FO AGENCY folio city ledger. **Not** 1C AR/AP (`#39` still ASK). |
 | `hotel/_not-ready/` | [x] | BAR, ProFolio, Contract, EW CoA — not Apply |
 | `hotel/14-Package-Prices-2026.csv` | [x] | START source for READY `#14` + clinic `#23` |

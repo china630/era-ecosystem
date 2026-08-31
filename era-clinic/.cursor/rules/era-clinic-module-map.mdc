@@ -41,7 +41,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 |-------|-----|
 | `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
 | `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
-| `/patients` | `/api/patients` — paginated list (`q`, sex, blood, MDM, age, `roomNumber` when sanatorium) + register; modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`) |
+| `/patients` | `/api/patients` — paginated list (`q` name parts + refCode, sex, blood, MDM **admin-only**, age, `roomNumber` when sanatorium) + register (Ad/Soyad/Ata adı, auto `P-######`); modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`). Reception: no MDM column/filter |
 | `/patients/[id]` | `/api/patients/[id]` PATCH (**today:** anamnesis required on demographics; **CLI-55:** anamnesis on episode, not this PATCH); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); `intakeChecklist` (`PKG-NAFTA-INTAKE`); now/next + PLAN preview Baku `atLabel` / `scheduledAt >= now`; card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`). **CLI-55 PLANNED:** episode select + archive blocks — [ADR](../../../docs/adr/clinic-episode-as-clinical-course.md) |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
@@ -91,13 +91,14 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |
 | `/admin/lookups` | `/api/admin/lookups` BODY_PART |
 | `/admin/physio-sites` | CLI-49 — `GET/POST /api/admin/physio-sites`, `GET/PATCH/DELETE …/[id]` (DELETE = retire); lists `GET/POST /api/admin/physio-lists`; unmatched `GET /api/admin/physio-nahiye-queue`, `PATCH …/[id]` (`ignore` \| `alias` existing S only); ops `GET /api/physio-catalog`. W4: `#23` slots `nahiye` → `note` + matcher. Seed `npm run db:seed:physio` (= base + Nafta overlay). ADR clinic-catalog-base-and-org-overlay-seeds |
+| `/account/password` | session — local staff change password (`PATCH /api/auth/password`); SSO 403 |
 
 ## Integration
 
 | Route | Auth |
 |-------|------|
 | `/api/integration/hotel-lifecycle` | bridge secret — check-in/out, room change, **stay product changed** |
-| `/api/integration/staff-provision` | bridge secret |
+| `/api/integration/staff-provision` | bridge secret — `enterRequestTenant`; scrypt User hash; Practitioner unique name link |
 | `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback |
 | `/api/billing/context` | session — `deferWalkInToHub` for cashier gate |
 | `/api/procedures/confirm` | session **DOCTOR** (+ admin) — confirm `PROPOSED` → `placeConfirmedProcedures` FIFO |

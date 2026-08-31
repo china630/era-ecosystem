@@ -37,6 +37,7 @@
     "cutoverImport": "Импорт cutover",
     "audit": "Аудит",
     "logout": "Выход",
+    "changePassword": "Сменить пароль",
     "wardsAdmin": "Палаты (админ)",
     "inpatientCensus": "Стационар — перепись",
     "diagnosticCatalog": "Каталог диагностики",
@@ -51,7 +52,21 @@
     "password": "Пароль",
     "submit": "Войти",
     "busy": "Вход…",
-    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator",
+    "provisionHint": "Первый логин кадров — PIN 0000. После входа: меню профиля → Сменить пароль."
+  },
+  "account": {
+    "title": "Сменить пароль",
+    "subtitle": "Кадровые учётки начинают с PIN 0000. Задайте свой пароль здесь.",
+    "current": "Текущий пароль",
+    "newPassword": "Новый пароль (минимум 8 символов)",
+    "confirm": "Подтвердите новый пароль",
+    "submit": "Сохранить пароль",
+    "busy": "Сохранение…",
+    "success": "Пароль обновлён.",
+    "failed": "Не удалось обновить пароль.",
+    "mismatch": "Новый пароль и подтверждение не совпадают.",
+    "ssoOnly": "Этот аккаунт входит через SSO, локального пароля нет."
   },
   "home": {
     "loading": "Загрузка…",
@@ -224,7 +239,15 @@
     "colType": "Тип",
     "colAmount": "Сумма",
     "colCreated": "Дата",
-    "openOrder": "Открыть"
+    "openOrder": "Открыть",
+    "patientSearchPlaceholder": "Имя пациента или P-код…",
+    "cancelOrder": "Отменить заказ",
+    "cancelConfirm": "Отменить этот лабораторный заказ?",
+    "patientRefCode": "Код пациента",
+    "patientFullName": "Имя пациента",
+    "labRepeatTitle": "Повторить лабораторный заказ?",
+    "labRepeatBody": "{code} уже выполнен. Заказать снова?",
+    "labAlreadyOpen": "Уже есть открытый лабораторный заказ на это исследование"
   },
   "labOrdersDetail": {
     "title": "Workflow лабораторного заказа",
@@ -660,7 +683,13 @@
     "bulkCancel": "Массовая отмена",
     "bulkCancelReason": "Причина",
     "replaceWithCode": "Код замены (необязательно)",
-    "bulkCancelled": "Процедуры отменены"
+    "bulkCancelled": "Процедуры отменены",
+    "labRepeatTitle": "Повторить лабораторный заказ?",
+    "labRepeatBody": "{code} уже выполнен в этом курсе. Заказать снова?",
+    "labAlreadyOpen": "Уже есть открытый лабораторный заказ на это исследование",
+    "labCancelConfirm": "Отменить этот лабораторный заказ?",
+    "labCancelled": "Лабораторный заказ отменён",
+    "labCancelOrder": "Отменить лаб"
   },
   "adminSettings": {
     "title": "Параметры клиники",
@@ -1037,6 +1066,7 @@
     "chapter": "Глава",
     "allChapters": "Все главы",
     "searchPlaceholder": "Поиск кода или названия МКБ-10",
+    "searchHint": "Введите код или название диагноза",
     "code": "Код МКБ-10",
     "note": "Примечание",
     "role": "Роль",
@@ -1083,6 +1113,10 @@
     "filterHotelRoomAll": "Все номера",
     "filterProgramCode": "Программа / пакет",
     "filterProgramCodeAll": "Все программы",
+    "filterEpisodeStatus": "Статус курса",
+    "filterEpisodeOpen": "Открытые",
+    "filterEpisodeAll": "Все",
+    "filterEpisodeClosed": "Закрытые",
     "checkIn": "Заезд",
     "checkOut": "Выезд",
     "refCode": "Код",
@@ -1116,7 +1150,7 @@
     "ageYears": "{age} лет",
     "ageUnknown": "Возраст не указан",
     "bloodGroup": "Группа крови",
-    "bloodUnknown": "Неизвестно",
+    "bloodUnknown": "Не указан",
     "emergencyContact": "Экстренный контакт",
     "emergencyContactName": "Имя экстренного контакта",
     "emergencyContactPhone": "Телефон экстренного контакта",
@@ -1132,7 +1166,15 @@
     "episodeClosedReadOnly": "Курс закрыт (только просмотр)",
     "anamnesisSave": "Сохранить анамнез",
     "anamnesisCourseMissing": "Нет курса — зарегистрируйте walk-in или дождитесь check-in",
-    "noEpisodes": "Нет курсов"
+    "noEpisodes": "Нет курсов",
+    "givenName": "Имя",
+    "surname": "Фамилия",
+    "fatherName": "Отчество",
+    "namePartsRequired": "Имя и фамилия обязательны",
+    "sexShortMale": "М",
+    "sexShortFemale": "Ж",
+    "issuingCountryPassport": "Страна (паспорт)",
+    "emptyList": "Пациентов нет"
   },
   "patientTimeline": {
     "title": "Клинический таймлайн",
@@ -1393,6 +1435,8 @@
     "stepCompleted": "Готово: {created} создано, {updated} обновлено, {errors} ошибок",
     "orderWarning": "Сначала закройте шаги: {steps}",
     "pickFileHint": "Выберите соответствующий .xlsx",
+    "pickFileHintMultiple": "Выберите сразу все чанки слотов (26-Slots-p01.xlsx …). Каждый файл уходит отдельным запросом.",
+    "chunkProgress": "Чанк {current} из {total}: {name}",
     "runBootstrap": "Запуск",
     "verifyMasterData": "Каталоги",
     "resetConfirm": "Сбросить прогресс мастера?",

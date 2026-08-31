@@ -24,6 +24,7 @@ import {
   FieldSelect,
   FIELD_SECTION_CLASS,
   LINK_ACCENT_CLASS,
+  ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
@@ -188,6 +189,8 @@ export default function MasterDataPage() {
   const debouncedFinanceQ = useDebouncedValue(financeProductQ, 300);
   const [skillCoverageMsg, setSkillCoverageMsg] = useState<string | null>(null);
   const [scheduleFor, setScheduleFor] = useState<{ id: string; name: string } | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const cpWorkforceMode = workforcePolicy?.hireMode === "cp_workforce";
   const blockPractitionerCreate = cpWorkforceMode;
@@ -258,6 +261,7 @@ export default function MasterDataPage() {
 
   useEffect(() => {
     setQ("");
+    setPage(1);
   }, [tab]);
 
   const filteredPractitioners = useMemo(
@@ -284,6 +288,48 @@ export default function MasterDataPage() {
         matchesFilter(debouncedQ, [row.code, row.name, row.resourceCode]),
       ),
     [procedureTypes, debouncedQ],
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQ, pageSize]);
+
+  const activeFilteredTotal = useMemo(() => {
+    switch (tab) {
+      case "practitioners":
+        return filteredPractitioners.length;
+      case "rooms":
+        return filteredRooms.length;
+      case "resources":
+        return filteredResources.length;
+      case "procedureTypes":
+        return filteredProcedureTypes.length;
+    }
+  }, [
+    tab,
+    filteredPractitioners.length,
+    filteredRooms.length,
+    filteredResources.length,
+    filteredProcedureTypes.length,
+  ]);
+
+  function slicePage<T>(arr: T[]): T[] {
+    const start = (page - 1) * pageSize;
+    return arr.slice(start, start + pageSize);
+  }
+
+  const pagedPractitioners = useMemo(
+    () => slicePage(filteredPractitioners),
+    [filteredPractitioners, page, pageSize],
+  );
+  const pagedRooms = useMemo(() => slicePage(filteredRooms), [filteredRooms, page, pageSize]);
+  const pagedResources = useMemo(
+    () => slicePage(filteredResources),
+    [filteredResources, page, pageSize],
+  );
+  const pagedProcedureTypes = useMemo(
+    () => slicePage(filteredProcedureTypes),
+    [filteredProcedureTypes, page, pageSize],
   );
 
   function resetModalExtras() {
@@ -757,7 +803,7 @@ export default function MasterDataPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPractitioners.map((row) => (
+                {pagedPractitioners.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.fullName}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -827,7 +873,7 @@ export default function MasterDataPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRooms.map((row) => (
+                {pagedRooms.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -868,7 +914,7 @@ export default function MasterDataPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredResources.map((row) => (
+                {pagedResources.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -913,7 +959,7 @@ export default function MasterDataPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProcedureTypes.map((row) => (
+                {pagedProcedureTypes.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -947,6 +993,22 @@ export default function MasterDataPage() {
             </table>
           )}
         </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={activeFilteredTotal}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
 
       <ModalShell

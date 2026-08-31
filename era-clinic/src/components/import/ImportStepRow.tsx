@@ -28,6 +28,7 @@ type Props = {
   label: string;
   templateHint: string;
   fileless?: boolean;
+  allowMultiple?: boolean;
   strictOrder: boolean;
   isLastInPhase: boolean;
   storedStatus: StoredImportStepStatus | null;
@@ -47,6 +48,7 @@ type Props = {
     orderWarning: string;
     pickFileHint: string;
     runBootstrap: string;
+    chunkProgress?: string;
   };
   onStatusChange: (entity: string, status: StoredImportStepStatus | null) => void;
 };
@@ -57,6 +59,7 @@ export function ImportStepRow({
   label,
   templateHint,
   fileless = false,
+  allowMultiple = false,
   strictOrder,
   isLastInPhase,
   storedStatus,
@@ -67,10 +70,12 @@ export function ImportStepRow({
   const [phase, setPhase] = useState<RowPhase>(() => (storedStatus ? 'done' : 'idle'));
   const [expanded, setExpanded] = useState(() => !storedStatus);
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<ImportSummary | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(storedStatus ? null : null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [chunkLine, setChunkLine] = useState<string | null>(null);
 
   const summary = phase === 'done' ? result : preview;
   const done = phase === 'done' && Boolean(storedStatus || result);
@@ -102,11 +107,18 @@ export function ImportStepRow({
       await handleFilelessRun(true);
       return;
     }
-    if (!file) return;
+    const upload = allowMultiple ? files : file;
+    if (!upload || (Array.isArray(upload) && upload.length === 0)) return;
     setBusy(true);
     setError(null);
+    setChunkLine(null);
     try {
-      const s = await uploadImportFile(entity, file, true);
+      const s = await uploadImportFile(entity, upload, true, (current, total, name) => {
+        const tpl = labels.chunkProgress ?? '{current}/{total} {name}';
+        setChunkLine(
+          tpl.replace('{current}', String(current)).replace('{total}', String(total)).replace('{name}', name),
+        );
+      });
       setPreview(s);
       setPhase('preview');
       setExpanded(true);
@@ -114,6 +126,7 @@ export function ImportStepRow({
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
+      setChunkLine(null);
     }
   }
 
@@ -122,28 +135,39 @@ export function ImportStepRow({
       await handleFilelessRun(false);
       return;
     }
-    if (!file) return;
+    const upload = allowMultiple ? files : file;
+    if (!upload || (Array.isArray(upload) && upload.length === 0)) return;
     setBusy(true);
     setError(null);
+    setChunkLine(null);
     try {
-      const s = await uploadImportFile(entity, file, false);
+      const s = await uploadImportFile(entity, upload, false, (current, total, name) => {
+        const tpl = labels.chunkProgress ?? '{current}/{total} {name}';
+        setChunkLine(
+          tpl.replace('{current}', String(current)).replace('{total}', String(total)).replace('{name}', name),
+        );
+      });
       setResult(s);
       setPhase('done');
-      const stored = saveImportStepStatus(entity, s, file.name);
+      const storedName = Array.isArray(upload) ? upload.map((f) => f.name).join(', ') : upload.name;
+      const stored = saveImportStepStatus(entity, s, storedName);
       onStatusChange(entity, stored);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
+      setChunkLine(null);
     }
   }
 
   function handleReimport() {
     setPhase('idle');
     setFile(null);
+    setFiles([]);
     setPreview(null);
     setResult(null);
     setError(null);
+    setChunkLine(null);
     setExpanded(true);
     clearImportStepStatus(entity);
     onStatusChange(entity, null);
@@ -214,20 +238,27 @@ export function ImportStepRow({
             ) : null}
 
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
+            {chunkLine ? <p className="text-[13px] text-[#2980B9]">{chunkLine}</p> : null}
 
             {(phase === 'idle' || phase === 'preview') && !fileless && (
               <div className="space-y-2">
                 <input
                   type="file"
                   accept=".xlsx,.xls"
+                  multiple={allowMultiple}
                   className={MODAL_INPUT_CLASS}
                   onChange={(e) => {
-                    setFile(e.target.files?.[0] ?? null);
+                    const picked = Array.from(e.target.files ?? []);
+                    setFiles(picked);
+                    setFile(picked[0] ?? null);
                     setPreview(null);
                     setError(null);
                     if (phase === 'preview') setPhase('idle');
                   }}
                 />
+                {allowMultiple && files.length > 0 ? (
+                  <p className="text-[13px] text-[#34495E]">{files.map((f) => f.name).join(', ')}</p>
+                ) : null}
                 <p className="text-[13px] text-[#7F8C8D]">{labels.pickFileHint}</p>
               </div>
             )}
@@ -245,7 +276,7 @@ export function ImportStepRow({
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
-                  disabled={(fileless ? false : !file) || busy}
+                  disabled={(fileless ? false : allowMultiple ? files.length === 0 : !file) || busy}
                   onClick={() => void handlePreview()}
                 >
                   {fileless ? labels.runBootstrap : labels.preview}
@@ -267,7 +298,7 @@ export function ImportStepRow({
                   <button
                     type="button"
                     className={PRIMARY_BUTTON_CLASS}
-                    disabled={(fileless ? false : !file) || busy}
+                    disabled={(fileless ? false : allowMultiple ? files.length === 0 : !file) || busy}
                     onClick={() => void handleImport()}
                   >
                     {labels.import}

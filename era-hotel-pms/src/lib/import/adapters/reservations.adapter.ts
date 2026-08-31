@@ -67,7 +67,7 @@ async function resolveGuestId(
 export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'reservations',
   label: 'Reservations',
-  order: 50,
+  order: 11,
   permission: PERMISSIONS.RESERVATIONS_WRITE,
   templateHint: '11-Reservations.xlsx — EW Front Office Control Panel',
   headerAliases: {

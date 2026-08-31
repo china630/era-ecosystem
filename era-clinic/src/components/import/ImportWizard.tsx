@@ -24,6 +24,7 @@ type ImportEntity = {
   order: number;
   templateHint: string;
   fileless?: boolean;
+  allowMultiple?: boolean;
 };
 
 type Props = {
@@ -77,6 +78,7 @@ export function ImportWizard({ entities }: Props) {
       orderWarning: t('orderWarning'),
       pickFileHint: t('pickFileHint'),
       runBootstrap: t('runBootstrap'),
+      chunkProgress: t('chunkProgress'),
     }),
     [t],
   );
@@ -158,11 +160,15 @@ export function ImportWizard({ entities }: Props) {
                   label={meta.label}
                   templateHint={meta.templateHint}
                   fileless={meta.fileless}
+                  allowMultiple={meta.allowMultiple}
                   strictOrder={current.phase.strictOrder}
                   isLastInPhase={idx === current.entities.length - 1}
                   storedStatus={statuses[meta.entity] ?? null}
                   missingPriorLabels={missingPriorLabels(meta.entity)}
-                  labels={rowLabels}
+                  labels={{
+                    ...rowLabels,
+                    pickFileHint: meta.allowMultiple ? t('pickFileHintMultiple') : rowLabels.pickFileHint,
+                  }}
                   onStatusChange={handleStatusChange}
                 />
               );

@@ -66,27 +66,26 @@ Three phases, steps top to bottom:
 
 ```
 Phase 1 — Dictionaries (any order within phase)
-  10  Revenue Codes      Revenue Code Definitions.xlsx
-  11  Bed Types          Bed Type.xlsx
-  12  Room Views         Room Views.xlsx
+  03  Revenue Codes      03-Revenue-Codes.xlsx
+  04  Bed Types          04-Bed-Types.xlsx
+  05  Room Views         05-Room-Views.xlsx
 
-Phase 2 — Hotel master data (recommended top → bottom)
-  20  Room Types         Room Types.xlsx
-  21  Rate Plans         Rate Codes.xlsx
-  22  Rooms              Rooms.xlsx
-  30  Travel Agencies    Travel Agencies.xlsx
-  31  Product Cards      Product Cards.xlsx  (SELLABLE)
-  32  Stock Cards        Stock Cards.xlsx    (STOCK)
+Phase 2 — Hotel master data (strict top → bottom)
+  06  Room Types         06-Room-Types.xlsx
+  07  Rate Plans         07-Rate-Codes.xlsx
+  08  Rooms              08-Rooms.xlsx
+  09  Travel Agencies    09-Travel-Agencies.xlsx
 
 Phase 3 — Transactional (strict order)
-  40  Guests             Guests.xlsx
-  50  Reservations       Reservations.xlsx
-  55  Reservation notes  FO-with-Notes / Notes dump (.xlsx)
-  60  Folios             Folios.xlsx
-  65  Agency Statement   15-Agency-Statement.xlsx  (FO city ledger remaining; not 1C)
+  10  Guests             10-Guest-Cards.xlsx
+  11  Reservations       11-Reservations.xlsx
+  12  Reservation notes  12-Reservation-Notes.xlsx
+  13  Folios             13-folio-parts/13-Folio-p01.xlsx … p12
+  14  Package sell       14-Package-Sell-2026.xlsx  (PDF desk, not EW)
+  15  Agency Statement   15-Agency-Statement.xlsx  (FO city ledger remaining; not 1C)
 ```
 
-Numbers match adapter `order` field in code. **Reservation notes** runs after reservations (needs `Res Id` → `externalRef`) and before folios; stamps medical SKU from Extra/agency when present.
+Numbers match READY pack-layout `#03`–`#15` and adapter `order`. **Not on this form:** BAR bootstrap (no Nafta file); FnB `#30`–`#32` (`era-fnb-pos` `/admin/import`); Retail `#33` (`era-retail-pos` `/admin/import`). **Reservation notes** runs after reservations (needs `Res Id` → `externalRef`) and before folios; stamps medical SKU from Extra/agency when present.
 
 ### 3.3 Per-step workflow
 
@@ -128,9 +127,8 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Rate Codes.xlsx | `rate-plans` | `RatePlan` | `code` | Legacy flat price fields |
 | Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode`. **Skip** virtual share labels (`707S`) — not master rooms. Nafta cutover: keep `Room No` / `Room Type` / `Floor` / `Bed Type` only. Ignore EW `Max Bed=0` (use `RoomType.adultCapacity`) and `Room State` HK snapshot (import leaves `AVAILABLE`). |
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | EW columns **Agent Code** + **Full Name** (Nafta READY: 212 rows). Footer/blank rows skipped. |
-| `31-Product-Cards.xlsx` | `product-cards` | `Product` | `code` | READY `#31`. Empty EW `Ürün Kodu` stamped `ERA-FNB-{Id}` until 1C. |
-| `33-Stock-Cards.xlsx` | `stock-cards` | `Product` | `code` | READY `#33` |
-| `10-Guest-Cards.xlsx` | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
+| `14-Package-Sell-2026.xlsx` | `package-sell` | desk sell rates | package code | After folios on the wizard (`#14`). PDF desk, not EW. Adapter skips `desk=N`. Extra bed: Standart 96 AZN, others 48. |
+| `10-Guest-Cards.xlsx` | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`).
 | `11-Reservations.xlsx` | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
 | `12-Reservation-Notes.xlsx` | `reservation-notes` | `ReservationNote` | `(reservationId, noteType)` | All nine EW note columns → ERA types (`EXTRA_REQ`…`INVOICE_NOTE`); then medical SKU stamp (HOT-PKG-02). Field map + 2026 extract: [`reports/nafta-ew-notes-2026/README.md`](../../reports/nafta-ew-notes-2026/README.md). Cheatsheet: [ERA-PKG-FO-CHEATSHEET.md](./nafta/ERA-PKG-FO-CHEATSHEET.md) |
 | `13-Folio-p01.xlsx` … `p12` | `folios` | `FolioCharge` | `externalRef` | Multi-select all chunks in one step. |
@@ -154,13 +152,13 @@ Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assign
 
 ```text
 [Revenue codes] ──┐
-[Bed types]     ──┼──► Room types ──► Rate plans ──► Rooms
+[Bed types]     ──┼──► Room types ──► Rate plans ──► Rooms ──► Agencies
 [Room views]    ──┘         │              │
-                            │              └──► Reservations ──► Folios
-[Agencies] ─────────────────┼───────────────────────►      ▲
-[Product / Stock cards] ────┘                              │
+                            │              └──► Reservations ──► Folios ──► Package sell ──► Agency statement
 [Guests] ──────────────────────────────────────────────────┘
 ```
+
+FnB product groups/cards and retail stock are **not** hotel wizard steps — Apply on `era-fnb-pos` / `era-retail-pos`.
 
 - **Reservations** resolve RoomType (code/name), optional Room, Agency, Guest (name or existing guest).
 - **Folios** resolve Reservation by `externalRef`, RevenueCode by `code`.
@@ -232,7 +230,9 @@ Excel row numbers in `errors[].row` are **1-based sheet rows** (header = row 1, 
 
 ### Entity slugs
 
-`revenue-codes`, `bed-types`, `room-views`, `room-types`, `rate-plans`, `rooms`, `agencies`, `product-cards`, `stock-cards`, `guests`, `reservations`, `reservation-notes`, `folios`, `agency-statement`.
+Wizard (`GET /api/import`): `revenue-codes`, `bed-types`, `room-views`, `room-types`, `rate-plans`, `rooms`, `agencies`, `guests`, `reservations`, `reservation-notes`, `folios`, `package-sell`, `agency-statement`.
+
+API-only (not listed on the form): `bar-bootstrap`, `product-cards`, `stock-cards` — FnB/retail Apply on their satellites.
 
 ---
 
@@ -326,7 +326,7 @@ Run reference seed on **every new deployment** before or alongside first propert
 | Symptom | Likely cause | Action |
 |---------|--------------|--------|
 | 403 on import API | User not in `PLATFORM_SUPER_ADMIN_EMAILS` | SSO email must match env list |
-| Room type not found (reservations) | Phase 2 step 20 skipped | Import Room Types first; re-run reservations |
+| Room type not found (reservations) | Phase 2 step 06 skipped | Import Room Types first; re-run reservations |
 | No guests in database | Guests step skipped | Import Guests.xlsx before Reservations |
 | MDM not linked | Missing FIN/passport in row | Expected; link manually via guest card / person lookup |
 | Duplicate key errors | Changed upsert key in source | Fix Excel or clear conflicting row in DB |

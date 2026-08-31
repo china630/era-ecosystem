@@ -3,24 +3,49 @@ import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { listOpenEpisodes, registerWalkInEpisode } from "@/lib/services/sanatorium.service";
 
-const walkInSchema = z.object({
-  fullName: z.string().min(1),
-  fin: z.string().optional(),
-  passport: z.string().optional(),
-  phone: z.string().optional(),
-  sex: z.enum(["MALE", "FEMALE"]),
-  birthDate: z.string().optional(),
-  nationality: z.string().optional(),
-  issuingCountry: z.string().optional(),
-  globalPersonId: z.string().optional(),
-  programCode: z.string().optional(),
+const listQuerySchema = z.object({
+  organizationId: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  q: z.string().optional(),
+  origin: z.string().optional(),
 });
+
+const walkInSchema = z
+  .object({
+    givenName: z.string().min(1).optional(),
+    surname: z.string().min(1).optional(),
+    fatherName: z.string().optional().nullable(),
+    fullName: z.string().optional(),
+    fin: z.string().optional(),
+    passport: z.string().optional(),
+    phone: z.string().optional(),
+    sex: z.enum(["MALE", "FEMALE"]),
+    birthDate: z.string().optional(),
+    nationality: z.string().optional(),
+    issuingCountry: z.string().optional(),
+    globalPersonId: z.string().optional(),
+    programCode: z.string().optional(),
+  })
+  .refine(
+    (b) =>
+      Boolean(b.fullName?.trim()) ||
+      (Boolean(b.givenName?.trim()) && Boolean(b.surname?.trim())),
+    { message: "givenName+surname or fullName required" },
+  );
 
 export async function GET(req: Request) {
   try {
-    const orgId = new URL(req.url).searchParams.get("organizationId") ?? undefined;
-    const episodes = await listOpenEpisodes(orgId);
-    return jsonOk(episodes);
+    const url = new URL(req.url);
+    const query = listQuerySchema.parse({
+      organizationId: url.searchParams.get("organizationId") ?? undefined,
+      page: url.searchParams.get("page") ?? undefined,
+      pageSize: url.searchParams.get("pageSize") ?? undefined,
+      q: url.searchParams.get("q") ?? undefined,
+      origin: url.searchParams.get("origin") ?? undefined,
+    });
+    const result = await listOpenEpisodes(query);
+    return jsonOk(result);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -42,7 +67,15 @@ export async function POST(req: Request) {
       "local-clinic";
     const episode = await registerWalkInEpisode({
       organizationId,
-      fullName: body.fullName,
+      givenName: body.givenName,
+      surname: body.surname,
+      fatherName: body.fatherName,
+      fullName:
+        body.fullName?.trim() ||
+        [body.givenName, body.fatherName, body.surname]
+          .map((p) => p?.trim())
+          .filter(Boolean)
+          .join(" "),
       fin: body.fin,
       passport: body.passport,
       phone: body.phone,

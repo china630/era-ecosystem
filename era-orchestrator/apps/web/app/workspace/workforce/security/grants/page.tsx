@@ -114,8 +114,7 @@ export default function WorkforceSecurityGrantsPage() {
     (globalPersonId: string): string => {
       const p = persons[globalPersonId];
       if (p?.displayName?.trim()) return p.displayName.trim();
-      if (p?.accessDenied) return t("maskedPerson");
-      return globalPersonId.slice(0, 8);
+      return t("maskedPerson");
     },
     [persons, t],
   );

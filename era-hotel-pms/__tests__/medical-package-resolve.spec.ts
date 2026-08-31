@@ -20,9 +20,48 @@ describe("medical-package-resolve", () => {
       guests: [{ fullName: "A" }, { fullName: "B" }],
       ratePlanCode: "EW-BAR",
     });
+    expect(r.perGuestCodes).toEqual(["PKG-STANDART", "PKG-STANDART"]);
     expect(r.unanimousCode).toBe("PKG-STANDART");
     expect(r.unresolved).toBe(false);
     expect(programCodeForLifecycle(r)).toBe("PKG-STANDART");
+  });
+
+  it("ERA-PKG STANDART covers two named guests without listing them", () => {
+    const r = resolveMedicalSku({
+      notes: [{ noteType: "EXTRA_REQ", text: "ERA-PKG STANDART" }],
+      agencyName: null,
+      guests: [
+        { fullName: "Tünzalə Əliyeva" },
+        { fullName: "Elmir Əliyev" },
+      ],
+    });
+    expect(r.perGuestCodes).toEqual(["PKG-STANDART", "PKG-STANDART"]);
+    expect(r.unanimousCode).toBe("PKG-STANDART");
+  });
+
+  it("identical named SKUs collapse to all pax even when names do not match", () => {
+    const r = resolveMedicalSku({
+      notes: [
+        {
+          noteType: "EXTRA_REQ",
+          text: "ERA-PKG\nTünzalə Əliyeva: STANDART\nElmir Əliyev: STANDART",
+        },
+      ],
+      agencyName: null,
+      guests: [{ fullName: "Guest One" }, { fullName: "Guest Two" }],
+    });
+    expect(r.perGuestCodes).toEqual(["PKG-STANDART", "PKG-STANDART"]);
+    expect(r.unanimousCode).toBe("PKG-STANDART");
+  });
+
+  it("ERA-PKG then bare SKU on the next line applies to all pax", () => {
+    const r = resolveMedicalSku({
+      notes: [{ noteType: "EXTRA_REQ", text: "ERA-PKG\nPREMIUM" }],
+      agencyName: null,
+      guests: [{ fullName: "A" }, { fullName: "B" }],
+    });
+    expect(r.unanimousCode).toBe("PKG-PREMIUM");
+    expect(r.perGuestCodes).toEqual(["PKG-PREMIUM", "PKG-PREMIUM"]);
   });
 
   it("resolves named mix from ERA-PKG without ordinals", () => {

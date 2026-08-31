@@ -212,6 +212,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .then(() => sendResponse({ ok: true }));
     return true;
   }
+  if (msg?.type === 'open-options') {
+    void chrome.runtime.openOptionsPage();
+    sendResponse({ ok: true });
+    return true;
+  }
   return false;
 });
 

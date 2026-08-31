@@ -1077,7 +1077,7 @@ export class MdmService {
   > {
     const orgId = organizationId?.trim();
     if (!orgId) throw new BadRequestException("organizationId required");
-    const unique = [...new Set(personIds.filter(Boolean))].slice(0, 100);
+    const unique = [...new Set(personIds.filter(Boolean))];
     const out: Record<
       string,
       {
@@ -1090,33 +1090,37 @@ export class MdmService {
         birthDate: string | null;
       }
     > = {};
-    let logPersonId: string | null = null;
-    for (const pid of unique) {
-      try {
-        const profile = await this.resolveOpsProfileData(pid, orgId);
-        if (!logPersonId) logPersonId = profile.globalPersonId;
-        out[profile.globalPersonId] = this.compactWorkforceDisplay(profile);
-      } catch {
-        out[pid] = {
-          globalPersonId: pid,
-          displayName: null,
-          primaryIdentifierMasked: null,
-          accessDenied: true,
-          hrProfile: null,
-          sex: null,
-          birthDate: null,
-        };
+    const BATCH = 100;
+    for (let i = 0; i < unique.length; i += BATCH) {
+      const chunk = unique.slice(i, i + BATCH);
+      let logPersonId: string | null = null;
+      for (const pid of chunk) {
+        try {
+          const profile = await this.resolveOpsProfileData(pid, orgId);
+          if (!logPersonId) logPersonId = profile.globalPersonId;
+          out[profile.globalPersonId] = this.compactWorkforceDisplay(profile);
+        } catch {
+          out[pid] = {
+            globalPersonId: pid,
+            displayName: null,
+            primaryIdentifierMasked: null,
+            accessDenied: true,
+            hrProfile: null,
+            sex: null,
+            birthDate: null,
+          };
+        }
       }
-    }
-    if (unique.length > 0 && logPersonId) {
-      await this.mdm.personAccessLog.create({
-        data: {
-          personId: logPersonId,
-          actorOrgId: orgId,
-          action: "WORKFORCE_OPS_PROFILE_BATCH",
-          metaJson: JSON.stringify({ count: unique.length, personIds: unique }),
-        },
-      });
+      if (chunk.length > 0 && logPersonId) {
+        await this.mdm.personAccessLog.create({
+          data: {
+            personId: logPersonId,
+            actorOrgId: orgId,
+            action: "WORKFORCE_OPS_PROFILE_BATCH",
+            metaJson: JSON.stringify({ count: chunk.length, personIds: chunk }),
+          },
+        });
+      }
     }
     return out;
   }

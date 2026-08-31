@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -14,6 +14,7 @@ import {
   Field,
   FieldSelect,
   FORM_STACK_CLASS,
+  ListPaginationFooter,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -67,6 +68,13 @@ export default function LisProfilesAdminPage() {
   const [importVisitId, setImportVisitId] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importBusy, setImportBusy] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedProfiles = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return profiles.slice(start, start + pageSize);
+  }, [profiles, page, pageSize]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/lis-profiles");
@@ -198,7 +206,7 @@ export default function LisProfilesAdminPage() {
                 </td>
               </tr>
             ) : (
-              profiles.map((p) => (
+              pagedProfiles.map((p) => (
                 <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{p.name}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{p.format}</td>
@@ -229,6 +237,22 @@ export default function LisProfilesAdminPage() {
           </tbody>
         </table>
         </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={profiles.length}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
 
       <div className={`${CARD_CONTAINER_CLASS} p-4`}>

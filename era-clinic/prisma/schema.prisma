@@ -77,6 +77,8 @@ model Tenant {
   doctorBonusPercentInHouse Float                   @default(0) @map("doctor_bonus_percent_in_house")
   /// Doctor bonus % of COMPLETED extras (WALK_IN) — Wave D; default 0 until FO sets
   doctorBonusPercentWalkIn  Float                   @default(0) @map("doctor_bonus_percent_walk_in")
+  /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
+  nextPatientSeq           Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
   icdFavoriteCodes         String[]                 @default([]) @map("icd_favorite_codes")
   icd10Version             String?                  @map("icd10_version")
@@ -94,6 +96,7 @@ enum LabOrderStatus {
   RESULT_READY
   PUBLISHED
   COMPLETED
+  CANCELLED
 }
 
 enum PatientOrigin {
@@ -259,9 +262,13 @@ model PatientRef {
   id                      String             @id @default(cuid())
   organizationId String @map("organization_id")
   refCode                 String
+  /// Ops display parts (Ad / Soyad / Ata adı). fullName is denormalized for search.
+  givenName               String             @default("") @map("given_name")
+  surname                 String             @default("") @map("surname")
+  fatherName              String?            @map("father_name")
   fullName                String
   phone                   String?
-  nationality             String?            @default("AZ")
+  nationality             String?
   /// Clinical sex (ops cache). SoR for identifiers remains MDM.
   sex                     PatientSex         @default(UNKNOWN)
   /// Calendar date only; age is derived at read time.
@@ -559,6 +566,9 @@ model LabOrder {
   publishedAt       DateTime?
   telehealthUrl     String?
   completedAt       DateTime?
+  cancelledAt       DateTime?      @map("cancelled_at")
+  cancelledByUserId String?        @map("cancelled_by_user_id")
+  cancelReason      String?        @map("cancel_reason")
   /// IN_HOUSE (clinic) or EXTERNAL (patient-brought results)
   source            LabResultSource @default(IN_HOUSE)
   /// Actual lab draw / result date (required for EXTERNAL; max 90 days age)

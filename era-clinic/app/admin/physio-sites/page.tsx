@@ -15,6 +15,7 @@ import {
   Field,
   FieldTextarea,
   FORM_STACK_CLASS,
+  ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   ModalFooter,
   ModalShell,
@@ -127,6 +128,17 @@ export default function PhysioSitesAdminPage() {
   const [queue, setQueue] = useState<QueueRow[]>([]);
   const [queueStatus, setQueueStatus] = useState("OPEN");
   const [aliasSiteById, setAliasSiteById] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedSites = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sites.slice(start, start + pageSize);
+  }, [sites, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab, qDebounced, pageSize]);
 
   const listKind = tab === "programs" ? "DEVICE_PROGRAM" : tab === "substances" ? "SUBSTANCE" : null;
 
@@ -488,6 +500,7 @@ export default function PhysioSitesAdminPage() {
           </table>
         </div>
       ) : (
+      <>
       <div className={DATA_TABLE_VIEWPORT_CLASS}>
         <table className={DATA_TABLE_CLASS}>
           <thead>
@@ -502,7 +515,7 @@ export default function PhysioSitesAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {(tab === "sites" ? pagedSites : rows).map((row) => (
               <tr
                 key={row.id}
                 className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}
@@ -527,6 +540,25 @@ export default function PhysioSitesAdminPage() {
           </tbody>
         </table>
       </div>
+      {tab === "sites" ? (
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={sites.length}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
+      ) : null}
+      </>
       )}
 
       <ModalShell

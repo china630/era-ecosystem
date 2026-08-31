@@ -24,7 +24,7 @@ function seasonFrom(season: string | null | undefined): Date {
 export const packageSellAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: "package-sell",
   label: "Package sell (desk)",
-  order: 21.5,
+  order: 14,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
   templateHint: "14-Package-Sell-2026.xlsx — PDF NAFTA PRICE & PACKAGES LIST (not EW)",
   headerAliases: {

@@ -15,33 +15,40 @@ import { roomViewsAdapter } from '@/lib/import/adapters/room-views.adapter';
 import { roomsAdapter } from '@/lib/import/adapters/rooms.adapter';
 import type { ImportAdapter, ImportEntityMeta } from '@/lib/import/types';
 
-const ADAPTERS = [
+/** Visible on `/settings/import` — pack-layout #03–#15. */
+const WIZARD_ADAPTERS = [
   revenueCodesAdapter,
   bedTypesAdapter,
   roomViewsAdapter,
   roomTypesAdapter,
-  barBootstrapAdapter,
   ratePlansAdapter,
-  packageSellAdapter,
   roomsAdapter,
   agenciesAdapter,
-  productCardsAdapter,
-  stockCardsAdapter,
   guestsAdapter,
   reservationsAdapter,
   reservationNotesAdapter,
   foliosAdapter,
+  packageSellAdapter,
   agencyStatementAdapter,
 ] as ImportAdapter<unknown>[];
 
-const byEntity = new Map(ADAPTERS.map((a) => [a.entity, a]));
+/** API-only leftovers (not hotel wizard). FnB/Retail have their own `/admin/import`. */
+const HIDDEN_ADAPTERS = [
+  barBootstrapAdapter,
+  productCardsAdapter,
+  stockCardsAdapter,
+] as ImportAdapter<unknown>[];
+
+const byEntity = new Map(
+  [...WIZARD_ADAPTERS, ...HIDDEN_ADAPTERS].map((a) => [a.entity, a]),
+);
 
 export function getImportAdapter(entity: string): ImportAdapter<unknown> | undefined {
   return byEntity.get(entity);
 }
 
 export function listImportEntities(): ImportEntityMeta[] {
-  return ADAPTERS.map(({ entity, label, order, templateHint, fileless, allowMultiple }) => ({
+  return WIZARD_ADAPTERS.map(({ entity, label, order, templateHint, fileless, allowMultiple }) => ({
     entity,
     label,
     order,

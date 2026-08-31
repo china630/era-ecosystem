@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -12,6 +12,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   FieldSelect,
+  ListPaginationFooter,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
@@ -50,6 +51,17 @@ export default function DiagnosisReportPage() {
   const [items, setItems] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return items.slice(start, start + pageSize);
+  }, [items, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [from, to, source, chapter, pageSize]);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +89,7 @@ export default function DiagnosisReportPage() {
       return;
     }
     setItems(data.items ?? data.data?.items ?? []);
+    setPage(1);
   }, [from, to, source, chapter, locale, tc]);
 
   return (
@@ -139,7 +152,7 @@ export default function DiagnosisReportPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((r) => (
+              {pagedItems.map((r) => (
                 <tr key={r.code} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.code}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.chapterCode}</td>
@@ -160,6 +173,23 @@ export default function DiagnosisReportPage() {
             </tbody>
           </table>
         </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={items.length}
+          loading={busy}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
     </>
   );

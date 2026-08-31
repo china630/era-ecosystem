@@ -17,7 +17,7 @@ const rowSchema = z.object({
 export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'folios',
   label: 'Folios',
-  order: 60,
+  order: 13,
   permission: PERMISSIONS.FOLIO_CHARGE,
   templateHint: '13-Folio-p01.xlsx … p12 — EW Folio Transactions (multi)',
   allowMultiple: true,

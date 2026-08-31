@@ -93,7 +93,7 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 
 | Route | API | Role |
 |-------|-----|------|
-| (event consumer) | `POST /api/integration/staff-provision` | Upsert `User` keyed on `cpEmploymentId`; map `satelliteRole` → local RBAC |
+| (event consumer) | `POST /api/integration/staff-provision` | `enterRequestTenant`; scrypt User hash; keyed on `cpEmploymentId` |
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
 | (clinic cutover glue) | `GET /api/internal/v1/stays/by-external-ref` | Clinic `#21` — Elektraweb RESID/RESNAMEID → `Guest.globalPersonId` (Bearer event token) |
 | Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |

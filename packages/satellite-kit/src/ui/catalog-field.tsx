@@ -36,6 +36,9 @@ export type CatalogFieldProps = {
   /** OPS_HOT: force chips even if options > 4 (not recommended). */
   preferChips?: boolean;
   name?: string;
+  onQueryChange?: (q: string) => void;
+  /** When onQueryChange is set, options are treated as server results (no local-only filter). */
+  serverSearch?: boolean;
 };
 
 function Shell({
@@ -91,6 +94,8 @@ export function CatalogField({
   emptyLabel = "—",
   preferChips,
   name,
+  onQueryChange,
+  serverSearch,
 }: CatalogFieldProps) {
   const resolved = resolveCatalogControl(kind);
   const control =
@@ -204,6 +209,8 @@ export function CatalogField({
         options={options}
         value={Array.isArray(value) ? value[0] ?? "" : value}
         onChange={(v) => onChange(v)}
+        onQueryChange={onQueryChange}
+        serverSearch={serverSearch ?? Boolean(onQueryChange)}
       />
     );
   }
@@ -248,6 +255,8 @@ function CatalogCombobox({
   options,
   value,
   onChange,
+  onQueryChange,
+  serverSearch,
 }: {
   label: string;
   required?: boolean;
@@ -261,12 +270,15 @@ function CatalogCombobox({
   options: CatalogOption[];
   value: string;
   onChange: (v: string) => void;
+  onQueryChange?: (q: string) => void;
+  serverSearch?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const selectedLabel = options.find((o) => o.value === value)?.label ?? value;
 
   const filtered = useMemo(() => {
+    if (serverSearch) return options.slice(0, 50);
     const q = query.trim().toLowerCase();
     if (!q) return options.slice(0, 50);
     return options
@@ -275,7 +287,12 @@ function CatalogCombobox({
           o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
       )
       .slice(0, 50);
-  }, [options, query]);
+  }, [options, query, serverSearch]);
+
+  function handleQueryChange(next: string) {
+    setQuery(next);
+    onQueryChange?.(next);
+  }
 
   return (
     <Shell
@@ -297,10 +314,10 @@ function CatalogCombobox({
           autoComplete="off"
           onFocus={() => {
             setOpen(true);
-            setQuery("");
+            if (!serverSearch) setQuery("");
           }}
           onChange={(e) => {
-            setQuery(e.target.value);
+            handleQueryChange(e.target.value);
             setOpen(true);
           }}
           onBlur={() => {

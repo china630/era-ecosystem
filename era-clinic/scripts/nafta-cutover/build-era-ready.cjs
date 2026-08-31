@@ -38,6 +38,8 @@ const {
   RETAIL_COPY_KEYS,
   C1_COPY_KEYS,
 } = require("./pack-layout.cjs");
+const { writeSheet, writeSheetChunks } = require("./xlsx-write.cjs");
+const { overlayPatientProgramCodes, loadEnrichedStamps } = require("./stamp-clinic-program.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -82,16 +84,6 @@ function rowsOf(doc) {
   if (Array.isArray(doc)) return doc;
   if (Array.isArray(doc.data)) return doc.data;
   return [];
-}
-
-function writeSheet(XLSX, outFile, headers, rows) {
-  fs.mkdirSync(path.dirname(outFile), { recursive: true });
-  const aoa = [headers, ...rows.map((r) => headers.map((h) => (r[h] == null ? "" : r[h])))];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "import");
-  XLSX.writeFile(wb, outFile);
-  return aoa.length - 1;
 }
 
 function slugName(name) {
@@ -281,6 +273,8 @@ function main() {
   }
   const livePatients = patientsAll ? patients : patients.filter((p) => liveIds.has(p.id));
   const patientRows = livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id)));
+  const pkgStamps = loadEnrichedStamps();
+  if (pkgStamps.length) overlayPatientProgramCodes(patientRows, pkgStamps);
   const checkInByWoId = new Map(
     livePatients.map((p, i) => [String(p.id), patientRows[i].checkIn || ""]),
   );
@@ -334,7 +328,7 @@ function main() {
 
   nQuota = writeSheet(XLSX, path.join(OUT, FILES.clinicQuotas), HEADERS.quotas, quotaRows);
   const historicalSlots = allSlots.filter((r) => r.status === "COMPLETED");
-  nSlots = writeSheet(XLSX, path.join(OUT, FILES.clinicSlots), HEADERS.slots, historicalSlots);
+  nSlots = writeSheetChunks(XLSX, path.join(OUT, FILES.clinicSlots), HEADERS.slots, historicalSlots);
 
   const labCatRows = [];
   const labCatSeen = new Set();

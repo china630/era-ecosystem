@@ -9,17 +9,32 @@ jest.mock("@era/satellite-kit", () => ({
   enterSatelliteTenant: jest.fn(),
 }));
 
-jest.mock("@/lib/prisma", () => ({
-  prisma: {
-    patientRef: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findUniqueOrThrow: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+jest.mock("@/lib/prisma", () => {
+  const patientRef = {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findUniqueOrThrow: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  };
+  const tenant = {
+    findFirst: jest.fn().mockResolvedValue({ id: "t1" }),
+    create: jest.fn(),
+    update: jest.fn().mockResolvedValue({
+      nextPatientSeq: 2,
+      organizationId: "test-org",
+    }),
+  };
+  return {
+    prisma: {
+      patientRef,
+      tenant,
+      $transaction: jest.fn(async (fn: (tx: { tenant: typeof tenant; patientRef: typeof patientRef }) => unknown) =>
+        fn({ tenant, patientRef }),
+      ),
     },
-  },
-}));
+  };
+});
 
 describe("patient MDM enforcement", () => {
   it("requires identifier input", () => {
@@ -35,8 +50,8 @@ describe("patient MDM enforcement", () => {
 
     await expect(
       createPatient({
-        refCode: "P1",
-        fullName: "Test",
+        givenName: "Test",
+        surname: "Patient",
         finCode: "ABC1234",
       }),
     ).rejects.toBeInstanceOf(PatientMdmRequiredError);

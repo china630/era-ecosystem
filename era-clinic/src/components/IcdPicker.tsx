@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CatalogField, Field, FieldSelect, useDebouncedValue } from "@era/satellite-kit/ui";
+import { CatalogField, FieldSelect, useDebouncedValue } from "@era/satellite-kit/ui";
 
 export type IcdPickerItem = {
   id: string;
@@ -32,8 +32,8 @@ export function IcdPicker({
 }: Props) {
   const locale = useLocale();
   const t = useTranslations("icd");
-  const [q, setQ] = useState("");
-  const debouncedQ = useDebouncedValue(q, 300);
+  const [query, setQuery] = useState("");
+  const debouncedQ = useDebouncedValue(query, 300);
   const [items, setItems] = useState<IcdPickerItem[]>([]);
   const [selected, setSelected] = useState<IcdPickerItem | null>(null);
   const [chapters, setChapters] = useState<Array<{ code: string; title: string }>>([]);
@@ -74,6 +74,30 @@ export function IcdPicker({
     };
   }, [debouncedQ, locale, chapter]);
 
+  useEffect(() => {
+    if (!valueId) {
+      setSelected(null);
+      return;
+    }
+    const hit = items.find((i) => i.id === valueId);
+    if (hit) {
+      setSelected(hit);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/icd?id=${encodeURIComponent(valueId)}&locale=${encodeURIComponent(locale)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        const row = (d.item ?? d.data?.item) as IcdPickerItem | undefined;
+        if (row?.id) setSelected(row);
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, [valueId, items, locale]);
+
   const options = useMemo(() => {
     const list = [...items];
     if (selected && !list.some((i) => i.id === selected.id)) {
@@ -81,13 +105,13 @@ export function IcdPicker({
     }
     return list.map((i) => ({
       value: i.id,
-      label: i.favorite ? `★ ${i.title}` : i.title,
+      label: i.favorite ? `★ ${i.code} — ${i.title}` : `${i.code} — ${i.title}`,
     }));
   }, [items, selected]);
 
   return (
     <div className="space-y-2">
-      {showChapterFilter && onChapterChange ? (
+      {showChapterFilter && onChapterChange && chapters.length > 0 ? (
         <FieldSelect
           label={t("chapter")}
           preset="selectWide"
@@ -102,25 +126,20 @@ export function IcdPicker({
           ))}
         </FieldSelect>
       ) : null}
-      <Field
-        label={t("searchPlaceholder")}
-        preset="shortText"
-        type="search"
-        placeholder={t("searchPlaceholder")}
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-      />
       <CatalogField
         kind="SEARCHABLE"
         label={label}
         value={valueId}
         required={required}
         options={options}
+        onQueryChange={setQuery}
+        serverSearch
         onChange={(v) => {
           const id = String(v);
           const hit = items.find((i) => i.id === id) ?? (selected?.id === id ? selected : null);
           setSelected(hit);
           onChange(id, hit);
+          if (!hit) setQuery("");
         }}
       />
     </div>

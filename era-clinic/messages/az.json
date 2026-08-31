@@ -37,6 +37,7 @@
     "cutoverImport": "Cutover import",
     "audit": "Audit",
     "logout": "Çıxış",
+    "changePassword": "Şifrəni dəyiş",
     "wardsAdmin": "Palatalar (admin)",
     "inpatientCensus": "Stasionar siyahı",
     "diagnosticCatalog": "Diaqnostika kataloqu",
@@ -51,7 +52,21 @@
     "password": "Şifrə",
     "submit": "Daxil ol",
     "busy": "Daxil olunur…",
-    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun",
+    "provisionHint": "Kadr loqini əvvəlcə PIN 0000-dır. Daxil olduqdan sonra: profil → Şifrəni dəyiş."
+  },
+  "account": {
+    "title": "Şifrəni dəyiş",
+    "subtitle": "Kadr hesabları PIN 0000 ilə başlayır. Öz şifrənizi burada qoyun.",
+    "current": "Cari şifrə",
+    "newPassword": "Yeni şifrə (ən azı 8 simvol)",
+    "confirm": "Yeni şifrəni təsdiqlə",
+    "submit": "Şifrəni yadda saxla",
+    "busy": "Saxlanılır…",
+    "success": "Şifrə yeniləndi.",
+    "failed": "Şifrə yenilənmədi.",
+    "mismatch": "Yeni şifrə və təsdiq eyni deyil.",
+    "ssoOnly": "Bu hesab SSO ilə daxil olur, yerli şifrə yoxdur."
   },
   "home": {
     "loading": "Yüklənir…",
@@ -224,7 +239,15 @@
     "colType": "Növ",
     "colAmount": "Məbləğ",
     "colCreated": "Tarix",
-    "openOrder": "Aç"
+    "openOrder": "Aç",
+    "patientSearchPlaceholder": "Xəstə adı və ya P-kodu…",
+    "cancelOrder": "Sifarişi ləğv et",
+    "cancelConfirm": "Bu lab sifarişi ləğv edilsin?",
+    "patientRefCode": "Xəstə kodu",
+    "patientFullName": "Xəstə adı",
+    "labRepeatTitle": "Lab təkrarlansın?",
+    "labRepeatBody": "{code} artıq tamamlanıb. Yenidən sifariş?",
+    "labAlreadyOpen": "Bu müayinə üçün açıq lab sifarişi var"
   },
   "labOrdersDetail": {
     "title": "Laboratoriya sifarişi iş axını",
@@ -660,7 +683,13 @@
     "bulkCancel": "Kütləvi ləğv",
     "bulkCancelReason": "Səbəb",
     "replaceWithCode": "Əvəzetmə kodu (istəyə bağlı)",
-    "bulkCancelled": "Prosedurlar ləğv edildi"
+    "bulkCancelled": "Prosedurlar ləğv edildi",
+    "labRepeatTitle": "Lab təkrarlansın?",
+    "labRepeatBody": "{code} bu kursda artıq tamamlanıb. Yenidən sifariş?",
+    "labAlreadyOpen": "Bu müayinə üçün açıq lab sifarişi var",
+    "labCancelConfirm": "Bu lab sifarişi ləğv edilsin?",
+    "labCancelled": "Lab sifarişi ləğv edildi",
+    "labCancelOrder": "Lab ləğv et"
   },
   "adminSettings": {
     "title": "Klinika parametrləri",
@@ -1037,6 +1066,7 @@
     "chapter": "Fəsil",
     "allChapters": "Bütün fəsillər",
     "searchPlaceholder": "ICD-10 kodu və ya adı axtarın",
+    "searchHint": "Kod və ya diaqnoz adı yazın",
     "code": "ICD-10 kodu",
     "note": "Qeyd",
     "role": "Rol",
@@ -1083,6 +1113,10 @@
     "filterHotelRoomAll": "Bütün otaqlar",
     "filterProgramCode": "Proqram / paket",
     "filterProgramCodeAll": "Bütün proqramlar",
+    "filterEpisodeStatus": "Kurs statusu",
+    "filterEpisodeOpen": "Açıq",
+    "filterEpisodeAll": "Hamısı",
+    "filterEpisodeClosed": "Bağlı",
     "checkIn": "Giriş",
     "checkOut": "Çıxış",
     "refCode": "Kod",
@@ -1116,7 +1150,7 @@
     "ageYears": "{age} yaş",
     "ageUnknown": "Yaş bilinmir",
     "bloodGroup": "Qan qrupu",
-    "bloodUnknown": "Naməlum",
+    "bloodUnknown": "Göstərilməyib",
     "emergencyContact": "Təcili əlaqə",
     "emergencyContactName": "Təcili əlaqə adı",
     "emergencyContactPhone": "Təcili əlaqə telefonu",
@@ -1132,7 +1166,15 @@
     "episodeClosedReadOnly": "Kurs bağlıdır (yalnız oxuma)",
     "anamnesisSave": "Anamnezi saxla",
     "anamnesisCourseMissing": "Kurs yoxdur — walk-in qeydiyyat edin və ya hotel check-in gözləyin",
-    "noEpisodes": "Kurs yoxdur"
+    "noEpisodes": "Kurs yoxdur",
+    "givenName": "Ad",
+    "surname": "Soyad",
+    "fatherName": "Ata adı",
+    "namePartsRequired": "Ad və soyad mütləqdir",
+    "sexShortMale": "K",
+    "sexShortFemale": "Q",
+    "issuingCountryPassport": "Ölkə (pasport)",
+    "emptyList": "Xəstə yoxdur"
   },
   "patientTimeline": {
     "title": "Klinik vaxt xətti",
@@ -1393,6 +1435,8 @@
     "stepCompleted": "Hazır: {created} yeni, {updated} yeniləmə, {errors} xəta",
     "orderWarning": "Əvvəlki addımlar: {steps}",
     "pickFileHint": "Uyğun .xlsx seçin",
+    "pickFileHintMultiple": "Bütün slot hissələrini bir dəfə seçin (26-Slots-p01.xlsx …). Hər fayl ayrı sorğu ilə gedir.",
+    "chunkProgress": "Hissə {current} / {total}: {name}",
     "runBootstrap": "İşlət",
     "verifyMasterData": "Kataloqlar",
     "resetConfirm": "Proqresi sıfırlamaq?",

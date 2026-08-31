@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   Field,
   FORM_STACK_CLASS,
+  ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   ModalFooter,
   ModalShell,
@@ -36,6 +37,13 @@ export default function ClinicLookupsAdminPage() {
   const [edit, setEdit] = useState<LookupRow | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [rows, page, pageSize]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/lookups?kind=BODY_PART");
@@ -82,7 +90,7 @@ export default function ClinicLookupsAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {pagedRows.map((row) => (
               <tr
                 key={row.id}
                 className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}
@@ -99,6 +107,22 @@ export default function ClinicLookupsAdminPage() {
           </tbody>
         </table>
       </div>
+      <ListPaginationFooter
+        page={page}
+        pageSize={pageSize}
+        total={rows.length}
+        onPageChange={setPage}
+        onPageSizeChange={(n) => {
+          setPageSize(n);
+          setPage(1);
+        }}
+        labels={{
+          rowsPerPage: tc("rowsPerPage"),
+          pageOf: tc("pageOf"),
+          prev: tc("prev"),
+          next: tc("next"),
+        }}
+      />
 
       <ModalShell
         open={open}

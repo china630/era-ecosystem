@@ -226,14 +226,14 @@ After upsert: call `recalcReservationDailyRates(id)` so `ReservationDailyRate` +
 | `bed-types` | `bed-types.adapter.ts` | ✅ | None |
 | `room-views` | `room-views.adapter.ts` | ✅ | None |
 | `room-types` | `room-types.adapter.ts` | ✅ | Verify Nafta column names in preview |
-| `bar-bootstrap` | *(new)* | Done | Create BAR BASE plan; `adapters/index.ts`, `phases.ts` order **20.5**, fileless wizard step |
+| `bar-bootstrap` | *(new)* | Done | Create BAR BASE plan. **Not on Nafta hotel wizard** (API-only / `seed-bar-from-legacy`). |
 | `bar-rates` | *(new)* | 🔲 | Parse yield/season grid → `RoomTypeRate`; bulk upsert |
 | `rate-plans` | `rate-plans.adapter.ts` | ⚠️ | Link DERIVED→BAR; map %/fixed; skip duplicate BAR |
 | `meal-add-ons` | *(new, optional)* | 🔲 | MealPlan export → AddOn graph |
 | `sales-contracts` | *(new)* | 🔲 | SalesContract + ContractAllotment rows |
 | `rooms` | `rooms.adapter.ts` | ✅ | None |
 | `agencies` | `agencies.adapter.ts` | ✅ | Map `commissionPercent` if column exists |
-| `product-cards` / `stock-cards` | `products.adapter.ts` | ✅ | None |
+| `product-cards` / `stock-cards` | `products.adapter.ts` | ✅ | **Not on hotel wizard.** Apply FnB `#31` / Retail `#33`. |
 | `guests` | `guests.adapter.ts` | ✅ | Run MDM backfill after (Phase 4) |
 | `reservations` | `reservations.adapter.ts` | ⚠️ | `ratePlanCode`, `salesContractCode`; post-upsert recalc |
 | `folios` | `folios.adapter.ts` | ✅ | Historical charges only; room nights recalc separately |

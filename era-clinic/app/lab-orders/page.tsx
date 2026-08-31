@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Eye } from "lucide-react";
+import { Check, Eye, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ColorLegend,
@@ -33,14 +33,21 @@ import {
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import {
   expandPackageCodes,
   filterAndSortCatalogItems,
-  pickL10n,
 } from "@/domain/catalog/diagnostic-catalog-shared";
+import { formatNameAndCode } from "@/lib/display-code";
 
 type ModalityRef = { code: string; titleEn: string; titleRu: string; titleAz: string };
-type DiagnosticServiceRef = { code: string; modality?: ModalityRef | null };
+type DiagnosticServiceRef = {
+  code: string;
+  titleEn?: string;
+  titleRu?: string;
+  titleAz?: string | null;
+  modality?: ModalityRef | null;
+};
 type LabOrderItem = { id: string; serviceCode: string; diagnosticService?: DiagnosticServiceRef | null };
 
 type LabOrder = {
@@ -62,29 +69,45 @@ function labOrderListDate(order: LabOrder): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-type PatientOption = { id: string; refCode: string; fullName: string };
-
 type ListFilters = {
+  q: string;
   status: string;
   criticalOnly: boolean;
   modality: string;
-  patientRefId: string;
   dateFrom: string;
   dateTo: string;
 };
 
 const emptyFilters: ListFilters = {
+  q: "",
   status: "",
   criticalOnly: false,
   modality: "",
-  patientRefId: "",
   dateFrom: "",
   dateTo: "",
 };
 
-function servicesLabel(order: LabOrder): string {
+function serviceDisplayName(
+  item: LabOrderItem,
+  locale: string,
+): string {
+  const svc = item.diagnosticService;
+  const name = svc
+    ? pickL10n(
+        {
+          en: svc.titleEn ?? svc.code,
+          ru: svc.titleRu ?? svc.titleEn ?? svc.code,
+          az: svc.titleAz ?? svc.titleEn ?? svc.code,
+        },
+        locale,
+      )
+    : "";
+  return formatNameAndCode(name, item.serviceCode);
+}
+
+function servicesLabel(order: LabOrder, locale: string): string {
   if (order.items?.length) {
-    return order.items.map((i) => i.serviceCode).join(", ");
+    return order.items.map((i) => serviceDisplayName(i, locale)).join(", ");
   }
   return order.testCode;
 }
@@ -103,12 +126,11 @@ export default function LabOrdersPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [patients, setPatients] = useState<PatientOption[]>([]);
   const [filters, setFilters] = useState<ListFilters>(emptyFilters);
   const [loading, setLoading] = useState(true);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ patientRefCode: "", visitId: "" });
+  const [form, setForm] = useState({ patientRefCode: "", patientFullName: "", visitId: "" });
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [catalogItems, setCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
   const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
@@ -119,6 +141,12 @@ export default function LabOrdersPage() {
   const [resultDate, setResultDate] = useState("");
   const [externalResultsText, setExternalResultsText] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
+  const [labRepeatOpen, setLabRepeatOpen] = useState(false);
+  const [pendingRepeatCode, setPendingRepeatCode] = useState("");
+  const [pendingCreatePayload, setPendingCreatePayload] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -126,7 +154,7 @@ export default function LabOrdersPage() {
     if (filters.status) params.set("status", filters.status);
     if (filters.criticalOnly) params.set("criticalOnly", "true");
     if (filters.modality) params.set("modality", filters.modality);
-    if (filters.patientRefId) params.set("patientRefId", filters.patientRefId);
+    if (filters.q.trim()) params.set("q", filters.q.trim());
     if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
     if (filters.dateTo) params.set("dateTo", filters.dateTo);
     const res = await fetch(`/api/lab-orders?${params}`);
@@ -160,15 +188,6 @@ export default function LabOrdersPage() {
       router.replace("/lab-orders");
     }
   }
-
-  useEffect(() => {
-    void fetch("/api/patients")
-      .then((r) => r.json())
-      .then((d) => {
-        const payload = (d.data ?? d) as { items?: PatientOption[] } | PatientOption[];
-        setPatients(Array.isArray(payload) ? payload : (payload.items ?? []));
-      });
-  }, []);
 
   useEffect(() => {
     void fetch("/api/diagnostic-catalog?kinds=lab_panel,imaging,functional,endoscopy,package&applyFavorites=false")
@@ -214,33 +233,42 @@ export default function LabOrdersPage() {
     setPage(1);
   }
 
-  async function createOrder() {
-    const patient = patients.find((p) => p.refCode === form.patientRefCode);
-    if (!patient || selectedCodes.length === 0) return;
+  async function cancelOrder(id: string) {
+    if (!window.confirm(t("cancelConfirm"))) return;
+    const res = await fetch(`/api/lab-orders/${id}`, { method: "DELETE" });
+    if (res.ok) await loadOrders();
+  }
+
+  async function createOrder(confirmRepeat = false) {
+    if (!form.patientRefCode.trim() || selectedCodes.length === 0) return;
     setCreateError(null);
     const expanded = expandPackageCodes(selectedCodes, catalogItems);
-    const payload: Record<string, unknown> = {
-      patientRefCode: patient.refCode,
-      patientFullName: patient.fullName,
-      testCodes: expanded,
-      visitId: form.visitId.trim() || undefined,
-    };
-    if (externalResult) {
-      payload.source = "EXTERNAL";
-      payload.resultDate = resultDate;
-      const lines = externalResultsText
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line) => {
-          const [code, ...rest] = line.split(/[:=]/);
-          const value = rest.join(":").trim() || code;
-          return { code: rest.length ? code.trim() : "value", value };
-        });
-      if (lines.length === 0 && externalResultsText.trim()) {
-        payload.results = [{ code: "value", value: externalResultsText.trim() }];
-      } else {
-        payload.results = lines;
+    const payload: Record<string, unknown> = pendingCreatePayload && confirmRepeat
+      ? { ...pendingCreatePayload, confirmRepeat: true }
+      : {
+          patientRefCode: form.patientRefCode.trim(),
+          patientFullName: form.patientFullName.trim() || form.patientRefCode.trim(),
+          testCodes: expanded,
+          visitId: form.visitId.trim() || undefined,
+        };
+    if (!confirmRepeat || !pendingCreatePayload) {
+      if (externalResult) {
+        payload.source = "EXTERNAL";
+        payload.resultDate = resultDate;
+        const lines = externalResultsText
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const [code, ...rest] = line.split(/[:=]/);
+            const value = rest.join(":").trim() || code;
+            return { code: rest.length ? code.trim() : "value", value };
+          });
+        if (lines.length === 0 && externalResultsText.trim()) {
+          payload.results = [{ code: "value", value: externalResultsText.trim() }];
+        } else {
+          payload.results = lines;
+        }
       }
     }
     const res = await fetch("/api/lab-orders", {
@@ -250,6 +278,19 @@ export default function LabOrdersPage() {
     });
     const data = await res.json();
     if (!res.ok) {
+      if (res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
+        setCreateError(t("labAlreadyOpen"));
+        setPendingCreatePayload(null);
+        return;
+      }
+      if (res.status === 409 && data.code === "LAB_ALREADY_COMPLETED") {
+        setPendingCreatePayload(payload);
+        setPendingRepeatCode(
+          typeof data.testCode === "string" ? data.testCode : expanded[0] ?? "",
+        );
+        setLabRepeatOpen(true);
+        return;
+      }
       const errMsg =
         data?.error ?? data?.message ?? (res.status === 400 ? "Request failed" : tc("failed"));
       setCreateError(String(errMsg));
@@ -257,7 +298,10 @@ export default function LabOrdersPage() {
     }
     const order = data.data ?? data;
     setCreateOpen(false);
-    setForm({ patientRefCode: "", visitId: "" });
+    setLabRepeatOpen(false);
+    setPendingCreatePayload(null);
+    setPendingRepeatCode("");
+    setForm({ patientRefCode: "", patientFullName: "", visitId: "" });
     setSelectedCodes([]);
     setExternalResult(false);
     setResultDate("");
@@ -302,6 +346,13 @@ export default function LabOrdersPage() {
           </label>
         }
       >
+        <Field
+          label={t("patientFilter")}
+          preset="shortText"
+          value={filters.q}
+          onChange={(e) => patchFilters({ q: e.target.value })}
+          placeholder={t("patientSearchPlaceholder")}
+        />
         <FieldSelect
           label={t("statusFilter")}
           preset="select"
@@ -314,6 +365,7 @@ export default function LabOrdersPage() {
           <option value="RESULT_READY">RESULT_READY</option>
           <option value="PUBLISHED">PUBLISHED</option>
           <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
         </FieldSelect>
         <FieldSelect
           label={t("modalityFilter")}
@@ -325,19 +377,6 @@ export default function LabOrdersPage() {
           {modalities.map((m) => (
             <option key={m.code} value={m.code}>
               {pickL10n(m.title, locale)}
-            </option>
-          ))}
-        </FieldSelect>
-        <FieldSelect
-          label={t("patientFilter")}
-          preset="select"
-          value={filters.patientRefId}
-          onChange={(e) => patchFilters({ patientRefId: e.target.value })}
-        >
-          <option value="">{tc("all")}</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.fullName} ({p.refCode})
             </option>
           ))}
         </FieldSelect>
@@ -400,7 +439,7 @@ export default function LabOrdersPage() {
                         setWorkflowId(order.id);
                       }}
                     >
-                      {servicesLabel(order)}
+                      {servicesLabel(order, locale)}
                     </button>
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{modalityLabel(order)}</td>
@@ -422,6 +461,19 @@ export default function LabOrdersPage() {
                       >
                         <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
                       </button>
+                      {order.status === "ORDERED" && (
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={t("cancelOrder")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void cancelOrder(order.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                        </button>
+                      )}
                       {order.status === "PUBLISHED" && (
                         <button
                           type="button"
@@ -474,19 +526,19 @@ export default function LabOrdersPage() {
         }}
       >
         <div className="space-y-3">
-          <FieldSelect
-            label={t("selectPatient")}
-            preset="select"
+          <Field
+            label={t("patientRefCode")}
+            preset="shortText"
             value={form.patientRefCode}
             onChange={(e) => setForm({ ...form, patientRefCode: e.target.value })}
-          >
-            <option value="">{t("selectPatient")}</option>
-            {patients.map((p) => (
-              <option key={p.id} value={p.refCode}>
-                {p.fullName} ({p.refCode})
-              </option>
-            ))}
-          </FieldSelect>
+            placeholder="P-000001"
+          />
+          <Field
+            label={t("patientFullName")}
+            preset="shortText"
+            value={form.patientFullName}
+            onChange={(e) => setForm({ ...form, patientFullName: e.target.value })}
+          />
           <label className={`flex items-center gap-2 text-[13px] ${MODAL_FIELD_LABEL_CLASS}`}>
             <input
               type="checkbox"
@@ -563,6 +615,30 @@ export default function LabOrdersPage() {
         onClose={closeWorkflow}
         onChanged={() => void loadOrders()}
       />
+
+      <ModalShell
+        open={labRepeatOpen}
+        title={t("labRepeatTitle")}
+        onClose={() => {
+          setLabRepeatOpen(false);
+          setPendingCreatePayload(null);
+        }}
+        footer={
+          <ModalFooter
+            onCancel={() => {
+              setLabRepeatOpen(false);
+              setPendingCreatePayload(null);
+            }}
+            onSubmit={() => void createOrder(true)}
+            submitLabel={tc("yes")}
+            cancelLabel={tc("no")}
+          />
+        }
+      >
+        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+          {t("labRepeatBody", { code: pendingRepeatCode })}
+        </p>
+      </ModalShell>
     </>
   );
 }

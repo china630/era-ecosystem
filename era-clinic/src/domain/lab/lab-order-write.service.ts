@@ -3,6 +3,10 @@ import { type SatelliteTransactionClient } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
+  assertLabOrderCanCreate,
+  findEpisodeLabConflict,
+} from "@/domain/lab/lab-order-conflict.service";
+import {
   enrichResultLines,
   hasCriticalFlag,
   type ResultLineInput,
@@ -181,6 +185,8 @@ export type CreateLabOrderWithItemsParams = {
   scheduledCollectionAt?: Date;
   /** Raw (un-enriched) result lines; only used when source is EXTERNAL. */
   resultLines?: RawResultLine[];
+  /** Allow repeat when a prior PUBLISHED/COMPLETED order exists on the episode. */
+  confirmRepeat?: boolean;
 };
 
 /**
@@ -192,6 +198,10 @@ export async function createLabOrderWithItems(
   params: CreateLabOrderWithItemsParams,
 ): Promise<Prisma.LabOrderGetPayload<{ include: typeof labOrderFullInclude }>> {
   const codes = params.codes;
+  if (params.clinicalEpisodeId) {
+    const conflict = await findEpisodeLabConflict(params.clinicalEpisodeId, codes);
+    assertLabOrderCanCreate(conflict, params.confirmRepeat);
+  }
   const servicesByCode = await resolveDiagnosticServicesByCodes(codes);
   const isExternal = params.source === "EXTERNAL";
   const enrichedLines =

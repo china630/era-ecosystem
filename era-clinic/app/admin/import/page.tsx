@@ -11,6 +11,8 @@ type ImportEntity = {
   label: string;
   order: number;
   templateHint: string;
+  fileless?: boolean;
+  allowMultiple?: boolean;
 };
 
 export default function AdminImportPage() {

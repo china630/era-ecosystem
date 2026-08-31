@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   transpilePackages: ["@era/i18n-common", "@era/satellite-kit", "@era/clinic-domain"],
+  experimental: {
+    serverActions: { bodySizeLimit: "32mb" },
+    middlewareClientMaxBodySize: "32mb",
+  },
   outputFileTracingIncludes: {
     "/*": [
       "./messages/**/*",

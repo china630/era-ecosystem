@@ -2,7 +2,9 @@
 
 Write the package in **Extra Request** (first lines). Do **not** rely on Rate Code.
 
-## Single package (all guests)
+## Same package (one guest or many)
+
+One line is enough. Do **not** list guest names when everyone has the same SKU.
 
 ```
 ERA-PKG STANDART
@@ -10,7 +12,17 @@ ERA-PKG STANDART
 
 Also: `PREMIUM`, `DERMO`, `DETOKS` (or `PKG-STANDART`, …).
 
-## Mix by guest name (no 1./2. ordinals)
+Wrong (unnecessary when the package is the same):
+
+```
+ERA-PKG
+Tünzalə Əliyeva: STANDART
+Elmir Əliyev: STANDART
+```
+
+The resolver still accepts that block (all named SKUs identical → same as `ERA-PKG STANDART`), but FO should write the one-liner.
+
+## Mix by guest name (different packages only)
 
 ```
 ERA-PKG

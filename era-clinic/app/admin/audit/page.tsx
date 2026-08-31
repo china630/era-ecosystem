@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -10,6 +10,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
 
@@ -24,7 +25,15 @@ type AuditRow = {
 
 export default function ClinicAuditPage() {
   const t = useTranslations("audit");
+  const tc = useTranslations("common");
   const [rows, setRows] = useState<AuditRow[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [rows, page, pageSize]);
 
   useEffect(() => {
     void fetch("/api/audit?limit=100")
@@ -47,7 +56,7 @@ export default function ClinicAuditPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {pagedRows.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={DATA_TABLE_TD_CLASS}>{new Date(r.createdAt).toLocaleString()}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
@@ -60,6 +69,22 @@ export default function ClinicAuditPage() {
           </tbody>
         </table>
         </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={rows.length}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
     </>
   );

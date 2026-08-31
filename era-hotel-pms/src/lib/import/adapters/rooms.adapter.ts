@@ -20,7 +20,7 @@ const rowSchema = z.object({
 export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'rooms',
   label: 'Rooms',
-  order: 22,
+  order: 8,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
   templateHint: '08-Rooms.xlsx — EW Rooms',
   headerAliases: {

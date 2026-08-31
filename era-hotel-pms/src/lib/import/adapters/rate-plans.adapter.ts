@@ -13,7 +13,7 @@ const rowSchema = z.object({
 export const ratePlansAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'rate-plans',
   label: 'Rate Codes',
-  order: 21,
+  order: 7,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
   templateHint: '07-Rate-Codes.xlsx — EW Rate Codes',
   headerAliases: {

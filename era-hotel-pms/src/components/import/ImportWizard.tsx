@@ -103,9 +103,6 @@ export function ImportWizard({ entities }: Props) {
 
   const current = phasesWithEntities[phaseIndex];
   const totalPhases = phasesWithEntities.length;
-  let stepCounter = phasesWithEntities
-    .slice(0, phaseIndex)
-    .reduce((sum, p) => sum + p.entities.length, 0);
 
   return (
     <div className="space-y-8">
@@ -150,11 +147,10 @@ export function ImportWizard({ entities }: Props) {
           </header>
           <div className="space-y-3">
             {current.entities.map((meta, idx) => {
-              stepCounter += 1;
               return (
                 <ImportStepRow
                   key={meta.entity}
-                  stepNumber={stepCounter}
+                  stepNumber={meta.order}
                   entity={meta.entity}
                   label={meta.label}
                   templateHint={meta.templateHint}

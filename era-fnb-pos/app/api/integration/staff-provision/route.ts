@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { handleStaffProvisionEvent } from "@/lib/staff-provision";
+import { enterRequestTenant } from "@/lib/request-organization";
 
-/** Orchestrator fan-out: finance STAFF_PROVISIONED / STAFF_DEACTIVATED. */
+/** Orchestrator fan-out: CP STAFF_PROVISIONED / STAFF_DEACTIVATED. */
 export async function POST(request: Request) {
   // SEC-HOT-01: fail closed in production when bridge secret unset
   const secret = process.env.SATELLITE_BRIDGE_SECRET?.trim() ?? "";
@@ -15,7 +16,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const event = await request.json();
+    const event = (await request.json()) as { organizationId?: string };
+    const organizationId =
+      typeof event.organizationId === "string" ? event.organizationId.trim() : "";
+    if (!organizationId) {
+      return NextResponse.json({ error: "organizationId required" }, { status: 400 });
+    }
+    enterRequestTenant(organizationId);
     const result = await handleStaffProvisionEvent(event);
     return NextResponse.json(result);
   } catch (err) {
