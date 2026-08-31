@@ -456,7 +456,7 @@ describe("nafta cutover import rules", () => {
       clinicalDiagnosis: { create: createDiagnosis },
     };
     const result = await adapter.upsert(tx as never, row, false);
-    expect(result).toBeNull();
+    expect(result).toBe("skipped");
     expect(createComplaint).not.toHaveBeenCalled();
     expect(createDiagnosis).not.toHaveBeenCalled();
   });
