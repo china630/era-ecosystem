@@ -10,6 +10,7 @@ import {
   addEpisodeDiagnosis,
   deleteEpisodeDiagnosis,
   listEpisodeDiagnoses,
+  updateEpisodeDiagnosis,
 } from "@/domain/icd/diagnosis-write.service";
 import { resolveEpisodeForPatient } from "@/domain/sanatorium/episode-resolve";
 import { EPISODE_CLOSED, episodeWriteDenied } from "@/domain/sanatorium/episode-gates";
@@ -18,6 +19,12 @@ const createSchema = z.object({
   icdCodeId: z.string().min(1),
   note: z.string().max(500).optional().nullable(),
   episodeId: z.string().min(1).optional(),
+});
+
+const updateSchema = z.object({
+  id: z.string().min(1),
+  icdCodeId: z.string().min(1).optional(),
+  note: z.string().max(500).optional().nullable(),
 });
 
 export async function GET(
@@ -82,6 +89,25 @@ export async function DELETE(
     if (!diagnosisId) return jsonError("id required", 400);
     await deleteEpisodeDiagnosis(diagnosisId, patientRefId);
     return jsonOk({ deleted: true });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    const { id: patientRefId } = await ctx.params;
+    const body = updateSchema.parse(await req.json());
+    const row = await updateEpisodeDiagnosis(body.id, patientRefId, {
+      icdCodeId: body.icdCodeId,
+      note: body.note,
+    });
+    return jsonOk(row);
   } catch (err) {
     return handleRouteError(err);
   }

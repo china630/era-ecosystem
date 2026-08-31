@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
-  inferCatalogFieldKind,
   DatePicker,
   EraDataGrid,
   EraListFilterBar,
@@ -27,8 +26,6 @@ import {
 } from "@era/satellite-kit/ui";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
-import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
-import { bakuDateDisplay } from "@/lib/baku-day";
 
 type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
 type PatientBloodGroup =
@@ -54,10 +51,7 @@ type Patient = {
   ageYears?: number | null;
   bloodGroup?: PatientBloodGroup;
   globalPersonId?: string | null;
-  hotelRoomNumber?: string | null;
-  programCode?: string | null;
-  checkInAt?: string | null;
-  checkOutAt?: string | null;
+  hasOpenEpisode?: boolean;
 };
 
 type ListResponse = {
@@ -65,8 +59,6 @@ type ListResponse = {
   total: number;
   page: number;
   pageSize: number;
-  hotelRooms?: string[];
-  programCodes?: string[];
 };
 
 const emptyForm = {
@@ -89,10 +81,7 @@ export default function PatientsPage() {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
   const { auth } = useClinicAuth();
-  const isAdmin = Boolean(auth?.canViewClinicAdmin || auth?.isPlatformSuperAdmin);
-  const hasSanatorium = (auth?.enabledPresets ?? []).includes(
-    CLINIC_PRESET.SANATORIUM_CLINICAL,
-  );
+  const isSuperAdmin = Boolean(auth?.isPlatformSuperAdmin);
   const [rows, setRows] = useState<Patient[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -100,17 +89,12 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
-  const [hotelRooms, setHotelRooms] = useState<string[]>([]);
-  const [programCodes, setProgramCodes] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     sex: "" as "" | PatientSex,
     bloodGroup: "" as "" | PatientBloodGroup,
     hasMdm: "" as "" | "0" | "1",
     ageMin: "",
     ageMax: "",
-    roomNumber: "",
-    programCode: "",
-    episodeStatus: "OPEN" as "OPEN" | "CLOSED" | "ALL",
   });
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
@@ -123,36 +107,23 @@ export default function PatientsPage() {
       const params = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
+        episodeStatus: "ALL",
       });
       if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
       if (filters.sex) params.set("sex", filters.sex);
       if (filters.bloodGroup) params.set("bloodGroup", filters.bloodGroup);
-      if (isAdmin && filters.hasMdm) params.set("hasMdm", filters.hasMdm);
+      if (isSuperAdmin && filters.hasMdm) params.set("hasMdm", filters.hasMdm);
       if (filters.ageMin.trim()) params.set("ageMin", filters.ageMin.trim());
       if (filters.ageMax.trim()) params.set("ageMax", filters.ageMax.trim());
-      if (hasSanatorium && filters.roomNumber.trim()) {
-        params.set("roomNumber", filters.roomNumber.trim());
-      }
-      if (hasSanatorium && filters.programCode.trim()) {
-        params.set("programCode", filters.programCode.trim());
-      }
-      params.set("episodeStatus", filters.episodeStatus);
-      if (hasSanatorium) {
-        params.set("includeHotelRooms", "1");
-        params.set("includeProgramCodes", "1");
-      }
       const res = await fetch(`/api/patients?${params}`);
       const d = await res.json();
       const payload = (d.data ?? d) as ListResponse;
       setRows(payload.items ?? []);
       setTotal(typeof payload.total === "number" ? payload.total : 0);
-      // Do not echo page/pageSize from API — avoids race that snaps the pager back.
-      if (payload.hotelRooms) setHotelRooms(payload.hotelRooms);
-      if (payload.programCodes) setProgramCodes(payload.programCodes);
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, filters, hasSanatorium, isAdmin, page, pageSize]);
+  }, [debouncedQ, filters, isSuperAdmin, page, pageSize]);
 
   useEffect(() => {
     void load();
@@ -182,31 +153,19 @@ export default function PatientsPage() {
         render: (p) => (p.ageYears != null ? t("ageYears", { age: p.ageYears }) : "—"),
       },
       { key: "phone", header: t("phone"), render: (p) => p.phone ?? "—" },
-      ...(hasSanatorium
-        ? [
-            {
-              key: "hotelRoomNumber",
-              header: t("filterHotelRoom"),
-              render: (p: Patient) => p.hotelRoomNumber ?? "—",
-            } satisfies EraDataGridColumn<Patient>,
-            {
-              key: "programCode",
-              header: t("filterProgramCode"),
-              render: (p: Patient) => p.programCode ?? "—",
-            } satisfies EraDataGridColumn<Patient>,
-            {
-              key: "checkInAt",
-              header: t("checkIn"),
-              render: (p: Patient) => (p.checkInAt ? bakuDateDisplay(p.checkInAt) : "—"),
-            } satisfies EraDataGridColumn<Patient>,
-            {
-              key: "checkOutAt",
-              header: t("checkOut"),
-              render: (p: Patient) => (p.checkOutAt ? bakuDateDisplay(p.checkOutAt) : "—"),
-            } satisfies EraDataGridColumn<Patient>,
-          ]
-        : []),
-      ...(isAdmin
+      {
+        key: "course",
+        header: t("colOpenCourse"),
+        render: (p) =>
+          p.hasOpenEpisode ? (
+            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900">
+              {t("badgeOpenCourse")}
+            </span>
+          ) : (
+            "—"
+          ),
+      },
+      ...(isSuperAdmin
         ? [
             {
               key: "mdm",
@@ -237,7 +196,7 @@ export default function PatientsPage() {
         ),
       },
     ],
-    [t, tc, hasSanatorium, isAdmin],
+    [t, tc, isSuperAdmin],
   );
 
   async function save() {
@@ -292,9 +251,6 @@ export default function PatientsPage() {
             hasMdm: "" as const,
             ageMin: "",
             ageMax: "",
-            roomNumber: "",
-            programCode: "",
-            episodeStatus: "OPEN",
           });
           setPage(1);
         }}
@@ -305,22 +261,6 @@ export default function PatientsPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <FieldSelect
-          label={t("filterEpisodeStatus")}
-          preset="select"
-          value={filters.episodeStatus}
-          onChange={(e) => {
-            setFilters({
-              ...filters,
-              episodeStatus: e.target.value as "OPEN" | "CLOSED" | "ALL",
-            });
-            setPage(1);
-          }}
-        >
-          <option value="OPEN">{t("filterEpisodeOpen")}</option>
-          <option value="ALL">{t("filterEpisodeAll")}</option>
-          <option value="CLOSED">{t("filterEpisodeClosed")}</option>
-        </FieldSelect>
         <FieldSelect
           label={t("filterSex")}
           preset="shortText"
@@ -333,7 +273,6 @@ export default function PatientsPage() {
           <option value="">{tc("all")}</option>
           <option value="MALE">{t("sexMale")}</option>
           <option value="FEMALE">{t("sexFemale")}</option>
-          <option value="OTHER">{t("sexOther")}</option>
           <option value="UNKNOWN">{t("sexUnknown")}</option>
         </FieldSelect>
         <FieldSelect
@@ -359,7 +298,7 @@ export default function PatientsPage() {
           <option value="O_NEG">O-</option>
           <option value="UNKNOWN">{t("sexUnknown")}</option>
         </FieldSelect>
-        {isAdmin ? (
+        {isSuperAdmin ? (
           <FieldSelect
             label={t("filterMdm")}
             preset="shortText"
@@ -373,41 +312,6 @@ export default function PatientsPage() {
             <option value="1">{t("filterMdmLinked")}</option>
             <option value="0">{t("filterMdmMissing")}</option>
           </FieldSelect>
-        ) : null}
-        {hasSanatorium ? (
-          <>
-            <CatalogField
-              kind="SEARCHABLE"
-              label={t("filterHotelRoom")}
-              value={filters.roomNumber}
-              onChange={(v) => {
-                setFilters({ ...filters, roomNumber: String(v ?? "") });
-                setPage(1);
-              }}
-              options={[
-                { value: "", label: t("filterHotelRoomAll") },
-                ...hotelRooms.map((room) => ({ value: room, label: room })),
-              ]}
-              emptyLabel={t("filterHotelRoomAll")}
-            />
-            <CatalogField
-              kind={inferCatalogFieldKind({
-                optionCount: programCodes.length + 1,
-                searchable: programCodes.length > 12,
-              })}
-              label={t("filterProgramCode")}
-              value={filters.programCode}
-              onChange={(v) => {
-                setFilters({ ...filters, programCode: String(v ?? "") });
-                setPage(1);
-              }}
-              options={[
-                { value: "", label: t("filterProgramCodeAll") },
-                ...programCodes.map((code) => ({ value: code, label: code })),
-              ]}
-              emptyLabel={null}
-            />
-          </>
         ) : null}
         <FieldRow cols={2}>
           <Field
@@ -519,7 +423,6 @@ export default function PatientsPage() {
               <option value="UNKNOWN">{t("sexUnknown")}</option>
               <option value="MALE">{t("sexMale")}</option>
               <option value="FEMALE">{t("sexFemale")}</option>
-              <option value="OTHER">{t("sexOther")}</option>
             </FieldSelect>
             <CatalogField
               kind="CLOSED_MEDIUM"

@@ -105,9 +105,10 @@ Writes `NAFTA-ERA-READY/clinic/19-Treatments.xlsx`, `20-Clinic-Rooms.xlsx`, `21-
 | `../hr/01-Org-Structure.xlsx` | START `hr/Ştat vahidləri Nafta 28.08.2026.xlsx` | orgUnit, position, totalSlots. Import **before** roster. |
 | `../hr/02-Employees.xlsx` | START `hr/02-Employees.xlsx` (133; FİN + Cins K/Q + DOB + hire) | fin, fullName, sex, birthDate, orgUnit, position, hireDate, workplace, satellites. Rebuild: `node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs` |
 
-Episode `programCode` (list **Proqram / paket**): **not** WO Check-up name. Overlay from EW FO-with-Notes: agency Premium/Dermo/Həmkarlar, phrases, `ERA-PKG`, Price Note, **Walkin medical → PKG-STANDART**. Skip leisure and mix (two SKUs on one card). Join: name+date, ±1 day, unique last name, unique room+date.
+Episode `programCode` (list **Proqram / paket**): **not** WO Check-up name. Overlay from EW FO-with-Notes + long Notes `#12`: agency Premium/Dermo/Həmkarlar, **Extra Req `ERA-PKG` only**, phrases in Extra / Res / CIn / **Operator** / **Payment**, Price Note, **Walkin medical → PKG-STANDART**. Skip leisure and mix (two SKUs on one card). Həmkarlar FO slice from 1 June (including September `Reservation`) is merged so the 152 cards are not truncated to in-house. Join: name+date, ±1 day, unique last name, unique room+date.
 
 ```
+node era-clinic/scripts/nafta-cutover/enrich-package-stamps.cjs         # rebuild stamps JSON
 node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs          # dry-run
 node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs --apply  # writes 24-Patients.xlsx
 ```

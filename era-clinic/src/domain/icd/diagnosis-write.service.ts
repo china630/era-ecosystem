@@ -43,6 +43,32 @@ export async function deleteEpisodeDiagnosis(id: string, patientRefId: string) {
   await prisma.clinicalDiagnosis.delete({ where: { id } });
 }
 
+export async function updateEpisodeDiagnosis(
+  id: string,
+  patientRefId: string,
+  input: { icdCodeId?: string; note?: string | null },
+) {
+  const row = await prisma.clinicalDiagnosis.findUnique({
+    where: { id },
+    include: { episode: { select: { patientRefId: true, status: true } } },
+  });
+  if (!row || row.episode.patientRefId !== patientRefId) {
+    throw new IcdCatalogError("Diagnosis not found", 404);
+  }
+  if (row.episode.status !== "OPEN") {
+    throw new IcdCatalogError("Closed episode is read-only", 409);
+  }
+  if (input.icdCodeId) await requireSelectableIcd(input.icdCodeId);
+  return prisma.clinicalDiagnosis.update({
+    where: { id },
+    data: {
+      ...(input.icdCodeId ? { icdCodeId: input.icdCodeId } : {}),
+      ...(input.note !== undefined ? { note: input.note?.trim() || null } : {}),
+    },
+    include: { icdCode: true },
+  });
+}
+
 export async function listVisitDiagnoses(visitId: string) {
   return prisma.visitDiagnosis.findMany({
     where: { visitId },

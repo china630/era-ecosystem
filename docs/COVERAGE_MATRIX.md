@@ -54,14 +54,14 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-03 | Resources (equipment) | vNext | Y | — | Y | — | — | SHIPPED | — |
 | CLI-04 | Procedure types | vNext | Y | — | Y Add+Edit reqs (resource + STAFF mode) | — | — | SHIPPED | Backfill missing requirements on SatAdmin list |
 | CLI-05 | Appointment create + practitioner day matrix | PRD K-01 / Pattern B | Y calendar + create/reschedule/cancel/check-in | Y `/appointments` matrix (rows=doctors) | — | — | — | SHIPPED | Legacy `/scheduling` + `/api/scheduling/slots` removed |
-| CLI-06 | Patient registry (M1) | PRD | Y paginated filters; clinic-native `P-######` refCode; Ad/Soyad/Ata adı | Y `/patients` grid + modal card; reception hides MDM column/filter; sex K/Q | — | — | — | SHIPPED | Anamnesis on episode (CLI-55); WO keys only in CutoverImportKey; hotel room filter when `sanatorium_clinical` |
+| CLI-06 | Patient registry (M1) | PRD | Y paginated filters; clinic-native `P-######` refCode; Ad/Soyad/Ata adı; default ALL + `hasOpenEpisode` | Y `/patients` identity grid + Open badge; room/program on `/sanatorium`; reception hides MDM column/filter; sex K/Q | — | — | — | SHIPPED | Anamnesis on episode (CLI-55); WO keys only in CutoverImportKey |
 | CLI-07 | Service catalog (M6) | PRD | Y | — | Y `/admin/catalog` grid + kind/paid/package filters + Nafta import | — | — | SHIPPED | `ServiceCatalogKind`; procedure picker = PROCEDURE only; prices → `amountNet` by `code` |
 | CLI-08 | Procedure compatibility rules | M11 | Y | — | Y modal | — | — | SHIPPED | — |
 | CLI-09 | Procedure sequence rules (FIFO) | vNext | Y | — | Y modal | — | — | SHIPPED | — |
 | CLI-10 | Clinical / program templates | vNext | Y | — | Y `/admin/templates` | — | — | SHIPPED | — |
 | CLI-11 | LIS profiles | M11 | Y | — | Y | — | — | SHIPPED | — |
 | CLI-12 | Lab order lifecycle | K2 | Y cancel ORDERED; duplicate open/completed gates + confirmRepeat | Y `/lab-orders` q→status→modality; Name (CODE); delete ORDERED | — | — | — | SHIPPED | — |
-| CLI-13 | Sanatorium chart | K5 | Y paged open episodes; chart delete complaint/dx/ORDERED lab | Y `/sanatorium` pager + Name (CODE) quotas; ICD single searchable picker | Y | — | — | SHIPPED | — |
+| CLI-13 | Sanatorium chart | K5 | Y paged open episodes; room/program filters; chart delete complaint/dx/ORDERED lab | Y `/sanatorium` pager (no API page echo) + room/program filters + Name (CODE) quotas; ICD single searchable picker | Y | — | — | SHIPPED | — |
 | CLI-14 | Reception queue | W3 | Y | Y | — | — | — | SHIPPED | — |
 | CLI-15 | Inpatient beds | M13 | Y census `?view=census` | Y ward tiles + `/inpatient/census` | Y ward board + admin modal CRUD | — | — | SHIPPED | `/admin/wards` edit/delete ward & bed |
 | CLI-16 | Visit complete + billing | K4 | Y | Y | — | — | — | SHIPPED | — |

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ModalShell, TEXT_MUTED_CLASS } from "@era/satellite-kit/ui";
+import { ModalShell } from "@era/satellite-kit/ui";
 import { PatientCardBody, type PatientCardPatient } from "@/components/patients/PatientCardBody";
 
 type Props = {
@@ -17,12 +17,6 @@ export function PatientCardModal({ patientId, open, onClose }: Props) {
 
   if (!patientId) return null;
 
-  const ageLine =
-    patient?.ageYears != null ? t("ageYears", { age: patient.ageYears }) : t("ageUnknown");
-  const headerMeta = patient
-    ? [patient.refCode, patient.fullName, ageLine].filter(Boolean).join(" · ")
-    : "";
-
   return (
     <ModalShell
       open={open}
@@ -30,7 +24,6 @@ export function PatientCardModal({ patientId, open, onClose }: Props) {
       onClose={onClose}
       maxWidthClass="max-w-4xl"
     >
-      {headerMeta ? <p className={`mb-4 text-[13px] ${TEXT_MUTED_CLASS}`}>{headerMeta}</p> : null}
       <PatientCardBody
         patientId={patientId}
         showBackLink={false}

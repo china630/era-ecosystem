@@ -14,9 +14,13 @@ Artifacts: this folder (`summary.json`, `migration-rows.csv`, `migration-rows-en
 Re-run:
 
 ```bash
-node scripts/_tmp_utf8/analyze-ew-fo-notes-2026.cjs
-node scripts/_tmp_utf8/enrich-ew-notes-migration.cjs
+node era-clinic/scripts/nafta-cutover/enrich-package-stamps.cjs
+node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs --apply
 ```
+
+(`scripts/_tmp_utf8/enrich-ew-notes-migration.cjs` is a wrapper.)
+
+Long Notes `#12` Operator / Payment Info are joined by `Res Id`. Həmkarlar FO from 1 June (`hemkarlar-fo-from-jun.xlsx` / Downloads 2026-08-31 slice) appends September `Reservation` cards.
 
 ## 1) EW ↔ ERA note field map
 
@@ -56,30 +60,28 @@ No new Prisma note-type enum values were required: all nine EW note columns alre
 | PKG-DETOKS | 1 |
 | ERA-PKG explicit in Extra | **4** only |
 
-### After enrichment (agency-prefix first + Price Note + soft medical default)
+### After enrichment (ERA-PKG Extra Req; phrases Extra/Res/CIn/Operator/Payment; Həmkarlar Jun–Sep)
+
+FO-with-Notes unique **1678** + **66** September Həmkarlar from the 1 June FO slice = **1744** reservations.
 
 | Metric | Count |
 |--------|------:|
-| With `migrationSku` | **1151** (**68.6%**) |
-| Agency Premium/Dermo/Detoks/Həmkarlar hits | **140** (all high conf) |
-| Mix hints (289/276/…) | 95 |
-| Leisure skip (no med stamp) | 207 |
-| Needs FO review (low/mix/default) | 707 |
-
-| migrationSource | Count |
-|-----------------|------:|
-| agency-prefix | 140 |
-| price-note | 790 |
-| agency-medical-default (* medical → Standart, low) | 167 |
-| phrase / ERA-PKG | 54 |
-| price-mix / mix-hint | 52 |
+| With `migrationSku` | **1215** (**69.7%**) |
+| Həmkarlar agency rows | **153** (all `PKG-STANDART`; 152 in the 31.08 FO file + 1 extra in the prior extract) |
+| Agency Premium / Dermo / Detoks name hits | 27 / 25 / 1 |
+| Phrase from Operator Note | 2 (both PREMIUM, incl. Standart→Premium upgrade) |
+| Phrase from Payment Info | 1 (`PKG-PREMIUM`) |
+| Mix hints (two SKUs / 289 / 276) | 52 (not stamped) |
+| Leisure skip | 207 |
 
 | migrationSku | Count |
 |--------------|------:|
-| PKG-STANDART | 931 |
-| PKG-PREMIUM | 149 |
-| PKG-DERMO | 70 |
+| PKG-STANDART | 1010 |
+| PKG-PREMIUM | 148 |
+| PKG-DERMO | 56 |
 | PKG-DETOKS | 1 |
+
+Clinic `#24` overlay (WO patients **1722**, name/room join): STANDART **1013**, PREMIUM **126**, DERMO **50**, empty **533**. September Həmkarlar mostly have no WO card yet (hotel `Reservation`) — they stamp when a clinic episode exists. Then **Re-Apply wizard `#24`**.
 
 **Apply rule:** `migrationConf=high` + `agency-prefix` / phrase / ERA-PKG / catalog price → auto-stamp. `agency-medical-default` and `low` → FO queue. `mixHint` → Guests tab dual SKU.
 

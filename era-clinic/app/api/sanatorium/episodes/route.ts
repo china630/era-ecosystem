@@ -9,6 +9,10 @@ const listQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
   q: z.string().optional(),
   origin: z.string().optional(),
+  roomNumber: z.string().optional(),
+  programCode: z.string().optional(),
+  includeHotelRooms: z.boolean().optional(),
+  includeProgramCodes: z.boolean().optional(),
 });
 
 const walkInSchema = z
@@ -43,6 +47,10 @@ export async function GET(req: Request) {
       pageSize: url.searchParams.get("pageSize") ?? undefined,
       q: url.searchParams.get("q") ?? undefined,
       origin: url.searchParams.get("origin") ?? undefined,
+      roomNumber: url.searchParams.get("roomNumber") ?? undefined,
+      programCode: url.searchParams.get("programCode") ?? undefined,
+      includeHotelRooms: url.searchParams.get("includeHotelRooms") === "1",
+      includeProgramCodes: url.searchParams.get("includeProgramCodes") === "1",
     });
     const result = await listOpenEpisodes(query);
     return jsonOk(result);

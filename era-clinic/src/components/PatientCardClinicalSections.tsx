@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Printer } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -11,6 +12,7 @@ import {
   ModalShell,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
@@ -454,100 +456,15 @@ export function PatientCardClinicalSections({
     return `/print/lab-order/${id}`;
   }
 
-  const { nowNext, resultsPreview, planPreview } = summary;
+  const { resultsPreview, planPreview } = summary;
   const proposedPreview = summary.proposedPreview ?? [];
   const intakeChecklist = summary.intakeChecklist;
-  const pending = nowNext.pendingLabs;
   const allProposedIds = proposedPreview
     .map(orderIdFromEvent)
     .filter((id): id is string => Boolean(id));
 
   return (
     <div className="space-y-6">
-      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-          {t("nowNextTitle")}
-        </h2>
-        {!nowNext.nextAppointment &&
-        !nowNext.activeEpisode &&
-        !nowNext.nextProcedure &&
-        pending.count === 0 ? (
-          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("nowNextEmpty")}</p>
-        ) : (
-          <ul className="space-y-2 text-[13px]">
-            {nowNext.nextAppointment ? (
-              <li className="rounded border border-amber-200 bg-amber-50/60 px-3 py-2">
-                <span className="font-medium">{t("nextAppointment")}: </span>
-                {nowNext.nextAppointment.practitionerName} ·{" "}
-                {nowNext.nextAppointment.atLabel ?? nowNext.nextAppointment.at} (
-                {nowNext.nextAppointment.status})
-                <Link href={nowNext.nextAppointment.href} className={`ml-2 ${LINK_ACCENT_CLASS}`}>
-                  {t("open")}
-                </Link>
-              </li>
-            ) : null}
-            {nowNext.activeEpisode ? (
-              <li className="rounded border border-rose-200 bg-rose-50/50 px-3 py-2">
-                <span className="font-medium">{t("activeEpisode")}: </span>
-                {nowNext.activeEpisode.programCode ?? nowNext.activeEpisode.id.slice(0, 8)}
-                {nowNext.activeEpisode.roomNumber
-                  ? ` · ${t("room")} ${nowNext.activeEpisode.roomNumber}`
-                  : ""}
-                <Link href={nowNext.activeEpisode.href} className={`ml-2 ${LINK_ACCENT_CLASS}`}>
-                  {t("openDayPlan")}
-                </Link>
-              </li>
-            ) : null}
-            {nowNext.nextProcedure ? (
-              <li className="rounded border px-3 py-2">
-                <span className="font-medium">{t("nextProcedure")}: </span>
-                {nowNext.nextProcedure.name} ·{" "}
-                {nowNext.nextProcedure.atLabel ?? nowNext.nextProcedure.at}
-                {nowNext.nextProcedure.code
-                  ? ` · ${t("procedureTypeCode", { defaultValue: "type" })} ${nowNext.nextProcedure.code}`
-                  : ""}
-              </li>
-            ) : null}
-            {pending.count > 0 ? (
-              <li className="rounded border border-violet-300 bg-violet-50 px-3 py-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    <span className="font-medium text-violet-900">{t("pendingLabs")}: </span>
-                    {t("pendingLabsCount", { count: pending.count })}
-                  </span>
-                  <button
-                    type="button"
-                    className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-1 text-[11px]`}
-                    onClick={() => {
-                      setHistTypes("lab_order");
-                      setLabFilter("pending");
-                      setHistoryOpen(true);
-                    }}
-                  >
-                    {t("showPending")}
-                  </button>
-                </div>
-                <ul className="mt-2 space-y-1 text-[12px] text-violet-950">
-                  {pending.items.map((ev) => (
-                    <li key={ev.id}>
-                      {ev.href ? (
-                        <Link href={ev.href} className="hover:underline">
-                          {eventTitle(ev, locale)} · {ev.status}
-                        </Link>
-                      ) : (
-                        <span>
-                          {eventTitle(ev, locale)} · {ev.status}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ) : null}
-          </ul>
-        )}
-      </section>
-
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -566,14 +483,15 @@ export function PatientCardClinicalSections({
           </button>
           <button
             type="button"
-            className={SECONDARY_BUTTON_CLASS}
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            aria-label={t("printCheckup", { defaultValue: "Print check-up" })}
             onClick={() =>
               openPrint(
                 `/print/checkup/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
               )
             }
           >
-            {t("printCheckup", { defaultValue: "Print check-up" })}
+            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
         </div>
         <div className={`${CARD_CONTAINER_CLASS} p-4`}>
@@ -613,10 +531,11 @@ export function PatientCardClinicalSections({
                   {labPrintHref(ev) ? (
                     <button
                       type="button"
-                      className={SECONDARY_BUTTON_CLASS}
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      aria-label={t("print", { defaultValue: "Print" })}
                       onClick={() => openPrint(labPrintHref(ev)!)}
                     >
-                      {t("print", { defaultValue: "Print" })}
+                      <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
                     </button>
                   ) : null}
                 </li>
@@ -638,14 +557,15 @@ export function PatientCardClinicalSections({
             </h2>
             <button
               type="button"
-              className={SECONDARY_BUTTON_CLASS}
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={t("printCheckup", { defaultValue: "Print check-up" })}
               onClick={() =>
-              openPrint(
-                `/print/checkup/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
-              )
-            }
+                openPrint(
+                  `/print/checkup/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
+                )
+              }
             >
-              {t("printCheckup", { defaultValue: "Print check-up" })}
+              <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
           </div>
           <div className={`${CARD_CONTAINER_CLASS} p-4`}>
@@ -787,14 +707,15 @@ export function PatientCardClinicalSections({
           </button>
           <button
             type="button"
-            className={SECONDARY_BUTTON_CLASS}
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
             onClick={() =>
               openPrint(
                 `/print/procedures/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
               )
             }
           >
-            {t("printProcedures", { defaultValue: "Print schedule" })}
+            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
         </div>
         <div className={`${CARD_CONTAINER_CLASS} p-4`}>
@@ -917,9 +838,12 @@ export function PatientCardClinicalSections({
         onClose={() => setPlanOpen(false)}
         closeLabel={tc("close")}
       >
-        {nowNext.activeEpisode ? (
+        {episodeId ? (
           <p className="mb-3 text-[13px]">
-            <Link href={nowNext.activeEpisode.href} className={LINK_ACCENT_CLASS}>
+            <Link
+              href={`/sanatorium?episode=${encodeURIComponent(episodeId)}`}
+              className={LINK_ACCENT_CLASS}
+            >
               {t("openDayPlan")}
             </Link>
           </p>

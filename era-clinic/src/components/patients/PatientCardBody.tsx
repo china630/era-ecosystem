@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
@@ -22,6 +23,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
@@ -124,7 +126,7 @@ export function PatientCardBody({
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
   const { auth } = useClinicAuth();
-  const isAdmin = Boolean(auth?.canViewClinicAdmin || auth?.isPlatformSuperAdmin);
+  const isSuperAdmin = Boolean(auth?.isPlatformSuperAdmin);
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
   const [episodes, setEpisodes] = useState<EpisodeOption[]>([]);
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
@@ -156,8 +158,6 @@ export function PatientCardBody({
           return t("sexMale");
         case "FEMALE":
           return t("sexFemale");
-        case "OTHER":
-          return t("sexOther");
         default:
           return t("sexUnknown");
       }
@@ -347,7 +347,7 @@ export function PatientCardBody({
         {patient.globalPersonId &&
         patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
         !patient.identifiersSummary?.some((i) => i.type === "AZ_FIN") &&
-        isAdmin ? (
+        isSuperAdmin ? (
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void mergeFinObtained()}>
             {t("finObtained")}
           </button>
@@ -369,11 +369,16 @@ export function PatientCardBody({
                 {patient.ageYears != null ? ` · ${t("ageYears", { age: patient.ageYears })}` : ""}
               </p>
             </div>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setEditOpen(true)}>
-              {tc("edit")}
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={tc("edit")}
+              onClick={() => setEditOpen(true)}
+            >
+              <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
           </div>
-          {isAdmin ? (
+          {isSuperAdmin ? (
             <p className="text-sm">
               {t("mdmBadge")}:{" "}
               {patient.globalPersonId ? (
@@ -413,7 +418,7 @@ export function PatientCardBody({
               </p>
             ) : null}
           </div>
-          {isAdmin && patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
+          {isSuperAdmin && patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
             <p className={TEXT_MUTED_CLASS}>
               {patient.identifiersSummary.map((i) => i.type).join(", ")}
             </p>
@@ -421,59 +426,64 @@ export function PatientCardBody({
           {msg ? <p>{msg}</p> : null}
         </div>
 
-        <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-          {episodes.length > 0 ? (
-            <CatalogField
-              kind={episodeFieldKind}
-              label={t("episodeSelect")}
-              value={selectedEpisodeId ?? ""}
-              onChange={(next) => onEpisodeChange(String(next))}
-              options={episodeOptions}
-            />
-          ) : (
-            <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
-          )}
+        <section className="space-y-2">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+            {t("episodeSelect")}
+          </h2>
+          <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+            {episodes.length > 0 ? (
+              <CatalogField
+                kind={episodeFieldKind}
+                label={t("episodeSelect")}
+                value={selectedEpisodeId ?? ""}
+                onChange={(next) => onEpisodeChange(String(next))}
+                options={episodeOptions}
+              />
+            ) : (
+              <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
+            )}
+          </div>
         </section>
 
         {selectedEpisode ? (
-          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-            {selectedEpisode.status === "OPEN" ? (
-              <>
-                <FieldTextarea
-                  label={t("anamnesis")}
-                  rows={4}
-                  value={anamnesis}
-                  onChange={(e) => setAnamnesis(e.target.value)}
-                  placeholder={t("anamnesisHint")}
-                />
-                <button
-                  type="button"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={anamnesisSaving}
-                  onClick={() => void saveAnamnesis()}
-                >
-                  {t("anamnesisSave")}
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="font-semibold">{t("anamnesis")}</p>
-                <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
-                <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
-                  <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
-                    {anamnesis.trim() || "—"}
-                  </p>
-                </div>
-              </>
-            )}
+          <section className="space-y-2">
+            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+              {t("anamnesis")}
+            </h2>
+            <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+              {selectedEpisode.status === "OPEN" ? (
+                <>
+                  <FieldTextarea
+                    label={t("anamnesis")}
+                    rows={4}
+                    value={anamnesis}
+                    onChange={(e) => setAnamnesis(e.target.value)}
+                    placeholder={t("anamnesisHint")}
+                  />
+                  <button
+                    type="button"
+                    className={PRIMARY_BUTTON_CLASS}
+                    disabled={anamnesisSaving}
+                    onClick={() => void saveAnamnesis()}
+                  >
+                    {t("anamnesisSave")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
+                  <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
+                    <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
+                      {anamnesis.trim() || "—"}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </section>
         ) : null}
 
-        <section
-          className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
-            ciOpen ? "p-4" : "px-4 py-2"
-          }`}
-        >
+        <section className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
               {t("contraindicationsTitle")}
@@ -492,13 +502,19 @@ export function PatientCardBody({
               {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
             </button>
           </div>
-          <PatientContraindicationsPanel
-            patientRefId={patient.id}
-            episodeId={selectedEpisodeId}
-            readOnly={episodeReadOnly}
-            expanded={ciOpen}
-            onCountChange={setCiCount}
-          />
+          <div
+            className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
+              ciOpen ? "p-4" : "px-4 py-2"
+            }`}
+          >
+            <PatientContraindicationsPanel
+              patientRefId={patient.id}
+              episodeId={selectedEpisodeId}
+              readOnly={episodeReadOnly}
+              expanded={ciOpen}
+              onCountChange={setCiCount}
+            />
+          </div>
         </section>
 
         <PatientCardComplaints
@@ -575,7 +591,6 @@ export function PatientCardBody({
               <option value="UNKNOWN">{t("sexUnknown")}</option>
               <option value="MALE">{t("sexMale")}</option>
               <option value="FEMALE">{t("sexFemale")}</option>
-              <option value="OTHER">{t("sexOther")}</option>
             </FieldSelect>
             <DatePicker
               label={t("birthDate")}
@@ -614,7 +629,7 @@ export function PatientCardBody({
               onChange={(e) => setForm({ ...form, emergencyContactPhone: e.target.value })}
             />
           </FieldRow>
-          {isAdmin ? (
+          {isSuperAdmin ? (
             <>
               <FieldRow cols={2} className="items-end">
                 <Field
