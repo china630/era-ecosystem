@@ -30,6 +30,7 @@ import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { maskPersonId } from "@/components/patients/PatientCardBody";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
+import { bakuDateDisplay } from "@/lib/baku-day";
 
 type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
 type PatientBloodGroup =
@@ -54,6 +55,8 @@ type Patient = {
   globalPersonId?: string | null;
   hotelRoomNumber?: string | null;
   programCode?: string | null;
+  checkInAt?: string | null;
+  checkOutAt?: string | null;
 };
 
 type ListResponse = {
@@ -189,6 +192,16 @@ export default function PatientsPage() {
               key: "programCode",
               header: t("filterProgramCode"),
               render: (p: Patient) => p.programCode ?? "—",
+            } satisfies EraDataGridColumn<Patient>,
+            {
+              key: "checkInAt",
+              header: t("checkIn"),
+              render: (p: Patient) => (p.checkInAt ? bakuDateDisplay(p.checkInAt) : "—"),
+            } satisfies EraDataGridColumn<Patient>,
+            {
+              key: "checkOutAt",
+              header: t("checkOut"),
+              render: (p: Patient) => (p.checkOutAt ? bakuDateDisplay(p.checkOutAt) : "—"),
             } satisfies EraDataGridColumn<Patient>,
           ]
         : []),
@@ -354,10 +367,7 @@ export default function PatientsPage() {
         {hasSanatorium ? (
           <>
             <CatalogField
-              kind={inferCatalogFieldKind({
-                optionCount: hotelRooms.length,
-                searchable: hotelRooms.length > 40,
-              })}
+              kind="SEARCHABLE"
               label={t("filterHotelRoom")}
               value={filters.roomNumber}
               onChange={(v) => {
@@ -365,9 +375,7 @@ export default function PatientsPage() {
                 setPage(1);
               }}
               options={[
-                ...(hotelRooms.length > 40
-                  ? [{ value: "", label: t("filterHotelRoomAll") }]
-                  : []),
+                { value: "", label: t("filterHotelRoomAll") },
                 ...hotelRooms.map((room) => ({ value: room, label: room })),
               ]}
               emptyLabel={t("filterHotelRoomAll")}
@@ -419,6 +427,7 @@ export default function PatientsPage() {
           rows={rows}
           rowKey={(p) => p.id}
           emptyMessage={loading ? tc("loading") : t("emptyList")}
+          pagination={false}
         />
         <ListPaginationFooter
           page={page}
@@ -426,7 +435,10 @@ export default function PatientsPage() {
           total={total}
           loading={loading}
           onPageChange={setPage}
-          onPageSizeChange={setPageSize}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
           labels={{
             rowsPerPage: tc("rowsPerPage"),
             pageOf: tc("pageOf"),

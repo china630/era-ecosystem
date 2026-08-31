@@ -186,13 +186,22 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   const [rows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { episodes: { _max: { openedAt: "desc" } } },
+        { createdAt: "desc" },
+      ],
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
         episodes: {
-          where: { status: "OPEN" },
-          select: { roomNumber: true, programCode: true },
+          select: {
+            roomNumber: true,
+            programCode: true,
+            openedAt: true,
+            closedAt: true,
+            reservationId: true,
+            programInstance: { select: { endsOn: true } },
+          },
           orderBy: { openedAt: "desc" },
           take: 1,
         },
@@ -206,10 +215,15 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   return {
     items: rows.map((row) => {
       const { episodes, ...patient } = row;
+      const ep = episodes[0];
+      const hotelGuest = Boolean(ep?.roomNumber || ep?.reservationId);
+      const checkOut = ep?.closedAt ?? ep?.programInstance?.endsOn ?? null;
       return {
         ...withDerivedDemographics(patient),
-        hotelRoomNumber: episodes[0]?.roomNumber ?? null,
-        programCode: episodes[0]?.programCode ?? null,
+        hotelRoomNumber: ep?.roomNumber ?? null,
+        programCode: ep?.programCode ?? null,
+        checkInAt: hotelGuest && ep?.openedAt ? ep.openedAt.toISOString() : null,
+        checkOutAt: hotelGuest && checkOut ? checkOut.toISOString() : null,
       };
     }),
     total,

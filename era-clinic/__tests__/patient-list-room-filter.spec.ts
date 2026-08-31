@@ -29,7 +29,7 @@ describe("listPatientsPaged hotel room filter", () => {
         refCode: "P1",
         fullName: "Ali",
         birthDate: null,
-        episodes: [{ roomNumber: "101" }],
+        episodes: [{ roomNumber: "101", reservationId: "11112877", openedAt: new Date("2026-08-27T00:00:00+04:00"), closedAt: null, programInstance: { endsOn: new Date("2026-09-04T00:00:00+04:00") } }],
       },
     ]);
     prisma.patientRef.count.mockResolvedValue(1);
@@ -51,10 +51,18 @@ describe("listPatientsPaged hotel room filter", () => {
             },
           },
         },
+        orderBy: [
+          { episodes: { _max: { openedAt: "desc" } } },
+          { createdAt: "desc" },
+        ],
       }),
     );
     expect(result.items[0]).toEqual(
-      expect.objectContaining({ hotelRoomNumber: "101" }),
+      expect.objectContaining({
+        hotelRoomNumber: "101",
+        checkInAt: expect.stringMatching(/^2026-08-26|^2026-08-27/),
+        checkOutAt: expect.stringMatching(/^2026-09-03|^2026-09-04/),
+      }),
     );
     expect(result.hotelRooms).toEqual(["101"]);
   });

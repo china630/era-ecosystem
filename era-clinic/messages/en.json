@@ -180,7 +180,11 @@
     "saved": "Saved",
     "confirm": "Confirm",
     "datePlaceholder": "dd.mm.yyyy",
-    "openCalendar": "Open calendar"
+    "openCalendar": "Open calendar",
+    "rowsPerPage": "Rows per page",
+    "pageOf": "Page {page} of {pages} · {total} total",
+    "prev": "Previous",
+    "next": "Next"
   },
   "appointments": {
     "title": "Doctor appointments",
@@ -1102,6 +1106,8 @@
     "filterHotelRoomAll": "All rooms",
     "filterProgramCode": "Program / package",
     "filterProgramCodeAll": "All programs",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
     "refCode": "Ref code",
     "name": "Full name",
     "phone": "Phone",

@@ -50,6 +50,13 @@ export function bakuTimeLabel(isoOrDate: Date | string): string {
   }).format(d);
 }
 
+/** DD.MM.YYYY in Asia/Baku. */
+export function bakuDateDisplay(isoOrDate: Date | string): string {
+  const key = bakuDateKey(isoOrDate);
+  const [y, m, day] = key.split("-");
+  return `${day}.${m}.${y}`;
+}
+
 /** DD.MM in Asia/Baku (compact PLAN rows). */
 export function bakuDateShort(isoOrDate: Date | string): string {
   const key = bakuDateKey(isoOrDate);
