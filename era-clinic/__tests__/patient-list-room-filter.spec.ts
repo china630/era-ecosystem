@@ -51,10 +51,7 @@ describe("listPatientsPaged hotel room filter", () => {
             },
           },
         },
-        orderBy: [
-          { episodes: { _max: { openedAt: "desc" } } },
-          { createdAt: "desc" },
-        ],
+        orderBy: { createdAt: "desc" },
       }),
     );
     expect(result.items[0]).toEqual(

@@ -186,10 +186,7 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   const [rows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
       where,
-      orderBy: [
-        { episodes: { _max: { openedAt: "desc" } } },
-        { createdAt: "desc" },
-      ],
+      orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
