@@ -240,8 +240,6 @@ export function AuthLoginCard({
 
         <form onSubmit={onSubmit} className={FORM_STACK_CLASS} autoComplete="on">
 
-          {formExtras}
-
           <label className={FORM_FIELD_GROUP_CLASS}>
 
             <span className={MODAL_FIELD_LABEL_CLASS}>
@@ -293,6 +291,8 @@ export function AuthLoginCard({
             />
 
           </label>
+
+          {formExtras}
 
           <button
 
