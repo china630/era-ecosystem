@@ -1,29 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { formatPax, formatPlanDate } from './format';
 import { barSvgPath, type BarShapeFlags } from './shapes';
-import type { ReservationStatus, RoomPlanReservationBar } from './types';
-
-const statusFill: Record<ReservationStatus, string> = {
-  CONFIRMED: '#2980B9',
-  IN_HOUSE: '#f59e0b',
-  OPTION: '#cbd5e1',
-  CHECKED_OUT: '#a3a3a3',
-  CANCELLED: '#f43f5e',
-  NO_SHOW: '#e11d48',
-};
-
-const statusStroke: Record<ReservationStatus, string> = {
-  CONFIRMED: '#1a5276',
-  IN_HOUSE: '#b45309',
-  OPTION: '#64748b',
-  CHECKED_OUT: '#525252',
-  CANCELLED: '#be123c',
-  NO_SHOW: '#9f1239',
-};
+import {
+  BAR_LABEL_PAD_LEFT_PX,
+  CHEVRON_PX,
+  HK_SQUARE_COLORS,
+  resolveHkSquareKind,
+  resolvePlanBarDayState,
+  themeForDayState,
+  type HkSquareKind,
+  type PlanBarInput,
+} from './plan-bar-theme';
+import type { RoomPlanReservationBar, RoomStatus } from './types';
 
 function formatMoney(value: number | string | undefined | null): string {
   if (value == null) return '—';
@@ -113,11 +105,24 @@ function BarTooltip({
   );
 }
 
+function HkSquare({ kind }: { kind: Exclude<HkSquareKind, null> }) {
+  return (
+    <span
+      className="pointer-events-none absolute top-1/2 z-[1] h-2.5 w-2.5 -translate-y-1/2 rounded-[2px] border border-black/10"
+      style={{ left: 4, backgroundColor: HK_SQUARE_COLORS[kind] }}
+      aria-hidden
+    />
+  );
+}
+
 export function RoomPlanBar({
   bar,
   shape,
   selected,
   draggable,
+  roomBars,
+  roomStatus,
+  roomHkCondition,
   onSelect,
   onDragStart,
   onDragEnd,
@@ -126,17 +131,61 @@ export function RoomPlanBar({
   shape: BarShapeFlags;
   selected: boolean;
   draggable: boolean;
+  roomBars: RoomPlanReservationBar[];
+  roomStatus?: RoomStatus;
+  roomHkCondition?: string | null;
   onSelect: () => void;
   onDragStart: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDragEnd: (e: React.DragEvent<HTMLButtonElement>) => void;
 }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [widthPx, setWidthPx] = useState(80);
   const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
-  const fill = statusFill[bar.status];
-  const stroke = statusStroke[bar.status];
-  const textClass = bar.status === 'OPTION' ? 'text-[#34495E]' : 'text-white';
+
+  useLayoutEffect(() => {
+    const el = btnRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.getBoundingClientRect().width;
+      if (w > 0) setWidthPx(w);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const inputs: PlanBarInput[] = roomBars.map((r) => ({
+    id: r.id,
+    status: r.status,
+    checkInDate: r.checkInDate,
+    checkOutDate: r.checkOutDate,
+    shareEligible: r.shareEligible,
+    shareGender: r.shareGender,
+    adults: r.adults,
+    roomId: r.roomId,
+  }));
+  const selfInput: PlanBarInput = {
+    id: bar.id,
+    status: bar.status,
+    checkInDate: bar.checkInDate,
+    checkOutDate: bar.checkOutDate,
+    shareEligible: bar.shareEligible,
+    shareGender: bar.shareGender,
+    adults: bar.adults,
+    roomId: bar.roomId,
+  };
+  const dayState = resolvePlanBarDayState(selfInput, inputs);
+  const theme = themeForDayState(dayState);
+  const hkKind =
+    roomStatus != null
+      ? resolveHkSquareKind({ status: roomStatus, hkCondition: roomHkCondition })
+      : null;
+
   const pax = formatPax(bar.adults, bar.children11_6, bar.children5_2, bar.children1_0);
   const meal = bar.mealPlanCode ? ` (${bar.mealPlanCode})` : '';
   const caption = `${bar.guest.fullName} ${pax}${meal}`;
+  const labelPad = BAR_LABEL_PAD_LEFT_PX + (hkKind ? 10 : 0);
 
   const showTooltip = useCallback((el: HTMLButtonElement | null) => {
     if (el) setHoverRect(el.getBoundingClientRect());
@@ -146,6 +195,7 @@ export function RoomPlanBar({
   return (
     <>
       <button
+        ref={btnRef}
         type="button"
         draggable={draggable}
         onClick={onSelect}
@@ -162,20 +212,23 @@ export function RoomPlanBar({
       >
         <svg
           className="block h-full w-full overflow-visible"
-          viewBox="0 0 100 20"
+          viewBox={`0 0 ${Math.max(widthPx, CHEVRON_PX * 2 + 4)} 26`}
           preserveAspectRatio="none"
           aria-hidden
         >
           <path
-            d={barSvgPath(shape)}
-            fill={fill}
-            stroke={stroke}
+            d={barSvgPath(shape, widthPx, 26)}
+            fill={theme.fill}
+            stroke={theme.stroke}
             strokeWidth={0.6}
+            strokeDasharray={theme.dashed ? '3 2' : undefined}
             vectorEffect="non-scaling-stroke"
           />
         </svg>
+        {hkKind ? <HkSquare kind={hkKind} /> : null}
         <span
-          className={`pointer-events-none absolute inset-0 flex items-center truncate pl-[14px] pr-2 text-left text-[10px] font-bold ${textClass}`}
+          className="pointer-events-none absolute inset-0 flex items-center truncate pr-2 text-left text-[10px] font-bold"
+          style={{ paddingLeft: labelPad, color: theme.text }}
         >
           {caption}
         </span>

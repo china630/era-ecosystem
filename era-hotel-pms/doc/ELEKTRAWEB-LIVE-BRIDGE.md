@@ -42,7 +42,7 @@ Process kill switch only: `ELEKTRAWEB_BRIDGE_ENABLED`. No property ids in env.
 
 Yes — Options page: ERA Hotel URL + **ERA organizationId (UUID)** + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Shared process Bearer was removed (unsafe on multi-org pool).
 
-**Workforce grant (Nafta desk):** Orchestrator Workforce → Security → Grants: employee + satellite **Hotel** + role **Reception**. After fan-out, local login is `emp-{staffCode}` / PIN `0000` (staffCode = first 8 hex of employment id). Use that pair in extension Settings **and** at `https://hotel-pms.era-365.online/login`. CP `RECEPTION` maps to hotel role `Receptionist` (bridge-allowed). Do not hire a second employment for someone already in cadre.
+**Workforce grant (Nafta desk):** Orchestrator Workforce → employments **⋯ → Login & access** (login + **organizationId**) or Security → Grants. After fan-out, local login is `emp-{staffCode}` / PIN `0000` (staffCode = first 8 hex of employment id). On the **SHARED** cloud pool (`hotel-pms.era-365.online/login`) you must also send **organizationId** (UUID of the hotel org) — the login form field, `?organizationId=…`, or extension Settings. CP `RECEPTION` maps to hotel role `Receptionist` (bridge-allowed). Do not hire a second employment for someone already in cadre.
 
 Docs: [extensions/elektraweb-bridge/README.md](../extensions/elektraweb-bridge/README.md)
 
@@ -212,6 +212,7 @@ Returns last success timestamp, counts (24h), last error — for FO supervisor /
 |---------|--------|
 | `ELEKTRAWEB_BRIDGE_ENABLED=1` | Process kill switch (503 when off) |
 | inbound / write / hotel id / SPA / walk-in | Super-Admin → Sync → `ElektrawebBridgePolicy` row per org |
+| clinic dual-run + hotel org UUID | Super-Admin clinic cutover card → Sync → clinic `ClinicCutoverPolicy`. Same UUID as this org is valid when hotel PMS is enabled on that MMC (outbox tenant = hotel) |
 | `ELEKTRAWEB_BRIDGE_ALLOWED_ORIGINS` | Optional allowlist of Elektraweb hosts (process) |
 
 **Wave 1:** property ids are **not** in hotel env. See [saas-request-tenant-and-vendor-bridges.md](../../docs/adr/saas-request-tenant-and-vendor-bridges.md).
@@ -381,10 +382,10 @@ Do **not** treat these ids as product defaults. Config / inbound name match on o
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3 v0.3.3; options_ui open_in_tab; toolbar lamp icons
-  background.js          # service worker: inbound queue + POST ingest + lamp
+  manifest.json          # MV3 v0.3.8; overlay login when JWT missing/expired
+  background.js          # service worker: inbound queue + POST ingest + lamp + executeScript
   injected.js / content.js
-  overlay.js             # in-page lamp for Open-as-window (no toolbar)
+  overlay-boot.js + overlay.js + overlay-frame.html  # in-page lamp (iframe UI, EW CSS isolated)
   lamp.js                # gray/yellow/green/red status
   options.html + settings.css + i18n.js + options.js
   popup.html / popup.js
@@ -396,7 +397,7 @@ era-hotel-pms/extensions/elektraweb-bridge/
 
 Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
 
-Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on `app.elektraweb.com` for Chrome **Open as window** (no extension toolbar). Same colors. Click overlay → Capture / Write / settings (settings open in a normal tab). Drag the circle if it covers SPA buttons.
+Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on Elektraweb for Chrome **Open as window / installed app** (no extension toolbar). v0.3.8: overlay shows ERA login + password when there is no token or JWT `exp` has passed (URL/org UUID stay in Settings). Panel UI is `overlay-frame.html`. Click overlay → Capture / Write / settings. Drag the circle if it covers SPA buttons. After Load unpacked / update: **Reload** the extension on `chrome://extensions`.
 
 | Color | Meaning |
 |-------|---------|
