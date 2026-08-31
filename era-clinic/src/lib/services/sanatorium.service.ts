@@ -8,10 +8,8 @@ import {
   assertLabOrderCanCreate,
   findEpisodeLabConflict,
 } from '@/domain/lab/lab-order-conflict.service';
-import {
-  allocatePatientRefCode,
-  composeFullName,
-} from '@/domain/patient/patient-ref-code';
+import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
+import { composeFullName } from '@/domain/patient/patient-ref-code';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;

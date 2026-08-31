@@ -14,8 +14,8 @@ import {
   matchProcedureToSeed,
   matchRoomToSeed,
 } from "@/lib/import/seed-catalog-match";
+import { allocatePatientRefCode } from "@/domain/patient/allocate-patient-ref-code";
 import {
-  allocatePatientRefCode,
   composeFullName,
   isClinicPatientRefCode,
 } from "@/domain/patient/patient-ref-code";

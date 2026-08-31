@@ -8,10 +8,8 @@ import {
   ageYearsFromBirthDate,
   parseBirthDateInput,
 } from "@/domain/patient/patient-demographics";
-import {
-  allocatePatientRefCode,
-  composeFullName,
-} from "@/domain/patient/patient-ref-code";
+import { allocatePatientRefCode } from "@/domain/patient/allocate-patient-ref-code";
+import { composeFullName } from "@/domain/patient/patient-ref-code";
 
 export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN, passport, or MDM") {
