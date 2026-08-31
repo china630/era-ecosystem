@@ -170,6 +170,7 @@ function daysRemaining(endsOn: string): number {
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
   const tc = useTranslations("common");
+  const tp = useTranslations("patients");
   const locale = useLocale();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [listTotal, setListTotal] = useState(0);
