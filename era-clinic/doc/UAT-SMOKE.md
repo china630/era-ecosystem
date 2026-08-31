@@ -80,7 +80,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — filter bar (sex, blood, MDM, age) + paginated grid; **Open card** modal; anamnesis required on demographics edit. **`/patients/[id]`** deep link still works via shared `PatientCardBody`. History/timeline: one row per encounter when a Visit exists («Приём · doctor», slot date, opens `/visits/[id]`); Appointment-only if no visit.
+3. **`/patients`** — filter bar (sex, blood, MDM, age, hotel room **autocomplete**, program); grid shows check-in / check-out after package for hotel guests; default sort check-in newest first; one server paginator. **Open card** modal; anamnesis required on demographics edit. **`/patients/[id]`** deep link still works via shared `PatientCardBody`. History/timeline: one row per encounter when a Visit exists («Приём · doctor», slot date, opens `/visits/[id]`); Appointment-only if no visit.
 4. **`/appointments`** — practitioner day matrix; click free cell → **New appointment** modal (prefilled); occupied → check-in / cancel; DnD reschedule.
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
@@ -265,7 +265,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 **Nafta card wave (2026-08-30) — after deploy:** seed diagnostic + physio catalogs → re-Apply `#23` → optionally `#31` (skip `#32`/`#33`/`#34` for intake). See `NAFTA-CUTOVER-IMPORT.md` § Post-deploy.
 
 1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes).
-2. `/patients`: filter by hotel room and program/package (`programCode`).
+2. `/patients`: filter by hotel room (autocomplete) and program/package (`programCode`); check-in/out columns for hotel guests.
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time.
 5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`SANATORIUM-INTAKE`, `GYN-OR-URO`, `ECG-12`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Print check-up lists the same four enabled sections.

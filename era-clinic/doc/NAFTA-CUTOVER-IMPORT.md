@@ -161,6 +161,17 @@ Admin → Cutover import (`/admin/import`). Clinic admin write.
 
 Re-upload of the same `externalRef` updates, does not duplicate. `#24` finds the latest episode **any** status (`openedAt` desc) and applies status / dates / room / reservation / program — re-upload `#24` only, no clinic DB wipe. Missing episode is created. Re-Apply `#26` / `#27` / `#29` also stamps `clinicalEpisodeId` on existing procedure/lab/USG rows (orphans from pre-CLI-55 Apply).
 
+## Seed catalog vs WO cutover (master-data duplicates)
+
+If `db:seed` (`SVC-*` / `CAB-*`) ran **before** wizard `#19`/`#20`, master-data shows two catalogs. Seed owns names and encoding. WO `#26` owns historical slot times (`scheduledAt`). Do **not** wipe slots.
+
+1. Dry-run: `npx tsx scripts/nafta-cutover/merge-seed-wo-catalog.ts`
+2. Apply: `npx tsx scripts/nafta-cutover/merge-seed-wo-catalog.ts --apply`
+3. Check `/admin/master-data` — leftover `WO-TR-*` / `WO-ROOM-*` should be gone; unmatched names stay in the JSON report (do not delete those by hand until mapped).
+4. Re-Apply `#26` after deploy so slot rows stamp `SVC-*` + seed cabinet resource (times stay). `#19` will not overwrite seed duration/name.
+
+Unmatched WO treatments (no `SVC-*` name hit) are left in place. Add an alias in `src/lib/import/seed-catalog-match.ts` and re-run.
+
 ## Runbook (ops vs archive)
 
 Hour X: upload `NAFTA-ERA-READY/hotel/*` in hotel wizard and `clinic/01–10` in clinic wizard. Rebuild after any START delta.

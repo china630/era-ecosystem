@@ -348,6 +348,37 @@ describe("nafta cutover import rules", () => {
     });
   });
 
+  it("procedure Apply attaches WO-TR to existing SVC seed row", async () => {
+    const adapter = getImportAdapter("procedures")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:treatment:10",
+      code: "WO-TR-10",
+      nameAz: "Amplipuls",
+      durationMin: "15",
+      resourceGapMinutes: "5",
+      patientRestMinutes: "10",
+      price: "12.5",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const create = jest.fn();
+    const tx = {
+      cutoverImportKey: { findFirst: jest.fn().mockResolvedValue(null), create: jest.fn() },
+      procedureType: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: "svc-amp", code: "SVC-AMPLIPULS", name: "Amplipuls" },
+        ]),
+        create,
+      },
+    };
+    await adapter.upsert(tx as never, row, false);
+    expect(create).not.toHaveBeenCalled();
+    expect(tx.cutoverImportKey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ recordId: "svc-amp" }),
+      }),
+    );
+  });
+
   it("maps lab order panel and COMPLETED status", () => {
     const adapter = getImportAdapter("lab-orders")!;
     const mapped = adapter.mapRow({
@@ -457,6 +488,7 @@ describe("nafta cutover import rules", () => {
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue({ recordId: "pat1" }),
       },
+      procedureType: { findFirst: jest.fn().mockResolvedValue(null) },
       clinicalEpisode: {
         findFirst: jest.fn().mockResolvedValue({
           id: "ep1",

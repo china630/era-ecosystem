@@ -144,7 +144,11 @@
     "saveFailed": "Не удалось сохранить",
     "confirm": "Подтвердить",
     "datePlaceholder": "дд.мм.гггг",
-    "openCalendar": "Открыть календарь"
+    "openCalendar": "Открыть календарь",
+    "rowsPerPage": "Строк на странице",
+    "pageOf": "Стр. {page} из {pages} · всего {total}",
+    "prev": "Назад",
+    "next": "Далее"
   },
   "appointments": {
     "title": "Приёмы",
@@ -1079,6 +1083,8 @@
     "filterHotelRoomAll": "Все номера",
     "filterProgramCode": "Программа / пакет",
     "filterProgramCodeAll": "Все программы",
+    "checkIn": "Заезд",
+    "checkOut": "Выезд",
     "refCode": "Код",
     "name": "ФИО",
     "phone": "Телефон",

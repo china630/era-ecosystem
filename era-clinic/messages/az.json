@@ -144,7 +144,11 @@
     "saveFailed": "Saxlama uğursuz",
     "confirm": "Təsdiq",
     "datePlaceholder": "gg.aa.iiii",
-    "openCalendar": "Təqvimi aç"
+    "openCalendar": "Təqvimi aç",
+    "rowsPerPage": "Səhifədə sətir",
+    "pageOf": "Səhifə {page}/{pages} · cəmi {total}",
+    "prev": "Əvvəlki",
+    "next": "Növbəti"
   },
   "appointments": {
     "title": "Qəbullar",
@@ -1079,6 +1083,8 @@
     "filterHotelRoomAll": "Bütün otaqlar",
     "filterProgramCode": "Proqram / paket",
     "filterProgramCodeAll": "Bütün proqramlar",
+    "checkIn": "Giriş",
+    "checkOut": "Çıxış",
     "refCode": "Kod",
     "name": "Ad",
     "phone": "Telefon",
