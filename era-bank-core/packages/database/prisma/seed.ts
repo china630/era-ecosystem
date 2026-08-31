@@ -398,7 +398,12 @@ async function main() {
       });
       if (cardTemplate) {
         await prisma.card.upsert({
-          where: { cardToken: "demo-retail-card-token" },
+          where: {
+            organizationId_cardToken: {
+              organizationId: bankOrgId,
+              cardToken: "demo-retail-card-token",
+            },
+          },
           create: {
             bankOrgId,
             customerId: retailId,
