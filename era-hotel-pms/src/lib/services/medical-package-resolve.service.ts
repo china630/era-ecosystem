@@ -127,10 +127,25 @@ function noteTextByType(notes: ResolveNoteInput[], types: string[]): string {
     .join("\n");
 }
 
+function applyNamedCode(
+  guests: ResolveGuestInput[],
+  named: Map<number, MedicalPackageCode>,
+  name: string,
+  code: MedicalPackageCode,
+): void {
+  guests.forEach((g, i) => {
+    if (namesMatch(guestDisplayName(g), name)) named.set(i, code);
+  });
+}
+
 /**
  * Parse ERA-PKG block:
- * - `ERA-PKG STANDART`
- * - `ERA-PKG\nAliyev: PREMIUM\nAliyeva: STANDART`
+ * - `ERA-PKG STANDART` — same SKU for every pax (do not list names)
+ * - `ERA-PKG\nSTANDART` — same, code on the next line
+ * - `ERA-PKG\nAliyev: PREMIUM\nAliyeva: STANDART` — mix only
+ *
+ * If every named row in the block is the same SKU, that SKU applies to all pax
+ * even when guest names do not match the card.
  */
 function parseEraPkgBlock(
   text: string,
@@ -147,6 +162,7 @@ function parseEraPkgBlock(
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   let hit = false;
   let allCode: MedicalPackageCode | null = null;
+  const blockCodes: MedicalPackageCode[] = [];
 
   for (const line of lines) {
     const eraMatch = line.match(/^ERA-PKG\s*[:\-]?\s*(.*)$/i);
@@ -158,37 +174,45 @@ function parseEraPkgBlock(
       if (namedLine) {
         const code = normalizeMedicalPackageCode(namedLine[2]);
         if (!code) continue;
-        const name = namedLine[1].trim();
-        guests.forEach((g, i) => {
-          if (namesMatch(guestDisplayName(g), name)) named.set(i, code);
-        });
+        blockCodes.push(code);
+        applyNamedCode(guests, named, namedLine[1].trim(), code);
       } else {
         const code = normalizeMedicalPackageCode(rest.split(/\s+/)[0]);
-        if (code) allCode = code;
+        if (code) {
+          allCode = code;
+          blockCodes.push(code);
+        }
       }
       continue;
     }
-    // Named rows without ERA-PKG prefix inside an Extra Req that already had ERA-PKG
     if (hit) {
       const namedLine = line.match(/^(.+?)\s*[:\-]\s*(\S+)$/);
       if (namedLine) {
         const code = normalizeMedicalPackageCode(namedLine[2]);
         if (!code) continue;
-        const name = namedLine[1].trim();
-        guests.forEach((g, i) => {
-          if (namesMatch(guestDisplayName(g), name)) named.set(i, code);
-        });
+        blockCodes.push(code);
+        applyNamedCode(guests, named, namedLine[1].trim(), code);
+        continue;
+      }
+      const bare = normalizeMedicalPackageCode(line);
+      if (bare) {
+        allCode = allCode ?? bare;
+        blockCodes.push(bare);
       }
     }
   }
 
-  // Whole-text single token after ERA-PKG when no newlines
   if (!hit) {
     const m = text.match(/ERA-PKG\s*[:\-]?\s*(\S+)/i);
     if (m) {
       hit = true;
       allCode = normalizeMedicalPackageCode(m[1]);
     }
+  }
+
+  if (!allCode) {
+    const unique = [...new Set(blockCodes)];
+    if (unique.length === 1) allCode = unique[0];
   }
 
   return { allCode, named, hit };
@@ -307,11 +331,17 @@ export function resolveMedicalSku(
   const cinNote = noteTextByType(input.notes, ["CIN_NOTE"]);
   const priceNote = noteTextByType(input.notes, ["PRICE_NOTE"]);
 
-  // 1. ERA-PKG in Extra Req
+  // 1. ERA-PKG in Extra Req — one SKU on the ERA-PKG line covers every pax
   const era = parseEraPkgBlock(extraReq, guests);
   if (era.hit) {
     anyHit = true;
-    if (era.named.size > 0) {
+    const namedCodes = [...era.named.values()];
+    const namedUnique = [...new Set(namedCodes)];
+    const samePackageForAll =
+      Boolean(era.allCode) && (namedUnique.length === 0 || namedUnique.every((c) => c === era.allCode));
+    if (samePackageForAll && era.allCode) {
+      perGuestCodes.fill(era.allCode);
+    } else if (era.named.size > 0) {
       for (const [i, code] of era.named) perGuestCodes[i] = code;
       if (era.allCode) {
         perGuestCodes.forEach((c, i) => {

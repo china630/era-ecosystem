@@ -2054,11 +2054,11 @@
       },
       "master": {
         "title": "Faza 2 — Otel NSİ",
-        "hint": "Yuxarıdan aşağı. Tariflərdən sonra: 14-Package-Sell-2026.xlsx (PDF, EW deyil). Sonra otaqlar, agentliklər, EW Ürün Kartları."
+        "hint": "Yuxarıdan aşağı: 06 otaq tipləri → 07 tariflər → 08 otaqlar → 09 agentliklər. Package sell 3-cü fazadadır (#14)."
       },
       "transactional": {
         "title": "Faza 3 — Qonaqlar, rezervasiyalar, qeydlər, folio",
-        "hint": "Sıra: qonaqlar → rezervasiyalar → qeydlər → folio → Agency Statement (EW city ledger, 1C deyil)."
+        "hint": "Sıra: qonaqlar → rezervasiyalar → qeydlər → folio → 14-Package-Sell → Agency Statement (EW city ledger, 1C deyil). FnB/retail kartlar bu formda yoxdur."
       }
     },
     "nextPhase": "Növbəti faza",

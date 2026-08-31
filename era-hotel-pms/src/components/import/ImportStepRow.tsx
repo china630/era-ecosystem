@@ -189,7 +189,7 @@ export function ImportStepRow({
               done ? 'bg-green-100 text-green-700' : 'bg-[#EBF5FB] text-[#2980B9]',
             ].join(' ')}
           >
-            {done ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : stepNumber}
+            {done ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : String(stepNumber).padStart(2, '0')}
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2">

@@ -2054,11 +2054,11 @@
       },
       "master": {
         "title": "Фаза 2 — НСИ отеля",
-        "hint": "Сверху вниз. После тарифов: 14-Package-Sell-2026.xlsx (PDF стойка, не EW). Затем номера, агентства, EW Ürün Kartları."
+        "hint": "Сверху вниз: 06 типы номеров → 07 тарифы → 08 номера → 09 агентства. Package sell — фаза 3 (#14)."
       },
       "transactional": {
         "title": "Фаза 3 — Гости, брони, ноты, фолио",
-        "hint": "Строгий порядок: гости → брони → ноты → фолио → Agency Statement (city ledger EW, не 1С)."
+        "hint": "Строгий порядок: гости → брони → ноты → фолио → 14-Package-Sell → Agency Statement (city ledger EW, не 1С). Карточки FnB/retail на этой форме нет."
       }
     },
     "nextPhase": "Следующая фаза",

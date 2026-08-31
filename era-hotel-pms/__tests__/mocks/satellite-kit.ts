@@ -38,6 +38,10 @@ export function resetSatelliteTenantAlsForTests(): void {
   als.organizationId = undefined;
 }
 
+export async function hashPassword(password: string): Promise<string> {
+  return `salt:${password}`;
+}
+
 export class IndustryModuleInactiveError extends Error {
   constructor(message = "Industry module inactive") {
     super(message);
