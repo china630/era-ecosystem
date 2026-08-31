@@ -1383,7 +1383,7 @@ const diagnosesAdapter: ImportAdapter<{
       console.warn(
         `[diagnoses import] skip ${row.patientRef}: no ICD-10 for "${row.rawText.slice(0, 40)}"`,
       );
-      return null;
+      return "skipped";
     }
     const icd = await tx.icdCode.findFirst({
       where: { code: row.icd10.trim(), selectable: true, active: true },
@@ -1392,7 +1392,7 @@ const diagnosesAdapter: ImportAdapter<{
       console.warn(
         `[diagnoses import] skip ${row.patientRef}: ICD ${row.icd10} not found`,
       );
-      return null;
+      return "skipped";
     }
     const episode = await ensureCutoverEpisode(tx, patientId);
     const key = `wo:dx:${row.patientRef}:${row.recordedAt}:${row.icd10}:${row.rawText.slice(0, 24)}`;

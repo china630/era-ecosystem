@@ -1,14 +1,10 @@
-import type { Prisma } from "@prisma/client";
+import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { formatPatientRefCode } from "@/domain/patient/patient-ref-code";
 
 type SeqClient = {
-  tenant: {
-    findFirst: typeof prisma.tenant.findFirst;
-    create: typeof prisma.tenant.create;
-    update: typeof prisma.tenant.update;
-  };
+  tenant: Pick<typeof prisma.tenant, "findFirst" | "create" | "update">;
 };
 
 /**
@@ -17,18 +13,19 @@ type SeqClient = {
  * Server-only: keep out of client bundles (do not import from `"use client"` pages).
  */
 export async function allocatePatientRefCode(
-  tx?: Prisma.TransactionClient | SeqClient,
+  tx?: SeqClient | SatelliteTransactionClient,
   organizationId?: string,
 ): Promise<string> {
   const client = (tx ?? prisma) as SeqClient;
   const orgId = organizationId ?? requestOrganizationId();
 
-  let tenant = await client.tenant.findFirst({
+  const existing = await client.tenant.findFirst({
     where: { organizationId: orgId },
     select: { id: true },
   });
-  if (!tenant) {
-    tenant = await client.tenant.create({
+  const tenant =
+    existing ??
+    (await client.tenant.create({
       data: {
         organizationId: orgId,
         code: orgId.slice(0, 24) || "clinic",
@@ -36,8 +33,7 @@ export async function allocatePatientRefCode(
         nextPatientSeq: 1,
       },
       select: { id: true },
-    });
-  }
+    }));
 
   const updated = await client.tenant.update({
     where: { id: tenant.id },

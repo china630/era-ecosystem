@@ -123,6 +123,8 @@ export async function openEpisodeFromStay(input: {
     });
   }
 
+  if (!patient) throw new Error("Failed to create hotel stay patient");
+
   await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
 
   // Wave E: OPEN episode keyed by reservation + patient (not reservation-only)
