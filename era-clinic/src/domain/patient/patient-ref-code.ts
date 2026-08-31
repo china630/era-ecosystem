@@ -35,17 +35,17 @@ export function isClinicPatientRefCode(refCode: string): boolean {
 }
 
 type SeqClient = {
-  $queryRaw: typeof prisma.$queryRaw;
-  $executeRaw: typeof prisma.$executeRaw;
   tenant: {
     findFirst: typeof prisma.tenant.findFirst;
     create: typeof prisma.tenant.create;
+    update: typeof prisma.tenant.update;
   };
 };
 
 /**
  * Atomically allocate next clinic-native refCode (P-000001 …) for the request org.
  * Ensures a Tenant row exists for the organization.
+ * Uses Prisma increment (atomic UPDATE) so satellite raw-SQL tenant filter is not required.
  */
 export async function allocatePatientRefCode(
   tx?: Prisma.TransactionClient | SeqClient,
@@ -70,14 +70,16 @@ export async function allocatePatientRefCode(
     });
   }
 
-  const rows = await client.$queryRaw<Array<{ next_patient_seq: number }>>`
-    UPDATE "Tenant"
-    SET "next_patient_seq" = "next_patient_seq" + 1
-    WHERE "id" = ${tenant.id}
-    RETURNING ("next_patient_seq" - 1) AS "next_patient_seq"
-  `;
-  const seq = rows[0]?.next_patient_seq;
-  if (seq == null || seq < 1) {
+  const updated = await client.tenant.update({
+    where: { id: tenant.id },
+    data: { nextPatientSeq: { increment: 1 } },
+    select: { nextPatientSeq: true, organizationId: true },
+  });
+  if (updated.organizationId !== orgId) {
+    throw new Error("Tenant organization mismatch while allocating patient refCode");
+  }
+  const seq = updated.nextPatientSeq - 1;
+  if (seq < 1) {
     throw new Error("Failed to allocate patient refCode sequence");
   }
   return formatPatientRefCode(seq);

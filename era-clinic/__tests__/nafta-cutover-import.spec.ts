@@ -20,9 +20,11 @@ const tenantStub = {
   tenant: {
     findFirst: jest.fn().mockResolvedValue({ id: "tenant1" }),
     create: jest.fn().mockResolvedValue({ id: "tenant1", nextPatientSeq: 2 }),
-    update: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue({
+      nextPatientSeq: 2,
+      organizationId: "org-test",
+    }),
   },
-  $queryRaw: jest.fn().mockResolvedValue([{ next_patient_seq: 1 }]),
 };
 
 describe("nafta cutover import rules", () => {
