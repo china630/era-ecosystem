@@ -35,7 +35,7 @@ const FILES = {
   clinicPatients: "clinic/24-Patients.xlsx",
   clinicQuotas: "clinic/25-Quotas.xlsx",
   clinicSlots: "clinic/26-Slots.xlsx",
-  /** Wizard also accepts 26-Slots-p01.xlsx … when the book is chunked. */
+  /** Chunks live in `clinic/26-Slots/26-Slots-p01.xlsx` … when the book is split. */
   clinicLabOrders: "clinic/27-Lab-Orders.xlsx",
   clinicLabResults: "clinic/28-Lab-Results.xlsx",
   clinicDiagnostics: "clinic/29-Diagnostics.xlsx",

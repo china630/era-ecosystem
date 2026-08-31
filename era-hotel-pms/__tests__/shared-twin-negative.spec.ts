@@ -4,11 +4,13 @@ import {
   countDoorsUsedOnNight,
   isEffectiveShare,
   maxDoorsUsedInRange,
+  nextFreeShareBedIndex,
   nextShareBedIndex,
   normalizeShareGender,
   validateShareCandidate,
   type ShareReservationSlice,
 } from '@/lib/services/share-assignment.service';
+import { parseHotelNoon } from '@/lib/hotel-calendar';
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -196,6 +198,94 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
       expect(() =>
         nextShareBedIndex([{ shareBedIndex: 1 }, { shareBedIndex: 2 }, { shareBedIndex: 3 }], 3),
       ).toThrow(/full/);
+    });
+  });
+
+  describe('nextFreeShareBedIndex (per-night)', () => {
+    it('assigns vacated bed 2 when A stays to 10th and B left on 5th', () => {
+      const bed = nextFreeShareBedIndex({
+        overlapping: [
+          {
+            id: 'a',
+            checkInDate: parseHotelNoon('2026-06-01'),
+            checkOutDate: parseHotelNoon('2026-06-10'),
+            shareBedIndex: 1,
+          },
+          {
+            id: 'b',
+            checkInDate: parseHotelNoon('2026-06-01'),
+            checkOutDate: parseHotelNoon('2026-06-05'),
+            shareBedIndex: 2,
+          },
+        ],
+        checkIn: parseHotelNoon('2026-06-06'),
+        checkOut: parseHotelNoon('2026-06-12'),
+        maxBed: 2,
+      });
+      expect(bed).toBe(2);
+    });
+
+    it('reuses bed 2 after a second turnover on the lower lane', () => {
+      const bed = nextFreeShareBedIndex({
+        overlapping: [
+          {
+            id: 'a',
+            checkInDate: parseHotelNoon('2026-06-01'),
+            checkOutDate: parseHotelNoon('2026-06-20'),
+            shareBedIndex: 1,
+          },
+          {
+            id: 'c',
+            checkInDate: parseHotelNoon('2026-06-06'),
+            checkOutDate: parseHotelNoon('2026-06-10'),
+            shareBedIndex: 2,
+          },
+        ],
+        checkIn: parseHotelNoon('2026-06-11'),
+        checkOut: parseHotelNoon('2026-06-16'),
+        maxBed: 2,
+      });
+      expect(bed).toBe(2);
+    });
+
+    it('does not treat non-overlapping same bed as full pool', () => {
+      const bed = nextFreeShareBedIndex({
+        overlapping: [
+          {
+            id: 'a',
+            checkInDate: parseHotelNoon('2026-06-01'),
+            checkOutDate: parseHotelNoon('2026-06-10'),
+            shareBedIndex: 1,
+          },
+          {
+            id: 'b',
+            checkInDate: parseHotelNoon('2026-06-12'),
+            checkOutDate: parseHotelNoon('2026-06-20'),
+            shareBedIndex: 1,
+          },
+        ],
+        checkIn: parseHotelNoon('2026-06-01'),
+        checkOut: parseHotelNoon('2026-06-20'),
+        maxBed: 2,
+      });
+      expect(bed).toBe(2);
+    });
+
+    it('null shareBedIndex on neighbor blocks a bed (no overlay on 1)', () => {
+      const bed = nextFreeShareBedIndex({
+        overlapping: [
+          {
+            id: 'a',
+            checkInDate: parseHotelNoon('2026-06-01'),
+            checkOutDate: parseHotelNoon('2026-06-10'),
+            shareBedIndex: null,
+          },
+        ],
+        checkIn: parseHotelNoon('2026-06-05'),
+        checkOut: parseHotelNoon('2026-06-12'),
+        maxBed: 2,
+      });
+      expect(bed).toBe(2);
     });
   });
 

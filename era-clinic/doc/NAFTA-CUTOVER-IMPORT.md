@@ -92,7 +92,7 @@ Writes `NAFTA-ERA-READY/clinic/19-Treatments.xlsx`, `20-Clinic-Rooms.xlsx`, `21-
 | File | Rows (2026-08-28 dump) | START source | Columns |
 |------|------------------:|----------------|---------|
 | 24-Patients.xlsx | 1714 | dump `cards/{id}.json` `slices.patient` joined onto `bulk/patients.json` | externalRef, woId, fullName, givenName, surname, sex, birthDate, nationality, phone, hotelResNo, roomNumber, folioPerson, uniqueId, checkIn, checkOut, treatmentDaysCount, nightCount, isReservationPatient, doctorId, doctorName, doctorFormCreatedAt, checkUpId, checkUpName, programCode, latestPainDegree, latestPainDegreeCreatedAt |
-| 26-Slots.xlsx / `26-Slots-p01.xlsx` … | ~60 480 COMPLETED | dump calendar | externalRef, date, startTime, patientRef, procedureCode, roomCode, status, nahiye. **Chunks of 5 000 rows** — wizard `#26` is multi-file; do not POST the full book (FormData parse fails). Split: `node era-clinic/scripts/nafta-cutover/split-xlsx-chunks.cjs --in …/26-Slots.xlsx --replace`. |
+| 26-Slots.xlsx / `clinic/26-Slots/26-Slots-p01.xlsx` … | ~60 480 COMPLETED | dump calendar | externalRef, date, startTime, patientRef, procedureCode, roomCode, status, nahiye. **Chunks of 5 000 rows in `clinic/26-Slots/`** — wizard `#26` is multi-file; do not POST the full book (FormData parse fails). Bake writes the folder automatically. |
 | 27-Lab-Orders.xlsx | 2354 | dump lab-results + files/lab | externalRef, patientRef, testCode, status, panel, takenAt |
 | 19-Treatments.xlsx | 80 | `01-procedures.xlsx` SSOT | externalRef, code, nameAz, durationMin, resourceGapMinutes, patientRestMinutes, price |
 | 20-Clinic-Rooms.xlsx | 63 | SSOT + calendar history | externalRef, code, name |
@@ -105,9 +105,10 @@ Writes `NAFTA-ERA-READY/clinic/19-Treatments.xlsx`, `20-Clinic-Rooms.xlsx`, `21-
 | `../hr/01-Org-Structure.xlsx` | START `hr/Ştat vahidləri Nafta 28.08.2026.xlsx` | orgUnit, position, totalSlots. Import **before** roster. |
 | `../hr/02-Employees.xlsx` | START `hr/02-Employees.xlsx` (133; FİN + Cins K/Q + DOB + hire) | fin, fullName, sex, birthDate, orgUnit, position, hireDate, workplace, satellites. Rebuild: `node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs` |
 
-Episode `programCode` (list **Proqram / paket**): **not** WO Check-up name. Overlay from EW FO-with-Notes: agency Premium/Dermo/Həmkarlar, phrases, `ERA-PKG`, Price Note, **Walkin medical → PKG-STANDART**. Skip leisure and mix (two SKUs on one card). Join: name+date, ±1 day, unique last name, unique room+date.
+Episode `programCode` (list **Proqram / paket**): **not** WO Check-up name. Overlay from EW FO-with-Notes + long Notes `#12`: agency Premium/Dermo/Həmkarlar, **Extra Req `ERA-PKG` only**, phrases in Extra / Res / CIn / **Operator** / **Payment**, Price Note, **Walkin medical → PKG-STANDART**. Skip leisure and mix (two SKUs on one card). Həmkarlar FO slice from 1 June (including September `Reservation`) is merged so the 152 cards are not truncated to in-house. Join: name+date, ±1 day, unique last name, unique room+date.
 
 ```
+node era-clinic/scripts/nafta-cutover/enrich-package-stamps.cjs         # rebuild stamps JSON
 node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs          # dry-run
 node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs --apply  # writes 24-Patients.xlsx
 ```
@@ -122,7 +123,9 @@ Attending doctor is **not** a field on `PatientRef`. Same as live ops: reception
 
 MDM on `#24`: stamp FO `uniqueId` + `passport` via `apply-wo-fo-guest-bridge.cjs` (dump `GET https://nafta-frontoffice.webonly.io/api/GuestCard`). Import hotel `#10` first — FO-only cards are appended as `Guest Id=wo:fo:{id}` with passport filled. Then `linkPersonIdentity` with that passport/FIN so clinic and hotel share MDM. Name+DOB hotel lookup and `hotelResNo` stay remain fallbacks. Walk-ins without FO/EW get a surrogate. Anamnesis stamp is `Nafta cutover import`.
 
-Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-URINE` + analyte aliases (`LYM%`→`LYMPH%`). **Ignored:** orders without parseable Word (~170) — no #28 lines, still importable via #27 as header-only orders.
+Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-URINE` + analyte aliases (`LYM%`→`LYMPH%`). Urine Word tables: join `w:t` runs without spaces, start at row `№=1`, drop `Tarix` / date grids (do not emit `U-DATE`). **Ignored:** orders without parseable Word (~170) — no #28 lines, still importable via #27 as header-only orders.
+
+**Import hardening (required before re-Apply `#27`):** middleware must pass `/api/import` without cloning request headers (Cookie + multipart). `#27`/`#29` upserts run inside `prisma.$transaction`: `LabOrder.create` then top-level `LabOrderItem.create` (scalar `diagnosticServiceId`). Nested `items.create` is rejected — tenant stamp adds `organizationId` to a non-tenant model, and nested Prisma input wants `diagnosticService.connect`, not the FK.
 
 Lab / USG list date: WO patients grid has no analysis column. `#27` `takenAt` is WO `LabResult.resultDate` (file date; present on the API even when the UI hides it). Empty `takenAt` → stay **check-in** (`ClinicalEpisode.openedAt` from `#24`). Import stamps `collectedAt` / `resultDate` / `createdAt` to that clinical day so `/lab-orders` “Tarix” is not the Apply timestamp. Date filters use `collectedAt` (fallback `createdAt`). Re-Apply `#27` (and `#29` for USG) after deploy to backfill already-imported rows.
 
@@ -165,7 +168,7 @@ Admin → Cutover import (`/admin/import`). Clinic admin write.
 1. Dictionaries: **16** catalog → **17** physio → **19** treatments → **20** rooms → **21** requirements → **23** templates. Do **not** Apply EW `Hizmet Tanımları` (old READY `#18`) — package quota procedures are not tariffed; do not clone 0 AZN extras.  
 2. Staff: **22**  
 3. Patients: **24** (after hotel `#10`/`#11`; FO `passport`/`uniqueId` → MDM; attending Visit from `#22`)  
-4. Quotas + slots: **25** + **26** (select all `26-Slots-p01.xlsx` … in one step; wizard posts each chunk separately)  
+4. Quotas + slots: **25** + **26** (select all files from `clinic/26-Slots/26-Slots-p01.xlsx` … in one step; wizard posts each chunk separately)  
 5. Lab / USG: **27** → **28**, then **29** after diagnostic catalog seed. Do **not** Apply leftover diagnoses.
 
 Re-upload of the same `externalRef` updates, does not duplicate. `#24` finds the latest episode **any** status (`openedAt` desc) and applies status / dates / room / reservation / program — re-upload `#24` only, no clinic DB wipe. Missing episode is created. Re-Apply `#26` / `#27` / `#29` also stamps `clinicalEpisodeId` on existing procedure/lab/USG rows (orphans from pre-CLI-55 Apply).

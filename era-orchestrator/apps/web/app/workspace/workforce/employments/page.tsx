@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowRightLeft,
+  KeyRound,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -56,7 +57,7 @@ type EmploymentRow = {
   position?: { name: string; id?: string } | null;
   orgUnitId?: string;
   positionId?: string;
-  roleBindings?: Array<{ satelliteKey: string }>;
+  roleBindings?: Array<{ satelliteKey: string; satelliteRole?: string }>;
 };
 
 type ListResponse = {
@@ -79,6 +80,45 @@ const SATELLITE_OPTIONS = [
   { key: "industry_hotel_pms", label: "Hotel PMS" },
   { key: "industry_fnb_pos", label: "F&B POS" },
 ] as const;
+
+/** Same formula as WorkforceProvisionService.staffCodeFromEmployment + login. */
+function staffLoginFromEmploymentId(employmentId: string): string {
+  const staffCode = employmentId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `emp-${staffCode.toLowerCase()}`;
+}
+
+function satelliteLabel(key: string): string {
+  return SATELLITE_OPTIONS.find((s) => s.key === key)?.label ?? key;
+}
+
+function humanizeRole(code: string): string {
+  return code
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
+/** Public staff-login origins (SHARED pool). Env overrides for local/dev. */
+const SATELLITE_LOGIN_ORIGIN: Record<string, string> = {
+  industry_clinic:
+    process.env.NEXT_PUBLIC_SATELLITE_CLINIC_URL?.replace(/\/$/, "") ||
+    "https://clinic.era-365.online",
+  industry_hotel_pms:
+    process.env.NEXT_PUBLIC_SATELLITE_HOTEL_URL?.replace(/\/$/, "") ||
+    "https://hotel-pms.era-365.online",
+  industry_fnb_pos:
+    process.env.NEXT_PUBLIC_SATELLITE_FNB_POS_URL?.replace(/\/$/, "") ||
+    "https://fnb-pos.era-365.online",
+};
+
+function satelliteLoginHref(
+  satelliteKey: string,
+  organizationId: string,
+): string | null {
+  const origin = SATELLITE_LOGIN_ORIGIN[satelliteKey];
+  if (!origin || !organizationId) return null;
+  return `${origin}/login?organizationId=${encodeURIComponent(organizationId)}`;
+}
 
 const SEX_VALUES = ["MALE", "FEMALE", "UNKNOWN"] as const;
 const BLOOD_VALUES = [
@@ -163,6 +203,27 @@ export default function WorkforceEmploymentsPage() {
   const [transferPositionId, setTransferPositionId] = useState("");
   const [cardOpen, setCardOpen] = useState(false);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginEmp, setLoginEmp] = useState<EmploymentRow | null>(null);
+  const [loginCopied, setLoginCopied] = useState(false);
+  const [orgCopied, setOrgCopied] = useState(false);
+
+  const workspaceOrgId =
+    user?.organizationId?.trim() ||
+    orgIdFromToken(getOrchAccessToken()) ||
+    "";
+
+
+  useEffect(() => {
+    if (!moreMenuId) return;
+    function onDocMouseDown(e: MouseEvent) {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest("[data-employment-more-menu]")) return;
+      setMoreMenuId(null);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [moreMenuId]);
 
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [resolveFin, setResolveFin] = useState("");
@@ -853,6 +914,13 @@ export default function WorkforceEmploymentsPage() {
             <tbody>
               {pagedRows.map((r) => {
                 const hasBindings = (r.roleBindings?.length ?? 0) > 0;
+                const canReprovision =
+                  r.status !== "TERMINATED" && hasBindings;
+                const reprovisionTitle = !canReprovision
+                  ? r.status === "TERMINATED"
+                    ? t("reprovisionTerminated")
+                    : t("reprovisionNoBindings")
+                  : t("reprovision");
                 return (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>
@@ -930,40 +998,52 @@ export default function WorkforceEmploymentsPage() {
                             aria-hidden
                           />
                         </button>
-                        {hasBindings ? (
-                          <div className="relative">
-                            <button
-                              type="button"
-                              className={TABLE_ROW_ICON_BTN_CLASS}
-                              title={t("moreActions")}
-                              aria-label={t("moreActions")}
-                              disabled={busy}
-                              onClick={() =>
-                                setMoreMenuId((id) =>
-                                  id === r.id ? null : r.id,
-                                )
-                              }
-                            >
-                              <MoreHorizontal
-                                className="h-4 w-4 text-[#7F8C8D]"
-                                aria-hidden
-                              />
-                            </button>
-                            {moreMenuId === r.id ? (
-                              <div className="absolute right-0 z-10 mt-1 min-w-[10rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7]"
-                                  disabled={busy}
-                                  onClick={() => void reprovisionEmployment(r)}
-                                >
-                                  <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-                                  {t("reprovision")}
-                                </button>
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
+                        <div className="relative" data-employment-more-menu="">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("moreActions")}
+                            aria-label={t("moreActions")}
+                            disabled={busy}
+                            onClick={() =>
+                              setMoreMenuId((id) =>
+                                id === r.id ? null : r.id,
+                              )
+                            }
+                          >
+                            <MoreHorizontal
+                              className="h-4 w-4 text-[#7F8C8D]"
+                              aria-hidden
+                            />
+                          </button>
+                          {moreMenuId === r.id ? (
+                            <div className="absolute right-0 z-10 mt-1 min-w-[11rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7]"
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  setLoginEmp(r);
+                                  setLoginCopied(false);
+                                  setLoginOpen(true);
+                                }}
+                              >
+                                <KeyRound className="h-3.5 w-3.5" aria-hidden />
+                                {t("loginInfo")}
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || !canReprovision}
+                                title={reprovisionTitle}
+                                onClick={() => void reprovisionEmployment(r)}
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                                {t("reprovision")}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -1340,6 +1420,128 @@ export default function WorkforceEmploymentsPage() {
             </button>
           </div>
         </form>
+      </ModalShell>
+
+      <ModalShell
+        open={loginOpen && !!loginEmp}
+        title={t("loginInfoTitle")}
+        subtitle={t("loginInfoSubtitle")}
+        onClose={() => {
+          setLoginOpen(false);
+          setLoginEmp(null);
+          setLoginCopied(false);
+          setOrgCopied(false);
+        }}
+        closeLabel={tCommon("close")}
+      >
+        {loginEmp ? (
+          <div className="space-y-4 text-[13px] text-[#34495E]">
+            <div>
+              <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                {t("loginLabel")}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <code className="rounded bg-[#F4F6F7] px-2 py-1 font-mono text-[14px] text-[#2C3E50]">
+                  {staffLoginFromEmploymentId(loginEmp.id)}
+                </code>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    const login = staffLoginFromEmploymentId(loginEmp.id);
+                    void navigator.clipboard?.writeText(login).then(() => {
+                      setLoginCopied(true);
+                      window.setTimeout(() => setLoginCopied(false), 2000);
+                    });
+                  }}
+                >
+                  {loginCopied ? t("loginCopied") : t("copyLogin")}
+                </button>
+              </div>
+            </div>
+            {workspaceOrgId ? (
+              <div>
+                <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                  {t("organizationIdLabel")}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <code className="break-all rounded bg-[#F4F6F7] px-2 py-1 font-mono text-[12px] text-[#2C3E50]">
+                    {workspaceOrgId}
+                  </code>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(workspaceOrgId).then(() => {
+                        setOrgCopied(true);
+                        window.setTimeout(() => setOrgCopied(false), 2000);
+                      });
+                    }}
+                  >
+                    {orgCopied ? t("loginCopied") : t("copyOrganizationId")}
+                  </button>
+                </div>
+                <p className="mt-1 text-[12px] text-[#7F8C8D]">{t("organizationIdSharedHint")}</p>
+              </div>
+            ) : null}
+            <p className="text-[#7F8C8D]">{t("defaultPinHint")}</p>
+            <div>
+              <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                {t("satellitesAccess")}
+              </div>
+              {(loginEmp.roleBindings ?? []).length === 0 ? (
+                <p className="text-[#7F8C8D]">{t("noSatelliteAccess")}</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {(loginEmp.roleBindings ?? []).map((b) => {
+                    const href = satelliteLoginHref(b.satelliteKey, workspaceOrgId);
+                    return (
+                      <li
+                        key={`${b.satelliteKey}:${b.satelliteRole ?? ""}`}
+                        className="rounded-md border border-[#E8ECF0] px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium text-[#2C3E50]">
+                            {satelliteLabel(b.satelliteKey)}
+                          </span>
+                          <span className="text-[#7F8C8D]">
+                            {b.satelliteRole
+                              ? humanizeRole(b.satelliteRole)
+                              : t("roleUnset")}
+                          </span>
+                        </div>
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-block text-[12px] text-[#2980B9] hover:underline"
+                          >
+                            {t("openSatelliteLogin")}
+                          </a>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => {
+                  setLoginOpen(false);
+                  setLoginEmp(null);
+                  setLoginCopied(false);
+                  setOrgCopied(false);
+                }}
+              >
+                {tCommon("close")}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </ModalShell>
     </>
   );

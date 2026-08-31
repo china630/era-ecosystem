@@ -2,7 +2,7 @@ import { handleStaffProvisionEvent } from "@/lib/staff-provision";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    role: { findFirst: jest.fn() },
+    role: { findFirst: jest.fn(), create: jest.fn() },
     user: {
       findFirst: jest.fn(),
       create: jest.fn(),
@@ -42,6 +42,7 @@ describe("hotel staff-provision", () => {
     jest.clearAllMocks();
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.role.findFirst.mockResolvedValue({ id: "role-1", code: "Receptionist" });
+    prisma.role.create.mockResolvedValue({ id: "role-new", code: "Receptionist" });
     prisma.user.findFirst.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: "user-1" });
   });
@@ -62,6 +63,27 @@ describe("hotel staff-provision", () => {
       }),
     );
     expect(prisma.role.findFirst).toHaveBeenCalledWith({ where: { code: "Receptionist" } });
+    expect(prisma.role.create).not.toHaveBeenCalled();
+  });
+
+  it("ensures Receptionist role when missing (no seed)", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.role.findFirst.mockResolvedValue(null);
+    const result = await handleStaffProvisionEvent(provisionEvent);
+    expect(result).toEqual({ satelliteUserId: "user-1" });
+    expect(prisma.role.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          code: "Receptionist",
+          permissionsJson: expect.any(String),
+        }),
+      }),
+    );
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ roleId: "role-new" }),
+      }),
+    );
   });
 
   it("deactivates user on STAFF_DEACTIVATED", async () => {

@@ -2,7 +2,7 @@
 
 /**
  * Overlay clinic #24 programCode from EW FO-with-Notes extract
- * (agency prefix / Həmkarlar / package phrases / high-conf catalog).
+ * (agency prefix / Həmkarlar / Extra Req ERA-PKG / Res·CIn·Operator·Payment phrases).
  *
  *   node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs
  *   node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs --apply
@@ -206,15 +206,13 @@ function overlayPatientProgramCodes(patientRows, stamps, opts = {}) {
   const stats = {
     total: patientRows.length,
     stamped: 0,
-    skippedExisting: 0,
+    overwritten: 0,
     unmatched: 0,
     bySource: {},
+    bySku: {},
   };
   for (const row of patientRows) {
-    if (normalizePkg(row.programCode)) {
-      stats.skippedExisting += 1;
-      continue;
-    }
+    const previous = normalizePkg(row.programCode);
     const day = ymd(row.checkIn);
     const names = [foldName(row.fullName), foldName(`${row.givenName || ""} ${row.surname || ""}`)].filter(
       Boolean,
@@ -250,8 +248,10 @@ function overlayPatientProgramCodes(patientRows, stamps, opts = {}) {
     }
     row.programCode = hit.migrationSku;
     stats.stamped += 1;
+    if (previous && previous !== hit.migrationSku) stats.overwritten += 1;
     const src = hit.migrationSource || (hit.migrationSku ? "medical-default" : "unknown");
     stats.bySource[src] = (stats.bySource[src] || 0) + 1;
+    stats.bySku[hit.migrationSku] = (stats.bySku[hit.migrationSku] || 0) + 1;
   }
   return stats;
 }

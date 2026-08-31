@@ -21,7 +21,7 @@ describe("listPatientsPaged hotel room filter", () => {
     jest.resetModules();
   });
 
-  it("scopes OPEN episodes by roomNumber and returns hotelRoomNumber", async () => {
+  it("scopes OPEN episodes by roomNumber when episodeStatus OPEN", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.patientRef.findMany.mockResolvedValue([
       {
@@ -29,7 +29,7 @@ describe("listPatientsPaged hotel room filter", () => {
         refCode: "P1",
         fullName: "Ali",
         birthDate: null,
-        episodes: [{ roomNumber: "101", reservationId: "11112877", openedAt: new Date("2026-08-27T00:00:00+04:00"), closedAt: null, programInstance: { endsOn: new Date("2026-09-04T00:00:00+04:00") } }],
+        episodes: [{ id: "ep1" }],
       },
     ]);
     prisma.patientRef.count.mockResolvedValue(1);
@@ -37,6 +37,7 @@ describe("listPatientsPaged hotel room filter", () => {
 
     const { listPatientsPaged } = await import("@/domain/patient/patient.service");
     const result = await listPatientsPaged({
+      episodeStatus: "OPEN",
       roomNumber: "101",
       includeHotelRooms: true,
     });
@@ -56,15 +57,13 @@ describe("listPatientsPaged hotel room filter", () => {
     );
     expect(result.items[0]).toEqual(
       expect.objectContaining({
-        hotelRoomNumber: "101",
-        checkInAt: expect.stringMatching(/^2026-08-26|^2026-08-27/),
-        checkOutAt: expect.stringMatching(/^2026-09-03|^2026-09-04/),
+        hasOpenEpisode: true,
       }),
     );
     expect(result.hotelRooms).toEqual(["101"]);
   });
 
-  it("does not query hotel rooms unless requested", async () => {
+  it("defaults to ALL patients without episode filter", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.patientRef.findMany.mockResolvedValue([]);
     prisma.patientRef.count.mockResolvedValue(0);
@@ -74,7 +73,7 @@ describe("listPatientsPaged hotel room filter", () => {
 
     expect(prisma.patientRef.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { episodes: { some: { status: "OPEN" } } },
+        where: {},
       }),
     );
     expect(prisma.clinicalEpisode.findMany).not.toHaveBeenCalled();

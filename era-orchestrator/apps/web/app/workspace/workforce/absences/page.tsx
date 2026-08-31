@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Eye, Plus } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -141,9 +142,13 @@ export default function WorkforceAbsencesPage() {
     setCreateOpen(true);
     const res = await workforceFetch("employments?status=ACTIVE");
     if (res.ok) {
-      const data = (await res.json()) as { items: EmploymentRow[] };
+      const data = (await res.json()) as {
+        items: EmploymentRow[];
+        persons?: ListResponse["persons"];
+      };
       const items = data.items ?? [];
       setEmployments(items);
+      if (data.persons) setPersons((p) => ({ ...p, ...data.persons }));
       if (items[0]) setFEmploymentId(items[0].id);
     }
   }
@@ -230,43 +235,33 @@ export default function WorkforceAbsencesPage() {
             onChange={(e) => setMonth(e.target.value)}
           />
         </label>
-        <label className="flex items-center gap-2 text-[13px] font-medium text-[#34495E]">
-          <span className="whitespace-nowrap">{t("filterEmployee")}</span>
-          <select
-            className="min-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={filterEmploymentId}
-            onChange={(e) => setFilterEmploymentId(e.target.value)}
-          >
-            <option value="">{t("filterAll")}</option>
-            {employeeFilterOptions.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-[13px] font-medium text-[#34495E]">
-          <span className="whitespace-nowrap">{t("filterKind")}</span>
-          <select
-            className="min-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={filterKind}
-            onChange={(e) => setFilterKind(e.target.value as "" | AbsenceKind)}
-          >
-            <option value="">{t("filterAll")}</option>
-            {ABSENCE_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {t(`kind.${k}` as "kind.VACATION")}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("filterEmployee")}
+          value={filterEmploymentId}
+          onChange={(next) => setFilterEmploymentId(String(next))}
+          options={employeeFilterOptions.map((o) => ({
+            value: o.id,
+            label: o.label,
+          }))}
+          emptyLabel={t("filterAll")}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("filterKind")}
+          value={filterKind}
+          onChange={(next) => setFilterKind(String(next) as "" | AbsenceKind)}
+          options={ABSENCE_KINDS.map((k) => ({
+            value: k,
+            label: t(`kind.${k}` as "kind.VACATION"),
+          }))}
+          emptyLabel={t("filterAll")}
+        />
       </div>
 
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : filteredRows.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("empty")}</div>
       ) : (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
@@ -280,7 +275,14 @@ export default function WorkforceAbsencesPage() {
               </tr>
             </thead>
             <tbody>
-              {paged.map((r) => (
+              {paged.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={5}>
+                    {t("empty")}
+                  </td>
+                </tr>
+              ) : (
+                paged.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
                     {personLabel(persons, r.employment.globalPersonId, t("maskedPerson"))}
@@ -305,7 +307,8 @@ export default function WorkforceAbsencesPage() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+                  ))
+              )}
             </tbody>
           </table>
           <ListPaginationFooter
@@ -332,35 +335,26 @@ export default function WorkforceAbsencesPage() {
         closeLabel={tCommon("close")}
       >
         <form className="grid gap-3" onSubmit={(e) => e.preventDefault()}>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("fieldEmployment")}
-            <select
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={fEmploymentId}
-              onChange={(e) => setFEmploymentId(e.target.value)}
-              required
-            >
-              {employments.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {personLabel(persons, e.globalPersonId, e.id.slice(0, 8))} ({e.status})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("colKind")}
-            <select
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={fKind}
-              onChange={(e) => setFKind(e.target.value as AbsenceKind)}
-            >
-              {ABSENCE_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {t(`kind.${k}` as "kind.VACATION")}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("fieldEmployment")}
+            value={fEmploymentId}
+            onChange={(next) => setFEmploymentId(String(next))}
+            options={employments.map((e) => ({
+              value: e.id,
+              label: `${personLabel(persons, e.globalPersonId, e.id.slice(0, 8))} (${e.status})`,
+            }))}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("colKind")}
+            value={fKind}
+            onChange={(next) => setFKind(String(next) as AbsenceKind)}
+            options={ABSENCE_KINDS.map((k) => ({
+              value: k,
+              label: t(`kind.${k}` as "kind.VACATION"),
+            }))}
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block text-[13px] font-medium text-[#34495E]">
               {t("fieldFrom")}

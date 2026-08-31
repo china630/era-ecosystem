@@ -354,13 +354,25 @@ export async function listOpenEpisodes(input?: {
   pageSize?: number;
   q?: string;
   origin?: string;
+  roomNumber?: string;
+  programCode?: string;
+  includeHotelRooms?: boolean;
+  includeProgramCodes?: boolean;
 }) {
   const page = input?.page ?? 1;
   const pageSize = input?.pageSize ?? 25;
+  const roomNumber = input?.roomNumber?.trim();
+  const programCode = input?.programCode?.trim();
   const where = {
     status: 'OPEN' as const,
     ...(input?.organizationId ? { organizationId: input.organizationId } : {}),
     ...(input?.origin ? { patientOrigin: input.origin as 'IN_HOUSE' | 'WALK_IN' } : {}),
+    ...(roomNumber
+      ? { roomNumber: { equals: roomNumber, mode: 'insensitive' as const } }
+      : {}),
+    ...(programCode
+      ? { programCode: { equals: programCode, mode: 'insensitive' as const } }
+      : {}),
     ...(input?.q?.trim()
       ? {
           OR: [
@@ -373,7 +385,11 @@ export async function listOpenEpisodes(input?: {
       : {}),
   };
 
-  const [total, episodes] = await Promise.all([
+  const { listHotelRoomNumbers, listProgramCodes } = await import(
+    '@/domain/patient/patient.service'
+  );
+
+  const [total, episodes, hotelRooms, programCodes] = await Promise.all([
     prisma.clinicalEpisode.count({ where }),
     prisma.clinicalEpisode.findMany({
       where,
@@ -412,6 +428,12 @@ export async function listOpenEpisodes(input?: {
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
+    input?.includeHotelRooms
+      ? listHotelRoomNumbers('OPEN')
+      : Promise.resolve(undefined),
+    input?.includeProgramCodes
+      ? listProgramCodes('OPEN')
+      : Promise.resolve(undefined),
   ]);
 
   const {
@@ -425,7 +447,14 @@ export async function listOpenEpisodes(input?: {
     .map((e) => e.id);
   if (walkInIds.length === 0) {
     const data = episodes.map((e) => ({ ...e, canCloseWalkIn: false as boolean }));
-    return { data, total, page, pageSize };
+    return {
+      data,
+      total,
+      page,
+      pageSize,
+      ...(hotelRooms ? { hotelRooms } : {}),
+      ...(programCodes ? { programCodes } : {}),
+    };
   }
 
   const [liveProcs, openLabs] = await Promise.all([
@@ -467,7 +496,14 @@ export async function listOpenEpisodes(input?: {
     });
     return { ...e, canCloseWalkIn: !denied };
   });
-  return { data, total, page, pageSize };
+  return {
+    data,
+    total,
+    page,
+    pageSize,
+    ...(hotelRooms ? { hotelRooms } : {}),
+    ...(programCodes ? { programCodes } : {}),
+  };
 }
 
 /** @deprecated use listOpenEpisodes */
@@ -525,6 +561,33 @@ export async function deleteEpisodeComplaint(id: string, patientRefId: string) {
     throw err;
   }
   await prisma.clinicalComplaint.delete({ where: { id } });
+}
+
+export async function updateEpisodeComplaint(
+  id: string,
+  patientRefId: string,
+  text: string,
+) {
+  const row = await prisma.clinicalComplaint.findUnique({
+    where: { id },
+    include: { episode: { select: { patientRefId: true, status: true } } },
+  });
+  if (!row || row.episode.patientRefId !== patientRefId) {
+    throw new Error("Complaint not found");
+  }
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(row.episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
+  return prisma.clinicalComplaint.update({
+    where: { id },
+    data: { text: text.trim() },
+  });
 }
 
 export async function addDiagnosis(

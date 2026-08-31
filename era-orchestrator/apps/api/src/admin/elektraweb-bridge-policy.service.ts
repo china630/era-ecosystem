@@ -109,18 +109,7 @@ export class ElektrawebBridgePolicyService {
     await this.requireOrg(organizationId);
     const hotelOrgId = dto.hotelOrganizationId ?? null;
     if (hotelOrgId) {
-      if (hotelOrgId === organizationId) {
-        throw new BadRequestException(
-          "hotelOrganizationId cannot equal the clinic organization",
-        );
-      }
-      const hotel = await this.prisma.organization.findUnique({
-        where: { id: hotelOrgId },
-        select: { id: true },
-      });
-      if (!hotel) {
-        throw new BadRequestException("hotelOrganizationId not found");
-      }
+      await this.assertHotelOrgLink(organizationId, hotelOrgId);
     }
     const row = await this.prisma.clinicCutoverPolicy.upsert({
       where: { organizationId },
@@ -143,6 +132,32 @@ export class ElektrawebBridgePolicyService {
       select: { id: true },
     });
     if (!org) throw new NotFoundException("Organization not found");
+  }
+
+  /**
+   * Same UUID is valid when one MMC hosts hotel PMS + clinic (Nafta).
+   * Clinic-only orgs must still point at a different existing hotel org.
+   */
+  private async assertHotelOrgLink(
+    clinicOrgId: string,
+    hotelOrgId: string,
+  ): Promise<void> {
+    if (hotelOrgId === clinicOrgId) {
+      const industries = await this.resolveIndustries(clinicOrgId);
+      if (!industries.includes("hotel")) {
+        throw new BadRequestException(
+          "hotelOrganizationId can equal this org only when hotel PMS is enabled on the same organization",
+        );
+      }
+      return;
+    }
+    const hotel = await this.prisma.organization.findUnique({
+      where: { id: hotelOrgId },
+      select: { id: true },
+    });
+    if (!hotel) {
+      throw new BadRequestException("hotelOrganizationId not found");
+    }
   }
 
   private async resolveIndustries(organizationId: string): Promise<string[]> {

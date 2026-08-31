@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   CalendarClock,
   ClipboardList,
+  DoorClosed,
   Eye,
   LayoutGrid,
   ListChecks,
@@ -15,6 +16,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CHIP_GROUP_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_SCROLL_CLASS,
@@ -24,7 +26,6 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  CatalogField,
   DatePicker,
   EraListFilterBar,
   useDebouncedValue,
@@ -35,6 +36,7 @@ import {
   FieldSelect,
   FieldTextarea,
   FORM_STACK_CLASS,
+  inferCatalogFieldKind,
   ListPaginationFooter,
   LINK_ACCENT_CLASS,
   LOCALE_TOGGLE_ACTIVE_CLASS,
@@ -167,8 +169,8 @@ function daysRemaining(endsOn: string): number {
 
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
-  const tp = useTranslations("patientRegistry");
   const tc = useTranslations("common");
+  const tp = useTranslations("patients");
   const locale = useLocale();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [listTotal, setListTotal] = useState(0);
@@ -207,6 +209,10 @@ export default function SanatoriumPage() {
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
   const [filterOrigin, setFilterOrigin] = useState("");
+  const [filterRoom, setFilterRoom] = useState("");
+  const [filterProgram, setFilterProgram] = useState("");
+  const [hotelRooms, setHotelRooms] = useState<string[]>([]);
+  const [programCodes, setProgramCodes] = useState<string[]>([]);
   const [proposedOrders, setProposedOrders] = useState<
     Array<{ id: string; procedureName: string; procedureCode: string; status: string; scheduledAt: string }>
   >([]);
@@ -219,26 +225,34 @@ export default function SanatoriumPage() {
 
   const loadList = useCallback(async () => {
     setListLoading(true);
-    const params = new URLSearchParams({
-      page: String(listPage),
-      pageSize: String(listPageSize),
-    });
-    if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
-    if (filterOrigin) params.set("origin", filterOrigin);
-    const res = await fetch(`/api/sanatorium/episodes?${params}`);
-    const data = await res.json();
-    const payload = data.data ?? data;
-    if (Array.isArray(payload)) {
-      setEpisodes(payload);
-      setListTotal(payload.length);
-    } else {
-      setEpisodes(Array.isArray(payload.data) ? payload.data : []);
-      setListTotal(typeof payload.total === "number" ? payload.total : 0);
-      if (typeof payload.page === "number") setListPage(payload.page);
-      if (typeof payload.pageSize === "number") setListPageSize(payload.pageSize);
+    try {
+      const params = new URLSearchParams({
+        page: String(listPage),
+        pageSize: String(listPageSize),
+        includeHotelRooms: "1",
+        includeProgramCodes: "1",
+      });
+      if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
+      if (filterOrigin) params.set("origin", filterOrigin);
+      if (filterRoom.trim()) params.set("roomNumber", filterRoom.trim());
+      if (filterProgram.trim()) params.set("programCode", filterProgram.trim());
+      const res = await fetch(`/api/sanatorium/episodes?${params}`);
+      const data = await res.json();
+      const payload = data.data ?? data;
+      if (Array.isArray(payload)) {
+        setEpisodes(payload);
+        setListTotal(payload.length);
+      } else {
+        setEpisodes(Array.isArray(payload.data) ? payload.data : []);
+        setListTotal(typeof payload.total === "number" ? payload.total : 0);
+        // Do not echo page/pageSize from API — avoids race that snaps the pager back.
+        if (Array.isArray(payload.hotelRooms)) setHotelRooms(payload.hotelRooms);
+        if (Array.isArray(payload.programCodes)) setProgramCodes(payload.programCodes);
+      }
+    } finally {
+      setListLoading(false);
     }
-    setListLoading(false);
-  }, [listPage, listPageSize, debouncedQ, filterOrigin]);
+  }, [listPage, listPageSize, debouncedQ, filterOrigin, filterRoom, filterProgram]);
 
   const loadDetail = useCallback(async (episodeId: string) => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`);
@@ -369,7 +383,7 @@ export default function SanatoriumPage() {
 
   useEffect(() => {
     setListPage(1);
-  }, [debouncedQ, filterOrigin, listPageSize]);
+  }, [debouncedQ, filterOrigin, filterRoom, filterProgram, listPageSize]);
 
   function statusLabel(status: string): string {
     switch (status) {
@@ -697,6 +711,8 @@ export default function SanatoriumPage() {
         onReset={() => {
           setQ("");
           setFilterOrigin("");
+          setFilterRoom("");
+          setFilterProgram("");
           setListPage(1);
         }}
       >
@@ -716,6 +732,31 @@ export default function SanatoriumPage() {
           <option value="IN_HOUSE">{t("originInHouse")}</option>
           <option value="WALK_IN">{t("originWalkIn")}</option>
         </FieldSelect>
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("filterHotelRoom")}
+          value={filterRoom}
+          onChange={(v) => setFilterRoom(String(v ?? ""))}
+          options={[
+            { value: "", label: t("filterHotelRoomAll") },
+            ...hotelRooms.map((room) => ({ value: room, label: room })),
+          ]}
+          emptyLabel={t("filterHotelRoomAll")}
+        />
+        <CatalogField
+          kind={inferCatalogFieldKind({
+            optionCount: programCodes.length + 1,
+            searchable: programCodes.length > 12,
+          })}
+          label={t("filterProgramCode")}
+          value={filterProgram}
+          onChange={(v) => setFilterProgram(String(v ?? ""))}
+          options={[
+            { value: "", label: t("filterProgramCodeAll") },
+            ...programCodes.map((code) => ({ value: code, label: code })),
+          ]}
+          emptyLabel={null}
+        />
       </EraListFilterBar>
 
       <div className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
@@ -781,8 +822,9 @@ export default function SanatoriumPage() {
                         {e.patientOrigin === "WALK_IN" && e.status === "OPEN" ? (
                           <button
                             type="button"
-                            className={SECONDARY_BUTTON_CLASS}
+                            className={TABLE_ROW_ICON_BTN_CLASS}
                             disabled={busy || e.canCloseWalkIn === false}
+                            aria-label={t("closeWalkIn")}
                             title={
                               e.canCloseWalkIn === false
                                 ? t("closeWalkInBusyHint")
@@ -790,7 +832,7 @@ export default function SanatoriumPage() {
                             }
                             onClick={() => void closeWalkIn(e.id)}
                           >
-                            {t("closeWalkIn")}
+                            <DoorClosed className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                           </button>
                         ) : null}
                       </div>
@@ -813,9 +855,11 @@ export default function SanatoriumPage() {
           page={listPage}
           pageSize={listPageSize}
           total={listTotal}
-          loading={listLoading}
           onPageChange={setListPage}
-          onPageSizeChange={setListPageSize}
+          onPageSizeChange={(n) => {
+            setListPageSize(n);
+            setListPage(1);
+          }}
           labels={{
             rowsPerPage: tc("rowsPerPage"),
             pageOf: tc("pageOf"),

@@ -52,7 +52,7 @@ Ungendered `shareEligible` does not consume inventory and must be refused on con
 | OTA exclusive | `isOtaAgency` / channel ingest force `shareEligible=false` |
 | Inventory at confirm | FIFO by booking time, not arrival; OPTION share consumes doors like CONFIRMED |
 | Occupancy 2nd adult | Never applied across two independent share RoomStays |
-| Capacity | `shareBedIndex` ∈ `1..maxBed`; pool full when count ≥ maxBed |
+| Capacity | `shareBedIndex` ∈ `1..maxBed`; pool full when **any night** of the candidate stay already has `maxBed` occupied beds (`nextFreeShareBedIndex`). New arrival takes the vacated bed (e.g. roommate left on the 5th → next guest from the 6th gets bed 2 while bed-1 guest stays to the 10th), not the first hole in the overlap list. |
 
 ### Soft rules
 
@@ -87,7 +87,7 @@ Occupancy reports: **doors %** = doors sold / quota; **guest nights** counted se
 ### UI
 
 - Reservation card: checkbox **«Подселение (share)»** on Stay/Assignment (not next to guest count); **Break share** when no overlapping roommate (else relocate first).
-- Room plan: **N lanes** per door (`maxBed`); own arrow bars; room-number badge `♂ n/N` / `♀ n/N` (gender color on badge, bar color = status).
+- Room plan: **N lanes** per door (`maxBed`); own arrow bars without date overlay (greedy paint lanes prefer `shareBedIndex`); room-number badge `♂ n/N` / `♀ n/N` (gender color on badge; bar color = day-state / EW palette).
 - Rack / chessboard: same badge; OCCUPIED door assignable for same-gender share when `occupied < maxBed`.
 
 ### Checkout / cancel / HK

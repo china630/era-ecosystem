@@ -75,6 +75,7 @@ export default function HrTimesheetPage() {
   const [batchTo, setBatchTo] = useState(1);
   const [batchType, setBatchType] = useState<TsEntry["type"]>("VACATION");
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
+  const [cpMaster, setCpMaster] = useState(false);
 
   const lastDay = useMemo(
     () => new Date(year, month, 0).getDate(),
@@ -99,31 +100,63 @@ export default function HrTimesheetPage() {
     if (!token) return;
     setLoading(true);
     setError(null);
-    const res = await apiFetch(`/api/hr/timesheets?year=${year}&month=${month}`);
-    if (!res.ok) {
-      setError(`${t("timesheet.loadErr")}: ${res.status}`);
+    const peek = await apiFetch(
+      `/api/hr/timesheets?year=${year}&month=${month}&create=false`,
+    );
+    if (!peek.ok) {
+      setError(`${t("timesheet.loadErr")}: ${peek.status}`);
+      setTimesheet(null);
+      setEmployees([]);
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
+    const peekJson = (await peek.json()) as {
+      timesheet: Ts | null;
+      employees: EmpRow[];
+      entries: TsEntry[];
+      attendanceMaster?: "cp" | "finance";
+    };
+    const isCp = peekJson.attendanceMaster === "cp";
+    setCpMaster(isCp);
+    if (isCp) {
+      setTimesheet(null);
+      setEmployees([]);
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
+    let j = peekJson;
+    if (!j.timesheet) {
+      const created = await apiFetch(
+        `/api/hr/timesheets?year=${year}&month=${month}`,
+      );
+      if (!created.ok) {
+        setError(`${t("timesheet.loadErr")}: ${created.status}`);
+        setTimesheet(null);
+        setEmployees([]);
+        setEntries([]);
+        setLoading(false);
+        return;
+      }
+      j = (await created.json()) as typeof peekJson;
+    }
+    if (!j.timesheet) {
       setTimesheet(null);
       setEmployees([]);
       setEntries([]);
     } else {
-      const j = (await res.json()) as {
-        timesheet: Ts | null;
-        employees: EmpRow[];
-        entries: TsEntry[];
-      };
-      if (!j.timesheet) {
-        setTimesheet(null);
-        setEmployees([]);
-        setEntries([]);
-      } else {
-        setTimesheet(j.timesheet);
-        setEmployees(j.employees);
-        setEntries(j.entries);
-        setSelectedEmployeeIds((prev) => prev.filter((id) => j.employees.some((e) => e.id === id)));
-        setBatchEmp((prev) =>
-          prev && j.employees.some((e) => e.id === prev) ? prev : j.employees[0]?.id ?? "",
-        );
-      }
+      setTimesheet(j.timesheet);
+      setEmployees(j.employees);
+      setEntries(j.entries);
+      setSelectedEmployeeIds((prev) =>
+        prev.filter((id) => j.employees.some((e) => e.id === id)),
+      );
+      setBatchEmp((prev) =>
+        prev && j.employees.some((e) => e.id === prev)
+          ? prev
+          : (j.employees[0]?.id ?? ""),
+      );
     }
     setLoading(false);
   }, [token, year, month, t]);
@@ -139,7 +172,7 @@ export default function HrTimesheetPage() {
   }, [year, month, lastDay]);
 
   const isLocked = timesheet?.status === "APPROVED";
-  const canEdit = !readOnlyRole && !isLocked;
+  const canEdit = !readOnlyRole && !isLocked && !cpMaster;
   const canMassApprove = canEdit && selectedEmployeeIds.length > 0;
 
   function cellCode(type: TsEntry["type"]): string {
@@ -326,6 +359,7 @@ export default function HrTimesheetPage() {
           </div>
         }
         actions={
+          cpMaster ? null : (
           <div className="flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
@@ -363,13 +397,25 @@ export default function HrTimesheetPage() {
               {t("timesheet.newAbsence")}
             </Link>
           </div>
+          )
         }
       />
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
+      {cpMaster ? (
+        <p className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#34495E]`}>
+          {t("timesheet.cpMasterBanner")}{" "}
+          <a
+            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/timesheets`}
+            className="font-medium text-[#2980B9] underline"
+          >
+            {t("timesheet.cpMasterLink")}
+          </a>
+        </p>
+      ) : null}
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
 
-      {!loading && timesheet && (
+      {!loading && !cpMaster && timesheet && (
         <>
           <section className={`${CARD_CONTAINER_CLASS} p-4`}>
             <h2 className="mb-3 text-base font-semibold text-[#34495E]">{t("timesheet.batchTitle")}</h2>

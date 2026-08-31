@@ -125,11 +125,14 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET /platform/v1/catalog/fx/convert` | `catalog-fx.controller.ts` |
 | `GET /platform/v1/catalog/icd10` | `catalog-icd10.controller.ts` — WHO ICD-10 in-process (not data-hub) |
 | `GET /platform/v1/workforce/policy` | `workforce-policy.controller.ts` |
-| `GET/POST /platform/v1/workforce/employments` | `workforce-employments.controller.ts` |
+| `GET/POST /platform/v1/workforce/employments` | `workforce-employments.controller.ts` — list/detail include active `roleBindings` (⋯ Reprovision + satellite filter) |
 | `GET/POST/PATCH /platform/v1/workforce/absences/*` | `workforce-absences.controller.ts` |
 | `GET/POST/PATCH /platform/v1/workforce/vacation-plans/*` | `workforce-vacation-plans.controller.ts` — department submit → HR approve; event `WORKFORCE_VACATION_PLAN_APPROVED` (Finance mirror HEADLESS — no local table yet) |
 | `GET/POST /platform/v1/workforce/personnel-orders/*` | hire/transfer/terminate printable orders + PDF — [ADR cp-personnel-orders](../../../docs/adr/cp-personnel-orders.md) |
 | `GET/POST /platform/v1/workforce/staff-schedule/*` | ştat cədvəli revisions (occupied/vacant snapshot) + approve + PDF |
+| `GET /platform/v1/workforce/timesheets?year=&month=` | month getOrCreate + active employments + MDM persons + entries |
+| `POST …/timesheets/:id/autofill\|sync-absences\|approve` `PATCH …/entries/batch` | weekday WORK / Sat–Sun OFF; reconcile absence locks; skip APPROVED cells; empty month approve → 400; emits `WORKFORCE_TIMESHEET_APPROVED` with row `type` |
+| `POST …/timesheets/approve` | **410** `TIMESHEET_USE_MONTH_APPROVE` (cherry-pick retired) |
 | `GET/POST /platform/v1/workforce/scope/*` | `workforce-org.controller.ts` |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/org-units/*` | `workforce-org-units.service.ts` + controller |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/positions/*` | `workforce-positions.controller.ts` — `?orgUnitId=` / `?status=`; archive rejects active employments |
@@ -147,12 +150,12 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/security/audit` | audit log |
 | Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |
 | Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
-| Web `/workspace/workforce/employments` | hire (sex/DOB/optional blood); employee card; icon actions; age/sex filters; deep-link `?orgUnitId=` / `?positionId=` |
+| Web `/workspace/workforce/employments` | hire (sex/DOB/optional blood); employee card; ⋯ Login & access (`emp-{staffCode}`, copy org ID, Open satellite login); icon actions; age/sex filters; deep-link `?orgUnitId=` / `?positionId=` |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
 | Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
 | Web `/workspace/workforce/personnel-orders` | create/issue/PDF |
 | Web `/workspace/workforce/staff-schedule` | revisions submit/approve/PDF |
-| Web `/workspace/workforce/timesheets` | draft approve |
+| Web `/workspace/workforce/timesheets` | month grid (click cycle, batch CatalogField, autofill / sync absences / approve) |
 | Web `/workspace/workforce/export` | export + import roster/absences (xlsx/csv) |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |

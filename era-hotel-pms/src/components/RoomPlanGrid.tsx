@@ -13,8 +13,17 @@ import {
   computePlacedBars,
   parseCalendarDate,
 } from '@/components/room-plan/shapes';
+import {
+  assignSharePaintLanes,
+  shareLaneCount,
+  toShareLaneInput,
+} from '@/components/room-plan/share-lanes';
+import {
+  HK_SQUARE_COLORS,
+  PLAN_BAR_COLORS,
+  type PlanBarDayState,
+} from '@/components/room-plan/plan-bar-theme';
 import type {
-  ReservationStatus,
   RoomPlanGroup,
   RoomPlanReservationBar,
   RoomPlanRoom,
@@ -30,24 +39,49 @@ export type {
 
 const ROOM_COL_W = 120;
 const DAY_MIN_W = 52;
-const LANE_H = 28;
 const ROW_H_BASE = 36;
+const BAR_GUTTER = 2;
 
 function rowHeightForRoom(room: RoomPlanRoom, roomBars: RoomPlanReservationBar[]): number {
-  const hasShare = roomBars.some((b) => b.shareEligible && b.shareBedIndex != null);
-  if (!hasShare) return ROW_H_BASE;
-  const lanes = Math.max(room.sharePool?.capacity ?? 2, 1);
-  return Math.max(ROW_H_BASE, lanes * LANE_H);
+  const lanes = shareLaneCount(
+    roomBars.map(toShareLaneInput),
+    room.sharePool?.capacity ?? 2,
+  );
+  return lanes * ROW_H_BASE;
 }
 
-const statusSwatch: Record<ReservationStatus, string> = {
-  CONFIRMED: 'bg-[#2980B9]',
-  IN_HOUSE: 'bg-amber-500',
-  OPTION: 'bg-slate-300',
-  CHECKED_OUT: 'bg-neutral-400',
-  CANCELLED: 'bg-rose-500',
-  NO_SHOW: 'bg-rose-600',
-};
+const BAR_LEGEND_STATES: PlanBarDayState[] = [
+  'reservation',
+  'expectedArrival',
+  'inHouse',
+  'expectedDeparture',
+  'checkout',
+  'multiple',
+  'option',
+];
+
+function ChevronSwatch({ fill }: { fill: string }) {
+  return (
+    <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden className="shrink-0">
+      <path
+        d="M0 0 L12 0 L18 6 L12 12 L0 12 L4 6 Z"
+        fill={fill}
+        stroke="#D5DADF"
+        strokeWidth="0.5"
+      />
+    </svg>
+  );
+}
+
+function SquareSwatch({ fill }: { fill: string }) {
+  return (
+    <span
+      className="inline-block h-3 w-3 shrink-0 rounded-sm border border-[#D5DADF]"
+      style={{ backgroundColor: fill }}
+      aria-hidden
+    />
+  );
+}
 
 type HoverCell = {
   roomId: string;
@@ -82,6 +116,14 @@ function dayIndexFromMouse(e: React.MouseEvent<HTMLElement>, days: number): numb
 
 function stickyRoomClass(extra = '') {
   return `sticky left-0 z-10 border-r border-[#D5DADF] bg-inherit ${extra}`;
+}
+
+function stickyDateHeaderClass(extra = '') {
+  return `sticky top-0 z-30 border-b border-r border-[#D5DADF]/50 ${extra}`;
+}
+
+function stickyAvailHeaderClass(extra = '') {
+  return `sticky z-20 border-b border-r border-[#D5DADF]/50 ${extra}`;
 }
 
 function RoomLabelCell({
@@ -147,11 +189,14 @@ function TimelineCells({
   const isOoo = room.status === 'OOO' || room.status === 'OOS';
   const placed = computePlacedBars(from, days, roomBars);
   const dayBg = isOoo ? 'bg-red-50/80' : 'bg-white';
-  const rowHeight = rowHeightForRoom(room, roomBars);
-  const laneCount = Math.max(
-    1,
-    room.sharePool?.capacity ??
-      (roomBars.some((b) => b.shareEligible) ? 2 : 1),
+  const laneCount = shareLaneCount(
+    roomBars.map(toShareLaneInput),
+    room.sharePool?.capacity ?? 2,
+  );
+  const rowHeight = laneCount * ROW_H_BASE;
+  const paintLanes = assignSharePaintLanes(
+    roomBars.map(toShareLaneInput),
+    room.sharePool?.capacity ?? 2,
   );
 
   return (
@@ -189,6 +234,15 @@ function TimelineCells({
           />
         ))}
       </div>
+      {laneCount > 1
+        ? Array.from({ length: laneCount - 1 }, (_, i) => (
+            <div
+              key={`hair-${room.id}-${i}`}
+              className="pointer-events-none absolute inset-x-0 z-[1] border-t border-[#D5DADF]"
+              style={{ top: (i + 1) * ROW_H_BASE }}
+            />
+          ))
+        : null}
       {todayIndex != null ? (
         <div
           className="pointer-events-none absolute inset-y-0 z-[1] border-l-2 border-dashed border-amber-500"
@@ -198,12 +252,9 @@ function TimelineCells({
       {placed.map((cell) => {
         const bar = cell.reservation;
         const { leftPct, widthPct } = barLayoutOffset(days, cell);
-        const shareLane =
-          bar.shareEligible && bar.shareBedIndex != null
-            ? Math.max(0, Math.min(laneCount - 1, bar.shareBedIndex - 1))
-            : 0;
-        const laneHeight = laneCount > 1 ? LANE_H - 2 : rowHeight - 4;
-        const topOffset = laneCount > 1 ? shareLane * LANE_H + 1 : 2;
+        const shareLane = paintLanes.get(bar.id) ?? 0;
+        const laneHeight = ROW_H_BASE - BAR_GUTTER * 2;
+        const topOffset = shareLane * ROW_H_BASE + BAR_GUTTER;
         return (
           <div
             key={bar.id}
@@ -220,6 +271,9 @@ function TimelineCells({
               shape={cell.shape}
               selected={selectedId === bar.id}
               draggable={Boolean(onResizeEnd || onMoveReservation)}
+              roomBars={roomBars}
+              roomStatus={room.status}
+              roomHkCondition={room.hkCondition}
               onSelect={() => onSelect(selectedId === bar.id ? null : bar.id)}
               onDragStart={(e) => {
                 if (!onMoveReservation && !onResizeEnd) return;
@@ -315,6 +369,7 @@ export default function RoomPlanGrid({
   onSelect,
   onResizeEnd,
   onMoveReservation,
+  fillViewport = false,
 }: {
   fromIso: string;
   days: number;
@@ -326,9 +381,10 @@ export default function RoomPlanGrid({
   onSelect: (id: string | null) => void;
   onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
   onMoveReservation?: (reservationId: string, toRoomId: string) => void;
+  /** When true, grid fills parent height (fullscreen) instead of capping at ~70vh. */
+  fillViewport?: boolean;
 }) {
   const t = useTranslations('roomPlan');
-  const tRes = useTranslations('reservationStatus');
   const from = useMemo(() => parseCalendarDate(fromIso), [fromIso]);
   const [hover, setHover] = useState<HoverCell | null>(null);
 
@@ -362,10 +418,37 @@ export default function RoomPlanGrid({
   const cols = `${ROOM_COL_W}px repeat(${days}, minmax(${DAY_MIN_W}px, 1fr))`;
   const minTableW = ROOM_COL_W + days * DAY_MIN_W;
 
-  const legendItems = (Object.keys(statusSwatch) as ReservationStatus[]).map((status) => ({
-    id: status,
-    label: tRes(status),
-    swatchClassName: statusSwatch[status],
+  const barLegendItems = BAR_LEGEND_STATES.map((state) => ({
+    id: state,
+    label: t(
+      state === 'expectedArrival'
+        ? 'legendExpectedArrival'
+        : state === 'expectedDeparture'
+          ? 'legendExpectedDeparture'
+          : state === 'inHouse'
+            ? 'legendInHouse'
+            : state === 'checkout'
+              ? 'legendCheckout'
+              : state === 'multiple'
+                ? 'legendMultiple'
+                : state === 'option'
+                  ? 'legendOption'
+                  : 'legendReservation',
+    ),
+    swatchClassName: '',
+    swatch: <ChevronSwatch fill={PLAN_BAR_COLORS[state].fill} />,
+  }));
+
+  const squareLegendItems = [
+    { id: 'hk-clean', label: t('legendHkClean'), fill: HK_SQUARE_COLORS.clean },
+    { id: 'hk-dirty', label: t('legendHkDirty'), fill: HK_SQUARE_COLORS.dirty },
+    { id: 'hk-maint', label: t('legendHkMaintenance'), fill: HK_SQUARE_COLORS.maintenance },
+    { id: 'hk-closed', label: t('legendHkClosed'), fill: HK_SQUARE_COLORS.closed },
+  ].map((item) => ({
+    id: item.id,
+    label: item.label,
+    swatchClassName: '',
+    swatch: <SquareSwatch fill={item.fill} />,
   }));
 
   const renderRoomBlock = (roomList: RoomPlanRoom[]) =>
@@ -401,20 +484,24 @@ export default function RoomPlanGrid({
     ));
 
   return (
-    <div className="w-full space-y-3">
-      <ColorLegend
-        ariaLabel={t('legendAria')}
-        items={[
-          ...legendItems,
-          { id: 'ooo', label: t('legendOoo'), swatchClassName: 'bg-red-600' },
-          {
-            id: 'turnover',
-            label: t('legendTurnover'),
-            swatchClassName: 'bg-[#2980B9]',
-          },
-        ]}
-      />
-      <div className="w-full overflow-x-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm">
+    <div
+      className={`w-full space-y-3 ${fillViewport ? 'flex min-h-0 flex-1 flex-col' : ''}`}
+    >
+      <div className={`space-y-1.5 ${fillViewport ? 'shrink-0' : ''}`}>
+        <ColorLegend ariaLabel={t('legendBarsAria')} items={barLegendItems} />
+        <ColorLegend
+          ariaLabel={t('legendSquaresAria')}
+          items={[
+            ...squareLegendItems,
+            { id: 'ooo', label: t('legendOoo'), swatchClassName: 'bg-red-600' },
+          ]}
+        />
+      </div>
+      <div
+        className={`w-full overflow-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm ${
+          fillViewport ? 'min-h-0 flex-1' : 'max-h-[min(70vh,calc(100vh-13rem))]'
+        }`}
+      >
         <div
           className="grid w-full"
           style={{
@@ -423,7 +510,7 @@ export default function RoomPlanGrid({
           }}
         >
           <div
-            className={`${stickyRoomClass('z-20 bg-[#F8FAFC]')} flex items-center border-b border-[#D5DADF] px-2 text-[13px] font-semibold text-[#34495E]`}
+            className={`${stickyRoomClass('top-0 z-40 bg-[#F8FAFC]')} flex items-center border-b border-[#D5DADF] px-2 text-[13px] font-semibold text-[#34495E]`}
             style={{ minHeight: ROW_H_BASE }}
           >
             {t('roomColumn')}
@@ -431,13 +518,13 @@ export default function RoomPlanGrid({
           {dateHeaders.map((d, i) => (
             <div
               key={d}
-              className={`flex items-center justify-center border-b border-r border-[#D5DADF]/50 px-1 text-center text-[13px] ${
+              className={`${stickyDateHeaderClass(
                 hover?.dayIndex === i
                   ? 'bg-[#EBF5FB] font-semibold text-[#2980B9]'
                   : isWeekendKey(d)
                     ? 'bg-[#FDECEC] text-[#C0392B]'
-                    : 'bg-[#F8FAFC] text-[#7F8C8D]'
-              }`}
+                    : 'bg-[#F8FAFC] text-[#7F8C8D]',
+              )} flex items-center justify-center px-1 text-center text-[13px]`}
               style={{ minHeight: ROW_H_BASE }}
             >
               {d.slice(5)}
@@ -445,16 +532,16 @@ export default function RoomPlanGrid({
           ))}
 
           <div
-            className={`${stickyRoomClass('z-20 bg-[#EBF5FB]')} flex items-center border-b border-[#D5DADF] px-2 text-[11px] font-medium text-[#2980B9]`}
-            style={{ minHeight: ROW_H_BASE }}
+            className={`${stickyRoomClass('z-40 bg-[#EBF5FB]')} flex items-center border-b border-[#D5DADF] px-2 text-[11px] font-medium text-[#2980B9]`}
+            style={{ minHeight: ROW_H_BASE, top: ROW_H_BASE }}
           >
             {t('availability')}
           </div>
           {dateHeaders.map((d) => (
             <div
               key={`avail-${d}`}
-              className="flex items-center justify-center border-b border-r border-[#D5DADF]/50 bg-[#EBF5FB] py-1 text-center text-[11px] font-semibold text-[#2980B9]"
-              style={{ minHeight: ROW_H_BASE }}
+              className={`${stickyAvailHeaderClass('bg-[#EBF5FB]')} flex items-center justify-center py-1 text-center text-[11px] font-semibold text-[#2980B9]`}
+              style={{ minHeight: ROW_H_BASE, top: ROW_H_BASE }}
             >
               {avail[d] ?? '—'}
             </div>

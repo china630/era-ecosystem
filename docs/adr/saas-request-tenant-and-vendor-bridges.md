@@ -53,7 +53,7 @@ Cron: `runCronForEachTenant` (already in topology ADR).
 
 ### 4. Vendor dual-run bridge (Elektraweb first; pattern for others)
 
-**Orchestrator (write):** policy on the **hotel** org, e.g. inbound/write flags, `elektrawebHotelId`, SPA dep/currency, walk-in house `RESID` / `RESNAMEID`. On the **clinic** department org: `elektrawebDualRun` + which hotel org receives outbox.
+**Orchestrator (write):** policy on the **hotel** org, e.g. inbound/write flags, `elektrawebHotelId`, SPA dep/currency, walk-in house `RESID` / `RESNAMEID`. On the **clinic** org: `elektrawebDualRun` + which hotel org receives outbox. `hotelOrganizationId` **may equal** the clinic org UUID when that MMC also hosts hotel PMS (Nafta one-org). A clinic-only org must still point at a different existing hotel org.
 
 **Hotel DB (read on request):** same fields, upserted by Sync for **that** `organizationId` only. A single process-wide `_era_runtime_config` row must **not** be overwritten by Nafta Sync (that would wipe 119 others).
 

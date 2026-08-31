@@ -2,12 +2,13 @@ import {
   barLayoutOffset,
   barSvgPath,
   calendarDateKey,
+  CHEVRON_PX,
   computePlacedBars,
   hasSameDayTurnoverEnd,
   hasSameDayTurnoverStart,
   parseCalendarDate,
-} from './shapes';
-import type { RoomPlanReservationBar } from './types';
+} from '@/components/room-plan/shapes';
+import type { RoomPlanReservationBar } from '@/components/room-plan/types';
 
 function bar(
   id: string,
@@ -26,28 +27,33 @@ function bar(
 }
 
 describe('room plan bar shapes', () => {
-  it('uses pointed arrow tip on a normal departure edge', () => {
-    const path = barSvgPath({ leftConcave: false, rightStyle: 'arrow' });
-    expect(path).toBe('M 0 0 L 88 0 L 100 10 L 88 20 L 0 20 L 0 0 Z');
-    expect(path).toContain('L 100 10');
+  it('uses blunt px chevron tip on a normal departure edge', () => {
+    const width = 200;
+    const path = barSvgPath({ leftConcave: true, rightStyle: 'arrow' }, width, 26);
+    expect(path).toContain(`L ${width} 13`);
+    expect(path).toContain(`L ${width - CHEVRON_PX} 26`);
+    expect(path).toContain(`L ${CHEVRON_PX} 13 L 0 0`);
   });
 
-  it('uses a concave notch on a turnover check-in (left edge only)', () => {
-    const path = barSvgPath({ leftConcave: true, rightStyle: 'arrow' });
-    expect(path).toContain('L 12 10 L 0 0');
-    expect(path).toMatch(/^M 0 0/);
-  });
-
-  it('uses a pointed tip whenever checkout is in-window (incl. turnover depart)', () => {
-    const path = barSvgPath({ leftConcave: false, rightStyle: 'arrow' });
-    expect(path).toContain('L 100 10');
-    expect(path).toMatch(/^M 0 0/);
+  it('uses the same chevron depth on nose and butt', () => {
+    const width = 160;
+    const path = barSvgPath({ leftConcave: true, rightStyle: 'arrow' }, width, 26);
+    expect(path).toContain(`L ${width - CHEVRON_PX} 26`);
+    expect(path).toContain(`L ${CHEVRON_PX} 13`);
   });
 
   it('uses a flat edge only when the stay is clipped by the window (continues)', () => {
-    const path = barSvgPath({ leftConcave: false, rightStyle: 'flat' });
-    expect(path).toBe('M 0 0 L 100 0 L 100 20 L 0 20 L 0 0 Z');
-    expect(path).not.toContain('L 100 10');
+    const path = barSvgPath({ leftConcave: false, rightStyle: 'flat' }, 100, 26);
+    expect(path).toBe('M 0 0 L 100 0 L 100 26 L 0 26 L 0 0 Z');
+    expect(path).not.toContain('L 100 13');
+  });
+
+  it('marks leftConcave for any in-window multi-night start (EW butt)', () => {
+    const from = parseCalendarDate('2026-06-10');
+    const a = bar('a', '2026-06-10', '2026-06-14');
+    const placed = computePlacedBars(from, 14, [a]);
+    expect(placed[0]!.shape.leftConcave).toBe(true);
+    expect(placed[0]!.shape.rightStyle).toBe('arrow');
   });
 
   it('detects turnover when prior checkout day equals check-in', () => {
@@ -67,6 +73,7 @@ describe('room plan bar shapes', () => {
     const row = placed.find((p) => p.reservation.id === 'b')!;
     expect(row.clippedAtStart).toBe(true);
     expect(row.turnoverStart).toBe(false);
+    expect(row.shape.leftConcave).toBe(false);
   });
 
   it('does not mark turnover when stays overlap on the room', () => {

@@ -29,7 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | Workspace / org hub | `/workspace, /organizations` | 🟡 |
-| Workforce | `/workspace/workforce/*` | 🟡 — hire/import xlsx landed (optional seat); not sell-ready |
+| Workforce | `/workspace/workforce/*` | 🟡 — month timesheet harden + vacation multi-line; not sell-ready (no UAT-SMOKE) |
 | Super-admin | `/super-admin/*` | 🟡 |
 | Placement hop / freeze | `/super-admin/orgs/[orgId]/placement` | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
 

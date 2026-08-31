@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseWorkbook } from '@/lib/import/excel';
 import { mapHeaders } from "@/lib/import/helpers";
-import type { ImportAdapter, ImportResult } from "@/lib/import/types";
+import type { ImportAdapter, ImportResult, ImportTx } from "@/lib/import/types";
 
 export async function runImportRows<T>(
   adapter: ImportAdapter<T>,
@@ -29,7 +29,10 @@ export async function runImportRows<T>(
         continue;
       }
       const row = adapter.rowSchema.parse(transformed);
-      const outcome = await adapter.upsert(prisma, row, dryRun);
+      const outcome =
+        !dryRun && adapter.atomicUpsert
+          ? await prisma.$transaction((tx) => adapter.upsert(tx as ImportTx, row, dryRun))
+          : await adapter.upsert(prisma, row, dryRun);
       if (outcome === 'created') result.created += 1;
       else if (outcome === 'updated') result.updated += 1;
       else result.skipped += 1;

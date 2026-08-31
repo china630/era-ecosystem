@@ -212,6 +212,7 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 
 | Surface | Path | Check |
 |---------|------|-------|
+| Workforce employments | `/workspace/workforce/employments` | ⋯ Login & access: `emp-{staffCode}` + copy org ID + Open login |
 | Workforce vacation | `/workspace/workforce/vacation-plans` | list + submit/approve modal |
 | Personnel orders | `/workspace/workforce/personnel-orders` | list |
 | Staff schedule | `/workspace/workforce/staff-schedule` | list |

@@ -36,7 +36,8 @@ describe("TimesheetService massApprove performance log (M6)", () => {
 
     const calendar = { resolveWorkingDays: jest.fn().mockResolvedValue([]) } as any;
     const mdm = { batchOpsProfile: jest.fn().mockResolvedValue({}) } as any;
-    const svc = new TimesheetService(prisma, calendar, mdm);
+    const subscriptionAccess = { hasModule: jest.fn().mockResolvedValue(false) } as any;
+    const svc = new TimesheetService(prisma, calendar, mdm, subscriptionAccess);
     await svc.massApprove("org-1", "ts-1", employeeIds);
 
     expect(logSpy).toHaveBeenCalledWith(
@@ -78,7 +79,8 @@ describe("TimesheetService massApprove performance log (M6)", () => {
 
     const calendar = { resolveWorkingDays: jest.fn().mockResolvedValue([]) } as any;
     const mdm = { batchOpsProfile: jest.fn().mockResolvedValue({}) } as any;
-    const svc = new TimesheetService(prisma, calendar, mdm);
+    const subscriptionAccess = { hasModule: jest.fn().mockResolvedValue(false) } as any;
+    const svc = new TimesheetService(prisma, calendar, mdm, subscriptionAccess);
     await svc.massApprove("org-1", "ts-1", employeeIds);
     expect(logSpy).not.toHaveBeenCalled();
     logSpy.mockRestore();

@@ -48,7 +48,7 @@ Empty rack/plan cells = free **doors**, not sellable type inventory. Create form
 | Rack DnD relocate | `POST /api/reservations/:id/relocate` | C |
 | Room plan grouping/period dropdowns | `FilterMenuButton` | C |
 | Room plan layout | Fixed **room column** + scrollable timeline; full page width | C+ |
-| Room plan bars | Half-day model; **arrow tip whenever checkout is in-window** (incl. turnover); concave notch only on next arrival left edge; flat right = clipped/continues past window (`room-plan/shapes.ts`) | C+ |
+| Room plan bars | Half-day model; blunt EW chevron (`CHEVRON_PX`); high-contrast day-state palette + HK squares (`plan-bar-theme.ts`); sticky date/availability headers on vertical scroll; share N lanes without overlay (`share-lanes.ts`) | C+ / EW palette |
 | Room plan hover | Tooltip portal with res/guest/dates/agency/payment | C+ |
 | Unified reservation card create/edit | `ReservationCardModal` + `ReservationCardToolbar` | C |
 | Reservation card near-fullscreen | `MODAL_FULL_CLASS`; 50/50; Phase 0 panels Stay/Product/Pax/Class/Commercial + Assignment (stage) + Additional; create=edit | C+ |

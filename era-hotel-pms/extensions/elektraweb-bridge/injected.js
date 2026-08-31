@@ -3,6 +3,9 @@
  * Posts to content script via window.postMessage (era-ew-bridge).
  */
 (function () {
+  if (window.__eraEwBridgeMain) return;
+  window.__eraEwBridgeMain = true;
+
   const SELECT_RE = /\/Select\/(QA_|QG_|Q_|HOTEL_)/i;
   const ALLOWED = [
     'QA_HOTEL_RESERVATION_RESERVATION',

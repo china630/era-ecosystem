@@ -27,7 +27,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 |
-| Patient registry (P-codes, Ad/Soyad/Ata, no MDM for reception) | `/patients` | 🟡 SCREEN (wave UX landed; field UAT open) |
+| Patient registry (P-codes, Ad/Soyad/Ata; Open-course badge; room/package on `/sanatorium`) | `/patients` | 🟡 SCREEN (wave UX landed; field UAT open) |
 | Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | 🟡 |
 | МКБ санаторий | `/sanatorium` | 🟡 |
 | Lab orders (q filter, Name (CODE), cancel ORDERED, repeat confirm) | `/lab-orders` | 🟡 SCREEN |
