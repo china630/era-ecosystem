@@ -109,12 +109,13 @@ async function createImportedLabOrder(
         ? { completedAt: input.collectedAt }
         : {}),
       ...(input.resultDate ? { resultDate: input.resultDate } : {}),
-      items: {
-        create: {
-          serviceCode: input.testCode,
-          ...(input.diagnosticServiceId ? { diagnosticServiceId: input.diagnosticServiceId } : {}),
-        },
-      },
+    },
+  });
+  await tx.labOrderItem.create({
+    data: {
+      labOrderId: order.id,
+      serviceCode: input.testCode,
+      ...(input.diagnosticServiceId ? { diagnosticServiceId: input.diagnosticServiceId } : {}),
     },
   });
   return order.id;
