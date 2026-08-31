@@ -128,12 +128,17 @@ describe("WO USG cutover mapping", () => {
       },
       modality: { findFirst: jest.fn().mockResolvedValue({ id: "mod-usg" }), create: jest.fn() },
       diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc-abd" }), create: jest.fn() },
+      clinicalEpisode: {
+        findFirst: jest.fn().mockResolvedValue({ id: "ep1" }),
+        create: jest.fn().mockResolvedValue({ id: "ep1" }),
+      },
       labOrder: { create: createOrder, update: jest.fn() },
       labOrderItem: { create: jest.fn().mockResolvedValue({ id: "item1" }), findFirst: jest.fn().mockResolvedValue({ id: "item1" }) },
       labResult: { findUnique: jest.fn().mockResolvedValue(null), create: createResult, update: jest.fn(), deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     };
     await adapter.upsert(tx as never, row, false);
     expect(createOrder.mock.calls[0][0].data.testCode).toBe("USG-ABD");
+    expect(createOrder.mock.calls[0][0].data.clinicalEpisodeId).toBe("ep1");
     const parsed = JSON.parse(createOrder.mock.calls[0][0].data.resultJson) as Array<{ code: string }>;
     expect(parsed.some((l) => l.code === "liver")).toBe(true);
     expect(parsed.some((l) => l.code === "rightKidney")).toBe(true);
@@ -163,6 +168,10 @@ describe("WO USG cutover mapping", () => {
       },
       modality: { findFirst: jest.fn().mockResolvedValue({ id: "mod-usg" }), create: jest.fn() },
       diagnosticService: { findFirst: jest.fn().mockResolvedValue({ id: "svc-abd" }), create: jest.fn() },
+      clinicalEpisode: {
+        findFirst: jest.fn().mockResolvedValue({ id: "ep1" }),
+        create: jest.fn().mockResolvedValue({ id: "ep1" }),
+      },
       labOrder: { create: createOrder, update: jest.fn() },
       labOrderItem: { create: jest.fn().mockResolvedValue({ id: "item1" }), findFirst: jest.fn().mockResolvedValue({ id: "item1" }) },
       labResult: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({ id: "r1" }), update: jest.fn(), deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },

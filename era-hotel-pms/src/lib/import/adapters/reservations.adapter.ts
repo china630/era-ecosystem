@@ -69,7 +69,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   label: 'Reservations',
   order: 50,
   permission: PERMISSIONS.RESERVATIONS_WRITE,
-  templateHint: 'Reservations.xlsx',
+  templateHint: '11-Reservations.xlsx — EW Front Office Control Panel',
   headerAliases: {
     'Res Id': 'externalRef',
     'Guest Name': 'guestName',

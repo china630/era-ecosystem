@@ -147,13 +147,31 @@ function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
   }));
 }
 
-export async function getPatientCardSummary(patientRefId: string) {
+export async function getPatientCardSummary(
+  patientRefId: string,
+  opts?: { episodeId?: string | null },
+) {
   const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
   const now = new Date();
 
+  const activeEpisode = opts?.episodeId
+    ? await prisma.clinicalEpisode.findFirst({
+        where: { id: opts.episodeId, patientRefId },
+      })
+    : await prisma.clinicalEpisode.findFirst({
+        where: { patientRefId, status: "OPEN" },
+        orderBy: { openedAt: "desc" },
+      });
+
+  const checklistEpisodeId = opts?.episodeId ?? activeEpisode?.id ?? null;
+  const episodeFilter = checklistEpisodeId
+    ? { clinicalEpisodeId: checklistEpisodeId }
+    : opts?.episodeId
+      ? { clinicalEpisodeId: opts.episodeId }
+      : {};
+
   const [
     nextAppointment,
-    activeEpisode,
     nextProcedure,
     pendingLabs,
     resultLabs,
@@ -170,26 +188,28 @@ export async function getPatientCardSummary(patientRefId: string) {
       include: { practitioner: { select: { fullName: true, code: true } } },
       orderBy: { scheduledAt: "asc" },
     }),
-    prisma.clinicalEpisode.findFirst({
-      where: { patientRefId, status: "OPEN" },
-      orderBy: { openedAt: "desc" },
-    }),
     prisma.procedureOrder.findFirst({
       where: {
         patientRefId,
+        ...episodeFilter,
         scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       orderBy: { scheduledAt: "asc" },
     }),
     prisma.labOrder.findMany({
-      where: { patientRefId, status: { in: ["ORDERED", "COLLECTED", "IN_PROGRESS"] } },
+      where: {
+        patientRefId,
+        ...episodeFilter,
+        status: { in: ["ORDERED", "COLLECTED", "IN_PROGRESS"] },
+      },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
     prisma.labOrder.findMany({
       where: {
         patientRefId,
+        ...episodeFilter,
         status: { in: ["RESULT_READY", "PUBLISHED", "COMPLETED"] },
         OR: [
           { items: { some: { results: { some: {} } } } },
@@ -202,6 +222,7 @@ export async function getPatientCardSummary(patientRefId: string) {
     prisma.procedureOrder.findMany({
       where: {
         patientRefId,
+        ...episodeFilter,
         scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
@@ -212,13 +233,14 @@ export async function getPatientCardSummary(patientRefId: string) {
     prisma.procedureOrder.findMany({
       where: {
         patientRefId,
+        ...episodeFilter,
         status: "PROPOSED",
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
     }),
-    getIntakeChecklist(patientRefId),
+    getIntakeChecklist(patientRefId, { episodeId: checklistEpisodeId }),
   ]);
 
   return {
@@ -284,6 +306,7 @@ export async function getPatientHistoryPage(
     to?: Date;
     offset?: number;
     limit?: number;
+    episodeId?: string;
   },
 ) {
   const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
@@ -291,6 +314,7 @@ export async function getPatientHistoryPage(
   const offset = opts.offset ?? 0;
   const types = opts.types?.length ? new Set(opts.types) : null;
   const labFilter = opts.labFilter ?? "all";
+  const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
 
   const wantVisit = !types || types.has("visit");
   const wantAppt = !types || types.has("appointment");
@@ -299,7 +323,7 @@ export async function getPatientHistoryPage(
   const [visits, labOrders, appointments] = await Promise.all([
     loadEncounters
       ? prisma.visit.findMany({
-          where: { patientRefId },
+          where: { patientRefId, ...episodeFilter },
           include: {
             practitioner: { select: { fullName: true, code: true } },
             serviceLines: true,
@@ -311,7 +335,7 @@ export async function getPatientHistoryPage(
       : Promise.resolve([]),
     !types || types.has("lab_order")
       ? prisma.labOrder.findMany({
-          where: { patientRefId },
+          where: { patientRefId, ...episodeFilter },
           orderBy: { createdAt: "desc" },
           take: 400,
         })
@@ -375,14 +399,16 @@ export async function getPatientHistoryPage(
 
 export async function getPatientPlanPage(
   patientRefId: string,
-  opts: { offset?: number; limit?: number; from?: Date; to?: Date },
+  opts: { offset?: number; limit?: number; from?: Date; to?: Date; episodeId?: string },
 ) {
   const settings = await getClinicSettings();
   const limit = opts.limit ?? settings.patientCardPlanPageSize;
   const offset = opts.offset ?? 0;
+  const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
 
   const where = {
     patientRefId,
+    ...episodeFilter,
     OR: [
       { status: "PROPOSED" as const },
       {

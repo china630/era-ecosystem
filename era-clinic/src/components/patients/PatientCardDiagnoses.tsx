@@ -10,43 +10,69 @@ import {
 } from "@era/satellite-kit/ui";
 import { DiagnosisPanel } from "@/components/DiagnosisPanel";
 
-export function PatientCardDiagnoses({ patientRefId }: { patientRefId: string }) {
+type Props = {
+  patientRefId: string;
+  episodeId?: string | null;
+  readOnly?: boolean;
+};
+
+export function PatientCardDiagnoses({
+  patientRefId,
+  episodeId,
+  readOnly = false,
+}: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
-  const [episodeId, setEpisodeId] = useState<string | null | undefined>(undefined);
+  const [resolvedEpisodeId, setResolvedEpisodeId] = useState<string | null | undefined>(
+    episodeId === undefined ? undefined : episodeId,
+  );
 
   useEffect(() => {
+    if (episodeId) {
+      setResolvedEpisodeId(episodeId);
+      return;
+    }
+    if (episodeId === null) {
+      setResolvedEpisodeId(null);
+      return;
+    }
     let cancelled = false;
-    void fetch(`/api/patients/${patientRefId}/diagnoses`)
+    const q = "";
+    void fetch(`/api/patients/${patientRefId}/diagnoses${q}`)
       .then(async (res) => (res.ok ? res.json() : null))
       .then((raw) => {
         if (cancelled || !raw) {
-          if (!cancelled) setEpisodeId(null);
+          if (!cancelled) setResolvedEpisodeId(null);
           return;
         }
         const row = raw.data ?? raw;
-        setEpisodeId(typeof row.episodeId === "string" ? row.episodeId : null);
+        setResolvedEpisodeId(typeof row.episodeId === "string" ? row.episodeId : null);
       })
       .catch(() => {
-        if (!cancelled) setEpisodeId(null);
+        if (!cancelled) setResolvedEpisodeId(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [patientRefId]);
+  }, [patientRefId, episodeId]);
+
+  const apiBase = resolvedEpisodeId
+    ? `/api/patients/${patientRefId}/diagnoses?episode=${encodeURIComponent(resolvedEpisodeId)}`
+    : `/api/patients/${patientRefId}/diagnoses`;
 
   return (
     <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-      {episodeId ? (
+      {resolvedEpisodeId ? (
         <DiagnosisPanel
-          apiBase={`/api/patients/${patientRefId}/diagnoses`}
+          apiBase={apiBase}
           title={t("diagnosesTitle")}
           showRole={false}
+          readOnly={readOnly}
         />
       ) : (
         <>
           <h3 className="font-semibold">{t("diagnosesTitle")}</h3>
-          {episodeId === undefined ? (
+          {resolvedEpisodeId === undefined ? (
             <p className={`mt-2 text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
           ) : (
             <p className={`mt-2 text-sm ${TEXT_MUTED_CLASS}`}>

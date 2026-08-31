@@ -10,6 +10,8 @@ Amended 2026-08-21 — consecutive patient gap is layer 3 (patient rest), not ca
 
 Amended 2026-08-30 (Wave C / Nafta): first-day confirm is a **FIFO prefix of 2–3** procedures (exam/intake sorted first). **Confirm all** removed from sanatorium UI and patient card. Soft hint only — do not hard-block >3. Nafta keeps `AFTER_CHECKUP` (exposed in `/admin/settings`). Same-day 4th in-package procedure charges list price and does not consume knot. Package-quota codes cannot be manually POSTed to SCHEDULED.
 
+Amended 2026-08-31 — [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md): empty OPEN-episode anamnesis blocks `buildProposedPlan`, manual `POST /api/procedures`, `placeConfirmedProcedures`, and bulk-cancel **replace** (**SCREEN** / CLI-55). Contraindication substitution uses the **episode** set.
+
 ## Context
 
 Sanatorium program instantiation used to place procedures onto resources immediately (one-shot FIFO). Doctors need to review package lines first: adjust codes/body parts, cancel and replace, and only then commit scarce cabin/equipment capacity. Placement must respect already-scheduled orders for the same patient (incremental planning), consecutive-day rotation (naftalan baths, body-part therapies), contraindication-driven substitution, peak/extended hours, and lab intake rules for external results and fasting panels.

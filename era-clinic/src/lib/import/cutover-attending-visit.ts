@@ -37,6 +37,7 @@ export async function ensureCutoverAttendingVisit(
     roomNumber: string | null;
     reservationId: string | null;
     patientOrigin: "IN_HOUSE" | "WALK_IN";
+    clinicalEpisodeId?: string | null;
   },
 ): Promise<string | null> {
   const doctorRef = attendingDoctorExternalRef(input.doctorId);
@@ -53,6 +54,7 @@ export async function ensureCutoverAttendingVisit(
     patientOrigin: input.patientOrigin,
     reservationId: input.reservationId,
     roomNumber: input.roomNumber,
+    clinicalEpisodeId: input.clinicalEpisodeId ?? undefined,
     completedAt: open ? null : (input.closedAt ?? at),
   };
 

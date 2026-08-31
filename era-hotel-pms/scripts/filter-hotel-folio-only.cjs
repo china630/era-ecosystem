@@ -8,18 +8,28 @@
 const fs = require("fs");
 const path = require("path");
 const X = require("xlsx");
+const { FILES, START_ARCHIVE, fileAt } = require(path.join(
+  __dirname,
+  "..",
+  "..",
+  "era-clinic",
+  "scripts",
+  "nafta-cutover",
+  "pack-layout.cjs",
+));
 
 function parseArgs(argv) {
   const args = argv.slice(2);
-  let ready = "D:/ERA-BACKUP/NAFTA-ERA-READY";
+  let ready = process.env.NAFTA_READY || "D:/ERA-BACKUP/NAFTA-ERA-READY";
+  let start = process.env.NAFTA_START || "D:/ERA-BACKUP/NAFTA-START";
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === "--ready") ready = args[i + 1];
+    if (args[i] === "--start") start = args[i + 1];
   }
-  const hotelDir = path.join(ready, "hotel");
   return {
-    reservations: path.join(hotelDir, "11-Reservations.merged.xlsx"),
-    folioIn: path.join(hotelDir, "12-Folio-Transactions.merged.xlsx"),
-    folioOut: path.join(hotelDir, "12-Folio-Transactions.hotel.xlsx"),
+    reservations: fileAt(ready, FILES.hotelReservations),
+    folioIn: fileAt(start, START_ARCHIVE.folioMerged),
+    folioOut: fileAt(start, START_ARCHIVE.folioHotel),
   };
 }
 

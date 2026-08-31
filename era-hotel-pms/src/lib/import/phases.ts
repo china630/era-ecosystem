@@ -18,12 +18,12 @@ export const IMPORT_PHASES: ImportPhaseDef[] = [
   {
     id: 'master',
     strictOrder: true,
-    entities: ['room-types', 'bar-bootstrap', 'rate-plans', 'rooms', 'agencies', 'product-cards', 'stock-cards'],
+    entities: ['room-types', 'bar-bootstrap', 'rate-plans', 'package-sell', 'rooms', 'agencies', 'product-cards', 'stock-cards'],
   },
   {
     id: 'transactional',
     strictOrder: true,
-    entities: ['guests', 'reservations', 'folios'],
+    entities: ['guests', 'reservations', 'reservation-notes', 'folios', 'agency-statement'],
   },
 ];
 

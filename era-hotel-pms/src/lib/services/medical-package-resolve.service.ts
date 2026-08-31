@@ -227,6 +227,9 @@ function parseUnstructuredPhrases(text: string): MedicalPackageCode | null {
  * Agency name starts with Premium/Dermo/Detox or known walk-in labels → SKU for all pax.
  * Walkin leisure / Walkin medical without prefix → not a medical SKU.
  * Optional `rules` from AgencyMedicalSkuRule (DB) checked first (prefix match, case-insensitive).
+ *
+ * Token match (anywhere): `\bpremium\b`, `\bdermo\b`, `\bdetoks?\b`, Həmkarlar —
+ * covers «Premium Naftalan Kamel», «Dermo Nafdan travel», etc.
  */
 export function resolveAgencyPackageCode(
   agencyName: string | null | undefined,
@@ -236,9 +239,13 @@ export function resolveAgencyPackageCode(
   const raw = agencyName.trim();
   const lower = raw.toLowerCase();
 
-  // Explicit non-medical
+  // Explicit non-medical leisure (do not invent SKU from tokens in leisure-only names)
   if (isLeisureAgency(raw)) return null;
   if (/^walkin\s+medical$/i.test(raw) || /^walk[\s-]?in\s+medical$/i.test(raw)) return null;
+  // Agency labelled leisure (suffix) without Premium/Dermo/Detoks token
+  if (/\bleisure\b/i.test(raw) && !/\b(premium|dermo|detoks|detox)\b/i.test(raw)) {
+    return null;
+  }
 
   // Editable DB rules (longest prefix first)
   if (rules?.length) {
@@ -255,27 +262,23 @@ export function resolveAgencyPackageCode(
     }
   }
 
-  // Prefix / walk-in labels (code defaults — used when DB empty)
-  if (/^premium\b/i.test(raw) || /premium\s+paket\s+walkin/i.test(raw) || /premium\s+facebook/i.test(raw)) {
-    return "PKG-PREMIUM";
-  }
-  if (
-    /^dermo\b/i.test(raw) ||
-    /dermo\s+paket\s+walkin/i.test(raw) ||
-    /fecebook\s+dermo|facebook\s+dermo/i.test(raw)
-  ) {
-    return "PKG-DERMO";
-  }
-  if (
-    /^detox\b/i.test(raw) ||
-    /^detoks\b/i.test(raw) ||
-    /detox\s+paket\s+walkin|detoks\s+paket\s+walkin/i.test(raw)
-  ) {
-    return "PKG-DETOKS";
+  // Həmkarlar / confederation → Standart (before generic medical default elsewhere)
+  if (/h[əe]mkarlar|hemkarlar|həmkərlar/i.test(lower)) {
+    return "PKG-STANDART";
   }
 
-  // Həmkarlar → Standart fallback (FO still asked to write ERA-PKG)
-  if (/h[əe]mkarlar|hemkarlar|həmkərlar/i.test(lower)) {
+  // Token anywhere (Premium Naftalan…, Fecebook Dermo paket, Detox paket Walkin)
+  if (/\bpremium\b/i.test(raw)) return "PKG-PREMIUM";
+  if (/\bdermo\b/i.test(raw) || /fecebook\s+dermo|facebook\s+dermo/i.test(raw)) {
+    return "PKG-DERMO";
+  }
+  if (/\bdetoks\b/i.test(raw) || /\bdetox\b/i.test(raw)) return "PKG-DETOKS";
+
+  // Standart paket walk-in / standart medical label
+  if (
+    /\bstandart\b/i.test(raw) &&
+    /paket|walkin|walk[\s-]?in|medical/i.test(raw)
+  ) {
     return "PKG-STANDART";
   }
 

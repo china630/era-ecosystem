@@ -52,7 +52,7 @@ Nav gating: `ClinicOpsShell` + middleware cookie `era_clinic_presets` (Phase 1).
 | `domain/inpatient/` | Done | Ward CRUD, ADT-light admit/transfer/discharge |
 | `domain/visit/` | Done | Visit cancel (K-15) |
 | `domain/appointment/` | Done | Calendar matrix + practitioner schedule (CLI-36); conflict helper still in `lib/scheduling.service.ts` |
-| `domain/sanatorium/` | Planned | Move from `lib/services/sanatorium.service.ts` |
+| `domain/sanatorium/` | In progress | `episode-gates.ts`, `episode-stamp.ts`, `episode-resolve.ts`; service still in `lib/services/sanatorium.service.ts`. Canon: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md) (CLI-55 SCREEN) |
 | `domain/billing/` | Planned | Move from `lib/billing-router.ts` |
 | `infra/prisma.ts` | Planned | Thin re-export of `@/lib/prisma` |
 

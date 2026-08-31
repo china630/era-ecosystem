@@ -196,12 +196,14 @@ model Ticket {
   totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
   openedAt                DateTime     @default(now()) @map("opened_at")
   closedAt                DateTime?    @map("closed_at")
+  externalRef             String?      @map("external_ref")
   outlet                  Outlet       @relation(fields: [outletId], references: [id], onDelete: Cascade)
   table                   PosTable?    @relation("TableTickets", fields: [tableId], references: [id])
   lines                   TicketLine[]
 
   @@index([outletId, status])
   @@index([beoId])
+  @@unique([organizationId, externalRef])
   @@map("tickets")
   @@index([organizationId])
 }

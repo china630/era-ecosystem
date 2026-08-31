@@ -80,6 +80,31 @@ const HEADERS = {
   ],
   orgStructure: ["orgUnit", "position", "totalSlots"],
   procedureRequirements: ["procedureCode", "resourceCode", "role", "quantity"],
+  physioSites: [
+    "code",
+    "kind",
+    "prikaz817",
+    "laterality",
+    "titleAz",
+    "titleRu",
+    "titleEn",
+    "titleLa",
+    "boundary",
+    "coarse",
+    "woAliases",
+    "sortOrder",
+  ],
+  programTemplates: [
+    "templateCode",
+    "templateName",
+    "minNights",
+    "maxNights",
+    "durationDays",
+    "nights",
+    "procedureCode",
+    "procedureName",
+    "qty",
+  ],
 };
 
 function ymd(value) {
@@ -95,8 +120,28 @@ function roomCode(id) {
   return `WO-ROOM-${id}`;
 }
 
-function slotStatus(dateYmd, cutover = CUTOVER) {
-  return dateYmd < cutover ? "COMPLETED" : "SCHEDULED";
+function isoDateTime(value) {
+  if (!value) return "";
+  const s = String(value).trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})/);
+  if (m) {
+    if (/[zZ]$/.test(s) || /[+-]\d{2}:?\d{2}$/.test(s)) return s.replace(" ", "T");
+    return `${m[1]}T${m[2]}+04:00`;
+  }
+  return ymd(value);
+}
+
+function slotInstant(dateYmd, startTime) {
+  const hh = String(startTime || "09:00:00").slice(0, 8);
+  const padded = hh.length === 5 ? `${hh}:00` : hh;
+  const d = new Date(`${dateYmd}T${padded}+04:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function slotStatus(dateYmd, startTime, asOf = new Date()) {
+  const instant = slotInstant(dateYmd, startTime);
+  if (instant) return instant.getTime() < asOf.getTime() ? "COMPLETED" : "SCHEDULED";
+  return dateYmd < String(asOf.toISOString()).slice(0, 10) ? "COMPLETED" : "SCHEDULED";
 }
 
 function isOpsSlotDate(dateYmd) {
@@ -227,8 +272,8 @@ function mapPatientImportRow(listRow, card) {
     folioPerson: c.folioPerson != null ? c.folioPerson : "",
     uniqueId: cell(c.uniqueId || list.uniqueId),
     passport: cell(c.passport || list.passport),
-    checkIn: ymd(c.checkInDate || list.checkInDate),
-    checkOut: ymd(c.checkOutDate || list.checkOutDate),
+    checkIn: isoDateTime(c.checkInDate || list.checkInDate),
+    checkOut: isoDateTime(c.checkOutDate || list.checkOutDate),
     treatmentDaysCount: c.treatmentDaysCount != null ? c.treatmentDaysCount : list.treatmentDaysCount ?? "",
     nightCount: c.nightCount != null ? c.nightCount : list.nightCount ?? "",
     isReservationPatient: isRes === true || isRes === "true" ? "true" : isRes === false || isRes === "false" ? "false" : "",
@@ -366,8 +411,10 @@ module.exports = {
   OPS_SLOT_TO,
   HEADERS,
   ymd,
+  isoDateTime,
   procedureCode,
   roomCode,
+  slotInstant,
   slotStatus,
   isOpsSlotDate,
   mapSex,

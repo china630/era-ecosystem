@@ -207,6 +207,16 @@ export async function registerWalkInEpisode(input: {
   }
   if (!patient) throw new Error("Failed to ensure patient ref");
 
+  const existingOpen = await prisma.clinicalEpisode.findFirst({
+    where: { patientRefId: patient.id, status: "OPEN" },
+    select: { id: true },
+  });
+  if (existingOpen) {
+    const err = new Error("Patient already has an open walk-in episode");
+    (err as Error & { code?: string }).code = "WALK_IN_OPEN_EXISTS";
+    throw err;
+  }
+
   const globalPersonId = await linkPatientGlobalPerson({
     patientRefId: patient.id,
     fin: input.fin,
@@ -253,6 +263,15 @@ export async function completeCheckupAndSchedule(input: {
   if (episode.complaints.length === 0 && episode.diagnoses.length === 0) {
     throw new Error('Add at least one complaint or diagnosis before scheduling');
   }
+  const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
+  if (anamnesisDenied) {
+    const err = new Error(anamnesisDenied);
+    (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
+    throw err;
+  }
 
   const programCode = input.programCode ?? episode.programCode;
   if (!programCode) throw new Error('Program code required');
@@ -272,7 +291,7 @@ export async function completeCheckupAndSchedule(input: {
 }
 
 export async function listOpenEpisodes(organizationId?: string) {
-  return prisma.clinicalEpisode.findMany({
+  const episodes = await prisma.clinicalEpisode.findMany({
     where: {
       status: 'OPEN',
       ...(organizationId ? { organizationId } : {}),
@@ -292,6 +311,59 @@ export async function listOpenEpisodes(organizationId?: string) {
     },
     orderBy: { openedAt: 'desc' },
   });
+
+  const {
+    LIVE_PROCEDURE_STATUSES,
+    OPEN_LAB_STATUSES,
+    walkInCloseDenied,
+  } = await import("@/domain/sanatorium/episode-gates");
+
+  const walkInIds = episodes
+    .filter((e) => e.patientOrigin === "WALK_IN")
+    .map((e) => e.id);
+  if (walkInIds.length === 0) {
+    return episodes.map((e) => ({ ...e, canCloseWalkIn: false as boolean }));
+  }
+
+  const [liveProcs, openLabs] = await Promise.all([
+    prisma.procedureOrder.groupBy({
+      by: ["clinicalEpisodeId"],
+      where: {
+        clinicalEpisodeId: { in: walkInIds },
+        status: { in: [...LIVE_PROCEDURE_STATUSES] },
+      },
+      _count: { _all: true },
+    }),
+    prisma.labOrder.groupBy({
+      by: ["clinicalEpisodeId"],
+      where: {
+        clinicalEpisodeId: { in: walkInIds },
+        status: { in: [...OPEN_LAB_STATUSES] },
+      },
+      _count: { _all: true },
+    }),
+  ]);
+  const liveByEp = new Map(
+    liveProcs
+      .filter((r) => r.clinicalEpisodeId)
+      .map((r) => [r.clinicalEpisodeId!, r._count._all]),
+  );
+  const labsByEp = new Map(
+    openLabs
+      .filter((r) => r.clinicalEpisodeId)
+      .map((r) => [r.clinicalEpisodeId!, r._count._all]),
+  );
+
+  return episodes.map((e) => {
+    if (e.patientOrigin !== "WALK_IN") {
+      return { ...e, canCloseWalkIn: false };
+    }
+    const denied = walkInCloseDenied({
+      liveProcedureCount: liveByEp.get(e.id) ?? 0,
+      openLabCount: labsByEp.get(e.id) ?? 0,
+    });
+    return { ...e, canCloseWalkIn: !denied };
+  });
 }
 
 /** @deprecated use listOpenEpisodes */
@@ -300,15 +372,74 @@ export async function listInHouseEpisodes(organizationId?: string) {
 }
 
 export async function addComplaint(episodeId: string, text: string) {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { status: true },
+  });
+  if (!episode) {
+    const err = new Error("Episode not found");
+    (err as Error & { code?: string }).code = "NO_OPEN_EPISODE";
+    throw err;
+  }
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
   return prisma.clinicalComplaint.create({
     data: { episodeId, text },
   });
+}
+
+export async function listEpisodeComplaints(episodeId: string) {
+  return prisma.clinicalComplaint.findMany({
+    where: { episodeId },
+    orderBy: { recordedAt: "desc" },
+  });
+}
+
+export async function deleteEpisodeComplaint(id: string, patientRefId: string) {
+  const row = await prisma.clinicalComplaint.findUnique({
+    where: { id },
+    include: { episode: { select: { patientRefId: true, status: true } } },
+  });
+  if (!row || row.episode.patientRefId !== patientRefId) {
+    throw new Error("Complaint not found");
+  }
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(row.episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
+  await prisma.clinicalComplaint.delete({ where: { id } });
 }
 
 export async function addDiagnosis(
   episodeId: string,
   input: { icdCodeId: string; note?: string | null; recordedByUserId?: string | null },
 ) {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { status: true },
+  });
+  if (!episode) throw new Error("Episode not found");
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
   const { addEpisodeDiagnosis } = await import("@/domain/icd/diagnosis-write.service");
   return addEpisodeDiagnosis(episodeId, input);
 }
@@ -319,6 +450,15 @@ export async function createEpisodeLabOrder(episodeId: string, testCode: string)
     include: { patientRef: true },
   });
   if (!episode?.patientRefId) throw new Error('Episode patient not found');
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
   const patientRefId = episode.patientRefId;
 
   // Fasting labs: schedule collection for next working morning (Asia/Baku ~08:00)
@@ -394,8 +534,12 @@ export async function getEpisodeSchedule(
 
   const orders = await prisma.procedureOrder.findMany({
     where: {
-      patientRefId: episode.patientRefId,
       scheduledAt: { gte: from, lt: to },
+      OR: [
+        { clinicalEpisodeId: episodeId },
+        // Pre-migration / orphan rows: fall back to patient+date
+        { clinicalEpisodeId: null, patientRefId: episode.patientRefId },
+      ],
     },
     orderBy: { scheduledAt: "asc" },
   });
@@ -411,4 +555,88 @@ export async function getEpisodeSchedule(
     ...o,
     procedureName: resolveOrderDisplayName(o, catalogNames),
   }));
+}
+
+/**
+ * Close an idle WALK_IN episode. Refuses IN_HOUSE (use hotel checkout)
+ * and refuses when live procedures or open labs remain — does not cancel leftovers.
+ */
+export async function closeWalkInEpisode(episodeId: string) {
+  const {
+    EPISODE_NOT_IDLE,
+    LIVE_PROCEDURE_STATUSES,
+    OPEN_LAB_STATUSES,
+    walkInCloseDenied,
+  } = await import("@/domain/sanatorium/episode-gates");
+
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: {
+      id: true,
+      status: true,
+      patientOrigin: true,
+      patientRefId: true,
+    },
+  });
+  if (!episode) {
+    const err = new Error("Episode not found");
+    (err as Error & { code?: string }).code = "NO_OPEN_EPISODE";
+    throw err;
+  }
+  if (episode.status !== "OPEN") {
+    const err = new Error("Episode is already closed");
+    (err as Error & { code?: string }).code = "EPISODE_CLOSED";
+    throw err;
+  }
+  if (episode.patientOrigin !== "WALK_IN") {
+    const err = new Error("IN_HOUSE episodes close via hotel checkout");
+    (err as Error & { code?: string }).code = "EPISODE_CLOSED";
+    throw err;
+  }
+
+  const [liveProcedureCount, openLabCount] = await Promise.all([
+    prisma.procedureOrder.count({
+      where: {
+        clinicalEpisodeId: episodeId,
+        status: { in: [...LIVE_PROCEDURE_STATUSES] },
+      },
+    }),
+    prisma.labOrder.count({
+      where: {
+        clinicalEpisodeId: episodeId,
+        status: { in: [...OPEN_LAB_STATUSES] },
+      },
+    }),
+  ]);
+
+  const denied = walkInCloseDenied({ liveProcedureCount, openLabCount });
+  if (denied) {
+    const err = new Error(denied);
+    (err as Error & { code?: string }).code = EPISODE_NOT_IDLE;
+    throw err;
+  }
+
+  return prisma.clinicalEpisode.update({
+    where: { id: episodeId },
+    data: { status: "CLOSED", closedAt: new Date() },
+  });
+}
+
+/** Cron helper: close idle OPEN walk-in episodes for the current tenant. */
+export async function closeIdleWalkInEpisodes(): Promise<{ closed: number; skipped: number }> {
+  const open = await prisma.clinicalEpisode.findMany({
+    where: { status: "OPEN", patientOrigin: "WALK_IN" },
+    select: { id: true },
+  });
+  let closed = 0;
+  let skipped = 0;
+  for (const ep of open) {
+    try {
+      await closeWalkInEpisode(ep.id);
+      closed++;
+    } catch {
+      skipped++;
+    }
+  }
+  return { closed, skipped };
 }

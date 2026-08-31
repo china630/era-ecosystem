@@ -32,6 +32,8 @@ export type ImportAdapter<T> = {
   templateHint: string;
   /** When true, import runs without Excel upload (bootstrap scripts). */
   fileless?: boolean;
+  /** Folio chunks: operator may attach several .xlsx in one step. */
+  allowMultiple?: boolean;
   headerAliases: Record<string, string>;
   rowSchema: z.ZodType<T>;
   /** Return `null` to skip a row (EW totals footer, virtual types). */
@@ -45,4 +47,5 @@ export type ImportEntityMeta = {
   order: number;
   templateHint: string;
   fileless?: boolean;
+  allowMultiple?: boolean;
 };

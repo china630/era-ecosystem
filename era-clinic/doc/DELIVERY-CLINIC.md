@@ -202,3 +202,15 @@ Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clin
 ### Nafta dual-run extra tickets (HOT-06)
 
 2026-08-27: Issue ticket at `/reception/extra-tickets` enqueues hotel `ElektrawebFolioOutbox`; widget `SP_SPA_SAVE`; 3-copy print; nurse gate. Not SHIPPED.
+
+### CLI-55 episode as care course — SCREEN
+
+[clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md). Waves W1–W5 landed; keep SCREEN until field punch (not SHIPPED).
+
+- [x] Anamnesis + contraindications on `ClinicalEpisode` (not demographics gate)
+- [x] `clinicalEpisodeId` on procedures, visits; labs stamped when OPEN exists
+- [x] Patient card episode select (default latest); CLOSED read-only
+- [x] `ANAMNESIS_REQUIRED` on procedure assign/confirm
+- [x] Walk-in close: reception + weekly cron; refuse if live procedures or open labs
+- [x] Intake idempotency per episode (not lifetime patient)
+

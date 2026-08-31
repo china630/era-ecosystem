@@ -14,12 +14,16 @@ type Row = { id: string; bodyPart: string; note: string | null };
 
 type Props = {
   patientRefId: string;
+  episodeId?: string | null;
+  readOnly?: boolean;
   expanded?: boolean;
   onCountChange?: (count: number) => void;
 };
 
 export function PatientContraindicationsPanel({
   patientRefId,
+  episodeId,
+  readOnly = false,
   expanded = true,
   onCountChange,
 }: Props) {
@@ -34,14 +38,15 @@ export function PatientContraindicationsPanel({
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/patients/${patientRefId}/contraindications`);
+    const q = episodeId ? `?episode=${encodeURIComponent(episodeId)}` : "";
+    const res = await fetch(`/api/patients/${patientRefId}/contraindications${q}`);
     if (res.ok) {
       const parsed = await res.json();
       const data = (parsed.data ?? parsed) as Row[];
       setRows(Array.isArray(data) ? data : []);
     }
     setLoading(false);
-  }, [patientRefId]);
+  }, [patientRefId, episodeId]);
 
   useEffect(() => {
     void load();
@@ -54,6 +59,7 @@ export function PatientContraindicationsPanel({
   const blocked = new Set(rows.map((r) => r.bodyPart));
 
   function onZoneClick(bodyPart: string) {
+    if (readOnly || !episodeId) return;
     if (blocked.has(bodyPart)) {
       const row = rows.find((r) => r.bodyPart === bodyPart);
       if (row) setRemoveRow(row);
@@ -65,10 +71,15 @@ export function PatientContraindicationsPanel({
   }
 
   async function confirmAdd() {
+    if (!episodeId) return;
     await fetch(`/api/patients/${patientRefId}/contraindications`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bodyPart: pendingPart, note: note.trim() || undefined }),
+      body: JSON.stringify({
+        bodyPart: pendingPart,
+        note: note.trim() || undefined,
+        episodeId,
+      }),
     });
     setAddOpen(false);
     await load();

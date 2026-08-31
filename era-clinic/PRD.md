@@ -28,7 +28,7 @@
 | **Full HIS** (OR, MAR, ward pharmacy, DRG/case billing) | Separate product appendix on same satellite — see [ADR clinic-product-lines](../../docs/adr/clinic-product-lines-and-presets.md) Phase 6 |
 | HL7/FHIR production, DICOM / PACS | Phase K4+ integrations |
 | Национальный e-recept (Dərman) | Регуляторный контур AZ — Phase 3 |
-| Полная EMR (долгая история болезни) | Упрощённая карта визита + CPOE lite |
+| Полная EMR (единая пожизненная история) | Нет longitudinal problem list. Архив — **курсы** `ClinicalEpisode` (CLI-55), не одна вечная карта |
 | Страховые ТПА и pre-auth (full) | Finance + модуль договоров §4.15 |
 | Склад медикаментов / фармаопт | Finance inventory или retail pharmacy preset — **не** ТТК процедур (см. M3e) |
 
@@ -52,6 +52,8 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 **Sanatorium business:** orchestrator entitlements `industry_hotel_pms` + `industry_clinic` (+ optional retail), not a standalone sanatorium satellite.
 
 **Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped.
+
+**Clinical course (CLI-55, canon — not shipped):** one `ClinicalEpisode` = one stay / walk-in registration. Patient header holds identity (name, age, sex, blood group, identifiers). Anamnesis, contraindications, visits, labs, and procedures belong to the **episode**. Card: episode dropdown (default = latest); closed course is read-only. Empty anamnesis blocks procedure assign/confirm (`ANAMNESIS_REQUIRED`). Walk-in close = reception + weekly cron, refused while live procedures or open labs remain. Hotel checkout unchanged. ADR: [clinic-episode-as-clinical-course.md](../docs/adr/clinic-episode-as-clinical-course.md).
 
 **Physio / sanatorium sites (W2):** doctor picks protocol zones **S** (chips + autocomplete) on the patient card; `ProcedureOrder.sites[]` stores the list; coarse `bodyPart` is derived. Every order still has free-text `note`. Type-gated programs/substances are W3. See [physio-site-canon.md](doc/physio-site-canon.md).
 
@@ -92,7 +94,7 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 | ID | Module | Status | Finance |
 |----|--------|--------|---------|
 | M0 | Platform shell, SSO | **DONE** | — |
-| M1 | Patient registry (ref, не полная EMR) | **SHIPPED** (registry UI) | Counterparty / patient ref sync |
+| M1 | Patient registry (ref, не полная EMR) | **SHIPPED** (registry UI) | Counterparty / patient ref sync; episode-scoped card archive = CLI-55 PLANNED |
 | M2 | Practitioners, rooms, schedule | **SHIPPED** (master-data admin; `staffKind` DOCTOR/NURSE/LAB) | — |
 | M3d | Monthly nurse/lab duty roster | **SHIPPED** | Head-doctor matrix `/sanatorium/nurse-roster`; clinic-local absences (Finance HR sync later) |
 | M3 | Appointment & check-in | **DONE** | — |
@@ -148,6 +150,18 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 | K-13 | Скидка на визит | Только `CLINIC_ADMIN` / `BUSINESS_OWNER`; audit log |
 | K-14 | Сводка выручки за день | `BUSINESS_OWNER`: visits + lab, без GL в спутнике |
 | K-15 | Отмена визита с причиной | До закрытия — без события; после — void flow в Finance (ручной) |
+
+### Санаторный курс (CLI-55 — канон, не shipped)
+
+Canon: [ADR clinic-episode-as-clinical-course](../docs/adr/clinic-episode-as-clinical-course.md).
+
+| ID | История | Критерий приёмки |
+|----|---------|------------------|
+| K-16 | Карточка: шапка пациента + выбор эпизода | Default = последний; смена подгружает анамнез, противопоказания, МКБ, визиты, лабы, процедуры **этого** курса |
+| K-17 | Закрытый эпизод только чтение | Нет add/confirm процедур, нет правки анамнеза/противопоказаний/МКБ |
+| K-18 | Пустой анамнез OPEN-эпизода | 409 `ANAMNESIS_REQUIRED` на назначение и confirm процедур; лабы/intake-визиты не блокируются; демография без анамнеза |
+| K-19 | Walk-in close | Ресепшен и недельный cron; отказ, пока есть живые процедуры или лабы `ORDERED`/`COLLECTED`/`IN_PROGRESS` |
+| K-20 | Повторный заезд | Новый OPEN; прошлый CLOSED; intake не считает прошлогодние визиты/лабы «уже сделанными» |
 
 ---
 

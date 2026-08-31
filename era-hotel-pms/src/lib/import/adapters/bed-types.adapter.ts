@@ -14,7 +14,7 @@ export const bedTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   label: 'Bed Type',
   order: 11,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
-  templateHint: 'Bed Type.xlsx',
+  templateHint: '04-Bed-Types.xlsx — EW Bed Type',
   headerAliases: {
     'Bed Type': 'code',
     'System Bed Type': 'name',

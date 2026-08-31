@@ -1,9 +1,11 @@
+import { agencyStatementAdapter } from '@/lib/import/adapters/agency-statement.adapter';
 import { barBootstrapAdapter } from '@/lib/import/adapters/bar-bootstrap.adapter';
 import { agenciesAdapter } from '@/lib/import/adapters/agencies.adapter';
 import { bedTypesAdapter } from '@/lib/import/adapters/bed-types.adapter';
 import { foliosAdapter } from '@/lib/import/adapters/folios.adapter';
 import { guestsAdapter } from '@/lib/import/adapters/guests.adapter';
 import { productCardsAdapter, stockCardsAdapter } from '@/lib/import/adapters/products.adapter';
+import { packageSellAdapter } from '@/lib/import/adapters/package-sell.adapter';
 import { ratePlansAdapter } from '@/lib/import/adapters/rate-plans.adapter';
 import { reservationsAdapter } from '@/lib/import/adapters/reservations.adapter';
 import { reservationNotesAdapter } from '@/lib/import/adapters/reservation-notes.adapter';
@@ -20,6 +22,7 @@ const ADAPTERS = [
   roomTypesAdapter,
   barBootstrapAdapter,
   ratePlansAdapter,
+  packageSellAdapter,
   roomsAdapter,
   agenciesAdapter,
   productCardsAdapter,
@@ -28,6 +31,7 @@ const ADAPTERS = [
   reservationsAdapter,
   reservationNotesAdapter,
   foliosAdapter,
+  agencyStatementAdapter,
 ] as ImportAdapter<unknown>[];
 
 const byEntity = new Map(ADAPTERS.map((a) => [a.entity, a]));
@@ -37,12 +41,13 @@ export function getImportAdapter(entity: string): ImportAdapter<unknown> | undef
 }
 
 export function listImportEntities(): ImportEntityMeta[] {
-  return ADAPTERS.map(({ entity, label, order, templateHint, fileless }) => ({
+  return ADAPTERS.map(({ entity, label, order, templateHint, fileless, allowMultiple }) => ({
     entity,
     label,
     order,
     templateHint,
     fileless,
+    allowMultiple,
   })).sort((a, b) => a.order - b.order);
 }
 
@@ -53,6 +58,7 @@ export {
   roomTypesAdapter,
   barBootstrapAdapter,
   ratePlansAdapter,
+  packageSellAdapter,
   roomsAdapter,
   agenciesAdapter,
   productCardsAdapter,
@@ -61,4 +67,5 @@ export {
   reservationsAdapter,
   reservationNotesAdapter,
   foliosAdapter,
+  agencyStatementAdapter,
 };

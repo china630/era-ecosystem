@@ -25,6 +25,8 @@ Add a **clinical demographics ops cache** on `PatientRef`:
 
 **Not stored locally as SoR:** FIN, passport, issuing country (remain MDM / transient intake). **Sex and birthDate** are MDM person-core SoR (`MALE`/`FEMALE`/`UNKNOWN` — no OTHER); `PatientRef` columns remain an ops cache filled from resolve/ops-profile.
 
+**Anamnesis is not demographics.** As of 2026-08-31 / CLI-55 SCREEN: [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md) — anamnesis and contraindications live on `ClinicalEpisode`. Demographics PATCH no longer requires anamnesis; procedure assign/confirm requires OPEN-course anamnesis.
+
 **Not in this wave:** height/weight, pregnancy status, preferred language, allergy free-text (structured contraindications + procedures already cover care alerts).
 
 Clinic prefers resolve-from-MDM and treats local columns as cache (same path as hotel guest ops-profile).

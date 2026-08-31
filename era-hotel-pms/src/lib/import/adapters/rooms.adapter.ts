@@ -22,7 +22,7 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   label: 'Rooms',
   order: 22,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
-  templateHint: 'Rooms.xlsx',
+  templateHint: '08-Rooms.xlsx — EW Rooms',
   headerAliases: {
     'Room No': 'roomNumber',
     'Room Type': 'roomTypeCode',

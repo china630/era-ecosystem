@@ -22,6 +22,7 @@
     "tables": "Masalar",
     "dailyMenu": "Günün menyusu",
     "integration": "İnteqrasiya",
+    "import": "Cutover import",
     "calendar": "Stol rezervasiyası",
     "brand": "ERA F&B POS"
   },
@@ -254,5 +255,45 @@
     "localeAz": "AZ",
     "localeRu": "RU",
     "localeEn": "EN"
+  },
+  "cutoverImport": {
+    "title": "Elektraweb import",
+    "subtitle": "Nafta cutover — READY #30–#32 sırayla. Idempotent upsert.",
+    "loading": "Yüklənir…",
+    "loadError": "Import kataloqu yüklənmədi",
+    "superAdminOnly": "Yalnız platforma super-admin və ya F&B menecer",
+    "intro": "Hər dəfə bir faza. Proqress brauzerdə saxlanır.",
+    "verifyMasterData": "Menyunu yoxla",
+    "resetProgress": "Proqresi sıfırla",
+    "resetConfirm": "Bu brauzerdə saxlanmış import proqresini təmizləmək?",
+    "coaNote": "Yalnız walk-in POS (999 FB / Xudmani CASH). Adlı in-house extras hotel folio #13-də qalır.",
+    "templateFile": "Şablon",
+    "preview": "Önizləmə",
+    "importConfirm": "Import",
+    "back": "Geri",
+    "reimport": "Yenidən yüklə",
+    "rows": "Sətir",
+    "created": "Yaradıldı",
+    "updated": "Yeniləndi",
+    "skipped": "Keçildi",
+    "errors": "Xətalar",
+    "stepCompleted": "Import — yaradıldı {created}, yeniləndi {updated}, xəta {errors}",
+    "orderWarning": "Əvvəlcə bunları tamamlayın: {steps}",
+    "pickFileHint": "Bu addım üçün Elektraweb .xlsx.",
+    "pickFileHintMultiple": "Birdən çox fayl seçin.",
+    "runBootstrap": "Bootstrap işə sal",
+    "phase": {
+      "catalog": {
+        "title": "Faza 1 — Menyu kataloqu",
+        "hint": "Qruplar, sonra kartlar (#30, sonra #31)."
+      },
+      "archive": {
+        "title": "Faza 2 — POS arxivi",
+        "hint": "#32 FnB Transactions — walk-in çeklər, hotel folio deyil."
+      }
+    },
+    "nextPhase": "Növbəti faza",
+    "prevPhase": "Əvvəlki faza",
+    "phaseProgress": "Faza {current} / {total}"
   }
 }

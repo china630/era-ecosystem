@@ -16,7 +16,7 @@ export const roomTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   label: 'Room Types',
   order: 20,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
-  templateHint: 'Room Types.xlsx',
+  templateHint: '06-Room-Types.xlsx — EW Room Types',
   headerAliases: {
     'Room Type Code': 'code',
     'Room Type Name': 'name',

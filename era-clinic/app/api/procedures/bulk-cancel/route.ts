@@ -4,6 +4,7 @@ import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-
 import { prisma } from "@/lib/prisma";
 import { cancelProcedureOrder } from "@/domain/procedure/procedure-attendance.service";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const bodySchema = z.object({
   episodeId: z.string().optional(),
@@ -85,13 +86,32 @@ export async function POST(req: Request) {
       });
       if (!pt) return jsonError(`Unknown replaceWithCode ${body.replaceWithCode}`, 400);
 
+      if (body.episodeId) {
+        const episode = await prisma.clinicalEpisode.findUnique({
+          where: { id: body.episodeId },
+          select: { anamnesisText: true },
+        });
+        const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
+          "@/domain/sanatorium/episode-gates"
+        );
+        const denied = episodeAnamnesisDenied(episode?.anamnesisText);
+        if (denied) return jsonError(denied, 409, { code: ANAMNESIS_REQUIRED });
+      }
+
       const newIds: string[] = [];
       for (let i = 0; i < targets.length; i++) {
         const src = targets[i];
+        const clinicalEpisodeId =
+          body.episodeId ??
+          (await stampEpisodeOnCreate({
+            patientRefId,
+            reservationId,
+          }));
         const created = await prisma.procedureOrder.create({
           data: {
             organizationId: requestOrganizationId(),
             patientRefId,
+            clinicalEpisodeId: clinicalEpisodeId ?? undefined,
             procedureCode: pt.code,
             procedureName: pt.name,
             procedureTypeId: pt.id,

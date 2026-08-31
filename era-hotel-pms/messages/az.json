@@ -2045,6 +2045,7 @@
     "stepCompleted": "Import edildi — yaradıldı {created}, yeniləndi {updated}, xəta {errors}",
     "orderWarning": "Əvvəlcə bunları tamamlamaq tövsiyə olunur: {steps}",
     "pickFileHint": "Bu addım üçün Elektraweb .xlsx export.",
+    "pickFileHintMultiple": "Bütün folio hissələrini bir dəfə seçin (13-Folio-p01.xlsx … p12).",
     "runBootstrap": "Bootstrap işə sal",
     "phase": {
       "dictionaries": {
@@ -2053,11 +2054,11 @@
       },
       "master": {
         "title": "Faza 2 — Otel NSİ",
-        "hint": "Yuxarıdan aşağı. Agentliklər və məhsul kartları otaqlardan sonra."
+        "hint": "Yuxarıdan aşağı. Tariflərdən sonra: 14-Package-Sell-2026.xlsx (PDF, EW deyil). Sonra otaqlar, agentliklər, EW Ürün Kartları."
       },
       "transactional": {
-        "title": "Faza 3 — Qonaqlar, rezervasiyalar, folio",
-        "hint": "Sıxı sıra: qonaqlar → rezervasiyalar → folio."
+        "title": "Faza 3 — Qonaqlar, rezervasiyalar, qeydlər, folio",
+        "hint": "Sıra: qonaqlar → rezervasiyalar → qeydlər → folio → Agency Statement (EW city ledger, 1C deyil)."
       }
     },
     "nextPhase": "Növbəti faza",

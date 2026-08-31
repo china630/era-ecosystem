@@ -17,6 +17,8 @@ Nafta sanatorium needs printable clinical forms (lab CBC/UA/biochemistry, USM na
 5. USM phrases (ImagingPhrase) stored as codes in LabResult (phrase.{organ} / meas.{key}) for trilingual narrative assembly.
 6. Print chrome skipped via ClinicOpsShell when path starts with /print.
 
+Checkup and procedure-schedule prints take optional `?episode=` (selected course). Default remains latest by `openedAt` when omitted. Canon: [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md) (CLI-55 SCREEN).
+
 ## Consequences
 
 - Print labels live in src/domain/print/print-labels.ts (not UI i18n cookie).

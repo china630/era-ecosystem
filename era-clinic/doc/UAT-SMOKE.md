@@ -345,4 +345,16 @@ Doctor card (no curl):
 4. Same-SKU couple (both Standart) still two charts.
 5. Share rooms remain two reservations (regression).
 
+## Episode as care course (CLI-55) — SCREEN
+
+**Status:** SCREEN (waves W1–W4 landed). Keep SCREEN until field punch — do not claim SHIPPED / SHOW / Pilot.
+
+ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md).
+
+1. Patient card — episode CatalogField (default latest); anamnesis above CI → ICD → clinical blocks; CLOSED = read-only.
+2. Empty OPEN anamnesis → confirm procedures disabled / API `409 ANAMNESIS_REQUIRED`; demographics save works without anamnesis.
+3. Second OPEN walk-in for same patient → `409 WALK_IN_OPEN_EXISTS`.
+4. `/sanatorium` Close on idle WALK_IN; refuse when live procedures or open labs remain (no silent cancel).
+5. Returning guest intake creates ECG/USG on the **new** episode (does not skip last year’s labs).
+6. Print checkup/procedures with `?episode=` for a past course does not mix the new stay.
 

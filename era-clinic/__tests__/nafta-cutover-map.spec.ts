@@ -12,6 +12,19 @@ const {
 describe("nafta cutover column map", () => {
   it("exposes EN headers for clinic books and roster", () => {
     expect(HEADERS.procedures[0]).toBe("externalRef");
+    expect(HEADERS.physioSites[0]).toBe("code");
+    expect(HEADERS.physioSites).toContain("woAliases");
+    expect(HEADERS.programTemplates).toEqual([
+      "templateCode",
+      "templateName",
+      "minNights",
+      "maxNights",
+      "durationDays",
+      "nights",
+      "procedureCode",
+      "procedureName",
+      "qty",
+    ]);
     expect(HEADERS.slots).toContain("status");
     expect(HEADERS.slots).toContain("nahiye");
     expect(HEADERS.labOrders).toContain("panel");
@@ -77,9 +90,22 @@ describe("nafta cutover column map", () => {
     expect(roomCode(44)).toBe("WO-ROOM-44");
   });
 
-  it("marks pre-cutover slots COMPLETED and ops week SCHEDULED", () => {
-    expect(slotStatus("2026-08-24")).toBe("COMPLETED");
-    expect(slotStatus("2026-08-25")).toBe("SCHEDULED");
+  it("maps PDF package_inclusion lines to ERA template procedure codes", () => {
+    const { mapInclusionItem } = require("../scripts/nafta-cutover/build-program-templates-import.cjs");
+    expect(mapInclusionItem("Naftalan vannasi (paid HBsAg/HCV/Syphilis card tests required)")).toMatchObject({
+      procedureCode: "NAFTALAN_BATH",
+    });
+    expect(mapInclusionItem("Fizioprosedurlar*").procedureCode).toBe("PHYSIO_POOL");
+    expect(mapInclusionItem("Duz otagi").procedureCode).toBe("WO-TR-148");
+    expect(mapInclusionItem("Qarin / kicik canaq USM").procedureCode).toBe("USG");
+  });
+
+  it("marks slots COMPLETED when Baku appointment datetime is already past", () => {
+    const asOf = new Date("2026-08-30T12:00:00+04:00");
+    expect(slotStatus("2026-08-24", "09:00:00", asOf)).toBe("COMPLETED");
+    expect(slotStatus("2026-08-30", "09:00:00", asOf)).toBe("COMPLETED");
+    expect(slotStatus("2026-08-30", "18:00:00", asOf)).toBe("SCHEDULED");
+    expect(slotStatus("2026-09-10", "09:00:00", asOf)).toBe("SCHEDULED");
     expect(isOpsSlotDate("2026-08-24")).toBe(false);
     expect(isOpsSlotDate("2026-08-25")).toBe(true);
     expect(isOpsSlotDate("2026-08-30")).toBe(true);
@@ -245,5 +271,25 @@ describe("nafta cutover column map", () => {
     expect(row.hotelResNo).toBe("11112877");
     expect(row.givenName).toBe("RAFIL");
     expect(row.folioPerson).toBe(1);
+    expect(row.checkIn).toBe("2026-08-27T08:55:00+04:00");
+    expect(row.checkOut).toBe("2026-09-04T12:00:00+04:00");
+  });
+
+  it("clinic wizard phases match READY #16–#29 (no leftover diagnoses)", () => {
+    const { IMPORT_PHASES } = require("../src/lib/import/phases");
+    expect(IMPORT_PHASES[0].entities).toEqual([
+      "lab-catalog",
+      "physio-sites",
+      "procedures",
+      "rooms",
+      "procedure-requirements",
+      "program-templates",
+    ]);
+    expect(IMPORT_PHASES[0].entities).not.toContain("hizmet-extras");
+    expect(IMPORT_PHASES.find((p: { id: string }) => p.id === "clinical").entities).toEqual([
+      "lab-orders",
+      "lab-results",
+      "diagnostics",
+    ]);
   });
 });

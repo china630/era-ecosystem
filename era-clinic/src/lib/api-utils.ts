@@ -55,6 +55,19 @@ export function handleRouteError(err: unknown) {
     const status = "status" in err && typeof err.status === "number" ? err.status : 400;
     return jsonError(err.message, status);
   }
+  if (err instanceof Error && "code" in err && typeof (err as { code?: string }).code === "string") {
+    const code = (err as { code: string }).code;
+    const conflictCodes = new Set([
+      "ANAMNESIS_REQUIRED",
+      "WALK_IN_OPEN_EXISTS",
+      "EPISODE_CLOSED",
+      "EPISODE_NOT_IDLE",
+      "NO_OPEN_EPISODE",
+    ]);
+    if (conflictCodes.has(code)) {
+      return jsonError(err.message, 409, { code });
+    }
+  }
   const msg = err instanceof Error ? err.message : "Internal error";
   return jsonError(msg, 500);
 }

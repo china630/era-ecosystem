@@ -31,6 +31,7 @@ type Props = {
   title: string;
   showKind?: boolean;
   showRole?: boolean;
+  readOnly?: boolean;
 };
 
 function titleFor(
@@ -42,7 +43,13 @@ function titleFor(
   return row.titleEn;
 }
 
-export function DiagnosisPanel({ apiBase, title, showKind, showRole = true }: Props) {
+export function DiagnosisPanel({
+  apiBase,
+  title,
+  showKind,
+  showRole = true,
+  readOnly = false,
+}: Props) {
   const t = useTranslations("icd");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -106,9 +113,11 @@ export function DiagnosisPanel({ apiBase, title, showKind, showRole = true }: Pr
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-semibold">{title}</h3>
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
-          {t("addDiagnosis")}
-        </button>
+        {!readOnly ? (
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
+            {t("addDiagnosis")}
+          </button>
+        ) : null}
       </div>
       <ul className="list-disc space-y-1 pl-5 text-sm">
         {items.map((d) => (
@@ -119,13 +128,15 @@ export function DiagnosisPanel({ apiBase, title, showKind, showRole = true }: Pr
               {d.kind ? ` · ${d.kind}` : ""}
               {d.note ? ` — ${d.note}` : ""}
             </span>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => void remove(d.id)}
-            >
-              {tc("delete")}
-            </button>
+            {!readOnly ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => void remove(d.id)}
+              >
+                {tc("delete")}
+              </button>
+            ) : null}
           </li>
         ))}
         {items.length === 0 ? (

@@ -257,8 +257,8 @@ function scorePair(resPart, guestFull) {
 }
 
 console.log('Loading...');
-const guests = load(path.join(ew, '10-Guest-Cards.merged.xlsx'));
-const reservations = load(path.join(ew, '11-Reservations.merged.xlsx'));
+const guests = load(path.join(ew, '10-Guest-Cards.xlsx'));
+const reservations = load(path.join(ew, '11-Reservations.xlsx'));
 
 // Build guest index
 const guestRecords = [];

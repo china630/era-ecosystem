@@ -14,6 +14,7 @@ import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
 } from "@/domain/catalog/catalog-display-name.service";
+import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 import {
   bakuDayBounds,
   todayBakuYmd,
@@ -217,10 +218,28 @@ export async function POST(req: Request) {
       const resolved = await resolveProcedureAmount(body.procedureCode);
       amountNet = resolved.amountNet;
     }
+    const clinicalEpisodeId = await stampEpisodeOnCreate({
+      patientRefId: body.patientRefId,
+      reservationId: body.reservationId,
+    });
+    if (clinicalEpisodeId) {
+      const episode = await prisma.clinicalEpisode.findUnique({
+        where: { id: clinicalEpisodeId },
+        select: { anamnesisText: true },
+      });
+      const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
+        "@/domain/sanatorium/episode-gates"
+      );
+      const denied = episodeAnamnesisDenied(episode?.anamnesisText);
+      if (denied) {
+        return jsonError(denied, 409, { code: ANAMNESIS_REQUIRED });
+      }
+    }
     const order = await prisma.procedureOrder.create({
       data: {
         organizationId: requestOrganizationId(),
         patientRefId: body.patientRefId,
+        clinicalEpisodeId: clinicalEpisodeId ?? undefined,
         procedureCode: body.procedureCode,
         procedureName: body.procedureName,
         scheduledAt: new Date(body.scheduledAt),

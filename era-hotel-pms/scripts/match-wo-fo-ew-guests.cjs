@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Match WebOnly FO guest cards to Elektraweb 10-Guest-Cards.merged.xlsx.
+ * Match WebOnly FO guest cards to Elektraweb 10-Guest-Cards.xlsx.
  *
  *   node era-hotel-pms/scripts/match-wo-fo-ew-guests.cjs
  *
@@ -15,10 +15,10 @@ const XLSX = require(path.join(__dirname, "..", "node_modules", "xlsx"));
 const DUMP_DIR = process.env.WO_FO_DUMP_DIR || path.join("D:", "ERA-BACKUP", "NAFTA-START", "hotel", "dump");
 const EW_XLSX =
   process.env.EW_GUESTS_XLSX ||
-  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "hotel", "10-Guest-Cards.merged.xlsx");
+  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "hotel", "10-Guest-Cards.xlsx");
 const CLINIC_PATIENTS =
   process.env.CLINIC_PATIENTS_XLSX ||
-  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "clinic", "21-patients.xlsx");
+  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "clinic", "24-Patients.xlsx");
 
 const FIN_RE = /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/;
 

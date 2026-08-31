@@ -5,7 +5,7 @@
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 
-import { LayoutDashboard, Settings, ShoppingCart, Package, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Settings, ShoppingCart, Package, BarChart3, Upload } from "lucide-react";
 
 import {
 
@@ -51,6 +51,8 @@ export default function RetailOpsShell({ children }: { children: React.ReactNode
     { href: "/stock-check", label: t("stockCheck"), icon: Package },
 
     { href: "/admin/replenishment", label: t("replenishment"), icon: Package },
+
+    { href: "/admin/import", label: t("import"), icon: Upload },
 
     { href: "/settings", label: t("settings"), icon: Settings },
 

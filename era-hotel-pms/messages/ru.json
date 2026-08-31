@@ -2045,6 +2045,7 @@
     "stepCompleted": "Импортировано — создано {created}, обновлено {updated}, ошибок {errors}",
     "orderWarning": "Рекомендуется сначала выполнить: {steps}",
     "pickFileHint": "Выгрузка Elektraweb .xlsx для этого шага.",
+    "pickFileHintMultiple": "Выберите сразу все чанки фолио (13-Folio-p01.xlsx … p12).",
     "runBootstrap": "Запустить bootstrap",
     "phase": {
       "dictionaries": {
@@ -2053,11 +2054,11 @@
       },
       "master": {
         "title": "Фаза 2 — НСИ отеля",
-        "hint": "Сверху вниз. Агентства и карточки товаров — после номеров."
+        "hint": "Сверху вниз. После тарифов: 14-Package-Sell-2026.xlsx (PDF стойка, не EW). Затем номера, агентства, EW Ürün Kartları."
       },
       "transactional": {
-        "title": "Фаза 3 — Гости, брони, folio",
-        "hint": "Строгий порядок: гости → брони → folio."
+        "title": "Фаза 3 — Гости, брони, ноты, фолио",
+        "hint": "Строгий порядок: гости → брони → ноты → фолио → Agency Statement (city ledger EW, не 1С)."
       }
     },
     "nextPhase": "Следующая фаза",
