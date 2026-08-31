@@ -63,12 +63,28 @@ export function handleRouteError(err: unknown) {
       "EPISODE_CLOSED",
       "EPISODE_NOT_IDLE",
       "NO_OPEN_EPISODE",
+      "LAB_NOT_ORDERED",
+      "LAB_ALREADY_OPEN",
+      "LAB_ALREADY_COMPLETED",
     ]);
     if (conflictCodes.has(code)) {
-      return jsonError(err.message, 409, { code });
+      const testCode =
+        "testCode" in err && typeof (err as { testCode?: string }).testCode === "string"
+          ? (err as { testCode: string }).testCode
+          : undefined;
+      return jsonError(err.message, 409, {
+        code,
+        ...(testCode ? { testCode } : {}),
+      });
     }
   }
   const msg = err instanceof Error ? err.message : "Internal error";
+  if (/Failed to parse body as FormData/i.test(msg)) {
+    return jsonError(
+      "File too large for one request. Split into 26-Slots-p01.xlsx … (5k rows) and upload the chunks.",
+      413,
+    );
+  }
   return jsonError(msg, 500);
 }
 

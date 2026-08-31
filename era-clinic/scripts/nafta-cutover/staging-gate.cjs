@@ -16,6 +16,7 @@ const LAB_DIR = path.join(START, "clinic", "dump", "files", "lab");
 const MANIFEST = path.join(LAB_DIR, "manifest.json");
 const READY = path.join(READY_ROOT, "clinic");
 const { CLINIC_WIZARD_BOOKS } = require("./pack-layout.cjs");
+const { wizardBookPresent } = require("./xlsx-write.cjs");
 const APPLY = process.argv.includes("--apply");
 const MIN_OK = 2000;
 
@@ -78,6 +79,7 @@ function main() {
       .slice(0, 3)
       .map((p) => ({ id: p.id, name: p.fullName, room: p.roomNumber || p.room }));
   }
+  const missingBooks = books.filter((n) => !wizardBookPresent(READY, n));
   const report = {
     labDir: LAB_DIR,
     labOkFiles: okFiles,

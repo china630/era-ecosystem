@@ -53,9 +53,12 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
     window.location.href = "/login";
   }
 
-  const profileItems: HeaderProfileMenuItem[] = canAdmin
-    ? [{ label: t("masterData"), href: "/admin/master-data" }]
-    : [{ label: t("settings"), href: "/help" }];
+  const profileItems: HeaderProfileMenuItem[] = [
+    { label: t("changePassword"), href: "/account/password" },
+    ...(canAdmin
+      ? [{ label: t("masterData"), href: "/admin/master-data" }]
+      : [{ label: t("settings"), href: "/help" }]),
+  ];
 
   if (pathname.startsWith("/print")) {
     return <>{children}</>;

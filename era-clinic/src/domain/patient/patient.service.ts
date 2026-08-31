@@ -8,6 +8,10 @@ import {
   ageYearsFromBirthDate,
   parseBirthDateInput,
 } from "@/domain/patient/patient-demographics";
+import {
+  allocatePatientRefCode,
+  composeFullName,
+} from "@/domain/patient/patient-ref-code";
 
 export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN, passport, or MDM") {
@@ -47,11 +51,16 @@ export type ListPatientsQuery = {
   hasMdm?: 0 | 1;
   ageMin?: number;
   ageMax?: number;
-  /** Hotel room on an OPEN sanatorium episode (Nafta / hotel appliance). */
+  /** Hotel room on a matching sanatorium episode (Nafta / hotel appliance). */
   roomNumber?: string;
   includeHotelRooms?: boolean;
   programCode?: string;
   includeProgramCodes?: boolean;
+  /**
+   * Episode course filter. Default OPEN (ops desk).
+   * CLOSED = has CLOSED course(s) and no OPEN; ALL = no episode-status constraint.
+   */
+  episodeStatus?: "OPEN" | "CLOSED" | "ALL";
   page?: number;
   pageSize?: number;
 };
@@ -151,6 +160,9 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
     const q = input.q.trim();
     where.OR = [
       { fullName: { contains: q, mode: "insensitive" } },
+      { givenName: { contains: q, mode: "insensitive" } },
+      { surname: { contains: q, mode: "insensitive" } },
+      { fatherName: { contains: q, mode: "insensitive" } },
       { refCode: { contains: q, mode: "insensitive" } },
       { phone: { contains: q, mode: "insensitive" } },
     ];
@@ -163,25 +175,41 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   const birthRange = birthDateRangeForAge(input.ageMin, input.ageMax);
   if (birthRange) where.birthDate = birthRange;
 
+  const episodeStatus = input.episodeStatus ?? "OPEN";
   const roomNumber = input.roomNumber?.trim();
-  if (roomNumber) {
-    where.episodes = {
-      some: {
-        status: "OPEN",
-        roomNumber: { equals: roomNumber, mode: "insensitive" },
-      },
-    };
-  }
   const programCode = input.programCode?.trim();
-  if (programCode) {
-    where.episodes = {
-      some: {
-        ...(where.episodes && "some" in where.episodes ? where.episodes.some : {}),
-        status: "OPEN",
-        programCode: { equals: programCode, mode: "insensitive" },
-      },
-    };
+
+  const episodeSome: Prisma.ClinicalEpisodeWhereInput = {};
+  if (episodeStatus === "OPEN") {
+    episodeSome.status = "OPEN";
+  } else if (episodeStatus === "CLOSED") {
+    episodeSome.status = "CLOSED";
   }
+  if (roomNumber) {
+    episodeSome.roomNumber = { equals: roomNumber, mode: "insensitive" };
+    if (!episodeSome.status) episodeSome.status = "OPEN";
+  }
+  if (programCode) {
+    episodeSome.programCode = { equals: programCode, mode: "insensitive" };
+    if (!episodeSome.status) episodeSome.status = "OPEN";
+  }
+
+  const hasEpisodeSome = Object.keys(episodeSome).length > 0;
+  if (episodeStatus === "CLOSED") {
+    where.AND = [
+      { episodes: { some: episodeSome } },
+      { episodes: { none: { status: "OPEN" } } },
+    ];
+  } else if (hasEpisodeSome) {
+    where.episodes = { some: episodeSome };
+  }
+
+  const episodeIncludeWhere: Prisma.ClinicalEpisodeWhereInput | undefined =
+    episodeStatus === "OPEN"
+      ? { status: "OPEN" }
+      : episodeStatus === "CLOSED"
+        ? { status: "CLOSED" }
+        : undefined;
 
   const [rows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
@@ -191,6 +219,7 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
       take: pageSize,
       include: {
         episodes: {
+          ...(episodeIncludeWhere ? { where: episodeIncludeWhere } : {}),
           select: {
             roomNumber: true,
             programCode: true,
@@ -250,10 +279,12 @@ export async function getPatient(id: string) {
 }
 
 export async function createPatient(data: {
-  refCode: string;
-  fullName: string;
+  givenName: string;
+  surname: string;
+  fatherName?: string | null;
+  fullName?: string;
   phone?: string;
-  nationality?: string;
+  nationality?: string | null;
   sex?: PatientSex;
   birthDate?: string | null;
   bloodGroup?: PatientBloodGroup;
@@ -270,30 +301,46 @@ export async function createPatient(data: {
     );
   }
 
+  const givenName = data.givenName.trim();
+  const surname = data.surname.trim();
+  if (!givenName || !surname) {
+    throw new Error("givenName and surname are required");
+  }
+  const fatherName = data.fatherName?.trim() || null;
+  const fullName =
+    data.fullName?.trim() || composeFullName({ givenName, surname, fatherName });
   const demo = demographicsWriteData(data);
-  const patient = await prisma.patientRef.create({
-    data: {
-      organizationId: requestOrganizationId(),
-      refCode: data.refCode,
-      fullName: data.fullName,
-      phone: data.phone,
-      nationality: demo.nationality ?? undefined,
-      sex: demo.sex,
-      birthDate: demo.birthDate === undefined ? undefined : demo.birthDate,
-      bloodGroup: demo.bloodGroup,
-      emergencyContactName: demo.emergencyContactName ?? undefined,
-      emergencyContactPhone: demo.emergencyContactPhone ?? undefined,
-    },
+  const organizationId = requestOrganizationId();
+
+  const patient = await prisma.$transaction(async (tx) => {
+    const refCode = await allocatePatientRefCode(tx, organizationId);
+    return tx.patientRef.create({
+      data: {
+        organizationId,
+        refCode,
+        givenName,
+        surname,
+        fatherName,
+        fullName,
+        phone: data.phone,
+        nationality: demo.nationality ?? null,
+        sex: demo.sex,
+        birthDate: demo.birthDate === undefined ? undefined : demo.birthDate,
+        bloodGroup: demo.bloodGroup,
+        emergencyContactName: demo.emergencyContactName ?? undefined,
+        emergencyContactPhone: demo.emergencyContactPhone ?? undefined,
+      },
+    });
   });
 
   const globalPersonId = await linkPatientGlobalPerson({
     patientRefId: patient.id,
     fin: data.finCode,
-    fullName: data.fullName,
+    fullName,
     phone: data.phone,
     passport: data.passportNumber,
     issuingCountry: data.issuingCountry,
-    nationality: data.nationality,
+    nationality: data.nationality ?? undefined,
     sex: demo.sex,
     birthDate: demo.birthDate ?? undefined,
   });
@@ -313,6 +360,9 @@ export async function createPatient(data: {
 export async function updatePatient(
   id: string,
   data: {
+    givenName?: string;
+    surname?: string;
+    fatherName?: string | null;
     fullName?: string;
     phone?: string | null;
     nationality?: string | null;
@@ -342,11 +392,34 @@ export async function updatePatient(
     data.phone !== undefined;
   const demographicsTouched = data.sex !== undefined || data.birthDate !== undefined;
 
+  const existing = await prisma.patientRef.findUniqueOrThrow({ where: { id } });
+  const givenName =
+    data.givenName !== undefined ? data.givenName.trim() : existing.givenName;
+  const surname =
+    data.surname !== undefined ? data.surname.trim() : existing.surname;
+  const fatherName =
+    data.fatherName !== undefined
+      ? data.fatherName?.trim() || null
+      : existing.fatherName;
+  const nameTouched =
+    data.givenName !== undefined ||
+    data.surname !== undefined ||
+    data.fatherName !== undefined;
+  const fullName = nameTouched
+    ? composeFullName({ givenName, surname, fatherName })
+    : data.fullName !== undefined
+      ? data.fullName.trim()
+      : existing.fullName;
+
   const demo = demographicsWriteData(data);
   const updated = await prisma.patientRef.update({
     where: { id },
     data: {
-      fullName: data.fullName,
+      ...(nameTouched
+        ? { givenName, surname, fatherName, fullName }
+        : data.fullName !== undefined
+          ? { fullName }
+          : {}),
       phone: data.phone,
       nationality: demo.nationality,
       sex: demo.sex,
@@ -357,7 +430,7 @@ export async function updatePatient(
     },
   });
 
-  if (identityTouched || demographicsTouched) {
+  if (identityTouched || demographicsTouched || nameTouched) {
     const globalPersonId = await linkPatientGlobalPerson({
       patientRefId: id,
       fin: identityInput.finCode,

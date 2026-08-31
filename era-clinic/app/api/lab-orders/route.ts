@@ -29,6 +29,7 @@ const createSchema = z.object({
     )
     .optional(),
   fasting: z.boolean().optional(),
+  confirmRepeat: z.boolean().optional(),
 });
 
 const querySchema = z.object({
@@ -52,6 +53,11 @@ const querySchema = z.object({
   dateTo: z.string().optional(),
   modality: z.string().optional(),
   patientRefId: z.string().optional(),
+  q: z.string().optional(),
+  includeCancelled: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
 });
 
 export async function GET(req: Request) {
@@ -66,9 +72,14 @@ export async function GET(req: Request) {
       dateTo: url.searchParams.get("dateTo") ?? undefined,
       modality: url.searchParams.get("modality") ?? undefined,
       patientRefId: url.searchParams.get("patientRefId") ?? undefined,
+      q: url.searchParams.get("q") ?? undefined,
+      includeCancelled: url.searchParams.get("includeCancelled") ?? undefined,
     });
 
     const conditions: Prisma.LabOrderWhereInput[] = [];
+    if (!query.includeCancelled && !query.status) {
+      conditions.push({ status: { not: "CANCELLED" } });
+    }
     if (query.status) conditions.push({ status: query.status });
     if (query.patientRefId) conditions.push({ patientRefId: query.patientRefId });
     if (query.dateFrom || query.dateTo) {
@@ -103,6 +114,17 @@ export async function GET(req: Request) {
     if (query.criticalOnly) {
       conditions.push({
         items: { some: { results: { some: { flag: "CRITICAL" } } } },
+      });
+    }
+    if (query.q?.trim()) {
+      const needle = query.q.trim();
+      conditions.push({
+        patientRef: {
+          OR: [
+            { fullName: { contains: needle, mode: "insensitive" } },
+            { refCode: { contains: needle, mode: "insensitive" } },
+          ],
+        },
       });
     }
 
@@ -203,6 +225,7 @@ export async function POST(req: Request) {
       resultDate,
       fasting: body.fasting,
       resultLines: body.results,
+      confirmRepeat: body.confirmRepeat,
     });
 
     return jsonOk(order, 201);

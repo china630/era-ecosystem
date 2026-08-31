@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { formatNameAndCode } from "@/lib/display-code";
 
 export type PrintUsmDocument = {
   branding: PrintBranding;
@@ -75,8 +76,8 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
       .map((i: {
         serviceCode: string;
         diagnosticService: { titleEn: string; titleRu: string; titleAz: string | null } | null;
-      }) =>
-        i.diagnosticService
+      }) => {
+        const name = i.diagnosticService
           ? pickL10n(
               {
                 en: i.diagnosticService.titleEn,
@@ -85,10 +86,11 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
               },
               lang,
             )
-          : i.serviceCode,
-      )
+          : "";
+        return formatNameAndCode(name, i.serviceCode);
+      })
       .filter(Boolean)
-      .join(", ") || "USM";
+      .join(", ") || formatNameAndCode("", order.testCode) || "USM";
 
   return {
     branding,

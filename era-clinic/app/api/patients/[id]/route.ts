@@ -21,6 +21,9 @@ const patientBloodGroup = z.enum([
 ]);
 
 const updateSchema = z.object({
+  givenName: z.string().min(1).optional(),
+  surname: z.string().min(1).optional(),
+  fatherName: z.string().nullable().optional(),
   fullName: z.string().min(1).optional(),
   phone: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),

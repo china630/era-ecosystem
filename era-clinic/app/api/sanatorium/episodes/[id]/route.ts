@@ -24,7 +24,10 @@ const diagnosisSchema = z.object({
   icdCodeId: z.string().min(1),
   note: z.string().max(500).optional().nullable(),
 });
-const labSchema = z.object({ testCode: z.string().min(1) });
+const labSchema = z.object({
+  testCode: z.string().min(1),
+  confirmRepeat: z.boolean().optional(),
+});
 const instantiateProgramSchema = z.object({
   programCode: z.string().min(1),
   startsOn: z.string().min(1),
@@ -113,7 +116,11 @@ export async function POST(
     }
     if (action === "lab") {
       const parsed = labSchema.parse(body);
-      return jsonOk(await createEpisodeLabOrder(id, parsed.testCode));
+      return jsonOk(
+        await createEpisodeLabOrder(id, parsed.testCode, {
+          confirmRepeat: parsed.confirmRepeat,
+        }),
+      );
     }
     if (action === "instantiate-program") {
       const parsed = instantiateProgramSchema.parse(body);

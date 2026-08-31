@@ -14,6 +14,11 @@ import {
   matchProcedureToSeed,
   matchRoomToSeed,
 } from "@/lib/import/seed-catalog-match";
+import {
+  allocatePatientRefCode,
+  composeFullName,
+  isClinicPatientRefCode,
+} from "@/domain/patient/patient-ref-code";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -649,11 +654,22 @@ const patientsAdapter: ImportAdapter<{
         const patient = await tx.patientRef.create({
           data: {
             organizationId: orgId(),
-            refCode: row.externalRef.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 48),
-            fullName: row.fullName,
+            refCode: await allocatePatientRefCode(tx, orgId()),
+            givenName: row.givenName?.trim() || row.fullName.trim().split(/\s+/)[0] || row.fullName,
+            surname:
+              row.surname?.trim() ||
+              row.fullName.trim().split(/\s+/).slice(-1)[0] ||
+              "",
+            fatherName: null,
+            fullName:
+              row.fullName ||
+              composeFullName({
+                givenName: row.givenName,
+                surname: row.surname,
+              }),
             sex,
             birthDate: parseDateCell(row.birthDate),
-            nationality: row.nationality || "AZ",
+            nationality: row.nationality || null,
             phone: row.phone || null,
             globalPersonId,
             anamnesisText: "Nafta cutover import",
@@ -714,13 +730,29 @@ const patientsAdapter: ImportAdapter<{
           where: { id },
           data: {
             fullName: row.fullName,
+            ...(row.givenName?.trim()
+              ? { givenName: row.givenName.trim() }
+              : {}),
+            ...(row.surname?.trim() ? { surname: row.surname.trim() } : {}),
             sex,
             birthDate: parseDateCell(row.birthDate),
             ...(row.nationality ? { nationality: row.nationality } : {}),
             ...(row.phone ? { phone: row.phone } : {}),
             ...(globalPersonId ? { globalPersonId } : {}),
+            // Never overwrite clinic-native P-* refCode with WO externalRef
           },
         });
+        const existingRef = await tx.patientRef.findUnique({
+          where: { id },
+          select: { refCode: true },
+        });
+        if (existingRef && !isClinicPatientRefCode(existingRef.refCode)) {
+          const nextCode = await allocatePatientRefCode(tx, orgId());
+          await tx.patientRef.update({
+            where: { id },
+            data: { refCode: nextCode },
+          });
+        }
         const checkIn = parseDateCell(row.checkIn);
         const checkOut = parseDateCell(row.checkOut);
         const episodeState = cutoverEpisodeFromCheckout(checkOut);
@@ -874,7 +906,8 @@ const slotsAdapter: ImportAdapter<{
   entity: "slots",
   label: "Slots",
   order: 11,
-  templateHint: "26-Slots.xlsx — WO calendar COMPLETED (not EW)",
+  templateHint: "26-Slots-p01.xlsx … — WO calendar COMPLETED, 5k-row chunks",
+  allowMultiple: true,
   headerAliases: {
     ...aliases(
       "externalRef",
@@ -1346,31 +1379,43 @@ const diagnosesAdapter: ImportAdapter<{
   upsert: async (tx, row, dryRun) => {
     const patientId = await findImportRecordId(tx, "patients", row.patientRef);
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
+    if (!row.icd10.trim()) {
+      console.warn(
+        `[diagnoses import] skip ${row.patientRef}: no ICD-10 for "${row.rawText.slice(0, 40)}"`,
+      );
+      return null;
+    }
+    const icd = await tx.icdCode.findFirst({
+      where: { code: row.icd10.trim(), selectable: true, active: true },
+    });
+    if (!icd) {
+      console.warn(
+        `[diagnoses import] skip ${row.patientRef}: ICD ${row.icd10} not found`,
+      );
+      return null;
+    }
     const episode = await ensureCutoverEpisode(tx, patientId);
-    const key = `wo:dx:${row.patientRef}:${row.recordedAt}:${row.rawText.slice(0, 24)}`;
+    const key = `wo:dx:${row.patientRef}:${row.recordedAt}:${row.icd10}:${row.rawText.slice(0, 24)}`;
     return upsertByRef(
       tx,
       "diagnoses",
       key,
       dryRun,
       async () => {
-        const complaint = await tx.clinicalComplaint.create({
-          data: { episodeId: episode.id, text: row.rawText },
+        const diagnosis = await tx.clinicalDiagnosis.create({
+          data: {
+            episodeId: episode.id,
+            icdCodeId: icd.id,
+            note: row.rawText.trim() || null,
+          },
         });
-        if (row.icd10) {
-          const icd = await tx.icdCode.findFirst({
-            where: { code: row.icd10, selectable: true, active: true },
-          });
-          if (icd) {
-            await tx.clinicalDiagnosis.create({
-              data: { episodeId: episode.id, icdCodeId: icd.id, note: row.rawText },
-            });
-          }
-        }
-        return complaint.id;
+        return diagnosis.id;
       },
       async (id) => {
-        await tx.clinicalComplaint.update({ where: { id }, data: { text: row.rawText } });
+        await tx.clinicalDiagnosis.update({
+          where: { id },
+          data: { note: row.rawText.trim() || null, icdCodeId: icd.id },
+        });
       },
     );
   },
@@ -1639,11 +1684,12 @@ export function getImportAdapter(entity: string): ImportAdapter<unknown> | undef
 }
 
 export function listImportEntities(): ImportEntityMeta[] {
-  return ADAPTERS.map(({ entity, label, order, templateHint, fileless }) => ({
+  return ADAPTERS.map(({ entity, label, order, templateHint, fileless, allowMultiple }) => ({
     entity,
     label,
     order,
     templateHint,
     fileless,
+    allowMultiple,
   })).sort((a, b) => a.order - b.order);
 }

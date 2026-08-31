@@ -62,6 +62,7 @@
     "cutoverImport": "Cutover import",
     "audit": "Audit log",
     "logout": "Log out",
+    "changePassword": "Change password",
     "wardsAdmin": "Wards (admin)",
     "inpatientCensus": "Inpatient census",
     "diagnosticCatalog": "Diagnostic catalog",
@@ -76,7 +77,21 @@
     "password": "Password",
     "submit": "Sign in",
     "busy": "…",
-    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator",
+    "provisionHint": "Workforce first login uses PIN 0000. After sign-in: profile menu → Change password."
+  },
+  "account": {
+    "title": "Change password",
+    "subtitle": "Workforce accounts start with PIN 0000. Set your own password here.",
+    "current": "Current password",
+    "newPassword": "New password (min 8 characters)",
+    "confirm": "Confirm new password",
+    "submit": "Save password",
+    "busy": "Saving…",
+    "success": "Password updated.",
+    "failed": "Could not update password.",
+    "mismatch": "New password and confirmation do not match.",
+    "ssoOnly": "This account signs in via SSO and has no local password."
   },
   "home": {
     "loading": "Loading…",
@@ -260,7 +275,15 @@
     "colType": "Type",
     "colAmount": "Amount",
     "colCreated": "Date",
-    "openOrder": "Open"
+    "openOrder": "Open",
+    "patientSearchPlaceholder": "Patient name or P-code…",
+    "cancelOrder": "Cancel order",
+    "cancelConfirm": "Cancel this lab order?",
+    "patientRefCode": "Patient code",
+    "patientFullName": "Patient name",
+    "labRepeatTitle": "Repeat lab order?",
+    "labRepeatBody": "{code} was already completed. Order again?",
+    "labAlreadyOpen": "An open lab order already exists for this study"
   },
   "labOrdersDetail": {
     "title": "Lab order workflow",
@@ -696,7 +719,13 @@
     "bulkCancel": "Bulk cancel",
     "bulkCancelReason": "Reason",
     "replaceWithCode": "Replace with code (optional)",
-    "bulkCancelled": "Procedures cancelled"
+    "bulkCancelled": "Procedures cancelled",
+    "labRepeatTitle": "Repeat lab order?",
+    "labRepeatBody": "{code} was already completed for this course. Order again?",
+    "labAlreadyOpen": "An open lab order already exists for this study",
+    "labCancelConfirm": "Cancel this lab order?",
+    "labCancelled": "Lab order cancelled",
+    "labCancelOrder": "Cancel lab"
   },
   "adminSettings": {
     "title": "Clinic settings",
@@ -1060,6 +1089,7 @@
     "chapter": "Chapter",
     "allChapters": "All chapters",
     "searchPlaceholder": "Search ICD-10 code or title",
+    "searchHint": "Type code or diagnosis title",
     "code": "ICD-10 code",
     "note": "Note",
     "role": "Role",
@@ -1093,7 +1123,7 @@
   },
   "patientRegistry": {
     "title": "Patient registry",
-    "subtitle": "Local patient references (MDM-linked)",
+    "subtitle": "Local patient references",
     "search": "Search patients",
     "filterSex": "Sex",
     "filterBlood": "Blood group",
@@ -1106,6 +1136,10 @@
     "filterHotelRoomAll": "All rooms",
     "filterProgramCode": "Program / package",
     "filterProgramCodeAll": "All programs",
+    "filterEpisodeStatus": "Course status",
+    "filterEpisodeOpen": "Open",
+    "filterEpisodeAll": "All",
+    "filterEpisodeClosed": "Closed",
     "checkIn": "Check-in",
     "checkOut": "Check-out",
     "refCode": "Ref code",
@@ -1139,7 +1173,7 @@
     "ageYears": "{age} y",
     "ageUnknown": "Age unknown",
     "bloodGroup": "Blood group",
-    "bloodUnknown": "Unknown",
+    "bloodUnknown": "Not specified",
     "emergencyContact": "Emergency contact",
     "emergencyContactName": "Emergency contact name",
     "emergencyContactPhone": "Emergency contact phone",
@@ -1155,7 +1189,15 @@
     "episodeClosedReadOnly": "This course is closed (read-only)",
     "anamnesisSave": "Save anamnesis",
     "anamnesisCourseMissing": "No care course yet — register walk-in or await hotel check-in",
-    "noEpisodes": "No care courses"
+    "noEpisodes": "No care courses",
+    "givenName": "Given name",
+    "surname": "Surname",
+    "fatherName": "Patronymic",
+    "namePartsRequired": "Given name and surname are required",
+    "sexShortMale": "M",
+    "sexShortFemale": "F",
+    "issuingCountryPassport": "Issuing country (passport)",
+    "emptyList": "No patients yet"
   },
   "patientTimeline": {
     "title": "Clinical timeline",
@@ -1416,6 +1458,8 @@
     "stepCompleted": "Done: {created} created, {updated} updated, {errors} errors",
     "orderWarning": "Complete prior steps first: {steps}",
     "pickFileHint": "Choose the matching .xlsx",
+    "pickFileHintMultiple": "Select all slot chunks (26-Slots-p01.xlsx …) at once. Each file is posted separately.",
+    "chunkProgress": "Chunk {current} of {total}: {name}",
     "runBootstrap": "Run",
     "verifyMasterData": "Open catalogs",
     "resetProgress": "Reset progress",

@@ -86,6 +86,9 @@ function LoginForm() {
         subtitle={subtitle}
         ssoHint={ssoHint}
       />
+      {t("provisionHint") ? (
+        <p className="max-w-md text-center text-xs text-[#7F8C8D]">{t("provisionHint")}</p>
+      ) : null}
       {showOrgField ? (
         <label className="w-full max-w-md text-sm text-[#2C3E50]">
           <span className="mb-1 block font-medium">{tAuth("organizationIdLabel")}</span>

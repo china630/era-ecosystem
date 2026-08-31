@@ -24,6 +24,7 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  CatalogField,
   DatePicker,
   EraListFilterBar,
   useDebouncedValue,
@@ -34,11 +35,13 @@ import {
   FieldSelect,
   FieldTextarea,
   FORM_STACK_CLASS,
+  ListPaginationFooter,
   LINK_ACCENT_CLASS,
   LOCALE_TOGGLE_ACTIVE_CLASS,
   ModalFooter,
   ModalShell,
   MODAL_CHECKBOX_CLASS,
+  NATIONALITY_OPTIONS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   PageHeader,
@@ -47,10 +50,12 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
+import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { IcdPicker } from "@/components/IcdPicker";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import { formatNameAndCode } from "@/lib/display-code";
 
 type ProcedureLine = {
   procedureCode: string;
@@ -86,8 +91,9 @@ type Episode = {
   openedAt: string;
   canCloseWalkIn?: boolean;
   patientRef: { id: string; fullName: string; refCode: string } | null;
-  complaints: { text: string; recordedAt: string }[];
+  complaints: { id: string; text: string; recordedAt: string }[];
   diagnoses: {
+    id: string;
     note?: string | null;
     icdCode?: {
       code: string;
@@ -96,7 +102,21 @@ type Episode = {
       titleAz?: string | null;
     } | null;
   }[];
-  labOrders: { id: string; testCode: string; status: string }[];
+  labOrders: {
+    id: string;
+    testCode: string;
+    status: string;
+    items?: Array<{
+      serviceCode: string;
+      diagnosticService?: {
+        code: string;
+        serviceCode?: string;
+        titleEn?: string;
+        titleRu?: string;
+        titleAz?: string | null;
+      } | null;
+    }>;
+  }[];
   programInstance?: ProgramInstance | null;
 };
 
@@ -108,7 +128,9 @@ type ProgramTemplate = {
 };
 
 type WalkInForm = {
-  fullName: string;
+  givenName: string;
+  surname: string;
+  fatherName: string;
   fin: string;
   passport: string;
   phone: string;
@@ -119,13 +141,15 @@ type WalkInForm = {
 };
 
 const emptyWalkIn = (): WalkInForm => ({
-  fullName: "",
+  givenName: "",
+  surname: "",
+  fatherName: "",
   fin: "",
   passport: "",
   phone: "",
   sex: "",
   birthDate: "",
-  nationality: "AZ",
+  nationality: "",
   programCode: "",
 });
 
@@ -143,9 +167,15 @@ function daysRemaining(endsOn: string): number {
 
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
+  const tp = useTranslations("patientRegistry");
   const tc = useTranslations("common");
   const locale = useLocale();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [listTotal, setListTotal] = useState(0);
+  const [listPage, setListPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState(25);
+  const [listLoading, setListLoading] = useState(false);
+  const [procedureTypeNames, setProcedureTypeNames] = useState<Map<string, string>>(new Map());
   const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -184,13 +214,31 @@ export default function SanatoriumPage() {
   const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
   const [bulkCancelReason, setBulkCancelReason] = useState("");
   const [bulkCancelReplace, setBulkCancelReplace] = useState("");
+  const [labRepeatOpen, setLabRepeatOpen] = useState(false);
+  const [pendingLabCode, setPendingLabCode] = useState("");
 
   const loadList = useCallback(async () => {
-    const res = await fetch("/api/sanatorium/episodes");
+    setListLoading(true);
+    const params = new URLSearchParams({
+      page: String(listPage),
+      pageSize: String(listPageSize),
+    });
+    if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
+    if (filterOrigin) params.set("origin", filterOrigin);
+    const res = await fetch(`/api/sanatorium/episodes?${params}`);
     const data = await res.json();
-    const list = Array.isArray(data) ? data : (data?.data ?? []);
-    setEpisodes(list);
-  }, []);
+    const payload = data.data ?? data;
+    if (Array.isArray(payload)) {
+      setEpisodes(payload);
+      setListTotal(payload.length);
+    } else {
+      setEpisodes(Array.isArray(payload.data) ? payload.data : []);
+      setListTotal(typeof payload.total === "number" ? payload.total : 0);
+      if (typeof payload.page === "number") setListPage(payload.page);
+      if (typeof payload.pageSize === "number") setListPageSize(payload.pageSize);
+    }
+    setListLoading(false);
+  }, [listPage, listPageSize, debouncedQ, filterOrigin]);
 
   const loadDetail = useCallback(async (episodeId: string) => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`);
@@ -255,6 +303,17 @@ export default function SanatoriumPage() {
   }, [loadList]);
 
   useEffect(() => {
+    void fetch("/api/procedure-types")
+      .then((r) => r.json())
+      .then((d) => {
+        const rows = (d.data ?? d.items ?? d) as Array<{ code: string; name: string }>;
+        if (!Array.isArray(rows)) return;
+        setProcedureTypeNames(new Map(rows.map((r) => [r.code, r.name])));
+      })
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
     void fetch("/api/diagnostic-catalog?kinds=lab_panel&applyFavorites=false")
       .then((r) => r.json())
       .then((d) => {
@@ -308,25 +367,9 @@ export default function SanatoriumPage() {
     ? episodeDetail
     : episodes.find((e) => e.id === selectedId) ?? null;
 
-  const filtered = useMemo(() => {
-    const needle = debouncedQ.trim().toLowerCase();
-    return episodes.filter((e) => {
-      if (filterOrigin && e.patientOrigin !== filterOrigin) return false;
-      if (!needle) return true;
-      const hay = [
-        e.patientRef?.fullName,
-        e.patientRef?.refCode,
-        e.roomNumber,
-        e.programCode,
-        e.programInstance?.programCode,
-        e.reservationId,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(needle);
-    });
-  }, [episodes, debouncedQ, filterOrigin]);
+  useEffect(() => {
+    setListPage(1);
+  }, [debouncedQ, filterOrigin, listPageSize]);
 
   function statusLabel(status: string): string {
     switch (status) {
@@ -443,6 +486,16 @@ export default function SanatoriumPage() {
       setMsg(t("alreadyHasProgram"));
       return;
     }
+    if (action === "lab" && res.status === 409 && data.code === "LAB_ALREADY_COMPLETED") {
+      const code = (body as { testCode?: string }).testCode ?? testCode;
+      setPendingLabCode(code);
+      setLabRepeatOpen(true);
+      return;
+    }
+    if (action === "lab" && res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
+      setMsg(data.error ?? t("labAlreadyOpen"));
+      return;
+    }
     setMsg(
       res.ok
         ? action === "instantiate-program" || action === "complete-checkup"
@@ -470,7 +523,7 @@ export default function SanatoriumPage() {
   }
 
   function validateWalkIn(): string | null {
-    if (!walkIn.fullName.trim()) return t("walkInName");
+    if (!walkIn.givenName.trim() || !walkIn.surname.trim()) return tp("namePartsRequired");
     if (!walkIn.sex) return t("sexRequired");
     if (!walkIn.fin.trim() && !walkIn.passport.trim()) return t("finOrPassportRequired");
     return null;
@@ -483,11 +536,17 @@ export default function SanatoriumPage() {
       return;
     }
     setBusy(true);
+    const givenName = walkIn.givenName.trim();
+    const surname = walkIn.surname.trim();
+    const fatherName = walkIn.fatherName.trim() || null;
     const res = await fetch("/api/sanatorium/episodes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fullName: walkIn.fullName.trim(),
+        givenName,
+        surname,
+        fatherName,
+        fullName: composeFullName({ givenName, surname, fatherName }),
         fin: walkIn.fin.trim() || undefined,
         passport: walkIn.passport.trim() || undefined,
         phone: walkIn.phone.trim() || undefined,
@@ -540,6 +599,60 @@ export default function SanatoriumPage() {
     await reloadEpisode();
   }
 
+  async function deleteComplaintRow(complaintId: string) {
+    const patientRefId = selected?.patientRef?.id;
+    if (!patientRefId) return;
+    setBusy(true);
+    const res = await fetch(
+      `/api/patients/${patientRefId}/complaints?id=${encodeURIComponent(complaintId)}`,
+      { method: "DELETE" },
+    );
+    setBusy(false);
+    setMsg(res.ok ? t("saved") : t("failed"));
+    if (res.ok) await reloadEpisode();
+  }
+
+  async function deleteDiagnosisRow(diagnosisId: string) {
+    const patientRefId = selected?.patientRef?.id;
+    if (!patientRefId) return;
+    setBusy(true);
+    const res = await fetch(
+      `/api/patients/${patientRefId}/diagnoses?id=${encodeURIComponent(diagnosisId)}`,
+      { method: "DELETE" },
+    );
+    setBusy(false);
+    setMsg(res.ok ? t("saved") : t("failed"));
+    if (res.ok) await reloadEpisode();
+  }
+
+  async function cancelLabRow(orderId: string) {
+    if (!window.confirm(t("labCancelConfirm"))) return;
+    setBusy(true);
+    const res = await fetch(`/api/lab-orders/${orderId}`, { method: "DELETE" });
+    setBusy(false);
+    setMsg(res.ok ? t("labCancelled") : t("failed"));
+    if (res.ok) await reloadEpisode();
+  }
+
+  function labOrderLabel(order: Episode["labOrders"][number]): string {
+    const item = order.items?.[0];
+    if (item) {
+      const svc = item.diagnosticService;
+      const name = svc
+        ? pickL10n(
+            {
+              en: svc.titleEn ?? svc.code,
+              ru: svc.titleRu ?? svc.titleEn ?? svc.code,
+              az: svc.titleAz ?? svc.titleEn ?? svc.code,
+            },
+            locale,
+          )
+        : "";
+      return formatNameAndCode(name, item.serviceCode);
+    }
+    return formatNameAndCode("", order.testCode);
+  }
+
   async function closeWalkIn(episodeId: string) {
     if (!window.confirm(t("closeWalkInConfirm"))) return;
     setBusy(true);
@@ -584,6 +697,7 @@ export default function SanatoriumPage() {
         onReset={() => {
           setQ("");
           setFilterOrigin("");
+          setListPage(1);
         }}
       >
         <Field
@@ -620,7 +734,7 @@ export default function SanatoriumPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e) => {
+              {episodes.map((e) => {
                 const prog = e.programInstance;
                 const days = prog ? daysRemaining(prog.endsOn) : null;
                 return (
@@ -684,10 +798,10 @@ export default function SanatoriumPage() {
                   </tr>
                 );
               })}
-              {filtered.length === 0 ? (
+              {episodes.length === 0 ? (
                 <tr>
                   <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                    {t("noEpisodes")}
+                    {listLoading ? tc("loading") : t("noEpisodes")}
                     <div className="mt-1 text-[12px]">{t("emptyHint")}</div>
                   </td>
                 </tr>
@@ -695,6 +809,20 @@ export default function SanatoriumPage() {
             </tbody>
           </table>
         </div>
+        <ListPaginationFooter
+          page={listPage}
+          pageSize={listPageSize}
+          total={listTotal}
+          loading={listLoading}
+          onPageChange={setListPage}
+          onPageSizeChange={setListPageSize}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
 
       <ModalShell
@@ -733,8 +861,18 @@ export default function SanatoriumPage() {
             <div>
               <h3 className="mb-1 font-semibold">{t("complaints")}</h3>
               <ul className="list-disc pl-5">
-                {selected.complaints.map((c, i) => (
-                  <li key={i}>{c.text}</li>
+                {selected.complaints.map((c) => (
+                  <li key={c.id} className="flex flex-wrap items-center gap-2">
+                    <span>{c.text}</span>
+                    <button
+                      type="button"
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      aria-label={tc("delete")}
+                      onClick={() => void deleteComplaintRow(c.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                    </button>
+                  </li>
                 ))}
                 {selected.complaints.length === 0 ? (
                   <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
@@ -744,7 +882,7 @@ export default function SanatoriumPage() {
             <div>
               <h3 className="mb-1 font-semibold">{t("diagnoses")}</h3>
               <ul className="list-disc pl-5">
-                {selected.diagnoses.map((d, i) => {
+                {selected.diagnoses.map((d) => {
                   const code = d.icdCode?.code;
                   const title = d.icdCode
                     ? locale.startsWith("ru")
@@ -754,9 +892,19 @@ export default function SanatoriumPage() {
                         : d.icdCode.titleEn
                     : null;
                   return (
-                    <li key={i}>
-                      {code ? `${code}${title ? ` — ${title}` : ""}` : "—"}
-                      {d.note ? ` (${d.note})` : ""}
+                    <li key={d.id} className="flex flex-wrap items-center gap-2">
+                      <span>
+                        {code ? `${code}${title ? ` — ${title}` : ""}` : "—"}
+                        {d.note ? ` (${d.note})` : ""}
+                      </span>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={tc("delete")}
+                        onClick={() => void deleteDiagnosisRow(d.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                      </button>
                     </li>
                   );
                 })}
@@ -769,11 +917,23 @@ export default function SanatoriumPage() {
               <h3 className="mb-1 font-semibold">{t("labOrders")}</h3>
               <ul>
                 {selected.labOrders.map((o) => (
-                  <li key={o.id}>
-                    {o.testCode} — {o.status}{" "}
-                    <Link href={`/lab-orders/${o.id}`} className={LINK_ACCENT_CLASS}>
-                      {t("workflow")}
-                    </Link>
+                  <li key={o.id} className="flex flex-wrap items-center gap-2">
+                    <span>
+                      {labOrderLabel(o)} — {o.status}{" "}
+                      <Link href={`/lab-orders/${o.id}`} className={LINK_ACCENT_CLASS}>
+                        {t("workflow")}
+                      </Link>
+                    </span>
+                    {o.status === "ORDERED" ? (
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={t("labCancelOrder")}
+                        onClick={() => void cancelLabRow(o.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                      </button>
+                    ) : null}
                   </li>
                 ))}
                 {selected.labOrders.length === 0 ? (
@@ -803,7 +963,12 @@ export default function SanatoriumPage() {
                       return (
                         <li key={line.procedureCode}>
                           <div className="mb-1 flex justify-between">
-                            <span>{line.procedureCode}</span>
+                            <span>
+                              {formatNameAndCode(
+                                procedureTypeNames.get(line.procedureCode) ?? "",
+                                line.procedureCode,
+                              )}
+                            </span>
                             <span>{t("quotaUsed", { used: line.quotaUsed, total: line.quotaTotal })}</span>
                           </div>
                           <div className={`h-2 overflow-hidden rounded-lg ${CHIP_GROUP_CLASS} !p-0`}>
@@ -1180,19 +1345,44 @@ export default function SanatoriumPage() {
         }
       >
         <div className={FORM_STACK_CLASS}>
-          <FieldRow>
+          <FieldRow cols={3}>
             <Field
-              label={t("walkInName")}
+              label={tp("givenName")}
               preset="shortText"
-              value={walkIn.fullName}
-              onChange={(e) => setWalkIn({ ...walkIn, fullName: e.target.value })}
+              value={walkIn.givenName}
+              onChange={(e) => setWalkIn({ ...walkIn, givenName: e.target.value })}
               required
             />
+            <Field
+              label={tp("surname")}
+              preset="shortText"
+              value={walkIn.surname}
+              onChange={(e) => setWalkIn({ ...walkIn, surname: e.target.value })}
+              required
+            />
+            <Field
+              label={tp("fatherName")}
+              preset="shortText"
+              value={walkIn.fatherName}
+              onChange={(e) => setWalkIn({ ...walkIn, fatherName: e.target.value })}
+            />
+          </FieldRow>
+          <FieldRow>
             <Field
               label={t("walkInPhone")}
               preset="phone"
               value={walkIn.phone}
               onChange={(e) => setWalkIn({ ...walkIn, phone: e.target.value })}
+            />
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("walkInNationality")}
+              value={walkIn.nationality}
+              onChange={(v) =>
+                setWalkIn({ ...walkIn, nationality: String(v ?? "").toUpperCase() })
+              }
+              options={[...NATIONALITY_OPTIONS]}
+              emptyLabel={t("sexUnknown")}
             />
           </FieldRow>
           <FieldRow>
@@ -1235,12 +1425,6 @@ export default function SanatoriumPage() {
             />
           </FieldRow>
           <FieldRow>
-            <Field
-              label={t("walkInNationality")}
-              preset="shortText"
-              value={walkIn.nationality}
-              onChange={(e) => setWalkIn({ ...walkIn, nationality: e.target.value })}
-            />
             <FieldSelect
               label={t("programSelect")}
               preset="select"
@@ -1279,6 +1463,28 @@ export default function SanatoriumPage() {
           value={rescheduleTime}
           onChange={(e) => setRescheduleTime(e.target.value)}
         />
+      </ModalShell>
+
+      <ModalShell
+        open={labRepeatOpen}
+        title={t("labRepeatTitle")}
+        onClose={() => setLabRepeatOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setLabRepeatOpen(false)}
+            onSubmit={() => {
+              setLabRepeatOpen(false);
+              void postAction("lab", { testCode: pendingLabCode, confirmRepeat: true });
+            }}
+            busy={busy}
+            submitLabel={tc("yes")}
+            cancelLabel={tc("no")}
+          />
+        }
+      >
+        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+          {t("labRepeatBody", { code: pendingLabCode })}
+        </p>
       </ModalShell>
 
       <PatientCardModal

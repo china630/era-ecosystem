@@ -14,10 +14,18 @@ jest.mock("@/lib/prisma", () => ({
       updateMany: jest.fn(),
     },
     practitioner: {
-      upsert: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
       updateMany: jest.fn(),
     },
   },
+}));
+
+jest.mock("@/lib/request-organization", () => ({
+  requestOrganizationId: () => "770e8400-e29b-41d4-a716-446655440002",
+  enterRequestTenant: jest.fn(),
 }));
 
 const CP_EMPLOYMENT_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -51,19 +59,90 @@ describe("clinic staff-provision", () => {
     prisma.user.findFirst.mockResolvedValue(null);
     prisma.user.findUnique.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: "user-1" });
-    prisma.practitioner.upsert.mockResolvedValue({ id: "pr-1" });
+    prisma.practitioner.findFirst.mockResolvedValue(null);
+    prisma.practitioner.findMany.mockResolvedValue([]);
+    prisma.practitioner.create.mockResolvedValue({ id: "pr-1" });
+    prisma.practitioner.update.mockResolvedValue({ id: "pr-1" });
   });
 
-  it("upserts practitioner by cpEmploymentId and returns satelliteUserId", async () => {
+  it("creates practitioner when none exists and returns satelliteUserId", async () => {
     const result = await handleStaffProvisionEvent(provisionEvent);
     expect(result).toEqual({ satelliteUserId: "user-1" });
     const { prisma } = jest.requireMock("@/lib/prisma");
-    expect(prisma.practitioner.upsert).toHaveBeenCalledWith(
+    expect(prisma.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { cpEmploymentId: CP_EMPLOYMENT_ID },
-        create: expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: ORG_ID,
+          login: "dr-test",
+          passwordHash: "salt:1234",
+          cpEmploymentId: CP_EMPLOYMENT_ID,
+        }),
+      }),
+    );
+    expect(prisma.practitioner.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: ORG_ID,
+          code: "FINEMP1",
           cpEmploymentId: CP_EMPLOYMENT_ID,
           financeEmployeeId: FIN_EMPLOYEE_ID,
+          userId: "user-1",
+        }),
+      }),
+    );
+  });
+
+  it("links imported practitioner by fullName instead of creating a duplicate", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.practitioner.findFirst.mockResolvedValue(null);
+    prisma.practitioner.findMany.mockResolvedValue([
+      {
+        id: "imported-1",
+        fullName: "Dr Test",
+        staffKind: "DOCTOR",
+        cpEmploymentId: null,
+      },
+    ]);
+    const result = await handleStaffProvisionEvent(provisionEvent);
+    expect(result).toEqual({ satelliteUserId: "user-1" });
+    expect(prisma.practitioner.create).not.toHaveBeenCalled();
+    expect(prisma.practitioner.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "imported-1" },
+        data: expect.objectContaining({
+          cpEmploymentId: CP_EMPLOYMENT_ID,
+          userId: "user-1",
+          globalPersonId: GLOBAL_PERSON_ID,
+        }),
+      }),
+    );
+  });
+
+  it("links imported Azerbaijani FIO to MDM Last-First-Patronymic without a duplicate", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.practitioner.findFirst.mockResolvedValue(null);
+    prisma.practitioner.findMany.mockResolvedValue([
+      {
+        id: "imported-rena",
+        fullName: "R\u0259na K\u0259ng\u0259rli",
+        staffKind: "DOCTOR",
+        cpEmploymentId: null,
+      },
+    ]);
+    const result = await handleStaffProvisionEvent({
+      ...provisionEvent,
+      payload: {
+        ...provisionEvent.payload,
+        fullName: "Kangarli Rana Kamil qizi",
+      },
+    });
+    expect(result).toEqual({ satelliteUserId: "user-1" });
+    expect(prisma.practitioner.create).not.toHaveBeenCalled();
+    expect(prisma.practitioner.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "imported-rena" },
+        data: expect.objectContaining({
+          cpEmploymentId: CP_EMPLOYMENT_ID,
           userId: "user-1",
         }),
       }),

@@ -3,12 +3,11 @@ import { parseWorkbook } from '@/lib/import/excel';
 import { mapHeaders } from "@/lib/import/helpers";
 import type { ImportAdapter, ImportResult } from "@/lib/import/types";
 
-export async function runImport<T>(
+export async function runImportRows<T>(
   adapter: ImportAdapter<T>,
-  buffer: Buffer,
+  rows: Record<string, unknown>[],
   dryRun: boolean,
 ): Promise<ImportResult> {
-  const { rows } = parseWorkbook(buffer);
   const result: ImportResult = {
     entity: adapter.entity,
     label: adapter.label,
@@ -43,6 +42,27 @@ export async function runImport<T>(
   }
 
   return result;
+}
+
+export async function runImport<T>(
+  adapter: ImportAdapter<T>,
+  buffer: Buffer,
+  dryRun: boolean,
+): Promise<ImportResult> {
+  const { rows } = parseWorkbook(buffer);
+  return runImportRows(adapter, rows, dryRun);
+}
+
+export async function runImportBuffers<T>(
+  adapter: ImportAdapter<T>,
+  buffers: Buffer[],
+  dryRun: boolean,
+): Promise<ImportResult> {
+  const rows: Record<string, unknown>[] = [];
+  for (const buffer of buffers) {
+    rows.push(...parseWorkbook(buffer).rows);
+  }
+  return runImportRows(adapter, rows, dryRun);
 }
 
 export async function runFilelessImport<T>(
