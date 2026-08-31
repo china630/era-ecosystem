@@ -35,8 +35,8 @@ export function normalizeCatalogName(raw: string): string {
     .trim();
 }
 
-function indexByNormName(catalog: CatalogNameRow[]): Map<string, CatalogNameRow> {
-  const map = new Map<string, CatalogNameRow>();
+function indexByNormName<T extends CatalogNameRow>(catalog: T[]): Map<string, T> {
+  const map = new Map<string, T>();
   for (const row of catalog) {
     const key = normalizeCatalogName(row.name);
     if (key && !map.has(key)) map.set(key, row);
@@ -46,10 +46,10 @@ function indexByNormName(catalog: CatalogNameRow[]): Map<string, CatalogNameRow>
   return map;
 }
 
-export function matchProcedureToSeed(
+export function matchProcedureToSeed<T extends CatalogNameRow>(
   nameOrCode: string,
-  catalog: CatalogNameRow[],
-): CatalogNameRow | null {
+  catalog: T[],
+): T | null {
   const raw = String(nameOrCode || "").trim();
   if (!raw) return null;
   const byCode = catalog.find((r) => r.code === raw);
@@ -65,7 +65,10 @@ export function matchProcedureToSeed(
   return byName.get(norm) ?? null;
 }
 
-export function matchRoomToSeed(nameOrCode: string, catalog: CatalogNameRow[]): CatalogNameRow | null {
+export function matchRoomToSeed<T extends CatalogNameRow>(
+  nameOrCode: string,
+  catalog: T[],
+): T | null {
   const raw = String(nameOrCode || "").trim();
   if (!raw) return null;
   const byCode = catalog.find((r) => r.code === raw);
