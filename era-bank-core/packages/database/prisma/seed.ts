@@ -440,7 +440,12 @@ async function main() {
       });
 
       await prisma.nostroVostroAccount.upsert({
-        where: { iban: "AZ21DEMO00000000009999" },
+        where: {
+          organizationId_iban: {
+            organizationId: bankOrgId,
+            iban: "AZ21DEMO00000000009999",
+          },
+        },
         create: {
           bankOrgId,
           counterpartyId: cp.id,

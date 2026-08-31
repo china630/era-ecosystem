@@ -5,7 +5,7 @@ cd /app
 if [ -f packages/database/prisma/schema.prisma ]; then
   npm run db:migrate:deploy -w @era/bank-core-database
   if [ "$RUN_SEED" = "true" ]; then
-    npm run db:seed -w @era/bank-core-database
+    npm run db:seed -w @era/bank-core-database || echo "[bank-core] seed failed; starting API anyway"
   fi
 fi
 
