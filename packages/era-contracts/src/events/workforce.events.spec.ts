@@ -3,10 +3,12 @@ import {
   WORKFORCE_ABSENCE_APPROVED,
   WORKFORCE_ORG_UNIT_UPSERTED,
   WORKFORCE_POSITION_UPSERTED,
+  WORKFORCE_TIMESHEET_APPROVED,
   WORKFORCE_VACATION_PLAN_APPROVED,
   satelliteWorkforceAbsenceApprovedSchema,
   satelliteWorkforceOrgUnitUpsertedSchema,
   satelliteWorkforcePositionUpsertedSchema,
+  satelliteWorkforceTimesheetApprovedSchema,
   satelliteWorkforceVacationPlanApprovedSchema,
   workforceAbsenceEventPayloadSchema,
   workforceOrgUnitPayloadSchema,
@@ -113,5 +115,33 @@ describe("workforce vacation plan events", () => {
       payload,
     };
     expect(satelliteWorkforceVacationPlanApprovedSchema.parse(event)).toEqual(event);
+  });
+});
+
+describe("workforce timesheet approved events", () => {
+  it("accepts optional row type", () => {
+    const event = {
+      type: WORKFORCE_TIMESHEET_APPROVED,
+      organizationId: "660e8400-e29b-41d4-a716-446655440001",
+      correlationId: "c1",
+      occurredAt: "2026-08-31T00:00:00.000Z",
+      payload: {
+        organizationId: "660e8400-e29b-41d4-a716-446655440001",
+        cpTimesheetEntryIds: ["990e8400-e29b-41d4-a716-446655440004"],
+        approvedByUserId: "aa0e8400-e29b-41d4-a716-446655440005",
+        approvedAt: "2026-08-31T00:00:00.000Z",
+        rows: [
+          {
+            cpTimesheetEntryId: "990e8400-e29b-41d4-a716-446655440004",
+            cpEmploymentId: "770e8400-e29b-41d4-a716-446655440002",
+            globalPersonId: "880e8400-e29b-41d4-a716-446655440003",
+            workDate: "2026-08-10",
+            hours: 8,
+            type: "VACATION" as const,
+          },
+        ],
+      },
+    };
+    expect(satelliteWorkforceTimesheetApprovedSchema.parse(event)).toEqual(event);
   });
 });

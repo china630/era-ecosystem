@@ -263,6 +263,9 @@ export const workforceTimesheetApprovedPayloadSchema = z.object({
       financeEmployeeId: z.string().uuid().optional(),
       workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       hours: z.number().min(0),
+      type: z
+        .enum(["WORK", "VACATION", "SICK", "OFF", "BUSINESS_TRIP"])
+        .optional(),
     }),
   ),
 });
