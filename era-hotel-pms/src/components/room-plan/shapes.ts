@@ -1,3 +1,4 @@
+import { CHEVRON_PX } from './plan-bar-theme';
 import type { RoomPlanReservationBar } from './types';
 
 /** Hotel property calendar (matches seed/API noon Baku stored as 08:00 UTC). */
@@ -5,7 +6,7 @@ export const HOTEL_TIME_ZONE = 'Asia/Baku';
 
 /**
  * Right (departure) edge style of a stay bar:
- * - `arrow`   check-out ends inside the visible window (always a pointed tip);
+ * - `arrow`   check-out ends inside the visible window (blunt EW chevron);
  * - `flat`    stay continues past the right edge of the window (clipped);
  * - `concave` reserved (arrival notch is leftConcave only).
  *
@@ -15,7 +16,10 @@ export const HOTEL_TIME_ZONE = 'Asia/Baku';
 export type BarEdgeStyle = 'arrow' | 'concave' | 'flat';
 
 export type BarShapeFlags = {
-  /** Concave notch on the arrival (left) edge for a same-day turnover check-in. */
+  /**
+   * Concave notch on the arrival (left) edge.
+   * True for any in-window start (EW butt) except same-day chip; clipped start stays flat.
+   */
   leftConcave: boolean;
   rightStyle: BarEdgeStyle;
 };
@@ -37,9 +41,47 @@ export type PlacedBar = {
   clippedAtEnd: boolean;
 };
 
-/** SVG geometry constants (viewBox 0 0 100 20, stretched to the bar box). */
-const ARROW_SHOULDER_X = 88;
-const CONCAVE_DEPTH_X = 12;
+export { CHEVRON_PX };
+
+/** Default bar height used when converting % geometry for tests / fallbacks. */
+export const BAR_SVG_HEIGHT = 26;
+
+/**
+ * Build the bar outline in pixel user-space (viewBox 0 0 width height).
+ * Chevron depth is a fixed CHEVRON_PX so long stays do not grow spear tips.
+ */
+export function barSvgPath(
+  flags: BarShapeFlags,
+  widthPx: number,
+  heightPx: number = BAR_SVG_HEIGHT,
+): string {
+  const w = Math.max(widthPx, CHEVRON_PX * 2 + 4);
+  const h = heightPx;
+  const midY = h / 2;
+  const chev = Math.min(CHEVRON_PX, Math.floor(w / 3));
+
+  const topRightX = flags.rightStyle === 'arrow' ? w - chev : w;
+
+  let rightEdge: string;
+  switch (flags.rightStyle) {
+    case 'arrow':
+      rightEdge = `L ${w} ${midY} L ${w - chev} ${h}`;
+      break;
+    case 'concave':
+      rightEdge = `L ${w - chev} ${midY} L ${w} ${h}`;
+      break;
+    default:
+      rightEdge = `L ${w} ${h}`;
+      break;
+  }
+
+  // Left butt notch for any in-window arrival (EW nesting); flat when clipped.
+  const leftEdge = flags.leftConcave
+    ? `L ${chev} ${midY} L 0 0`
+    : `L 0 0`;
+
+  return `M 0 0 L ${topRightX} 0 ${rightEdge} L 0 ${h} ${leftEdge} Z`;
+}
 
 export function calendarDateKey(iso: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
@@ -109,35 +151,6 @@ export function hasSameDayTurnoverEnd(
 }
 
 /**
- * Build the bar outline. The path is drawn clockwise:
- * top-left → top-right → right edge (down) → bottom-left → left edge (up) → close.
- *
- * Right edge encodes the departure semantics; the left edge is blunt for a
- * normal/clipped arrival and concave for a same-day turnover check-in. Clipped
- * ends are flat so the bar visibly bleeds to the window boundary ("continues").
- */
-export function barSvgPath(flags: BarShapeFlags): string {
-  const topRightX = flags.rightStyle === 'arrow' ? ARROW_SHOULDER_X : 100;
-
-  let rightEdge: string;
-  switch (flags.rightStyle) {
-    case 'arrow':
-      rightEdge = `L 100 10 L ${ARROW_SHOULDER_X} 20`;
-      break;
-    case 'concave':
-      rightEdge = `L ${100 - CONCAVE_DEPTH_X} 10 L 100 20`;
-      break;
-    default:
-      rightEdge = `L 100 20`;
-      break;
-  }
-
-  const leftEdge = flags.leftConcave ? `L ${CONCAVE_DEPTH_X} 10 L 0 0` : `L 0 0`;
-
-  return `M 0 0 L ${topRightX} 0 ${rightEdge} L 0 20 ${leftEdge} Z`;
-}
-
-/**
  * Layout is fully precomputed in {@link computePlacedBars}; this reads the
  * stored box offset (kept as a function for call-site/back-compat + tests).
  */
@@ -197,7 +210,8 @@ export function computePlacedBars(
 
     // Right tip whenever checkout is in-window (incl. turnover). Flat only if clipped.
     const rightStyle: BarEdgeStyle = clippedAtEnd ? 'flat' : 'arrow';
-    const leftConcave = !clippedAtStart && !sameDayStay && turnoverStart;
+    // EW butt notch on any in-window arrival (not only turnover); chip stays blunt.
+    const leftConcave = !clippedAtStart && !sameDayStay;
 
     out.push({
       leftPct: leftFrac * 100,

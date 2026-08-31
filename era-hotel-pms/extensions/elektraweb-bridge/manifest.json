@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "ERA Elektraweb Bridge",
-  "version": "0.3.3",
+  "version": "0.3.8",
   "description": "Temporary dual-run: Elektraweb ↔ ERA (inbound mirror + sanatorium SPA extra Insert)",
-  "permissions": ["storage", "alarms"],
+  "permissions": ["storage", "alarms", "scripting", "tabs", "webNavigation"],
   "host_permissions": [
     "https://app.elektraweb.com/*",
     "https://*.elektraweb.com/*",
+    "https://elektraweb.com/*",
     "http://localhost:3201/*",
     "http://127.0.0.1:3201/*",
     "https://*/*",
@@ -32,23 +33,56 @@
     "page": "options.html",
     "open_in_tab": true
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "overlay.js",
+        "overlay-frame.html",
+        "overlay-frame.js",
+        "i18n.js",
+        "lamp.js"
+      ],
+      "matches": [
+        "https://app.elektraweb.com/*",
+        "https://*.elektraweb.com/*",
+        "https://elektraweb.com/*"
+      ]
+    }
+  ],
   "content_scripts": [
     {
-      "matches": ["https://app.elektraweb.com/*"],
+      "matches": [
+        "https://app.elektraweb.com/*",
+        "https://*.elektraweb.com/*",
+        "https://elektraweb.com/*"
+      ],
       "js": ["content.js"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
     },
     {
-      "matches": ["https://app.elektraweb.com/*"],
+      "matches": [
+        "https://app.elektraweb.com/*",
+        "https://*.elektraweb.com/*",
+        "https://elektraweb.com/*"
+      ],
       "js": ["injected.js"],
       "run_at": "document_start",
-      "world": "MAIN"
+      "world": "MAIN",
+      "all_frames": true,
+      "match_about_blank": true
     },
     {
-      "matches": ["https://app.elektraweb.com/*"],
-      "js": ["overlay.js"],
+      "matches": [
+        "https://app.elektraweb.com/*",
+        "https://*.elektraweb.com/*",
+        "https://elektraweb.com/*"
+      ],
+      "js": ["overlay-boot.js"],
       "run_at": "document_idle",
-      "type": "module"
+      "all_frames": true,
+      "match_about_blank": true
     }
   ]
 }

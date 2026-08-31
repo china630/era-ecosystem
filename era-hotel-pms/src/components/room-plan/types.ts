@@ -21,6 +21,8 @@ export interface RoomPlanRoom {
   roomNumber: string;
   floor: number;
   status: RoomStatus;
+  /** Housekeeping condition when present (DIRTY/PICKUP/CLEAN/INSPECTED). */
+  hkCondition?: string | null;
   roomType: { code: string };
   sharePool?: {
     gender: string;

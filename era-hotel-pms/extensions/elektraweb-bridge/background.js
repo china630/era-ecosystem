@@ -231,8 +231,113 @@ chrome.storage.onChanged.addListener(() => {
   void refreshToolbarLamp();
 });
 
+function isElektrawebUrl(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'elektraweb.com' || host.endsWith('.elektraweb.com');
+  } catch {
+    return false;
+  }
+}
+
+const injectingFrames = new Set();
+
+async function injectIntoFrame(tabId, frameId) {
+  const key = `${tabId}:${frameId}`;
+  if (injectingFrames.has(key)) return;
+  injectingFrames.add(key);
+  const target = { tabId, frameIds: [frameId] };
+  try {
+    await chrome.scripting.executeScript({
+      target,
+      files: ['injected.js'],
+      world: 'MAIN',
+      injectImmediately: true,
+    });
+    await chrome.scripting.executeScript({
+      target,
+      files: ['content.js'],
+      world: 'ISOLATED',
+      injectImmediately: true,
+    });
+    await chrome.scripting.executeScript({
+      target,
+      files: ['overlay-boot.js'],
+      world: 'ISOLATED',
+    });
+  } catch {
+    /* chrome://, discarded tab, or host not permitted */
+  } finally {
+    injectingFrames.delete(key);
+  }
+}
+
+async function injectTabFrames(tabId) {
+  try {
+    const frames = await chrome.webNavigation.getAllFrames({ tabId });
+    if (!frames || !frames.length) {
+      await injectIntoFrame(tabId, 0);
+      return;
+    }
+    for (const frame of frames) {
+      if (frame.url && isElektrawebUrl(frame.url)) {
+        await injectIntoFrame(tabId, frame.frameId);
+      }
+    }
+  } catch {
+    await injectIntoFrame(tabId, 0);
+  }
+}
+
+async function injectAllElektrawebTabs() {
+  let tabs = [];
+  try {
+    tabs = await chrome.tabs.query({});
+  } catch {
+    return;
+  }
+  for (const tab of tabs) {
+    if (!tab.id) continue;
+    if (tab.url && isElektrawebUrl(tab.url)) {
+      await injectTabFrames(tab.id);
+      continue;
+    }
+    try {
+      const frames = await chrome.webNavigation.getAllFrames({ tabId: tab.id });
+      const hit = (frames || []).some((f) => f.url && isElektrawebUrl(f.url));
+      if (hit) await injectTabFrames(tab.id);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.url && isElektrawebUrl(details.url)) {
+    void injectIntoFrame(details.tabId, details.frameId);
+  }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== 'complete') return;
+  const url = tab.url || changeInfo.url || '';
+  if (url && isElektrawebUrl(url)) {
+    void injectTabFrames(tabId);
+    return;
+  }
+  /* App/PWA windows sometimes report empty url; still try frames. */
+  if (!url || url === 'about:blank') {
+    void injectTabFrames(tabId);
+  }
+});
+
+chrome.windows.onCreated.addListener(() => {
+  setTimeout(() => void injectAllElektrawebTabs(), 400);
+});
+
 chrome.runtime.onStartup.addListener(() => {
   void refreshToolbarLamp();
+  void injectAllElektrawebTabs();
 });
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -242,7 +347,9 @@ chrome.runtime.onInstalled.addListener(() => {
     if (!data.deskRole) patch.deskRole = 'hotel_fo';
     if (Object.keys(patch).length) void chrome.storage.local.set(patch);
     void refreshToolbarLamp();
+    void injectAllElektrawebTabs();
   });
 });
 
 void refreshToolbarLamp();
+void injectAllElektrawebTabs();

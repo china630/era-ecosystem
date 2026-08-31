@@ -134,7 +134,7 @@ Popup: compact status + toolbar lamp (gray/yellow/green/red) + **on-page overlay
 
 Elektraweb cannot block checkout on our queue.
 
-- Extension toolbar lamp + **in-page overlay** on `app.elektraweb.com` (saved-app / Open as window) + settings: session color, pending age, last error.
+- Extension toolbar lamp + **in-page overlay** on Elektraweb (saved-app / Open as window; v0.3.4 programmatic inject into app windows + frames) + settings: session color, pending age, last error.
 - Hotel `GET …/health`: inbound + `writeEnabled` + outbox counts by status.
 - Operational rule: do not check out an in-house stay with clinic extras while sanatorium write health is red / pending &gt; N minutes.
 

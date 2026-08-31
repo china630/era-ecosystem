@@ -7,7 +7,9 @@ import {
   parseHotelNoon,
 } from '@/lib/hotel-calendar';
 
-const PLAN_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
+/** Active stays on the plan; CHECKED_OUT included so EW gold checkout bars appear. */
+export const PLAN_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION', 'CHECKED_OUT'] as const;
+export const UNASSIGNED_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
 export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   const days = input?.days ?? 14;
@@ -48,7 +50,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
 
   const unassigned = await prisma.reservation.findMany({
     where: {
-      status: { in: [...PLAN_STATUSES] },
+      status: { in: [...UNASSIGNED_STATUSES] },
       roomId: null,
       checkInDate: { lt: to },
       checkOutDate: { gt: from },
@@ -200,7 +202,11 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
           capacity: maxBed,
         };
       }
-      return { ...room, sharePool };
+      return {
+        ...room,
+        hkCondition: room.hkCondition ?? null,
+        sharePool,
+      };
     }),
     reservations: reservations.map(mapBar),
     unassigned,

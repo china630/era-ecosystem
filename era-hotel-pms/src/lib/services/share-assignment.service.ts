@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { isOtaAgency } from '@/lib/booking-source-kind';
+import { hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 
 export const SCHEDULABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
@@ -283,6 +284,103 @@ export function nextShareBedIndex(
   throw new Error('Share pool on this room is full');
 }
 
+type BedOccupant = {
+  id: string;
+  checkInDate: Date;
+  checkOutDate: Date;
+  shareBedIndex?: number | null;
+};
+
+function eachNightKeys(checkIn: Date, checkOut: Date): string[] {
+  const keys: string[] = [];
+  const start = hotelDateKey(checkIn);
+  const end = hotelDateKey(checkOut);
+  let cur = start;
+  while (cur < end) {
+    keys.push(cur);
+    const noon = parseHotelNoon(cur);
+    noon.setUTCDate(noon.getUTCDate() + 1);
+    cur = hotelDateKey(noon);
+  }
+  return keys;
+}
+
+/**
+ * Per-night free bed: minimal index free on every night of the candidate stay.
+ * Neighbors with null shareBedIndex still occupy the lowest free slots
+ * (stable: CI then id) so a new arrival cannot paint over them.
+ */
+export function nextFreeShareBedIndex(input: {
+  overlapping: BedOccupant[];
+  checkIn: Date;
+  checkOut: Date;
+  maxBed: number;
+}): number {
+  const nights = eachNightKeys(input.checkIn, input.checkOut);
+  if (nights.length === 0) {
+    return nextShareBedIndex(input.overlapping, input.maxBed);
+  }
+
+  const sorted = [...input.overlapping].sort((a, b) => {
+    const ci = a.checkInDate.getTime() - b.checkInDate.getTime();
+    if (ci !== 0) return ci;
+    return a.id.localeCompare(b.id);
+  });
+
+  const occupiedByNight = new Map<string, Set<number>>();
+  for (const night of nights) {
+    occupiedByNight.set(night, new Set());
+  }
+
+  for (const night of nights) {
+    const nightStart = parseHotelNoon(night);
+    const nightEnd = parseHotelNoon(night);
+    nightEnd.setUTCDate(nightEnd.getUTCDate() + 1);
+    const active = sorted.filter(
+      (r) => r.checkInDate.getTime() < nightEnd.getTime() && r.checkOutDate.getTime() > nightStart.getTime(),
+    );
+    const used = occupiedByNight.get(night)!;
+    const claimed = new Set<number>();
+    for (const r of active) {
+      if (r.shareBedIndex != null && r.shareBedIndex >= 1 && r.shareBedIndex <= input.maxBed) {
+        used.add(r.shareBedIndex);
+        claimed.add(r.shareBedIndex);
+      }
+    }
+    for (const r of active) {
+      if (r.shareBedIndex != null) continue;
+      for (let i = 1; i <= input.maxBed; i++) {
+        if (!claimed.has(i)) {
+          used.add(i);
+          claimed.add(i);
+          break;
+        }
+      }
+    }
+  }
+
+  for (let bed = 1; bed <= input.maxBed; bed++) {
+    const freeAllNights = nights.every((n) => !occupiedByNight.get(n)!.has(bed));
+    if (freeAllNights) return bed;
+  }
+  throw new Error('Share pool on this room is full');
+}
+
+/** True when any night of the candidate stay already has maxBed occupied beds. */
+export function isSharePoolFullPerNight(input: {
+  overlapping: BedOccupant[];
+  checkIn: Date;
+  checkOut: Date;
+  maxBed: number;
+}): boolean {
+  try {
+    nextFreeShareBedIndex(input);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export async function assertRoomShareAssignable(input: {
   roomId: string;
   checkIn: Date;
@@ -351,11 +449,23 @@ export async function assertRoomShareAssignable(input: {
   if (poolGender !== candGender) {
     throw new Error('Opposite gender cannot share this room');
   }
-  if (shareOverlap.length >= maxBed) {
+
+  const bedInput = {
+    overlapping: shareOverlap.map((r) => ({
+      id: r.id,
+      checkInDate: r.checkInDate,
+      checkOutDate: r.checkOutDate,
+      shareBedIndex: r.shareBedIndex,
+    })),
+    checkIn: input.checkIn,
+    checkOut: input.checkOut,
+    maxBed,
+  };
+  if (isSharePoolFullPerNight(bedInput)) {
     throw new Error('Share pool on this room is full');
   }
 
-  const shareBedIndex = nextShareBedIndex(shareOverlap, maxBed);
+  const shareBedIndex = nextFreeShareBedIndex(bedInput);
   return { shareBedIndex, joiningPool: true };
 }
 
