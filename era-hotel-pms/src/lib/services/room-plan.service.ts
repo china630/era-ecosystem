@@ -27,7 +27,8 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       status: { in: [...PLAN_STATUSES] },
       roomId: { not: null },
       checkInDate: { lt: to },
-      checkOutDate: { gt: from },
+      // gte: include same-noon departures on the window start day (EW departure / checkout bars).
+      checkOutDate: { gte: from },
     },
     include: {
       guest: { select: { fullName: true } },
@@ -53,7 +54,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       status: { in: [...UNASSIGNED_STATUSES] },
       roomId: null,
       checkInDate: { lt: to },
-      checkOutDate: { gt: from },
+      checkOutDate: { gte: from },
     },
     include: { guest: true, roomType: true },
     orderBy: { checkInDate: 'asc' },

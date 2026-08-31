@@ -33,11 +33,25 @@ function parseResultLines(resultJson: string | null): ResultLineInput[] {
 function labCatalog(
   testCode: string,
   catalogItems: DiagnosticCatalogItem[],
-): { title: string; titleL10n?: L10n } {
+): { title: string; titleL10n?: L10n; kind: string | null } {
   const primary = testCode.split(",")[0]?.trim() ?? testCode;
   const item = catalogItems.find((i) => i.code === primary || i.serviceCode === primary);
-  if (!item) return { title: testCode };
-  return { title: `${item.title.en} (${testCode})`, titleL10n: item.title };
+  if (!item) return { title: testCode, kind: null };
+  return { title: `${item.title.en} (${testCode})`, titleL10n: item.title, kind: item.kind };
+}
+
+const IMAGING_KINDS = new Set(["imaging", "functional", "endoscopy"]);
+
+function matchesLabCatalogKind(
+  testCode: string,
+  catalogItems: DiagnosticCatalogItem[],
+  labCatalogKind: "panel" | "imaging",
+): boolean {
+  const { kind } = labCatalog(testCode, catalogItems);
+  const isImaging = Boolean(kind && IMAGING_KINDS.has(kind));
+  if (labCatalogKind === "imaging") return isImaging;
+  // panel: lab_panel or unknown/missing kind
+  return !isImaging;
 }
 
 function mapLabEvent(
@@ -302,6 +316,8 @@ export async function getPatientHistoryPage(
   opts: {
     types?: TimelineEventType[];
     labFilter?: HistoryLabFilter;
+    /** When set, only lab_order rows matching catalog kind (analizlər vs müayinələr). */
+    labCatalogKind?: "panel" | "imaging";
     from?: Date;
     to?: Date;
     offset?: number;
@@ -314,10 +330,13 @@ export async function getPatientHistoryPage(
   const offset = opts.offset ?? 0;
   const types = opts.types?.length ? new Set(opts.types) : null;
   const labFilter = opts.labFilter ?? "all";
+  const labCatalogKind = opts.labCatalogKind;
   const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
 
   const wantVisit = !types || types.has("visit");
   const wantAppt = !types || types.has("appointment");
+  const wantLab =
+    Boolean(labCatalogKind) || !types || types.has("lab_order");
   const loadEncounters = !types || wantVisit || wantAppt;
 
   const [visits, labOrders, appointments] = await Promise.all([
@@ -333,7 +352,7 @@ export async function getPatientHistoryPage(
           take: 300,
         })
       : Promise.resolve([]),
-    !types || types.has("lab_order")
+    wantLab
       ? prisma.labOrder.findMany({
           where: { patientRefId, ...episodeFilter },
           orderBy: { createdAt: "desc" },
@@ -369,6 +388,12 @@ export async function getPatientHistoryPage(
   for (const o of labOrders) {
     if (labFilter === "results" && !RESULT_STATUSES.has(o.status)) continue;
     if (labFilter === "pending" && !PENDING_LAB_STATUSES.has(o.status)) continue;
+    if (
+      labCatalogKind &&
+      !matchesLabCatalogKind(o.testCode, catalog.items, labCatalogKind)
+    ) {
+      continue;
+    }
     events.push(mapLabEvent(o, catalog.items));
   }
 

@@ -7,7 +7,11 @@ import {
 import { hashPassword } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { ROLE_CODES } from "@/lib/auth/permissions";
+import {
+  ROLE_CODES,
+  permissionsForRole,
+  serializePermissions,
+} from "@/lib/auth/permissions";
 
 const ROLE_CODES_FROM_CP: Record<string, string> = {
   RECEPTION: ROLE_CODES.RECEPTIONIST,
@@ -16,14 +20,26 @@ const ROLE_CODES_FROM_CP: Record<string, string> = {
   STAFF: ROLE_CODES.RECEPTIONIST,
 };
 
+/** Same pattern as clinic staff-provision + hotel SSO: never fail closed on missing Role row. */
+async function ensureRole(code: string) {
+  const existing = await prisma.role.findFirst({ where: { code } });
+  if (existing) return existing;
+  return prisma.role.create({
+    data: {
+      code,
+      name: code.replace(/_/g, " "),
+      permissionsJson: serializePermissions(permissionsForRole(code)),
+    },
+  });
+}
+
 export async function handleStaffProvisionEvent(event: unknown) {
   if (isSatelliteStaffProvisioned(event)) {
     const parsed = satelliteStaffProvisionedSchema.parse(event);
     const p = parsed.payload;
     const organizationId = requestOrganizationId();
     const roleCode = ROLE_CODES_FROM_CP[p.satelliteRole] ?? ROLE_CODES.RECEPTIONIST;
-    const role = await prisma.role.findFirst({ where: { code: roleCode } });
-    if (!role) throw new Error(`Role ${roleCode} missing`);
+    const role = await ensureRole(roleCode);
 
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const passwordHash = await hashPassword(p.pin ?? "0000");

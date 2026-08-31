@@ -26,18 +26,28 @@ describe('plan-bar-theme', () => {
     expect(state).toBe('option');
     const theme = themeForDayState(state);
     expect(theme.dashed).toBe(true);
-    expect(theme.text).toBe('#34495E');
+    expect(theme.text).toBe('#37474F');
     expect(theme.fill).toBe(PLAN_BAR_COLORS.option.fill);
   });
 
-  it('CONFIRMED today → expectedArrival (light text)', () => {
+  it('CONFIRMED today → expectedArrival (dark text on yellow)', () => {
     const state = resolvePlanBarDayState(
       bar({ id: 'a', status: 'CONFIRMED', checkInDate: today, checkOutDate: '2026-06-14' }),
       [],
       today,
     );
     expect(state).toBe('expectedArrival');
-    expect(themeForDayState(state).text).toBe('#34495E');
+    expect(themeForDayState(state).text).toBe('#37474F');
+    expect(themeForDayState(state).fill).toBe('#FDD835');
+  });
+
+  it('CONFIRMED overdue (ci before today) → still expectedArrival', () => {
+    const state = resolvePlanBarDayState(
+      bar({ id: 'a', status: 'CONFIRMED', checkInDate: '2026-06-08', checkOutDate: '2026-06-14' }),
+      [],
+      today,
+    );
+    expect(state).toBe('expectedArrival');
   });
 
   it('CONFIRMED future → reservation (white text)', () => {
@@ -50,29 +60,31 @@ describe('plan-bar-theme', () => {
     expect(themeForDayState(state).text).toBe('#FFFFFF');
   });
 
-  it('IN_HOUSE departing today → expectedDeparture', () => {
+  it('IN_HOUSE departing today → expectedDeparture (pink)', () => {
     const state = resolvePlanBarDayState(
       bar({ id: 'a', status: 'IN_HOUSE', checkInDate: '2026-06-05', checkOutDate: today }),
       [],
       today,
     );
     expect(state).toBe('expectedDeparture');
-    expect(themeForDayState(state).text).toBe('#34495E');
+    expect(themeForDayState(state).fill).toBe('#F06292');
+    expect(themeForDayState(state).text).toBe('#FFFFFF');
   });
 
-  it('IN_HOUSE staying → inHouse', () => {
+  it('IN_HOUSE staying → inHouse (forest green)', () => {
     const state = resolvePlanBarDayState(
       bar({ id: 'a', status: 'IN_HOUSE', checkInDate: '2026-06-05', checkOutDate: '2026-06-20' }),
       [],
       today,
     );
     expect(state).toBe('inHouse');
+    expect(themeForDayState(state).fill).toBe('#2E7D32');
   });
 
-  it('CHECKED_OUT → checkout gold', () => {
+  it('CHECKED_OUT → checkout amber', () => {
     const state = resolvePlanBarDayState(bar({ id: 'a', status: 'CHECKED_OUT' }), [], today);
     expect(state).toBe('checkout');
-    expect(themeForDayState(state).fill).toBe('#FFC107');
+    expect(themeForDayState(state).fill).toBe('#FFA000');
   });
 
   it('single share in empty pool is NOT multiple', () => {
@@ -108,7 +120,7 @@ describe('plan-bar-theme', () => {
     });
     expect(hasOverlappingShareRoommate(a, [a, b])).toBe(true);
     expect(resolvePlanBarDayState(a, [a, b], today)).toBe('multiple');
-    expect(themeForDayState('multiple').fill).toBe('#26C6DA');
+    expect(themeForDayState('multiple').fill).toBe('#00BCD4');
   });
 
   it('resolves HK square kinds from room status', () => {

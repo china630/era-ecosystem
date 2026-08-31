@@ -3,7 +3,15 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { AuthLoginCard, buildAuthLoginLabels, showApiError, assignNoStoreRedirect } from "@era/satellite-kit/ui";
+import {
+  AuthLoginCard,
+  buildAuthLoginLabels,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_INPUT_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  showApiError,
+  assignNoStoreRedirect,
+} from "@era/satellite-kit/ui";
 import type { Locale } from "@era/i18n-common";
 
 const UUID_RE =
@@ -72,38 +80,45 @@ function LoginForm() {
     ssoHint = undefined;
   }
 
+  let provisionHint: string | undefined;
+  try {
+    provisionHint = t("provisionHint") || undefined;
+  } catch {
+    provisionHint = undefined;
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#EBEDF0] p-8">
-      <AuthLoginCard
-        locale={locale}
-        labels={buildAuthLoginLabels(tAuth)}
-        loginId={loginId}
-        password={password}
-        onLoginIdChange={setLoginId}
-        onPasswordChange={setPassword}
-        onSubmit={onSubmit}
-        busy={busy}
-        subtitle={subtitle}
-        ssoHint={ssoHint}
-      />
-      {t("provisionHint") ? (
-        <p className="max-w-md text-center text-xs text-[#7F8C8D]">{t("provisionHint")}</p>
-      ) : null}
-      {showOrgField ? (
-        <label className="w-full max-w-md text-sm text-[#2C3E50]">
-          <span className="mb-1 block font-medium">{tAuth("organizationIdLabel")}</span>
-          <input
-            className="w-full rounded border border-[#BDC3C7] bg-white px-3 py-2 font-mono text-sm"
-            value={organizationId}
-            onChange={(e) => setOrganizationId(e.target.value)}
-            placeholder={tAuth("organizationIdPlaceholder")}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <span className="mt-1 block text-xs text-[#7F8C8D]">{tAuth("organizationIdHint")}</span>
-        </label>
-      ) : null}
-    </div>
+    <AuthLoginCard
+      locale={locale}
+      labels={buildAuthLoginLabels(tAuth)}
+      loginId={loginId}
+      password={password}
+      onLoginIdChange={setLoginId}
+      onPasswordChange={setPassword}
+      onSubmit={onSubmit}
+      busy={busy}
+      subtitle={subtitle}
+      ssoHint={
+        [ssoHint, provisionHint].filter(Boolean).join(" · ") || undefined
+      }
+      formExtras={
+        showOrgField ? (
+          <label className={FORM_FIELD_GROUP_CLASS}>
+            <span className={MODAL_FIELD_LABEL_CLASS}>{tAuth("organizationIdLabel")}</span>
+            <input
+              className={`${FORM_INPUT_CLASS} font-mono text-sm`}
+              value={organizationId}
+              onChange={(e) => setOrganizationId(e.target.value)}
+              placeholder={tAuth("organizationIdPlaceholder")}
+              autoComplete="off"
+              spellCheck={false}
+              name="organizationId"
+            />
+            <span className="mt-1 block text-xs text-[#7F8C8D]">{tAuth("organizationIdHint")}</span>
+          </label>
+        ) : null
+      }
+    />
   );
 }
 

@@ -86,7 +86,7 @@ describe('room-plan EW wave smoke', () => {
         today,
       ),
     ).toBe('expectedArrival');
-    expect(themeForDayState('expectedArrival').text).toBe('#34495E');
+    expect(themeForDayState('expectedArrival').text).toBe('#37474F');
     expect(themeForDayState('expectedArrival').fill).toBe(PLAN_BAR_COLORS.expectedArrival.fill);
 
     expect(

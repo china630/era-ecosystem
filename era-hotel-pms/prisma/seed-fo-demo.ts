@@ -445,7 +445,8 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   });
 
   const checkedOut: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 17, roomNumber: '202', checkIn: ci(-5), checkOut: co(-1), status: 'CHECKED_OUT', withFolio: true, chargeAmount: 600, payAmount: 600 },
+    // Checkout today stays on the plan as EW gold while from=today.
+    { guestIndex: 17, roomNumber: '202', checkIn: ci(-5), checkOut: co(0), status: 'CHECKED_OUT', withFolio: true, chargeAmount: 600, payAmount: 600 },
     { guestIndex: 19, roomNumber: '103', checkIn: ci(-3), checkOut: co(-1), status: 'CHECKED_OUT' },
     { guestIndex: 20, roomNumber: '104', checkIn: ci(-7), checkOut: co(-2), status: 'CHECKED_OUT', agencyId: ctx.agency.id },
   ];

@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   LINK_ACCENT_CLASS,
+  PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
-import { DiagnosisPanel } from "@/components/DiagnosisPanel";
+import {
+  DiagnosisPanel,
+  type DiagnosisPanelHandle,
+} from "@/components/DiagnosisPanel";
 
 type Props = {
   patientRefId: string;
@@ -23,6 +27,7 @@ export function PatientCardDiagnoses({
 }: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
+  const panelRef = useRef<DiagnosisPanelHandle>(null);
   const [resolvedEpisodeId, setResolvedEpisodeId] = useState<string | null | undefined>(
     episodeId === undefined ? undefined : episodeId,
   );
@@ -61,17 +66,30 @@ export function PatientCardDiagnoses({
 
   return (
     <section className="space-y-2">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-        {t("diagnosesTitle")}
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+          {t("diagnosesTitle")}
+        </h2>
+        {!readOnly && resolvedEpisodeId ? (
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => panelRef.current?.openCreate()}
+          >
+            {t("addDiagnosis")}
+          </button>
+        ) : null}
+      </div>
       <div className={`${CARD_CONTAINER_CLASS} p-4`}>
         {resolvedEpisodeId ? (
           <DiagnosisPanel
+            ref={panelRef}
             apiBase={apiBase}
             title={t("diagnosesTitle")}
             showRole={false}
             readOnly={readOnly}
             hideTitle
+            hideAddButton
           />
         ) : resolvedEpisodeId === undefined ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
