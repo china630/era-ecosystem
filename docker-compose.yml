@@ -266,6 +266,8 @@ services:
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_HOTEL_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-chingiz@era.com,shirinov.chingiz@gmail.com,inaram84@gmail.com}
       PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: ${PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD:-}
+      # Process kill switch for Elektraweb live bridge (HOT-06). Per-org ids live on ElektrawebBridgePolicy.
+      ELEKTRAWEB_BRIDGE_ENABLED: ${ELEKTRAWEB_BRIDGE_ENABLED:-0}
     ports:
       - "3201:3201"
     depends_on:
