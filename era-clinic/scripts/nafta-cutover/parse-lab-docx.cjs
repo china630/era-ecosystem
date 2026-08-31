@@ -152,13 +152,17 @@ function pushResult(out, seen, label, rawValue, refRange) {
   if (refRange && value === String(refRange).trim()) return;
   const code = analyteCode(lab);
   if (code === "U-DATE") return;
-  const key = `${code}|${value}`;
+  let valueOut = value;
+  if (code === "U-SG" && /^1\d{3}$/.test(valueOut)) {
+    valueOut = `${valueOut[0]}.${valueOut.slice(1)}`;
+  }
+  const key = `${code}|${valueOut}`;
   if (seen.has(key)) return;
   seen.add(key);
   out.push({
     code,
     label: lab,
-    value,
+    value: valueOut,
     unit,
     refRange: String(refRange || "").trim(),
   });

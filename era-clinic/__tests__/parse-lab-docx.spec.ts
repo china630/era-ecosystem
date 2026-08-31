@@ -32,6 +32,13 @@ describe("parse-lab-docx urine template", () => {
     ]);
     expect(rows.map((r) => r.code)).not.toContain("U-DATE");
     expect(rows.find((r) => r.label === "Xüsusi çəki")).toMatchObject({ value: "1.030", unit: "" });
+    expect(
+      resultsFromTableRows([
+        ["1", "Xüsusi çəki", "1030", ""],
+        ["2", "PH", "6.0", ""],
+        ["3", "Protein", "0.0", ""],
+      ]).find((r) => r.code === "U-SG"),
+    ).toMatchObject({ value: "1.030" });
     expect(rows.find((r) => r.label === "PH")).toMatchObject({ value: "6.0", code: "U-PH" });
     expect(rows.find((r) => r.label === "Leykositlər")).toMatchObject({ value: "6-7" });
     expect(rows.find((r) => r.label === "Qlukoza")).toMatchObject({ value: "++" });
