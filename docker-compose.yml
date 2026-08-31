@@ -109,6 +109,12 @@ services:
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:-dev-era-pii-encryption-key-32chars!!}
       PII_BLIND_INDEX_KEY: ${PII_BLIND_INDEX_KEY:-dev-era-pii-blind-index-key-32chars!}
       SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
+      # Staff fan-out: docker-internal (do not use public https://*.era-365.online — Traefik loop).
+      CLINIC_API_URL: http://clinic:3203
+      HOTEL_PMS_API_URL: http://hotel-pms:3201
+      FNB_POS_API_URL: http://fnb-pos:3202
+      SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
+      CLINIC_BRIDGE_SECRET: ${CLINIC_BRIDGE_SECRET:-${SATELLITE_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ERA_APP_ORIGIN: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
       ERA_API_ORIGIN: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
       ERA_FINANCE_ORIGIN: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
@@ -252,6 +258,7 @@ services:
       CLINIC_URL: http://clinic:3203
       NEXT_PUBLIC_FNB_POS_URL: ${ERA_FNB_POS_ORIGIN:-https://fnb-pos.era-365.online}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-hotel-pms}
+      SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
@@ -289,6 +296,7 @@ services:
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       FNB_POS_WEBHOOK_SECRET: ${FNB_POS_WEBHOOK_SECRET:-dev-fnb-pos-webhook-secret}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
+      SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_FB_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
@@ -499,6 +507,8 @@ services:
       HOSTNAME: 0.0.0.0
       HOTEL_PMS_URL: http://hotel-pms:3201
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
+      SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
+      CLINIC_BRIDGE_SECRET: ${CLINIC_BRIDGE_SECRET:-${SATELLITE_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_CLINIC_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}

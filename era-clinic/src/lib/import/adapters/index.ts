@@ -9,6 +9,16 @@ import { cutoverEpisodeFromCheckout } from "@/lib/import/cutover-episode-status"
 import { ensureCutoverAttendingVisit } from "@/lib/import/cutover-attending-visit";
 import { parseWoUsgNoteWithFallback, withRawQeydFallback, type WoUsgResultLine, type WoUsgServiceCode } from "@/lib/import/parse-wo-usg-note";
 import { parseBakuDateTime } from "@/lib/baku-day";
+import {
+  isSeedProcedureCode,
+  matchProcedureToSeed,
+  matchRoomToSeed,
+} from "@/lib/import/seed-catalog-match";
+import { allocatePatientRefCode } from "@/domain/patient/allocate-patient-ref-code";
+import {
+  composeFullName,
+  isClinicPatientRefCode,
+} from "@/domain/patient/patient-ref-code";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -24,6 +34,47 @@ function req(value: unknown): string {
   const s = cellString(value);
   if (!s) throw new Error("Required cell is empty");
   return s;
+}
+
+async function resolveImportedProcedure(
+  tx: ImportTx,
+  procedureCode: string,
+): Promise<{ id: string; code: string; name: string; durationMin: number } | null> {
+  const byCode = await tx.procedureType?.findFirst({ where: { code: procedureCode } });
+  if (byCode) return byCode;
+  const m = procedureCode.match(/^WO-TR-(\d+)$/i);
+  if (!m) return null;
+  const id = await findImportRecordId(tx, "procedures", `wo:treatment:${m[1]}`);
+  if (!id) return null;
+  return tx.procedureType.findFirst({ where: { id } });
+}
+
+async function resolveImportedResource(tx: ImportTx, roomCode: string) {
+  const byCode = await tx.resource.findFirst({ where: { code: roomCode } });
+  if (byCode) return byCode;
+  const m = roomCode.match(/^WO-ROOM-(\d+)$/i);
+  if (!m) return null;
+  const roomId = await findImportRecordId(tx, "rooms", `wo:room:${m[1]}`);
+  if (!roomId) return null;
+  return tx.resource.findFirst({ where: { roomId } });
+}
+
+async function stampCutoverStayWindow(
+  tx: ImportTx,
+  episodeId: string | undefined,
+  checkIn: Date | null,
+  checkOut: Date | null,
+) {
+  if (!episodeId || (!checkIn && !checkOut)) return;
+  const inst = await tx.programInstance?.findUnique({ where: { episodeId } });
+  if (!inst) return;
+  await tx.programInstance.update({
+    where: { id: inst.id },
+    data: {
+      ...(checkIn ? { startsOn: checkIn } : {}),
+      ...(checkOut ? { endsOn: checkOut } : {}),
+    },
+  });
 }
 
 /**
@@ -221,8 +272,15 @@ const proceduresAdapter: ImportAdapter<{
       "procedures",
       row.externalRef,
       dryRun,
-      async () =>
-        (
+      async () => {
+        const catalog = await tx.procedureType.findMany({
+          where: { code: { startsWith: "SVC-" } },
+          select: { id: true, code: true, name: true },
+        });
+        const seed =
+          matchProcedureToSeed(row.nameAz, catalog) ?? matchProcedureToSeed(row.code, catalog);
+        if (seed) return seed.id;
+        return (
           await tx.procedureType.create({
             data: {
               organizationId: orgId(),
@@ -233,8 +291,14 @@ const proceduresAdapter: ImportAdapter<{
               patientRestMinutes: row.patientRestMinutes,
             },
           })
-        ).id,
+        ).id;
+      },
       async (id) => {
+        const existing = await tx.procedureType.findFirst({
+          where: { id },
+          select: { code: true },
+        });
+        if (existing && isSeedProcedureCode(existing.code)) return;
         await tx.procedureType.update({
           where: { id },
           data: {
@@ -272,6 +336,12 @@ const roomsAdapter: ImportAdapter<{ externalRef: string; code: string; name: str
       row.externalRef,
       dryRun,
       async () => {
+        const cabs = await tx.room.findMany({
+          where: { code: { startsWith: "CAB-" } },
+          select: { id: true, code: true, name: true },
+        });
+        const seed = matchRoomToSeed(row.name, cabs) ?? matchRoomToSeed(row.code, cabs);
+        if (seed) return seed.id;
         const room = await tx.room.create({
           data: { organizationId: orgId(), code: row.code, name: row.name },
         });
@@ -287,6 +357,8 @@ const roomsAdapter: ImportAdapter<{ externalRef: string; code: string; name: str
         return room.id;
       },
       async (id) => {
+        const existing = await tx.room.findFirst({ where: { id }, select: { code: true } });
+        if (existing?.code?.startsWith("CAB-")) return;
         await tx.room.update({ where: { id }, data: { code: row.code, name: row.name } });
         const resource = await tx.resource.findFirst({ where: { code: row.code } });
         if (resource) {
@@ -333,13 +405,12 @@ const procedureRequirementsAdapter: ImportAdapter<{
     quantity: cellNumber(raw.quantity) ?? 1,
   }),
   upsert: async (tx, row, dryRun) => {
-    const proc = await tx.procedureType.findFirst({
-      where: { organizationId: orgId(), code: row.procedureCode },
-    });
+    const proc = await resolveImportedProcedure(tx, row.procedureCode);
     if (!proc) throw new Error(`Unknown procedure ${row.procedureCode}`);
-    const resource = await tx.resource.findFirst({
-      where: { organizationId: orgId(), code: row.resourceCode },
-    });
+    const resource =
+      (await tx.resource.findFirst({
+        where: { organizationId: orgId(), code: row.resourceCode },
+      })) ?? (await resolveImportedResource(tx, row.resourceCode));
     if (!resource) throw new Error(`Unknown resource ${row.resourceCode}`);
     const role =
       row.role === "LOCATION" || row.role === "EQUIPMENT" || row.role === "STAFF"
@@ -358,7 +429,7 @@ const procedureRequirementsAdapter: ImportAdapter<{
               procedureTypeId: proc.id,
               role,
               resourceKind: role === "LOCATION" ? "ROOM" : role === "EQUIPMENT" ? "EQUIPMENT" : null,
-              resourceCode: row.resourceCode,
+              resourceCode: resource.code ?? row.resourceCode,
               quantity: Math.max(1, row.quantity),
               staffMode: "HARD",
               required: true,
@@ -369,7 +440,7 @@ const procedureRequirementsAdapter: ImportAdapter<{
         await tx.procedureTypeRequirement.update({
           where: { id },
           data: {
-            resourceCode: row.resourceCode,
+            resourceCode: resource.code ?? row.resourceCode,
             quantity: Math.max(1, row.quantity),
           },
         });
@@ -583,11 +654,22 @@ const patientsAdapter: ImportAdapter<{
         const patient = await tx.patientRef.create({
           data: {
             organizationId: orgId(),
-            refCode: row.externalRef.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 48),
-            fullName: row.fullName,
+            refCode: await allocatePatientRefCode(tx, orgId()),
+            givenName: row.givenName?.trim() || row.fullName.trim().split(/\s+/)[0] || row.fullName,
+            surname:
+              row.surname?.trim() ||
+              row.fullName.trim().split(/\s+/).slice(-1)[0] ||
+              "",
+            fatherName: null,
+            fullName:
+              row.fullName ||
+              composeFullName({
+                givenName: row.givenName,
+                surname: row.surname,
+              }),
             sex,
             birthDate: parseDateCell(row.birthDate),
-            nationality: row.nationality || "AZ",
+            nationality: row.nationality || null,
             phone: row.phone || null,
             globalPersonId,
             anamnesisText: "Nafta cutover import",
@@ -622,6 +704,7 @@ const patientsAdapter: ImportAdapter<{
           patientOrigin: inHouse ? "IN_HOUSE" : "WALK_IN",
           clinicalEpisodeId: episode.id,
         });
+        await stampCutoverStayWindow(tx, episode.id, checkIn, checkOut);
         return patient.id;
       },
       async (id) => {
@@ -647,13 +730,29 @@ const patientsAdapter: ImportAdapter<{
           where: { id },
           data: {
             fullName: row.fullName,
+            ...(row.givenName?.trim()
+              ? { givenName: row.givenName.trim() }
+              : {}),
+            ...(row.surname?.trim() ? { surname: row.surname.trim() } : {}),
             sex,
             birthDate: parseDateCell(row.birthDate),
             ...(row.nationality ? { nationality: row.nationality } : {}),
             ...(row.phone ? { phone: row.phone } : {}),
             ...(globalPersonId ? { globalPersonId } : {}),
+            // Never overwrite clinic-native P-* refCode with WO externalRef
           },
         });
+        const existingRef = await tx.patientRef.findUnique({
+          where: { id },
+          select: { refCode: true },
+        });
+        if (existingRef && !isClinicPatientRefCode(existingRef.refCode)) {
+          const nextCode = await allocatePatientRefCode(tx, orgId());
+          await tx.patientRef.update({
+            where: { id },
+            data: { refCode: nextCode },
+          });
+        }
         const checkIn = parseDateCell(row.checkIn);
         const checkOut = parseDateCell(row.checkOut);
         const episodeState = cutoverEpisodeFromCheckout(checkOut);
@@ -701,6 +800,7 @@ const patientsAdapter: ImportAdapter<{
           patientOrigin,
           clinicalEpisodeId: episodeId,
         });
+        await stampCutoverStayWindow(tx, episodeId, checkIn, checkOut);
       },
     ),
 };
@@ -759,15 +859,19 @@ const quotasAdapter: ImportAdapter<{
           templateId: template.id,
           episodeId: episode.id,
           programCode: code,
-          startsOn: new Date(),
-          endsOn: new Date(Date.now() + 14 * 86400000),
+          startsOn: episode.openedAt ?? new Date(),
+          endsOn:
+            episode.closedAt ??
+            new Date((episode.openedAt ?? new Date()).getTime() + 14 * 86400000),
         },
       });
     }
     if (!instance) throw new Error(`Could not resolve program instance for ${row.patientRef}`);
+    const proc = await resolveImportedProcedure(tx, row.procedureCode);
+    const procedureCode = proc?.code ?? row.procedureCode;
     const line = await tx.programProcedureBalance.findUnique({
       where: {
-        instanceId_procedureCode: { instanceId: instance.id, procedureCode: row.procedureCode },
+        instanceId_procedureCode: { instanceId: instance.id, procedureCode },
       },
     });
     if (line) {
@@ -780,7 +884,7 @@ const quotasAdapter: ImportAdapter<{
     await tx.programProcedureBalance.create({
       data: {
         instanceId: instance.id,
-        procedureCode: row.procedureCode,
+        procedureCode,
         quotaTotal: row.quotaTotal,
         quotaUsed: used,
       },
@@ -802,7 +906,8 @@ const slotsAdapter: ImportAdapter<{
   entity: "slots",
   label: "Slots",
   order: 11,
-  templateHint: "26-Slots.xlsx — WO calendar COMPLETED (not EW)",
+  templateHint: "26-Slots-p01.xlsx … — WO calendar COMPLETED, 5k-row chunks",
+  allowMultiple: true,
   headerAliases: {
     ...aliases(
       "externalRef",
@@ -840,10 +945,8 @@ const slotsAdapter: ImportAdapter<{
   upsert: async (tx, row, dryRun) => {
     const patientId = await findImportRecordId(tx, "patients", row.patientRef);
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
-    const proc = await tx.procedureType.findFirst({ where: { code: row.procedureCode } });
-    const resource = row.roomCode
-      ? await tx.resource.findFirst({ where: { code: row.roomCode } })
-      : null;
+    const proc = await resolveImportedProcedure(tx, row.procedureCode);
+    const resource = row.roomCode ? await resolveImportedResource(tx, row.roomCode) : null;
     const hhmm = row.startTime.length === 5 ? `${row.startTime}:00` : row.startTime.slice(0, 8);
     const start = parseBakuDateTime(row.date, hhmm);
     const st = row.status.toUpperCase();
@@ -863,7 +966,7 @@ const slotsAdapter: ImportAdapter<{
             patientRefId: patientId,
             clinicalEpisodeId: episode.id,
             procedureTypeId: proc?.id,
-            procedureCode: row.procedureCode,
+            procedureCode: proc?.code ?? row.procedureCode,
             procedureName: proc?.name ?? row.procedureCode,
             scheduledAt: start,
             endsAt,
@@ -899,6 +1002,9 @@ const slotsAdapter: ImportAdapter<{
             importedHistorical: historical,
             resourceId: resource?.id,
             clinicalEpisodeId: episode.id,
+            ...(proc
+              ? { procedureTypeId: proc.id, procedureCode: proc.code, procedureName: proc.name }
+              : {}),
             ...(historical ? { completedAt: start } : {}),
           },
         });
@@ -1273,31 +1379,43 @@ const diagnosesAdapter: ImportAdapter<{
   upsert: async (tx, row, dryRun) => {
     const patientId = await findImportRecordId(tx, "patients", row.patientRef);
     if (!patientId) throw new Error(`Unknown patient ${row.patientRef}`);
+    if (!row.icd10.trim()) {
+      console.warn(
+        `[diagnoses import] skip ${row.patientRef}: no ICD-10 for "${row.rawText.slice(0, 40)}"`,
+      );
+      return "skipped";
+    }
+    const icd = await tx.icdCode.findFirst({
+      where: { code: row.icd10.trim(), selectable: true, active: true },
+    });
+    if (!icd) {
+      console.warn(
+        `[diagnoses import] skip ${row.patientRef}: ICD ${row.icd10} not found`,
+      );
+      return "skipped";
+    }
     const episode = await ensureCutoverEpisode(tx, patientId);
-    const key = `wo:dx:${row.patientRef}:${row.recordedAt}:${row.rawText.slice(0, 24)}`;
+    const key = `wo:dx:${row.patientRef}:${row.recordedAt}:${row.icd10}:${row.rawText.slice(0, 24)}`;
     return upsertByRef(
       tx,
       "diagnoses",
       key,
       dryRun,
       async () => {
-        const complaint = await tx.clinicalComplaint.create({
-          data: { episodeId: episode.id, text: row.rawText },
+        const diagnosis = await tx.clinicalDiagnosis.create({
+          data: {
+            episodeId: episode.id,
+            icdCodeId: icd.id,
+            note: row.rawText.trim() || null,
+          },
         });
-        if (row.icd10) {
-          const icd = await tx.icdCode.findFirst({
-            where: { code: row.icd10, selectable: true, active: true },
-          });
-          if (icd) {
-            await tx.clinicalDiagnosis.create({
-              data: { episodeId: episode.id, icdCodeId: icd.id, note: row.rawText },
-            });
-          }
-        }
-        return complaint.id;
+        return diagnosis.id;
       },
       async (id) => {
-        await tx.clinicalComplaint.update({ where: { id }, data: { text: row.rawText } });
+        await tx.clinicalDiagnosis.update({
+          where: { id },
+          data: { note: row.rawText.trim() || null, icdCodeId: icd.id },
+        });
       },
     );
   },
@@ -1566,11 +1684,12 @@ export function getImportAdapter(entity: string): ImportAdapter<unknown> | undef
 }
 
 export function listImportEntities(): ImportEntityMeta[] {
-  return ADAPTERS.map(({ entity, label, order, templateHint, fileless }) => ({
+  return ADAPTERS.map(({ entity, label, order, templateHint, fileless, allowMultiple }) => ({
     entity,
     label,
     order,
     templateHint,
     fileless,
+    allowMultiple,
   })).sort((a, b) => a.order - b.order);
 }

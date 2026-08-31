@@ -3,16 +3,20 @@ import { packageSellAdapter } from "@/lib/import/adapters/package-sell.adapter";
 import { IMPORT_PHASES } from "@/lib/import/phases";
 
 describe("package-sell import adapter", () => {
-  it("is in the hotel master phase after rate-plans", () => {
+  it("is in the hotel transactional phase after folios (pack #14)", () => {
     expect(IMPORT_PHASES.find((p) => p.id === "master")?.entities).toEqual([
       "room-types",
-      "bar-bootstrap",
       "rate-plans",
-      "package-sell",
       "rooms",
       "agencies",
-      "product-cards",
-      "stock-cards",
+    ]);
+    expect(IMPORT_PHASES.find((p) => p.id === "transactional")?.entities).toEqual([
+      "guests",
+      "reservations",
+      "reservation-notes",
+      "folios",
+      "package-sell",
+      "agency-statement",
     ]);
   });
 

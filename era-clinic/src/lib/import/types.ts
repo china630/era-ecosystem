@@ -30,6 +30,8 @@ export type ImportAdapter<T> = {
   order: number;
   templateHint: string;
   fileless?: boolean;
+  /** Large books (slots): operator may attach several .xlsx chunks in one step. */
+  allowMultiple?: boolean;
   headerAliases: Record<string, string>;
   rowSchema: z.ZodType<T>;
   mapRow: (raw: Record<string, unknown>) => unknown;
@@ -42,4 +44,5 @@ export type ImportEntityMeta = {
   order: number;
   templateHint: string;
   fileless?: boolean;
+  allowMultiple?: boolean;
 };

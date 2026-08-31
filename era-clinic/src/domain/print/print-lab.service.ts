@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { formatNameAndCode } from "@/lib/display-code";
 
 export type PrintLabRow = {
   no: number;
@@ -82,7 +83,10 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
   for (const item of order.items) {
     const svc = item.diagnosticService;
     if (svc) {
-      titleParts.push(pickL10n({ en: svc.titleEn, ru: svc.titleRu, az: svc.titleAz }, lang));
+      const name = pickL10n({ en: svc.titleEn, ru: svc.titleRu, az: svc.titleAz }, lang);
+      titleParts.push(formatNameAndCode(name, svc.code || item.serviceCode));
+    } else if (item.serviceCode) {
+      titleParts.push(item.serviceCode);
     }
     const analytes = svc?.analytes ?? [];
     const byCode = new Map(analytes.map((a: { code: string }) => [a.code, a]));

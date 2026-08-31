@@ -92,7 +92,7 @@ Writes `NAFTA-ERA-READY/clinic/19-Treatments.xlsx`, `20-Clinic-Rooms.xlsx`, `21-
 | File | Rows (2026-08-28 dump) | START source | Columns |
 |------|------------------:|----------------|---------|
 | 24-Patients.xlsx | 1714 | dump `cards/{id}.json` `slices.patient` joined onto `bulk/patients.json` | externalRef, woId, fullName, givenName, surname, sex, birthDate, nationality, phone, hotelResNo, roomNumber, folioPerson, uniqueId, checkIn, checkOut, treatmentDaysCount, nightCount, isReservationPatient, doctorId, doctorName, doctorFormCreatedAt, checkUpId, checkUpName, programCode, latestPainDegree, latestPainDegreeCreatedAt |
-| 26-Slots.xlsx | 2802 | dump calendar | externalRef, date, startTime, patientRef, procedureCode, roomCode, status |
+| 26-Slots.xlsx / `26-Slots-p01.xlsx` … | ~60 480 COMPLETED | dump calendar | externalRef, date, startTime, patientRef, procedureCode, roomCode, status, nahiye. **Chunks of 5 000 rows** — wizard `#26` is multi-file; do not POST the full book (FormData parse fails). Split: `node era-clinic/scripts/nafta-cutover/split-xlsx-chunks.cjs --in …/26-Slots.xlsx --replace`. |
 | 27-Lab-Orders.xlsx | 2354 | dump lab-results + files/lab | externalRef, patientRef, testCode, status, panel, takenAt |
 | 19-Treatments.xlsx | 80 | `01-procedures.xlsx` SSOT | externalRef, code, nameAz, durationMin, resourceGapMinutes, patientRestMinutes, price |
 | 20-Clinic-Rooms.xlsx | 63 | SSOT + calendar history | externalRef, code, name |
@@ -104,6 +104,15 @@ Writes `NAFTA-ERA-READY/clinic/19-Treatments.xlsx`, `20-Clinic-Rooms.xlsx`, `21-
 | 28-Lab-Results.xlsx | 22620 | Word tables | orderRef, code, label, value, unit, refMin, refMax |
 | `../hr/01-Org-Structure.xlsx` | START `hr/Ştat vahidləri Nafta 28.08.2026.xlsx` | orgUnit, position, totalSlots. Import **before** roster. |
 | `../hr/02-Employees.xlsx` | START `hr/02-Employees.xlsx` (133; FİN + Cins K/Q + DOB + hire) | fin, fullName, sex, birthDate, orgUnit, position, hireDate, workplace, satellites. Rebuild: `node era-clinic/scripts/nafta-cutover/build-hr-roster.cjs` |
+
+Episode `programCode` (list **Proqram / paket**): **not** WO Check-up name. Overlay from EW FO-with-Notes: agency Premium/Dermo/Həmkarlar, phrases, `ERA-PKG`, Price Note, **Walkin medical → PKG-STANDART**. Skip leisure and mix (two SKUs on one card). Join: name+date, ±1 day, unique last name, unique room+date.
+
+```
+node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs          # dry-run
+node era-clinic/scripts/nafta-cutover/stamp-clinic-program.cjs --apply  # writes 24-Patients.xlsx
+```
+
+Then **Re-Apply wizard `#24`**. Rebuild/bake runs the overlay automatically. `rebuild-derived.cjs` also stamps before writing `#24`.
 
 `#24` joins card `GET /api/Patient/{id}` onto list `get-all`. The list omits `gender`, `name`/`surname`, `folioPerson`, and often `reservationId`; those live on the card. `sex` is `MALE`/`FEMALE`/`UNKNOWN` from card `gender` (Female must not be treated as male — the substring `male` sits inside `female`). Extra columns stay on the book for ops/MDM; wizard persist: name, sex, birthDate, nationality, phone, hotelResNo, room, program, stay dates.
 
@@ -156,16 +165,27 @@ Admin → Cutover import (`/admin/import`). Clinic admin write.
 1. Dictionaries: **16** catalog → **17** physio → **19** treatments → **20** rooms → **21** requirements → **23** templates. Do **not** Apply EW `Hizmet Tanımları` (old READY `#18`) — package quota procedures are not tariffed; do not clone 0 AZN extras.  
 2. Staff: **22**  
 3. Patients: **24** (after hotel `#10`/`#11`; FO `passport`/`uniqueId` → MDM; attending Visit from `#22`)  
-4. Quotas + slots: **25** + **26**  
+4. Quotas + slots: **25** + **26** (select all `26-Slots-p01.xlsx` … in one step; wizard posts each chunk separately)  
 5. Lab / USG: **27** → **28**, then **29** after diagnostic catalog seed. Do **not** Apply leftover diagnoses.
 
 Re-upload of the same `externalRef` updates, does not duplicate. `#24` finds the latest episode **any** status (`openedAt` desc) and applies status / dates / room / reservation / program — re-upload `#24` only, no clinic DB wipe. Missing episode is created. Re-Apply `#26` / `#27` / `#29` also stamps `clinicalEpisodeId` on existing procedure/lab/USG rows (orphans from pre-CLI-55 Apply).
+
+## Seed catalog vs WO cutover (master-data duplicates)
+
+If `db:seed` (`SVC-*` / `CAB-*`) ran **before** wizard `#19`/`#20`, master-data shows two catalogs. Seed owns names and encoding. WO `#26` owns historical slot times (`scheduledAt`). Do **not** wipe slots.
+
+1. Dry-run: `npx tsx scripts/nafta-cutover/merge-seed-wo-catalog.ts`
+2. Apply: `npx tsx scripts/nafta-cutover/merge-seed-wo-catalog.ts --apply`
+3. Check `/admin/master-data` — leftover `WO-TR-*` / `WO-ROOM-*` should be gone; unmatched names stay in the JSON report (do not delete those by hand until mapped).
+4. Re-Apply `#26` after deploy so slot rows stamp `SVC-*` + seed cabinet resource (times stay). `#19` will not overwrite seed duration/name.
+
+Unmatched WO treatments (no `SVC-*` name hit) are left in place. Add an alias in `src/lib/import/seed-catalog-match.ts` and re-run.
 
 ## Runbook (ops vs archive)
 
 Hour X: upload `NAFTA-ERA-READY/hotel/*` in hotel wizard and `clinic/01–10` in clinic wizard. Rebuild after any START delta.
 
-Patients `/patients`: filter hotel room (existing) + program/package (`programCode`) on OPEN episodes.
+Patients `/patients`: filter hotel room (existing) + program/package (`programCode`) on OPEN episodes. Clinic-native **`P-######`** `refCode` (Tenant `nextPatientSeq`); WO `wo:patient:{id}` stays only in `CutoverImportKey`. After legacy import, remap: `npx tsx scripts/nafta-cutover/backfill-patient-ref-codes.ts` then `--apply`. USG protocols mistakenly stored as complaints: `npx tsx scripts/nafta-cutover/scrub-usg-complaints.ts` then `--apply`. Diagnoses leftover adapter no longer writes `rawText` into `ClinicalComplaint`.
 
 Roster mapping lives in `scripts/nafta-cutover/map.cjs` (`mapRosterRow` / `mapOrgStructureRow`). Rebuild only HR books:
 

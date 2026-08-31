@@ -32,6 +32,23 @@ function roleGuardResponse(request: NextRequest, reqHeaders: Headers) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Multipart import: verify cookie on the original request, then pass through.
+  // Cloning headers via NextResponse.next({ request: { headers } }) drops Cookie
+  // and truncates FormData on POST → 401 Unauthorized or parse failure.
+  if (pathname.startsWith("/api/import")) {
+    const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    try {
+      await verifySatelliteSession(token);
+    } catch {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
   const reqHeaders = withPath(request);
 
   const clinicPublicApi = [
@@ -39,6 +56,7 @@ export async function middleware(request: NextRequest) {
     "/api/sanatorium/episodes/from-stay",
     "/api/integration/hotel-lifecycle",
     "/api/integration/settlement-confirmed",
+    "/api/integration/staff-provision",
     "/api/booking",
     "/api/cron",
   ];

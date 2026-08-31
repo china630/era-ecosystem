@@ -282,7 +282,7 @@ function mapPatientImportRow(listRow, card) {
     doctorFormCreatedAt: isoStamp(list.doctorFormCreatedAt || c.doctorFormCreatedAt),
     checkUpId: c.checkUpId != null ? c.checkUpId : list.checkUpId ?? "",
     checkUpName,
-    programCode: checkUpName,
+    programCode: "",
     latestPainDegree:
       c.latestPainDegree != null ? c.latestPainDegree : list.latestPainDegree != null ? list.latestPainDegree : "",
     latestPainDegreeCreatedAt: isoStamp(c.latestPainDegreeCreatedAt || list.latestPainDegreeCreatedAt),

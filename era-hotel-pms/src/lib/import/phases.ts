@@ -1,4 +1,4 @@
-/** Ordered migration phases for Elektraweb bootstrap (super-admin hub). */
+/** Ordered migration phases — Nafta READY pack-layout #03–#15. */
 
 export type ImportPhaseId = 'dictionaries' | 'master' | 'transactional';
 
@@ -9,6 +9,10 @@ export type ImportPhaseDef = {
   entities: string[];
 };
 
+/**
+ * Hotel wizard only. Not on this form:
+ * BAR bootstrap (no Nafta file) · FnB `#30–#32` · Retail `#33`.
+ */
 export const IMPORT_PHASES: ImportPhaseDef[] = [
   {
     id: 'dictionaries',
@@ -18,12 +22,19 @@ export const IMPORT_PHASES: ImportPhaseDef[] = [
   {
     id: 'master',
     strictOrder: true,
-    entities: ['room-types', 'bar-bootstrap', 'rate-plans', 'package-sell', 'rooms', 'agencies', 'product-cards', 'stock-cards'],
+    entities: ['room-types', 'rate-plans', 'rooms', 'agencies'],
   },
   {
     id: 'transactional',
     strictOrder: true,
-    entities: ['guests', 'reservations', 'reservation-notes', 'folios', 'agency-statement'],
+    entities: [
+      'guests',
+      'reservations',
+      'reservation-notes',
+      'folios',
+      'package-sell',
+      'agency-statement',
+    ],
   },
 ];
 

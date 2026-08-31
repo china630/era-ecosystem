@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Trash2 } from "lucide-react";
 import {
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
@@ -29,6 +30,7 @@ import type {
   DiagnosticCatalogItem,
 } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import { formatNameAndCode } from "@/lib/display-code";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 
 const resultsFormId = "lab-results-form";
@@ -48,6 +50,9 @@ type LabOrderItem = {
   serviceCode: string;
   diagnosticService?: {
     code: string;
+    titleEn?: string;
+    titleRu?: string;
+    titleAz?: string | null;
     modality?: { code: string } | null;
   } | null;
   results?: LabResultRow[];
@@ -113,6 +118,7 @@ type Props = {
 
 export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Props) {
   const t = useTranslations("labOrdersDetail");
+  const tList = useTranslations("labOrders");
   const tc = useTranslations("common");
   const locale = useLocale();
   const [order, setOrder] = useState<LabOrder | null>(null);
@@ -244,6 +250,22 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     [resultRows, catalogItem],
   );
 
+  async function cancelOrder() {
+    if (!orderId || !window.confirm(tList("cancelConfirm"))) return;
+    setBusy(true);
+    setError("");
+    const res = await fetch(`/api/lab-orders/${orderId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? t("actionFailed"));
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    onChanged?.();
+    onClose();
+  }
+
   async function runAction(path: string, body?: unknown) {
     if (!orderId) return;
     setBusy(true);
@@ -289,11 +311,34 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     setResultsModalOpen(true);
   }
 
+  function labItemLabel(item: LabOrderItem): string {
+    const svc = item.diagnosticService;
+    const name = svc
+      ? pickL10n(
+          {
+            en: svc.titleEn ?? svc.code,
+            ru: svc.titleRu ?? svc.titleEn ?? svc.code,
+            az: svc.titleAz ?? svc.titleEn ?? svc.code,
+          },
+          locale,
+        )
+      : catalogItem && (catalogItem.code === item.serviceCode || catalogItem.serviceCode === item.serviceCode)
+        ? pickL10n(catalogItem.title, locale)
+        : "";
+    return formatNameAndCode(name, item.serviceCode);
+  }
+
   const currentStep = order ? stepIndex(order.status) : 0;
   const canEditResults = Boolean(order && EDITABLE_STATUSES.includes(order.status));
+  const serviceTitle =
+    order != null
+      ? order.items?.length
+        ? order.items.map((i) => labItemLabel(i)).join(", ")
+        : formatNameAndCode(catalogItem ? pickL10n(catalogItem.title, locale) : "", order.testCode)
+      : "";
   const title =
     order != null
-      ? `${order.items?.length ? order.items.map((i) => i.serviceCode).join(", ") : order.testCode} — ${order.patientRef.fullName}`
+      ? `${formatNameAndCode(order.patientRef.fullName, order.patientRef.refCode)}${serviceTitle ? ` — ${serviceTitle}` : ""}`
       : t("title");
 
   const modalityCode =
@@ -319,14 +364,28 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
         closeLabel={tc("close")}
         maxWidthClass="max-w-3xl"
         headerActions={
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => setPrintOpen(true)}
-            disabled={!orderId}
-          >
-            {t("printButton")}
-          </button>
+          <>
+            {order?.status === "ORDERED" ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy}
+                onClick={() => void cancelOrder()}
+                aria-label={tList("cancelOrder")}
+              >
+                <Trash2 className="mr-1 inline h-4 w-4" aria-hidden />
+                {tList("cancelOrder")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setPrintOpen(true)}
+              disabled={!orderId}
+            >
+              {t("printButton")}
+            </button>
+          </>
         }
       >
         <div className="space-y-5">

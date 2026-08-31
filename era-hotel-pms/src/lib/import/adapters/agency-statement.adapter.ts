@@ -20,7 +20,7 @@ const rowSchema = z.object({
 export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: "agency-statement",
   label: "Agency Statement (city ledger)",
-  order: 65,
+  order: 15,
   permission: PERMISSIONS.FOLIO_CHARGE,
   templateHint: "15-Agency-Statement.xlsx — EW Agency Statement (FO city ledger, not 1C)",
   headerAliases: {

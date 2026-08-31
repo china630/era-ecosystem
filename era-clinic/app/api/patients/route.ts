@@ -23,10 +23,12 @@ const patientBloodGroup = z.enum([
 
 const createSchema = z
   .object({
-    refCode: z.string().min(1),
-    fullName: z.string().min(1),
+    givenName: z.string().min(1),
+    surname: z.string().min(1),
+    fatherName: z.string().nullable().optional(),
+    fullName: z.string().optional(),
     phone: z.string().optional(),
-    nationality: z.string().optional(),
+    nationality: z.string().nullable().optional(),
     sex: patientSex.optional(),
     birthDate: z.string().nullable().optional(),
     bloodGroup: patientBloodGroup.optional(),
@@ -58,6 +60,13 @@ export async function GET(req: Request) {
     const pageSizeRaw = params.get("pageSize");
     const ageMinRaw = params.get("ageMin");
     const ageMaxRaw = params.get("ageMax");
+    const episodeStatusRaw = params.get("episodeStatus");
+    const episodeStatus =
+      episodeStatusRaw === "OPEN" ||
+      episodeStatusRaw === "CLOSED" ||
+      episodeStatusRaw === "ALL"
+        ? episodeStatusRaw
+        : "OPEN";
 
     const result = await listPatientsPaged({
       q,
@@ -73,6 +82,7 @@ export async function GET(req: Request) {
       includeHotelRooms: params.get("includeHotelRooms") === "1",
       programCode: params.get("programCode")?.trim() || undefined,
       includeProgramCodes: params.get("includeProgramCodes") === "1",
+      episodeStatus,
       page: pageRaw ? Number(pageRaw) : undefined,
       pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
     });

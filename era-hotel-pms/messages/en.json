@@ -2081,11 +2081,11 @@
       },
       "master": {
         "title": "Phase 2 — Hotel master data",
-        "hint": "Top to bottom. After rate codes: 14-Package-Sell-2026.xlsx (PDF desk, not EW). Then rooms, agencies, EW Ürün Kartları."
+        "hint": "Top to bottom: 06 room types → 07 rates → 08 rooms → 09 agencies. Package sell is phase 3 (#14)."
       },
       "transactional": {
         "title": "Phase 3 — Guests, reservations, notes, folios",
-        "hint": "Strict order: guests → reservations → notes → folios → 15-Agency-Statement.xlsx (EW city ledger, not 1C)."
+        "hint": "Strict order: guests → reservations → notes → folios → 14-Package-Sell-2026.xlsx → 15-Agency-Statement.xlsx. FnB/retail cards are not on this form."
       }
     },
     "nextPhase": "Next phase",

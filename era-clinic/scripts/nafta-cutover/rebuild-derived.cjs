@@ -27,6 +27,8 @@ const {
 const { parseLabDocxFile, testCodeFromPanel, panelFromName } = require("./parse-lab-docx.cjs");
 const { eraCodeForWoAnalysis, eraAnalyteCode } = require("./wo-era-lab-map.cjs");
 const { FILES } = require("./pack-layout.cjs");
+const { writeSheet, writeSheetChunks } = require("./xlsx-write.cjs");
+const { overlayPatientProgramCodes, loadEnrichedStamps } = require("./stamp-clinic-program.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -61,16 +63,6 @@ function rowsOf(doc) {
   if (Array.isArray(doc)) return doc;
   if (Array.isArray(doc.data)) return doc.data;
   return [];
-}
-
-function writeSheet(XLSX, outFile, headers, rows) {
-  fs.mkdirSync(path.dirname(outFile), { recursive: true });
-  const aoa = [headers, ...rows.map((r) => headers.map((h) => (r[h] == null ? "" : r[h])))];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "import");
-  XLSX.writeFile(wb, outFile);
-  return rows.length;
 }
 
 function normName(s) {
@@ -191,6 +183,8 @@ function main() {
 
   const livePatients = patientsAll ? patients : patients;
   const patientRows = livePatients.map((p) => mapPatientImportRow(p, cardIndex.get(p.id)));
+  const pkgStamps = loadEnrichedStamps();
+  if (pkgStamps.length) overlayPatientProgramCodes(patientRows, pkgStamps);
   const checkInByWoId = new Map(
     livePatients.map((p, i) => [String(p.id), patientRows[i].checkIn || ""]),
   );
@@ -265,7 +259,7 @@ function main() {
 
   const historicalSlots = allSlots.filter((r) => r.status === "COMPLETED");
   const nQuota = writeSheet(XLSX, path.join(OUT, FILES.clinicQuotas), HEADERS.quotas, quotaRows);
-  const nSlots = writeSheet(XLSX, path.join(OUT, FILES.clinicSlots), HEADERS.slots, historicalSlots);
+  const nSlots = writeSheetChunks(XLSX, path.join(OUT, FILES.clinicSlots), HEADERS.slots, historicalSlots);
 
   const seedLab = loadSeedLabIndex();
   const labCatRows = [];

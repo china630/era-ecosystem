@@ -29,7 +29,7 @@ describe("listPatientsPaged hotel room filter", () => {
         refCode: "P1",
         fullName: "Ali",
         birthDate: null,
-        episodes: [{ roomNumber: "101" }],
+        episodes: [{ roomNumber: "101", reservationId: "11112877", openedAt: new Date("2026-08-27T00:00:00+04:00"), closedAt: null, programInstance: { endsOn: new Date("2026-09-04T00:00:00+04:00") } }],
       },
     ]);
     prisma.patientRef.count.mockResolvedValue(1);
@@ -51,10 +51,15 @@ describe("listPatientsPaged hotel room filter", () => {
             },
           },
         },
+        orderBy: { createdAt: "desc" },
       }),
     );
     expect(result.items[0]).toEqual(
-      expect.objectContaining({ hotelRoomNumber: "101" }),
+      expect.objectContaining({
+        hotelRoomNumber: "101",
+        checkInAt: expect.stringMatching(/^2026-08-26|^2026-08-27/),
+        checkOutAt: expect.stringMatching(/^2026-09-03|^2026-09-04/),
+      }),
     );
     expect(result.hotelRooms).toEqual(["101"]);
   });
@@ -67,7 +72,45 @@ describe("listPatientsPaged hotel room filter", () => {
     const { listPatientsPaged } = await import("@/domain/patient/patient.service");
     const result = await listPatientsPaged({});
 
+    expect(prisma.patientRef.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { episodes: { some: { status: "OPEN" } } },
+      }),
+    );
     expect(prisma.clinicalEpisode.findMany).not.toHaveBeenCalled();
     expect(result.hotelRooms).toBeUndefined();
+  });
+
+  it("episodeStatus ALL skips episode status constraint", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.patientRef.findMany.mockResolvedValue([]);
+    prisma.patientRef.count.mockResolvedValue(0);
+
+    const { listPatientsPaged } = await import("@/domain/patient/patient.service");
+    await listPatientsPaged({ episodeStatus: "ALL" });
+
+    expect(prisma.patientRef.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+  });
+
+  it("episodeStatus CLOSED requires closed course and no open", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.patientRef.findMany.mockResolvedValue([]);
+    prisma.patientRef.count.mockResolvedValue(0);
+
+    const { listPatientsPaged } = await import("@/domain/patient/patient.service");
+    await listPatientsPaged({ episodeStatus: "CLOSED" });
+
+    expect(prisma.patientRef.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          AND: [
+            { episodes: { some: { status: "CLOSED" } } },
+            { episodes: { none: { status: "OPEN" } } },
+          ],
+        },
+      }),
+    );
   });
 });

@@ -12,7 +12,7 @@ const rowSchema = z.object({
 export const bedTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'bed-types',
   label: 'Bed Type',
-  order: 11,
+  order: 4,
   permission: PERMISSIONS.MASTER_DATA_MANAGE,
   templateHint: '04-Bed-Types.xlsx — EW Bed Type',
   headerAliases: {

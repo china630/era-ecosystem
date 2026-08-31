@@ -214,3 +214,7 @@ Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clin
 - [x] Walk-in close: reception + weekly cron; refuse if live procedures or open labs
 - [x] Intake idempotency per episode (not lifetime patient)
 
+### CLI-WF-PWD-01 local password
+
+- [x] Profile → `/account/password`; first workforce PIN `0000`; `PATCH /api/auth/password`; SSO accounts 403
+

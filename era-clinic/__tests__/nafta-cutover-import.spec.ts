@@ -16,6 +16,17 @@ jest.mock("@/domain/physio/nahiye-cutover.service", () => ({
   applyNahiyeToProcedureOrder: jest.fn().mockResolvedValue(undefined),
 }));
 
+const tenantStub = {
+  tenant: {
+    findFirst: jest.fn().mockResolvedValue({ id: "tenant1" }),
+    create: jest.fn().mockResolvedValue({ id: "tenant1", nextPatientSeq: 2 }),
+    update: jest.fn().mockResolvedValue({
+      nextPatientSeq: 2,
+      organizationId: "org-test",
+    }),
+  },
+};
+
 describe("nafta cutover import rules", () => {
   it("maps patient card fields including sex nationality phone", () => {
     const adapter = getImportAdapter("patients")!;
@@ -80,6 +91,7 @@ describe("nafta cutover import rules", () => {
     const createPatient = jest.fn().mockResolvedValue({ id: "pat1" });
     const createEpisode = jest.fn().mockResolvedValue({ id: "ep1" });
     const tx = {
+      ...tenantStub,
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
@@ -125,6 +137,7 @@ describe("nafta cutover import rules", () => {
     });
     const createEpisode = jest.fn().mockResolvedValue({ id: "ep1" });
     const tx = {
+      ...tenantStub,
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
@@ -157,6 +170,7 @@ describe("nafta cutover import rules", () => {
     });
     const createEpisode = jest.fn().mockResolvedValue({ id: "ep1" });
     const tx = {
+      ...tenantStub,
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
@@ -194,11 +208,15 @@ describe("nafta cutover import rules", () => {
     });
     const updateEpisode = jest.fn();
     const tx = {
+      ...tenantStub,
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue({ recordId: "pat1" }),
       },
       patientRef: {
-        findUnique: jest.fn().mockResolvedValue({ globalPersonId: "gp-cutover" }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce({ globalPersonId: "gp-cutover" })
+          .mockResolvedValueOnce({ refCode: "wo-patient-left" }),
         update: jest.fn(),
       },
       clinicalEpisode: {
@@ -250,11 +268,15 @@ describe("nafta cutover import rules", () => {
     const updateEpisode = jest.fn();
     const createEpisode = jest.fn();
     const tx = {
+      ...tenantStub,
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue({ recordId: "pat1" }),
       },
       patientRef: {
-        findUnique: jest.fn().mockResolvedValue({ globalPersonId: "gp-cutover" }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce({ globalPersonId: "gp-cutover" })
+          .mockResolvedValueOnce({ refCode: "wo-patient-left" }),
         update: jest.fn(),
       },
       clinicalEpisode: {
@@ -306,6 +328,7 @@ describe("nafta cutover import rules", () => {
     });
     const createVisit = jest.fn().mockResolvedValue({ id: "vis1" });
     const tx = {
+      ...tenantStub,
       cutoverImportKey: {
         findFirst: jest.fn(async ({ where }: { where: { entity: string; externalRef?: string } }) => {
           if (where.entity === "practitioners" && where.externalRef === "wo:doctor:3") {
@@ -348,6 +371,37 @@ describe("nafta cutover import rules", () => {
     });
   });
 
+  it("procedure Apply attaches WO-TR to existing SVC seed row", async () => {
+    const adapter = getImportAdapter("procedures")!;
+    const mapped = adapter.mapRow({
+      externalRef: "wo:treatment:10",
+      code: "WO-TR-10",
+      nameAz: "Amplipuls",
+      durationMin: "15",
+      resourceGapMinutes: "5",
+      patientRestMinutes: "10",
+      price: "12.5",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const create = jest.fn();
+    const tx = {
+      cutoverImportKey: { findFirst: jest.fn().mockResolvedValue(null), create: jest.fn() },
+      procedureType: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: "svc-amp", code: "SVC-AMPLIPULS", name: "Amplipuls" },
+        ]),
+        create,
+      },
+    };
+    await adapter.upsert(tx as never, row, false);
+    expect(create).not.toHaveBeenCalled();
+    expect(tx.cutoverImportKey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ recordId: "svc-amp" }),
+      }),
+    );
+  });
+
   it("maps lab order panel and COMPLETED status", () => {
     const adapter = getImportAdapter("lab-orders")!;
     const mapped = adapter.mapRow({
@@ -375,7 +429,7 @@ describe("nafta cutover import rules", () => {
     ).toBe(false);
   });
 
-  it("diagnoses upsert uses CLOSED episode when no OPEN", async () => {
+  it("diagnoses upsert skips rows without resolvable ICD-10", async () => {
     const adapter = getImportAdapter("diagnoses")!;
     const mapped = adapter.mapRow({
       patientRef: "wo:patient:99",
@@ -384,7 +438,8 @@ describe("nafta cutover import rules", () => {
       recordedAt: "2024-01-15",
     });
     const row = adapter.rowSchema.parse(mapped);
-    const createComplaint = jest.fn().mockResolvedValue({ id: "cmp1" });
+    const createComplaint = jest.fn();
+    const createDiagnosis = jest.fn();
     const tx = {
       cutoverImportKey: {
         findFirst: jest.fn(async ({ where }: { where: { entity: string } }) =>
@@ -398,11 +453,47 @@ describe("nafta cutover import rules", () => {
       },
       clinicalComplaint: { create: createComplaint },
       icdCode: { findFirst: jest.fn() },
-      clinicalDiagnosis: { create: jest.fn() },
+      clinicalDiagnosis: { create: createDiagnosis },
+    };
+    const result = await adapter.upsert(tx as never, row, false);
+    expect(result).toBe("skipped");
+    expect(createComplaint).not.toHaveBeenCalled();
+    expect(createDiagnosis).not.toHaveBeenCalled();
+  });
+
+  it("diagnoses upsert creates clinicalDiagnosis when ICD found", async () => {
+    const adapter = getImportAdapter("diagnoses")!;
+    const mapped = adapter.mapRow({
+      patientRef: "wo:patient:99",
+      rawText: "Hypertension",
+      icd10: "I10",
+      recordedAt: "2024-01-15",
+    });
+    const row = adapter.rowSchema.parse(mapped);
+    const createDiagnosis = jest.fn().mockResolvedValue({ id: "dx1" });
+    const tx = {
+      cutoverImportKey: {
+        findFirst: jest.fn(async ({ where }: { where: { entity: string } }) =>
+          where.entity === "patients" ? { recordId: "pat1" } : null,
+        ),
+        create: jest.fn(),
+      },
+      clinicalEpisode: {
+        findFirst: jest.fn().mockResolvedValue({ id: "ep-closed", programCode: "CUTOVER-ARCHIVE" }),
+        create: jest.fn(),
+      },
+      clinicalComplaint: { create: jest.fn() },
+      icdCode: { findFirst: jest.fn().mockResolvedValue({ id: "icd1", code: "I10" }) },
+      clinicalDiagnosis: { create: createDiagnosis, update: jest.fn() },
     };
     await adapter.upsert(tx as never, row, false);
-    expect(createComplaint).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ episodeId: "ep-closed" }) }),
+    expect(createDiagnosis).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          episodeId: "ep-closed",
+          icdCodeId: "icd1",
+        }),
+      }),
     );
   });
 
@@ -457,6 +548,7 @@ describe("nafta cutover import rules", () => {
       cutoverImportKey: {
         findFirst: jest.fn().mockResolvedValue({ recordId: "pat1" }),
       },
+      procedureType: { findFirst: jest.fn().mockResolvedValue(null) },
       clinicalEpisode: {
         findFirst: jest.fn().mockResolvedValue({
           id: "ep1",

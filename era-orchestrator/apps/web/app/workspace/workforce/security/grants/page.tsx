@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Ban } from "lucide-react";
 import {
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -47,13 +48,24 @@ function humanizeRole(code: string): string {
     .replace(/^\w/, (c) => c.toUpperCase());
 }
 
-type Overview = {
-  employments: Array<{
-    id: string;
-    globalPersonId: string;
-    orgUnit?: { name: string };
-    position?: { name: string };
-  }>;
+type EmploymentRow = {
+  id: string;
+  globalPersonId: string;
+  status?: string;
+  orgUnit?: { name: string };
+  position?: { name: string };
+};
+
+type PersonProfile = {
+  globalPersonId: string;
+  displayName: string | null;
+  finMasked?: string | null;
+  accessDenied: boolean;
+};
+
+type EmploymentsList = {
+  items: EmploymentRow[];
+  persons: Record<string, PersonProfile>;
 };
 
 type GrantRow = {
@@ -65,28 +77,27 @@ type GrantRow = {
   revokedAt?: string | null;
 };
 
+const EMPTY_GRANT_FORM = {
+  employmentId: "",
+  satelliteKey: "" as "" | WorkforceSatelliteKey,
+  satelliteRole: "",
+  reason: "",
+};
+
 export default function WorkforceSecurityGrantsPage() {
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceSecurity");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
-  const [data, setData] = useState<Overview | null>(null);
+  const [employments, setEmployments] = useState<EmploymentRow[]>([]);
+  const [persons, setPersons] = useState<Record<string, PersonProfile>>({});
   const [grants, setGrants] = useState<GrantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [grantOpen, setGrantOpen] = useState(false);
-  const [grantForm, setGrantForm] = useState<{
-    employmentId: string;
-    satelliteKey: WorkforceSatelliteKey;
-    satelliteRole: string;
-    reason: string;
-  }>({
-    employmentId: "",
-    satelliteKey: SATELLITES[0].key,
-    satelliteRole: "DOCTOR",
-    reason: "",
-  });
+  const [grantForm, setGrantForm] = useState(EMPTY_GRANT_FORM);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const { page, pageSize, setPage, setPageSize, paged, total } =
     useListPagination(grants);
@@ -99,29 +110,67 @@ export default function WorkforceSecurityGrantsPage() {
     [tSys],
   );
 
+  const personName = useCallback(
+    (globalPersonId: string): string => {
+      const p = persons[globalPersonId];
+      if (p?.displayName?.trim()) return p.displayName.trim();
+      return t("maskedPerson");
+    },
+    [persons, t],
+  );
+
   const employmentLabel = useCallback(
     (employmentId: string): string => {
-      const e = data?.employments.find((x) => x.id === employmentId);
+      const e = employments.find((x) => x.id === employmentId);
       if (!e) return `${employmentId.slice(0, 8)}…`;
-      const parts = [e.position?.name, e.orgUnit?.name].filter(Boolean);
-      return parts.length > 0 ? parts.join(" · ") : `${employmentId.slice(0, 8)}…`;
+      const name = personName(e.globalPersonId);
+      const job = [e.position?.name, e.orgUnit?.name].filter(Boolean).join(" · ");
+      return job ? `${name} — ${job}` : name;
     },
-    [data?.employments],
+    [employments, personName],
   );
+
+  const employmentOptions = useMemo(
+    () =>
+      [...employments]
+        .map((e) => ({
+          value: e.id,
+          label: employmentLabel(e.id),
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label, "az")),
+    [employments, employmentLabel],
+  );
+
+  const satelliteOptions = useMemo(
+    () => SATELLITES.map((s) => ({ value: s.key, label: satelliteLabel(s.key) })),
+    [satelliteLabel],
+  );
+
+  const roleOptions = useMemo(() => {
+    if (!grantForm.satelliteKey) return [];
+    return (ROLES_BY_SATELLITE[grantForm.satelliteKey] ?? []).map((r) => ({
+      value: r,
+      label: humanizeRole(r),
+    }));
+  }, [grantForm.satelliteKey]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [ovRes, grantRes] = await Promise.all([
-      wfFetch("security/overview"),
+    const [empRes, grantRes] = await Promise.all([
+      wfFetch("employments?status=ACTIVE"),
       wfFetch("manual-grants"),
     ]);
-    if (await isWorkforceGate403(ovRes)) {
+    if (await isWorkforceGate403(empRes)) {
       setNotEntitled(true);
       setLoading(false);
       return;
     }
     setNotEntitled(false);
-    if (ovRes.ok) setData((await ovRes.json()) as Overview);
+    if (empRes.ok) {
+      const payload = (await empRes.json()) as EmploymentsList;
+      setEmployments(Array.isArray(payload.items) ? payload.items : []);
+      setPersons(payload.persons ?? {});
+    }
     if (grantRes.ok) {
       const rows = (await grantRes.json()) as GrantRow[];
       setGrants(Array.isArray(rows) ? rows : []);
@@ -134,20 +183,42 @@ export default function WorkforceSecurityGrantsPage() {
     void load();
   }, [ready, user?.organizationId, load]);
 
+  function openGrantModal() {
+    setGrantForm(EMPTY_GRANT_FORM);
+    setModalError(null);
+    setGrantOpen(true);
+  }
+
   async function onGrantSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy || !grantForm.employmentId || !grantForm.reason.trim()) return;
+    if (
+      busy ||
+      !grantForm.employmentId ||
+      !grantForm.satelliteKey ||
+      !grantForm.satelliteRole ||
+      !grantForm.reason.trim()
+    ) {
+      return;
+    }
     setBusy(true);
+    setModalError(null);
     const res = await wfFetch("manual-grants", {
       method: "POST",
-      body: JSON.stringify(grantForm),
+      body: JSON.stringify({
+        employmentId: grantForm.employmentId,
+        satelliteKey: grantForm.satelliteKey,
+        satelliteRole: grantForm.satelliteRole,
+        reason: grantForm.reason.trim(),
+      }),
     });
     setBusy(false);
     if (res.ok) {
       setGrantOpen(false);
-      setGrantForm((f) => ({ ...f, reason: "" }));
+      setGrantForm(EMPTY_GRANT_FORM);
       await load();
+      return;
     }
+    setModalError((await res.text()) || tCommon("saveFailed"));
   }
 
   async function onRevokeGrant(id: string) {
@@ -163,16 +234,13 @@ export default function WorkforceSecurityGrantsPage() {
     return <WorkforceGate onEnabled={load} />;
   }
 
-  const roleOptions =
-    ROLES_BY_SATELLITE[grantForm.satelliteKey] ?? ROLES_BY_SATELLITE.industry_clinic;
-
   return (
     <>
       <PageHeader
         title={t("grantsPageTitle")}
         subtitle={t("grantsPageSubtitle")}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setGrantOpen(true)}>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openGrantModal}>
             {t("grantCreate")}
           </button>
         }
@@ -249,56 +317,45 @@ export default function WorkforceSecurityGrantsPage() {
         closeLabel={tCommon("close")}
       >
         <form onSubmit={onGrantSubmit} className="grid gap-3">
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("fieldEmployment")}
-            <select
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={grantForm.employmentId}
-              onChange={(e) => setGrantForm((f) => ({ ...f, employmentId: e.target.value }))}
-              required
-            >
-              <option value="">{t("selectEmployment")}</option>
-              {(data?.employments ?? []).map((e) => (
-                <option key={e.id} value={e.id}>
-                  {employmentLabel(e.id)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("colSatellite")}
-            <select
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={grantForm.satelliteKey}
-              onChange={(e) =>
-                setGrantForm((f) => ({
-                  ...f,
-                  satelliteKey: e.target.value as WorkforceSatelliteKey,
-                  satelliteRole: ROLES_BY_SATELLITE[e.target.value]?.[0] ?? "STAFF",
-                }))
-              }
-            >
-              {SATELLITES.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {satelliteLabel(s.key)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("colRole")}
-            <select
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={grantForm.satelliteRole}
-              onChange={(e) => setGrantForm((f) => ({ ...f, satelliteRole: e.target.value }))}
-            >
-              {roleOptions.map((r) => (
-                <option key={r} value={r}>
-                  {humanizeRole(r)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("fieldEmployment")}
+            required
+            hint={t("fieldEmploymentHint")}
+            value={grantForm.employmentId}
+            onChange={(next) =>
+              setGrantForm((f) => ({ ...f, employmentId: String(next) }))
+            }
+            options={employmentOptions}
+            emptyLabel={t("selectEmployment")}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("colSatellite")}
+            required
+            value={grantForm.satelliteKey}
+            onChange={(next) =>
+              setGrantForm((f) => ({
+                ...f,
+                satelliteKey: String(next) as WorkforceSatelliteKey | "",
+                satelliteRole: "",
+              }))
+            }
+            options={satelliteOptions}
+            emptyLabel={t("selectSatellite")}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("colRole")}
+            required
+            disabled={!grantForm.satelliteKey}
+            value={grantForm.satelliteRole}
+            onChange={(next) =>
+              setGrantForm((f) => ({ ...f, satelliteRole: String(next) }))
+            }
+            options={roleOptions}
+            emptyLabel={t("selectRole")}
+          />
           <label className="block text-[13px] font-medium text-[#34495E]">
             {t("fieldReason")}
             <textarea
@@ -309,6 +366,9 @@ export default function WorkforceSecurityGrantsPage() {
               required
             />
           </label>
+          {modalError ? (
+            <p className="text-[13px] text-[#C0392B]">{modalError}</p>
+          ) : null}
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"

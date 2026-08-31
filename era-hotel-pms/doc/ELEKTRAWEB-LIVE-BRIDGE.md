@@ -42,6 +42,8 @@ Process kill switch only: `ELEKTRAWEB_BRIDGE_ENABLED`. No property ids in env.
 
 Yes — Options page: ERA Hotel URL + **ERA organizationId (UUID)** + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Shared process Bearer was removed (unsafe on multi-org pool).
 
+**Workforce grant (Nafta desk):** Orchestrator Workforce → Security → Grants: employee + satellite **Hotel** + role **Reception**. After fan-out, local login is `emp-{staffCode}` / PIN `0000` (staffCode = first 8 hex of employment id). Use that pair in extension Settings **and** at `https://hotel-pms.era-365.online/login`. CP `RECEPTION` maps to hotel role `Receptionist` (bridge-allowed). Do not hire a second employment for someone already in cadre.
+
 Docs: [extensions/elektraweb-bridge/README.md](../extensions/elektraweb-bridge/README.md)
 
 ## 1. Status and ownership
@@ -379,9 +381,10 @@ Do **not** treat these ids as product defaults. Config / inbound name match on o
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3 v0.3.2; options_ui open_in_tab; toolbar lamp icons
+  manifest.json          # MV3 v0.3.3; options_ui open_in_tab; toolbar lamp icons
   background.js          # service worker: inbound queue + POST ingest + lamp
   injected.js / content.js
+  overlay.js             # in-page lamp for Open-as-window (no toolbar)
   lamp.js                # gray/yellow/green/red status
   options.html + settings.css + i18n.js + options.js
   popup.html / popup.js
@@ -393,7 +396,7 @@ era-hotel-pms/extensions/elektraweb-bridge/
 
 Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
 
-Toolbar **lamp** (the action icon is a circle; hover tooltip):
+Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on `app.elektraweb.com` for Chrome **Open as window** (no extension toolbar). Same colors. Click overlay → Capture / Write / settings (settings open in a normal tab). Drag the circle if it covers SPA buttons.
 
 | Color | Meaning |
 |-------|---------|
@@ -416,7 +419,7 @@ Popup shows the same toggles plus a matching lamp.
 1. `chrome://extensions` → Developer mode → Load unpacked.
 2. Settings: ERA Hotel URL + staff login → **Log in & save**. Pick **This desk**.
 3. Hotel FO: open Elektraweb grids (§2). Sanatorium: keep SPA open (guest folio + Tibbi Ambulator).
-4. **Capture & sync** ON. Health: toolbar lamp green; last sync / queue / last error on Settings and popup.
+4. **Capture & sync** ON. Health: toolbar lamp **or the on-page circle** green; last sync / queue / last error on Settings, popup, and overlay.
 
 ### Security
 

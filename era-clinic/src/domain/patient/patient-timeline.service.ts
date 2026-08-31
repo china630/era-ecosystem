@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { getDiagnosticCatalog } from "@/domain/catalog/diagnostic-catalog";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
+import { bakuDateKey } from "@/lib/baku-day";
+
+export { bakuDateKey } from "@/lib/baku-day";
 
 export type TimelineEventType =
   | "appointment"
@@ -44,16 +47,6 @@ export type PatientTimelineDay = {
 };
 
 const BAKU_TZ = "Asia/Baku";
-
-export function bakuDateKey(isoOrDate: Date | string): string {
-  const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: BAKU_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
-}
 
 function bakuTimeLabel(isoOrDate: Date | string): string {
   const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;

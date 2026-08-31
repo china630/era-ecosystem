@@ -95,6 +95,15 @@ export function resetSatelliteTenantAlsForTests(): void {
   als.organizationId = undefined;
 }
 
+export async function hashPassword(password: string): Promise<string> {
+  return `salt:${password}`;
+}
+
+export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  if (stored === "sso:no-password") return false;
+  return stored === `salt:${password}`;
+}
+
 export const resolveOperatingMode = jest.fn().mockReturnValue("STANDALONE");
 export const resolveSettlementPolicy = jest.fn();
 export const shouldDeferWalkInToHub = jest.fn().mockReturnValue(false);

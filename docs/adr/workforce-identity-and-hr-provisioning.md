@@ -37,7 +37,9 @@ Events on the shared satellite envelope (`@era/contracts`):
 
 **Publisher (Plan C):** orchestrator `WorkforceProvisionService` on CP hire, manual grant, terminate. Finance `HrStaffProvisioningService` **deprecated** (no-op).
 
-Orchestrator fans out to registered `SatelliteEndpoint` and updates `WorkforceAssignment` keyed by `[organizationId, satelliteKey, cpEmploymentId]`.
+Orchestrator fans out to registered `SatelliteEndpoint` (else env `CLINIC_API_URL` / `HOTEL_PMS_API_URL` / `FNB_POS_API_URL` on the **docker network**) and updates `WorkforceAssignment` keyed by `[organizationId, satelliteKey, cpEmploymentId]`. Shared secret: `SATELLITE_BRIDGE_SECRET`. Consuming handlers (clinic, hotel, fnb) call `enterRequestTenant(event.organizationId)` and stamp `organizationId`. User passwords use kit scrypt. Clinic links imported practitioners by `cpEmploymentId` / `globalPersonId` / **unique** name match (exactly one candidate; otherwise create, do not guess). Default PIN `0000`; clinic self-service `/account/password`.
+
+**Out of this bus (do not drop):** `industry_retail`, `industry_logistics`, `industry_construction`, `industry_crm`, `industry_auto_service`, `industry_wholesale` have **no** `/api/integration/staff-provision` handler. CP hire/grant does not create a local login there. Owners use SSO. When those verticals need floor staff logins, add handler + fan-out env URL + bridge secret (same pattern as clinic). Bank uses bank-core internal staff-provisioning, not this fan-out.
 
 ### Clinic practitioner hire (CP workforce only)
 
@@ -69,8 +71,10 @@ Legacy `finance_hr` / `local_master` hire modes removed (clean v3 cut).
 - Finance HR: `era-finance-core/apps/api/src/hr/employees.service.ts`
 - Events: `packages/era-contracts/src/events/hr.events.ts`
 - Workforce registry + policy: `era-orchestrator/apps/api/src/workforce/`, `platform/workforce/` (Wave 3)
-- F&B provision handler: `era-fnb-pos/app/api/integration/staff-provision/route.ts`
+- F&B provision handler: `era-fnb-pos/src/lib/staff-provision.ts`
 - Clinic provision handler: `era-clinic/src/lib/staff-provision.ts`
+- Hotel provision handler: `era-hotel-pms/src/lib/staff-provision.ts`
+- Clinic password self-service: `PATCH /api/auth/password`, UI `/account/password`
 
 ## Consequences
 

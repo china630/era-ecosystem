@@ -15,6 +15,7 @@ import {
   DatePicker,
   Field,
   FORM_STACK_CLASS,
+  ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   ModalFooter,
   ModalShell,
@@ -103,6 +104,17 @@ export default function NurseRosterPage() {
     endsOn: "",
     note: "",
   });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedLines = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return lines.slice(start, start + pageSize);
+  }, [lines, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [yearMonth, staffKind, pageSize]);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -118,6 +130,7 @@ export default function NurseRosterPage() {
       }
       setView(data);
       setLines(data.lines);
+      setPage(1);
     } finally {
       setBusy(false);
     }
@@ -226,6 +239,7 @@ export default function NurseRosterPage() {
       }
       setView(data);
       setLines(data.lines);
+      setPage(1);
       setMsg(action === "approve" ? t("approved") : t("copied"));
     } finally {
       setBusy(false);
@@ -378,13 +392,14 @@ export default function NurseRosterPage() {
               </tr>
             </thead>
             <tbody>
-              {lines.map((line, idx) => {
+              {pagedLines.map((line, idx) => {
                 const staff = view?.staff.find((s) => s.id === line.practitionerId);
                 const noSkill =
                   staff && !staff.skillProcedureTypeIds.includes(line.procedureTypeId);
+                const rowNum = (page - 1) * pageSize + idx + 1;
                 return (
                   <tr key={line.procedureTypeId} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{idx + 1}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{rowNum}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {line.procedureName}
                       <span className={`ml-2 text-xs ${TEXT_MUTED_CLASS}`}>
@@ -427,6 +442,23 @@ export default function NurseRosterPage() {
             </tbody>
           </table>
         </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={lines.length}
+          loading={busy}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
+          }}
+        />
       </div>
 
       <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

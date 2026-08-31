@@ -18,6 +18,7 @@ import {
   FieldTextarea,
   ModalFooter,
   ModalShell,
+  NATIONALITY_OPTIONS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
@@ -25,6 +26,13 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
+import { useClinicAuth } from "@/hooks/useClinicAuth";
+
+function nationalityLabel(code: string | null | undefined): string {
+  if (!code) return "—";
+  const hit = NATIONALITY_OPTIONS.find((o) => o.value === code);
+  return hit?.label ?? code;
+}
 
 export type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
 export type PatientBloodGroup =
@@ -41,6 +49,9 @@ export type PatientBloodGroup =
 export type PatientCardPatient = {
   id: string;
   refCode: string;
+  givenName?: string;
+  surname?: string;
+  fatherName?: string | null;
   fullName: string;
   phone?: string | null;
   nationality?: string | null;
@@ -81,9 +92,12 @@ function maskPersonId(id: string | null | undefined): string {
 }
 
 const emptyForm = {
+  givenName: "",
+  surname: "",
+  fatherName: "",
   fullName: "",
   phone: "",
-  nationality: "AZ",
+  nationality: "",
   sex: "UNKNOWN" as PatientSex,
   birthDate: "",
   bloodGroup: "UNKNOWN" as PatientBloodGroup,
@@ -91,7 +105,7 @@ const emptyForm = {
   emergencyContactPhone: "",
   finCode: "",
   passportNumber: "",
-  issuingCountry: "AZ",
+  issuingCountry: "",
 };
 
 type Props = {
@@ -109,6 +123,8 @@ export function PatientCardBody({
 }: Props) {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
+  const { auth } = useClinicAuth();
+  const isAdmin = Boolean(auth?.canViewClinicAdmin || auth?.isPlatformSuperAdmin);
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
   const [episodes, setEpisodes] = useState<EpisodeOption[]>([]);
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
@@ -174,9 +190,12 @@ export function PatientCardBody({
     setPatient(p);
     onPatientLoaded?.(p);
     setForm({
+      givenName: p.givenName ?? "",
+      surname: p.surname ?? "",
+      fatherName: p.fatherName ?? "",
       fullName: p.fullName ?? "",
       phone: p.phone ?? "",
-      nationality: p.nationality ?? "AZ",
+      nationality: p.nationality ?? "",
       sex: p.sex ?? "UNKNOWN",
       birthDate: birthDateToInputValue(p.birthDate),
       bloodGroup: p.bloodGroup ?? "UNKNOWN",
@@ -184,7 +203,7 @@ export function PatientCardBody({
       emergencyContactPhone: p.emergencyContactPhone ?? "",
       finCode: "",
       passportNumber: "",
-      issuingCountry: "AZ",
+      issuingCountry: "",
     });
     await loadEpisodes();
   }, [patientId, onPatientLoaded, loadEpisodes]);
@@ -290,7 +309,9 @@ export function PatientCardBody({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fullName: form.fullName,
+        givenName: form.givenName.trim(),
+        surname: form.surname.trim(),
+        fatherName: form.fatherName.trim() || null,
         phone: form.phone || null,
         nationality: form.nationality.trim() || null,
         sex: form.sex,
@@ -323,12 +344,10 @@ export function PatientCardBody({
   return (
     <>
       <div className="mb-4 flex flex-wrap gap-2">
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setEditOpen(true)}>
-          {tc("edit")}
-        </button>
         {patient.globalPersonId &&
         patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
-        !patient.identifiersSummary?.some((i) => i.type === "AZ_FIN") ? (
+        !patient.identifiersSummary?.some((i) => i.type === "AZ_FIN") &&
+        isAdmin ? (
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void mergeFinObtained()}>
             {t("finObtained")}
           </button>
@@ -341,46 +360,60 @@ export function PatientCardBody({
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 pb-10 sm:px-0">
-        <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
-          <p>
-            {t("mdmBadge")}:{" "}
-            {patient.globalPersonId ? (
-              <span className={TEXT_SUCCESS_CLASS}>{maskPersonId(patient.globalPersonId)}</span>
-            ) : (
-              <span className={TEXT_DANGER_CLASS}>{t("mdmMissing")}</span>
-            )}
-          </p>
-          <div className={`grid gap-1 ${TEXT_MUTED_CLASS} sm:grid-cols-2`}>
+        <div className={`${CARD_CONTAINER_CLASS} relative space-y-3 p-4`}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-base font-semibold text-[#2C3E50]">{patient.fullName}</p>
+              <p className="mt-0.5 text-sm font-medium text-[#34495E]">
+                {patient.refCode}
+                {patient.ageYears != null ? ` · ${t("ageYears", { age: patient.ageYears })}` : ""}
+              </p>
+            </div>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setEditOpen(true)}>
+              {tc("edit")}
+            </button>
+          </div>
+          {isAdmin ? (
+            <p className="text-sm">
+              {t("mdmBadge")}:{" "}
+              {patient.globalPersonId ? (
+                <span className={TEXT_SUCCESS_CLASS}>{maskPersonId(patient.globalPersonId)}</span>
+              ) : (
+                <span className={TEXT_DANGER_CLASS}>{t("mdmMissing")}</span>
+              )}
+            </p>
+          ) : null}
+          <div className="grid gap-2 text-sm text-[#2C3E50] sm:grid-cols-2">
             {patient.phone ? (
               <p>
-                {t("phone")}: {patient.phone}
-              </p>
-            ) : null}
-            {patient.nationality ? (
-              <p>
-                {t("nationality")}: {patient.nationality}
+                <span className="font-medium">{t("phone")}:</span> {patient.phone}
               </p>
             ) : null}
             <p>
-              {t("sex")}: {sexLabel(patient.sex)}
+              <span className="font-medium">{t("nationality")}:</span>{" "}
+              {nationalityLabel(patient.nationality)}
             </p>
             <p>
-              {t("birthDate")}: {birthDateToInputValue(patient.birthDate) || "—"} ({ageLine})
+              <span className="font-medium">{t("sex")}:</span> {sexLabel(patient.sex)}
             </p>
             <p>
-              {t("bloodGroup")}:{" "}
+              <span className="font-medium">{t("birthDate")}:</span>{" "}
+              {birthDateToInputValue(patient.birthDate) || "—"} ({ageLine})
+            </p>
+            <p>
+              <span className="font-medium">{t("bloodGroup")}:</span>{" "}
               {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
                 ? BLOOD_LABELS[patient.bloodGroup]
-                : t("bloodUnknown")}
+                : t("sexUnknown")}
             </p>
             {patient.emergencyContactName || patient.emergencyContactPhone ? (
               <p>
-                {t("emergencyContact")}:{" "}
+                <span className="font-medium">{t("emergencyContact")}:</span>{" "}
                 {[patient.emergencyContactName, patient.emergencyContactPhone].filter(Boolean).join(" · ")}
               </p>
             ) : null}
           </div>
-          {patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
+          {isAdmin && patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
             <p className={TEXT_MUTED_CLASS}>
               {patient.identifiersSummary.map((i) => i.type).join(", ")}
             </p>
@@ -492,12 +525,28 @@ export function PatientCardBody({
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>
         <div className="space-y-4">
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("demographicsHint")}</p>
-          <Field
-            label={t("fullName")}
-            preset="shortText"
-            value={form.fullName}
-            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-          />
+          <FieldRow cols={3}>
+            <Field
+              label={t("givenName")}
+              preset="shortText"
+              value={form.givenName}
+              onChange={(e) => setForm({ ...form, givenName: e.target.value })}
+              required
+            />
+            <Field
+              label={t("surname")}
+              preset="shortText"
+              value={form.surname}
+              onChange={(e) => setForm({ ...form, surname: e.target.value })}
+              required
+            />
+            <Field
+              label={t("fatherName")}
+              preset="shortText"
+              value={form.fatherName}
+              onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
+            />
+          </FieldRow>
           <FieldRow cols={2}>
             <Field
               label={t("phone")}
@@ -505,11 +554,15 @@ export function PatientCardBody({
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
-            <Field
+            <CatalogField
+              kind="SEARCHABLE"
               label={t("nationality")}
-              preset="code"
               value={form.nationality}
-              onChange={(e) => setForm({ ...form, nationality: e.target.value.toUpperCase() })}
+              onChange={(v) =>
+                setForm({ ...form, nationality: String(v ?? "").toUpperCase() })
+              }
+              options={[...NATIONALITY_OPTIONS]}
+              emptyLabel={t("sexUnknown")}
             />
           </FieldRow>
           <FieldRow cols={2}>
@@ -538,7 +591,7 @@ export function PatientCardBody({
             value={form.bloodGroup}
             onChange={(e) => setForm({ ...form, bloodGroup: e.target.value as PatientBloodGroup })}
           >
-            <option value="UNKNOWN">{t("bloodUnknown")}</option>
+            <option value="UNKNOWN">{t("sexUnknown")}</option>
             {(Object.keys(BLOOD_LABELS) as PatientBloodGroup[])
               .filter((k) => k !== "UNKNOWN")
               .map((k) => (
@@ -561,36 +614,55 @@ export function PatientCardBody({
               onChange={(e) => setForm({ ...form, emergencyContactPhone: e.target.value })}
             />
           </FieldRow>
-          <FieldRow cols={2} className="items-end">
+          {isAdmin ? (
+            <>
+              <FieldRow cols={2} className="items-end">
+                <Field
+                  label={t("finCode")}
+                  preset="fin"
+                  value={form.finCode}
+                  onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
+                />
+                <button
+                  type="button"
+                  className={`${SECONDARY_BUTTON_CLASS} self-end`}
+                  onClick={() => void lookupMdm()}
+                >
+                  {t("mdmLookup")}
+                </button>
+              </FieldRow>
+              {mdmStatus ? <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{mdmStatus}</p> : null}
+              <FieldRow cols={2}>
+                <Field
+                  label={t("passportNumber")}
+                  preset="code"
+                  value={form.passportNumber}
+                  onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
+                />
+                {form.passportNumber.trim() ? (
+                  <CatalogField
+                    kind="SEARCHABLE"
+                    label={t("issuingCountryPassport")}
+                    value={form.issuingCountry}
+                    onChange={(v) =>
+                      setForm({ ...form, issuingCountry: String(v ?? "").toUpperCase() })
+                    }
+                    options={[...NATIONALITY_OPTIONS]}
+                    emptyLabel={t("sexUnknown")}
+                  />
+                ) : (
+                  <div />
+                )}
+              </FieldRow>
+            </>
+          ) : (
             <Field
               label={t("finCode")}
               preset="fin"
               value={form.finCode}
               onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
             />
-            <button
-              type="button"
-              className={`${SECONDARY_BUTTON_CLASS} self-end`}
-              onClick={() => void lookupMdm()}
-            >
-              {t("mdmLookup")}
-            </button>
-          </FieldRow>
-          {mdmStatus ? <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{mdmStatus}</p> : null}
-          <FieldRow cols={2}>
-            <Field
-              label={t("passportNumber")}
-              preset="code"
-              value={form.passportNumber}
-              onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
-            />
-            <Field
-              label={t("issuingCountry")}
-              preset="code"
-              value={form.issuingCountry}
-              onChange={(e) => setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })}
-            />
-          </FieldRow>
+          )}
         </div>
         <ModalFooter
           onCancel={() => setEditOpen(false)}

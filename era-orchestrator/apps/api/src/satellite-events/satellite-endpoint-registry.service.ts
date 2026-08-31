@@ -28,6 +28,13 @@ export type ResolvedLaunchUrl = {
   satelliteKey: string;
 };
 
+/** Docker-internal (or local) base URLs for STAFF_* fan-out when no SatelliteEndpoint row. */
+const FANOUT_URL_ENV: Record<string, readonly string[]> = {
+  industry_clinic: ["CLINIC_API_URL"],
+  industry_hotel_pms: ["HOTEL_PMS_API_URL"],
+  industry_fnb_pos: ["FNB_POS_API_URL"],
+};
+
 /**
  * Env keys for owner-launcher base URLs when no SatelliteEndpoint row exists.
  * Prefer NEXT_PUBLIC_* / ERA_*_ORIGIN (browser-reachable). CLINIC_API_URL is
@@ -86,14 +93,14 @@ export class SatelliteEndpointRegistryService {
       },
     });
     if (row?.enabled) {
-      const secret = row.secretCipher ? decryptText(row.secretCipher) ?? "" : "";
+      const fromRow = row.secretCipher
+        ? decryptText(row.secretCipher) ?? ""
+        : "";
+      const secret = fromRow || this.fanoutBridgeSecret();
       return { baseUrl: row.baseUrl.replace(/\/$/, ""), secret };
     }
 
-    if (satelliteKey === SATELLITE_KEY_CLINIC) {
-      return this.clinicEnvFallback();
-    }
-    return null;
+    return this.fanoutEnvFallback(satelliteKey);
   }
 
   /**
@@ -142,13 +149,29 @@ export class SatelliteEndpointRegistryService {
     return null;
   }
 
-  private clinicEnvFallback(): ResolvedSatelliteEndpoint | null {
-    const baseUrl = this.config.get<string>("CLINIC_API_URL")?.trim();
+  private fanoutBridgeSecret(): string {
+    return (
+      this.config.get<string>("SATELLITE_BRIDGE_SECRET")?.trim() ||
+      this.config.get<string>("CLINIC_BRIDGE_SECRET")?.trim() ||
+      ""
+    );
+  }
+
+  private fanoutEnvFallback(
+    satelliteKey: string,
+  ): ResolvedSatelliteEndpoint | null {
+    const envKeys = FANOUT_URL_ENV[satelliteKey] ?? [];
+    let baseUrl: string | undefined;
+    for (const envKey of envKeys) {
+      const raw =
+        this.config.get<string>(envKey)?.trim() || process.env[envKey]?.trim();
+      if (raw) {
+        baseUrl = raw.replace(/\/$/, "");
+        break;
+      }
+    }
     if (!baseUrl) return null;
-    return {
-      baseUrl: baseUrl.replace(/\/$/, ""),
-      secret: this.config.get<string>("CLINIC_BRIDGE_SECRET")?.trim() ?? "",
-    };
+    return { baseUrl, secret: this.fanoutBridgeSecret() };
   }
 
   async listForOrg(organizationId: string): Promise<SatelliteEndpointListItem[]> {

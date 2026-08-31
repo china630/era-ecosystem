@@ -50,6 +50,20 @@ Base: `http://127.0.0.1:4000/platform/v1/workforce` (Bearer `SATELLITE_EVENT_SER
 
 See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-provisioning.md).
 
+**STAFF_* fan-out (orchestrator → satellite, docker-internal):**
+
+| Variable | Who | Example (compose) |
+|----------|-----|-------------------|
+| `CLINIC_API_URL` | orchestrator | `http://clinic:3203` |
+| `HOTEL_PMS_API_URL` | orchestrator | `http://hotel-pms:3201` |
+| `FNB_POS_API_URL` | orchestrator | `http://fnb-pos:3202` |
+| `SATELLITE_BRIDGE_SECRET` | orchestrator + clinic + hotel-pms + fnb-pos | same value; header `x-satellite-bridge-secret` |
+| `CLINIC_BRIDGE_SECRET` | clinic (alias for staff-provision) + hotel → clinic lifecycle | may match `SATELLITE_BRIDGE_SECRET` |
+
+Public `ERA_CLINIC_ORIGIN` / launcher URLs are **not** the staff fan-out target.
+
+Only **clinic, hotel-pms, fnb-pos** consume `STAFF_PROVISIONED` today. Retail / logistics / construction / CRM / auto / wholesale grants do not create satellite logins — see [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) Plan C table.
+
 ---
 
 ## Public hub (Orchestrator web `:3000`)

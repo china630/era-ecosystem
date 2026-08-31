@@ -31,8 +31,8 @@
 4. `POST /api/lab-orders/[id]/results` with `{ lines: [{ code, value }] }` → `RESULT_READY`
 5. `POST /api/lab-orders/[id]/publish` → `PUBLISHED`, `publishedAt` set; if patient `phone` is email-shaped → orchestrator notification (EMAIL) when `CONTROL_PLANE_URL` + token configured
 6. `POST /api/lab-orders/[id]/complete` → `COMPLETED` + `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` event
-7. **`/lab-orders`** — DATA_TABLE list (services/patient/modality/status/amount/date=`collectedAt`), filter bar (status, critical only, modality, patient, date from/to on collectedAt) + Apply/Reset, `ListPaginationFooter` page/pageSize
-8. **`/lab-orders/[id]`** — structural results table (no raw JSON); results re-editable while `RESULT_READY` (before publish); read-only once `PUBLISHED`/`COMPLETED`; Print button shows "coming soon" notice; step chips show role hint
+7. **`/lab-orders`** — DATA_TABLE list (services Name (CODE) / patient / modality / status / amount / date=`collectedAt`), filter bar order: **patient free-text (q)** → status → modality → date from/to; critical only; `ListPaginationFooter`. Delete (trash) only while `ORDERED`. Create: OPEN duplicate → message + no create; COMPLETED duplicate → Yes/No repeat (`confirmRepeat`). Row opens workflow modal.
+8. **`/lab-orders/[id]`** / workflow modal — title `Name (CODE) — patient`; structural results table; cancel if ORDERED; results re-editable while `RESULT_READY` (before publish); read-only once `PUBLISHED`/`COMPLETED`; Print lab **and** USM use Name (CODE); step chips show role hint
 
 ## K2b — Appointment notifications (Nafta W0)
 
@@ -80,7 +80,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — filter bar (sex, blood, MDM, age) + paginated grid; **Open card** modal; anamnesis required on demographics edit. **`/patients/[id]`** deep link still works via shared `PatientCardBody`. History/timeline: one row per encounter when a Visit exists («Приём · doctor», slot date, opens `/visits/[id]`); Appointment-only if no visit.
+3. **`/patients`** — filter bar (course status default **Open** / All / Closed; sex, blood, age, hotel room **autocomplete**, program with explicit «all»; **MDM filter/column only for SatAdmin**); grid shows clinic-native **`P-######`** codes (not `wo-patient-*`); sex column **K/Q**; check-in / check-out after package for hotel guests; one server paginator (footer stays while loading; page not echoed from API). **Register patient**: Ad / Soyad / Ata adı; nationality SEARCHABLE with empty default (not AZ); no manual Kod. **Open card** modal — bold identity block, Edit top-right; anamnesis on selected episode. **`/patients/[id]`** deep link still works via shared `PatientCardBody`. History/timeline: one row per encounter when a Visit exists («Приём · doctor», slot date, opens `/visits/[id]`); Appointment-only if no visit.
 4. **`/appointments`** — practitioner day matrix; click free cell → **New appointment** modal (prefilled); occupied → check-in / cancel; DnD reschedule.
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
@@ -90,11 +90,17 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 10. **`/cashier` Over-quota** — see sanatorium over-quota / folio logs; **Collect locally** for standalone `LOCAL` rows.
 11. **Settlement hub:** walk-in with hub policy → channel `SETTLEMENT_HUB` in queue (not a hard UI block); hotel `/front-cash/pending` after settle.
 
+## Workforce local login (CLI-WF-01 / CLI-WF-PWD-01)
+
+1. CP Workforce grant or Reprovision for a clinic binding → clinic `/login` with `emp-{staffCode}` and PIN **`0000`**.
+2. After sign-in: profile menu → **Change password** (`/account/password`). Current = `0000`, new password ≥ 8 characters. Re-login with the new password.
+3. SSO owner accounts have no local password (the form returns 403).
+
 ## Sanatorium clinical day
 
 Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan checked in; `programSchedulingMode=AFTER_CHECKUP`.
 
-1. **`/sanatorium`** — episode visible; **no** procedures until checkup (complaint + ICD). Search ICD (`I10` / гипертенз) → add diagnosis → then schedule program.
+1. **`/sanatorium`** — open courses table with **ListPaginationFooter** (server page/pageSize + search + origin); episode visible; **no** procedures until checkup (complaint + ICD). Search ICD in **one** searchable field (`I10` / гипертенз) → add diagnosis → then schedule program. Treatment chart: delete complaint/diagnosis rows; delete lab only if ORDERED; adding a duplicate COMPLETED lab shows Yes/No repeat confirm. Quota bars show **Name (CODE)** not raw `WO-TR-*`. **Register walk-in**: Ad / Soyad / Ata adı; nationality SEARCHABLE empty (not AZ); FIN or passport required; allocates `P-######`.
 2. **Complete checkup & schedule program** → FIFO chart with 5-min slots; same procedure not twice same day. Slots require free **cabin/equipment** AND **skilled HARD staff** (Pattern A allocations).
 3. **`/nurse`** — day board: agenda (previous slot → EOD) + day progress; kanban Missed / Upcoming / In progress / Completed. **Check-in** only while unified window open (`endsAt`, +gap if next slot free) → `CHECKED_IN`. No nurse No-show button. Missed rows stay `SCHEDULED` until EOD sweep. Late guests: reception reschedules.
 4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks; lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); per-type `resourceGapMinutes` / `patientRestMinutes` on procedure types (tenant default = create default only); DEMO-WEEK from Randevular (~840 orders). Drag/move/cancel as before.
@@ -106,11 +112,11 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 9. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
 10. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
 11. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
-12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab.
+12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows (**`SVC-*` names, no leftover `WO-TR-*`**); mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab. Procedure table has pagination footer.
 
 ### ICD-10 catalog (CLI-39…42)
 
-1. **`/sanatorium`** — search ICD picker for `I10` or «гипертенз»; add diagnosis (selectable category/leaf only) + optional note; then **Complete checkup & schedule program**. Chapter/BLOCK codes must not save.
+1. **`/sanatorium`** — single ICD searchable picker for `I10` or «гипертенз»; add diagnosis (selectable category/leaf only) + optional note; delete diagnosis from chart; then **Complete checkup & schedule program**. Chapter/BLOCK codes must not save. Empty chapter list must not block search (catalog must be seeded: `node prisma/load-icd10.cjs`).
 2. **Patient card** (`/patients/[id]` or sanatorium patient modal) — contraindications body map is **collapsed** (amber bar + expand); ICD-10 list sits **below** it; add/remove against the **open** episode. Without an open episode the add path is hidden (409 `NO_OPEN_EPISODE` if posted).
 3. **`/visits/[id]`** — add primary/secondary visit diagnoses; list updates.
 4. **`/inpatient`** — admission diagnoses modal (admission/discharge + role).
@@ -264,8 +270,8 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 **Nafta card wave (2026-08-30) — after deploy:** seed diagnostic + physio catalogs → re-Apply `#23` → optionally `#31` (skip `#32`/`#33`/`#34` for intake). See `NAFTA-CUTOVER-IMPORT.md` § Post-deploy.
 
-1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes).
-2. `/patients`: filter by hotel room and program/package (`programCode`).
+1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes). `#26` slots: select all `26-Slots-p01.xlsx` … chunks (not the full book — FormData fails).
+2. `/patients`: filter by hotel room (autocomplete) and program/package (`programCode`); check-in/out columns for hotel guests. After overlay + Re-Apply `#24`, agency/Həmkarlar/phrase SKUs show in **Proqram / paket** (not WO checkup).
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time.
 5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`SANATORIUM-INTAKE`, `GYN-OR-URO`, `ECG-12`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Print check-up lists the same four enabled sections.

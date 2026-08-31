@@ -281,7 +281,12 @@ export default function CatalogAdminPage() {
           </p>
         ) : (
           <>
-            <EraDataGrid columns={columns} rows={pagedRows} rowKey={(row) => row.id} />
+            <EraDataGrid
+              columns={columns}
+              rows={pagedRows}
+              rowKey={(row) => row.id}
+              pagination={false}
+            />
             <ListPaginationFooter
               page={page}
               pageSize={pageSize}

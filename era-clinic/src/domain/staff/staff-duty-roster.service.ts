@@ -26,11 +26,14 @@ export function assertYearMonth(yearMonth: string): string {
   return yearMonth;
 }
 
+import { isWoProcedureCode } from "@/lib/import/seed-catalog-match";
+
 async function listProcedureTypesOrdered() {
-  return prisma.procedureType.findMany({
+  const rows = await prisma.procedureType.findMany({
     orderBy: { code: "asc" },
     select: { id: true, code: true, name: true },
   });
+  return rows.filter((row) => !isWoProcedureCode(row.code));
 }
 
 async function listStaff(staffKind: PractitionerStaffKind) {

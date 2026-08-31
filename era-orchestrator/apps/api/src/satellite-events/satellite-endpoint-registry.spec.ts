@@ -43,11 +43,43 @@ describe("SatelliteEndpointRegistryService", () => {
     prisma.satelliteEndpoint.findUnique.mockResolvedValue(null);
     const r = await svc({
       CLINIC_API_URL: "http://127.0.0.1:3203",
-      CLINIC_BRIDGE_SECRET: "bridge-secret",
+      SATELLITE_BRIDGE_SECRET: "bridge-secret",
     }).resolveEndpoint("org-1", SATELLITE_KEY_CLINIC);
     expect(r).toEqual({
       baseUrl: "http://127.0.0.1:3203",
       secret: "bridge-secret",
+    });
+  });
+
+  it("falls back to env for hotel and fnb staff fan-out", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue(null);
+    const s = svc({
+      HOTEL_PMS_API_URL: "http://hotel-pms:3201",
+      FNB_POS_API_URL: "http://fnb-pos:3202",
+      SATELLITE_BRIDGE_SECRET: "bridge-secret",
+    });
+    await expect(s.resolveEndpoint("org-1", "industry_hotel_pms")).resolves.toEqual({
+      baseUrl: "http://hotel-pms:3201",
+      secret: "bridge-secret",
+    });
+    await expect(s.resolveEndpoint("org-1", "industry_fnb_pos")).resolves.toEqual({
+      baseUrl: "http://fnb-pos:3202",
+      secret: "bridge-secret",
+    });
+  });
+
+  it("uses env bridge secret when registry row has no cipher", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue({
+      enabled: true,
+      baseUrl: "http://clinic:3203/",
+      secretCipher: null,
+    });
+    const r = await svc({
+      SATELLITE_BRIDGE_SECRET: "from-env",
+    }).resolveEndpoint("org-1", SATELLITE_KEY_CLINIC);
+    expect(r).toEqual({
+      baseUrl: "http://clinic:3203",
+      secret: "from-env",
     });
   });
 

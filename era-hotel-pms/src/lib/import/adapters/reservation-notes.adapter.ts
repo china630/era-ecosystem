@@ -104,7 +104,7 @@ const WIDE_NOTE_KEYS = [
 export const reservationNotesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: "reservation-notes",
   label: "Reservation notes",
-  order: 55,
+  order: 12,
   permission: PERMISSIONS.RESERVATIONS_WRITE,
   templateHint: "12-Reservation-Notes.xlsx — EW Notes",
   headerAliases: {

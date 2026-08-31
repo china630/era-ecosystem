@@ -1,7 +1,17 @@
-import { bakuDateKey } from "@/domain/patient/patient-timeline.service";
-
 /** Asia/Baku is UTC+4 year-round (no DST). */
 const BAKU_OFFSET = "+04:00";
+const BAKU_TZ = "Asia/Baku";
+
+/** YYYY-MM-DD in Asia/Baku. Safe to import from client components. */
+export function bakuDateKey(isoOrDate: Date | string): string {
+  const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: BAKU_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
 
 export function todayBakuYmd(asOf = new Date()): string {
   return bakuDateKey(asOf);
@@ -48,6 +58,13 @@ export function bakuTimeLabel(isoOrDate: Date | string): string {
     minute: "2-digit",
     hour12: false,
   }).format(d);
+}
+
+/** DD.MM.YYYY in Asia/Baku. */
+export function bakuDateDisplay(isoOrDate: Date | string): string {
+  const key = bakuDateKey(isoOrDate);
+  const [y, m, day] = key.split("-");
+  return `${day}.${m}.${y}`;
 }
 
 /** DD.MM in Asia/Baku (compact PLAN rows). */

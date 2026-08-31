@@ -24,10 +24,15 @@ describe("package-sell extra bed", () => {
 });
 
 describe("agency-statement import adapter", () => {
-  it("is last in the transactional phase", () => {
-    expect(IMPORT_PHASES.find((p) => p.id === "transactional")?.entities).toContain(
+  it("is last in the transactional phase after package-sell", () => {
+    expect(IMPORT_PHASES.find((p) => p.id === "transactional")?.entities).toEqual([
+      "guests",
+      "reservations",
+      "reservation-notes",
+      "folios",
+      "package-sell",
       "agency-statement",
-    );
+    ]);
   });
 
   it("parses EW remaining with thousands comma and skips zeros", () => {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ERA Elektraweb Bridge",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Temporary dual-run: Elektraweb ↔ ERA (inbound mirror + sanatorium SPA extra Insert)",
   "permissions": ["storage", "alarms"],
   "host_permissions": [
@@ -43,6 +43,12 @@
       "js": ["injected.js"],
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": ["https://app.elektraweb.com/*"],
+      "js": ["overlay.js"],
+      "run_at": "document_idle",
+      "type": "module"
     }
   ]
 }

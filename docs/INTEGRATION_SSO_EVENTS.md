@@ -324,6 +324,24 @@ Schema: `packages/era-contracts/src/events/workforce.events.ts`. ADR: [cp-workfo
 
 **STAFF_PROVISIONED / STAFF_DEACTIVATED (Plan C):** Publisher = **Orchestrator CP** (`WorkforceProvisionService`). Payload v2 requires `cpEmploymentId`; optional `financeEmployeeId` for payroll extension. `fullName` in payload is **T3 ops-cache display stamp only** (from MDM at provision); not authoritative — see [cp-workforce-pii-tiers.md](./adr/cp-workforce-pii-tiers.md). Schema: `packages/era-contracts/src/events/hr.events.ts`. ADR: [cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md).
 
+Fan-out: `SatelliteEventsService` → queue `era-satellite-fanout` → `POST {baseUrl}/api/integration/staff-provision` with header `x-satellite-bridge-secret`. The path is session-public (`DEFAULT_PUBLIC_API_PREFIXES`); auth is the bridge secret, not a staff cookie. Endpoint resolution: `SatelliteEndpoint` row, else docker-internal env (`CLINIC_API_URL` / `HOTEL_PMS_API_URL` / `FNB_POS_API_URL`). Do **not** point those env vars at public `https://*.era-365.online` from the orchestrator container (Traefik loop). Shared secret: `SATELLITE_BRIDGE_SECRET` (clinic also accepts `CLINIC_BRIDGE_SECRET`). Handlers bind tenant via `enterRequestTenant(event.organizationId)` and stamp `organizationId` on local User (required on SHARED; Nafta DEDICATED also uses the event org). User `passwordHash` is kit **scrypt** (`hashPassword`) so `/login` works. F&B floor PIN on `StaffRoster.pinHash` stays SHA-256 (`hashStaffPin`) for `/api/labor/clock`.
+
+**Default PIN / password change:** CP emits `pin: "0000"` (no CP UI to set a password). Clinic ops change it after first login: profile menu → **Change password** (`/account/password`, `PATCH /api/auth/password`). SSO users (`sso:no-password`) cannot set a local password. Hotel admin can still reset via `/settings/users`; F&B web login uses the same scrypt hash as clinic (PIN clock is separate).
+
+**Clinic Excel cutover vs workforce (name match):** imported `Practitioner` rows have `cpEmploymentId` / `globalPersonId` null. Link order is `cpEmploymentId` → `globalPersonId` → **unique** name match among unlinked same `staffKind`. Unique means **exactly one** imported card looks like the MDM FIO (latinized tokens; e.g. `Rəna Kəngərli` ↔ `Kangarli Rana Kamil qizi`). Zero matches → create a new practitioner (imported card stays unlinked). Two or more matches → do **not** guess; create a new card rather than attach the login to the wrong doctor.
+
+**Who consumes STAFF_PROVISIONED today**
+
+| Satellite | Local staff login from CP hire/grant | Handler |
+|-----------|--------------------------------------|---------|
+| Clinic | Yes (`User` + `Practitioner`) | `era-clinic` `/api/integration/staff-provision` |
+| Hotel PMS | Yes (`User`, role `Receptionist` for CP `RECEPTION`) | `era-hotel-pms` same path. Bridge: extension Settings uses this login. |
+| F&B POS | Yes (`User` + `StaffRoster` PIN) | `era-fnb-pos` same path |
+| Retail, logistics, construction, CRM, auto, wholesale | **Not yet.** Owner/manager use SSO from the launcher. Security Admin grant is recorded in CP but **no satellite User is created**. Floor staff of those verticals do not get `emp-*` / `0000` until a handler + `FANOUT_URL_ENV` entry exists. | none |
+| Bank | Different bus: bank-core `/internal/v1/staff-provisioning` (finance HR family), not this industry fan-out. | bank-core |
+
+Do not treat a grant to `industry_retail` (etc.) as a working POS login. Track the gap here so a later wave can add handlers without rediscovering it.
+
 **CP workforce org events (Plan B):** Orchestrator → `era-satellite-events` → Finance worker when `hr_full`:
 
 | Event | Purpose |

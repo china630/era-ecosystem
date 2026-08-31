@@ -9,6 +9,7 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  ListPaginationFooter,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
@@ -107,6 +108,17 @@ export default function ProceduresReportPage() {
     bonusWalkIn: number;
     bonusTotal: number;
   } | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return items.slice(start, start + pageSize);
+  }, [items, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [view, from, to, procedure, paid, nurseId, pageSize]);
 
   const url = useMemo(() => {
     const params = new URLSearchParams({
@@ -160,6 +172,7 @@ export default function ProceduresReportPage() {
         return;
       }
       setItems(d.items ?? []);
+      setPage(1);
       setGrandTotal(typeof d.grandTotal === "number" ? d.grandTotal : null);
       if (view === "doctor-bonus") {
         setBonusBuckets({
@@ -293,7 +306,7 @@ export default function ProceduresReportPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((it: any, idx: number) => {
+                pagedItems.map((it: any, idx: number) => {
                   if (view === "doctor-lines") {
                     const row = it as DoctorLinesItem;
                     return (
@@ -346,6 +359,23 @@ export default function ProceduresReportPage() {
             </tbody>
           </table>
         </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={items.length}
+          loading={busy}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: t("rowsPerPage"),
+            pageOf: t("pageOf"),
+            prev: t("prev"),
+            next: t("next"),
+          }}
+        />
 
         {grandTotal != null ? <p className="mt-3 text-sm">Grand total: {grandTotal}</p> : null}
         {bonusBuckets ? (

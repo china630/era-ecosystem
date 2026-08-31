@@ -20,16 +20,15 @@ import {
   NATIONALITY_OPTIONS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
-import { maskPersonId } from "@/components/patients/PatientCardBody";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
+import { bakuDateDisplay } from "@/lib/baku-day";
 
 type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
 type PatientBloodGroup =
@@ -46,6 +45,9 @@ type PatientBloodGroup =
 type Patient = {
   id: string;
   refCode: string;
+  givenName?: string;
+  surname?: string;
+  fatherName?: string | null;
   fullName: string;
   phone?: string | null;
   sex?: PatientSex;
@@ -54,6 +56,8 @@ type Patient = {
   globalPersonId?: string | null;
   hotelRoomNumber?: string | null;
   programCode?: string | null;
+  checkInAt?: string | null;
+  checkOutAt?: string | null;
 };
 
 type ListResponse = {
@@ -66,10 +70,11 @@ type ListResponse = {
 };
 
 const emptyForm = {
-  refCode: "",
-  fullName: "",
+  givenName: "",
+  surname: "",
+  fatherName: "",
   phone: "",
-  nationality: "AZ",
+  nationality: "",
   sex: "UNKNOWN" as PatientSex,
   birthDate: "",
   bloodGroup: "UNKNOWN" as PatientBloodGroup,
@@ -77,13 +82,14 @@ const emptyForm = {
   emergencyContactPhone: "",
   finCode: "",
   passportNumber: "",
-  issuingCountry: "AZ",
+  issuingCountry: "",
 };
 
 export default function PatientsPage() {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
   const { auth } = useClinicAuth();
+  const isAdmin = Boolean(auth?.canViewClinicAdmin || auth?.isPlatformSuperAdmin);
   const hasSanatorium = (auth?.enabledPresets ?? []).includes(
     CLINIC_PRESET.SANATORIUM_CLINICAL,
   );
@@ -104,11 +110,11 @@ export default function PatientsPage() {
     ageMax: "",
     roomNumber: "",
     programCode: "",
+    episodeStatus: "OPEN" as "OPEN" | "CLOSED" | "ALL",
   });
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const load = useCallback(async () => {
@@ -121,7 +127,7 @@ export default function PatientsPage() {
       if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
       if (filters.sex) params.set("sex", filters.sex);
       if (filters.bloodGroup) params.set("bloodGroup", filters.bloodGroup);
-      if (filters.hasMdm) params.set("hasMdm", filters.hasMdm);
+      if (isAdmin && filters.hasMdm) params.set("hasMdm", filters.hasMdm);
       if (filters.ageMin.trim()) params.set("ageMin", filters.ageMin.trim());
       if (filters.ageMax.trim()) params.set("ageMax", filters.ageMax.trim());
       if (hasSanatorium && filters.roomNumber.trim()) {
@@ -130,6 +136,7 @@ export default function PatientsPage() {
       if (hasSanatorium && filters.programCode.trim()) {
         params.set("programCode", filters.programCode.trim());
       }
+      params.set("episodeStatus", filters.episodeStatus);
       if (hasSanatorium) {
         params.set("includeHotelRooms", "1");
         params.set("includeProgramCodes", "1");
@@ -138,15 +145,14 @@ export default function PatientsPage() {
       const d = await res.json();
       const payload = (d.data ?? d) as ListResponse;
       setRows(payload.items ?? []);
-      setTotal(payload.total ?? 0);
-      setPage(payload.page ?? page);
-      setPageSize(payload.pageSize ?? pageSize);
+      setTotal(typeof payload.total === "number" ? payload.total : 0);
+      // Do not echo page/pageSize from API — avoids race that snaps the pager back.
       if (payload.hotelRooms) setHotelRooms(payload.hotelRooms);
       if (payload.programCodes) setProgramCodes(payload.programCodes);
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, filters, hasSanatorium, page, pageSize]);
+  }, [debouncedQ, filters, hasSanatorium, isAdmin, page, pageSize]);
 
   useEffect(() => {
     void load();
@@ -165,12 +171,10 @@ export default function PatientsPage() {
         header: t("sex"),
         render: (p) =>
           p.sex === "MALE"
-            ? t("sexMale")
+            ? t("sexShortMale")
             : p.sex === "FEMALE"
-              ? t("sexFemale")
-              : p.sex === "OTHER"
-                ? t("sexOther")
-                : "—",
+              ? t("sexShortFemale")
+              : "—",
       },
       {
         key: "ageYears",
@@ -190,20 +194,34 @@ export default function PatientsPage() {
               header: t("filterProgramCode"),
               render: (p: Patient) => p.programCode ?? "—",
             } satisfies EraDataGridColumn<Patient>,
+            {
+              key: "checkInAt",
+              header: t("checkIn"),
+              render: (p: Patient) => (p.checkInAt ? bakuDateDisplay(p.checkInAt) : "—"),
+            } satisfies EraDataGridColumn<Patient>,
+            {
+              key: "checkOutAt",
+              header: t("checkOut"),
+              render: (p: Patient) => (p.checkOutAt ? bakuDateDisplay(p.checkOutAt) : "—"),
+            } satisfies EraDataGridColumn<Patient>,
           ]
         : []),
-      {
-        key: "mdm",
-        header: t("mdmBadge"),
-        render: (p) =>
-          p.globalPersonId ? (
-            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs">
-              {maskPersonId(p.globalPersonId)}
-            </span>
-          ) : (
-            <span className="text-red-600">{t("mdmMissing")}</span>
-          ),
-      },
+      ...(isAdmin
+        ? [
+            {
+              key: "mdm",
+              header: t("mdmBadge"),
+              render: (p: Patient) =>
+                p.globalPersonId ? (
+                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs">
+                    {p.globalPersonId.slice(0, 4)}…
+                  </span>
+                ) : (
+                  <span className="text-red-600">{t("mdmMissing")}</span>
+                ),
+            } satisfies EraDataGridColumn<Patient>,
+          ]
+        : []),
       {
         key: "actions",
         header: tc("actions"),
@@ -219,30 +237,8 @@ export default function PatientsPage() {
         ),
       },
     ],
-    [t, tc, hasSanatorium],
+    [t, tc, hasSanatorium, isAdmin],
   );
-
-  async function lookupMdm() {
-    setMdmStatus(null);
-    if (!form.finCode.trim()) {
-      setMdmStatus(t("finRequired"));
-      return;
-    }
-    const res = await fetch("/api/mdm/person-lookup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fin: form.finCode.trim() }),
-    });
-    const data = await res.json();
-    if (data.globalPersonId) {
-      setMdmStatus(t("mdmLinked", { id: maskPersonId(data.globalPersonId) }));
-      if (data.fullName && !form.fullName) {
-        setForm((f) => ({ ...f, fullName: data.fullName }));
-      }
-    } else {
-      setMdmStatus(t("mdmNotFound"));
-    }
-  }
 
   async function save() {
     setError(null);
@@ -250,10 +246,19 @@ export default function PatientsPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...form,
+        givenName: form.givenName.trim(),
+        surname: form.surname.trim(),
+        fatherName: form.fatherName.trim() || null,
+        phone: form.phone.trim() || undefined,
+        nationality: form.nationality.trim() || null,
+        sex: form.sex,
         birthDate: form.birthDate.trim() || null,
+        bloodGroup: form.bloodGroup,
         emergencyContactName: form.emergencyContactName.trim() || null,
         emergencyContactPhone: form.emergencyContactPhone.trim() || null,
+        finCode: form.finCode.trim() || undefined,
+        passportNumber: form.passportNumber.trim() || undefined,
+        issuingCountry: form.issuingCountry.trim() || undefined,
       }),
     });
     const data = await res.json();
@@ -263,7 +268,6 @@ export default function PatientsPage() {
     }
     setOpen(false);
     setForm(emptyForm);
-    setMdmStatus(null);
     await load();
   }
 
@@ -290,6 +294,7 @@ export default function PatientsPage() {
             ageMax: "",
             roomNumber: "",
             programCode: "",
+            episodeStatus: "OPEN",
           });
           setPage(1);
         }}
@@ -300,6 +305,22 @@ export default function PatientsPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <FieldSelect
+          label={t("filterEpisodeStatus")}
+          preset="select"
+          value={filters.episodeStatus}
+          onChange={(e) => {
+            setFilters({
+              ...filters,
+              episodeStatus: e.target.value as "OPEN" | "CLOSED" | "ALL",
+            });
+            setPage(1);
+          }}
+        >
+          <option value="OPEN">{t("filterEpisodeOpen")}</option>
+          <option value="ALL">{t("filterEpisodeAll")}</option>
+          <option value="CLOSED">{t("filterEpisodeClosed")}</option>
+        </FieldSelect>
         <FieldSelect
           label={t("filterSex")}
           preset="shortText"
@@ -336,28 +357,27 @@ export default function PatientsPage() {
           <option value="AB_NEG">AB-</option>
           <option value="O_POS">O+</option>
           <option value="O_NEG">O-</option>
-          <option value="UNKNOWN">{t("bloodUnknown")}</option>
+          <option value="UNKNOWN">{t("sexUnknown")}</option>
         </FieldSelect>
-        <FieldSelect
-          label={t("filterMdm")}
-          preset="shortText"
-          value={filters.hasMdm}
-          onChange={(e) => {
-            setFilters({ ...filters, hasMdm: e.target.value as "" | "0" | "1" });
-            setPage(1);
-          }}
-        >
-          <option value="">{tc("all")}</option>
-          <option value="1">{t("filterMdmLinked")}</option>
-          <option value="0">{t("filterMdmMissing")}</option>
-        </FieldSelect>
+        {isAdmin ? (
+          <FieldSelect
+            label={t("filterMdm")}
+            preset="shortText"
+            value={filters.hasMdm}
+            onChange={(e) => {
+              setFilters({ ...filters, hasMdm: e.target.value as "" | "0" | "1" });
+              setPage(1);
+            }}
+          >
+            <option value="">{tc("all")}</option>
+            <option value="1">{t("filterMdmLinked")}</option>
+            <option value="0">{t("filterMdmMissing")}</option>
+          </FieldSelect>
+        ) : null}
         {hasSanatorium ? (
           <>
             <CatalogField
-              kind={inferCatalogFieldKind({
-                optionCount: hotelRooms.length,
-                searchable: hotelRooms.length > 40,
-              })}
+              kind="SEARCHABLE"
               label={t("filterHotelRoom")}
               value={filters.roomNumber}
               onChange={(v) => {
@@ -365,16 +385,14 @@ export default function PatientsPage() {
                 setPage(1);
               }}
               options={[
-                ...(hotelRooms.length > 40
-                  ? [{ value: "", label: t("filterHotelRoomAll") }]
-                  : []),
+                { value: "", label: t("filterHotelRoomAll") },
                 ...hotelRooms.map((room) => ({ value: room, label: room })),
               ]}
               emptyLabel={t("filterHotelRoomAll")}
             />
             <CatalogField
               kind={inferCatalogFieldKind({
-                optionCount: programCodes.length,
+                optionCount: programCodes.length + 1,
                 searchable: programCodes.length > 12,
               })}
               label={t("filterProgramCode")}
@@ -383,8 +401,11 @@ export default function PatientsPage() {
                 setFilters({ ...filters, programCode: String(v ?? "") });
                 setPage(1);
               }}
-              options={programCodes.map((code) => ({ value: code, label: code }))}
-              emptyLabel={t("filterProgramCodeAll")}
+              options={[
+                { value: "", label: t("filterProgramCodeAll") },
+                ...programCodes.map((code) => ({ value: code, label: code })),
+              ]}
+              emptyLabel={null}
             />
           </>
         ) : null}
@@ -419,14 +440,17 @@ export default function PatientsPage() {
           rows={rows}
           rowKey={(p) => p.id}
           emptyMessage={loading ? tc("loading") : t("emptyList")}
+          pagination={false}
         />
         <ListPaginationFooter
           page={page}
           pageSize={pageSize}
           total={total}
-          loading={loading}
           onPageChange={setPage}
-          onPageSizeChange={setPageSize}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
           labels={{
             rowsPerPage: tc("rowsPerPage"),
             pageOf: tc("pageOf"),
@@ -445,18 +469,28 @@ export default function PatientsPage() {
       <ModalShell open={open} title={t("createTitle")} onClose={() => setOpen(false)}>
         <div className="space-y-3">
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("demographicsHint")}</p>
-          <Field
-            label={t("refCode")}
-            preset="code"
-            value={form.refCode}
-            onChange={(e) => setForm({ ...form, refCode: e.target.value })}
-          />
-          <Field
-            label={t("name")}
-            preset="shortText"
-            value={form.fullName}
-            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-          />
+          <FieldRow cols={3}>
+            <Field
+              label={t("givenName")}
+              preset="shortText"
+              value={form.givenName}
+              onChange={(e) => setForm({ ...form, givenName: e.target.value })}
+              required
+            />
+            <Field
+              label={t("surname")}
+              preset="shortText"
+              value={form.surname}
+              onChange={(e) => setForm({ ...form, surname: e.target.value })}
+              required
+            />
+            <Field
+              label={t("fatherName")}
+              preset="shortText"
+              value={form.fatherName}
+              onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
+            />
+          </FieldRow>
           <FieldRow cols={2}>
             <Field
               label={t("phone")}
@@ -468,8 +502,11 @@ export default function PatientsPage() {
               kind="SEARCHABLE"
               label={t("nationality")}
               value={form.nationality}
-              onChange={(v) => setForm({ ...form, nationality: String(v).toUpperCase() })}
+              onChange={(v) =>
+                setForm({ ...form, nationality: String(v ?? "").toUpperCase() })
+              }
               options={[...NATIONALITY_OPTIONS]}
+              emptyLabel={t("sexUnknown")}
             />
           </FieldRow>
           <FieldRow cols={2}>
@@ -492,7 +529,7 @@ export default function PatientsPage() {
                 setForm({ ...form, bloodGroup: String(v) as PatientBloodGroup })
               }
               options={[
-                { value: "UNKNOWN", label: t("bloodUnknown") },
+                { value: "UNKNOWN", label: t("sexUnknown") },
                 { value: "A_POS", label: "A+" },
                 { value: "A_NEG", label: "A-" },
                 { value: "B_POS", label: "B+" },
@@ -511,22 +548,12 @@ export default function PatientsPage() {
               openCalendarLabel={tc("openCalendar")}
             />
           </FieldRow>
-          <FieldRow cols={2} className="items-end">
-            <Field
-              label={t("finCode")}
-              preset="fin"
-              value={form.finCode}
-              onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
-            />
-            <button
-              type="button"
-              className={`${SECONDARY_BUTTON_CLASS} self-end`}
-              onClick={() => void lookupMdm()}
-            >
-              {t("mdmLookup")}
-            </button>
-          </FieldRow>
-          {mdmStatus ? <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{mdmStatus}</p> : null}
+          <Field
+            label={t("finCode")}
+            preset="fin"
+            value={form.finCode}
+            onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
+          />
           {error ? <p className={`text-xs ${TEXT_DANGER_CLASS}`}>{error}</p> : null}
         </div>
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />

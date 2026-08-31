@@ -4,12 +4,18 @@ import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { getPersonOpsProfile, normalizePersonSex, parsePersonBirthDate } from '@era/satellite-kit';
 import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
+import {
+  assertLabOrderCanCreate,
+  findEpisodeLabConflict,
+} from '@/domain/lab/lab-order-conflict.service';
+import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
+import { composeFullName } from '@/domain/patient/patient-ref-code';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
 }
 
-/** Wave E — stable PatientRef code for in-house pax (MDM > paxKey > passport). */
+/** Wave E — legacy lookup key only (new creates use allocatePatientRefCode). */
 export function resolveHotelPatientRefCode(input: {
   reservationId: string;
   globalPersonId?: string | null;
@@ -58,7 +64,7 @@ async function applyMdmDemographicsCache(
   });
 }
 
-function walkInRefCode(finOrPassport: string): string {
+function walkInLegacyRefCode(finOrPassport: string): string {
   return `WALKIN-${finOrPassport.replace(/\s+/g, '-').slice(0, 20)}`;
 }
 
@@ -75,34 +81,49 @@ export async function openEpisodeFromStay(input: {
   /** Wave E — stable pax key when no MDM (defaults to passport/reservation). */
   paxKey?: string | null;
 }) {
-  const refCode = resolveHotelPatientRefCode({
+  const legacyRef = resolveHotelPatientRefCode({
     reservationId: input.reservationId,
     globalPersonId: input.globalPersonId,
     paxKey: input.paxKey,
     passportNumber: input.passportNumber,
   });
 
-  const patient =
-    (await prisma.patientRef.findFirst({
-      where: {
-        organizationId: input.organizationId,
-        OR: [
-          ...(input.globalPersonId?.trim()
-            ? [{ globalPersonId: input.globalPersonId.trim() }]
-            : []),
-          { refCode },
-        ],
-      },
-    })) ??
-    (await prisma.patientRef.create({
-      data: {
-        organizationId: input.organizationId,
-        refCode,
-        fullName: input.guestName,
-        phone: input.phone ?? null,
-        globalPersonId: input.globalPersonId ?? null,
-      },
-    }));
+  let patient = await prisma.patientRef.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      OR: [
+        ...(input.globalPersonId?.trim()
+          ? [{ globalPersonId: input.globalPersonId.trim() }]
+          : []),
+        { refCode: legacyRef },
+      ],
+    },
+  });
+
+  if (!patient) {
+    patient = await prisma.$transaction(async (tx) => {
+      const refCode = await allocatePatientRefCode(tx, input.organizationId);
+      const parts = input.guestName.trim().split(/\s+/);
+      const givenName = parts[0] ?? input.guestName;
+      const surname = parts.length > 1 ? parts[parts.length - 1]! : "";
+      const fatherName =
+        parts.length > 2 ? parts.slice(1, -1).join(" ") : null;
+      return tx.patientRef.create({
+        data: {
+          organizationId: input.organizationId,
+          refCode,
+          givenName,
+          surname,
+          fatherName,
+          fullName: input.guestName,
+          phone: input.phone ?? null,
+          globalPersonId: input.globalPersonId ?? null,
+        },
+      });
+    });
+  }
+
+  if (!patient) throw new Error("Failed to create hotel stay patient");
 
   await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
 
@@ -157,6 +178,9 @@ export async function openEpisodeFromStay(input: {
 
 export async function registerWalkInEpisode(input: {
   organizationId: string;
+  givenName?: string;
+  surname?: string;
+  fatherName?: string | null;
   fullName: string;
   fin?: string;
   passport?: string;
@@ -170,33 +194,67 @@ export async function registerWalkInEpisode(input: {
 }) {
   const key = input.fin?.trim() || input.passport?.trim();
   if (!key) throw new Error("FIN or passport required");
-  const refCode = walkInRefCode(key);
+  const legacyRef = walkInLegacyRefCode(key);
+
+  const givenName = (input.givenName ?? input.fullName.split(/\s+/)[0] ?? "").trim();
+  const surname = (
+    input.surname ??
+    input.fullName.trim().split(/\s+/).slice(-1)[0] ??
+    ""
+  ).trim();
+  const fatherName =
+    input.fatherName !== undefined
+      ? input.fatherName?.trim() || null
+      : null;
+  const fullName =
+    input.fullName.trim() ||
+    composeFullName({ givenName, surname, fatherName });
 
   let patient = await prisma.patientRef.findFirst({
-    where: { organizationId: input.organizationId, refCode },
+    where: {
+      organizationId: input.organizationId,
+      OR: [
+        ...(input.globalPersonId?.trim()
+          ? [{ globalPersonId: input.globalPersonId.trim() }]
+          : []),
+        { refCode: legacyRef },
+        ...(input.phone?.trim()
+          ? [{ phone: input.phone.trim() }]
+          : []),
+      ],
+    },
   });
   const birthDate = input.birthDate?.trim()
     ? new Date(`${input.birthDate.trim()}T00:00:00.000Z`)
     : undefined;
 
   if (!patient) {
-    patient = await prisma.patientRef.create({
-      data: {
-        organizationId: input.organizationId,
-        refCode,
-        fullName: input.fullName,
-        phone: input.phone ?? null,
-        nationality: input.nationality?.trim() || "AZ",
-        sex: input.sex,
-        birthDate: birthDate ?? null,
-        globalPersonId: input.globalPersonId ?? null,
-      },
+    patient = await prisma.$transaction(async (tx) => {
+      const refCode = await allocatePatientRefCode(tx, input.organizationId);
+      return tx.patientRef.create({
+        data: {
+          organizationId: input.organizationId,
+          refCode,
+          givenName: givenName || fullName,
+          surname,
+          fatherName,
+          fullName,
+          phone: input.phone ?? null,
+          nationality: input.nationality?.trim() || null,
+          sex: input.sex,
+          birthDate: birthDate ?? null,
+          globalPersonId: input.globalPersonId ?? null,
+        },
+      });
     });
   } else {
     patient = await prisma.patientRef.update({
       where: { id: patient.id },
       data: {
-        fullName: input.fullName,
+        givenName: givenName || patient.givenName,
+        surname: surname || patient.surname,
+        ...(fatherName !== undefined ? { fatherName } : {}),
+        fullName,
         ...(input.phone !== undefined ? { phone: input.phone || null } : {}),
         ...(input.nationality?.trim() ? { nationality: input.nationality.trim() } : {}),
         sex: input.sex,
@@ -290,27 +348,71 @@ export async function completeCheckupAndSchedule(input: {
   return instance;
 }
 
-export async function listOpenEpisodes(organizationId?: string) {
-  const episodes = await prisma.clinicalEpisode.findMany({
-    where: {
-      status: 'OPEN',
-      ...(organizationId ? { organizationId } : {}),
-    },
-    include: {
-      patientRef: true,
-      complaints: { orderBy: { recordedAt: 'desc' }, take: 3 },
-      diagnoses: {
-        orderBy: { recordedAt: 'desc' },
-        take: 3,
-        include: { icdCode: true },
+export async function listOpenEpisodes(input?: {
+  organizationId?: string;
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  origin?: string;
+}) {
+  const page = input?.page ?? 1;
+  const pageSize = input?.pageSize ?? 25;
+  const where = {
+    status: 'OPEN' as const,
+    ...(input?.organizationId ? { organizationId: input.organizationId } : {}),
+    ...(input?.origin ? { patientOrigin: input.origin as 'IN_HOUSE' | 'WALK_IN' } : {}),
+    ...(input?.q?.trim()
+      ? {
+          OR: [
+            { patientRef: { fullName: { contains: input.q.trim(), mode: 'insensitive' as const } } },
+            { patientRef: { refCode: { contains: input.q.trim(), mode: 'insensitive' as const } } },
+            { roomNumber: { contains: input.q.trim(), mode: 'insensitive' as const } },
+            { programCode: { contains: input.q.trim(), mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [total, episodes] = await Promise.all([
+    prisma.clinicalEpisode.count({ where }),
+    prisma.clinicalEpisode.findMany({
+      where,
+      include: {
+        patientRef: true,
+        complaints: { orderBy: { recordedAt: 'desc' }, take: 3 },
+        diagnoses: {
+          orderBy: { recordedAt: 'desc' },
+          take: 3,
+          include: { icdCode: true },
+        },
+        labOrders: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            items: {
+              include: {
+                diagnosticService: {
+                  select: {
+                    code: true,
+                    serviceCode: true,
+                    titleEn: true,
+                    titleRu: true,
+                    titleAz: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        programInstance: {
+          include: { procedureLines: { orderBy: { procedureCode: 'asc' } } },
+        },
       },
-      labOrders: { orderBy: { createdAt: 'desc' }, take: 5 },
-      programInstance: {
-        include: { procedureLines: { orderBy: { procedureCode: 'asc' } } },
-      },
-    },
-    orderBy: { openedAt: 'desc' },
-  });
+      orderBy: { openedAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
 
   const {
     LIVE_PROCEDURE_STATUSES,
@@ -322,7 +424,8 @@ export async function listOpenEpisodes(organizationId?: string) {
     .filter((e) => e.patientOrigin === "WALK_IN")
     .map((e) => e.id);
   if (walkInIds.length === 0) {
-    return episodes.map((e) => ({ ...e, canCloseWalkIn: false as boolean }));
+    const data = episodes.map((e) => ({ ...e, canCloseWalkIn: false as boolean }));
+    return { data, total, page, pageSize };
   }
 
   const [liveProcs, openLabs] = await Promise.all([
@@ -354,7 +457,7 @@ export async function listOpenEpisodes(organizationId?: string) {
       .map((r) => [r.clinicalEpisodeId!, r._count._all]),
   );
 
-  return episodes.map((e) => {
+  const data = episodes.map((e) => {
     if (e.patientOrigin !== "WALK_IN") {
       return { ...e, canCloseWalkIn: false };
     }
@@ -364,11 +467,13 @@ export async function listOpenEpisodes(organizationId?: string) {
     });
     return { ...e, canCloseWalkIn: !denied };
   });
+  return { data, total, page, pageSize };
 }
 
 /** @deprecated use listOpenEpisodes */
 export async function listInHouseEpisodes(organizationId?: string) {
-  return listOpenEpisodes(organizationId);
+  const result = await listOpenEpisodes({ organizationId });
+  return result.data;
 }
 
 export async function addComplaint(episodeId: string, text: string) {
@@ -444,7 +549,11 @@ export async function addDiagnosis(
   return addEpisodeDiagnosis(episodeId, input);
 }
 
-export async function createEpisodeLabOrder(episodeId: string, testCode: string) {
+export async function createEpisodeLabOrder(
+  episodeId: string,
+  testCode: string,
+  options?: { confirmRepeat?: boolean },
+) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
     include: { patientRef: true },
@@ -459,6 +568,10 @@ export async function createEpisodeLabOrder(episodeId: string, testCode: string)
     (err as Error & { code?: string }).code = EPISODE_CLOSED;
     throw err;
   }
+
+  const conflict = await findEpisodeLabConflict(episodeId, [testCode]);
+  assertLabOrderCanCreate(conflict, options?.confirmRepeat);
+
   const patientRefId = episode.patientRefId;
 
   // Fasting labs: schedule collection for next working morning (Asia/Baku ~08:00)
@@ -510,7 +623,24 @@ export async function getEpisode(id: string) {
       patientRef: true,
       complaints: { orderBy: { recordedAt: 'desc' } },
       diagnoses: { orderBy: { recordedAt: 'desc' }, include: { icdCode: true } },
-      labOrders: { orderBy: { createdAt: 'desc' } },
+      labOrders: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          items: {
+            include: {
+              diagnosticService: {
+                select: {
+                  code: true,
+                  serviceCode: true,
+                  titleEn: true,
+                  titleRu: true,
+                  titleAz: true,
+                },
+              },
+            },
+          },
+        },
+      },
       programInstance: {
         include: {
           procedureLines: { orderBy: { procedureCode: 'asc' } },

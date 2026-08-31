@@ -35,9 +35,11 @@ Entity slugs (v1): `revenue-codes`, … `folios`, `agency-statement`. **Planned 
 
 ## Phases (`src/lib/import/phases.ts`)
 
-1. **dictionaries** — flexible order  
-2. **master** — strict top→bottom  
-3. **transactional** — guests → reservations → reservation-notes → folios → **agency-statement** (EW city ledger, not 1C)  
+1. **dictionaries** — `#03`–`#05` flexible order  
+2. **master** — `#06` types → `#07` rates → `#08` rooms → `#09` agencies  
+3. **transactional** — `#10` guests → `#11` reservations → `#12` notes → `#13` folios → `#14` package-sell → `#15` agency-statement  
+
+Not on the hotel form: BAR bootstrap; FnB `#30`–`#32`; Retail `#33`.  
 
 ## Core files
 
