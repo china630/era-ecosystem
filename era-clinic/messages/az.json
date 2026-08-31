@@ -596,6 +596,11 @@
     "completeCheckupSchedule": "Checkup tamamla və planla",
     "checkupPendingHint": "Şikayət və ya ICD diaqnoz əlavə edin, sonra proqramı planlayın.",
     "registerWalkIn": "+ Walk-in qeydiyyat",
+    "closeWalkIn": "Bağla",
+    "closeWalkInConfirm": "Walk-in kursu bağlansın? Yalnız canlı prosedur və açıq lab olmadıqda.",
+    "closeWalkInOk": "Walk-in kurs bağlandı",
+    "closeWalkInBusyHint": "Bağlamadan əvvəl canlı prosedur və açıq lab-ları bitirin",
+    "anamnesisRequiredForProgram": "Proqram təyin etməzdən əvvəl kurs anamnezini doldurun",
     "walkInName": "Ad soyad",
     "walkInFin": "FIN",
     "walkInPassport": "Pasport",
@@ -1115,8 +1120,13 @@
     "contraindicationsCollapse": "Yığ",
     "anamnesis": "Anamnez",
     "anamnesisHint": "Qısa tibbi tarix və cari şikayətlər",
-    "anamnesisRequired": "Demografiyanı saxlamazdan əvvəl anamnez tələb olunur",
-    "anamnesisMissing": "Anamnez qeyd edilməyib — redaktə edərək əlavə edin"
+    "anamnesisRequired": "Prosedurları təsdiqləməzdən əvvəl bu kurs üçün anamnez tələb olunur",
+    "anamnesisMissing": "Bu kurs üçün anamnez qeyd edilməyib",
+    "episodeSelect": "Müalicə kursu",
+    "episodeClosedReadOnly": "Kurs bağlıdır (yalnız oxuma)",
+    "anamnesisSave": "Anamnezi saxla",
+    "anamnesisCourseMissing": "Kurs yoxdur — walk-in qeydiyyat edin və ya hotel check-in gözləyin",
+    "noEpisodes": "Kurs yoxdur"
   },
   "patientTimeline": {
     "title": "Klinik vaxt xətti",
@@ -1180,6 +1190,7 @@
     "day1SoftWarn": "Plan təsdiqləndi (yumşaq xəbərdarlıq: Nafta birinci gün defolt 2–3 prosedur).",
     "confirmOk": "Plan təsdiqləndi",
     "confirmFailed": "Təsdiq alınmadı",
+    "anamnesisRequiredForConfirm": "Prosedurları təsdiqləməzdən əvvəl kurs anamnezini doldurun",
     "bodyPart": "Bədən hissəsi",
     "physioSites": "Zonalar",
     "physioAddSite": "Zona əlavə et",
@@ -1238,6 +1249,9 @@
     "print": "Çap",
     "downloadLabFile": "Analiz faylını yüklə",
     "diagnosesTitle": "ICD-10 diaqnozları",
+    "complaintsTitle": "Şikayətlər",
+    "addComplaint": "Şikayət əlavə et",
+    "complaintsNoEpisode": "Kurs yoxdur — /sanatorium-da qeydiyyat edin.",
     "diagnosesNoEpisode": "Aktiv sanatoriya epizodu yoxdur — diaqnoz açıq kursa yazılır.",
     "diagnosesOpenSanatorium": "Sanatoriyanı aç"
   },
@@ -1384,23 +1398,23 @@
     "phase": {
       "dictionaries": {
         "title": "Soraqçalar",
-        "hint": "25 prosedur, 26 otaq, 40 prosedur→otaq tələbləri"
+        "hint": "16 kataloq → 17 physio → 19 prosedur → 20 kabin → 21 tələblər → 23 şablonlar. EW Hizmet Tanımları Apply olunmur."
       },
       "master": {
         "title": "Heyət",
-        "hint": "Həkimlər (03)"
+        "hint": "22 həkimlər"
       },
       "patients": {
         "title": "Pasiyentlər",
-        "hint": "In-house (04)"
+        "hint": "24 pasiyentlər (otel qonaq/rezervdən sonra)"
       },
       "quotas": {
         "title": "Kvota və slotlar",
-        "hint": "05 sonra 06. Kvota iki dəfə yanmasın."
+        "hint": "25 kvota, sonra 26 tarixi COMPLETED. Kvota iki dəfə yanmasın."
       },
       "clinical": {
-        "title": "Lab və diaqnozlar",
-        "hint": "07–10"
+        "title": "Lab və USG",
+        "hint": "27 sifariş → 28 nəticə → 29 diaqnostika. leftover diagnoses yükləməyin."
       }
     }
   }

@@ -596,6 +596,11 @@
     "completeCheckupSchedule": "Завершить чекап и запланировать",
     "checkupPendingHint": "Добавьте жалобу или диагноз ICD, затем запланируйте программу.",
     "registerWalkIn": "+ Walk-in регистрация",
+    "closeWalkIn": "Закрыть",
+    "closeWalkInConfirm": "Закрыть walk-in курс? Только если нет активных процедур и открытых лабораторий.",
+    "closeWalkInOk": "Walk-in курс закрыт",
+    "closeWalkInBusyHint": "Сначала завершите живые процедуры и открытые анализы",
+    "anamnesisRequiredForProgram": "Заполните анамнез курса перед назначением программы",
     "walkInName": "ФИО",
     "walkInFin": "FIN",
     "walkInPassport": "Паспорт",
@@ -1115,8 +1120,13 @@
     "contraindicationsCollapse": "Свернуть",
     "anamnesis": "Анамнез",
     "anamnesisHint": "Краткий медицинский анамнез и текущие жалобы",
-    "anamnesisRequired": "Перед сохранением демографии нужен анамнез",
-    "anamnesisMissing": "Анамнез не заполнен — отредактируйте пациента"
+    "anamnesisRequired": "Анамнез курса обязателен перед подтверждением процедур",
+    "anamnesisMissing": "Анамнез этого курса не заполнен",
+    "episodeSelect": "Курс лечения",
+    "episodeClosedReadOnly": "Курс закрыт (только просмотр)",
+    "anamnesisSave": "Сохранить анамнез",
+    "anamnesisCourseMissing": "Нет курса — зарегистрируйте walk-in или дождитесь check-in",
+    "noEpisodes": "Нет курсов"
   },
   "patientTimeline": {
     "title": "Клинический таймлайн",
@@ -1180,6 +1190,7 @@
     "day1SoftWarn": "План подтверждён (мягкое предупреждение: по умолчанию Nafta — 2–3 процедуры в первый день).",
     "confirmOk": "План подтверждён",
     "confirmFailed": "Не удалось подтвердить",
+    "anamnesisRequiredForConfirm": "Заполните анамнез курса перед подтверждением процедур",
     "bodyPart": "Часть тела",
     "physioSites": "Зоны",
     "physioAddSite": "Добавить зону",
@@ -1238,6 +1249,9 @@
     "print": "Печать",
     "downloadLabFile": "Скачать файл анализа",
     "diagnosesTitle": "Диагнозы МКБ-10",
+    "complaintsTitle": "Жалобы",
+    "addComplaint": "Добавить жалобу",
+    "complaintsNoEpisode": "Нет курса — зарегистрируйте на /sanatorium.",
     "diagnosesNoEpisode": "Нет активного эпизода санатория — диагнозы пишутся на открытый курс.",
     "diagnosesOpenSanatorium": "Открыть санаторий"
   },
@@ -1384,23 +1398,23 @@
     "phase": {
       "dictionaries": {
         "title": "Справочники",
-        "hint": "25 процедуры, 26 кабинеты, 40 привязки процедура→кабинет"
+        "hint": "16 каталог → 17 physio → 19 процедуры → 20 кабинеты → 21 требования → 23 шаблоны. EW Hizmet Tanımları не Apply."
       },
       "master": {
         "title": "Персонал",
-        "hint": "Врачи (03)"
+        "hint": "22 врачи"
       },
       "patients": {
         "title": "Пациенты",
-        "hint": "Проживающие (04)"
+        "hint": "24 пациенты (после гостей/броней отеля)"
       },
       "quotas": {
         "title": "Квоты и слоты",
-        "hint": "05 затем 06. Квоту не сжигать дважды."
+        "hint": "25 квоты, затем 26 исторические COMPLETED. Квоту не сжигать дважды."
       },
       "clinical": {
-        "title": "Лаборатория и диагнозы",
-        "hint": "07–10"
+        "title": "Лаборатория и УЗИ",
+        "hint": "27 заказы → 28 результаты → 29 диагностика. leftover diagnoses не грузить."
       }
     }
   }

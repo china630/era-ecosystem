@@ -11,11 +11,17 @@ export function patientCreateDenied(input: {
   return null;
 }
 
-export function patientAnamnesisDenied(anamnesisText: string | null | undefined, updatingClinical: boolean): string | null {
+/**
+ * @deprecated CLI-55 — anamnesis lives on ClinicalEpisode; demographics PATCH no longer requires it.
+ * Kept for transitional tests; always returns null when updatingClinical is false.
+ * Prefer episodeAnamnesisDenied from @/domain/sanatorium/episode-gates.
+ */
+export function patientAnamnesisDenied(
+  _anamnesisText: string | null | undefined,
+  updatingClinical: boolean,
+): string | null {
   if (!updatingClinical) return null;
-  if (anamnesisText != null && !String(anamnesisText).trim()) {
-    return "Anamnesis text is required when updating clinical demographics";
-  }
+  // Demographics no longer gated by anamnesis (CLI-55).
   return null;
 }
 

@@ -632,6 +632,11 @@
     "completeCheckupSchedule": "Complete checkup & schedule program",
     "checkupPendingHint": "Add complaint or ICD diagnosis, then schedule the treatment program.",
     "registerWalkIn": "+ Register walk-in",
+    "closeWalkIn": "Close",
+    "closeWalkInConfirm": "Close this walk-in care course? Only when no live procedures or open labs remain.",
+    "closeWalkInOk": "Walk-in course closed",
+    "closeWalkInBusyHint": "Finish live procedures and open labs before closing",
+    "anamnesisRequiredForProgram": "Fill anamnesis for this course before assigning a program",
     "walkInName": "Full name",
     "walkInFin": "FIN",
     "walkInPassport": "Passport",
@@ -1138,8 +1143,13 @@
     "contraindicationsCollapse": "Collapse",
     "anamnesis": "Anamnesis",
     "anamnesisHint": "Brief medical history and current complaints",
-    "anamnesisRequired": "Anamnesis is required before saving demographics",
-    "anamnesisMissing": "Anamnesis not recorded — edit patient to add"
+    "anamnesisRequired": "Anamnesis is required for this care course before confirming procedures",
+    "anamnesisMissing": "Anamnesis not recorded for this course",
+    "episodeSelect": "Care course",
+    "episodeClosedReadOnly": "This course is closed (read-only)",
+    "anamnesisSave": "Save anamnesis",
+    "anamnesisCourseMissing": "No care course yet — register walk-in or await hotel check-in",
+    "noEpisodes": "No care courses"
   },
   "patientTimeline": {
     "title": "Clinical timeline",
@@ -1203,6 +1213,7 @@
     "day1SoftWarn": "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
     "confirmOk": "Plan confirmed",
     "confirmFailed": "Confirm failed",
+    "anamnesisRequiredForConfirm": "Fill anamnesis for this course before confirming procedures",
     "bodyPart": "Body part",
     "physioSites": "Sites",
     "physioAddSite": "Add site",
@@ -1261,6 +1272,9 @@
     "print": "Print",
     "downloadLabFile": "Download lab file",
     "diagnosesTitle": "ICD-10 diagnoses",
+    "complaintsTitle": "Complaints",
+    "addComplaint": "Add complaint",
+    "complaintsNoEpisode": "No care course — open sanatorium to register.",
     "diagnosesNoEpisode": "No active sanatorium episode — diagnoses are recorded on an open course.",
     "diagnosesOpenSanatorium": "Open sanatorium"
   },
@@ -1407,23 +1421,23 @@
     "phase": {
       "dictionaries": {
         "title": "Dictionaries",
-        "hint": "25 procedures, 26 rooms, 40 procedure→room requirements"
+        "hint": "16 lab catalog → 17 physio → 19 treatments → 20 rooms → 21 requirements → 23 templates. Do not Apply EW Hizmet Tanımları."
       },
       "master": {
         "title": "Staff",
-        "hint": "Practitioners (03)"
+        "hint": "22 doctors"
       },
       "patients": {
         "title": "Patients",
-        "hint": "In-house patients (04)"
+        "hint": "24 patients (after hotel guests/reservations)"
       },
       "quotas": {
         "title": "Quotas and slots",
-        "hint": "05 quotas then 06 ops slots. Do not burn quota twice."
+        "hint": "25 quotas then 26 historical COMPLETED slots. Do not burn quota twice."
       },
       "clinical": {
-        "title": "Lab and diagnoses",
-        "hint": "07–10 catalog, orders, USG text, ICD notes"
+        "title": "Lab and USG",
+        "hint": "27 lab orders → 28 results → 29 diagnostics. Skip leftover diagnoses."
       }
     }
   }

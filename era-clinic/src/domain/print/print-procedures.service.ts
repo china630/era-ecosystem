@@ -41,20 +41,26 @@ function bakuTime(d: Date): string {
 export async function buildProceduresPrint(
   patientId: string,
   lang: PrintLang,
+  episodeId?: string | null,
 ): Promise<PrintProceduresDocument | null> {
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return null;
 
   const branding = await getPrintBranding(lang);
-  const episode = await prisma.clinicalEpisode.findFirst({
-    where: { patientRefId: patientId },
-    orderBy: { openedAt: "desc" },
-  });
+  const episode = episodeId
+    ? await prisma.clinicalEpisode.findFirst({
+        where: { id: episodeId, patientRefId: patientId },
+      })
+    : await prisma.clinicalEpisode.findFirst({
+        where: { patientRefId: patientId },
+        orderBy: { openedAt: "desc" },
+      });
 
   const orders = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: patientId,
       status: { notIn: ["CANCELLED"] },
+      ...(episode ? { clinicalEpisodeId: episode.id } : {}),
     },
     include: {
       resource: { include: { room: true } },

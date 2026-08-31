@@ -88,9 +88,11 @@ Nurse board shows only **Check-in** (no manual No-show). Past-deadline `SCHEDULE
 |----------|--------|
 | `POST /api/cron/procedure-auto-complete` | `CHECKED_IN` with effective end `< now` → `COMPLETED` |
 | `POST /api/cron/procedure-no-show-sweep` | stale `SCHEDULED` → `NO_SHOW` |
+| `POST /api/cron/episode-walkin-close` | idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55) |
 | `GET /api/procedures` (nurse board) | lazy `autoCompleteElapsedCheckedIn` before list |
 
 Auth: `Authorization: Bearer PLATFORM_CRON_SECRET` (same pattern as other clinic crons).
+Path→module: `CLINIC_MODULE_BY_ROUTE` in satellite-kit (`/api/cron/episode-walkin-close` → `clinic_inpatient`).
 
 Tenant flags: `checkInRequiresQr` (default true), `autoNoShowAfterMin` (nullable = EOD-only).
 

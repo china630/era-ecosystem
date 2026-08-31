@@ -48,9 +48,9 @@ function excelDate(v) {
   return null;
 }
 
-const guests = load(path.join(ew, '10-Guest-Cards.merged.xlsx'));
-const reservations = load(path.join(ew, '11-Reservations.merged.xlsx'));
-const folioHotel = load(path.join(ew, '12-Folio-Transactions.merged.xlsx'));
+const guests = load(path.join(ew, '10-Guest-Cards.xlsx'));
+const reservations = load(path.join(ew, '11-Reservations.xlsx'));
+const folioHotel = load(path.join(ew, '13-Folio-Transactions.merged.xlsx'));
 
 const guestNameToIds = new Map();
 for (const g of guests) {

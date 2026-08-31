@@ -5,40 +5,36 @@ import {
   jsonError,
   jsonOk,
 } from "@/lib/api-utils";
-import { prisma } from "@/lib/prisma";
 import { patientCardDiagnosisWriteDenied } from "@/lib/patient-card-gates";
 import {
   addEpisodeDiagnosis,
   deleteEpisodeDiagnosis,
   listEpisodeDiagnoses,
 } from "@/domain/icd/diagnosis-write.service";
+import { resolveEpisodeForPatient } from "@/domain/sanatorium/episode-resolve";
+import { EPISODE_CLOSED, episodeWriteDenied } from "@/domain/sanatorium/episode-gates";
 
 const createSchema = z.object({
   icdCodeId: z.string().min(1),
   note: z.string().max(500).optional().nullable(),
+  episodeId: z.string().min(1).optional(),
 });
 
-async function openEpisodeForPatient(patientRefId: string) {
-  return prisma.clinicalEpisode.findFirst({
-    where: { patientRefId, status: "OPEN" },
-    orderBy: { openedAt: "desc" },
-    select: { id: true },
-  });
-}
-
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const { id } = await ctx.params;
-    const episode = await openEpisodeForPatient(id);
-    if (!episode) return jsonOk({ items: [], episodeId: null });
+    const episodeParam = new URL(req.url).searchParams.get("episode");
+    const episode = await resolveEpisodeForPatient(id, episodeParam);
+    if (!episode) return jsonOk({ items: [], episodeId: null, status: null });
     return jsonOk({
       items: await listEpisodeDiagnoses(episode.id),
       episodeId: episode.id,
+      status: episode.status,
     });
   } catch (err) {
     return handleRouteError(err);
@@ -53,14 +49,19 @@ export async function POST(
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const { id } = await ctx.params;
-    const episode = await openEpisodeForPatient(id);
-    const denied = patientCardDiagnosisWriteDenied(Boolean(episode));
+    const body = createSchema.parse(await req.json());
+    const episodeParam =
+      body.episodeId ?? new URL(req.url).searchParams.get("episode");
+    const episode = await resolveEpisodeForPatient(id, episodeParam);
+    const denied = patientCardDiagnosisWriteDenied(Boolean(episode && episode.status === "OPEN"));
     if (denied || !episode) {
       return jsonError(denied ?? "No open sanatorium episode", 409, { code: "NO_OPEN_EPISODE" });
     }
-    const body = createSchema.parse(await req.json());
+    const closed = episodeWriteDenied(episode.status);
+    if (closed) return jsonError(closed, 409, { code: EPISODE_CLOSED });
     const row = await addEpisodeDiagnosis(episode.id, {
-      ...body,
+      icdCodeId: body.icdCodeId,
+      note: body.note,
       recordedByUserId: session.sub,
     });
     return jsonOk(row, 201);

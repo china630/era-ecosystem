@@ -1,8 +1,8 @@
 /**
- * Build clinic #27 from human roster + HR FIN match.
+ * Build clinic #22 from human roster + HR FIN match.
  *
  * SSOT: NAFTA-START/clinic/reports/27-practitioners-roster.json
- * Output: NAFTA-ERA-READY/clinic/27-Doctors.xlsx
+ * Output: NAFTA-ERA-READY/clinic/22-Doctors.xlsx
  *
  *   node era-clinic/scripts/nafta-cutover/build-practitioners-import.cjs
  */
@@ -12,6 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const { HEADERS } = require("./map.cjs");
 const { loadMappedRoster } = require("./build-hr-roster.cjs");
+const { FILES } = require("./pack-layout.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const READY = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -110,12 +111,12 @@ function main() {
       fullName: r.fullName,
       titleAz: r.titleAz,
       fin: hr?.fin || "",
-      note: "HR/CP workforce — not in 27-Doctors wizard",
+      note: "HR/CP workforce — not in 22-Doctors wizard",
     });
   }
 
-  const outReady = path.join(READY, "clinic", "27-Doctors.xlsx");
-  const outMirror = path.join(MIRROR, "27-Doctors.xlsx");
+  const outReady = path.join(READY, FILES.clinicDoctors);
+  const outMirror = path.join(MIRROR, path.basename(FILES.clinicDoctors));
   const n = writeSheet(XLSX, outReady, HEADERS.practitioners, outRows);
   writeSheet(XLSX, outMirror, HEADERS.practitioners, outRows);
 

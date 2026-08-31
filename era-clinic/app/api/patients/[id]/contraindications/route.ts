@@ -2,20 +2,31 @@ import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { BODY_PART_CODES } from "@/lib/body-part-codes";
 import { prisma } from "@/lib/prisma";
+import {
+  EPISODE_CLOSED,
+  episodeWriteDenied,
+  NO_OPEN_EPISODE,
+} from "@/domain/sanatorium/episode-gates";
 
 const bodySchema = z.object({
   bodyPart: z.enum(BODY_PART_CODES),
   note: z.string().optional(),
+  episodeId: z.string().min(1),
 });
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    const url = new URL(req.url);
+    const episodeId = url.searchParams.get("episode");
     const rows = await prisma.patientContraindication.findMany({
-      where: { patientRefId: id },
+      where: {
+        patientRefId: id,
+        ...(episodeId ? { episodeId } : {}),
+      },
     });
     return jsonOk(rows);
   } catch (err) {
@@ -32,6 +43,15 @@ export async function DELETE(
     const url = new URL(req.url);
     const rowId = url.searchParams.get("id");
     if (!rowId) return jsonError("id required", 400);
+    const existing = await prisma.patientContraindication.findFirst({
+      where: { id: rowId, patientRefId },
+      select: { id: true, episodeId: true, episode: { select: { status: true } } },
+    });
+    if (!existing) return jsonError("Not found", 404);
+    if (existing.episodeId) {
+      const closed = episodeWriteDenied(existing.episode?.status);
+      if (closed) return jsonError(closed, 409, { code: EPISODE_CLOSED });
+    }
     await prisma.patientContraindication.deleteMany({
       where: { id: rowId, patientRefId },
     });
@@ -48,9 +68,21 @@ export async function POST(
   try {
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
+    const episode = await prisma.clinicalEpisode.findFirst({
+      where: { id: body.episodeId, patientRefId: id },
+      select: { id: true, status: true },
+    });
+    if (!episode) {
+      return jsonError("Episode not found for patient", 404, { code: NO_OPEN_EPISODE });
+    }
+    const closed = episodeWriteDenied(episode.status);
+    if (closed) {
+      return jsonError(closed, 409, { code: EPISODE_CLOSED });
+    }
     const row = await prisma.patientContraindication.create({
       data: {
         patientRefId: id,
+        episodeId: episode.id,
         bodyPart: body.bodyPart,
         note: body.note,
       },

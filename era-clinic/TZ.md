@@ -16,6 +16,22 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CLINIC
 Tenant → Practitioner → Room → Appointment → Visit → VisitServiceLine
 ```
 
+## Clinical course (CLI-55 canon — not shipped)
+
+SoR: [docs/adr/clinic-episode-as-clinical-course.md](../docs/adr/clinic-episode-as-clinical-course.md).
+
+```text
+PatientRef (identity: name, sex, DOB, blood, identifiers)
+  └── ClinicalEpisode[]  (one stay / walk-in)
+        ├── anamnesisText
+        ├── PatientContraindication[]
+        ├── ClinicalComplaint / ClinicalDiagnosis
+        ├── Visit[] / LabOrder[] / ProcedureOrder[]
+        └── ProgramInstance?
+```
+
+Hotel checkout still closes IN_HOUSE. Walk-in close is reception + weekly cron after live procedures and open labs are gone. Implementation waves TBD.
+
 ## API surface (planned)
 
 | Method | Path | PRD |

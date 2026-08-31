@@ -45,13 +45,18 @@ function visitStatus(status: string): IntakeChecklistStatus {
   return "MISSING";
 }
 
+type EpisodeScope = { clinicalEpisodeId: string };
+
 async function findLabOrder(
   patientRefId: string,
   testCode: string,
+  episode?: EpisodeScope,
 ): Promise<{ id: string; status: string } | null> {
+  const episodeFilter = episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {};
   const byItem = await prisma.labOrder.findFirst({
     where: {
       patientRefId,
+      ...episodeFilter,
       items: { some: { serviceCode: testCode } },
     },
     orderBy: { createdAt: "desc" },
@@ -61,6 +66,7 @@ async function findLabOrder(
   return prisma.labOrder.findFirst({
     where: {
       patientRefId,
+      ...episodeFilter,
       OR: [
         { testCode },
         { testCode: { startsWith: `${testCode},` } },
@@ -75,11 +81,15 @@ async function findLabOrder(
 async function findVisitByServiceCode(
   patientRefId: string,
   serviceCode: string,
+  episode?: EpisodeScope,
 ): Promise<{ id: string; status: string } | null> {
   const line = await prisma.visitServiceLine.findFirst({
     where: {
       serviceCode,
-      visit: { patientRefId },
+      visit: {
+        patientRefId,
+        ...(episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {}),
+      },
     },
     orderBy: { visit: { createdAt: "desc" } },
     select: { visit: { select: { id: true, status: true } } },
@@ -89,9 +99,14 @@ async function findVisitByServiceCode(
 
 async function findAttendingOrAnyVisit(
   patientRefId: string,
+  episode?: EpisodeScope,
 ): Promise<{ id: string; status: string } | null> {
   return prisma.visit.findFirst({
-    where: { patientRefId, status: { not: "CANCELLED" } },
+    where: {
+      patientRefId,
+      status: { not: "CANCELLED" },
+      ...(episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {}),
+    },
     orderBy: { createdAt: "desc" },
     select: { id: true, status: true },
   });
@@ -100,14 +115,15 @@ async function findAttendingOrAnyVisit(
 async function findGynOrUroVisit(
   patientRefId: string,
   sex: string | null | undefined,
+  episode?: EpisodeScope,
 ): Promise<{ id: string; status: string; resolvedCode: string } | null> {
   const resolved = resolveNaftaIntakeCode(GYN_OR_URO_SLOT, sex);
   if (resolved === "GYN-VISIT" || resolved === "URO-VISIT") {
-    const byCode = await findVisitByServiceCode(patientRefId, resolved);
+    const byCode = await findVisitByServiceCode(patientRefId, resolved, episode);
     if (byCode) return { ...byCode, resolvedCode: resolved };
   }
   for (const code of ["GYN-VISIT", "URO-VISIT"] as const) {
-    const byCode = await findVisitByServiceCode(patientRefId, code);
+    const byCode = await findVisitByServiceCode(patientRefId, code, episode);
     if (byCode) return { ...byCode, resolvedCode: code };
   }
   const specialtyNeedle =
@@ -117,7 +133,11 @@ async function findGynOrUroVisit(
         ? ["gyn", "gine", "гинек"]
         : ["gyn", "gine", "uro", "уролог", "гинек"];
   const visits = await prisma.visit.findMany({
-    where: { patientRefId, status: { not: "CANCELLED" } },
+    where: {
+      patientRefId,
+      status: { not: "CANCELLED" },
+      ...(episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {}),
+    },
     include: { practitioner: { select: { specialty: true } } },
     orderBy: { createdAt: "desc" },
     take: 20,
@@ -137,9 +157,15 @@ async function findGynOrUroVisit(
 
 /**
  * Derive Nafta check-in checklist from existing Visit / LabOrder rows.
- * Does not create phantom orders. Package SoT: DiagnosticService PKG-NAFTA-INTAKE.
+ * When episodeId is set, only that care course counts (CLI-55).
  */
-export async function getIntakeChecklist(patientRefId: string): Promise<IntakeChecklist> {
+export async function getIntakeChecklist(
+  patientRefId: string,
+  opts?: { episodeId?: string | null },
+): Promise<IntakeChecklist> {
+  const episode = opts?.episodeId
+    ? { clinicalEpisodeId: opts.episodeId }
+    : undefined;
   const [catalog, patient] = await Promise.all([
     getDiagnosticCatalog(),
     prisma.patientRef.findUnique({
@@ -161,7 +187,7 @@ export async function getIntakeChecklist(patientRefId: string): Promise<IntakeCh
     const resolved = resolveNaftaIntakeCode(slot, patient?.sex);
 
     if (slot === "ECG-12" || slot === "USG-ABD") {
-      const order = await findLabOrder(patientRefId, slot);
+      const order = await findLabOrder(patientRefId, slot, episode);
       items.push({
         slot,
         resolvedCode: slot,
@@ -175,8 +201,12 @@ export async function getIntakeChecklist(patientRefId: string): Promise<IntakeCh
     }
 
     if (slot === "SANATORIUM-INTAKE") {
-      const byLine = await findVisitByServiceCode(patientRefId, "SANATORIUM-INTAKE");
-      const visit = byLine ?? (await findAttendingOrAnyVisit(patientRefId));
+      const byLine = await findVisitByServiceCode(
+        patientRefId,
+        "SANATORIUM-INTAKE",
+        episode,
+      );
+      const visit = byLine ?? (await findAttendingOrAnyVisit(patientRefId, episode));
       items.push({
         slot,
         resolvedCode: "SANATORIUM-INTAKE",
@@ -189,7 +219,7 @@ export async function getIntakeChecklist(patientRefId: string): Promise<IntakeCh
       continue;
     }
 
-    const gyn = await findGynOrUroVisit(patientRefId, patient?.sex);
+    const gyn = await findGynOrUroVisit(patientRefId, patient?.sex, episode);
     items.push({
       slot,
       resolvedCode: gyn?.resolvedCode ?? String(resolved),

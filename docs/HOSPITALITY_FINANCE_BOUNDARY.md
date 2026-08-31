@@ -12,7 +12,7 @@ This replaces the Elektraweb pattern where ACC screens mixed operational folio w
 | Night audit (operational day) | Hotel PMS | Close business day; emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` |
 | Revenue → GL mapping | Hotel config → Finance journal | Admin `/admin/integration`; Finance posts NAS |
 | **Sales invoices (e-qaimə / AR)** | **Finance** `/sales/invoices` | Operational list `/reports/invoices`; flag `integrateToAccounting`; **deep link** to Finance |
-| **Agency city ledger / CL (ops)** | **Hotel** folios + snapshot + checkout transfer-to-AR (P5 H-BL-40) | Routing, credit gate, `PENDING_AR`/`TRANSFERRED_AR` handoff; snapshot `/reports/agency-ledger` |
+| **Agency city ledger / CL (ops)** | **Hotel** folios + snapshot + checkout transfer-to-AR (P5 H-BL-40) | Routing, credit gate, `PENDING_AR`/`TRANSFERRED_AR` handoff; snapshot `/reports/agency-ledger`. EW Agency Statement cutover → hotel `agency-statement` import (AGENCY folio remaining), **not** Finance/1C AR |
 | **Agency AR / aging / invoice matching** | **Finance** counterparty reconciliation | Deep link `/crm/counterparties`; bank apply / matching (**H-BL-48**) — not duplicated in PMS |
 | **Purchases / PO** | **Finance** `/purchases` | Not implemented in hotel (Wave 6+) |
 | **Inventory / stock** | **Finance** `/inventory/*` | Local MVP `/admin/stock` for HK/consumption only; **deep link** to Finance warehouse. Clinic procedure TTK write-off: [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md) via `SATELLITE_CLINIC_PROCEDURE_COMPLETED` → `adjustStock` (warn+post). Not hotel `/admin/stock`, not retail POS. |

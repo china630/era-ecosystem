@@ -21,9 +21,10 @@ A 14k-row title list is not tenant master data: SatAdmin must not CRUD WHO wordi
 5. **Recording surfaces**
    - Sanatorium episode: `ClinicalDiagnosis` via `POST /api/sanatorium/episodes/[id]?action=diagnosis` (`IcdPicker` = `CatalogField` SEARCHABLE).
    - Patient card (open episode): same `ClinicalDiagnosis` via `GET/POST/DELETE /api/patients/[id]/diagnoses`.
+   - **CLI-55 (canon, not shipped):** card episode switcher; ICD block is **the selected course**; CLOSED = read-only. See [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md).
    - Visit: `VisitDiagnosis` (`PRIMARY` / `SECONDARY`) on `/visits/[id]`.
    - Inpatient: `AdmissionDiagnosis` (`ADMISSION` / `DISCHARGE` + role) on `/inpatient`.
-   - Print checkup includes episode diagnoses.
+   - Print checkup includes episode diagnoses (must follow **selected** episode once CLI-55 ships).
 6. **Platform gateway (not data-hub)** — Orchestrator `GET /platform/v1/catalog/icd10` is served **in-process** from the shared generator. Clinic may sync via `@era/satellite-kit` `platformIcd10Search` / `platformCatalogGet`. Search at runtime is local `GET /api/icd` (not `/api/icd10`).
 7. **Report** — `/reports/diagnoses` aggregates episode / visit / admission usage.
 

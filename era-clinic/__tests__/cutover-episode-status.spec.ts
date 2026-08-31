@@ -14,12 +14,25 @@ describe("cutoverEpisodeFromCheckout", () => {
     });
   });
 
-  it("keeps OPEN when checkOut is today (Baku)", () => {
+  it("keeps OPEN when date-only checkout is today (end of Baku day)", () => {
     const checkOut = new Date("2026-08-28T00:00:00.000Z");
     expect(cutoverEpisodeFromCheckout(checkOut, asOf)).toEqual({
       status: CUTOVER_EPISODE_OPEN,
       closedAt: null,
     });
+  });
+
+  it("closes when checkout clock today is already past", () => {
+    const checkOut = new Date("2026-08-28T11:00:00+04:00");
+    expect(cutoverEpisodeFromCheckout(checkOut, asOf)).toEqual({
+      status: CUTOVER_EPISODE_IMPORTED_CLOSED,
+      closedAt: checkOut,
+    });
+  });
+
+  it("keeps OPEN when checkout clock today is still ahead", () => {
+    const checkOut = new Date("2026-08-28T14:00:00+04:00");
+    expect(cutoverEpisodeFromCheckout(checkOut, asOf).status).toBe(CUTOVER_EPISODE_OPEN);
   });
 
   it("keeps OPEN when checkOut is in the future", () => {

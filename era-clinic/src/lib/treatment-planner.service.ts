@@ -210,6 +210,7 @@ async function expandProposedSlots(instanceId: string): Promise<{
   patientRefId: string;
   patientOrigin: "WALK_IN" | "IN_HOUSE";
   reservationId: string | null;
+  clinicalEpisodeId: string | null;
   startsOn: Date;
   slots: PlannedSlot[];
 }> {
@@ -228,14 +229,16 @@ async function expandProposedSlots(instanceId: string): Promise<{
       patientRefId: "",
       patientOrigin: "WALK_IN",
       reservationId: null,
+      clinicalEpisodeId: null,
       startsOn: new Date(),
       slots: [],
     };
   }
 
   const patientRefId = instance.episode.patientRefId;
+  const clinicalEpisodeId = instance.episodeId;
   const contraindications = await prisma.patientContraindication.findMany({
-    where: { patientRefId },
+    where: { episodeId: clinicalEpisodeId },
   });
   const blockedParts = new Set(contraindications.map((c) => c.bodyPart));
 
@@ -309,6 +312,7 @@ async function expandProposedSlots(instanceId: string): Promise<{
     patientRefId,
     patientOrigin: instance.episode.patientOrigin,
     reservationId: instance.reservationId,
+    clinicalEpisodeId,
     startsOn: instance.startsOn,
     slots: planned,
   };
@@ -320,9 +324,31 @@ async function expandProposedSlots(instanceId: string): Promise<{
  */
 export async function buildProposedPlan(instanceId: string): Promise<number> {
   const workHours = await getTenantWorkHours();
-  const { patientRefId, patientOrigin, reservationId, startsOn, slots } =
-    await expandProposedSlots(instanceId);
+  const {
+    patientRefId,
+    patientOrigin,
+    reservationId,
+    clinicalEpisodeId,
+    startsOn,
+    slots,
+  } = await expandProposedSlots(instanceId);
   if (!patientRefId || slots.length === 0) return 0;
+
+  if (clinicalEpisodeId) {
+    const episode = await prisma.clinicalEpisode.findUnique({
+      where: { id: clinicalEpisodeId },
+      select: { anamnesisText: true },
+    });
+    const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
+      "@/domain/sanatorium/episode-gates"
+    );
+    const denied = episodeAnamnesisDenied(episode?.anamnesisText);
+    if (denied) {
+      const err = new Error(denied);
+      (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
+      throw err;
+    }
+  }
 
   // Idempotent: drop previous unconfirmed PROPOSED for this reservation/patient from this program run
   await prisma.procedureOrder.deleteMany({
@@ -330,6 +356,7 @@ export async function buildProposedPlan(instanceId: string): Promise<number> {
       patientRefId,
       status: "PROPOSED",
       ...(reservationId ? { reservationId } : {}),
+      ...(clinicalEpisodeId ? { clinicalEpisodeId } : {}),
     },
   });
 
@@ -344,6 +371,7 @@ export async function buildProposedPlan(instanceId: string): Promise<number> {
       data: {
         organizationId: requestOrganizationId(),
         patientRefId,
+        clinicalEpisodeId: clinicalEpisodeId ?? undefined,
         procedureCode: item.procedureCode,
         procedureName: item.procedureName,
         procedureTypeId: item.procedureTypeId,
@@ -385,6 +413,22 @@ export async function placeConfirmedProcedures(
   if (orders.length === 0) return 0;
 
   const patientRefId = orders[0].patientRefId;
+  const episodeId = orders[0].clinicalEpisodeId;
+  if (episodeId) {
+    const episode = await prisma.clinicalEpisode.findUnique({
+      where: { id: episodeId },
+      select: { anamnesisText: true },
+    });
+    const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
+      "@/domain/sanatorium/episode-gates"
+    );
+    const denied = episodeAnamnesisDenied(episode?.anamnesisText);
+    if (denied) {
+      const err = new Error(denied);
+      (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
+      throw err;
+    }
+  }
   const rules = await prisma.procedureRule.findMany();
   const types = await prisma.procedureType.findMany({
     include: { requirements: true },

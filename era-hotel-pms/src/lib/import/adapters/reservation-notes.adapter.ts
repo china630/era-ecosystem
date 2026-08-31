@@ -51,9 +51,22 @@ export const EW_NOTE_COLUMN_TO_ERA: Record<string, string> = {
   INVOICE_NOTE: "INVOICE_NOTE",
   "INVOICE NOTE": "INVOICE_NOTE",
   INVOICENOTE: "INVOICE_NOTE",
+  CHECKIN_NOTE: "CIN_NOTE",
+  "CHECKIN NOTE": "CIN_NOTE",
+  CHECKOUT_NOTE: "COUT_NOTE",
+  "CHECKOUT NOTE": "COUT_NOTE",
+  PAYMENT_INFO: "PAYMENT_NOTE",
+  "PAYMENT INFO": "PAYMENT_NOTE",
+  CANCEL_REASON: "CANCEL_NOTE",
+  "CANCEL REASON": "CANCEL_NOTE",
+  OPERATOR_NOTE: "GENERAL_NOTE",
+  "OPERATOR NOTE": "GENERAL_NOTE",
+  "GENERAL NOTES": "GENERAL_NOTE",
+  INVOICE: "INVOICE_NOTE",
   CONFIRMATION: "CONFIRMATION",
   GENERAL_NOTE: "GENERAL_NOTE",
   "GENERAL NOTE": "GENERAL_NOTE",
+  "ARRIVAL POSTPONED": "ARRIVAL_POSTPONED",
 };
 
 function parseResIdFromInfo(info: string | null | undefined): string | null {
@@ -93,7 +106,7 @@ export const reservationNotesAdapter: ImportAdapter<z.infer<typeof rowSchema>> =
   label: "Reservation notes",
   order: 55,
   permission: PERMISSIONS.RESERVATIONS_WRITE,
-  templateHint: "Notes.xlsx / FO-with-Notes",
+  templateHint: "12-Reservation-Notes.xlsx — EW Notes",
   headerAliases: {
     "Note Type": "noteType",
     Notes: "text",

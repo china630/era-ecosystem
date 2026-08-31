@@ -6,14 +6,14 @@ import { normalizePrintLang } from "@/domain/print/print-types";
 
 type Props = {
   params: Promise<{ patientId: string }>;
-  searchParams: Promise<{ lang?: string; autoprint?: string }>;
+  searchParams: Promise<{ lang?: string; autoprint?: string; episode?: string }>;
 };
 
 export default async function PrintCheckupPage({ params, searchParams }: Props) {
   const { patientId } = await params;
   const sp = await searchParams;
   const lang = normalizePrintLang(sp.lang);
-  const doc = await buildCheckupPrint(patientId, lang);
+  const doc = await buildCheckupPrint(patientId, lang, sp.episode);
   if (!doc) notFound();
 
   return (

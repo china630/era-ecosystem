@@ -21,6 +21,7 @@ import {
 
   UtensilsCrossed,
   LayoutPanelTop,
+  Upload,
 
 } from "lucide-react";
 
@@ -65,6 +66,8 @@ const linkKeys = [
   { href: "/admin/daily-menu", key: "dailyMenu", icon: ClipboardList },
 
   { href: "/admin/integration", key: "integration", icon: Receipt },
+
+  { href: "/admin/import", key: "import", icon: Upload },
 
   { href: "/calendar", key: "calendar", icon: CalendarDays },
 

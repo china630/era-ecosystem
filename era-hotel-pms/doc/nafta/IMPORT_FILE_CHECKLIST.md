@@ -1,6 +1,6 @@
 # Nafta import — file checklist
 
-Operator checklist for **Nafta** bootstrap. Hotel column is taken from `era-hotel-pms` Elektraweb import wizard (`IMPORT_PHASES` + adapters). Clinic / F&B do **not** have a satellite import module yet — listed as planned / data-only.
+Operator checklist for **Nafta** bootstrap. Hotel column is taken from `era-hotel-pms` Elektraweb import wizard (`IMPORT_PHASES` + adapters). Clinic wizard: `era-clinic` `/admin/import`. F&B wizard: `era-fnb-pos` `/admin/import` (`#30`–`#32`). Retail wizard: `era-retail-pos` `/admin/import` (`#33`).
 
 **Pack (raw):** `D:\ERA-BACKUP\NAFTA-START\` (`hotel/`, `clinic/`, `hr/`, `1c/`). **Wizard:** `D:\ERA-BACKUP\NAFTA-ERA-READY\`.  
 **Start inventory:** [START-DATA-INVENTORY.md](./START-DATA-INVENTORY.md) · **numbered checklist + accountant ask:** [START-FILE-CHECKLIST.md](./START-FILE-CHECKLIST.md).
@@ -13,38 +13,34 @@ Operator checklist for **Nafta** bootstrap. Hotel column is taken from `era-hote
 
 Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`adapters/index.ts`](../src/lib/import/adapters/index.ts).
 
-| Order | Entity | File on disk (wizard reads columns, not the EW export name) | Status in `EW` | Notes |
-|------:|--------|-------------------------------------------------------------|----------------|-------|
-| 10 | `revenue-codes` | `01-Revenue-Codes.xlsx` | [x] | Also optional `db:seed:reference` |
-| 11 | `bed-types` | `02-Bed-Types.xlsx` | [x] | |
-| 12 | `room-views` | `03-Room-Views.xlsx` | [x] | |
-| 20 | `room-types` | `04-Room-Types.xlsx` | [x] | |
-| 20.5 | `bar-bootstrap` | *(fileless)* | [x] | Creates empty `BAR` base plan — **not** package prices from PDF |
-| 21 | `rate-plans` | `06-Rate-Codes.xlsx` | [x] | EW rate codes; package/FB BAR from PDF is separate feed |
-| 22 | `rooms` | `05-Rooms.xlsx` | [x] | Inventory only: `Room No`, `Room Type`, `Floor`, `Bed Type`. EW extras + `Max Bed` (all 0) + `Room State` (HK snapshot) stripped. Capacity from `04` `Max Adult`. |
-| 30 | `agencies` | `07-Travel-Agencies.xlsx` | [x] | |
-| 31 | `product-cards` | `08-Product-Cards.xlsx` | [x] | SELLABLE |
-| 32 | `stock-cards` | `09-Stock-Cards.xlsx` | [x] | STOCK |
-| 40 | `guests` | `10-Guest-Cards.merged.xlsx` | [x] | **7 723** EW + **407** FO-only (`wo:fo:{id}`). FO dump stamps passports (`apply-wo-fo-guest-bridge.cjs`). |
+| Order | Entity | File on disk | Status | Notes |
+|------:|--------|--------------|--------|-------|
+| 10 | `revenue-codes` | `03-Revenue-Codes.xlsx` | [x] | Also optional `db:seed:reference` |
+| 11 | `bed-types` | `04-Bed-Types.xlsx` | [x] | |
+| 12 | `room-views` | `05-Room-Views.xlsx` | [x] | |
+| 20 | `room-types` | `06-Room-Types.xlsx` | [x] | |
+| 21 | `rate-plans` | `07-Rate-Codes.xlsx` | [x] | EW Rate Codes |
+| 21.5 | `package-sell` | `14-Package-Sell-2026.xlsx` | [x] | Desk sell from PDF (not EW). Adapter skips `desk=N`. **Extra bed:** Standart **96 AZN**, other packages **48** (half, rounded). |
+| 22 | `rooms` | `08-Rooms.xlsx` | [x] | Inventory only: `Room No`, `Room Type`, `Floor`, `Bed Type`. |
+| 30 | `agencies` | `09-Travel-Agencies.xlsx` | [x] | |
+| 40 | `guests` | `10-Guest-Cards.xlsx` | [x] | **8 782** after August overlay + FO-only `wo:fo:{id}`. |
+| 50 | `reservations` | `11-Reservations.xlsx` | [x] | **6 158** `Res Id` (August FOCP overlay + 41 new) |
+| 55 | `reservation-notes` | `12-Reservation-Notes.xlsx` | [x] | YTD EW Notes → matched Res Id (skip Channel / empty type). 1 225 packed rows. |
+| 60 | `folios` | `hotel/13-folio-parts/13-Folio-p01.xlsx` … | [x] | Чанки Apply. Archive START `13-Folio-Transactions.merged.xlsx`. Splitter input: START `13-Folio-Transactions.hotel.xlsx`. |
+| 65 | `agency-statement` | `15-Agency-Statement.xlsx` | [x] | EW **Agency Statement** 2026-08-31. **Hotel FO city ledger**, not 1C. Remaining > 0 → AGENCY folio (`ew:agency-stmt:{ResId}`). Skip Remaining ≤ 0. Missing reservation = per-row error. |
 
-| 50 | `reservations` | `11-Reservations.merged.xlsx` | [x] | Cutover 2026-08-17: **6 117** `Res Id` (74 InHouse, 568 Reservation) |
-| 55 | `reservation-notes` | FO-with-Notes / Notes dump `.xlsx` | [~] | After reservations. Stamps medical SKU from Extra Req / agency. 2026 extract: `reports/nafta-ew-notes-2026/` |
-| 60 | `folios` | `12-Folio-Transactions.hotel.xlsx` | [x] | Wizard book: guest stays whose `Res Id` is in `#11`. Rebuild: `node era-hotel-pms/scripts/filter-hotel-folio-only.cjs`. Archive (unfiltered): `12-Folio-Transactions.merged.xlsx` (95 793). **Do not** load `999 FB` (`#16`), Tibb Ambulator, CASH/DEBITOR house ledgers. |
-
-### Hotel — related files (not wizard steps)
+### Hotel — related files (not hotel wizard)
 
 | File | Status | Use |
 |------|--------|-----|
-| `16-FnB-Transactions.merged.xlsx` | [x] | Archive for future FnB — **do not** load as hotel guest folio |
-| `17-ProFolio-Transactions.xlsx` | [~] | ROOM-only cross-check |
-| `19-Agency-Statement.xlsx` | [~] | Opening AR / city ledger → Finance later |
-| `18-Contract-Details.xlsx` | [~] | Reference |
-| `20-DO-NOT-IMPORT-Chart-of-Accounts.xlsx` | [ ] | **Excluded** — finance-core |
-| `08-Product-Group-List.xlsx` | [~] | Optional grouping |
-| `13-Package-Prices-2026.csv` | [x] | Parsed package/FB rates from commercial PDF (seed pricing later) |
-| Room-only BAR (RO / no board) | [ ] | **Not sold** commercially. Derived **BAR BB / BAR FB** proposal: [BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md) + `14-BAR-Derived-2026.csv` — confirm with hotel before seeding |
-| `15-Hizmet-Tanimlari.xlsx` | [x] | EW SPA/medical services (287). Seed clinic catalog + hotel `SPA MEDIKAL` prices; not a wizard step |
-| `hr/37-Employees.xlsx` | [x] | READY `hr/37-Employees.xlsx` (fin, sex, workplace, satellites) + `hr/org-structure.xlsx` → CP Workforce. Import org-structure first. Empty satellites = no login seat. |
+| `fnb/32-FnB-Transactions.xlsx` | [x] | **8 559** walk-in POS (`merge-fnb-2026.cjs`: `START/fnb/_source/ew-2026-999-fb` Jan–3 Jul + `ew-2026-xudmani` CASH FOLIO Jul–Aug). Named Xudmani in-house extras go to hotel `#13`. **Apply on F&B** `/admin/import` entity `fnb-transactions` — **not** hotel guest folio |
+| `fnb/30-Product-Group-List.xlsx` + `31-Product-Cards.xlsx` | [x] | EW 31.08 groups + 200 cards. Empty `Ürün Kodu` stamped `ERA-FNB-{Id}` until 1C. **Apply on F&B** `/admin/import` (`product-groups` → `product-cards`). Hotel master still has a copy for hotel `Product` SKUs. |
+| `retail/33-Stock-Cards.xlsx` | [x] | Retail (naftalan shop), not pharmacy 1C. **Apply on Retail** `/admin/import` entity `stock-cards`. Empty code → `ERA-STK-{Id}`. |
+| `hotel/15-Agency-Statement.xlsx` | [x] | EW Agency Statement **2026-08-31** (518 Res Id / 256 Remaining > 0). **Hotel wizard** `agency-statement` — FO AGENCY folio city ledger. **Not** 1C AR/AP (`#39` still ASK). |
+| `hotel/_not-ready/` | [x] | BAR, ProFolio, Contract, EW CoA — not Apply |
+| `hotel/14-Package-Prices-2026.csv` | [x] | START source for READY `#14` + clinic `#23` |
+| `hotel/_not-ready/15-Hizmet-Tanimlari.source.xlsx` | [x] | EW **Hizmet Tanımları** — archive only. Not clinic Apply. Package inclusions are not tariffed; do not clone 0 AZN extras. |
+| `hr/01-Org-Structure.xlsx` + `hr/02-Employees.xlsx` | [x] | CP Workforce. Org first. |
 
 ---
 
@@ -75,13 +71,15 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 
 ## B. Clinic / sanatorium — WebOnly (`WO`)
 
-**Clinic wizard:** `era-clinic` `/admin/import` — see `NAFTA-ERA-READY/IMPORT-CHECKLIST.md`.  
-**Cutover:** 2026-08-25 · **WO dump refreshed:** 2026-08-25.
+**Clinic wizard:** `era-clinic` `/admin/import` — pack-layout `#16`–`#29`. See `NAFTA-ERA-READY/IMPORT-CHECKLIST.md`. Re-Apply `#26` / `#27` / `#29` stamps `clinicalEpisodeId` on existing procedure/lab/USG rows (no clinic wipe).  
+**Cutover:** 2026-08-25 · **WO dump refreshed:** 2026-08-30.
 
 | Dataset | File(s) | Status | Rows / notes |
 |---------|---------|--------|--------------|
-| Appointments | `clinic/dump/calendar/reservations-all.json` | [x] | **61 155** (2026-08-25). READY `#23` = **2373** ops (25–29 Aug) |
-| Guests / patients | `clinic/dump/cards/` + `bulk/patients.json` | [x] | **1665** full archive |
+| Appointments | `clinic/dump/calendar/reservations-all.json` | [x] | **62 166** dump → READY `#26` **60 480 COMPLETED** only (`importedHistorical`). 1 169 WO SCHEDULED held off the matrix (quota leftover on `#25`; forward plan from `#23`). 517 WO-TR not in curated `#19` dropped. |
+| Physio sites | seed `prisma/seed-data/base/physio-zones-s.json` + Nafta overlay → READY `#17` | [x] | **31** zones. Wizard book for appliance; live SoR remains `npx tsx prisma/seed-physio-catalog.ts` / `/admin/physio-sites` |
+| Program templates | START `hotel/14-Package-Prices-2026.csv` → READY `#23` | [x] | **233** knots, PKG-STANDART / PREMIUM / DERMO / DETOKS. Not physio-seed |
+| Guests / patients | `clinic/dump/cards/` + `bulk/patients.json` | [x] | **1722** full archive |
 | Procedures catalog | `clinic/reports/01-procedures.xlsx` (SSOT) → READY `#25` | [x] | **80** curated (WO ref 154) |
 | Procedure requirements | READY `40-Procedure-Requirements.xlsx` | [x] | **126** LOCATION rows |
 | Rooms / cabins | READY `26-Rooms.xlsx` | [x] | **63** (Kabina 14 for history) |
@@ -94,7 +92,7 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 | Check-ups / products | `clinic/catalogs/33–36` | [x] | Ref only |
 | **API card dump** | `clinic/dump/` | [x] | `dump-webonly-patient-cards.cjs`. **Do not commit.** |
 | **API procedure calendar** | `clinic/dump/calendar/` | [x] | `dump-webonly-clinic-calendar.cjs`. **Do not commit.** |
-| **WO FO guest cards** | `hotel/dump/guest-cards.json` | [x] | UI `/en/dashboard/frontoffice/guestcard` → `dump-webonly-fo-guest-cards.cjs` (Bearer). **1 598** cards, passport+DOB on all. Match vs EW: `match-wo-fo-ew-guests.cjs`. Not a wizard step. |
+| **WO FO guest cards** | `hotel/dump/guest-cards.json` | [x] | UI `/en/dashboard/frontoffice/guestcard` → `dump-webonly-fo-guest-cards.cjs` (Bearer). **1 608** cards, passport+DOB on all. Match vs EW: `match-wo-fo-ew-guests.cjs`. Not a wizard step. |
 | Curated mirror | `clinic/reports/era-import/` | [x] | `#25`, `#26`, `#40` + `manifest.json` |
 
 ---

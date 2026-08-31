@@ -15,6 +15,7 @@ const READY_ROOT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAF
 const LAB_DIR = path.join(START, "clinic", "dump", "files", "lab");
 const MANIFEST = path.join(LAB_DIR, "manifest.json");
 const READY = path.join(READY_ROOT, "clinic");
+const { CLINIC_WIZARD_BOOKS } = require("./pack-layout.cjs");
 const APPLY = process.argv.includes("--apply");
 const MIN_OK = 2000;
 
@@ -25,20 +26,20 @@ function isLabBinary(buf) {
 }
 
 function main() {
-  const books = [
-    "21-patients.xlsx",
-    "23-slots.xlsx",
-    "24-lab-orders.xlsx",
-    "25-Treatments.xlsx",
-    "26-Rooms.xlsx",
-    "27-Doctors.xlsx",
-    "29-Analyses.xlsx",
-    "31-Diagnostics.xlsx",
-    "32-Diagnoses.xlsx",
-    "38-quotas.xlsx",
-    "39-lab-results.xlsx",
-    "40-Procedure-Requirements.xlsx",
-  ];
+  const books = CLINIC_WIZARD_BOOKS.filter((n) =>
+    [
+      "19-Treatments.xlsx",
+      "20-Clinic-Rooms.xlsx",
+      "21-Procedure-Requirements.xlsx",
+      "22-Doctors.xlsx",
+      "24-Patients.xlsx",
+      "25-Quotas.xlsx",
+      "26-Slots.xlsx",
+      "27-Lab-Orders.xlsx",
+      "28-Lab-Results.xlsx",
+      "29-Diagnostics.xlsx",
+    ].includes(n),
+  );
   let okFiles = 0;
   if (fs.existsSync(LAB_DIR)) {
     for (const name of fs.readdirSync(LAB_DIR)) {

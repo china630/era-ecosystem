@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Fetch WebOnly FO reservation guest sections for clinic #21 hotelResNo.
+ * Fetch WebOnly FO reservation guest sections for clinic #24 hotelResNo.
  *
  *   $env:WO_BEARER = "<accessToken>"
  *   node era-hotel-pms/scripts/dump-webonly-fo-reservation-guests.cjs
@@ -19,7 +19,7 @@ const ADMIN_BASE = process.env.WO_ADMIN_API || "https://nafta-admin.webonly.io";
 const DUMP_DIR = process.env.WO_FO_DUMP_DIR || path.join("D:", "ERA-BACKUP", "NAFTA-START", "hotel", "dump");
 const CLINIC_XLSX =
   process.env.CLINIC_PATIENTS_XLSX ||
-  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "clinic", "21-patients.xlsx");
+  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "clinic", "24-Patients.xlsx");
 const BEARER = (process.env.WO_BEARER || process.env.WO_TOKEN || "").trim();
 const COOKIE = (process.env.WO_COOKIE || "").trim();
 const CONCURRENCY = Number(process.env.WO_CONCURRENCY || 3);

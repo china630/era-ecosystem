@@ -18,11 +18,11 @@ const XLSX = require(path.join(__dirname, "..", "node_modules", "xlsx"));
 
 const DUMP_DIR = process.env.WO_FO_DUMP_DIR || path.join("D:", "ERA-BACKUP", "NAFTA-START", "hotel", "dump");
 const EW_PATHS = [
-  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "hotel", "10-Guest-Cards.merged.xlsx"),
-  path.join("D:", "ERA-BACKUP", "NAFTA-START", "hotel", "10-Guest-Cards.merged.xlsx"),
+  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "hotel", "10-Guest-Cards.xlsx"),
+  path.join("D:", "ERA-BACKUP", "NAFTA-START", "hotel", "10-Guest-Cards.xlsx"),
 ];
 const CLINIC_PATHS = [
-  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "clinic", "21-patients.xlsx"),
+  path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY", "clinic", "24-Patients.xlsx"),
 ];
 const FO_PATH = path.join(DUMP_DIR, "guest-cards.json");
 const RES_PATH = path.join(DUMP_DIR, "reservation-guests.json");
@@ -290,7 +290,7 @@ function main() {
 
   const ewFile = EW_PATHS.find((p) => fs.existsSync(p));
   if (!ewFile) {
-    process.stderr.write("Missing EW 10-Guest-Cards.merged.xlsx\n");
+    process.stderr.write("Missing EW 10-Guest-Cards.xlsx\n");
     process.exit(2);
   }
   const ewBook = loadEw(ewFile);

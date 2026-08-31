@@ -501,6 +501,8 @@ model Visit {
   appointmentId  String?              @unique
   patientRefId   String
   practitionerId String
+  /// Optional link to sanatorium care course (Pattern B outpatient may stay null).
+  clinicalEpisodeId String?           @map("clinical_episode_id")
   status         VisitStatus          @default(IN_PROGRESS)
   patientOrigin  PatientOrigin        @default(WALK_IN)
   billingTarget        BillingTarget        @default(FINANCE)
@@ -514,6 +516,7 @@ model Visit {
   patientRef     PatientRef           @relation(fields: [patientRefId], references: [id])
   practitioner   Practitioner         @relation(fields: [practitionerId], references: [id])
   appointment    Appointment?         @relation(fields: [appointmentId], references: [id])
+  clinicalEpisode ClinicalEpisode?    @relation(fields: [clinicalEpisodeId], references: [id])
   serviceLines   VisitServiceLine[]
   labOrders      LabOrder[]
   discountAudits VisitDiscountAudit[]
@@ -526,6 +529,7 @@ model Visit {
 
   @@index([patientRefId, status])
   @@index([organizationId])
+  @@index([clinicalEpisodeId])
 }
 
 model VisitServiceLine {
@@ -751,12 +755,18 @@ model ClinicalEpisode {
   patientOrigin       PatientOrigin       @default(IN_HOUSE)
   programCode         String?
   checkupCompletedAt  DateTime?
+  /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
+  anamnesisText       String?             @map("anamnesis_text") @db.Text
+  anamnesisUpdatedAt  DateTime?           @map("anamnesis_updated_at")
   status              String              @default("OPEN")
   openedAt            DateTime            @default(now())
   closedAt            DateTime?
   complaints          ClinicalComplaint[]
   diagnoses           ClinicalDiagnosis[]
+  contraindications   PatientContraindication[]
   labOrders           LabOrder[]
+  visits              Visit[]
+  procedureOrders     ProcedureOrder[]
   programInstance     ProgramInstance?
 
   @@index([reservationId])
@@ -1184,13 +1194,17 @@ model PatientContraindication {
   id           String     @id @default(cuid())
   organizationId String @map("organization_id")
   patientRefId String
+  /// Care-course scope (CLI-55). Null only for pre-migration orphans / patients with no episode.
+  episodeId    String?    @map("episode_id")
   /// ClinicLookup BODY_PART code
   bodyPart     String
   note         String?
   patientRef   PatientRef @relation(fields: [patientRefId], references: [id], onDelete: Cascade)
+  episode      ClinicalEpisode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
 
   @@index([patientRefId])
+  @@index([episodeId])
   @@index([organizationId])
 }
 
@@ -1324,6 +1338,8 @@ model ProcedureOrder {
   organizationId String @map("organization_id")
   visitId          String?
   patientRefId     String
+  /// Optional link to sanatorium care course (Pattern B / orphans may stay null).
+  clinicalEpisodeId String?             @map("clinical_episode_id")
   procedureTypeId  String?
   procedureCode    String
   procedureName    String
@@ -1373,6 +1389,7 @@ model ProcedureOrder {
   cancelReason     String?              @map("cancel_reason")
   visit            Visit?               @relation(fields: [visitId], references: [id])
   patientRef       PatientRef           @relation(fields: [patientRefId], references: [id])
+  clinicalEpisode  ClinicalEpisode?     @relation(fields: [clinicalEpisodeId], references: [id])
   procedureType    ProcedureType?       @relation(fields: [procedureTypeId], references: [id])
   prescribedByPractitioner Practitioner? @relation("ProcedureOrder_prescribedByPractitioner", fields: [prescribedByPractitionerId], references: [id])
   resource         Resource?            @relation(fields: [resourceId], references: [id])
@@ -1384,6 +1401,7 @@ model ProcedureOrder {
   @@unique([organizationId, accessCode])
   @@index([scheduledAt, status])
   @@index([patientRefId])
+  @@index([clinicalEpisodeId])
   @@index([resourceId, scheduledAt])
   @@index([status, scheduledAt])
   @@index([prescribedByPractitionerId, scheduledAt])

@@ -6,10 +6,20 @@
 const fs = require("fs");
 const path = require("path");
 const X = require("xlsx");
+const { FILES, START_ARCHIVE, fileAt } = require(path.join(
+  __dirname,
+  "..",
+  "..",
+  "era-clinic",
+  "scripts",
+  "nafta-cutover",
+  "pack-layout.cjs",
+));
 
-const READY = process.argv[2] || "D:/ERA-BACKUP/NAFTA-ERA-READY/hotel";
-const SRC = path.join(READY, "12-Folio-Transactions.hotel.xlsx");
-const OUT_DIR = path.join(READY, "folio-upload");
+const START = process.env.NAFTA_START || "D:/ERA-BACKUP/NAFTA-START";
+const READY_ROOT = process.argv[2] || process.env.NAFTA_READY || "D:/ERA-BACKUP/NAFTA-ERA-READY";
+const SRC = fileAt(START, START_ARCHIVE.folioHotel);
+const OUT_DIR = fileAt(READY_ROOT, FILES.hotelFolioDir);
 const COLS = [
   "Id",
   "Res Id",
@@ -118,7 +128,7 @@ function main() {
   }
   fs.mkdirSync(OUT_DIR, { recursive: true });
   for (const f of fs.readdirSync(OUT_DIR)) {
-    if (/^12-Folio-Transactions\.hotel-(slim|p\d+)\.xlsx$/i.test(f) || f.startsWith("_probe-")) {
+    if (/^13-Folio-(slim|p\d+)\.xlsx$/i.test(f) || f.startsWith("_probe-")) {
       fs.unlinkSync(path.join(OUT_DIR, f));
     }
   }
@@ -137,14 +147,14 @@ function main() {
   }
   console.log("source", rawRows.length, "charges", slim.length, "skipped cash/terminal", skippedNoRevenue);
 
-  const slimPath = path.join(OUT_DIR, "12-Folio-Transactions.hotel-slim.xlsx");
+  const slimPath = path.join(OUT_DIR, "13-Folio-slim.xlsx");
   const slimBytes = writeXlsx(slimPath, slim);
   console.log("slim", slim.length, "rows", (slimBytes / 1024 / 1024).toFixed(2), "MB", slimPath);
 
   const parts = [];
   for (let i = 0, n = 1; i < slim.length; i += ROWS_PER_PART, n += 1) {
     const chunk = slim.slice(i, i + ROWS_PER_PART);
-    const name = `12-Folio-Transactions.hotel-p${String(n).padStart(2, "0")}.xlsx`;
+    const name = `13-Folio-p${String(n).padStart(2, "0")}.xlsx`;
     const fp = path.join(OUT_DIR, name);
     const bytes = writeXlsx(fp, chunk);
     parts.push({ name, rows: chunk.length, mb: +(bytes / 1024 / 1024).toFixed(2) });

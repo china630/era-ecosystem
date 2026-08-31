@@ -32,10 +32,13 @@ export async function listEpisodeDiagnoses(episodeId: string) {
 export async function deleteEpisodeDiagnosis(id: string, patientRefId: string) {
   const row = await prisma.clinicalDiagnosis.findUnique({
     where: { id },
-    include: { episode: { select: { patientRefId: true } } },
+    include: { episode: { select: { patientRefId: true, status: true } } },
   });
   if (!row || row.episode.patientRefId !== patientRefId) {
     throw new IcdCatalogError("Diagnosis not found", 404);
+  }
+  if (row.episode.status !== "OPEN") {
+    throw new IcdCatalogError("Closed episode is read-only", 409);
   }
   await prisma.clinicalDiagnosis.delete({ where: { id } });
 }

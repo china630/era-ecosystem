@@ -4,6 +4,7 @@ import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
+import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const createSchema = z.object({
   patientRefCode: z.string(),
@@ -189,9 +190,13 @@ export async function POST(req: Request) {
       }
     }
 
+    const clinicalEpisodeId = await stampEpisodeOnCreate({
+      patientRefId: patient.id,
+    });
     const order = await createLabOrderWithItems({
       patientRefId: patient.id,
       visitId: body.visitId,
+      clinicalEpisodeId: clinicalEpisodeId ?? undefined,
       codes,
       amountNet: body.amountNet,
       source,

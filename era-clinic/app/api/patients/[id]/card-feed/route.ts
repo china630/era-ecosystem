@@ -16,6 +16,7 @@ const querySchema = z.object({
   to: z.string().optional(),
   offset: z.coerce.number().int().min(0).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  episode: z.string().optional(),
 });
 
 const TYPE_SET = new Set<TimelineEventType>([
@@ -49,6 +50,7 @@ export async function GET(
       to: url.searchParams.get("to") ?? undefined,
       offset: url.searchParams.get("offset") ?? undefined,
       limit: url.searchParams.get("limit") ?? undefined,
+      episode: url.searchParams.get("episode") ?? undefined,
     });
 
     const from = query.from ? new Date(query.from) : undefined;
@@ -63,6 +65,7 @@ export async function GET(
           limit: query.limit,
           from,
           to,
+          episodeId: query.episode,
         }),
       );
     }
@@ -84,6 +87,7 @@ export async function GET(
         to,
         offset: query.offset,
         limit: query.limit,
+        episodeId: query.episode,
       }),
     );
   } catch (err) {

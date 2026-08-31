@@ -93,9 +93,9 @@ function folioIndex(rows) {
 }
 
 console.log('Loading from', ew);
-const reservations = load(path.join(ew, '11-Reservations.merged.xlsx'));
-const guests = load(path.join(ew, '10-Guest-Cards.merged.xlsx'));
-const folioHotel = load(path.join(ew, '12-Folio-Transactions.merged.xlsx'));
+const reservations = load(path.join(ew, '11-Reservations.xlsx'));
+const guests = load(path.join(ew, '10-Guest-Cards.xlsx'));
+const folioHotel = load(path.join(ew, '13-Folio-Transactions.merged.xlsx'));
 const folioFnb = load(path.join(ew, '16-FnB-Transactions.merged.xlsx'));
 
 const guestsById = new Map();
@@ -228,9 +228,9 @@ for (const n of folioGuestNames) {
 const report = {
   generatedAt: new Date().toISOString(),
   files: {
-    reservations: '11-Reservations.merged.xlsx',
-    guests: '10-Guest-Cards.merged.xlsx',
-    folioHotel: '12-Folio-Transactions.merged.xlsx',
+    reservations: '11-Reservations.xlsx',
+    guests: '10-Guest-Cards.xlsx',
+    folioHotel: '13-Folio-Transactions.merged.xlsx',
     folioFnb: '16-FnB-Transactions.merged.xlsx',
   },
   counts: {

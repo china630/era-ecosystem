@@ -89,7 +89,7 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | 6 | F&B POS | `era-fnb-pos` | `fnb-pos` | `fnb-pos` | 3202 | `https://fnb-pos.era-365.online/` |
 | 7 | Clinic | `era-clinic` | `clinic` | `clinic` | 3203 | `https://clinic.era-365.online/` |
 
-**Clinic crons** (Bearer `PLATFORM_CRON_SECRET`): `POST /api/cron/procedure-auto-complete`, `POST /api/cron/procedure-no-show-sweep`, plus existing inpatient/catalog crons. Tenant flags: `checkInRequiresQr`, `autoNoShowAfterMin` (see ADR clinic-procedure-day-ops).
+**Clinic crons** (Bearer `PLATFORM_CRON_SECRET`): `POST /api/cron/procedure-auto-complete`, `POST /api/cron/procedure-no-show-sweep`, `POST /api/cron/episode-walkin-close`, plus existing inpatient/catalog crons. Tenant flags: `checkInRequiresQr`, `autoNoShowAfterMin` (see ADR clinic-procedure-day-ops).
 
 | 8 | Retail & E-commerce | `era-retail-pos` | `retail-pos` | `retail-pos` | 3204 | `https://retail-pos.era-365.online/` |
 | 9 | Logistics & Customs | `era-logistics` | `logistics` | `logistics` | 3205 | `https://logistics.era-365.online/` |

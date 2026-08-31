@@ -71,4 +71,20 @@ describe("getIntakeChecklist", () => {
     expect(intake?.status).toBe("DONE");
     expect(checklist.items).toHaveLength(4);
   });
+
+  it("scopes LabOrder / Visit queries by clinicalEpisodeId when provided", async () => {
+    await getIntakeChecklist("p1", { episodeId: "ep-this-year" });
+    expect(mockedPrisma.labOrder.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ clinicalEpisodeId: "ep-this-year" }),
+      }),
+    );
+    expect(mockedPrisma.visitServiceLine.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          visit: expect.objectContaining({ clinicalEpisodeId: "ep-this-year" }),
+        }),
+      }),
+    );
+  });
 });

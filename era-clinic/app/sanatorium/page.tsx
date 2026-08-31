@@ -84,6 +84,7 @@ type Episode = {
   checkupCompletedAt: string | null;
   status: string;
   openedAt: string;
+  canCloseWalkIn?: boolean;
   patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { text: string; recordedAt: string }[];
   diagnoses: {
@@ -434,6 +435,10 @@ export default function SanatoriumPage() {
     });
     const data = await res.json();
     setBusy(false);
+    if (res.status === 409 && data.code === "ANAMNESIS_REQUIRED") {
+      setMsg(data.error ?? t("anamnesisRequiredForProgram"));
+      return;
+    }
     if (action === "instantiate-program" && res.status === 409) {
       setMsg(t("alreadyHasProgram"));
       return;
@@ -533,6 +538,26 @@ export default function SanatoriumPage() {
     setBusy(false);
     setMsg(res.ok ? t("procedureCancelled") : (data.error ?? t("failed")));
     await reloadEpisode();
+  }
+
+  async function closeWalkIn(episodeId: string) {
+    if (!window.confirm(t("closeWalkInConfirm"))) return;
+    setBusy(true);
+    const res = await fetch(`/api/sanatorium/episodes/${episodeId}?action=close`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    setMsg(res.ok ? t("closeWalkInOk") : (data.error ?? t("failed")));
+    if (res.ok) {
+      if (selectedId === episodeId) {
+        setSelectedId("");
+        setChartModalOpen(false);
+      }
+      await loadList();
+    }
   }
 
   const program = selected?.programInstance;
@@ -637,6 +662,21 @@ export default function SanatoriumPage() {
                             onClick={() => setPatientCardId(e.patientRef!.id)}
                           >
                             <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                          </button>
+                        ) : null}
+                        {e.patientOrigin === "WALK_IN" && e.status === "OPEN" ? (
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON_CLASS}
+                            disabled={busy || e.canCloseWalkIn === false}
+                            title={
+                              e.canCloseWalkIn === false
+                                ? t("closeWalkInBusyHint")
+                                : t("closeWalkIn")
+                            }
+                            onClick={() => void closeWalkIn(e.id)}
+                          >
+                            {t("closeWalkIn")}
                           </button>
                         ) : null}
                       </div>

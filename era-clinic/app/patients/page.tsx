@@ -14,7 +14,6 @@ import {
   Field,
   FieldRow,
   FieldSelect,
-  FieldTextarea,
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
@@ -79,7 +78,6 @@ const emptyForm = {
   finCode: "",
   passportNumber: "",
   issuingCountry: "AZ",
-  anamnesisText: "",
 };
 
 export default function PatientsPage() {
@@ -256,7 +254,6 @@ export default function PatientsPage() {
         birthDate: form.birthDate.trim() || null,
         emergencyContactName: form.emergencyContactName.trim() || null,
         emergencyContactPhone: form.emergencyContactPhone.trim() || null,
-        anamnesisText: form.anamnesisText.trim() || null,
       }),
     });
     const data = await res.json();
@@ -459,13 +456,6 @@ export default function PatientsPage() {
             preset="shortText"
             value={form.fullName}
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-          />
-          <FieldTextarea
-            label={t("anamnesis")}
-            rows={3}
-            value={form.anamnesisText}
-            onChange={(e) => setForm({ ...form, anamnesisText: e.target.value })}
-            placeholder={t("anamnesisHint")}
           />
           <FieldRow cols={2}>
             <Field

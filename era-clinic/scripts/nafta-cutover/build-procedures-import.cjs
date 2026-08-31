@@ -2,9 +2,9 @@
  * Build clinic wizard import books from curated 01-procedures.xlsx (SSOT).
  *
  * Input:  D:\ERA-BACKUP\NAFTA-START\clinic\reports\01-procedures.xlsx
- * Output: D:\ERA-BACKUP\NAFTA-ERA-READY\clinic\25-Treatments.xlsx
- *         D:\ERA-BACKUP\NAFTA-ERA-READY\clinic\26-Rooms.xlsx
- *         D:\ERA-BACKUP\NAFTA-ERA-READY\clinic\40-Procedure-Requirements.xlsx
+ * Output: D:\ERA-BACKUP\NAFTA-ERA-READY\clinic\19-Treatments.xlsx
+ *         D:\ERA-BACKUP\NAFTA-ERA-READY\clinic\20-Clinic-Rooms.xlsx
+ *         D:\ERA-BACKUP\NAFTA-ERA-READY\clinic\21-Procedure-Requirements.xlsx
  *         D:\ERA-BACKUP\NAFTA-START\clinic\reports\era-import\ (mirror + manifest)
  *
  * Electro #40 LOCATION rows stay 7–13 for Amplipuls/Elektroforez (FIFO 2-pad
@@ -18,6 +18,7 @@
 const fs = require("fs");
 const path = require("path");
 const { HEADERS, procedureCode, roomCode } = require("./map.cjs");
+const { FILES } = require("./pack-layout.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const READY = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -26,7 +27,6 @@ const MIRROR = path.join(START, "clinic", "reports", "era-import");
 const WO_TREATMENTS = path.join(START, "clinic", "dump", "catalogs", "treatments.json");
 const WO_ROOMS = path.join(START, "clinic", "dump", "catalogs", "rooms.json");
 const WO_CALENDAR = path.join(START, "clinic", "dump", "calendar", "reservations-all.json");
-const EW_HIZMET = path.join(START, "hotel", "15-Hizmet-Tanimlari.xlsx");
 
 const RESOURCE_HEADERS = HEADERS.procedureRequirements;
 
@@ -98,20 +98,6 @@ function pickWoTreatment(candidates) {
     candidates.find((x) => Number(x.price) > 0) ||
     candidates[0]
   );
-}
-
-function loadEwPrices(XLSX) {
-  if (!fs.existsSync(EW_HIZMET)) return new Map();
-  const wb = XLSX.readFile(EW_HIZMET);
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-  const map = new Map();
-  for (const r of rows) {
-    const name = String(r["Hizmet Adı"] || r.Name || "").trim();
-    if (!name) continue;
-    map.set(norm(name), Number(r.Fiyat ?? r.price ?? 0) || 0);
-  }
-  return map;
 }
 
 function buildWoIndex(treatments) {
@@ -224,7 +210,6 @@ function main() {
   const woTreatments = loadJson(WO_TREATMENTS).data || [];
   const woRooms = loadJson(WO_ROOMS).data || [];
   const byBase = buildWoIndex(woTreatments);
-  const ewPrices = loadEwPrices(XLSX);
 
   const roomByName = new Map(woRooms.map((r) => [String(r.name).trim(), r]));
   const usedRoomIds = new Set();
@@ -254,14 +239,7 @@ function main() {
       const slug = slugCode(baseName(nameAz));
       externalRef = `nafta:procedure:${slug}`;
       code = `NAFTA-PROC-${slug}`;
-      const ewPrice = ewPrices.get(norm(baseName(nameAz)));
-      if (ewPrice != null) price = ewPrice;
       warnings.push({ n: row.n, nameAz, reason: "no WO match" });
-    }
-
-    if (price === 0) {
-      const ewPrice = ewPrices.get(norm(baseName(nameAz)));
-      if (ewPrice != null) price = ewPrice;
     }
 
     procedureRows.push({
@@ -304,12 +282,12 @@ function main() {
       name: r.name || "",
     }));
 
-  const out25Ready = path.join(READY, "clinic", "25-Treatments.xlsx");
-  const out26Ready = path.join(READY, "clinic", "26-Rooms.xlsx");
-  const outResReady = path.join(READY, "clinic", "40-Procedure-Requirements.xlsx");
-  const out25Mirror = path.join(MIRROR, "25-Treatments.xlsx");
-  const out26Mirror = path.join(MIRROR, "26-Rooms.xlsx");
-  const outResMirror = path.join(MIRROR, "40-Procedure-Requirements.xlsx");
+  const out25Ready = path.join(READY, FILES.clinicTreatments);
+  const out26Ready = path.join(READY, FILES.clinicRooms);
+  const outResReady = path.join(READY, FILES.clinicRequirements);
+  const out25Mirror = path.join(MIRROR, path.basename(FILES.clinicTreatments));
+  const out26Mirror = path.join(MIRROR, path.basename(FILES.clinicRooms));
+  const outResMirror = path.join(MIRROR, path.basename(FILES.clinicRequirements));
 
   const nProc = writeSheet(XLSX, out25Ready, HEADERS.procedures, procedureRows);
   writeSheet(XLSX, out26Ready, HEADERS.rooms, roomRows);
@@ -326,16 +304,14 @@ function main() {
     `Built: ${new Date().toISOString()}`,
     "",
     "## Wizard upload (phase 1 — dictionaries)",
-    "- 25-Treatments.xlsx → entity `procedures`",
-    "- 26-Rooms.xlsx → entity `rooms`",
-    "",
-    "## Post-wizard (manual / follow-up script)",
-    "- 40-Procedure-Requirements.xlsx — procedureCode → room resourceCode (LOCATION); wizard entity procedure-requirements",
+    "- 19-Treatments.xlsx → entity `procedures`",
+    "- 20-Clinic-Rooms.xlsx → entity `rooms`",
+    "- 21-Procedure-Requirements.xlsx → entity `procedure-requirements` (after 19+20)",
     "",
     "## Rules applied",
     "- durationMin + gap from 01-procedures.xlsx (gap = resourceGapMinutes)",
     "- patientRestMinutes from WO when matched, else 15",
-    "- price from WO, else Elektraweb 15-Hizmet-Tanimlari",
+    "- price from WO only; package inclusions stay 0 (not tariffed). EW Hizmet Tanımları is not a clinic catalog.",
     `- deduped rows: ${skipped.length}`,
     "",
   ].join("\n");

@@ -49,31 +49,48 @@ function buildProductAdapter(
     permission: PERMISSIONS.MASTER_DATA_MANAGE,
     templateHint,
     headerAliases: {
+      Id: 'ewId',
       'Product Code': 'code',
       'Stock Code': 'code',
+      'Ürün Kodu': 'code',
+      'Stok Kodu': 'code',
       'Product Name': 'name',
       'Stock Name': 'name',
+      'Ürün Adı': 'name',
+      'Stok Adı': 'name',
       'Product Group Name': 'groupName',
       'Stock Group': 'groupName',
+      'Ürün Grubu Adı': 'groupName',
       'Stock Unit': 'unit',
       Price: 'price',
+      Fiyat: 'price',
       Currency: 'currency',
+      Döviz: 'currency',
       'Revenue Group': 'revenueGroup',
+      'Gelir Grubu': 'revenueGroup',
       Vat: 'vatRate',
+      KDV: 'vatRate',
       'Discount Active': 'active',
+      'İndirim Aktif': 'active',
     },
     rowSchema,
-    mapRow: (raw) => ({
-      code: cellString(raw.code),
-      name: cellString(raw.name),
-      groupName: cellString(raw.groupName),
-      unit: cellString(raw.unit) ?? 'pcs',
-      price: cellNumber(raw.price),
-      currency: cellString(raw.currency),
-      revenueGroup: cellString(raw.revenueGroup),
-      vatRate: cellNumber(raw.vatRate),
-      active: raw.active === undefined ? true : cellBool(raw.active),
-    }),
+    mapRow: (raw) => {
+      const name = cellString(raw.name);
+      if (!name) return null;
+      const ewId = cellString(raw.ewId) ?? (raw.ewId != null ? String(raw.ewId) : null);
+      const prefix = productType === 'STOCK' ? 'ERA-STK' : 'ERA-FNB';
+      return {
+        code: cellString(raw.code) ?? (ewId ? `${prefix}-${ewId}` : slugCode(name)),
+        name,
+        groupName: cellString(raw.groupName),
+        unit: cellString(raw.unit) ?? 'pcs',
+        price: cellNumber(raw.price),
+        currency: cellString(raw.currency),
+        revenueGroup: cellString(raw.revenueGroup),
+        vatRate: cellNumber(raw.vatRate),
+        active: raw.active === undefined ? true : cellBool(raw.active),
+      };
+    },
     upsert: async (tx, row, dryRun) => {
       const groupId = await ensureProductGroup(tx, row.groupName, dryRun);
       const existing = await tx.product.findFirst({ where: { code: row.code } });
@@ -103,7 +120,7 @@ export const productCardsAdapter = buildProductAdapter(
   'product-cards',
   'Product Cards',
   31,
-  'Product Cards.xlsx',
+  '31-Product-Cards.xlsx — EW Ürün Kartları',
   'SELLABLE',
 );
 
@@ -111,6 +128,6 @@ export const stockCardsAdapter = buildProductAdapter(
   'stock-cards',
   'Stock Cards',
   32,
-  'Stock Cards.xlsx',
+  '33-Stock-Cards.xlsx — EW Ürün Tanımları / Stock Cards',
   'STOCK',
 );

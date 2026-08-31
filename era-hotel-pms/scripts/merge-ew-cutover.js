@@ -104,10 +104,19 @@ function main() {
     return null;
   }
 
-  const guestMerged = pick("10-Guest-Cards.merged.xlsx", "Guest Cards.merged.xlsx");
-  const resMerged = pick("11-Reservations.merged.xlsx", "Reservations.merged.xlsx");
-  const folioMerged = pick("12-Folio-Transactions.merged.xlsx", "Folio Transactions.merged.xlsx");
-  const fnbMerged = pick("16-FnB-Transactions.merged.xlsx", "FnB Transactions.merged.xlsx");
+  const guestMerged = pick("10-Guest-Cards.xlsx", "10-Guest-Cards.merged.xlsx", "Guest Cards.merged.xlsx");
+  const resMerged = pick("11-Reservations.xlsx", "11-Reservations.merged.xlsx", "Reservations.merged.xlsx");
+  const folioMerged = pick(
+    "13-Folio-Transactions.merged.xlsx",
+    "12-Folio-Transactions.merged.xlsx",
+    "Folio Transactions.merged.xlsx",
+  );
+  const fnbMerged = pick(
+    path.join("..", "fnb", "32-FnB-Transactions.xlsx"),
+    "32-FnB-Transactions.xlsx",
+    "16-FnB-Transactions.merged.xlsx",
+    "FnB Transactions.merged.xlsx",
+  );
 
   const guestSources = [
     guestMerged,
@@ -131,8 +140,8 @@ function main() {
     folio: folioSources.filter((f) => !path.basename(f).includes(".merged.")).map(chunkRisk),
   };
 
-  const guestFinal = path.join(EW, "10-Guest-Cards.merged.xlsx");
-  const guestOut = path.join(EW, "10-Guest-Cards.merged.next.xlsx");
+  const guestFinal = path.join(EW, "10-Guest-Cards.xlsx");
+  const guestOut = path.join(EW, "10-Guest-Cards.next.xlsx");
   run(path.join(scriptsDir, "merge-guest-cards-files.js"), [
     "--out",
     guestOut,
@@ -151,21 +160,22 @@ function main() {
     "--files",
     ...resSources,
     "--out",
-    path.join(EW, "11-Reservations.merged.xlsx"),
+    path.join(EW, "11-Reservations.xlsx"),
   ]);
 
+  fs.mkdirSync(path.join(EW, "..", "fnb"), { recursive: true });
   run(path.join(scriptsDir, "merge-folio-transactions.js"), [
     "--files",
     ...folioSources,
     "--out",
-    path.join(EW, "12-Folio-Transactions.merged.xlsx"),
+    path.join(EW, "13-Folio-Transactions.merged.xlsx"),
     "--fnb-out",
-    path.join(EW, "16-FnB-Transactions.merged.xlsx"),
+    path.join(EW, "..", "fnb", "32-FnB-Transactions.xlsx"),
   ]);
 
-  const guests = sheetRows(path.join(EW, "10-Guest-Cards.merged.xlsx"));
-  const reservations = sheetRows(path.join(EW, "11-Reservations.merged.xlsx"));
-  const folios = sheetRows(path.join(EW, "12-Folio-Transactions.merged.xlsx"));
+  const guests = sheetRows(path.join(EW, "10-Guest-Cards.xlsx"));
+  const reservations = sheetRows(path.join(EW, "11-Reservations.xlsx"));
+  const folios = sheetRows(path.join(EW, "13-Folio-Transactions.merged.xlsx"));
 
   const guestIds = new Set(guests.map((r) => String(r["Guest Id"] ?? "").trim()).filter(Boolean));
   const resByState = {};

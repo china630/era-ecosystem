@@ -29,6 +29,8 @@
 
 AC-CLI-TENANT stays out of BE rollup (schema+filter only). HL7 CLI-23 + fiscal CLI-24 = External residual.
 
+AC-CLI-EPISODE (CLI-55) negatives: `__tests__/cli-episode-negative.spec.ts` + `__tests__/cli-episode-gates.spec.ts` (anamnesis / walk-in close / CLOSED read-only). Field UAT still open → AC stays 🟡.
+
 ## Forbidden as sole proof
 
 - Chat assertion without artifact

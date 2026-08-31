@@ -42,7 +42,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/` | Shared date toolbar + `GET /api/ops/day-summary?date=`; owners also get `ExecutiveDashboard` (`GET /api/executive/summary`) as first block; full-width (no content `max-w-*`) |
 | `/appointments` | `/api/appointments` (optional resourceId/roomCode); PATCH reschedule + conflict |
 | `/patients` | `/api/patients` — paginated list (`q`, sex, blood, MDM, age, `roomNumber` when sanatorium) + register; modal card via `PatientCardModal`. Hotel room filter + column only if preset `sanatorium_clinical` (`includeHotelRooms=1`) |
-| `/patients/[id]` | `/api/patients/[id]` PATCH (anamnesis required on demographics); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); `intakeChecklist` (`PKG-NAFTA-INTAKE`); now/next + PLAN preview Baku `atLabel` / `scheduledAt >= now`; card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`) |
+| `/patients/[id]` | `/api/patients/[id]` PATCH (**today:** anamnesis required on demographics; **CLI-55:** anamnesis on episode, not this PATCH); shared `PatientCardBody`; contraindications collapsed by default; ICD-10 on open episode `GET/POST/DELETE /api/patients/[id]/diagnoses`; CLI-49 physio S chips + type-gated fields + `note` on proposed/scheduled (`GET /api/physio-catalog`, `PATCH /api/procedures/[id]`); `intakeChecklist` (`PKG-NAFTA-INTAKE`); now/next + PLAN preview Baku `atLabel` / `scheduledAt >= now`; card-feed/timeline: Appointment+Visit → one visit row (`/visits/[id]`). **CLI-55 PLANNED:** episode select + archive blocks — [ADR](../../../docs/adr/clinic-episode-as-clinical-course.md) |
 | `/api/mdm/person-lookup` | POST — MDM resolve prefill (session) |
 | `/api/mdm/person-identifiers` | GET — identifier types for linked `globalPersonId` |
 | `/api/mdm/person-merge` | POST — foreigner → citizen merge |
@@ -112,6 +112,11 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED`; Wave 4 `byOrganization` |
 | Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products`; complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
 | `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota); Wave 4 `byOrganization` |
+| `/api/cron/episode-walkin-close` | Bearer `PLATFORM_CRON_SECRET` — idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55; refuses live procedures/labs); path→module `clinic_inpatient` |
+| `GET/POST/DELETE /api/patients/[id]/complaints` | session — course complaints (`?episode=`); CLOSED read-only |
+| `POST /api/sanatorium/episodes/[id]?action=close` | session RECEPTION/DOCTOR — close idle walk-in course |
+| `GET /api/patients/[id]/episodes` | session — all care courses for card selector (CLI-55) |
+| `PATCH /api/sanatorium/episodes/[id]` | session — OPEN episode anamnesis |
 | `/api/procedures/[id]/no-show` | session NURSE — burns quota + may charge folio |
 | `/api/sanatorium/resources/available-slots` | session RECEPTION — free inventory (exhausted omitted) |
 | `/api/capacity/summary` | bridge secret — GET remaining%/risk (`x-era-organization-id` or process bind); POST `runCronForEachTenant` → `byOrganization` |

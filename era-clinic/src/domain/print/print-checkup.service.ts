@@ -55,29 +55,33 @@ function pickTitle(
 export async function buildCheckupPrint(
   patientId: string,
   lang: PrintLang,
+  episodeId?: string | null,
 ): Promise<PrintCheckupDocument | null> {
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return null;
 
   const branding = await getPrintBranding(lang);
   const config = await getCheckupSectionsConfig();
-  const [episode, appointments, intake] = await Promise.all([
-    prisma.clinicalEpisode.findFirst({
-      where: { patientRefId: patientId },
-      orderBy: { openedAt: "desc" },
-      include: {
-        diagnoses: {
-          include: { icdCode: true },
-          orderBy: { recordedAt: "asc" },
-        },
+  const episodeWhere = episodeId
+    ? { id: episodeId, patientRefId: patientId }
+    : { patientRefId: patientId };
+  const episode = await prisma.clinicalEpisode.findFirst({
+    where: episodeWhere,
+    orderBy: { openedAt: "desc" },
+    include: {
+      diagnoses: {
+        include: { icdCode: true },
+        orderBy: { recordedAt: "asc" },
       },
-    }),
+    },
+  });
+  const [appointments, intake] = await Promise.all([
     prisma.appointment.findMany({
       where: { patientRefId: patientId },
       include: { practitioner: true },
       orderBy: { scheduledAt: "asc" },
     }),
-    getIntakeChecklist(patientId),
+    getIntakeChecklist(patientId, { episodeId: episode?.id ?? null }),
   ]);
 
   const intakeBySpecialty = new Map(

@@ -3,8 +3,12 @@
 /**
  * Build NAFTA-ERA-READY/*.xlsx from D:\ERA-BACKUP\NAFTA-START dump.
  *
- *   node era-clinic/scripts/nafta-cutover/build-era-ready.cjs
- *   NAFTA_START=D:\ERA-BACKUP\NAFTA-START NAFTA_READY=D:\ERA-BACKUP\NAFTA-ERA-READY node era-clinic/scripts/nafta-cutover/build-era-ready.cjs
+ *   node era-clinic/scripts/nafta-cutover/build-era-ready.cjs --domain=clinic
+ *   node era-clinic/scripts/nafta-cutover/build-era-ready.cjs --domain=hr
+ *   node era-clinic/scripts/nafta-cutover/build-era-ready.cjs --domain=hotel
+ *
+ * Default --domain=clinic (does not wipe hotel/hr). Never run --domain=all
+ * unless you intend to recopy every domain from START.
  */
 
 const fs = require("fs");
@@ -26,6 +30,14 @@ const {
 const { parseLabDocxFile, testCodeFromPanel, panelFromName } = require("./parse-lab-docx.cjs");
 const { eraCodeForWoAnalysis } = require("./wo-era-lab-map.cjs");
 const { buildHrRoster, loadMappedRoster } = require("./build-hr-roster.cjs");
+const {
+  FILES,
+  CLINIC_KEEP_CURATED,
+  HOTEL_COPY_KEYS,
+  FNB_COPY_KEYS,
+  RETAIL_COPY_KEYS,
+  C1_COPY_KEYS,
+} = require("./pack-layout.cjs");
 
 const START = process.env.NAFTA_START || path.join("D:", "ERA-BACKUP", "NAFTA-START");
 const OUT = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ERA-READY");
@@ -90,6 +102,49 @@ function slugName(name) {
     .slice(0, 40);
 }
 
+function parseDomains() {
+  const argv = process.argv.slice(2);
+  let raw = "";
+  const eq = argv.find((a) => a.startsWith("--domain="));
+  if (eq) raw = eq.slice("--domain=".length);
+  else {
+    const i = argv.indexOf("--domain");
+    if (i >= 0) raw = String(argv[i + 1] || "");
+  }
+  raw = raw.trim().toLowerCase();
+  if (!raw) return new Set(["clinic"]);
+  if (raw === "all") {
+    console.warn("WARN: --domain=all recopies hotel/fnb/retail/1c from START and rebuilds clinic+hr");
+    return new Set(["hr", "hotel", "clinic", "fnb", "retail", "1c"]);
+  }
+  const allowed = new Set(["hr", "hotel", "clinic", "fnb", "retail", "1c"]);
+  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  for (const p of parts) {
+    if (!allowed.has(p)) {
+      console.error("Unknown --domain", p, "(use hr|hotel|clinic|fnb|retail|1c|all)");
+      process.exit(1);
+    }
+  }
+  return new Set(parts);
+}
+
+function copyRel(srcRoot, destRoot, rel) {
+  const src = path.join(srcRoot, rel);
+  if (!fs.existsSync(src)) return false;
+  const dest = path.join(destRoot, rel);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(src, dest);
+  return true;
+}
+
+function copyKeys(srcRoot, destRoot, keys) {
+  let n = 0;
+  for (const key of keys) {
+    if (copyRel(srcRoot, destRoot, FILES[key])) n += 1;
+  }
+  return n;
+}
+
 function inHousePatient(p, today = CUTOVER) {
   const cin = ymd(p.checkInDate);
   const cout = ymd(p.checkOutDate);
@@ -98,29 +153,43 @@ function inHousePatient(p, today = CUTOVER) {
 }
 
 function main() {
+  const domains = parseDomains();
   const XLSX = loadXlsx();
   const clinicOut = path.join(OUT, "clinic");
+  let nProc = 0;
+  let nRooms = 0;
+  let nPract = 0;
+  let nPat = 0;
+  let nQuota = 0;
+  let nSlots = 0;
+  let nLabCat = 0;
+  let nLabOrd = 0;
+  let nLabLines = 0;
+  let parsedOk = 0;
+  let parsedEmpty = 0;
+  let nDxImg = 0;
+  let nDx = 0;
+  let labLineRows = [];
+
+  if (domains.has("clinic")) {
   fs.mkdirSync(clinicOut, { recursive: true });
-  const KEEP_CURATED = [
-    "25-Treatments.xlsx",
-    "26-Rooms.xlsx",
-    "27-Doctors.xlsx",
-    "40-Procedure-Requirements.xlsx",
+  const KEEP_CURATED = new Set([
+    ...CLINIC_KEEP_CURATED,
+    path.basename(FILES.clinicPhysio),
+    path.basename(FILES.clinicTemplates),
+    "README.md",
     "IMPORT-CHECKLIST.md",
     "rebuild-derived-report.json",
-  ];
+    "rebuild-usg-report.json",
+  ]);
   if (fs.existsSync(clinicOut)) {
     for (const name of fs.readdirSync(clinicOut)) {
-      if (KEEP_CURATED.includes(name)) continue;
-      if (/\.(xlsx|csv)$/i.test(name)) fs.unlinkSync(path.join(clinicOut, name));
+      if (KEEP_CURATED.has(name)) continue;
+      const fp = path.join(clinicOut, name);
+      if (!fs.statSync(fp).isFile()) continue;
+      if (/\.(xlsx|csv)$/i.test(name)) fs.unlinkSync(fp);
     }
   }
-  fs.mkdirSync(path.join(OUT, "hr"), { recursive: true });
-  const hrOut = path.join(OUT, "hr");
-  for (const name of fs.readdirSync(hrOut)) {
-    fs.unlinkSync(path.join(hrOut, name));
-  }
-  fs.mkdirSync(path.join(OUT, "hotel"), { recursive: true });
 
   const treatments = rowsOf(readDumpJson("catalogs/treatments.json"));
   const rooms = rowsOf(readDumpJson("catalogs/rooms.json"));
@@ -132,14 +201,12 @@ function main() {
   const nahiyeByProc = loadNahiyeByProcedureId(path.join(DUMP, "cards"));
   const cardIndex = loadPatientCardIndex(path.join(DUMP, "cards"));
 
-  const curatedProcPath = path.join(clinicOut, "25-Treatments.xlsx");
+  const curatedProcPath = path.join(OUT, FILES.clinicTreatments);
   const useCuratedProcedures = fs.existsSync(curatedProcPath);
-  let nProc = 0;
-  let nRooms = 0;
   if (!useCuratedProcedures) {
     nProc = writeSheet(
       XLSX,
-      path.join(clinicOut, "25-Treatments.xlsx"),
+      path.join(OUT, FILES.clinicTreatments),
       HEADERS.procedures,
       treatments.map((t) => ({
         externalRef: `wo:treatment:${t.id}`,
@@ -153,7 +220,7 @@ function main() {
     );
     nRooms = writeSheet(
       XLSX,
-      path.join(clinicOut, "26-Rooms.xlsx"),
+      path.join(OUT, FILES.clinicRooms),
       HEADERS.rooms,
       rooms.map((r) => ({
         externalRef: `wo:room:${r.id}`,
@@ -186,12 +253,15 @@ function main() {
       });
     }
   }
-  const nPract = writeSheet(
-    XLSX,
-    path.join(clinicOut, "27-Doctors.xlsx"),
-    HEADERS.practitioners,
-    practRows,
-  );
+  const curatedDoctors = path.join(OUT, FILES.clinicDoctors);
+  if (!fs.existsSync(curatedDoctors)) {
+    nPract = writeSheet(
+      XLSX,
+      curatedDoctors,
+      HEADERS.practitioners,
+      practRows,
+    );
+  }
 
   const liveIds = new Set();
   const patientsAll = process.env.NAFTA_PATIENTS_ALL !== "0";
@@ -201,7 +271,9 @@ function main() {
     }
     for (const s of slotsRaw) {
       const date = ymd(s.date);
-      if (isOpsSlotDate(date) && slotStatus(date) === "SCHEDULED") liveIds.add(s.patientId);
+      if (isOpsSlotDate(date) && slotStatus(date, String(s.startTime || "").slice(0, 8)) === "SCHEDULED") {
+        liveIds.add(s.patientId);
+      }
     }
     for (const r of rowsOf(readDumpJson("bulk/lab-results.json"))) {
       if (r.patientId) liveIds.add(r.patientId);
@@ -212,33 +284,32 @@ function main() {
   const checkInByWoId = new Map(
     livePatients.map((p, i) => [String(p.id), patientRows[i].checkIn || ""]),
   );
-  const nPat = writeSheet(
+  nPat = writeSheet(
     XLSX,
-    path.join(clinicOut, "21-patients.xlsx"),
+    path.join(OUT, FILES.clinicPatients),
     HEADERS.patients,
     patientRows,
   );
 
   const quotaMap = new Map();
-  const opsSlots = [];
-  const archiveSlots = [];
+  const allSlots = [];
   for (const s of slotsRaw) {
     const date = ymd(s.date);
-    const status = slotStatus(date);
+    const startTime = String(s.startTime || "").slice(0, 8);
+    const status = slotStatus(date, startTime);
     const procedureCd = procedureCode(s.treatmentId);
     const patientRef = `wo:patient:${s.patientId}`;
     const row = {
       externalRef: `wo:res:${s.id}`,
       date,
-      startTime: String(s.startTime || "").slice(0, 8),
+      startTime,
       patientRef,
       procedureCode: procedureCd,
       roomCode: roomCode(s.roomId),
       status,
       nahiye: slotNahiye(s, nahiyeByProc),
     };
-    if (isOpsSlotDate(date) && status === "SCHEDULED") opsSlots.push(row);
-    else archiveSlots.push(row);
+    allSlots.push(row);
 
     const key = `${patientRef}|${procedureCd}`;
     const cur = quotaMap.get(key) || { total: 0, used: 0 };
@@ -261,8 +332,9 @@ function main() {
     })
     .filter((r) => liveRefs.has(r.patientRef));
 
-  const nQuota = writeSheet(XLSX, path.join(clinicOut, "38-quotas.xlsx"), HEADERS.quotas, quotaRows);
-  const nSlots = writeSheet(XLSX, path.join(clinicOut, "23-slots.xlsx"), HEADERS.slots, opsSlots);
+  nQuota = writeSheet(XLSX, path.join(OUT, FILES.clinicQuotas), HEADERS.quotas, quotaRows);
+  const historicalSlots = allSlots.filter((r) => r.status === "COMPLETED");
+  nSlots = writeSheet(XLSX, path.join(OUT, FILES.clinicSlots), HEADERS.slots, historicalSlots);
 
   const labCatRows = [];
   const labCatSeen = new Set();
@@ -281,9 +353,9 @@ function main() {
     if (!code) continue;
     addLabCat(`wo:analysis:${a.id}`, code, a.name || code);
   }
-  const nLabCat = writeSheet(
+  nLabCat = writeSheet(
     XLSX,
-    path.join(clinicOut, "29-Analyses.xlsx"),
+    path.join(OUT, FILES.clinicCatalog),
     HEADERS.labCatalog,
     labCatRows,
   );
@@ -312,12 +384,12 @@ function main() {
   }
 
   const labMeta = rowsOf(readDumpJson("bulk/lab-results.json"));
-  const labLineRows = [];
-  let parsedOk = 0;
-  let parsedEmpty = 0;
-  const nLabOrd = writeSheet(
+  labLineRows = [];
+  parsedOk = 0;
+  parsedEmpty = 0;
+  nLabOrd = writeSheet(
     XLSX,
-    path.join(clinicOut, "24-lab-orders.xlsx"),
+    path.join(OUT, FILES.clinicLabOrders),
     HEADERS.labOrders,
     labMeta.map((r) => {
       const abs = labById.get(String(r.id));
@@ -358,9 +430,9 @@ function main() {
       };
     }),
   );
-  const nLabLines = writeSheet(
+  nLabLines = writeSheet(
     XLSX,
-    path.join(clinicOut, "39-lab-results.xlsx"),
+    path.join(OUT, FILES.clinicLabResults),
     HEADERS.labResultLines,
     labLineRows,
   );
@@ -370,67 +442,51 @@ function main() {
   });
   if (usgRun.status) process.exit(usgRun.status);
   const usgReport = JSON.parse(fs.readFileSync(path.join(clinicOut, "rebuild-usg-report.json"), "utf8"));
-  const nDxImg = usgReport.diagnostics;
-  const nDx = usgReport.diagnoses;
+  nDxImg = usgReport.diagnostics;
+  nDx = usgReport.diagnoses;
+  } // domain clinic
 
-  const catDir = path.join(START, "clinic", "catalogs");
-  for (const base of ["33-CheckUps", "34-CheckUp-Details", "35-Product-Groups", "36-Products"]) {
-    for (const ext of [".xlsx", ".csv"]) {
-      const src = path.join(catDir, base + ext);
-      if (fs.existsSync(src)) fs.copyFileSync(src, path.join(clinicOut, base + ext));
-    }
+  let nRoster = 0;
+  if (domains.has("hr")) {
+    const hrBuilt = buildHrRoster(XLSX, START, OUT);
+    nRoster = hrBuilt.n;
   }
 
-  const hrBuilt = buildHrRoster(XLSX, START, OUT);
-  const nRoster = hrBuilt.n;
-
-  const hotelSrc = path.join(START, "hotel");
-  const hotelOut = path.join(OUT, "hotel");
-  const archiveLeft = path.join(OUT, "hotel-archive");
-  if (fs.existsSync(archiveLeft)) fs.rmSync(archiveLeft, { recursive: true, force: true });
-  const slotsArchive = path.join(clinicOut, "06-slots-archive.xlsx");
-  if (fs.existsSync(slotsArchive)) fs.unlinkSync(slotsArchive);
-  fs.mkdirSync(hotelOut, { recursive: true });
-  for (const name of fs.readdirSync(hotelOut)) {
-    fs.unlinkSync(path.join(hotelOut, name));
+  if (domains.has("hotel")) {
+    copyKeys(START, OUT, HOTEL_COPY_KEYS);
   }
-  if (fs.existsSync(hotelSrc)) {
-    for (const name of fs.readdirSync(hotelSrc)) {
-      if (/\.source\./i.test(name) || /\.md$/i.test(name)) continue;
-      if (!/\.(xlsx|csv)$/i.test(name)) continue;
-      fs.copyFileSync(path.join(hotelSrc, name), path.join(hotelOut, name));
-    }
+  if (domains.has("fnb")) {
+    copyKeys(START, OUT, FNB_COPY_KEYS);
   }
-
-  const c1Src = path.join(START, "1c");
-  const c1Out = path.join(OUT, "1c");
-  fs.mkdirSync(c1Out, { recursive: true });
-  if (fs.existsSync(c1Src)) {
-    for (const name of fs.readdirSync(c1Src)) {
-      if (!/\.xlsx$/i.test(name)) continue;
-      fs.copyFileSync(path.join(c1Src, name), path.join(c1Out, name));
-    }
+  if (domains.has("retail")) {
+    copyKeys(START, OUT, RETAIL_COPY_KEYS);
+  }
+  if (domains.has("1c")) {
+    copyKeys(START, OUT, C1_COPY_KEYS);
   }
 
   const summary = {
     cutover: CUTOVER,
     out: OUT,
-    clinic: {
-      procedures: nProc,
-      rooms: nRooms,
-      practitioners: nPract,
-      patients: nPat,
-      quotas: nQuota,
-      slotsOps: nSlots,
-      labCatalog: nLabCat,
-      labOrders: nLabOrd,
-      labResultLines: nLabLines,
-      labParsedOrders: parsedOk,
-      labEmptyParse: parsedEmpty,
-      labAnalyteCodes: [...new Set(labLineRows.map((r) => r.code))].sort(),
-      diagnostics: nDxImg,
-      diagnoses: nDx,
-    },
+    domains: [...domains],
+    clinic: domains.has("clinic")
+      ? {
+          procedures: nProc,
+          rooms: nRooms,
+          practitioners: nPract,
+          patients: nPat,
+          quotas: nQuota,
+          slotsOps: nSlots,
+          labCatalog: nLabCat,
+          labOrders: nLabOrd,
+          labResultLines: nLabLines,
+          labParsedOrders: parsedOk,
+          labEmptyParse: parsedEmpty,
+          labAnalyteCodes: [...new Set(labLineRows.map((r) => r.code))].sort(),
+          diagnostics: nDxImg,
+          diagnoses: nDx,
+        }
+      : undefined,
     roster: nRoster,
   };
   const readme = path.join(OUT, "README.txt");
@@ -438,10 +494,12 @@ function main() {
   fs.writeFileSync(path.join(OUT, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
   console.log(JSON.stringify(summary, null, 2));
 
-  const bridge = path.join(__dirname, "../../../era-hotel-pms/scripts/apply-wo-fo-guest-bridge.cjs");
-  if (fs.existsSync(bridge)) {
-    const r = require("child_process").spawnSync(process.execPath, [bridge], { stdio: "inherit" });
-    if (r.status) process.exit(r.status);
+  if (domains.has("clinic") || domains.has("hotel")) {
+    const bridge = path.join(__dirname, "../../../era-hotel-pms/scripts/apply-wo-fo-guest-bridge.cjs");
+    if (fs.existsSync(bridge)) {
+      const r = require("child_process").spawnSync(process.execPath, [bridge], { stdio: "inherit" });
+      if (r.status) process.exit(r.status);
+    }
   }
 }
 

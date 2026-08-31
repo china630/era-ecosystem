@@ -1,22 +1,24 @@
 # Nafta — единый чеклист файлов на старт контура
 
 Срез: **2026-08-25** (cutover). Сырьё: `D:\ERA-BACKUP\NAFTA-START\`. Книги wizard: `D:\ERA-BACKUP\NAFTA-ERA-READY\`.  
-Готовый чеклист: `NAFTA-ERA-READY\IMPORT-CHECKLIST.md`.
+**Мастер Apply (номера 01–47):** `D:\ERA-BACKUP\NAFTA-ERA-READY\IMPORT-CHECKLIST.md`  
+Код имён: `era-clinic/scripts/nafta-cutover/pack-layout.cjs`
+
+**2026-08-30:** сквозная нумерация HR→hotel→clinic→FnB→retail→1C. Старые EW 01–20 / clinic 21–40 / HR 37 / 1C 40–53 **не** использовать.
 
 ```
 D:\ERA-BACKUP\
   NAFTA-START\           сырьё (не грузить wizard’ом как есть)
-    hotel/               Elektraweb
-    clinic/dump|catalogs WebOnly
-    hr/                  кадры
-    1c/                  1С
-  NAFTA-ERA-READY\       те же номера, что в чеклисте
-    IMPORT-CHECKLIST.md  мастер (clinic + hotel + hr)
-    hotel/01–20          = START/hotel
-    clinic/21–40         = dump + curated SSOT
-    hr/37-Employees.xlsx
-    hr/org-structure.xlsx
-    1c/40–53
+    hr/                  02-Employees + Ştat (имя AZ)
+    August/              EW 2026-08-30 drop (guest cards, FO, folio, notes, agencies)
+    hotel/               03–15 + folio archives; _not-ready/
+    clinic/dump|catalogs WebOnly (не нумеровать dump)
+    fnb/                 30–32
+    retail/              33
+    1c/                  34–47
+  NAFTA-ERA-READY\       wizard Apply
+    IMPORT-CHECKLIST.md  мастер
+    hr/01–02  hotel/03–15  clinic/16–29  fnb/30–32  retail/33  1c/34–47
 ```
 
 Легенда: `[x]` файл на диске · `[ ]` просить.  
@@ -40,30 +42,30 @@ D:\ERA-BACKUP\
 | 07 | [x] | `hotel/07-Travel-Agencies.xlsx` | Hotel wizard | — |
 | 08 | [x] | `hotel/08-Product-Cards.xlsx` (+ `08-Product-Group-List.xlsx`) — EW **2026-08-21** | Hotel wizard SELLABLE | — |
 | 09 | [x] | `hotel/09-Stock-Cards.xlsx` — EW Ürün Tanımları **2026-08-21** | Hotel wizard STOCK | — |
-| 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723 EW + 407 FO-only `wo:fo:*`) | Hotel wizard `guests` + MDM | FO passports applied; dump `hotel/dump/guest-cards.json` |
+| 10 | [x] | `hotel/10-Guest-Cards.merged.xlsx` (7 723 EW + 407 FO-only `wo:fo:*`) | Hotel wizard `guests` + MDM | FO dump **2026-08-30**: `hotel/dump/guest-cards.json` **1608**, passport+DOB on all |
 | 11 | [x] | `hotel/11-Reservations.merged.xlsx` (6 117) | Hotel wizard, 2026+ / InHouse / future | — |
 | 12 | [x] | `hotel/12-Folio-Transactions.hotel.xlsx` (wizard) · archive `12-Folio-Transactions.merged.xlsx` (95 793) | Hotel wizard `folios`. Только брони из `#11`; без `TIBB AMBULATOR` / `999 FB` / CASH/DEBITOR. | — |
 | 13 | [x] | `hotel/13-Package-Prices-2026.csv` | Hotel rate plans + Clinic `ProgramTemplate` | — |
 | 14 | [x] | `hotel/14-BAR-Derived-2026.csv` (+ `.md`) | Hotel BAR (учётная лестница) | — |
 | 15 | [x] | `hotel/15-Hizmet-Tanimlari.xlsx` — EW **2026-08-21** (Hizmet Tanımları; не путать с WO #25) | Hotel `SPA MEDIKAL` extra; сверка имён с #25 | — |
-| 16 | [x] | `hotel/16-FnB-Transactions.merged.xlsx` (22 219) | Сверка F&B, **не** меню | — |
+| 16 | [x] | `hotel/16-FnB-Transactions.merged.xlsx` (old 22 219 overwritten) | Сверка F&B, **не** меню | **2026-08-31:** raw 2026 cheques in `START/fnb/_source/ew-2026-999-fb` (5 880, guest 999 FB until 2026-07-03) + `ew-2026-xudmani` (1 582; CASH → READY `#32`, named in-house → hotel `#13`). READY `#32` = **8 559** |
 | 17 | [x] | `hotel/17-ProFolio-Transactions.xlsx` | Только сверка ROOM, не грузить как folio | — |
 | 18 | [x] | `hotel/18-Contract-Details.xlsx` | Справка | — |
-| 19 | [x] | `hotel/19-Agency-Statement.xlsx` | Finance city ledger — **устарел (15.06)** | Свежая ведомость — из 1С (#45) |
+| 19 | [x] | `hotel/19-Agency-Statement.xlsx` (stale 15.06) · **fresh** READY `hotel/15-Agency-Statement.xlsx` (2026-08-31) | **Hotel** wizard `agency-statement` — FO city ledger remaining. **Not** 1C. 1C AR/AP stays `#45` ASK | Свежая ведомость EW — в отель; развёрнутая ДЗ/КЗ — из 1С (#45) |
 | 20 | [x] | `hotel/20-DO-NOT-IMPORT-Chart-of-Accounts.xlsx` | **Не грузить** | План счетов из 1С (#48) |
 
 ---
 
 ## B. Clinic — `clinic\` → `era-clinic`
 
-### B1. Живой дамп API (`clinic/dump\`) — обновлено **2026-08-25**
+### B1. Живой дамп API (`clinic/dump\`) — обновлено **2026-08-30**
 
 | # | Есть | Файл | READY | Строк | Бух |
 |---|:---:|------|-------|------:|-----|
-| 21 | [x] | `clinic/dump/cards/` + `bulk/patients.json` | `clinic/21-patients.xlsx` | **1665** | — |
-| 22 | [x] | `clinic/dump/bulk/examination-forms.json` | #31 + #32 | 311 forms | — |
-| 23 | [x] | `clinic/dump/calendar/reservations-all.json` (61 155) | `clinic/23-slots.xlsx` | **2373** ops | Ops **25–30.08**; WO слотов на 30 нет |
-| 24 | [x] | `clinic/dump/files/lab/` + `bulk/lab-results.json` | `24-lab-orders.xlsx` | **2153** | ~170 без Word — не импортируем |
+| 21 | [x] | `clinic/dump/cards/` + `bulk/patients.json` | READY `#24` | **1722** | — |
+| 22 | [x] | `clinic/dump/bulk/examination-forms.json` | READY `#29` | **431** USG forms | — |
+| 23 | [x] | `clinic/dump/calendar/reservations-all.json` (62 166) | READY `#26` | max **2026-09-10** | Ops **25–30.08**; WO слотов на 30 нет |
+| 24 | [x] | `clinic/dump/files/lab/` + `bulk/lab-results.json` | READY `#27`/`#28` | **2369** meta / **2200** Word | ~169 без Word — не импортируем |
 
 ### B2. Справочники и curated pack
 

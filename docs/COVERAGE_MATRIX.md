@@ -53,7 +53,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-03 | Resources (equipment) | vNext | Y | — | Y | — | — | SHIPPED | — |
 | CLI-04 | Procedure types | vNext | Y | — | Y Add+Edit reqs (resource + STAFF mode) | — | — | SHIPPED | Backfill missing requirements on SatAdmin list |
 | CLI-05 | Appointment create + practitioner day matrix | PRD K-01 / Pattern B | Y calendar + create/reschedule/cancel/check-in | Y `/appointments` matrix (rows=doctors) | — | — | — | SHIPPED | Legacy `/scheduling` + `/api/scheduling/slots` removed |
-| CLI-06 | Patient registry (M1) | PRD | Y paginated filters | Y `/patients` grid + modal card | — | — | — | SHIPPED | Anamnesis required on demographics PATCH; hotel room filter when `sanatorium_clinical` |
+| CLI-06 | Patient registry (M1) | PRD | Y paginated filters | Y `/patients` grid + modal card | — | — | — | SHIPPED | Anamnesis on episode (CLI-55); demographics PATCH no longer requires it; hotel room filter when `sanatorium_clinical` |
 | CLI-07 | Service catalog (M6) | PRD | Y | — | Y `/admin/catalog` grid + kind/paid/package filters + Nafta import | — | — | SHIPPED | `ServiceCatalogKind`; procedure picker = PROCEDURE only; prices → `amountNet` by `code` |
 | CLI-08 | Procedure compatibility rules | M11 | Y | — | Y modal | — | — | SHIPPED | — |
 | CLI-09 | Procedure sequence rules (FIFO) | vNext | Y | — | Y modal | — | — | SHIPPED | — |
@@ -96,6 +96,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-52 | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP admin; 4th same-day paid | [ADR FIFO](./adr/clinic-doctor-confirmed-fifo-planning.md) | Y exam-prefix sort; daily-cap charge; manual POST guard | Y `/sanatorium` + card; `/admin/settings` mode | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave C |
 | CLI-53 | Doctor bonus extras-only + IN_HOUSE/WALK_IN buckets | [ADR compose/bonus](./adr/nafta-compose-sell-and-doctor-bonus.md) | Y `bonusEligible` + doctor-bonus split | Y `/reports/procedures` doctor-bonus | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave D |
 | CLI-54 | One reservation → two episodes (per pax PatientRef + program) | [ADR episode-per-pax](./adr/nafta-episode-per-pax.md) | Y openEpisode per patient; charge by episode | Y `/sanatorium` one row per episode | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave E |
+| CLI-55 | Episode as care course: children + card switcher + walk-in close | [ADR course](./adr/clinic-episode-as-clinical-course.md) | Y stamp+gates+list/PATCH/close/cron | Y card CatalogField switcher + Close on /sanatorium | — | — | — | SCREEN | W1–W4 landed; keep SCREEN until field punch; AC-CLI-EPISODE stays 🟡 out of BE rollup |
 
 ### MDM natural-person identity
 
@@ -167,7 +168,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-02 | BAR rates Excel import | partial | wizard | BLOCKED | Nafta Excel export; scoped out of AC-HOT-RATE (dynamic plans only) |
 | HOT-03 | Guest notify H-BL-06 | Y | send pages | STUB | Twilio/SendGrid |
 | HOT-04 | e-qaimé H-BL-24 | stub | folio read-only | STUB | prod cert |
-| HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin only `/admin/import` |
+| HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin `/admin/import`. Nafta: `#14` extra bed 96/48; `#15` Agency Statement → AGENCY folio (not 1C) |
 | HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | HEADLESS | Extension settings + ingest/health + outbox. Clinic Issue-ticket **SHOW** (Wave 6 lab). Super-Admin **per-org** policy **SHOW** (Wave 6 lab) + Sync → `ElektrawebBridgePolicy`. Hotel request tenant from JWT/session. Wave 8: ingest stamps ALS-first (`bridgeRequestOrganizationId`). Wave 9: field runbook [`reports/hot06-field-runbook.md`](../reports/hot06-field-runbook.md). **Not SHIPPED** (field SPA Insert open). Lab: [`reports/hot06-lab-signoff.md`](../reports/hot06-lab-signoff.md). [ADR saas](./adr/saas-request-tenant-and-vendor-bridges.md) · [inbound](./adr/hotel-elektraweb-live-bridge.md) · [reverse](./adr/hotel-elektraweb-reverse-folio-post.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
 | HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | — |
 | HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
@@ -243,7 +244,16 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | FNB-04 | Menu price history | Y `/admin/menu` history modal | SHIPPED | — |
 | FNB-05 | Standalone sale/shift → Finance GL | Y pay + Z-close events | SHIPPED | LOCAL_CASHIER only; hotel paths via NA |
 | FNB-06 | Recipe SKU + Finance deep-link | Y menu admin | SHIPPED | BOM SoT Finance |
-| FNB-07 | Dish image URL | Y menu + floor strip | SHIPPED | URL only, no upload |
+| FNB-07 | Dish image URL | Y `/admin/menu` + floor strip | SHIPPED | URL only, no upload |
+| FNB-08 | Nafta cutover Excel wizard | Y `/admin/import` | API | READY #30-#32; UAT-SMOKE UI open — not SHIPPED |
+
+---
+
+## era-retail-pos (highlights)
+
+| ID | Capability | OpsUI | Status | Blocker |
+|----|------------|-------|--------|---------|
+| RET-01 | Nafta cutover stock-cards import | Y `/admin/import` | API | READY #33; UAT-SMOKE UI open — not SHIPPED |
 
 ---
 
@@ -536,6 +546,9 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-08-28 | SaaS Wave 12: honesty closeout — status drift fix + `check:acceptance` SaaS bans; TENANT/TOPO 🟡; HOT-06 HEADLESS; no `ga`. |
 | 2026-08-23 | Hotel guest tours HOT-TOUR-01 SHIPPED: `/tours` roster + TOUR folio + `/fleet` + print; SKU hotel_transfers; AC-HOT-TOUR Scaffold ✅; UI SCREEN (not SHOW) |
 | 2026-08-30 | Nafta card wave (3): (1) CLI-32/34 intake checklist `PKG-NAFTA-INTAKE` + live instantiate; (2) CLI-49 Solyuks/`belinə`/`NAFTALAN_FILL`/empty-catalog UX + always rematch on `#23`; (3) CLI-25/48 Baku `parseBakuDateTime` + now/PLAN `gte now`. Ops: seed catalogs then re-Apply `#23` (+ `#31` if USG). Not Pilot-ready / not GA. |
+| 2026-08-31 | CLI-55 PLANNED: episode as care course (ADR clinic-episode-as-clinical-course). Card switcher, episode children, walk-in close. Not started; waves TBD. CLI-06 anamnesis-on-demographics superseded when CLI-55 ships. |
+| 2026-08-31 | CLI-55 **SCREEN**: episode as care course waves W1–W4 (schema/stamp, gates, card switcher, walk-in close+cron). Not SHIPPED / not Pilot. |
+| 2026-08-31 | Nafta cutover: hotel `#15` Agency Statement → AGENCY folio (not 1C); `#14` extra bed 96/48; F&B `#30`–`#32` + Retail `#33` wizards API (not SHIPPED) |
 | 2026-08-30 | Clinic catalog seed layers: satellite **base** + Nafta **org overlay** (ADR clinic-catalog-base-and-org-overlay-seeds). Wrappers `db:seed:physio` / `db:seed:diagnostic-catalog` run both. |
 | 2026-08-19 | HOT-RPT-01/02 Hotel Management Reports W1–W3 (P0 ZIP + P1 catalog + cubes/3-year + email ZIP link HEADLESS); STUB → API — not SHIPPED (no UAT evidence) |
 | 2026-08-20 | HOT-AGP-01/02/03 Agency portal P0–P1 (CP grants + hotel book + FO inbox + passport scan); Status=API; AC-HOT-AGP 🟡; SKU `hotel_agency_portal` |
