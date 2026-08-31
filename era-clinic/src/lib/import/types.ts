@@ -1,10 +1,10 @@
 import type { PrismaClient } from "@prisma/client";
-import type { SatellitePrisma } from "@era/satellite-kit/tenancy";
+import type { SatellitePrisma, SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 import type { z } from "zod";
 
 export type UpsertOutcome = "created" | "updated" | "skipped";
 
-export type ImportTx = SatellitePrisma<PrismaClient>;
+export type ImportTx = SatellitePrisma<PrismaClient> | SatelliteTransactionClient;
 
 export type ImportRowError = {
   row: number;
