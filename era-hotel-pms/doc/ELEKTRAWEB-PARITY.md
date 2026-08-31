@@ -65,7 +65,7 @@
 | Rack / plan DnD relocate | `POST .../relocate` | HK-03 + `RoomChangePlan` |
 | Room plan filters | `/room-plan` | `FilterMenuButton` grouping + period |
 | Room plan room column | `/room-plan` | Left fixed column; timeline does not shift room numbers |
-| Room plan bar shapes | `/room-plan` | Arrow end; turnover notch when checkout = next check-in |
+| Room plan bar shapes | `/room-plan` | Blunt EW chevron + butt notch (`CHEVRON_PX`); day-state colors; HK squares on bar tail |
 | Room plan tooltip | `/room-plan` | Hover popup with reservation fields |
 | Reservation card UX | `ReservationCardModal` | Shared toolbar; create → edit same card |
 | Guest card depth | `GuestCardModal` | Config CRM + reservation grids ([GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md)) |

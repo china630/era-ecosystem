@@ -151,7 +151,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   }
 
   const extraRooms = await Promise.all(
-    ['103', '104', '203', '204', '303', '304', '403', '404'].map((num, i) => {
+    ['103', '104', '105', '203', '204', '303', '304', '403', '404'].map((num) => {
       const typeId = num.startsWith('3')
         ? ctx.typeSuite.id
         : num.startsWith('2') || num === '403'
@@ -160,8 +160,14 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
       const floor = parseInt(num[0], 10);
       return prisma.room.upsert({
         where: { roomNumber: num },
-        create: { roomNumber: num, roomTypeId: typeId, floor, status: RoomStatus.AVAILABLE },
-        update: {},
+        create: {
+          roomNumber: num,
+          roomTypeId: typeId,
+          floor,
+          status: RoomStatus.AVAILABLE,
+          ...(num === '105' ? { maxBed: 2 } : {}),
+        },
+        update: num === '105' ? { maxBed: 2 } : {},
       });
     }),
   );
@@ -229,9 +235,14 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     withFolio?: boolean;
     chargeAmount?: number;
     payAmount?: number;
+    /** Shared twin: allow date overlap on same door; sets share* fields. */
+    shareEligible?: boolean;
+    shareGender?: 'M' | 'F';
+    shareBedIndex?: number;
   }) {
     const guest = guests[spec.guestIndex]!;
-    if (spec.roomNumber && ROOM_PLAN_STATUSES.includes(spec.status)) {
+    const isShare = Boolean(spec.shareEligible && spec.shareGender);
+    if (spec.roomNumber && ROOM_PLAN_STATUSES.includes(spec.status) && !isShare) {
       const slots = roomPlanSlots[spec.roomNumber] ?? [];
       for (const s of slots) {
         if (staysOverlap(s.checkIn, s.checkOut, spec.checkIn, spec.checkOut)) {
@@ -249,6 +260,12 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         status: spec.status,
       });
       roomPlanSlots[spec.roomNumber] = slots;
+    }
+    if (isShare && spec.shareGender) {
+      await prisma.guest.update({
+        where: { id: guest.id },
+        data: { gender: spec.shareGender },
+      });
     }
     const room = spec.roomNumber ? roomByNum[spec.roomNumber] : undefined;
     const nights = stayNights(spec.checkIn, spec.checkOut);
@@ -276,6 +293,13 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         market: spec.agencyId ? 'B2B' : 'FIT',
         segment: spec.status === 'IN_HOUSE' ? 'SANATORIUM' : 'LEISURE',
         booker: guest.fullName,
+        ...(isShare
+          ? {
+              shareEligible: true,
+              shareGender: spec.shareGender!,
+              shareBedIndex: spec.shareBedIndex ?? null,
+            }
+          : {}),
       },
     });
 
@@ -531,6 +555,49 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     },
   ];
   for (const s of room203Chain) await createReservation(s);
+
+  /**
+   * Room 105: shared twin vacated-bed demo (UAT §30).
+   * A bed1 → +10; B bed2 → +5; C from +6 must land bed2 (not overlay A).
+   */
+  const room105Share: Parameters<typeof createReservation>[0][] = [
+    {
+      guestIndex: 6,
+      roomNumber: '105',
+      checkIn: ci(0),
+      checkOut: co(10),
+      status: 'IN_HOUSE',
+      withStay: true,
+      shareEligible: true,
+      shareGender: 'M',
+      shareBedIndex: 1,
+      notes: { RES_NOTE: '105 share A — bed 1 through +10 (stay on top lane).' },
+    },
+    {
+      guestIndex: 16,
+      roomNumber: '105',
+      checkIn: ci(0),
+      checkOut: co(5),
+      status: 'IN_HOUSE',
+      withStay: true,
+      shareEligible: true,
+      shareGender: 'M',
+      shareBedIndex: 2,
+      notes: { RES_NOTE: '105 share B — bed 2 through +5 (vacates lower lane).' },
+    },
+    {
+      guestIndex: 20,
+      roomNumber: '105',
+      checkIn: ci(6),
+      checkOut: co(12),
+      status: 'CONFIRMED',
+      shareEligible: true,
+      shareGender: 'M',
+      shareBedIndex: 2,
+      notes: { RES_NOTE: '105 share C — from +6 on bed 2 (must not overlay A).' },
+    },
+  ];
+  for (const s of room105Share) await createReservation(s);
 
   /** Room 403: second chain — mixed gaps (after guest 25 stay ends +6). */
   const room403Chain: Parameters<typeof createReservation>[0][] = [

@@ -16,7 +16,7 @@
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-HOT-FO | Front office screen chain (arrive/stay/depart) | ✅ | [ ] | `__tests__/fo-gates-negative.spec.ts` + HOT-FO/BOOK | Negative: Avl=0, DIRTY assign, names-incomplete, overlapping named guest |
-| AC-HOT-FO-SHARE | Shared twin assignment (union gender pool) | ✅ | [ ] | `__tests__/shared-twin-negative.spec.ts` + HOT-FO-03 | T2; M/F only; N beds; OTA exclusive; last-out DIRTY; break/cancel; HOT-FO-03 Status=API until UAT §30 |
+| AC-HOT-FO-SHARE | Shared twin assignment (union gender pool) | ✅ | [ ] | `__tests__/shared-twin-negative.spec.ts` + HOT-FO-03 | T2; M/F only; N beds; vacated-bed reuse (`nextFreeShareBedIndex`); OTA exclusive; last-out DIRTY; break/cancel; HOT-FO-03 Status=API until UAT §30 |
 | AC-HOT-CASH | FO money / City Ledger MVP | ✅ | [ ] | `__tests__/p5-fo-money-negative.spec.ts` + HOT-CASH/CO/CL; UAT §27 | Negative: CL gate, guest balance, DEPOSIT over-HELD, TRANSFERRED_AR refund, discount |
 | AC-HOT-HK | Housekeeping + maintenance | ✅ | [ ] | `__tests__/hk-status-negative.spec.ts` | DIRTY not assignable; CLEAN/INSPECTED; **not** full Nafta deepen |
 | AC-HOT-RATE | Dynamic rate plans (scoped) | ✅ | [ ] | ADR hotel-dynamic-rate-plans + pricing-engine tests | **Scope-cut:** BAR Excel HOT-02 = separate BLOCKED contour (not this AC) |

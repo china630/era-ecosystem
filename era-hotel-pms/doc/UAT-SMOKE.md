@@ -94,15 +94,19 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 
 ## 9. Room plan & occupancy (PMS-04, PMS-06)
 
-Room plan UI (Wave C+):
+Room plan UI (Wave C+ / EW palette):
 
 - [ ] Room numbers stay in the **left column** while scrolling dates
-- [ ] Bars show **arrow tip** on the last night; **notched start** when checkout = next check-in (e.g. room 203 chain)
+- [ ] Bars show **blunt arrow tip** on the last night; **butt notch** on in-window starts; same-day turnover nests nose into butt
+- [ ] Guest names sit **right of the butt** (not clipped into the V)
+- [ ] Day-state colors match EW legend (reservation / expected arrival / in-house / expected departure / checkout / multiple / option)
+- [ ] HK squares on bar tail (clean / dirty / maintenance / closed)
+- [ ] Share rows use the **same vertical gutter** as exclusive stays; no painted overlay of overlapping share stays
 - [ ] Hover a bar → tooltip with res no., guest, dates, agency, payment
-- [ ] Table uses **full content width**; row height compact (~36px)
+- [ ] Table uses **full content width**; exclusive row ~36px; share door = N × 36px
 
-1. `/room-plan` � extend +1 night on bar.
-2. `/reports/occupancy` � 30-day grid loads.
+1. `/room-plan` — extend +1 night on bar.
+2. `/reports/occupancy` — 30-day grid loads.
 
 ## 10. Housekeeping & medical
 
@@ -430,7 +434,7 @@ UI paths (OpsUI) — required before Status=SHIPPED. Queue APIs are API-only (no
 
 1. **Share checkbox:** reservation card → Assignment → enable **Shared twin (share)** (not near guest count) → gender Select **M or F** required → save. Ungendered guest: share refused / exclusive only.
 2. **T2 reject:** confirm male share stay when type quota full for female pool on overlapping dates → second booking rejected; first keeps slot.
-3. **Same door (N beds):** assign same-gender share singles up to `maxBed` → N lanes on room plan; badge `♂ n/N` or `♀ n/N`. Opposite gender on door → reject.
+3. **Same door (N beds):** assign same-gender share singles up to `maxBed` → N lanes on room plan; badge `♂ n/N` or `♀ n/N`. Opposite gender on door → reject. **Vacated bed reuse:** guest A to the 10th on bed 1 + guest B to the 5th on bed 2 → new share from the 6th must land on **bed 2** (lower lane), not overlay A on the top lane. Demo seed: room **105** (`105 share A/B/C` notes) after `npm run db:seed`.
 4. **Rack / arrivals assign:** first guest IN_HOUSE on OCCUPIED door → second same-gender share assignable from rack/chessboard (not only CLEAN).
 5. **Check-in second:** second share check-in on OCCUPIED succeeds.
 6. **Partial checkout / cancel:** first share leaves while roommate remains → door OCCUPIED (bed-HK note allowed, not full DIRTY); last-out → DIRTY + HK task.
@@ -496,7 +500,7 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 
 ### Lab UI
 
-1. Super-Admin → org hub → Elektraweb / clinic cutover policy → save → Sync to hotel `ElektrawebBridgePolicy`.
+1. Super-Admin → org hub → Elektraweb / clinic cutover policy → save → Sync to hotel `ElektrawebBridgePolicy`. One-MMC hotel+clinic may paste **this org UUID** as hotel org (save error shows on the cutover card, not the page header).
 2. Confirm outbox enqueue requires `organizationId`; HOTELID must match **that** org policy (not process env).
 3. `writeEnabled=false` or `ELEKTRAWEB_BRIDGE_ENABLED=0` → no write drain.
 4. Widget settings path documented in [ELEKTRAWEB-LIVE-BRIDGE.md](./ELEKTRAWEB-LIVE-BRIDGE.md) (extension — HEADLESS).

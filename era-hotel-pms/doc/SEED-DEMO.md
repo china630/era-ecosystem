@@ -34,7 +34,7 @@ All planned stays use **check-in 14:00** and **check-out 12:00** Asia/Baku (`src
 
 Statuses: `IN_HOUSE`, `CONFIRMED`, `OPTION`, `CANCELLED`, `NO_SHOW`, `CHECKED_OUT`.
 
-**Room plan rule:** for each room, `CONFIRMED` / `IN_HOUSE` / `OPTION` must not overlap (`seed-fo-demo` throws on conflict). Examples: **301** next booking starts at `today+8` (after in-house ends `today+7`); **204** arrival at `today+3` (after in-house ends `today+2`); **203** turnover chain starts `today+1` (in-house departure today ends before chain).
+**Room plan rule:** for each room, exclusive `CONFIRMED` / `IN_HOUSE` / `OPTION` must not overlap (`seed-fo-demo` throws on conflict). **Share** stays on the same door may overlap by bed. Examples: **301** next booking starts at `today+8` (after in-house ends `today+7`); **204** arrival at `today+3` (after in-house ends `today+2`); **203** turnover chain starts `today+1` (in-house departure today ends before chain).
 
 **Consecutive same-room chains** (room plan / rack turnover demos):
 
@@ -42,8 +42,9 @@ Statuses: `IN_HOUSE`, `CONFIRMED`, `OPTION`, `CANCELLED`, `NO_SHOW`, `CHECKED_OU
 |------|---------|
 | **203** | 6 bookings from tomorrow: back-to-back ×3, 1-night gap, next-day arrival, option with gap |
 | **403** | 5 bookings from +7d: back-to-back ×2, next-day gap, back-to-back, 2-night gap + 3 nights |
+| **105** | Shared twin: A bed1 to +10, B bed2 to +5, C from +6 on bed2 (vacated-bed / no overlay) |
 
-Notes in DB: `203 chain N/6`, `403 chain N/5`.
+Notes in DB: `203 chain N/6`, `403 chain N/5`, `105 share A/B/C`.
 
 ## Volume loader (`load-nafta-transactions.cjs`)
 
