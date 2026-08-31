@@ -11,6 +11,6 @@
 | `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |
 | `/admin/settings` | outlet config | Admin |
 
-Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close. Org bind: `GET/POST /api/internal/v1/organization/bind` (ADR satellite-organization-bind).
+Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`). CP staff: `POST /api/integration/staff-provision` (`enterRequestTenant`, scrypt User hash, SHA-256 PIN roster). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close. Org bind: `GET/POST /api/internal/v1/organization/bind` (ADR satellite-organization-bind).
 
 **SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware `x-era-organization-id`; `assertFnbEntitled` → ALS; ops stamps via `requestOrganizationId()`. Not sellable SHARED pool / no TENANT Scaffold ✅.
