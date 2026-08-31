@@ -98,6 +98,28 @@ function humanizeRole(code: string): string {
     .replace(/^\w/, (c) => c.toUpperCase());
 }
 
+/** Public staff-login origins (SHARED pool). Env overrides for local/dev. */
+const SATELLITE_LOGIN_ORIGIN: Record<string, string> = {
+  industry_clinic:
+    process.env.NEXT_PUBLIC_SATELLITE_CLINIC_URL?.replace(/\/$/, "") ||
+    "https://clinic.era-365.online",
+  industry_hotel_pms:
+    process.env.NEXT_PUBLIC_SATELLITE_HOTEL_URL?.replace(/\/$/, "") ||
+    "https://hotel-pms.era-365.online",
+  industry_fnb_pos:
+    process.env.NEXT_PUBLIC_SATELLITE_FNB_POS_URL?.replace(/\/$/, "") ||
+    "https://fnb-pos.era-365.online",
+};
+
+function satelliteLoginHref(
+  satelliteKey: string,
+  organizationId: string,
+): string | null {
+  const origin = SATELLITE_LOGIN_ORIGIN[satelliteKey];
+  if (!origin || !organizationId) return null;
+  return `${origin}/login?organizationId=${encodeURIComponent(organizationId)}`;
+}
+
 const SEX_VALUES = ["MALE", "FEMALE", "UNKNOWN"] as const;
 const BLOOD_VALUES = [
   "A_POS",
@@ -184,6 +206,13 @@ export default function WorkforceEmploymentsPage() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginEmp, setLoginEmp] = useState<EmploymentRow | null>(null);
   const [loginCopied, setLoginCopied] = useState(false);
+  const [orgCopied, setOrgCopied] = useState(false);
+
+  const workspaceOrgId =
+    user?.organizationId?.trim() ||
+    orgIdFromToken(getOrchAccessToken()) ||
+    "";
+
 
   useEffect(() => {
     if (!moreMenuId) return;
@@ -1401,6 +1430,7 @@ export default function WorkforceEmploymentsPage() {
           setLoginOpen(false);
           setLoginEmp(null);
           setLoginCopied(false);
+          setOrgCopied(false);
         }}
         closeLabel={tCommon("close")}
       >
@@ -1429,6 +1459,31 @@ export default function WorkforceEmploymentsPage() {
                 </button>
               </div>
             </div>
+            {workspaceOrgId ? (
+              <div>
+                <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                  {t("organizationIdLabel")}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <code className="break-all rounded bg-[#F4F6F7] px-2 py-1 font-mono text-[12px] text-[#2C3E50]">
+                    {workspaceOrgId}
+                  </code>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(workspaceOrgId).then(() => {
+                        setOrgCopied(true);
+                        window.setTimeout(() => setOrgCopied(false), 2000);
+                      });
+                    }}
+                  >
+                    {orgCopied ? t("loginCopied") : t("copyOrganizationId")}
+                  </button>
+                </div>
+                <p className="mt-1 text-[12px] text-[#7F8C8D]">{t("organizationIdSharedHint")}</p>
+              </div>
+            ) : null}
             <p className="text-[#7F8C8D]">{t("defaultPinHint")}</p>
             <div>
               <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
@@ -1438,21 +1493,36 @@ export default function WorkforceEmploymentsPage() {
                 <p className="text-[#7F8C8D]">{t("noSatelliteAccess")}</p>
               ) : (
                 <ul className="space-y-1.5">
-                  {(loginEmp.roleBindings ?? []).map((b) => (
-                    <li
-                      key={`${b.satelliteKey}:${b.satelliteRole ?? ""}`}
-                      className="flex items-center justify-between gap-3 rounded-md border border-[#E8ECF0] px-3 py-2"
-                    >
-                      <span className="font-medium text-[#2C3E50]">
-                        {satelliteLabel(b.satelliteKey)}
-                      </span>
-                      <span className="text-[#7F8C8D]">
-                        {b.satelliteRole
-                          ? humanizeRole(b.satelliteRole)
-                          : t("roleUnset")}
-                      </span>
-                    </li>
-                  ))}
+                  {(loginEmp.roleBindings ?? []).map((b) => {
+                    const href = satelliteLoginHref(b.satelliteKey, workspaceOrgId);
+                    return (
+                      <li
+                        key={`${b.satelliteKey}:${b.satelliteRole ?? ""}`}
+                        className="rounded-md border border-[#E8ECF0] px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium text-[#2C3E50]">
+                            {satelliteLabel(b.satelliteKey)}
+                          </span>
+                          <span className="text-[#7F8C8D]">
+                            {b.satelliteRole
+                              ? humanizeRole(b.satelliteRole)
+                              : t("roleUnset")}
+                          </span>
+                        </div>
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-block text-[12px] text-[#2980B9] hover:underline"
+                          >
+                            {t("openSatelliteLogin")}
+                          </a>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -1464,6 +1534,7 @@ export default function WorkforceEmploymentsPage() {
                   setLoginOpen(false);
                   setLoginEmp(null);
                   setLoginCopied(false);
+                  setOrgCopied(false);
                 }}
               >
                 {tCommon("close")}
