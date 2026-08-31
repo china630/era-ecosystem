@@ -611,16 +611,13 @@ describe("nafta cutover import rules", () => {
     expect(createOrder.mock.calls[0][0].data.createdAt.getTime()).toBe(
       createOrder.mock.calls[0][0].data.collectedAt.getTime(),
     );
-    expect(createOrder.mock.calls[0][0].data.items).toBeUndefined();
-    expect(createItem).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          labOrderId: "lab1",
-          serviceCode: "LAB-CBC",
-          diagnosticServiceId: "svc1",
-        }),
+    expect(createItem).not.toHaveBeenCalled();
+    expect(createOrder.mock.calls[0][0].data.items).toEqual({
+      create: expect.objectContaining({
+        serviceCode: "LAB-CBC",
+        diagnosticServiceId: "svc1",
       }),
-    );
+    });
   });
 
   it("lab upsert uses episode check-in when takenAt is empty", async () => {

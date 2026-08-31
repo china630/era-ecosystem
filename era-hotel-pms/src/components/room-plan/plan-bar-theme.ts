@@ -25,55 +25,59 @@ export type PlanBarTheme = {
   dashed: boolean;
 };
 
-/** ElektraWeb-inspired palette (room-plan bars only; rack unchanged). */
+/**
+ * ElektraWeb-inspired palette (room-plan bars only; rack unchanged).
+ * Hues are intentionally far apart so day-states read at a glance
+ * (reservation lime ≠ in-house forest ≠ arrival yellow ≠ departure pink).
+ */
 export const PLAN_BAR_COLORS: Record<PlanBarDayState, PlanBarTheme> = {
   option: {
-    fill: '#D5DADF',
-    stroke: '#7F8C8D',
-    text: '#34495E',
-    swatchBg: '#D5DADF',
+    fill: '#B0BEC5',
+    stroke: '#78909C',
+    text: '#37474F',
+    swatchBg: '#B0BEC5',
     dashed: true,
   },
   reservation: {
     fill: '#8BC34A',
-    stroke: '#689F38',
+    stroke: '#558B2F',
     text: '#FFFFFF',
     swatchBg: '#8BC34A',
     dashed: false,
   },
   expectedArrival: {
-    fill: '#C5E86C',
-    stroke: '#9CCC65',
-    text: '#34495E',
-    swatchBg: '#C5E86C',
+    fill: '#FDD835',
+    stroke: '#F9A825',
+    text: '#37474F',
+    swatchBg: '#FDD835',
     dashed: false,
   },
   inHouse: {
-    fill: '#66BB6A',
-    stroke: '#43A047',
+    fill: '#2E7D32',
+    stroke: '#1B5E20',
     text: '#FFFFFF',
-    swatchBg: '#66BB6A',
+    swatchBg: '#2E7D32',
     dashed: false,
   },
   expectedDeparture: {
-    fill: '#F8BBD0',
-    stroke: '#F48FB1',
-    text: '#34495E',
-    swatchBg: '#F8BBD0',
+    fill: '#F06292',
+    stroke: '#C2185B',
+    text: '#FFFFFF',
+    swatchBg: '#F06292',
     dashed: false,
   },
   checkout: {
-    fill: '#FFC107',
-    stroke: '#FFA000',
-    text: '#34495E',
-    swatchBg: '#FFC107',
+    fill: '#FFA000',
+    stroke: '#EF6C00',
+    text: '#37474F',
+    swatchBg: '#FFA000',
     dashed: false,
   },
   multiple: {
-    fill: '#26C6DA',
-    stroke: '#00ACC1',
+    fill: '#00BCD4',
+    stroke: '#00838F',
     text: '#FFFFFF',
-    swatchBg: '#26C6DA',
+    swatchBg: '#00BCD4',
     dashed: false,
   },
 };
@@ -145,7 +149,8 @@ export function resolvePlanBarDayState(
   const co = hotelDateKey(bar.checkOutDate);
 
   if (bar.status === 'CONFIRMED') {
-    return ci === todayKey ? 'expectedArrival' : 'reservation';
+    // Arrival day and overdue (still not checked in) stay yellow until CI.
+    return ci <= todayKey ? 'expectedArrival' : 'reservation';
   }
   if (bar.status === 'IN_HOUSE') {
     return co === todayKey ? 'expectedDeparture' : 'inHouse';
