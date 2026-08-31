@@ -14,6 +14,7 @@ import {
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { enrichEmployeesWithMdm } from "./employee-person.util";
 import { HrCalendarService } from "./hr-calendar.service";
 import type { TimesheetBatchItemDto } from "./dto/timesheet-batch.dto";
@@ -62,7 +63,23 @@ export class TimesheetService {
     private readonly prisma: PrismaService,
     private readonly calendar: HrCalendarService,
     private readonly mdm: OrchestratorMdmClientService,
+    private readonly subscriptionAccess: SubscriptionAccessService,
   ) {}
+
+  private async isCpAttendanceMaster(organizationId: string): Promise<boolean> {
+    return this.subscriptionAccess.hasModule(organizationId, "platform_workforce");
+  }
+
+  private async assertFinanceWritable(organizationId: string) {
+    if (await this.isCpAttendanceMaster(organizationId)) {
+      throw new ConflictException({
+        statusCode: 409,
+        code: "TIMESHEET_MASTER_IS_CP",
+        message:
+          "Attendance is mastered in Control Plane Workforce. Edit Workspace → Workforce → Timesheets.",
+      });
+    }
+  }
 
   async findByMonthIfExists(
     organizationId: string,
@@ -81,7 +98,10 @@ export class TimesheetService {
       where: { organizationId, year, month },
     });
     if (!ts) {
-      return { timesheet: null, employees: [], entries: [] };
+      const attendanceMaster = (await this.isCpAttendanceMaster(organizationId))
+        ? "cp"
+        : "finance";
+      return { timesheet: null, employees: [], entries: [], attendanceMaster };
     }
     return this.getFull(organizationId, ts.id, departmentId);
   }
@@ -144,7 +164,10 @@ export class TimesheetService {
       ...e,
       hours: e.hours != null ? e.hours.toString() : "0",
     }));
-    return { timesheet: ts, employees, entries: entriesJson };
+    const attendanceMaster = (await this.isCpAttendanceMaster(organizationId))
+      ? "cp"
+      : "finance";
+    return { timesheet: ts, employees, entries: entriesJson, attendanceMaster };
   }
 
   private assertDraft(ts: { status: TimesheetStatus }) {
@@ -162,6 +185,7 @@ export class TimesheetService {
       where: { id: timesheetId, organizationId },
     });
     if (!ts) throw new NotFoundException("Timesheet not found");
+    await this.assertFinanceWritable(organizationId);
     this.assertDraft(ts);
     const { year, month } = ts;
     const { lastDay } = monthBoundsUtc(year, month);
@@ -224,6 +248,7 @@ export class TimesheetService {
       where: { id: timesheetId, organizationId },
     });
     if (!ts) throw new NotFoundException("Timesheet not found");
+    await this.assertFinanceWritable(organizationId);
     this.assertDraft(ts);
     const { year, month } = ts;
     const { start: monthStart, end: monthEnd, lastDay } = monthBoundsUtc(year, month);
@@ -294,6 +319,7 @@ export class TimesheetService {
       where: { id: timesheetId, organizationId },
     });
     if (!ts) throw new NotFoundException("Timesheet not found");
+    await this.assertFinanceWritable(organizationId);
     this.assertDraft(ts);
     const { year, month } = ts;
     const { lastDay } = monthBoundsUtc(year, month);
@@ -380,6 +406,7 @@ export class TimesheetService {
       where: { id: timesheetId, organizationId },
     });
     if (!ts) throw new NotFoundException("Timesheet not found");
+    await this.assertFinanceWritable(organizationId);
     if (ts.status === TimesheetStatus.APPROVED) {
       throw new ConflictException("Табель уже утверждён");
     }
@@ -418,6 +445,7 @@ export class TimesheetService {
       where: { id: timesheetId, organizationId },
     });
     if (!ts) throw new NotFoundException("Timesheet not found");
+    await this.assertFinanceWritable(organizationId);
     if (ts.status === TimesheetStatus.APPROVED) {
       throw new ConflictException("Табель уже утверждён");
     }

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { WORKFORCE_EMPLOYMENT_TRANSFERRED } from "@era/contracts";
-import { WorkforceEmploymentStatus } from "@era365/database";
+import { RoleBindingStatus, WorkforceEmploymentStatus } from "@era365/database";
 import { MdmService } from "../../mdm/mdm.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
@@ -20,6 +20,16 @@ function parseDateOnly(iso: string): Date {
   const d = iso.slice(0, 10);
   return new Date(`${d}T00:00:00.000Z`);
 }
+
+/** List/detail payload for workspace Employments overflow (⋯ Reprovision) and satellite filter. */
+const EMPLOYMENT_INCLUDE = {
+  orgUnit: true,
+  position: true,
+  roleBindings: {
+    where: { status: RoleBindingStatus.ACTIVE },
+    select: { satelliteKey: true, satelliteRole: true },
+  },
+};
 
 @Injectable()
 export class WorkforceEmploymentsService {
@@ -60,7 +70,7 @@ export class WorkforceEmploymentsService {
         ...(opts?.status ? { status: opts.status } : {}),
         ...(orgUnitFilter ?? {}),
       },
-      include: { orgUnit: true, position: true },
+      include: EMPLOYMENT_INCLUDE,
       orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
     });
   }
@@ -69,7 +79,7 @@ export class WorkforceEmploymentsService {
     await this.entitlement.assertWorkforceHub(organizationId);
     const row = await this.prisma.workforceEmployment.findFirst({
       where: { id, organizationId },
-      include: { orgUnit: true, position: true },
+      include: EMPLOYMENT_INCLUDE,
     });
     if (!row) throw new NotFoundException("Employment not found");
     return row;

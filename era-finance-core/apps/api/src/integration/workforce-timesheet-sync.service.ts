@@ -11,6 +11,21 @@ function parseDateOnly(iso: string): Date {
   return new Date(`${iso.slice(0, 10)}T00:00:00.000Z`);
 }
 
+function mapApprovedType(raw?: string): TimesheetEntryType {
+  switch (raw) {
+    case "VACATION":
+      return TimesheetEntryType.VACATION;
+    case "SICK":
+      return TimesheetEntryType.SICK;
+    case "OFF":
+      return TimesheetEntryType.OFF;
+    case "BUSINESS_TRIP":
+      return TimesheetEntryType.BUSINESS_TRIP;
+    default:
+      return TimesheetEntryType.WORK;
+  }
+}
+
 function dayDateUtc(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
 }
@@ -67,6 +82,7 @@ export class WorkforceTimesheetSyncService {
         month,
       );
       const dayDate = dayDateUtc(year, month, day);
+      const entryType = mapApprovedType(row.type);
       await this.prisma.timesheetEntry.upsert({
         where: {
           timesheetId_employeeId_dayDate: {
@@ -79,11 +95,11 @@ export class WorkforceTimesheetSyncService {
           timesheetId: ts.id,
           employeeId: employee.id,
           dayDate,
-          type: TimesheetEntryType.WORK,
+          type: entryType,
           hours: new Decimal(row.hours),
         },
         update: {
-          type: TimesheetEntryType.WORK,
+          type: entryType,
           hours: new Decimal(row.hours),
         },
       });

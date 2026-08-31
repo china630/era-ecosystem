@@ -328,6 +328,8 @@ Fan-out: `SatelliteEventsService` → queue `era-satellite-fanout` → `POST {ba
 
 **Default PIN / password change:** CP emits `pin: "0000"` (no CP UI to set a password). Clinic ops change it after first login: profile menu → **Change password** (`/account/password`, `PATCH /api/auth/password`). SSO users (`sso:no-password`) cannot set a local password. Hotel admin can still reset via `/settings/users`; F&B web login uses the same scrypt hash as clinic (PIN clock is separate).
 
+**Reprovision UI:** Workspace → Workforce → Employments → row **⋯** → Reprovision (confirm). Overflow is always visible; the action is disabled until the employment has at least one **active** satellite binding (grant Hotel/Clinic/F&B first). `GET /platform/v1/workforce/employments` and employment detail include those bindings. Creating a manual grant also calls the same `reprovision` internally.
+
 **Clinic Excel cutover vs workforce (name match):** imported `Practitioner` rows have `cpEmploymentId` / `globalPersonId` null. Link order is `cpEmploymentId` → `globalPersonId` → **unique** name match among unlinked same `staffKind`. Unique means **exactly one** imported card looks like the MDM FIO (latinized tokens; e.g. `Rəna Kəngərli` ↔ `Kangarli Rana Kamil qizi`). Zero matches → create a new practitioner (imported card stays unlinked). Two or more matches → do **not** guess; create a new card rather than attach the login to the wrong doctor.
 
 **Who consumes STAFF_PROVISIONED today**
@@ -355,8 +357,8 @@ Do not treat a grant to `industry_retail` (etc.) as a working POS login. Track t
 
 | Event | Direction | Purpose |
 |-------|-----------|---------|
-| `WORKFORCE_TIMESHEET_BATCH_IMPORTED` | construction → orchestrator | CP DRAFT `WorkforceTimesheetEntry` rows |
-| `WORKFORCE_TIMESHEET_APPROVED` | orchestrator → Finance (`hr_full`) | Mirror WORK hours to payroll timesheet |
+| `WORKFORCE_TIMESHEET_BATCH_IMPORTED` | construction → orchestrator | Upsert cells on CP month `WorkforceTimesheet` |
+| `WORKFORCE_TIMESHEET_APPROVED` | orchestrator → Finance (`hr_full`) | Mirror hours + optional `rows[].type`. Finance mutations 409 `TIMESHEET_MASTER_IS_CP` when `platform_workforce`; Finance UI link-only (no local edit). CP cherry-pick approve retired (410). |
 
 ADR: [workforce-timesheet-construction-bridge.md](./adr/workforce-timesheet-construction-bridge.md).
 

@@ -118,10 +118,10 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | FIN-WH-FORM-01 | Forma-5 / Forma-2 statutory warehouse prints | TZ | Y | Y inventory | Y | — | — | API | WS6 |
 | FIN-PROC-01 | ProcurementProtocol + Bid + AP aging + creditor plan | TZ | Y | Y `/procurement/protocols`, `/reporting/ap-aging` | Y | Y | — | API | WS6 |
 | FIN-SUBCONTO-01 | Subconto + BRANCH multi-branch valueRef | ADR | Y | — | Y | Y | — | API | `ERA_SUBCONTO_ENABLED`; [ADR](./adr/subconto-branch-dimension.md) |
-| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | Y | — | — | Y `/workspace/workforce/personnel-orders` | — | API | [ADR](./adr/cp-personnel-orders.md) |
-| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | Y | — | — | Y `/workspace/workforce/staff-schedule` | — | API | occupied/vacant slots |
-| CP-WF-VAC-01 | Vacation plan submit/approve + event | TZ | Y | — | — | Y `/workspace/workforce/vacation-plans` | — | API | Finance mirror HEADLESS |
-| CP-WF-TS-01 | Timesheet draft approve | ADR | Y | — | — | Y `/workspace/workforce/timesheets` | — | API | CP timesheets approve |
+| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | Y | — | — | Y `/workspace/workforce/personnel-orders` | — | API | table + modal CatalogField; no UAT-SMOKE |
+| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | Y | — | — | Y `/workspace/workforce/staff-schedule` | — | API | table + modal + live snapshot; no UAT-SMOKE |
+| CP-WF-VAC-01 | Vacation plan submit/approve + event | TZ | Y | — | — | Y `/workspace/workforce/vacation-plans` | — | API | table + modal; list `{ items, persons }`; Finance mirror HEADLESS |
+| CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | Y | — | — | Y `/workspace/workforce/timesheets` | — | API | month approve only; APPROVED cells immutable; Finance UI link-only when `platform_workforce`; no UAT-SMOKE |
 | CP-WF-PII-01 | Workforce employments/absences MDM batch display + hire resolve | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | masked FIN default |
 | FIN-CP-MDM-01 | Counterparty ИП FIN → globalPersonId | ADR | Y | — | Y modal | Y | — | SHIPPED | — |
 | BANK-MDM-01 | CIF natural + UBO resolve | ADR D4 | Y | Y CIF modal | Y API | — | — | SHIPPED | — |
@@ -347,7 +347,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | CL-CAL-01 | Clinic scheduling skip non-working/mourning | Y | Y | — | SHIPPED | — |
 | LG-CAL-01 | Logistics SLA business-day ETA | Y `/trips/[id]` | Y | — | SHIPPED | `/api/sla/eta` |
 | CN-CAL-01 | Construction timesheet calendar norm | Y field-ops | Y | — | SHIPPED | calendar warn on import |
-| CN-CAL-02 | Construction timesheet → CP → Finance | ADR F2 | Y event | — | — | — | — | HEADLESS | Import + CP approve + Finance consumer |
+| CN-CAL-02 | Construction timesheet → CP → Finance | ADR F2 | Y event | — | — | — | — | HEADLESS | Import upserts CP month grid; approve emits `type`; Finance mirror |
 | WS-CAL-01 | Wholesale payment terms business days | — | Y | — | SHIPPED | `/admin/import-orders` |
 | FB-CAL-01 | FNB labor → finance HR | Y | Y | — | HEADLESS | no local calendar |
 | AS-CAL-01 | Auto appointment working days | Y `/appointments` | Y | — | SHIPPED | calendar snap + cron |
@@ -431,12 +431,12 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
-| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | Workspace → employments: hire (sex/DOB/optional blood), employee card, transfer/terminate; reprovision in overflow; filters sex/age/org/position (API UI, no UAT-SMOKE yet) |
-| CP-WF-ABS-01 | Absence workflow (7 TK AZ kinds, modal CRUD) | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | create/edit via modal on `/workspace/workforce/absences`; kinds: VACATION/SICK/UNPAID/SOCIAL_LEAVE/EDUCATIONAL_LEAVE/BUSINESS_TRIP/ADMINISTRATIVE |
-| CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | UI landed; status API until UAT-SMOKE |
-| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | UI landed; status API until UAT-SMOKE |
-| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | UI landed; status API until UAT-SMOKE |
-| CP-WF-TS-01 | Timesheet draft approve | ADR | `GET/POST …/timesheets/*` | — | — | Y `/workspace/workforce/timesheets` | — | UI landed; status API until UAT-SMOKE |
+| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | Workspace → employments: hire (sex/DOB/optional blood), employee card, transfer/terminate; ⋯ overflow always visible (Reprovision disabled until active satellite bindings); list/detail include active roleBindings; filters sex/age/org/position (API UI, no UAT-SMOKE yet) |
+| CP-WF-ABS-01 | Absence workflow (7 TK AZ kinds, modal CRUD) | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | table+CatalogField; cancel unlocks timesheet cells; not a timesheet grid |
+| CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | multi-line modal + status gates; list `{ items, persons }`; API until UAT-SMOKE |
+| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | status gates; list `{ items, persons }`; API until UAT-SMOKE |
+| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | status gates + snapshot expand; API until UAT-SMOKE |
+| CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | `GET ?year=&month=` + autofill/sync/batch/approve | — | — | Y `/workspace/workforce/timesheets` | — | empty→WORK; APPROVED immutable; 410 cherry-pick; Finance link-only; API until UAT-SMOKE |
 | CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*`, `POST …/import/org-structure` | — | — | Y | — | bootstrap + xlsx/csv import on `/workspace/workforce/org-structure`; upsert by name, no deletes |
 | CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` (+ archive) | — | — | Y | — | create/edit/archive on `/workspace/workforce/positions`; drill-down from org-structure; link to employments |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Split UI: `/security` matrix (neutral No access), `/security/grants`, `/security/bindings`, `/security/audit` |
@@ -478,6 +478,8 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | CP-WF-TS harden: APPROVED cells immutable; cherry-pick approve 410; empty approve 400; absence cancel unlock + sync reconcile; Finance UI link-only + EN banner; vacation multi-line + status gates. Status API — not SHIPPED. |
+| 2026-08-31 | CP-WF-TS-01 month grid is CP attendance SoR (Finance 409 `TIMESHEET_MASTER_IS_CP` when `platform_workforce`); VAC/ORD/STAT table+modal; ABS table header + CatalogField. Status API — not SHIPPED (no UAT-SMOKE). |
 | 2026-08-31 | CLI-WF-PWD-01 clinic `/account/password`; hotel/fnb STAFF_PROVISIONED scrypt + tenant; other satellites documented as no local login fan-out. |
 | 2026-08-29 | ORCH-MDM-04: super-admin persons directory; CP-WF-EMP-01 employee card + filters; CP-WF-POS-01 archive + drill-down. |
 | 2026-08-28 | CLI-25: patient card timeline/history collapse Appointment+Visit to one «Приём» row (slot date, `/visits/[id]`). |
