@@ -29,7 +29,10 @@ export async function runImportRows<T>(
         continue;
       }
       const row = adapter.rowSchema.parse(transformed);
-      const outcome = await adapter.upsert(prisma, row, dryRun);
+      const outcome =
+        !dryRun && adapter.atomicUpsert
+          ? await prisma.$transaction((tx) => adapter.upsert(tx, row, dryRun))
+          : await adapter.upsert(prisma, row, dryRun);
       if (outcome === 'created') result.created += 1;
       else if (outcome === 'updated') result.updated += 1;
       else result.skipped += 1;

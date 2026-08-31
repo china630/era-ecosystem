@@ -270,7 +270,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 **Nafta card wave (2026-08-30) — after deploy:** seed diagnostic + physio catalogs → re-Apply `#23` → optionally `#31` (skip `#32`/`#33`/`#34` for intake). See `NAFTA-CUTOVER-IMPORT.md` § Post-deploy.
 
-1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes). `#26` slots: select all `26-Slots-p01.xlsx` … chunks (not the full book — FormData fails).
+1. Dry-run 01–04 in `/admin/import` (preview row counts, no writes). `#26` slots: select all files from `clinic/26-Slots/` (`26-Slots-p01.xlsx` …), not a single full book. Confirm `/api/import` keeps the session cookie (multipart Apply must not 401).
 2. **/patients**: identity filters only; open-course badge; hotel room + program filters are on `/sanatorium`. After overlay + Re-Apply `#24`, agency/Həmkarlar (incl. September Reservation) and Extra/Res/CIn/Operator/Payment phrases show in **Proqram / paket** on the sanatorium board.
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time.
