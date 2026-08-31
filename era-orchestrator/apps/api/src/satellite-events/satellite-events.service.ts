@@ -149,7 +149,7 @@ export class SatelliteEventsService {
       satelliteKey,
     );
     if (!entitled) {
-      this.logger.debug(
+      this.logger.warn(
         `Skip staff fan-out: org=${organizationId} has no ${satelliteKey}`,
       );
       return;
@@ -160,7 +160,7 @@ export class SatelliteEventsService {
       satelliteKey,
     );
     if (!endpoint) {
-      this.logger.debug(
+      this.logger.warn(
         `Skip staff fan-out: no endpoint for org=${organizationId} satellite=${satelliteKey}`,
       );
       return;

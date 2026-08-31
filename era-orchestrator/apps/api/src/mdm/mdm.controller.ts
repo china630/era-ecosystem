@@ -81,8 +81,12 @@ export class MdmController {
     @Headers("x-service-token") xToken?: string,
   ) {
     this.guard(auth, xToken);
+    const personIds = body.personIds ?? [];
+    if (personIds.length > 100) {
+      throw new BadRequestException("ops-profile batch accepts at most 100 personIds");
+    }
     return this.mdm.batchGetPersonOpsProfile(
-      body.personIds ?? [],
+      personIds,
       body.organizationId ?? "",
     );
   }
