@@ -191,8 +191,8 @@ async function main() {
         data: { resourceId: seedRes.id },
       });
       await prisma.procedureTypeRequirement.updateMany({
-        where: { resourceId: woRes.id },
-        data: { resourceId: seedRes.id, resourceCode: seedRes.code },
+        where: { resourceCode: woRes.code },
+        data: { resourceCode: seedRes.code },
       });
       await prisma.resource.delete({ where: { id: woRes.id } });
     }
