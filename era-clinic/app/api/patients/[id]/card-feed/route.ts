@@ -70,18 +70,43 @@ export async function GET(
       );
     }
 
-    const types = query.types
-      ? (query.types
+    const rawTokens = query.types
+      ? query.types
           .split(",")
           .map((t) => t.trim())
-          .filter((t): t is TimelineEventType =>
-            TYPE_SET.has(t as TimelineEventType),
-          ) as TimelineEventType[])
-      : undefined;
+          .filter(Boolean)
+      : [];
+
+    const isAll =
+      rawTokens.length === 0 ||
+      rawTokens.includes("all") ||
+      rawTokens.every((t) => t === "all");
+
+    let labCatalogKind: "panel" | "imaging" | undefined;
+    const types: TimelineEventType[] = [];
+
+    if (!isAll) {
+      for (const token of rawTokens) {
+        if (token === "lab_panel") {
+          labCatalogKind = "panel";
+          if (!types.includes("lab_order")) types.push("lab_order");
+          continue;
+        }
+        if (token === "lab_imaging") {
+          labCatalogKind = "imaging";
+          if (!types.includes("lab_order")) types.push("lab_order");
+          continue;
+        }
+        if (TYPE_SET.has(token as TimelineEventType)) {
+          types.push(token as TimelineEventType);
+        }
+      }
+    }
 
     return jsonOk(
       await getPatientHistoryPage(id, {
-        types: types?.length ? types : undefined,
+        types: isAll || types.length === 0 ? undefined : types,
+        labCatalogKind,
         labFilter: (query.labFilter ?? "all") as HistoryLabFilter,
         from,
         to,

@@ -484,29 +484,29 @@ export function PatientCardBody({
         ) : null}
 
         <section className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
-              {t("contraindicationsTitle")}
-              {ciCount > 0 ? (
-                <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
-                  {ciCount}
-                </span>
-              ) : null}
-            </h2>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              aria-expanded={ciOpen}
-              onClick={() => setCiOpen((open) => !open)}
-            >
-              {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
-            </button>
-          </div>
           <div
             className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
               ciOpen ? "p-4" : "px-4 py-2"
             }`}
           >
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
+                {t("contraindicationsTitle")}
+                {ciCount > 0 ? (
+                  <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
+                    {ciCount}
+                  </span>
+                ) : null}
+              </h2>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                aria-expanded={ciOpen}
+                onClick={() => setCiOpen((open) => !open)}
+              >
+                {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
+              </button>
+            </div>
             <PatientContraindicationsPanel
               patientRefId={patient.id}
               episodeId={selectedEpisodeId}

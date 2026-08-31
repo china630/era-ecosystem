@@ -118,6 +118,14 @@ function stickyRoomClass(extra = '') {
   return `sticky left-0 z-10 border-r border-[#D5DADF] bg-inherit ${extra}`;
 }
 
+function stickyDateHeaderClass(extra = '') {
+  return `sticky top-0 z-30 border-b border-r border-[#D5DADF]/50 ${extra}`;
+}
+
+function stickyAvailHeaderClass(extra = '') {
+  return `sticky z-20 border-b border-r border-[#D5DADF]/50 ${extra}`;
+}
+
 function RoomLabelCell({
   room,
   rowHeight,
@@ -361,6 +369,7 @@ export default function RoomPlanGrid({
   onSelect,
   onResizeEnd,
   onMoveReservation,
+  fillViewport = false,
 }: {
   fromIso: string;
   days: number;
@@ -372,6 +381,8 @@ export default function RoomPlanGrid({
   onSelect: (id: string | null) => void;
   onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
   onMoveReservation?: (reservationId: string, toRoomId: string) => void;
+  /** When true, grid fills parent height (fullscreen) instead of capping at ~70vh. */
+  fillViewport?: boolean;
 }) {
   const t = useTranslations('roomPlan');
   const from = useMemo(() => parseCalendarDate(fromIso), [fromIso]);
@@ -473,8 +484,10 @@ export default function RoomPlanGrid({
     ));
 
   return (
-    <div className="w-full space-y-3">
-      <div className="space-y-1.5">
+    <div
+      className={`w-full space-y-3 ${fillViewport ? 'flex min-h-0 flex-1 flex-col' : ''}`}
+    >
+      <div className={`space-y-1.5 ${fillViewport ? 'shrink-0' : ''}`}>
         <ColorLegend ariaLabel={t('legendBarsAria')} items={barLegendItems} />
         <ColorLegend
           ariaLabel={t('legendSquaresAria')}
@@ -484,7 +497,11 @@ export default function RoomPlanGrid({
           ]}
         />
       </div>
-      <div className="w-full overflow-x-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm">
+      <div
+        className={`w-full overflow-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm ${
+          fillViewport ? 'min-h-0 flex-1' : 'max-h-[min(70vh,calc(100vh-13rem))]'
+        }`}
+      >
         <div
           className="grid w-full"
           style={{
@@ -493,7 +510,7 @@ export default function RoomPlanGrid({
           }}
         >
           <div
-            className={`${stickyRoomClass('z-20 bg-[#F8FAFC]')} flex items-center border-b border-[#D5DADF] px-2 text-[13px] font-semibold text-[#34495E]`}
+            className={`${stickyRoomClass('top-0 z-40 bg-[#F8FAFC]')} flex items-center border-b border-[#D5DADF] px-2 text-[13px] font-semibold text-[#34495E]`}
             style={{ minHeight: ROW_H_BASE }}
           >
             {t('roomColumn')}
@@ -501,13 +518,13 @@ export default function RoomPlanGrid({
           {dateHeaders.map((d, i) => (
             <div
               key={d}
-              className={`flex items-center justify-center border-b border-r border-[#D5DADF]/50 px-1 text-center text-[13px] ${
+              className={`${stickyDateHeaderClass(
                 hover?.dayIndex === i
                   ? 'bg-[#EBF5FB] font-semibold text-[#2980B9]'
                   : isWeekendKey(d)
                     ? 'bg-[#FDECEC] text-[#C0392B]'
-                    : 'bg-[#F8FAFC] text-[#7F8C8D]'
-              }`}
+                    : 'bg-[#F8FAFC] text-[#7F8C8D]',
+              )} flex items-center justify-center px-1 text-center text-[13px]`}
               style={{ minHeight: ROW_H_BASE }}
             >
               {d.slice(5)}
@@ -515,16 +532,16 @@ export default function RoomPlanGrid({
           ))}
 
           <div
-            className={`${stickyRoomClass('z-20 bg-[#EBF5FB]')} flex items-center border-b border-[#D5DADF] px-2 text-[11px] font-medium text-[#2980B9]`}
-            style={{ minHeight: ROW_H_BASE }}
+            className={`${stickyRoomClass('z-40 bg-[#EBF5FB]')} flex items-center border-b border-[#D5DADF] px-2 text-[11px] font-medium text-[#2980B9]`}
+            style={{ minHeight: ROW_H_BASE, top: ROW_H_BASE }}
           >
             {t('availability')}
           </div>
           {dateHeaders.map((d) => (
             <div
               key={`avail-${d}`}
-              className="flex items-center justify-center border-b border-r border-[#D5DADF]/50 bg-[#EBF5FB] py-1 text-center text-[11px] font-semibold text-[#2980B9]"
-              style={{ minHeight: ROW_H_BASE }}
+              className={`${stickyAvailHeaderClass('bg-[#EBF5FB]')} flex items-center justify-center py-1 text-center text-[11px] font-semibold text-[#2980B9]`}
+              style={{ minHeight: ROW_H_BASE, top: ROW_H_BASE }}
             >
               {avail[d] ?? '—'}
             </div>

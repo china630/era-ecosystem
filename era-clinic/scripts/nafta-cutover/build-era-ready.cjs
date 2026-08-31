@@ -398,6 +398,7 @@ function main() {
           if (parsed.results && parsed.results.length) {
             parsedOk += 1;
             for (const line of parsed.results) {
+              if (line.code === "U-DATE" || /\btarix\b/i.test(line.label || "")) continue;
               const refs = splitRef(line.refRange);
               labLineRows.push({
                 orderRef: `wo:lab:${r.id}`,

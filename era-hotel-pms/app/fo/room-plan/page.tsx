@@ -332,6 +332,7 @@ export default function RoomPlanPage() {
       availabilityByDay={data.availabilityByDay}
       groups={groups}
       selectedId={selectedId}
+      fillViewport={fullscreen}
       onSelect={(id) => {
         setSelectedId(id);
         if (id) setCardReservationId(id);
@@ -460,11 +461,13 @@ export default function RoomPlanPage() {
               {t('exitFullscreen')}
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-4 py-3 sm:px-6">
-            <div className="mb-3 flex flex-wrap items-center justify-end gap-2">{headerActions}</div>
-            {filters}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6">
+            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-end gap-2">{headerActions}</div>
+            <div className="shrink-0">{filters}</div>
             {unassignedBlock}
-            <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{grid}</div>
+            <div className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden p-4`}>
+              {grid}
+            </div>
           </div>
         </div>
         {modals}

@@ -32,6 +32,11 @@ export type ImportAdapter<T> = {
   fileless?: boolean;
   /** Large books (slots): operator may attach several .xlsx chunks in one step. */
   allowMultiple?: boolean;
+  /**
+   * Wrap each row upsert in prisma.$transaction so create + cutover bind
+   * cannot leave a LabOrder without LabOrderItem / import key.
+   */
+  atomicUpsert?: boolean;
   headerAliases: Record<string, string>;
   rowSchema: z.ZodType<T>;
   mapRow: (raw: Record<string, unknown>) => unknown;
