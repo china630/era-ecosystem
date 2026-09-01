@@ -15,7 +15,7 @@ export async function POST(
     const adapter = getImportAdapter(entity);
     if (!adapter) return jsonError(`Unknown import entity: ${entity}`, 404);
 
-    const access = await assertClinicImportAccess();
+    const access = await assertClinicImportAccess(request);
     if (access.error) return access.error;
     const url = new URL(request.url);
     const dryRun = url.searchParams.get("dryRun") === "1";

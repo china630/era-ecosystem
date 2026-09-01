@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, requireClinicRole } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { jsonOk, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { patchProcedureOrderPhysio, toPhysioOrderPayload } from "@/domain/physio/physio-order-sites.service";
 
 const patchSchema = z.object({
@@ -33,7 +33,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.RECEPTION]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_DOCTOR_RECEPTION);
     if (denied) return denied;
     const { id } = await params;
     const body = patchSchema.parse(await req.json());

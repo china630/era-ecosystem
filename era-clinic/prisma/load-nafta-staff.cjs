@@ -18,10 +18,13 @@ const STAFF = [
  { code:"CS-01", login:"turane.memmedzade",   role:"DOCTOR" },
 ];
 
+const roleDefaults = require("./clinic-role-permissions.defaults.json");
+
 async function main(){
   const roles={};
-  for(const rc of [["CLINIC_ADMIN","Clinic administrator"],["RECEPTION","Reception"],["DOCTOR","Doctor"],["NURSE","Nurse"],["LAB_TECH","Lab technician"]]){
-    const r=await prisma.role.upsert({where:{code:rc[0]},update:{name:rc[1]},create:{code:rc[0],name:rc[1],permissionsJson:"[]"}});
+  for(const rc of [["CLINIC_ADMIN","Clinic administrator"],["RECEPTION","Reception"],["DOCTOR","Doctor"],["NURSE","Nurse"],["LAB_TECH","Lab technician"],["FLOOR","Floor check-in"]]){
+    const perms=JSON.stringify(roleDefaults[rc[0]]||[]);
+    const r=await prisma.role.upsert({where:{code:rc[0]},update:{name:rc[1],permissionsJson:perms},create:{code:rc[0],name:rc[1],permissionsJson:perms}});
     roles[rc[0]]=r.id;
   }
   const ph=hash(PASSWORD);

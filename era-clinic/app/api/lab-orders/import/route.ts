@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { createImportedLabOrder } from "@/domain/lab/lab-order-write.service";
 
@@ -16,6 +23,10 @@ function parseCsvLine(line: string, delimiter: string): string[] {
 
 export async function POST(req: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    if (denied) return denied;
+
     const body = bodySchema.parse(await req.json());
     const profile = await prisma.lisFileProfile.findUnique({
       where: { id: body.profileId },

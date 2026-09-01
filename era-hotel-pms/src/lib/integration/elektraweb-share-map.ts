@@ -7,6 +7,7 @@
  */
 
 import { isOtaAgency } from '@/lib/booking-source-kind';
+import { reservationStayOverlaps } from '@/lib/hotel-calendar';
 import {
   nextShareBedIndex,
   normalizeShareGender,
@@ -205,7 +206,31 @@ export async function applyElektrawebSharePair(
   const neighborShare = overlapping.some(
     (r: ShareMapNeighbor) => r.id !== reservation.id && r.shareEligible,
   );
-  const shouldOpenPool = input.isSecond || neighborShare || reservation.shareEligible;
+  const overlapGated = overlapping.filter((row: ShareMapNeighbor) => {
+    const gate = canJoinSharePool({
+      adults: row.adults,
+      gender: row.guest?.gender,
+      title: row.guest?.title,
+      agencyCode: row.agency?.code,
+      agencyName: row.agency?.name,
+    });
+    return gate.ok && reservationStayOverlaps(row, reservation);
+  });
+  const overlapByGender = new Map<ShareGender, number>();
+  for (const row of overlapGated) {
+    const gate = canJoinSharePool({
+      adults: row.adults,
+      gender: row.guest?.gender,
+      title: row.guest?.title,
+      agencyCode: row.agency?.code,
+      agencyName: row.agency?.name,
+    });
+    if (!gate.ok) continue;
+    overlapByGender.set(gate.gender, (overlapByGender.get(gate.gender) ?? 0) + 1);
+  }
+  const overlapEligible = [...overlapByGender.values()].some((n) => n >= 2);
+  const shouldOpenPool =
+    input.isSecond || neighborShare || reservation.shareEligible || overlapEligible;
 
   if (!shouldOpenPool) {
     // Walk-in / exclusive NORMAL — leave alone; never clear existing share.
@@ -240,7 +265,7 @@ export async function applyElektrawebSharePair(
     const gate = gateFor(row);
     if (!gate.ok) continue;
     const isSelf = row.id === reservation.id;
-    const pullAllEligible = input.isSecond;
+    const pullAllEligible = input.isSecond || overlapEligible;
     const pullExistingShare = row.shareEligible || (isSelf && reservation.shareEligible);
     const pullSelfIntoNeighborPool = isSelf && neighborShare;
     if (!pullAllEligible && !pullExistingShare && !pullSelfIntoNeighborPool) continue;

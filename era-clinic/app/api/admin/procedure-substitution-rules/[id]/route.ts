@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { updateSubstitutionRule } from "@/lib/procedure-substitution.service";
 
 const patchSchema = z.object({
@@ -15,7 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await params;
     const body = patchSchema.parse(await req.json());

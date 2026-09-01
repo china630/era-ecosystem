@@ -204,7 +204,7 @@ export async function patchReservationFull(
   const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, shareEligible, ...data } =
     input;
 
-  const nextShareEligible = shareEligible ?? existing.shareEligible;
+  let nextShareEligible = shareEligible ?? existing.shareEligible;
   let nextShareGender = existing.shareGender;
   if (shareEligible !== undefined) {
     if (!nextShareEligible) {
@@ -245,17 +245,18 @@ export async function patchReservationFull(
 
   const checkIn = data.checkInDate ?? existing.checkInDate;
   const checkOut = data.checkOutDate ?? existing.checkOutDate;
-  const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
-  await assertShareInventory(existing.roomTypeId, checkIn, checkOut, {
-    id,
-    shareEligible: nextShareEligible,
-    shareGender: nextShareGender,
-    adults: data.adults ?? existing.adults,
-    roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
-  });
 
   let assignShareBedIndex: number | null | undefined;
-  if (data.roomId !== undefined && data.roomId !== null && data.roomId !== '') {
+  let doorShareResolved = false;
+  const effectiveRoomId =
+    data.roomId !== undefined ? data.roomId : existing.roomId;
+  const doorAssignRequested =
+    (data.roomId !== undefined && data.roomId !== null && data.roomId !== '') ||
+    (Boolean(effectiveRoomId) &&
+      effectiveRoomId !== null &&
+      (data.checkInDate !== undefined || data.checkOutDate !== undefined));
+
+  if (doorAssignRequested && effectiveRoomId) {
     const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
     const paxForGate = paxGuests ?? existing.paxGuests;
     const adultsForGate = data.adults ?? existing.adults;
@@ -271,7 +272,7 @@ export async function patchReservationFull(
 
     const { assertRoomShareAssignable, roomStatusAllowedForShareAssign, reservationIsOta } =
       await import('@/lib/services/share-assignment.service');
-    const room = await prisma.room.findUnique({ where: { id: data.roomId } });
+    const room = await prisma.room.findUnique({ where: { id: effectiveRoomId } });
     if (!room) throw new Error('Room not found');
     const typeId = data.roomTypeId ?? existing.roomTypeId;
     if (room.roomTypeId !== typeId) {
@@ -289,15 +290,25 @@ export async function patchReservationFull(
       shareGender: nextShareGender,
       adults: data.adults ?? existing.adults,
       isOta: await reservationIsOta(id),
+      guestGender: existing.guest.gender,
     };
-    const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
-      roomId: data.roomId,
-      checkIn,
-      checkOut,
-      excludeReservationId: id,
-      candidate,
-    });
+    const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
+      await assertRoomShareAssignable({
+        roomId: effectiveRoomId,
+        checkIn,
+        checkOut,
+        excludeReservationId: id,
+        candidate,
+      });
     assignShareBedIndex = shareBedIndex;
+    doorShareResolved = true;
+    if (autoShare) {
+      nextShareEligible = true;
+      nextShareGender = resolvedGender;
+    } else if (resolvedShare) {
+      nextShareEligible = true;
+      nextShareGender = resolvedGender ?? nextShareGender;
+    }
     if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
       throw new Error(
         `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
@@ -305,13 +316,27 @@ export async function patchReservationFull(
     }
   } else if (data.roomId === null) {
     assignShareBedIndex = null;
+    nextShareEligible = false;
+    nextShareGender = null;
   }
+
+  const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
+  await assertShareInventory(existing.roomTypeId, checkIn, checkOut, {
+    id,
+    shareEligible: nextShareEligible,
+    shareGender: nextShareGender,
+    adults: data.adults ?? existing.adults,
+    roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
+  });
+
+  const shareFieldsDirty =
+    shareEligible !== undefined || doorShareResolved || assignShareBedIndex !== undefined;
 
   await prisma.reservation.update({
     where: { id },
     data: {
       ...data,
-      ...(shareEligible !== undefined
+      ...(shareFieldsDirty
         ? {
             shareEligible: nextShareEligible,
             shareGender: nextShareGender,

@@ -15,6 +15,7 @@ const {
   platformSuperAdminEmails,
   platformSuperAdminBootstrapPassword,
 } = require("@era/satellite-kit") as typeof import("@era/satellite-kit");
+const { permissionsJsonForRole } = require("../src/lib/auth/clinic-permissions") as typeof import("../src/lib/auth/clinic-permissions");
 const { createSatelliteTenantExtension } = require("@era/satellite-kit/tenancy") as typeof import("@era/satellite-kit/tenancy");
 
 const password =
@@ -48,7 +49,7 @@ async function main() {
       data: {
         code: adminRoleCode,
         name: adminRoleCode.replace(/_/g, " "),
-        permissionsJson: "[]",
+        permissionsJson: permissionsJsonForRole("CLINIC_ADMIN"),
       },
     });
     console.info(`[demo-user] created role ${adminRoleCode}`);

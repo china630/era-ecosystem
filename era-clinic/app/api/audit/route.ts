@@ -1,10 +1,10 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const limit = Number(new URL(req.url).searchParams.get("limit") ?? "100");
     const rows = await prisma.satelliteAuditLog.findMany({

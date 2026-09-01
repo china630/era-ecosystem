@@ -1,4 +1,7 @@
-import { handleStaffProvisionEvent } from "@/lib/staff-provision";
+import {
+  handleStaffProvisionEvent,
+  SatelliteLoginTakenError,
+} from "@/lib/staff-provision";
 
 jest.mock("@era/satellite-kit", () => ({
   hashPassword: jest.fn(async (p: string) => `salt:${p}`),
@@ -9,6 +12,7 @@ jest.mock("@/lib/prisma", () => ({
     role: { findFirst: jest.fn() },
     user: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
@@ -83,5 +87,46 @@ describe("fnb staff-provision", () => {
     const rosterData = prisma.staffRoster.create.mock.calls[0][0].data;
     expect(rosterData.pinHash).not.toBe("salt:1234");
     expect(rosterData.pinHash).toHaveLength(64);
+  });
+
+  it("throws SatelliteLoginTakenError when login belongs to another cpEmploymentId", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "user-other",
+        cpEmploymentId: "other-cp-id",
+        login: "emp-wait",
+      });
+
+    await expect(handleStaffProvisionEvent(provisionEvent)).rejects.toBeInstanceOf(
+      SatelliteLoginTakenError,
+    );
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("deactivates only satelliteUserId on STAFF_DEACTIVATED", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst.mockResolvedValue({ id: "user-1" });
+    await handleStaffProvisionEvent({
+      type: "STAFF_DEACTIVATED",
+      organizationId: ORG_ID,
+      correlationId: "corr-2",
+      occurredAt: new Date().toISOString(),
+      payload: {
+        cpEmploymentId: CP_EMPLOYMENT_ID,
+        satelliteKey: "industry_fnb_pos",
+        staffCode: "FINEMP1",
+        satelliteUserId: "user-1",
+      },
+    });
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { status: "INACTIVE" },
+    });
+    expect(prisma.staffRoster.updateMany).toHaveBeenCalledWith({
+      where: { cpEmploymentId: CP_EMPLOYMENT_ID },
+      data: { active: false },
+    });
   });
 });

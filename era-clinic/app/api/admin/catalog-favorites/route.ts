@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminRead, assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   getCatalogFavorites,
   updateCatalogFavorites,
@@ -12,9 +12,9 @@ const patchSchema = z.object({
   mode: z.enum(["first", "only"]).optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminRead();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const favorites = await getCatalogFavorites();
     const catalog = await getDiagnosticCatalog();
@@ -36,7 +36,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = patchSchema.parse(await req.json());
     const favorites = await updateCatalogFavorites(body);

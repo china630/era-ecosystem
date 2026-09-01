@@ -1,4 +1,11 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -6,6 +13,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_VISITS);
+    if (denied) return denied;
+
     const { id } = await params;
     const visit = await prisma.visit.findUnique({
       where: { id },

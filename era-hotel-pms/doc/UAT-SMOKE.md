@@ -28,6 +28,8 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 | reception | reception123 | Receptionist |
 | manager | manager123 | Manager |
 
+Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API calls must not 500 (`Headers#set` ByteString). Middleware encodes `x-user-login` / `x-user-fullname` as `utf8:…`.
+
 ## 1. Auth & navigation
 
 1. Open `/login`, sign in as `reception` / `reception123`.
@@ -440,6 +442,7 @@ UI paths (OpsUI) — required before Status=SHIPPED. Queue APIs are API-only (no
 6. **Partial checkout / cancel:** first share leaves while roommate remains → door OCCUPIED (bed-HK note allowed, not full DIRTY); last-out → DIRTY + HK task.
 7. **Break share:** with no roommate → Break share → exclusive; with roommate → refused until relocate.
 8. **Import/bridge (ops note, not SHIPPED):** re-import reservations where Room No is `707` + `707S` (or detail SHARE / Room Count 0) → both stays `shareEligible` on door `707`, occupancy doors = 1; NORMAL primary is never treated as clear-share. See ADR hotel-shared-twin-assignment § Elektraweb cutover.
+9. **Door+overlap auto-pair (307 / Nafta):** two single M/F stays on the **same door** with overlapping nights (e.g. room **307**) → assign second without manual share checkbox **or** re-import without `S` suffix → both rows `shareEligible`, beds 1/2; `/fo/room-plan` shows **2 parallel lanes** (no bar overlay). OTA / adults>1 / ungendered → **409** with explicit message. Ops backfill: `npx tsx scripts/ops/pair-share-overlaps.ts [--dry-run]`; add `--include-checked-out` for IN_HOUSE + CHECKED_OUT history pairs.
 
 ## 31. Agency portal P0–P1 (HOT-AGP) (2026-08-20)
 

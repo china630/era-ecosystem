@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-20  
-**Updated:** 2026-08-20 (ops-closeout: gender law, N beds, break share, HK); 2026-08-20 (Elektraweb cutover Excel/bridge pairing)
+**Updated:** 2026-08-20 (ops-closeout: gender law, N beds, break share, HK); 2026-08-20 (Elektraweb cutover Excel/bridge pairing); 2026-09-01 (door+overlap auto-pair before EW `S`; assign auto-share; ops backfill)
 **Scope:** `era-hotel-pms` — union/Nafta FO assignment, inventory, room plan
 
 ## Context
@@ -28,7 +28,7 @@ Block → Booking (ReservationGroup) → RoomStay (Reservation, one person/vouch
 
 ### Share is a door mode
 
-- Opens when FO assigns the **first** share-eligible single to a door (explicit checkbox; default on for agency/union singles with M/F gender only).
+- Opens when FO assigns the **first** share-eligible single to a door (explicit checkbox; default on for agency/union singles with M/F gender only), **or automatically** when a second schedulable single with real date overlap lands on the same door and passes M/F + `adults=1` + not-OTA gates (assign, relocate, schedule+room, import/bridge pairing).
 - Pool gender = first guest gender; locked until the pool ends.
 - Survives `n/maxBed` (waiting for roommate or after first checkout).
 - Clears when the **last assigned** stay on that door leaves → `DIRTY`, normal room.
@@ -108,6 +108,7 @@ Elektraweb has **no share status on the primary guest**. Second guest only: Reco
 |----|-----|
 | `707` + `707S` (or both cards on `707`) | One `Room` `707`; two `Reservation` rows |
 | Second: SHARE / RC=0 / `…S` | `shareEligible` + bed index; **pull** overlapping NORMAL neighbor into the same pool |
+| Two NORMAL rows, same door, overlapping nights, no EW `S` yet | **Heuristic pair** on re-import / bridge (`applyElektrawebSharePair` overlapEligible) — same as assign auto-share |
 | Primary always NORMAL | Never treat NORMAL as “clear share” |
 | After first checkout, FO flips remaining SHARE→NORMAL | Bridge/import **must not** clear `shareEligible`; pool stays share until ERA Break share |
 | `Room Count=0` inventory hack | Not stored — door math uses share pool |

@@ -13,6 +13,8 @@ export type SatelliteSessionPayload = {
   isOwner?: boolean;
   /** Finance membership role before satellite mapping. */
   financeRole?: string;
+  /** Domain permission codes (industry satellite RBAC; optional). */
+  permissions?: string[];
 };
 
 function getSecret(): Uint8Array {
@@ -40,6 +42,7 @@ export async function signSatelliteSession(
   if (payload.roles?.length) claims.roles = payload.roles;
   if (payload.isOwner != null) claims.isOwner = payload.isOwner;
   if (payload.financeRole) claims.financeRole = payload.financeRole;
+  if (payload.permissions?.length) claims.permissions = payload.permissions;
 
   return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
@@ -59,6 +62,10 @@ export async function verifySatelliteSession(
   const roles = Array.isArray(rolesRaw)
     ? rolesRaw.map(String)
     : undefined;
+  const permissionsRaw = payload.permissions;
+  const permissions = Array.isArray(permissionsRaw)
+    ? permissionsRaw.map(String)
+    : undefined;
   return {
     sub,
     login: String(payload.login ?? ""),
@@ -73,5 +80,6 @@ export async function verifySatelliteSession(
     financeRole: payload.financeRole
       ? String(payload.financeRole)
       : undefined,
+    permissions,
   };
 }

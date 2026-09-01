@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { assertOpsApiPermission } from "@/lib/auth/clinic-ops-guard";
 import { createImportedLabOrder } from "@/domain/lab/lab-order-write.service";
 
 const MAX_EXTERNAL_AGE_DAYS = 90;
@@ -20,8 +21,12 @@ const bodySchema = z.object({
   resultDate: z.string().min(1),
 });
 
+/** Legacy alias of /api/lab-orders/import — gated by api:lab_orders. */
 export async function POST(req: Request) {
   try {
+    const gate = await assertOpsApiPermission(req);
+    if (gate.error) return gate.error;
+
     const body = bodySchema.parse(await req.json());
     const resultDate = new Date(body.resultDate);
     if (Number.isNaN(resultDate.getTime())) {

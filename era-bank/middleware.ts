@@ -6,6 +6,7 @@ import {
   getBearerOrCookieToken,
   isPublicApiPath,
   redirectNoStore,
+  encodeSessionHeaderUtf8,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
 
@@ -36,8 +37,8 @@ export async function middleware(request: NextRequest) {
       const headers = new Headers(reqHeaders);
       headers.set("x-user-id", session.sub);
       headers.set("x-user-role", session.role);
-      headers.set("x-user-login", session.login);
-      headers.set("x-user-fullname", session.fullName);
+      headers.set("x-user-login", encodeSessionHeaderUtf8(session.login));
+      headers.set("x-user-fullname", encodeSessionHeaderUtf8(session.fullName));
       return NextResponse.next({ request: { headers } });
     } catch {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });

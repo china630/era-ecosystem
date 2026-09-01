@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 
 const patchSchema = z.object({
@@ -15,8 +15,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminRoute(_req);
+    if (guard.error) return guard.error;
     const { id } = await params;
     const profile = await prisma.lisFileProfile.findUnique({ where: { id } });
     if (!profile) return jsonError("Profile not found", 404);
@@ -31,7 +31,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await params;
     const body = patchSchema.parse(await req.json());
@@ -57,7 +57,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(_req);
     if (guard.error) return guard.error;
     const { id } = await params;
     await prisma.lisFileProfile.delete({ where: { id } });

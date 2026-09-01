@@ -4,9 +4,9 @@ import {
   jsonError,
   handleRouteError,
   getRouteSession,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import {
@@ -45,6 +45,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+    );
+    if (denied) return denied;
     const { id } = await params;
     const episode = await getEpisode(id);
     return jsonOk(episode);
@@ -59,7 +65,11 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const permDenied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
+    );
+    if (permDenied) return permDenied;
     const { id } = await params;
     const body = patchSchema.parse(await req.json());
     const episode = await prisma.clinicalEpisode.findUnique({
@@ -95,6 +105,12 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    const session = await getRouteSession();
+    const permDenied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
+    );
+    if (permDenied) return permDenied;
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
     const rawBody = await req.text();
@@ -106,7 +122,6 @@ export async function POST(
     }
     if (action === "diagnosis") {
       const parsed = diagnosisSchema.parse(body);
-      const session = await getRouteSession();
       return jsonOk(
         await addDiagnosis(id, {
           ...parsed,
@@ -154,9 +169,6 @@ export async function POST(
       );
     }
     if (action === "close") {
-      const session = await getRouteSession();
-      const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION, CLINIC_ROLE.DOCTOR]);
-      if (denied) return denied;
       return jsonOk(await closeWalkInEpisode(id));
     }
 

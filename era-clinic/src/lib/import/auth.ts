@@ -1,10 +1,12 @@
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import type { NextResponse } from "next/server";
 
-export async function assertClinicImportAccess(): Promise<
+export async function assertClinicImportAccess(
+  req: Request,
+): Promise<
   { userId: string; error?: undefined } | { userId?: undefined; error: NextResponse }
 > {
-  const guard = await assertClinicAdminWrite();
+  const guard = await assertClinicAdminRoute(req);
   if (guard.error) return { error: guard.error };
   return { userId: guard.session.sub };
 }

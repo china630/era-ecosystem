@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { enterSatelliteTenant } from "@era/satellite-kit";
+import { decodeSessionHeaderUtf8 } from "@/lib/auth/session-header-utf8";
 import type { SessionPayload } from "./jwt";
 import { prisma } from "@/lib/prisma";
 import { assertHotelApiEntitled } from "@/lib/hotel-module-gate";
@@ -8,8 +9,8 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
   const h = await headers();
   const userId = h.get("x-user-id");
   const role = h.get("x-user-role");
-  const login = h.get("x-user-login");
-  const fullName = h.get("x-user-fullname");
+  const login = decodeSessionHeaderUtf8(h.get("x-user-login") ?? "");
+  const fullName = decodeSessionHeaderUtf8(h.get("x-user-fullname") ?? "");
   let email = h.get("x-user-email")?.trim() || undefined;
   let organizationId = h.get("x-era-organization-id")?.trim() || undefined;
   if (!userId || !role) return null;

@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Users } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -17,38 +19,42 @@ import {
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
+  WORKFORCE_UI_SATELLITES,
+  humanizeSatelliteRole,
+  rolesForSatellite,
+} from "../../../../lib/workforce-satellites";
+import {
   isWorkforceGate403,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
 
-const SATELLITES = [
-  { key: "industry_clinic", i18n: "clinic" },
-  { key: "industry_hotel_pms", i18n: "hotel" },
-  { key: "industry_fnb_pos", i18n: "fnb" },
-] as const;
+type AccessStateFilter = "" | "all" | "configured" | "notConfigured";
 
-const ROLES_BY_SATELLITE: Record<string, string[]> = {
-  industry_clinic: ["DOCTOR", "NURSE", "RECEPTION", "CLINIC_ADMIN"],
-  industry_hotel_pms: ["RECEPTION", "HOUSEKEEPING", "MANAGER", "STAFF"],
-  industry_fnb_pos: ["WAITER", "MANAGER", "CHEF", "CASHIER", "STAFF"],
-};
-
-function humanizeRole(code: string): string {
-  return code
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/^\w/, (c) => c.toUpperCase());
+function positionHasConfiguredAccess(
+  positionId: string,
+  templateByCell: Map<string, TemplateRow>,
+  satelliteKey: string,
+): boolean {
+  if (satelliteKey) {
+    return templateByCell.has(`${positionId}:${satelliteKey}`);
+  }
+  return WORKFORCE_UI_SATELLITES.some((s) =>
+    templateByCell.has(`${positionId}:${s.key}`),
+  );
 }
 
 type Overview = {
   seats: { used: number; limit: number };
 };
 
+type OrgUnitOpt = { id: string; name: string };
+
 type PositionRow = {
   id: string;
   name: string;
-  orgUnit?: { name: string };
+  status?: string;
+  orgUnit?: { id: string; name: string };
 };
 
 type TemplateRow = {
@@ -59,23 +65,40 @@ type TemplateRow = {
 };
 
 export default function WorkforceSecurityMatrixPage() {
+  const searchParams = useSearchParams();
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceSecurity");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
   const [data, setData] = useState<Overview | null>(null);
   const [positions, setPositions] = useState<PositionRow[]>([]);
+  const [orgUnits, setOrgUnits] = useState<OrgUnitOpt[]>([]);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busyCell, setBusyCell] = useState<string | null>(null);
+  const [matrixError, setMatrixError] = useState<string | null>(null);
 
-  const { page, pageSize, setPage, setPageSize, paged, total } =
-    useListPagination(positions);
+  const [filterText, setFilterText] = useState("");
+  const [filterOrgUnitId, setFilterOrgUnitId] = useState(
+    () => searchParams.get("orgUnitId") ?? "",
+  );
+  const [filterPositionId, setFilterPositionId] = useState(
+    () => searchParams.get("positionId") ?? "",
+  );
+  const [filterSatellite, setFilterSatellite] = useState("");
+  const [filterAccessState, setFilterAccessState] = useState<AccessStateFilter>("");
+
+  useEffect(() => {
+    const ou = searchParams.get("orgUnitId");
+    const pos = searchParams.get("positionId");
+    if (ou != null) setFilterOrgUnitId(ou);
+    if (pos != null) setFilterPositionId(pos);
+  }, [searchParams]);
 
   const satelliteLabel = useCallback(
     (key: string): string => {
-      const found = SATELLITES.find((s) => s.key === key);
+      const found = WORKFORCE_UI_SATELLITES.find((s) => s.key === key);
       return found ? tSys(`${found.i18n}.title` as "clinic.title") : key;
     },
     [tSys],
@@ -89,12 +112,102 @@ export default function WorkforceSecurityMatrixPage() {
     return m;
   }, [templates]);
 
+  const orgUnitOptions = useMemo(
+    () => orgUnits.map((u) => ({ value: u.id, label: u.name })),
+    [orgUnits],
+  );
+
+  const filterPositionOptions = useMemo(
+    () =>
+      positions.filter(
+        (p) => !filterOrgUnitId || p.orgUnit?.id === filterOrgUnitId,
+      ),
+    [positions, filterOrgUnitId],
+  );
+
+  const satelliteOptions = useMemo(
+    () =>
+      WORKFORCE_UI_SATELLITES.map((s) => ({
+        value: s.key,
+        label: satelliteLabel(s.key),
+      })),
+    [satelliteLabel],
+  );
+
+  const accessStateOptions = useMemo(
+    () => [
+      { value: "all", label: t("filterAccessAll") },
+      { value: "configured", label: t("filterAccessConfigured") },
+      { value: "notConfigured", label: t("filterAccessNotConfigured") },
+    ],
+    [t],
+  );
+
+  const hasActiveFilters =
+    filterText.trim() !== "" ||
+    filterOrgUnitId !== "" ||
+    filterPositionId !== "" ||
+    filterAccessState === "configured" ||
+    filterAccessState === "notConfigured";
+
+  const filteredPositions = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    return positions.filter((p) => {
+      if (filterOrgUnitId && p.orgUnit?.id !== filterOrgUnitId) return false;
+      if (filterPositionId && p.id !== filterPositionId) return false;
+      if (filterAccessState && filterAccessState !== "all") {
+        const configured = positionHasConfiguredAccess(
+          p.id,
+          templateByCell,
+          filterSatellite,
+        );
+        if (filterAccessState === "configured" && !configured) return false;
+        if (filterAccessState === "notConfigured" && configured) return false;
+      }
+      if (q) {
+        const posName = p.name.toLowerCase();
+        const unitName = (p.orgUnit?.name ?? "").toLowerCase();
+        if (!posName.includes(q) && !unitName.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [
+    positions,
+    filterText,
+    filterOrgUnitId,
+    filterPositionId,
+    filterSatellite,
+    filterAccessState,
+    templateByCell,
+  ]);
+
+  const filterResetKey = [
+    filterText,
+    filterOrgUnitId,
+    filterPositionId,
+    filterSatellite,
+    filterAccessState,
+  ].join("|");
+
+  const { page, pageSize, setPage, setPageSize, paged, total } =
+    useListPagination(filteredPositions, filterResetKey);
+
+  const reloadTemplates = useCallback(async () => {
+    const tmplRes = await wfFetch("role-templates");
+    if (tmplRes.ok) {
+      const rows = (await tmplRes.json()) as TemplateRow[];
+      setTemplates(Array.isArray(rows) ? rows : []);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const [ovRes, posRes, tmplRes] = await Promise.all([
+    setMatrixError(null);
+    const [ovRes, posRes, tmplRes, ouRes] = await Promise.all([
       wfFetch("security/overview"),
-      wfFetch("positions"),
+      wfFetch("positions?status=ACTIVE"),
       wfFetch("role-templates"),
+      wfFetch("org-units"),
     ]);
     if (await isWorkforceGate403(ovRes)) {
       setNotEntitled(true);
@@ -111,6 +224,10 @@ export default function WorkforceSecurityMatrixPage() {
       const rows = (await tmplRes.json()) as TemplateRow[];
       setTemplates(Array.isArray(rows) ? rows : []);
     }
+    if (ouRes.ok) {
+      const units = (await ouRes.json()) as OrgUnitOpt[];
+      setOrgUnits(Array.isArray(units) ? units : []);
+    }
     setLoading(false);
   }, []);
 
@@ -120,26 +237,45 @@ export default function WorkforceSecurityMatrixPage() {
   }, [ready, user?.organizationId, load]);
 
   async function onMatrixChange(positionId: string, satelliteKey: string, role: string) {
-    if (busy) return;
-    setBusy(true);
-    const existing = templateByCell.get(`${positionId}:${satelliteKey}`);
+    const cellKey = `${positionId}:${satelliteKey}`;
+    if (busyCell) return;
+    setBusyCell(cellKey);
+    setMatrixError(null);
+    const existing = templateByCell.get(cellKey);
     try {
       if (!role) {
         if (existing) {
-          await wfFetch(`role-templates/${existing.id}`, { method: "DELETE" });
+          const res = await wfFetch(`role-templates/${existing.id}`, { method: "DELETE" });
+          if (!res.ok) throw new Error(await res.text());
         }
+        setTemplates((prev) =>
+          prev.filter(
+            (row) => !(row.positionId === positionId && row.satelliteKey === satelliteKey),
+          ),
+        );
       } else {
         if (existing && existing.satelliteRole !== role) {
-          await wfFetch(`role-templates/${existing.id}`, { method: "DELETE" });
+          const delRes = await wfFetch(`role-templates/${existing.id}`, { method: "DELETE" });
+          if (!delRes.ok) throw new Error(await delRes.text());
         }
-        await wfFetch("role-templates", {
+        const putRes = await wfFetch("role-templates", {
           method: "PUT",
           body: JSON.stringify({ positionId, satelliteKey, satelliteRole: role }),
         });
+        if (!putRes.ok) throw new Error(await putRes.text());
+        const row = (await putRes.json()) as TemplateRow;
+        setTemplates((prev) => {
+          const rest = prev.filter(
+            (r) => !(r.positionId === positionId && r.satelliteKey === satelliteKey),
+          );
+          return [...rest, row];
+        });
       }
-      await load();
+    } catch (err) {
+      setMatrixError(err instanceof Error ? err.message : tCommon("saveFailed"));
+      await reloadTemplates();
     } finally {
-      setBusy(false);
+      setBusyCell(null);
     }
   }
 
@@ -150,6 +286,8 @@ export default function WorkforceSecurityMatrixPage() {
 
   const seatUsed = data?.seats.used ?? 0;
   const seatLimit = data?.seats.limit;
+  const emptyMessage =
+    positions.length === 0 ? t("noPositions") : t("noFilterMatch");
 
   return (
     <>
@@ -179,12 +317,71 @@ export default function WorkforceSecurityMatrixPage() {
               <h2 className="text-sm font-semibold text-[#34495E]">{t("matrixTitle")}</h2>
               <p className="text-xs text-[#7F8C8D]">{t("matrixHint")}</p>
             </div>
+            <div className="flex flex-wrap items-end gap-3 border-b border-[#EBEDF0] px-4 py-3">
+              <label className="text-[13px] font-medium text-[#34495E]">
+                {t("filterSearch")}
+                <input
+                  className="mt-1 block w-48 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                  placeholder={t("filterSearchPlaceholder")}
+                />
+              </label>
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t("filterOrgUnit")}
+                value={filterOrgUnitId}
+                onChange={(next) => {
+                  setFilterOrgUnitId(String(next));
+                  setFilterPositionId("");
+                }}
+                options={orgUnitOptions}
+                emptyLabel={t("filterAll")}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t("filterPosition")}
+                value={filterPositionId}
+                onChange={(next) => setFilterPositionId(String(next))}
+                options={filterPositionOptions.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
+                emptyLabel={t("filterAll")}
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("filterSatellite")}
+                value={filterSatellite}
+                onChange={(next) => setFilterSatellite(String(next))}
+                options={satelliteOptions}
+                emptyLabel={t("filterAll")}
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("filterAccessState")}
+                value={filterAccessState}
+                onChange={(next) => setFilterAccessState(String(next) as AccessStateFilter)}
+                options={accessStateOptions}
+                emptyLabel={t("filterAll")}
+              />
+              {hasActiveFilters ? (
+                <p className="pb-1 text-xs text-[#7F8C8D]">
+                  {t("filterResultCount", { count: filteredPositions.length })}
+                </p>
+              ) : null}
+            </div>
+            {matrixError ? (
+              <p className="border-b border-[#EBEDF0] px-4 py-2 text-[13px] text-[#C0392B]">
+                {matrixError}
+              </p>
+            ) : null}
             <div className={DATA_TABLE_VIEWPORT_CLASS}>
               <table className={DATA_TABLE_CLASS}>
                 <thead>
                   <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
-                    {SATELLITES.map((s) => (
+                    {WORKFORCE_UI_SATELLITES.map((s) => (
                       <th key={s.key} className={DATA_TABLE_TH_LEFT_CLASS}>
                         {satelliteLabel(s.key)}
                       </th>
@@ -195,10 +392,10 @@ export default function WorkforceSecurityMatrixPage() {
                   {total === 0 ? (
                     <tr className={DATA_TABLE_TR_CLASS}>
                       <td
-                        colSpan={SATELLITES.length + 1}
+                        colSpan={WORKFORCE_UI_SATELLITES.length + 1}
                         className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}
                       >
-                        {t("noPositions")}
+                        {emptyMessage}
                       </td>
                     </tr>
                   ) : (
@@ -210,23 +407,25 @@ export default function WorkforceSecurityMatrixPage() {
                             <span className="ml-1 text-[#7F8C8D]">({p.orgUnit.name})</span>
                           ) : null}
                         </td>
-                        {SATELLITES.map((s) => {
-                          const tmpl = templateByCell.get(`${p.id}:${s.key}`);
+                        {WORKFORCE_UI_SATELLITES.map((s) => {
+                          const cellKey = `${p.id}:${s.key}`;
+                          const tmpl = templateByCell.get(cellKey);
                           const current = tmpl?.satelliteRole ?? "";
+                          const cellBusy = busyCell === cellKey;
                           return (
                             <td key={s.key} className={DATA_TABLE_TD_CLASS}>
                               <select
                                 className="rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px] focus:border-[#2980B9] focus:outline-none disabled:opacity-50"
                                 value={current}
-                                disabled={busy}
+                                disabled={cellBusy || busyCell !== null}
                                 onChange={(e) =>
                                   void onMatrixChange(p.id, s.key, e.target.value)
                                 }
                               >
                                 <option value="">{t("noAccess")}</option>
-                                {(ROLES_BY_SATELLITE[s.key] ?? []).map((r) => (
+                                {rolesForSatellite(s.key).map((r) => (
                                   <option key={r} value={r}>
-                                    {humanizeRole(r)}
+                                    {humanizeSatelliteRole(r)}
                                   </option>
                                 ))}
                               </select>

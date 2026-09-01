@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import {
-  assertClinicAdminRead,
-  assertClinicAdminWrite,
-} from '@/lib/auth/clinic-admin-guard';
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   listCompatibilityRules,
   createCompatibilityRule,
@@ -18,9 +15,9 @@ const createSchema = z.object({
   note: z.string().optional(),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const guard = await assertClinicAdminRead();
+    const guard = await assertClinicAdminRoute(request);
     if (guard.error) return guard.error;
     return jsonOk(await listCompatibilityRules());
   } catch (err) {
@@ -30,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(request);
     if (guard.error) return guard.error;
     const body = createSchema.parse(await request.json());
     return jsonOk(await createCompatibilityRule(body), 201);
@@ -41,7 +38,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(request);
     if (guard.error) return guard.error;
     const id = new URL(request.url).searchParams.get('id');
     if (!id) throw new Error('id required');

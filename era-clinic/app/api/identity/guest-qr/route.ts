@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
-import { getRouteSession } from "@/lib/api-utils";
+import {
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { issueGuestQrToken } from "@era/satellite-kit";
 
 export async function POST(request: Request) {
   const session = await getRouteSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = await requireClinicPermission(
+    session,
+    CLINIC_PERMISSION.API_IDENTITY_GUEST_QR,
+  );
+  if (denied) return denied;
+
   const body = (await request.json()) as { patientRefId?: string };
   if (!body.patientRefId) {
     return NextResponse.json({ error: "patientRefId required" }, { status: 400 });

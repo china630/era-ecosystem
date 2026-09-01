@@ -3,9 +3,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { buildUnifiedBill } from "@/domain/cashier/cashier-bill.service";
 
 export async function GET(
@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;
 
     const { visitId } = await params;

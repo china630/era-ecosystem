@@ -9,6 +9,7 @@ import {
   verifyAgencySession,
   verifySatelliteSession,
 } from '@era/satellite-kit/auth/middleware-edge';
+import { encodeSessionHeaderUtf8 } from '@/lib/auth/session-header-utf8';
 import type { NextRequest } from 'next/server';
 import {
   isPosBridgeApiPath,
@@ -123,8 +124,8 @@ export async function middleware(request: NextRequest) {
       const headers = new Headers(reqHeaders);
       headers.set('x-user-id', session.sub);
       headers.set('x-user-role', session.role);
-      headers.set('x-user-login', session.login);
-      headers.set('x-user-fullname', session.fullName);
+      headers.set('x-user-login', encodeSessionHeaderUtf8(session.login));
+      headers.set('x-user-fullname', encodeSessionHeaderUtf8(session.fullName));
       if (session.email) headers.set('x-user-email', session.email);
       if (session.organizationId) {
         headers.set('x-era-organization-id', session.organizationId);

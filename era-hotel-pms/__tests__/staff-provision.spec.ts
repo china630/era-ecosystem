@@ -1,10 +1,14 @@
-import { handleStaffProvisionEvent } from "@/lib/staff-provision";
+import {
+  handleStaffProvisionEvent,
+  SatelliteLoginTakenError,
+} from "@/lib/staff-provision";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     role: { findFirst: jest.fn(), create: jest.fn() },
     user: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
@@ -86,8 +90,47 @@ describe("hotel staff-provision", () => {
     );
   });
 
-  it("deactivates user on STAFF_DEACTIVATED", async () => {
+  it("throws SatelliteLoginTakenError when login belongs to another cpEmploymentId", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "user-other",
+        cpEmploymentId: "other-cp-id",
+        login: "emp-front",
+      });
+
+    await expect(handleStaffProvisionEvent(provisionEvent)).rejects.toBeInstanceOf(
+      SatelliteLoginTakenError,
+    );
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("updates existing cp user when login is renamed", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst.mockResolvedValueOnce({
+      id: "user-1",
+      cpEmploymentId: CP_EMPLOYMENT_ID,
+      login: "old-login",
+    });
+    prisma.user.update.mockResolvedValue({ id: "user-1" });
+    const result = await handleStaffProvisionEvent({
+      ...provisionEvent,
+      payload: { ...provisionEvent.payload, login: "emp-front-new" },
+    });
+    expect(result).toEqual({ satelliteUserId: "user-1" });
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "user-1" },
+        data: expect.objectContaining({ login: "emp-front-new" }),
+      }),
+    );
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("deactivates only satelliteUserId on STAFF_DEACTIVATED", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst.mockResolvedValue({ id: "user-1" });
     await handleStaffProvisionEvent({
       type: "STAFF_DEACTIVATED",
       organizationId: ORG_ID,
@@ -100,6 +143,51 @@ describe("hotel staff-provision", () => {
         satelliteUserId: "user-1",
       },
     });
-    expect(prisma.user.updateMany).toHaveBeenCalled();
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { status: "DISABLED" },
+    });
+  });
+
+  it("deactivates by cpEmploymentId when satelliteUserId omitted and unique", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findMany = jest.fn().mockResolvedValue([{ id: "user-1" }]);
+    await handleStaffProvisionEvent({
+      type: "STAFF_DEACTIVATED",
+      organizationId: ORG_ID,
+      correlationId: "corr-4",
+      occurredAt: new Date().toISOString(),
+      payload: {
+        cpEmploymentId: CP_EMPLOYMENT_ID,
+        satelliteKey: "industry_hotel_pms",
+        staffCode: "FINEMP1",
+      },
+    });
+    expect(prisma.user.findMany).toHaveBeenCalled();
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { status: "DISABLED" },
+    });
+  });
+
+  it("throws TARGET_AMBIGUOUS when multiple users share cpEmploymentId", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    const { SatelliteTargetAmbiguousError } = await import("@/lib/staff-provision");
+    prisma.user.findMany = jest
+      .fn()
+      .mockResolvedValue([{ id: "u1" }, { id: "u2" }]);
+    await expect(
+      handleStaffProvisionEvent({
+        type: "STAFF_DEACTIVATED",
+        organizationId: ORG_ID,
+        correlationId: "corr-5",
+        occurredAt: new Date().toISOString(),
+        payload: {
+          cpEmploymentId: CP_EMPLOYMENT_ID,
+          satelliteKey: "industry_hotel_pms",
+          staffCode: "FINEMP1",
+        },
+      }),
+    ).rejects.toBeInstanceOf(SatelliteTargetAmbiguousError);
   });
 });

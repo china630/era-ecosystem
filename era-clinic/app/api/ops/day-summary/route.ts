@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  jsonError,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { getOpsDaySummary } from "@/domain/ops/day-summary.service";
 
 const querySchema = z.object({
@@ -12,9 +19,10 @@ const querySchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_OPS_DAY_SUMMARY);
+    if (denied) return denied;
 
-    const url = new URL(req.url);
+        const url = new URL(req.url);
     const parsed = querySchema.parse({
       date: url.searchParams.get("date") ?? undefined,
     });

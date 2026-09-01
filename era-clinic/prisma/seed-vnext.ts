@@ -8,6 +8,7 @@ import {
   platformSuperAdminBootstrapPassword,
   platformSuperAdminEmails,
 } from "@era/satellite-kit";
+import { permissionsJsonForRole } from "../src/lib/auth/clinic-permissions";
 import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
 
 const requireCjs = createRequire(__filename);
@@ -245,11 +246,11 @@ async function seedDemoAdmin() {
 
   const role = await prisma.role.upsert({
     where: { code: roleCode },
-    update: { name: "Clinic administrator" },
+    update: { name: "Clinic administrator", permissionsJson: permissionsJsonForRole(roleCode) },
     create: {
       code: roleCode,
       name: "Clinic administrator",
-      permissionsJson: "[]",
+      permissionsJson: permissionsJsonForRole(roleCode),
     },
   });
 
