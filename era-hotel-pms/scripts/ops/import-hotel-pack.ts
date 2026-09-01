@@ -16,12 +16,14 @@ import { runImport, runImportBuffers } from '../../src/lib/import/run-import';
 
 const dryRun = process.argv.includes('--dry-run');
 const fromArg = process.argv.find((a) => a.startsWith('--from='))?.slice(7);
-const packDir = process.argv.find((a) => !a.startsWith('-') && fs.existsSync(a));
+const packArg = process.argv.find((a) => !a.startsWith('-') && fs.existsSync(a));
 
-if (!packDir) {
+if (!packArg) {
   console.error('Usage: npx tsx scripts/ops/import-hotel-pack.ts <packDir> [--dry-run] [--from=entity]');
   process.exit(1);
 }
+
+const packDir: string = packArg;
 
 function findFiles(dir: string, pattern: RegExp): string[] {
   return fs
@@ -70,10 +72,11 @@ async function main() {
   const entities = listImportEntities()
     .sort((a, b) => a.order - b.order)
     .map((e) => e.entity);
-  const startIdx = fromArg ? Math.max(0, entities.indexOf(fromArg)) : 0;
-  if (fromArg && startIdx < 0) {
+  const fromIdx = fromArg ? entities.indexOf(fromArg) : 0;
+  if (fromArg && fromIdx < 0) {
     throw new Error(`Unknown --from entity: ${fromArg}`);
   }
+  const startIdx = fromArg ? fromIdx : 0;
 
   console.log(`${dryRun ? '[dry-run] ' : ''}Import pack: ${packDir}`);
   for (const entity of entities.slice(startIdx)) {
