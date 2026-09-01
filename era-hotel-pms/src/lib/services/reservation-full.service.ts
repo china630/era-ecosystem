@@ -204,7 +204,7 @@ export async function patchReservationFull(
   const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, shareEligible, ...data } =
     input;
 
-  const nextShareEligible = shareEligible ?? existing.shareEligible;
+  let nextShareEligible = shareEligible ?? existing.shareEligible;
   let nextShareGender = existing.shareGender;
   if (shareEligible !== undefined) {
     if (!nextShareEligible) {
