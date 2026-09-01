@@ -35,8 +35,14 @@ import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   mdmWorkforceFetch,
   orgIdFromToken,
+  parseWorkforceApiError,
   workforceFetch,
 } from "../../../../lib/workforce-fetch";
+import {
+  WORKFORCE_UI_SATELLITES,
+  humanizeSatelliteRole,
+  satelliteLoginHref,
+} from "../../../../lib/workforce-satellites";
 
 type OrgUnitOpt = { id: string; name: string; status: string };
 type PositionOpt = {
@@ -57,11 +63,21 @@ type EmploymentRow = {
   position?: { name: string; id?: string } | null;
   orgUnitId?: string;
   positionId?: string;
-  roleBindings?: Array<{ satelliteKey: string; satelliteRole?: string }>;
+  roleBindings?: Array<{
+    satelliteKey: string;
+    satelliteRole?: string;
+    provisionState?: string;
+    lastProvisionError?: string | null;
+  }>;
+  satelliteStaffLogin?: string | null;
+  satelliteStaffPin?: string | null;
 };
 
 type ListResponse = {
   items: EmploymentRow[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
   persons: Record<
     string,
     {
@@ -75,49 +91,13 @@ type ListResponse = {
   >;
 };
 
-const SATELLITE_OPTIONS = [
-  { key: "industry_clinic", label: "Clinic" },
-  { key: "industry_hotel_pms", label: "Hotel PMS" },
-  { key: "industry_fnb_pos", label: "F&B POS" },
-] as const;
-
-/** Same formula as WorkforceProvisionService.staffCodeFromEmployment + login. */
 function staffLoginFromEmploymentId(employmentId: string): string {
   const staffCode = employmentId.replace(/-/g, "").slice(0, 8).toUpperCase();
   return `emp-${staffCode.toLowerCase()}`;
 }
 
-function satelliteLabel(key: string): string {
-  return SATELLITE_OPTIONS.find((s) => s.key === key)?.label ?? key;
-}
-
-function humanizeRole(code: string): string {
-  return code
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
-
-/** Public staff-login origins (SHARED pool). Env overrides for local/dev. */
-const SATELLITE_LOGIN_ORIGIN: Record<string, string> = {
-  industry_clinic:
-    process.env.NEXT_PUBLIC_SATELLITE_CLINIC_URL?.replace(/\/$/, "") ||
-    "https://clinic.era-365.online",
-  industry_hotel_pms:
-    process.env.NEXT_PUBLIC_SATELLITE_HOTEL_URL?.replace(/\/$/, "") ||
-    "https://hotel-pms.era-365.online",
-  industry_fnb_pos:
-    process.env.NEXT_PUBLIC_SATELLITE_FNB_POS_URL?.replace(/\/$/, "") ||
-    "https://fnb-pos.era-365.online",
-};
-
-function satelliteLoginHref(
-  satelliteKey: string,
-  organizationId: string,
-): string | null {
-  const origin = SATELLITE_LOGIN_ORIGIN[satelliteKey];
-  if (!origin || !organizationId) return null;
-  return `${origin}/login?organizationId=${encodeURIComponent(organizationId)}`;
+function displayStaffLogin(emp: EmploymentRow): string {
+  return emp.satelliteStaffLogin?.trim() || staffLoginFromEmploymentId(emp.id);
 }
 
 const SEX_VALUES = ["MALE", "FEMALE", "UNKNOWN"] as const;
@@ -190,6 +170,24 @@ export default function WorkforceEmploymentsPage() {
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceEmployments");
   const tCommon = useTranslations("common");
+  const tSys = useTranslations("workspace.systems");
+
+  const satelliteLabel = useCallback(
+    (key: string): string => {
+      const found = WORKFORCE_UI_SATELLITES.find((s) => s.key === key);
+      return found ? tSys(`${found.i18n}.title` as "clinic.title") : key;
+    },
+    [tSys],
+  );
+
+  const satelliteFilterOptions = useMemo(
+    () =>
+      WORKFORCE_UI_SATELLITES.map((s) => ({
+        key: s.key,
+        label: satelliteLabel(s.key),
+      })),
+    [satelliteLabel],
+  );
   const searchParams = useSearchParams();
 
   const [rows, setRows] = useState<EmploymentRow[]>([]);
@@ -207,6 +205,9 @@ export default function WorkforceEmploymentsPage() {
   const [loginEmp, setLoginEmp] = useState<EmploymentRow | null>(null);
   const [loginCopied, setLoginCopied] = useState(false);
   const [orgCopied, setOrgCopied] = useState(false);
+  const [loginEditLogin, setLoginEditLogin] = useState("");
+  const [loginEditPin, setLoginEditPin] = useState("0000");
+  const [loginModalError, setLoginModalError] = useState<string | null>(null);
 
   const workspaceOrgId =
     user?.organizationId?.trim() ||
@@ -245,6 +246,8 @@ export default function WorkforceEmploymentsPage() {
   const [notEntitled, setNotEntitled] = useState(false);
   const [enabling, setEnabling] = useState(false);
   const [satelliteKeys, setSatelliteKeys] = useState<string[]>([]);
+  const [hireLogin, setHireLogin] = useState("");
+  const [hirePin, setHirePin] = useState("0000");
 
   // Employee card fields
   const [cardName, setCardName] = useState("");
@@ -268,6 +271,7 @@ export default function WorkforceEmploymentsPage() {
   const [filterAge, setFilterAge] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
+  const [serverTotal, setServerTotal] = useState(0);
 
   useEffect(() => {
     const ou = searchParams.get("orgUnitId");
@@ -335,7 +339,15 @@ export default function WorkforceEmploymentsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const res = await workforceFetch("employments");
+    const qs = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    if (filterStatus) qs.set("status", filterStatus);
+    if (filterOrgUnitId) qs.set("orgUnitId", filterOrgUnitId);
+    if (filterPositionId) qs.set("positionId", filterPositionId);
+    if (filterSatellite) qs.set("satelliteKey", filterSatellite);
+    const res = await workforceFetch(`employments?${qs}`);
     if (res.status === 403) {
       const body = (await res.json().catch(() => null)) as {
         code?: string;
@@ -358,8 +370,17 @@ export default function WorkforceEmploymentsPage() {
     const data = (await res.json()) as ListResponse;
     setRows(data.items ?? []);
     setPersons(data.persons ?? {});
+    setServerTotal(typeof data.total === "number" ? data.total : (data.items ?? []).length);
     setLoading(false);
-  }, [loadRefs]);
+  }, [
+    loadRefs,
+    page,
+    pageSize,
+    filterStatus,
+    filterOrgUnitId,
+    filterPositionId,
+    filterSatellite,
+  ]);
 
   useEffect(() => {
     if (!ready || !user?.organizationId) return;
@@ -404,19 +425,6 @@ export default function WorkforceEmploymentsPage() {
   const filteredRows = useMemo(() => {
     const q = filterText.trim().toLowerCase();
     return rows.filter((r) => {
-      if (filterStatus && r.status !== filterStatus) return false;
-      if (filterOrgUnitId) {
-        const unitId = r.orgUnitId ?? r.orgUnit?.id;
-        if (unitId !== filterOrgUnitId) return false;
-      }
-      if (filterPositionId) {
-        const posId = r.positionId ?? r.position?.id;
-        if (posId !== filterPositionId) return false;
-      }
-      if (filterSatellite) {
-        const keys = r.roleBindings?.map((b) => b.satelliteKey) ?? [];
-        if (!keys.includes(filterSatellite)) return false;
-      }
       const person = persons[r.globalPersonId];
       if (filterSex) {
         if ((person?.sex ?? "UNKNOWN") !== filterSex) return false;
@@ -438,22 +446,13 @@ export default function WorkforceEmploymentsPage() {
       }
       return true;
     });
-  }, [
-    rows,
-    persons,
-    filterText,
-    filterOrgUnitId,
-    filterPositionId,
-    filterStatus,
-    filterSatellite,
-    filterSex,
-    filterAge,
-  ]);
+  }, [rows, persons, filterText, filterSex, filterAge]);
 
-  const pagedRows = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredRows.slice(start, start + pageSize);
-  }, [filteredRows, page, pageSize]);
+  const pagedRows = filteredRows;
+  const listTotal =
+    filterText.trim() || filterSex || filterAge
+      ? filteredRows.length
+      : serverTotal;
 
   useEffect(() => {
     setPage(1);
@@ -465,6 +464,7 @@ export default function WorkforceEmploymentsPage() {
     filterSatellite,
     filterSex,
     filterAge,
+    pageSize,
   ]);
 
   function formatSex(sex: string | null | undefined): string {
@@ -478,6 +478,13 @@ export default function WorkforceEmploymentsPage() {
     if (status === "ACTIVE") return t("statusActive");
     if (status === "TERMINATED") return t("statusTerminated");
     return status;
+  }
+
+  async function describeWorkforceError(res: Response): Promise<string> {
+    const err = await parseWorkforceApiError(res);
+    if (err.code === "LOGIN_TAKEN") return t("loginTaken");
+    if (err.code === "LOGIN_REQUIRES_BINDING") return t("loginRequiresBinding");
+    return err.message;
   }
 
   function openHire() {
@@ -554,15 +561,19 @@ export default function WorkforceEmploymentsPage() {
         orgUnitId,
         positionId,
         satelliteKeys,
+        ...(hireLogin.trim() ? { login: hireLogin.trim().toLowerCase() } : {}),
+        ...(hirePin.trim() ? { pin: hirePin.trim() } : {}),
       }),
     });
     if (!res.ok) {
-      setModalError(await res.text());
+      setModalError(await describeWorkforceError(res));
       setBusy(false);
       return;
     }
     setGlobalPersonId("");
     setSatelliteKeys([]);
+    setHireLogin("");
+    setHirePin("0000");
     setHireOpen(false);
     await load();
     setBusy(false);
@@ -583,21 +594,45 @@ export default function WorkforceEmploymentsPage() {
     await load();
   }
 
-  async function reprovisionEmployment(emp: EmploymentRow) {
-    if (!window.confirm(t("reprovisionConfirm"))) return;
+  async function reprovisionEmployment(
+    emp: EmploymentRow,
+    opts?: { login?: string; pin?: string; skipConfirm?: boolean },
+  ) {
+    if (!opts?.skipConfirm && !window.confirm(t("reprovisionConfirm"))) return;
     setMoreMenuId(null);
     setBusy(true);
     setError(null);
+    setLoginModalError(null);
+    const body: { login?: string; pin?: string } = {};
+    if (opts?.login?.trim()) body.login = opts.login.trim().toLowerCase();
+    if (opts?.pin?.trim()) body.pin = opts.pin.trim();
     const res = await workforceFetch(`employments/${emp.id}/reprovision`, {
       method: "PATCH",
-      body: JSON.stringify({}),
+      body: JSON.stringify(body),
     });
     setBusy(false);
     if (!res.ok) {
-      setError(await res.text());
+      const msg = await describeWorkforceError(res);
+      if (loginOpen) setLoginModalError(msg);
+      else setError(msg);
       return;
     }
     await load();
+    return true;
+  }
+
+  async function saveLoginAccess(e: React.FormEvent) {
+    e.preventDefault();
+    if (!loginEmp || busy) return;
+    const ok = await reprovisionEmployment(loginEmp, {
+      login: loginEditLogin,
+      pin: loginEditPin,
+      skipConfirm: true,
+    });
+    if (ok) {
+      setLoginOpen(false);
+      setLoginEmp(null);
+    }
   }
 
   async function submitTransfer(e: React.FormEvent) {
@@ -879,7 +914,7 @@ export default function WorkforceEmploymentsPage() {
             onChange={(e) => setFilterSatellite(e.target.value)}
           >
             <option value="">{t("filterAll")}</option>
-            {SATELLITE_OPTIONS.map((s) => (
+            {satelliteFilterOptions.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.label}
               </option>
@@ -916,6 +951,12 @@ export default function WorkforceEmploymentsPage() {
                 const hasBindings = (r.roleBindings?.length ?? 0) > 0;
                 const canReprovision =
                   r.status !== "TERMINATED" && hasBindings;
+                const canLoginAccess = canReprovision;
+                const loginAccessTitle = !canLoginAccess
+                  ? r.status === "TERMINATED"
+                    ? t("reprovisionTerminated")
+                    : t("reprovisionNoBindings")
+                  : t("loginInfo");
                 const reprovisionTitle = !canReprovision
                   ? r.status === "TERMINATED"
                     ? t("reprovisionTerminated")
@@ -1020,10 +1061,16 @@ export default function WorkforceEmploymentsPage() {
                             <div className="absolute right-0 z-10 mt-1 min-w-[11rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
                               <button
                                 type="button"
-                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7]"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || !canLoginAccess}
+                                title={loginAccessTitle}
                                 onClick={() => {
+                                  if (!canLoginAccess) return;
                                   setMoreMenuId(null);
                                   setLoginEmp(r);
+                                  setLoginEditLogin(displayStaffLogin(r));
+                                  setLoginEditPin(r.satelliteStaffPin?.trim() || "0000");
+                                  setLoginModalError(null);
                                   setLoginCopied(false);
                                   setLoginOpen(true);
                                 }}
@@ -1054,7 +1101,7 @@ export default function WorkforceEmploymentsPage() {
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
-            total={filteredRows.length}
+            total={listTotal}
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
             labels={{
@@ -1189,7 +1236,7 @@ export default function WorkforceEmploymentsPage() {
               {t("satelliteAccessHint")}
             </p>
             <div className="flex flex-wrap gap-4">
-              {SATELLITE_OPTIONS.map((s) => (
+              {satelliteFilterOptions.map((s) => (
                 <label
                   key={s.key}
                   className="flex items-center gap-2 text-xs text-[#34495E]"
@@ -1210,6 +1257,27 @@ export default function WorkforceEmploymentsPage() {
               ))}
             </div>
           </fieldset>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("fieldStaffLogin")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
+                value={hireLogin}
+                onChange={(e) => setHireLogin(e.target.value)}
+                placeholder={t("fieldStaffLoginAutoPlaceholder")}
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("fieldStaffPin")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
+                value={hirePin}
+                onChange={(e) => setHirePin(e.target.value)}
+                placeholder="0000"
+              />
+            </label>
+          </div>
+          <p className="text-xs text-[#7F8C8D]">{t("fieldStaffLoginHint")}</p>
           <p className="text-xs text-[#7F8C8D]">{t("mdmHint")}</p>
           {modalError && hireOpen ? (
             <p className="text-sm text-red-700">{modalError}</p>
@@ -1431,25 +1499,33 @@ export default function WorkforceEmploymentsPage() {
           setLoginEmp(null);
           setLoginCopied(false);
           setOrgCopied(false);
+          setLoginModalError(null);
         }}
         closeLabel={tCommon("close")}
       >
         {loginEmp ? (
-          <div className="space-y-4 text-[13px] text-[#34495E]">
+          <form onSubmit={(e) => void saveLoginAccess(e)} className="space-y-4 text-[13px] text-[#34495E]">
+            {(loginEmp.roleBindings?.length ?? 0) === 0 ? (
+              <p className="text-[13px] text-[#C0392B]">{t("reprovisionNoBindings")}</p>
+            ) : null}
             <div>
-              <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+              <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
                 {t("loginLabel")}
-              </div>
+              </label>
               <div className="flex flex-wrap items-center gap-2">
-                <code className="rounded bg-[#F4F6F7] px-2 py-1 font-mono text-[14px] text-[#2C3E50]">
-                  {staffLoginFromEmploymentId(loginEmp.id)}
-                </code>
+                <input
+                  className="min-w-[12rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[14px] text-[#2C3E50]"
+                  value={loginEditLogin}
+                  onChange={(e) => setLoginEditLogin(e.target.value)}
+                  required={(loginEmp.roleBindings?.length ?? 0) > 0}
+                  disabled={(loginEmp.roleBindings?.length ?? 0) === 0}
+                  readOnly={(loginEmp.roleBindings?.length ?? 0) === 0}
+                />
                 <button
                   type="button"
                   className={SECONDARY_BUTTON_CLASS}
                   onClick={() => {
-                    const login = staffLoginFromEmploymentId(loginEmp.id);
-                    void navigator.clipboard?.writeText(login).then(() => {
+                    void navigator.clipboard?.writeText(loginEditLogin).then(() => {
                       setLoginCopied(true);
                       window.setTimeout(() => setLoginCopied(false), 2000);
                     });
@@ -1458,7 +1534,20 @@ export default function WorkforceEmploymentsPage() {
                   {loginCopied ? t("loginCopied") : t("copyLogin")}
                 </button>
               </div>
+              <p className="mt-1 text-[12px] text-[#7F8C8D]">{t("fieldStaffLoginHint")}</p>
             </div>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                {t("fieldStaffPin")}
+              </span>
+              <input
+                className="block w-full max-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[14px]"
+                value={loginEditPin}
+                onChange={(e) => setLoginEditPin(e.target.value)}
+                disabled={(loginEmp.roleBindings?.length ?? 0) === 0}
+                readOnly={(loginEmp.roleBindings?.length ?? 0) === 0}
+              />
+            </label>
             {workspaceOrgId ? (
               <div>
                 <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
@@ -1485,6 +1574,7 @@ export default function WorkforceEmploymentsPage() {
               </div>
             ) : null}
             <p className="text-[#7F8C8D]">{t("defaultPinHint")}</p>
+            <p className="text-[12px] text-[#7F8C8D]">{t("syncEventualHint")}</p>
             <div>
               <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
                 {t("satellitesAccess")}
@@ -1506,10 +1596,21 @@ export default function WorkforceEmploymentsPage() {
                           </span>
                           <span className="text-[#7F8C8D]">
                             {b.satelliteRole
-                              ? humanizeRole(b.satelliteRole)
+                              ? humanizeSatelliteRole(b.satelliteRole)
                               : t("roleUnset")}
                           </span>
                         </div>
+                        {b.provisionState === "FAILED" ? (
+                          <p
+                            className="mt-1 text-[12px] text-[#C0392B]"
+                            title={b.lastProvisionError ?? undefined}
+                          >
+                            {t("provisionFailedBadge")}
+                            {b.lastProvisionError
+                              ? `: ${b.lastProvisionError}`
+                              : ""}
+                          </p>
+                        ) : null}
                         {href ? (
                           <a
                             href={href}
@@ -1526,21 +1627,29 @@ export default function WorkforceEmploymentsPage() {
                 </ul>
               )}
             </div>
-            <div className="flex justify-end pt-1">
+            {loginModalError ? (
+              <p className="text-[13px] text-[#C0392B]">{loginModalError}</p>
+            ) : null}
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
-                className={PRIMARY_BUTTON_CLASS}
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy}
                 onClick={() => {
                   setLoginOpen(false);
                   setLoginEmp(null);
                   setLoginCopied(false);
                   setOrgCopied(false);
+                  setLoginModalError(null);
                 }}
               >
-                {tCommon("close")}
+                {tCommon("cancel")}
+              </button>
+              <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy || !(loginEmp.roleBindings?.length ?? 0)}>
+                {busy ? t("busy") : t("saveLoginAccess")}
               </button>
             </div>
-          </div>
+          </form>
         ) : null}
       </ModalShell>
     </>

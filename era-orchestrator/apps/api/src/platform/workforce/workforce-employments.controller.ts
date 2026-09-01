@@ -21,6 +21,7 @@ import {
 } from "./dto/workforce-employment.dto";
 import { TransferEmploymentDto } from "./dto/workforce-org.dto";
 import { HireWorkforceEmploymentDto } from "./dto/workforce-provision.dto";
+import { ReprovisionEmploymentDto } from "./dto/workforce-reprovision.dto";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceOrgScopeService } from "./workforce-org-scope.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
@@ -58,13 +59,17 @@ export class WorkforceEmploymentsController {
       orgUnitId: query.orgUnitId,
       subtree: query.subtree === "true" || query.subtree === "1",
       orgUnitIds: managedIds,
+      positionId: query.positionId,
+      satelliteKey: query.satelliteKey,
+      page: Math.max(1, Number(query.page) || 1),
+      pageSize: Math.min(100, Math.max(1, Number(query.pageSize) || 50)),
     });
-    const personIds = rows.map((r) => r.globalPersonId);
+    const personIds = rows.items.map((r) => r.globalPersonId);
     const persons = await this.employments.resolvePersonProfiles(
       organizationId,
       personIds,
     );
-    return { items: rows, persons };
+    return { ...rows, persons };
   }
 
   @Post("hire")
@@ -137,7 +142,8 @@ export class WorkforceEmploymentsController {
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @CurrentUser() user: EraJwtPayload,
+    @Body() dto: ReprovisionEmploymentDto,
   ) {
-    return this.provision.reprovision(organizationId, id, user.sub);
+    return this.provision.reprovision(organizationId, id, user.sub, dto);
   }
 }

@@ -39,4 +39,18 @@ export class ListWorkforceEmploymentsQueryDto {
 
   @IsOptional()
   subtree?: string;
+
+  @IsOptional()
+  @IsUUID()
+  positionId?: string;
+
+  @IsOptional()
+  @IsString()
+  satelliteKey?: string;
+
+  @IsOptional()
+  page?: string;
+
+  @IsOptional()
+  pageSize?: string;
 }
