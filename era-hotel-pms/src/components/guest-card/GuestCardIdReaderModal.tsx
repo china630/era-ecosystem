@@ -14,6 +14,7 @@ export type IdReaderPayload = {
   nationalIdFin?: string;
   birthDate?: string;
   gender?: string;
+  sex?: string;
 };
 
 export function GuestCardIdReaderModal({

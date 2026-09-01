@@ -139,21 +139,24 @@ export async function ensurePricingComponentsSeeded() {
       }
       continue;
     }
-    await prisma.pricingComponent.create({
+    // Create parent then version separately: tenant stamp injects organizationId into
+    // nested `versions.create`, but PricingComponentVersion has no organizationId column.
+    const created = await prisma.pricingComponent.create({
       data: {
         code: def.code,
         name: def.name,
         kind: def.kind,
         unit: def.unit,
         sortOrder: def.sortOrder,
-        versions: {
-          create: {
-            sellAmount: def.sellAmount != null ? toDecimal(def.sellAmount) : null,
-            cogsAmount: def.cogsAmount != null ? toDecimal(def.cogsAmount) : null,
-            effectiveFrom: epoch,
-            note: 'Initial seed (Nafta 2026)',
-          },
-        },
+      },
+    });
+    await prisma.pricingComponentVersion.create({
+      data: {
+        componentId: created.id,
+        sellAmount: def.sellAmount != null ? toDecimal(def.sellAmount) : null,
+        cogsAmount: def.cogsAmount != null ? toDecimal(def.cogsAmount) : null,
+        effectiveFrom: epoch,
+        note: 'Initial seed (Nafta 2026)',
       },
     });
   }

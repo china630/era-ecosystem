@@ -33,7 +33,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 |-------|-----|------|
 | Staff `/login` | `POST /api/auth/login`; middleware sets `x-user-*` | UTF-8 `fullName`/`login` encoded for Edge Headers (`session-header-utf8.ts`) |
 | /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
-| /fo/reservations | reservations grid | Stay list / arrivals |
+| /fo/reservations | reservations grid | Stay list / arrivals — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; default status=LIVE; `EraListWorkspace` |
 | /fo/rack | rack | Door tiles |
 | /fo/room-plan | room-plan API | Timeline bars; share twin N lanes without overlay; bed = per-night free; EW day-state palette + HK squares |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
@@ -87,6 +87,7 @@ Cross-app: fb-pos tickets with `beoId` — extras only on event day; base packag
 | Guest card Details tab | `GET /api/mdm/person-ops-profile?globalPersonId=` | Masked FIN/passport from MDM |
 | Guest card merge | `POST /api/mdm/person-merge` | Foreigner → citizen FIN merge |
 | Guest create/edit | `POST /api/guests`, `PATCH /api/guests/:id/full` | Transient identity → `linkPersonIdentity`; no local FIN/passport columns |
+| Guest list | `GET /api/guests?q=&page=&pageSize=` | Paged `{ items, total, page, pageSize }`; UI `EraListWorkspace` |
 
 Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYSTEM_URLS.md`).
 

@@ -19,6 +19,7 @@ import { GuestCardTimeShareTab } from '@/components/guest-card/GuestCardTimeShar
 import { GuestCardActionGrid } from '@/components/guest-card/GuestCardActionGrid';
 import { crmTabButtons, reservationDetailsButtons } from '@/lib/guest-crm-config';
 import { GuestCardIdReaderModal, type IdReaderPayload } from '@/components/guest-card/GuestCardIdReaderModal';
+import { guestComposedFullName } from '@/lib/guest-identity';
 import type { GuestStats, GuestTabId } from '@/components/guest-card/types';
 
 const STAT_COLORS = [
@@ -40,8 +41,8 @@ const DETAIL_FIELD_KEYS = [
   'visaNumber',
   'visaExpiry',
   'maritalStatus',
-  'fatherName',
-  'motherName',
+  'parentFatherName',
+  'parentMotherName',
   'verificationStatus',
   'registrationNumber',
   'vehiclePlate',
@@ -75,8 +76,9 @@ export default function GuestCardModal({
   const [fullName, setFullName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [middleName, setMiddleName] = useState('');
   const [title, setTitle] = useState('');
-  const [gender, setGender] = useState('');
+  const [sex, setSex] = useState('');
   const [nationality, setNationality] = useState('AZ');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -163,8 +165,9 @@ export default function GuestCardModal({
       setFullName(String(g.fullName ?? ''));
       setFirstName(String(g.firstName ?? ''));
       setLastName(String(g.lastName ?? ''));
+      setMiddleName(String(g.middleName ?? ''));
       setTitle(String(g.title ?? ''));
-      setGender(String(g.gender ?? ''));
+      setSex(String(g.sex ?? ''));
       setNationality(String(g.nationality ?? 'AZ'));
       setPhone(String(g.phone ?? ''));
       setEmail(String(g.email ?? ''));
@@ -197,8 +200,8 @@ export default function GuestCardModal({
         visaNumber: String(g.visaNumber ?? ''),
         visaExpiry: g.visaExpiry ? String(g.visaExpiry).slice(0, 10) : '',
         maritalStatus: String(g.maritalStatus ?? ''),
-        fatherName: String(g.fatherName ?? ''),
-        motherName: String(g.motherName ?? ''),
+        parentFatherName: String(g.parentFatherName ?? ''),
+        parentMotherName: String(g.parentMotherName ?? ''),
         verificationStatus: String(g.verificationStatus ?? ''),
         registrationNumber: String(g.registrationNumber ?? ''),
         vehiclePlate: String(g.vehiclePlate ?? ''),
@@ -252,8 +255,9 @@ export default function GuestCardModal({
     if ('fullName' in patch) setFullName(String(patch.fullName));
     if ('firstName' in patch) setFirstName(String(patch.firstName));
     if ('lastName' in patch) setLastName(String(patch.lastName));
+    if ('middleName' in patch) setMiddleName(String(patch.middleName));
     if ('title' in patch) setTitle(String(patch.title));
-    if ('gender' in patch) setGender(String(patch.gender));
+    if ('sex' in patch) setSex(String(patch.sex));
     if ('nationality' in patch) setNationality(String(patch.nationality));
     if ('vipType' in patch) setVipType(String(patch.vipType));
     if ('loyaltyTier' in patch) setLoyaltyTier(String(patch.loyaltyTier));
@@ -326,15 +330,17 @@ export default function GuestCardModal({
     }
     setBusy(true);
     try {
+      const composed = guestComposedFullName({ firstName, middleName, lastName, fullName });
       const res = await fetch(`/api/guests/${guestId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName,
+          fullName: composed || fullName,
           firstName: firstName || null,
+          middleName: middleName || null,
           lastName: lastName || null,
           title: title || null,
-          gender: gender || null,
+          sex: sex || null,
           nationality,
           phone: detailFields.phone || phone || null,
           email: detailFields.email || email || null,
@@ -356,8 +362,8 @@ export default function GuestCardModal({
           visaNumber: detailFields.visaNumber || null,
           visaExpiry: detailFields.visaExpiry || null,
           maritalStatus: detailFields.maritalStatus || null,
-          fatherName: detailFields.fatherName || null,
-          motherName: detailFields.motherName || null,
+          parentFatherName: detailFields.parentFatherName || null,
+          parentMotherName: detailFields.parentMotherName || null,
           verificationStatus: detailFields.verificationStatus || null,
           registrationNumber: detailFields.registrationNumber || null,
           vehiclePlate: detailFields.vehiclePlate || null,
@@ -454,8 +460,9 @@ export default function GuestCardModal({
               fullName={fullName}
               firstName={firstName}
               lastName={lastName}
+              middleName={middleName}
               title={title}
-              gender={gender}
+              sex={sex}
               nationality={nationality}
               birthDate={detailFields.birthDate ?? ''}
               birthPlace={detailFields.birthPlace ?? ''}
@@ -476,8 +483,8 @@ export default function GuestCardModal({
               vehiclePlate={detailFields.vehiclePlate ?? ''}
               occupation={detailFields.occupation ?? ''}
               maritalStatus={detailFields.maritalStatus ?? ''}
-              fatherName={detailFields.fatherName ?? ''}
-              motherName={detailFields.motherName ?? ''}
+              parentFatherName={detailFields.parentFatherName ?? ''}
+              parentMotherName={detailFields.parentMotherName ?? ''}
               marriageDate={detailFields.marriageDate ?? ''}
               bonusPercent={detailFields.bonusPercent ?? ''}
               hotelName={detailFields.hotelName ?? ''}
@@ -589,7 +596,8 @@ export default function GuestCardModal({
           if (data.lastName) setLastName(data.lastName);
           if (data.fullName) setFullName(data.fullName);
           if (data.nationality) setNationality(data.nationality);
-          if (data.gender) setGender(data.gender);
+          if (data.gender) setSex(data.gender);
+          if (data.sex) setSex(data.sex);
           setTransientIdentity((f) => ({
             ...f,
             passportNumber: data.passportNumber ?? f.passportNumber,

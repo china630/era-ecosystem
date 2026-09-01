@@ -104,7 +104,7 @@ type ShareMapReservation = {
   checkInDate: Date;
   checkOutDate: Date;
   status: string;
-  guest: { gender: string | null; title: string | null };
+  guest: { sex: string | null; title: string | null };
   agency: { code: string; name: string } | null;
   room: {
     id: string;
@@ -121,7 +121,7 @@ type ShareMapNeighbor = {
   shareBedIndex: number | null;
   checkInDate: Date;
   checkOutDate: Date;
-  guest: { gender: string | null; title: string | null };
+  guest: { sex: string | null; title: string | null };
   agency: { code: string; name: string } | null;
 };
 
@@ -198,7 +198,7 @@ export async function applyElektrawebSharePair(
       checkOutDate: { gt: reservation.checkInDate },
     },
     include: {
-      guest: { select: { gender: true, title: true } },
+      guest: { select: { sex: true, title: true } },
       agency: { select: { code: true, name: true } },
     },
   });
@@ -209,7 +209,7 @@ export async function applyElektrawebSharePair(
   const overlapGated = overlapping.filter((row: ShareMapNeighbor) => {
     const gate = canJoinSharePool({
       adults: row.adults,
-      gender: row.guest?.gender,
+      gender: row.guest?.sex,
       title: row.guest?.title,
       agencyCode: row.agency?.code,
       agencyName: row.agency?.name,
@@ -220,7 +220,7 @@ export async function applyElektrawebSharePair(
   for (const row of overlapGated) {
     const gate = canJoinSharePool({
       adults: row.adults,
-      gender: row.guest?.gender,
+      gender: row.guest?.sex,
       title: row.guest?.title,
       agencyCode: row.agency?.code,
       agencyName: row.agency?.name,
@@ -253,7 +253,7 @@ export async function applyElektrawebSharePair(
   const gateFor = (row: ShareMapNeighbor | ShareMapReservation) =>
     canJoinSharePool({
       adults: row.adults,
-      gender: row.guest?.gender,
+      gender: row.guest?.sex,
       title: row.guest?.title,
       agencyCode: row.agency?.code,
       agencyName: row.agency?.name,

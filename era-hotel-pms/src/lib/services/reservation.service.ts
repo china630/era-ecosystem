@@ -168,7 +168,7 @@ export async function createReservation(input: {
         throw new Error('OTA reservations cannot use shared twin assignment');
       }
     }
-    shareGender = syncShareGenderFromGuest(true, guestMaster.gender);
+    shareGender = syncShareGenderFromGuest(true, guestMaster.sex);
     validateShareCandidate({
       shareEligible: true,
       shareGender,
@@ -207,7 +207,7 @@ export async function createReservation(input: {
         shareGender,
         adults: input.adults ?? 1,
         isOta: agencyOta,
-        guestGender: guestMaster.gender,
+        guestGender: guestMaster.sex,
       },
     });
     if (door.autoShare) {
@@ -389,10 +389,10 @@ export async function assignRoom(reservationId: string, roomId: string) {
       excludeReservationId: reservationId,
       candidate: {
         shareEligible: reservation.shareEligible,
-        shareGender: reservation.shareGender ?? reservation.guest.gender,
+        shareGender: reservation.shareGender ?? reservation.guest.sex,
         adults: reservation.adults,
         isOta: await reservationIsOta(reservationId),
-        guestGender: reservation.guest.gender,
+        guestGender: reservation.guest.sex,
       },
     });
   if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
@@ -791,7 +791,7 @@ export async function updateReservationSchedule(
       shareGender: reservation.shareGender,
       adults: reservation.adults,
       isOta: await reservationIsOta(id),
-      guestGender: reservation.guest.gender,
+      guestGender: reservation.guest.sex,
     };
     const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
       await assertRoomShareAssignable({

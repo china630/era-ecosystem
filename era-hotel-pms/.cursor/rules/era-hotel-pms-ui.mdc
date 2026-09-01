@@ -18,8 +18,9 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 ## List screens (required)
 
 - Every table/grid page: `PageHeader` -> `EraListFilterBar` (Field*/DatePicker) -> `HotelDataGrid` (or shell+scroll table).
-- Pagination: client footer on by default (25/50/100); pass `pagination={false}` only for tiny modal lists.
-- Table chrome: `DATA_TABLE_SHELL_CLASS` + `DATA_TABLE_SCROLL_CLASS` (or legacy `DATA_TABLE_VIEWPORT_CLASS` with clip-path) so sticky thead keeps rounded corners.
+- **Class A (guests, FO reservations):** `LIST_PAGE_SHELL_CLASS` + `EraListWorkspace` + server `{ items, total, page, pageSize }` (25/50/100). Filters go in the query string — not client-only over a dump. Reservations default status filter = **Live** (`OPTION|CONFIRMED|IN_HOUSE`); All is explicit.
+- **Class B (catalogs / modals):** client footer on by default (25/50/100); pass `pagination={false}` or `embedded` only for tiny modal lists.
+- Table chrome: `DATA_TABLE_SHELL_CLASS` + `DATA_TABLE_SCROLL_CLASS` (or fill scroll inside workspace). Legacy `DATA_TABLE_VIEWPORT_CLASS` ok until migrated.
 - CRUD add via modal (`ModalShell` + `Field*`), never `window.prompt`.
 - Errors: `showApiError` toast — not inline `text-red-*` / StatusMessage for API failures.
 - 3-tier tokens: `docs/adr/era-design-tokens-3tier.md` + `resolveField` / `columnFilters`.

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import {
   enrichGuestWithMdmProfile,
+  guestComposedFullName,
   updateGuestIdentity,
 } from '@/lib/guest-identity';
 
@@ -62,7 +63,7 @@ export async function patchGuestFull(
     lastName: string | null;
     middleName: string | null;
     title: string | null;
-    gender: string | null;
+    sex: string | null;
     nationality: string;
     phone: string | null;
     email: string | null;
@@ -88,8 +89,8 @@ export async function patchGuestFull(
     visaNumber: string | null;
     visaExpiry: string | null;
     maritalStatus: string | null;
-    fatherName: string | null;
-    motherName: string | null;
+    parentFatherName: string | null;
+    parentMotherName: string | null;
     verificationStatus: string | null;
     marriageDate: string | null;
     bonusPercent: number | null;
@@ -108,18 +109,35 @@ export async function patchGuestFull(
     fullName,
     nationality,
     phone,
+    firstName,
+    middleName,
+    lastName,
+    sex,
     ...rest
   } = input;
-  const gender = rest.gender;
+
+  const existing = await prisma.guest.findUnique({ where: { id } });
+
+  const composedFullName =
+    firstName !== undefined || middleName !== undefined || lastName !== undefined
+      ? guestComposedFullName({
+          firstName: firstName ?? existing?.firstName,
+          middleName: middleName ?? existing?.middleName,
+          lastName: lastName ?? existing?.lastName,
+          fullName: fullName ?? existing?.fullName,
+        })
+      : fullName;
 
   if (
     nationalIdFin !== undefined ||
     passportNumber !== undefined ||
-    gender !== undefined ||
+    sex !== undefined ||
     birthDate !== undefined ||
-    (fullName !== undefined && (nationalIdFin || passportNumber))
+    firstName !== undefined ||
+    middleName !== undefined ||
+    lastName !== undefined ||
+    (composedFullName !== undefined && (nationalIdFin || passportNumber))
   ) {
-    const existing = await prisma.guest.findUnique({ where: { id } });
     if (existing) {
       const shouldLink = Boolean(
         existing.globalPersonId ||
@@ -128,31 +146,38 @@ export async function patchGuestFull(
       );
       if (shouldLink) {
         await updateGuestIdentity(id, {
-          fullName: fullName ?? existing.fullName,
+          firstName: firstName !== undefined ? firstName : existing.firstName,
+          middleName: middleName !== undefined ? middleName : existing.middleName,
+          lastName: lastName !== undefined ? lastName : existing.lastName,
+          fullName: composedFullName ?? existing.fullName,
           nationalIdFin: nationalIdFin ?? undefined,
           passportNumber: passportNumber ?? undefined,
           nationality: nationality ?? existing.nationality,
           phone: phone ?? existing.phone,
           globalPersonId: existing.globalPersonId,
-          gender: gender !== undefined ? gender : existing.gender,
+          sex: sex !== undefined ? sex : existing.sex,
           birthDate: birthDate !== undefined ? birthDate : existing.birthDate,
         });
       }
     }
   }
 
-  if (rest.gender !== undefined) {
+  if (sex !== undefined) {
     const { assertGuestGenderChangeAllowed } = await import(
       '@/lib/services/share-assignment.service'
     );
-    await assertGuestGenderChangeAllowed(id, rest.gender);
+    await assertGuestGenderChangeAllowed(id, sex);
   }
 
   await prisma.guest.update({
     where: { id },
     data: {
       ...rest,
-      ...(fullName !== undefined ? { fullName } : {}),
+      ...(sex !== undefined ? { sex } : {}),
+      ...(firstName !== undefined ? { firstName } : {}),
+      ...(middleName !== undefined ? { middleName } : {}),
+      ...(lastName !== undefined ? { lastName } : {}),
+      ...(composedFullName !== undefined ? { fullName: composedFullName } : {}),
       ...(nationality !== undefined ? { nationality } : {}),
       ...(phone !== undefined ? { phone } : {}),
       birthDate: birthDate === undefined ? undefined : birthDate ? new Date(birthDate) : null,

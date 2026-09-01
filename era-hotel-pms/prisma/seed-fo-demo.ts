@@ -5,6 +5,7 @@
  * Nafta seed: `rateMedical` = PKG-STANDART; `mealHB`/`mealBB` args are both Full board (FB)
  * (packages include FB; param names kept for call-site compatibility).
  */
+import { composePersonFullName } from '../src/lib/person-documents';
 import {
   PaymentMethod,
   PrismaClient,
@@ -52,8 +53,8 @@ export type FoDemoSeedContext = {
 };
 
 const GUEST_PROFILES: Array<{
-  fullName: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   nationality: string;
   phone: string;
@@ -65,34 +66,34 @@ const GUEST_PROFILES: Array<{
   greyList?: boolean;
   visitCount?: number;
 }> = [
-  { fullName: 'Əliyev Rəşad Kamal', firstName: 'Rəşad', lastName: 'Əliyev', nationality: 'AZ', phone: '+994501112233', email: 'rashad.aliyev@mail.az', passport: 'AA1234567', fin: '5ZKX8K1', vip: 'GOLD', visitCount: 4 },
-  { fullName: 'Həsənova Günel Fidan', firstName: 'Günel', lastName: 'Həsənova', nationality: 'AZ', phone: '+994502223344', email: 'gunel.hasanova@gmail.com', passport: 'AA2345678', visitCount: 2 },
-  { fullName: 'Məmmədov Tural Elşən', firstName: 'Tural', lastName: 'Məmmədov', nationality: 'AZ', phone: '+994503334455', email: 'tural.m@outlook.com', passport: 'AA3456789', fin: '7H2P9M4', visitCount: 1 },
-  { fullName: 'Kərimova Leyla', firstName: 'Leyla', lastName: 'Kərimova', nationality: 'AZ', phone: '+994504445566', email: 'leyla.k@mail.ru', passport: 'AA4567890', visitCount: 6 },
-  { fullName: 'İbrahimov Vüsal', firstName: 'Vüsal', lastName: 'İbrahimov', nationality: 'AZ', phone: '+994505556677', email: 'vusal.i@yahoo.com', passport: 'AA5678901', visitCount: 3 },
-  { fullName: 'Quliyeva Nərgiz', firstName: 'Nərgiz', lastName: 'Quliyeva', nationality: 'AZ', phone: '+994506667788', email: 'nergiz.q@gmail.com', passport: 'AA6789012', greyList: true, visitCount: 1 },
-  { fullName: 'Rəhimov Elçin', firstName: 'Elçin', lastName: 'Rəhimov', nationality: 'AZ', phone: '+994507778899', email: 'elcin.r@mail.az', passport: 'AA7890123', visitCount: 2 },
-  { fullName: 'Səfərova Könül', firstName: 'Könül', lastName: 'Səfərova', nationality: 'AZ', phone: '+994508889900', email: 'konul.s@inbox.ru', passport: 'AA8901234', visitCount: 5 },
-  { fullName: 'Hüseynov Orxan', firstName: 'Orxan', lastName: 'Hüseynov', nationality: 'AZ', phone: '+994509990011', email: 'orxan.h@gmail.com', passport: 'AA9012345', vip: 'SILVER', visitCount: 2 },
-  { fullName: 'Babayeva Aysel', firstName: 'Aysel', lastName: 'Babayeva', nationality: 'AZ', phone: '+994551001122', email: 'aysel.b@mail.az', passport: 'AB0123456', visitCount: 1 },
-  { fullName: 'Mustafayev Kamran', firstName: 'Kamran', lastName: 'Mustafayev', nationality: 'AZ', phone: '+994552223344', email: 'kamran.m@corp.az', passport: 'AB1234567', visitCount: 7 },
-  { fullName: 'Zeynalova Fidan', firstName: 'Fidan', lastName: 'Zeynalova', nationality: 'AZ', phone: '+994553334455', email: 'fidan.z@gmail.com', passport: 'AB2345678', visitCount: 2 },
-  { fullName: 'Vladimir Petrov', firstName: 'Vladimir', lastName: 'Petrov', nationality: 'RU', phone: '+79031234567', email: 'v.petrov@yandex.ru', passport: '72 1234567', visitCount: 3 },
-  { fullName: 'Elena Sokolova', firstName: 'Elena', lastName: 'Sokolova', nationality: 'RU', phone: '+79037654321', email: 'elena.sokolova@gmail.com', passport: '72 7654321', visitCount: 1 },
-  { fullName: 'Dmitry Volkov', firstName: 'Dmitry', lastName: 'Volkov', nationality: 'RU', phone: '+79059876543', email: 'd.volkov@mail.ru', passport: '72 9876543', visitCount: 2 },
-  { fullName: 'Anna Kowalska', firstName: 'Anna', lastName: 'Kowalska', nationality: 'PL', phone: '+48501234567', email: 'anna.k@wp.pl', passport: 'ED1234567', visitCount: 1 },
-  { fullName: 'Hans Mueller', firstName: 'Hans', lastName: 'Mueller', nationality: 'DE', phone: '+491701234567', email: 'h.mueller@gmx.de', passport: 'C01X00T47', visitCount: 2 },
-  { fullName: 'Sophie Martin', firstName: 'Sophie', lastName: 'Martin', nationality: 'FR', phone: '+33612345678', email: 'sophie.martin@gmail.com', passport: '15AB12345', visitCount: 1 },
-  { fullName: 'James Wilson', firstName: 'James', lastName: 'Wilson', nationality: 'GB', phone: '+447700900123', email: 'j.wilson@outlook.com', passport: '533123456', visitCount: 1 },
-  { fullName: 'Fatima Al Mansouri', firstName: 'Fatima', lastName: 'Al Mansouri', nationality: 'AE', phone: '+971501234567', email: 'fatima.am@emirates.ae', passport: 'N1234567', vip: 'PLATINUM', visitCount: 4 },
-  { fullName: 'Omar Hassan', firstName: 'Omar', lastName: 'Hassan', nationality: 'TR', phone: '+905321234567', email: 'omar.h@gmail.com', passport: 'U12345678', visitCount: 2 },
-  { fullName: 'Leyla Karimova (child)', firstName: 'Leyla', lastName: 'Karimova', nationality: 'AZ', phone: '+994504445566', email: 'leyla.child@mail.az', passport: 'AA4567891', visitCount: 0 },
-  { fullName: 'Nafta Petroleum HR', firstName: 'Nafta', lastName: 'HR', nationality: 'AZ', phone: '+994125551100', email: 'hr@nafta.az', passport: 'CORP-HR-01', voen: '1234567891' },
-  { fullName: 'SOCAR Wellness Group', firstName: 'SOCAR', lastName: 'Wellness', nationality: 'AZ', phone: '+994125552200', email: 'wellness@socar.az', passport: 'CORP-SOCAR', voen: '9876543210' },
-  { fullName: 'Turizm Agentliyi MMC', firstName: 'Turizm', lastName: 'MMC', nationality: 'AZ', phone: '+994125553300', email: 'ops@travel-az.az', passport: 'CORP-TRAVEL', voen: '1122334455' },
-  { fullName: 'Gurbanov Nurlan', firstName: 'Nurlan', lastName: 'Gurbanov', nationality: 'AZ', phone: '+994554445566', email: 'nurlan.g@mail.az', passport: 'AB3456789', visitCount: 1 },
-  { fullName: 'Rustamov Emin', firstName: 'Emin', lastName: 'Rustamov', nationality: 'AZ', phone: '+994555556677', email: 'emin.r@gmail.com', passport: 'AB4567890', visitCount: 3 },
-  { fullName: 'Shirinova Aynur', firstName: 'Aynur', lastName: 'Shirinova', nationality: 'AZ', phone: '+994556667788', email: 'aynur.s@inbox.ru', passport: 'AB5678901', visitCount: 2 },
+  { firstName: 'Rəşad', middleName: 'Kamal', lastName: 'Əliyev', nationality: 'AZ', phone: '+994501112233', email: 'rashad.aliyev@mail.az', passport: 'AA1234567', fin: '5ZKX8K1', vip: 'GOLD', visitCount: 4 },
+  { firstName: 'Günel', middleName: 'Fidan', lastName: 'Həsənova', nationality: 'AZ', phone: '+994502223344', email: 'gunel.hasanova@gmail.com', passport: 'AA2345678', visitCount: 2 },
+  { firstName: 'Tural', middleName: 'Elşən', lastName: 'Məmmədov', nationality: 'AZ', phone: '+994503334455', email: 'tural.m@outlook.com', passport: 'AA3456789', fin: '7H2P9M4', visitCount: 1 },
+  { firstName: 'Leyla', lastName: 'Kərimova', nationality: 'AZ', phone: '+994504445566', email: 'leyla.k@mail.ru', passport: 'AA4567890', visitCount: 6 },
+  { firstName: 'Vüsal', lastName: 'İbrahimov', nationality: 'AZ', phone: '+994505556677', email: 'vusal.i@yahoo.com', passport: 'AA5678901', visitCount: 3 },
+  { firstName: 'Nərgiz', lastName: 'Quliyeva', nationality: 'AZ', phone: '+994506667788', email: 'nergiz.q@gmail.com', passport: 'AA6789012', greyList: true, visitCount: 1 },
+  { firstName: 'Elçin', lastName: 'Rəhimov', nationality: 'AZ', phone: '+994507778899', email: 'elcin.r@mail.az', passport: 'AA7890123', visitCount: 2 },
+  { firstName: 'Könül', lastName: 'Səfərova', nationality: 'AZ', phone: '+994508889900', email: 'konul.s@inbox.ru', passport: 'AA8901234', visitCount: 5 },
+  { firstName: 'Orxan', lastName: 'Hüseynov', nationality: 'AZ', phone: '+994509990011', email: 'orxan.h@gmail.com', passport: 'AA9012345', vip: 'SILVER', visitCount: 2 },
+  { firstName: 'Aysel', lastName: 'Babayeva', nationality: 'AZ', phone: '+994551001122', email: 'aysel.b@mail.az', passport: 'AB0123456', visitCount: 1 },
+  { firstName: 'Kamran', lastName: 'Mustafayev', nationality: 'AZ', phone: '+994552223344', email: 'kamran.m@corp.az', passport: 'AB1234567', visitCount: 7 },
+  { firstName: 'Fidan', lastName: 'Zeynalova', nationality: 'AZ', phone: '+994553334455', email: 'fidan.z@gmail.com', passport: 'AB2345678', visitCount: 2 },
+  { firstName: 'Vladimir', lastName: 'Petrov', nationality: 'RU', phone: '+79031234567', email: 'v.petrov@yandex.ru', passport: '72 1234567', visitCount: 3 },
+  { firstName: 'Elena', lastName: 'Sokolova', nationality: 'RU', phone: '+79037654321', email: 'elena.sokolova@gmail.com', passport: '72 7654321', visitCount: 1 },
+  { firstName: 'Dmitry', lastName: 'Volkov', nationality: 'RU', phone: '+79059876543', email: 'd.volkov@mail.ru', passport: '72 9876543', visitCount: 2 },
+  { firstName: 'Anna', lastName: 'Kowalska', nationality: 'PL', phone: '+48501234567', email: 'anna.k@wp.pl', passport: 'ED1234567', visitCount: 1 },
+  { firstName: 'Hans', lastName: 'Mueller', nationality: 'DE', phone: '+491701234567', email: 'h.mueller@gmx.de', passport: 'C01X00T47', visitCount: 2 },
+  { firstName: 'Sophie', lastName: 'Martin', nationality: 'FR', phone: '+33612345678', email: 'sophie.martin@gmail.com', passport: '15AB12345', visitCount: 1 },
+  { firstName: 'James', lastName: 'Wilson', nationality: 'GB', phone: '+447700900123', email: 'j.wilson@outlook.com', passport: '533123456', visitCount: 1 },
+  { firstName: 'Fatima', lastName: 'Al Mansouri', nationality: 'AE', phone: '+971501234567', email: 'fatima.am@emirates.ae', passport: 'N1234567', vip: 'PLATINUM', visitCount: 4 },
+  { firstName: 'Omar', lastName: 'Hassan', nationality: 'TR', phone: '+905321234567', email: 'omar.h@gmail.com', passport: 'U12345678', visitCount: 2 },
+  { firstName: 'Leyla', lastName: 'Karimova', nationality: 'AZ', phone: '+994504445566', email: 'leyla.child@mail.az', passport: 'AA4567891', visitCount: 0 },
+  { firstName: 'Nafta', lastName: 'HR', nationality: 'AZ', phone: '+994125551100', email: 'hr@nafta.az', passport: 'CORP-HR-01', voen: '1234567891' },
+  { firstName: 'SOCAR', lastName: 'Wellness', nationality: 'AZ', phone: '+994125552200', email: 'wellness@socar.az', passport: 'CORP-SOCAR', voen: '9876543210' },
+  { firstName: 'Turizm', lastName: 'MMC', nationality: 'AZ', phone: '+994125553300', email: 'ops@travel-az.az', passport: 'CORP-TRAVEL', voen: '1122334455' },
+  { firstName: 'Nurlan', lastName: 'Gurbanov', nationality: 'AZ', phone: '+994554445566', email: 'nurlan.g@mail.az', passport: 'AB3456789', visitCount: 1 },
+  { firstName: 'Emin', lastName: 'Rustamov', nationality: 'AZ', phone: '+994555556677', email: 'emin.r@gmail.com', passport: 'AB4567890', visitCount: 3 },
+  { firstName: 'Aynur', lastName: 'Shirinova', nationality: 'AZ', phone: '+994556667788', email: 'aynur.s@inbox.ru', passport: 'AB5678901', visitCount: 2 },
 ];
 
 /** Statuses that block the room on the room plan (must not overlap per room). */
@@ -179,8 +180,9 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   for (const p of GUEST_PROFILES) {
     const g = await prisma.guest.create({
       data: {
-        fullName: p.fullName,
+        fullName: composePersonFullName(p.firstName, p.middleName, p.lastName),
         firstName: p.firstName,
+        middleName: p.middleName ?? null,
         lastName: p.lastName,
         nationality: p.nationality,
         phone: p.phone,
@@ -264,7 +266,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     if (isShare && spec.shareGender) {
       await prisma.guest.update({
         where: { id: guest.id },
-        data: { gender: spec.shareGender },
+        data: { sex: spec.shareGender },
       });
     }
     const room = spec.roomNumber ? roomByNum[spec.roomNumber] : undefined;
@@ -321,6 +323,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
       data: {
         reservationId: res.id,
         firstName: guest.firstName ?? paxName[0] ?? 'Guest',
+        middleName: guest.middleName ?? null,
         lastName: guest.lastName ?? paxName.slice(1).join(' ') ?? '—',
         nationality: guest.nationality,
         passportNo: GUEST_PROFILES[spec.guestIndex]?.passport ?? 'N/A',

@@ -20,10 +20,19 @@ export type ShareReservationSlice = {
 };
 
 export function normalizeShareGender(g: string | null | undefined): ShareGender | null {
-  if (!g) return null;
-  const u = g.trim().toUpperCase();
-  if (u === 'M' || u === 'MALE' || u === '♂') return 'M';
-  if (u === 'F' || u === 'FEMALE' || u === '♀') return 'F';
+  if (g == null) return null;
+  const raw = String(g).trim();
+  if (!raw) return null;
+  const u = raw.toUpperCase();
+  // Elektraweb Guest Cards UI: "0 - Male" / "1 - Female" (numeric codes in export/API).
+  if (u === '0' || u.startsWith('0 ') || u === '2' || u.startsWith('2 ')) return 'M';
+  if (u === '1' || u.startsWith('1 ')) return 'F';
+  if (u === 'M' || u === 'MALE' || u === '♂' || u === 'ERKEK' || u === 'KİŞİ' || u === 'KISI') {
+    return 'M';
+  }
+  if (u === 'F' || u === 'FEMALE' || u === '♀' || u === 'KADIN' || u === 'QADIN') return 'F';
+  if (/\bMALE\b/.test(u) && !/\bFEMALE\b/.test(u)) return 'M';
+  if (/\bFEMALE\b/.test(u)) return 'F';
   return null;
 }
 
@@ -109,7 +118,7 @@ type DoorOverlapRow = {
   checkInDate: Date;
   checkOutDate: Date;
   shareBedIndex: number | null;
-  guest: { gender: string | null };
+  guest: { sex: string | null };
   agency: { code: string; name: string } | null;
 };
 
@@ -137,7 +146,7 @@ async function loadDoorOverlaps(input: {
       checkInDate: true,
       checkOutDate: true,
       shareBedIndex: true,
-      guest: { select: { gender: true } },
+      guest: { select: { sex: true } },
       agency: { select: { code: true, name: true } },
     },
   });
@@ -150,7 +159,7 @@ function gateRowForShare(row: DoorOverlapRow): ReturnType<typeof canGuestJoinSha
   return canGuestJoinSharePool({
     adults: row.adults,
     shareGender: row.shareGender,
-    guestGender: row.guest.gender,
+    guestGender: normalizeShareGender(row.guest.sex),
     isOta: row.agency ? isOtaAgency(row.agency.code, row.agency.name) : false,
   });
 }
@@ -943,7 +952,7 @@ export async function listShareRoomingQueue(input?: {
       ...(input?.roomTypeId ? { roomTypeId: input.roomTypeId } : {}),
     },
     include: {
-      guest: { select: { fullName: true, gender: true } },
+      guest: { select: { fullName: true, sex: true } },
       roomType: { select: { code: true, adultCapacity: true } },
       agency: { select: { code: true, name: true } },
     },
@@ -968,7 +977,7 @@ export async function suggestShareDoors(input: {
 > {
   const reservation = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
-    include: { roomType: true, guest: { select: { gender: true } } },
+    include: { roomType: true, guest: { select: { sex: true } } },
   });
   if (!reservation) throw new Error('Reservation not found');
   if (!isEffectiveShare(reservation)) {
@@ -1007,7 +1016,7 @@ export async function suggestShareDoors(input: {
           shareEligible: true,
           shareGender: gender,
           adults: 1,
-          guestGender: reservation.guest?.gender,
+          guestGender: normalizeShareGender(reservation.guest?.sex),
         },
       });
       const overlapping = await prisma.reservation.findMany({

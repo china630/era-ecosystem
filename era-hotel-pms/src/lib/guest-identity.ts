@@ -1,9 +1,12 @@
 import {
-  getPersonOpsProfile,
   linkPersonIdentity,
   type PersonOpsProfile,
 } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
+import {
+  composePersonFullName,
+  mapNationalityToIso,
+} from '@/lib/person-documents';
 
 export class GuestMdmRequiredError extends Error {
   constructor(message: string) {
@@ -13,20 +16,37 @@ export class GuestMdmRequiredError extends Error {
 }
 
 export type TransientGuestIdentity = {
-  fullName: string;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  /** Legacy blob; prefer parts. */
+  fullName?: string | null;
   nationalIdFin?: string | null;
   passportNumber?: string | null;
   issuingCountry?: string | null;
   phone?: string | null;
-  nationality?: string;
+  /** ISO 3166-1 alpha-2 citizenship on guest cache. */
+  nationality?: string | null;
   globalPersonId?: string | null;
+  sex?: string | null;
+  /** @deprecated alias for sex on wire */
   gender?: string | null;
   birthDate?: string | Date | null;
 };
 
-function toIssuingCountry(nationality?: string): string | undefined {
-  if (!nationality || nationality === 'OTHER') return undefined;
-  return nationality;
+function resolveFullName(input: TransientGuestIdentity): string {
+  const composed = composePersonFullName(
+    input.firstName,
+    input.middleName,
+    input.lastName,
+  );
+  return composed || input.fullName?.trim() || '';
+}
+
+function mdmNationality(raw?: string | null): string | undefined {
+  const iso = mapNationalityToIso(raw ?? undefined);
+  if (!iso || iso === 'OTHER') return undefined;
+  return iso;
 }
 
 export async function linkGuestPersonIdentity(
@@ -35,17 +55,21 @@ export async function linkGuestPersonIdentity(
   const fin = input.nationalIdFin?.trim();
   const passport = input.passportNumber?.trim();
   const globalPersonId = input.globalPersonId?.trim();
-  if (!fin && !passport && !globalPersonId && !input.fullName?.trim()) return null;
+  const fullName = resolveFullName(input);
+  if (!fin && !passport && !globalPersonId && !fullName) return null;
 
   const linked = await linkPersonIdentity({
     fin: fin || undefined,
     passport: passport || undefined,
-    issuingCountry: input.issuingCountry ?? toIssuingCountry(input.nationality),
-    fullName: input.fullName.trim(),
-    phone: input.phone ?? undefined,
-    nationality: input.nationality === 'AZ' ? 'AZ' : 'OTHER',
+    issuingCountry: input.issuingCountry?.trim() || undefined,
+    firstName: input.firstName?.trim() || undefined,
+    middleName: input.middleName?.trim() || undefined,
+    lastName: input.lastName?.trim() || undefined,
+    fullName: fullName || undefined,
+    phone: input.phone?.trim() || undefined,
+    nationality: mdmNationality(input.nationality),
     globalPersonId: globalPersonId || undefined,
-    gender: input.gender ?? undefined,
+    sex: input.sex ?? input.gender ?? undefined,
     birthDate: input.birthDate ?? undefined,
   });
   return linked.globalPersonId ?? globalPersonId ?? null;
@@ -69,6 +93,7 @@ export async function fetchGuestMdmProfile(
   globalPersonId: string | null | undefined,
 ): Promise<PersonOpsProfile | null> {
   if (!globalPersonId?.trim()) return null;
+  const { getPersonOpsProfile } = await import('@era/satellite-kit');
   return getPersonOpsProfile(globalPersonId.trim());
 }
 
@@ -90,4 +115,18 @@ export function assertGuestMdmStrict(
       'Guest must have FIN or passport resolved to MDM globalPersonId',
     );
   }
+}
+
+/** Compose denorm fullName for Guest write paths. */
+export function guestComposedFullName(input: {
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
+}): string {
+  return (
+    composePersonFullName(input.firstName, input.middleName, input.lastName) ||
+    input.fullName?.trim() ||
+    ''
+  );
 }

@@ -888,7 +888,8 @@ model Guest {
   lastName           String?
   middleName         String?
   title              String?
-  gender             String?
+  /** M/F ops cache — physical column `gender`. */
+  sex                String?        @map("gender")
   nationality        String         @default("AZ")
   voen               String?
   phone              String?
@@ -914,8 +915,9 @@ model Guest {
   visaNumber         String?
   visaExpiry         DateTime?
   maritalStatus      String?
-  fatherName         String?
-  motherName         String?
+  /** Parent CRM fields — not patronymic (see middleName). */
+  parentFatherName   String?        @map("fatherName")
+  parentMotherName   String?        @map("motherName")
   verificationStatus String?
   marriageDate       DateTime?      @db.Date
   bonusPercent       Decimal?       @db.Decimal(5, 2)
@@ -1489,9 +1491,11 @@ model ReservationGuest {
   guestId       String?
   guest         Guest?      @relation(fields: [guestId], references: [id], onDelete: SetNull)
   title         String?
-  gender        String?
+  /** M/F — physical column `gender`. */
+  sex           String?     @map("gender")
   firstName     String?
   lastName      String?
+  middleName    String?
   nationality   String?
   birthDate     DateTime?
   age           Int?

@@ -2,6 +2,7 @@ import { resolvePersonIdentity } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
+import { syncGuestIdentityDocuments } from '@/lib/guest-document-sync';
 import { genderFromElektrawebGuest } from '@/lib/integration/elektraweb-share-map';
 import {
   classifyPersonDocuments,
@@ -40,11 +41,12 @@ export async function upsertGuestFromElektrawebRow(
   const phone = str(row.PHONE) ?? str(row.CONTACTPHONE) ?? str(row.PHONE_CALCULATED);
   const email = str(row.EMAIL);
   const birthDate = parseElektrawebDate(row.BIRTHDATE);
-  const gender =
-    genderFromElektrawebGuest({
-      gender: str(row.GENDER) ?? str(row.SEX) ?? str(row.GENDERCODE),
-      title: str(row.TITLE) ?? str(row.ID_TITLE),
-    }) ?? str(row.GENDER) ?? str(row.SEX);
+  const genderRaw = str(row.GENDER) ?? str(row.SEX) ?? str(row.GENDERCODE);
+  // EW Guest Cards: 0=Male, 1=Female — never persist raw codes.
+  const sex = genderFromElektrawebGuest({
+    gender: genderRaw,
+    title: str(row.TITLE) ?? str(row.ID_TITLE),
+  });
 
   const existing = await prisma.guest.findFirst({ where: { externalRef } });
   let globalPersonId: string | null = existing?.globalPersonId ?? null;
@@ -53,11 +55,14 @@ export async function upsertGuestFromElektrawebRow(
       fin: docs.fin,
       passport: docs.passport,
       issuingCountry: iso,
+      firstName: firstName ?? undefined,
+      middleName: middleName ?? undefined,
+      lastName: lastName ?? undefined,
       fullName,
       phone: phone ?? undefined,
-      nationality: iso === 'AZ' ? 'AZ' : 'OTHER',
+      nationality: iso,
       globalPersonId: globalPersonId || undefined,
-      gender: gender ?? undefined,
+      sex: sex ?? undefined,
       birthDate: birthDate ?? undefined,
     });
     globalPersonId = resolved.globalPersonId ?? globalPersonId;
@@ -72,7 +77,7 @@ export async function upsertGuestFromElektrawebRow(
     firstName: firstName ?? undefined,
     lastName: lastName ?? undefined,
     middleName: middleName ?? undefined,
-    gender: gender ?? undefined,
+    sex: sex ?? undefined,
     birthDate: birthDate ?? undefined,
     nationality: iso,
     phone: phone ?? undefined,
@@ -88,13 +93,22 @@ export async function upsertGuestFromElektrawebRow(
       firstName: data.firstName,
       lastName: data.lastName,
       middleName: data.middleName,
-      gender: data.gender,
+      sex: data.sex,
       birthDate: data.birthDate,
       nationality: data.nationality,
       phone: data.phone,
       email: data.email,
     },
   });
+
+  const saved = await prisma.guest.findFirst({ where: { externalRef } });
+  if (saved) {
+    await syncGuestIdentityDocuments(prisma, saved.id, {
+      nationalIdFin: docs.fin,
+      passportNumber: docs.passport,
+      nationality: iso,
+    });
+  }
 
   return { action: existing ? 'updated' : 'created', key: externalRef };
 }
