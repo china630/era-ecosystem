@@ -51,6 +51,31 @@ DELETE FROM "Reservation" WHERE "organizationId" = '__ORG__';
 
 DELETE FROM "ElektrawebFolioOutbox" WHERE "organizationId" = '__ORG__';
 
+-- Bridge/import may insert reservations after the DELETE above (same txn window on busy staging).
+DELETE FROM "FolioPayment" fp
+USING "Folio" f, "Reservation" r, "Guest" g
+WHERE fp."folioId" = f.id AND f."reservationId" = r.id AND r."guestId" = g.id AND g."organizationId" = '__ORG__';
+
+DELETE FROM "FolioCharge" fc
+USING "Folio" f, "Reservation" r, "Guest" g
+WHERE fc."folioId" = f.id AND f."reservationId" = r.id AND r."guestId" = g.id AND g."organizationId" = '__ORG__';
+
+DELETE FROM "FolioSettlement" fs
+USING "Folio" f, "Reservation" r, "Guest" g
+WHERE fs."folioId" = f.id AND f."reservationId" = r.id AND r."guestId" = g.id AND g."organizationId" = '__ORG__';
+
+DELETE FROM "FolioDeposit" fd
+USING "Folio" f, "Reservation" r, "Guest" g
+WHERE fd."folioId" = f.id AND f."reservationId" = r.id AND r."guestId" = g.id AND g."organizationId" = '__ORG__';
+
+DELETE FROM "Folio" f
+USING "Reservation" r, "Guest" g
+WHERE f."reservationId" = r.id AND r."guestId" = g.id AND g."organizationId" = '__ORG__';
+
+DELETE FROM "Reservation" r
+USING "Guest" g
+WHERE r."guestId" = g.id AND g."organizationId" = '__ORG__';
+
 DELETE FROM "Guest" WHERE "organizationId" = '__ORG__';
 
 UPDATE "Room"

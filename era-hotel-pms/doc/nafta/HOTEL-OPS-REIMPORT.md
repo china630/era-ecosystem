@@ -52,7 +52,8 @@ Canon: [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §3.2.
 | 03–05 | revenue-codes, bed-types, room-views | optional if `db:seed:reference` already run |
 | 06–09 | room-types, rate-plans, rooms, agencies | master upsert |
 | **10** | **guests** | **10-Guest-Cards.merged.xlsx** |
-| **11** | **reservations** | **11-Reservations.merged.xlsx** |
+| **10b** | *(prep)* | `npx tsx scripts/enrich-reservations-guest-id.ts` — stamps **Guest Id** on `#11` from `#10` (+ optional `--api-map`) |
+| **11** | **reservations** | **11-Reservations.merged.xlsx** (must include **Guest Id** column) |
 | 12 | reservation-notes | 12-Reservation-Notes.xlsx |
 | 13 | folios | 13-Folio-p01…p12 (multi-select) |
 | 14–15 | package-sell, agency-statement | if used |
@@ -77,7 +78,7 @@ Resume from guests only: `--from=guests`
 ## 4. Post-import checks
 
 ```sql
--- No reservation stubs
+-- No reservation-import guest stubs (import links by Guest Id only)
 SELECT count(*) FROM "Guest" WHERE "externalRef" LIKE 'import-guest-%';  -- 0
 
 -- Guest count ~ file rows (merged ~7723–9000, not 12k)
@@ -98,4 +99,4 @@ Optional: `npx tsx scripts/ops/pair-share-overlaps.ts --dry-run`
 
 ## 5. Why stubs happened before
 
-Reservations were imported **before** guest cards (or name match failed) → `import-guest-*` stubs (~3232). **Guests must be step 10 before step 11.**
+Reservations import **requires Elektraweb Guest Id** (`Guest.externalRef`). FOCP Excel has **Guest Name only** — run `scripts/enrich-reservations-guest-id.ts` after merge (also in `merge-ew-cutover.js`). Import step 10 (Guest Cards) before step 11.

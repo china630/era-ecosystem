@@ -129,7 +129,7 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | EW columns **Agent Code** + **Full Name** (Nafta READY: 212 rows). Footer/blank rows skipped. |
 | `14-Package-Sell-2026.xlsx` | `package-sell` | desk sell rates | package code | After folios on the wizard (`#14`). PDF desk, not EW. Adapter skips `desk=N`. Extra bed: Standart 96 AZN, others 48. |
 | `10-Guest-Cards.xlsx` | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **Gender:** EW **`0` = Male**, **`1` = Female** (UI “0 - Male”); import/bridge normalize to `M`/`F` (never store raw `0`/`1`). **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
-| `11-Reservations.xlsx` | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**. Shared twin: see §4.1 |
+| `11-Reservations.xlsx` | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**; **`Guest Id`** column required (FO export lacks it — stamp via `scripts/enrich-reservations-guest-id.ts` from `#10` + optional API `--api-map`). Import resolves `guestId` by `Guest.externalRef` = **Guest Id** (no name stubs). Shared twin: see §4.1 |
 | `12-Reservation-Notes.xlsx` | `reservation-notes` | `ReservationNote` | `(reservationId, noteType)` | All nine EW note columns → ERA types (`EXTRA_REQ`…`INVOICE_NOTE`); then medical SKU stamp (HOT-PKG-02). Field map + 2026 extract: [`reports/nafta-ew-notes-2026/README.md`](../../reports/nafta-ew-notes-2026/README.md). Cheatsheet: [ERA-PKG-FO-CHEATSHEET.md](./nafta/ERA-PKG-FO-CHEATSHEET.md) |
 | `13-Folio-p01.xlsx` … `p12` | `folios` | `FolioCharge` | `externalRef` | Multi-select all chunks in one step. |
 | `15-Agency-Statement.xlsx` | `agency-statement` | `FolioCharge` on **AGENCY** folio | `ew:agency-stmt:{ResId}` | EW remaining > 0 only. Ops city ledger, **not** Finance/1C AR. |
@@ -424,7 +424,7 @@ Phase 1 UAT does **not** require full historical folio replay — see [NAFTA_SAN
 
 ### 15.5 Guest ↔ reservation name linking (Nafta EW audit, locked)
 
-FOCP / Folio Transactions exports have **`Guest Name` only** (no Elektraweb `Guest Id`). Linking to Guest Cards is therefore string-based.
+FOCP / Folio Transactions exports have **`Guest Name` only** (no Elektraweb `Guest Id`). Before wizard step 11, run **`scripts/enrich-reservations-guest-id.ts`** to stamp **`Guest Id`** from merged Guest Cards (canon §15.5 name rules) and optional live/API map (`Res Id` → `RESGUESTID`). Import then links **`Guest.externalRef`**, not display name.
 
 **Cancelled / future without stay:** do **not** chase missing Guest Cards. If a Guest Card already exists and is **complete**, import/link it; if the card has gaps, **skip**. Complete = `Guest Id` + Name + Last Name + at least one of Passport / National Id / Phone.
 
