@@ -1,8 +1,21 @@
 /**
- * MDM fullName fill-not-clear for patronymic.
- * Keep in sync with era-hotel-pms/src/lib/person-documents.ts mergeFullNameWithPatronymic.
+ * MDM person name helpers.
+ * Canonical implementation lives in `@era/satellite-kit` `integration/person-name`
+ * (imported via package subpath — not the kit barrel — so Jest/Nest avoid jose).
+ * Keep this file's re-exports in sync with that module.
  */
 
+export {
+  composePersonFullName,
+  splitFullNameToParts,
+  mergePersonNameParts,
+  normalizeNationalityIso,
+  hasPersonNameInput,
+  resolveIncomingNameParts,
+  type PersonNameParts,
+} from "@era/satellite-kit/integration/person-name";
+
+/** @deprecated Prefer mergePersonNameParts. Kept for back-compat unit tests. */
 function foldPersonName(value: string): string {
   return value
     .trim()
@@ -23,6 +36,7 @@ function tokens(name: string): string[] {
   return name.trim().split(/\s+/).filter(Boolean);
 }
 
+/** @deprecated Prefer mergePersonNameParts per-field fill-not-clear. */
 export function mergeFullNameWithPatronymic(
   existing: string | null | undefined,
   incoming: string,

@@ -6,8 +6,13 @@ export type ResolvePersonInput = {
   issuingCountry?: string;
   residencePermit?: string;
   nationalId?: string;
-  fullName: string;
+  /** Denorm / legacy blob. Prefer firstName + lastName (+ middleName). */
+  fullName?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   phone?: string;
+  /** ISO 3166-1 alpha-2 citizenship. OTHER/garbage ignored on write. */
   nationality?: string;
   /** Update this person when already linked (hotel/clinic card edit without re-entering FIN). */
   globalPersonId?: string;
@@ -28,7 +33,7 @@ export function inferPersonSegment(
 ): "CITIZEN" | "FOREIGNER" | "UNVERIFIED" {
   const nat = (nationality ?? "AZ").trim().toUpperCase();
   if (identifiers.some((i) => i.type === "AZ_FIN")) return "CITIZEN";
-  if (nat && nat !== "AZ") return "FOREIGNER";
+  if (nat && nat !== "AZ" && nat !== "OTHER") return "FOREIGNER";
   if (identifiers.some((i) => i.type === "PASSPORT" || i.type === "RESIDENCE_PERMIT")) {
     return "FOREIGNER";
   }
@@ -39,25 +44,31 @@ export function collectIdentifierInputs(
   input: ResolvePersonInput,
 ): IdentifierInput[] {
   const out: IdentifierInput[] = [];
-  const country = input.issuingCountry ?? input.nationality ?? "AZ";
+  // Do not fall back to nationality for passport/residence — issuingCountry is document SoR.
+  // Last-resort AZ only when satellites omit the field (steps 3–4 will send country).
+  const docCountry = input.issuingCountry?.trim() || "AZ";
   if (input.fin?.trim()) {
     out.push({ type: "AZ_FIN", value: input.fin.trim(), issuingCountry: "AZ" });
   }
   if (input.passport?.trim()) {
-    out.push({ type: "PASSPORT", value: input.passport.trim(), issuingCountry: country });
+    out.push({
+      type: "PASSPORT",
+      value: input.passport.trim(),
+      issuingCountry: docCountry,
+    });
   }
   if (input.residencePermit?.trim()) {
     out.push({
       type: "RESIDENCE_PERMIT",
       value: input.residencePermit.trim(),
-      issuingCountry: country,
+      issuingCountry: docCountry,
     });
   }
   if (input.nationalId?.trim()) {
     out.push({
       type: "NATIONAL_ID",
       value: input.nationalId.trim(),
-      issuingCountry: country,
+      issuingCountry: docCountry,
     });
   }
   return out;
