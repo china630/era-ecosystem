@@ -86,6 +86,27 @@ export const DATA_TABLE_SHELL_CLASS =
 export const DATA_TABLE_SCROLL_CLASS = "max-h-[min(70vh,56rem)] overflow-auto";
 
 /**
+ * Fill-height table scroll (EraListWorkspace / layout="fill").
+ * No 70vh cap — parent flex column owns the height.
+ */
+export const DATA_TABLE_SCROLL_FILL_CLASS = "min-h-0 flex-1 overflow-auto";
+
+/**
+ * Page root for unbounded lists: fills viewport under fixed header (4rem),
+ * counters main `pb-24` / `lg:pb-8` so the page itself does not scroll.
+ * Put PageHeader + EraListWorkspace inside.
+ */
+export const LIST_PAGE_SHELL_CLASS =
+  "flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden -mb-16 pb-3 lg:-mb-8 lg:pb-2";
+
+/** Flex column used by EraListWorkspace when fill=true (parent is LIST_PAGE_SHELL_CLASS). */
+export const LIST_PAGE_FILL_CLASS =
+  "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden";
+
+/** Non-fill workspace (nested / partial embeds). */
+export const LIST_WORKSPACE_CLASS = "flex min-h-0 flex-1 flex-col gap-3";
+
+/**
  * Legacy single-wrapper viewport (shell + scroll). Prefer SHELL + SCROLL for new code.
  * clip-path keeps sticky thead from painting over rounded corners while overflow-auto scrolls.
  */

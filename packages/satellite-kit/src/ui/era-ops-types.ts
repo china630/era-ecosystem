@@ -71,6 +71,9 @@ export type EraDataGridPaginationLabels = {
   next: string;
 };
 
+export type EraDataGridPaginationMode = "client" | "server";
+export type EraDataGridLayout = "flow" | "fill";
+
 export type EraDataGridProps<T extends Record<string, unknown>> = {
   title?: string;
   columns: EraDataGridColumn<T>[];
@@ -81,10 +84,38 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   emptyMessage?: string;
   toolbar?: ReactNode;
   /**
-   * Client-side pagination (default on). Footer uses ListPaginationFooter.
-   * Pass translated labels from the host app when available.
+   * When true, shows ListPaginationFooter (default on for client mode).
+   * Prefer false inside EraListWorkspace (footer slot owns the pager).
    */
   pagination?: boolean;
   paginationLabels?: EraDataGridPaginationLabels;
   defaultPageSize?: number;
+  /**
+   * `client` (default): slice `rows` locally; total = rows.length.
+   * `server`: render `rows` as-is; controlled page/total from the parent.
+   */
+  paginationMode?: EraDataGridPaginationMode;
+  /**
+   * `flow` (default): DATA_TABLE_SCROLL_CLASS (70vh cap).
+   * `fill`: flex-1 min-h-0 scroll — use inside EraListWorkspace when the grid owns chrome.
+   */
+  layout?: EraDataGridLayout;
+  /**
+   * When true, render only the `<table>` (no shell/scroll/footer).
+   * Use inside EraListWorkspace `table` slot with `tableShell` (default).
+   * Prefer pairing with `paginationMode="server"`.
+   */
+  embedded?: boolean;
+  /** Extra class names on each data row (status tint, etc.). */
+  rowClassName?: (row: T) => string | undefined;
+  /** Server mode: current page (1-based). */
+  page?: number;
+  /** Server mode: page size. */
+  pageSize?: number;
+  /** Server mode: total matching rows (COUNT). */
+  total?: number;
+  /** Server mode: page change. */
+  onPageChange?: (page: number) => void;
+  /** Server mode: page size change (should reset page to 1). */
+  onPageSizeChange?: (pageSize: number) => void;
 };

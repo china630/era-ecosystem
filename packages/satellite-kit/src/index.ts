@@ -241,6 +241,15 @@ export {
   type PersonSex,
 } from "./integration/person-sex";
 export {
+  composePersonFullName,
+  splitFullNameToParts,
+  mergePersonNameParts,
+  normalizeNationalityIso,
+  hasPersonNameInput,
+  resolveIncomingNameParts,
+  type PersonNameParts,
+} from "./integration/person-name";
+export {
   resolveGlobalPerson,
   issueGuestQrToken,
   verifyGuestQrToken,
@@ -413,3 +422,10 @@ export {
 } from "./auth/agency-session";
 
 export { getSatelliteStorage, uploadSatelliteAttachment } from "./storage/satellite-upload";
+
+export {
+  parsePaginatedList,
+  normalizeListPagination,
+  type PaginatedList,
+  type ListPagination,
+} from "./ui/paginated-list";

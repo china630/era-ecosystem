@@ -7,14 +7,17 @@ export function PageHeader({
   subtitle,
   leading,
   actions,
+  className = "",
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
   leading?: ReactNode;
   actions?: ReactNode;
+  /** Extra classes on `<header>` (e.g. `!mb-0` inside LIST_PAGE_SHELL). */
+  className?: string;
 }) {
   return (
-    <header className="mb-6 space-y-3">
+    <header className={["mb-6 space-y-3", className].filter(Boolean).join(" ")}>
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
           <h1 className="m-0 text-left text-2xl font-semibold text-[#34495E]">{title}</h1>
