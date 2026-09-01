@@ -30,6 +30,7 @@ COPY era-finance-core/packages/api-contracts ./era-finance-core/packages/api-con
 COPY era-finance-core/packages/i18n ./era-finance-core/packages/i18n
 COPY era-finance-core/packages/ui ./era-finance-core/packages/ui
 COPY era-finance-core/apps/api ./era-finance-core/apps/api
+COPY era-finance-core/scripts ./era-finance-core/scripts
 COPY era-finance-core/apps/web/lib/i18n/resources.ts ./era-finance-core/apps/web/lib/i18n/resources.ts
 
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
