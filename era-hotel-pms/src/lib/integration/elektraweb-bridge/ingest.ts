@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import {
   classifyBridgePayload,
@@ -9,6 +10,7 @@ import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config
 import type { BridgeAuthContext } from '@/lib/integration/elektraweb-bridge/auth';
 import { upsertGuestFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 import { upsertReservationFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-reservation';
+import { upsertReservationNoteFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-reservation-note';
 import { upsertFolioFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-folio';
 import { stampStayGuestResNameId } from '@/lib/integration/elektraweb-bridge/stamp-resnameid';
 
@@ -105,12 +107,27 @@ export async function ingestElektrawebBridgeEnvelope(
     return summary;
   }
 
+  const noteStampIds = new Set<string>();
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]!;
     try {
       const hid = rowHotelId(row);
       if (hid != null) await assertHotelIdMatches(hid);
       // Detail payloads sometimes omit HOTELID — still OK if auth hotel matches policy
+
+      if (objectName === 'QA_EASYPMS_NOTES') {
+        const r = await upsertReservationNoteFromElektrawebRow(row);
+        if (r.action === 'skipped') {
+          summary.skipped += 1;
+        } else {
+          summary.accepted += 1;
+          if (r.action === 'created') summary.created += 1;
+          else summary.updated += 1;
+          if (r.reservationId) noteStampIds.add(r.reservationId);
+        }
+        continue;
+      }
 
       if (entity === 'guest') {
         const r = await upsertGuestFromElektrawebRow(row);
@@ -145,6 +162,15 @@ export async function ingestElektrawebBridgeEnvelope(
         touchError(message);
         throw err;
       }
+    }
+  }
+
+  if (noteStampIds.size > 0) {
+    const { stampMedicalPackagesForReservation } = await import(
+      '@/lib/services/medical-package-stamp.service'
+    );
+    for (const reservationId of noteStampIds) {
+      await stampMedicalPackagesForReservation(prisma, reservationId);
     }
   }
 

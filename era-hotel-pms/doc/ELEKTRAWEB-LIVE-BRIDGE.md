@@ -66,6 +66,7 @@ Open these grids so list/detail XHR fire under the logged-in session. Observed a
 | Domain | UI URL | Typical Elektraweb Excel analogue |
 |--------|--------|-----------------------------------|
 | Reservations | [app.elektraweb.com/app/grid/res-all/reservation](https://app.elektraweb.com/app/grid/res-all/reservation) | Reservations / FOCP |
+| Reservation notes | [app.elektraweb.com/app/grid/allresnotes](https://app.elektraweb.com/app/grid/allresnotes) | CRM → Reservation Notes (long Extra Req / Price Note) |
 | Folio posting / lines | [app.elektraweb.com/app/grid/toplu-islem-girisi](https://app.elektraweb.com/app/grid/toplu-islem-girisi) | Folio Transactions |
 | Guest cards | [app.elektraweb.com/app/grid/guest-card-simple](https://app.elektraweb.com/app/grid/guest-card-simple) | Guest Cards |
 
@@ -79,7 +80,7 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 ┌─────────────────────────────────────┐
 │  FO PC: Chrome + extension (MV3)    │
 │  Session: Elektraweb login + 2FA    │
-│  Tabs: res-all / guest-card / folio │
+│  Tabs: res-all / allresnotes / guest-card / folio │
 └──────────────┬──────────────────────┘
                │ intercept JSON responses
                │ (declarativeNetRequest / debugger /
@@ -142,7 +143,7 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 | Adults / children | Adult, TChd | |
 | Agency / voucher | Agency, Voucher | Soft |
 | Rate / package | Notes Extra Req / agency | Resolve `PKG-*` via Wave A dual-run; **not** EW rate as medical SKU |
-| Notes | Extra Req, Res Note, CIn, Price | Upsert `ReservationNote`; stamp `medicalPackageCode` |
+| Notes | Extra Req, Res Note, CIn, Price | Live: `QA_EASYPMS_NOTES` on `/app/grid/allresnotes` (NOTETYPE + NOTES + RESID). Excel wide FO-with-Notes still for import. Then stamp `medicalPackageCode`. |
 
 **Status-diff → events** (must call hotel service paths, not silent Prisma-only write):
 
@@ -246,6 +247,7 @@ Raw HAR = gitignored (`*.har`) — live tokens + guest PII.
 | In-house | `/app/grid/res-all/inHouse` | `QA_HOTEL_RESERVATION` | `RESSTATEID=3` + `HOTELID` |
 | Check-out (tab on same res-all page) | `/app/grid/res-all/…` tab | `QA_HOTEL_RESERVATION_CHECKOUT` | `HOTELID` (sample: all rows CheckOut) |
 | Card open | (from either grid) | `QA_EASYPMS_RESDETAIL` + `QA_HOTEL_RES_GUEST` | by Res Id |
+| Reservation Notes | `/app/grid/allresnotes` | `QA_EASYPMS_NOTES` | date range; long `NOTETYPE` + `NOTES` + `RESID` |
 
 Same browser page + tab filter is enough: each tab hits a **different Select object** (F5 alone may re-fetch only the active tab — mixed HAR with both Reservation list + CheckOut tab is fine).
 

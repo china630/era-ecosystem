@@ -23,12 +23,15 @@ const rowSchema = z.object({
 export const EW_NOTE_COLUMN_TO_ERA: Record<string, string> = {
   EXTRA_REQ: "EXTRA_REQ",
   "EXTRA REQUEST": "EXTRA_REQ",
+  EXTRA_REQUEST: "EXTRA_REQ",
+  "EXTRA REQ": "EXTRA_REQ",
   EXTRAREQ: "EXTRA_REQ",
   RES_NOTE: "RES_NOTE",
   "RES NOTE": "RES_NOTE",
   RESNOTE: "RES_NOTE",
   CIN_NOTE: "CIN_NOTE",
   "CIN NOTE": "CIN_NOTE",
+  "CLN NOTE": "CIN_NOTE",
   "CHECK IN NOTE": "CIN_NOTE",
   CHECKINNOTE: "CIN_NOTE",
   COUT_NOTE: "COUT_NOTE",
@@ -78,7 +81,7 @@ function parseResIdFromInfo(info: string | null | undefined): string | null {
   return m?.[1]?.trim() ?? null;
 }
 
-function mapNoteType(raw: string): string | null {
+export function mapNoteType(raw: string): string | null {
   const t = raw.trim().toUpperCase().replace(/\s+/g, "_");
   const stripped = t.replace(/^#+|#+$/g, "");
   const mapped =

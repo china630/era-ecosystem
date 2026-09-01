@@ -15,7 +15,7 @@ Temporary dual-run extension: Elektraweb session on the desk PC ↔ this hotel-p
 
 Tooltip on the toolbar icon repeats the same text (EN / RU / AZ). Popup, Settings, and the on-page overlay show a matching dot.
 
-Chrome **Install as app / Open as window:** the toolbar lamp is hidden. Use the floating circle on the Elektraweb page (v0.3.8: overlay login/password when JWT missing or expired; UI in an extension iframe). First-time Hotel URL + org UUID still uses Settings (opens a normal Chrome tab). After updating the extension, click **Reload** on `chrome://extensions` so Chrome grants `scripting` / `tabs` / `webNavigation`.
+Chrome **Install as app / Open as window:** the toolbar lamp is hidden. Use the floating circle on the Elektraweb page (v0.3.9: overlay login/password when JWT missing or expired; UI in an extension iframe). First-time Hotel URL + org UUID still uses Settings (opens a normal Chrome tab). After updating the extension, click **Reload** on `chrome://extensions` so Chrome grants `scripting` / `tabs` / `webNavigation`.
 
 **Login:** Options asks for ERA Hotel PMS URL + staff login/password. Server returns a **bridge JWT** that embeds:
 
@@ -48,7 +48,7 @@ Write must **not** run on FO: extras need the three-copy SPA ticket on the sanat
    AUTH_JWT_SECRET=<same as hotel>
    POS_BRIDGE_SECRET=<same as clinic>
    ```
-2. Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → this folder. On update to **0.3.8+**: **Reload** the card. Overlay injects into already-open Elektraweb **app windows** — no need to use a normal tab for the lamp.
+2. Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → this folder. On update to **0.3.9+**: **Reload** the card. Overlay injects into already-open Elektraweb **app windows** — no need to use a normal tab for the lamp.
 3. Extension **Settings** → URL + **ERA organization ID (hotel UUID)** + ERA reception login (`emp-…` / `0000` after Workforce grant, or seed `reception` / `reception123`) → **Log in & save**.
 4. Pick **This desk**. Hotel FO: open Elektraweb grids (reservations / in-house / checkout / guests / folio). Sanatorium: keep SPA open (guest folio and Tibbi Ambulator).
 5. Popup or Settings → **Capture & sync** ON. Toolbar lamp should turn **green** (yellow if capture is still off; red if login expired). Sanatorium: **Write** ON and keep SPA open so `LoginToken` exists.
