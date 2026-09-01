@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class LookupFinDto {
@@ -8,9 +8,27 @@ export class LookupFinDto {
   @MaxLength(7)
   fin!: string;
 
-  @ApiPropertyOptional({ description: "Full name for MDM resolve-or-create when lookup misses" })
+  @ApiPropertyOptional({ description: "Legacy blob; prefer firstName+lastName" })
   @IsOptional()
   @IsString()
   @MaxLength(200)
   fullName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  middleName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  lastName?: string;
 }

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../../../components/empty-state";
 import { KO1PrintForm, type KO1PrintOrder } from "../../../../components/print/KO1PrintForm";
 import { apiFetch } from "../../../../lib/api-client";
+import { formatAzEmployeeListName } from "../../../../lib/employee-display-name";
 import {
   CARD_CONTAINER_CLASS,
   MODAL_CLOSE_BUTTON_CLASS,
@@ -56,7 +57,7 @@ type CashOrderRow = {
   purpose: string;
   skipJournalPosting?: boolean;
   counterparty?: { id: string; name: string } | null;
-  employee?: { id: string; firstName: string; lastName: string } | null;
+  employee?: { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null } | null;
 };
 
 type CashSubtypeOpt = { code: string; nameAz: string; nameRu: string; nameEn: string };
@@ -80,6 +81,8 @@ type EmployeeOpt = {
   id: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
+  displayName?: string | null;
   accountableAccountCode244?: string | null;
 };
 
@@ -405,7 +408,7 @@ export default function BankingCashPage() {
   const partyLabel = useCallback((row: CashOrderRow) => {
     if (row.counterparty?.name) return row.counterparty.name;
     if (row.employee) {
-      return `${row.employee.firstName} ${row.employee.lastName}`.trim();
+      return formatAzEmployeeListName(row.employee);
     }
     return "—";
   }, []);
@@ -440,7 +443,7 @@ export default function BankingCashPage() {
     const fromParty = row.counterparty?.name
       ? row.counterparty.name
       : row.employee
-        ? `${row.employee.firstName} ${row.employee.lastName}`.trim()
+        ? formatAzEmployeeListName(row.employee)
         : "—";
 
     setKo1PrintOrder({
@@ -1005,7 +1008,7 @@ export default function BankingCashPage() {
                             accountable.map((r) => (
                               <tr key={r.employee.id} className={DATA_TABLE_TR_CLASS}>
                                 <td className={DATA_TABLE_TD_CLASS}>
-                                  {r.employee.firstName} {r.employee.lastName}
+                                  {formatAzEmployeeListName(r.employee)}
                                 </td>
                                 <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>{r.accountCode}</td>
                                 <td className={DATA_TABLE_TD_RIGHT_CLASS}>
@@ -1150,7 +1153,7 @@ export default function BankingCashPage() {
                       : employees.filter((e) => e.accountableAccountCode244?.trim())
                     ).map((em) => (
                       <option key={em.id} value={em.id}>
-                        {em.firstName} {em.lastName}
+                        {formatAzEmployeeListName(em)}
                         {em.accountableAccountCode244 ? ` · ${em.accountableAccountCode244}` : ""}
                       </option>
                     ))}
@@ -1389,7 +1392,7 @@ export default function BankingCashPage() {
                       <option value="">—</option>
                       {employees.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.firstName} {c.lastName}
+                          {formatAzEmployeeListName(c)}
                         </option>
                       ))}
                     </select>

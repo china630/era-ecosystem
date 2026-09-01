@@ -37,10 +37,16 @@ export class OpeningBalanceHrLineDto {
   @IsNotEmpty()
   lastName!: string;
 
-  @ApiProperty({ description: "Ata adı (отчество)" })
+  @ApiPropertyOptional({ description: "Ata adı (middle name)" })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  patronymic!: string;
+  middleName?: string;
+
+  /** @deprecated alias for middleName */
+  @ApiPropertyOptional({ deprecated: true })
+  @IsOptional()
+  @IsString()
+  patronymic?: string;
 
   @ApiProperty({ description: "Штатная должность (JobPosition)" })
   @IsUUID()

@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { formatAzEmployeeListName } from "../../lib/employee-display-name";
 import { apiFetch } from "../../lib/api-client";
 import {
   MODAL_CLOSE_BUTTON_CLASS,
@@ -15,7 +16,7 @@ import {
 } from "../../lib/design-system";
 import { Button } from "../ui/button";
 
-type EmpOpt = { id: string; firstName: string; lastName: string };
+type EmpOpt = { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null };
 type AbsenceTypeOpt = {
   id: string;
   nameAz: string;
@@ -142,7 +143,7 @@ export function AbsenceModal({
               >
                 {employees.map((e) => (
                   <option key={e.id} value={e.id}>
-                    {e.lastName} {e.firstName}
+                    {formatAzEmployeeListName(e)}
                   </option>
                 ))}
               </select>

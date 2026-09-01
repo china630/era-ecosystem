@@ -1290,7 +1290,7 @@ model Employee {
   /// *
   ///    * Дата выхода на работу (миграционная/кадровая точка отсчёта).
   hireDate                       DateTime                 @map("hire_date") @db.Date
-  dateOfBirth                    DateTime?                @map("date_of_birth") @db.Date
+  birthDate                      DateTime?                @map("date_of_birth") @db.Date
   contractEndDate                DateTime?                @map("contract_end_date") @db.Date
   /// *
   ///    * Оклад gross (AZN), частный ненефтяной сектор
@@ -1331,7 +1331,6 @@ model Employee {
   /// *
   ///    * Субсчёт 244.x для подотчёта (если задан).
   accountableAccountCode244      String?                  @map("accountable_account_code_244")
-  patronymic                     String?
   emasSyncStatus                 IntegrationSyncStatus    @default(NOT_SYNCED) @map("emas_sync_status")
   emasSyncedAt                   DateTime?                @map("emas_synced_at") @db.Timestamptz(6)
   emasSyncError                  String?                  @map("emas_sync_error")

@@ -21,6 +21,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { TOOLBAR_MONTH_INPUT_CLASS } from "../../../lib/form-styles";
+import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { useAuth } from "../../../lib/auth-context";
 import { isRestrictedUserRole } from "../../../lib/role-utils";
 
@@ -31,7 +32,7 @@ type Ts = {
   status: "DRAFT" | "APPROVED";
 };
 
-type EmpRow = { id: string; firstName: string; lastName: string; finCode: string };
+type EmpRow = { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null; finCode: string };
 
 type TsEntry = {
   id: string;
@@ -430,7 +431,7 @@ export default function HrTimesheetPage() {
                 >
                   {employees.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.lastName} {e.firstName}
+                      {formatAzEmployeeListName(e)}
                     </option>
                   ))}
                 </select>
@@ -531,7 +532,7 @@ export default function HrTimesheetPage() {
                           }}
                         />
                         <span>
-                          {emp.lastName} {emp.firstName}
+                          {formatAzEmployeeListName(emp)}
                         </span>
                       </label>
                     </td>

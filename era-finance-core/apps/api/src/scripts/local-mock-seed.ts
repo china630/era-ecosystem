@@ -220,7 +220,6 @@ type OrgSeedConfig = {
     finCode: string;
     firstName: string;
     lastName: string;
-    patronymic?: string;
     salary: number;
     positionName: string;
     hireDate: Date;
@@ -367,7 +366,6 @@ async function recreateOrganization(
         data: {
           organizationId: organization.id,
           globalPersonId,
-          patronymic: emp.patronymic ?? null,
           startDate: emp.hireDate,
           hireDate: emp.hireDate,
           salary: new Decimal(emp.salary),
@@ -941,7 +939,6 @@ async function bootstrap() {
           finCode: "TVM1001",
           firstName: "Aysel",
           lastName: "Mammadova",
-          patronymic: "Elchin qizi",
           salary: 2800,
           positionName: "Content Manager",
           hireDate: sixMonthsAgo,
@@ -950,7 +947,6 @@ async function bootstrap() {
           finCode: "TVM1002",
           firstName: "Rauf",
           lastName: "Aliyev",
-          patronymic: "Asif oglu",
           salary: 3600,
           positionName: "Legal Counsel",
           hireDate: sixMonthsAgo,
@@ -1028,7 +1024,6 @@ async function bootstrap() {
           finCode: "TVS2001",
           firstName: "Turan",
           lastName: "Hasanov",
-          patronymic: "Rashad oglu",
           salary: 2900,
           positionName: "Event Coordinator",
           hireDate: oneYearAgo,
@@ -1037,7 +1032,6 @@ async function bootstrap() {
           finCode: "TVS2002",
           firstName: "Nigar",
           lastName: "Quliyeva",
-          patronymic: "Samir qizi",
           salary: 3300,
           positionName: "Event Coordinator",
           hireDate: oneYearAgo,
@@ -1046,7 +1040,6 @@ async function bootstrap() {
           finCode: "TVS2003",
           firstName: "Kamran",
           lastName: "Rahimov",
-          patronymic: "Adil oglu",
           salary: 4600,
           positionName: "Head Coach",
           hireDate: oneYearAgo,

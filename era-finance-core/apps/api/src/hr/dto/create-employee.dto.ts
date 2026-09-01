@@ -48,11 +48,6 @@ export class CreateEmployeeDto {
   @Matches(/^\d{10}$/, { message: "voen must be 10 digits" })
   voen?: string;
 
-  @ApiPropertyOptional({ description: "Ata adı (отчество) — payroll document only" })
-  @IsOptional()
-  @IsString()
-  patronymic?: string;
-
   @ApiProperty({ description: "Штатная должность (справочник JobPosition)" })
   @IsUUID()
   positionId!: string;

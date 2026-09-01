@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
+import { IsOptional, IsString, ValidateIf } from "class-validator";
 
 export class ResolveEmployeePersonDto {
   @ApiPropertyOptional({ example: "1A2B3C4" })
@@ -17,10 +17,25 @@ export class ResolveEmployeePersonDto {
   @IsString()
   issuingCountry?: string;
 
-  @ApiPropertyOptional({ description: "Hint for MDM resolve when FIN not found" })
+  @ApiPropertyOptional()
+  @ValidateIf((o: ResolveEmployeePersonDto) => !o.firstName?.trim() || !o.lastName?.trim())
   @IsString()
-  @IsNotEmpty()
-  fullName!: string;
+  fullName?: string;
+
+  @ApiPropertyOptional()
+  @ValidateIf((o: ResolveEmployeePersonDto) => !o.fullName?.trim())
+  @IsString()
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  middleName?: string;
+
+  @ApiPropertyOptional()
+  @ValidateIf((o: ResolveEmployeePersonDto) => !o.fullName?.trim())
+  @IsString()
+  lastName?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

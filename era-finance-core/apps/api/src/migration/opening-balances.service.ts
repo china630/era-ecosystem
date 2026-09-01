@@ -17,6 +17,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { assertWarehouseNotUnderReconciliation } from "../inventory/inventory-reconciliation-lock";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { composePersonFullName } from "@era/satellite-kit";
 import {
   blindIndex,
   encryptText,
@@ -176,13 +177,18 @@ export class OpeningBalancesService {
             "For CONTRACTOR, voen is required (10 digits)",
           );
         }
-        const fullName = [row.lastName, row.firstName, row.patronymic]
-          .map((part) => part.trim())
-          .filter(Boolean)
-          .join(" ");
+        const middleName = (row.middleName ?? row.patronymic)?.trim() ?? "";
+        const fullName = composePersonFullName(
+          row.firstName.trim(),
+          middleName || null,
+          row.lastName.trim(),
+        );
         const linked = await this.mdm.workforceResolve({
           organizationId,
           fin: normalizeFin(row.finCode.trim()),
+          firstName: row.firstName.trim(),
+          middleName: middleName || undefined,
+          lastName: row.lastName.trim(),
           fullName,
         });
         if (!linked?.globalPersonId) {
@@ -196,7 +202,6 @@ export class OpeningBalancesService {
             kind,
             globalPersonId: linked.globalPersonId,
             emasEligible: Boolean(normalizeFin(row.finCode.trim())),
-            patronymic: row.patronymic.trim(),
             positionId: row.positionId,
             startDate: new Date(row.hireDate),
             hireDate: new Date(row.hireDate),

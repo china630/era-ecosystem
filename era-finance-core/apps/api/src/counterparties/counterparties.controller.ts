@@ -26,6 +26,7 @@ import { MergeCounterpartiesDto } from "./dto/merge-counterparties.dto";
 import { UpdateCounterpartyDto } from "./dto/update-counterparty.dto";
 import { CounterpartiesService } from "./counterparties.service";
 import { DataHubClientService } from "../data-hub/data-hub-client.service";
+import { composePersonFullName, resolveIncomingNameParts } from "@era/satellite-kit";
 import {
   blindIndex,
   encryptText,
@@ -108,9 +109,22 @@ export class CounterpartiesController {
     @OrganizationId() organizationId: string,
     @Body() dto: LookupFinDto,
   ) {
-    if (dto.fullName?.trim()) {
+    const parts = resolveIncomingNameParts(dto);
+    const composed = composePersonFullName(
+      parts?.firstName,
+      parts?.middleName,
+      parts?.lastName,
+    );
+    const fullName = composed || dto.fullName?.trim();
+    if (fullName || (parts?.firstName && parts?.lastName)) {
       const linked = await this.orchestratorMdm.linkPersonIdentity(
-        { fin: dto.fin, fullName: dto.fullName.trim() },
+        {
+          fin: dto.fin,
+          firstName: parts?.firstName?.trim() || undefined,
+          middleName: parts?.middleName?.trim() || undefined,
+          lastName: parts?.lastName?.trim() || undefined,
+          fullName: fullName || undefined,
+        },
         organizationId,
       );
       if (linked.globalPersonId) {
@@ -282,8 +296,15 @@ export class CounterpartiesController {
 
     let globalPersonId: string | null = null;
     if (dto.legalForm === CounterpartyLegalForm.INDIVIDUAL && dto.finCode?.trim()) {
+      const nameParts = resolveIncomingNameParts({ fullName: name });
       const linked = await this.orchestratorMdm.linkPersonIdentity(
-        { fin: normalizeFin(dto.finCode.trim()), fullName: name },
+        {
+          fin: normalizeFin(dto.finCode.trim()),
+          firstName: nameParts?.firstName?.trim() || undefined,
+          middleName: nameParts?.middleName?.trim() || undefined,
+          lastName: nameParts?.lastName?.trim() || undefined,
+          fullName: name,
+        },
         orgId,
       );
       globalPersonId = linked.globalPersonId;
