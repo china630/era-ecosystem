@@ -4,7 +4,9 @@ jest.mock('@/lib/prisma', () => ({
       findMany: jest.fn(),
       count: jest.fn(),
     },
-    $queryRaw: jest.fn(),
+    reservationNote: {
+      findMany: jest.fn(),
+    },
   },
 }));
 
@@ -57,9 +59,9 @@ describe('listReservationsForGrid pagination', () => {
     const { prisma } = await import('@/lib/prisma');
     (prisma.reservation.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.reservation.count as jest.Mock).mockResolvedValue(3);
-    (prisma.$queryRaw as jest.Mock).mockResolvedValue([
-      { id: 'r1' },
-      { id: 'r2' },
+    (prisma.reservationNote.findMany as jest.Mock).mockResolvedValue([
+      { reservationId: 'r1', text: 'note one' },
+      { reservationId: 'r2', text: 'note two' },
     ]);
 
     const { listReservationsForGrid } = await import(
@@ -75,7 +77,7 @@ describe('listReservationsForGrid pagination', () => {
 
     expect(result.total).toBe(3);
     expect(result.page).toBe(2);
-    expect(prisma.$queryRaw).toHaveBeenCalled();
+    expect(prisma.reservationNote.findMany).toHaveBeenCalled();
     const where = (prisma.reservation.findMany as jest.Mock).mock.calls[0][0]
       .where;
     expect(where.status).toBeUndefined();
@@ -88,7 +90,7 @@ describe('listReservationsForGrid pagination', () => {
 
   it('hasNotes with no note rows returns empty page', async () => {
     const { prisma } = await import('@/lib/prisma');
-    (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
+    (prisma.reservationNote.findMany as jest.Mock).mockResolvedValue([]);
 
     const { listReservationsForGrid } = await import(
       '@/lib/services/reservation-full.service'
