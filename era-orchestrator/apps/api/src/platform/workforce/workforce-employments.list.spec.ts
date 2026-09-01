@@ -3,7 +3,7 @@ import { WorkforceEmploymentsService } from "./workforce-employments.service";
 
 describe("WorkforceEmploymentsService.list include", () => {
   const prisma = {
-    workforceEmployment: { findMany: jest.fn(), findFirst: jest.fn() },
+    workforceEmployment: { findMany: jest.fn(), count: jest.fn(), findFirst: jest.fn() },
   };
   const entitlement = { assertWorkforceHub: jest.fn() };
   const svc = new WorkforceEmploymentsService(
@@ -21,6 +21,7 @@ describe("WorkforceEmploymentsService.list include", () => {
     jest.clearAllMocks();
     entitlement.assertWorkforceHub.mockResolvedValue(undefined);
     prisma.workforceEmployment.findMany.mockResolvedValue([]);
+    prisma.workforceEmployment.count.mockResolvedValue(0);
     prisma.workforceEmployment.findFirst.mockResolvedValue({
       id: "emp-1",
       globalPersonId: "p1",
