@@ -1,7 +1,10 @@
 import {
+  composePersonFullName,
   isValidAzFin,
   linkPersonIdentity,
   lookupGlobalPersonByFin,
+  normalizeNationalityIso,
+  resolveIncomingNameParts,
 } from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
@@ -10,11 +13,21 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       fin?: string;
+      passport?: string;
+      issuingCountry?: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       fullName?: string;
       phone?: string;
+      nationality?: string;
     };
     const fin = body.fin?.trim();
-    const fullName = body.fullName?.trim();
+    const parts = resolveIncomingNameParts(body);
+    const fullName =
+      composePersonFullName(parts?.firstName, parts?.middleName, parts?.lastName) ||
+      body.fullName?.trim() ||
+      "";
     const orgId = requestOrganizationId();
 
     if (fin) {
@@ -30,15 +43,21 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!fullName) {
-      return jsonError("fullName required when FIN not found", 400);
+    if (!fullName && !(parts?.firstName?.trim() && parts?.lastName?.trim())) {
+      return jsonError("fullName or firstName+lastName required when FIN not found", 400);
     }
 
     const linked = await linkPersonIdentity(
       {
-        fullName,
         fin: fin || undefined,
+        passport: body.passport?.trim(),
+        issuingCountry: body.issuingCountry?.trim() || undefined,
+        firstName: parts?.firstName?.trim() || undefined,
+        middleName: parts?.middleName?.trim() || undefined,
+        lastName: parts?.lastName?.trim() || undefined,
+        fullName: fullName || undefined,
         phone: body.phone?.trim(),
+        nationality: normalizeNationalityIso(body.nationality) ?? undefined,
       },
       { requesterOrgId: orgId, purpose: "crm_lead" },
     );
