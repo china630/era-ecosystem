@@ -4,7 +4,9 @@ import {
   jsonError,
   handleRouteError,
   getRouteSession,
+  requireClinicPermission,
 } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   admitPatient,
   dischargeAdmission,
@@ -16,8 +18,10 @@ import {
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const view = new URL(req.url).searchParams.get("view");
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
+    if (denied) return denied;
+
+        const view = new URL(req.url).searchParams.get("view");
     if (view === "census") {
       return jsonOk({ items: await listInpatientCensus() });
     }
@@ -39,8 +43,10 @@ const admitSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const body = admitSchema.parse(await req.json());
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
+    if (denied) return denied;
+
+        const body = admitSchema.parse(await req.json());
     const action = body.action ?? "admit";
 
     if (action === "admit") {

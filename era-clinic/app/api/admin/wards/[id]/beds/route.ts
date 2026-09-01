@@ -1,8 +1,5 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import {
-  assertClinicAdminRead,
-  assertClinicAdminWrite,
-} from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { createBed } from "@/domain/inpatient/ward.service";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -16,7 +13,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await assertClinicAdminRead();
+  const guard = await assertClinicAdminRoute(_request);
   if (guard.error) return guard.error;
   try {
     const { id } = await params;
@@ -34,7 +31,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await assertClinicAdminWrite();
+  const guard = await assertClinicAdminRoute(request);
   if (guard.error) return guard.error;
   try {
     const { id: wardId } = await params;

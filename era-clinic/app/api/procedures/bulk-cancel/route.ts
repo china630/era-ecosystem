@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { cancelProcedureOrder } from "@/domain/procedure/procedure-attendance.service";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
@@ -23,6 +30,9 @@ export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_RECEPTION);
+    if (denied) return denied;
+
     const body = bodySchema.parse(await req.json());
     if (!body.episodeId && !body.patientRefId) {
       return jsonError("episodeId or patientRefId required", 400);

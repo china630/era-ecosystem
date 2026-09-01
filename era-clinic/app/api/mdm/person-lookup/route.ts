@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { linkPersonIdentity } from "@era/satellite-kit";
-import { jsonOk, handleRouteError, jsonError, getRouteSession } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  jsonError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 
 const schema = z.object({
   fin: z.string().trim().optional(),
@@ -14,8 +21,10 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const body = schema.parse(await request.json());
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_MDM);
+    if (denied) return denied;
+
+        const body = schema.parse(await request.json());
     const linked = await linkPersonIdentity({
       fin: body.fin,
       passport: body.passport,

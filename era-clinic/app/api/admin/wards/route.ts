@@ -1,8 +1,5 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import {
-  assertClinicAdminRead,
-  assertClinicAdminWrite,
-} from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { listWards, createWard } from "@/domain/inpatient/ward.service";
 import { z } from "zod";
 
@@ -12,8 +9,8 @@ const createSchema = z.object({
   dailyChargeCode: z.string().optional(),
 });
 
-export async function GET() {
-  const guard = await assertClinicAdminRead();
+export async function GET(request: Request) {
+  const guard = await assertClinicAdminRoute(request);
   if (guard.error) return guard.error;
   try {
     const wards = await listWards();
@@ -24,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const guard = await assertClinicAdminWrite();
+  const guard = await assertClinicAdminRoute(request);
   if (guard.error) return guard.error;
   try {
     const body = createSchema.parse(await request.json());

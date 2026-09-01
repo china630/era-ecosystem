@@ -1,4 +1,7 @@
-import { handleStaffProvisionEvent } from "@/lib/staff-provision";
+import {
+  handleStaffProvisionEvent,
+  SatelliteLoginTakenError,
+} from "@/lib/staff-provision";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -9,6 +12,7 @@ jest.mock("@/lib/prisma", () => ({
     user: {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
@@ -149,8 +153,25 @@ describe("clinic staff-provision", () => {
     );
   });
 
-  it("deactivates user and practitioner on deactivate event", async () => {
+  it("throws SatelliteLoginTakenError when login belongs to another cpEmploymentId", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "user-other",
+        cpEmploymentId: "other-cp-id",
+        login: "dr-test",
+      });
+
+    await expect(handleStaffProvisionEvent(provisionEvent)).rejects.toBeInstanceOf(
+      SatelliteLoginTakenError,
+    );
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("deactivates only satelliteUserId on STAFF_DEACTIVATED", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.user.findFirst.mockResolvedValue({ id: "user-1" });
     await handleStaffProvisionEvent({
       type: "STAFF_DEACTIVATED",
       organizationId: ORG_ID,
@@ -164,12 +185,13 @@ describe("clinic staff-provision", () => {
         satelliteUserId: "user-1",
       },
     });
-    expect(prisma.user.updateMany).toHaveBeenCalled();
-    expect(prisma.practitioner.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { cpEmploymentId: CP_EMPLOYMENT_ID },
-        data: { active: false },
-      }),
-    );
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { status: "INACTIVE" },
+    });
+    expect(prisma.practitioner.updateMany).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      data: { active: false },
+    });
   });
 });

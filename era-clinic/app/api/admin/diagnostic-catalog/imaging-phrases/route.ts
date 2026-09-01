@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   createImagingPhrase,
   listImagingPhrases,
@@ -19,7 +19,7 @@ const createSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const url = new URL(req.url);
     const organKey = url.searchParams.get("organKey") ?? undefined;
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = createSchema.parse(await req.json());
     return jsonOk(await createImagingPhrase(body), 201);

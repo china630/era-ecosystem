@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 
 import {
   updatePractitionerOpsCatalog,
@@ -31,7 +31,7 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
 
     const { id } = await ctx.params;
@@ -71,7 +71,7 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
 
     const { id } = await ctx.params;

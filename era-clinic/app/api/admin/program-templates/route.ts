@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -28,9 +28,9 @@ const createSchema = z.object({
     .optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const rows = await prisma.programTemplate.findMany({
       orderBy: { code: "asc" },
@@ -44,7 +44,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = createSchema.parse(await req.json());
     const row = await prisma.programTemplate.create({
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return jsonOk({ error: "id required" }, 400);

@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import {
   fifoConfirmBlockedReason,
@@ -17,6 +24,9 @@ export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_CONFIRM);
+    if (denied) return denied;
+
     const body = bodySchema.parse(await req.json());
 
     const selected = await prisma.procedureOrder.findMany({

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   getPractitionerById,
   auditMasterChange,
@@ -68,7 +68,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
     const existing = await getPractitionerById(id);

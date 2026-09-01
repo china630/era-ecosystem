@@ -3,9 +3,9 @@ import {
   getRouteSession,
   handleRouteError,
   jsonOk,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { getPractitionerDayMatrix } from "@/domain/appointment/appointment-calendar.service";
 
 const querySchema = z.object({
@@ -15,8 +15,17 @@ const querySchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION]);
-    if (denied) return denied;
+    const deniedRead = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_APPOINTMENTS_READ,
+    );
+    if (deniedRead) {
+      const deniedWrite = await requireClinicPermission(
+        session,
+        CLINIC_PERMISSION.API_APPOINTMENTS_WRITE,
+      );
+      if (deniedWrite) return deniedWrite;
+    }
 
     const url = new URL(req.url);
     const query = querySchema.parse({

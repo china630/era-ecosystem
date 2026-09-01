@@ -18,7 +18,7 @@ export async function relocateReservationRoom(
 ) {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    include: { room: true, ratePlan: true },
+    include: { room: true, ratePlan: true, guest: true, agency: true },
   });
   if (!reservation) throw new Error('Reservation not found');
   if (!RELOCATABLE.includes(reservation.status as (typeof RELOCATABLE)[number])) {
@@ -35,24 +35,6 @@ export async function relocateReservationRoom(
   });
   if (!allowed.ok) throw new Error(allowed.error);
 
-  const { assertRoomShareAssignable, roomStatusAllowedForShareAssign } = await import(
-    '@/lib/services/share-assignment.service'
-  );
-  const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
-    roomId: toRoomId,
-    checkIn: reservation.checkInDate,
-    checkOut: reservation.checkOutDate,
-    excludeReservationId: reservationId,
-    candidate: {
-      shareEligible: reservation.shareEligible,
-      shareGender: reservation.shareGender,
-      adults: reservation.adults,
-    },
-  });
-  if (!roomStatusAllowedForShareAssign(toRoom, joiningPool)) {
-    throw new Error('Target room must be AVAILABLE, CLEAN, or INSPECTED (HK-03)');
-  }
-
   const fromRoomId = reservation.roomId;
   const updated = await updateReservationSchedule(reservationId, {
     roomId: toRoomId,
@@ -62,12 +44,6 @@ export async function relocateReservationRoom(
     await prisma.reservation.update({
       where: { id: reservationId },
       data: { givenRoomTypeId: toRoom.roomTypeId },
-    });
-  }
-  if (shareBedIndex != null) {
-    await prisma.reservation.update({
-      where: { id: reservationId },
-      data: { shareBedIndex },
     });
   }
 

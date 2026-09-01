@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   createPortalLink,
   createShipment,
@@ -21,6 +28,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    if (denied) return denied;
+
     const { id } = await params;
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const order = await prisma.labOrder.findUnique({

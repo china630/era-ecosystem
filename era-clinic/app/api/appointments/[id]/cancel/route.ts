@@ -4,9 +4,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { appointmentCancelDenied } from "@/lib/appointment-status-gates";
 import { prisma } from "@/lib/prisma";
 
@@ -20,7 +20,7 @@ export async function POST(
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_APPOINTMENTS_WRITE);
     if (denied) return denied;
 
     const { id } = await params;

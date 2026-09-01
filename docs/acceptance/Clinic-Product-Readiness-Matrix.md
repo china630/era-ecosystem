@@ -48,6 +48,7 @@
 | Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` doctor-bonus + settings % | 🟡 SCREEN (extras-only buckets; UAT open; not SHIPPED) |
 | One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (UAT open; not SHIPPED) |
 | Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; UAT open — not SHOW / not Pilot) |
+| Role access matrix (CLI-RBAC-01) | `/admin/access` | 🟡 SCREEN (Phase A Waves 1–3 shipped; UAT listed; not SHOW / not Pilot) |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA). CLI-55 episode-course card is **SCREEN** (built; UAT open) — not SHOW / not Pilot.
 

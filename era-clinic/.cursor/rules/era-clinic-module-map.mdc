@@ -23,7 +23,7 @@ Built by [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) → [ClinicOpsShell
 | Wellness | preset `wellness` | placeholder (no routes yet — section auto-hides) |
 | Catalogs | admin/owner | `/admin/catalog` (service prices), `/admin/diagnostic-catalog` (modalities/services/analytes/**favorites** tab), `/admin/icd-favorites` (ICD-10 pin + catalog sync/retire; no title CRUD), `/admin/templates`, `/admin/lookups` (BODY_PART), `/admin/physio-sites` (S + programs + substances + unmatched nahiye queue) |
 | Rules & data | admin/owner | `/admin/procedure-rules`, `/admin/lis-profiles`, `/admin/master-data` |
-| Platform | admin/owner | `/admin/audit`, `/admin/settings` |
+| Platform | admin/owner | `/admin/audit`, `/admin/settings`, `/admin/access` |
 
 Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`; `GET/POST /api/internal/v1/runtime-config` (incl. `clinicCutover` upsert). Cutover `#21` calls hotel `GET /api/internal/v1/stays/by-external-ref` then MDM `linkPersonIdentity`.
 
@@ -86,6 +86,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/import` | Nafta cutover xlsx — clinic 21–40 incl. `procedure-requirements` ([NAFTA-CUTOVER-IMPORT](../../doc/NAFTA-CUTOVER-IMPORT.md)) |
 | `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`), `/api/admin/procedure-rotation-rules` (+ `[id]`), `/api/admin/procedure-substitution-rules` (+ `[id]`) |
 | `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, card limits, **`programSchedulingMode`** AFTER_CHECKUP \| ON_CHECKIN — Wave C / CLI-52; Nafta default AFTER_CHECKUP; **`doctorBonusPercentInHouse` / `doctorBonusPercentWalkIn`** — Wave D / CLI-53, default 0) |
+| `/admin/access` | `GET /api/admin/roles`, `GET/PATCH /api/admin/roles/[code]/permissions` — configurable role×screen matrix (`Role.permissionsJson`; ADR clinic-domain-permissions-and-rbac). After Save: `POST /api/auth/session/refresh-permissions` re-signs JWT. Admin APIs: `adminApiRoutePermission` → `assertClinicAdminRoute`. Staff APIs: `opsApiRoutePermission` → `requireClinicPermission` / `assertOpsApiPermission` (Phase A Waves 1–3). Legacy orphans gated: `/api/lab/import` (`api:lab_orders`), `/api/imaging-phrases` (`api:catalog.read`), `/api/templates` (`screen:admin.templates`). |
 | `/reports/procedures` | doctor-bonus view: `bonusEligible` extras only; IN_HOUSE / WALK_IN buckets + % (CLI-53) |
 | `/admin/audit` | `/api/audit` |
 | `/admin/lis-profiles` | `/api/admin/lis-profiles` |

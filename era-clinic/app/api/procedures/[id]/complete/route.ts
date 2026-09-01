@@ -3,9 +3,9 @@ import {
   jsonError,
   handleRouteError,
   getRouteSession,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { completeProcedureOrder } from "@/domain/procedure/procedure-completion.service";
 import {
   mapAttendanceHttpStatus,
@@ -18,7 +18,7 @@ export async function POST(
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.NURSE, CLINIC_ROLE.DOCTOR]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_COMPLETE);
     if (denied) return denied;
 
     const { id } = await params;

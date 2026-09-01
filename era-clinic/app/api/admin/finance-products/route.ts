@@ -1,4 +1,5 @@
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 type FinanceProductRow = {
@@ -14,8 +15,8 @@ type FinanceProductRow = {
  */
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
 
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim();

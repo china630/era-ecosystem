@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { mergePersonRecords } from "@era/satellite-kit";
-import { jsonOk, handleRouteError, jsonError, getRouteSession } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import {
+  jsonOk,
+  handleRouteError,
+  jsonError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { linkPatientGlobalPerson } from "@/lib/patient-identity";
 
 const schema = z.object({
@@ -15,10 +21,10 @@ const schema = z.object({
 /** Ops: foreigner received FIN — merge MDM records and re-link patient. */
 export async function POST(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
-    if (guard.error) return guard.error;
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_MDM);
+    if (denied) return denied;
+
     const body = schema.parse(await req.json());
     const merged = await mergePersonRecords(body.sourcePersonId, body.targetPersonId);
     if (!merged.globalPersonId) {

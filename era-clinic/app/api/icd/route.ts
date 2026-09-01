@@ -1,4 +1,11 @@
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   getTenantIcdFavorites,
   listIcdChapters,
@@ -8,8 +15,10 @@ import {
 export async function GET(request: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const url = new URL(request.url);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_ICD_READ);
+    if (denied) return denied;
+
+        const url = new URL(request.url);
     const q = url.searchParams.get("q") ?? "";
     const chapter = url.searchParams.get("chapter") ?? "";
     const locale = url.searchParams.get("locale") ?? "en";

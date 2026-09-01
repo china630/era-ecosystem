@@ -8,8 +8,8 @@ import {
   redirectNoStore,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
-import { hasClinicAdminAccess } from "@/lib/auth/clinic-admin-access";
-import { sessionHasClinicRole, CLINIC_ROLE } from "@/lib/clinic-roles";
+import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
+import { routePermission } from "@/lib/auth/clinic-permissions";
 import {
   parsePresetsCookie,
   pathnameRequiresPreset,
@@ -100,35 +100,22 @@ export async function middleware(request: NextRequest) {
   }
   try {
     const session = await verifySatelliteSession(token);
-    if (pathname === "/doctor" || pathname.startsWith("/doctor/")) {
-      // DOCTOR workspace; SatAdmin / BUSINESS_OWNER may open for oversight (same as /admin gate).
-      const doctorOk =
-        sessionHasClinicRole(session.role, [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.CLINIC_ADMIN]) ||
-        hasClinicAdminAccess(session);
-      if (!doctorOk) {
-        return roleGuardResponse(request, reqHeaders);
-      }
-    }
-    if (pathname === "/nurse" || pathname.startsWith("/nurse/")) {
-      const nurseOk =
-        sessionHasClinicRole(session.role, [CLINIC_ROLE.NURSE, CLINIC_ROLE.CLINIC_ADMIN]) ||
-        hasClinicAdminAccess(session);
-      if (!nurseOk) {
-        return roleGuardResponse(request, reqHeaders);
-      }
-    }
-    if (pathname.startsWith("/sanatorium/nurse-roster")) {
-      const rosterOk =
-        sessionHasClinicRole(session.role, [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.CLINIC_ADMIN]) ||
-        hasClinicAdminAccess(session);
-      if (!rosterOk) {
-        return roleGuardResponse(request, reqHeaders);
-      }
-    }
-    if (pathname.startsWith("/admin")) {
-      if (!hasClinicAdminAccess(session)) {
-        return roleGuardResponse(request, reqHeaders);
-      }
+    const required = routePermission(pathname);
+    if (
+      required &&
+      !sessionHasClinicPermission(
+        {
+          role: session.role,
+          roles: session.roles,
+          permissions: session.permissions,
+          login: session.login,
+          email: session.email,
+          isOwner: session.isOwner,
+        },
+        required,
+      )
+    ) {
+      return roleGuardResponse(request, reqHeaders);
     }
     const requiredPreset = pathnameRequiresPreset(pathname);
     if (requiredPreset) {

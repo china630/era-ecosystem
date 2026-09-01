@@ -3,14 +3,18 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
+  requireClinicPermission,
 } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { listDiagnosisReport } from "@/domain/icd/diagnosis-report.service";
 
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const url = new URL(req.url);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_REPORTS_DIAGNOSES);
+    if (denied) return denied;
+
+        const url = new URL(req.url);
     const from = url.searchParams.get("from") ?? "";
     const to = url.searchParams.get("to") ?? "";
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {

@@ -18,6 +18,7 @@ import {
   countRemainingInHouseOnDoor,
   isEffectiveShare,
   reservationIsOta,
+  resolveDoorAssignment,
   roomStatusAllowedForShareAssign,
   syncShareGenderFromGuest,
   validateShareCandidate,
@@ -186,19 +187,41 @@ export async function createReservation(input: {
     if (!room) throw new Error('Room not found');
     assertRoomInventoryAvailable(room);
     if (room.roomTypeId !== input.roomTypeId) throw new Error('Room does not match room type');
-    const candidate = {
-      shareEligible,
-      shareGender,
-      adults: input.adults ?? 1,
-    };
-    const { shareBedIndex: bedIdx, joiningPool } = await assertRoomShareAssignable({
+    let agencyOta = false;
+    if (agencyId) {
+      const agencyForOta = await prisma.agency.findUnique({ where: { id: agencyId } });
+      agencyOta = Boolean(
+        agencyForOta &&
+          (await import('@/lib/booking-source-kind')).isOtaAgency(
+            agencyForOta.code,
+            agencyForOta.name,
+          ),
+      );
+    }
+    const door = await resolveDoorAssignment({
       roomId: input.roomId,
       checkIn: input.checkInDate,
       checkOut: input.checkOutDate,
-      candidate,
+      candidate: {
+        shareEligible,
+        shareGender,
+        adults: input.adults ?? 1,
+        isOta: agencyOta,
+        guestGender: guestMaster.gender,
+      },
     });
-    shareBedIndex = bedIdx;
-    if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
+    if (door.autoShare) {
+      shareEligible = true;
+      shareGender = door.shareGender;
+      await assertShareInventory(input.roomTypeId, input.checkInDate, input.checkOutDate, {
+        shareEligible: true,
+        shareGender,
+        adults: input.adults ?? 1,
+        roomId: input.roomId,
+      });
+    }
+    shareBedIndex = door.shareBedIndex;
+    if (!roomStatusAllowedForShareAssign(room, door.joiningPool)) {
       throw new Error('Room is not available for booking');
     }
   }
@@ -358,19 +381,20 @@ export async function assignRoom(reservationId: string, roomId: string) {
     if (!allowed.ok) throw new Error(allowed.error);
   }
 
-  const candidate = {
-    shareEligible: reservation.shareEligible,
-    shareGender: reservation.shareGender ?? reservation.guest.gender,
-    adults: reservation.adults,
-    isOta: await reservationIsOta(reservationId),
-  };
-  const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
-    roomId,
-    checkIn: reservation.checkInDate,
-    checkOut: reservation.checkOutDate,
-    excludeReservationId: reservationId,
-    candidate,
-  });
+  const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
+    await assertRoomShareAssignable({
+      roomId,
+      checkIn: reservation.checkInDate,
+      checkOut: reservation.checkOutDate,
+      excludeReservationId: reservationId,
+      candidate: {
+        shareEligible: reservation.shareEligible,
+        shareGender: reservation.shareGender ?? reservation.guest.gender,
+        adults: reservation.adults,
+        isOta: await reservationIsOta(reservationId),
+        guestGender: reservation.guest.gender,
+      },
+    });
   if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
     throw new Error(
       `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
@@ -384,6 +408,9 @@ export async function assignRoom(reservationId: string, roomId: string) {
     data: {
       roomId,
       shareBedIndex,
+      ...(autoShare || resolvedShare
+        ? { shareEligible: true, shareGender: resolvedGender ?? reservation.shareGender }
+        : {}),
       ...(otherType ? { givenRoomTypeId: room.roomTypeId } : {}),
     },
     include: { room: true, guest: true, roomType: true, ratePlan: true },
@@ -688,34 +715,21 @@ export async function assertRoomFree(
     shareGender: string | null;
     adults: number;
     isOta?: boolean;
+    guestGender?: string | null;
   },
 ) {
-  if (candidate?.shareEligible && isEffectiveShare(candidate)) {
-    await assertRoomShareAssignable({
-      roomId,
-      checkIn,
-      checkOut,
-      excludeReservationId,
-      candidate,
-    });
-    return;
-  }
-
-  const conflict = await prisma.reservation.findFirst({
-    where: {
-      roomId,
-      ...(excludeReservationId ? { id: { not: excludeReservationId } } : {}),
-      status: { in: [...SCHEDULABLE_STATUSES] },
-      checkInDate: { lt: checkOut },
-      checkOutDate: { gt: checkIn },
+  /** @deprecated Prefer resolveDoorAssignment directly; kept for external callers. */
+  await resolveDoorAssignment({
+    roomId,
+    checkIn,
+    checkOut,
+    excludeReservationId,
+    candidate: candidate ?? {
+      shareEligible: false,
+      shareGender: null,
+      adults: 1,
     },
-    include: { guest: true },
   });
-  if (conflict) {
-    throw new Error(
-      `Room conflict: ${conflict.guest.fullName} (${conflict.checkInDate.toISOString().slice(0, 10)} – ${conflict.checkOutDate.toISOString().slice(0, 10)})`,
-    );
-  }
 }
 
 export async function updateReservationSchedule(
@@ -777,21 +791,23 @@ export async function updateReservationSchedule(
       shareGender: reservation.shareGender,
       adults: reservation.adults,
       isOta: await reservationIsOta(id),
+      guestGender: reservation.guest.gender,
     };
-    const { shareBedIndex, joiningPool } = await assertRoomShareAssignable({
-      roomId: newRoomId,
-      checkIn: newCheckIn,
-      checkOut: newCheckOut,
-      excludeReservationId: id,
-      candidate,
-    });
+    const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
+      await assertRoomShareAssignable({
+        roomId: newRoomId,
+        checkIn: newCheckIn,
+        checkOut: newCheckOut,
+        excludeReservationId: id,
+        candidate,
+      });
     if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
     await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {
       id,
-      shareEligible: reservation.shareEligible,
-      shareGender: reservation.shareGender,
+      shareEligible: autoShare || resolvedShare ? true : reservation.shareEligible,
+      shareGender: autoShare ? resolvedGender : reservation.shareGender,
       adults: reservation.adults,
       roomId: newRoomId,
     });
@@ -802,6 +818,7 @@ export async function updateReservationSchedule(
         checkOutDate: newCheckOut,
         roomId: newRoomId,
         shareBedIndex,
+        ...(autoShare ? { shareEligible: true, shareGender: resolvedGender } : {}),
         totalAmount,
       },
       include: { room: true, guest: true, ratePlan: true, roomType: true },

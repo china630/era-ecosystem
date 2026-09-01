@@ -1,11 +1,12 @@
 import { z } from "zod";
 import {
   getRouteSession,
-  hasClinicAdminRole,
   jsonOk,
   jsonError,
   handleRouteError,
+  requireClinicPermission,
 } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
@@ -21,9 +22,8 @@ export async function POST(
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    if (!hasClinicAdminRole(session)) {
-      return jsonError("CLINIC_ADMIN or BUSINESS_OWNER required", 403);
-    }
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
+    if (denied) return denied;
 
     const { id } = await params;
     const body = bodySchema.parse(await req.json());

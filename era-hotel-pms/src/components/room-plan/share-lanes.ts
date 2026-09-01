@@ -1,4 +1,4 @@
-import { hotelDateKey, parseHotelNoon, addHotelDays } from '@/lib/hotel-calendar';
+import { hotelDateKey, parseHotelNoon, addHotelDays, reservationStayOverlaps } from '@/lib/hotel-calendar';
 import type { RoomPlanReservationBar } from './types';
 import { calendarDateKey, parseCalendarDate } from './shapes';
 
@@ -20,11 +20,16 @@ function isEffectiveShare(b: ShareLaneInput): boolean {
 }
 
 function stayOverlaps(a: ShareLaneInput, b: ShareLaneInput): boolean {
-  const aCi = parseCalendarDate(a.checkInDate).getTime();
-  const aCo = parseCalendarDate(a.checkOutDate).getTime();
-  const bCi = parseCalendarDate(b.checkInDate).getTime();
-  const bCo = parseCalendarDate(b.checkOutDate).getTime();
-  return aCi < bCo && bCi < aCo;
+  return reservationStayOverlaps(
+    {
+      checkInDate: parseCalendarDate(a.checkInDate),
+      checkOutDate: parseCalendarDate(a.checkOutDate),
+    },
+    {
+      checkInDate: parseCalendarDate(b.checkInDate),
+      checkOutDate: parseCalendarDate(b.checkOutDate),
+    },
+  );
 }
 
 /**

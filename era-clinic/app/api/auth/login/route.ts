@@ -9,6 +9,7 @@ import {
 } from "@era/satellite-kit";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { permissionsForUser } from "@/lib/auth/clinic-permission.service";
 import { getEnabledPresets } from "@/domain/settings/settings.service";
 import {
   PRESETS_COOKIE,
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     const organizationId = user.organizationId;
     enterSatelliteTenant({ organizationId });
 
+    const permissions = await permissionsForUser(user.id);
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.login,
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
       role: user.role.code,
       fullName: user.fullName,
       organizationId,
+      permissions,
     });
     const enabledPresets = await getEnabledPresets();
     const res = jsonOk({

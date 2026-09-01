@@ -1,4 +1,11 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { dischargeAdmission } from "@/domain/inpatient/adt.service";
 import { prisma } from "@/lib/prisma";
 
@@ -7,6 +14,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
+    if (denied) return denied;
+
     const { id } = await params;
     const assignment = await prisma.bedAssignment.findUnique({
       where: { id },

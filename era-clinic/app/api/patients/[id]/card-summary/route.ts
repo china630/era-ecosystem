@@ -1,4 +1,11 @@
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  jsonError,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { getPatientCardSummary } from "@/domain/patient/patient-card.service";
 import { prisma } from "@/lib/prisma";
 
@@ -8,8 +15,10 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const exists = await prisma.patientRef.findUnique({
       where: { id },
       select: { id: true },
