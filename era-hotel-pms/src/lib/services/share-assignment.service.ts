@@ -2,8 +2,9 @@ import { prisma } from '@/lib/prisma';
 import { isOtaAgency } from '@/lib/booking-source-kind';
 import { hotelDateKey, parseHotelNoon, reservationStayOverlaps } from '@/lib/hotel-calendar';
 import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
+import type { ReservationStatus } from '@prisma/client';
 
-export const SCHEDULABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
+export const SCHEDULABLE_STATUSES: ReservationStatus[] = ['CONFIRMED', 'IN_HOUSE', 'OPTION'];
 
 export type ShareGender = 'M' | 'F';
 
@@ -117,7 +118,7 @@ async function loadDoorOverlaps(input: {
   checkIn: Date;
   checkOut: Date;
   excludeReservationId?: string;
-  statuses?: readonly string[];
+  statuses?: readonly ReservationStatus[];
 }): Promise<DoorOverlapRow[]> {
   const statuses = input.statuses ?? SCHEDULABLE_STATUSES;
   const rows = await prisma.reservation.findMany({
