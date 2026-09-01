@@ -478,6 +478,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-01 | Hotel middleware UTF-8-encodes `x-user-login` / `x-user-fullname` so Cyrillic/Azerbaijani staff names do not crash Edge `Headers#set`. |
 | 2026-09-01 | CP-WF-EMP-01: Login & access copy org ID + Open satellite `/login?organizationId=`; hotel staff-provision ensure Role; clinic card/import polish + kit login formExtras after password. Status API where previously API. |
 | 2026-09-01 | HOT-FO-03: room plan N lanes without overlay + per-night vacated-bed reuse; HOT-06 overlay inject into EW app windows. Status API / HEADLESS — not SHIPPED. |
 | 2026-09-01 | CP-WF-EMP-01: employments ⋯ Login & access (`emp-{staffCode}` + satellite roles, PIN 0000). Status API — not SHIPPED. |

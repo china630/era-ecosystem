@@ -28,6 +28,8 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 | reception | reception123 | Receptionist |
 | manager | manager123 | Manager |
 
+Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API calls must not 500 (`Headers#set` ByteString). Middleware encodes `x-user-login` / `x-user-fullname` as `utf8:…`.
+
 ## 1. Auth & navigation
 
 1. Open `/login`, sign in as `reception` / `reception123`.

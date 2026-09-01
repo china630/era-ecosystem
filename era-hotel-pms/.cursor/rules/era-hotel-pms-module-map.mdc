@@ -31,6 +31,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 
 | Route | API | Role |
 |-------|-----|------|
+| Staff `/login` | `POST /api/auth/login`; middleware sets `x-user-*` | UTF-8 `fullName`/`login` encoded for Edge Headers (`session-header-utf8.ts`) |
 | /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
 | /fo/reservations | reservations grid | Stay list / arrivals |
 | /fo/rack | rack | Door tiles |
