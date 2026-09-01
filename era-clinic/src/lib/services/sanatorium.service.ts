@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
-import { getPersonOpsProfile, normalizePersonSex, parsePersonBirthDate } from '@era/satellite-kit';
+import { getPersonOpsProfile, normalizePersonSex, parsePersonBirthDate, splitFullNameToParts } from '@era/satellite-kit';
 import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
 import {
   assertLabOrderCanCreate,
@@ -10,6 +10,7 @@ import {
 } from '@/domain/lab/lab-order-conflict.service';
 import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
 import { composeFullName } from '@/domain/patient/patient-ref-code';
+import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
@@ -54,12 +55,35 @@ async function applyMdmDemographicsCache(
     sex === "MALE" || sex === "FEMALE"
       ? sex
       : undefined;
+  const namePatch: {
+    firstName?: string;
+    middleName?: string | null;
+    lastName?: string;
+    fullName?: string;
+  } = {};
+  if (profile.firstName?.trim() && !patient.firstName?.trim()) {
+    namePatch.firstName = profile.firstName.trim();
+  }
+  if (profile.middleName?.trim() && !patient.middleName?.trim()) {
+    namePatch.middleName = profile.middleName.trim();
+  }
+  if (profile.lastName?.trim() && !patient.lastName?.trim()) {
+    namePatch.lastName = profile.lastName.trim();
+  }
+  if (Object.keys(namePatch).length > 0) {
+    namePatch.fullName = composeFullName({
+      firstName: namePatch.firstName ?? patient.firstName,
+      middleName: namePatch.middleName ?? patient.middleName,
+      lastName: namePatch.lastName ?? patient.lastName,
+    });
+  }
   await prisma.patientRef.update({
     where: { id: patientId },
     data: {
       ...(nextSex && patient.sex === "UNKNOWN" ? { sex: nextSex } : {}),
       ...(!patient.birthDate && birthDate ? { birthDate } : {}),
       globalPersonId: globalPersonId.trim(),
+      ...namePatch,
     },
   });
 }
@@ -103,19 +127,20 @@ export async function openEpisodeFromStay(input: {
   if (!patient) {
     patient = await prisma.$transaction(async (tx) => {
       const refCode = await allocatePatientRefCode(tx, input.organizationId);
-      const parts = input.guestName.trim().split(/\s+/);
-      const givenName = parts[0] ?? input.guestName;
-      const surname = parts.length > 1 ? parts[parts.length - 1]! : "";
-      const fatherName =
-        parts.length > 2 ? parts.slice(1, -1).join(" ") : null;
+      const parts = splitFullNameToParts(input.guestName);
+      const firstName = parts.firstName ?? input.guestName;
+      const lastName = parts.lastName ?? "";
+      const middleName = parts.middleName;
+      const fullName =
+        composeFullName({ firstName, lastName, middleName }) || input.guestName.trim();
       return tx.patientRef.create({
         data: {
           organizationId: input.organizationId,
           refCode,
-          givenName,
-          surname,
-          fatherName,
-          fullName: input.guestName,
+          firstName,
+          lastName,
+          middleName,
+          fullName,
           phone: input.phone ?? null,
           globalPersonId: input.globalPersonId ?? null,
         },
@@ -178,9 +203,9 @@ export async function openEpisodeFromStay(input: {
 
 export async function registerWalkInEpisode(input: {
   organizationId: string;
-  givenName?: string;
-  surname?: string;
-  fatherName?: string | null;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
   fullName: string;
   fin?: string;
   passport?: string;
@@ -196,19 +221,21 @@ export async function registerWalkInEpisode(input: {
   if (!key) throw new Error("FIN or passport required");
   const legacyRef = walkInLegacyRefCode(key);
 
-  const givenName = (input.givenName ?? input.fullName.split(/\s+/)[0] ?? "").trim();
-  const surname = (
-    input.surname ??
+  const split = splitFullNameToParts(input.fullName);
+  const firstName = (input.firstName ?? split.firstName ?? input.fullName.split(/\s+/)[0] ?? "").trim();
+  const lastName = (
+    input.lastName ??
+    split.lastName ??
     input.fullName.trim().split(/\s+/).slice(-1)[0] ??
     ""
   ).trim();
-  const fatherName =
-    input.fatherName !== undefined
-      ? input.fatherName?.trim() || null
-      : null;
+  const middleName =
+    input.middleName !== undefined
+      ? input.middleName?.trim() || null
+      : split.middleName;
   const fullName =
     input.fullName.trim() ||
-    composeFullName({ givenName, surname, fatherName });
+    composeFullName({ firstName, lastName, middleName });
 
   let patient = await prisma.patientRef.findFirst({
     where: {
@@ -235,9 +262,9 @@ export async function registerWalkInEpisode(input: {
         data: {
           organizationId: input.organizationId,
           refCode,
-          givenName: givenName || fullName,
-          surname,
-          fatherName,
+          firstName: firstName || fullName,
+          lastName,
+          middleName,
           fullName,
           phone: input.phone ?? null,
           nationality: input.nationality?.trim() || null,
@@ -251,9 +278,9 @@ export async function registerWalkInEpisode(input: {
     patient = await prisma.patientRef.update({
       where: { id: patient.id },
       data: {
-        givenName: givenName || patient.givenName,
-        surname: surname || patient.surname,
-        ...(fatherName !== undefined ? { fatherName } : {}),
+        firstName: firstName || patient.firstName,
+        lastName: lastName || patient.lastName,
+        ...(middleName !== undefined ? { middleName } : {}),
         fullName,
         ...(input.phone !== undefined ? { phone: input.phone || null } : {}),
         ...(input.nationality?.trim() ? { nationality: input.nationality.trim() } : {}),
@@ -278,7 +305,10 @@ export async function registerWalkInEpisode(input: {
   const globalPersonId = await linkPatientGlobalPerson({
     patientRefId: patient.id,
     fin: input.fin,
-    fullName: input.fullName,
+    firstName,
+    middleName: middleName ?? undefined,
+    lastName,
+    fullName,
     phone: input.phone,
     passport: input.passport,
     issuingCountry: input.issuingCountry,
@@ -358,11 +388,31 @@ export async function listOpenEpisodes(input?: {
   programCode?: string;
   includeHotelRooms?: boolean;
   includeProgramCodes?: boolean;
+  /** Layer-2 data scope (omit / ALL = no row filter). */
+  dataScope?: { mode: "ALL" | "ASSIGNED"; practitionerId: string | null };
 }) {
   const page = input?.page ?? 1;
   const pageSize = input?.pageSize ?? 25;
   const roomNumber = input?.roomNumber?.trim();
   const programCode = input?.programCode?.trim();
+
+  if (
+    input?.dataScope?.mode === "ASSIGNED" &&
+    !input.dataScope.practitionerId
+  ) {
+    return {
+      data: [],
+      total: 0,
+      page,
+      pageSize,
+    };
+  }
+
+  const scopeFilter =
+    input?.dataScope?.mode === "ASSIGNED" && input.dataScope.practitionerId
+      ? episodeAssignedToPractitionerWhere(input.dataScope.practitionerId)
+      : undefined;
+
   const where = {
     status: 'OPEN' as const,
     ...(input?.organizationId ? { organizationId: input.organizationId } : {}),
@@ -383,6 +433,7 @@ export async function listOpenEpisodes(input?: {
           ],
         }
       : {}),
+    ...(scopeFilter ? { AND: [scopeFilter] } : {}),
   };
 
   const { listHotelRoomNumbers, listProgramCodes } = await import(

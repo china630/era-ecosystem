@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { assertLabOrderDataScope } from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 import { readStoredLabFile } from "@/lib/import/lab-import-files";
 
@@ -30,10 +31,13 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS_FILE);
     if (denied) return denied;
 
     const { id } = await params;
+    const scopeDenied = await assertLabOrderDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const order = await prisma.labOrder.findUnique({
       where: { id },
       select: { id: true, resultJson: true },

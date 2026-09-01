@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   CHIP_GROUP_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
@@ -25,10 +24,9 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
-  useDebouncedValue,
+  EraListWorkspace,
   FIELD_SECTION_BODY_CLASS,
   FIELD_SECTION_CLASS,
   Field,
@@ -37,6 +35,7 @@ import {
   FieldTextarea,
   FORM_STACK_CLASS,
   inferCatalogFieldKind,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   LINK_ACCENT_CLASS,
   LOCALE_TOGGLE_ACTIVE_CLASS,
@@ -51,6 +50,7 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
@@ -58,6 +58,13 @@ import { IcdPicker } from "@/components/IcdPicker";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
+
+type EpisodeListFilters = {
+  q: string;
+  origin: string;
+  room: string;
+  program: string;
+};
 
 type ProcedureLine = {
   procedureCode: string;
@@ -130,9 +137,9 @@ type ProgramTemplate = {
 };
 
 type WalkInForm = {
-  givenName: string;
-  surname: string;
-  fatherName: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
   fin: string;
   passport: string;
   phone: string;
@@ -143,9 +150,9 @@ type WalkInForm = {
 };
 
 const emptyWalkIn = (): WalkInForm => ({
-  givenName: "",
-  surname: "",
-  fatherName: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
   fin: "",
   passport: "",
   phone: "",
@@ -172,11 +179,6 @@ export default function SanatoriumPage() {
   const tc = useTranslations("common");
   const tp = useTranslations("patients");
   const locale = useLocale();
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [listTotal, setListTotal] = useState(0);
-  const [listPage, setListPage] = useState(1);
-  const [listPageSize, setListPageSize] = useState(25);
-  const [listLoading, setListLoading] = useState(false);
   const [procedureTypeNames, setProcedureTypeNames] = useState<Map<string, string>>(new Map());
   const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
@@ -207,7 +209,6 @@ export default function SanatoriumPage() {
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
-  const debouncedQ = useDebouncedValue(q, 300);
   const [filterOrigin, setFilterOrigin] = useState("");
   const [filterRoom, setFilterRoom] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
@@ -223,36 +224,62 @@ export default function SanatoriumPage() {
   const [labRepeatOpen, setLabRepeatOpen] = useState(false);
   const [pendingLabCode, setPendingLabCode] = useState("");
 
-  const loadList = useCallback(async () => {
-    setListLoading(true);
-    try {
+  const listFilters = useMemo<EpisodeListFilters>(
+    () => ({
+      q,
+      origin: filterOrigin,
+      room: filterRoom,
+      program: filterProgram,
+    }),
+    [q, filterOrigin, filterRoom, filterProgram],
+  );
+
+  const listFetcher = useCallback(
+    async ({
+      page,
+      pageSize,
+      filters: f,
+    }: {
+      page: number;
+      pageSize: number;
+      filters: EpisodeListFilters;
+    }) => {
       const params = new URLSearchParams({
-        page: String(listPage),
-        pageSize: String(listPageSize),
+        page: String(page),
+        pageSize: String(pageSize),
         includeHotelRooms: "1",
         includeProgramCodes: "1",
       });
-      if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
-      if (filterOrigin) params.set("origin", filterOrigin);
-      if (filterRoom.trim()) params.set("roomNumber", filterRoom.trim());
-      if (filterProgram.trim()) params.set("programCode", filterProgram.trim());
+      if (f.q.trim()) params.set("q", f.q.trim());
+      if (f.origin) params.set("origin", f.origin);
+      if (f.room.trim()) params.set("roomNumber", f.room.trim());
+      if (f.program.trim()) params.set("programCode", f.program.trim());
       const res = await fetch(`/api/sanatorium/episodes?${params}`);
+      if (!res.ok) throw new Error("Failed to load episodes");
       const data = await res.json();
       const payload = data.data ?? data;
-      if (Array.isArray(payload)) {
-        setEpisodes(payload);
-        setListTotal(payload.length);
-      } else {
-        setEpisodes(Array.isArray(payload.data) ? payload.data : []);
-        setListTotal(typeof payload.total === "number" ? payload.total : 0);
-        // Do not echo page/pageSize from API — avoids race that snaps the pager back.
+      if (!Array.isArray(payload)) {
         if (Array.isArray(payload.hotelRooms)) setHotelRooms(payload.hotelRooms);
         if (Array.isArray(payload.programCodes)) setProgramCodes(payload.programCodes);
       }
-    } finally {
-      setListLoading(false);
-    }
-  }, [listPage, listPageSize, debouncedQ, filterOrigin, filterRoom, filterProgram]);
+      return data;
+    },
+    [],
+  );
+
+  const {
+    items: episodes,
+    total: listTotal,
+    page: listPage,
+    pageSize: listPageSize,
+    setPage: setListPage,
+    setPageSize: setListPageSize,
+    loading: listLoading,
+    reload: loadList,
+  } = usePaginatedList<Episode, EpisodeListFilters>({
+    fetcher: listFetcher,
+    filters: listFilters,
+  });
 
   const loadDetail = useCallback(async (episodeId: string) => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`);
@@ -311,10 +338,6 @@ export default function SanatoriumPage() {
     // Wave C: default-select first 2–3 for day-1 confirm
     setSelectedProposed(new Set(proposed.slice(0, 3).map((o) => o.id)));
   }, []);
-
-  useEffect(() => {
-    void loadList();
-  }, [loadList]);
 
   useEffect(() => {
     void fetch("/api/procedure-types")
@@ -380,10 +403,6 @@ export default function SanatoriumPage() {
   const selected = episodeDetail?.id === selectedId
     ? episodeDetail
     : episodes.find((e) => e.id === selectedId) ?? null;
-
-  useEffect(() => {
-    setListPage(1);
-  }, [debouncedQ, filterOrigin, filterRoom, filterProgram, listPageSize]);
 
   function statusLabel(status: string): string {
     switch (status) {
@@ -537,7 +556,7 @@ export default function SanatoriumPage() {
   }
 
   function validateWalkIn(): string | null {
-    if (!walkIn.givenName.trim() || !walkIn.surname.trim()) return tp("namePartsRequired");
+    if (!walkIn.firstName.trim() || !walkIn.lastName.trim()) return tp("namePartsRequired");
     if (!walkIn.sex) return t("sexRequired");
     if (!walkIn.fin.trim() && !walkIn.passport.trim()) return t("finOrPassportRequired");
     return null;
@@ -550,17 +569,17 @@ export default function SanatoriumPage() {
       return;
     }
     setBusy(true);
-    const givenName = walkIn.givenName.trim();
-    const surname = walkIn.surname.trim();
-    const fatherName = walkIn.fatherName.trim() || null;
+    const firstName = walkIn.firstName.trim();
+    const lastName = walkIn.lastName.trim();
+    const middleName = walkIn.middleName.trim() || null;
     const res = await fetch("/api/sanatorium/episodes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        givenName,
-        surname,
-        fatherName,
-        fullName: composeFullName({ givenName, surname, fatherName }),
+        firstName,
+        lastName,
+        middleName,
+        fullName: composeFullName({ firstName, lastName, middleName }),
         fin: walkIn.fin.trim() || undefined,
         passport: walkIn.passport.trim() || undefined,
         phone: walkIn.phone.trim() || undefined,
@@ -694,73 +713,77 @@ export default function SanatoriumPage() {
     (selected.complaints.length > 0 || selected.diagnoses.length > 0);
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
-            {t("registerWalkIn")}
-          </button>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
+              {t("registerWalkIn")}
+            </button>
+          }
+        />
+        {msg ? <p className={`mb-3 text-[13px] ${TEXT_SUCCESS_CLASS}`}>{msg}</p> : null}
+      </div>
+
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tc("filterReset")}
+            onReset={() => {
+              setQ("");
+              setFilterOrigin("");
+              setFilterRoom("");
+              setFilterProgram("");
+            }}
+          >
+            <Field
+              label={tc("search")}
+              preset="shortText"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <FieldSelect
+              label={t("filterOrigin")}
+              preset="select"
+              value={filterOrigin}
+              onChange={(e) => setFilterOrigin(e.target.value)}
+            >
+              <option value="">{tc("all")}</option>
+              <option value="IN_HOUSE">{t("originInHouse")}</option>
+              <option value="WALK_IN">{t("originWalkIn")}</option>
+            </FieldSelect>
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("filterHotelRoom")}
+              value={filterRoom}
+              onChange={(v) => setFilterRoom(String(v ?? ""))}
+              options={[
+                { value: "", label: t("filterHotelRoomAll") },
+                ...hotelRooms.map((room) => ({ value: room, label: room })),
+              ]}
+              emptyLabel={t("filterHotelRoomAll")}
+            />
+            <CatalogField
+              kind={inferCatalogFieldKind({
+                optionCount: programCodes.length + 1,
+                searchable: programCodes.length > 12,
+              })}
+              label={t("filterProgramCode")}
+              value={filterProgram}
+              onChange={(v) => setFilterProgram(String(v ?? ""))}
+              options={[
+                { value: "", label: t("filterProgramCodeAll") },
+                ...programCodes.map((code) => ({ value: code, label: code })),
+              ]}
+              emptyLabel={null}
+            />
+          </EraListFilterBar>
         }
-      />
-      {msg ? <p className={`mb-3 text-[13px] ${TEXT_SUCCESS_CLASS}`}>{msg}</p> : null}
-
-      <EraListFilterBar
-        resetLabel={tc("filterReset")}
-        onReset={() => {
-          setQ("");
-          setFilterOrigin("");
-          setFilterRoom("");
-          setFilterProgram("");
-          setListPage(1);
-        }}
-      >
-        <Field
-          label={tc("search")}
-          preset="shortText"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <FieldSelect
-          label={t("filterOrigin")}
-          preset="select"
-          value={filterOrigin}
-          onChange={(e) => setFilterOrigin(e.target.value)}
-        >
-          <option value="">{tc("all")}</option>
-          <option value="IN_HOUSE">{t("originInHouse")}</option>
-          <option value="WALK_IN">{t("originWalkIn")}</option>
-        </FieldSelect>
-        <CatalogField
-          kind="SEARCHABLE"
-          label={t("filterHotelRoom")}
-          value={filterRoom}
-          onChange={(v) => setFilterRoom(String(v ?? ""))}
-          options={[
-            { value: "", label: t("filterHotelRoomAll") },
-            ...hotelRooms.map((room) => ({ value: room, label: room })),
-          ]}
-          emptyLabel={t("filterHotelRoomAll")}
-        />
-        <CatalogField
-          kind={inferCatalogFieldKind({
-            optionCount: programCodes.length + 1,
-            searchable: programCodes.length > 12,
-          })}
-          label={t("filterProgramCode")}
-          value={filterProgram}
-          onChange={(v) => setFilterProgram(String(v ?? ""))}
-          options={[
-            { value: "", label: t("filterProgramCodeAll") },
-            ...programCodes.map((code) => ({ value: code, label: code })),
-          ]}
-          emptyLabel={null}
-        />
-      </EraListFilterBar>
-
-      <div className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -850,24 +873,23 @@ export default function SanatoriumPage() {
               ) : null}
             </tbody>
           </table>
-        </div>
-        <ListPaginationFooter
-          page={listPage}
-          pageSize={listPageSize}
-          total={listTotal}
-          onPageChange={setListPage}
-          onPageSizeChange={(n) => {
-            setListPageSize(n);
-            setListPage(1);
-          }}
-          labels={{
-            rowsPerPage: tc("rowsPerPage"),
-            pageOf: tc("pageOf"),
-            prev: tc("prev"),
-            next: tc("next"),
-          }}
-        />
-      </div>
+        }
+        footer={
+          <ListPaginationFooter
+            page={listPage}
+            pageSize={listPageSize}
+            total={listTotal}
+            onPageChange={setListPage}
+            onPageSizeChange={setListPageSize}
+            labels={{
+              rowsPerPage: tc("rowsPerPage"),
+              pageOf: tc("pageOf"),
+              prev: tc("prev"),
+              next: tc("next"),
+            }}
+          />
+        }
+      />
 
       <ModalShell
         open={chartModalOpen && Boolean(selected)}
@@ -1391,24 +1413,24 @@ export default function SanatoriumPage() {
         <div className={FORM_STACK_CLASS}>
           <FieldRow cols={3}>
             <Field
-              label={tp("givenName")}
+              label={tp("firstName")}
               preset="shortText"
-              value={walkIn.givenName}
-              onChange={(e) => setWalkIn({ ...walkIn, givenName: e.target.value })}
+              value={walkIn.firstName}
+              onChange={(e) => setWalkIn({ ...walkIn, firstName: e.target.value })}
               required
             />
             <Field
-              label={tp("surname")}
+              label={tp("lastName")}
               preset="shortText"
-              value={walkIn.surname}
-              onChange={(e) => setWalkIn({ ...walkIn, surname: e.target.value })}
+              value={walkIn.lastName}
+              onChange={(e) => setWalkIn({ ...walkIn, lastName: e.target.value })}
               required
             />
             <Field
-              label={tp("fatherName")}
+              label={tp("middleName")}
               preset="shortText"
-              value={walkIn.fatherName}
-              onChange={(e) => setWalkIn({ ...walkIn, fatherName: e.target.value })}
+              value={walkIn.middleName}
+              onChange={(e) => setWalkIn({ ...walkIn, middleName: e.target.value })}
             />
           </FieldRow>
           <FieldRow>
@@ -1536,6 +1558,6 @@ export default function SanatoriumPage() {
         open={Boolean(patientCardId)}
         onClose={() => setPatientCardId(null)}
       />
-    </>
+    </div>
   );
 }

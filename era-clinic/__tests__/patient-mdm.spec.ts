@@ -4,6 +4,43 @@ import { patientHasMdmIdentifier } from "@era/clinic-domain";
 jest.mock("@era/satellite-kit", () => ({
   listPersonIdentifiers: jest.fn().mockResolvedValue({ identifiers: [] }),
   linkPersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
+  composePersonFullName: (
+    firstName?: string | null,
+    middleName?: string | null,
+    lastName?: string | null,
+  ) =>
+    [firstName, middleName, lastName]
+      .map((p) => p?.trim())
+      .filter(Boolean)
+      .join(" "),
+  resolveIncomingNameParts: (input: {
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    fullName?: string | null;
+  }) => {
+    const first = input.firstName?.trim() || null;
+    const last = input.lastName?.trim() || null;
+    if (first || last) {
+      return { firstName: first, middleName: input.middleName?.trim() || null, lastName: last };
+    }
+    const blob = input.fullName?.trim();
+    if (!blob) return null;
+    const parts = blob.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return { firstName: parts[0], middleName: null, lastName: null };
+    if (parts.length === 2) {
+      return { firstName: parts[0], middleName: null, lastName: parts[1] };
+    }
+    return {
+      firstName: parts[0],
+      middleName: parts.slice(1, -1).join(" "),
+      lastName: parts[parts.length - 1],
+    };
+  },
+  normalizeNationalityIso: (raw?: string | null) => {
+    const s = raw?.trim().toUpperCase();
+    return s && /^[A-Z]{2}$/.test(s) ? s : null;
+  },
   satelliteOrganizationId: jest.fn().mockReturnValue("test-org"),
   resolveSatelliteTenantOrgId: jest.fn().mockReturnValue("test-org"),
   enterSatelliteTenant: jest.fn(),
@@ -40,6 +77,7 @@ describe("patient MDM enforcement", () => {
   it("requires identifier input", () => {
     expect(patientHasMdmIdentifier({})).toBe(false);
     expect(patientHasMdmIdentifier({ finCode: "ABC1234" })).toBe(true);
+    expect(patientHasMdmIdentifier({ phone: "+994501112233" })).toBe(false);
   });
 
   it("throws PatientMdmRequiredError when MDM unresolved", async () => {
@@ -50,8 +88,8 @@ describe("patient MDM enforcement", () => {
 
     await expect(
       createPatient({
-        givenName: "Test",
-        surname: "Patient",
+        firstName: "Test",
+        lastName: "Patient",
         finCode: "ABC1234",
       }),
     ).rejects.toBeInstanceOf(PatientMdmRequiredError);

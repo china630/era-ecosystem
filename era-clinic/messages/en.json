@@ -87,7 +87,8 @@
       "sanatorium": "Sanatorium",
       "inpatient": "Inpatient",
       "admin": "Administration",
-      "api": "API capabilities"
+      "api": "API capabilities",
+      "scope": "Data scope"
     },
     "permissions": {
       "screen:home": "Home",
@@ -153,7 +154,9 @@
       "api:icd_read": "API — ICD search",
       "api:queue": "API — queue",
       "api:catalog_read": "API — read catalogs",
-      "api:identity_guest_qr": "API — guest QR"
+      "api:identity_guest_qr": "API — guest QR",
+      "scope:episodes_all": "See all episodes (else assigned only)",
+      "scope:lab_orders_all": "See all lab orders (else assigned only)"
     }
   },
   "login": {
@@ -1282,10 +1285,13 @@
     "anamnesisSave": "Save anamnesis",
     "anamnesisCourseMissing": "No care course yet — register walk-in or await hotel check-in",
     "noEpisodes": "No care courses",
+    "firstName": "First name",
+    "middleName": "Middle name",
+    "lastName": "Last name",
     "givenName": "Given name",
     "surname": "Surname",
     "fatherName": "Patronymic",
-    "namePartsRequired": "Given name and surname are required",
+    "namePartsRequired": "First name and last name are required",
     "sexShortMale": "M",
     "sexShortFemale": "F",
     "issuingCountryPassport": "Issuing country (passport)",

@@ -18,7 +18,7 @@
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-CLI-MD | Master data (practitioners, rooms, resources, procedure types) | ✅ | [ ] | `__tests__/cli-md-negative.spec.ts` + CLI-01..04,30,36,38 | Negative: module gate; inactive practitioner / catalog |
 | AC-CLI-OPS | Appointments + day-ops + reception queue | ✅ | [ ] | `__tests__/cli-ops-negative.spec.ts` + CLI-05,14,26,29 | Negative: module gate 403; cancel COMPLETED; reschedule deny |
-| AC-CLI-PT | Patients / clinical card / demographics | ✅ | [ ] | `__tests__/cli-pt-negative.spec.ts` + CLI-06,25,28,40 | Negative: module gate; MDM identifier; visit diagnoses CLI-40; card ICD without open episode. Anamnesis gate moved to episode (CLI-55) — demographics PATCH no longer requires it |
+| AC-CLI-PT | Patients / clinical card / demographics | ✅ | [ ] | `__tests__/cli-pt-negative.spec.ts` + CLI-06,25,28,40 | Negative: module gate; MDM identifier (FIN or passport+country, not phone); name parts to MDM; visit diagnoses CLI-40; card ICD without open episode. Anamnesis gate moved to episode (CLI-55) — demographics PATCH no longer requires it |
 | AC-CLI-LAB | Lab orders ops + diagnostic catalog | ✅ | [ ] | `__tests__/cli-lab-negative.spec.ts` + CLI-11,12,32 | **Ops only** — illegal publish / collect / complete; not live HL7 |
 | AC-CLI-SAN | Sanatorium chart + doctor-confirm FIFO | ✅ | [ ] | `__tests__/cli-san-negative.spec.ts` + CLI-13,31,38,39 | Negative: FIFO skip → 409; module gate; ICD empty/chapter reject (`__tests__/icd10-catalog.spec.ts`) |
 | AC-CLI-SAN-PKG | Staff assign 4 Nafta SKUs + episode without hotel program (Wave A) | 🟡 | [ ] | `cli-san-negative` unknown template; CLI-50 | **Out of AC-CLI-SAN rollup** — dual-run assign; do not flip SAN |

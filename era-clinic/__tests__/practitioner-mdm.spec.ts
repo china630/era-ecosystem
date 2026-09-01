@@ -4,9 +4,10 @@ import {
   resolvePractitionerGlobalPerson,
 } from "@/lib/practitioner-identity";
 
-jest.mock("@era/satellite-kit", () => ({
-  linkPersonIdentity: jest.fn(),
-}));
+jest.mock("@era/satellite-kit", () => {
+  const actual = jest.requireActual("./mocks/satellite-kit");
+  return actual;
+});
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {

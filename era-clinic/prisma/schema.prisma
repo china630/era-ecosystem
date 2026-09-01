@@ -228,7 +228,6 @@ enum LisFileFormat {
 enum PatientSex {
   MALE
   FEMALE
-  OTHER
   UNKNOWN
 }
 
@@ -262,10 +261,10 @@ model PatientRef {
   id                      String             @id @default(cuid())
   organizationId String @map("organization_id")
   refCode                 String
-  /// Ops display parts (Ad / Soyad / Ata adı). fullName is denormalized for search.
-  givenName               String             @default("") @map("given_name")
-  surname                 String             @default("") @map("surname")
-  fatherName              String?            @map("father_name")
+  /// Ops display parts (Ad / Ata adı / Soyad). fullName is denormalized for search.
+  firstName               String             @default("") @map("given_name")
+  lastName                String             @default("") @map("surname")
+  middleName              String?            @map("father_name")
   fullName                String
   phone                   String?
   nationality             String?
@@ -318,6 +317,9 @@ model Practitioner {
   organizationId String @map("organization_id")
   code               String
   fullName           String
+  firstName          String?           @map("first_name")
+  middleName         String?           @map("middle_name")
+  lastName           String?           @map("last_name")
   specialty          String?
   /// Clinical staff class — doctors vs procedure nurses vs lab techs.
   staffKind          PractitionerStaffKind @default(DOCTOR) @map("staff_kind")
