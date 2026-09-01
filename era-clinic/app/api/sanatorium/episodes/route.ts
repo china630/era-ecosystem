@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { listOpenEpisodes, registerWalkInEpisode } from "@/lib/services/sanatorium.service";
 
 const listQuerySchema = z.object({
@@ -40,6 +46,12 @@ const walkInSchema = z
 
 export async function GET(req: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+    );
+    if (denied) return denied;
     const url = new URL(req.url);
     const query = listQuerySchema.parse({
       organizationId: url.searchParams.get("organizationId") ?? undefined,
@@ -61,6 +73,12 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
+    );
+    if (denied) return denied;
     const body = walkInSchema.parse(await req.json());
     let boundOrg: string | undefined;
     try {

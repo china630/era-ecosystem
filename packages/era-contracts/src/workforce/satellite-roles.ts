@@ -4,6 +4,16 @@ export const SATELLITE_KEY_CLINIC = "industry_clinic" as const;
 export const SATELLITE_KEY_HOTEL = "industry_hotel_pms" as const;
 export const SATELLITE_KEY_FNB = "industry_fnb_pos" as const;
 
+/** Operational industry satellites wired through CP Workforce role matrix / grants. */
+export const WORKFORCE_OPERATIONAL_SATELLITE_KEYS = [
+  SATELLITE_KEY_CLINIC,
+  SATELLITE_KEY_HOTEL,
+  SATELLITE_KEY_FNB,
+] as const;
+
+export type WorkforceOperationalSatelliteKey =
+  (typeof WORKFORCE_OPERATIONAL_SATELLITE_KEYS)[number];
+
 export const clinicSatelliteRoleSchema = z.enum([
   "DOCTOR",
   "NURSE",

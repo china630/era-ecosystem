@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
 
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 
 import { listPractitioners } from "@/lib/services/clinic-master-data.service";
 
@@ -22,9 +22,9 @@ export async function GET(req: Request) {
 }
 
 /** v3 clean cutover — practitioner hire only via CP Workforce (Plan E). */
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
 
     return jsonError(

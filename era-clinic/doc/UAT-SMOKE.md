@@ -172,6 +172,19 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 4. Local login as provisioned ops user → `/appointments` accessible per role.
 5. (Optional) Security Admin manual grant **CLINIC_ADMIN** → admin routes; revoke → admin blocked, doctor OK.
 
+## Role access matrix (CLI-RBAC-01 / Variant A)
+
+1. Sign in as **CLINIC_ADMIN** → **`/admin/access`** opens; matrix lists roles and permission groups.
+2. Save or Reset → session refresh toast; **this** admin session JWT updates without re-login. Other logged-in users still need re-login for **page** middleware.
+3. **RECEPTION** role — uncheck `screen:sanatorium.nurse_roster`, save; re-login as reception user → nurse roster nav hidden and `/sanatorium/nurse-roster` redirects forbidden.
+4. **DOCTOR** role — uncheck `screen:sanatorium.resources`, save; re-login as doctor → resource matrix hidden; sanatorium list still visible if `screen:sanatorium` checked.
+5. **Reset to defaults** on RECEPTION → sanatorium split matches seed (reception: resources yes, nurse roster no).
+6. `PATCH /api/admin/roles/RECEPTION/permissions` without `admin:access_manage` → 403 for non-admin ops roles.
+7. Without `api:sanatorium.episodes.read`, `GET /api/sanatorium/episodes` and `GET /api/sanatorium/episodes/[id]` return **403** (API uses DB, not stale JWT). Without `api:procedures.reception`, `POST /api/procedures` returns **403**.
+8. **Wave 2 — CLINIC_ADMIN matrix:** uncheck `screen:admin.catalog` for **CLINIC_ADMIN**, Save (session refresh). Catalog nav item hidden; `/admin/catalog` forbidden after refresh; `GET /api/admin/catalog` returns **403**. Re-check + Save → access restored. OrgOwner SSO still sees all admin screens.
+9. **Wave 3 — staff APIs:** uncheck `screen:patients` / `api:patients` for RECEPTION → patients nav hidden; `GET /api/patients` **403**. Uncheck `api:appointments.write` → `POST /api/appointments` **403** (session required). Queue/lab/confirm similarly gated by matrix.
+10. **Gap closeout:** role without `api:catalog.read` → `GET /api/imaging-phrases` **403**. Without `api:lab_orders` → `POST /api/lab/import` **403**. Without `screen:admin.templates` → `/api/templates` **403**. After upgrade, customized matrices: **Reset to defaults** (or grant new keys) so Wave 3 api:* keys appear.
+
 
 
 ## Print forms (CLI-34)

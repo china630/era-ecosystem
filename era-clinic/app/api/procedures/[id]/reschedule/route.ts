@@ -4,9 +4,9 @@ import {
   jsonError,
   handleRouteError,
   getRouteSession,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { receptionRescheduleProcedure } from "@/domain/procedure/procedure-attendance.service";
 import { evaluateAndPublishCapacity } from "@/lib/capacity.service";
 
@@ -21,7 +21,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_RECEPTION);
     if (denied) return denied;
 
     const { id } = await params;

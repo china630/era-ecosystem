@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   listProcedureRules,
   createProcedureRule,
@@ -14,9 +14,9 @@ const createSchema = z.object({
   minGapMinutes: z.number().int().nonnegative().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     return jsonOk(await listProcedureRules());
   } catch (err) {
@@ -26,7 +26,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = createSchema.parse(await req.json());
     return jsonOk(await createProcedureRule(body), 201);
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return jsonOk({ error: "id required" }, 400);

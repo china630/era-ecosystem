@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { BODY_PART_CODES } from "@/lib/body-part-codes";
 import { prisma } from "@/lib/prisma";
 import {
@@ -19,6 +26,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
     const { id } = await params;
     const url = new URL(req.url);
     const episodeId = url.searchParams.get("episode");
@@ -39,6 +50,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
     const { id: patientRefId } = await params;
     const url = new URL(req.url);
     const rowId = url.searchParams.get("id");
@@ -66,6 +81,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
     const episode = await prisma.clinicalEpisode.findFirst({

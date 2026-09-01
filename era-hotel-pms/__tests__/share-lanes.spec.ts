@@ -71,4 +71,29 @@ describe('share paint lanes', () => {
     };
     expect(shareLaneCount([a], 2)).toBe(2);
   });
+
+  it('307-like two share bars on parallel lanes', () => {
+    const aqil = {
+      id: 'aqil',
+      checkInDate: '2026-08-20',
+      checkOutDate: '2026-08-27',
+      shareEligible: true,
+      shareGender: 'M',
+      adults: 1,
+      shareBedIndex: 1,
+    };
+    const rovsen = {
+      id: 'rovsen',
+      checkInDate: '2026-08-21',
+      checkOutDate: '2026-08-28',
+      shareEligible: true,
+      shareGender: 'M',
+      adults: 1,
+      shareBedIndex: 2,
+    };
+    const lanes = assignSharePaintLanes([aqil, rovsen], 2);
+    expect(lanes.get('aqil')).toBe(0);
+    expect(lanes.get('rovsen')).toBe(1);
+    expect(shareLaneCount([aqil, rovsen], 2)).toBe(2);
+  });
 });

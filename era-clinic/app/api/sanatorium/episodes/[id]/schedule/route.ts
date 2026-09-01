@@ -1,5 +1,11 @@
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { getEpisodeSchedule } from '@/lib/services/sanatorium.service';
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { getEpisodeSchedule } from "@/lib/services/sanatorium.service";
 
 function parseDayStart(value: string | null): Date {
   const day = value ? new Date(value) : new Date();
@@ -12,6 +18,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+    );
+    if (denied) return denied;
     const { id } = await params;
     const url = new URL(req.url);
     const from = parseDayStart(url.searchParams.get('from'));

@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { detectSchedulingConflict } from "@/lib/scheduling.service";
@@ -28,8 +35,21 @@ const createSchema = z
     message: "patientRefId or patientRefCode required",
   });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const session = await getRouteSession();
+    const deniedRead = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_APPOINTMENTS_READ,
+    );
+    if (deniedRead) {
+      const deniedWrite = await requireClinicPermission(
+        session,
+        CLINIC_PERMISSION.API_APPOINTMENTS_WRITE,
+      );
+      if (deniedWrite) return deniedWrite;
+    }
+
     const appointments = await prisma.appointment.findMany({
       include: { patientRef: true, practitioner: true, visit: true },
       orderBy: { scheduledAt: "desc" },
@@ -43,6 +63,13 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_APPOINTMENTS_WRITE,
+    );
+    if (denied) return denied;
+
     const body = createSchema.parse(await req.json());
 
     const organizationId = requestOrganizationId();

@@ -27,8 +27,11 @@ import {
   CalendarRange,
 } from "lucide-react";
 import type { EraOpsNavItem, EraOpsNavSection } from "@era/satellite-kit/ui";
-import { CLINIC_ROLE, type ClinicRoleCode } from "@/lib/clinic-roles";
 import { CLINIC_PRESET, type ClinicPresetCode } from "@/domain/presets/clinic-presets";
+import {
+  CLINIC_PERMISSION,
+  type ClinicPermission,
+} from "@/lib/auth/clinic-permissions";
 
 export type ClinicNavGroupId =
   | "frontdesk"
@@ -45,17 +48,15 @@ export type ClinicNavEntry = {
   labelKey: string;
   icon: LucideIcon;
   group: ClinicNavGroupId;
-  /** When set, only these roles see the item (unless `seesAll`). */
-  roles?: ClinicRoleCode[];
+  /** When set, only sessions with this permission see the item. */
+  permission?: ClinicPermission;
   /** Extra gate on top of the group's module preset. */
   preset?: ClinicPresetCode;
-  /** Requires canViewClinicAdmin || isPlatformSuperAdmin. */
-  adminOnly?: boolean;
 };
 
 export type ClinicNavBuildCtx = {
   role: string;
-  seesAll: boolean;
+  permissions: string[];
   presetEnabled: (code: ClinicPresetCode) => boolean;
 };
 
@@ -100,8 +101,8 @@ const GROUP_META: Record<
 
 /** Flat links above collapsible sections (all authenticated users). */
 export const CLINIC_TOP_NAV: ClinicNavEntry[] = [
-  { href: "/", labelKey: "home", icon: LayoutDashboard, group: "frontdesk" },
-  { href: "/patients", labelKey: "patients", icon: Users, group: "frontdesk" },
+  { href: "/", labelKey: "home", icon: LayoutDashboard, group: "frontdesk", permission: CLINIC_PERMISSION.SCREEN_HOME },
+  { href: "/patients", labelKey: "patients", icon: Users, group: "frontdesk", permission: CLINIC_PERMISSION.SCREEN_PATIENTS },
 ];
 
 export const CLINIC_NAV: ClinicNavEntry[] = [
@@ -111,28 +112,28 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "appointments",
     icon: Stethoscope,
     group: "frontdesk",
-    roles: [CLINIC_ROLE.RECEPTION],
+    permission: CLINIC_PERMISSION.SCREEN_APPOINTMENTS,
   },
   {
     href: "/reception/queue",
     labelKey: "queue",
     icon: ListOrdered,
     group: "frontdesk",
-    roles: [CLINIC_ROLE.RECEPTION],
+    permission: CLINIC_PERMISSION.SCREEN_RECEPTION_QUEUE,
   },
   {
     href: "/cashier",
     labelKey: "cashier",
     icon: Wallet,
     group: "frontdesk",
-    roles: [CLINIC_ROLE.RECEPTION],
+    permission: CLINIC_PERMISSION.SCREEN_CASHIER,
   },
   {
     href: "/reception/extra-tickets",
     labelKey: "extraTickets",
     icon: ScrollText,
     group: "frontdesk",
-    roles: [CLINIC_ROLE.RECEPTION],
+    permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
     preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
   },
 
@@ -142,42 +143,42 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "doctor",
     icon: UserRound,
     group: "clinical",
-    roles: [CLINIC_ROLE.DOCTOR],
+    permission: CLINIC_PERMISSION.SCREEN_DOCTOR,
   },
   {
     href: "/nurse",
     labelKey: "nurse",
     icon: Syringe,
     group: "clinical",
-    roles: [CLINIC_ROLE.NURSE],
+    permission: CLINIC_PERMISSION.SCREEN_NURSE,
   },
   {
     href: "/check-in",
     labelKey: "checkIn",
     icon: ClipboardList,
     group: "clinical",
-    roles: [CLINIC_ROLE.FLOOR, CLINIC_ROLE.NURSE],
+    permission: CLINIC_PERMISSION.SCREEN_CHECK_IN,
   },
   {
     href: "/lab-orders",
     labelKey: "labOrders",
     icon: FlaskConical,
     group: "clinical",
-    roles: [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE, CLINIC_ROLE.LAB_TECH],
+    permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
   },
   {
     href: "/reports/diagnoses",
     labelKey: "diagnosisReport",
     icon: FileSpreadsheet,
     group: "clinical",
-    roles: [CLINIC_ROLE.DOCTOR],
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   },
   {
     href: "/reports/procedures",
     labelKey: "procedureReport",
     icon: FileSpreadsheet,
     group: "clinical",
-    roles: [CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE, CLINIC_ROLE.CLINIC_ADMIN],
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   },
 
   // Module: Sanatoriya
@@ -186,7 +187,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "sanatorium",
     icon: HeartPulse,
     group: "mod:sanatorium",
-    roles: [CLINIC_ROLE.RECEPTION, CLINIC_ROLE.DOCTOR],
+    permission: CLINIC_PERMISSION.SCREEN_SANATORIUM,
     preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
   },
   {
@@ -194,7 +195,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "resourceMatrix",
     icon: Grid3x3,
     group: "mod:sanatorium",
-    roles: [CLINIC_ROLE.RECEPTION],
+    permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
     preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
   },
   {
@@ -202,7 +203,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "nurseRoster",
     icon: CalendarRange,
     group: "mod:sanatorium",
-    roles: [CLINIC_ROLE.DOCTOR],
+    permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER,
     preset: CLINIC_PRESET.SANATORIUM_CLINICAL,
   },
 
@@ -212,7 +213,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "inpatient",
     icon: BedDouble,
     group: "mod:inpatient",
-    roles: [CLINIC_ROLE.RECEPTION, CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE],
+    permission: CLINIC_PERMISSION.SCREEN_INPATIENT,
     preset: CLINIC_PRESET.INPATIENT_DAY,
   },
   {
@@ -220,7 +221,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "inpatientCensus",
     icon: ClipboardList,
     group: "mod:inpatient",
-    roles: [CLINIC_ROLE.RECEPTION, CLINIC_ROLE.DOCTOR, CLINIC_ROLE.NURSE],
+    permission: CLINIC_PERMISSION.SCREEN_INPATIENT_CENSUS,
     preset: CLINIC_PRESET.INPATIENT_DAY,
   },
   {
@@ -228,7 +229,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "wardsAdmin",
     icon: BedDouble,
     group: "mod:inpatient",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS,
     preset: CLINIC_PRESET.INPATIENT_DAY,
   },
 
@@ -238,35 +239,35 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "catalog",
     icon: BookOpen,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
   },
   {
     href: "/admin/diagnostic-catalog",
     labelKey: "diagnosticCatalog",
     icon: Beaker,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
   },
   {
     href: "/admin/icd-favorites",
     labelKey: "icdFavorites",
     icon: BookOpen,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
   },
   {
     href: "/admin/templates",
     labelKey: "templates",
     icon: FileSpreadsheet,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES,
   },
   {
     href: "/admin/import",
     labelKey: "cutoverImport",
     icon: FileInput,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   },
 
   // Setup — Rules & data (admin/owner)
@@ -275,58 +276,64 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "procedureRules",
     icon: GitBranch,
     group: "setup:rules",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   },
   {
     href: "/admin/lis-profiles",
     labelKey: "lisProfiles",
     icon: FileInput,
     group: "setup:rules",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
   },
   {
     href: "/admin/master-data",
     labelKey: "masterData",
     icon: Database,
     group: "setup:rules",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
   },
   {
     href: "/admin/lookups",
     labelKey: "lookups",
     icon: BookOpen,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
   },
   {
     href: "/admin/physio-sites",
     labelKey: "physioSites",
     icon: MapPin,
     group: "setup:catalogs",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
   },
   {
     href: "/admin/audit",
     labelKey: "audit",
     icon: ScrollText,
     group: "platform",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
   },
   {
     href: "/admin/settings",
     labelKey: "settings",
     icon: Settings,
     group: "platform",
-    adminOnly: true,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  },
+  {
+    href: "/admin/access",
+    labelKey: "accessControl",
+    icon: Shield,
+    group: "platform",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
   },
 ];
 
 function entryVisible(entry: ClinicNavEntry, ctx: ClinicNavBuildCtx): boolean {
   if (entry.preset && !ctx.presetEnabled(entry.preset)) return false;
-  if (entry.adminOnly && !ctx.seesAll) return false;
-  if (ctx.seesAll) return true;
-  if (!entry.roles || entry.roles.length === 0) return true;
-  return entry.roles.includes(ctx.role as ClinicRoleCode);
+  const perm = entry.permission;
+  if (!perm) return true;
+  return ctx.permissions.includes(perm);
 }
 
 function toNavItem(entry: ClinicNavEntry, t: NavTranslator): EraOpsNavItem {
@@ -341,7 +348,9 @@ export function buildClinicNav(
   ctx: ClinicNavBuildCtx,
   t: NavTranslator,
 ): { topItems: EraOpsNavItem[]; sections: EraOpsNavSection[] } {
-  const topItems = CLINIC_TOP_NAV.map((e) => toNavItem(e, t));
+  const topItems = CLINIC_TOP_NAV.filter((e) => entryVisible(e, ctx)).map((e) =>
+    toNavItem(e, t),
+  );
 
   const visible = CLINIC_NAV.filter((e) => entryVisible(e, ctx));
   const byGroup = new Map<ClinicNavGroupId, EraOpsNavItem[]>();
@@ -366,4 +375,13 @@ export function buildClinicNav(
   }
 
   return { topItems, sections };
+}
+
+/** First admin href the session may open (nav order). */
+export function firstAllowedAdminHref(permissions: string[]): string | null {
+  for (const entry of CLINIC_NAV) {
+    if (!entry.permission?.startsWith("screen:admin.")) continue;
+    if (permissions.includes(entry.permission)) return entry.href;
+  }
+  return null;
 }

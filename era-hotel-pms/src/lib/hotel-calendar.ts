@@ -56,6 +56,18 @@ export function staysOverlap(
   return aIn.getTime() < bOut.getTime() && bIn.getTime() < aOut.getTime();
 }
 
+/** Reservation stay overlap (same rule as assign / share-lanes / paint). */
+export function reservationStayOverlaps(
+  a: { checkInDate: Date | string; checkOutDate: Date | string },
+  b: { checkInDate: Date | string; checkOutDate: Date | string },
+): boolean {
+  const aIn = a.checkInDate instanceof Date ? a.checkInDate : new Date(a.checkInDate);
+  const aOut = a.checkOutDate instanceof Date ? a.checkOutDate : new Date(a.checkOutDate);
+  const bIn = b.checkInDate instanceof Date ? b.checkInDate : new Date(b.checkInDate);
+  const bOut = b.checkOutDate instanceof Date ? b.checkOutDate : new Date(b.checkOutDate);
+  return staysOverlap(aIn, aOut, bIn, bOut);
+}
+
 /** Calendar nights between stay edges (minimum 1). */
 export function stayNights(checkIn: Date, checkOut: Date): number {
   const a = parseHotelNoon(checkIn);

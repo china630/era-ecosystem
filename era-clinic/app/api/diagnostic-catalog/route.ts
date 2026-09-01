@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  jsonError,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   filterAndSortCatalogItems,
   getDiagnosticCatalog,
@@ -18,9 +25,10 @@ const querySchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CATALOG_READ);
+    if (denied) return denied;
 
-    const url = new URL(req.url);
+        const url = new URL(req.url);
     const query = querySchema.parse({
       kinds: url.searchParams.get("kinds") ?? undefined,
       search: url.searchParams.get("search") ?? undefined,

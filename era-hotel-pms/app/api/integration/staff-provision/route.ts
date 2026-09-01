@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleStaffProvisionEvent } from "@/lib/staff-provision";
+import { handleStaffProvisionEvent, SatelliteLoginTakenError, SatelliteTargetAmbiguousError } from "@/lib/staff-provision";
 import { enterRequestTenant } from "@/lib/request-organization";
 
 /** Orchestrator fan-out: CP STAFF_PROVISIONED / STAFF_DEACTIVATED. */
@@ -27,6 +27,18 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Provision failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const prismaCode =
+      typeof err === "object" && err !== null && "code" in err
+        ? String((err as { code: unknown }).code)
+        : "";
+    const code =
+      err instanceof SatelliteLoginTakenError || prismaCode === "P2002"
+        ? "LOGIN_TAKEN"
+        : err instanceof SatelliteTargetAmbiguousError
+          ? "TARGET_AMBIGUOUS"
+          : undefined;
+    const status =
+      code === "LOGIN_TAKEN" || code === "TARGET_AMBIGUOUS" ? 409 : 400;
+    return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status });
   }
 }

@@ -10,11 +10,9 @@ import {
   type SatelliteSessionPayload,
 } from "@era/satellite-kit";
 import { hasClinicAdminAccess } from "@/lib/auth/clinic-admin-access";
-import {
-  CLINIC_ROLE,
-  sessionHasClinicRole,
-  type ClinicRoleCode,
-} from "@/lib/clinic-roles";
+import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
+import { assertClinicPermission } from "@/lib/auth/clinic-permission.service";
+import type { ClinicPermission } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
 export function jsonOk<T>(data: T, status = 200) {
@@ -150,16 +148,12 @@ export function hasBusinessOwnerRole(
   );
 }
 
-export function requireClinicRole(
+/** Prefer for new guards — checks domain permission from DB (role.permissionsJson). */
+export async function requireClinicPermission(
   session: SatelliteSessionPayload | null,
-  allowed: ClinicRoleCode[],
-): NextResponse | null {
-  if (!session) return jsonError("Unauthorized", 401);
-  if (
-    hasClinicAdminRole(session) ||
-    sessionHasClinicRole(session.role, allowed)
-  ) {
-    return null;
-  }
-  return jsonError("Forbidden", 403);
+  permission: ClinicPermission,
+): Promise<NextResponse | null> {
+  return assertClinicPermission(session, permission);
 }
+
+export { sessionHasClinicPermission };

@@ -4,9 +4,9 @@ import {
   jsonError,
   handleRouteError,
   getRouteSession,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   issueExtraTickets,
   listExtrasAwaitingTicket,
@@ -19,11 +19,10 @@ import {
 export async function GET() {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [
-      CLINIC_ROLE.RECEPTION,
-      CLINIC_ROLE.NURSE,
-      CLINIC_ROLE.DOCTOR,
-    ]);
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_READ,
+    );
     if (denied) return denied;
     const { dualRun, orders } = await listExtrasAwaitingTicket(
       session?.organizationId,
@@ -55,7 +54,10 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION]);
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_WRITE,
+    );
     if (denied) return denied;
     const body = schema.parse(await request.json());
     const result = await issueExtraTickets(

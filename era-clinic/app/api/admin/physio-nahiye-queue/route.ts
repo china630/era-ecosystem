@@ -1,10 +1,10 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { listNahiyeQueue } from "@/domain/physio/nahiye-cutover.service";
 
 export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const url = new URL(req.url);
     const rows = await listNahiyeQueue({

@@ -31,6 +31,29 @@ export const DEFAULT_BARE_PUBLIC_PAGE_PREFIXES = [
 
 export const ERA_PATHNAME_HEADER = "x-era-pathname";
 
+/** Prefix for UTF-8 session values in request headers (Fetch Headers = ByteString / latin1). */
+export const SESSION_HEADER_UTF8_PREFIX = "utf8:";
+
+/** Encode text for Edge middleware `Headers#set` (throws on code points > 255). */
+export function encodeSessionHeaderUtf8(value: string): string {
+  if (!value) return value;
+  for (let i = 0; i < value.length; i++) {
+    if (value.charCodeAt(i) > 255) {
+      return SESSION_HEADER_UTF8_PREFIX + encodeURIComponent(value);
+    }
+  }
+  return value;
+}
+
+/** Decode `encodeSessionHeaderUtf8` values from incoming request headers. */
+export function decodeSessionHeaderUtf8(value: string): string {
+  if (!value) return value;
+  if (value.startsWith(SESSION_HEADER_UTF8_PREFIX)) {
+    return decodeURIComponent(value.slice(SESSION_HEADER_UTF8_PREFIX.length));
+  }
+  return value;
+}
+
 export function isPublicApiPath(
   pathname: string,
   extraPrefixes: string[] = [],
@@ -98,6 +121,11 @@ export type EdgeSessionPayload = {
   /** Present when issued at login/SSO — used for platform super-admin gates. */
   email?: string;
   organizationId?: string;
+  /** All mapped satellite roles (includes primary `role`). */
+  roles?: string[];
+  isOwner?: boolean;
+  /** Domain permission codes (industry satellite RBAC; optional). */
+  permissions?: string[];
 };
 
 /** JWT verify for Next.js Edge middleware (jose only — no Node crypto). */
@@ -107,6 +135,12 @@ export async function verifySatelliteSession(
   const { payload } = await jwtVerify(token, jwtSecret());
   const sub = payload.sub;
   if (!sub || typeof sub !== "string") throw new Error("Invalid token subject");
+  const rolesRaw = payload.roles;
+  const roles = Array.isArray(rolesRaw) ? rolesRaw.map(String) : undefined;
+  const permissionsRaw = payload.permissions;
+  const permissions = Array.isArray(permissionsRaw)
+    ? permissionsRaw.map(String)
+    : undefined;
   return {
     sub,
     login: String(payload.login ?? ""),
@@ -117,6 +151,9 @@ export async function verifySatelliteSession(
       payload.organizationId != null
         ? String(payload.organizationId)
         : undefined,
+    roles,
+    isOwner: payload.isOwner === true,
+    permissions,
   };
 }
 

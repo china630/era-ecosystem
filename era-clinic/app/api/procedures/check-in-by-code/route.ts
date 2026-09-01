@@ -4,10 +4,10 @@ import {
   jsonOk,
   handleRouteError,
   getRouteSession,
-  requireClinicRole,
-  hasClinicAdminRole,
+  requireClinicPermission,
+  sessionHasClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { checkInProcedureOrder, mapAttendanceHttpStatus, ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -28,11 +28,7 @@ const schema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [
-      CLINIC_ROLE.FLOOR,
-      CLINIC_ROLE.NURSE,
-      CLINIC_ROLE.DOCTOR,
-    ]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_CHECK_IN);
     if (denied) return denied;
 
     const { code } = schema.parse(await req.json());
@@ -52,7 +48,8 @@ export async function POST(req: Request) {
     }
 
     const canOverride =
-      hasClinicAdminRole(session!) || session!.role === CLINIC_ROLE.DOCTOR;
+      sessionHasClinicPermission(session!, CLINIC_PERMISSION.SCREEN_DOCTOR) ||
+      sessionHasClinicPermission(session!, CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS);
 
     const updated = await checkInProcedureOrder(
       order.id,
