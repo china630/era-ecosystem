@@ -589,16 +589,19 @@ export async function listReservationsForGrid(
   }
 
   if (opts.hasNotes) {
-    // Match UI trim(): length(btrim(text)) > 0 (whitespace-only ≠ has notes).
-    const withNotes = await prisma.$queryRaw<{ id: string }[]>`
-      SELECT DISTINCT "reservationId" AS id
-      FROM "ReservationNote"
-      WHERE length(btrim("text")) > 0
-    `;
-    if (withNotes.length === 0) {
+    // Match UI trim(): whitespace-only ≠ has notes (Prisma — no raw SQL for tenant gate).
+    const noteRows = await prisma.reservationNote.findMany({
+      select: { reservationId: true, text: true },
+    });
+    const withNotesIds = [
+      ...new Set(
+        noteRows.filter((n) => n.text.trim().length > 0).map((n) => n.reservationId),
+      ),
+    ];
+    if (withNotesIds.length === 0) {
       return { items: [], total: 0, page, pageSize };
     }
-    where.id = { in: withNotes.map((r) => r.id) };
+    where.id = { in: withNotesIds };
   }
 
   if (opts.dateFrom || opts.dateTo) {
