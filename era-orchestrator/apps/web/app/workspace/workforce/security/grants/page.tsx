@@ -467,7 +467,7 @@ export default function WorkforceSecurityGrantsPage() {
                 </tr>
               </thead>
               <tbody>
-                {total === 0 ? (
+                {filteredGrants.length === 0 ? (
                   <tr className={DATA_TABLE_TR_CLASS}>
                     <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
                       {emptyMessage}
