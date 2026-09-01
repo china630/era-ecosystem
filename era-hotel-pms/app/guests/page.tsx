@@ -187,7 +187,6 @@ export default function GuestsPage() {
                 patchFilter({ nationality: (Array.isArray(v) ? v[0] : v) ?? '' })
               }
               options={[{ value: '', label: tc('all') }, ...NATIONALITY_OPTIONS]}
-              placeholder={tc('all')}
             />
             <Field
               label={t('fin')}
@@ -223,7 +222,7 @@ export default function GuestsPage() {
             />
             <Field
               label={t('email')}
-              preset="email"
+              preset="shortText"
               value={filtersState.email}
               onChange={(e) => patchFilter({ email: e.target.value })}
             />

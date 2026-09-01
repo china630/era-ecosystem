@@ -19,7 +19,7 @@ import { GuestCardTimeShareTab } from '@/components/guest-card/GuestCardTimeShar
 import { GuestCardActionGrid } from '@/components/guest-card/GuestCardActionGrid';
 import { crmTabButtons, reservationDetailsButtons } from '@/lib/guest-crm-config';
 import { GuestCardIdReaderModal, type IdReaderPayload } from '@/components/guest-card/GuestCardIdReaderModal';
-import { guestComposedFullName } from '@/lib/guest-identity';
+import { guestComposedFullName } from '@/lib/guest-identity.shared';
 import type { GuestStats, GuestTabId } from '@/components/guest-card/types';
 
 const STAT_COLORS = [

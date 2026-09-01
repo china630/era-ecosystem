@@ -1,4 +1,7 @@
-import { composePersonFullName, normalizeNationalityIso } from "@era/satellite-kit";
+import {
+  composePersonFullName,
+  normalizeNationalityIso,
+} from "@era/satellite-kit/integration/person-name";
 
 export type MdmPersonLookupInput = {
   fin?: string;

@@ -3,45 +3,18 @@ import {
   type PersonOpsProfile,
 } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
+import { mapNationalityToIso } from '@/lib/person-documents';
 import {
-  composePersonFullName,
-  mapNationalityToIso,
-} from '@/lib/person-documents';
+  GuestMdmRequiredError,
+  resolveGuestFullName,
+  type TransientGuestIdentity,
+} from '@/lib/guest-identity.shared';
 
-export class GuestMdmRequiredError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'GuestMdmRequiredError';
-  }
-}
-
-export type TransientGuestIdentity = {
-  firstName?: string | null;
-  middleName?: string | null;
-  lastName?: string | null;
-  /** Legacy blob; prefer parts. */
-  fullName?: string | null;
-  nationalIdFin?: string | null;
-  passportNumber?: string | null;
-  issuingCountry?: string | null;
-  phone?: string | null;
-  /** ISO 3166-1 alpha-2 citizenship on guest cache. */
-  nationality?: string | null;
-  globalPersonId?: string | null;
-  sex?: string | null;
-  /** @deprecated alias for sex on wire */
-  gender?: string | null;
-  birthDate?: string | Date | null;
-};
-
-function resolveFullName(input: TransientGuestIdentity): string {
-  const composed = composePersonFullName(
-    input.firstName,
-    input.middleName,
-    input.lastName,
-  );
-  return composed || input.fullName?.trim() || '';
-}
+export {
+  GuestMdmRequiredError,
+  guestComposedFullName,
+  type TransientGuestIdentity,
+} from '@/lib/guest-identity.shared';
 
 function mdmNationality(raw?: string | null): string | undefined {
   const iso = mapNationalityToIso(raw ?? undefined);
@@ -55,7 +28,7 @@ export async function linkGuestPersonIdentity(
   const fin = input.nationalIdFin?.trim();
   const passport = input.passportNumber?.trim();
   const globalPersonId = input.globalPersonId?.trim();
-  const fullName = resolveFullName(input);
+  const fullName = resolveGuestFullName(input);
   if (!fin && !passport && !globalPersonId && !fullName) return null;
 
   const linked = await linkPersonIdentity({
@@ -115,18 +88,4 @@ export function assertGuestMdmStrict(
       'Guest must have FIN or passport resolved to MDM globalPersonId',
     );
   }
-}
-
-/** Compose denorm fullName for Guest write paths. */
-export function guestComposedFullName(input: {
-  firstName?: string | null;
-  middleName?: string | null;
-  lastName?: string | null;
-  fullName?: string | null;
-}): string {
-  return (
-    composePersonFullName(input.firstName, input.middleName, input.lastName) ||
-    input.fullName?.trim() ||
-    ''
-  );
 }
