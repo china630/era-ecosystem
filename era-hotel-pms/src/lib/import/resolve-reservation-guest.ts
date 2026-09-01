@@ -1,4 +1,5 @@
 import { composePersonFullName } from '@/lib/person-documents';
+import type { ImportTx } from '@/lib/import/types';
 
 /** In-memory index for one import batch — rebuilt on first reservation row. */
 let lookupCache: Map<string, Set<string>> | null = null;
@@ -198,13 +199,6 @@ export function resolveGuestExternalRefFromName(
 export function resetReservationGuestLookupCache(): void {
   lookupCache = null;
 }
-
-type ImportTx = {
-  guest: {
-    findMany: (args: unknown) => Promise<GuestLookupRow[]>;
-    findFirst: (args: unknown) => Promise<{ id: string } | null>;
-  };
-};
 
 async function ensureGuestLookup(tx: ImportTx): Promise<Map<string, Set<string>>> {
   if (lookupCache) return lookupCache;
