@@ -1,4 +1,4 @@
-import { composePersonFullName } from "@era/satellite-kit";
+import { composePersonFullName } from "@era/satellite-kit/integration/person-name";
 
 export type PatientNameParts = {
   firstName: string;
