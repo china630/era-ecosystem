@@ -82,6 +82,18 @@ Rules: label **above** control (`Field` / `FieldSelect`); no placeholder-as-labe
 
 Reference: clinic `/patients`, `/admin/catalog`, `/admin/master-data`, `/lab-orders`, `/nurse`, `/sanatorium/resources`.
 
+## List classes (pagination + layout)
+
+| Class | When | Pattern |
+|-------|------|---------|
+| **A — Unbounded list** | Guests, reservations, patients, lab orders, sanatorium courses, CIF, invoices | Server `{ items\|data, total, page, pageSize }` + **`EraListWorkspace`** inside **`LIST_PAGE_SHELL_CLASS`**: filter / optional toolbar / scrollable table / docked `ListPaginationFooter`. Page itself does **not** scroll. |
+| **B — Small catalog** | Master-data ≤~200 rows, modal grids | Client `EraDataGrid` (default slice + `DATA_TABLE_SCROLL_CLASS` 70vh) or `pagination={false}` |
+| **C — Canvas** | Room plan, rack, POS, KDS, resource matrix | Not a paged table |
+
+Contract helpers: `parsePaginatedList`, `normalizeListPagination`, `usePaginatedList` from `@era/satellite-kit` / `/ui`. Do **not** echo `page`/`pageSize` from the API into React state (pager snap races).
+
+`EraDataGrid` defaults remain **client** + **flow** so unrefactored screens stay unchanged. Opt-in: `paginationMode="server"`, `layout="fill"`, `embedded` (table-only inside workspace). Class-A screens pair `embedded` + `paginationMode="server"` and prefer `usePaginatedList` + `parsePaginatedList`. FO reservations tint rows via `rowClassName` (status + notes ring).
+
 ## Managed pick-lists (`CatalogField`)
 
 **Canon:** [adr/managed-lists-vs-enums.md](./adr/managed-lists-vs-enums.md) · Cursor rule `era-managed-list-controls.mdc`.

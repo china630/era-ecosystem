@@ -261,18 +261,18 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 
 ## MDM natural-person identity (internal API)
 
-**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Person core also stores **`sex`** (`MALE` \| `FEMALE` \| `UNKNOWN`; no OTHER) and **`birthDate`**. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) including gender/DOB cache — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md).
+**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Person core stores **name parts** (`firstName` / `middleName` / `lastName` ciphers + denorm `fullName`), **`sex`** (`MALE` \| `FEMALE` \| `UNKNOWN`; no OTHER), **`birthDate`**, and **`nationality`** as ISO citizenship. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) including gender/DOB cache — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md). Canon: [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md).
 
 **Auth:** `Authorization: Bearer` with `MDM_INTERNAL_SERVICE_TOKEN` (alias `SATELLITE_EVENT_SERVICE_TOKEN` in some apps).
 
-**Canonical client:** `linkPersonIdentity` in `@era/satellite-kit` — resolve-or-create (writes sex/DOB when provided). Pass `globalPersonId` to fill an existing person.
+**Canonical client:** `linkPersonIdentity` in `@era/satellite-kit` — resolve-or-create (writes name parts + sex/DOB when provided). Accepts `firstName`/`middleName`/`lastName` and/or legacy `fullName`. Pass `globalPersonId` to fill an existing person. Fill-not-clear per field.
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/internal/v1/mdm/health` | Liveness |
-| POST | `/internal/v1/mdm/persons/lookup-by-fin` | Consent-aware read / prefill (includes sex + birthDate when granted) |
-| POST | `/internal/v1/mdm/persons/resolve` | Find-or-create (FIN / passport / VNJ + fullName + optional sex/birthDate); `globalPersonId` updates that row |
-| GET | `/internal/v1/mdm/persons/:id/ops-profile` | Masked identifiers + sex + birthDate |
+| POST | `/internal/v1/mdm/persons/lookup-by-fin` | Consent-aware read / prefill (name parts + fullName + sex + birthDate when granted) |
+| POST | `/internal/v1/mdm/persons/resolve` | Find-or-create (FIN / passport / VNJ + name parts or fullName + optional sex/birthDate); `globalPersonId` updates that row |
+| GET | `/internal/v1/mdm/persons/:id/ops-profile` | Masked identifiers + name parts + fullName + sex + birthDate |
 | POST | `/internal/v1/mdm/persons/merge` | Foreigner → citizen (explicit workflow) |
 | POST | `/internal/v1/mdm/organizations/register` | VÖEN → `GlobalLegalEntity` |
 
@@ -280,7 +280,7 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/v1/admin/mdm/persons` | Paginated directory (`fin`, `fullName`, `phone`, `birthDate`, `includeMerged`); decrypts name for operators |
+| GET | `/v1/admin/mdm/persons` | Paginated directory (`fin`, name parts/`fullName`, `phone`, `birthDate`, `includeMerged`); decrypts name for operators |
 | POST | `/v1/admin/mdm/persons/lookup-by-fin` | Exact FIN lookup |
 | POST | `/v1/admin/mdm/persons/resolve` | Resolve/create |
 | POST | `/v1/admin/mdm/persons/merge` | Merge duplicates |
@@ -322,7 +322,9 @@ Schema: `packages/era-contracts/src/events/workforce.events.ts`. ADR: [cp-workfo
 
 **MDM HR profile (WS2):** `GET/PATCH /internal/v1/mdm/persons/:personId/hr-profile?organizationId=` (PersonAccessGrant). Ops-profile + batch include decrypted `hrProfile` when grant allows. Finance reads via `OrchestratorMdmClientService.getHrProfile` / `batchHrProfiles` — never persists blood/address/education/marital/stats/photo on `Employee`.
 
-**STAFF_PROVISIONED / STAFF_DEACTIVATED (Plan C):** Publisher = **Orchestrator CP** (`WorkforceProvisionService`). Payload v2 requires `cpEmploymentId`; optional `financeEmployeeId` for payroll extension. `fullName` in payload is **T3 ops-cache display stamp only** (from MDM at provision); not authoritative — see [cp-workforce-pii-tiers.md](./adr/cp-workforce-pii-tiers.md). Schema: `packages/era-contracts/src/events/hr.events.ts`. ADR: [cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md).
+**STAFF_PROVISIONED / STAFF_DEACTIVATED (Plan C):** Publisher = **Orchestrator CP** (`WorkforceProvisionService`). Payload v2 requires `cpEmploymentId`; optional `financeEmployeeId` for payroll extension. `fullName` in payload is **T3 ops-cache display stamp only** — composed from MDM ops-profile `firstName`/`middleName`/`lastName` (fallback legacy `fullName`); not authoritative — see [cp-workforce-pii-tiers.md](./adr/cp-workforce-pii-tiers.md). Schema: `packages/era-contracts/src/events/hr.events.ts`. ADR: [cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md).
+
+**Workforce roster CSV (orch import):** canonical headers `fin,firstName,middleName,lastName,sex,birthDate,orgUnit,position,hireDate,workplace,satellites`. Legacy `fullName` column still accepted (MDM splits given-first). Nafta HR cutover `Tam adı` (surname-first) is parsed in `era-clinic/scripts/nafta-cutover/map.cjs` → three columns before orch import. Export roster adds parts + `displayName`.
 
 Fan-out: `SatelliteEventsService` → queue `era-satellite-fanout` → `POST {baseUrl}/api/integration/staff-provision` with header `x-satellite-bridge-secret`. The path is session-public (`DEFAULT_PUBLIC_API_PREFIXES`); auth is the bridge secret, not a staff cookie. Endpoint resolution: `SatelliteEndpoint` row, else docker-internal env (`CLINIC_API_URL` / `HOTEL_PMS_API_URL` / `FNB_POS_API_URL`). Do **not** point those env vars at public `https://*.era-365.online` from the orchestrator container (Traefik loop). Shared secret: `SATELLITE_BRIDGE_SECRET` (clinic also accepts `CLINIC_BRIDGE_SECRET`). Handlers bind tenant via `enterRequestTenant(event.organizationId)` and stamp `organizationId` on local User (required on SHARED; Nafta DEDICATED also uses the event org). User `passwordHash` is kit **scrypt** (`hashPassword`) so `/login` works. F&B floor PIN on `StaffRoster.pinHash` stays SHA-256 (`hashStaffPin`) for `/api/labor/clock`. **Hotel + clinic** `staff-provision` **ensure** the mapped Role row (with hotel `ROLE_PERMISSIONS` JSON) when missing — do not require a prior full seed for CP hire/grant to succeed.
 
