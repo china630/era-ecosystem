@@ -56,8 +56,11 @@ export const reservationFullPatchSchema = z.object({
         id: z.string().uuid().optional(),
         guestId: z.string().uuid().nullable().optional(),
         title: z.string().nullable().optional(),
+        sex: z.string().nullable().optional(),
+        /** @deprecated use sex */
         gender: z.string().nullable().optional(),
         firstName: z.string().nullable().optional(),
+        middleName: z.string().nullable().optional(),
         lastName: z.string().nullable().optional(),
         nationality: z.string().nullable().optional(),
         birthDate: z.string().nullable().optional(),

@@ -66,7 +66,7 @@ interface Room {
 
 interface Arrival {
   id: string;
-  guest: Guest & { gender?: string | null };
+  guest: Guest & { sex?: string | null };
   roomType: { code: string };
   room: { roomNumber: string } | null;
   status: ReservationStatus;

@@ -14,7 +14,7 @@ import {
   PatientAnamnesisRequiredError,
 } from "@/domain/patient/patient.service";
 
-const patientSex = z.enum(["MALE", "FEMALE", "OTHER", "UNKNOWN"]);
+const patientSex = z.enum(["MALE", "FEMALE", "UNKNOWN"]);
 const patientBloodGroup = z.enum([
   "A_POS",
   "A_NEG",
@@ -27,23 +27,55 @@ const patientBloodGroup = z.enum([
   "UNKNOWN",
 ]);
 
-const updateSchema = z.object({
+const patientNameAliases = z.object({
+  firstName: z.string().min(1).optional(),
+  middleName: z.string().nullable().optional(),
+  lastName: z.string().min(1).optional(),
   givenName: z.string().min(1).optional(),
   surname: z.string().min(1).optional(),
   fatherName: z.string().nullable().optional(),
-  fullName: z.string().min(1).optional(),
-  phone: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  sex: patientSex.optional(),
-  birthDate: z.string().nullable().optional(),
-  bloodGroup: patientBloodGroup.optional(),
-  emergencyContactName: z.string().nullable().optional(),
-  emergencyContactPhone: z.string().nullable().optional(),
-  finCode: z.string().nullable().optional(),
-  passportNumber: z.string().nullable().optional(),
-  issuingCountry: z.string().nullable().optional(),
-  anamnesisText: z.string().nullable().optional(),
 });
+
+function normalizePatientName(d: z.infer<typeof patientNameAliases>) {
+  const firstName = (d.firstName ?? d.givenName ?? "").trim();
+  const lastName = (d.lastName ?? d.surname ?? "").trim();
+  const middleName =
+    d.middleName !== undefined
+      ? d.middleName?.trim() || null
+      : d.fatherName !== undefined
+        ? d.fatherName?.trim() || null
+        : undefined;
+  return {
+    ...(d.firstName !== undefined || d.givenName !== undefined
+      ? { firstName: firstName || undefined }
+      : {}),
+    ...(d.lastName !== undefined || d.surname !== undefined
+      ? { lastName: lastName || undefined }
+      : {}),
+    ...(middleName !== undefined ? { middleName } : {}),
+  };
+}
+
+const updateSchema = z
+  .object({
+    ...patientNameAliases.shape,
+    fullName: z.string().min(1).optional(),
+    phone: z.string().nullable().optional(),
+    nationality: z.string().nullable().optional(),
+    sex: patientSex.optional(),
+    birthDate: z.string().nullable().optional(),
+    bloodGroup: patientBloodGroup.optional(),
+    emergencyContactName: z.string().nullable().optional(),
+    emergencyContactPhone: z.string().nullable().optional(),
+    finCode: z.string().nullable().optional(),
+    passportNumber: z.string().nullable().optional(),
+    issuingCountry: z.string().nullable().optional(),
+    anamnesisText: z.string().nullable().optional(),
+  })
+  .transform((d) => {
+    const { givenName, surname, fatherName, ...rest } = d;
+    return { ...rest, ...normalizePatientName(d) };
+  });
 
 export async function GET(
   _req: Request,

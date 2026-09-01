@@ -1,15 +1,14 @@
+import { composePersonFullName } from "@era/satellite-kit/integration/person-name";
+
 export type PatientNameParts = {
-  givenName: string;
-  surname: string;
-  fatherName?: string | null;
+  firstName: string;
+  lastName: string;
+  middleName?: string | null;
 };
 
 /** Denormalized display + search string: Ad [Ata] Soyad. */
 export function composeFullName(parts: PatientNameParts): string {
-  const given = parts.givenName?.trim() ?? "";
-  const father = parts.fatherName?.trim() ?? "";
-  const surname = parts.surname?.trim() ?? "";
-  return [given, father, surname].filter(Boolean).join(" ").trim();
+  return composePersonFullName(parts.firstName, parts.middleName, parts.lastName);
 }
 
 export function formatPatientRefCode(seq: number): string {

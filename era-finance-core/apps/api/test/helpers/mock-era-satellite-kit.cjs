@@ -7,9 +7,36 @@ const {
   assertBridgeSecret,
 } = require("../../../../../packages/satellite-kit/dist/auth/assert-service-token.js");
 
+function composePersonFullName(firstName, middleName, lastName) {
+  return [firstName, middleName, lastName]
+    .map((p) => p?.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function splitFullNameToParts(fullName) {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { firstName: null, middleName: null, lastName: null };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], middleName: null, lastName: null };
+  }
+  if (parts.length === 2) {
+    return { firstName: parts[0], middleName: null, lastName: parts[1] };
+  }
+  return {
+    firstName: parts[0],
+    middleName: parts.slice(1, -1).join(" "),
+    lastName: parts[parts.length - 1],
+  };
+}
+
 module.exports = {
   assertEnvServiceToken,
   assertBridgeSecret,
+  composePersonFullName,
+  splitFullNameToParts,
   resolveOrchestratorBaseUrl: () =>
     process.env.CONTROL_PLANE_URL || process.env.ORCHESTRATOR_URL || "",
   resolveSatelliteEventServiceToken: () =>

@@ -49,12 +49,13 @@ export function CreateEmployeeModal({
 
   const [kind, setKind] = useState<"EMPLOYEE" | "CONTRACTOR">("EMPLOYEE");
   const [resolveFin, setResolveFin] = useState("");
-  const [resolveNameHint, setResolveNameHint] = useState("");
+  const [resolveFirstName, setResolveFirstName] = useState("");
+  const [resolveMiddleName, setResolveMiddleName] = useState("");
+  const [resolveLastName, setResolveLastName] = useState("");
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [resolvedPerson, setResolvedPerson] = useState<ResolvedPerson | null>(null);
   const [voen, setVoen] = useState("");
   const [contractorSocial, setContractorSocial] = useState("");
-  const [patronymic, setPatronymic] = useState("");
   const [positionId, setPositionId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [salary, setSalary] = useState("");
@@ -98,12 +99,13 @@ export function CreateEmployeeModal({
     if (!open) return;
     setKind("EMPLOYEE");
     setResolveFin("");
-    setResolveNameHint("");
+    setResolveFirstName("");
+    setResolveMiddleName("");
+    setResolveLastName("");
     setGlobalPersonId("");
     setResolvedPerson(null);
     setVoen("");
     setContractorSocial("");
-    setPatronymic("");
     setStartDate("");
     setSalary("");
   }, [open]);
@@ -114,8 +116,8 @@ export function CreateEmployeeModal({
       toast.error(t("employees.finInvalidStrict"));
       return;
     }
-    if (!resolveNameHint.trim()) {
-      toast.error(t("employees.resolveNameRequired", { defaultValue: "Enter full name hint for MDM lookup" }));
+    if (!resolveFirstName.trim() || !resolveLastName.trim()) {
+      toast.error(t("employees.resolveNameRequired", { defaultValue: "Enter first and last name for MDM lookup" }));
       return;
     }
     setResolveBusy(true);
@@ -124,7 +126,9 @@ export function CreateEmployeeModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fin: resolveFin.trim(),
-        fullName: resolveNameHint.trim(),
+        firstName: resolveFirstName.trim(),
+        middleName: resolveMiddleName.trim() || undefined,
+        lastName: resolveLastName.trim(),
       }),
     });
     setResolveBusy(false);
@@ -151,7 +155,7 @@ export function CreateEmployeeModal({
     }
     setLoadErr(null);
 
-    if (!globalPersonId || !patronymic.trim() || !startDate || salary === "" || !positionId) {
+    if (!globalPersonId || !startDate || salary === "" || !positionId) {
       toast.error(t("employees.fillRequired"));
       return;
     }
@@ -168,7 +172,6 @@ export function CreateEmployeeModal({
     const body: Record<string, unknown> = {
       kind,
       globalPersonId,
-      patronymic: patronymic.trim(),
       positionId,
       startDate,
       hireDate: startDate,
@@ -242,7 +245,7 @@ export function CreateEmployeeModal({
               <p className="m-0 text-[12px] font-semibold text-[#34495E]">
                 {t("employees.personSection", { defaultValue: "Person (MDM)" })}
               </p>
-              <FieldRow cols={2}>
+              <FieldRow cols={3}>
                 <Field
                   label={t("employees.fin")}
                   preset="fin"
@@ -256,16 +259,33 @@ export function CreateEmployeeModal({
                   inputClassName="font-mono uppercase"
                 />
                 <Field
-                  label={t("employees.resolveNameHint", { defaultValue: "Full name (lookup hint)" })}
+                  label={t("employees.firstName", { defaultValue: "Ad" })}
                   preset="shortText"
-                  value={resolveNameHint}
-                  onChange={(e) => setResolveNameHint(e.target.value)}
+                  value={resolveFirstName}
+                  onChange={(e) => setResolveFirstName(e.target.value)}
+                />
+                <Field
+                  label={t("employees.lastName", { defaultValue: "Soyad" })}
+                  preset="shortText"
+                  value={resolveLastName}
+                  onChange={(e) => setResolveLastName(e.target.value)}
                 />
               </FieldRow>
+              <Field
+                label={t("employees.middleName", { defaultValue: "Ata adı" })}
+                preset="shortText"
+                value={resolveMiddleName}
+                onChange={(e) => setResolveMiddleName(e.target.value)}
+              />
               <Button
                 type="button"
                 variant="outline"
-                disabled={resolveBusy || !resolveFin.trim() || !resolveNameHint.trim()}
+                disabled={
+                  resolveBusy ||
+                  !resolveFin.trim() ||
+                  !resolveFirstName.trim() ||
+                  !resolveLastName.trim()
+                }
                 onClick={() => void resolvePerson()}
               >
                 {resolveBusy ? "…" : t("employees.resolvePerson", { defaultValue: "Resolve in MDM" })}
@@ -288,14 +308,6 @@ export function CreateEmployeeModal({
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field
-                label={t("employees.patronymic")}
-                preset="shortText"
-                className="md:col-span-2"
-                value={patronymic}
-                onChange={(e) => setPatronymic(e.target.value)}
-              />
-
               <FieldSelect
                 label={t("employees.kind")}
                 preset="selectWide"

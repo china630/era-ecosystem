@@ -71,9 +71,9 @@ function downloadBlob(filename: string, content: string) {
 }
 
 const ROSTER_TEMPLATE =
-  "fin,fullName,sex,birthDate,orgUnit,position,hireDate,workplace,satellites\n" +
-  "1A2B3C4,Example Person,MALE,1990-01-15,Resepşn,Qeydiyyatçı,2026-07-01,PRIMARY,industry_hotel_pms\n" +
-  "5B6C7D8,Second Job,FEMALE,1992-03-20,Resepşn,Qeydiyyatçı,2026-07-01,ADDITIONAL,\n";
+  "fin,firstName,middleName,lastName,sex,birthDate,orgUnit,position,hireDate,workplace,satellites\n" +
+  "1A2B3C4,Ali,Vali,Mammadov,MALE,1990-01-15,Resepşn,Qeydiyyatçı,2026-07-01,PRIMARY,industry_hotel_pms\n" +
+  "5B6C7D8,Second,,Job,FEMALE,1992-03-20,Resepşn,Qeydiyyatçı,2026-07-01,ADDITIONAL,\n";
 
 const ABSENCE_TEMPLATE =
   "staffCode,kind,startDate,endDate,note\n" +

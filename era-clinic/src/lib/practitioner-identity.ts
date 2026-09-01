@@ -1,4 +1,9 @@
-import { linkPersonIdentity } from "@era/satellite-kit";
+import {
+  composePersonFullName,
+  linkPersonIdentity,
+  normalizeNationalityIso,
+  resolveIncomingNameParts,
+} from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 
 const STRICT =
@@ -27,9 +32,26 @@ export function practitionerMdmStrictEnabled(): boolean {
   return STRICT;
 }
 
+function resolvePractitionerFullName(input: {
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  fullName?: string;
+}): string {
+  const parts = resolveIncomingNameParts(input);
+  return (
+    composePersonFullName(parts?.firstName, parts?.middleName, parts?.lastName) ||
+    input.fullName?.trim() ||
+    ""
+  );
+}
+
 /** Resolve-or-create in MDM before practitioner row insert (strict create). */
 export async function resolvePractitionerGlobalPerson(input: {
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   fin?: string;
   passport?: string;
   issuingCountry?: string;
@@ -42,13 +64,19 @@ export async function resolvePractitionerGlobalPerson(input: {
     );
   }
 
+  const parts = resolveIncomingNameParts(input);
+  const fullName = resolvePractitionerFullName(input);
+
   const linked = await linkPersonIdentity({
     fin: input.fin?.trim(),
     passport: input.passport?.trim(),
-    issuingCountry: input.issuingCountry?.trim() ?? input.nationality?.trim(),
-    fullName: input.fullName.trim(),
+    issuingCountry: input.issuingCountry?.trim() || undefined,
+    firstName: parts?.firstName?.trim() || undefined,
+    middleName: parts?.middleName?.trim() || undefined,
+    lastName: parts?.lastName?.trim() || undefined,
+    fullName: fullName || undefined,
     phone: input.phone?.trim(),
-    nationality: input.nationality?.trim(),
+    nationality: normalizeNationalityIso(input.nationality) ?? undefined,
   });
 
   if (!linked.globalPersonId) {
@@ -66,6 +94,9 @@ export async function resolvePractitionerGlobalPerson(input: {
 export async function linkPractitionerGlobalPerson(input: {
   practitionerId: string;
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   fin?: string;
   passport?: string;
   issuingCountry?: string;
@@ -80,13 +111,19 @@ export async function linkPractitionerGlobalPerson(input: {
     return null;
   }
 
+  const parts = resolveIncomingNameParts(input);
+  const fullName = resolvePractitionerFullName(input);
+
   const linked = await linkPersonIdentity({
     fin: input.fin?.trim(),
     passport: input.passport?.trim(),
-    issuingCountry: input.issuingCountry?.trim() ?? input.nationality?.trim(),
-    fullName: input.fullName.trim(),
+    issuingCountry: input.issuingCountry?.trim() || undefined,
+    firstName: parts?.firstName?.trim() || undefined,
+    middleName: parts?.middleName?.trim() || undefined,
+    lastName: parts?.lastName?.trim() || undefined,
+    fullName: fullName || undefined,
     phone: input.phone?.trim(),
-    nationality: input.nationality?.trim(),
+    nationality: normalizeNationalityIso(input.nationality) ?? undefined,
   });
 
   if (linked.globalPersonId) {

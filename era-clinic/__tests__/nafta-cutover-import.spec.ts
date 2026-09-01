@@ -34,6 +34,8 @@ describe("nafta cutover import rules", () => {
       externalRef: "wo:patient:2148",
       woId: "2148",
       fullName: "RAFIL KURBANOV",
+      firstName: "RAFIL",
+      lastName: "KURBANOV",
       givenName: "RAFIL",
       surname: "KURBANOV",
       sex: "MALE",
@@ -63,7 +65,8 @@ describe("nafta cutover import rules", () => {
       nationality: "Russian",
       phone: "+994501112233",
       hotelResNo: "11112877",
-      givenName: "RAFIL",
+      firstName: "RAFIL",
+      lastName: "KURBANOV",
     });
   });
 

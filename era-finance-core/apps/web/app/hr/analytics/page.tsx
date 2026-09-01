@@ -7,6 +7,7 @@ import { EmptyState } from "../../../components/empty-state";
 import { apiFetch } from "../../../lib/api-client";
 import { parseHrEmployeesResponse } from "../../../lib/hr-employees-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { useAuth } from "../../../lib/auth-context";
 import {
   BORDER_MUTED_CLASS,
@@ -19,6 +20,8 @@ type EmpRow = {
   id: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
+  displayName?: string | null;
   jobPosition?: { department?: { id: string; name: string } };
 };
 type AbsenceRow = {
@@ -287,8 +290,8 @@ export default function HrAnalyticsPage() {
                 <div
                   className="sticky left-0 z-10 border-t border-[#EBEDF0] bg-white px-2 py-1.5 text-[13px] font-medium text-[#34495E]"
                 >
-                  <span className="block truncate" title={`${emp.lastName} ${emp.firstName}`}>
-                    {emp.lastName} {emp.firstName}
+                  <span className="block truncate" title={formatAzEmployeeListName(emp)}>
+                    {formatAzEmployeeListName(emp)}
                   </span>
                   {emp.jobPosition?.department?.name ? (
                     <span className="block truncate text-[11px] font-normal text-[#7F8C8D]">

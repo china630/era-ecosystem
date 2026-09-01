@@ -8,8 +8,11 @@ const UNIT_KIT = "unit-kit";
 const POS_CLEAN = "pos-clean";
 const POS_COOK = "pos-cook";
 
-const HEADER =
+const HEADER_LEGACY =
   "fin,fullName,sex,birthDate,orgUnit,position,hireDate,workplace,satellites";
+
+const HEADER_PARTS =
+  "fin,firstName,middleName,lastName,sex,birthDate,orgUnit,position,hireDate,workplace,satellites";
 
 describe("WorkforceImportService.importRoster", () => {
   const prisma = {
@@ -56,7 +59,7 @@ describe("WorkforceImportService.importRoster", () => {
   });
 
   it("resolves MDM even when the org unit is missing", async () => {
-    const csv = `${HEADER}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,UnknownDept,Cleaner,2026-01-01,PRIMARY,`;
+    const csv = `${HEADER_LEGACY}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,UnknownDept,Cleaner,2026-01-01,PRIMARY,`;
     const result = await svc.importRoster(ORG, "actor1", csv, false);
     expect(mdm.workforceResolvePerson).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -71,12 +74,26 @@ describe("WorkforceImportService.importRoster", () => {
     expect(result.rows[0].message).toMatch(/Org unit not found/);
   });
 
+  it("imports name parts when firstName and lastName columns are present", async () => {
+    const csv = `${HEADER_PARTS}\n1A2B3C4,Ali,Vali,Mammadov,MALE,1990-01-15,Housekeeping,Cleaner,2026-01-01,PRIMARY,`;
+    const result = await svc.importRoster(ORG, "actor1", csv, false);
+    expect(mdm.workforceResolvePerson).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fin: "1A2B3C4",
+        firstName: "Ali",
+        middleName: "Vali",
+        lastName: "Mammadov",
+      }),
+    );
+    expect(result.created).toBe(1);
+  });
+
   it("skips hire for the same person+unit+position after MDM update", async () => {
     prisma.workforceEmployment.findFirst.mockResolvedValue({
       id: "emp-existing",
       hireDate: new Date("2026-01-01T00:00:00.000Z"),
     });
-    const csv = `${HEADER}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-01-01,PRIMARY,`;
+    const csv = `${HEADER_LEGACY}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-01-01,PRIMARY,`;
     const result = await svc.importRoster(ORG, "actor1", csv, false);
     expect(mdm.workforceResolvePerson).toHaveBeenCalled();
     expect(provision.hire).not.toHaveBeenCalled();
@@ -101,7 +118,7 @@ describe("WorkforceImportService.importRoster", () => {
       hireDate: new Date("2024-01-13T00:00:00.000Z"),
     });
     prisma.workforceEmployment.update.mockResolvedValue({ id: "emp-existing" });
-    const csv = `${HEADER}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-05-12,PRIMARY,`;
+    const csv = `${HEADER_LEGACY}\n1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-05-12,PRIMARY,`;
     const result = await svc.importRoster(ORG, "actor1", csv, false);
     expect(provision.hire).not.toHaveBeenCalled();
     expect(prisma.workforceEmployment.update).toHaveBeenCalledWith(
@@ -122,7 +139,7 @@ describe("WorkforceImportService.importRoster", () => {
       })
       .mockResolvedValueOnce(null);
     const csv =
-      `${HEADER}\n` +
+      `${HEADER_LEGACY}\n` +
       `1A2B3C4,Ali Aliyev,MALE,1990-01-15,Housekeeping,Cleaner,2026-01-01,PRIMARY,\n` +
       `1A2B3C4,Ali Aliyev,MALE,1990-01-15,Kitchen,Cook,2026-01-01,ADDITIONAL,industry_clinic`;
     const result = await svc.importRoster(ORG, "actor1", csv, false);

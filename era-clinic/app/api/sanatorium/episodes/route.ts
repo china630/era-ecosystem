@@ -5,9 +5,12 @@ import {
   handleRouteError,
   getRouteSession,
   requireClinicPermission,
+  jsonError,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { resolveClinicDataScope } from "@/lib/auth/clinic-data-scope";
 import { listOpenEpisodes, registerWalkInEpisode } from "@/lib/services/sanatorium.service";
+import { composeFullName } from "@/domain/patient/patient-ref-code";
 
 const listQuerySchema = z.object({
   organizationId: z.string().optional(),
@@ -21,11 +24,30 @@ const listQuerySchema = z.object({
   includeProgramCodes: z.boolean().optional(),
 });
 
+const patientNameAliases = z.object({
+  firstName: z.string().min(1).optional(),
+  middleName: z.string().optional().nullable(),
+  lastName: z.string().min(1).optional(),
+  givenName: z.string().min(1).optional(),
+  surname: z.string().min(1).optional(),
+  fatherName: z.string().optional().nullable(),
+});
+
+function normalizeWalkInName(d: z.infer<typeof patientNameAliases>) {
+  const firstName = (d.firstName ?? d.givenName ?? "").trim();
+  const lastName = (d.lastName ?? d.surname ?? "").trim();
+  const middleName =
+    d.middleName !== undefined
+      ? d.middleName?.trim() || null
+      : d.fatherName !== undefined
+        ? d.fatherName?.trim() || null
+        : null;
+  return { firstName, middleName, lastName };
+}
+
 const walkInSchema = z
   .object({
-    givenName: z.string().min(1).optional(),
-    surname: z.string().min(1).optional(),
-    fatherName: z.string().optional().nullable(),
+    ...patientNameAliases.shape,
     fullName: z.string().optional(),
     fin: z.string().optional(),
     passport: z.string().optional(),
@@ -37,16 +59,21 @@ const walkInSchema = z
     globalPersonId: z.string().optional(),
     programCode: z.string().optional(),
   })
+  .transform((d) => {
+    const { givenName, surname, fatherName, ...rest } = d;
+    return { ...rest, ...normalizeWalkInName(d) };
+  })
   .refine(
     (b) =>
       Boolean(b.fullName?.trim()) ||
-      (Boolean(b.givenName?.trim()) && Boolean(b.surname?.trim())),
-    { message: "givenName+surname or fullName required" },
+      (Boolean(b.firstName?.trim()) && Boolean(b.lastName?.trim())),
+    { message: "firstName+lastName or fullName required" },
   );
 
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
@@ -64,7 +91,11 @@ export async function GET(req: Request) {
       includeHotelRooms: url.searchParams.get("includeHotelRooms") === "1",
       includeProgramCodes: url.searchParams.get("includeProgramCodes") === "1",
     });
-    const result = await listOpenEpisodes(query);
+    const dataScope = await resolveClinicDataScope(
+      session,
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+    );
+    const result = await listOpenEpisodes({ ...query, dataScope });
     return jsonOk(result);
   } catch (err) {
     return handleRouteError(err);
@@ -91,17 +122,17 @@ export async function POST(req: Request) {
       boundOrg ??
       new URL(req.url).searchParams.get("organizationId") ??
       "local-clinic";
+    const firstName = body.firstName ?? "";
+    const lastName = body.lastName ?? "";
+    const middleName = body.middleName ?? null;
     const episode = await registerWalkInEpisode({
       organizationId,
-      givenName: body.givenName,
-      surname: body.surname,
-      fatherName: body.fatherName,
+      firstName,
+      lastName,
+      middleName,
       fullName:
         body.fullName?.trim() ||
-        [body.givenName, body.fatherName, body.surname]
-          .map((p) => p?.trim())
-          .filter(Boolean)
-          .join(" "),
+        composeFullName({ firstName, lastName, middleName }),
       fin: body.fin,
       passport: body.passport,
       phone: body.phone,

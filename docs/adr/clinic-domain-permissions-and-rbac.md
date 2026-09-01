@@ -67,6 +67,7 @@ All keys are lowercase, colon-separated, ASCII:
 |--------|---------|---------|
 | `screen:` | UI route (App Router page) | `screen:sanatorium.resources` |
 | `api:` | API capability (may gate multiple routes) | `api:cashier.settle` |
+| `scope:` | Data row scope (ALL vs assigned-self) | `scope:episodes.all` |
 | `admin:` | SatAdmin screens (alias of `screen:admin.*` for grouping) | `admin:catalog` |
 
 Rules:
@@ -149,6 +150,15 @@ Do **not** extend `STAFF_PROVISIONED` payload with screen lists in Phase A or B-
 **Wave 3 shipped:** coarse staff API keys + `opsApiRoutePermission` / `assertOpsApiPermission`; appointments/queue/patients/lab/visits/inpatient/MDM/ICD/ops catalogs guarded; `navEntryPermission`; no `roles` fallback in `entryVisible`; i18n permission labels on `/admin/access` (keys escape `.` → `_` for next-intl nesting); Implementation-Matrix `AC-CLI-RBAC` 🟡 (out of BE rollup until field UAT).
 
 **Gap closeout (post–Wave 3):** orphan aliases `/api/lab/import`, `/api/imaging-phrases`, `/api/templates` gated; ops mapper covers cashier/nurse/sanatorium resource paths + procedures fallback; full `app/api` grep allowlist; `assertClinicAdminRead/Write` require `Request` (no binary no-arg path); `requireClinicRole` removed. Customized `Role.permissionsJson` rows do **not** auto-gain new keys — use Reset to defaults or manual grant after upgrade.
+
+### Data scope layer (post–Wave 3)
+
+Two layers:
+
+1. **Capability** — `screen:*` / `api:*` (may the role open the list / call the API).
+2. **Row scope** — `scope:episodes.all` / `scope:lab_orders.all` in `/admin/access`.
+
+Enforcement: `resolveClinicDataScope` + list/detail filters. Without `scope:*.all`, rows are limited to the session’s `Practitioner` via episode visits / `prescribedByPractitionerId` / procedure allocations (labs: own visit or assigned episode). OrgOwner / platform super-admin always ALL. Defaults: RECEPTION, NURSE, LAB_TECH (labs), CLINIC_ADMIN get ALL; DOCTOR assigned-only (and no `screen:patients` by default).
 
 ---
 

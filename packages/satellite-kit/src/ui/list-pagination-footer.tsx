@@ -1,9 +1,12 @@
 "use client";
 
 import { MODAL_INPUT_CLASS, SECONDARY_BUTTON_CLASS } from "./design-system";
+import {
+  DEFAULT_LIST_PAGE_SIZE,
+  LIST_PAGE_SIZE_OPTIONS,
+} from "./paginated-list";
 
-export const LIST_PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
-export const DEFAULT_LIST_PAGE_SIZE = 25;
+export { LIST_PAGE_SIZE_OPTIONS, DEFAULT_LIST_PAGE_SIZE };
 
 export type ListPaginationFooterLabels = {
   rowsPerPage: string;

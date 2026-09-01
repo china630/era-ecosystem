@@ -21,7 +21,7 @@ describe('guests import adapter', () => {
         middleName: null,
         fullName: 'Ali Mammadov',
         title: null,
-        gender: 'M',
+        sex: 'M',
         birthDate: null,
         passportNumber: 'AA1234567',
         nationalIdFin: 'ABC1234',
@@ -44,7 +44,7 @@ describe('guests import adapter', () => {
     const { resolvePersonIdentity } = jest.requireMock('@era/satellite-kit');
     expect(resolvePersonIdentity).toHaveBeenCalledWith(
       expect.objectContaining({
-        gender: 'M',
+        sex: 'M',
         fin: 'ABC1234',
         passport: 'AA1234567',
       }),
@@ -70,5 +70,27 @@ describe('guests import adapter', () => {
     expect(row.middleName).toBe('Vali');
     expect(row.fullName).toBe('Ali Vali Mammadov');
     expect(row.nationality).toBe('AZ');
+  });
+
+  it('mapRow maps Elektraweb Gender 0/1 to M/F', async () => {
+    const { guestsAdapter } = await import('@/lib/import/adapters/guests.adapter');
+    expect(
+      guestsAdapter.mapRow({
+        externalRef: '10',
+        firstName: 'Zaur',
+        lastName: 'Rasulov',
+        gender: 0,
+        nationality: 'Azerbaijan',
+      }).sex,
+    ).toBe('M');
+    expect(
+      guestsAdapter.mapRow({
+        externalRef: '11',
+        firstName: 'Aygun',
+        lastName: 'Aliyeva',
+        gender: '1 - Female',
+        nationality: 'Azerbaijan',
+      }).sex,
+    ).toBe('F');
   });
 });

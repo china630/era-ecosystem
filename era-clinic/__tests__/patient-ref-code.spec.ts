@@ -14,14 +14,14 @@ describe("patient-ref-code", () => {
   });
 
   it("composes Ad Ata Soyad", () => {
-    expect(composeFullName({ givenName: "Matluba", surname: "Umirzakova" })).toBe(
+    expect(composeFullName({ firstName: "Matluba", lastName: "Umirzakova" })).toBe(
       "Matluba Umirzakova",
     );
     expect(
       composeFullName({
-        givenName: "Əli",
-        fatherName: "Vəli",
-        surname: "Məmmədov",
+        firstName: "Əli",
+        middleName: "Vəli",
+        lastName: "Məmmədov",
       }),
     ).toBe("Əli Vəli Məmmədov");
   });

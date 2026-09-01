@@ -4,6 +4,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellBool, cellNumber, cellString, parseDateCell } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
 import { genderFromElektrawebGuest } from '@/lib/integration/elektraweb-share-map';
+import { syncGuestIdentityDocuments } from '@/lib/guest-document-sync';
 import {
   classifyPersonDocuments,
   composePersonFullName,
@@ -19,6 +20,8 @@ const rowSchema = z.object({
   fullName: z.string().min(1),
   title: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
+  /** Normalized M/F after mapRow. */
+  sex: z.string().optional().nullable(),
   birthDate: z.date().optional().nullable(),
   passportNumber: z.string().optional().nullable(),
   nationalIdFin: z.string().optional().nullable(),
@@ -69,7 +72,8 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       'Unknown Guest';
     const title = cellString(raw.title);
     const genderRaw = cellString(raw.gender);
-    const gender = genderFromElektrawebGuest({ gender: genderRaw, title });
+    // Persist only M|F (never raw EW "0"/"1") so guest card + share gate work.
+    const sex = genderFromElektrawebGuest({ gender: genderRaw, title });
     const iso = mapNationalityToIso(cellString(raw.nationality));
     const docs = classifyPersonDocuments({
       nationalId: cellString(raw.nationalIdFin),
@@ -82,7 +86,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       middleName,
       fullName,
       title,
-      gender: gender ?? genderRaw,
+      sex,
       birthDate: parseDateCell(raw.birthDate, { dateOnly: true }),
       passportNumber: docs.passport ?? null,
       nationalIdFin: docs.fin ?? null,
@@ -106,11 +110,14 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         fin: row.nationalIdFin?.trim() || undefined,
         passport: row.passportNumber?.trim() || undefined,
         issuingCountry: iso,
+        firstName: row.firstName ?? undefined,
+        middleName: row.middleName ?? undefined,
+        lastName: row.lastName ?? undefined,
         fullName: row.fullName,
         phone: row.phone ?? undefined,
-        nationality: iso === 'AZ' ? 'AZ' : 'OTHER',
+        nationality: iso,
         globalPersonId: globalPersonId || undefined,
-        gender: row.gender ?? undefined,
+        sex: row.sex ?? undefined,
         birthDate: row.birthDate ?? undefined,
       });
       globalPersonId = resolved.globalPersonId ?? globalPersonId;
@@ -124,7 +131,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       lastName: row.lastName ?? undefined,
       middleName: row.middleName ?? undefined,
       title: row.title ?? undefined,
-      gender: row.gender ?? undefined,
+      sex: row.sex ?? undefined,
       birthDate: row.birthDate ?? undefined,
       nationality: row.nationality ?? 'AZ',
       phone: row.phone ?? undefined,
@@ -146,7 +153,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         lastName: data.lastName,
         middleName: data.middleName,
         title: data.title,
-        gender: data.gender,
+        sex: data.sex,
         birthDate: data.birthDate,
         nationality: data.nationality,
         phone: data.phone,
@@ -158,6 +165,14 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         vehiclePlate: data.vehiclePlate,
       },
     });
+    const saved = await tx.guest.findFirst({ where: { externalRef: row.externalRef } });
+    if (saved) {
+      await syncGuestIdentityDocuments(tx, saved.id, {
+        nationalIdFin: row.nationalIdFin,
+        passportNumber: row.passportNumber,
+        nationality: row.nationality ?? undefined,
+      });
+    }
     return existing ? 'updated' : 'created';
   },
 };

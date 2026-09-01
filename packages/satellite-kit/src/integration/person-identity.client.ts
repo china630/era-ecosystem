@@ -9,6 +9,10 @@ import {
 } from "../tenancy/resolve-orchestrator-url";
 import type { PersonSex } from "./person-sex";
 import { normalizePersonSex, toBirthDateIso } from "./person-sex";
+import {
+  composePersonFullName,
+  hasPersonNameInput,
+} from "./person-name";
 
 export type PersonIdentityInput = {
   fin?: string;
@@ -16,7 +20,11 @@ export type PersonIdentityInput = {
   issuingCountry?: string;
   residencePermit?: string;
   nationalId?: string;
-  fullName: string;
+  /** Legacy blob. Prefer firstName + lastName (+ middleName). */
+  fullName?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   phone?: string;
   nationality?: string;
   /** When set, resolve updates this person (fill sex/DOB) instead of creating a surrogate. */
@@ -61,7 +69,14 @@ function authHeaders(token: string): Record<string, string> {
 export async function lookupGlobalPersonByFin(
   fin: string,
   opts?: MdmClientOptions & { requesterOrgId?: string; purpose?: string },
-): Promise<{ globalPersonId: string | null; masked?: boolean }> {
+): Promise<{
+  globalPersonId: string | null;
+  masked?: boolean;
+  fullName?: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+}> {
   const token = serviceToken(opts);
   if (!token) return { globalPersonId: null };
   const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons/lookup-by-fin`, {
@@ -79,21 +94,39 @@ export async function lookupGlobalPersonByFin(
     found?: boolean;
     globalPersonId?: string;
     masked?: boolean;
+    fullName?: string | null;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
   };
   if (!data.found || !data.globalPersonId) return { globalPersonId: null };
-  return { globalPersonId: data.globalPersonId, masked: data.masked };
+  return {
+    globalPersonId: data.globalPersonId,
+    masked: data.masked,
+    fullName: data.fullName,
+    firstName: data.firstName,
+    middleName: data.middleName,
+    lastName: data.lastName,
+  };
 }
 
 function resolveBody(input: PersonIdentityInput) {
   const sex = normalizePersonSex(input.sex ?? input.gender);
   const birthDate = toBirthDateIso(input.birthDate);
+  const composed =
+    composePersonFullName(input.firstName, input.middleName, input.lastName) ||
+    input.fullName?.trim() ||
+    undefined;
   return {
     fin: input.fin,
     passport: input.passport,
     issuingCountry: input.issuingCountry,
     residencePermit: input.residencePermit,
     nationalId: input.nationalId,
-    fullName: input.fullName,
+    firstName: input.firstName?.trim() || undefined,
+    middleName: input.middleName?.trim() || undefined,
+    lastName: input.lastName?.trim() || undefined,
+    fullName: composed,
     phone: input.phone,
     nationality: input.nationality,
     globalPersonId: input.globalPersonId?.trim() || undefined,
@@ -130,7 +163,7 @@ export async function linkPersonIdentity(
   input: PersonIdentityInput,
   opts?: MdmClientOptions & { requesterOrgId?: string; purpose?: string },
 ): Promise<{ globalPersonId: string | null; created?: boolean; masked?: boolean }> {
-  if (!input.fullName?.trim()) {
+  if (!hasPersonNameInput(input) && !input.globalPersonId?.trim()) {
     return { globalPersonId: null };
   }
   let masked: boolean | undefined;
@@ -187,6 +220,9 @@ export async function listPersonIdentifiers(
 export type PersonOpsProfile = {
   globalPersonId: string;
   fullName: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
   phoneMasked: string | null;
   sex?: PersonSex | null;
   birthDate?: string | null;

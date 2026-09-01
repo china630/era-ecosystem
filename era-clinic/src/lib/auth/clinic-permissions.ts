@@ -66,6 +66,10 @@ export const CLINIC_PERMISSION = {
   API_QUEUE: "api:queue",
   API_CATALOG_READ: "api:catalog.read",
   API_IDENTITY_GUEST_QR: "api:identity.guest_qr",
+  /** List/detail: all episodes (else assigned-to-self practitioner). */
+  SCOPE_EPISODES_ALL: "scope:episodes.all",
+  /** List/detail: all lab orders (else assigned-to-self / own episode). */
+  SCOPE_LAB_ORDERS_ALL: "scope:lab_orders.all",
 } as const;
 
 export type ClinicPermission =
@@ -75,8 +79,10 @@ export const ALL_CLINIC_PERMISSIONS: ClinicPermission[] = Object.values(
   CLINIC_PERMISSION,
 );
 
+const COMMON_HOME: ClinicPermission[] = [CLINIC_PERMISSION.SCREEN_HOME];
+
 const COMMON_AUTHENTICATED: ClinicPermission[] = [
-  CLINIC_PERMISSION.SCREEN_HOME,
+  ...COMMON_HOME,
   CLINIC_PERMISSION.SCREEN_PATIENTS,
 ];
 
@@ -92,8 +98,9 @@ const RECEPTION_SCREENS: ClinicPermission[] = [
   CLINIC_PERMISSION.SCREEN_INPATIENT_CENSUS,
 ];
 
+/** Doctors use episode/lab desks; patient registry is off by default (matrix). */
 const DOCTOR_SCREENS: ClinicPermission[] = [
-  ...COMMON_AUTHENTICATED,
+  ...COMMON_HOME,
   CLINIC_PERMISSION.SCREEN_DOCTOR,
   CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
   CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
@@ -167,6 +174,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_QUEUE,
       CLINIC_PERMISSION.API_CATALOG_READ,
       CLINIC_PERMISSION.API_IDENTITY_GUEST_QR,
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+      CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
     ],
     [CLINIC_ROLE.DOCTOR]: [
       ...DOCTOR_SCREENS,
@@ -188,7 +197,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_REPORTS_DIAGNOSES,
       CLINIC_PERMISSION.API_NURSE_QR_SCAN,
       CLINIC_PERMISSION.API_NURSE_OVERDUE,
-      CLINIC_PERMISSION.API_PATIENTS,
       CLINIC_PERMISSION.API_APPOINTMENTS_READ,
       CLINIC_PERMISSION.API_INPATIENT,
       CLINIC_PERMISSION.API_VISITS,
@@ -196,6 +204,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_OPS_DAY_SUMMARY,
       CLINIC_PERMISSION.API_ICD_READ,
       CLINIC_PERMISSION.API_CATALOG_READ,
+      // no SCOPE_*_ALL → assigned-self rows only
     ],
     [CLINIC_ROLE.NURSE]: [
       ...NURSE_SCREENS,
@@ -217,6 +226,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_ICD_READ,
       CLINIC_PERMISSION.API_CATALOG_READ,
       CLINIC_PERMISSION.API_IDENTITY_GUEST_QR,
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+      CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
     ],
     [CLINIC_ROLE.FLOOR]: [
       ...FLOOR_SCREENS,
@@ -232,6 +243,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_LAB_ORDERS,
       CLINIC_PERMISSION.API_PATIENTS,
       CLINIC_PERMISSION.API_CATALOG_READ,
+      CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
     ],
     [CLINIC_ROLE.CLINIC_ADMIN]: [...ALL_CLINIC_PERMISSIONS],
   };
@@ -243,7 +255,8 @@ export type PermissionGroupId =
   | "sanatorium"
   | "inpatient"
   | "admin"
-  | "api";
+  | "api"
+  | "scope";
 
 export type PermissionGroup = {
   id: PermissionGroupId;
@@ -310,6 +323,14 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     id: "api",
     labelKey: "groupApi",
     permissions: ALL_CLINIC_PERMISSIONS.filter((p) => p.startsWith("api:")),
+  },
+  {
+    id: "scope",
+    labelKey: "groupScope",
+    permissions: [
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+      CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
+    ],
   },
 ];
 

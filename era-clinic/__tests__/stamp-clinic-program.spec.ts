@@ -97,8 +97,8 @@ describe("stamp clinic program from EW notes", () => {
     const rows = [
       {
         fullName: "Afət Həsənov",
-        givenName: "Afət",
-        surname: "Həsənov",
+        firstName: "Afət",
+        lastName: "Həsənov",
         checkIn: "2026-08-27T14:24:00+04:00",
         roomNumber: "306",
         programCode: "",

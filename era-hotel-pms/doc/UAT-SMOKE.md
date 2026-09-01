@@ -44,9 +44,11 @@ Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API call
 ## 2. Booking (PMS-01)
 
 1. `/bookings/new` — create guest via **+ New guest**; enter FIN/passport in lookup fields → MDM link → verify guest row has `globalPersonId` and **no** local FIN/passport columns (DB).
-2. `/guests` — open guest card; Details tab shows **masked** FIN/passport from MDM ops-profile; edit uses transient lookup only.
-3. Create 3-night booking (room type + rate + dates).
-3. Confirm reservation on chessboard.
+2. `/guests` — open guest card; left panel shows **Ad / Ata adı / Soyad** (`firstName` / `middleName` / `lastName`); save composes `fullName` with patronymic; **Sex** catalog (M/F) writes `Guest.sex`; nationality Select stores ISO code (e.g. `KZ`, not collapsed to `OTHER` on MDM wire).
+3. Guest card Details tab shows **masked** FIN/passport from MDM ops-profile; parent names (`parentFatherName` / `parentMotherName`) separate from patronymic; edit uses transient lookup only.
+4. Re-save guest with empty middle name — MDM **does not** clear existing patronymic (fill-not-clear).
+5. Create 3-night booking (room type + rate + dates).
+6. Confirm reservation on chessboard.
 
 ## 3. Check-in & folio (PMS-03, FIN-01)
 

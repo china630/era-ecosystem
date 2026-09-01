@@ -46,7 +46,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-01 | Practitioners ops catalog (specialty, slots) | PRD M2 | Y | — | Y `/admin/master-data` | — | — | SHIPPED | Ops edit only; hire via CP Workforce |
 | CLI-WF-01 | Practitioner hire (CP workforce → provision) | ADR cp-core-workforce-hub | Y CP hire + STAFF_PROVISIONED | — | — | Y (payroll mirror optional) | — | SHIPPED | UAT: Workspace hire → clinic DOCTOR login |
 | CLI-WF-PWD-01 | Clinic local staff change own password | ADR workforce-identity | Y `PATCH /api/auth/password` | Y `/account/password` | — | — | — | SHIPPED | First login PIN `0000`; SSO accounts 403 |
-| CLI-RBAC-01 | Configurable role×screen matrix (Variant A) | ADR clinic-domain-permissions-and-rbac | Y full staff+admin API catalog (`opsApiRoutePermission` + `adminApiRoutePermission`); refresh-permissions; gap-closeout orphans | Y hide screen → API 403 | Y `/admin/access`; CLINIC_ADMIN matrix binds screens | — | — | SHIPPED | Phase A Waves 1–3 + gap closeout (lab/import, imaging-phrases, templates; grep allowlist); AC-CLI-RBAC 🟡 until field UAT; Reset defaults after upgrade if matrix customized |
+| CLI-RBAC-01 | Configurable role×screen matrix (Variant A) | ADR clinic-domain-permissions-and-rbac | Y full staff+admin API catalog (`opsApiRoutePermission` + `adminApiRoutePermission`); refresh-permissions; gap-closeout orphans; `scope:episodes.all` / `scope:lab_orders.all` row filters | Y hide screen → API 403; doctor without scope → assigned rows only | Y `/admin/access`; CLINIC_ADMIN matrix binds screens + scope | — | — | SHIPPED | Phase A Waves 1–3 + gap closeout + data-scope layer; AC-CLI-RBAC 🟡 until field UAT; Reset defaults after upgrade if matrix customized |
 | CP-WF-HUB-01 | CP Workforce hub end-to-end (hire, org, absence, security) | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | Plan E clean cutover |
 | CP-WF-EXP-01 | Workforce CSV export (roster, absences, timesheet) | ADR F1 | Y | — | — | Y `/workspace/workforce/export` | — | SHIPPED | No FIN in default CSV |
 | CP-WF-IMP-01 | Workforce CSV/xlsx import (roster, absences, org-structure) | ADR F1 | Y dry-run + apply | — | — | Y `/workspace/workforce/export` + `/workspace/workforce/org-structure` | — | SHIPPED | xlsx or CSV; empty satellites = no seat; org-structure before roster |
@@ -82,10 +82,10 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-34 | Print forms (lab/USM/checkup/procedures) + branding | ADR clinic-print-forms | Y print loaders; ImagingPhrase; checkup ← Nafta intake 4 | Y /print/*; checkup default therapist/gyn/cardio/usm | Y print branding; phrase/analyte options | — | — | SHIPPED | Tenant `checkupSectionsJson` overlay OK |
 | CLI-33 | Cashier ops (queue, shifts, multi-channel settle, over-quota) | ADR clinic-cashier-ops | Y queue/bills/shifts/receipts/over-quota; unified bill; split pay; ProcedureChargeLog | Y `/cashier` tabs + settle modal; X/Z shift | — | — | — | SHIPPED | Fiscal still STUB (CLI-24); folio/hub void at hotel |
 | CLI-27 | Clinic→hotel capacity foresight | ADR clinic-hotel-capacity-foresight | Y `/api/capacity/summary` (+ remaining%) | — | — | Y executive banner | — | SHIPPED | Soft warn ≤15% remaining; critical blocks medical booking; bus CAPACITY_CHANGED |
-| CLI-28 | Patient clinical demographics (sex, age, blood, emergency) | ADR clinic-patient-clinical-demographics | Y givenName/surname/fatherName + `ageYears`; nationality nullable | Y `/patients`, `/patients/[id]` Ad/Soyad/Ata; nationality SEARCHABLE no AZ default | — | — | — | SHIPPED | Ops cache on PatientRef; sex/DOB SoR = MDM person core |
+| CLI-28 | Patient clinical demographics (sex, age, blood, emergency) | ADR clinic-patient-clinical-demographics | Y firstName/middleName/lastName + `ageYears`; nationality nullable | Y `/patients`, `/patients/[id]` Ad/Ata adı/Soyad; nationality SEARCHABLE no AZ default | — | — | — | SHIPPED | Ops cache; MDM link sends name parts + ISO; PatientSex no OTHER; phone not MDM id |
 | CLI-29 | Ops home day dashboard (Ana səhifə) | PRD ops | Y `/api/ops/day-summary` | Y `/` KPI + by-type | — | — | — | SHIPPED | Asia/Baku day; appointments/procedures/queue/labs/overdue; preset inpatient beds |
 | CLI-36 | Practitioner shift rotation | ADR clinic-practitioner-shifts | Y rule engine (weekly/week-parity/month-parity/cycle) + exceptions; matrix off-shift block; booking guard 409 | Y `/appointments` off-shift slots blocked | Y `/admin/master-data` **Shifts** modal + `GET/PUT …/[id]/schedule` | — | — | SHIPPED | Unrestricted when no rules (back-compat); outpatient appts only |
-| CLI-37 | UI list/filter standard (3-tier) | DESIGN + UI_PLAYBOOK | — | Y instant `EraListFilterBar`; name-first; icon row actions; home full-width + shared date; ListPaginationFooter on sanatorium + SatAdmin DATA_TABLE lists | Y same on SatAdmin lists; catalog grid `pagination={false}` | — | — | SHIPPED | Global kit: no Apply; Reset inline; `useDebouncedValue` 300ms |
+| CLI-37 | UI list/filter standard (3-tier) | DESIGN + UI_PLAYBOOK | — | Y instant `EraListFilterBar`; name-first; icon row actions; home full-width + shared date; `EraListWorkspace` + server COUNT/page on patients / lab-orders / sanatorium list | Y same on SatAdmin lists; catalog grid `pagination={false}` | — | — | SHIPPED | Global kit: no Apply; Reset inline; `useDebouncedValue` 300ms; fill-height list shell |
 | CLI-38 | Staff kind + monthly nurse/lab duty roster | ADR clinic-staff-duty-roster | Y roster GET/PUT/approve; absences; planner uses APPROVED posting; calendar = DOCTOR only; roster excludes leftover `WO-TR-*` | Y `/sanatorium/nurse-roster` month matrix + absence modal + pager | Y master-data `staffKind` + link | Y | — | SHIPPED | Skill ≠ duty; CLI-36 = hours; Finance HR vacation sync later |
 | CLI-39 | Sanatorium ICD-10 search/picker | ADR clinic-icd10-catalog | Y `GET /api/icd`; episode diagnosis; `GET/POST/DELETE /api/patients/[id]/diagnoses` | Y `/sanatorium` IcdPicker single SEARCHABLE (API `onQueryChange`); patient card after contraindications | — | — | — | SHIPPED | UAT-SMOKE ICD; selectable CATEGORY/LEAF only; card write needs OPEN episode |
 | CLI-40 | Visit + inpatient + print + ICD favorites | ADR clinic-icd10-catalog | Y VisitDiagnosis / AdmissionDiagnosis | Y `/visits/[id]`; `/inpatient` dx modal; print checkup | Y `/admin/icd-favorites` | — | — | SHIPPED | UAT-SMOKE ICD; SatAdmin no title CRUD |
@@ -106,7 +106,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------|
 | CLI-MDM-01 | Practitioner MDM link | ADR | Y | — | Y `/admin/master-data` | — | — | SHIPPED | — |
 | CLI-MDM-02 | Patient intake resolve | PRD M1 | Y | Y `/patients` | Y | — | — | SHIPPED | Cutover `#21` reuses hotel guest person; walk-in surrogate if no stay |
-| HOT-MDM-01 | Guest create/edit MDM link + masked ops-profile | ADR | Y | Y GuestCardModal | Y | — | — | SHIPPED | UAT-SMOKE §2 guest MDM |
+| HOT-MDM-01 | Guest create/edit MDM link + masked ops-profile | ADR | Y | Y GuestCardModal | Y | — | — | SHIPPED | UAT-SMOKE §2; link sends first/middle/last + ISO nationality (not OTHER collapse) |
 | FIN-CIT-01 | Natural person via MDM (HR/CP) | TZ §28.2 | Y | — | Y | Y | — | SHIPPED | — |
 | FIN-HR-MDM-01 | Employee payroll mirror + MDM person read-through | ADR | Y | — | Y | Y | — | SHIPPED | Plan D — no local FIN/name |
 | ORCH-MDM-HR-01 | PersonHrProfile + PersonAddress (blood/stats/addr/edu) grant-gated | ADR | Y | — | — | — | HEADLESS | API | internal `/hr-profile`; ops-profile batch expands |
@@ -145,9 +145,9 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | BANK-WEALTH-01 | Safekeeping FOP | BE roadmap | Y | Y `/wealth` | — | — | — | SHIPPED | thin custody |
 | BANK-AML-RTF-01 | Fraud score lab | BE roadmap | Y | Y `/aml/cases` | — | — | — | API | score engine; cases UI |
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | ADR | Y | — | — | Y | Y | SHIPPED | — |
-| ORCH-MDM-02 | internal resolve/merge API | ADR | Y | — | — | — | HEADLESS | HEADLESS | service token; resolve writes sex/DOB |
-| ORCH-MDM-03 | Person core sex + birthDate (M/F/UNKNOWN) | ADR era-mdm-natural-person-identity | Y resolve + ops-profile | — | — | — | HEADLESS | API | no OTHER; fill-not-clear; hotel/clinic cache |
-| ORCH-MDM-04 | Super-admin persons directory | ADR | Y `GET /v1/admin/mdm/persons` | — | — | — | Y `/super-admin/mdm/persons` | API | list + FIN/name/DOB/phone filters; resolve/merge modals |
+| ORCH-MDM-02 | internal resolve/merge API | ADR | Y | — | — | — | HEADLESS | HEADLESS | service token; resolve writes name parts + sex/DOB |
+| ORCH-MDM-03 | Person core name parts + sex + birthDate | ADR era-mdm-natural-person-identity | Y resolve + ops-profile | — | — | — | HEADLESS | API | first/middle/last + fullName denorm; ISO nationality; fill-not-clear; hotel/clinic cache |
+| ORCH-MDM-04 | Super-admin persons directory | ADR | Y `GET /v1/admin/mdm/persons` | — | — | — | Y `/super-admin/mdm/persons` | API | list shows first/middle/last; resolve modal parts; FIN/name/DOB/phone filters |
 
 ### Presets (product lines)
 
@@ -172,7 +172,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-04 | e-qaimé H-BL-24 | stub | folio read-only | STUB | prod cert |
 | HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin `/settings/import`. Wizard pack `#03`–`#15` (no FnB/retail cards, no BAR). Nafta: `#14` extra bed 96/48; `#15` Agency Statement → AGENCY folio (not 1C) |
 | HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | HEADLESS | Extension settings + ingest/health + outbox. Overlay v0.3.4: programmatic inject into Elektraweb app windows + frames. Clinic Issue-ticket **SHOW** (Wave 6 lab). Super-Admin **per-org** policy **SHOW** (Wave 6 lab) + Sync → `ElektrawebBridgePolicy`. Hotel request tenant from JWT/session. Wave 8: ingest stamps ALS-first (`bridgeRequestOrganizationId`). Wave 9: field runbook [`reports/hot06-field-runbook.md`](../reports/hot06-field-runbook.md). **Not SHIPPED** (field SPA Insert open). Lab: [`reports/hot06-lab-signoff.md`](../reports/hot06-lab-signoff.md). [ADR saas](./adr/saas-request-tenant-and-vendor-bridges.md) · [inbound](./adr/hotel-elektraweb-live-bridge.md) · [reverse](./adr/hotel-elektraweb-reverse-folio-post.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
-| HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | — |
+| HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | name parts + ISO nationality on link |
 | HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
 | HOT-BOOK-01 | Booking hierarchy (Block→Booking→RoomStay) | Y | Y card + `/admin/allotment-blocks` | SHIPPED | [ADR](./adr/hotel-booking-hierarchy.md); pickup UI; MASTER folio routing |
 | HOT-BOOK-02 | Reservation card Phase 0 agency-first layout | Y | Y ReservationCardEditor | SHIPPED | Assignment by stage; Additional collapsed |
@@ -223,7 +223,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-AGP-01 | Agency portal book (contract allotment + isolation) | [ADR agency portal](./adr/hotel-agency-portal.md) | Y `/api/agency/*` | Y `/agency/*` (extranet) | Y invite | — | — | API | P0–P1; multi-hotel grant on CP; AUTO default OFF → OPTION |
 | HOT-AGP-02 | FO agency inbox confirm / decline | ADR agency portal | Y `/api/fo/agency-inbox` | Y `/fo/agency-inbox` | — | — | — | API | Confirm → CONFIRMED; decline → CANCELLED |
 | HOT-AGP-03 | Optional passport scan on agency booking | ADR agency portal | Y attachment upload | Y card + agency UI | — | — | — | API | Not KBS; storage key org-scoped |
-| HOT-UI-01 | List/filter enrichment (EraListFilterBar parity) | CLI-37 pattern | — | Y FO lists | allotment | — | — | SHIPPED | UAT list filters; H-BL-47 |
+| HOT-UI-01 | List/filter enrichment (EraListFilterBar parity) | CLI-37 pattern | — | Y FO lists; guests + reservations server page+COUNT via `EraListWorkspace`; FO `rowClassName` status tint; `?guestId=` → status ALL | allotment | — | — | SHIPPED | UAT list filters; H-BL-47; Live default on reservations (guest deep-link = All) |
 | HOT-PC-01 | Pricing components (service fee / meals / COGS versions + history) | [ADR bar vs package](./adr/hotel-bar-accounting-vs-package-sell.md) | Y `/api/admin/pricing-components` | Y `/settings/pricing-components` | Y | — | — | SHIPPED | Seeds Nafta defaults; audit on version create |
 | HOT-OCC-01 | Occupancy / load / child pricing feature flags + 2nd/3rd adult + extra bed + child matrix CRUD | [ADR occupancy flags](./adr/hotel-occupancy-and-load-pricing-flags.md) | Y `/api/admin/pricing-policy`, child-matrix, yield | Y `/settings/pricing-policy`, master-data rate plans, `/distribution/child-matrix` | Y | — | — | SHIPPED | Flags default OFF; yield only when load flag ON |
 | HOT-PKG-01 | Package sell + costFloor versions (1/2 adult occupancy) | [ADR bar vs package](./adr/hotel-bar-accounting-vs-package-sell.md) | Y `/api/admin/rate-plans/[id]/sell-versions` | Y `/settings/package-prices` | Y | — | — | SHIPPED | Syncs `pricePerNight` for occupancy=1 |
@@ -400,7 +400,7 @@ ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-p
 | ORCH-03 | MDM persons write | — | Y | SHIPPED |
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | Y | Y | SHIPPED |
 | ORCH-MDM-02 | internal resolve/merge API | — | HEADLESS | `[h]` |
-| ORCH-MDM-03 | Person core sex + birthDate | — | HEADLESS | `[h]` |
+| ORCH-MDM-03 | Person core name parts + sex + birthDate | — | HEADLESS | `[h]` |
 | ORCH-MDM-04 | Super-admin persons directory | — | Y `/super-admin/mdm/persons` | API |
 | ORCH-04 | Vendor SMS/email prod | — | — | STUB |
 | ORCH-05 | Login onboarding 0/1/N + company-less gate | Y | — | SHIPPED |
@@ -487,6 +487,9 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-08-31 | CP-WF-TS harden: APPROVED cells immutable; cherry-pick approve 410; empty approve 400; absence cancel unlock + sync reconcile; Finance UI link-only + EN banner; vacation multi-line + status gates. Status API — not SHIPPED. |
 | 2026-08-31 | CP-WF-TS-01 month grid is CP attendance SoR (Finance 409 `TIMESHEET_MASTER_IS_CP` when `platform_workforce`); VAC/ORD/STAT table+modal; ABS table header + CatalogField. Status API — not SHIPPED (no UAT-SMOKE). |
 | 2026-08-31 | CLI-WF-PWD-01 clinic `/account/password`; hotel/fnb STAFF_PROVISIONED scrypt + tenant; other satellites documented as no local login fan-out. |
+| 2026-09-01 | Step 5 Finance: Employee `birthDate` map; drop `patronymic`; MDM parts read-through (`personDisplayFromOpsProfile`); hire/edit/opening-balance `middleName` → MDM; ƏMAS prefill from parts; backfill script before migrate. |
+| 2026-09-01 | Step 2 orch: workforce hire/card + roster CSV parts; super-admin MDM directory columns; Nafta HR Tam adı → canon parts; STAFF_PROVISIONED fullName from MDM compose. |
+| 2026-09-01 | ORCH-MDM-02/03: MDM person name parts (`firstName`/`middleName`/`lastName` ciphers + fullName denorm); resolve dual-write + fill-not-clear; ISO nationality; ops-profile returns parts. Backfill script after migrate. UI directory still step 2. |
 | 2026-08-29 | ORCH-MDM-04: super-admin persons directory; CP-WF-EMP-01 employee card + filters; CP-WF-POS-01 archive + drill-down. |
 | 2026-08-28 | CLI-25: patient card timeline/history collapse Appointment+Visit to one «Приём» row (slot date, `/visits/[id]`). |
 | 2026-08-28 | CLI-48: `#21` attending doctor = one Visit on check-in from `#27` `wo:doctor:{id}` (not a PatientRef field). |
@@ -569,3 +572,5 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-08-04 | Hotel BE scaffold green: negative-path suites; DEPOSIT over-HELD refuse; HOT-02 scoped out of AC-HOT-RATE; INT excl. from BE rollup |
 | 2026-08-05 | Bank Product Factory: typed paramsJson + activate/retire + apply-on-originate (deposit/loan/card/current); ops UI authoring; readiness stays 🟡/mvp |
 | 2026-08-06 | Bank Capability Inventory SSOT (IN/PARTIAL/DECLARED/OUT); Acceptance/PRD/editions disclose mid-size AZ CBS ≠ full ABS; YC yellow-clear lab-pilot |
+| 2026-09-01 | List workspace: kit `EraListWorkspace` + server COUNT/page; clinic patients/lab-orders/sanatorium + hotel guests/FO reservations (CLI-37 / HOT-UI-01) |
+| 2026-09-01 | List polish: `usePaginatedList` on 5 screens; FO row tint + guestId→ALL; hasNotes btrim; dateFrom/To UI; `paginationMode=server` |

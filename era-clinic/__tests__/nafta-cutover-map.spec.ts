@@ -33,6 +33,9 @@ describe("nafta cutover column map", () => {
       "externalRef",
       "woId",
       "fullName",
+      "firstName",
+      "middleName",
+      "lastName",
       "givenName",
       "surname",
       "sex",
@@ -60,7 +63,9 @@ describe("nafta cutover column map", () => {
     ]);
     expect(HEADERS.roster).toEqual([
       "fin",
-      "fullName",
+      "firstName",
+      "middleName",
+      "lastName",
       "sex",
       "birthDate",
       "orgUnit",
@@ -125,13 +130,16 @@ describe("nafta cutover column map", () => {
   it("maps medical job titles to clinic satellite", () => {
     const row = mapRosterRow({
       FİN: "4QK1E9C",
-      "Tam adı": "Rəna Kəngərli",
+      "Tam adı": "Kəngərli Rəna",
       Şöbə: "Tibb",
       Vəzifə: "Baş həkim",
       Cinsi: "Q",
     });
     expect(row.satellites).toBe("industry_clinic");
     expect(row.fin).toBe("4QK1E9C");
+    expect(row.lastName).toBe("Kəngərli");
+    expect(row.firstName).toBe("Rəna");
+    expect(row.middleName).toBe("");
     expect(row.sex).toBe("FEMALE");
     expect(row.workplace).toBe("");
   });
@@ -179,6 +187,9 @@ describe("nafta cutover column map", () => {
     });
     expect(row.hireDate).toBe("2026-05-12");
     expect(row.birthDate).toBe("1976-09-16");
+    expect(row.lastName).toBe("Nəzərov");
+    expect(row.firstName).toBe("Nail");
+    expect(row.middleName).toBe("Nizami");
     expect(row.hireDate).not.toBe("2020-01-01");
     const dotted = mapRosterRow({
       FİN: "5DL988R",
@@ -201,7 +212,9 @@ describe("nafta cutover column map", () => {
     writeRosterSheet(XLSX, tmp, HEADERS.roster, [
       {
         fin: "119TS86",
-        fullName: "Nəzərov Nail Nizami oğlu",
+        firstName: "Nail",
+        middleName: "Nizami",
+        lastName: "Nəzərov",
         sex: "MALE",
         birthDate: "1976-09-16",
         orgUnit: "Əyləncə",
@@ -215,6 +228,9 @@ describe("nafta cutover column map", () => {
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: true });
     fs.unlinkSync(tmp);
     expect(rows[0].sex).toBe("MALE");
+    expect(rows[0].firstName).toBe("Nail");
+    expect(rows[0].lastName).toBe("Nəzərov");
+    expect(rows[0].middleName).toBe("Nizami");
     expect(rows[0].birthDate).toBe("1976-09-16");
     expect(rows[0].hireDate).toBe("2026-05-12");
     expect(String(rows[0].birthDate)).not.toMatch(/T/);
@@ -250,7 +266,7 @@ describe("nafta cutover column map", () => {
       {
         patient: {
           id: 2148,
-          name: "RAFIL",
+          name: "Ali Vali",
           surname: "KURBANOV",
           gender: "Male",
           nationality: "Russian",
@@ -269,7 +285,11 @@ describe("nafta cutover column map", () => {
     );
     expect(row.sex).toBe("MALE");
     expect(row.hotelResNo).toBe("11112877");
-    expect(row.givenName).toBe("RAFIL");
+    expect(row.firstName).toBe("Ali");
+    expect(row.middleName).toBe("Vali");
+    expect(row.lastName).toBe("KURBANOV");
+    expect(row.givenName).toBe("Ali");
+    expect(row.surname).toBe("KURBANOV");
     expect(row.folioPerson).toBe(1);
     expect(row.checkIn).toBe("2026-08-27T08:55:00+04:00");
     expect(row.checkOut).toBe("2026-09-04T12:00:00+04:00");

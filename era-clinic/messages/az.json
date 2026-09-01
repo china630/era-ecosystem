@@ -62,7 +62,8 @@
       "sanatorium": "Sanatoriya",
       "inpatient": "Stasionar",
       "admin": "İdarəetmə",
-      "api": "API imkanları"
+      "api": "API imkanları",
+      "scope": "Məlumat əhatəsi"
     },
     "permissions": {
       "screen:home": "Ana səhifə",
@@ -128,7 +129,9 @@
       "api:icd_read": "API — ICD axtarış",
       "api:queue": "API — növbə",
       "api:catalog_read": "API — kataloq oxu",
-      "api:identity_guest_qr": "API — qonaq QR"
+      "api:identity_guest_qr": "API — qonaq QR",
+      "scope:episodes_all": "Bütün epizodlar (əks halda yalnız təyinatlar)",
+      "scope:lab_orders_all": "Bütün lab sifarişləri (əks halda yalnız təyinatlar)"
     }
   },
   "login": {
@@ -1259,6 +1262,9 @@
     "anamnesisSave": "Anamnezi saxla",
     "anamnesisCourseMissing": "Kurs yoxdur — walk-in qeydiyyat edin və ya hotel check-in gözləyin",
     "noEpisodes": "Kurs yoxdur",
+    "firstName": "Ad",
+    "middleName": "Ata adı",
+    "lastName": "Soyad",
     "givenName": "Ad",
     "surname": "Soyad",
     "fatherName": "Ata adı",

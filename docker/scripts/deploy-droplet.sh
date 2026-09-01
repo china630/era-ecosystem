@@ -75,9 +75,14 @@ else
   "${COMPOSE[@]}" pull $services
 fi
 
-chmod +x docker/scripts/migrate-all.sh
+chmod +x docker/scripts/migrate-all.sh docker/scripts/person-name-canon-droplet.sh 2>/dev/null || true
 export DEPLOY_SERVICES="$services"
-COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
+if [ -z "$services" ] && [ -f docker/scripts/person-name-canon-droplet.sh ]; then
+  echo "==> full deploy: person-name-canon (MDM backfill, finance patronymic, migrate-all)"
+  ./docker/scripts/person-name-canon-droplet.sh
+else
+  COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
+fi
 
 if [ -z "$services" ]; then
   "${COMPOSE[@]}" up -d --remove-orphans

@@ -1,10 +1,24 @@
+import {
+  composePersonFullName,
+  splitFullNameToParts,
+} from "@era/satellite-kit";
 import type { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+
+export type MdmOpsProfileSlice = {
+  displayName?: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  primaryIdentifierMasked?: string | null;
+  accessDenied?: boolean;
+};
 
 export type EmployeePersonDisplay = {
   displayName: string | null;
   finMasked: string | null;
   accessDenied: boolean;
   firstName: string;
+  middleName: string;
   lastName: string;
   /** Masked identifier for list columns (never plaintext FIN). */
   finCode: string | null;
@@ -15,39 +29,62 @@ const FALLBACK_PERSON: EmployeePersonDisplay = {
   finMasked: null,
   accessDenied: true,
   firstName: "—",
+  middleName: "",
   lastName: "—",
   finCode: null,
 };
 
-/** AZ convention: first token = surname, remainder = given name(s). */
-export function splitAzPersonName(displayName: string | null | undefined): {
-  firstName: string;
-  lastName: string;
-} {
-  const parts = (displayName ?? "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { firstName: "—", lastName: "—" };
-  if (parts.length === 1) return { firstName: parts[0]!, lastName: parts[0]! };
-  return { lastName: parts[0]!, firstName: parts.slice(1).join(" ") };
+/** AZ payroll/timesheet list: surname first, then given + patronymic. */
+export function formatAzEmployeeListName(
+  person: Pick<EmployeePersonDisplay, "lastName" | "firstName" | "middleName">,
+): string {
+  return [person.lastName, person.firstName, person.middleName]
+    .map((p) => p?.trim())
+    .filter((p) => p && p !== "—")
+    .join(" ")
+    .trim();
 }
 
 export function personDisplayFromOpsProfile(
-  profile:
-    | {
-        displayName: string | null;
-        primaryIdentifierMasked: string | null;
-        accessDenied: boolean;
-      }
-    | undefined,
+  profile: MdmOpsProfileSlice | undefined,
 ): EmployeePersonDisplay {
   if (!profile) return { ...FALLBACK_PERSON };
-  const names = splitAzPersonName(profile.displayName);
+
+  const finMasked = profile.primaryIdentifierMasked ?? null;
+  const accessDenied = profile.accessDenied ?? false;
+  const first = profile.firstName?.trim();
+  const middle = profile.middleName?.trim() ?? "";
+  const last = profile.lastName?.trim();
+
+  if (first || last) {
+    const displayName =
+      composePersonFullName(first, middle, last) ||
+      profile.displayName?.trim() ||
+      null;
+    return {
+      displayName,
+      finMasked,
+      accessDenied,
+      firstName: first || "—",
+      middleName: middle,
+      lastName: last || "—",
+      finCode: finMasked,
+    };
+  }
+
+  const parts = splitFullNameToParts(profile.displayName);
+  const displayName =
+    profile.displayName?.trim() ||
+    composePersonFullName(parts.firstName, parts.middleName, parts.lastName) ||
+    null;
   return {
-    displayName: profile.displayName,
-    finMasked: profile.primaryIdentifierMasked,
-    accessDenied: profile.accessDenied,
-    firstName: names.firstName,
-    lastName: names.lastName,
-    finCode: profile.primaryIdentifierMasked,
+    displayName,
+    finMasked,
+    accessDenied,
+    firstName: parts.firstName?.trim() || "—",
+    middleName: parts.middleName?.trim() ?? "",
+    lastName: parts.lastName?.trim() || "—",
+    finCode: finMasked,
   };
 }
 
@@ -101,6 +138,7 @@ export function attachEmployeePerson<T extends { globalPersonId: string }>(
     finMasked: person.finMasked,
     accessDenied: person.accessDenied,
     firstName: person.firstName,
+    middleName: person.middleName,
     lastName: person.lastName,
     finCode: person.finCode,
   };

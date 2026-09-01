@@ -232,8 +232,8 @@ export function ReservationCardEditor({
     setResNo(String(json.resNo ?? ''));
     setShareNo(String(json.shareNo ?? ''));
     setShareEligible(Boolean(json.shareEligible));
-    const guestObj = json.guest as { gender?: string | null } | undefined;
-    setGuestGender(String(json.shareGender ?? guestObj?.gender ?? ''));
+    const guestObj = json.guest as { sex?: string | null; gender?: string | null } | undefined;
+    setGuestGender(String(json.shareGender ?? guestObj?.sex ?? guestObj?.gender ?? ''));
     const neighbors = json.shareNeighbors as
       | Array<{ guestName: string; checkInDate: string; checkOutDate: string }>
       | undefined;
@@ -318,7 +318,8 @@ export function ReservationCardEditor({
       nextPax = [
         {
           title: '',
-          gender: '',
+          sex: '',
+          middleName: '',
           firstName: parts[0] ?? '',
           lastName: parts.slice(1).join(' '),
           nationality: '',
@@ -342,7 +343,8 @@ export function ReservationCardEditor({
         id: g.id,
         guestId: g.guestId ?? undefined,
         title: g.title ?? '',
-        gender: g.gender ?? '',
+        sex: g.sex ?? (g as { gender?: string | null }).gender ?? '',
+        middleName: g.middleName ?? '',
         firstName: g.firstName ?? '',
         lastName: g.lastName ?? '',
         nationality: g.nationality ?? '',
@@ -1237,7 +1239,7 @@ export function ReservationCardEditor({
         await fetch(`/api/guests/${guestId}/full`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gender: guestGender }),
+          body: JSON.stringify({ sex: guestGender }),
         }).catch(() => undefined);
       }
       const res = await fetch(`/api/reservations/${reservationId}/full`, {
@@ -1303,7 +1305,8 @@ export function ReservationCardEditor({
             id: p.id,
             guestId: p.guestId || null,
             title: p.title || null,
-            gender: p.gender || null,
+            sex: p.sex || null,
+            middleName: p.middleName || null,
             firstName: p.firstName || null,
             lastName: p.lastName || null,
             nationality: p.nationality || null,

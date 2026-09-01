@@ -14,9 +14,17 @@ export type MdmResolveInput = {
   issuingCountry?: string;
   residencePermit?: string;
   nationalId?: string;
-  fullName: string;
+  /** Legacy blob. Prefer firstName + lastName (+ middleName). */
+  fullName?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   phone?: string;
+  /** ISO 3166-1 alpha-2 citizenship. */
   nationality?: string;
+  sex?: string;
+  birthDate?: string | null;
+  globalPersonId?: string;
 };
 
 export type MdmResolveResult = {
@@ -28,6 +36,9 @@ export type MdmLookupFinResult = {
   globalPersonId: string | null;
   masked?: boolean;
   fullName?: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
 };
 
 export type MdmMergeInput = {

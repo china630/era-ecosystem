@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { toDecimal } from '@/lib/decimal';
 import type { FolioType, HotelLookupKind } from '@prisma/client';
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
+import { HOTEL_LOOKUP_DEFAULTS } from '@/lib/hotel-lookup-defaults';
 
 export async function listRoomTypes() {
   return prisma.roomType.findMany({ orderBy: { code: 'asc' }, include: { _count: { select: { rooms: true } } } });
@@ -252,7 +253,45 @@ export async function listActiveRevenueCodes() {
   });
 }
 
+/** Idempotent catalog seed when HotelLookup was wiped / never seeded for this org. */
+export async function ensureHotelLookupsSeeded() {
+  // Product: no Unknown gender in catalog (EW is binary Male/Female + rare Other).
+  await prisma.hotelLookup.deleteMany({
+    where: { kind: 'GENDER', code: { in: ['UNKNOWN', 'MALE', 'FEMALE'] } },
+  });
+
+  const kinds = [...new Set(HOTEL_LOOKUP_DEFAULTS.map((r) => r.kind))] as HotelLookupKind[];
+  for (const kind of kinds) {
+    const existing = await prisma.hotelLookup.count({ where: { kind } });
+    if (existing > 0 && kind !== 'GENDER') continue;
+    const rows = HOTEL_LOOKUP_DEFAULTS.filter((r) => r.kind === kind);
+    for (const row of rows) {
+      const found = await prisma.hotelLookup.findFirst({
+        where: { kind: row.kind as HotelLookupKind, code: row.code },
+      });
+      if (found) {
+        if (kind === 'GENDER') {
+          await prisma.hotelLookup.update({
+            where: { id: found.id },
+            data: { name: row.name, sortOrder: row.sortOrder, active: true },
+          });
+        }
+        continue;
+      }
+      await prisma.hotelLookup.create({
+        data: {
+          kind: row.kind as HotelLookupKind,
+          code: row.code,
+          name: row.name,
+          sortOrder: row.sortOrder,
+        },
+      });
+    }
+  }
+}
+
 export async function listHotelLookups(kind?: HotelLookupKind, activeOnly = false) {
+  await ensureHotelLookupsSeeded();
   return prisma.hotelLookup.findMany({
     where: {
       ...(kind ? { kind } : {}),

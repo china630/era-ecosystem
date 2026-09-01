@@ -31,7 +31,15 @@ import {
   formatPersonBirthDate,
   personCoreDemographicsWrite,
 } from "./mdm-person-sex";
-import { mergeFullNameWithPatronymic } from "./mdm-person-name";
+import {
+  composePersonFullName,
+  hasPersonNameInput,
+  mergePersonNameParts,
+  normalizeNationalityIso,
+  resolveIncomingNameParts,
+  splitFullNameToParts,
+  type PersonNameParts,
+} from "./mdm-person-name";
 import { decryptText } from "../security/pii-crypto.util";
 import { blindIndexForVoen } from "../common/utils/voen-blind-index";
 import {
@@ -248,9 +256,7 @@ export class MdmService {
           })
         : null;
 
-    const fullName = person.fullNameCipher
-      ? decryptText(person.fullNameCipher)
-      : null;
+    const names = this.decryptPersonNameParts(person);
     if (!grant && input.requesterOrgId) {
       await this.ensurePendingAccessRequest(
         person.id,
@@ -261,6 +267,9 @@ export class MdmService {
         found: true as const,
         globalPersonId: person.id,
         fullName: null,
+        firstName: null,
+        middleName: null,
+        lastName: null,
         phone: null,
         sex: null,
         birthDate: null,
@@ -271,7 +280,10 @@ export class MdmService {
     return {
       found: true as const,
       globalPersonId: person.id,
-      fullName: fullName?.trim() || null,
+      fullName: names.fullName,
+      firstName: names.firstName,
+      middleName: names.middleName,
+      lastName: names.lastName,
       phone: person.phoneCipher
         ? maskPhone(decryptText(person.phoneCipher))
         : null,
@@ -308,12 +320,54 @@ export class MdmService {
     return this.resolveOrCreatePerson(input, true);
   }
 
+  private decryptPersonNameParts(person: {
+    firstNameCipher?: string | null;
+    middleNameCipher?: string | null;
+    lastNameCipher?: string | null;
+    fullNameCipher?: string | null;
+  }): PersonNameParts & { fullName: string | null } {
+    let firstName = person.firstNameCipher
+      ? (decryptText(person.firstNameCipher) ?? "").trim() || null
+      : null;
+    let middleName = person.middleNameCipher
+      ? (decryptText(person.middleNameCipher) ?? "").trim() || null
+      : null;
+    let lastName = person.lastNameCipher
+      ? (decryptText(person.lastNameCipher) ?? "").trim() || null
+      : null;
+    if (!firstName && !lastName && person.fullNameCipher) {
+      const split = splitFullNameToParts(decryptText(person.fullNameCipher));
+      firstName = split.firstName;
+      middleName = split.middleName;
+      lastName = split.lastName;
+    }
+    const composed = composePersonFullName(firstName, middleName, lastName);
+    const fullName =
+      composed ||
+      (person.fullNameCipher
+        ? (decryptText(person.fullNameCipher) ?? "").trim() || null
+        : null);
+    return { firstName, middleName, lastName, fullName };
+  }
+
+  private nameCipherWriteData(parts: PersonNameParts & { fullName: string }) {
+    return {
+      firstNameCipher: parts.firstName ? encryptText(parts.firstName) : null,
+      middleNameCipher: parts.middleName ? encryptText(parts.middleName) : null,
+      lastNameCipher: parts.lastName ? encryptText(parts.lastName) : null,
+      fullNameCipher: parts.fullName ? encryptText(parts.fullName) : null,
+    };
+  }
+
   private async resolveOrCreatePerson(
     input: ResolvePersonInput,
     allowSurrogate: boolean,
   ) {
-    const fullName = input.fullName.trim();
-    if (!fullName) throw new BadRequestException("fullName required");
+    if (!hasPersonNameInput(input) && !input.globalPersonId?.trim()) {
+      throw new BadRequestException(
+        "firstName+lastName or fullName required",
+      );
+    }
 
     if (input.globalPersonId?.trim()) {
       const canonicalId = await this.resolveCanonicalPersonId(
@@ -357,7 +411,32 @@ export class MdmService {
       }
     }
 
-    const segment = inferPersonSegment(input.nationality, identifiers);
+    const incoming = resolveIncomingNameParts(input);
+    if (
+      !incoming ||
+      !composePersonFullName(
+        incoming.firstName,
+        incoming.middleName,
+        incoming.lastName,
+      )
+    ) {
+      throw new BadRequestException(
+        "firstName+lastName or fullName required",
+      );
+    }
+    const nameParts = mergePersonNameParts(
+      { firstName: null, middleName: null, lastName: null },
+      incoming,
+    );
+    if (!nameParts.fullName) {
+      throw new BadRequestException(
+        "firstName+lastName or fullName required",
+      );
+    }
+
+    const nationalityIso =
+      normalizeNationalityIso(input.nationality) ?? "AZ";
+    const segment = inferPersonSegment(nationalityIso, identifiers);
     const finBlindIndex = finIdent ? blindIndexFin(finIdent.value) : null;
 
     const demo = personCoreDemographicsWrite({
@@ -366,13 +445,14 @@ export class MdmService {
       birthDate: input.birthDate,
     });
 
+    const phoneTrim = input.phone?.trim();
     const created = await this.mdm.globalNaturalPerson.create({
       data: {
         finBlindIndex,
         finCipher: finIdent ? encryptText(finIdent.value.trim()) : null,
-        fullNameCipher: encryptText(fullName),
-        phoneCipher: input.phone ? encryptText(input.phone.trim()) : null,
-        nationality: (input.nationality ?? "AZ").trim().toUpperCase(),
+        ...this.nameCipherWriteData(nameParts),
+        phoneCipher: phoneTrim ? encryptText(phoneTrim) : null,
+        nationality: nationalityIso,
         personSegment: segment as PersonSegment,
         sex: demo.sex ?? "UNKNOWN",
         birthDate: demo.birthDate ?? null,
@@ -420,25 +500,29 @@ export class MdmService {
       birthDate: input.birthDate,
       existingSex: existing?.sex,
     });
-    const existingName = existing.fullNameCipher
-      ? decryptText(existing.fullNameCipher)
-      : null;
-    const fullName = mergeFullNameWithPatronymic(
-      existingName,
-      input.fullName.trim(),
+    const existingParts = this.decryptPersonNameParts(existing);
+    const incoming = resolveIncomingNameParts(input);
+    const nameParts = mergePersonNameParts(
+      {
+        firstName: existingParts.firstName,
+        middleName: existingParts.middleName,
+        lastName: existingParts.lastName,
+      },
+      incoming ?? {},
     );
-    const segment = inferPersonSegment(input.nationality, identifiers);
+    const nationalityIso = normalizeNationalityIso(input.nationality);
+    const segment = inferPersonSegment(
+      nationalityIso ?? existing.nationality ?? undefined,
+      identifiers,
+    );
     const finIdent = identifiers.find((i) => i.type === "AZ_FIN");
+    const phoneTrim = input.phone?.trim();
     await this.mdm.globalNaturalPerson.update({
       where: { id: personId },
       data: {
-        fullNameCipher: encryptText(fullName),
-        phoneCipher: input.phone
-          ? encryptText(input.phone.trim())
-          : undefined,
-        nationality: input.nationality
-          ? input.nationality.trim().toUpperCase()
-          : undefined,
+        ...this.nameCipherWriteData(nameParts),
+        phoneCipher: phoneTrim ? encryptText(phoneTrim) : undefined,
+        ...(nationalityIso ? { nationality: nationalityIso } : {}),
         personSegment: segment as PersonSegment,
         ...(demo.sex ? { sex: demo.sex } : {}),
         ...(demo.birthDate ? { birthDate: demo.birthDate } : {}),
@@ -918,6 +1002,9 @@ export class MdmService {
 
     type PersonRow = {
       id: string;
+      firstNameCipher: string | null;
+      middleNameCipher: string | null;
+      lastNameCipher: string | null;
       fullNameCipher: string | null;
       phoneCipher: string | null;
       finCipher: string | null;
@@ -929,16 +1016,17 @@ export class MdmService {
     };
 
     const mapItem = (r: PersonRow) => {
-      const fullName = r.fullNameCipher
-        ? (decryptText(r.fullNameCipher) ?? "").trim() || null
-        : null;
+      const names = this.decryptPersonNameParts(r);
       const phonePlain = r.phoneCipher
         ? decryptText(r.phoneCipher)
         : null;
       const finPlain = r.finCipher ? decryptText(r.finCipher) : null;
       return {
         id: r.id,
-        fullName,
+        fullName: names.fullName,
+        firstName: names.firstName,
+        middleName: names.middleName,
+        lastName: names.lastName,
         finMasked: finPlain ? maskIdentifierValue(finPlain) : null,
         phoneMasked: maskPhone(phonePlain),
         sex: r.sex,
@@ -948,6 +1036,21 @@ export class MdmService {
         updatedAt: r.updatedAt.toISOString(),
       };
     };
+
+    const personSelect = {
+      id: true,
+      firstNameCipher: true,
+      middleNameCipher: true,
+      lastNameCipher: true,
+      fullNameCipher: true,
+      phoneCipher: true,
+      finCipher: true,
+      sex: true,
+      birthDate: true,
+      personSegment: true,
+      mergedIntoPersonId: true,
+      updatedAt: true,
+    } as const;
 
     let items: ReturnType<typeof mapItem>[];
     let total: number;
@@ -960,17 +1063,7 @@ export class MdmService {
           orderBy: { updatedAt: "desc" },
           skip: (page - 1) * pageSize,
           take: pageSize,
-          select: {
-            id: true,
-            fullNameCipher: true,
-            phoneCipher: true,
-            finCipher: true,
-            sex: true,
-            birthDate: true,
-            personSegment: true,
-            mergedIntoPersonId: true,
-            updatedAt: true,
-          },
+          select: personSelect,
         }),
       ]);
       total = count;
@@ -980,23 +1073,12 @@ export class MdmService {
         where,
         orderBy: { updatedAt: "desc" },
         take: 2000,
-        select: {
-          id: true,
-          fullNameCipher: true,
-          phoneCipher: true,
-          finCipher: true,
-          sex: true,
-          birthDate: true,
-          personSegment: true,
-          mergedIntoPersonId: true,
-          updatedAt: true,
-        },
+        select: personSelect,
       });
       const filtered = candidates.filter((r) => {
         if (nameQ) {
-          const name = r.fullNameCipher
-            ? (decryptText(r.fullNameCipher) ?? "").toLowerCase()
-            : "";
+          const names = this.decryptPersonNameParts(r);
+          const name = (names.fullName ?? "").toLowerCase();
           if (!name.includes(nameQ)) return false;
         }
         if (phoneDigits) {
@@ -1039,6 +1121,9 @@ export class MdmService {
   compactWorkforceDisplay(profile: {
     globalPersonId: string;
     fullName: string | null;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
     identifiers: Array<{ maskedValue: string; isPrimary: boolean }>;
     accessDenied: boolean;
     hrProfile: PersonHrProfileView | null;
@@ -1047,9 +1132,19 @@ export class MdmService {
   }) {
     const primary =
       profile.identifiers.find((i) => i.isPrimary) ?? profile.identifiers[0];
+    const composed = profile.accessDenied
+      ? null
+      : composePersonFullName(
+          profile.firstName,
+          profile.middleName,
+          profile.lastName,
+        ) || profile.fullName;
     return {
       globalPersonId: profile.globalPersonId,
-      displayName: profile.accessDenied ? null : profile.fullName,
+      displayName: composed,
+      firstName: profile.accessDenied ? null : (profile.firstName ?? null),
+      middleName: profile.accessDenied ? null : (profile.middleName ?? null),
+      lastName: profile.accessDenied ? null : (profile.lastName ?? null),
       primaryIdentifierMasked: primary?.maskedValue ?? null,
       accessDenied: profile.accessDenied,
       hrProfile: profile.accessDenied ? null : profile.hrProfile,
@@ -1067,6 +1162,9 @@ export class MdmService {
       {
         globalPersonId: string;
         displayName: string | null;
+        firstName: string | null;
+        middleName: string | null;
+        lastName: string | null;
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
         hrProfile: PersonHrProfileView | null;
@@ -1083,6 +1181,9 @@ export class MdmService {
       {
         globalPersonId: string;
         displayName: string | null;
+        firstName: string | null;
+        middleName: string | null;
+        lastName: string | null;
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
         hrProfile: PersonHrProfileView | null;
@@ -1103,6 +1204,9 @@ export class MdmService {
           out[pid] = {
             globalPersonId: pid,
             displayName: null,
+            firstName: null,
+            middleName: null,
+            lastName: null,
             primaryIdentifierMasked: null,
             accessDenied: true,
             hrProfile: null,
@@ -1220,12 +1324,14 @@ export class MdmService {
       ? null
       : await this.loadHrProfileView(canonical);
 
+    const names = accessDenied ? null : this.decryptPersonNameParts(person);
+
     return {
       globalPersonId: canonical,
-      fullName:
-        !accessDenied && person.fullNameCipher
-          ? (decryptText(person.fullNameCipher) ?? "").trim() || null
-          : null,
+      fullName: names?.fullName ?? null,
+      firstName: names?.firstName ?? null,
+      middleName: names?.middleName ?? null,
+      lastName: names?.lastName ?? null,
       phoneMasked:
         !accessDenied && person.phoneCipher
           ? maskPhone(decryptText(person.phoneCipher))

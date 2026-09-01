@@ -11,11 +11,10 @@ import {
   listPatientsPaged,
   createPatient,
   PatientMdmRequiredError,
-  PatientAnamnesisRequiredError,
 } from "@/domain/patient/patient.service";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
 
-const patientSex = z.enum(["MALE", "FEMALE", "OTHER", "UNKNOWN"]);
+const patientSex = z.enum(["MALE", "FEMALE", "UNKNOWN"]);
 const patientBloodGroup = z.enum([
   "A_POS",
   "A_NEG",
@@ -28,11 +27,30 @@ const patientBloodGroup = z.enum([
   "UNKNOWN",
 ]);
 
+const patientNameAliases = z.object({
+  firstName: z.string().min(1).optional(),
+  middleName: z.string().nullable().optional(),
+  lastName: z.string().min(1).optional(),
+  givenName: z.string().min(1).optional(),
+  surname: z.string().min(1).optional(),
+  fatherName: z.string().nullable().optional(),
+});
+
+function normalizePatientName(d: z.infer<typeof patientNameAliases>) {
+  const firstName = (d.firstName ?? d.givenName ?? "").trim();
+  const lastName = (d.lastName ?? d.surname ?? "").trim();
+  const middleName =
+    d.middleName !== undefined
+      ? d.middleName?.trim() || null
+      : d.fatherName !== undefined
+        ? d.fatherName?.trim() || null
+        : null;
+  return { firstName, middleName, lastName };
+}
+
 const createSchema = z
   .object({
-    givenName: z.string().min(1),
-    surname: z.string().min(1),
-    fatherName: z.string().nullable().optional(),
+    ...patientNameAliases.shape,
     fullName: z.string().optional(),
     phone: z.string().optional(),
     nationality: z.string().nullable().optional(),
@@ -45,8 +63,15 @@ const createSchema = z
     passportNumber: z.string().optional(),
     issuingCountry: z.string().optional(),
   })
+  .transform((d) => {
+    const { givenName, surname, fatherName, ...rest } = d;
+    return { ...rest, ...normalizePatientName(d) };
+  })
+  .refine((d) => Boolean(d.firstName && d.lastName), {
+    message: "firstName and lastName are required",
+  })
   .refine((d) => patientHasMdmIdentifier(d), {
-    message: "Provide FIN, passport+country, or phone for MDM resolve",
+    message: "Provide FIN or passport with issuing country for MDM resolve",
   });
 
 function parseHasMdm(raw: string | null): 0 | 1 | undefined {

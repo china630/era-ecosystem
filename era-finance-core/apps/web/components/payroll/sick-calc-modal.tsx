@@ -14,9 +14,10 @@ import {
   MODAL_INPUT_CLASS,
 } from "../../lib/design-system";
 import { formatMoneyAzn } from "../../lib/format-money";
+import { formatAzEmployeeListName } from "../../lib/employee-display-name";
 import { Button } from "../ui/button";
 
-type EmpOpt = { id: string; firstName: string; lastName: string };
+type EmpOpt = { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null };
 
 export function SickCalcModal({
   open,
@@ -97,7 +98,7 @@ export function SickCalcModal({
                 >
                   {employees.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.lastName} {e.firstName}
+                      {formatAzEmployeeListName(e)}
                     </option>
                   ))}
                 </select>

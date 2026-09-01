@@ -19,6 +19,7 @@ import {
   composeFullName,
   isClinicPatientRefCode,
 } from "@/domain/patient/patient-ref-code";
+import { splitFullNameToParts } from "@era/satellite-kit";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -477,28 +478,41 @@ const practitionersAdapter: ImportAdapter<{
       "practitioners",
       row.externalRef,
       dryRun,
-      async () =>
-        (
+      async () => {
+        const nameParts = splitFullNameToParts(row.fullName);
+        return (
           await tx.practitioner.create({
             data: {
               organizationId: orgId(),
               code: row.fin || row.externalRef,
               fullName: row.fullName,
+              firstName: nameParts.firstName,
+              middleName: nameParts.middleName,
+              lastName: nameParts.lastName,
               staffKind: toStaffKind(row.role),
             },
           })
-        ).id,
+        ).id;
+      },
       async (id) => {
+        const nameParts = splitFullNameToParts(row.fullName);
         await tx.practitioner.update({
           where: { id },
-          data: { fullName: row.fullName, staffKind: toStaffKind(row.role) },
+          data: {
+            fullName: row.fullName,
+            firstName: nameParts.firstName,
+            middleName: nameParts.middleName,
+            lastName: nameParts.lastName,
+            staffKind: toStaffKind(row.role),
+          },
         });
       },
     ),
 };
 
-function toPatientSex(raw: string): "MALE" | "FEMALE" | "OTHER" | "UNKNOWN" {
-  if (raw === "MALE" || raw === "FEMALE" || raw === "OTHER") return raw;
+function toPatientSex(raw: string): "MALE" | "FEMALE" | "UNKNOWN" {
+  if (raw === "MALE" || raw === "FEMALE") return raw;
+  if (raw === "OTHER") return "UNKNOWN";
   return "UNKNOWN";
 }
 
@@ -510,8 +524,9 @@ const patientsAdapter: ImportAdapter<{
   externalRef: string;
   woId: string;
   fullName: string;
-  givenName: string;
-  surname: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
   sex: string;
   birthDate: string;
   nationality: string;
@@ -543,6 +558,9 @@ const patientsAdapter: ImportAdapter<{
     "externalRef",
     "woId",
     "fullName",
+    "firstName",
+    "middleName",
+    "lastName",
     "givenName",
     "surname",
     "sex",
@@ -572,8 +590,11 @@ const patientsAdapter: ImportAdapter<{
     externalRef: z.string().min(1),
     woId: z.string(),
     fullName: z.string().min(1),
-    givenName: z.string(),
-    surname: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    lastName: z.string(),
+    givenName: z.string().optional(),
+    surname: z.string().optional(),
     sex: z.string(),
     birthDate: z.string(),
     nationality: z.string(),
@@ -597,12 +618,21 @@ const patientsAdapter: ImportAdapter<{
     latestPainDegree: z.string(),
     latestPainDegreeCreatedAt: z.string(),
   }),
-  mapRow: (raw) => ({
+  mapRow: (raw) => {
+    const givenAlias = optCell(raw, "givenName");
+    const surnameAlias = optCell(raw, "surname");
+    const firstName = optCell(raw, "firstName") || givenAlias;
+    const lastName = optCell(raw, "lastName") || surnameAlias;
+    const middleName = optCell(raw, "middleName");
+    return {
     externalRef: req(raw.externalRef),
     woId: optCell(raw, "woId"),
     fullName: req(raw.fullName),
-    givenName: optCell(raw, "givenName"),
-    surname: optCell(raw, "surname"),
+    firstName,
+    middleName,
+    lastName,
+    givenName: firstName,
+    surname: lastName,
     sex: cellString(raw.sex) ?? "UNKNOWN",
     birthDate: optCell(raw, "birthDate"),
     nationality: optCell(raw, "nationality"),
@@ -625,7 +655,8 @@ const patientsAdapter: ImportAdapter<{
     programCode: optCell(raw, "programCode"),
     latestPainDegree: optCell(raw, "latestPainDegree"),
     latestPainDegreeCreatedAt: optCell(raw, "latestPainDegreeCreatedAt"),
-  }),
+    };
+  },
   upsert: (tx, row, dryRun) =>
     upsertByRef(
       tx,
@@ -640,8 +671,9 @@ const patientsAdapter: ImportAdapter<{
         const inHouse = row.isReservationPatient !== "false";
         const globalPersonId = await resolveCutoverPatientMdm({
           fullName: row.fullName,
-          givenName: row.givenName,
-          surname: row.surname,
+          firstName: row.firstName,
+          middleName: row.middleName || null,
+          lastName: row.lastName,
           phone: row.phone,
           nationality: row.nationality,
           sex,
@@ -650,22 +682,23 @@ const patientsAdapter: ImportAdapter<{
           folioPerson: row.folioPerson,
           passport: row.passport,
         });
+        const firstName =
+          row.firstName?.trim() || row.fullName.trim().split(/\s+/)[0] || row.fullName;
+        const lastName =
+          row.lastName?.trim() ||
+          row.fullName.trim().split(/\s+/).slice(-1)[0] ||
+          "";
+        const middleName = row.middleName?.trim() || null;
         const patient = await tx.patientRef.create({
           data: {
             organizationId: orgId(),
             refCode: await allocatePatientRefCode(tx, orgId()),
-            givenName: row.givenName?.trim() || row.fullName.trim().split(/\s+/)[0] || row.fullName,
-            surname:
-              row.surname?.trim() ||
-              row.fullName.trim().split(/\s+/).slice(-1)[0] ||
-              "",
-            fatherName: null,
+            firstName,
+            lastName,
+            middleName,
             fullName:
               row.fullName ||
-              composeFullName({
-                givenName: row.givenName,
-                surname: row.surname,
-              }),
+              composeFullName({ firstName, lastName, middleName }),
             sex,
             birthDate: parseDateCell(row.birthDate),
             nationality: row.nationality || null,
@@ -714,8 +747,9 @@ const patientsAdapter: ImportAdapter<{
         });
         const globalPersonId = await resolveCutoverPatientMdm({
           fullName: row.fullName,
-          givenName: row.givenName,
-          surname: row.surname,
+          firstName: row.firstName,
+          middleName: row.middleName || null,
+          lastName: row.lastName,
           phone: row.phone,
           nationality: row.nationality,
           sex,
@@ -729,10 +763,9 @@ const patientsAdapter: ImportAdapter<{
           where: { id },
           data: {
             fullName: row.fullName,
-            ...(row.givenName?.trim()
-              ? { givenName: row.givenName.trim() }
-              : {}),
-            ...(row.surname?.trim() ? { surname: row.surname.trim() } : {}),
+            ...(row.firstName?.trim() ? { firstName: row.firstName.trim() } : {}),
+            ...(row.middleName?.trim() ? { middleName: row.middleName.trim() } : {}),
+            ...(row.lastName?.trim() ? { lastName: row.lastName.trim() } : {}),
             sex,
             birthDate: parseDateCell(row.birthDate),
             ...(row.nationality ? { nationality: row.nationality } : {}),

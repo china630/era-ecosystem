@@ -2,17 +2,17 @@
   {
     "agencyNamePrefix": "Həmkarlar İttifaqı  Konfederasiyası",
     "packageCode": "PKG-STANDART",
-    "reservationCount": 87
+    "reservationCount": 153
   },
   {
     "agencyNamePrefix": "Dermo paket Walkin",
     "packageCode": "PKG-DERMO",
-    "reservationCount": 17
+    "reservationCount": 14
   },
   {
     "agencyNamePrefix": "Premium Naftalan Kamel",
     "packageCode": "PKG-PREMIUM",
-    "reservationCount": 11
+    "reservationCount": 10
   },
   {
     "agencyNamePrefix": "Premium paket Walkin",
@@ -40,11 +40,6 @@
     "reservationCount": 2
   },
   {
-    "agencyNamePrefix": "Dermo Nafdan travel",
-    "packageCode": "PKG-DERMO",
-    "reservationCount": 1
-  },
-  {
     "agencyNamePrefix": "Dermo Naftalan Med medical",
     "packageCode": "PKG-DERMO",
     "reservationCount": 1
@@ -52,11 +47,6 @@
   {
     "agencyNamePrefix": "Dermo Naftalan Kamel",
     "packageCode": "PKG-DERMO",
-    "reservationCount": 1
-  },
-  {
-    "agencyNamePrefix": "Premium Facebook",
-    "packageCode": "PKG-PREMIUM",
     "reservationCount": 1
   },
   {

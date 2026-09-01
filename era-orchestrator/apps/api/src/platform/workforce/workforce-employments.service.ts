@@ -239,6 +239,9 @@ export class WorkforceEmploymentsService {
       {
         globalPersonId: string;
         displayName: string | null;
+        firstName: string | null;
+        middleName: string | null;
+        lastName: string | null;
         finMasked: string | null;
         accessDenied: boolean;
         sex: string | null;
@@ -255,6 +258,9 @@ export class WorkforceEmploymentsService {
       {
         globalPersonId: string;
         displayName: string | null;
+        firstName: string | null;
+        middleName: string | null;
+        lastName: string | null;
         finMasked: string | null;
         accessDenied: boolean;
         sex: string | null;
@@ -265,6 +271,9 @@ export class WorkforceEmploymentsService {
       out[id] = {
         globalPersonId: row.globalPersonId,
         displayName: row.displayName,
+        firstName: row.firstName,
+        middleName: row.middleName,
+        lastName: row.lastName,
         finMasked: row.primaryIdentifierMasked,
         accessDenied: row.accessDenied,
         sex: row.sex,

@@ -14,6 +14,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
+import { buildMdmPersonLookupBody } from '@/lib/mdm-person-lookup-body';
 
 const GUEST_LOOKUP_KINDS = [
   'TITLE',
@@ -40,8 +41,9 @@ export function GuestCardLeftPanel({
   fullName,
   firstName,
   lastName,
+  middleName = '',
   title,
-  gender,
+  sex,
   nationality,
   birthDate = '',
   birthPlace = '',
@@ -62,8 +64,8 @@ export function GuestCardLeftPanel({
   vehiclePlate = '',
   occupation = '',
   maritalStatus = '',
-  fatherName = '',
-  motherName = '',
+  parentFatherName = '',
+  parentMotherName = '',
   marriageDate = '',
   bonusPercent = '',
   hotelName = '',
@@ -83,8 +85,9 @@ export function GuestCardLeftPanel({
   fullName: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   title: string;
-  gender: string;
+  sex: string;
   nationality: string;
   birthDate?: string;
   birthPlace?: string;
@@ -105,8 +108,8 @@ export function GuestCardLeftPanel({
   vehiclePlate?: string;
   occupation?: string;
   maritalStatus?: string;
-  fatherName?: string;
-  motherName?: string;
+  parentFatherName?: string;
+  parentMotherName?: string;
   marriageDate?: string;
   bonusPercent?: string;
   hotelName?: string;
@@ -142,22 +145,27 @@ export function GuestCardLeftPanel({
   const hasPassport = Boolean(maskedPassport && maskedPassport !== '***');
 
   async function lookupMdm() {
+    const hasParts = Boolean(firstName.trim() && lastName.trim());
     const name = fullName.trim();
-    if (!name) {
+    if (!hasParts && !name) {
       setMdmStatus(t('mdm.nameRequired'));
       return;
     }
     const res = await fetch('/api/mdm/person-lookup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fin: transientIdentity.nationalIdFin?.trim() || undefined,
-        passport: transientIdentity.passportNumber?.trim() || undefined,
-        issuingCountry: nationality === 'AZ' ? 'AZ' : nationality || undefined,
-        fullName: name,
-        phone: phone?.trim() || undefined,
-        nationality: nationality === 'AZ' ? 'AZ' : 'OTHER',
-      }),
+      body: JSON.stringify(
+        buildMdmPersonLookupBody({
+          fin: transientIdentity.nationalIdFin?.trim() || undefined,
+          passport: transientIdentity.passportNumber?.trim() || undefined,
+          firstName: firstName.trim() || undefined,
+          middleName: middleName.trim() || undefined,
+          lastName: lastName.trim() || undefined,
+          fullName: name || undefined,
+          phone: phone?.trim() || undefined,
+          nationality: nationality || undefined,
+        }),
+      ),
     });
     const data = await res.json();
     if (data.globalPersonId) {
@@ -179,7 +187,16 @@ export function GuestCardLeftPanel({
       const lookupRes = await fetch('/api/mdm/person-lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fin: targetFin, fullName: fullName.trim() }),
+        body: JSON.stringify(
+          buildMdmPersonLookupBody({
+            fin: targetFin,
+            firstName: firstName.trim() || undefined,
+            middleName: middleName.trim() || undefined,
+            lastName: lastName.trim() || undefined,
+            fullName: fullName.trim() || undefined,
+            nationality: nationality || undefined,
+          }),
+        ),
       });
       const lookup = await lookupRes.json();
       if (!lookup.globalPersonId) {
@@ -240,9 +257,9 @@ export function GuestCardLeftPanel({
             <CatalogField
               kind="CLOSED_SMALL"
               label={t('fields.gender')}
-              value={gender}
-              onChange={setCatalog('gender')}
-              options={withOrphanOption(byKind.GENDER ?? [], gender)}
+              value={sex}
+              onChange={setCatalog('sex')}
+              options={withOrphanOption(byKind.GENDER ?? [], sex)}
             />
           </FieldRow>
           <FieldRow cols={2}>
@@ -259,6 +276,12 @@ export function GuestCardLeftPanel({
               onChange={set('lastName')}
             />
           </FieldRow>
+          <Field
+            label={t('fields.middleName')}
+            preset="shortText"
+            value={middleName}
+            onChange={set('middleName')}
+          />
           <Field
             label={t('fields.fullName')}
             preset="longText"
@@ -478,8 +501,8 @@ export function GuestCardLeftPanel({
             options={withOrphanOption(byKind.MARITAL_STATUS ?? [], maritalStatus)}
           />
           <FieldRow cols={2}>
-            <Field label={t('details.fatherName')} preset="shortText" value={fatherName} onChange={set('fatherName')} />
-            <Field label={t('details.motherName')} preset="shortText" value={motherName} onChange={set('motherName')} />
+            <Field label={t('details.fatherName')} preset="shortText" value={parentFatherName} onChange={set('parentFatherName')} />
+            <Field label={t('details.motherName')} preset="shortText" value={parentMotherName} onChange={set('parentMotherName')} />
           </FieldRow>
           <FieldRow cols={2}>
             <DatePicker

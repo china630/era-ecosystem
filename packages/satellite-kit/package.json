@@ -59,13 +59,17 @@
       "types": "./dist/bff/voen-preview-route.d.ts",
       "default": "./dist/bff/voen-preview-route.js"
     },
+    "./integration/person-name": {
+      "types": "./dist/integration/person-name.d.ts",
+      "default": "./dist/integration/person-name.js"
+    },
     "./tailwind-content": "./tailwind-content.js",
     "./icd10/generate": "./icd10/generate-icd10.cjs"
   },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/auth/login-user.test.js dist/integration/org-entitlement-gate.test.js dist/placement/slice-export.test.js"
+    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/auth/login-user.test.js dist/integration/org-entitlement-gate.test.js dist/integration/person-name.test.js dist/placement/slice-export.test.js dist/ui/paginated-list.test.js"
   },
   "dependencies": {
     "@era/fiscal": "file:../era-fiscal",

@@ -43,6 +43,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../lib/design-system";
+import { formatAzEmployeeListName } from "../../lib/employee-display-name";
 import { Button } from "../../components/ui/button";
 import { VacationCalcModal } from "../../components/payroll/vacation-calc-modal";
 import { SickCalcModal } from "../../components/payroll/sick-calc-modal";
@@ -78,7 +79,7 @@ type SalaryRegistryRow = {
   bankAccount?: { bankName: string; accountNumber: string; currency: string } | null;
 };
 
-type EmpOpt = { id: string; firstName: string; lastName: string };
+type EmpOpt = { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null };
 
 type AbsenceTypeOpt = { id: string; nameAz: string; code: string; formula: string };
 
@@ -819,7 +820,7 @@ function PayrollPageInner() {
                     className={`${CARD_CONTAINER_CLASS} space-y-1.5 p-4 text-sm`}
                   >
                     <div className="font-semibold text-gray-900">
-                      {s.employee.lastName} {s.employee.firstName}
+                      {formatAzEmployeeListName(s.employee)}
                     </div>
                     <div className="text-slate-600">
                       {t("employees.thKind")}:{" "}
@@ -964,7 +965,7 @@ function PayrollPageInner() {
                         <td className={DATA_TABLE_TD_CLASS}>
                           <div className="flex items-center gap-1">
                             <span className="min-w-0 font-semibold text-[#34495E]">
-                              {s.employee.lastName} {s.employee.firstName}
+                              {formatAzEmployeeListName(s.employee)}
                             </span>
                             <button
                               type="button"
@@ -1160,7 +1161,7 @@ function PayrollPageInner() {
                 {absencesInMonth.map((a) => (
                   <tr key={a.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
-                      {a.employee.lastName} {a.employee.firstName}
+                      {formatAzEmployeeListName(a.employee)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {a.absenceType?.nameAz ?? t("payroll.absenceTypeUnknown")}
@@ -1215,7 +1216,7 @@ function PayrollPageInner() {
         employeeId={employeeAbsencesEmp?.id ?? null}
         employeeLabel={
           employeeAbsencesEmp
-            ? `${employeeAbsencesEmp.lastName} ${employeeAbsencesEmp.firstName}`
+            ? formatAzEmployeeListName(employeeAbsencesEmp)
             : undefined
         }
         year={year}

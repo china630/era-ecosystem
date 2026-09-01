@@ -18,6 +18,7 @@ import {
 } from "@era365/database";
 import { randomUUID } from "crypto";
 import { MdmService } from "../../mdm/mdm.service";
+import { composePersonFullName } from "../../mdm/mdm-person-name";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { SubscriptionAccessService } from "../../subscription/subscription-access.service";
@@ -40,6 +41,27 @@ import {
 function parseDateOnly(iso: string): Date {
   const d = iso.slice(0, 10);
   return new Date(`${d}T00:00:00.000Z`);
+}
+
+function provisionDisplayName(
+  profile: {
+    fullName?: string | null;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+  },
+  fallbackId: string,
+): string {
+  const composed = composePersonFullName(
+    profile.firstName,
+    profile.middleName,
+    profile.lastName,
+  );
+  return (
+    composed ||
+    (typeof profile.fullName === "string" && profile.fullName.trim()) ||
+    fallbackId.slice(0, 8)
+  );
 }
 
 @Injectable()
@@ -75,9 +97,7 @@ export class WorkforceProvisionService {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
     const globalPersonId = dto.globalPersonId.trim();
     const profile = await this.mdm.getPersonOpsProfile(globalPersonId, organizationId);
-    const fullName =
-      (typeof profile.fullName === "string" && profile.fullName.trim()) ||
-      globalPersonId.slice(0, 8);
+    const fullName = provisionDisplayName(profile, globalPersonId);
 
     await this.mdm.ensureWorkforceAccessGrant(globalPersonId, organizationId);
 
@@ -376,9 +396,7 @@ export class WorkforceProvisionService {
       employment.globalPersonId,
       organizationId,
     );
-    const fullName =
-      (typeof profile.fullName === "string" && profile.fullName.trim()) ||
-      employment.globalPersonId.slice(0, 8);
+    const fullName = provisionDisplayName(profile, employment.globalPersonId);
 
     for (const binding of bindings) {
       await this.emitProvisioned({

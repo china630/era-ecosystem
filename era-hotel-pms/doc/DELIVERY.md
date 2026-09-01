@@ -508,7 +508,7 @@ Tracked in [BACKLOG-PRODUCTION.md § P5](BACKLOG-PRODUCTION.md) · [COVERAGE_MAT
 - [x] Admin modals: Field*/DatePicker presets; `showApiError`
 - [x] Ops canvases: light token polish (chessboard/room-plan/folio/HK)
 - [x] Table chrome: shell+scroll / viewport clip-path so sticky thead keeps rounded corners
-- [x] Grid pagination: kit `EraDataGrid` + hotel `HotelDataGrid` with i18n `ListPaginationFooter` (25/50/100)
+- [x] Grid pagination: kit `EraDataGrid` + hotel `HotelDataGrid` with i18n `ListPaginationFooter` (25/50/100); guests + FO reservations use server `{ items, total, page, pageSize }` + `EraListWorkspace` (class A)
 - [x] Reservation card: single ModalShell header; footer Save/Check-in; `TAB_*` / `CHIP_*` / folio `HotelDataGrid`
 - [x] Reservation Stay: `DatePicker` + stable `MODAL_WIDE` min/max height; FieldSection/CHIP light headers
 - [x] Reservation card UX regroup: `MODAL_FULL` (~98vw/1600px); left rail 2-col sections (Stay/Room/Pax/Classification/Commercial/Billing); Guests tab = pax grid only

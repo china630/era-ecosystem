@@ -7,6 +7,7 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import {
@@ -46,12 +47,15 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
     );
     if (denied) return denied;
     const { id } = await params;
+    const scopeDenied = await assertEpisodeDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const episode = await getEpisode(id);
     return jsonOk(episode);
   } catch (err) {
@@ -65,12 +69,15 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const permDenied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
     );
     if (permDenied) return permDenied;
     const { id } = await params;
+    const scopeDenied = await assertEpisodeDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const body = patchSchema.parse(await req.json());
     const episode = await prisma.clinicalEpisode.findUnique({
       where: { id },
@@ -106,11 +113,14 @@ export async function POST(
   try {
     const { id } = await params;
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const permDenied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
     );
     if (permDenied) return permDenied;
+    const scopeDenied = await assertEpisodeDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
     const rawBody = await req.text();
@@ -125,7 +135,7 @@ export async function POST(
       return jsonOk(
         await addDiagnosis(id, {
           ...parsed,
-          recordedByUserId: session?.sub ?? null,
+          recordedByUserId: session.sub,
         }),
       );
     }

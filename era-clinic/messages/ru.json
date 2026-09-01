@@ -62,7 +62,8 @@
       "sanatorium": "Санаторий",
       "inpatient": "Стационар",
       "admin": "Администрирование",
-      "api": "API"
+      "api": "API",
+      "scope": "Область данных"
     },
     "permissions": {
       "screen:home": "Главная",
@@ -128,7 +129,9 @@
       "api:icd_read": "API — поиск ICD",
       "api:queue": "API — очередь",
       "api:catalog_read": "API — чтение каталогов",
-      "api:identity_guest_qr": "API — гостевой QR"
+      "api:identity_guest_qr": "API — гостевой QR",
+      "scope:episodes_all": "Все эпизоды (иначе только свои назначения)",
+      "scope:lab_orders_all": "Все лаб. заказы (иначе только свои назначения)"
     }
   },
   "login": {
@@ -1259,6 +1262,9 @@
     "anamnesisSave": "Сохранить анамнез",
     "anamnesisCourseMissing": "Нет курса — зарегистрируйте walk-in или дождитесь check-in",
     "noEpisodes": "Нет курсов",
+    "firstName": "Имя",
+    "middleName": "Отчество",
+    "lastName": "Фамилия",
     "givenName": "Имя",
     "surname": "Фамилия",
     "fatherName": "Отчество",

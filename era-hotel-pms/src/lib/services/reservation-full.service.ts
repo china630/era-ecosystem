@@ -2,7 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
-import type { PartyBillingMode } from '@prisma/client';
+import { normalizeListPagination } from '@era/satellite-kit';
+import type { PartyBillingMode, Prisma, ReservationStatus } from '@prisma/client';
 
 const fullInclude = {
   room: { include: { roomType: true } },
@@ -169,6 +170,8 @@ export async function patchReservationFull(
       guestId?: string | null;
       title?: string | null;
       gender?: string | null;
+      sex?: string | null;
+      middleName?: string | null;
       firstName?: string | null;
       lastName?: string | null;
       nationality?: string | null;
@@ -233,7 +236,7 @@ export async function patchReservationFull(
       const { syncShareGenderFromGuest, validateShareCandidate, reservationIsOta } = await import(
         '@/lib/services/share-assignment.service'
       );
-      nextShareGender = syncShareGenderFromGuest(true, guestForGender?.gender);
+      nextShareGender = syncShareGenderFromGuest(true, guestForGender?.sex);
       validateShareCandidate({
         shareEligible: true,
         shareGender: nextShareGender,
@@ -290,7 +293,7 @@ export async function patchReservationFull(
       shareGender: nextShareGender,
       adults: data.adults ?? existing.adults,
       isOta: await reservationIsOta(id),
-      guestGender: existing.guest.gender,
+      guestGender: existing.guest.sex,
     };
     const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
       await assertRoomShareAssignable({
@@ -418,7 +421,8 @@ export async function patchReservationFull(
           reservationId: id,
           guestId: p.guestId ?? null,
           title: p.title ?? null,
-          gender: p.gender ?? null,
+          sex: p.sex ?? p.gender ?? null,
+          middleName: p.middleName ?? null,
           firstName: p.firstName ?? null,
           lastName: p.lastName ?? null,
           nationality: p.nationality ?? null,
@@ -545,21 +549,99 @@ export async function patchReservationFull(
   return getReservationFull(id);
 }
 
-export async function listReservationsForGrid(guestId?: string) {
-  const rows = await prisma.reservation.findMany({
-    where: { groupId: null, ...(guestId ? { guestId } : {}) },
-    include: {
-      room: true,
-      roomType: true,
-      guest: true,
-      agency: true,
-      notes: true,
-    },
-    orderBy: { checkInDate: 'desc' },
-    take: 500,
-  });
+export type ListReservationsForGridQuery = {
+  q?: string;
+  /** LIVE (default) | ALL | specific ReservationStatus */
+  status?: string;
+  hasNotes?: boolean;
+  guestId?: string;
+  page?: number;
+  pageSize?: number;
+  dateFrom?: string;
+  dateTo?: string;
+};
 
-  return rows.map((r) => {
+const LIVE_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
+
+export async function listReservationsForGrid(
+  input: ListReservationsForGridQuery | string = {},
+) {
+  // Legacy: bare guestId string.
+  const opts: ListReservationsForGridQuery =
+    typeof input === 'string' ? { guestId: input } : (input ?? {});
+  const { page, pageSize, skip } = normalizeListPagination(
+    opts.page,
+    opts.pageSize,
+  );
+
+  const where: Prisma.ReservationWhereInput = {
+    groupId: null,
+  };
+  if (opts.guestId) where.guestId = opts.guestId;
+
+  const statusRaw = (
+    opts.status ?? (opts.guestId ? 'ALL' : 'LIVE')
+  ).trim();
+  if (statusRaw === 'LIVE' || statusRaw === '') {
+    where.status = { in: [...LIVE_STATUSES] };
+  } else if (statusRaw !== 'ALL') {
+    where.status = statusRaw as ReservationStatus;
+  }
+
+  if (opts.hasNotes) {
+    // Match UI trim(): whitespace-only ≠ has notes (Prisma — no raw SQL for tenant gate).
+    const noteRows = await prisma.reservationNote.findMany({
+      select: { reservationId: true, text: true },
+    });
+    const withNotesIds = [
+      ...new Set(
+        noteRows.filter((n) => n.text.trim().length > 0).map((n) => n.reservationId),
+      ),
+    ];
+    if (withNotesIds.length === 0) {
+      return { items: [], total: 0, page, pageSize };
+    }
+    where.id = { in: withNotesIds };
+  }
+
+  if (opts.dateFrom || opts.dateTo) {
+    where.checkInDate = {};
+    if (opts.dateFrom) {
+      where.checkInDate.gte = new Date(`${opts.dateFrom}T00:00:00.000Z`);
+    }
+    if (opts.dateTo) {
+      where.checkInDate.lte = new Date(`${opts.dateTo}T23:59:59.999Z`);
+    }
+  }
+
+  const q = opts.q?.trim();
+  if (q) {
+    where.OR = [
+      { id: { contains: q, mode: 'insensitive' } },
+      { guest: { fullName: { contains: q, mode: 'insensitive' } } },
+      { room: { roomNumber: { contains: q, mode: 'insensitive' } } },
+      { agency: { code: { contains: q, mode: 'insensitive' } } },
+    ];
+  }
+
+  const [rows, total] = await Promise.all([
+    prisma.reservation.findMany({
+      where,
+      include: {
+        room: true,
+        roomType: true,
+        guest: true,
+        agency: true,
+        notes: true,
+      },
+      orderBy: [{ checkInDate: 'desc' }, { id: 'desc' }],
+      skip,
+      take: pageSize,
+    }),
+    prisma.reservation.count({ where }),
+  ]);
+
+  const items = rows.map((r) => {
     const filled = r.notes.filter((n) => (n.text ?? '').trim().length > 0);
     const preview = filled[0]?.text?.trim().slice(0, 80) ?? null;
     return {
@@ -569,6 +651,8 @@ export async function listReservationsForGrid(guestId?: string) {
       noteTypes: filled.map((n) => n.noteType),
     };
   });
+
+  return { items, total, page, pageSize };
 }
 
 export async function listGroupReservations() {

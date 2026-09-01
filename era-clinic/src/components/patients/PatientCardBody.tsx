@@ -36,7 +36,7 @@ function nationalityLabel(code: string | null | undefined): string {
   return hit?.label ?? code;
 }
 
-export type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
+export type PatientSex = "MALE" | "FEMALE" | "UNKNOWN";
 export type PatientBloodGroup =
   | "A_POS"
   | "A_NEG"
@@ -51,9 +51,9 @@ export type PatientBloodGroup =
 export type PatientCardPatient = {
   id: string;
   refCode: string;
-  givenName?: string;
-  surname?: string;
-  fatherName?: string | null;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
   fullName: string;
   phone?: string | null;
   nationality?: string | null;
@@ -94,9 +94,9 @@ function maskPersonId(id: string | null | undefined): string {
 }
 
 const emptyForm = {
-  givenName: "",
-  surname: "",
-  fatherName: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
   fullName: "",
   phone: "",
   nationality: "",
@@ -190,9 +190,9 @@ export function PatientCardBody({
     setPatient(p);
     onPatientLoaded?.(p);
     setForm({
-      givenName: p.givenName ?? "",
-      surname: p.surname ?? "",
-      fatherName: p.fatherName ?? "",
+      firstName: p.firstName ?? "",
+      middleName: p.middleName ?? "",
+      lastName: p.lastName ?? "",
       fullName: p.fullName ?? "",
       phone: p.phone ?? "",
       nationality: p.nationality ?? "",
@@ -309,9 +309,9 @@ export function PatientCardBody({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        givenName: form.givenName.trim(),
-        surname: form.surname.trim(),
-        fatherName: form.fatherName.trim() || null,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        middleName: form.middleName.trim() || null,
         phone: form.phone || null,
         nationality: form.nationality.trim() || null,
         sex: form.sex,
@@ -543,24 +543,24 @@ export function PatientCardBody({
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("demographicsHint")}</p>
           <FieldRow cols={3}>
             <Field
-              label={t("givenName")}
+              label={t("firstName")}
               preset="shortText"
-              value={form.givenName}
-              onChange={(e) => setForm({ ...form, givenName: e.target.value })}
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
               required
             />
             <Field
-              label={t("surname")}
+              label={t("lastName")}
               preset="shortText"
-              value={form.surname}
-              onChange={(e) => setForm({ ...form, surname: e.target.value })}
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
               required
             />
             <Field
-              label={t("fatherName")}
+              label={t("middleName")}
               preset="shortText"
-              value={form.fatherName}
-              onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
+              value={form.middleName}
+              onChange={(e) => setForm({ ...form, middleName: e.target.value })}
             />
           </FieldRow>
           <FieldRow cols={2}>

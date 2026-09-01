@@ -83,6 +83,9 @@ type ListResponse = {
     {
       globalPersonId: string;
       displayName: string | null;
+      firstName?: string | null;
+      middleName?: string | null;
+      lastName?: string | null;
       finMasked?: string | null;
       accessDenied: boolean;
       sex?: string | null;
@@ -228,7 +231,9 @@ export default function WorkforceEmploymentsPage() {
 
   const [globalPersonId, setGlobalPersonId] = useState("");
   const [resolveFin, setResolveFin] = useState("");
-  const [resolveName, setResolveName] = useState("");
+  const [resolveFirstName, setResolveFirstName] = useState("");
+  const [resolveMiddleName, setResolveMiddleName] = useState("");
+  const [resolveLastName, setResolveLastName] = useState("");
   const [resolveSex, setResolveSex] = useState("UNKNOWN");
   const [resolveBirthDate, setResolveBirthDate] = useState("");
   const [resolveBlood, setResolveBlood] = useState("");
@@ -250,7 +255,9 @@ export default function WorkforceEmploymentsPage() {
   const [hirePin, setHirePin] = useState("0000");
 
   // Employee card fields
-  const [cardName, setCardName] = useState("");
+  const [cardFirstName, setCardFirstName] = useState("");
+  const [cardMiddleName, setCardMiddleName] = useState("");
+  const [cardLastName, setCardLastName] = useState("");
   const [cardSex, setCardSex] = useState("UNKNOWN");
   const [cardBirthDate, setCardBirthDate] = useState("");
   const [cardPhone, setCardPhone] = useState("");
@@ -489,7 +496,9 @@ export default function WorkforceEmploymentsPage() {
 
   function openHire() {
     setResolveFin("");
-    setResolveName("");
+    setResolveFirstName("");
+    setResolveMiddleName("");
+    setResolveLastName("");
     setResolveSex("UNKNOWN");
     setResolveBirthDate("");
     setResolveBlood("");
@@ -503,14 +512,23 @@ export default function WorkforceEmploymentsPage() {
   }
 
   async function onResolvePerson() {
-    if (busy || !resolveFin.trim() || !resolveName.trim()) return;
+    if (
+      busy ||
+      !resolveFin.trim() ||
+      !resolveFirstName.trim() ||
+      !resolveLastName.trim()
+    ) {
+      return;
+    }
     setBusy(true);
     setModalError(null);
     const res = await mdmWorkforceFetch("workforce-resolve", {
       method: "POST",
       body: JSON.stringify({
         fin: resolveFin.trim(),
-        fullName: resolveName.trim(),
+        firstName: resolveFirstName.trim(),
+        middleName: resolveMiddleName.trim() || undefined,
+        lastName: resolveLastName.trim(),
         sex: resolveSex || undefined,
         birthDate: resolveBirthDate || undefined,
       }),
@@ -663,7 +681,9 @@ export default function WorkforceEmploymentsPage() {
     setCardOpen(true);
     setBusy(true);
     const person = persons[emp.globalPersonId];
-    setCardName(person?.displayName ?? "");
+    setCardFirstName(person?.firstName ?? "");
+    setCardMiddleName(person?.middleName ?? "");
+    setCardLastName(person?.lastName ?? "");
     setCardSex(person?.sex ?? "UNKNOWN");
     setCardBirthDate(person?.birthDate ?? "");
     setCardPhone("");
@@ -679,11 +699,30 @@ export default function WorkforceEmploymentsPage() {
     if (opsRes.ok) {
       const ops = (await opsRes.json()) as {
         fullName?: string | null;
+        firstName?: string | null;
+        middleName?: string | null;
+        lastName?: string | null;
         sex?: string | null;
         birthDate?: string | null;
         phoneMasked?: string | null;
       };
-      if (ops.fullName) setCardName(ops.fullName);
+      if (ops.firstName || ops.lastName) {
+        setCardFirstName(ops.firstName ?? "");
+        setCardMiddleName(ops.middleName ?? "");
+        setCardLastName(ops.lastName ?? "");
+      } else if (ops.fullName) {
+        const parts = ops.fullName.trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 1) {
+          setCardFirstName(parts[0] ?? "");
+        } else if (parts.length === 2) {
+          setCardFirstName(parts[0] ?? "");
+          setCardLastName(parts[1] ?? "");
+        } else if (parts.length >= 3) {
+          setCardFirstName(parts[0] ?? "");
+          setCardMiddleName(parts.slice(1, -1).join(" "));
+          setCardLastName(parts[parts.length - 1] ?? "");
+        }
+      }
       if (ops.sex) setCardSex(ops.sex);
       if (ops.birthDate) setCardBirthDate(ops.birthDate);
       // phoneMasked is display-only; leave editable phone empty unless user re-enters
@@ -704,7 +743,7 @@ export default function WorkforceEmploymentsPage() {
 
   async function saveEmployeeCard(e: React.FormEvent) {
     e.preventDefault();
-    if (!actionEmp || !cardName.trim()) return;
+    if (!actionEmp || !cardFirstName.trim() || !cardLastName.trim()) return;
     setBusy(true);
     setModalError(null);
 
@@ -712,7 +751,9 @@ export default function WorkforceEmploymentsPage() {
       method: "POST",
       body: JSON.stringify({
         globalPersonId: actionEmp.globalPersonId,
-        fullName: cardName.trim(),
+        firstName: cardFirstName.trim(),
+        middleName: cardMiddleName.trim() || undefined,
+        lastName: cardLastName.trim(),
         sex: cardSex || undefined,
         birthDate: cardBirthDate || undefined,
         phone: cardPhone.trim() || undefined,
@@ -1122,6 +1163,34 @@ export default function WorkforceEmploymentsPage() {
         closeLabel={tCommon("close")}
       >
         <form onSubmit={(e) => void onHire(e)} className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("fieldFirstName")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={resolveFirstName}
+                onChange={(e) => setResolveFirstName(e.target.value)}
+                required
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("fieldMiddleName")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={resolveMiddleName}
+                onChange={(e) => setResolveMiddleName(e.target.value)}
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("fieldLastName")}
+              <input
+                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={resolveLastName}
+                onChange={(e) => setResolveLastName(e.target.value)}
+                required
+              />
+            </label>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block text-[13px] font-medium text-[#34495E]">
               {t("resolveFin")}
@@ -1130,14 +1199,6 @@ export default function WorkforceEmploymentsPage() {
                 value={resolveFin}
                 onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
                 placeholder="1A2B3C4"
-              />
-            </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("resolveFullName")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={resolveName}
-                onChange={(e) => setResolveName(e.target.value)}
               />
             </label>
           </div>
@@ -1172,7 +1233,12 @@ export default function WorkforceEmploymentsPage() {
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            disabled={busy || !resolveFin.trim() || !resolveName.trim()}
+            disabled={
+              busy ||
+              !resolveFin.trim() ||
+              !resolveFirstName.trim() ||
+              !resolveLastName.trim()
+            }
             onClick={() => void onResolvePerson()}
           >
             {t("resolvePerson")}
@@ -1370,15 +1436,34 @@ export default function WorkforceEmploymentsPage() {
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("cardIdentity")}
             </legend>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("resolveFullName")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={cardName}
-                onChange={(e) => setCardName(e.target.value)}
-                required
-              />
-            </label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("fieldFirstName")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  value={cardFirstName}
+                  onChange={(e) => setCardFirstName(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("fieldMiddleName")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  value={cardMiddleName}
+                  onChange={(e) => setCardMiddleName(e.target.value)}
+                />
+              </label>
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("fieldLastName")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  value={cardLastName}
+                  onChange={(e) => setCardLastName(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
             <p className="text-xs text-[#7F8C8D]">
               {t("colFinMasked")}:{" "}
               {actionEmp
@@ -1482,7 +1567,7 @@ export default function WorkforceEmploymentsPage() {
             <button
               type="submit"
               className={PRIMARY_BUTTON_CLASS}
-              disabled={busy || !cardName.trim()}
+              disabled={busy || !cardFirstName.trim() || !cardLastName.trim()}
             >
               {busy ? t("busy") : tCommon("save")}
             </button>
