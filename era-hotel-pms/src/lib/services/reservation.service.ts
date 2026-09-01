@@ -155,7 +155,7 @@ export async function createReservation(input: {
   const guestMaster = await prisma.guest.findUnique({ where: { id: input.guestId } });
   if (!guestMaster) throw new Error('Guest not found');
 
-  const shareEligible = input.shareEligible ?? false;
+  let shareEligible = input.shareEligible ?? false;
   let shareGender: string | null = null;
   let shareBedIndex: number | null = null;
   if (shareEligible) {
