@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { assertClinicAdminRead, assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   getClinicSettings,
   updateClinicSettings,
@@ -60,9 +60,9 @@ const patchSchema = z.object({
   checkupSectionsJson: z.string().nullable().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const guard = await assertClinicAdminRead();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     return jsonOk(await getClinicSettings());
   } catch (err) {
@@ -72,7 +72,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = patchSchema.parse(await req.json());
     if (body.enabledPresets?.some((p) => !isClinicPreset(p))) {

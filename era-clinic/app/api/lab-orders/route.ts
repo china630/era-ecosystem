@@ -1,7 +1,14 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
@@ -62,6 +69,10 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    if (denied) return denied;
+
     const url = new URL(req.url);
     const query = querySchema.parse({
       status: url.searchParams.get("status") ?? undefined,
@@ -160,6 +171,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    if (denied) return denied;
+
     const body = createSchema.parse(await req.json());
     const codes =
       body.testCodes?.length

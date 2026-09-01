@@ -4,7 +4,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
+  requireClinicPermission,
 } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { patientCardDiagnosisWriteDenied } from "@/lib/patient-card-gates";
 import {
   addEpisodeDiagnosis,
@@ -33,8 +35,10 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const episodeParam = new URL(req.url).searchParams.get("episode");
     const episode = await resolveEpisodeForPatient(id, episodeParam);
     if (!episode) return jsonOk({ items: [], episodeId: null, status: null });
@@ -54,22 +58,28 @@ export async function POST(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const body = createSchema.parse(await req.json());
     const episodeParam =
       body.episodeId ?? new URL(req.url).searchParams.get("episode");
     const episode = await resolveEpisodeForPatient(id, episodeParam);
-    const denied = patientCardDiagnosisWriteDenied(Boolean(episode && episode.status === "OPEN"));
-    if (denied || !episode) {
-      return jsonError(denied ?? "No open sanatorium episode", 409, { code: "NO_OPEN_EPISODE" });
+    const writeDenied = patientCardDiagnosisWriteDenied(
+      Boolean(episode && episode.status === "OPEN"),
+    );
+    if (writeDenied || !episode) {
+      return jsonError(writeDenied ?? "No open sanatorium episode", 409, {
+        code: "NO_OPEN_EPISODE",
+      });
     }
     const closed = episodeWriteDenied(episode.status);
     if (closed) return jsonError(closed, 409, { code: EPISODE_CLOSED });
     const row = await addEpisodeDiagnosis(episode.id, {
       icdCodeId: body.icdCodeId,
       note: body.note,
-      recordedByUserId: session.sub,
+      recordedByUserId: session!.sub,
     });
     return jsonOk(row, 201);
   } catch (err) {
@@ -83,8 +93,10 @@ export async function DELETE(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id: patientRefId } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id: patientRefId } = await ctx.params;
     const diagnosisId = new URL(req.url).searchParams.get("id");
     if (!diagnosisId) return jsonError("id required", 400);
     await deleteEpisodeDiagnosis(diagnosisId, patientRefId);
@@ -100,8 +112,10 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id: patientRefId } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id: patientRefId } = await ctx.params;
     const body = updateSchema.parse(await req.json());
     const row = await updateEpisodeDiagnosis(body.id, patientRefId, {
       icdCodeId: body.icdCodeId,

@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  jsonError,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   listPatientsPaged,
   createPatient,
@@ -51,8 +58,10 @@ function parseHasMdm(raw: string | null): 0 | 1 | undefined {
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const params = new URL(req.url).searchParams;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const params = new URL(req.url).searchParams;
     const q = params.get("q") ?? undefined;
     const sexRaw = params.get("sex");
     const bloodRaw = params.get("bloodGroup");
@@ -95,8 +104,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const body = createSchema.parse(await req.json());
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const body = createSchema.parse(await req.json());
     return jsonOk(await createPatient(body), 201);
   } catch (err) {
     if (err instanceof PatientMdmRequiredError) {

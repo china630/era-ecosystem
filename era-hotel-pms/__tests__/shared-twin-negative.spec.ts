@@ -1,16 +1,18 @@
 import {
   assertShareInventory,
   breakShareReservation,
+  canGuestJoinSharePool,
   countDoorsUsedOnNight,
   isEffectiveShare,
   maxDoorsUsedInRange,
   nextFreeShareBedIndex,
   nextShareBedIndex,
   normalizeShareGender,
+  resolveDoorAssignment,
   validateShareCandidate,
   type ShareReservationSlice,
 } from '@/lib/services/share-assignment.service';
-import { parseHotelNoon } from '@/lib/hotel-calendar';
+import { parseHotelNoon, reservationStayOverlaps, staysOverlap } from '@/lib/hotel-calendar';
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -391,5 +393,123 @@ describe('share-assignment pure math', () => {
       2,
     );
     expect(used).toBe(2);
+  });
+});
+
+describe('reservationStayOverlaps SSOT', () => {
+  it('real night overlap counts as overlap', () => {
+    expect(
+      reservationStayOverlaps(
+        { checkInDate: new Date('2026-08-20T14:00:00Z'), checkOutDate: new Date('2026-08-27T10:00:00Z') },
+        { checkInDate: new Date('2026-08-21T14:00:00Z'), checkOutDate: new Date('2026-08-28T10:00:00Z') },
+      ),
+    ).toBe(true);
+  });
+
+  it('same-day turnover does not count as overlap', () => {
+    expect(
+      staysOverlap(
+        new Date('2026-08-20T14:00:00Z'),
+        new Date('2026-08-27T08:00:00Z'),
+        new Date('2026-08-27T14:00:00Z'),
+        new Date('2026-08-30T10:00:00Z'),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('resolveDoorAssignment auto-share', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('auto-opens share pool when exclusive candidate overlaps eligible neighbor', async () => {
+    prisma.room.findUnique.mockResolvedValue({
+      id: 'room-307',
+      maxBed: 2,
+      roomType: { adultCapacity: 2 },
+    });
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'neighbor',
+        shareEligible: false,
+        shareGender: null,
+        adults: 1,
+        checkInDate: new Date('2026-08-20T10:00:00Z'),
+        checkOutDate: new Date('2026-08-29T08:00:00Z'),
+        shareBedIndex: null,
+        guest: { gender: 'M' },
+        agency: { code: 'UNION', name: 'Hamkarlar' },
+      },
+    ]);
+    prisma.reservation.update.mockResolvedValue({});
+
+    const result = await resolveDoorAssignment({
+      roomId: 'room-307',
+      checkIn: new Date('2026-08-21T10:00:00Z'),
+      checkOut: new Date('2026-08-28T08:00:00Z'),
+      excludeReservationId: 'candidate',
+      candidate: {
+        shareEligible: false,
+        shareGender: null,
+        adults: 1,
+        guestGender: 'M',
+        isOta: false,
+      },
+    });
+
+    expect(result.autoShare).toBe(true);
+    expect(result.shareEligible).toBe(true);
+    expect(result.shareGender).toBe('M');
+    expect(result.pulledNeighborIds).toContain('neighbor');
+    expect(prisma.reservation.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'neighbor' },
+        data: expect.objectContaining({ shareEligible: true, shareGender: 'M', shareBedIndex: 1 }),
+      }),
+    );
+    expect(result.shareBedIndex).toBe(2);
+  });
+
+  it('rejects OTA candidate on overlapping door', async () => {
+    prisma.room.findUnique.mockResolvedValue({
+      id: 'room-307',
+      maxBed: 2,
+      roomType: { adultCapacity: 2 },
+    });
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'neighbor',
+        shareEligible: false,
+        shareGender: null,
+        adults: 1,
+        checkInDate: new Date('2026-08-20T10:00:00Z'),
+        checkOutDate: new Date('2026-08-27T08:00:00Z'),
+        shareBedIndex: null,
+        guest: { gender: 'M' },
+        agency: null,
+      },
+    ]);
+
+    await expect(
+      resolveDoorAssignment({
+        roomId: 'room-307',
+        checkIn: new Date('2026-08-21T10:00:00Z'),
+        checkOut: new Date('2026-08-28T08:00:00Z'),
+        candidate: {
+          shareEligible: false,
+          shareGender: null,
+          adults: 1,
+          guestGender: 'M',
+          isOta: true,
+        },
+      }),
+    ).rejects.toThrow(/OTA/);
+  });
+
+  it('canGuestJoinSharePool gates adults and gender', () => {
+    expect(canGuestJoinSharePool({ adults: 2, guestGender: 'M' }).ok).toBe(false);
+    expect(canGuestJoinSharePool({ adults: 1, guestGender: 'M', isOta: true }).ok).toBe(false);
+    expect(canGuestJoinSharePool({ adults: 1, guestGender: 'M' }).ok).toBe(true);
   });
 });

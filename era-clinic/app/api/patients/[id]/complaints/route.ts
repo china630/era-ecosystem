@@ -4,7 +4,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
+  requireClinicPermission,
 } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { resolveEpisodeForPatient } from "@/domain/sanatorium/episode-resolve";
 import { EPISODE_CLOSED, episodeWriteDenied } from "@/domain/sanatorium/episode-gates";
 import {
@@ -30,8 +32,10 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const episodeParam = new URL(req.url).searchParams.get("episode");
     const episode = await resolveEpisodeForPatient(id, episodeParam);
     if (!episode) return jsonOk({ items: [], episodeId: null, status: null });
@@ -51,8 +55,10 @@ export async function POST(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const body = createSchema.parse(await req.json());
     const episodeParam =
       body.episodeId ?? new URL(req.url).searchParams.get("episode");
@@ -75,8 +81,10 @@ export async function DELETE(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id: patientRefId } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id: patientRefId } = await ctx.params;
     const complaintId = new URL(req.url).searchParams.get("id");
     if (!complaintId) return jsonError("id required", 400);
     await deleteEpisodeComplaint(complaintId, patientRefId);
@@ -92,8 +100,10 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id: patientRefId } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id: patientRefId } = await ctx.params;
     const body = updateSchema.parse(await req.json());
     const row = await updateEpisodeComplaint(body.id, patientRefId, body.text);
     return jsonOk(row);

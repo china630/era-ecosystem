@@ -4,9 +4,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import {
   approveDutyRoster,
@@ -36,14 +36,16 @@ const monthSchema = z.object({
   staffKind: staffKindSchema.optional(),
 });
 
-function rosterForbidden(session: Awaited<ReturnType<typeof getRouteSession>>) {
-  return requireClinicRole(session, [CLINIC_ROLE.DOCTOR]);
+async function rosterForbidden(
+  session: Awaited<ReturnType<typeof getRouteSession>>,
+) {
+  return requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_NURSE_ROSTER);
 }
 
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = rosterForbidden(session);
+    const denied = await rosterForbidden(session);
     if (denied) return denied;
     const url = new URL(req.url);
     const yearMonth = url.searchParams.get("yearMonth") ?? "";
@@ -61,7 +63,7 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = rosterForbidden(session);
+    const denied = await rosterForbidden(session);
     if (denied) return denied;
     const body = saveSchema.parse(await req.json());
     const result = await saveDutyRoster(body);
@@ -81,7 +83,7 @@ export async function PUT(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = rosterForbidden(session);
+    const denied = await rosterForbidden(session);
     if (denied) return denied;
     const body = z
       .object({

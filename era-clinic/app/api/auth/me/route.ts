@@ -1,5 +1,10 @@
 import { jsonError, jsonOk, handleRouteError, getRouteSession } from "@/lib/api-utils";
-import { hasClinicAdminAccess } from "@/lib/auth/clinic-admin-access";
+import { hasClinicPermissionBypass } from "@/lib/auth/clinic-admin-access";
+import {
+  resolveSessionPermissions,
+  permissionsForUser,
+} from "@/lib/auth/clinic-permission.service";
+import { ALL_CLINIC_PERMISSIONS } from "@/lib/auth/clinic-permissions";
 import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
 import { getEnabledPresets } from "@/domain/settings/settings.service";
 import {
@@ -43,15 +48,27 @@ export async function GET() {
       organizationId: organizationId || session.organizationId,
     };
 
+    const bypass = hasClinicPermissionBypass(mergedSession);
+    const dbPermissions = await permissionsForUser(user.id);
+    const permissions = bypass
+      ? [...ALL_CLINIC_PERMISSIONS]
+      : resolveSessionPermissions({
+          role: user.role.code,
+          roles: session.roles,
+          permissions: dbPermissions,
+        });
+
     const res = jsonOk({
       id: user.id,
       login: user.login,
       email: user.email,
       fullName: user.fullName,
       role: user.role.code,
+      permissions,
       organizationId: organizationId || null,
       organizationName: controlPlaneName ?? tenant?.name ?? null,
-      canViewClinicAdmin: hasClinicAdminAccess(mergedSession),
+      canViewClinicAdmin:
+        bypass || permissions.some((p) => p.startsWith("screen:admin.")),
       isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
       enabledPresets,
       checkInMode:

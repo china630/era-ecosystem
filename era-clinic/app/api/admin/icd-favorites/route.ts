@@ -5,7 +5,7 @@ import {
   jsonError,
   jsonOk,
 } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   getTenantIcdFavorites,
   retireIcdCode,
@@ -23,7 +23,7 @@ const retireSchema = z.object({
   code: z.string().min(1).max(16),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
@@ -39,7 +39,7 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = putSchema.parse(await req.json());
     const tenant = await setTenantIcdFavorites(body.codes);
@@ -51,7 +51,7 @@ export async function PUT(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const action = new URL(req.url).searchParams.get("action");
     if (action === "sync") {

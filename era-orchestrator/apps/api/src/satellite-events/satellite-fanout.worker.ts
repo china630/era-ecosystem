@@ -7,7 +7,9 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Job, Queue, Worker } from "bullmq";
 import {
+  isSatelliteStaffDeactivated,
   isSatelliteStaffProvisioned,
+  satelliteStaffDeactivatedSchema,
   satelliteStaffProvisionedSchema,
 } from "@era/contracts";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
@@ -23,6 +25,13 @@ import {
   ERA_SATELLITE_FANOUT_QUEUE,
   type SatelliteFanoutJobPayload,
 } from "./satellite-fanout.queue";
+
+function provisionErrorCode(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (msg.includes("LOGIN_TAKEN")) return "LOGIN_TAKEN";
+  if (msg.includes("TARGET_AMBIGUOUS")) return "TARGET_AMBIGUOUS";
+  return msg.slice(0, 200) || "FANOUT_FAILED";
+}
 
 @Injectable()
 export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
@@ -133,6 +142,37 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
     );
   }
 
+  private async markFailedFromEvent(
+    event: Record<string, unknown>,
+    err: unknown,
+  ): Promise<void> {
+    try {
+      if (isSatelliteStaffProvisioned(event)) {
+        const parsed = satelliteStaffProvisionedSchema.parse(event);
+        await this.workforce.markProvisionFailed(
+          parsed.payload.cpEmploymentId,
+          parsed.payload.satelliteKey,
+          provisionErrorCode(err),
+          parsed.payload.roleBindingId,
+        );
+        return;
+      }
+      if (isSatelliteStaffDeactivated(event)) {
+        const parsed = satelliteStaffDeactivatedSchema.parse(event);
+        await this.workforce.markProvisionFailed(
+          parsed.payload.cpEmploymentId,
+          parsed.payload.satelliteKey,
+          provisionErrorCode(err),
+          parsed.payload.roleBindingId,
+        );
+      }
+    } catch (markErr) {
+      this.logger.warn(
+        `Could not mark provision FAILED: ${markErr instanceof Error ? markErr.message : markErr}`,
+      );
+    }
+  }
+
   private async handle(job: Job<SatelliteFanoutJobPayload>): Promise<void> {
     const { organizationId, satelliteKey, event, path } = job.data;
     const endpoint = await this.registry.resolveEndpoint(
@@ -143,6 +183,7 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(
         `Fan-out job ${job.id}: no endpoint for org=${organizationId} satellite=${satelliteKey}`,
       );
+      await this.markFailedFromEvent(event, new Error("NO_ENDPOINT"));
       return;
     }
 
@@ -155,23 +196,36 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
     }
 
     if (path) {
-      const result = await forwardToSatellite(endpoint, path, event);
-      if (
-        isSatelliteStaffProvisioned(event) &&
-        result.satelliteUserId?.trim()
-      ) {
-        const parsed = satelliteStaffProvisionedSchema.parse(event);
-        await this.workforce.patchSatelliteUserId(
-          parsed.organizationId,
-          parsed.payload.satelliteKey,
-          parsed.payload.cpEmploymentId,
-          result.satelliteUserId.trim(),
+      try {
+        const result = await forwardToSatellite(endpoint, path, event);
+        if (
+          isSatelliteStaffProvisioned(event) &&
+          result.satelliteUserId?.trim()
+        ) {
+          const parsed = satelliteStaffProvisionedSchema.parse(event);
+          await this.workforce.patchSatelliteUserId(
+            parsed.organizationId,
+            parsed.payload.satelliteKey,
+            parsed.payload.cpEmploymentId,
+            result.satelliteUserId.trim(),
+          );
+        } else if (isSatelliteStaffProvisioned(event)) {
+          const parsed = satelliteStaffProvisionedSchema.parse(event);
+          await this.workforce.markProvisionFailed(
+            parsed.payload.cpEmploymentId,
+            parsed.payload.satelliteKey,
+            "NO_SATELLITE_USER_ID_IN_RESPONSE",
+            parsed.payload.roleBindingId,
+          );
+        }
+        this.logger.log(
+          `Forwarded ${String(event.type)} to ${satelliteKey} org=${organizationId}`,
         );
+        return;
+      } catch (err) {
+        await this.markFailedFromEvent(event, err);
+        throw err;
       }
-      this.logger.log(
-        `Forwarded ${String(event.type)} to ${satelliteKey} org=${organizationId}`,
-      );
-      return;
     }
 
     this.logger.warn(

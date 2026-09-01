@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { jsonError, handleRouteError, getRouteSession, requireClinicRole } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { jsonError, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { readStoredLabFile } from "@/lib/import/lab-import-files";
 
@@ -30,13 +30,7 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [
-      CLINIC_ROLE.CLINIC_ADMIN,
-      CLINIC_ROLE.DOCTOR,
-      CLINIC_ROLE.NURSE,
-      CLINIC_ROLE.LAB_TECH,
-      CLINIC_ROLE.RECEPTION,
-    ]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS_FILE);
     if (denied) return denied;
 
     const { id } = await params;

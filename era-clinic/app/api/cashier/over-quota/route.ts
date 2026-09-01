@@ -3,9 +3,9 @@ import {
   getRouteSession,
   handleRouteError,
   jsonOk,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
 const querySchema = z.object({
@@ -26,7 +26,7 @@ const querySchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.RECEPTION]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;
 
     const url = new URL(req.url);

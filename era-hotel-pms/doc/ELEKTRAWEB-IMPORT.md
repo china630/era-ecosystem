@@ -142,6 +142,7 @@ Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assign
 - Resolve room by **physical** door: `707S` → `Room` `707` (never create `707S`).
 - Second-guest signal: `Record Type=SHARE` **or** `Room Count=0` **or** Room No suffix `S` (Nafta list export often only has the suffix).
 - After upsert, `applyElektrawebSharePair` marks the second stay **and** overlapping NORMAL/CHECKED_OUT neighbors on that door (`shareEligible` + beds 1..maxBed).
+- **Heuristic (no EW `S` yet):** two NORMAL rows on one physical door with real night overlap and M/F singles → same pairing on re-import / live bridge (`overlapEligible`).
 - Re-import does **not** clear share when the row is NORMAL (EW primary is always NORMAL).
 - Agency name is **not** a trigger. Walk-in shares only when EW marks the second guest.
 - Guests must be imported with Gender before share pairs become effective inventory.

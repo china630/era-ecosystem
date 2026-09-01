@@ -4,7 +4,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
+  requireClinicPermission,
 } from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   addAdmissionDiagnosis,
   deleteAdmissionDiagnosis,
@@ -24,8 +26,10 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     return jsonOk({ items: await listAdmissionDiagnoses(id) });
   } catch (err) {
     return handleRouteError(err);
@@ -39,6 +43,9 @@ export async function POST(
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
+    if (denied) return denied;
+
     const { id } = await ctx.params;
     const body = createSchema.parse(await req.json());
     const row = await addAdmissionDiagnosis(id, {
@@ -54,8 +61,10 @@ export async function POST(
 export async function DELETE(req: Request) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const id = new URL(req.url).searchParams.get("id");
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
+    if (denied) return denied;
+
+        const id = new URL(req.url).searchParams.get("id");
     if (!id) return jsonError("id required", 400);
     await deleteAdmissionDiagnosis(id);
     return jsonOk({ deleted: true });

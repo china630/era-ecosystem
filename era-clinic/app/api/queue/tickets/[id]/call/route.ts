@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
 const patchSchema = z.object({
@@ -11,6 +18,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_QUEUE);
+    if (denied) return denied;
+
     const { id } = await params;
     const body = patchSchema.parse(await req.json());
     const ticket = await prisma.queueTicket.findUnique({ where: { id } });

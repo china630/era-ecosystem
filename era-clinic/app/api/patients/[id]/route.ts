@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import {
+  jsonOk,
+  handleRouteError,
+  getRouteSession,
+  jsonError,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   getPatient,
   updatePatient,
@@ -44,8 +51,10 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const row = await getPatient(id);
     if (!row) return jsonError("Not found", 404);
     return jsonOk(row);
@@ -60,8 +69,10 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
-    const { id } = await ctx.params;
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
+    if (denied) return denied;
+
+        const { id } = await ctx.params;
     const body = updateSchema.parse(await req.json());
     return jsonOk(await updatePatient(id, body));
   } catch (err) {

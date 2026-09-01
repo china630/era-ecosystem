@@ -4,10 +4,10 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
-  requireClinicRole,
-  hasClinicAdminRole,
+  requireClinicPermission,
+  sessionHasClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
@@ -32,11 +32,7 @@ const viewSchema = z.enum([
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [
-      CLINIC_ROLE.DOCTOR,
-      CLINIC_ROLE.NURSE,
-      CLINIC_ROLE.CLINIC_ADMIN,
-    ]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_REPORTS_PROCEDURES);
     if (denied) return denied;
     if (!session) return jsonError("Unauthorized", 401);
 
@@ -61,10 +57,8 @@ export async function GET(req: Request) {
     const doctorIdParam = url.searchParams.get("doctorId")?.trim() || undefined;
     const nurseIdParam = url.searchParams.get("nurseId")?.trim() || undefined;
 
-    const isAdmin = hasClinicAdminRole(session);
-
     const myDoctorPractitionerId =
-      session.role === CLINIC_ROLE.DOCTOR
+      sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_DOCTOR)
         ? (
             await prisma.practitioner.findFirst({
               where: { userId: session.sub },
@@ -74,8 +68,10 @@ export async function GET(req: Request) {
         : null;
 
     const resolveDoctorPractitionerId = async (): Promise<string | null> => {
-      if (isAdmin) return doctorIdParam ?? myDoctorPractitionerId ?? null;
-      if (session.role === CLINIC_ROLE.DOCTOR) return myDoctorPractitionerId;
+      // Doctors (screen:doctor) are scoped to self; others may filter by doctorId.
+      if (sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_DOCTOR)) {
+        return myDoctorPractitionerId;
+      }
       return doctorIdParam ?? null;
     };
 
@@ -300,17 +296,20 @@ export async function GET(req: Request) {
     }
 
     // nurse-work
-    const nursePractitionerId =
-      session.role === CLINIC_ROLE.NURSE
-        ? (
-            await prisma.practitioner.findFirst({
-              where: { userId: session.sub },
-              select: { id: true },
-            })
-          )?.id
-        : nurseIdParam ?? null;
+    const isNurseDesk = sessionHasClinicPermission(
+      session,
+      CLINIC_PERMISSION.SCREEN_NURSE,
+    );
+    const nursePractitionerId = isNurseDesk
+      ? (
+          await prisma.practitioner.findFirst({
+            where: { userId: session.sub },
+            select: { id: true },
+          })
+        )?.id
+      : nurseIdParam ?? null;
 
-    if (session.role === CLINIC_ROLE.NURSE && !nursePractitionerId) {
+    if (isNurseDesk && !nursePractitionerId) {
       return jsonOk({ view, items: [], grandTotal: 0 });
     }
 

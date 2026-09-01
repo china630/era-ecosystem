@@ -6,9 +6,11 @@ import {
   resolveVerifiedSsoFinanceRole,
   satelliteOrganizationId,
   satelliteRuntimeConfig,
+  signSatelliteSession,
   ssoExchangeBodySchema,
 } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
+import { permissionsForUser } from "@/lib/auth/clinic-permission.service";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -54,10 +56,28 @@ export async function POST(request: Request) {
 
     enterSatelliteTenant({ organizationId: body.organizationId });
 
-    const { token, user } = await executeSatelliteSsoExchange(
+    const { user } = await executeSatelliteSsoExchange(
       { ...body, financeRole },
       prisma,
     );
+
+    const dbUser = await prisma.user.findFirst({
+      where: { login: user.login, organizationId: body.organizationId },
+      select: { id: true },
+    });
+    const permissions = dbUser ? await permissionsForUser(dbUser.id) : [];
+    const token = await signSatelliteSession({
+      sub: user.id,
+      login: user.login,
+      email: body.email,
+      role: user.role,
+      fullName: user.fullName,
+      organizationId: body.organizationId,
+      roles: user.roles,
+      isOwner: user.isOwner,
+      financeRole: user.financeRole,
+      permissions,
+    });
 
     const res = jsonOk({ user, token });
     res.cookies.set(authCookieName(), token, {

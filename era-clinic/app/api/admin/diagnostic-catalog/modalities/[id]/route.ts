@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   updateModality,
   deleteModality,
@@ -21,7 +21,7 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
     const body = updateSchema.parse(await req.json());
@@ -41,7 +41,7 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
     await deleteModality({ userId: guard.session.sub, request: req }, id);

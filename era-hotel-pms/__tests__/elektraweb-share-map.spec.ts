@@ -452,5 +452,66 @@ describe('elektraweb-share-map', () => {
       expect(c.applied).toBe(false);
       expect(c.skippedReason).toBe('adults_not_1');
     });
+
+    it('9. two NORMAL with overlap and no EW S signal opens share pool (307-like)', async () => {
+      const aqil = stay({
+        id: 'aqil',
+        roomId: 'room-307',
+        checkIn: '2026-08-20T10:00:00Z',
+        checkOut: '2026-08-27T08:00:00Z',
+        gender: 'M',
+      });
+      const rovsen = stay({
+        id: 'rovsen',
+        roomId: 'room-307',
+        checkIn: '2026-08-21T10:00:00Z',
+        checkOut: '2026-08-28T08:00:00Z',
+        gender: 'M',
+      });
+      const state = { reservations: new Map([[aqil.id, aqil], [rovsen.id, rovsen]]) };
+      const db = makeDb(state);
+
+      const result = await applyElektrawebSharePair(db, {
+        reservationId: 'rovsen',
+        isSecond: false,
+      });
+
+      expect(result.applied).toBe(true);
+      expect(result.pairedIds.sort()).toEqual(['aqil', 'rovsen']);
+      expect(aqil.shareEligible).toBe(true);
+      expect(rovsen.shareEligible).toBe(true);
+      expect(aqil.shareBedIndex).toBe(1);
+      expect(rovsen.shareBedIndex).toBe(2);
+      expect(aqil.shareGender).toBe('M');
+    });
+
+    it('10. opposite gender overlap without EW signal does not open pool', async () => {
+      const male = stay({
+        id: 'm',
+        roomId: 'room-x',
+        checkIn: '2026-08-20T10:00:00Z',
+        checkOut: '2026-08-27T08:00:00Z',
+        gender: 'M',
+      });
+      const female = stay({
+        id: 'f',
+        roomId: 'room-x',
+        checkIn: '2026-08-21T10:00:00Z',
+        checkOut: '2026-08-28T08:00:00Z',
+        gender: 'F',
+      });
+      const state = { reservations: new Map([[male.id, male], [female.id, female]]) };
+      const db = makeDb(state);
+
+      const result = await applyElektrawebSharePair(db, {
+        reservationId: 'f',
+        isSecond: false,
+      });
+
+      expect(result.applied).toBe(false);
+      expect(result.skippedReason).toBe('no_share_signal');
+      expect(male.shareEligible).toBe(false);
+      expect(female.shareEligible).toBe(false);
+    });
   });
 });

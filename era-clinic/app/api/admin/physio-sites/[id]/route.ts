@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import {
   getPhysioSite,
@@ -26,7 +26,7 @@ const patchSchema = z.object({
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(_req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
     return jsonOk(await getPhysioSite(id));
@@ -37,7 +37,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
     const body = patchSchema.parse(await req.json());
@@ -58,7 +58,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 /** Retire (active=false). Hard delete is forbidden. */
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const guard = await assertClinicAdminWrite();
+    const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
     const row = await retirePhysioSite(id);

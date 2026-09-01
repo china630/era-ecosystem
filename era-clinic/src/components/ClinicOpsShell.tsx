@@ -15,6 +15,7 @@ import {
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PRESET, type ClinicPresetCode } from "@/domain/presets/clinic-presets";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { buildClinicNav, CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
 
 const ALL_NAV_HREFS = [...CLINIC_TOP_NAV, ...CLINIC_NAV].map((entry) => entry.href);
@@ -39,14 +40,16 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
   const locale = useLocale() as Locale;
   const { auth } = useClinicAuth();
   const canAdmin = auth?.canViewClinicAdmin === true;
-  const seesAll = canAdmin || auth?.isPlatformSuperAdmin === true;
   const role = auth?.role ?? "";
+  const permissions = auth?.permissions ?? [];
   const enabledPresets = auth?.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT];
+  const canMasterData =
+    permissions.includes(CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA) || canAdmin;
 
   const { topItems, sections } = useMemo(() => {
     const presetEnabled = (code: ClinicPresetCode) => enabledPresets.includes(code);
-    return buildClinicNav({ role, seesAll, presetEnabled }, (key) => t(key as "home"));
-  }, [role, seesAll, enabledPresets, t]);
+    return buildClinicNav({ role, permissions, presetEnabled }, (key) => t(key as "home"));
+  }, [role, permissions, enabledPresets, t]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -55,7 +58,7 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
 
   const profileItems: HeaderProfileMenuItem[] = [
     { label: t("changePassword"), href: "/account/password" },
-    ...(canAdmin
+    ...(canMasterData
       ? [{ label: t("masterData"), href: "/admin/master-data" }]
       : [{ label: t("settings"), href: "/help" }]),
   ];

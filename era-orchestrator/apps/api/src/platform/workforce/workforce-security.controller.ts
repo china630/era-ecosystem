@@ -20,6 +20,28 @@ export class WorkforceSecurityController {
     return this.security.overview(organizationId);
   }
 
+  @Get("bindings")
+  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @ApiOperation({ summary: "Paginated role bindings list" })
+  bindings(
+    @OrganizationId() organizationId: string,
+    @Query("page") page?: string,
+    @Query("pageSize") pageSize?: string,
+    @Query("search") search?: string,
+    @Query("orgUnitId") orgUnitId?: string,
+    @Query("positionId") positionId?: string,
+    @Query("satelliteKey") satelliteKey?: string,
+    @Query("role") role?: string,
+    @Query("provisionState") provisionState?: string,
+  ) {
+    return this.security.listBindings(
+      organizationId,
+      Math.max(1, Number(page) || 1),
+      Math.min(100, Math.max(1, Number(pageSize) || 50)),
+      { search, orgUnitId, positionId, satelliteKey, role, provisionState },
+    );
+  }
+
   @Get("audit")
   @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
   @ApiOperation({ summary: "Workforce security audit log" })

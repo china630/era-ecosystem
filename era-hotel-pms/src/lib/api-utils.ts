@@ -44,7 +44,17 @@ export function handleRouteError(err: unknown) {
     if (lower.includes('forbidden') || lower.includes('insufficient permissions')) {
       return jsonError(err.message, 403);
     }
-    if (lower.includes('idempotency conflict') || lower.includes('duplicate') || lower.includes('no contract allotment') || lower.includes('no availability')) {
+    if (
+      lower.includes('idempotency conflict') ||
+      lower.includes('duplicate') ||
+      lower.includes('no contract allotment') ||
+      lower.includes('no availability') ||
+      lower.includes('room conflict') ||
+      lower.includes('share pool') ||
+      lower.includes('opposite gender') ||
+      lower.includes('roommate remains') ||
+      lower.includes('exclusive stay')
+    ) {
       return jsonError(err.message, 409);
     }
     const known = ['not found', 'invalid', 'cannot', 'only', 'must'];

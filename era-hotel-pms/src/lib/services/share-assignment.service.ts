@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { isOtaAgency } from '@/lib/booking-source-kind';
-import { hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
+import { hotelDateKey, parseHotelNoon, reservationStayOverlaps } from '@/lib/hotel-calendar';
 import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
+import type { ReservationStatus } from '@prisma/client';
 
-export const SCHEDULABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
+export const SCHEDULABLE_STATUSES: ReservationStatus[] = ['CONFIRMED', 'IN_HOUSE', 'OPTION'];
 
 export type ShareGender = 'M' | 'F';
 
@@ -60,7 +61,348 @@ function eachNight(from: Date, to: Date): Date[] {
 }
 
 function overlapsStay(r: ShareReservationSlice, checkIn: Date, checkOut: Date): boolean {
-  return r.checkInDate < checkOut && r.checkOutDate > checkIn;
+  return reservationStayOverlaps(r, { checkInDate: checkIn, checkOutDate: checkOut });
+}
+
+export function canGuestJoinSharePool(input: {
+  adults: number;
+  shareGender?: string | null;
+  guestGender?: string | null;
+  isOta?: boolean;
+}): { ok: true; gender: ShareGender } | { ok: false; reason: string } {
+  if (input.adults !== 1) {
+    return { ok: false, reason: 'adults_not_1' };
+  }
+  if (input.isOta) {
+    return { ok: false, reason: 'ota' };
+  }
+  const gender =
+    normalizeShareGender(input.shareGender) ?? normalizeShareGender(input.guestGender);
+  if (!gender) {
+    return { ok: false, reason: 'no_gender' };
+  }
+  return { ok: true, gender };
+}
+
+export type DoorAssignmentCandidate = {
+  shareEligible: boolean;
+  shareGender: string | null;
+  adults: number;
+  isOta?: boolean;
+  guestGender?: string | null;
+};
+
+export type DoorAssignmentResult = {
+  shareBedIndex: number | null;
+  joiningPool: boolean;
+  shareEligible: boolean;
+  shareGender: string | null;
+  autoShare: boolean;
+  pulledNeighborIds: string[];
+};
+
+type DoorOverlapRow = {
+  id: string;
+  shareEligible: boolean;
+  shareGender: string | null;
+  adults: number;
+  checkInDate: Date;
+  checkOutDate: Date;
+  shareBedIndex: number | null;
+  guest: { gender: string | null };
+  agency: { code: string; name: string } | null;
+};
+
+async function loadDoorOverlaps(input: {
+  roomId: string;
+  checkIn: Date;
+  checkOut: Date;
+  excludeReservationId?: string;
+  statuses?: readonly ReservationStatus[];
+}): Promise<DoorOverlapRow[]> {
+  const statuses = input.statuses ?? SCHEDULABLE_STATUSES;
+  const rows = await prisma.reservation.findMany({
+    where: {
+      roomId: input.roomId,
+      ...(input.excludeReservationId ? { id: { not: input.excludeReservationId } } : {}),
+      status: { in: [...statuses] },
+      checkInDate: { lt: input.checkOut },
+      checkOutDate: { gt: input.checkIn },
+    },
+    select: {
+      id: true,
+      shareEligible: true,
+      shareGender: true,
+      adults: true,
+      checkInDate: true,
+      checkOutDate: true,
+      shareBedIndex: true,
+      guest: { select: { gender: true } },
+      agency: { select: { code: true, name: true } },
+    },
+  });
+  return rows.filter((r) =>
+    reservationStayOverlaps(r, { checkInDate: input.checkIn, checkOutDate: input.checkOut }),
+  );
+}
+
+function gateRowForShare(row: DoorOverlapRow): ReturnType<typeof canGuestJoinSharePool> {
+  return canGuestJoinSharePool({
+    adults: row.adults,
+    shareGender: row.shareGender,
+    guestGender: row.guest.gender,
+    isOta: row.agency ? isOtaAgency(row.agency.code, row.agency.name) : false,
+  });
+}
+
+/**
+ * Mark all share-eligible overlapping stays on a door with beds (pulls former exclusives).
+ */
+export async function openSharePoolForDoor(input: {
+  roomId: string;
+  checkIn: Date;
+  checkOut: Date;
+  excludeReservationId?: string;
+  poolGender: ShareGender;
+  /** When set, only these reservation ids (plus exclude filter) participate. */
+  reservationIds?: string[];
+  dryRun?: boolean;
+}): Promise<Array<{ id: string; shareBedIndex: number; shareGender: ShareGender }>> {
+  const room = await prisma.room.findUnique({
+    where: { id: input.roomId },
+    include: { roomType: true },
+  });
+  if (!room) throw new Error('Room not found');
+  const maxBed = resolveMaxBed(room.maxBed, room.roomType.adultCapacity);
+
+  let rows = await loadDoorOverlaps({
+    roomId: input.roomId,
+    checkIn: input.checkIn,
+    checkOut: input.checkOut,
+    excludeReservationId: input.excludeReservationId,
+  });
+  if (input.reservationIds?.length) {
+    const allowed = new Set(input.reservationIds);
+    rows = rows.filter((r) => allowed.has(r.id));
+  }
+
+  const members = rows
+    .map((row) => {
+      const gate = gateRowForShare(row);
+      if (!gate.ok || gate.gender !== input.poolGender) return null;
+      return {
+        id: row.id,
+        existingBed: row.shareBedIndex,
+        checkInDate: row.checkInDate,
+        checkOutDate: row.checkOutDate,
+      };
+    })
+    .filter((m): m is NonNullable<typeof m> => m != null)
+    .sort((a, b) => {
+      const ci = a.checkInDate.getTime() - b.checkInDate.getTime();
+      if (ci !== 0) return ci;
+      return a.id.localeCompare(b.id);
+    });
+
+  const assigned: Array<{ id: string; shareBedIndex: number; shareGender: ShareGender }> = [];
+  for (const m of members) {
+    const bedInput = {
+      overlapping: assigned.map((a) => {
+        const src = members.find((x) => x.id === a.id)!;
+        return {
+          id: a.id,
+          checkInDate: src.checkInDate,
+          checkOutDate: src.checkOutDate,
+          shareBedIndex: a.shareBedIndex,
+        };
+      }),
+      checkIn: m.checkInDate,
+      checkOut: m.checkOutDate,
+      maxBed,
+    };
+    const prefer =
+      m.existingBed != null && m.existingBed >= 1 && m.existingBed <= maxBed
+        ? m.existingBed
+        : nextFreeShareBedIndex(bedInput);
+    assigned.push({
+      id: m.id,
+      shareBedIndex: prefer,
+      shareGender: input.poolGender,
+    });
+  }
+
+  if (!input.dryRun) {
+    for (const a of assigned) {
+      await prisma.reservation.update({
+        where: { id: a.id },
+        data: {
+          shareEligible: true,
+          shareGender: a.shareGender,
+          shareBedIndex: a.shareBedIndex,
+        },
+      });
+    }
+  }
+  return assigned;
+}
+
+/**
+ * Assign / relocate door: overlap → share pool (auto) or 409. Pulls neighbors into pool.
+ */
+export async function resolveDoorAssignment(input: {
+  roomId: string;
+  checkIn: Date;
+  checkOut: Date;
+  excludeReservationId?: string;
+  candidate: DoorAssignmentCandidate;
+}): Promise<DoorAssignmentResult> {
+  const room = await prisma.room.findUnique({
+    where: { id: input.roomId },
+    include: { roomType: true },
+  });
+  if (!room) throw new Error('Room not found');
+  const maxBed = resolveMaxBed(room.maxBed, room.roomType.adultCapacity);
+
+  const neighbors = await loadDoorOverlaps({
+    roomId: input.roomId,
+    checkIn: input.checkIn,
+    checkOut: input.checkOut,
+    excludeReservationId: input.excludeReservationId,
+  });
+
+  let shareEligible = input.candidate.shareEligible;
+  let shareGender =
+    normalizeShareGender(input.candidate.shareGender) ??
+    normalizeShareGender(input.candidate.guestGender);
+  let autoShare = false;
+
+  if (neighbors.length === 0) {
+    if (shareEligible && isEffectiveShare({ shareEligible, shareGender, adults: input.candidate.adults })) {
+      validateShareCandidate({ ...input.candidate, shareEligible: true, shareGender });
+      return {
+        shareBedIndex: 1,
+        joiningPool: false,
+        shareEligible: true,
+        shareGender,
+        autoShare: false,
+        pulledNeighborIds: [],
+      };
+    }
+    return {
+      shareBedIndex: null,
+      joiningPool: false,
+      shareEligible: false,
+      shareGender: null,
+      autoShare: false,
+      pulledNeighborIds: [],
+    };
+  }
+
+  const gate = canGuestJoinSharePool({
+    adults: input.candidate.adults,
+    shareGender: input.candidate.shareGender,
+    guestGender: input.candidate.guestGender,
+    isOta: input.candidate.isOta,
+  });
+
+  if (shareEligible && isEffectiveShare({ shareEligible, shareGender, adults: input.candidate.adults })) {
+    validateShareCandidate({ ...input.candidate, shareEligible: true, shareGender });
+  } else if (gate.ok) {
+    shareEligible = true;
+    shareGender = gate.gender;
+    autoShare = true;
+    validateShareCandidate({
+      shareEligible: true,
+      shareGender,
+      adults: input.candidate.adults,
+      isOta: input.candidate.isOta,
+    });
+  } else {
+    const first = neighbors[0]!;
+    if (gate.reason === 'ota') {
+      throw new Error('OTA reservations cannot use shared twin assignment');
+    }
+    if (gate.reason === 'adults_not_1') {
+      throw new Error('Shared twin is only allowed for single-adult stays');
+    }
+    if (gate.reason === 'no_gender') {
+      throw new Error('Gender is required for shared twin stays');
+    }
+    throw new Error(
+      `Room conflict: overlapping stay (${first.checkInDate.toISOString().slice(0, 10)} – ${first.checkOutDate.toISOString().slice(0, 10)})`,
+    );
+  }
+
+  const candGender = shareGender!;
+  const pullableNeighborIds: string[] = [];
+  for (const n of neighbors) {
+    if (isEffectiveShare(n)) {
+      const poolGender = normalizeShareGender(n.shareGender);
+      if (poolGender !== candGender) {
+        throw new Error('Opposite gender cannot share this room');
+      }
+      continue;
+    }
+    const nGate = gateRowForShare(n);
+    if (!nGate.ok || nGate.gender !== candGender) {
+      throw new Error(
+        `Room conflict: overlapping stay cannot join share pool (${n.checkInDate.toISOString().slice(0, 10)} – ${n.checkOutDate.toISOString().slice(0, 10)})`,
+      );
+    }
+    pullableNeighborIds.push(n.id);
+  }
+
+  const shareNeighbors = neighbors.filter(isEffectiveShare);
+
+  const bedInput = {
+    overlapping: [
+      ...shareNeighbors.map((r) => ({
+        id: r.id,
+        checkInDate: r.checkInDate,
+        checkOutDate: r.checkOutDate,
+        shareBedIndex: r.shareBedIndex,
+      })),
+    ],
+    checkIn: input.checkIn,
+    checkOut: input.checkOut,
+    maxBed,
+  };
+
+  const pulledNeighborIds = [...shareNeighbors.map((n) => n.id), ...pullableNeighborIds];
+  if (pullableNeighborIds.length > 0) {
+    const pulled = await openSharePoolForDoor({
+      roomId: input.roomId,
+      checkIn: input.checkIn,
+      checkOut: input.checkOut,
+      excludeReservationId: input.excludeReservationId,
+      poolGender: candGender,
+      reservationIds: pullableNeighborIds,
+    });
+    for (const p of pulled) {
+      const row = neighbors.find((n) => n.id === p.id);
+      if (!row) continue;
+      bedInput.overlapping.push({
+        id: p.id,
+        checkInDate: row.checkInDate,
+        checkOutDate: row.checkOutDate,
+        shareBedIndex: p.shareBedIndex,
+      });
+    }
+  }
+
+  if (isSharePoolFullPerNight(bedInput)) {
+    throw new Error('Share pool on this room is full');
+  }
+  const shareBedIndex = nextFreeShareBedIndex(bedInput);
+
+  return {
+    shareBedIndex,
+    joiningPool: shareNeighbors.length > 0 || autoShare,
+    shareEligible: true,
+    shareGender: candGender,
+    autoShare,
+    pulledNeighborIds,
+  };
 }
 
 function overlapsNight(r: ShareReservationSlice, night: Date): boolean {
@@ -391,82 +733,29 @@ export async function assertRoomShareAssignable(input: {
     shareGender: string | null;
     adults: number;
     isOta?: boolean;
+    guestGender?: string | null;
   };
-}): Promise<{ shareBedIndex: number | null; joiningPool: boolean }> {
-  const room = await prisma.room.findUnique({
-    where: { id: input.roomId },
-    include: { roomType: true },
-  });
-  if (!room) throw new Error('Room not found');
-  const maxBed = resolveMaxBed(room.maxBed, room.roomType.adultCapacity);
-
-  const overlapping = await prisma.reservation.findMany({
-    where: {
-      roomId: input.roomId,
-      ...(input.excludeReservationId ? { id: { not: input.excludeReservationId } } : {}),
-      status: { in: [...SCHEDULABLE_STATUSES] },
-      checkInDate: { lt: input.checkOut },
-      checkOutDate: { gt: input.checkIn },
-    },
-    select: {
-      id: true,
-      roomId: true,
-      shareEligible: true,
-      shareGender: true,
-      adults: true,
-      checkInDate: true,
-      checkOutDate: true,
-      shareBedIndex: true,
-    },
-  });
-
-  const candidateEffective = isEffectiveShare(input.candidate);
-
-  if (!candidateEffective) {
-    if (overlapping.length > 0) {
-      const first = overlapping[0]!;
-      throw new Error(
-        `Room conflict: overlapping stay (${first.checkInDate.toISOString().slice(0, 10)} – ${first.checkOutDate.toISOString().slice(0, 10)})`,
-      );
-    }
-    return { shareBedIndex: null, joiningPool: false };
-  }
-
-  validateShareCandidate(input.candidate);
-  const candGender = normalizeShareGender(input.candidate.shareGender)!;
-
-  const exclusiveOverlap = overlapping.filter((r) => !isEffectiveShare(r));
-  if (exclusiveOverlap.length > 0) {
-    throw new Error('Room has exclusive stay — cannot assign shared twin');
-  }
-
-  const shareOverlap = overlapping.filter(isEffectiveShare);
-  if (shareOverlap.length === 0) {
-    return { shareBedIndex: 1, joiningPool: false };
-  }
-
-  const poolGender = normalizeShareGender(shareOverlap[0]!.shareGender);
-  if (poolGender !== candGender) {
-    throw new Error('Opposite gender cannot share this room');
-  }
-
-  const bedInput = {
-    overlapping: shareOverlap.map((r) => ({
-      id: r.id,
-      checkInDate: r.checkInDate,
-      checkOutDate: r.checkOutDate,
-      shareBedIndex: r.shareBedIndex,
-    })),
+}): Promise<{
+  shareBedIndex: number | null;
+  joiningPool: boolean;
+  shareEligible: boolean;
+  shareGender: string | null;
+  autoShare: boolean;
+}> {
+  const result = await resolveDoorAssignment({
+    roomId: input.roomId,
     checkIn: input.checkIn,
     checkOut: input.checkOut,
-    maxBed,
+    excludeReservationId: input.excludeReservationId,
+    candidate: input.candidate,
+  });
+  return {
+    shareBedIndex: result.shareBedIndex,
+    joiningPool: result.joiningPool,
+    shareEligible: result.shareEligible,
+    shareGender: result.shareGender,
+    autoShare: result.autoShare,
   };
-  if (isSharePoolFullPerNight(bedInput)) {
-    throw new Error('Share pool on this room is full');
-  }
-
-  const shareBedIndex = nextFreeShareBedIndex(bedInput);
-  return { shareBedIndex, joiningPool: true };
 }
 
 export function roomStatusAllowedForShareAssign(
@@ -679,7 +968,7 @@ export async function suggestShareDoors(input: {
 > {
   const reservation = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
-    include: { roomType: true },
+    include: { roomType: true, guest: { select: { gender: true } } },
   });
   if (!reservation) throw new Error('Reservation not found');
   if (!isEffectiveShare(reservation)) {
@@ -718,6 +1007,7 @@ export async function suggestShareDoors(input: {
           shareEligible: true,
           shareGender: gender,
           adults: 1,
+          guestGender: reservation.guest?.gender,
         },
       });
       const overlapping = await prisma.reservation.findMany({

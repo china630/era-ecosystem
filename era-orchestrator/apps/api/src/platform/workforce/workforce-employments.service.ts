@@ -51,12 +51,18 @@ export class WorkforceEmploymentsService {
       orgUnitId?: string;
       subtree?: boolean;
       orgUnitIds?: string[] | null;
+      positionId?: string;
+      satelliteKey?: string;
+      page?: number;
+      pageSize?: number;
     },
   ) {
     await this.entitlement.assertWorkforceHub(organizationId);
     let orgUnitFilter: { orgUnitId: { in: string[] } } | undefined;
     if (opts?.orgUnitIds != null) {
-      if (opts.orgUnitIds.length === 0) return [];
+      if (opts.orgUnitIds.length === 0) {
+        return { items: [], total: 0, page: 1, pageSize: opts.pageSize ?? 50 };
+      }
       orgUnitFilter = { orgUnitId: { in: opts.orgUnitIds } };
     } else if (opts?.orgUnitId) {
       const ids = opts.subtree
@@ -64,15 +70,35 @@ export class WorkforceEmploymentsService {
         : [opts.orgUnitId];
       orgUnitFilter = { orgUnitId: { in: ids } };
     }
-    return this.prisma.workforceEmployment.findMany({
-      where: {
-        organizationId,
-        ...(opts?.status ? { status: opts.status } : {}),
-        ...(orgUnitFilter ?? {}),
-      },
-      include: EMPLOYMENT_INCLUDE,
-      orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
-    });
+    const page = Math.max(1, opts?.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 50));
+    const where = {
+      organizationId,
+      ...(opts?.status ? { status: opts.status } : {}),
+      ...(orgUnitFilter ?? {}),
+      ...(opts?.positionId ? { positionId: opts.positionId } : {}),
+      ...(opts?.satelliteKey
+        ? {
+            roleBindings: {
+              some: {
+                satelliteKey: opts.satelliteKey,
+                status: "ACTIVE" as const,
+              },
+            },
+          }
+        : {}),
+    };
+    const [items, total] = await Promise.all([
+      this.prisma.workforceEmployment.findMany({
+        where,
+        include: EMPLOYMENT_INCLUDE,
+        orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.workforceEmployment.count({ where }),
+    ]);
+    return { items, total, page, pageSize };
   }
 
   async getOne(organizationId: string, id: string) {

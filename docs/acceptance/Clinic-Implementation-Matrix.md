@@ -27,19 +27,21 @@
 | AC-CLI-BONUS | Doctor bonus extras-only buckets (Wave D) | 🟡 | [ ] | CLI-53; bonusEligible | **Out of AC-CLI-SAN rollup** |
 | AC-CLI-SAN-PAX | One stay two episodes (Wave E) | 🟡 | [ ] | CLI-54; openEpisode per patient | **Out of AC-CLI-SAN rollup** |
 | AC-CLI-EPISODE | Episode as care course (card switcher, children, walk-in close) | 🟡 | [ ] | CLI-55; ADR clinic-episode-as-clinical-course; `__tests__/cli-episode-negative.spec.ts` + `cli-episode-gates.spec.ts` | **Out of BE rollup** until field UAT; SCREEN UI landed; Scaffold stays 🟡 |
+| AC-CLI-RBAC | Configurable role×screen/API matrix (Variant A Waves 1–3) | 🟡 | [ ] | `cli-rbac-negative` + `cli-rbac-admin-negative` + `cli-rbac-ops-negative`; ADR clinic-domain-permissions-and-rbac; `/admin/access` | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 | AC-CLI-CASH | Cashier settle / ops | ✅ | [ ] | `__tests__/cli-cash-negative.spec.ts` + CLI-33 | **Settle/ops only** — visit/shift deny; live fiscal = External |
 | AC-CLI-PRINT | Print forms + branding | ✅ | [ ] | `__tests__/cli-print-negative.spec.ts` + CLI-34 | Negative: missing source; unsupported lang |
 | AC-CLI-CAP | Clinic→hotel capacity foresight | ✅ | [ ] | `__tests__/cli-cap-negative.spec.ts` + CLI-27 | Negative: critical risk blocks booking |
 | AC-CLI-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 2 clinic login/JWT/`enterSatelliteTenant` + lifecycle ALS; Wave 4 cron + capacity POST multi-org; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 
-**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT, AC-CLI-SAN-PKG, AC-CLI-SAN-QUOTA, AC-CLI-SAN-DAY1, AC-CLI-BONUS, AC-CLI-SAN-PAX, AC-CLI-EPISODE) → **✅**.
+**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT, AC-CLI-SAN-PKG, AC-CLI-SAN-QUOTA, AC-CLI-SAN-DAY1, AC-CLI-BONUS, AC-CLI-SAN-PAX, AC-CLI-EPISODE, AC-CLI-RBAC) → **✅**.
 AC-CLI-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.
 AC-CLI-SAN-PKG is 🟡 and stays **out of Scaffold BE rollup** (does not reopen AC-CLI-SAN).
 AC-CLI-SAN-QUOTA is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-SAN-DAY1 is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-BONUS is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-SAN-PAX is 🟡 and stays **out of Scaffold BE rollup**.
-AC-CLI-EPISODE is 🟡 (declared canon, not built) and stays **out of Scaffold BE rollup**.
+AC-CLI-EPISODE is 🟡 (SCREEN landed; field UAT open) and stays **out of Scaffold BE rollup**.
+AC-CLI-RBAC is 🟡 (Phase A shipped; field UAT open) and stays **out of Scaffold BE rollup**.
 Do not call this table «product readiness».
 
 ### Residual register
@@ -69,3 +71,6 @@ Do not call this table «product readiness».
 | `era-clinic/__tests__/cli-print-negative.spec.ts` | AC-CLI-PRINT |
 | `era-clinic/__tests__/cli-cap-negative.spec.ts` | AC-CLI-CAP |
 | `era-clinic/__tests__/cli-cash-negative.spec.ts` | AC-CLI-CASH |
+| `era-clinic/__tests__/cli-rbac-negative.spec.ts` | AC-CLI-RBAC (Wave 1) |
+| `era-clinic/__tests__/cli-rbac-admin-negative.spec.ts` | AC-CLI-RBAC (Wave 2) |
+| `era-clinic/__tests__/cli-rbac-ops-negative.spec.ts` | AC-CLI-RBAC (Wave 3) |

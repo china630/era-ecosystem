@@ -197,9 +197,30 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       const maxBed = room.maxBed ?? room.roomType.adultCapacity ?? 2;
       let sharePool: { gender: string; occupied: number; capacity: number } | null = null;
       if (shareStays.length > 0) {
+        let peakOccupied = 0;
+        let peakGender = shareStays[0]!.shareGender!;
+        for (const day of dateKeys) {
+          const dayStart = parseHotelNoon(day);
+          const dayEnd = new Date(dayStart);
+          dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+          const byGender = new Map<string, number>();
+          for (const stay of shareStays) {
+            const ci = stay.checkInDate.getTime();
+            const co = stay.checkOutDate.getTime();
+            if (ci >= dayEnd.getTime() || co <= dayStart.getTime()) continue;
+            const g = stay.shareGender!;
+            byGender.set(g, (byGender.get(g) ?? 0) + 1);
+          }
+          for (const [g, count] of byGender) {
+            if (count > peakOccupied) {
+              peakOccupied = count;
+              peakGender = g;
+            }
+          }
+        }
         sharePool = {
-          gender: shareStays[0]!.shareGender!,
-          occupied: shareStays.length,
+          gender: peakGender,
+          occupied: Math.max(peakOccupied, 1),
           capacity: maxBed,
         };
       }

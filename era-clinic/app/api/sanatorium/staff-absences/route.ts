@@ -4,9 +4,9 @@ import {
   handleRouteError,
   jsonError,
   jsonOk,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import {
   createStaffAbsence,
@@ -24,7 +24,7 @@ const createSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.DOCTOR]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES);
     if (denied) return denied;
     const body = createSchema.parse(await req.json());
     const row = await createStaffAbsence(body);
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.DOCTOR]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES);
     if (denied) return denied;
     const id = new URL(req.url).searchParams.get("id");
     if (!id) {

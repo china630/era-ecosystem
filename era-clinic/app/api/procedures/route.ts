@@ -5,9 +5,9 @@ import {
   jsonError,
   handleRouteError,
   getRouteSession,
-  requireClinicRole,
+  requireClinicPermission,
 } from "@/lib/api-utils";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { resolveProcedureAmount } from "@/domain/catalog/catalog-price.service";
 import {
@@ -36,12 +36,7 @@ const ALL_FILTER_STATUSES: ProcedureOrderStatus[] = [
 export async function GET(request: Request) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [
-      CLINIC_ROLE.NURSE,
-      CLINIC_ROLE.DOCTOR,
-      CLINIC_ROLE.RECEPTION,
-      CLINIC_ROLE.FLOOR,
-    ]);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_READ);
     if (denied) return denied;
 
     // Lazy catch-up: CHECKED_IN past endsAt → COMPLETED before listing.
@@ -191,7 +186,12 @@ const createSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await getRouteSession();
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_PROCEDURES_RECEPTION,
+    );
+    if (denied) return denied;
     const body = createSchema.parse(await req.json());
 
     // Wave C/E: package-quota codes cannot land SCHEDULED via manual POST — doctor confirm only.

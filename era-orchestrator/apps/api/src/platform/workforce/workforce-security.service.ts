@@ -26,7 +26,7 @@ export class WorkforceSecurityService {
         where: { organizationId, status: "ACTIVE" },
         include: { orgUnit: true, position: true, roleBindings: true },
         orderBy: { createdAt: "desc" },
-        take: 100,
+        take: 20,
       }),
       this.prisma.workforceRoleBinding.findMany({
         where: {
@@ -37,7 +37,7 @@ export class WorkforceSecurityService {
           employment: { include: { orgUnit: true, position: true } },
         },
         orderBy: { updatedAt: "desc" },
-        take: 200,
+        take: 20,
       }),
       this.prisma.workforceAuditLog.findMany({
         where: { organizationId },
@@ -57,6 +57,80 @@ export class WorkforceSecurityService {
       bindings,
       auditTail,
     };
+  }
+
+  async listBindings(
+    organizationId: string,
+    page = 1,
+    pageSize = 50,
+    filters?: {
+      search?: string;
+      orgUnitId?: string;
+      positionId?: string;
+      satelliteKey?: string;
+      role?: string;
+      provisionState?: string;
+    },
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const skip = (page - 1) * pageSize;
+    const where: Prisma.WorkforceRoleBindingWhereInput = {
+      status: "ACTIVE",
+      employment: { organizationId },
+    };
+    if (filters?.satelliteKey?.trim()) {
+      where.satelliteKey = filters.satelliteKey.trim();
+    }
+    if (filters?.role?.trim()) {
+      where.satelliteRole = filters.role.trim();
+    }
+    if (filters?.provisionState?.trim()) {
+      where.provisionState = filters.provisionState.trim() as
+        | "PENDING"
+        | "APPLIED"
+        | "FAILED";
+    }
+    const employmentWhere: Prisma.WorkforceEmploymentWhereInput = {
+      organizationId,
+    };
+    if (filters?.orgUnitId?.trim()) {
+      employmentWhere.orgUnitId = filters.orgUnitId.trim();
+    }
+    if (filters?.positionId?.trim()) {
+      employmentWhere.positionId = filters.positionId.trim();
+    }
+    const search = filters?.search?.trim();
+    if (search && search.length >= 1) {
+      where.OR = [
+        { satelliteRole: { contains: search, mode: "insensitive" } },
+        { satelliteKey: { contains: search, mode: "insensitive" } },
+        {
+          employment: {
+            orgUnit: { name: { contains: search, mode: "insensitive" } },
+          },
+        },
+        {
+          employment: {
+            position: { name: { contains: search, mode: "insensitive" } },
+          },
+        },
+      ];
+    }
+    where.employment = employmentWhere;
+
+    const [items, total] = await Promise.all([
+      this.prisma.workforceRoleBinding.findMany({
+        where,
+        include: {
+          employment: { include: { orgUnit: true, position: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.workforceRoleBinding.count({ where }),
+    ]);
+    return { items, total, page, pageSize };
   }
 
   async auditLog(
