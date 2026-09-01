@@ -79,8 +79,16 @@ model GlobalNaturalPerson {
   /// Legacy FIN blind index — kept for back-compat; canonical identifiers live in PersonIdentifier.
   finBlindIndex      String?               @unique @map("fin_blind_index")
   finCipher          String?               @map("fin_cipher")
+  /// Given name (Ad). SoR for person name parts; fullNameCipher is denormalized.
+  firstNameCipher    String?               @map("first_name_cipher")
+  /// Patronymic (Ata adı). Optional.
+  middleNameCipher   String?               @map("middle_name_cipher")
+  /// Surname (Soyad).
+  lastNameCipher     String?               @map("last_name_cipher")
+  /// Denormalized: firstName + middleName + lastName (given + patronymic + surname).
   fullNameCipher     String?               @map("full_name_cipher")
   phoneCipher        String?               @map("phone_cipher")
+  /// ISO 3166-1 alpha-2 citizenship (not ethnicity). Do not store OTHER.
   nationality        String?               @default("AZ")
   /// SoR for legal sex (not HR profile). Satellites cache; do not invent a second identity card.
   sex                PersonSex             @default(UNKNOWN)

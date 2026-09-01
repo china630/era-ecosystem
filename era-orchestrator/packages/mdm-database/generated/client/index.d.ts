@@ -1724,6 +1724,9 @@ export namespace Prisma {
     id: string | null
     finBlindIndex: string | null
     finCipher: string | null
+    firstNameCipher: string | null
+    middleNameCipher: string | null
+    lastNameCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
     nationality: string | null
@@ -1739,6 +1742,9 @@ export namespace Prisma {
     id: string | null
     finBlindIndex: string | null
     finCipher: string | null
+    firstNameCipher: string | null
+    middleNameCipher: string | null
+    lastNameCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
     nationality: string | null
@@ -1754,6 +1760,9 @@ export namespace Prisma {
     id: number
     finBlindIndex: number
     finCipher: number
+    firstNameCipher: number
+    middleNameCipher: number
+    lastNameCipher: number
     fullNameCipher: number
     phoneCipher: number
     nationality: number
@@ -1771,6 +1780,9 @@ export namespace Prisma {
     id?: true
     finBlindIndex?: true
     finCipher?: true
+    firstNameCipher?: true
+    middleNameCipher?: true
+    lastNameCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
     nationality?: true
@@ -1786,6 +1798,9 @@ export namespace Prisma {
     id?: true
     finBlindIndex?: true
     finCipher?: true
+    firstNameCipher?: true
+    middleNameCipher?: true
+    lastNameCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
     nationality?: true
@@ -1801,6 +1816,9 @@ export namespace Prisma {
     id?: true
     finBlindIndex?: true
     finCipher?: true
+    firstNameCipher?: true
+    middleNameCipher?: true
+    lastNameCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
     nationality?: true
@@ -1889,6 +1907,9 @@ export namespace Prisma {
     id: string
     finBlindIndex: string | null
     finCipher: string | null
+    firstNameCipher: string | null
+    middleNameCipher: string | null
+    lastNameCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
     nationality: string | null
@@ -1921,6 +1942,9 @@ export namespace Prisma {
     id?: boolean
     finBlindIndex?: boolean
     finCipher?: boolean
+    firstNameCipher?: boolean
+    middleNameCipher?: boolean
+    lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
@@ -1945,6 +1969,9 @@ export namespace Prisma {
     id?: boolean
     finBlindIndex?: boolean
     finCipher?: boolean
+    firstNameCipher?: boolean
+    middleNameCipher?: boolean
+    lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
@@ -1961,6 +1988,9 @@ export namespace Prisma {
     id?: boolean
     finBlindIndex?: boolean
     finCipher?: boolean
+    firstNameCipher?: boolean
+    middleNameCipher?: boolean
+    lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
@@ -1977,6 +2007,9 @@ export namespace Prisma {
     id?: boolean
     finBlindIndex?: boolean
     finCipher?: boolean
+    firstNameCipher?: boolean
+    middleNameCipher?: boolean
+    lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
     nationality?: boolean
@@ -1988,7 +2021,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "fullNameCipher" | "phoneCipher" | "nationality" | "sex" | "birthDate" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
+  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "firstNameCipher" | "middleNameCipher" | "lastNameCipher" | "fullNameCipher" | "phoneCipher" | "nationality" | "sex" | "birthDate" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
   export type GlobalNaturalPersonInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     identifiers?: boolean | GlobalNaturalPerson$identifiersArgs<ExtArgs>
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
@@ -2026,8 +2059,26 @@ export namespace Prisma {
        */
       finBlindIndex: string | null
       finCipher: string | null
+      /**
+       * Given name (Ad). SoR for person name parts; fullNameCipher is denormalized.
+       */
+      firstNameCipher: string | null
+      /**
+       * Patronymic (Ata adı). Optional.
+       */
+      middleNameCipher: string | null
+      /**
+       * Surname (Soyad).
+       */
+      lastNameCipher: string | null
+      /**
+       * Denormalized: firstName + middleName + lastName (given + patronymic + surname).
+       */
       fullNameCipher: string | null
       phoneCipher: string | null
+      /**
+       * ISO 3166-1 alpha-2 citizenship (not ethnicity). Do not store OTHER.
+       */
       nationality: string | null
       /**
        * SoR for legal sex (not HR profile). Satellites cache; do not invent a second identity card.
@@ -2472,6 +2523,9 @@ export namespace Prisma {
     readonly id: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly finBlindIndex: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly finCipher: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly firstNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly middleNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly lastNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly fullNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly phoneCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly nationality: FieldRef<"GlobalNaturalPerson", 'String'>
@@ -10708,6 +10762,9 @@ export namespace Prisma {
     id: 'id',
     finBlindIndex: 'finBlindIndex',
     finCipher: 'finCipher',
+    firstNameCipher: 'firstNameCipher',
+    middleNameCipher: 'middleNameCipher',
+    lastNameCipher: 'lastNameCipher',
     fullNameCipher: 'fullNameCipher',
     phoneCipher: 'phoneCipher',
     nationality: 'nationality',
@@ -11031,6 +11088,9 @@ export namespace Prisma {
     id?: UuidFilter<"GlobalNaturalPerson"> | string
     finBlindIndex?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     finCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    firstNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    middleNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    lastNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
@@ -11054,6 +11114,9 @@ export namespace Prisma {
     id?: SortOrder
     finBlindIndex?: SortOrderInput | SortOrder
     finCipher?: SortOrderInput | SortOrder
+    firstNameCipher?: SortOrderInput | SortOrder
+    middleNameCipher?: SortOrderInput | SortOrder
+    lastNameCipher?: SortOrderInput | SortOrder
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
     nationality?: SortOrderInput | SortOrder
@@ -11080,6 +11143,9 @@ export namespace Prisma {
     OR?: GlobalNaturalPersonWhereInput[]
     NOT?: GlobalNaturalPersonWhereInput | GlobalNaturalPersonWhereInput[]
     finCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    firstNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    middleNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    lastNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
@@ -11103,6 +11169,9 @@ export namespace Prisma {
     id?: SortOrder
     finBlindIndex?: SortOrderInput | SortOrder
     finCipher?: SortOrderInput | SortOrder
+    firstNameCipher?: SortOrderInput | SortOrder
+    middleNameCipher?: SortOrderInput | SortOrder
+    lastNameCipher?: SortOrderInput | SortOrder
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
     nationality?: SortOrderInput | SortOrder
@@ -11124,6 +11193,9 @@ export namespace Prisma {
     id?: UuidWithAggregatesFilter<"GlobalNaturalPerson"> | string
     finBlindIndex?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     finCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    firstNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    middleNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    lastNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
@@ -11614,6 +11686,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -11636,6 +11711,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -11658,6 +11736,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11680,6 +11761,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11702,6 +11786,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -11717,6 +11804,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11731,6 +11821,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12408,6 +12501,9 @@ export namespace Prisma {
     id?: SortOrder
     finBlindIndex?: SortOrder
     finCipher?: SortOrder
+    firstNameCipher?: SortOrder
+    middleNameCipher?: SortOrder
+    lastNameCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
     nationality?: SortOrder
@@ -12423,6 +12519,9 @@ export namespace Prisma {
     id?: SortOrder
     finBlindIndex?: SortOrder
     finCipher?: SortOrder
+    firstNameCipher?: SortOrder
+    middleNameCipher?: SortOrder
+    lastNameCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
     nationality?: SortOrder
@@ -12438,6 +12537,9 @@ export namespace Prisma {
     id?: SortOrder
     finBlindIndex?: SortOrder
     finCipher?: SortOrder
+    firstNameCipher?: SortOrder
+    middleNameCipher?: SortOrder
+    lastNameCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
     nationality?: SortOrder
@@ -13895,6 +13997,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -13916,6 +14021,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -13942,6 +14050,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -13963,6 +14074,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14186,6 +14300,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14207,6 +14324,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14247,6 +14367,9 @@ export namespace Prisma {
     id?: UuidFilter<"GlobalNaturalPerson"> | string
     finBlindIndex?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     finCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    firstNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    middleNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    lastNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
@@ -14262,6 +14385,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14283,6 +14409,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14320,6 +14449,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14341,6 +14473,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14362,6 +14497,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14383,6 +14521,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14420,6 +14561,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14441,6 +14585,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14462,6 +14609,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14483,6 +14633,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14520,6 +14673,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14541,6 +14697,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14562,6 +14721,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14583,6 +14745,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14620,6 +14785,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14641,6 +14809,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14662,6 +14833,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14683,6 +14857,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14720,6 +14897,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14741,6 +14921,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14762,6 +14945,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14783,6 +14969,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -14820,6 +15009,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14841,6 +15033,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14908,6 +15103,9 @@ export namespace Prisma {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
     nationality?: string | null
@@ -15060,6 +15258,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15081,6 +15282,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15102,6 +15306,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
