@@ -566,6 +566,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 **Status:** Engineering open — not SHIPPED.
 
 1. Import Notes dump or FO-with-Notes: Extra Req `ERA-PKG STANDART` (one line, no guest names) → every pax `medicalPackageCode` stamped. Named Extra lines only when packages differ.
+1b. Live dual-run: EW **Reservation Notes** (`/app/grid/allresnotes`) Extra Request `ERA-PKG DERMO` → ERA Extra Req + `PKG-DERMO` (bridge v0.3.9 + hotel ingest). FOCP list does not carry Extra Req.
 2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`; `Walkin leisure` stays unresolved **and** check-in does **not** emit sanatorium lifecycle (`stayKind: leisure`).
 3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
 4. Check-in lifecycle sends `programCode` only when unanimous; EW Rate Code alone never becomes SKU.
