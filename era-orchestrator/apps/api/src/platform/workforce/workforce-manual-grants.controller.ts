@@ -33,7 +33,14 @@ export class WorkforceManualGrantsController {
     @OrganizationId() organizationId: string,
     @Query() query: ListManualGrantsQueryDto,
   ) {
-    return this.grants.list(organizationId, query.employmentId);
+    return this.grants.list(organizationId, {
+      employmentId: query.employmentId,
+      satelliteKey: query.satelliteKey,
+      revoked: query.revoked,
+      search: query.search,
+      page: query.page,
+      pageSize: query.pageSize,
+    });
   }
 
   @Post()
@@ -54,5 +61,16 @@ export class WorkforceManualGrantsController {
     @CurrentUser() user: EraJwtPayload,
   ) {
     return this.grants.revoke(organizationId, id, user.sub);
+  }
+
+  @Post(":id/restore")
+  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @ApiOperation({ summary: "Restore a revoked manual satellite grant" })
+  restore(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+  ) {
+    return this.grants.restore(organizationId, id, user.sub);
   }
 }

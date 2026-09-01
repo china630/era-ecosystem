@@ -3,7 +3,7 @@
 **Status:** Accepted (2026-06)  
 **Context:** ERA v3 Workforce — hire and satellite access were split across Finance HR and satellite `local_master`.
 
-**Related:** [cp-workforce-org-units.md](./cp-workforce-org-units.md), [workforce-identity-and-hr-provisioning.md](./workforce-identity-and-hr-provisioning.md)
+**Related:** [cp-workforce-org-units.md](./cp-workforce-org-units.md), [workforce-identity-and-hr-provisioning.md](./workforce-identity-and-hr-provisioning.md), [clinic-domain-permissions-and-rbac.md](./clinic-domain-permissions-and-rbac.md) (satellite layer 4 — Phase A clinic), [cp-workforce-satellite-provision-sync.md](./cp-workforce-satellite-provision-sync.md) (deactivate target, provisionState, list pagination)
 
 ## Three access layers
 

@@ -541,6 +541,12 @@ enum RoleBindingStatus {
   REVOKED
 }
 
+enum WorkforceProvisionState {
+  PENDING
+  APPLIED
+  FAILED
+}
+
 /// Anchor for HR org tree (usually parent STANDALONE commercial org).
 model WorkforceScope {
   id                   String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -634,21 +640,25 @@ model SatelliteRoleTemplate {
 }
 
 model WorkforceRoleBinding {
-  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  employmentId    String            @map("employment_id") @db.Uuid
-  satelliteKey    String            @map("satellite_key")
-  satelliteRole   String            @map("satellite_role")
-  source          RoleBindingSource
-  manualGrantId   String?           @map("manual_grant_id") @db.Uuid
-  status          RoleBindingStatus @default(ACTIVE)
-  satelliteUserId String?           @map("satellite_user_id")
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
-  employment      WorkforceEmployment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
-  manualGrant     WorkforceManualGrant? @relation(fields: [manualGrantId], references: [id], onDelete: SetNull)
+  id                 String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employmentId       String                   @map("employment_id") @db.Uuid
+  satelliteKey       String                   @map("satellite_key")
+  satelliteRole      String                   @map("satellite_role")
+  source             RoleBindingSource
+  manualGrantId      String?                  @map("manual_grant_id") @db.Uuid
+  status             RoleBindingStatus        @default(ACTIVE)
+  satelliteUserId    String?                  @map("satellite_user_id")
+  provisionState     WorkforceProvisionState  @default(PENDING) @map("provision_state")
+  lastProvisionError String?                  @map("last_provision_error")
+  lastProvisionAt    DateTime?                @map("last_provision_at")
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
+  employment         WorkforceEmployment      @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  manualGrant        WorkforceManualGrant?    @relation(fields: [manualGrantId], references: [id], onDelete: SetNull)
 
   @@unique([employmentId, satelliteKey, satelliteRole])
   @@index([employmentId, status])
+  @@index([provisionState, status])
   @@map("workforce_role_bindings")
 }
 
@@ -695,6 +705,10 @@ model WorkforceEmployment {
   financeEmployeeId          String?                   @map("finance_employee_id") @db.Uuid
   commercialOrganizationId   String?                   @map("commercial_organization_id") @db.Uuid
   platformUserId             String?                   @map("platform_user_id") @db.Uuid
+  /// Local satellite login override; default emp-{employmentId hex prefix} when null at provision.
+  satelliteStaffLogin        String?                   @map("satellite_staff_login") @db.VarChar(64)
+  /// Default PIN pushed on provision / reprovision (pilot default 0000).
+  satelliteStaffPin          String?                   @map("satellite_staff_pin") @db.VarChar(32)
   createdAt                  DateTime                  @default(now()) @map("created_at")
   updatedAt                  DateTime                  @updatedAt @map("updated_at")
   organization               Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)

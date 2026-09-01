@@ -136,21 +136,23 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET/POST /platform/v1/workforce/scope/*` | `workforce-org.controller.ts` |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/org-units/*` | `workforce-org-units.service.ts` + controller |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/positions/*` | `workforce-positions.controller.ts` — `?orgUnitId=` / `?status=`; archive rejects active employments |
-| `PATCH /platform/v1/workforce/employments/:id/reprovision` | `workforce-provision.service.ts` |
+| `PATCH /platform/v1/workforce/employments/:id/reprovision` | `workforce-provision.service.ts` — `LOGIN_REQUIRES_BINDING` without active bindings; `LOGIN_TAKEN` via `assertSatelliteLoginAvailable`; partial unique index on `(organization_id, lower(satellite_staff_login))` for ACTIVE |
 | `GET/PUT/DELETE /platform/v1/workforce/role-templates/*` | `workforce-role-templates.controller.ts` |
-| `GET/POST /platform/v1/workforce/manual-grants/*` | `workforce-manual-grants.controller.ts` |
-| `GET /platform/v1/workforce/security/*` | `workforce-security.controller.ts` |
+| `GET /platform/v1/workforce/security/overview` | summary widgets only (small tails) |
+| `GET /platform/v1/workforce/security/bindings` | paginated bindings (`page`/`pageSize`, search, orgUnit, position, satellite, role, provisionState) |
+| `GET /platform/v1/workforce/security/audit` | paginated audit |
+| `GET/POST /platform/v1/workforce/manual-grants/*` (+ `POST :id/restore`) | `workforce-manual-grants.controller.ts` — list: `employmentId`, `satelliteKey`, `revoked`, `search`, `page`, `pageSize` → `{ items, total, page, pageSize }` |
 | `GET /platform/v1/workforce/export/*` | `workforce-export.controller.ts` |
 | `POST /platform/v1/workforce/import/roster` | `workforce-import.controller.ts` — CSV/xlsx hire (dryRun); empty satellites = headcount; `ADDITIONAL` = second job, no seat |
 | `POST /platform/v1/workforce/import/absences` | `workforce-import.controller.ts` — CSV/xlsx absences (dryRun); `staffCode`/`globalPersonId` |
 | `POST /platform/v1/workforce/import/org-structure` | `workforce-import.controller.ts` — CSV/xlsx units+positions upsert (dryRun); no deletes |
-| Web `/workspace/workforce/security` | matrix + seats |
-| Web `/workspace/workforce/security/grants` | manual grants |
-| Web `/workspace/workforce/security/bindings` | effective bindings |
+| Web `/workspace/workforce/security` | matrix + seats; **ACTIVE positions only**; optimistic cell save (no full reload); client filters (search, org unit, position, satellite, access state); deep-link `?orgUnitId=` / `?positionId=`; SSOT `@/lib/workforce-satellites` |
+| Web `/workspace/workforce/security/grants` | manual grants; server page + `satelliteKey`/`revoked`/`search`; client org/position/role on page; status default Active |
+| Web `/workspace/workforce/security/bindings` | server-paginated bindings (not overview); filters + provisionState column |
 | Web `/workspace/workforce/security/audit` | audit log |
 | Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |
 | Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
-| Web `/workspace/workforce/employments` | hire (sex/DOB/optional blood); employee card; ⋯ Login & access (`emp-{staffCode}`, copy org ID, Open satellite login); icon actions; age/sex filters; deep-link `?orgUnitId=` / `?positionId=` |
+| Web `/workspace/workforce/employments` | hire; employee card; Login & access disabled without binding; provisionState Sync failed badge + eventual-sync hint; server page/filters (status/org/position/satellite); SSOT `@/lib/workforce-satellites` |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
 | Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
 | Web `/workspace/workforce/personnel-orders` | create/issue/PDF |

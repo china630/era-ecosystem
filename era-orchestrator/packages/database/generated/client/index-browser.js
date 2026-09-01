@@ -354,6 +354,9 @@ exports.Prisma.WorkforceRoleBindingScalarFieldEnum = {
   manualGrantId: 'manualGrantId',
   status: 'status',
   satelliteUserId: 'satelliteUserId',
+  provisionState: 'provisionState',
+  lastProvisionError: 'lastProvisionError',
+  lastProvisionAt: 'lastProvisionAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -391,6 +394,8 @@ exports.Prisma.WorkforceEmploymentScalarFieldEnum = {
   financeEmployeeId: 'financeEmployeeId',
   commercialOrganizationId: 'commercialOrganizationId',
   platformUserId: 'platformUserId',
+  satelliteStaffLogin: 'satelliteStaffLogin',
+  satelliteStaffPin: 'satelliteStaffPin',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1119,6 +1124,12 @@ exports.RoleBindingSource = exports.$Enums.RoleBindingSource = {
 exports.RoleBindingStatus = exports.$Enums.RoleBindingStatus = {
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED'
+};
+
+exports.WorkforceProvisionState = exports.$Enums.WorkforceProvisionState = {
+  PENDING: 'PENDING',
+  APPLIED: 'APPLIED',
+  FAILED: 'FAILED'
 };
 
 exports.WorkforceEmploymentStatus = exports.$Enums.WorkforceEmploymentStatus = {

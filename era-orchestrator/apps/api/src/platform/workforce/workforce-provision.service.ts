@@ -8,6 +8,7 @@ import {
   SATELLITE_STAFF_PROVISIONED,
   WORKFORCE_EMPLOYMENT_HIRED,
   WORKFORCE_EMPLOYMENT_TERMINATED,
+  WORKFORCE_OPERATIONAL_SATELLITE_KEYS,
   isValidSatelliteRole,
 } from "@era/contracts";
 import {
@@ -27,14 +28,18 @@ import { WorkforceRoleTemplateService } from "./workforce-role-template.service"
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceSeatService } from "./workforce-seat.service";
 import { filterEntitledSatellites, shouldAllocateNewSeat } from "./workforce-satellite-keys";
+import {
+  assertSatelliteLoginAvailable,
+  normalizeSatelliteStaffLogin,
+  normalizeSatelliteStaffPin,
+  resolveSatelliteStaffLogin,
+  resolveSatelliteStaffPin,
+  staffCodeFromEmployment,
+} from "./workforce-staff-login";
 
 function parseDateOnly(iso: string): Date {
   const d = iso.slice(0, 10);
   return new Date(`${d}T00:00:00.000Z`);
-}
-
-function staffCodeFromEmployment(id: string): string {
-  return id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
 @Injectable()
@@ -148,6 +153,16 @@ export class WorkforceProvisionService {
         },
         include: { orgUnit: true, position: true },
       });
+      const resolvedLogin = resolveSatelliteStaffLogin(row.id, null, dto.login);
+      const resolvedPin = resolveSatelliteStaffPin(null, dto.pin);
+      await assertSatelliteLoginAvailable(tx, organizationId, resolvedLogin);
+      await tx.workforceEmployment.update({
+        where: { id: row.id },
+        data: {
+          satelliteStaffLogin: resolvedLogin,
+          satelliteStaffPin: resolvedPin,
+        },
+      });
       if (needsNewSeat) {
         await tx.workforceSeatAllocation.create({
           data: {
@@ -158,7 +173,11 @@ export class WorkforceProvisionService {
           },
         });
       }
-      return row;
+      return {
+        ...row,
+        satelliteStaffLogin: resolvedLogin,
+        satelliteStaffPin: resolvedPin,
+      };
     });
 
     const bindings = [];
@@ -247,6 +266,16 @@ export class WorkforceProvisionService {
 
     const staffCode = staffCodeFromEmployment(employmentId);
     for (const b of bindings) {
+      if (!b.satelliteUserId) {
+        await this.prisma.workforceRoleBinding.update({
+          where: { id: b.id },
+          data: {
+            provisionState: "FAILED",
+            lastProvisionError: "MISSING_SATELLITE_USER_ID",
+            lastProvisionAt: new Date(),
+          },
+        });
+      }
       await this.satelliteEvents.enqueue({
         type: SATELLITE_STAFF_DEACTIVATED,
         organizationId: link.workforceScope.anchorOrganizationId,
@@ -297,12 +326,51 @@ export class WorkforceProvisionService {
     organizationId: string,
     employmentId: string,
     actorUserId: string,
+    opts?: { login?: string; pin?: string },
   ) {
     const employment = await this.prisma.workforceEmployment.findFirst({
       where: { id: employmentId, organizationId, status: WorkforceEmploymentStatus.ACTIVE },
       include: { orgUnit: true, position: true },
     });
     if (!employment) throw new NotFoundException("Active employment not found");
+
+    const bindings = await this.prisma.workforceRoleBinding.findMany({
+      where: { employmentId, status: RoleBindingStatus.ACTIVE },
+    });
+
+    const loginOverride = normalizeSatelliteStaffLogin(opts?.login);
+    const pinOverride = normalizeSatelliteStaffPin(opts?.pin);
+    if ((loginOverride || pinOverride) && bindings.length === 0) {
+      throw new BadRequestException({
+        code: "LOGIN_REQUIRES_BINDING",
+        message: "Cannot save satellite login without an active role binding",
+      });
+    }
+
+    let cpSaved = false;
+    if (loginOverride || pinOverride) {
+      if (loginOverride) {
+        await assertSatelliteLoginAvailable(
+          this.prisma,
+          organizationId,
+          loginOverride,
+          employmentId,
+        );
+      }
+      await this.prisma.workforceEmployment.update({
+        where: { id: employmentId },
+        data: {
+          ...(loginOverride ? { satelliteStaffLogin: loginOverride } : {}),
+          ...(pinOverride ? { satelliteStaffPin: pinOverride } : {}),
+        },
+      });
+      employment.satelliteStaffLogin =
+        loginOverride ?? employment.satelliteStaffLogin;
+      employment.satelliteStaffPin =
+        pinOverride ?? employment.satelliteStaffPin;
+      cpSaved = true;
+    }
+
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
     const profile = await this.mdm.getPersonOpsProfile(
       employment.globalPersonId,
@@ -312,9 +380,6 @@ export class WorkforceProvisionService {
       (typeof profile.fullName === "string" && profile.fullName.trim()) ||
       employment.globalPersonId.slice(0, 8);
 
-    const bindings = await this.prisma.workforceRoleBinding.findMany({
-      where: { employmentId, status: RoleBindingStatus.ACTIVE },
-    });
     for (const binding of bindings) {
       await this.emitProvisioned({
         organizationId: link.workforceScope.anchorOrganizationId,
@@ -332,7 +397,7 @@ export class WorkforceProvisionService {
       entityType: "EMPLOYMENT",
       entityId: employmentId,
     });
-    return { reprovisioned: bindings.length };
+    return { reprovisioned: bindings.length, cpSaved };
   }
 
   private async emitProvisioned(args: {
@@ -342,6 +407,8 @@ export class WorkforceProvisionService {
       id: string;
       financeEmployeeId: string | null;
       orgUnit: { name: string };
+      satelliteStaffLogin?: string | null;
+      satelliteStaffPin?: string | null;
     };
     binding: { id: string; satelliteKey: string; satelliteRole: string };
     fullName: string;
@@ -350,6 +417,23 @@ export class WorkforceProvisionService {
     position: { name: string };
   }) {
     const staffCode = staffCodeFromEmployment(args.employment.id);
+    const login = resolveSatelliteStaffLogin(
+      args.employment.id,
+      args.employment.satelliteStaffLogin,
+      args.login,
+    );
+    const pin = resolveSatelliteStaffPin(
+      args.employment.satelliteStaffPin,
+      args.pin,
+    );
+    await this.prisma.workforceRoleBinding.update({
+      where: { id: args.binding.id },
+      data: {
+        provisionState: "PENDING",
+        lastProvisionError: null,
+        lastProvisionAt: new Date(),
+      },
+    });
     await this.satelliteEvents.enqueue({
       type: SATELLITE_STAFF_PROVISIONED,
       organizationId: args.organizationId,
@@ -365,8 +449,8 @@ export class WorkforceProvisionService {
         satelliteRole: args.binding.satelliteRole,
         staffCode,
         fullName: args.fullName,
-        pin: args.pin ?? "0000",
-        login: args.login ?? `emp-${staffCode.toLowerCase()}`,
+        pin,
+        login,
         positionTitle: args.position.name,
         orgUnitName: args.employment.orgUnit.name,
         roleBindingId: args.binding.id,
@@ -378,11 +462,7 @@ export class WorkforceProvisionService {
     organizationId: string,
     requested?: string[],
   ): Promise<string[]> {
-    const industryKeys = [
-      "industry_clinic",
-      "industry_hotel_pms",
-      "industry_fnb_pos",
-    ];
+    const industryKeys = [...WORKFORCE_OPERATIONAL_SATELLITE_KEYS];
     const entitled: string[] = [];
     for (const key of industryKeys) {
       if (await this.subscriptionAccess.hasModule(organizationId, key)) {

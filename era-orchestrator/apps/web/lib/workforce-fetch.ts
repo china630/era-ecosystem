@@ -27,6 +27,39 @@ function withAuthHeaders(init: RequestInit): RequestInit {
   return { ...init, headers };
 }
 
+export type WorkforceApiError = {
+  status: number;
+  code?: string;
+  message: string;
+};
+
+/** Parse Nest JSON (`{ code, message }` or wrapped `message: { code }`) from a failed workforce call. */
+export async function parseWorkforceApiError(
+  res: Response,
+): Promise<WorkforceApiError> {
+  const raw = await res.text();
+  let code: string | undefined;
+  let message = raw || res.statusText;
+  try {
+    const j = JSON.parse(raw) as Record<string, unknown>;
+    if (typeof j.code === "string") code = j.code;
+    const nested = j.message;
+    if (typeof nested === "string") message = nested;
+    else if (nested && typeof nested === "object") {
+      const n = nested as { code?: string; message?: string };
+      if (typeof n.code === "string") code = n.code;
+      if (typeof n.message === "string") message = n.message;
+    }
+  } catch {
+    /* keep raw body */
+  }
+  if (!code && raw.includes("LOGIN_TAKEN")) code = "LOGIN_TAKEN";
+  if (!code && raw.includes("LOGIN_REQUIRES_BINDING")) {
+    code = "LOGIN_REQUIRES_BINDING";
+  }
+  return { status: res.status, code, message };
+}
+
 /** Fetch the CP Workforce hub API through the web proxy. */
 export function workforceFetch(path: string, init: RequestInit = {}) {
   return fetch(

@@ -11,8 +11,12 @@ describe("WorkforceProvisionService.hire seats", () => {
     orgUnit: { findFirst: jest.fn() },
     workforcePosition: { findUnique: jest.fn() },
     workforceSeatAllocation: { findFirst: jest.fn(), create: jest.fn() },
-    workforceEmployment: { create: jest.fn() },
-    workforceRoleBinding: { create: jest.fn() },
+    workforceEmployment: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    workforceRoleBinding: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
     $transaction: jest.fn(),
   };
   const mdm = {
@@ -66,6 +70,8 @@ describe("WorkforceProvisionService.hire seats", () => {
     subscriptionAccess.hasModule.mockResolvedValue(true);
     prisma.workforceSeatAllocation.findFirst.mockResolvedValue(null);
     prisma.workforceEmployment.create.mockResolvedValue(employmentRow);
+    prisma.workforceEmployment.findFirst.mockResolvedValue(null);
+    prisma.workforceEmployment.update.mockResolvedValue(employmentRow);
     prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) =>
       fn(prisma),
     );

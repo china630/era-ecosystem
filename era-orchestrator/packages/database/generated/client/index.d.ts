@@ -779,6 +779,15 @@ export const RoleBindingStatus: {
 export type RoleBindingStatus = (typeof RoleBindingStatus)[keyof typeof RoleBindingStatus]
 
 
+export const WorkforceProvisionState: {
+  PENDING: 'PENDING',
+  APPLIED: 'APPLIED',
+  FAILED: 'FAILED'
+};
+
+export type WorkforceProvisionState = (typeof WorkforceProvisionState)[keyof typeof WorkforceProvisionState]
+
+
 export const OrgOperatingMode: {
   STANDALONE: 'STANDALONE',
   DEPARTMENT: 'DEPARTMENT'
@@ -1000,6 +1009,10 @@ export const RoleBindingSource: typeof $Enums.RoleBindingSource
 export type RoleBindingStatus = $Enums.RoleBindingStatus
 
 export const RoleBindingStatus: typeof $Enums.RoleBindingStatus
+
+export type WorkforceProvisionState = $Enums.WorkforceProvisionState
+
+export const WorkforceProvisionState: typeof $Enums.WorkforceProvisionState
 
 export type OrgOperatingMode = $Enums.OrgOperatingMode
 
@@ -31253,6 +31266,9 @@ export namespace Prisma {
     manualGrantId: string | null
     status: $Enums.RoleBindingStatus | null
     satelliteUserId: string | null
+    provisionState: $Enums.WorkforceProvisionState | null
+    lastProvisionError: string | null
+    lastProvisionAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -31266,6 +31282,9 @@ export namespace Prisma {
     manualGrantId: string | null
     status: $Enums.RoleBindingStatus | null
     satelliteUserId: string | null
+    provisionState: $Enums.WorkforceProvisionState | null
+    lastProvisionError: string | null
+    lastProvisionAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -31279,6 +31298,9 @@ export namespace Prisma {
     manualGrantId: number
     status: number
     satelliteUserId: number
+    provisionState: number
+    lastProvisionError: number
+    lastProvisionAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -31294,6 +31316,9 @@ export namespace Prisma {
     manualGrantId?: true
     status?: true
     satelliteUserId?: true
+    provisionState?: true
+    lastProvisionError?: true
+    lastProvisionAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -31307,6 +31332,9 @@ export namespace Prisma {
     manualGrantId?: true
     status?: true
     satelliteUserId?: true
+    provisionState?: true
+    lastProvisionError?: true
+    lastProvisionAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -31320,6 +31348,9 @@ export namespace Prisma {
     manualGrantId?: true
     status?: true
     satelliteUserId?: true
+    provisionState?: true
+    lastProvisionError?: true
+    lastProvisionAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -31406,6 +31437,9 @@ export namespace Prisma {
     manualGrantId: string | null
     status: $Enums.RoleBindingStatus
     satelliteUserId: string | null
+    provisionState: $Enums.WorkforceProvisionState
+    lastProvisionError: string | null
+    lastProvisionAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceRoleBindingCountAggregateOutputType | null
@@ -31436,6 +31470,9 @@ export namespace Prisma {
     manualGrantId?: boolean
     status?: boolean
     satelliteUserId?: boolean
+    provisionState?: boolean
+    lastProvisionError?: boolean
+    lastProvisionAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -31451,6 +31488,9 @@ export namespace Prisma {
     manualGrantId?: boolean
     status?: boolean
     satelliteUserId?: boolean
+    provisionState?: boolean
+    lastProvisionError?: boolean
+    lastProvisionAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -31466,6 +31506,9 @@ export namespace Prisma {
     manualGrantId?: boolean
     status?: boolean
     satelliteUserId?: boolean
+    provisionState?: boolean
+    lastProvisionError?: boolean
+    lastProvisionAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -31481,11 +31524,14 @@ export namespace Prisma {
     manualGrantId?: boolean
     status?: boolean
     satelliteUserId?: boolean
+    provisionState?: boolean
+    lastProvisionError?: boolean
+    lastProvisionAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceRoleBindingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "employmentId" | "satelliteKey" | "satelliteRole" | "source" | "manualGrantId" | "status" | "satelliteUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceRoleBinding"]>
+  export type WorkforceRoleBindingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "employmentId" | "satelliteKey" | "satelliteRole" | "source" | "manualGrantId" | "status" | "satelliteUserId" | "provisionState" | "lastProvisionError" | "lastProvisionAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceRoleBinding"]>
   export type WorkforceRoleBindingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
     manualGrant?: boolean | WorkforceRoleBinding$manualGrantArgs<ExtArgs>
@@ -31514,6 +31560,9 @@ export namespace Prisma {
       manualGrantId: string | null
       status: $Enums.RoleBindingStatus
       satelliteUserId: string | null
+      provisionState: $Enums.WorkforceProvisionState
+      lastProvisionError: string | null
+      lastProvisionAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceRoleBinding"]>
@@ -31949,6 +31998,9 @@ export namespace Prisma {
     readonly manualGrantId: FieldRef<"WorkforceRoleBinding", 'String'>
     readonly status: FieldRef<"WorkforceRoleBinding", 'RoleBindingStatus'>
     readonly satelliteUserId: FieldRef<"WorkforceRoleBinding", 'String'>
+    readonly provisionState: FieldRef<"WorkforceRoleBinding", 'WorkforceProvisionState'>
+    readonly lastProvisionError: FieldRef<"WorkforceRoleBinding", 'String'>
+    readonly lastProvisionAt: FieldRef<"WorkforceRoleBinding", 'DateTime'>
     readonly createdAt: FieldRef<"WorkforceRoleBinding", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceRoleBinding", 'DateTime'>
   }
@@ -34640,6 +34692,8 @@ export namespace Prisma {
     financeEmployeeId: string | null
     commercialOrganizationId: string | null
     platformUserId: string | null
+    satelliteStaffLogin: string | null
+    satelliteStaffPin: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -34656,6 +34710,8 @@ export namespace Prisma {
     financeEmployeeId: string | null
     commercialOrganizationId: string | null
     platformUserId: string | null
+    satelliteStaffLogin: string | null
+    satelliteStaffPin: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -34672,6 +34728,8 @@ export namespace Prisma {
     financeEmployeeId: number
     commercialOrganizationId: number
     platformUserId: number
+    satelliteStaffLogin: number
+    satelliteStaffPin: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -34690,6 +34748,8 @@ export namespace Prisma {
     financeEmployeeId?: true
     commercialOrganizationId?: true
     platformUserId?: true
+    satelliteStaffLogin?: true
+    satelliteStaffPin?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -34706,6 +34766,8 @@ export namespace Prisma {
     financeEmployeeId?: true
     commercialOrganizationId?: true
     platformUserId?: true
+    satelliteStaffLogin?: true
+    satelliteStaffPin?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -34722,6 +34784,8 @@ export namespace Prisma {
     financeEmployeeId?: true
     commercialOrganizationId?: true
     platformUserId?: true
+    satelliteStaffLogin?: true
+    satelliteStaffPin?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -34811,6 +34875,8 @@ export namespace Prisma {
     financeEmployeeId: string | null
     commercialOrganizationId: string | null
     platformUserId: string | null
+    satelliteStaffLogin: string | null
+    satelliteStaffPin: string | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceEmploymentCountAggregateOutputType | null
@@ -34844,6 +34910,8 @@ export namespace Prisma {
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
+    satelliteStaffLogin?: boolean
+    satelliteStaffPin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -34873,6 +34941,8 @@ export namespace Prisma {
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
+    satelliteStaffLogin?: boolean
+    satelliteStaffPin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -34893,6 +34963,8 @@ export namespace Prisma {
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
+    satelliteStaffLogin?: boolean
+    satelliteStaffPin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -34913,11 +34985,13 @@ export namespace Prisma {
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
+    satelliteStaffLogin?: boolean
+    satelliteStaffPin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceEmploymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "workforceScopeId" | "orgUnitId" | "positionId" | "globalPersonId" | "status" | "hireDate" | "financeEmployeeId" | "commercialOrganizationId" | "platformUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceEmployment"]>
+  export type WorkforceEmploymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "workforceScopeId" | "orgUnitId" | "positionId" | "globalPersonId" | "status" | "hireDate" | "financeEmployeeId" | "commercialOrganizationId" | "platformUserId" | "satelliteStaffLogin" | "satelliteStaffPin" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceEmployment"]>
   export type WorkforceEmploymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -34974,6 +35048,14 @@ export namespace Prisma {
       financeEmployeeId: string | null
       commercialOrganizationId: string | null
       platformUserId: string | null
+      /**
+       * Local satellite login override; default emp-{employmentId hex prefix} when null at provision.
+       */
+      satelliteStaffLogin: string | null
+      /**
+       * Default PIN pushed on provision / reprovision (pilot default 0000).
+       */
+      satelliteStaffPin: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceEmployment"]>
@@ -35422,6 +35504,8 @@ export namespace Prisma {
     readonly financeEmployeeId: FieldRef<"WorkforceEmployment", 'String'>
     readonly commercialOrganizationId: FieldRef<"WorkforceEmployment", 'String'>
     readonly platformUserId: FieldRef<"WorkforceEmployment", 'String'>
+    readonly satelliteStaffLogin: FieldRef<"WorkforceEmployment", 'String'>
+    readonly satelliteStaffPin: FieldRef<"WorkforceEmployment", 'String'>
     readonly createdAt: FieldRef<"WorkforceEmployment", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceEmployment", 'DateTime'>
   }
@@ -93384,6 +93468,9 @@ export namespace Prisma {
     manualGrantId: 'manualGrantId',
     status: 'status',
     satelliteUserId: 'satelliteUserId',
+    provisionState: 'provisionState',
+    lastProvisionError: 'lastProvisionError',
+    lastProvisionAt: 'lastProvisionAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -93430,6 +93517,8 @@ export namespace Prisma {
     financeEmployeeId: 'financeEmployeeId',
     commercialOrganizationId: 'commercialOrganizationId',
     platformUserId: 'platformUserId',
+    satelliteStaffLogin: 'satelliteStaffLogin',
+    satelliteStaffPin: 'satelliteStaffPin',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -94498,6 +94587,20 @@ export namespace Prisma {
    * Reference to a field of type 'RoleBindingStatus[]'
    */
   export type ListEnumRoleBindingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleBindingStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceProvisionState'
+   */
+  export type EnumWorkforceProvisionStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceProvisionState'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceProvisionState[]'
+   */
+  export type ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceProvisionState[]'>
     
 
 
@@ -96523,6 +96626,9 @@ export namespace Prisma {
     manualGrantId?: UuidNullableFilter<"WorkforceRoleBinding"> | string | null
     status?: EnumRoleBindingStatusFilter<"WorkforceRoleBinding"> | $Enums.RoleBindingStatus
     satelliteUserId?: StringNullableFilter<"WorkforceRoleBinding"> | string | null
+    provisionState?: EnumWorkforceProvisionStateFilter<"WorkforceRoleBinding"> | $Enums.WorkforceProvisionState
+    lastProvisionError?: StringNullableFilter<"WorkforceRoleBinding"> | string | null
+    lastProvisionAt?: DateTimeNullableFilter<"WorkforceRoleBinding"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceRoleBinding"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceRoleBinding"> | Date | string
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
@@ -96538,6 +96644,9 @@ export namespace Prisma {
     manualGrantId?: SortOrderInput | SortOrder
     status?: SortOrder
     satelliteUserId?: SortOrderInput | SortOrder
+    provisionState?: SortOrder
+    lastProvisionError?: SortOrderInput | SortOrder
+    lastProvisionAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     employment?: WorkforceEmploymentOrderByWithRelationInput
@@ -96557,6 +96666,9 @@ export namespace Prisma {
     manualGrantId?: UuidNullableFilter<"WorkforceRoleBinding"> | string | null
     status?: EnumRoleBindingStatusFilter<"WorkforceRoleBinding"> | $Enums.RoleBindingStatus
     satelliteUserId?: StringNullableFilter<"WorkforceRoleBinding"> | string | null
+    provisionState?: EnumWorkforceProvisionStateFilter<"WorkforceRoleBinding"> | $Enums.WorkforceProvisionState
+    lastProvisionError?: StringNullableFilter<"WorkforceRoleBinding"> | string | null
+    lastProvisionAt?: DateTimeNullableFilter<"WorkforceRoleBinding"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceRoleBinding"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceRoleBinding"> | Date | string
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
@@ -96572,6 +96684,9 @@ export namespace Prisma {
     manualGrantId?: SortOrderInput | SortOrder
     status?: SortOrder
     satelliteUserId?: SortOrderInput | SortOrder
+    provisionState?: SortOrder
+    lastProvisionError?: SortOrderInput | SortOrder
+    lastProvisionAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceRoleBindingCountOrderByAggregateInput
@@ -96591,6 +96706,9 @@ export namespace Prisma {
     manualGrantId?: UuidNullableWithAggregatesFilter<"WorkforceRoleBinding"> | string | null
     status?: EnumRoleBindingStatusWithAggregatesFilter<"WorkforceRoleBinding"> | $Enums.RoleBindingStatus
     satelliteUserId?: StringNullableWithAggregatesFilter<"WorkforceRoleBinding"> | string | null
+    provisionState?: EnumWorkforceProvisionStateWithAggregatesFilter<"WorkforceRoleBinding"> | $Enums.WorkforceProvisionState
+    lastProvisionError?: StringNullableWithAggregatesFilter<"WorkforceRoleBinding"> | string | null
+    lastProvisionAt?: DateTimeNullableWithAggregatesFilter<"WorkforceRoleBinding"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceRoleBinding"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceRoleBinding"> | Date | string
   }
@@ -96752,6 +96870,8 @@ export namespace Prisma {
     financeEmployeeId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffLogin?: StringNullableFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffPin?: StringNullableFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -96780,6 +96900,8 @@ export namespace Prisma {
     financeEmployeeId?: SortOrderInput | SortOrder
     commercialOrganizationId?: SortOrderInput | SortOrder
     platformUserId?: SortOrderInput | SortOrder
+    satelliteStaffLogin?: SortOrderInput | SortOrder
+    satelliteStaffPin?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -96811,6 +96933,8 @@ export namespace Prisma {
     financeEmployeeId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffLogin?: StringNullableFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffPin?: StringNullableFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -96839,6 +96963,8 @@ export namespace Prisma {
     financeEmployeeId?: SortOrderInput | SortOrder
     commercialOrganizationId?: SortOrderInput | SortOrder
     platformUserId?: SortOrderInput | SortOrder
+    satelliteStaffLogin?: SortOrderInput | SortOrder
+    satelliteStaffPin?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceEmploymentCountOrderByAggregateInput
@@ -96861,6 +96987,8 @@ export namespace Prisma {
     financeEmployeeId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffLogin?: StringNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffPin?: StringNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceEmployment"> | Date | string
   }
@@ -102578,6 +102706,9 @@ export namespace Prisma {
     source: $Enums.RoleBindingSource
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutRoleBindingsInput
@@ -102593,6 +102724,9 @@ export namespace Prisma {
     manualGrantId?: string | null
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -102604,6 +102738,9 @@ export namespace Prisma {
     source?: EnumRoleBindingSourceFieldUpdateOperationsInput | $Enums.RoleBindingSource
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutRoleBindingsNestedInput
@@ -102619,6 +102756,9 @@ export namespace Prisma {
     manualGrantId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -102632,6 +102772,9 @@ export namespace Prisma {
     manualGrantId?: string | null
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -102643,6 +102786,9 @@ export namespace Prisma {
     source?: EnumRoleBindingSourceFieldUpdateOperationsInput | $Enums.RoleBindingSource
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -102656,6 +102802,9 @@ export namespace Prisma {
     manualGrantId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -102816,6 +102965,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -102844,6 +102995,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -102864,6 +103017,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -102892,6 +103047,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -102916,6 +103073,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -102928,6 +103087,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -102944,6 +103105,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -108985,6 +109148,13 @@ export namespace Prisma {
     not?: NestedEnumRoleBindingStatusFilter<$PrismaModel> | $Enums.RoleBindingStatus
   }
 
+  export type EnumWorkforceProvisionStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceProvisionState | EnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceProvisionStateFilter<$PrismaModel> | $Enums.WorkforceProvisionState
+  }
+
   export type WorkforceEmploymentScalarRelationFilter = {
     is?: WorkforceEmploymentWhereInput
     isNot?: WorkforceEmploymentWhereInput
@@ -109010,6 +109180,9 @@ export namespace Prisma {
     manualGrantId?: SortOrder
     status?: SortOrder
     satelliteUserId?: SortOrder
+    provisionState?: SortOrder
+    lastProvisionError?: SortOrder
+    lastProvisionAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -109023,6 +109196,9 @@ export namespace Prisma {
     manualGrantId?: SortOrder
     status?: SortOrder
     satelliteUserId?: SortOrder
+    provisionState?: SortOrder
+    lastProvisionError?: SortOrder
+    lastProvisionAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -109036,6 +109212,9 @@ export namespace Prisma {
     manualGrantId?: SortOrder
     status?: SortOrder
     satelliteUserId?: SortOrder
+    provisionState?: SortOrder
+    lastProvisionError?: SortOrder
+    lastProvisionAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -109058,6 +109237,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumRoleBindingStatusFilter<$PrismaModel>
     _max?: NestedEnumRoleBindingStatusFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceProvisionStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceProvisionState | EnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceProvisionStateWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceProvisionState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceProvisionStateFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceProvisionStateFilter<$PrismaModel>
   }
 
   export type WorkforceRoleBindingListRelationFilter = {
@@ -109202,6 +109391,8 @@ export namespace Prisma {
     financeEmployeeId?: SortOrder
     commercialOrganizationId?: SortOrder
     platformUserId?: SortOrder
+    satelliteStaffLogin?: SortOrder
+    satelliteStaffPin?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -109218,6 +109409,8 @@ export namespace Prisma {
     financeEmployeeId?: SortOrder
     commercialOrganizationId?: SortOrder
     platformUserId?: SortOrder
+    satelliteStaffLogin?: SortOrder
+    satelliteStaffPin?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -109234,6 +109427,8 @@ export namespace Prisma {
     financeEmployeeId?: SortOrder
     commercialOrganizationId?: SortOrder
     platformUserId?: SortOrder
+    satelliteStaffLogin?: SortOrder
+    satelliteStaffPin?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -113642,6 +113837,10 @@ export namespace Prisma {
     set?: $Enums.RoleBindingStatus
   }
 
+  export type EnumWorkforceProvisionStateFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceProvisionState
+  }
+
   export type WorkforceEmploymentUpdateOneRequiredWithoutRoleBindingsNestedInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutRoleBindingsInput, WorkforceEmploymentUncheckedCreateWithoutRoleBindingsInput>
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutRoleBindingsInput
@@ -118012,6 +118211,13 @@ export namespace Prisma {
     not?: NestedEnumRoleBindingStatusFilter<$PrismaModel> | $Enums.RoleBindingStatus
   }
 
+  export type NestedEnumWorkforceProvisionStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceProvisionState | EnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceProvisionStateFilter<$PrismaModel> | $Enums.WorkforceProvisionState
+  }
+
   export type NestedEnumRoleBindingSourceWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.RoleBindingSource | EnumRoleBindingSourceFieldRefInput<$PrismaModel>
     in?: $Enums.RoleBindingSource[] | ListEnumRoleBindingSourceFieldRefInput<$PrismaModel>
@@ -118030,6 +118236,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumRoleBindingStatusFilter<$PrismaModel>
     _max?: NestedEnumRoleBindingStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceProvisionStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceProvisionState | EnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceProvisionState[] | ListEnumWorkforceProvisionStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceProvisionStateWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceProvisionState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceProvisionStateFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceProvisionStateFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel = never> = {
@@ -121322,6 +121538,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -121348,6 +121566,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -121612,6 +121832,8 @@ export namespace Prisma {
     financeEmployeeId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffLogin?: StringNullableFilter<"WorkforceEmployment"> | string | null
+    satelliteStaffPin?: StringNullableFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
   }
@@ -121907,6 +122129,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -121934,6 +122158,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -121992,6 +122218,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -122018,6 +122246,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -122231,6 +122461,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -122258,6 +122490,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -122820,6 +123054,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -122846,6 +123082,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -123063,6 +123301,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -123090,6 +123330,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -123154,6 +123396,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -123181,6 +123425,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -123235,6 +123481,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -123262,6 +123510,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -123285,6 +123535,9 @@ export namespace Prisma {
     source: $Enums.RoleBindingSource
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutRoleBindingsInput
@@ -123298,6 +123551,9 @@ export namespace Prisma {
     source: $Enums.RoleBindingSource
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -123331,6 +123587,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -123358,6 +123616,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -123397,6 +123657,9 @@ export namespace Prisma {
     manualGrantId?: UuidNullableFilter<"WorkforceRoleBinding"> | string | null
     status?: EnumRoleBindingStatusFilter<"WorkforceRoleBinding"> | $Enums.RoleBindingStatus
     satelliteUserId?: StringNullableFilter<"WorkforceRoleBinding"> | string | null
+    provisionState?: EnumWorkforceProvisionStateFilter<"WorkforceRoleBinding"> | $Enums.WorkforceProvisionState
+    lastProvisionError?: StringNullableFilter<"WorkforceRoleBinding"> | string | null
+    lastProvisionAt?: DateTimeNullableFilter<"WorkforceRoleBinding"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceRoleBinding"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceRoleBinding"> | Date | string
   }
@@ -123442,6 +123705,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -123469,6 +123734,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -123543,6 +123810,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -123570,6 +123839,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -123918,6 +124189,9 @@ export namespace Prisma {
     source: $Enums.RoleBindingSource
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     manualGrant?: WorkforceManualGrantCreateNestedOneWithoutRoleBindingsInput
@@ -123931,6 +124205,9 @@ export namespace Prisma {
     manualGrantId?: string | null
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -124590,6 +124867,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -124617,6 +124896,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
@@ -124652,6 +124933,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -124679,6 +124962,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
@@ -125043,6 +125328,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -125070,6 +125357,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -125136,6 +125425,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -125163,6 +125454,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -125425,6 +125718,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -125452,6 +125747,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -125530,6 +125827,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -125557,6 +125856,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -125609,6 +125910,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
@@ -125636,6 +125939,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -125710,6 +126015,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -125737,6 +126044,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -127386,6 +127695,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
@@ -127412,6 +127723,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
@@ -137486,6 +137799,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -137610,6 +137925,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -137636,6 +137953,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -137659,6 +137978,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -137888,6 +138209,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -138007,6 +138330,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -138033,6 +138358,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -138056,6 +138383,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138145,6 +138474,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -138167,6 +138498,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
@@ -138193,6 +138526,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -138216,6 +138551,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138258,6 +138595,9 @@ export namespace Prisma {
     source: $Enums.RoleBindingSource
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -138269,6 +138609,9 @@ export namespace Prisma {
     source?: EnumRoleBindingSourceFieldUpdateOperationsInput | $Enums.RoleBindingSource
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutRoleBindingsNestedInput
@@ -138282,6 +138625,9 @@ export namespace Prisma {
     source?: EnumRoleBindingSourceFieldUpdateOperationsInput | $Enums.RoleBindingSource
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138294,6 +138640,9 @@ export namespace Prisma {
     source?: EnumRoleBindingSourceFieldUpdateOperationsInput | $Enums.RoleBindingSource
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138340,6 +138689,9 @@ export namespace Prisma {
     manualGrantId?: string | null
     status?: $Enums.RoleBindingStatus
     satelliteUserId?: string | null
+    provisionState?: $Enums.WorkforceProvisionState
+    lastProvisionError?: string | null
+    lastProvisionAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -138516,6 +138868,9 @@ export namespace Prisma {
     source?: EnumRoleBindingSourceFieldUpdateOperationsInput | $Enums.RoleBindingSource
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     manualGrant?: WorkforceManualGrantUpdateOneWithoutRoleBindingsNestedInput
@@ -138529,6 +138884,9 @@ export namespace Prisma {
     manualGrantId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138541,6 +138899,9 @@ export namespace Prisma {
     manualGrantId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumRoleBindingStatusFieldUpdateOperationsInput | $Enums.RoleBindingStatus
     satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    provisionState?: EnumWorkforceProvisionStateFieldUpdateOperationsInput | $Enums.WorkforceProvisionState
+    lastProvisionError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastProvisionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -139250,6 +139611,8 @@ export namespace Prisma {
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -140207,6 +140570,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
@@ -140233,6 +140598,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -140256,6 +140623,8 @@ export namespace Prisma {
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

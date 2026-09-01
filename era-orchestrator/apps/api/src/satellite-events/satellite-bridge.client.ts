@@ -29,6 +29,10 @@ export async function forwardToSatellite(
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    const loginTaken = res.status === 409 && text.includes("LOGIN_TAKEN");
+    if (loginTaken) {
+      throw new Error(`Satellite bridge LOGIN_TAKEN: ${text.slice(0, 200)}`);
+    }
     throw new Error(
       `Satellite bridge failed: ${res.status} ${text.slice(0, 200)}`,
     );
