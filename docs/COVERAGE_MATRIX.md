@@ -175,7 +175,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | name parts + ISO nationality on link |
 | HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
 | HOT-BOOK-01 | Booking hierarchy (Block→Booking→RoomStay) | Y | Y card + `/admin/allotment-blocks` | SHIPPED | [ADR](./adr/hotel-booking-hierarchy.md); pickup UI; MASTER folio routing |
-| HOT-BOOK-02 | Reservation card Phase 0 agency-first layout | Y | Y ReservationCardEditor | SHIPPED | Assignment by stage; Additional collapsed |
+| HOT-BOOK-02 | Reservation card Phase 0 agency-first layout | Y | Y ReservationCardEditor | SHIPPED | Assignment by stage; Additional collapsed; companion pax names from linked Guest (not booker-only) |
 | HOT-FO-01 | Room type availability (Avl/Occ) | Y | Y /availability | SHIPPED | FO chain ADR; Occ includes unassigned |
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; block save when Avl=0 |
 | HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door+overlap auto-pair (assign/import); N lanes without overlay; per-night `nextFreeShareBedIndex`; seed room 105 / backfill 307; UAT-SMOKE §30 not signed — not SHIPPED |
@@ -479,6 +479,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-02 | HOT-BOOK-02: reservation-full includes linked Guest on `paxGuests`; card hydrates companion names from that map (not booker-only). Status SHIPPED. |
 | 2026-09-02 | HOT-05/HOT-06: reservations import `A / B` → `ReservationGuest`; live FOCP guest = EW Id then name matcher, no first-guest fallback. Status SHIPPED / HEADLESS unchanged. |
 | 2026-09-01 | Hotel middleware UTF-8-encodes `x-user-login` / `x-user-fullname` so Cyrillic/Azerbaijani staff names do not crash Edge `Headers#set`. |
 | 2026-09-01 | CP-WF-EMP-01: Login & access copy org ID + Open satellite `/login?organizationId=`; hotel staff-provision ensure Role; clinic card/import polish + kit login formExtras after password. Status API where previously API. |

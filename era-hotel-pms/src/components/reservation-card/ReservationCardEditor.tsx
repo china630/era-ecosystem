@@ -361,10 +361,21 @@ export function ReservationCardEditor({
         medicalPackageCode:
           (g as { medicalPackageCode?: string | null }).medicalPackageCode ?? '',
       }));
+      const nameByGuestId = new Map<string, string>();
+      for (const g of guests) {
+        const linked = (g as { guest?: { fullName?: string; firstName?: string | null; lastName?: string | null } })
+          .guest;
+        const gid = g.guestId ?? undefined;
+        if (!gid) continue;
+        const label =
+          linked?.fullName?.trim() ||
+          [linked?.firstName, linked?.lastName].filter(Boolean).join(' ').trim();
+        if (label) nameByGuestId.set(gid, label);
+      }
       nextPax = hydratePaxNames(nextPax, {
         id: masterGuest?.id ?? String(json.guestId ?? ''),
         fullName: masterGuest?.fullName,
-      });
+      }, nameByGuestId);
     }
     const sized = syncPaxToPartySize(nextPax, targetSize, equalMode);
     setPax(sized);
