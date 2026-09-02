@@ -68,9 +68,9 @@ export function buildPatientDemographicsFillPatch(
   }
   if (patch.firstName || patch.middleName !== undefined || patch.lastName) {
     patch.fullName = composeFullName({
-      firstName: patch.firstName ?? patient.firstName,
+      firstName: patch.firstName ?? patient.firstName ?? "",
       middleName: patch.middleName !== undefined ? patch.middleName : patient.middleName,
-      lastName: patch.lastName ?? patient.lastName,
+      lastName: patch.lastName ?? patient.lastName ?? "",
     });
   }
   const gpid = profile.globalPersonId?.trim() || patient.globalPersonId?.trim();
