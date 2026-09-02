@@ -80,6 +80,11 @@ describe("nafta cutover column map", () => {
   it("maps WO Word analyte slugs to ERA seed codes", () => {
     const { eraAnalyteCode, eraPanelCode } = require("../scripts/nafta-cutover/wo-era-lab-map.cjs");
     expect(eraPanelCode("QAN")).toBe("LAB-CBC");
+    expect(eraPanelCode("DIMER")).toBe("DDIMER");
+    expect(eraPanelCode("CRP")).toBe("CRP");
+    expect(eraPanelCode("PRL")).toBe("PRL");
+    expect(eraPanelCode("INSULIN")).toBe("INS");
+    expect(eraPanelCode("HORMON")).toBe("LAB-ENDO-HORM");
     expect(eraAnalyteCode("LYMPCT")).toBe("LYMPH%");
     expect(eraAnalyteCode("NEUT%")).toBe("NEUT%");
     expect(eraAnalyteCode("WBC")).toBe("WBC");

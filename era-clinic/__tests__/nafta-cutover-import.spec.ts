@@ -614,11 +614,12 @@ describe("nafta cutover import rules", () => {
     expect(createOrder.mock.calls[0][0].data.createdAt.getTime()).toBe(
       createOrder.mock.calls[0][0].data.collectedAt.getTime(),
     );
-    expect(createItem).not.toHaveBeenCalled();
-    expect(createOrder.mock.calls[0][0].data.items).toEqual({
-      create: expect.objectContaining({
+    expect(createOrder.mock.calls[0][0].data.items).toBeUndefined();
+    expect(createItem).toHaveBeenCalledWith({
+      data: expect.objectContaining({
         serviceCode: "LAB-CBC",
         diagnosticServiceId: "svc1",
+        labOrderId: "lab1",
       }),
     });
   });
