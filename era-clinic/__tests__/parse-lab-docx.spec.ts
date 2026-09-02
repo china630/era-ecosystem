@@ -61,4 +61,18 @@ describe("parse-lab-docx urine template", () => {
     expect(panelFromName("123_SIDIK.docx")).toBe("SIDIK");
     expect(panelFromName("57_QAN.docx")).toBe("QAN");
   });
+
+  it("maps single-test Word filenames to dedicated panels", () => {
+    const { eraPanelCode } = require("../scripts/nafta-cutover/wo-era-lab-map.cjs");
+    expect(panelFromName("409_QAN  Vasilevskaya Anjelika.docx")).toBe("QAN");
+    expect(panelFromName("Dimer  Vasilevskaya Anjelika.docx")).toBe("DIMER");
+    expect(eraPanelCode(panelFromName("Dimer  Vasilevskaya Anjelika.docx"))).toBe("DDIMER");
+    expect(panelFromName("CRP  Mullakhunova Ogulzhan.docx")).toBe("CRP");
+    expect(eraPanelCode(panelFromName("CRP  Mullakhunova Ogulzhan.docx"))).toBe("CRP");
+    expect(panelFromName("prl Vasilevskaya Anjelika.docx")).toBe("PRL");
+    expect(panelFromName("İNSULİN   Həmzəyev Əkrəm.docx")).toBe("INSULIN");
+    expect(eraPanelCode(panelFromName("İNSULİN   Həmzəyev Əkrəm.docx"))).toBe("INS");
+    expect(panelFromName("HORMON  Vasilevskaya Anjelika.docx")).toBe("HORMON");
+    expect(eraPanelCode(panelFromName("HORMON  Vasilevskaya Anjelika.docx"))).toBe("LAB-ENDO-HORM");
+  });
 });

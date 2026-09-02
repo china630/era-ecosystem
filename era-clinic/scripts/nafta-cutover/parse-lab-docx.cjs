@@ -255,6 +255,11 @@ function panelFromName(fileName) {
   if (/QAN|CBC|HEMOGRAM/.test(n)) return "QAN";
   if (/B[İI]OK|BIOCHEM/.test(n)) return "BIOKIM";
   if (/S[İI]D[İI]K|URINE/.test(n)) return "SIDIK";
+  if (/DIMER|D-DIMER|D_DIMER/.test(n)) return "DIMER";
+  if (/\bCRP\b/.test(n)) return "CRP";
+  if (/\bPRL\b|PROLACTIN/.test(n)) return "PRL";
+  if (/İNSULİN|INSULIN|\bINS\b|NSULIN/.test(n)) return "INSULIN";
+  if (/HORMON/.test(n)) return "HORMON";
   return "OTHER";
 }
 
