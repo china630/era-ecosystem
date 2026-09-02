@@ -50,7 +50,12 @@ export async function instantiateProgramFromTemplate(input: {
     };
   });
 
-  const instance = await prisma.programInstance.create({
+  /**
+   * ProgramProcedureBalance is not tenant-scoped. Nested `procedureLines.create`
+   * under ProgramInstance is stamped with organizationId and rejected (same class
+   * as LabOrderItem). Create instance first, then top-level balance rows.
+   */
+  const created = await prisma.programInstance.create({
     data: {
       templateId: template.id,
       episodeId: input.episodeId,
@@ -58,10 +63,20 @@ export async function instantiateProgramFromTemplate(input: {
       programCode: template.code,
       startsOn: input.startsOn,
       endsOn,
-      procedureLines: {
-        create: balanceRows,
-      },
     },
+  });
+  if (balanceRows.length > 0) {
+    await prisma.programProcedureBalance.createMany({
+      data: balanceRows.map((row) => ({
+        instanceId: created.id,
+        procedureCode: row.procedureCode,
+        quotaTotal: row.quotaTotal,
+        quotaUsed: row.quotaUsed,
+      })),
+    });
+  }
+  const instance = await prisma.programInstance.findUniqueOrThrow({
+    where: { id: created.id },
     include: { procedureLines: true },
   });
 
