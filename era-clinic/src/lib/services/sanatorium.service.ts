@@ -60,17 +60,10 @@ const episodeInclude = {
   labOrders: true,
 } as const;
 
-type EpisodeClient = {
-  clinicalEpisode: {
-    findFirst: typeof prisma.clinicalEpisode.findFirst;
-  };
-  patientRef: {
-    findFirst: typeof prisma.patientRef.findFirst;
-  };
-};
-
 async function findOpenEpisodeForStay(
-  client: EpisodeClient,
+  // Prisma client or interactive transaction — keep loose for SatellitePrisma $extends.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: any,
   input: {
     organizationId: string;
     reservationId: string;
@@ -245,82 +238,78 @@ export async function openEpisodeFromStay(input: {
     return patchOpenEpisode(existingFast);
   }
 
-  const createStayEpisode = async (
-    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
-  ) => {
-    const existing = await findOpenEpisodeForStay(tx, stayLookup);
-    if (existing) return existing;
-
-    let patient = await tx.patientRef.findFirst({
-      where: {
-        organizationId: input.organizationId,
-        OR: [
-          ...(gpid ? [{ globalPersonId: gpid }] : []),
-          { refCode: legacyRef },
-          // Reuse patient already attached to an OPEN episode on this stay
-          {
-            episodes: {
-              some: {
-                organizationId: input.organizationId,
-                reservationId: input.reservationId,
-                status: "OPEN",
-                OR: [
-                  { hotelStayId },
-                  ...(gpid
-                    ? [{ globalPersonId: gpid }]
-                    : !input.paxKey?.trim()
-                      ? [{ hotelStayId: input.reservationId }]
-                      : []),
-                ],
-              },
-            },
-          },
-        ],
-      },
-    });
-
-    if (!patient) {
-      const refCode = await allocatePatientRefCode(tx, input.organizationId);
-      const parts = splitFullNameToParts(input.guestName);
-      const firstName = parts.firstName ?? input.guestName;
-      const lastName = parts.lastName ?? "";
-      const middleName = parts.middleName;
-      const fullName =
-        composeFullName({ firstName, lastName, middleName }) || input.guestName.trim();
-      patient = await tx.patientRef.create({
-        data: {
-          organizationId: input.organizationId,
-          refCode,
-          firstName,
-          lastName,
-          middleName,
-          fullName,
-          phone: input.phone ?? null,
-          globalPersonId: gpid,
-        },
-      });
-    }
-
-    return tx.clinicalEpisode.create({
-      data: {
-        organizationId: input.organizationId,
-        patientRefId: patient.id,
-        globalPersonId: gpid ?? patient.globalPersonId,
-        hotelStayId,
-        reservationId: input.reservationId,
-        roomNumber: input.roomNumber ?? null,
-        patientOrigin: "IN_HOUSE",
-        programCode: input.programCode ?? null,
-        status: "OPEN",
-      },
-      include: episodeInclude,
-    });
-  };
-
   let created;
   try {
     created = await prisma.$transaction(
-      async (tx) => createStayEpisode(tx),
+      async (tx) => {
+        const existing = await findOpenEpisodeForStay(tx, stayLookup);
+        if (existing) return existing;
+
+        let patient = await tx.patientRef.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            OR: [
+              ...(gpid ? [{ globalPersonId: gpid }] : []),
+              { refCode: legacyRef },
+              {
+                episodes: {
+                  some: {
+                    organizationId: input.organizationId,
+                    reservationId: input.reservationId,
+                    status: "OPEN",
+                    OR: [
+                      { hotelStayId },
+                      ...(gpid
+                        ? [{ globalPersonId: gpid }]
+                        : !input.paxKey?.trim()
+                          ? [{ hotelStayId: input.reservationId }]
+                          : []),
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        });
+
+        if (!patient) {
+          const refCode = await allocatePatientRefCode(tx, input.organizationId);
+          const parts = splitFullNameToParts(input.guestName);
+          const firstName = parts.firstName ?? input.guestName;
+          const lastName = parts.lastName ?? "";
+          const middleName = parts.middleName;
+          const fullName =
+            composeFullName({ firstName, lastName, middleName }) ||
+            input.guestName.trim();
+          patient = await tx.patientRef.create({
+            data: {
+              organizationId: input.organizationId,
+              refCode,
+              firstName,
+              lastName,
+              middleName,
+              fullName,
+              phone: input.phone ?? null,
+              globalPersonId: gpid,
+            },
+          });
+        }
+
+        return tx.clinicalEpisode.create({
+          data: {
+            organizationId: input.organizationId,
+            patientRefId: patient.id,
+            globalPersonId: gpid ?? patient.globalPersonId,
+            hotelStayId,
+            reservationId: input.reservationId,
+            roomNumber: input.roomNumber ?? null,
+            patientOrigin: "IN_HOUSE",
+            programCode: input.programCode ?? null,
+            status: "OPEN",
+          },
+          include: episodeInclude,
+        });
+      },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   } catch (err) {
