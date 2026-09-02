@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
 import { requestOrganizationId } from '@/lib/request-organization';
@@ -30,6 +31,79 @@ export function resolveHotelPatientRefCode(input: {
     return `HOTEL-${input.reservationId.slice(0, 8)}-${input.paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
   }
   return refCodeFromPassport(input.passportNumber?.trim() || input.reservationId);
+}
+
+/**
+ * Stable stay identity written to ClinicalEpisode.hotelStayId.
+ * Concurrent check-ins for the same pax must share this key (Şirinov race).
+ * Primary guest (no MDM / paxKey) keeps plain reservationId for back-compat.
+ */
+export function resolveHotelStayId(input: {
+  reservationId: string;
+  hotelStayId?: string | null;
+  globalPersonId?: string | null;
+  paxKey?: string | null;
+}): string {
+  const gpid = input.globalPersonId?.trim();
+  if (gpid) return `${input.reservationId}::mdm:${gpid.slice(0, 40)}`;
+  const pax = input.paxKey?.trim();
+  if (pax) {
+    return `${input.reservationId}::pax:${pax.replace(/\s+/g, "-").slice(0, 24)}`;
+  }
+  return input.hotelStayId?.trim() || input.reservationId;
+}
+
+const episodeInclude = {
+  patientRef: true,
+  complaints: true,
+  diagnoses: true,
+  labOrders: true,
+} as const;
+
+type EpisodeClient = {
+  clinicalEpisode: {
+    findFirst: typeof prisma.clinicalEpisode.findFirst;
+  };
+  patientRef: {
+    findFirst: typeof prisma.patientRef.findFirst;
+  };
+};
+
+async function findOpenEpisodeForStay(
+  client: EpisodeClient,
+  input: {
+    organizationId: string;
+    reservationId: string;
+    hotelStayId: string;
+    globalPersonId?: string | null;
+    paxKey?: string | null;
+  },
+) {
+  const gpid = input.globalPersonId?.trim();
+  const isPrimary =
+    !gpid && !input.paxKey?.trim();
+
+  return client.clinicalEpisode.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      reservationId: input.reservationId,
+      status: "OPEN",
+      OR: [
+        { hotelStayId: input.hotelStayId },
+        // Legacy primary rows used hotelStayId = reservationId
+        ...(isPrimary
+          ? [{ hotelStayId: input.reservationId }, { hotelStayId: null }]
+          : []),
+        ...(gpid
+          ? [
+              { globalPersonId: gpid },
+              { patientRef: { globalPersonId: gpid } },
+            ]
+          : []),
+      ],
+    },
+    include: episodeInclude,
+  });
 }
 
 async function safeInstantiateIntake(episodeId: string) {
@@ -105,27 +179,107 @@ export async function openEpisodeFromStay(input: {
   /** Wave E — stable pax key when no MDM (defaults to passport/reservation). */
   paxKey?: string | null;
 }) {
+  const hotelStayId = resolveHotelStayId(input);
   const legacyRef = resolveHotelPatientRefCode({
     reservationId: input.reservationId,
     globalPersonId: input.globalPersonId,
     paxKey: input.paxKey,
     passportNumber: input.passportNumber,
   });
+  const gpid = input.globalPersonId?.trim() || null;
 
-  let patient = await prisma.patientRef.findFirst({
-    where: {
-      organizationId: input.organizationId,
-      OR: [
-        ...(input.globalPersonId?.trim()
-          ? [{ globalPersonId: input.globalPersonId.trim() }]
-          : []),
-        { refCode: legacyRef },
-      ],
-    },
-  });
+  const patchOpenEpisode = async (existing: {
+    id: string;
+    roomNumber: string | null;
+    programCode: string | null;
+    hotelStayId?: string | null;
+  }) => {
+    const data: {
+      roomNumber?: string;
+      hotelStayId?: string;
+      globalPersonId?: string;
+      programCode?: string;
+    } = {};
+    if (input.roomNumber && existing.roomNumber !== input.roomNumber) {
+      data.roomNumber = input.roomNumber;
+    }
+    if (existing.hotelStayId !== hotelStayId) {
+      data.hotelStayId = hotelStayId;
+    }
+    if (gpid) data.globalPersonId = gpid;
+    if (input.programCode && !existing.programCode) {
+      data.programCode = input.programCode;
+    }
+    if (Object.keys(data).length > 0) {
+      const updated = await prisma.clinicalEpisode.update({
+        where: { id: existing.id },
+        data,
+        include: episodeInclude,
+      });
+      await safeInstantiateIntake(updated.id);
+      return updated;
+    }
+    await safeInstantiateIntake(existing.id);
+    return prisma.clinicalEpisode.findUniqueOrThrow({
+      where: { id: existing.id },
+      include: episodeInclude,
+    });
+  };
 
-  if (!patient) {
-    patient = await prisma.$transaction(async (tx) => {
+  const stayLookup = {
+    organizationId: input.organizationId,
+    reservationId: input.reservationId,
+    hotelStayId,
+    globalPersonId: gpid,
+    paxKey: input.paxKey,
+  };
+
+  const existingFast = await findOpenEpisodeForStay(prisma, stayLookup);
+  if (existingFast) {
+    if (existingFast.patientRefId) {
+      await applyMdmDemographicsCache(
+        existingFast.patientRefId,
+        gpid ?? existingFast.globalPersonId,
+      );
+    }
+    return patchOpenEpisode(existingFast);
+  }
+
+  const createStayEpisode = async (
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  ) => {
+    const existing = await findOpenEpisodeForStay(tx, stayLookup);
+    if (existing) return existing;
+
+    let patient = await tx.patientRef.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        OR: [
+          ...(gpid ? [{ globalPersonId: gpid }] : []),
+          { refCode: legacyRef },
+          // Reuse patient already attached to an OPEN episode on this stay
+          {
+            episodes: {
+              some: {
+                organizationId: input.organizationId,
+                reservationId: input.reservationId,
+                status: "OPEN",
+                OR: [
+                  { hotelStayId },
+                  ...(gpid
+                    ? [{ globalPersonId: gpid }]
+                    : !input.paxKey?.trim()
+                      ? [{ hotelStayId: input.reservationId }]
+                      : []),
+                ],
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    if (!patient) {
       const refCode = await allocatePatientRefCode(tx, input.organizationId);
       const parts = splitFullNameToParts(input.guestName);
       const firstName = parts.firstName ?? input.guestName;
@@ -133,7 +287,7 @@ export async function openEpisodeFromStay(input: {
       const middleName = parts.middleName;
       const fullName =
         composeFullName({ firstName, lastName, middleName }) || input.guestName.trim();
-      return tx.patientRef.create({
+      patient = await tx.patientRef.create({
         data: {
           organizationId: input.organizationId,
           refCode,
@@ -142,61 +296,54 @@ export async function openEpisodeFromStay(input: {
           middleName,
           fullName,
           phone: input.phone ?? null,
-          globalPersonId: input.globalPersonId ?? null,
+          globalPersonId: gpid,
         },
       });
+    }
+
+    return tx.clinicalEpisode.create({
+      data: {
+        organizationId: input.organizationId,
+        patientRefId: patient.id,
+        globalPersonId: gpid ?? patient.globalPersonId,
+        hotelStayId,
+        reservationId: input.reservationId,
+        roomNumber: input.roomNumber ?? null,
+        patientOrigin: "IN_HOUSE",
+        programCode: input.programCode ?? null,
+        status: "OPEN",
+      },
+      include: episodeInclude,
     });
+  };
+
+  let created;
+  try {
+    created = await prisma.$transaction(
+      async (tx) => createStayEpisode(tx),
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  } catch (err) {
+    // Concurrent check-in: loser retries as read of the winner's episode.
+    const raced = await findOpenEpisodeForStay(prisma, stayLookup);
+    if (raced) {
+      if (raced.patientRefId) {
+        await applyMdmDemographicsCache(
+          raced.patientRefId,
+          gpid ?? raced.globalPersonId,
+        );
+      }
+      return patchOpenEpisode(raced);
+    }
+    throw err;
   }
 
-  if (!patient) throw new Error("Failed to create hotel stay patient");
-
-  await applyMdmDemographicsCache(patient.id, input.globalPersonId ?? patient.globalPersonId);
-
-  // Wave E: OPEN episode keyed by reservation + patient (not reservation-only)
-  const existing = await prisma.clinicalEpisode.findFirst({
-    where: {
-      reservationId: input.reservationId,
-      patientRefId: patient.id,
-      status: "OPEN",
-    },
-  });
-  if (existing) {
-    if (input.roomNumber && existing.roomNumber !== input.roomNumber) {
-      const updated = await prisma.clinicalEpisode.update({
-        where: { id: existing.id },
-        data: {
-          roomNumber: input.roomNumber,
-          ...(input.programCode ? { programCode: input.programCode } : {}),
-        },
-        include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
-      });
-      await safeInstantiateIntake(updated.id);
-      return updated;
-    }
-    if (input.programCode && !existing.programCode) {
-      await prisma.clinicalEpisode.update({
-        where: { id: existing.id },
-        data: { programCode: input.programCode },
-      });
-    }
-    await safeInstantiateIntake(existing.id);
-    return existing;
+  if (created.patientRefId) {
+    await applyMdmDemographicsCache(
+      created.patientRefId,
+      gpid ?? created.globalPersonId,
+    );
   }
-
-  const created = await prisma.clinicalEpisode.create({
-    data: {
-      organizationId: input.organizationId,
-      patientRefId: patient.id,
-      globalPersonId: input.globalPersonId ?? patient.globalPersonId,
-      hotelStayId: input.hotelStayId ?? input.reservationId,
-      reservationId: input.reservationId,
-      roomNumber: input.roomNumber ?? null,
-      patientOrigin: "IN_HOUSE",
-      programCode: input.programCode ?? null,
-      status: "OPEN",
-    },
-    include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
-  });
   await safeInstantiateIntake(created.id);
   return created;
 }
