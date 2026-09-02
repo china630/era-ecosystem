@@ -182,4 +182,77 @@ describe("AC-CLI-SAN-PKG unknown program code", () => {
       }),
     ).rejects.toThrow(/not found/i);
   });
+
+  it("instantiateProgramFromTemplate creates balances top-level (no nested stamp)", async () => {
+    jest.resetModules();
+    const create = jest.fn().mockResolvedValue({ id: "inst-1" });
+    const createMany = jest.fn().mockResolvedValue({ count: 2 });
+    const findUniqueOrThrow = jest.fn().mockResolvedValue({
+      id: "inst-1",
+      procedureLines: [
+        { procedureCode: "NAFTALAN_BATH", quotaTotal: 9 },
+        { procedureCode: "PHYSIO_POOL", quotaTotal: 24 },
+      ],
+    });
+    const episodeUpdate = jest.fn().mockResolvedValue({});
+    jest.doMock("@/lib/prisma", () => ({
+      prisma: {
+        programTemplate: {
+          findFirst: jest.fn().mockResolvedValue({
+            id: "tpl-1",
+            code: "PKG-PREMIUM",
+            durationDays: 10,
+            minNights: 7,
+            maxNights: 21,
+            procedures: [
+              { procedureCode: "NAFTALAN_BATH", quotaTotal: 9 },
+              { procedureCode: "PHYSIO_POOL", quotaTotal: 24 },
+            ],
+            quotaKnots: [],
+          }),
+        },
+        programInstance: { create, findUniqueOrThrow },
+        programProcedureBalance: { createMany },
+        clinicalEpisode: { update: episodeUpdate },
+      },
+    }));
+    jest.doMock("@/lib/treatment-planner.service", () => ({
+      planProgramFifo: jest.fn().mockResolvedValue(undefined),
+    }));
+    const { instantiateProgramFromTemplate } = await import(
+      "@/lib/sanatorium-scheduler.service"
+    );
+    const startsOn = new Date("2026-09-02T00:00:00.000Z");
+    await instantiateProgramFromTemplate({
+      episodeId: "ep-1",
+      programCode: "PKG-PREMIUM",
+      startsOn,
+    });
+    expect(create).toHaveBeenCalledWith({
+      data: expect.not.objectContaining({
+        procedureLines: expect.anything(),
+      }),
+    });
+    expect(create.mock.calls[0][0].data).toMatchObject({
+      templateId: "tpl-1",
+      episodeId: "ep-1",
+      programCode: "PKG-PREMIUM",
+    });
+    expect(createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          instanceId: "inst-1",
+          procedureCode: "NAFTALAN_BATH",
+          quotaTotal: 9,
+          quotaUsed: 0,
+        },
+        {
+          instanceId: "inst-1",
+          procedureCode: "PHYSIO_POOL",
+          quotaTotal: 24,
+          quotaUsed: 0,
+        },
+      ],
+    });
+  });
 });
