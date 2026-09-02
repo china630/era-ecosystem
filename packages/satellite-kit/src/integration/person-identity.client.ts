@@ -49,12 +49,12 @@ function baseUrl(opts?: MdmClientOptions): string {
 }
 
 function serviceToken(opts?: MdmClientOptions): string | undefined {
-  return (
-    opts?.serviceToken?.trim() ||
+  const fromEnv =
     process.env.MDM_INTERNAL_SERVICE_TOKEN?.trim() ||
-    resolveSatelliteEventServiceToken() ||
-    undefined
-  );
+    process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN?.trim() ||
+    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+    resolveSatelliteEventServiceToken();
+  return opts?.serviceToken?.trim() || fromEnv || undefined;
 }
 
 function authHeaders(token: string): Record<string, string> {
