@@ -273,7 +273,7 @@ Prerequisite: `cd era-hotel-pms && npx prisma migrate deploy` (applies `20260603
 1. Reservation card: left panel **Nights**, **Preferred location/bed**, **Given room type**, **Contract ref** → Save → reload.
 2. Room row: **Lock**, **Search** (focuses room select), **HK** link, **Bed** icon visible.
 3. Toolbar **Attach** → upload file metadata row; **Lightning** → recalc / charge-all shortcuts.
-4. **Guests** tab: member/pay/res id columns; **Repeat guest** adds pax row.
+4. **Guests** tab: member/pay/res id columns; **Repeat guest** adds pax row; companions with `guestId` show Guest Card names (not booker copy).
 5. **Pricing** tab: currency, fix price, discount % columns on daily grid.
 6. **Folio** tab: **1st / 2nd person** filters; columns Pax, Invoice.
 7. Guest card **ID Reader** → paste JSON `{"firstName":"Test","lastName":"User"}` → Apply → fields update.

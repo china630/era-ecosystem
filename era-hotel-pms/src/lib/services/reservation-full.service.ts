@@ -16,7 +16,20 @@ const fullInclude = {
   agency: true,
   source: true,
   group: true,
-  paxGuests: { orderBy: { sortOrder: 'asc' as const } },
+  paxGuests: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      guest: {
+        select: {
+          id: true,
+          fullName: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+        },
+      },
+    },
+  },
   notes: true,
   dailyRates: { orderBy: { stayDate: 'asc' as const } },
   staySlices: { orderBy: { fromDate: 'asc' as const } },
