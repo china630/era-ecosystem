@@ -7,6 +7,7 @@ import {
   parseElektrawebDate,
   str,
 } from '@/lib/integration/elektraweb-bridge/normalize';
+import { resolveGuestIdForBridgeReservation } from '@/lib/integration/elektraweb-bridge/guest-bridge-resolve';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 import {
   applyElektrawebSharePair,
@@ -28,43 +29,6 @@ import {
 export type ReservationBridgeResult = UpsertResult & {
   events: string[];
 };
-
-async function resolveGuestId(row: Record<string, unknown>): Promise<string> {
-  const guestExt =
-    str(row.RESGUESTID) ??
-    str(row.CONTACTGUESTID) ??
-    str(row.GUESTID);
-  if (guestExt) {
-    const byRef = await prisma.guest.findFirst({ where: { externalRef: guestExt } });
-    if (byRef) return byRef.id;
-    const name =
-      str(row.GUESTNAMES) ??
-      ([str(row.NAME), str(row.LNAME)].filter(Boolean).join(' ') || `Guest ${guestExt}`);
-    const created = await prisma.guest.create({
-      data: {
-        organizationId: bridgeRequestOrganizationId(),
-        externalRef: guestExt,
-        fullName: name,
-        firstName: str(row.NAME) ?? undefined,
-        lastName: str(row.LNAME) ?? undefined,
-        phone: str(row.CONTACTPHONE) ?? str(row.PHONE) ?? undefined,
-      },
-    });
-    return created.id;
-  }
-
-  const guestName = str(row.GUESTNAMES);
-  if (guestName) {
-    const byName = await prisma.guest.findFirst({
-      where: { fullName: { equals: guestName, mode: 'insensitive' } },
-    });
-    if (byName) return byName.id;
-  }
-
-  const fallback = await prisma.guest.findFirst({ orderBy: { fullName: 'asc' } });
-  if (!fallback) throw new Error('No guests in database — sync guests first');
-  return fallback.id;
-}
 
 async function resolveRatePlanId(row: Record<string, unknown>): Promise<string> {
   const code = str(row.RATECODE) ?? str(row.RATECODEID_RATECODE);
@@ -121,7 +85,7 @@ export async function upsertReservationFromElektrawebRow(
   const { status } = mapElektrawebReservationStatus(row);
   const rawRoomNumber = str(row.ROOMNO) ?? str(row.ROOMID_ROOMNO);
   const doorNumber = physicalRoomNumber(rawRoomNumber);
-  const guestId = await resolveGuestId(row);
+  const guestId = await resolveGuestIdForBridgeReservation(row);
   const roomTypeId = await resolveRoomTypeId(row);
   const ratePlanId = await resolveRatePlanId(row);
 

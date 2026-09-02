@@ -136,7 +136,7 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 | ERA field / behavior | Elektraweb source (Excel parity) | Notes |
 |----------------------|----------------------------------|--------|
 | `Reservation.externalRef` | Res Id | Required |
-| Guest link | Guest Id preferred; name fallback last resort | Bridge must prefer Guest Id from API |
+| Guest link | Guest Id (`RESGUESTID` / `CONTACTGUESTID` / `GUESTID`); else same name matcher as Excel import | Never attach FOCP to an arbitrary first guest. Create only when EW Guest Id is new. Backfill stub `import-guest-*` / `ew-fo-name:*` refs. Sync Guest Cards before FOCP. |
 | Room type / room | Room Type, Room No | Resolve existing master data |
 | Dates | Arrival, Departure | |
 | Status | State | **Critical** for lifecycle |
@@ -384,7 +384,7 @@ Do **not** treat these ids as product defaults. Config / inbound name match on o
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3 v0.3.8; overlay login when JWT missing/expired
+  manifest.json          # MV3 v0.3.10; overlay login when JWT missing/expired; QA_EASYPMS_NOTES allowlist
   background.js          # service worker: inbound queue + POST ingest + lamp + executeScript
   injected.js / content.js
   overlay-boot.js + overlay.js + overlay-frame.html  # in-page lamp (iframe UI, EW CSS isolated)
@@ -399,7 +399,7 @@ era-hotel-pms/extensions/elektraweb-bridge/
 
 Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
 
-Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on Elektraweb for Chrome **Open as window / installed app** (no extension toolbar). v0.3.8: overlay shows ERA login + password when there is no token or JWT `exp` has passed (URL/org UUID stay in Settings). Panel UI is `overlay-frame.html`. Click overlay → Capture / Write / settings. Drag the circle if it covers SPA buttons. After Load unpacked / update: **Reload** the extension on `chrome://extensions`.
+Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on Elektraweb for Chrome **Open as window / installed app** (no extension toolbar). v0.3.10: overlay shows ERA login + password when there is no token or JWT `exp` has passed (URL/org UUID stay in Settings). Panel UI is `overlay-frame.html`. Click overlay → Capture / Write / settings. Drag the circle if it covers SPA buttons. After Load unpacked / update: **Reload** the extension on `chrome://extensions` from `era-hotel-pms/extensions/elektraweb-bridge` (not a stale copy).
 
 | Color | Meaning |
 |-------|---------|
@@ -469,7 +469,7 @@ Popup shows the same toggles plus a matching lamp.
 | Symptom | Likely cause | Mitigation |
 |---------|--------------|------------|
 | Clinic empty, hotel has guests | Upsert without lifecycle emit | Fix ingest to call check-in services on status-diff |
-| Duplicate guests | Missing Guest Id / name fallback | Prefer API Guest Id; reconcile Excel externalRef |
+| Duplicate guests | FOCP created a guest when Excel already had a name stub | Prefer EW Guest Id; name-match import stubs and backfill `externalRef`; never first-guest fallback |
 | Orphan folio lines | Res not mirrored yet | Batch order + retry queue |
 | Sync silent on one desk | Extension missing / disabled | FO PC checklist |
 | Sudden mass errors | Elektraweb upgraded (new v18.x) | Version gate + pause bridge |
