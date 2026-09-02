@@ -21,12 +21,17 @@ type Props = {
   patientRefId: string;
   episodeId?: string | null;
   readOnly?: boolean;
+  onChanged?: () => void;
+  /** Day-1 package open result from complaint POST (toast on card). */
+  onDay1Program?: (payload: unknown) => void;
 };
 
 export function PatientCardComplaints({
   patientRefId,
   episodeId,
   readOnly = false,
+  onChanged,
+  onDay1Program,
 }: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
@@ -109,11 +114,15 @@ export function PatientCardComplaints({
         setMsg(data.error ?? tc("failed"));
         return;
       }
+      const data = await res.json().catch(() => ({}));
+      const day1 = data.day1Program ?? data.data?.day1Program;
+      if (day1) onDay1Program?.(day1);
     }
     setOpen(false);
     setEditingId(null);
     setText("");
     await load();
+    onChanged?.();
   }
 
   async function remove(id: string) {
@@ -121,7 +130,10 @@ export function PatientCardComplaints({
       `/api/patients/${patientRefId}/complaints?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
-    if (res.ok) await load();
+    if (res.ok) {
+      await load();
+      onChanged?.();
+    }
   }
 
   return (

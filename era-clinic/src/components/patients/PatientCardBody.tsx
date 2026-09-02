@@ -8,6 +8,8 @@ import { PatientContraindicationsPanel } from "@/components/PatientContraindicat
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
 import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
 import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
+import { day1ProgramToastKey } from "@/lib/day1-program-toast";
+import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
 import {
   CARD_CONTAINER_CLASS,
@@ -73,6 +75,9 @@ type EpisodeOption = {
   label: string;
   status: string;
   anamnesisText: string | null;
+  programCode: string | null;
+  roomNumber: string | null;
+  patientOrigin: string;
 };
 
 const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
@@ -135,6 +140,8 @@ export function PatientCardBody({
   const [editOpen, setEditOpen] = useState(false);
   const [ciOpen, setCiOpen] = useState(false);
   const [ciCount, setCiCount] = useState(0);
+  const [careTeamCount, setCareTeamCount] = useState(0);
+  const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -145,6 +152,7 @@ export function PatientCardBody({
   );
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
+  const careTeamOk = careTeamCount > 0;
   const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
   const episodeOptions = useMemo(
     () => episodes.map((e) => ({ value: e.id, label: e.label })),
@@ -216,8 +224,13 @@ export function PatientCardBody({
     setSelectedEpisodeId(nextId);
     const ep = episodes.find((e) => e.id === nextId);
     setAnamnesis(ep?.anamnesisText ?? "");
+    setCareTeamCount(0);
     setMsg(null);
   }
+
+  const onCareTeamChange = useCallback((items: { id: string }[]) => {
+    setCareTeamCount(items.length);
+  }, []);
 
   async function saveAnamnesis() {
     if (!selectedEpisodeId || selectedEpisode?.status !== "OPEN") return;
@@ -240,7 +253,16 @@ export function PatientCardBody({
         e.id === selectedEpisodeId ? { ...e, anamnesisText: trimmed || null } : e,
       ),
     );
-    setMsg(tc("saved"));
+    const day1Key = day1ProgramToastKey(data.day1Program ?? data.data?.day1Program);
+    setMsg(day1Key ? t(day1Key) : tc("saved"));
+    setClinicalRefreshKey((n) => n + 1);
+  }
+
+  function applyDay1Toast(payload: unknown) {
+    const key = day1ProgramToastKey(
+      payload as Parameters<typeof day1ProgramToastKey>[0],
+    );
+    if (key) setMsg(t(key));
   }
 
   async function lookupMdm() {
@@ -446,96 +468,131 @@ export function PatientCardBody({
         </section>
 
         {selectedEpisode ? (
-          <section className="space-y-2">
-            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-              {t("anamnesis")}
-            </h2>
-            <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-              {selectedEpisode.status === "OPEN" ? (
-                <>
-                  <FieldTextarea
-                    label={t("anamnesis")}
-                    rows={4}
-                    value={anamnesis}
-                    onChange={(e) => setAnamnesis(e.target.value)}
-                    placeholder={t("anamnesisHint")}
-                  />
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={anamnesisSaving}
-                    onClick={() => void saveAnamnesis()}
-                  >
-                    {t("anamnesisSave")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
-                  <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
-                    <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
-                      {anamnesis.trim() || "—"}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
+          <>
+            <section className="space-y-2">
+              <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                {t("packageSummaryTitle")}
+              </h2>
+              <div className={`${CARD_CONTAINER_CLASS} space-y-1 p-4 text-sm`}>
+                <p>
+                  <span className="font-medium">{t("packageProgram")}:</span>{" "}
+                  {selectedEpisode.programCode ?? "—"}
+                </p>
+                <p>
+                  <span className="font-medium">{t("packageRoom")}:</span>{" "}
+                  {selectedEpisode.roomNumber ?? "—"}
+                </p>
+                <p>
+                  <span className="font-medium">{t("packageOrigin")}:</span>{" "}
+                  {selectedEpisode.patientOrigin}
+                </p>
+              </div>
+            </section>
+
+            <PatientCardCareTeam
+              episodeId={selectedEpisode.id}
+              readOnly={episodeReadOnly}
+              onTeamChange={onCareTeamChange}
+            />
+          </>
         ) : null}
 
-        <section className="space-y-2">
-          <div
-            className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
-              ciOpen ? "p-4" : "px-4 py-2"
-            }`}
-          >
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
-                {t("contraindicationsTitle")}
-                {ciCount > 0 ? (
-                  <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
-                    {ciCount}
-                  </span>
-                ) : null}
+        {selectedEpisode && (careTeamOk || episodeReadOnly) ? (
+          <>
+            <section className="space-y-2">
+              <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                {t("anamnesis")}
               </h2>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                aria-expanded={ciOpen}
-                onClick={() => setCiOpen((open) => !open)}
+              <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+                {selectedEpisode.status === "OPEN" ? (
+                  <>
+                    <FieldTextarea
+                      label={t("anamnesis")}
+                      rows={4}
+                      value={anamnesis}
+                      onChange={(e) => setAnamnesis(e.target.value)}
+                      placeholder={t("anamnesisHint")}
+                    />
+                    <button
+                      type="button"
+                      className={PRIMARY_BUTTON_CLASS}
+                      disabled={anamnesisSaving}
+                      onClick={() => void saveAnamnesis()}
+                    >
+                      {t("anamnesisSave")}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
+                    <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
+                      <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
+                        {anamnesis.trim() || "—"}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div
+                className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
+                  ciOpen ? "p-4" : "px-4 py-2"
+                }`}
               >
-                {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
-              </button>
-            </div>
-            <PatientContraindicationsPanel
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
+                    {t("contraindicationsTitle")}
+                    {ciCount > 0 ? (
+                      <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
+                        {ciCount}
+                      </span>
+                    ) : null}
+                  </h2>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    aria-expanded={ciOpen}
+                    onClick={() => setCiOpen((open) => !open)}
+                  >
+                    {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
+                  </button>
+                </div>
+                <PatientContraindicationsPanel
+                  patientRefId={patient.id}
+                  episodeId={selectedEpisodeId}
+                  readOnly={episodeReadOnly}
+                  expanded={ciOpen}
+                  onCountChange={setCiCount}
+                />
+              </div>
+            </section>
+
+            <PatientCardComplaints
               patientRefId={patient.id}
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
-              expanded={ciOpen}
-              onCountChange={setCiCount}
+              onChanged={() => setClinicalRefreshKey((n) => n + 1)}
+              onDay1Program={applyDay1Toast}
             />
-          </div>
-        </section>
 
-        <PatientCardComplaints
-          patientRefId={patient.id}
-          episodeId={selectedEpisodeId}
-          readOnly={episodeReadOnly}
-        />
+            <PatientCardDiagnoses
+              patientRefId={patient.id}
+              episodeId={selectedEpisodeId}
+              readOnly={episodeReadOnly}
+            />
 
-        <PatientCardDiagnoses
-          patientRefId={patient.id}
-          episodeId={selectedEpisodeId}
-          readOnly={episodeReadOnly}
-        />
-
-        <PatientCardClinicalSections
-          patientRefId={patient.id}
-          panel={panel}
-          episodeId={selectedEpisodeId}
-          readOnly={episodeReadOnly}
-          anamnesisOk={anamnesisOk}
-        />
+            <PatientCardClinicalSections
+              patientRefId={patient.id}
+              panel={panel}
+              episodeId={selectedEpisodeId}
+              readOnly={episodeReadOnly}
+              anamnesisOk={anamnesisOk}
+              refreshKey={clinicalRefreshKey}
+            />
+          </>
+        ) : null}
       </div>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>

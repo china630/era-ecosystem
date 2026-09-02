@@ -5,6 +5,10 @@ import {
   episodeWriteDenied,
   walkInCloseDenied,
 } from "@/domain/sanatorium/episode-gates";
+import {
+  CARE_TEAM_REQUIRED,
+  episodeCareTeamDenied,
+} from "@/domain/sanatorium/episode-care-team-gates";
 import { formatEpisodeLabel } from "@/domain/sanatorium/episode-resolve";
 
 describe("CLI-55 episode negative paths (W2–W4)", () => {
@@ -16,6 +20,12 @@ describe("CLI-55 episode negative paths (W2–W4)", () => {
 
   it("allows procedure path when anamnesis present", () => {
     expect(episodeAnamnesisDenied("HTN, allergy to iodine")).toBeNull();
+  });
+
+  it("CLI-56 blocks clinical work when care team empty", () => {
+    expect(episodeCareTeamDenied(0)).toMatch(/doctor/i);
+    expect(CARE_TEAM_REQUIRED).toBe("CARE_TEAM_REQUIRED");
+    expect(episodeCareTeamDenied(1)).toBeNull();
   });
 
   it("CLOSED course is read-only for writes", () => {

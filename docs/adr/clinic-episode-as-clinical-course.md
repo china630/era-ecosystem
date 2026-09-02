@@ -6,6 +6,8 @@
 
 **Coverage:** CLI-55 (**SCREEN**) · AC-CLI-EPISODE 🟡 (out of Scaffold BE rollup until field UAT)
 
+**Related:** [clinic-episode-care-team.md](./clinic-episode-care-team.md) (CLI-56 multi-doctor assign + clinical gate)
+
 Related: [nafta-episode-per-pax.md](./nafta-episode-per-pax.md) · [clinic-patient-clinical-demographics.md](./clinic-patient-clinical-demographics.md) · [clinic-icd10-catalog.md](./clinic-icd10-catalog.md) · [clinic-doctor-confirmed-fifo-planning.md](./clinic-doctor-confirmed-fifo-planning.md) · [clinic-print-forms.md](./clinic-print-forms.md) · [sanatorium-vnext.md](./sanatorium-vnext.md) · [era-clinic/PRD.md](../../era-clinic/PRD.md)
 
 ---

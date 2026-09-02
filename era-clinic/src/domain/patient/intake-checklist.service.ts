@@ -201,6 +201,32 @@ export async function getIntakeChecklist(
     }
 
     if (slot === "SANATORIUM-INTAKE") {
+      // Therapist stage: anamnesis + ≥1 complaint on this course ⇒ DONE (diagnosis optional).
+      if (opts?.episodeId) {
+        const course = await prisma.clinicalEpisode.findUnique({
+          where: { id: opts.episodeId },
+          select: {
+            anamnesisText: true,
+            _count: { select: { complaints: true } },
+          },
+        });
+        const therapistStageDone =
+          Boolean(course?.anamnesisText?.trim()) &&
+          (course?._count.complaints ?? 0) > 0;
+        if (therapistStageDone) {
+          items.push({
+            slot,
+            resolvedCode: "SANATORIUM-INTAKE",
+            kind,
+            title,
+            status: "DONE",
+            href: null,
+            recordId: null,
+          });
+          continue;
+        }
+      }
+
       const byLine = await findVisitByServiceCode(
         patientRefId,
         "SANATORIUM-INTAKE",

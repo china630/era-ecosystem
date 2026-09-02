@@ -19,6 +19,11 @@ import {
   getEpisode,
 } from "@/lib/services/sanatorium.service";
 import { ANAMNESIS_REQUIRED, episodeAnamnesisDenied } from "@/domain/sanatorium/episode-gates";
+import {
+  CARE_TEAM_REQUIRED,
+  episodeCareTeamDenied,
+} from "@/domain/sanatorium/episode-care-team-gates";
+import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 
 const complaintSchema = z.object({ text: z.string().min(1) });
 const diagnosisSchema = z.object({
@@ -90,6 +95,13 @@ export async function PATCH(
     const closed = episodeWriteDenied(episode.status);
     if (closed) return jsonError(closed, 409, { code: EPISODE_CLOSED });
 
+    if (body.anamnesisText !== undefined) {
+      const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(id));
+      if (careDenied) {
+        return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+      }
+    }
+
     const data: { anamnesisText?: string | null; anamnesisUpdatedAt?: Date | null } = {};
     if (body.anamnesisText !== undefined) {
       const trimmed = body.anamnesisText?.trim() || null;
@@ -100,7 +112,28 @@ export async function PATCH(
       where: { id },
       data,
     });
-    return jsonOk(updated);
+
+    let day1Program: Awaited<
+      ReturnType<
+        typeof import("@/domain/sanatorium/open-program-after-therapist.service").tryOpenProgramAfterTherapistStage
+      >
+    > | null = null;
+    if (body.anamnesisText !== undefined && updated.anamnesisText?.trim()) {
+      try {
+        const { tryOpenProgramAfterTherapistStage } = await import(
+          "@/domain/sanatorium/open-program-after-therapist.service"
+        );
+        day1Program = await tryOpenProgramAfterTherapistStage(id);
+      } catch (err) {
+        day1Program = {
+          opened: false,
+          reason: "INSTANTIATE_FAILED",
+        };
+        console.error("[day1] open program after anamnesis failed", id, err);
+      }
+    }
+
+    return jsonOk({ ...updated, day1Program });
   } catch (err) {
     return handleRouteError(err);
   }
@@ -126,9 +159,33 @@ export async function POST(
     const rawBody = await req.text();
     const body = rawBody ? JSON.parse(rawBody) : {};
 
+    const clinicalActions = new Set([
+      "complaint",
+      "diagnosis",
+      "lab",
+      "instantiate-program",
+      "complete-checkup",
+    ]);
+    if (action && clinicalActions.has(action)) {
+      const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(id));
+      if (careDenied) {
+        return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+      }
+    }
+
     if (action === "complaint") {
       const parsed = complaintSchema.parse(body);
-      return jsonOk(await addComplaint(id, parsed.text));
+      const row = await addComplaint(id, parsed.text);
+      let day1Program = null;
+      try {
+        const { tryOpenProgramAfterTherapistStage } = await import(
+          "@/domain/sanatorium/open-program-after-therapist.service"
+        );
+        day1Program = await tryOpenProgramAfterTherapistStage(id);
+      } catch (err) {
+        console.error("[day1] open program after complaint failed", id, err);
+      }
+      return jsonOk({ ...row, day1Program });
     }
     if (action === "diagnosis") {
       const parsed = diagnosisSchema.parse(body);

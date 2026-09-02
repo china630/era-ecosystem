@@ -68,8 +68,28 @@ export async function POST(
     }
     const closed = episodeWriteDenied(episode.status);
     if (closed) return jsonError(closed, 409, { code: EPISODE_CLOSED });
+    const {
+      CARE_TEAM_REQUIRED,
+      episodeCareTeamDenied,
+    } = await import("@/domain/sanatorium/episode-care-team-gates");
+    const { countEpisodeCareDoctors } = await import(
+      "@/domain/sanatorium/episode-care-team.service"
+    );
+    const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episode.id));
+    if (careDenied) {
+      return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+    }
     const row = await addComplaint(episode.id, body.text);
-    return jsonOk(row, 201);
+    let day1Program = null;
+    try {
+      const { tryOpenProgramAfterTherapistStage } = await import(
+        "@/domain/sanatorium/open-program-after-therapist.service"
+      );
+      day1Program = await tryOpenProgramAfterTherapistStage(episode.id);
+    } catch (err) {
+      console.error("[day1] open program after complaint failed", episode.id, err);
+    }
+    return jsonOk({ ...row, day1Program }, 201);
   } catch (err) {
     return handleRouteError(err);
   }

@@ -98,7 +98,10 @@ type Episode = {
   checkupCompletedAt: string | null;
   status: string;
   openedAt: string;
+  anamnesisText?: string | null;
   canCloseWalkIn?: boolean;
+  /** CLI-56 — at least one care-team doctor assigned. */
+  hasCareTeam?: boolean;
   patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { id: string; text: string; recordedAt: string }[];
   diagnoses: {
@@ -708,9 +711,10 @@ export default function SanatoriumPage() {
 
   const program = selected?.programInstance;
   const canCompleteCheckup =
-    selected &&
+    Boolean(selected) &&
     !program &&
-    (selected.complaints.length > 0 || selected.diagnoses.length > 0);
+    Boolean(selected?.anamnesisText?.trim()) &&
+    selected!.complaints.length > 0;
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
@@ -801,8 +805,14 @@ export default function SanatoriumPage() {
               {episodes.map((e) => {
                 const prog = e.programInstance;
                 const days = prog ? daysRemaining(prog.endsOn) : null;
+                const rowTint =
+                  e.hasCareTeam === true
+                    ? "bg-sky-50/70"
+                    : e.hasCareTeam === false
+                      ? "bg-red-50/50"
+                      : "";
                 return (
-                  <tr key={e.id} className={DATA_TABLE_TR_CLASS}>
+                  <tr key={e.id} className={`${DATA_TABLE_TR_CLASS} ${rowTint}`.trim()}>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
                     </td>
