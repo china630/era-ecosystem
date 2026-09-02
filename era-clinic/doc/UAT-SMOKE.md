@@ -364,6 +364,7 @@ Doctor card (no curl):
 3. Checkout closes both OPEN episodes.
 4. Same-SKU couple (both Standart) still two charts.
 5. Share rooms remain two reservations (regression).
+6. **Idempotency:** duplicate `CHECKED_IN` / from-stay for the same reservation + pax (or primary without MDM) must **not** create a second `P-*` / OPEN episode — reopen the existing stay (`hotelStayId` + Serializable).
 
 ## Episode as care course (CLI-55) — SCREEN
 
