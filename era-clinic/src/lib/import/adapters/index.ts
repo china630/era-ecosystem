@@ -201,6 +201,14 @@ async function ensureCutoverEpisode(tx: ImportTx, patientId: string) {
   });
 }
 
+function isPrismaRecordNotFound(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; message?: string; name?: string };
+  if (e.code === "P2025") return true;
+  const msg = String(e.message ?? "");
+  return /No record was found for an update/i.test(msg) || /Record to update not found/i.test(msg);
+}
+
 async function upsertByRef(
   tx: ImportTx,
   entity: string,
@@ -212,8 +220,16 @@ async function upsertByRef(
   const existingId = await findImportRecordId(tx, entity, ref);
   if (dryRun) return existingId ? "updated" : "created";
   if (existingId) {
-    await update(existingId);
-    return "updated";
+    try {
+      await update(existingId);
+      return "updated";
+    } catch (err) {
+      // Stale CutoverImportKey after wipe/delete: key points at missing row.
+      if (!isPrismaRecordNotFound(err)) throw err;
+      console.warn(
+        `[import:${entity}] stale key for ${ref} → recreate (missing ${existingId})`,
+      );
+    }
   }
   const id = await create();
   await bindImportRecord(tx, entity, ref, id, false);

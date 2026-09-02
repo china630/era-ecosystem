@@ -14,15 +14,16 @@ export type InstantiateIntakeResult = {
   skippedLabCodes: string[];
 };
 
-async function resolveDefaultPractitioner(
-  organizationId: string,
+/** Prefer first care-team doctor (CLI-56). Do not invent “first DOCTOR by code”. */
+async function resolveCareTeamPractitioner(
+  episodeId: string,
 ): Promise<string | null> {
-  const doc = await prisma.practitioner.findFirst({
-    where: { organizationId, active: true, staffKind: "DOCTOR" },
-    orderBy: { code: "asc" },
-    select: { id: true },
+  const row = await prisma.episodeCareDoctor.findFirst({
+    where: { episodeId },
+    orderBy: { assignedAt: "asc" },
+    select: { practitionerId: true },
   });
-  return doc?.id ?? null;
+  return row?.practitionerId ?? null;
 }
 
 async function hasVisitLine(
@@ -93,7 +94,7 @@ export async function instantiateIntakePackage(
   const createdLabCodes: string[] = [];
   const skippedLabCodes: string[] = [];
 
-  const practitionerId = await resolveDefaultPractitioner(organizationId);
+  const practitionerId = await resolveCareTeamPractitioner(episodeId);
   const visitCodes = naftaIntakeVisitCodes(sex);
 
   for (const code of visitCodes) {
@@ -102,6 +103,7 @@ export async function instantiateIntakePackage(
       continue;
     }
 
+    // CLI-56: no care-team doctor yet → skip intake visits (labs still ok).
     if (!practitionerId) {
       skippedVisitCodes.push(code);
       continue;

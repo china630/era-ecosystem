@@ -152,6 +152,8 @@ type Props = {
   /** When false, confirm procedures buttons are disabled (ANAMNESIS_REQUIRED). */
   anamnesisOk?: boolean;
   readOnly?: boolean;
+  /** Bump to reload card-summary (intake checklist after anamnesis/complaint). */
+  refreshKey?: number;
 };
 
 export function PatientCardClinicalSections({
@@ -160,6 +162,7 @@ export function PatientCardClinicalSections({
   episodeId,
   anamnesisOk = true,
   readOnly = false,
+  refreshKey = 0,
 }: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
@@ -292,7 +295,7 @@ export function PatientCardClinicalSections({
     setSummary(row);
     mergePhysioFromEvents([...(row.proposedPreview ?? []), ...(row.planPreview ?? [])]);
     setLoading(false);
-  }, [patientRefId, episodeId, mergePhysioFromEvents]);
+  }, [patientRefId, episodeId, mergePhysioFromEvents, refreshKey]);
 
   async function patchPhysio(
     orderId: string,

@@ -230,6 +230,19 @@ export async function POST(req: Request) {
       const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
         "@/domain/sanatorium/episode-gates"
       );
+      const {
+        CARE_TEAM_REQUIRED,
+        episodeCareTeamDenied,
+      } = await import("@/domain/sanatorium/episode-care-team-gates");
+      const { countEpisodeCareDoctors } = await import(
+        "@/domain/sanatorium/episode-care-team.service"
+      );
+      const careDenied = episodeCareTeamDenied(
+        await countEpisodeCareDoctors(clinicalEpisodeId),
+      );
+      if (careDenied) {
+        return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+      }
       const denied = episodeAnamnesisDenied(episode?.anamnesisText);
       if (denied) {
         return jsonError(denied, 409, { code: ANAMNESIS_REQUIRED });

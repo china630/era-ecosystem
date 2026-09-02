@@ -80,7 +80,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — identity registry (full base, `episodeStatus=ALL`): filter bar sex (no Other) / blood / age min·max inclusive ≥/≤ / MDM filter·column **only platform Super-Admin**; grid shows clinic-native **`P-######`**, sex **K/Q**, thin **Open course** badge (no room/package/check-in columns); one server paginator. **Register patient**: Ad / Ata adı / Soyad (`firstName` / `middleName` / `lastName`); save composes `fullName`; nationality empty default; sex M/F/unknown only; **FIN or passport+country required** (phone alone rejected). Re-save without middle name → MDM fill-not-clear. **Open card** modal — identity + episode selector; contraindications title **inside** amber box; complaints `+ Şikayət` / ICD `+ Diaqnoz` outside cards; results print **per row only** (no header checkup print); intake checklist has **no** block print; **Klinik tarixçə** — type (All / Appointments / Visits / Exams / Labs) + period default 30d; compact cards + print. Course room/program ops live on **`/sanatorium`**. **`/patients/[id]`** via shared `PatientCardBody`.
+3. **`/patients`** — identity registry (full base, `episodeStatus=ALL`): filter bar sex (no Other) / blood / age min·max inclusive ≥/≤ / MDM filter·column **only platform Super-Admin**; grid shows clinic-native **`P-######`**, sex **K/Q**, thin **Open course** badge (no room/package/check-in columns); one server paginator. **MDM soft fill on list load:** only rows on the current page with `globalPersonId` **and** a hole (sex UNKNOWN / no DOB / missing Ad or Soyad) get one `ops-profile/batch`; reception-filled fields are never overwritten (fill-not-clear). **Register patient**: Ad / Ata adı / Soyad (`firstName` / `middleName` / `lastName`); save composes `fullName`; nationality empty default; sex M/F/unknown only; **FIN or passport+country required** (phone alone rejected). Re-save without middle name → MDM fill-not-clear. **Open card** modal — identity + episode selector; contraindications title **inside** amber box; complaints `+ Şikayət` / ICD `+ Diaqnoz` outside cards; results print **per row only** (no header checkup print); intake checklist has **no** block print; **Klinik tarixçə** — type (All / Appointments / Visits / Exams / Labs) + period default 30d; compact cards + print. Course room/program ops live on **`/sanatorium`**. **`/patients/[id]`** via shared `PatientCardBody`.
 4. **`/appointments`** — practitioner day matrix; click free cell → **New appointment** modal (prefilled); occupied → check-in / cancel; DnD reschedule.
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
@@ -378,4 +378,19 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 4. `/sanatorium` Close on idle WALK_IN; refuse when live procedures or open labs remain (no silent cancel).
 5. Returning guest intake creates ECG/USG on the **new** episode (does not skip last year’s labs).
 6. Print checkup/procedures with `?episode=` for a past course does not mix the new stay.
+
+## Episode care team (CLI-56) — SCREEN
+
+**Status:** SCREEN. Not SHIPPED. ADR: [clinic-episode-care-team.md](../../docs/adr/clinic-episode-care-team.md).
+
+1. Reception opens patient card from `/sanatorium` → sees identity + package + **Care team** only.
+2. **+ Doctor** (therapist / gyn / uro …) → Save → doctor with assigned-only scope sees the course on `/sanatorium`.
+3. Clinical blocks (anamnesis, CI, complaints/ICD, plan/confirm) appear only after ≥1 care-team doctor.
+4. Empty care team → API `409 CARE_TEAM_REQUIRED` on anamnesis / complaints / diagnoses / complete-checkup / procedure assign.
+5. Doctor already on team can **+ Doctor** peers; first assign requires RECEPTION/admin (`scope:episodes.all`).
+6. Appointments linkage deferred (Pattern B `/appointments` unchanged).
+7. `SANATORIUM-INTAKE` checklist → **Keçdi/Passed** when OPEN episode has anamnesis + ≥1 complaint (diagnosis optional).
+8. Same trigger **auto-opens** stay `programCode` as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) — do not wait for labs. Then Confirm 2–3.
+9. `/sanatorium` list rows: light sky tint when care team assigned; light red tint when not.
+10. If episode has no `programCode`, proposed stays empty until package is set (walk-in Select / hotel product).
 

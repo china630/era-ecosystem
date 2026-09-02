@@ -340,6 +340,7 @@ model Practitioner {
   scheduleExceptions PractitionerScheduleException[]
   dutyLines          StaffDutyLine[]
   absences           StaffAbsence[]
+  episodeCareRows    EpisodeCareDoctor[]
   @@unique([organizationId, code])
   @@index([organizationId])
   @@index([staffKind])
@@ -780,10 +781,28 @@ model ClinicalEpisode {
   visits              Visit[]
   procedureOrders     ProcedureOrder[]
   programInstance     ProgramInstance?
+  /// CLI-56 — doctors on this course (therapist, gyn, uro, …).
+  careDoctors         EpisodeCareDoctor[]
 
   @@index([reservationId])
   @@index([organizationId, status])
   @@index([reservationId, patientRefId, status])
+}
+
+/// CLI-56 — multi-doctor care team for a sanatorium / walk-in course.
+model EpisodeCareDoctor {
+  id               String          @id @default(cuid())
+  episodeId        String          @map("episode_id")
+  practitionerId   String          @map("practitioner_id")
+  assignedAt       DateTime        @default(now()) @map("assigned_at")
+  assignedByUserId String?         @map("assigned_by_user_id")
+  episode          ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  practitioner     Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@unique([episodeId, practitionerId])
+  @@index([practitionerId])
+  @@index([episodeId, assignedAt])
+  @@map("episode_care_doctor")
 }
 
 model ClinicalComplaint {

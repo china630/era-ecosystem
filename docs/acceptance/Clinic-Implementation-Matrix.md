@@ -57,6 +57,7 @@ Do not call this table «product readiness».
 | CLI-32 / CLI-34 / CLI-25 | Nafta intake checklist + Baku slots | Out of BE plan | `PKG-NAFTA-INTAKE` card/print + live instantiate; `#23` `parseBakuDateTime(+04:00)` + PLAN/now `gte now` — UAT punch in `UAT-SMOKE.md` |
 | Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 | CLI-55 / AC-CLI-EPISODE | Episode as care course | Out of BE plan | ADR `clinic-episode-as-clinical-course`; SCREEN W1–W5; AC stays 🟡 until field UAT; do not reopen AC-CLI-PT demographics anamnesis |
+| CLI-56 | Episode care team (multi-doctor) | Out of BE plan | ADR `clinic-episode-care-team`; SCREEN; assigned-only scope + card gate; appointments link deferred |
 
 ### Negative-path proof index
 

@@ -98,6 +98,17 @@ export async function POST(
     if (closed) {
       return jsonError(closed, 409, { code: EPISODE_CLOSED });
     }
+    const {
+      CARE_TEAM_REQUIRED,
+      episodeCareTeamDenied,
+    } = await import("@/domain/sanatorium/episode-care-team-gates");
+    const { countEpisodeCareDoctors } = await import(
+      "@/domain/sanatorium/episode-care-team.service"
+    );
+    const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episode.id));
+    if (careDenied) {
+      return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+    }
     const row = await prisma.patientContraindication.create({
       data: {
         patientRefId: id,
