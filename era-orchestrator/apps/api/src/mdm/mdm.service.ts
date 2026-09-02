@@ -48,7 +48,7 @@ import {
   verifyGuestIdentityToken,
 } from "../common/utils/guest-identity.util";
 import {
-  assertInternalServiceToken,
+  assertMatchingServiceToken,
   maskPhone,
 } from "../common/utils/internal-service-token.util";
 import * as QRCode from "qrcode";
@@ -95,11 +95,8 @@ export class MdmService {
     authorization: string | undefined,
     xServiceToken?: string,
   ): void {
-    assertInternalServiceToken(
-      authorization,
-      "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN",
-      xServiceToken,
-    );
+    // Satellites call MDM with SATELLITE_EVENT_SERVICE_TOKEN; Finance uses CONTROL_PLANE_*.
+    assertMatchingServiceToken(authorization, xServiceToken);
   }
 
   /** Follow merge alias chain to canonical person id. */
