@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ERA Elektraweb Bridge",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "Temporary dual-run: Elektraweb ↔ ERA (inbound mirror + sanatorium SPA extra Insert)",
   "permissions": ["storage", "alarms", "scripting", "tabs", "webNavigation"],
   "host_permissions": [

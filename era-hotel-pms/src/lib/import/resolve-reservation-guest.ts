@@ -162,6 +162,77 @@ function pickUniqueId(ids: Set<string> | null): string | null {
   return [...ids][0] ?? null;
 }
 
+/** Match one FO name fragment (`Guest Name` part) to a single Guest.id. */
+export function resolveGuestIdForNamePart(
+  part: string,
+  lookup: Map<string, Set<string>>,
+): string | null {
+  return (
+    pickUniqueId(lookupExact(part, lookup)) ?? pickUniqueId(lookupSafeFold(part, lookup))
+  );
+}
+
+export type PlannedImportPaxRow = {
+  guestId: string | null;
+  displayName: string;
+  isPrimary: boolean;
+  sortOrder: number;
+};
+
+/**
+ * Build party rows from split `Guest Name` parts.
+ * Primary guest is always `primaryGuestId` (from Guest Id column / import resolver).
+ */
+export function planReservationPaxFromParts(
+  parts: string[],
+  primaryGuestId: string,
+  lookup: Map<string, Set<string>>,
+): PlannedImportPaxRow[] {
+  if (!parts.length) {
+    return [
+      {
+        guestId: primaryGuestId,
+        displayName: '',
+        isPrimary: true,
+        sortOrder: 0,
+      },
+    ];
+  }
+
+  const partIds = parts.map((part) => resolveGuestIdForNamePart(part, lookup));
+  let primaryIdx = partIds.findIndex((id) => id === primaryGuestId);
+  if (primaryIdx < 0) primaryIdx = 0;
+  partIds[primaryIdx] = primaryGuestId;
+
+  const seenGuestIds = new Set<string>();
+  const rows: PlannedImportPaxRow[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const guestId = partIds[i] ?? null;
+    if (guestId) {
+      if (seenGuestIds.has(guestId)) continue;
+      seenGuestIds.add(guestId);
+    }
+    rows.push({
+      guestId,
+      displayName: parts[i] ?? '',
+      isPrimary: i === primaryIdx,
+      sortOrder: rows.length,
+    });
+  }
+
+  if (!rows.some((r) => r.isPrimary)) {
+    rows.unshift({
+      guestId: primaryGuestId,
+      displayName: parts[primaryIdx] ?? '',
+      isPrimary: true,
+      sortOrder: 0,
+    });
+    return rows.map((row, i) => ({ ...row, sortOrder: i }));
+  }
+
+  return rows;
+}
+
 function resolveUniqueFromLookup(
   guestName: string | null | undefined,
   lookup: Map<string, Set<string>>,
@@ -214,6 +285,11 @@ async function ensureGuestLookup(tx: ImportTx): Promise<Map<string, Set<string>>
   });
   lookupCache = buildGuestNameLookup(rows);
   return lookupCache;
+}
+
+/** Shared name index for reservation import (cached per batch). */
+export async function getGuestImportNameLookup(tx: ImportTx): Promise<Map<string, Set<string>>> {
+  return ensureGuestLookup(tx);
 }
 
 /**

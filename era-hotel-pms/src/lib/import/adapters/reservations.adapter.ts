@@ -16,6 +16,7 @@ import {
   physicalRoomNumber,
 } from '@/lib/integration/elektraweb-share-map';
 import { resolveGuestIdForReservationImport } from '@/lib/import/resolve-reservation-guest';
+import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
@@ -42,7 +43,8 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   label: 'Reservations',
   order: 11,
   permission: PERMISSIONS.RESERVATIONS_WRITE,
-  templateHint: '11-Reservations.xlsx — EW FOCP (+ Guest Id from enrich-reservations-guest-id.ts)',
+  templateHint:
+    '11-Reservations.xlsx — EW FOCP (+ Guest Id enrich). Multi-name `A / B` → ReservationGuest party on one Res Id.',
   headerAliases: {
     'Res Id': 'externalRef',
     'Guest Id': 'guestExternalRef',
@@ -201,6 +203,16 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (isSecond && !pair.applied && pair.skippedReason) {
       console.warn(
         `[import:reservations] share pair skipped for ${row.externalRef}: ${pair.skippedReason}`,
+      );
+    }
+
+    const pax = await syncReservationPaxFromImport(tx, reservation.id, {
+      primaryGuestId: guestId,
+      guestName: row.guestName,
+    });
+    if (pax.paxCount > 1) {
+      console.info(
+        `[import:reservations] Res ${row.externalRef}: ${pax.paxCount} pax (${pax.linkedCount} linked to Guest Cards)`,
       );
     }
 

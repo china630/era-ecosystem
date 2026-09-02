@@ -34,7 +34,7 @@
     if (!objectName) return 'unknown';
     if (/GUEST/i.test(objectName)) return 'guest';
     if (/FOLIO|FOLIOTRANS|FOLIOACTION/i.test(objectName)) return 'folio';
-    if (/RESERVATION|RESDETAIL|RES_/i.test(objectName)) return 'reservation';
+    if (/RESERVATION|RESDETAIL|RES_|NOTES/i.test(objectName)) return 'reservation';
     return 'unknown';
   }
 
