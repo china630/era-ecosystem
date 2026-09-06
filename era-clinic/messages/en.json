@@ -283,6 +283,7 @@
     "confirmDelete": "Delete this record?",
     "saved": "Saved",
     "confirm": "Confirm",
+    "close": "Close",
     "datePlaceholder": "dd.mm.yyyy",
     "openCalendar": "Open calendar",
     "rowsPerPage": "Rows per page",
@@ -1217,7 +1218,18 @@
     "addTitle": "Add contraindication",
     "removeTitle": "Remove contraindication",
     "noteOptional": "Note (optional)",
-    "empty": "No contraindicated zones"
+    "empty": "No contraindicated zones",
+    "parts": {
+      "HEAD": "Head",
+      "NECK": "Neck",
+      "CHEST": "Chest",
+      "BACK": "Back",
+      "ABDOMEN": "Abdomen",
+      "ARM_LEFT": "Left arm",
+      "ARM_RIGHT": "Right arm",
+      "LEG_LEFT": "Left leg",
+      "LEG_RIGHT": "Right leg"
+    }
   },
   "visits": {
     "completeConfirmTitle": "Complete visit",
@@ -1514,6 +1526,7 @@
     "diagnosesTitle": "ICD-10 diagnoses",
     "complaintsTitle": "Complaints",
     "addComplaint": "+ Complaint",
+    "addAnamnesis": "+ Anamnesis",
     "addDiagnosis": "+ Diagnosis",
     "complaintsNoEpisode": "No care course — open sanatorium to register.",
     "diagnosesNoEpisode": "No active sanatorium episode — diagnoses are recorded on an open course.",

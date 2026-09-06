@@ -485,6 +485,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-07 | Clinic: packageQuotaCode on ProcedureOrder + clinical author practitioner on anamnesis/complaints/diagnoses; pool SKU picker in package assign. |
 | 2026-09-07 | Platform commercial catalog freeze (19/29/39/99 AZN); clinic commercial SKUs + hotel/clinic sanatorium XOR. ADR era-commercial-catalog. |
 | 2026-09-07 | HOT-CL-06 company profile + `/front-cash/company-ledger`; HOT-CASH-07/08 folio balances + journal; Agency.settlementMode. Status API / SCREEN — not SHIPPED. |
 | 2026-09-06 | FO laundry grid+filters; room-changes journal + card/plan relocate hint; reservation-times actual CI/CO + guest/agency, sort actual CI desc. |

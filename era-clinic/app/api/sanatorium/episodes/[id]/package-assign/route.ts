@@ -25,6 +25,8 @@ const lineSchema = z.object({
   siteLaterality: z
     .record(z.enum(["LEFT", "RIGHT", "BOTH"]).nullable())
     .optional(),
+  /** Burn PHYSIO_POOL / PARAFFIN_POOL balance; procedureCode stays the real SKU. */
+  burnPoolCode: z.string().min(1).optional().nullable(),
 });
 
 const assignSchema = z.object({

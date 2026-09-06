@@ -688,7 +688,11 @@ export async function listInHouseEpisodes(organizationId?: string) {
   return result.data;
 }
 
-export async function addComplaint(episodeId: string, text: string) {
+export async function addComplaint(
+  episodeId: string,
+  text: string,
+  opts?: { recordedByPractitionerId?: string | null },
+) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
     select: { status: true },
@@ -708,7 +712,14 @@ export async function addComplaint(episodeId: string, text: string) {
     throw err;
   }
   return prisma.clinicalComplaint.create({
-    data: { episodeId, text },
+    data: {
+      episodeId,
+      text,
+      recordedByPractitionerId: opts?.recordedByPractitionerId ?? null,
+    },
+    include: {
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
@@ -716,6 +727,9 @@ export async function listEpisodeComplaints(episodeId: string) {
   return prisma.clinicalComplaint.findMany({
     where: { episodeId },
     orderBy: { recordedAt: "desc" },
+    include: {
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
@@ -763,12 +777,20 @@ export async function updateEpisodeComplaint(
   return prisma.clinicalComplaint.update({
     where: { id },
     data: { text: text.trim() },
+    include: {
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
 export async function addDiagnosis(
   episodeId: string,
-  input: { icdCodeId: string; note?: string | null; recordedByUserId?: string | null },
+  input: {
+    icdCodeId: string;
+    note?: string | null;
+    recordedByUserId?: string | null;
+    recordedByPractitionerId?: string | null;
+  },
 ) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
@@ -860,8 +882,20 @@ export async function getEpisode(id: string) {
     where: { id },
     include: {
       patientRef: true,
-      complaints: { orderBy: { recordedAt: 'desc' } },
-      diagnoses: { orderBy: { recordedAt: 'desc' }, include: { icdCode: true } },
+      complaints: {
+        orderBy: { recordedAt: "desc" },
+        include: {
+          recordedByPractitioner: { select: { fullName: true, specialty: true } },
+        },
+      },
+      diagnoses: {
+        orderBy: { recordedAt: "desc" },
+        include: {
+          icdCode: true,
+          recordedByPractitioner: { select: { fullName: true, specialty: true } },
+        },
+      },
+      anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
       labOrders: {
         orderBy: { createdAt: 'desc' },
         include: {

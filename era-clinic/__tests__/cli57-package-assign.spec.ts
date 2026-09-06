@@ -2,6 +2,9 @@ import {
   bakuDayKey,
   PackageAssignError,
   paramsLabelFromOrder,
+  isPackagePoolCode,
+  eligibleSkusForPool,
+  isPackageAssignTreatmentLine,
 } from "@/domain/sanatorium/package-assign.service";
 import { applyQuotaRecalc } from "@/lib/program-quota";
 import { extraNeedsPaperTicket } from "@/domain/procedure/extra-ticket";
@@ -17,6 +20,54 @@ describe("CLI-57 package assign helpers", () => {
     const err = new PackageAssignError("quota", "QUOTA_EXCEEDED", 400);
     expect(err.code).toBe("QUOTA_EXCEEDED");
     expect(err.status).toBe(400);
+  });
+
+  it("isPackagePoolCode detects PHYSIO_POOL / PARAFFIN_POOL / *_POOL", () => {
+    expect(isPackagePoolCode("PHYSIO_POOL")).toBe(true);
+    expect(isPackagePoolCode("PARAFFIN_POOL")).toBe(true);
+    expect(isPackagePoolCode("OTHER_POOL")).toBe(true);
+    expect(isPackagePoolCode("SVC-OZONE")).toBe(false);
+    expect(isPackagePoolCode("NAFTALAN")).toBe(false);
+  });
+
+  it("isPackageAssignTreatmentLine keeps pools/WO/SVC, drops labs and exams", () => {
+    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(true);
+    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(true);
+    expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
+    expect(isPackageAssignTreatmentLine("SVC-OZONE", "Ozone")).toBe(true);
+    expect(isPackageAssignTreatmentLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);
+
+    expect(isPackageAssignTreatmentLine("ALT", "ALAT")).toBe(false);
+    expect(isPackageAssignTreatmentLine("AST", "ASAT")).toBe(false);
+    expect(isPackageAssignTreatmentLine("GLU", "Şəkər qanda")).toBe(false);
+    expect(isPackageAssignTreatmentLine("ECG", "EKQ ve kardiolog muayinesi")).toBe(false);
+    expect(isPackageAssignTreatmentLine("GYN", "Ginekolog/urolog muayinesi")).toBe(false);
+    expect(isPackageAssignTreatmentLine("NEURO", "Nevropatolog muayinesi")).toBe(false);
+    expect(isPackageAssignTreatmentLine("LAB-CBC", "Qan umumi analiz")).toBe(false);
+    expect(isPackageAssignTreatmentLine("LAB-URINE", "Sidik")).toBe(false);
+    expect(isPackageAssignTreatmentLine("THERAPIST", "Hekim muayinesi")).toBe(false);
+  });
+
+  it("eligibleSkusForPool paraffin vs physio and excludes dedicated balances", () => {
+    const types = [
+      { code: "SVC-PARAFIN-ARM", name: "Parafin qol", needsSite: true, active: true },
+      { code: "SVC-OZONE", name: "Ozone", needsSite: true, active: true },
+      { code: "SVC-NAFTALAN", name: "Naftalan", needsSite: true, active: true },
+      { code: "SVC-LAB-CBC", name: "CBC", needsSite: false, active: true },
+      { code: "PHYSIO_POOL", name: "Pool", needsSite: false, active: true },
+    ];
+    const balances = ["PHYSIO_POOL", "PARAFFIN_POOL", "SVC-NAFTALAN"];
+
+    const paraffin = eligibleSkusForPool("PARAFFIN_POOL", balances, types);
+    expect(paraffin.map((s) => s.code)).toEqual(["SVC-PARAFIN-ARM"]);
+
+    const physio = eligibleSkusForPool("PHYSIO_POOL", balances, types);
+    const codes = physio.map((s) => s.code);
+    expect(codes).toContain("SVC-OZONE");
+    expect(codes).not.toContain("SVC-PARAFIN-ARM");
+    expect(codes).not.toContain("SVC-NAFTALAN");
+    expect(codes).not.toContain("PHYSIO_POOL");
+    expect(codes).not.toContain("SVC-LAB-CBC");
   });
 
   it("applyQuotaRecalc never shrinks below used (stay shorten over-consume)", () => {

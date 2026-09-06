@@ -1848,6 +1848,7 @@ export default function SanatoriumPage() {
               replaceSubmit: t("replaceSubmit", { defaultValue: "Replace" }),
               qtyDown: t("qtyDown", { defaultValue: "−1" }),
               checkedInLocked: t("checkedInLocked", { defaultValue: "Checked in" }),
+              pickPoolSku: t("pickProcedure", { defaultValue: "Procedure" }),
             }}
           />
           <ExtrasAssignModal

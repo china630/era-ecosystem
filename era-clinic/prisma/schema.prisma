@@ -344,6 +344,9 @@ model Practitioner {
   dutyDayOverrides   StaffDutyDayOverride[]
   absences           StaffAbsence[]
   episodeCareRows    EpisodeCareDoctor[]
+  anamnesisEpisodes  ClinicalEpisode[] @relation("EpisodeAnamnesisAuthor")
+  authoredComplaints ClinicalComplaint[] @relation("ComplaintAuthor")
+  authoredDiagnoses  ClinicalDiagnosis[] @relation("DiagnosisAuthor")
   @@unique([organizationId, code])
   @@index([organizationId])
   @@index([staffKind])
@@ -774,6 +777,9 @@ model ClinicalEpisode {
   /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
   anamnesisText       String?             @map("anamnesis_text") @db.Text
   anamnesisUpdatedAt  DateTime?           @map("anamnesis_updated_at")
+  /// Practitioner who first wrote anamnesis (kept on later edits).
+  anamnesisByPractitionerId String?       @map("anamnesis_by_practitioner_id")
+  anamnesisByPractitioner   Practitioner? @relation("EpisodeAnamnesisAuthor", fields: [anamnesisByPractitionerId], references: [id], onDelete: SetNull)
   status              String              @default("OPEN")
   openedAt            DateTime            @default(now())
   closedAt            DateTime?
@@ -790,6 +796,7 @@ model ClinicalEpisode {
   @@index([reservationId])
   @@index([organizationId, status])
   @@index([reservationId, patientRefId, status])
+  @@index([anamnesisByPractitionerId])
 }
 
 /// CLI-56 — multi-doctor care team for a sanatorium / walk-in course.
@@ -814,8 +821,11 @@ model ClinicalComplaint {
   episode    ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   text       String
   recordedAt DateTime        @default(now())
+  recordedByPractitionerId String?       @map("recorded_by_practitioner_id")
+  recordedByPractitioner   Practitioner? @relation("ComplaintAuthor", fields: [recordedByPractitionerId], references: [id], onDelete: SetNull)
 
   @@index([episodeId])
+  @@index([recordedByPractitionerId])
 }
 
 model ClinicalDiagnosis {
@@ -827,9 +837,12 @@ model ClinicalDiagnosis {
   note             String?
   recordedAt       DateTime        @default(now())
   recordedByUserId String?         @map("recorded_by_user_id")
+  recordedByPractitionerId String?       @map("recorded_by_practitioner_id")
+  recordedByPractitioner   Practitioner? @relation("DiagnosisAuthor", fields: [recordedByPractitionerId], references: [id], onDelete: SetNull)
 
   @@index([episodeId])
   @@index([icdCodeId])
+  @@index([recordedByPractitionerId])
 }
 
 enum IcdCodeKind {
@@ -1414,6 +1427,8 @@ model ProcedureOrder {
   assignBatchId    String?              @map("assign_batch_id")
   /// CLI-57: true = burns package quota; false = paid extra / over-quota folio.
   inPackage        Boolean              @default(false) @map("in_package")
+  /// CLI-57: package balance line burned (PHYSIO_POOL / PARAFFIN_POOL / same as procedureCode).
+  packageQuotaCode String?              @map("package_quota_code")
   /// Clinic reception confirmed guest payment receipt before Pay (walk-in / extras).
   paymentReceiptRef String?             @map("payment_receipt_ref")
   quantity         Int                  @default(1)
@@ -1465,6 +1480,7 @@ model ProcedureOrder {
   @@index([extraTicketId])
   @@index([assignBatchId])
   @@index([inPackage])
+  @@index([packageQuotaCode])
 }
 
 model ProcedureAllocation {

@@ -27,6 +27,126 @@ export class PackageAssignError extends Error {
 const IN_CIRCULATION = ["SCHEDULED", "CHECKED_IN"] as const;
 const CONSUMED = ["COMPLETED", "NO_SHOW"] as const;
 
+/** Nafta PDF bucket codes — entitlement only, never ProcedureOrder.procedureCode. */
+export const PACKAGE_POOL_CODES = ["PHYSIO_POOL", "PARAFFIN_POOL"] as const;
+export type PackagePoolCode = (typeof PACKAGE_POOL_CODES)[number];
+
+export function isPackagePoolCode(code: string): boolean {
+  return (PACKAGE_POOL_CODES as readonly string[]).includes(code) || /_POOL$/i.test(code);
+}
+
+function foldHay(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g");
+}
+
+/**
+ * CLI-57 package assign left menu = treatment entitlements only.
+ * Intake labs / doctor exams stay on ProgramProcedureBalance for quota truth but are out of scope
+ * for this modal (ADR clinic-episode-procedure-assign-modal — intake on separate card blocks).
+ */
+export function isPackageAssignTreatmentLine(code: string, name?: string | null): boolean {
+  const c = code.trim().toUpperCase();
+  if (!c) return false;
+  if (isPackagePoolCode(c)) return true;
+  if (c.startsWith("WO-TR-") || c.startsWith("SVC-")) return true;
+  if (c.includes("NAFTALAN") || c === "PHYSIO_PAID") return true;
+
+  // Explicit PDF / knot intake + lab + visit codes
+  const intakeExact = new Set([
+    "ALT",
+    "AST",
+    "GLU",
+    "ECG",
+    "ECG-12",
+    "USG",
+    "USG-ABD",
+    "THERAPIST",
+    "NEURO",
+    "GYN",
+    "URO",
+    "GYN-OR-URO",
+    "GYN-VISIT",
+    "URO-VISIT",
+    "SANATORIUM-INTAKE",
+    "LAB_PAID",
+    "LAB-CBC",
+    "LAB-URINE",
+    "LAB-SEROLOGY-CARD",
+  ]);
+  if (intakeExact.has(c)) return false;
+  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return false;
+  if (c.startsWith("VISIT-") || c.endsWith("-VISIT")) return false;
+
+  const hay = foldHay(`${c} ${name ?? ""}`);
+  if (
+    /muayin|analiz|alat|asat|sekar|sidik|ekq|usm|kardiolog|ginekolog|urolog|nevropatolog|hekim\b|hbsag|serolog/.test(
+      hay,
+    )
+  ) {
+    return false;
+  }
+
+  // Unknown PDF-* leftovers: only keep if not clearly intake-shaped
+  if (c.startsWith("PDF-")) return false;
+
+  // Conservative: do not surface OTHER/DIAGNOSTIC/LAB-shaped codes in the assign menu
+  return false;
+}
+
+function isParaffinType(code: string, name: string): boolean {
+  const hay = foldHay(`${code} ${name}`);
+  return /parafin|paraffin/.test(hay);
+}
+
+export type PoolEligibleSku = { code: string; name: string };
+
+/**
+ * Which real ProcedureTypes may burn a pool balance line.
+ * PARAFFIN_POOL → paraffin SKUs only.
+ * PHYSIO_POOL → needsSite (or SVC-*) minus paraffin and minus codes that already have their own non-pool package line.
+ */
+export function eligibleSkusForPool(
+  poolCode: string,
+  packageBalanceCodes: string[],
+  types: Array<{ code: string; name: string; needsSite?: boolean | null; active?: boolean | null }>,
+): PoolEligibleSku[] {
+  const dedicated = new Set(
+    packageBalanceCodes.filter((c) => !isPackagePoolCode(c)),
+  );
+  const active = types.filter((t) => t.active !== false);
+  if (poolCode === "PARAFFIN_POOL" || /paraffin/i.test(poolCode)) {
+    return active
+      .filter((t) => isParaffinType(t.code, t.name))
+      .map((t) => ({ code: t.code, name: t.name }));
+  }
+  // PHYSIO_POOL and other *_POOL catch-alls
+  return active
+    .filter((t) => {
+      if (dedicated.has(t.code)) return false;
+      if (isParaffinType(t.code, t.name)) return false;
+      if (isPackagePoolCode(t.code)) return false;
+      if (t.needsSite === true) return true;
+      // Broad physio/treatment SVC catalog (Nafta seed)
+      if (/^SVC-/i.test(t.code) && !/LAB|USM|ECG|ALT|AST|GLU|CBC|URINE/i.test(t.code)) {
+        return true;
+      }
+      return false;
+    })
+    .map((t) => ({ code: t.code, name: t.name }));
+}
+
+function quotaCodeOf(o: { packageQuotaCode?: string | null; procedureCode: string }): string {
+  return o.packageQuotaCode?.trim() || o.procedureCode;
+}
+
 function newBatchId(): string {
   return `batch_${randomBytes(8).toString("hex")}`;
 }
@@ -103,6 +223,8 @@ export type PackageBalanceRow = {
   remaining: number;
   inCirculation: number;
   consumed: number;
+  /** True for PHYSIO_POOL / PARAFFIN_POOL — not a bookable SKU. */
+  isPool: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -114,6 +236,8 @@ export type PackageAssignedAgg = {
   locked: boolean;
   /** Human-readable physio / clinical params under the title. */
   paramsLabel: string;
+  /** Balance line burned (pool code or procedureCode). */
+  packageQuotaCode: string;
 };
 
 async function loadEpisodeForAssign(episodeId: string) {
@@ -146,6 +270,8 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   balances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
   softWarnDay1: string | null;
+  /** poolCode → eligible real SKUs for the picker */
+  poolEligible: Record<string, PoolEligibleSku[]>;
 }> {
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
@@ -162,6 +288,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
     select: {
       procedureCode: true,
       procedureName: true,
+      packageQuotaCode: true,
       status: true,
       assignBatchId: true,
       note: true,
@@ -180,13 +307,22 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
 
   const counts = new Map<string, { circ: number; consumed: number }>();
   for (const o of orders) {
-    const row = counts.get(o.procedureCode) ?? { circ: 0, consumed: 0 };
+    const q = quotaCodeOf(o);
+    const row = counts.get(q) ?? { circ: 0, consumed: 0 };
     if ((IN_CIRCULATION as readonly string[]).includes(o.status)) row.circ += 1;
     else row.consumed += 1;
-    counts.set(o.procedureCode, row);
+    counts.set(q, row);
   }
 
-  const balances: PackageBalanceRow[] = instance.procedureLines.map((line) => {
+  const balanceCodes = instance.procedureLines.map((l) => l.procedureCode);
+  const balances: PackageBalanceRow[] = instance.procedureLines
+    .filter((line) =>
+      isPackageAssignTreatmentLine(
+        line.procedureCode,
+        nameByCode.get(line.procedureCode) ?? line.procedureCode,
+      ),
+    )
+    .map((line) => {
     const c = counts.get(line.procedureCode) ?? { circ: 0, consumed: 0 };
     const used = c.circ + c.consumed;
     return {
@@ -197,16 +333,29 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
       remaining: Math.max(0, line.quotaTotal - used),
       inCirculation: c.circ,
       consumed: c.consumed,
+      isPool: isPackagePoolCode(line.procedureCode),
     };
   });
+
+  const types = await prisma.procedureType.findMany({
+    select: { code: true, name: true, needsSite: true },
+  });
+  const poolEligible: Record<string, PoolEligibleSku[]> = {};
+  for (const b of balances) {
+    if (!b.isPool) continue;
+    poolEligible[b.procedureCode] = eligibleSkusForPool(
+      b.procedureCode,
+      balanceCodes,
+      types.map((t) => ({ ...t, active: true })),
+    );
+  }
 
   const batchMap = new Map<string, PackageAssignedAgg>();
   for (const o of orders) {
     const consumed = (CONSUMED as readonly string[]).includes(o.status);
-    // CLI-57: CHECKED_IN locked like consumed (no modal delete / qty↓).
     const locked = consumed || o.status === "CHECKED_IN";
     const fp = fingerprintParams(o);
-    const key = `${o.assignBatchId ?? o.procedureCode}:${fp}:${locked ? "locked" : "active"}:${consumed ? "done" : "live"}`;
+    const key = `${o.assignBatchId ?? o.procedureCode}:${quotaCodeOf(o)}:${fp}:${locked ? "locked" : "active"}:${consumed ? "done" : "live"}`;
     const prev = batchMap.get(key);
     if (prev) {
       prev.qty += 1;
@@ -219,6 +368,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
         statusKind: consumed ? "consumed" : "active",
         locked,
         paramsLabel: paramsLabelFromOrder(o),
+        packageQuotaCode: quotaCodeOf(o),
       });
     }
   }
@@ -227,10 +377,12 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
     balances,
     assigned: [...batchMap.values()],
     softWarnDay1: null,
+    poolEligible,
   };
 }
 
 export type AssignLineInput = {
+  /** Real ProcedureType code (never a *_POOL bucket). */
   procedureCode: string;
   qty: number;
   note?: string | null;
@@ -240,6 +392,8 @@ export type AssignLineInput = {
   siteApplyMode?: "TURN" | "TOGETHER" | null;
   /** siteId → LEFT | RIGHT | BOTH */
   siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+  /** When set, burn this package balance line (PHYSIO_POOL / PARAFFIN_POOL). */
+  burnPoolCode?: string | null;
 };
 
 /**
@@ -254,26 +408,68 @@ export async function assignPackageProcedures(
   const instance = episode.programInstance!;
   const snap = await getPackageAssignSnapshot(episodeId);
   const remByCode = new Map(snap.balances.map((b) => [b.procedureCode, b]));
+  const balanceCodes = snap.balances.map((b) => b.procedureCode);
+
+  const types = await prisma.procedureType.findMany();
+  const typeByCode = new Map(types.map((t) => [t.code, t]));
 
   let totalQty = 0;
+  const resolved: Array<AssignLineInput & { quotaCode: string }> = [];
+
   for (const line of lines) {
     if (line.qty < 1) continue;
-    const bal = remByCode.get(line.procedureCode);
+    if (isPackagePoolCode(line.procedureCode)) {
+      throw new PackageAssignError(
+        `Pool code ${line.procedureCode} is not assignable — pick a real procedure`,
+        "POOL_NOT_ASSIGNABLE",
+        400,
+      );
+    }
+    const burnPool = line.burnPoolCode?.trim() || null;
+    const quotaCode = burnPool || line.procedureCode;
+    if (burnPool) {
+      if (!isPackagePoolCode(burnPool)) {
+        throw new PackageAssignError(
+          `burnPoolCode ${burnPool} is not a pool`,
+          "INVALID",
+          400,
+        );
+      }
+      const eligible = eligibleSkusForPool(
+        burnPool,
+        balanceCodes,
+        types.map((t) => ({ code: t.code, name: t.name, needsSite: t.needsSite, active: true })),
+      );
+      if (!eligible.some((e) => e.code === line.procedureCode)) {
+        throw new PackageAssignError(
+          `SKU ${line.procedureCode} is not eligible for pool ${burnPool}`,
+          "POOL_SKU_NOT_ELIGIBLE",
+          400,
+        );
+      }
+    }
+    const bal = remByCode.get(quotaCode);
     if (!bal) {
       throw new PackageAssignError(
-        `Code ${line.procedureCode} not in package`,
+        `Code ${quotaCode} not in package`,
         "NOT_IN_PACKAGE",
         400,
       );
     }
     if (line.qty > bal.remaining) {
       throw new PackageAssignError(
-        `Qty ${line.qty} exceeds remaining ${bal.remaining} for ${line.procedureCode}`,
+        `Qty ${line.qty} exceeds remaining ${bal.remaining} for ${quotaCode}`,
         "QUOTA_EXCEEDED",
         400,
       );
     }
+    // Reserve remaining for multi-line same batch
+    remByCode.set(quotaCode, {
+      ...bal,
+      remaining: bal.remaining - line.qty,
+    });
     totalQty += line.qty;
+    resolved.push({ ...line, quotaCode });
   }
 
   const softWarn =
@@ -281,8 +477,6 @@ export async function assignPackageProcedures(
       ? `Day-1 soft cap: Nafta default is ${DAY1_SOFT_CONFIRM_CAP}; batch has ${totalQty}`
       : null;
 
-  const types = await prisma.procedureType.findMany();
-  const typeByCode = new Map(types.map((t) => [t.code, t]));
   const orgId = requestOrganizationId();
   const workStart = new Date();
   workStart.setHours(8, 0, 0, 0);
@@ -290,8 +484,7 @@ export async function assignPackageProcedures(
   const createdIds: string[] = [];
   let seq = 0;
 
-  for (const line of lines) {
-    if (line.qty < 1) continue;
+  for (const line of resolved) {
     const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
       throw new PackageAssignError(
@@ -321,6 +514,7 @@ export async function assignPackageProcedures(
           physioFields: line.physioFields ?? undefined,
           assignBatchId: batchId,
           inPackage: true,
+          packageQuotaCode: line.quotaCode,
           patientOrigin: episode.patientOrigin,
           reservationId: episode.reservationId ?? undefined,
           amountNet: 0,
@@ -346,8 +540,7 @@ export async function assignPackageProcedures(
     confirmedByUserId: opts?.confirmedByUserId,
   });
 
-  // Sync quotaUsed to circulation+consumed count for affected codes
-  const codes = [...new Set(lines.map((l) => l.procedureCode))];
+  const codes = [...new Set(resolved.map((l) => l.quotaCode))];
   for (const code of codes) {
     await syncQuotaUsed(instance.id, episodeId, code);
   }
@@ -355,17 +548,20 @@ export async function assignPackageProcedures(
   return { placed, softWarn, orderIds: createdIds };
 }
 
-async function syncQuotaUsed(instanceId: string, episodeId: string, procedureCode: string) {
+async function syncQuotaUsed(instanceId: string, episodeId: string, quotaCode: string) {
   const used = await prisma.procedureOrder.count({
     where: {
       clinicalEpisodeId: episodeId,
-      procedureCode,
-      status: { in: [...IN_CIRCULATION, ...CONSUMED] },
       inPackage: true,
+      status: { in: [...IN_CIRCULATION, ...CONSUMED] },
+      OR: [
+        { packageQuotaCode: quotaCode },
+        { packageQuotaCode: null, procedureCode: quotaCode },
+      ],
     },
   });
   await prisma.programProcedureBalance.updateMany({
-    where: { instanceId, procedureCode },
+    where: { instanceId, procedureCode: quotaCode },
     data: { quotaUsed: used },
   });
 }
@@ -435,7 +631,35 @@ export async function replacePackageProcedures(
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
   const packageCodes = new Set(instance.procedureLines.map((l) => l.procedureCode));
-  const inPackageTarget = packageCodes.has(input.toCode);
+  const balanceCodes = [...packageCodes];
+
+  if (isPackagePoolCode(input.toCode)) {
+    throw new PackageAssignError(
+      `Pool code ${input.toCode} is not assignable — pick a real procedure`,
+      "POOL_NOT_ASSIGNABLE",
+      400,
+    );
+  }
+
+  let burnPoolCode: string | null = null;
+  let inPackageTarget = packageCodes.has(input.toCode);
+  if (!inPackageTarget) {
+    const types = await prisma.procedureType.findMany({
+      select: { code: true, name: true, needsSite: true },
+    });
+    for (const pool of balanceCodes.filter(isPackagePoolCode)) {
+      const eligible = eligibleSkusForPool(
+        pool,
+        balanceCodes,
+        types.map((t) => ({ ...t, active: true })),
+      );
+      if (eligible.some((e) => e.code === input.toCode)) {
+        inPackageTarget = true;
+        burnPoolCode = pool;
+        break;
+      }
+    }
+  }
 
   if (!inPackageTarget && !opts?.allowOutOfPackage) {
     throw new PackageAssignError(
@@ -464,6 +688,8 @@ export async function replacePackageProcedures(
     );
   }
 
+  const fromQuotaCodes = [...new Set(active.map((o) => quotaCodeOf(o)))];
+
   await prisma.procedureOrder.updateMany({
     where: { id: { in: active.map((o) => o.id) } },
     data: {
@@ -472,12 +698,21 @@ export async function replacePackageProcedures(
       cancelReason: "package_replace",
     },
   });
-  await syncQuotaUsed(instance.id, episodeId, input.fromCode);
+  for (const code of fromQuotaCodes) {
+    await syncQuotaUsed(instance.id, episodeId, code);
+  }
 
   if (inPackageTarget) {
     const result = await assignPackageProcedures(
       episodeId,
-      [{ procedureCode: input.toCode, qty: input.qty, note: input.note }],
+      [
+        {
+          procedureCode: input.toCode,
+          qty: input.qty,
+          note: input.note,
+          burnPoolCode,
+        },
+      ],
       opts,
     );
     return {
@@ -500,14 +735,16 @@ export async function replacePackageProcedures(
 }
 
 /**
- * Day-1 auto: up to 3 distinct package codes with remaining > 0, qty 1 each, standard defaults.
+ * Day-1 auto: up to 3 distinct non-pool package codes with remaining > 0, qty 1 each.
  */
 export async function day1AutoAssign(
   episodeId: string,
   opts?: { confirmedByUserId?: string },
 ): Promise<{ placed: number; softWarn: string | null; orderIds: string[] }> {
   const snap = await getPackageAssignSnapshot(episodeId);
-  const picks = snap.balances.filter((b) => b.remaining > 0).slice(0, DAY1_SOFT_CONFIRM_CAP);
+  const picks = snap.balances
+    .filter((b) => !b.isPool && b.remaining > 0)
+    .slice(0, DAY1_SOFT_CONFIRM_CAP);
   if (picks.length === 0) {
     throw new PackageAssignError("No remaining package quota", "EMPTY_REMAINING", 400);
   }
@@ -579,7 +816,10 @@ export async function adjustPackageAssign(
     },
   });
 
-  await syncQuotaUsed(instance.id, episodeId, input.procedureCode);
+  const syncCodes = [...new Set(cancellable.map((o) => quotaCodeOf(o)))];
+  for (const code of syncCodes) {
+    await syncQuotaUsed(instance.id, episodeId, code);
+  }
   return { cancelled: cancellable.length };
 }
 

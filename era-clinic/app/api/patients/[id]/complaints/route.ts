@@ -79,7 +79,11 @@ export async function POST(
     if (careDenied) {
       return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
     }
-    const row = await addComplaint(episode.id, body.text);
+    const row = await addComplaint(episode.id, body.text, {
+      recordedByPractitionerId: await (
+        await import("@/lib/auth/session-practitioner")
+      ).resolveSessionPractitionerId(session!.sub),
+    });
     let day1Program = null;
     try {
       const { tryOpenProgramAfterTherapistStage } = await import(
