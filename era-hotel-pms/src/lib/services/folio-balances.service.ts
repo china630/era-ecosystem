@@ -50,8 +50,8 @@ export async function listReservationFolioBalances(tab: FolioBalanceTab): Promis
 }> {
   const statusFilter =
     tab === 'reservation'
-      ? { in: ['CONFIRMED', 'OPTION', 'IN_HOUSE'] as const }
-      : { in: ['IN_HOUSE'] as const };
+      ? { in: ['CONFIRMED', 'OPTION', 'IN_HOUSE'] as Array<'CONFIRMED' | 'OPTION' | 'IN_HOUSE'> }
+      : { in: ['IN_HOUSE'] as Array<'IN_HOUSE'> };
 
   const reservations = await prisma.reservation.findMany({
     where: { status: statusFilter },
