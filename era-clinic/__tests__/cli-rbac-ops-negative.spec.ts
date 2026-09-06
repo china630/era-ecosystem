@@ -128,9 +128,7 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
     expect(opsApiRoutePermission("/api/imaging-phrases")).toBe(
       CLINIC_PERMISSION.API_CATALOG_READ,
     );
-    expect(opsApiRoutePermission("/api/templates")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES,
-    );
+    expect(opsApiRoutePermission("/api/templates")).toBeNull();
     expect(opsApiRoutePermission("/api/cashier/queue")).toBe(
       CLINIC_PERMISSION.API_CASHIER,
     );

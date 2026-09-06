@@ -23,8 +23,13 @@ export async function listExtrasAwaitingTicket(organizationId?: string | null) {
     where: {
       extraTicketIssuedAt: null,
       importedHistorical: false,
-      status: { in: ["PROPOSED", "SCHEDULED"] },
-      amountNet: { gt: 0 },
+      OR: [
+        { status: "PENDING_PAY" },
+        {
+          status: { in: ["PROPOSED", "SCHEDULED"] },
+          amountNet: { gt: 0 },
+        },
+      ],
     },
     include: { patientRef: true },
     orderBy: { scheduledAt: "asc" },

@@ -8,7 +8,6 @@ import type {
 import { shouldAutoInstantiateProgramOnCheckin } from "@/domain/settings/scheduling-settings";
 import { openEpisodeFromStay } from "@/lib/services/sanatorium.service";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
-import { buildProposedPlan } from "@/lib/treatment-planner.service";
 import { prisma } from "@/lib/prisma";
 import { enterRequestTenant } from "@/lib/request-organization";
 
@@ -101,6 +100,13 @@ export async function handleGuestCheckedOut(
     },
     data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
   });
+  // CLI-57: purge unpaid extras on check-out
+  await prisma.procedureOrder.deleteMany({
+    where: {
+      reservationId: p.reservationId,
+      status: "PENDING_PAY",
+    },
+  });
 }
 
 export async function handleRoomChanged(event: SatelliteHotelRoomChangedEvent) {
@@ -184,7 +190,7 @@ export async function handleStayProductChanged(
           endsOn: checkOut,
           reservationId: p.reservationId,
         });
-        await buildProposedPlan(existing.id);
+        // CLI-57: no buildProposedPlan — doctor assigns from balance modal
         continue;
       }
       if (!programCode) continue;

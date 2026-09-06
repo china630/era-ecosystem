@@ -6,7 +6,7 @@
 
 **Coverage:** CLI-56 · extends CLI-55 / CLI-RBAC data-scope
 
-Related: [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md) · [clinic-domain-permissions-and-rbac.md](./clinic-domain-permissions-and-rbac.md) · [clinic-doctor-confirmed-fifo-planning.md](./clinic-doctor-confirmed-fifo-planning.md)
+Related: [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md) · [clinic-domain-permissions-and-rbac.md](./clinic-domain-permissions-and-rbac.md) · [clinic-doctor-confirmed-fifo-planning.md](./clinic-doctor-confirmed-fifo-planning.md) · [clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md) (CLI-57 package/extras assign on card — PLANNED)
 
 ---
 
@@ -105,4 +105,8 @@ Assigned DOCTOR needs `api:patients` to open the card from sanatorium; list/get 
 
 - Auto-suggest specialty from intake package lines.
 - Patient-facing portal care team.
-- Binding EW/WO doctor ids beyond attending Visit → care team is backfilled from WO attending Visits (`20260902150000` + re-import upsert).
+- Splitting `checkupCompletedAt` into doctor-exam vs labs/USG/ECG milestones (field name currently means therapist stage done).
+
+## Data cutover
+
+WO `#24` `doctorId` → attending Visit (`attending-visits`) → `EpisodeCareDoctor` via Prisma migration `20260902150000_backfill_care_team_from_wo_attending` (and optional script `scripts/nafta-cutover/backfill-care-team-from-wo-attending.ts`). Re-import `#24` also upserts care team in `ensureCutoverAttendingVisit`.

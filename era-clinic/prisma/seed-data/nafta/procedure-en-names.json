@@ -18,7 +18,6 @@
   "SVC-METABOLIK-INFUZIYA": "Metabolic infusion",
   "SVC-UFB-TERAPIYA": "UVB phototherapy",
   "SVC-BUKME": "Body wrap",
-  "SVC-TURUNDA-BURUN-VE-QULAQ": "Nasal and ear turunda",
   "SVC-LAZERTERAPIYA": "Laser therapy",
   "SVC-MAQNITOTERAPIYA": "Magnetic field therapy",
   "SVC-ULTRAFONOFOREZ": "Ultraphonophoresis (naftalan oil)",
@@ -44,7 +43,6 @@
   "SVC-SADE-UZ-MASAJI-15-DEQ": "Simple facial massage (15 minutes)",
   "SVC-VAKUUMTERAPIYA": "Vacuum therapy",
   "SVC-FITO-TERAPIYA-BOCKA": "Herbal steam barrel (phytotherapy)",
-  "SVC-TAM-BEDEN-NAFTALAN-VANNASI": "Full-body Naftalan bath",
   "SVC-OTURARQ-BEDEN-NAFTALAN-VANNASI": "Seated Naftalan bath",
   "SVC-4-KAMERALI-NAFTALAN-VANNASI": "4-chamber Naftalan bath",
   "SVC-YOD-BROM-VANNASI": "Iodine-bromine bath",
@@ -129,5 +127,11 @@
   "SVC-IDMAN-ZAL": "Gym / exercise hall",
   "SVC-MUALIC-VI-IDMAN-QRUP-S-KLIND": "Group therapeutic exercise",
   "SVC-H-KIM-T-YINAT-IL-FIZIOTERAPIYAN-N-3-PROSEDURAS-P": "Physician-prescribed physiotherapy (3 sessions complimentary)",
-  "SVC-VAKUMTERAPIYA": "Vacuum therapy"
+  "SVC-VAKUMTERAPIYA": "Vacuum therapy",
+  "SVC-PROLOTERAPIYA": "Prolotherapy",
+  "SVC-TURUNDA-BURUN": "Nasal turunda",
+  "SVC-TURUNDA-QULAQ": "Ear turunda",
+  "SVC-APLIKASIYA-NAFTALAN-QADIN": "Naftalan application ♀",
+  "SVC-APLIKASIYA-NAFTALAN-KISI": "Naftalan application ♂",
+  "SVC-TRAKSIYA": "Traction"
 }

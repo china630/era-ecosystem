@@ -33,6 +33,7 @@ PRD: [../PRD.md](../PRD.md)
 - [x] CLI-36 practitioner shift rotation — `PractitionerScheduleRule`/`PractitionerScheduleException`; rule engine (WEEKLY / WEEK_PARITY / MONTH_DAY_PARITY / CYCLE) + per-day hours + exceptions; matrix blocks off-shift slots; create/reschedule guard (409 off-shift); SatAdmin **Shifts** modal on `/admin/master-data` (`GET/PUT /api/admin/practitioners/[id]/schedule`); ADR [clinic-practitioner-shifts.md](../../docs/adr/clinic-practitioner-shifts.md)
 - [x] CLI-37 UI list/filter standard — global `EraListFilterBar` instant filters (no Apply; Reset inline; `useDebouncedValue` 300ms); clinic home full-width + shared date; ops/SatAdmin tables name-first + Lucide icon row actions; DESIGN + UI_PLAYBOOK updated
 - [x] CLI-38 staff kind + monthly duty roster — `Practitioner.staffKind` (DOCTOR/NURSE/LAB); `StaffDutyRoster`/`StaffDutyLine`/`StaffAbsence`; `/sanatorium/nurse-roster` (head doctor); planner prefers approved posting; clinic-local absences (Finance HR later); ADR [clinic-staff-duty-roster.md](../../docs/adr/clinic-staff-duty-roster.md)
+- [x] CLI-38b duty roster dual view + day substitution — by-nurse table (same SoT as by-procedure); `StaffDutyDayOverride`; planner: override → posted → **no** silent skilled-pool substitute when posted absent; head doctor only; ADR amend 2026-09-03
 - [x] CLI-39 sanatorium ICD-10 search/picker — WHO ICD-10 2019 `IcdCode`; `GET /api/icd`; `IcdPicker` (`CatalogField` SEARCHABLE) on `/sanatorium`; selectable CATEGORY/LEAF only
 - [x] CLI-40 visit + inpatient + print + favorites — `VisitDiagnosis` / `AdmissionDiagnosis`; `/visits/[id]`; `/inpatient` diagnoses modal; print checkup diagnosis block; `/admin/icd-favorites` (pin + retire, no title CRUD)
 - [x] CLI-41 platform ICD-10 gateway — orchestrator `GET /platform/v1/catalog/icd10` in-process from shared generator (not data-hub); clinic optional sync
@@ -91,7 +92,8 @@ Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 - [x] `/admin/wards` — ward/bed create+edit+delete modals
 - [x] `/patients` — registry list + create modal (M1)
 - [x] `/admin/catalog` — service cache + Finance sync + Nafta price import (`POST /api/admin/catalog/import-nafta`, `packageIncluded` / department filters)
-- [x] `/admin/templates` — clinical + program templates
+- [x] `/admin/diagnostic-catalog` — single form SoT (incl. visit + field designer); `/admin/program-templates` — sanatorium packages; `ClinicalTemplate` table dropped
+- [x] Visit exam print — `/print/visit-exam/[cpoeEntryId]` from CPOE history (one entry); FHIR + whole-visit print = debt in CLINICAL_AND_PROGRAM_TEMPLATES.md
 - [x] `/admin/procedure-rules` — compatibility + FIFO sequence rules (modal)
 - [x] `/admin/audit` — satellite audit log viewer
 - [x] Docker `RUN_SEED` + bootstrap `db:seed:vnext`
@@ -158,9 +160,10 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 
 - [x] Billing router: `WALK_IN` → finance event; `IN_HOUSE` → hotel `room-charge` MEDICAL
 - [x] Nafta dual-run extra tickets: `/reception/extra-tickets` + hotel Elektraweb outbox at issue (not `COMPLETED`); nurse `TICKET_REQUIRED`. HOT-06 remains HEADLESS.
+- [~] CLI-57 SCREEN: package balance assign modal + extras `PENDING_PAY`→Pay→folio→plan→ticket×3; `inPackage` flag; walk-in extras-only; Replace+FO manager; day-1 auto ≤3; UAT open — not SHIPPED
 - [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
 - [~] Wave A dual-run (CLI-50 SCREEN): episode always opens without hotel `programCode`; staff Select `PKG-STANDART|PREMIUM|DERMO|DETOKS` on `/sanatorium`; `?episode=` opens treatment chart; ADR [nafta-medical-sku-dual-run.md](../../docs/adr/nafta-medical-sku-dual-run.md)
-- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `recalcProgramQuotas` on stay-product/date change (no cancel SCHEDULED); free = remaining quota; `/admin/templates` multi-procedure + knots JSON; ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
+- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `recalcProgramQuotas` on stay-product/date change (no cancel SCHEDULED); free = remaining quota; `/admin/program-templates` multi-procedure + knots matrix; ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
 - [x] Plan 2.9: `notifyClinicCheckIn` removed; `ProcessedEvent` idempotency on lifecycle ingress
 - [x] `PRESCRIPTION_ISSUED` / `PROCEDURE_COMPLETED` + retail reserve/write-off endpoints
 

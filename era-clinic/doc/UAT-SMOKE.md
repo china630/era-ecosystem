@@ -112,7 +112,7 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 9. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
 10. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
 11. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
-12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows (**`SVC-*` names, no leftover `WO-TR-*`**); mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab. Procedure table has pagination footer.
+12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; toggle **Procedures | Nurses**; assign nurses to procedure rows (**`SVC-*` names, no leftover `WO-TR-*`**) or assign procedures to a nurse (multi-select); mark stable; add vacation overlapping the month → warning on the row; **Approve**. Set a **day substitute** (Substitute for date…) when the posted nurse is away. Confirm a proposed program: STAFF allocation = day override if set, else posted nurse if present; if posted absent and **no** override → staff unallocated (no silent skilled-pool substitute). Master-data practitioners show Doctor / Nurse / Lab. Tables have pagination footers. ADR `clinic-staff-duty-roster.md`.
 
 ### ICD-10 catalog (CLI-39…42)
 
@@ -183,7 +183,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 7. Without `api:sanatorium.episodes.read`, `GET /api/sanatorium/episodes` and `GET /api/sanatorium/episodes/[id]` return **403** (API uses DB, not stale JWT). Without `api:procedures.reception`, `POST /api/procedures` returns **403**.
 8. **Wave 2 — CLINIC_ADMIN matrix:** uncheck `screen:admin.catalog` for **CLINIC_ADMIN**, Save (session refresh). Catalog nav item hidden; `/admin/catalog` forbidden after refresh; `GET /api/admin/catalog` returns **403**. Re-check + Save → access restored. OrgOwner SSO still sees all admin screens.
 9. **Wave 3 — staff APIs:** uncheck `screen:patients` / `api:patients` for RECEPTION → patients nav hidden; `GET /api/patients` **403**. Uncheck `api:appointments.write` → `POST /api/appointments` **403** (session required). Queue/lab/confirm similarly gated by matrix.
-10. **Gap closeout:** role without `api:catalog.read` → `GET /api/imaging-phrases` **403**. Without `api:lab_orders` → `POST /api/lab/import` **403**. Without `screen:admin.templates` → `/api/templates` **403**. After upgrade, customized matrices: **Reset to defaults** (or grant new keys) so Wave 3 api:* keys appear.
+10. **Gap closeout:** role without `api:catalog.read` → `GET /api/imaging-phrases` **403**. Without `api:lab_orders` → `POST /api/lab/import` **403**. Legacy `/api/templates` and `/api/admin/clinical-templates` **removed**. After upgrade, customized matrices: **Reset to defaults** (or grant `screen:admin.program_templates`) so new keys appear. Legacy `screen:admin.templates` expands to diagnostic_catalog + program_templates on parse.
 11. **Data scope:** DOCTOR without `scope:episodes.all` (default) → `GET /api/sanatorium/episodes` returns only episodes with a visit / prescription / allocation for that doctor’s Practitioner; detail of another doctor’s episode → **404**. Grant `scope:episodes.all` → full list. Same for labs with `scope:lab_orders.all`. After upgrade: **Reset** RECEPTION/NURSE/LAB_TECH/CLINIC_ADMIN so they gain `scope:*.all`.
 
 
@@ -203,15 +203,33 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 
 Prerequisite (ops): clinic cutover policy `elektrawebDualRun` + Sync; hotel org `writeEnabled` + Sync; pool kill switch; extension on **sanatorium** desk with Write ON and SPA open.
 
-1. Doctor assigns a paid extra (or over-quota).
-2. **`/reception/extra-tickets`** — select rows → **Issue ticket**. ERA opens 3-copy print (`/print/extra-ticket/…`). Charge is **not** posted on nurse complete.
+1. Doctor assigns a paid extra (`PENDING_PAY` on Müalicə kartı / extras modal — price shown).
+2. **`/reception/extra-tickets`** — select rows → **Pay**. ERA posts hotel folio (or walk-in cashier/EW channel), places onto schedule, then opens 3-copy print (`/print/extra-ticket/…`).
 3. Confirm hotel health `writeEnabled` and outbox not stuck `FAILED`. Unknown SPA product must fail enqueue (do not guess).
 4. **`/nurse`** — extra without ticket → check-in blocked (`TICKET_REQUIRED`).
-5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio, not clinic cashier (field).
+5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio / hotel cashier path, not clinic cashier (field).
+6. Explicit guest decline → delete `PENDING_PAY`; episode close / hotel check-out auto-purges unpaid pending.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=saas-wave6-hot06-lab
 cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
+```
+
+## Episode procedure assign (CLI-57)
+
+**Status:** SCREEN — not SHIPPED / not Pilot. ADR `docs/adr/clinic-episode-procedure-assign-modal.md`.
+
+1. **In-house** Müalicə kartı: **Procedures in package** `+` → left remaining / right assigned; physio form overlay; **Save** places; Cancel discards draft. Day-1 auto ≤3 distinct codes.
+2. **Walk-in:** package block hidden; **Additional procedures** only; reception Pay requires payment receipt/cheque ref.
+3. Extras modal shows unit price + muted total; Save → `PENDING_PAY` on card (not nurse list until ticket).
+4. `/reception/extra-tickets` → select all → Pay with receipt → folio/cashier → schedule → print ×3 per procedure.
+5. Nurse `/nurse?mine=1`: unpaid extras absent; paid without ticket → check-in `TICKET_REQUIRED`.
+6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
+7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
+8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
+
+```bash
+cd era-clinic && npm test -- --testPathPattern=cli57-package-assign
 ```
 
 ## Topology — two-org isolation (CP-TENANT-01 / SaaS Waves 5 + 9)
@@ -323,11 +341,23 @@ Doctor card (no curl):
 4. Open `/sanatorium?episode=<id>` → treatment chart modal opens (not only PatientCard).
 5. Patient card «Gün planını aç» href lands on that deep link.
 
+## Visit CPOE / diagnostic SoT (CLI-10)
+
+**Status:** SHOW — print + card entry; FHIR / whole-visit print remain debt.
+
+1. [x] `/admin/diagnostic-catalog` → Services → **Visit templates** filter → edit fields via field designer (not raw JSON only).
+2. [x] `/admin/program-templates` visible only with `screen:admin.program_templates` (not legacy templates key).
+3. [x] Doctor: open `/visits/[id]` → pick visit template → fill fields → Save → history row appears.
+4. [x] History row → **Print exam** → language dialog → `/print/visit-exam/[cpoeEntryId]` opens and print dialog appears (one entry; diagnoses block; snapshotted labels).
+5. [x] Patient card → **Exam notes** section → print icon → same print route.
+6. [x] Role without `api:visits` and without `api:patients` → `/print/visit-exam/...` redirects forbidden.
+7. [x] Legacy `/api/admin/clinical-templates` and `/api/templates` routes are **gone** (404).
+
 ## Program quota knots (CLI-51 / Wave B)
 
 **Status:** Engineering API — not SHIPPED.
 
-1. `/admin/templates` program tab — edit multi-procedure JSON + knots JSON; Save keeps all lines.
+1. `/admin/program-templates` — edit multi-procedure + knots matrix; Save keeps all lines. Empty list shows empty-state row.
 2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
 3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
 4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.

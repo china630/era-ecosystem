@@ -80,6 +80,7 @@ type ProcedureType = {
   bodyPart?: string | null;
   needsSite?: boolean;
   physioOrderFields?: string[];
+  allowedSiteCodes?: string[];
   extendedEndHour?: number | null;
   skillCoverage?: number | null;
   requirements?: RequirementRow[];
@@ -177,6 +178,8 @@ export default function MasterDataPage() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [needsSite, setNeedsSite] = useState(true);
   const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
+  const [allowedSiteCodes, setAllowedSiteCodes] = useState<string[]>([]);
+  const [physioSiteOptions, setPhysioSiteOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
   const [identifierTypes, setIdentifierTypes] = useState<IdentifierChip[]>([]);
@@ -196,7 +199,7 @@ export default function MasterDataPage() {
   const blockPractitionerCreate = cpWorkforceMode;
 
   const loadAll = useCallback(async () => {
-    const [p, r, res, pt, wp, cat] = await Promise.all([
+    const [p, r, res, pt, wp, cat, sites] = await Promise.all([
       fetch("/api/admin/practitioners").then((x) => x.json()),
       fetch("/api/admin/rooms").then((x) => x.json()),
       fetch("/api/admin/resources").then((x) => x.json()),
@@ -205,6 +208,7 @@ export default function MasterDataPage() {
       ),
       fetch("/api/admin/workforce-policy").then((x) => x.json()),
       fetch("/api/admin/catalog?kind=PROCEDURE").then((x) => x.json()),
+      fetch("/api/admin/physio-sites").then((x) => x.json()),
     ]);
     setPractitioners((p.data ?? p) as Practitioner[]);
     setRooms((r.data ?? r) as Room[]);
@@ -220,6 +224,23 @@ export default function MasterDataPage() {
             descriptionRu: row.descriptionRu,
             descriptionEn: row.descriptionEn,
           }))
+        : [],
+    );
+    const siteRows = (sites.data ?? sites) as Array<{
+      code: string;
+      titleAz?: string;
+      titleRu?: string;
+      titleEn?: string;
+      active?: boolean;
+    }>;
+    setPhysioSiteOptions(
+      Array.isArray(siteRows)
+        ? siteRows
+            .filter((s) => s.active !== false)
+            .map((s) => ({
+              value: s.code,
+              label: `${s.code} — ${locale.startsWith("ru") ? s.titleRu : locale.startsWith("az") ? s.titleAz : s.titleEn}`,
+            }))
         : [],
     );
     const policyPayload = (wp.data ?? wp) as WorkforcePolicy;
@@ -343,6 +364,7 @@ export default function MasterDataPage() {
     setSkillCoverageMsg(null);
     setNeedsSite(true);
     setPhysioOrderFields([]);
+    setAllowedSiteCodes([]);
   }
 
   function openCreate() {
@@ -437,6 +459,7 @@ export default function MasterDataPage() {
     });
     setNeedsSite(row.needsSite !== false);
     setPhysioOrderFields(row.physioOrderFields ?? []);
+    setAllowedSiteCodes(row.allowedSiteCodes ?? []);
     setMdmStatus(null);
     setGlobalPersonId(null);
     setIdentifierTypes([]);
@@ -553,6 +576,7 @@ export default function MasterDataPage() {
           bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
           needsSite,
           physioOrderFields,
+          allowedSiteCodes,
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
@@ -594,6 +618,7 @@ export default function MasterDataPage() {
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
         needsSite,
         ...(physioOrderFields.length ? { physioOrderFields } : {}),
+        allowedSiteCodes,
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
           : null,
@@ -1032,6 +1057,7 @@ export default function MasterDataPage() {
                   setForm({ ...form, code: match.code, name: match.description });
                   setNeedsSite(gate.needsSite);
                   setPhysioOrderFields(gate.fields);
+                  setAllowedSiteCodes(gate.allowedSiteCodes);
                 }
               }}
             >
@@ -1283,6 +1309,19 @@ export default function MasterDataPage() {
                   label: t(`physioField_${code}` as "physioOrderFields", { defaultValue: code }),
                 }))}
               />
+              {needsSite ? (
+                <CatalogField
+                  kind="MULTI"
+                  label={t("allowedSiteCodes")}
+                  value={allowedSiteCodes}
+                  onChange={(next) =>
+                    setAllowedSiteCodes(
+                      Array.isArray(next) ? next.map(String) : next ? [String(next)] : [],
+                    )
+                  }
+                  options={physioSiteOptions}
+                />
+              ) : null}
               <Field
                 label={t("extendedEndHour")}
                 preset="count"

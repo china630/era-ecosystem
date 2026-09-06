@@ -503,27 +503,47 @@ export async function listOpenEpisodes(input?: {
       ? episodeAssignedToPractitionerWhere(input.dataScope.practitionerId)
       : undefined;
 
-  const where = {
-    status: 'OPEN' as const,
+  const and: Prisma.ClinicalEpisodeWhereInput[] = [];
+  if (input?.origin) {
+    and.push({ patientOrigin: input.origin as "IN_HOUSE" | "WALK_IN" });
+  }
+  if (roomNumber) {
+    and.push({ roomNumber: { equals: roomNumber, mode: "insensitive" } });
+  }
+  if (programCode) {
+    and.push({
+      OR: [
+        { programCode: { equals: programCode, mode: "insensitive" } },
+        {
+          programInstance: {
+            programCode: { equals: programCode, mode: "insensitive" },
+          },
+        },
+      ],
+    });
+  }
+  if (input?.q?.trim()) {
+    const needle = input.q.trim();
+    and.push({
+      OR: [
+        { patientRef: { fullName: { contains: needle, mode: "insensitive" } } },
+        { patientRef: { refCode: { contains: needle, mode: "insensitive" } } },
+        { roomNumber: { contains: needle, mode: "insensitive" } },
+        { programCode: { contains: needle, mode: "insensitive" } },
+        {
+          programInstance: {
+            programCode: { contains: needle, mode: "insensitive" },
+          },
+        },
+      ],
+    });
+  }
+  if (scopeFilter) and.push(scopeFilter);
+
+  const where: Prisma.ClinicalEpisodeWhereInput = {
+    status: "OPEN",
     ...(input?.organizationId ? { organizationId: input.organizationId } : {}),
-    ...(input?.origin ? { patientOrigin: input.origin as 'IN_HOUSE' | 'WALK_IN' } : {}),
-    ...(roomNumber
-      ? { roomNumber: { equals: roomNumber, mode: 'insensitive' as const } }
-      : {}),
-    ...(programCode
-      ? { programCode: { equals: programCode, mode: 'insensitive' as const } }
-      : {}),
-    ...(input?.q?.trim()
-      ? {
-          OR: [
-            { patientRef: { fullName: { contains: input.q.trim(), mode: 'insensitive' as const } } },
-            { patientRef: { refCode: { contains: input.q.trim(), mode: 'insensitive' as const } } },
-            { roomNumber: { contains: input.q.trim(), mode: 'insensitive' as const } },
-            { programCode: { contains: input.q.trim(), mode: 'insensitive' as const } },
-          ],
-        }
-      : {}),
-    ...(scopeFilter ? { AND: [scopeFilter] } : {}),
+    ...(and.length ? { AND: and } : {}),
   };
 
   const { listHotelRoomNumbers, listProgramCodes } = await import(
@@ -964,6 +984,11 @@ export async function closeWalkInEpisode(episodeId: string) {
     (err as Error & { code?: string }).code = EPISODE_NOT_IDLE;
     throw err;
   }
+
+  const { purgePendingExtrasForEpisode } = await import(
+    "@/domain/sanatorium/extras-assign.service"
+  );
+  await purgePendingExtrasForEpisode(episodeId);
 
   return prisma.clinicalEpisode.update({
     where: { id: episodeId },

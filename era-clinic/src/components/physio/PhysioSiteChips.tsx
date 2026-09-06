@@ -43,6 +43,9 @@ export type PhysioCatalogListItem = {
 export type PhysioChipsValue = {
   needsSite: boolean;
   physioOrderFields: string[];
+  allowedSiteCodes: string[];
+  forceSiteTogether?: boolean;
+  sitesHintKey?: "hydro_jet_safety" | null;
   siteIds: string[];
   siteApplyMode: "TOGETHER" | "TURN" | null;
   siteLaterality: Record<string, PhysioLateralityCode | null>;
@@ -97,6 +100,7 @@ export type PhysioChipsLabels = {
   intensityNotHot: string;
   intensityMedium: string;
   intensityMore: string;
+  sitesHintHydroJets: string;
 };
 
 function siteChipLabel(site: PhysioCatalogSite, locale: string): string {
@@ -165,13 +169,20 @@ export function PhysioSiteChips({
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const allowed = value.physioOrderFields ?? [];
   const fields = value.physioFields ?? {};
+  const allowedSiteCodes = value.allowedSiteCodes ?? [];
+
+  const pickerCatalog = useMemo(() => {
+    if (!allowedSiteCodes.length) return catalog;
+    const allow = new Set(allowedSiteCodes);
+    return catalog.filter((s) => allow.has(s.code) || value.siteIds.includes(s.id));
+  }, [catalog, allowedSiteCodes, value.siteIds]);
 
   const options: CatalogOption[] = useMemo(
     () =>
-      catalog
+      pickerCatalog
         .filter((s) => !value.siteIds.includes(s.id))
         .map((s) => ({ value: s.id, label: siteSearchLabel(s, locale) })),
-    [catalog, locale, value.siteIds],
+    [pickerCatalog, locale, value.siteIds],
   );
 
   const modeOptions: CatalogOption[] = [
@@ -228,6 +239,9 @@ export function PhysioSiteChips({
                 );
               })}
             </div>
+            {value.sitesHintKey === "hydro_jet_safety" ? (
+              <p className="mt-1 text-[11px] leading-snug text-[#7F8C8D]">{labels.sitesHintHydroJets}</p>
+            ) : null}
             {showLaterality
               ? value.siteIds.map((id) => {
                   const site = byId.get(id);
@@ -283,7 +297,7 @@ export function PhysioSiteChips({
               />
             )
           ) : null}
-          {value.siteIds.length >= 2 && editable ? (
+          {value.siteIds.length >= 2 && editable && !value.forceSiteTogether ? (
             <CatalogField
               kind="OPS_HOT"
               label={labels.applyMode}
@@ -292,7 +306,7 @@ export function PhysioSiteChips({
               options={modeOptions}
             />
           ) : null}
-          {value.siteIds.length >= 2 && !editable && value.siteApplyMode ? (
+          {value.siteIds.length >= 2 && !editable && value.siteApplyMode && !value.forceSiteTogether ? (
             <p className="text-[12px] text-[#7F8C8D]">
               {value.siteApplyMode === "TURN" ? labels.turn : labels.together}
             </p>
@@ -388,7 +402,16 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ dayBlock: pickOpt(DAY_BLOCK_CODES, next) })}
           options={DAY_BLOCK_CODES.map((v) => ({
             value: v,
-            label: v === "ALTERNATING" ? labels.dayBlockAlt : v === "5_THEN" ? labels.dayBlockThen : v,
+            label:
+              v === "ALTERNATING"
+                ? labels.dayBlockAlt
+                : v === "2"
+                  ? "2"
+                  : v === "3"
+                    ? "3"
+                    : v === "5"
+                      ? "5"
+                      : v,
           }))}
           disabled={!editable}
         />

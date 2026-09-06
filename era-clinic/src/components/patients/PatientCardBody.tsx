@@ -587,6 +587,7 @@ export function PatientCardBody({
               patientRefId={patient.id}
               panel={panel}
               episodeId={selectedEpisodeId}
+              patientOrigin={selectedEpisode?.patientOrigin}
               readOnly={episodeReadOnly}
               anamnesisOk={anamnesisOk}
               refreshKey={clinicalRefreshKey}

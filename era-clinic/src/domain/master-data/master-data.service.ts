@@ -16,6 +16,7 @@ import {
 } from "@/domain/settings/scheduling-settings";
 import { parsePhysioOrderFields } from "@/domain/physio/physio-order-fields";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
+import { uniqueSiteCodes } from "@/domain/physio/physio-allowed-sites";
 
 export async function listPractitioners(staffKind?: "DOCTOR" | "NURSE" | "LAB") {
   return prisma.practitioner.findMany({
@@ -177,6 +178,7 @@ export async function createProcedureType(data: {
   extendedEndHour?: number | null;
   needsSite?: boolean;
   physioOrderFields?: string[];
+  allowedSiteCodes?: string[];
 }) {
   const settings = await getSchedulingSettings();
   const durationMin =
@@ -204,12 +206,15 @@ export async function createProcedureType(data: {
     patientRestMinutes: _pr,
     needsSite: needsSiteIn,
     physioOrderFields: fieldsIn,
+    allowedSiteCodes: sitesIn,
     ...rest
   } = data;
   const gate = inferPhysioTypeGate(data.code, data.name);
   const needsSite = needsSiteIn ?? gate.needsSite;
   const physioOrderFields =
     fieldsIn != null ? parsePhysioOrderFields(fieldsIn) : gate.fields;
+  const allowedSiteCodes =
+    sitesIn != null ? uniqueSiteCodes(sitesIn) : gate.allowedSiteCodes;
   const row = await prisma.procedureType.create({
     data: {
       ...rest,
@@ -218,6 +223,7 @@ export async function createProcedureType(data: {
       patientRestMinutes,
       needsSite,
       physioOrderFields,
+      allowedSiteCodes,
     },
   });
   await ensureDefaultRequirements(row.id);
@@ -245,6 +251,7 @@ export async function updateProcedureType(
     extendedEndHour?: number | null;
     needsSite?: boolean;
     physioOrderFields?: string[];
+    allowedSiteCodes?: string[];
   },
 ) {
   const settings = await getSchedulingSettings();
@@ -256,10 +263,11 @@ export async function updateProcedureType(
       `durationMin must be a multiple of ${settings.schedulingSlotMinutes} minutes (got ${data.durationMin})`,
     );
   }
-  const { physioOrderFields: fieldsIn, ...rest } = data;
+  const { physioOrderFields: fieldsIn, allowedSiteCodes: sitesIn, ...rest } = data;
   const patch = {
     ...rest,
     ...(fieldsIn !== undefined ? { physioOrderFields: parsePhysioOrderFields(fieldsIn) } : {}),
+    ...(sitesIn !== undefined ? { allowedSiteCodes: uniqueSiteCodes(sitesIn) } : {}),
     ...(data.durationMin != null
       ? {
           durationMin: alignDurationToSlotMinutes(

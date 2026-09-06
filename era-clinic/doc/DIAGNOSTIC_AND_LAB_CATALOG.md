@@ -2,7 +2,7 @@
 
 **Version:** 1.2.0 (AZ clinic + MediClub/Exonlab routine layer)  
 Source of truth: [`../prisma/seed-data/diagnostic-lab-catalog.json`](../prisma/seed-data/diagnostic-lab-catalog.json)  
-Seed: `prisma/seed-vnext.ts` → `ClinicalTemplate` + `ServiceCatalogCache`  
+Seed: `prisma/seed-diagnostic-catalog*.cjs` → `Modality`/`DiagnosticService` (live SoT). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md).  
 P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
 Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 
@@ -30,12 +30,12 @@ v1.2 lab adds: Sysmex CBC extras (`MCV`…`PLT-PCT`), Nafta liver/renal/cardiac/
 
 ## Contract
 
-| Kind | Stored as | `bodyJson` |
-|------|-----------|------------|
-| `imaging` / `functional` / `endoscopy` | `ClinicalTemplate` | `{ kind, modality, category, title, metaFields, fields }` |
-| `lab_panel` | `ClinicalTemplate` + catalog code | `{ kind, category, title, analytes }` |
-| `visit` | `ClinicalTemplate` | `{ kind, specialty, title, fields }` |
-| `package` | `ClinicalTemplate` + catalog code | `{ kind, title, includes[] }` |
+| Kind | Stored as | Shape |
+|------|-----------|--------|
+| `imaging` / `functional` / `endoscopy` | `DiagnosticService.fieldsJson` | `{ key, type, label:{en,ru,az}, … }` |
+| `lab_panel` | `DiagnosticService` + `DiagnosticAnalyte` | analytes with refs / options |
+| `visit` | `DiagnosticService.fieldsJson` (`kind=visit`) | exam fields (CPOE) |
+| `package` | `DiagnosticService.includesJson` | child service codes |
 
 Shared imaging meta (`commonMetaFields`): indication, studyDate, performer, device, contrastReaction, imagesAttached.
 

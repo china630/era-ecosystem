@@ -285,6 +285,7 @@ async function loadRosterView(
       endsOn: a.endsOn.toISOString().slice(0, 10),
       note: a.note,
     })),
+    dayOverrides: await listDayOverridesForRoster(rosterId, yearMonth),
   };
 }
 
@@ -436,6 +437,121 @@ export async function deleteStaffAbsence(id: string) {
   await prisma.staffAbsence.delete({ where: { id } });
 }
 
+export async function listDayOverridesForRoster(rosterId: string, yearMonth: string) {
+  const { fromYmd, toYmd } = yearMonthYmdBounds(yearMonth);
+  const from = bakuMidnight(fromYmd);
+  const to = bakuMidnight(toYmd);
+  const rows = await prisma.staffDutyDayOverride.findMany({
+    where: {
+      rosterId,
+      dutyDate: { gte: from, lte: to },
+    },
+    include: {
+      procedureType: { select: { id: true, code: true, name: true } },
+      practitioner: { select: { id: true, code: true, fullName: true } },
+    },
+    orderBy: [{ dutyDate: "asc" }, { procedureTypeId: "asc" }],
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    dutyDate: r.dutyDate.toISOString().slice(0, 10),
+    procedureTypeId: r.procedureTypeId,
+    procedureCode: r.procedureType.code,
+    procedureName: r.procedureType.name,
+    practitionerId: r.practitionerId,
+    practitionerName: r.practitioner.fullName,
+    practitionerCode: r.practitioner.code,
+    note: r.note,
+    createdByUserId: r.createdByUserId,
+  }));
+}
+
+export async function listDayOverrides(input: {
+  yearMonth: string;
+  staffKind?: PractitionerStaffKind;
+  dutyDate?: string;
+}) {
+  const yearMonth = assertYearMonth(input.yearMonth);
+  const staffKind = input.staffKind ?? "NURSE";
+  const view = await getOrCreateDutyRoster({ yearMonth, staffKind });
+  let overrides = view.dayOverrides;
+  if (input.dutyDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dutyDate)) {
+      throw new StaffDutyError("dutyDate must be YYYY-MM-DD");
+    }
+    overrides = overrides.filter((o) => o.dutyDate === input.dutyDate);
+  }
+  return { rosterId: view.roster.id, yearMonth, staffKind, overrides };
+}
+
+export async function upsertDayOverride(input: {
+  yearMonth: string;
+  staffKind?: PractitionerStaffKind;
+  dutyDate: string;
+  procedureTypeId: string;
+  practitionerId: string;
+  note?: string | null;
+  createdByUserId?: string | null;
+}) {
+  const yearMonth = assertYearMonth(input.yearMonth);
+  const staffKind = input.staffKind ?? "NURSE";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dutyDate)) {
+    throw new StaffDutyError("dutyDate must be YYYY-MM-DD");
+  }
+  if (yearMonthOfYmd(input.dutyDate) !== yearMonth) {
+    throw new StaffDutyError("dutyDate must fall in yearMonth");
+  }
+  const view = await getOrCreateDutyRoster({ yearMonth, staffKind });
+  const staffIds = new Set(view.staff.map((s) => s.id));
+  if (!staffIds.has(input.practitionerId)) {
+    throw new StaffDutyError("Substitute must match roster staffKind");
+  }
+  const lineOk = view.lines.some((l) => l.procedureTypeId === input.procedureTypeId);
+  if (!lineOk) {
+    throw new StaffDutyError("Unknown procedureTypeId for this roster");
+  }
+
+  const dutyDate = bakuMidnight(input.dutyDate);
+  const row = await prisma.staffDutyDayOverride.upsert({
+    where: {
+      rosterId_dutyDate_procedureTypeId: {
+        rosterId: view.roster.id,
+        dutyDate,
+        procedureTypeId: input.procedureTypeId,
+      },
+    },
+                create: {
+                  organizationId: requestOrganizationId(),
+                  rosterId: view.roster.id,
+                  dutyDate,
+                  procedureTypeId: input.procedureTypeId,
+                  practitionerId: input.practitionerId,
+                  note: input.note ?? null,
+                  createdByUserId: input.createdByUserId ?? null,
+                },
+    update: {
+      practitionerId: input.practitionerId,
+      note: input.note ?? null,
+      createdByUserId: input.createdByUserId ?? null,
+    },
+  });
+  return {
+    id: row.id,
+    dutyDate: input.dutyDate,
+    procedureTypeId: row.procedureTypeId,
+    practitionerId: row.practitionerId,
+    note: row.note,
+  };
+}
+
+export async function deleteDayOverride(id: string) {
+  const existing = await prisma.staffDutyDayOverride.findUnique({ where: { id } });
+  if (!existing) {
+    throw new StaffDutyError("Day override not found", 404);
+  }
+  await prisma.staffDutyDayOverride.delete({ where: { id } });
+}
+
 export async function isPractitionerAbsentOn(practitionerId: string, at: Date): Promise<boolean> {
   const ymd = bakuYmd(at);
   const day = bakuMidnight(ymd);
@@ -457,7 +573,7 @@ export async function isPractitionerAbsentOn(practitionerId: string, at: Date): 
   return isAbsentOnYmd(absences, ymd);
 }
 
-/** Posted nurse for an approved month roster, if any. */
+/** Posted nurse + optional day override for an allocation slot. */
 export async function resolvePostedStaffForSlot(input: {
   procedureTypeId: string;
   at: Date;
@@ -466,9 +582,11 @@ export async function resolvePostedStaffForSlot(input: {
   rosterStatus: "DRAFT" | "APPROVED" | null;
   posted: DutyCandidate | null;
   postedAbsent: boolean;
+  dayOverride: DutyCandidate | null;
 }> {
   const staffKind = input.staffKind ?? "NURSE";
-  const yearMonth = yearMonthOfYmd(bakuYmd(input.at));
+  const ymd = bakuYmd(input.at);
+  const yearMonth = yearMonthOfYmd(ymd);
   const roster = await prisma.staffDutyRoster.findUnique({
     where: {
       organizationId_yearMonth_staffKind: {
@@ -484,10 +602,20 @@ export async function resolvePostedStaffForSlot(input: {
           practitioner: { select: { id: true, code: true, fullName: true, active: true } },
         },
       },
+      dayOverrides: {
+        where: {
+          procedureTypeId: input.procedureTypeId,
+          dutyDate: bakuMidnight(ymd),
+        },
+        include: {
+          practitioner: { select: { id: true, code: true, fullName: true, active: true } },
+        },
+        take: 1,
+      },
     },
   });
   if (!roster) {
-    return { rosterStatus: null, posted: null, postedAbsent: false };
+    return { rosterStatus: null, posted: null, postedAbsent: false, dayOverride: null };
   }
   const line = roster.lines[0];
   const posted =
@@ -501,7 +629,16 @@ export async function resolvePostedStaffForSlot(input: {
   const postedAbsent = posted
     ? await isPractitionerAbsentOn(posted.id, input.at)
     : false;
-  return { rosterStatus: roster.status, posted, postedAbsent };
+  const ov = roster.dayOverrides[0];
+  const dayOverride =
+    ov?.practitioner && ov.practitioner.active
+      ? {
+          id: ov.practitioner.id,
+          code: ov.practitioner.code,
+          fullName: ov.practitioner.fullName,
+        }
+      : null;
+  return { rosterStatus: roster.status, posted, postedAbsent, dayOverride };
 }
 
 export function applyDutyFilter(
@@ -514,5 +651,7 @@ export function applyDutyFilter(
     posted: duty.posted,
     postedAbsent: duty.postedAbsent,
     skilled,
+    dayOverridePractitionerId: duty.dayOverride?.id ?? null,
+    dayOverride: duty.dayOverride,
   });
 }
