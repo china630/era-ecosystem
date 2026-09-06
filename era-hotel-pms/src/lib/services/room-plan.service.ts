@@ -40,7 +40,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     },
     include: {
       guest: { select: { fullName: true } },
-      reservationGuests: {
+      paxGuests: {
         select: { firstName: true, lastName: true, isPrimary: true, sortOrder: true },
         orderBy: { sortOrder: 'asc' },
       },
@@ -127,7 +127,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       shareGender: r.shareGender,
       shareBedIndex: r.shareBedIndex,
       guest: r.guest,
-      partyNames: r.reservationGuests
+      partyNames: r.paxGuests
         .map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim())
         .filter(Boolean),
       roomType: r.roomType,
