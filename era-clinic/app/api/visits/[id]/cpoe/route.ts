@@ -14,6 +14,29 @@ const bodySchema = z.object({
   payloadJson: z.string().default("{}"),
 });
 
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_VISITS);
+    if (denied) return denied;
+
+    const { id } = await params;
+    const visit = await prisma.visit.findUnique({ where: { id }, select: { id: true } });
+    if (!visit) return jsonError("Visit not found", 404);
+
+    const entries = await prisma.cpoeEntry.findMany({
+      where: { visitId: id },
+      orderBy: { createdAt: "desc" },
+    });
+    return jsonOk({ items: entries });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },

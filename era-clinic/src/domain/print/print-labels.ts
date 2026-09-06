@@ -62,6 +62,8 @@ const EN: Dict = {
   copyNurse: "Copy 2 — nurse",
   copyGuest: "Copy 3 — guest",
   ticketNo: "Ticket",
+  visitExam: "Visit examination",
+  visitExamEmpty: "No filled fields in this exam note",
 };
 
 const RU: Dict = {
@@ -124,6 +126,8 @@ const RU: Dict = {
   copyNurse: "Копия 2 — медсестра",
   copyGuest: "Копия 3 — гость",
   ticketNo: "Чек",
+  visitExam: "Осмотр врача",
+  visitExamEmpty: "В этой записи осмотра нет заполненных полей",
 };
 
 const AZ: Dict = {
@@ -186,6 +190,8 @@ const AZ: Dict = {
   copyNurse: "Nüsxə 2 — tibb bacısı",
   copyGuest: "Nüsxə 3 — qonaq",
   ticketNo: "Çek",
+  visitExam: "Həkim baxışı",
+  visitExamEmpty: "Bu baxış qeydində doldurulmuş sahə yoxdur",
 };
 
 const BY_LANG: Record<PrintLang, Dict> = { en: EN, ru: RU, az: AZ };

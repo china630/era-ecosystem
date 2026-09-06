@@ -13,6 +13,7 @@ import {
   PageHeader,
 } from "@era/satellite-kit/ui";
 import { DiagnosisPanel } from "@/components/DiagnosisPanel";
+import { VisitCpoePanel } from "@/components/VisitCpoePanel";
 
 type VisitDetail = {
   id: string;
@@ -146,6 +147,7 @@ export default function VisitDetailPage() {
           apiBase={`/api/visits/${visit.id}/diagnoses`}
           title={t("diagnoses")}
         />
+        <VisitCpoePanel visitId={visit.id} />
         {insuranceResult && (
           <pre className="rounded border bg-slate-50 p-2 text-xs">{insuranceResult}</pre>
         )}

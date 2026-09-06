@@ -144,6 +144,8 @@ enum ProcedureStaffMode {
 enum ProcedureOrderStatus {
   /// Package line shown on patient card; not on resources until doctor confirms
   PROPOSED
+  /// Paid extra prescribed; not scheduled until reception Pay (CLI-57)
+  PENDING_PAY
   SCHEDULED
   CHECKED_IN
   COMPLETED
@@ -339,6 +341,7 @@ model Practitioner {
   scheduleRules      PractitionerScheduleRule[]
   scheduleExceptions PractitionerScheduleException[]
   dutyLines          StaffDutyLine[]
+  dutyDayOverrides   StaffDutyDayOverride[]
   absences           StaffAbsence[]
   episodeCareRows    EpisodeCareDoctor[]
   @@unique([organizationId, code])
@@ -1053,6 +1056,8 @@ model ProcedureType {
   needsSite          Boolean       @default(true) @map("needs_site")
   /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
   physioOrderFields  String[]      @default([]) @map("physio_order_fields")
+  /// PhysioSite.code allowlist for the doctor picker. Empty + needsSite = legacy all; seed fills concrete lists.
+  allowedSiteCodes   String[]      @default([]) @map("allowed_site_codes")
   afterLunchAllowed  Boolean       @default(true)
   /// When false, slot must start at or after lunchEndHour (men 4-chamber after lunch).
   beforeLunchAllowed Boolean       @default(true) @map("before_lunch_allowed")
@@ -1067,6 +1072,7 @@ model ProcedureType {
   consumableLines    ProcedureConsumableLine[]
   skills             PractitionerSkill[]
   dutyLines          StaffDutyLine[]
+  dutyDayOverrides   StaffDutyDayOverride[]
 
   @@index([resourceCode])
   @@unique([organizationId, code])
@@ -1109,6 +1115,7 @@ model StaffDutyRoster {
   copiedFromYearMonth String?                @map("copied_from_year_month")
   note                String?
   lines               StaffDutyLine[]
+  dayOverrides        StaffDutyDayOverride[]
   createdAt           DateTime               @default(now()) @map("created_at")
   updatedAt           DateTime               @updatedAt @map("updated_at")
 
@@ -1136,6 +1143,30 @@ model StaffDutyLine {
   @@index([practitionerId])
   @@index([organizationId])
   @@map("staff_duty_line")
+}
+
+/// Head-doctor day substitution for one procedure on one civil day (Asia/Baku).
+/// Wins over the monthly posted nurse; never invents a silent skilled-pool fallback.
+model StaffDutyDayOverride {
+  id              String          @id @default(cuid())
+  organizationId  String          @map("organization_id")
+  rosterId        String          @map("roster_id")
+  roster          StaffDutyRoster @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  /// UTC midnight of the Asia/Baku civil day
+  dutyDate        DateTime        @map("duty_date")
+  procedureTypeId String          @map("procedure_type_id")
+  procedureType   ProcedureType   @relation(fields: [procedureTypeId], references: [id], onDelete: Cascade)
+  practitionerId  String          @map("practitioner_id")
+  practitioner    Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  note            String?
+  createdByUserId String?         @map("created_by_user_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@unique([rosterId, dutyDate, procedureTypeId])
+  @@index([organizationId, dutyDate])
+  @@index([practitionerId])
+  @@map("staff_duty_day_override")
 }
 
 /// Clinic-local absence overlay (vacation / sick / training). Finance HR sync is later.
@@ -1281,18 +1312,6 @@ model VisitDiscountAudit {
   @@index([organizationId])
 }
 
-model ClinicalTemplate {
-  id          String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  code        String
-  title       String
-  specialty   String?
-  bodyJson    String
-  createdAt   DateTime @default(now())
-  @@unique([organizationId, code])
-  @@index([organizationId])
-}
-
 model ProgramTemplate {
   id          String                  @id @default(cuid())
   organizationId String @map("organization_id")
@@ -1391,6 +1410,12 @@ model ProcedureOrder {
   note             String?              @db.Text
   /// Type-gated physio values (program, substance, work-kind, …). W3.
   physioFields     Json?                @map("physio_fields")
+  /// CLI-57 package modal: groups sessions created in one Save batch.
+  assignBatchId    String?              @map("assign_batch_id")
+  /// CLI-57: true = burns package quota; false = paid extra / over-quota folio.
+  inPackage        Boolean              @default(false) @map("in_package")
+  /// Clinic reception confirmed guest payment receipt before Pay (walk-in / extras).
+  paymentReceiptRef String?             @map("payment_receipt_ref")
   quantity         Int                  @default(1)
   patientOrigin    PatientOrigin        @default(WALK_IN)
   reservationId    String?
@@ -1438,6 +1463,8 @@ model ProcedureOrder {
   @@index([prescribedByPractitionerId, scheduledAt])
   @@index([organizationId])
   @@index([extraTicketId])
+  @@index([assignBatchId])
+  @@index([inPackage])
 }
 
 model ProcedureAllocation {

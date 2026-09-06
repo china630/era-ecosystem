@@ -28,13 +28,14 @@
 |---------|------|-------|
 | Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 |
 | Patient registry (P-codes, Ad/Soyad/Ata; Open-course badge; room/package on `/sanatorium`) | `/patients` | 🟡 SCREEN (wave UX landed; field UAT open) |
-| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | 🟡 |
+| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | ✅ SCREEN (CLI-38 + CLI-38b: dual view + day override) |
 | МКБ санаторий | `/sanatorium` | 🟡 |
 | Lab orders (q filter, Name (CODE), cancel ORDERED, repeat confirm) | `/lab-orders` | 🟡 SCREEN |
 | МКБ карточка пациента | `/patients/[id]` (after contraindications) | 🟡 |
 | Nafta intake checklist (CLI-25/32/34) | `/patients/[id]` İlkin diaqnostik prosedurlar; `/print/checkup/[patientId]` 4 sections | 🟡 SCREEN (not WO `#33`; UAT open) |
 | Nafta slots clock (CLI-25/48) | Card now/next + compact PLAN — Baku labels, `scheduledAt >= now` | 🟡 SCREEN (re-Apply `#23` required on droplet) |
 | МКБ визит/стационар | `/visits/[id]`, `/inpatient` | 🟡 |
+| Visit exam CPOE + print (CLI-10) | `/visits/[id]` CPOE; `/patients/[id]` exam notes; `/print/visit-exam/[id]` | ✅ SHOW (UAT-SMOKE punched; FHIR/whole-visit debt) |
 | МКБ отчёт | `/reports/diagnoses` | 🟡 |
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
@@ -49,6 +50,7 @@
 | One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (UAT open; not SHIPPED) |
 | Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; UAT open — not SHOW / not Pilot) |
 | Role access matrix (CLI-RBAC-01) | `/admin/access` | 🟡 SCREEN (Phase A Waves 1–3 shipped; UAT listed; not SHOW / not Pilot) |
+| Package/extras assign (CLI-57) | `/sanatorium` Müalicə kartı + `/reception/extra-tickets` Pay | 🟡 SCREEN (hardened: inPackage, Replace, walk-in extras-only; UAT open — not SHOW) |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA). CLI-55 episode-course card is **SCREEN** (built; UAT open) — not SHOW / not Pilot.
 

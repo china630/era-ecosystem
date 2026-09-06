@@ -26,12 +26,34 @@
   "durationMin": 20
  },
  {
+  "code": "SVC-APLIKASIYA-NAFTALAN-KISI",
+  "name": "Aplikasiya Naftalan (Kişi)",
+  "price": 24,
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 14,
+  "dayEndHour": 18,
+  "beforeLunchAllowed": false
+ },
+ {
+  "code": "SVC-APLIKASIYA-NAFTALAN-QADIN",
+  "name": "Aplikasiya Naftalan (Qadın)",
+  "price": 24,
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 8,
+  "dayEndHour": 13,
+  "afterLunchAllowed": false
+ },
+ {
   "code": "SVC-BUKME",
   "name": "Bükmə",
   "price": 20,
   "durationMin": 20
  },
-  {
+ {
   "code": "SVC-DARSONVAL",
   "name": "Darsonval",
   "price": 11,
@@ -50,6 +72,12 @@
   "name": "Fito terapiya (boçka)",
   "price": 16,
   "durationMin": 20
+ },
+ {
+  "code": "SVC-GINEKOLOJI-TAMPON",
+  "name": "Ginekoloji tampon",
+  "price": 14,
+  "durationMin": 15
  },
  {
   "code": "SVC-HIDROKOLONOTERAPIYA",
@@ -80,6 +108,12 @@
   "name": "İnqalyasiya",
   "price": 10,
   "durationMin": 15
+ },
+ {
+  "code": "SVC-ISIQ-VANNASI",
+  "name": "İşıq vannası",
+  "price": 10,
+  "durationMin": 20
  },
  {
   "code": "SVC-KARBOKSITERAPIYA",
@@ -114,10 +148,44 @@
   "durationMin": 30
  },
  {
+  "code": "SVC-MANUAL-TERAPIYA",
+  "name": "Manual terapiya",
+  "price": 50,
+  "durationMin": 30
+ },
+ {
   "code": "SVC-MAQNITOTERAPIYA",
   "name": "Maqnitoterapiya",
   "price": 12,
   "durationMin": 20
+ },
+ {
+  "code": "SVC-NAFTALAN-VANNASI-KISI",
+  "name": "Naftalan vannası (Kişi)",
+  "price": 14,
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 14,
+  "dayEndHour": 18,
+  "beforeLunchAllowed": false
+ },
+ {
+  "code": "SVC-NAFTALAN-VANNASI-QADIN",
+  "name": "Naftalan vannası (Qadın)",
+  "price": 14,
+  "durationMin": 20,
+  "resourceGapMinutes": 5,
+  "patientRestMinutes": 40,
+  "dayStartHour": 8,
+  "dayEndHour": 13,
+  "afterLunchAllowed": false
+ },
+ {
+  "code": "SVC-OSTEOPATIYA",
+  "name": "Osteopatiya",
+  "price": 50,
+  "durationMin": 30
  },
  {
   "code": "SVC-OZONTERAPIYA",
@@ -158,6 +226,12 @@
   "patientRestMinutes": 15
  },
  {
+  "code": "SVC-PROLOTERAPIYA",
+  "name": "Proloterapiya",
+  "price": 40,
+  "durationMin": 20
+ },
+ {
   "code": "SVC-QISA-DALGA-TERAPIYA-UVC",
   "name": "Qısa dalğa terapiya UVÇ",
   "price": 12,
@@ -176,14 +250,26 @@
   "durationMin": 20
  },
  {
-  "code": "SVC-TAM-BEDEN-NAFTALAN-VANNASI",
-  "name": "Tam bədən naftalan vannası",
-  "price": 14,
+  "code": "SVC-TRAKSIYA",
+  "name": "Traksiya",
+  "price": 30,
   "durationMin": 20
  },
  {
-  "code": "SVC-TURUNDA-BURUN-VE-QULAQ",
-  "name": "Turunda (burun və qulaq)",
+  "code": "SVC-TRIQQEZONALAR-ILE-ISLEME",
+  "name": "Triqqezonalar ilə işləmə",
+  "price": 50,
+  "durationMin": 30
+ },
+ {
+  "code": "SVC-TURUNDA-BURUN",
+  "name": "Turunda burun",
+  "price": 12,
+  "durationMin": 15
+ },
+ {
+  "code": "SVC-TURUNDA-QULAQ",
+  "name": "Turunda qulaq",
   "price": 12,
   "durationMin": 15
  },
@@ -195,7 +281,7 @@
   "resourceGapMinutes": 5,
   "patientRestMinutes": 15
  },
-  {
+ {
   "code": "SVC-ULTRAFONOFOREZ",
   "name": "Ultrafonoforez (Naftalan yağıyla)",
   "price": 12,
@@ -210,28 +296,6 @@
   "durationMin": 10,
   "resourceGapMinutes": 0,
   "patientRestMinutes": 15
- },
- {
-  "code": "SVC-NAFTALAN-VANNASI-QADIN",
-  "name": "Naftalan vannası (Qadın)",
-  "price": 14,
-  "durationMin": 20,
-  "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 8,
-  "dayEndHour": 13,
-  "afterLunchAllowed": false
- },
- {
-  "code": "SVC-NAFTALAN-VANNASI-KISI",
-  "name": "Naftalan vannası (Kişi)",
-  "price": 14,
-  "durationMin": 20,
-  "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 14,
-  "dayEndHour": 18,
-  "beforeLunchAllowed": false
  },
  {
   "code": "SVC-UROLOJI-MIKROKLIZMA",
@@ -249,6 +313,12 @@
   "code": "SVC-VAKUUMTERAPIYA",
   "name": "Vakuumterapiya",
   "price": 11,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-XALLARIN-KOAQULYASIYASI",
+  "name": "Xalların koaqulyasiyası",
+  "price": 20,
   "durationMin": 20
  },
  {

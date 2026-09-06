@@ -10,6 +10,7 @@ import {
 } from "@era/satellite-kit/auth/middleware-edge";
 import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
 import { routePermission } from "@/lib/auth/clinic-permissions";
+import { sessionMayPrintVisitExam } from "@/lib/auth/visit-exam-print-access";
 import {
   parsePresetsCookie,
   pathnameRequiresPreset,
@@ -59,6 +60,7 @@ export async function middleware(request: NextRequest) {
     "/api/integration/staff-provision",
     "/api/booking",
     "/api/cron",
+    "/api/internal/v1/extras/hotel-void",
   ];
   if (pathname.startsWith("/api")) {
     if (isPublicApiPath(pathname, clinicPublicApi)) {
@@ -100,6 +102,21 @@ export async function middleware(request: NextRequest) {
   }
   try {
     const session = await verifySatelliteSession(token);
+    if (pathname.startsWith("/print/visit-exam")) {
+      if (
+        !sessionMayPrintVisitExam({
+          role: session.role ?? "",
+          roles: session.roles,
+          permissions: session.permissions,
+          login: session.login ?? "",
+          email: session.email,
+          isOwner: session.isOwner,
+        })
+      ) {
+        return roleGuardResponse(request, reqHeaders);
+      }
+      return NextResponse.next({ request: { headers: reqHeaders } });
+    }
     const required = routePermission(pathname);
     if (
       required &&

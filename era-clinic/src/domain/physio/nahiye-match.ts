@@ -270,14 +270,22 @@ export function classifyEmptyNahiye(procedureName: string): {
 } {
   const n = fold(procedureName || "");
   if (!n) return { kind: "unknown", defaults: [] };
-  if (/inqalyasiya|hidrokolon|uroloji|ozonterapiya|fito.?terapiya|karboksi/.test(n)) {
+  if (/inqalyasiya|hidrokolon|uroloji|ozonterapiya|fito.?terapiya|karboksi|ginekoloji.?tampon|proloter/.test(n)) {
     return { kind: "no-surface-site", defaults: [] };
   }
-  if (/turunda qulaq|trunda qulaq/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-EAR"] };
+  if (/turunda qulaq|trunda qulaq/.test(n) && !/burun/.test(n)) {
+    return { kind: "site-in-name", defaults: ["ZONE-EAR"] };
+  }
+  if (/(trunda|turunda)/.test(n) && /burun/.test(n) && !/qulaq/.test(n)) {
+    return { kind: "site-in-name", defaults: ["ZONE-FACE"] };
+  }
   if (/(trunda|turunda)/.test(n) && /burun/.test(n)) {
-    return { kind: "site-in-name-missing-nose", defaults: [] };
+    return { kind: "site-in-name", defaults: ["ZONE-FACE", "ZONE-EAR"] };
   }
   if (/turunda|trunda/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-EAR"] };
+  if (/aplikasiya/.test(n) && /naftalan/.test(n)) {
+    return { kind: "needs-nahiye", defaults: [] };
+  }
   if (/4 kamera/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FOUR-CHAMBER"] };
   if (/parafin.*butun|butun beden/.test(n)) {
     return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
@@ -294,14 +302,48 @@ export function classifyEmptyNahiye(procedureName: string): {
   if (/tam beden naftalan/.test(n)) {
     return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   }
+  if (/otur|oturaq|sitz/.test(n) && /naftalan/.test(n)) {
+    return { kind: "site-in-name", defaults: ["ZONE-SITZ"] };
+  }
   if (/yod.?brom/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/hidromasaj/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
-  if (/massaj 30/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
+  if (/isiq.?vann/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
+  if (/massaj 30|massaj 15/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/^ufb\b|ufb terapiya/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/bukme/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/limfodrenaj/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-LOWER-LIMB"] };
+  // Empty fill on ♀/♂ naftalan (or işıq vannası) → FULL; oturaq only when text says so.
   if (/naftalan vannasi|isiq vann/.test(n)) {
-    return { kind: "fill-ambiguous", defaults: [] };
+    return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   }
   return { kind: "needs-nahiye", defaults: [] };
+}
+
+/**
+ * Import site chips when WO nahiye is empty (or classifier returns no chips yet).
+ * 1) SKU-named anatomy from classifyEmptyNahiye (paraffin family, 4-kamera, limfo…).
+ * 2) Else if allowlist includes ZONE-FULL-BODY → full body.
+ * 3) Else if allowlist is a single code → that code.
+ * Never invent FULL when the type forbids it (ESWT, turunda, four-chamber-only, …).
+ */
+export function resolveEmptyImportSiteCodes(
+  procedureName: string,
+  allowedSiteCodes: readonly string[] | null | undefined,
+): string[] {
+  const empty = classifyEmptyNahiye(procedureName);
+  if (empty.kind === "no-surface-site" || empty.kind === "unknown") return [];
+
+  let chips = [...empty.defaults];
+  const allowed = allowedSiteCodes?.length ? [...allowedSiteCodes] : null;
+
+  if (!chips.length && allowed) {
+    if (allowed.includes("ZONE-FULL-BODY")) chips = ["ZONE-FULL-BODY"];
+    else if (allowed.length === 1) chips = [allowed[0]!];
+  }
+
+  if (allowed) {
+    const allow = new Set(allowed);
+    chips = chips.filter((c) => allow.has(c));
+  }
+  return chips;
 }

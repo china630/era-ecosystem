@@ -86,7 +86,7 @@ Reference: clinic `/patients`, `/admin/catalog`, `/admin/master-data`, `/lab-ord
 
 | Class | When | Pattern |
 |-------|------|---------|
-| **A — Unbounded list** | Guests, reservations, patients, lab orders, sanatorium courses, CIF, invoices | Server `{ items\|data, total, page, pageSize }` + **`EraListWorkspace`** inside **`LIST_PAGE_SHELL_CLASS`**: filter / optional toolbar / scrollable table / docked `ListPaginationFooter`. Page itself does **not** scroll. |
+| **A — Unbounded list** | Guests, reservations, patients, lab orders, sanatorium courses, CIF, invoices | Server `{ items\|data, total, page, pageSize }` + **`EraListWorkspace`** inside **`LIST_PAGE_SHELL_CLASS`** (`flex-1` under shell): filter / optional toolbar / scrollable table / docked `ListPaginationFooter` on the viewport bottom edge. Page itself does **not** scroll. |
 | **B — Small catalog** | Master-data ≤~200 rows, modal grids | Client `EraDataGrid` (default slice + `DATA_TABLE_SCROLL_CLASS` 70vh) or `pagination={false}` |
 | **C — Canvas** | Room plan, rack, POS, KDS, resource matrix | Not a paged table |
 

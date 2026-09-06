@@ -5,9 +5,15 @@ import {
   classifyEmptyNahiye,
   fillImportedNote,
   overlayZoneAliases,
+  resolveEmptyImportSiteCodes,
   type NahiyeMatchCatalog,
 } from "@/domain/physio/nahiye-match";
-import { inferLateralityFromText, physioFieldsFromFlags, siteApplyModeFromFlags } from "@/domain/physio/nahiye-match-values";
+import {
+  defaultLateralityForSite,
+  inferLateralityFromText,
+  physioFieldsFromFlags,
+  siteApplyModeFromFlags,
+} from "@/domain/physio/nahiye-match-values";
 import { loadMergedPhysioZonesCatalog } from "@/domain/physio/physio-catalog-layers";
 
 const cjs = require("../scripts/nafta-cutover/nahiye-s-match.cjs") as {
@@ -72,12 +78,37 @@ describe("nahiye matcher (CLI-49 W4)", () => {
       defaults: [],
     });
     expect(classifyEmptyNahiye("Massaj 30 dəq").defaults).toEqual(["ZONE-FULL-BODY"]);
+    expect(classifyEmptyNahiye("Massaj 15 dəq").defaults).toEqual(["ZONE-FULL-BODY"]);
+    expect(classifyEmptyNahiye("Naftalan vannası (Qadın)").defaults).toEqual(["ZONE-FULL-BODY"]);
+    expect(classifyEmptyNahiye("Parafinoterapiya (aşağı ətraf)").defaults).toEqual(["ZONE-LOWER-LIMB"]);
   });
 
-  it("infers laterality and növbəli from flags/text", () => {
+  it("resolves empty import sites: SKU named > FULL allowlist > single code", () => {
+    expect(
+      resolveEmptyImportSiteCodes("Parafinoterapiya (aşağı ətraf)", [
+        "ZONE-LOWER-LIMB",
+        "ZONE-KNEE",
+        "ZONE-FULL-BODY",
+      ]),
+    ).toEqual(["ZONE-LOWER-LIMB"]);
+    expect(resolveEmptyImportSiteCodes("Amplipuls", ["ZONE-KNEE", "ZONE-FULL-BODY", "ZONE-BACK"])).toEqual([
+      "ZONE-FULL-BODY",
+    ]);
+    expect(resolveEmptyImportSiteCodes("Zərbə dalğa", ["ZONE-KNEE", "ZONE-SHOULDER"])).toEqual([]);
+    expect(resolveEmptyImportSiteCodes("4 kameralı hidroqalvanizasiya", ["ZONE-FOUR-CHAMBER"])).toEqual([
+      "ZONE-FOUR-CHAMBER",
+    ]);
+    expect(resolveEmptyImportSiteCodes("Ozonterapiya", [])).toEqual([]);
+  });
+
+  it("infers laterality and defaults BOTH when side omitted", () => {
     expect(inferLateralityFromText("sol diz")).toBe("LEFT");
     expect(inferLateralityFromText("sağ çiyin")).toBe("RIGHT");
     expect(inferLateralityFromText("hər iki ayaq")).toBe("BOTH");
+    expect(inferLateralityFromText("diz")).toBeNull();
+    expect(defaultLateralityForSite(true, null)).toBe("BOTH");
+    expect(defaultLateralityForSite(true, "LEFT")).toBe("LEFT");
+    expect(defaultLateralityForSite(false, null)).toBeNull();
     expect(siteApplyModeFromFlags(["SEQUENCE_ALTERNATING"])).toBe("TURN");
     expect(siteApplyModeFromFlags(["SEQUENCE_SIMULTANEOUS"])).toBe("TOGETHER");
   });

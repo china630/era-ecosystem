@@ -138,7 +138,7 @@ export async function hasProcedureSameDay(
       patientRefId,
       procedureCode,
       scheduledAt: { gte: start, lt: end },
-      status: { notIn: ["CANCELLED", "PROPOSED"] },
+      status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY"] },
       ...(excludeOrderId ? { id: { not: excludeOrderId } } : {}),
     },
   });
@@ -319,76 +319,24 @@ async function expandProposedSlots(instanceId: string): Promise<{
 }
 
 /**
- * Build PROPOSED procedure orders from program quotas (no resource bookings).
- * Doctor must confirm before placeConfirmedProcedures places them on the matrix.
+ * @deprecated CLI-57 — do not pre-expand package into PROPOSED. Use package-assign API.
+ * Returns 0 and does not create orders.
  */
-export async function buildProposedPlan(instanceId: string): Promise<number> {
-  const workHours = await getTenantWorkHours();
-  const {
-    patientRefId,
-    patientOrigin,
-    reservationId,
-    clinicalEpisodeId,
-    startsOn,
-    slots,
-  } = await expandProposedSlots(instanceId);
-  if (!patientRefId || slots.length === 0) return 0;
+export async function buildProposedPlan(_instanceId: string): Promise<number> {
+  console.warn(
+    "[clinic] buildProposedPlan is deprecated (CLI-57); use package-assign instead",
+  );
+  return 0;
+}
 
-  if (clinicalEpisodeId) {
-    const episode = await prisma.clinicalEpisode.findUnique({
-      where: { id: clinicalEpisodeId },
-      select: { anamnesisText: true },
-    });
-    const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
-      "@/domain/sanatorium/episode-gates"
-    );
-    const denied = episodeAnamnesisDenied(episode?.anamnesisText);
-    if (denied) {
-      const err = new Error(denied);
-      (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
-      throw err;
-    }
-  }
-
-  // Idempotent: drop previous unconfirmed PROPOSED for this reservation/patient from this program run
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      patientRefId,
-      status: "PROPOSED",
-      ...(reservationId ? { reservationId } : {}),
-      ...(clinicalEpisodeId ? { clinicalEpisodeId } : {}),
-    },
-  });
-
-  let cursor = new Date(startsOn);
-  cursor.setHours(workHours.dayStartHour, 0, 0, 0);
-  let created = 0;
-
-  for (const item of slots) {
-    if (!item.procedureTypeId) continue;
-    const proposedAt = await nextWorkSlot(cursor, workHours);
-    await prisma.procedureOrder.create({
-      data: {
-        organizationId: requestOrganizationId(),
-        patientRefId,
-        clinicalEpisodeId: clinicalEpisodeId ?? undefined,
-        procedureCode: item.procedureCode,
-        procedureName: item.procedureName,
-        procedureTypeId: item.procedureTypeId,
-        scheduledAt: proposedAt,
-        endsAt: addMinutes(proposedAt, item.durationMin),
-        sequenceIndex: item.sequenceIndex,
-        bodyPart: item.bodyPart ?? undefined,
-        patientOrigin,
-        reservationId: reservationId ?? undefined,
-        status: "PROPOSED",
-      },
-    });
-    cursor = addMinutes(proposedAt, item.durationMin + item.minGapMinutes);
-    created++;
-  }
-
-  return created;
+/**
+ * @deprecated CLI-57 — alias of buildProposedPlan no-op.
+ */
+export async function planProgramFifo(
+  instanceId: string,
+  _startsOn: Date,
+): Promise<number> {
+  return buildProposedPlan(instanceId);
 }
 
 /**
@@ -731,15 +679,4 @@ export async function placeConfirmedProcedures(
   }
 
   return placed;
-}
-
-/**
- * @deprecated Prefer buildProposedPlan + placeConfirmedProcedures.
- * Kept for callers that still expect one-shot schedule; now builds PROPOSED only.
- */
-export async function planProgramFifo(
-  instanceId: string,
-  _startsOn: Date,
-): Promise<number> {
-  return buildProposedPlan(instanceId);
 }

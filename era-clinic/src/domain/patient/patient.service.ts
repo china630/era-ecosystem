@@ -134,18 +134,28 @@ export async function listPatients(query?: string) {
 export async function listProgramCodes(
   episodeStatus: "OPEN" | "CLOSED" | "ALL" = "OPEN",
 ): Promise<string[]> {
-  const where =
+  const episodeWhere =
     episodeStatus === "ALL"
       ? { programCode: { not: null } }
       : { status: episodeStatus, programCode: { not: null } };
-  const rows = await prisma.clinicalEpisode.findMany({
-    where,
-    select: { programCode: true },
-  });
+  const instanceWhere =
+    episodeStatus === "ALL" ? {} : { episode: { status: episodeStatus } };
+
+  const [fromEpisode, fromInstance] = await Promise.all([
+    prisma.clinicalEpisode.findMany({
+      where: episodeWhere,
+      select: { programCode: true },
+    }),
+    prisma.programInstance.findMany({
+      where: instanceWhere,
+      select: { programCode: true },
+    }),
+  ]);
+
   return [
     ...new Set(
-      rows
-        .map((r) => r.programCode?.trim())
+      [...fromEpisode.map((r) => r.programCode), ...fromInstance.map((r) => r.programCode)]
+        .map((n) => n?.trim())
         .filter((n): n is string => Boolean(n)),
     ),
   ].sort((a, b) => a.localeCompare(b));

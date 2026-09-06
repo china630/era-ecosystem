@@ -27,6 +27,12 @@ import {
   type PhysioChipsLabels,
   type PhysioChipsValue,
 } from "@/components/physio/PhysioSiteChips";
+import {
+  EpisodeAssignBlocks,
+  EpisodeScheduleCards,
+} from "@/components/sanatorium/EpisodeAssignChrome";
+import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
+import { ExtrasAssignModal } from "@/components/sanatorium/ExtrasAssignModal";
 
 type TimelineEvent = {
   id: string;
@@ -101,11 +107,26 @@ type CardSummary = {
     packageTitle: L10n | null;
     items: IntakeChecklistItem[];
   };
+  examNotesPreview?: Array<{
+    id: string;
+    visitId: string;
+    at: string;
+    atLabel?: string;
+    title: string;
+    titleL10n?: L10n;
+    templateId: string | null;
+    doctorName: string;
+    href: string;
+    printHref: string;
+  }>;
 };
 
 const EMPTY_PHYSIO: PhysioChipsValue = {
   needsSite: true,
   physioOrderFields: [],
+  allowedSiteCodes: [],
+  forceSiteTogether: false,
+  sitesHintKey: null,
   siteIds: [],
   siteApplyMode: null,
   siteLaterality: {},
@@ -149,6 +170,8 @@ type Props = {
   patientRefId: string;
   panel?: string | null;
   episodeId?: string | null;
+  /** CLI-57: walk-in hides package assign. */
+  patientOrigin?: string | null;
   /** When false, confirm procedures buttons are disabled (ANAMNESIS_REQUIRED). */
   anamnesisOk?: boolean;
   readOnly?: boolean;
@@ -160,6 +183,7 @@ export function PatientCardClinicalSections({
   patientRefId,
   panel,
   episodeId,
+  patientOrigin,
   anamnesisOk = true,
   readOnly = false,
   refreshKey = 0,
@@ -194,6 +218,9 @@ export function PatientCardClinicalSections({
   const [physioById, setPhysioById] = useState<Record<string, PhysioChipsValue>>({});
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
+  const [packageModalOpen, setPackageModalOpen] = useState(false);
+  const [extrasModalOpen, setExtrasModalOpen] = useState(false);
+  const [day1Busy, setDay1Busy] = useState(false);
 
   const physioLabels: PhysioChipsLabels = useMemo(
     () => ({
@@ -245,6 +272,10 @@ export function PatientCardClinicalSections({
       intensityNotHot: t("physioIntensityNotHot", { defaultValue: "Not hot" }),
       intensityMedium: t("physioIntensityMedium", { defaultValue: "Medium" }),
       intensityMore: t("physioIntensityMore", { defaultValue: "More" }),
+      sitesHintHydroJets: t("physioSitesHintHydroJets", {
+        defaultValue:
+          "Do not aim jets at the heart, breasts, or groin. Prefer back, lumbar, thighs, calves, and feet.",
+      }),
     }),
     [t],
   );
@@ -275,8 +306,12 @@ export function PatientCardClinicalSections({
         next[oid] = {
           needsSite: ev.physio.needsSite,
           physioOrderFields: ev.physio.physioOrderFields ?? [],
+          allowedSiteCodes: ev.physio.allowedSiteCodes ?? [],
+          forceSiteTogether: ev.physio.forceSiteTogether === true,
+          sitesHintKey: ev.physio.sitesHintKey ?? null,
           siteIds: ev.physio.siteIds,
-          siteApplyMode: ev.physio.siteApplyMode,
+          siteApplyMode:
+            ev.physio.forceSiteTogether === true ? "TOGETHER" : ev.physio.siteApplyMode,
           siteLaterality: ev.physio.siteLaterality ?? {},
           physioFields: ev.physio.physioFields ?? {},
           note: ev.physio.note,
@@ -534,6 +569,47 @@ export function PatientCardClinicalSections({
         </div>
       </section>
 
+      <section className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+            {t("examNotesTitle", { defaultValue: "Exam notes" })}
+          </h2>
+        </div>
+        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+          {(summary?.examNotesPreview?.length ?? 0) === 0 ? (
+            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+              {t("examNotesEmpty", { defaultValue: "No exam notes yet." })}
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {(summary?.examNotesPreview ?? []).map((note) => (
+                <li key={note.id} className="flex items-start gap-2 text-[13px]">
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-500" />
+                  <div className="min-w-0 flex-1">
+                    <Link href={note.href} className={`font-medium ${LINK_ACCENT_CLASS}`}>
+                      {note.titleL10n ? pickL10n(note.titleL10n, locale) : note.title}
+                    </Link>
+                    <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {note.atLabel ?? note.at}
+                      {note.doctorName ? ` · ${note.doctorName}` : ""}
+                      {note.templateId ? ` · ${note.templateId}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={t("printExam", { defaultValue: "Print exam" })}
+                    onClick={() => openPrint(note.printHref)}
+                  >
+                    <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
       {intakeChecklist?.items?.length ? (
         <section className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -587,98 +663,68 @@ export function PatientCardClinicalSections({
       ) : null}
 
       <section className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-            {t("proposedPlanTitle", { defaultValue: "Proposed plan" })}
-          </h2>
-          {allProposedIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={
-                  confirmBusy ||
-                  selectedProposed.size === 0 ||
-                  !anamnesisOk ||
-                  readOnly
-                }
-                onClick={() => void confirmOrders([...selectedProposed])}
-              >
-                {t("confirmSelected", { defaultValue: "Confirm selected" })}
-              </button>
-              {!anamnesisOk ? (
-                <p className={`text-[12px] text-amber-700`}>
-                  {t("anamnesisRequiredForConfirm", {
-                    defaultValue: "Fill anamnesis for this course before confirming procedures.",
-                  })}
-                </p>
-              ) : (
-              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                {t("firstDayConfirmHint", {
-                  defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
-                })}
-              </p>
-              )}
-            </div>
-          ) : null}
-        </div>
-        {confirmMsg ? <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{confirmMsg}</p> : null}
-        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
-          {proposedPreview.length === 0 ? (
-            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-              {t("proposedEmpty", { defaultValue: "No proposed procedures awaiting confirmation." })}
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {proposedPreview.map((ev) => {
-                const oid = orderIdFromEvent(ev);
-                if (!oid) return null;
-                return (
-                  <li
-                    key={ev.id}
-                    className="flex flex-wrap items-start gap-2 rounded border border-amber-200 bg-amber-50/50 px-3 py-2 text-[13px]"
-                  >
-                    <input
-                      type="checkbox"
-                      className={`mt-1 ${MODAL_CHECKBOX_CLASS}`}
-                      checked={selectedProposed.has(oid)}
-                      onChange={() => toggleProposed(oid)}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium">{eventTitle(ev, locale)}</span>
-                      <p className="text-[12px] text-amber-800">
-                        {ev.subtitle} · {t("statusProposed", { defaultValue: "PROPOSED" })}
-                      </p>
-                      <PhysioSiteChips
-                        value={physioById[oid] ?? ev.physio ?? EMPTY_PHYSIO}
-                        catalog={physioCatalog}
-                        programs={physioPrograms}
-                        substances={physioSubstances}
-                        locale={locale}
-                        editable
-                        labels={physioLabels}
-                        onSitesChange={(siteIds) => void patchPhysio(oid, { siteIds })}
-                        onModeChange={(siteApplyMode) => void patchPhysio(oid, { siteApplyMode })}
-                        onNoteBlur={(note) => void patchPhysio(oid, { note })}
-                        onLateralityChange={(siteId, laterality) =>
-                          void patchPhysio(oid, { siteLaterality: { [siteId]: laterality } })
+        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+          {t("assignSectionTitle", { defaultValue: "Procedure assign" })}
+        </h2>
+        {episodeId ? (
+          <EpisodeAssignBlocks
+            packageTitle={t("assignPackageTitle", { defaultValue: "Procedures in package" })}
+            extrasTitle={t("assignExtrasTitle", { defaultValue: "Additional procedures" })}
+            day1Label={t("day1AutoAssign", { defaultValue: "Day-1 auto (≤3)" })}
+            readOnly={readOnly || !anamnesisOk}
+            day1Busy={day1Busy}
+            hidePackage={patientOrigin === "WALK_IN"}
+            onPackagePlus={() => setPackageModalOpen(true)}
+            onExtrasPlus={() => setExtrasModalOpen(true)}
+            onDay1={
+              patientOrigin === "WALK_IN"
+                ? undefined
+                : () => {
+                    setDay1Busy(true);
+                    void fetch(`/api/sanatorium/episodes/${episodeId}/package-assign/day1`, {
+                      method: "POST",
+                    })
+                      .then(async (res) => {
+                        if (!res.ok) {
+                          const d = await res.json();
+                          setConfirmMsg(d.error ?? "Day-1 failed");
+                          return;
                         }
-                        onFieldsChange={(physioFields) => void patchPhysio(oid, { physioFields })}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+                        setConfirmMsg(null);
+                        const q = episodeId ? `?episode=${encodeURIComponent(episodeId)}` : "";
+                        const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
+                        if (r.ok) {
+                          const d = await r.json();
+                          setSummary(d.data ?? d);
+                        }
+                      })
+                      .finally(() => setDay1Busy(false));
+                  }
+            }
+          />
+        ) : (
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+            {t("assignNeedsEpisode", {
+              defaultValue: "Open a sanatorium course to assign package procedures.",
+            })}
+          </p>
+        )}
+        {confirmMsg ? <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{confirmMsg}</p> : null}
       </section>
 
       <section className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-            {t("planTitle")}
-          </h2>
+        <EpisodeScheduleCards
+          title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
+          emptyLabel={t("scheduleCardsEmpty", { defaultValue: "No scheduled procedures yet." })}
+          items={planPreview.map((ev) => ({
+            id: ev.id,
+            title: eventTitle(ev, locale),
+            subtitle: ev.subtitle,
+            status: ev.status,
+            atLabel: ev.at ? bakuDateTimeLabel(ev.at) : undefined,
+          }))}
+        />
+        <div className="flex flex-wrap gap-2">
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPlanOpen(true)}>
             {t("openPlan")}
           </button>
@@ -695,56 +741,74 @@ export function PatientCardClinicalSections({
             <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
         </div>
-        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
-          {planPreview.length === 0 ? (
-            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("planEmpty")}</p>
-          ) : (
-            <ul className="space-y-2">
-              {planPreview.map((ev) => {
-                const physio = ev.physio ?? (ev.id.startsWith("procedure:") ? physioById[ev.id.slice("procedure:".length)] : undefined);
-                const siteLabels =
-                  physio?.siteIds
-                    ?.map((id) => {
-                      const site = physioCatalog.find((s) => s.id === id);
-                      if (!site) return null;
-                      const loc = locale.startsWith("ru")
-                        ? site.titleRu
-                        : locale.startsWith("az")
-                          ? site.titleAz
-                          : site.titleEn;
-                      return `${loc} / ${site.titleLa}`;
-                    })
-                    .filter(Boolean) ?? [];
-                return (
-                <li
-                  key={ev.id}
-                  className="flex items-start gap-2 rounded border border-emerald-100 bg-emerald-50/40 px-3 py-2 text-[13px]"
-                >
-                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium">{eventTitle(ev, locale)}</span>
-                    <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                      {ev.subtitle} · {ev.status}
-                    </p>
-                    {siteLabels.length > 0 ? (
-                      <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {t("physioSites", { defaultValue: "Sites" })}: {siteLabels.join(" · ")}
-                      </p>
-                    ) : physio?.needsSite ? (
-                      <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {t("planSitesInFullPlan", {
-                          defaultValue: "Sites — open full plan",
-                        })}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
       </section>
+
+      {episodeId ? (
+        <>
+          <PackageAssignModal
+            open={packageModalOpen}
+            episodeId={episodeId}
+            onClose={() => setPackageModalOpen(false)}
+            onSaved={async () => {
+              const q = `?episode=${encodeURIComponent(episodeId)}`;
+              const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
+              if (r.ok) {
+                const d = await r.json();
+                setSummary(d.data ?? d);
+              }
+            }}
+            labels={{
+              title: t("assignPackageTitle", { defaultValue: "Procedures in package" }),
+              save: tc("save"),
+              cancel: tc("cancel"),
+              leftMenu: t("packageMenuLeft", { defaultValue: "Package remaining" }),
+              rightAssigned: t("packageMenuRight", { defaultValue: "Assigned" }),
+              remaining: t("remaining", { defaultValue: "Remaining" }),
+              qty: t("qty", { defaultValue: "Quantity" }),
+              note: t("note", { defaultValue: "Note" }),
+              addToDraft: t("addToDraft", { defaultValue: "Add" }),
+              all: t("assignAll", { defaultValue: "All" }),
+              delete: tc("delete"),
+              consumedLocked: t("consumedLocked", { defaultValue: "Completed" }),
+              emptyLeft: t("packageEmptyLeft", { defaultValue: "No package lines." }),
+              emptyRight: t("packageEmptyRight", { defaultValue: "Nothing assigned yet." }),
+              softWarnPrefix: t("softWarn", { defaultValue: "Note" }),
+              replace: t("replaceProcedure", { defaultValue: "Replace" }),
+              replaceFrom: t("replaceFrom", { defaultValue: "From" }),
+              replaceTo: t("replaceTo", { defaultValue: "To" }),
+              replaceSubmit: t("replaceSubmit", { defaultValue: "Replace" }),
+              qtyDown: t("qtyDown", { defaultValue: "−1" }),
+              checkedInLocked: t("checkedInLocked", { defaultValue: "Checked in" }),
+            }}
+          />
+          <ExtrasAssignModal
+            open={extrasModalOpen}
+            episodeId={episodeId}
+            onClose={() => setExtrasModalOpen(false)}
+            onSaved={async () => {
+              const q = `?episode=${encodeURIComponent(episodeId)}`;
+              const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
+              if (r.ok) {
+                const d = await r.json();
+                setSummary(d.data ?? d);
+              }
+            }}
+            labels={{
+              title: t("assignExtrasTitle", { defaultValue: "Additional procedures" }),
+              save: tc("save"),
+              cancel: tc("cancel"),
+              pickProcedure: t("pickProcedure", { defaultValue: "Procedure" }),
+              qty: t("qty", { defaultValue: "Quantity" }),
+              note: t("note", { defaultValue: "Note" }),
+              addToDraft: t("addToDraft", { defaultValue: "Add" }),
+              pending: t("pendingPay", { defaultValue: "Awaiting payment" }),
+              price: t("price", { defaultValue: "Price" }),
+              delete: tc("delete"),
+              empty: t("extrasEmpty", { defaultValue: "No additional procedures." }),
+            }}
+          />
+        </>
+      ) : null}
 
       <ModalShell
         open={historyOpen}

@@ -244,7 +244,6 @@ export default function PatientsPage() {
         <PageHeader
           className="!mb-0"
           title={t("title")}
-          subtitle={t("subtitle")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
               {tc("add")}

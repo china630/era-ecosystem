@@ -56,8 +56,8 @@
 
 ### 1.2 Карточка визита + CPOE-UI + МКБ-10
 - **UI карточки визита** (сейчас `/appointments` — плейсхолдер `app/appointments/page.tsx:21-23`) поверх существующих API.
-- **CPOE-UI** на существующие модели `CpoeEntry`/`ClinicalTemplate` (`schema.prisma:185-231`); API `POST /api/visits/[id]/cpoe` уже есть.
-- **Динамические шаблоны осмотров** по специальностям (используя `ClinicalTemplate`).
+- **CPOE-UI** на `CpoeEntry` + visit templates из Diagnostic catalog (`kind=visit`); API `GET/POST /api/visits/[id]/cpoe`; UI на `/visits/[id]`.
+- **Динамические шаблоны осмотров** по специальностям — `DiagnosticService` modality `VISIT` (admin: `/admin/diagnostic-catalog`).
 - **Каталог МКБ-10** вместо free-text `ClinicalDiagnosis.icdCode` (`schema.prisma:154-162`).
 
 ### 1.3 Рабочие места врача и медсестры (роль-роутинг)
