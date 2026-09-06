@@ -49,7 +49,7 @@ export type RoomRackRoom = {
   roomNumber: string;
   status: RoomStatus;
   floor: number;
-  roomType: { code: string; name: string };
+  roomType: { code: string; name: string; adultCapacity?: number };
   reservations: Array<{
     id: string;
     status: ReservationStatus;
