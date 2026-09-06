@@ -558,7 +558,7 @@ export default function RoomPlanGrid({
               className={`${stickyAvailHeaderClass('bg-[#EBF5FB]')} flex items-center justify-center py-1 text-center text-[11px] font-semibold text-[#2980B9]`}
               style={{ minHeight: AVAIL_ROW_H, top: DATE_HEADER_H }}
             >
-              {avail[d] ?? '—'}
+              {availabilityByDay?.[d] ?? '—'}
             </div>
           ))}
 
