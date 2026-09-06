@@ -741,6 +741,12 @@ model BookingSource {
   @@index([organizationId])
 }
 
+/** Opera-style: Travel Agent vs Company are different profiles (commission vs direct bill). */
+enum B2bSettlementMode {
+  PREPAID
+  POSTPAID
+}
+
 model Agency {
   id                   String              @id @default(uuid())
   organizationId String
@@ -750,6 +756,8 @@ model Agency {
   /** Local cache for Finance counterparty (resolved by agency VÖEN). */
   financeCounterpartyId String?
   commissionPercent    Decimal?            @db.Decimal(5, 2)
+  /** When commission is taken: prepaid (deducted up front) vs postpaid (statement after stay). */
+  settlementMode       B2bSettlementMode   @default(POSTPAID)
   /** Max open AR (PENDING_AR + TRANSFERRED_AR) for this agency; null = use stay/hotel default */
   creditLimitAzn       Decimal?            @db.Decimal(12, 2)
   /** Net days after checkout for Finance aging (display + H-BL-48) */
@@ -761,6 +769,27 @@ model Agency {
   contractPricingRules ContractPricingRule[]
   salesContracts       SalesContract[]
   banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+/** Corporate account (Opera Company profile) — direct bill, no travel-agent commission. */
+model Company {
+  id                    String             @id @default(uuid())
+  organizationId        String
+  code                  String
+  name                  String
+  voen                  String?
+  financeCounterpartyId String?
+  creditLimitAzn        Decimal?           @db.Decimal(12, 2)
+  paymentTermsDays      Int?
+  settlementMode        B2bSettlementMode  @default(POSTPAID)
+  active                Boolean            @default(true)
+  reservations          Reservation[]
+  salesContracts        SalesContract[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
   @@unique([organizationId, code])
   @@index([organizationId])
 }
@@ -832,6 +861,8 @@ model SalesContract {
   counterpartyType  SalesContractCounterpartyType @default(AGENCY)
   agencyId          String?
   agency            Agency?                       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  companyId         String?
+  company           Company?                      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   companyGuestId    String?
   companyGuest      Guest?                        @relation("SalesContractCompany", fields: [companyGuestId], references: [id], onDelete: SetNull)
   validFrom         DateTime                      @db.Date
@@ -856,6 +887,7 @@ model SalesContract {
   updatedAt         DateTime                      @updatedAt
 
   @@index([agencyId, status])
+  @@index([companyId, status])
   @@index([validFrom, validTo])
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -1341,6 +1373,8 @@ model Reservation {
   source        BookingSource?    @relation(fields: [sourceId], references: [id])
   agencyId      String?
   agency        Agency?           @relation(fields: [agencyId], references: [id])
+  companyId     String?
+  company       Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
   groupId       String?
   group         ReservationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   salesContractId String?
@@ -1438,6 +1472,7 @@ model Reservation {
   @@index([bookerGuestId])
   @@index([roomTypeId])
   @@index([agencyId])
+  @@index([companyId])
   @@index([groupId])
   @@index([salesContractId])
   @@unique([organizationId, externalRef])

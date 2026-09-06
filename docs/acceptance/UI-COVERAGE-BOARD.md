@@ -111,6 +111,8 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |
 | HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey` | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
 | HOT-TOUR-01 | Hotel | Nafta weekend tours | Y | `/tours` `/tours/[id]/print` `/fleet` | **SCREEN** | Out of Hotel SHOW rollup (no Demo/TE); SHIPPED ops | ADR hotel-guest-tours |
+| HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | UAT §42 open; Status=API | out of Hotel SHOW rollup |
+| HOT-CL-06 | Hotel | Company profile + company CL | Y Company + ledger | `/distribution/companies` + `/front-cash/company-ledger` | **SCREEN** | UAT §42 open; Status=API | Opera split; ADR hotel-agency-vs-company-profiles |
 | HOT-HK-01…05 | Hotel | Nafta HK deepen | Y | `/hk` roster rotation laundry forecast discrepancy policy | **SCREEN** | UAT-SMOKE §34 open; out of Hotel SHOW rollup | AC-HOT-HK remains Dirty/Clean/Inspected |
 | BANK-GL / PAY-APPR / LOAN-* / ECL / CAP | Bank | ops lab | Y | paths Y | **SHOW** lab | field / cert is VENDOR or Pilot — not a missing screen | Inventory OUT |
 | CLI-* admin/ops | Clinic | catalogs / appts / cash | Y | `/admin/*`, `/appointments`, `/cashier` | **SCREEN** | Demo/TE sign-off | Nafta 2026-06 API-only master-data is closed |
@@ -139,6 +141,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-09-07 | HOT-CL-06 company CL moved to own `/front-cash/company-ledger` (Opera IA split from agency-ledger tabs). |
 | 2026-08-31 | Clinic CLI-WF-PWD-01 local password self-service SHIPPED (`/account/password`). Hotel/F&B STAFF_PROVISIONED User hash aligned to scrypt. |
 | 2026-08-30 | Clinic Nafta card wave SCREEN: intake checklist (`PKG-NAFTA-INTAKE`), physio empty-catalog/Solyuks, Baku `#23` clock — UAT open; not SHOW / not GA. |
 | 2026-08-23 | HOT-TOUR-01 guest tours SHIPPED as SCREEN (`/tours` + `/fleet`); still out of Hotel SHOW rollup. |

@@ -172,6 +172,17 @@ export function resolveGuestIdForNamePart(
   );
 }
 
+/** All Guest.id hits for one name fragment (exact, else safe-fold singleton). */
+export function collectGuestIdsForNamePart(
+  part: string,
+  lookup: Map<string, Set<string>>,
+): string[] {
+  const exact = lookupExact(part, lookup);
+  if (exact?.size) return [...exact];
+  const soft = lookupSafeFold(part, lookup);
+  return soft?.size ? [...soft] : [];
+}
+
 export type PlannedImportPaxRow = {
   guestId: string | null;
   displayName: string;

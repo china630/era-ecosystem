@@ -35,9 +35,18 @@ function makeDb(state: {
     reservation: {
       findUnique: async ({ where }: { where: { id: string } }) =>
         state.reservations.get(where.id) ?? null,
-      findMany: async ({ where }: { where: { roomId?: string } }) => {
+      findMany: async ({
+        where,
+      }: {
+        where: { roomId?: string; status?: { in: string[] } };
+      }) => {
         const roomId = where.roomId;
-        return [...state.reservations.values()].filter((r) => r.roomId === roomId);
+        const statuses = where.status?.in;
+        return [...state.reservations.values()].filter((r) => {
+          if (r.roomId !== roomId) return false;
+          if (statuses && !statuses.includes(r.status)) return false;
+          return true;
+        });
       },
       update: async ({
         where,
@@ -285,7 +294,7 @@ describe('elektraweb-share-map', () => {
       expect(share.shareEligible).toBe(true);
     });
 
-    it('6. EW NORMAL after first-out keeps remaining guest shareEligible', async () => {
+    it('6. EW NORMAL alone after first-out clears orphan shareEligible', async () => {
       const remaining = stay({
         id: 'yaqub',
         shareEligible: true,
@@ -298,17 +307,69 @@ describe('elektraweb-share-map', () => {
       const state = { reservations: new Map([[remaining.id, remaining]]) };
       const db = makeDb(state);
 
-      // EW flipped SHARE → NORMAL (isSecond=false); ERA must keep share.
       const result = await applyElektrawebSharePair(db, {
         reservationId: 'yaqub',
         isSecond: false,
       });
-      expect(result.applied).toBe(true);
-      expect(remaining.shareEligible).toBe(true);
-      expect(remaining.shareGender).toBe('M');
+      expect(result.cleared).toBe(true);
+      expect(result.skippedReason).toBe('orphan_cleared');
+      expect(remaining.shareEligible).toBe(false);
+      expect(remaining.shareGender).toBeNull();
+      expect(remaining.shareBedIndex).toBeNull();
     });
 
-    it('7. CHECKED_OUT history pair counts as 1 door', async () => {
+    it('6b. CHECKED_OUT former roommate does not reopen live share', async () => {
+      const live = stay({
+        id: 'live',
+        shareEligible: false,
+        checkIn: '2026-09-02T10:00:00Z',
+        checkOut: '2026-09-12T08:00:00Z',
+        status: 'IN_HOUSE',
+        sex: 'F',
+      });
+      const gone = stay({
+        id: 'gone',
+        shareEligible: true,
+        shareGender: 'F',
+        shareBedIndex: 2,
+        checkIn: '2026-09-02T10:00:00Z',
+        checkOut: '2026-09-10T08:00:00Z',
+        status: 'CHECKED_OUT',
+        sex: 'F',
+      });
+      const state = { reservations: new Map([[live.id, live], [gone.id, gone]]) };
+      const db = makeDb(state);
+      const result = await applyElektrawebSharePair(db, {
+        reservationId: 'live',
+        isSecond: false,
+      });
+      expect(result.applied).toBe(false);
+      expect(live.shareEligible).toBe(false);
+    });
+
+    it('6c. adults>1 clears shareEligible', async () => {
+      const family = stay({
+        id: 'fam',
+        adults: 3,
+        shareEligible: true,
+        shareGender: 'F',
+        shareBedIndex: 1,
+        checkIn: '2026-09-02T10:00:00Z',
+        checkOut: '2026-09-12T08:00:00Z',
+        status: 'IN_HOUSE',
+        sex: 'F',
+      });
+      const db = makeDb({ reservations: new Map([[family.id, family]]) });
+      const result = await applyElektrawebSharePair(db, {
+        reservationId: 'fam',
+        isSecond: false,
+      });
+      expect(result.cleared).toBe(true);
+      expect(result.skippedReason).toBe('adults_not_1');
+      expect(family.shareEligible).toBe(false);
+    });
+
+    it('7. CHECKED_OUT history pair counts as 1 door (includeHistory)', async () => {
       const a = stay({
         id: 'a',
         status: 'CHECKED_OUT',
@@ -325,7 +386,11 @@ describe('elektraweb-share-map', () => {
       });
       const state = { reservations: new Map([[a.id, a], [b.id, b]]) };
       const db = makeDb(state);
-      await applyElektrawebSharePair(db, { reservationId: 'b', isSecond: true });
+      await applyElektrawebSharePair(db, {
+        reservationId: 'b',
+        isSecond: true,
+        includeHistory: true,
+      });
       expect(a.shareEligible && b.shareEligible).toBe(true);
 
       const night = new Date('2026-06-05T00:00:00Z');

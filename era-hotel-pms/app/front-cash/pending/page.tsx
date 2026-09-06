@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  CARD_CONTAINER_CLASS,
   EraListFilterBar,
   useDebouncedValue,
   Field,
@@ -15,9 +14,11 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { parsePendingReceiptLines } from '@/lib/pending-receipt-lines';
 
 type PendingRow = {
   id: string;
@@ -38,9 +39,9 @@ export default function FrontCashPendingPage() {
   const [rows, setRows] = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [payTarget, setPayTarget] = useState<PendingRow | null>(null);
-  const [voidTarget, setVoidTarget] = useState<PendingRow | null>(null);
+  const [receipt, setReceipt] = useState<PendingRow | null>(null);
   const [voidReason, setVoidReason] = useState('');
+  const [voidOpen, setVoidOpen] = useState(false);
   const [q, setQ] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
 
@@ -66,10 +67,10 @@ export default function FrontCashPendingPage() {
   }, [load]);
 
   async function pay(method: 'CASH' | 'CARD') {
-    if (!payTarget) return;
+    if (!receipt) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/settlement/pending/${payTarget.id}/pay`, {
+      const res = await fetch(`/api/settlement/pending/${receipt.id}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentMethod: method }),
@@ -79,7 +80,7 @@ export default function FrontCashPendingPage() {
         showApiError(data, t('payFailed'));
         return;
       }
-      setPayTarget(null);
+      setReceipt(null);
       showSuccess(t('paySuccess'));
       void load();
     } finally {
@@ -88,10 +89,10 @@ export default function FrontCashPendingPage() {
   }
 
   async function voidPending() {
-    if (!voidTarget || voidReason.trim().length < 3) return;
+    if (!receipt || voidReason.trim().length < 3) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/settlement/pending/${voidTarget.id}/void`, {
+      const res = await fetch(`/api/settlement/pending/${receipt.id}/void`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: voidReason.trim() }),
@@ -101,8 +102,9 @@ export default function FrontCashPendingPage() {
         showApiError(data, t('voidFailed'));
         return;
       }
-      setVoidTarget(null);
+      setVoidOpen(false);
       setVoidReason('');
+      setReceipt(null);
       showSuccess(t('voidSuccess'));
       void load();
     } finally {
@@ -113,22 +115,21 @@ export default function FrontCashPendingPage() {
   const canPay = can(PERMISSIONS.FOLIO_PAYMENT);
   const canVoid = can(PERMISSIONS.FOLIO_VOID);
   const visibleRows = useMemo(() => {
-    const q = debouncedQ.trim().toLowerCase();
-    if (!q) return rows;
+    const needle = debouncedQ.trim().toLowerCase();
+    if (!needle) return rows;
     return rows.filter((row) =>
       `${row.sourceSystem} ${row.sourceRef} ${row.payerLabel ?? ''} ${row.description}`
         .toLowerCase()
-        .includes(q),
+        .includes(needle),
     );
   }, [rows, debouncedQ]);
+
+  const lines = receipt ? parsePendingReceiptLines(receipt.description) : [];
 
   return (
     <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <EraListFilterBar
-        resetLabel={tc('filterReset')}
-        onReset={() => setQ('')}
-      >
+      <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setQ('')}>
         <Field
           label={tc('search')}
           preset="longText"
@@ -136,111 +137,117 @@ export default function FrontCashPendingPage() {
           onChange={(e) => setQ(e.target.value)}
         />
       </EraListFilterBar>
-      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto p-4`}>
-          {loading ? (
-            <p className="text-sm text-gray-500">{tc('loading')}</p>
-          ) : visibleRows.length === 0 ? (
-            <p className="text-sm text-gray-600">{t('empty')}</p>
-          ) : (
+      <HotelDataGrid<PendingRow & Record<string, unknown>>
+        columns={[
+          { key: 'sourceSystem', header: t('colSource') },
+          { key: 'sourceRef', header: t('colRef'), render: (r) => r.sourceRef.slice(0, 12) },
+          { key: 'payerLabel', header: t('colPayer'), render: (r) => r.payerLabel ?? '—' },
+          { key: 'description', header: t('colDescription') },
+          {
+            key: 'amount',
+            header: t('colAmount'),
+            render: (r) => `${Number(r.amount).toFixed(2)} ${r.currency}`,
+          },
+          {
+            key: 'open',
+            header: t('colActions'),
+            render: (r) => (
+              <button
+                type="button"
+                className="text-[#2980B9] hover:underline"
+                onClick={() => {
+                  setReceipt(r);
+                  setVoidOpen(false);
+                  setVoidReason('');
+                }}
+              >
+                {t('openReceipt')}
+              </button>
+            ),
+          },
+        ]}
+        rows={visibleRows as (PendingRow & Record<string, unknown>)[]}
+        rowKey={(r) => r.id}
+        emptyMessage={loading ? tc('loading') : t('empty')}
+      />
+
+      <EraModal
+        open={Boolean(receipt) && !voidOpen}
+        onClose={() => setReceipt(null)}
+        title={t('receiptTitle')}
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setReceipt(null)}>
+              {tc('cancel')}
+            </button>
+            {canVoid ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setVoidOpen(true)}
+              >
+                {t('void')}
+              </button>
+            ) : null}
+            {canPay ? (
+              <>
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={busy}
+                  onClick={() => void pay('CASH')}
+                >
+                  {t('payCash')}
+                </button>
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={busy}
+                  onClick={() => void pay('CARD')}
+                >
+                  {t('payCard')}
+                </button>
+              </>
+            ) : null}
+          </div>
+        }
+      >
+        {receipt ? (
+          <div className="space-y-3 text-sm">
+            <p className="text-xs text-[#7F8C8D]">
+              {receipt.sourceSystem} · {receipt.payerLabel ?? '—'}
+            </p>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs uppercase text-gray-500">
-                  <th className="py-2 pr-3">{t('colSource')}</th>
-                  <th className="py-2 pr-3">{t('colRef')}</th>
-                  <th className="py-2 pr-3">{t('colPayer')}</th>
-                  <th className="py-2 pr-3">{t('colDescription')}</th>
-                  <th className="py-2 pr-3 text-right">{t('colAmount')}</th>
-                  <th className="py-2">{t('colActions')}</th>
+                <tr className="border-b text-left text-xs uppercase text-[#7F8C8D]">
+                  <th className="py-1 pr-2">{t('lineQty')}</th>
+                  <th className="py-1">{t('lineName')}</th>
                 </tr>
               </thead>
               <tbody>
-                {visibleRows.map((row) => (
-                  <tr key={row.id} className="border-b last:border-0">
-                    <td className="py-2 pr-3">{row.sourceSystem}</td>
-                    <td className="py-2 pr-3 font-mono text-xs">{row.sourceRef.slice(0, 12)}</td>
-                    <td className="py-2 pr-3">{row.payerLabel ?? '—'}</td>
-                    <td className="py-2 pr-3">{row.description}</td>
-                    <td className="py-2 pr-3 text-right font-medium">
-                      {Number(row.amount).toFixed(2)} {row.currency}
-                    </td>
-                    <td className="py-2 space-x-2">
-                      {canPay && (
-                        <button
-                          type="button"
-                          className={PRIMARY_BUTTON_CLASS}
-                          onClick={() => setPayTarget(row)}
-                        >
-                          {t('pay')}
-                        </button>
-                      )}
-                      {canVoid && (
-                        <button
-                          type="button"
-                          className={SECONDARY_BUTTON_CLASS}
-                          onClick={() => {
-                            setVoidTarget(row);
-                            setVoidReason('');
-                          }}
-                        >
-                          {t('void')}
-                        </button>
-                      )}
-                    </td>
+                {lines.map((line, i) => (
+                  <tr key={`${line.name}-${i}`} className="border-b last:border-0">
+                    <td className="py-1 pr-2">{line.qty}</td>
+                    <td className="py-1">{line.name}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
-      </section>
-
-      <EraModal
-        open={Boolean(payTarget)}
-        onClose={() => setPayTarget(null)}
-        title={t('payModalTitle')}
-        footer={
-          <div className="flex flex-wrap justify-end gap-2">
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPayTarget(null)}>
-              {tc('cancel')}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void pay('CASH')}
-            >
-              {t('payCash')}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void pay('CARD')}
-            >
-              {t('payCard')}
-            </button>
-          </div>
-        }
-      >
-        {payTarget && (
-          <div className="space-y-3 text-sm">
-            <p>{payTarget.description}</p>
             <p className="font-semibold">
-              {Number(payTarget.amount).toFixed(2)} {payTarget.currency}
+              {Number(receipt.amount).toFixed(2)} {receipt.currency}
             </p>
-            <p className="text-xs text-gray-500">{t('amountReadOnly')}</p>
+            <p className="text-xs text-[#7F8C8D]">{t('amountReadOnly')}</p>
           </div>
-        )}
+        ) : null}
       </EraModal>
 
       <EraModal
-        open={Boolean(voidTarget)}
-        onClose={() => setVoidTarget(null)}
+        open={voidOpen}
+        onClose={() => setVoidOpen(false)}
         title={t('voidModalTitle')}
         footer={
           <EraModalFooter
-            onCancel={() => setVoidTarget(null)}
+            onCancel={() => setVoidOpen(false)}
             onSubmit={() => void voidPending()}
             busy={busy}
             submitDisabled={voidReason.trim().length < 3}

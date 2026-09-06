@@ -92,6 +92,7 @@ export async function upsertTravelAgency(input: {
   name: string;
   voen?: string;
   commissionPercent?: number;
+  settlementMode?: 'PREPAID' | 'POSTPAID';
   active?: boolean;
 }) {
   if (input.id) {
@@ -103,6 +104,7 @@ export async function upsertTravelAgency(input: {
         voen: input.voen,
         commissionPercent:
           input.commissionPercent != null ? toDecimal(input.commissionPercent) : undefined,
+        settlementMode: input.settlementMode,
         active: input.active,
       },
     });
@@ -114,6 +116,7 @@ export async function upsertTravelAgency(input: {
       voen: input.voen,
       commissionPercent:
         input.commissionPercent != null ? toDecimal(input.commissionPercent) : null,
+      settlementMode: input.settlementMode ?? 'POSTPAID',
       active: input.active ?? true,
     },
   });

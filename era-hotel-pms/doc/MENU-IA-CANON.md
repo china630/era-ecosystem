@@ -28,14 +28,14 @@ Related: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md) · [HotelOps
 |-----------|-----|-------------|
 | Room type availability | `/fo/availability` | Sellable Avl/Occ; entry to create when Avl > 0 |
 | Reservation list | `/fo/reservations` | Stay queue: filters, notes, assign / check-in |
-| Room rack | `/fo/rack` | Shift doors: HK status, in-house, quick actions |
 | Room plan | `/fo/room-plan` | Timeline by room; relocate / extend |
+| Room rack | `/fo/rack` | Shift doors: HK status, in-house, quick actions |
 | Group reservations | `/fo/groups` | Groups / booking envelope |
 | In-house | `/fo/in-house` | In-house guests; jump to card / folio |
-| Room changes | `/fo/room-changes` | Room change plans |
-| Reservation times *(optional FO report)* | `/fo/reservation-times` | Actual check-in / check-out times |
+| Room changes | `/fo/room-changes` | Journal of moves; change door on plan / card Assignment |
+| Reservation times *(optional FO report)* | `/fo/reservation-times` | Actual CI/CO journal; guest + agency filters |
 | Agency inbox | `/fo/agency-inbox` | OPTION stays from agency portal — confirm / decline (`hotel_agency_portal`) |
-| Guest laundry | `/fo/laundry` | In-plant vs posted tickets; fallback Delivered + return scan (same ticket as HK; no invent) |
+| Guest laundry | `/fo/laundry` | Ticket grid + filters; fallback Delivered + return scan (no invent) |
 
 Agency extranet UI lives on orchestrator `/agency/*` + hotel `/agency/*` after SSO — **not** in the hotel staff sidebar.
 
@@ -51,9 +51,12 @@ Legacy cutover (temporary redirects OK): `/` → `/fo/rack`, `/availability` →
 
 | Menu item | URL | Description |
 |-----------|-----|-------------|
-| Pending settlement | `/front-cash/pending` | Walk-in pay queue: **F&B café + clinic/sanatorium** via settlement hub; pay / void |
-| Agency city ledger | `/front-cash/agency-ledger` | Agency CL ops snapshot; apply payment; Finance deep link when configured |
-| Shift journal | `/front-cash/transactions` | FO cash journal + shift Z packet + close shift (ops, not fiscal KKM Z) |
+| Pending settlement | `/front-cash/pending` | Walk-in pay queue: **F&B café + clinic/sanatorium** via settlement hub; click receipt → line items; pay / void in modal |
+| Folio balances | `/front-cash/folio-balances` | In-house / any balance / guest balance / reservations — guest vs agency vs company |
+| Folio journal | `/front-cash/folio-journal` | Day charges+payments (read-only); click → stay folio |
+| Agency city ledger | `/front-cash/agency-ledger` | Travel-agent CL; AGENCY folios; commission %; Finance snapshot |
+| Company city ledger | `/front-cash/company-ledger` | Corporate CL; COMPANY folios; prepaid/postpaid; no commission |
+| Shift journal | `/front-cash/transactions` | FO cash journal (payments \| deposits tabs) + Z in modal + close shift (ops, not fiscal KKM Z) |
 | Folio (not a list item) | `/folio/[reservationId]` | Stay folio: charges, deposit, settle, refund, checkout/CL — open from FO card / in-house |
 
 Café/clinic tickets awaiting reception payment live on **`/front-cash/pending`** (not a separate sanatorium menu, not F&B floor).
@@ -114,7 +117,8 @@ Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 | Sales contracts | `/distribution/contracts` | B2B contracts, commission, pickup |
 | Allotment blocks | `/distribution/allotment-blocks` | Blocks / quotas, pickup → booking |
 | Promotion codes | `/distribution/promotion-codes` | Promotions |
-| Travel agencies | `/distribution/travel-agencies` | Agency master |
+| Travel agencies | `/distribution/travel-agencies` | Agency master (commission + prepaid/postpaid) |
+| Companies | `/distribution/companies` | Corporate master (direct bill, no commission) |
 | Child matrix | `/distribution/child-matrix` | Child rate matrix |
 | Yield rules | `/distribution/yield-rules` | Yield / stop rules |
 

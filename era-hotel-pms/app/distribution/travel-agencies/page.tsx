@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
+  CatalogField,
   EraListFilterBar,
   useDebouncedValue,
   Field,
@@ -28,6 +29,7 @@ type AgencyRow = {
   name: string;
   voen: string | null;
   commissionPercent: string | null;
+  settlementMode?: 'PREPAID' | 'POSTPAID';
   active: boolean;
 };
 
@@ -44,6 +46,7 @@ export default function TravelAgenciesPage() {
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [agencyVoen, setAgencyVoen] = useState('');
   const [agencyNameHint, setAgencyNameHint] = useState('');
+  const [settlementMode, setSettlementMode] = useState<'PREPAID' | 'POSTPAID'>('POSTPAID');
 
   const [inviteAgency, setInviteAgency] = useState<AgencyRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -80,6 +83,7 @@ export default function TravelAgenciesPage() {
     setEditRow(null);
     setAgencyVoen('');
     setAgencyNameHint('');
+    setSettlementMode('POSTPAID');
     setModalOpen(true);
   }
 
@@ -87,6 +91,7 @@ export default function TravelAgenciesPage() {
     setEditRow(row);
     setAgencyVoen(row.voen ?? '');
     setAgencyNameHint('');
+    setSettlementMode(row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID');
     setModalOpen(true);
   }
 
@@ -136,6 +141,11 @@ export default function TravelAgenciesPage() {
           { key: 'name', header: t('name') },
           { key: 'voen', header: 'VÖEN', render: (r) => r.voen ?? '—' },
           { key: 'commissionPercent', header: t('commission'), render: (r) => r.commissionPercent ?? '—' },
+          {
+            key: 'settlementMode',
+            header: t('settlementMode'),
+            render: (r) => t(r.settlementMode === 'PREPAID' ? 'prepaid' : 'postpaid'),
+          },
           { key: 'active', header: t('active'), render: (r) => String(r.active) },
           {
             key: 'actions',
@@ -254,6 +264,7 @@ export default function TravelAgenciesPage() {
                   commissionPercent: fd.get('commission')
                     ? Number(fd.get('commission'))
                     : undefined,
+                  settlementMode,
                   active: fd.get('active') === 'on',
                 }),
               });
@@ -315,6 +326,16 @@ export default function TravelAgenciesPage() {
             type="number"
             step="0.01"
             defaultValue={editRow?.commissionPercent ?? ''}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('settlementMode')}
+            value={settlementMode}
+            onChange={(v) => setSettlementMode(v === 'PREPAID' ? 'PREPAID' : 'POSTPAID')}
+            options={[
+              { value: 'POSTPAID', label: t('postpaid') },
+              { value: 'PREPAID', label: t('prepaid') },
+            ]}
           />
           <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
             <input

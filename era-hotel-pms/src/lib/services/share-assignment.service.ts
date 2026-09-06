@@ -3,10 +3,11 @@ import { isOtaAgency } from '@/lib/booking-source-kind';
 import { hotelDateKey, parseHotelNoon, reservationStayOverlaps } from '@/lib/hotel-calendar';
 import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 import type { ReservationStatus } from '@prisma/client';
+import { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
+
+export { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
 
 export const SCHEDULABLE_STATUSES: ReservationStatus[] = ['CONFIRMED', 'IN_HOUSE', 'OPTION'];
-
-export type ShareGender = 'M' | 'F';
 
 export type ShareReservationSlice = {
   id: string;
@@ -18,23 +19,6 @@ export type ShareReservationSlice = {
   checkOutDate: Date;
   shareBedIndex?: number | null;
 };
-
-export function normalizeShareGender(g: string | null | undefined): ShareGender | null {
-  if (g == null) return null;
-  const raw = String(g).trim();
-  if (!raw) return null;
-  const u = raw.toUpperCase();
-  // Elektraweb Guest Cards UI: "0 - Male" / "1 - Female" (numeric codes in export/API).
-  if (u === '0' || u.startsWith('0 ') || u === '2' || u.startsWith('2 ')) return 'M';
-  if (u === '1' || u.startsWith('1 ')) return 'F';
-  if (u === 'M' || u === 'MALE' || u === '♂' || u === 'ERKEK' || u === 'KİŞİ' || u === 'KISI') {
-    return 'M';
-  }
-  if (u === 'F' || u === 'FEMALE' || u === '♀' || u === 'KADIN' || u === 'QADIN') return 'F';
-  if (/\bMALE\b/.test(u) && !/\bFEMALE\b/.test(u)) return 'M';
-  if (/\bFEMALE\b/.test(u)) return 'F';
-  return null;
-}
 
 export function resolveMaxBed(
   roomMaxBed: number | null | undefined,

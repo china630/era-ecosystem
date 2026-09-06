@@ -14,6 +14,7 @@ const fullInclude = {
   ratePlan: true,
   mealPlan: true,
   agency: true,
+  company: true,
   source: true,
   group: true,
   paxGuests: {
@@ -133,6 +134,7 @@ export async function patchReservationFull(
     ratePlanId?: string;
     mealPlanId?: string | null;
     agencyId?: string | null;
+    companyId?: string | null;
     salesContractId?: string | null;
     sourceId?: string | null;
     roomId?: string | null;
@@ -266,11 +268,20 @@ export async function patchReservationFull(
   let doorShareResolved = false;
   const effectiveRoomId =
     data.roomId !== undefined ? data.roomId : existing.roomId;
+  /** Explicit FO clear must not re-enter join/autoShare via door assign. */
+  const clearingShare = shareEligible === false;
   const doorAssignRequested =
-    (data.roomId !== undefined && data.roomId !== null && data.roomId !== '') ||
-    (Boolean(effectiveRoomId) &&
-      effectiveRoomId !== null &&
-      (data.checkInDate !== undefined || data.checkOutDate !== undefined));
+    !clearingShare &&
+    ((data.roomId !== undefined && data.roomId !== null && data.roomId !== '') ||
+      (Boolean(effectiveRoomId) &&
+        effectiveRoomId !== null &&
+        (data.checkInDate !== undefined || data.checkOutDate !== undefined)));
+
+  if (clearingShare) {
+    assignShareBedIndex = null;
+    nextShareEligible = false;
+    nextShareGender = null;
+  }
 
   if (doorAssignRequested && effectiveRoomId) {
     const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
@@ -564,6 +575,8 @@ export async function patchReservationFull(
 
 export type ListReservationsForGridQuery = {
   q?: string;
+  /** Substring match on reservation note text (any note type). */
+  noteQ?: string;
   /** LIVE (default) | ALL | specific ReservationStatus */
   status?: string;
   hasNotes?: boolean;
@@ -601,14 +614,23 @@ export async function listReservationsForGrid(
     where.status = statusRaw as ReservationStatus;
   }
 
-  if (opts.hasNotes) {
+  const noteQ = opts.noteQ?.trim();
+  if (opts.hasNotes || noteQ) {
     // Match UI trim(): whitespace-only ≠ has notes (Prisma — no raw SQL for tenant gate).
     const noteRows = await prisma.reservationNote.findMany({
       select: { reservationId: true, text: true },
     });
+    const needle = noteQ?.toLowerCase();
     const withNotesIds = [
       ...new Set(
-        noteRows.filter((n) => n.text.trim().length > 0).map((n) => n.reservationId),
+        noteRows
+          .filter((n) => {
+            const text = n.text.trim();
+            if (text.length === 0) return false;
+            if (needle && !text.toLowerCase().includes(needle)) return false;
+            return true;
+          })
+          .map((n) => n.reservationId),
       ),
     ];
     if (withNotesIds.length === 0) {
@@ -634,6 +656,7 @@ export async function listReservationsForGrid(
       { guest: { fullName: { contains: q, mode: 'insensitive' } } },
       { room: { roomNumber: { contains: q, mode: 'insensitive' } } },
       { agency: { code: { contains: q, mode: 'insensitive' } } },
+      { notes: { some: { text: { contains: q, mode: 'insensitive' } } } },
     ];
   }
 

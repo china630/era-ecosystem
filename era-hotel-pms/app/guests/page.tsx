@@ -145,7 +145,6 @@ export default function GuestsPage() {
         <PageHeader
           className="!mb-0"
           title={t('title')}
-          subtitle={t('subtitle')}
           actions={
             can(PERMISSIONS.RESERVATIONS_WRITE) ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
@@ -160,7 +159,57 @@ export default function GuestsPage() {
           <EraListFilterBar
             className="!mb-0"
             resetLabel={tc('filterReset')}
+            moreLabel={t('moreFilters')}
+            lessLabel={t('lessFilters')}
             onReset={() => setFiltersState(EMPTY_FILTERS)}
+            more={
+              <>
+                <Field
+                  label={t('fin')}
+                  preset="code"
+                  value={filtersState.fin}
+                  onChange={(e) => patchFilter({ fin: e.target.value })}
+                />
+                <Field
+                  label={t('passport')}
+                  preset="code"
+                  value={filtersState.passport}
+                  onChange={(e) => patchFilter({ passport: e.target.value })}
+                />
+                <DatePicker
+                  label={t('birthDateFrom')}
+                  value={filtersState.birthDateFrom}
+                  onChange={(v) => patchFilter({ birthDateFrom: v })}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                />
+                <DatePicker
+                  label={t('birthDateTo')}
+                  value={filtersState.birthDateTo}
+                  onChange={(v) => patchFilter({ birthDateTo: v })}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                />
+                <Field
+                  label={t('phone')}
+                  preset="phone"
+                  value={filtersState.phone}
+                  onChange={(e) => patchFilter({ phone: e.target.value })}
+                />
+                <Field
+                  label={t('email')}
+                  preset="shortText"
+                  value={filtersState.email}
+                  onChange={(e) => patchFilter({ email: e.target.value })}
+                />
+                <Field
+                  label={t('externalRef')}
+                  preset="code"
+                  value={filtersState.externalRef}
+                  onChange={(e) => patchFilter({ externalRef: e.target.value })}
+                />
+              </>
+            }
           >
             <Field
               label={tc('search')}
@@ -187,50 +236,6 @@ export default function GuestsPage() {
                 patchFilter({ nationality: (Array.isArray(v) ? v[0] : v) ?? '' })
               }
               options={[{ value: '', label: tc('all') }, ...NATIONALITY_OPTIONS]}
-            />
-            <Field
-              label={t('fin')}
-              preset="code"
-              value={filtersState.fin}
-              onChange={(e) => patchFilter({ fin: e.target.value })}
-            />
-            <Field
-              label={t('passport')}
-              preset="code"
-              value={filtersState.passport}
-              onChange={(e) => patchFilter({ passport: e.target.value })}
-            />
-            <DatePicker
-              label={t('birthDateFrom')}
-              value={filtersState.birthDateFrom}
-              onChange={(v) => patchFilter({ birthDateFrom: v })}
-              placeholder={tc('datePlaceholder')}
-              openCalendarLabel={tc('openCalendar')}
-            />
-            <DatePicker
-              label={t('birthDateTo')}
-              value={filtersState.birthDateTo}
-              onChange={(v) => patchFilter({ birthDateTo: v })}
-              placeholder={tc('datePlaceholder')}
-              openCalendarLabel={tc('openCalendar')}
-            />
-            <Field
-              label={t('phone')}
-              preset="phone"
-              value={filtersState.phone}
-              onChange={(e) => patchFilter({ phone: e.target.value })}
-            />
-            <Field
-              label={t('email')}
-              preset="shortText"
-              value={filtersState.email}
-              onChange={(e) => patchFilter({ email: e.target.value })}
-            />
-            <Field
-              label={t('externalRef')}
-              preset="code"
-              value={filtersState.externalRef}
-              onChange={(e) => patchFilter({ externalRef: e.target.value })}
             />
           </EraListFilterBar>
         }

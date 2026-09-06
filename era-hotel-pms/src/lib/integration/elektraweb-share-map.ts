@@ -3,7 +3,8 @@
  *
  * EW marks only the second guest (Record Type SHARE / Room Count 0 / Room No …S).
  * The NORMAL primary on the same physical door must be pulled into the share pool.
- * EW NORMAL after first-out must never clear ERA shareEligible.
+ * Live bridge: orphan alone + NORMAL clears shareEligible (FO Break share must stick).
+ * Excel cutover may pass includeHistory to pair CHECKED_OUT for occupancy math.
  */
 
 import { isOtaAgency } from '@/lib/booking-source-kind';
@@ -15,13 +16,11 @@ import {
   type ShareGender,
 } from '@/lib/services/share-assignment.service';
 
-/** Stay statuses that participate in door pairing (includes history for occupancy). */
-export const SHARE_PAIR_STATUSES = [
-  'OPTION',
-  'CONFIRMED',
-  'IN_HOUSE',
-  'CHECKED_OUT',
-] as const;
+/** Live door statuses for opening / clearing the share pool. */
+export const SHARE_LIVE_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
+
+/** Excel cutover may include CHECKED_OUT when includeHistory=true. */
+export const SHARE_PAIR_STATUSES = [...SHARE_LIVE_STATUSES, 'CHECKED_OUT'] as const;
 
 export type ElektrawebShareSignals = {
   /** Raw Room No from EW (may be 707S). */
@@ -121,6 +120,7 @@ type ShareMapNeighbor = {
   shareBedIndex: number | null;
   checkInDate: Date;
   checkOutDate: Date;
+  status: string;
   guest: { sex: string | null; title: string | null };
   agency: { code: string; name: string } | null;
 };
@@ -135,12 +135,19 @@ export type ApplyElektrawebSharePairInput = {
   /** Optional EW ShareNo label (display only). */
   shareNo?: string | null;
   dryRun?: boolean;
+  /**
+   * Excel cutover: include CHECKED_OUT neighbors for historical door pairing.
+   * Live bridge must leave this false so CHECKED_OUT cannot reopen a live pool.
+   */
+  includeHistory?: boolean;
 };
 
 export type ApplyElektrawebSharePairResult = {
   applied: boolean;
   pairedIds: string[];
   skippedReason?: string;
+  /** True when orphan / invalid share flags were cleared on this reservation. */
+  cleared?: boolean;
 };
 
 function canJoinSharePool(input: {
@@ -166,10 +173,32 @@ function canJoinSharePool(input: {
   return { ok: true, gender };
 }
 
+function isLiveShareStatus(status: string): boolean {
+  return (SHARE_LIVE_STATUSES as readonly string[]).includes(status);
+}
+
+async function clearShareFlags(
+  db: ShareMapDb,
+  reservationId: string,
+  shareNo: string | null | undefined,
+  dryRun: boolean | undefined,
+): Promise<void> {
+  if (dryRun) return;
+  await db.reservation.update({
+    where: { id: reservationId },
+    data: {
+      shareEligible: false,
+      shareGender: null,
+      shareBedIndex: null,
+      ...(shareNo != null && shareNo !== '' ? { shareNo } : {}),
+    },
+  });
+}
+
 /**
- * After reservation upsert: if this row is an EW second guest, or an overlapping
- * share neighbor already exists on the door, mark the whole overlapping pool.
- * Never clears shareEligible when EW says NORMAL / Room Count 1.
+ * After reservation upsert: open share pool only on EW second signal, live
+ * share neighbor, or ≥2 live same-gender eligible singles on the door.
+ * Alone + NORMAL (or adults≠1) clears orphan shareEligible so FO Break sticks.
  */
 export async function applyElektrawebSharePair(
   db: ShareMapDb,
@@ -186,14 +215,35 @@ export async function applyElektrawebSharePair(
   if (!reservation?.roomId || !reservation.room) {
     return { applied: false, pairedIds: [], skippedReason: 'no_room' };
   }
-  if (!SHARE_PAIR_STATUSES.includes(reservation.status as (typeof SHARE_PAIR_STATUSES)[number])) {
+  const pairStatuses = input.includeHistory
+    ? [...SHARE_PAIR_STATUSES]
+    : [...SHARE_LIVE_STATUSES];
+  if (!pairStatuses.includes(reservation.status)) {
     return { applied: false, pairedIds: [], skippedReason: 'status_out' };
+  }
+
+  if (reservation.adults !== 1) {
+    const hadShare = reservation.shareEligible;
+    if (hadShare) {
+      await clearShareFlags(db, reservation.id, input.shareNo, input.dryRun);
+    } else if (input.shareNo != null && input.shareNo !== '' && !input.dryRun) {
+      await db.reservation.update({
+        where: { id: reservation.id },
+        data: { shareNo: input.shareNo },
+      });
+    }
+    return {
+      applied: false,
+      pairedIds: [],
+      skippedReason: 'adults_not_1',
+      cleared: hadShare,
+    };
   }
 
   const overlapping = await db.reservation.findMany({
     where: {
       roomId: reservation.roomId,
-      status: { in: [...SHARE_PAIR_STATUSES] },
+      status: { in: pairStatuses },
       checkInDate: { lt: reservation.checkOutDate },
       checkOutDate: { gt: reservation.checkInDate },
     },
@@ -203,10 +253,16 @@ export async function applyElektrawebSharePair(
     },
   });
 
-  const neighborShare = overlapping.some(
+  /** Pool open/clear decisions ignore CHECKED_OUT unless includeHistory pairing. */
+  const liveOverlapping = overlapping.filter((r: ShareMapNeighbor) =>
+    isLiveShareStatus(r.status),
+  );
+  const signalRows = input.includeHistory ? overlapping : liveOverlapping;
+
+  const neighborShare = signalRows.some(
     (r: ShareMapNeighbor) => r.id !== reservation.id && r.shareEligible,
   );
-  const overlapGated = overlapping.filter((row: ShareMapNeighbor) => {
+  const overlapGated = signalRows.filter((row: ShareMapNeighbor) => {
     const gate = canJoinSharePool({
       adults: row.adults,
       gender: row.guest?.sex,
@@ -229,11 +285,21 @@ export async function applyElektrawebSharePair(
     overlapByGender.set(gate.gender, (overlapByGender.get(gate.gender) ?? 0) + 1);
   }
   const overlapEligible = [...overlapByGender.values()].some((n) => n >= 2);
-  const shouldOpenPool =
-    input.isSecond || neighborShare || reservation.shareEligible || overlapEligible;
+  // Do NOT reopen solely because this row already has shareEligible (sticky alone).
+  const shouldOpenPool = input.isSecond || neighborShare || overlapEligible;
 
   if (!shouldOpenPool) {
-    // Walk-in / exclusive NORMAL — leave alone; never clear existing share.
+    const orphan =
+      reservation.shareEligible && isLiveShareStatus(reservation.status);
+    if (orphan) {
+      await clearShareFlags(db, reservation.id, input.shareNo, input.dryRun);
+      return {
+        applied: false,
+        pairedIds: [],
+        skippedReason: 'orphan_cleared',
+        cleared: true,
+      };
+    }
     if (input.shareNo != null && input.shareNo !== '' && !input.dryRun) {
       await db.reservation.update({
         where: { id: reservation.id },
@@ -260,13 +326,14 @@ export async function applyElektrawebSharePair(
     });
 
   const byId = new Map<string, Member>();
+  const pullRows = input.includeHistory ? overlapping : liveOverlapping;
 
-  for (const row of overlapping) {
+  for (const row of pullRows) {
     const gate = gateFor(row);
     if (!gate.ok) continue;
     const isSelf = row.id === reservation.id;
     const pullAllEligible = input.isSecond || overlapEligible;
-    const pullExistingShare = row.shareEligible || (isSelf && reservation.shareEligible);
+    const pullExistingShare = row.shareEligible;
     const pullSelfIntoNeighborPool = isSelf && neighborShare;
     if (!pullAllEligible && !pullExistingShare && !pullSelfIntoNeighborPool) continue;
     byId.set(row.id, {
@@ -279,6 +346,15 @@ export async function applyElektrawebSharePair(
 
   if (byId.size === 0) {
     const selfGate = gateFor(reservation);
+    if (reservation.shareEligible && isLiveShareStatus(reservation.status)) {
+      await clearShareFlags(db, reservation.id, input.shareNo, input.dryRun);
+      return {
+        applied: false,
+        pairedIds: [],
+        skippedReason: selfGate.ok ? 'no_eligible_members' : selfGate.reason,
+        cleared: true,
+      };
+    }
     return {
       applied: false,
       pairedIds: [],
@@ -301,6 +377,19 @@ export async function applyElektrawebSharePair(
   const compatible = ordered.filter((m) => m.gender === poolGender);
   if (compatible.length === 0) {
     return { applied: false, pairedIds: [], skippedReason: 'gender_mismatch' };
+  }
+  // Alone without EW second: do not keep a one-bed "pool" sticky.
+  if (compatible.length < 2 && !input.isSecond && !neighborShare) {
+    if (reservation.shareEligible && isLiveShareStatus(reservation.status)) {
+      await clearShareFlags(db, reservation.id, input.shareNo, input.dryRun);
+      return {
+        applied: false,
+        pairedIds: [],
+        skippedReason: 'orphan_cleared',
+        cleared: true,
+      };
+    }
+    return { applied: false, pairedIds: [], skippedReason: 'no_share_signal' };
   }
   if (compatible.length > maxBed) {
     compatible.length = maxBed;

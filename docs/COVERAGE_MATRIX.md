@@ -197,8 +197,10 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status | Blocker / gap |
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------------|
 | HOT-CASH-01 | Folio settle multi-method (CASH/CARD/COMPANY/LOYALTY/DEPOSIT/BANK_TRANSFER) | KKM policy | Y settle | Y `/folio/[id]` | — | — | — | SHIPPED | UAT-SMOKE §3/§27; BANK_TRANSFER ops tender + bankReference; match in Finance |
-| HOT-CASH-02 | Unified front-cash pending hub (F&B/clinic walk-in) | ADR settlement hub | Y | Y `/front-cash/pending` | — | — | — | SHIPPED | UAT-SMOKE §6b; not clinic cashier |
-| HOT-CASH-06 | Front cash journal + shift Z packet + close shift | MENU-IA | Y `/api/front-cash/transactions` | Y `/front-cash/transactions` | — | — | — | SHIPPED | UAT-SMOKE §28; ops Z print (not fiscal KKM Z) |
+| HOT-CASH-02 | Unified front-cash pending hub (F&B/clinic walk-in) | ADR settlement hub | Y | Y `/front-cash/pending` | — | — | — | SHIPPED | UAT-SMOKE §6b; receipt modal lines; not clinic cashier |
+| HOT-CASH-06 | Front cash journal + shift Z packet + close shift | MENU-IA | Y `/api/front-cash/transactions` | Y `/front-cash/transactions` | — | — | — | SHIPPED | UAT-SMOKE §28; payments/deposits tabs; Z modal (not fiscal KKM Z) |
+| HOT-CASH-07 | Reservation with folio balances | MENU-IA | Y `/api/front-cash/folio-balances` | Y `/front-cash/folio-balances` | — | — | — | API | Tabs in-house / any / guest / reservation; UAT open |
+| HOT-CASH-08 | Daily folio journal (charges+payments) | MENU-IA | Y `/api/front-cash/folio-journal` | Y `/front-cash/folio-journal` | — | — | — | API | Read-only; mutate on `/folio/[id]`; UAT open |
 | HOT-CASH-03 | Folio deposit hold / apply / refund HELD | H-BL-10/41 | Y deposits | Y folio settle DEPOSIT | — | — | — | SHIPPED | UAT-SMOKE §27; apply@check-in + settle/CO |
 | HOT-CASH-04 | Folio payment refunds to guest | ADR CL | Y refund API | Y folio Refund | — | — | — | SHIPPED | UAT-SMOKE §27; mock fiscal; TRANSFERRED_AR blocked |
 | HOT-CASH-05 | Checkout discounts (manual + automatic) | ADR CL | Y DISCOUNT | Y settle/checkout | promo CRUD | — | — | SHIPPED | UAT-SMOKE §27; H-BL-43 |
@@ -208,9 +210,10 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-CO-04 | Early checkout unused-nights refund (net of 18% VAT, default CASH) | ADR hotel-early-checkout-unused-nights | Y preview + apply on check-out | Y folio + chessboard checkout modal | — | — | — | SHIPPED | UAT-SMOKE §33; all folios reverse; guest cash net VAT; H-BL-49 |
 | HOT-CL-01 | Folio routing rules + stay overrides (revenue → GUEST/COMPANY/AGENCY) | ADR CL | Y stay PUT | Y card routing table | Y master data | — | — | SHIPPED | Stay overrides > property FolioRoutingRule on postCharge |
 | HOT-CL-02 | Credit limit on stay / room charge | H-BL-03 | Y | Y Billing field | — | — | — | SHIPPED | UAT-SMOKE card billing; CL gate uses limit |
-| HOT-CL-03 | Agency City Ledger ops snapshot | Stage 23 | Y ledger+settle | Y `/front-cash/agency-ledger` | — | — | — | SHIPPED | UAT-SMOKE §27 agency settle; legacy `/reports/agency-ledger` redirects |
-| HOT-CL-04 | City Ledger → Finance snapshot + ops re-push | boundary | Y event + `/api/agencies/[id]/city-ledger-snapshot` | Y agency-ledger push + Finance deep link | — | Y AR | — | SHIPPED | Aging/match stays Finance |
+| HOT-CL-03 | Agency City Ledger ops snapshot | Stage 23 | Y ledger+settle | Y `/front-cash/agency-ledger` | — | — | — | SHIPPED | AGENCY folios only; code/name/commission/settlement; UAT-SMOKE §27 |
+| HOT-CL-04 | City Ledger → Finance snapshot + ops re-push | boundary | Y event + `/api/agencies/[id]/city-ledger-snapshot` | Y agency-ledger push + Finance deep link | — | Y AR | — | SHIPPED | Aging/match stays Finance; agency tab only |
 | HOT-CL-05 | Payment terms + aging + invoice matching | ADR CL D2 | — | — | terms on CP | Y aging+allocate | — | SHIPPED | Finance UAT aging+allocate; hotel handoff only |
+| HOT-CL-06 | Company profile + company City Ledger | [ADR agency vs company](./adr/hotel-agency-vs-company-profiles.md) | Y Company + `GET /api/companies/[id]/ledger` | Y `/distribution/companies` + `/front-cash/company-ledger` | Y CRUD | — | — | API | Independent of `agencyId`; no commission; UAT open |
 | HOT-NA-01 | Night Audit EOD (post room/package, roll day, E1) | clone-spec 07 | Y `/api/night-audit/*` | Y `/night-audit` | — | — | — | SHIPPED | UAT-SMOKE §6; legacy `/operations` redirects |
 | HOT-NA-02 | Night Audit polish (exceptions, auto no-show, trial) | ADR CL | Y polish steps | Y `/night-audit` preview | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-44 |
 | HOT-NA-03 | EOD reports hub + P1 grids (+ no-show / room-move / VIP + CSV) | MENU-IA + ADR | Y `/api/night-audit/eod-reports` | Y `/night-audit/reports*` | — | — | — | SHIPPED | UAT-SMOKE §28; Management PDF catalog is HOT-RPT-01/02 (API, not SHIPPED) |
@@ -222,7 +225,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-TOUR-01 | Guest group tours (Nafta weekend roster + TOUR folio) | [ADR hotel-guest-tours](./adr/hotel-guest-tours.md) | Y `/api/tours/*` `/api/fleet/*` `/api/folios/charges/[chargeId]/pay` | Y `/tours` `/tours/[id]` `/tours/[id]/print` | Y `/fleet` | — | — | SHIPPED | SKU `hotel_transfers`. UAT-SMOKE §14b. City ledger ≠ Paid. DispatchVehicle not merged. |
 | HOT-BEO-01 | Banquets / BEO MVP + day sheet print | H-BL-31 | Y day-sheet | Y `/banquets*` | — | — | — | SHIPPED | UAT-SMOKE §15; not full Opera S&C |
 | HOT-AG-01 | Tour agency contracts + commission % | H-BL-30 | Y | Y `/admin/contracts` | Y | — | — | SHIPPED | UAT-SMOKE §18 |
-| HOT-AG-02 | Agency prepaid/postpaid settlement + refunds | ADR CL | Y settlement API | Y agency-ledger | — | Finance match | — | SHIPPED | UAT-SMOKE §27; bank match Finance |
+| HOT-AG-02 | Agency prepaid/postpaid settlement + refunds | ADR CL | Y settlement API + `Agency.settlementMode` | Y agency-ledger + travel-agencies | Y settlement field | Finance match | — | SHIPPED | UAT-SMOKE §27; bank match Finance |
 | HOT-AGP-01 | Agency portal book (contract allotment + isolation) | [ADR agency portal](./adr/hotel-agency-portal.md) | Y `/api/agency/*` | Y `/agency/*` (extranet) | Y invite | — | — | API | P0–P1; multi-hotel grant on CP; AUTO default OFF → OPTION |
 | HOT-AGP-02 | FO agency inbox confirm / decline | ADR agency portal | Y `/api/fo/agency-inbox` | Y `/fo/agency-inbox` | — | — | — | API | Confirm → CONFIRMED; decline → CANCELLED |
 | HOT-AGP-03 | Optional passport scan on agency booking | ADR agency portal | Y attachment upload | Y card + agency UI | — | — | — | API | Not KBS; storage key org-scoped |
@@ -482,6 +485,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-07 | HOT-CL-06 company profile + `/front-cash/company-ledger`; HOT-CASH-07/08 folio balances + journal; Agency.settlementMode. Status API / SCREEN — not SHIPPED. |
 | 2026-09-06 | FO laundry grid+filters; room-changes journal + card/plan relocate hint; reservation-times actual CI/CO + guest/agency, sort actual CI desc. |
 | 2026-09-06 | HOT-FO-03 room plan: drop HK squares; hide OOO/OOS/repair; occupancy-frame strokes; two names + folio debt on nose; EW day+weekday header. Status API (UAT §9 unsigned). |
 | 2026-09-02 | CLI-48: `#27`/`#29` create `LabOrderItem` after `LabOrder` (nested `items.create` stamps `organizationId` and is rejected). Word filenames Dimer/CRP/PRL/Insulin/Hormon map to catalog codes. Status SHIPPED. |

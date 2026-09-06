@@ -80,7 +80,7 @@ Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API call
 ### 6b. Settlement hub (pending walk-in)
 
 1. With Nafta org policy (`settlementHub=HOTEL_FRONT_CASH`): fb-pos walk-in ticket → **Send to reception**.
-2. `/front-cash/pending` — row appears; pay CASH → mock fiscal; fb ticket CLOSED via callback.
+2. `/front-cash/pending` — receipt row; **Open receipt** → line items; pay CASH → mock fiscal; fb ticket CLOSED via callback.
 3. Clinic walk-in visit complete → pending row; pay at Front Cash → visit `settledAt` set.
 4. Leave a pending row open → night audit **blocks** (default `pendingSettlementNaPolicy=BLOCK`); after pay → NA succeeds.
 
@@ -104,7 +104,10 @@ Room plan UI (Wave C+ / EW palette):
 - [ ] Bars show **blunt arrow tip** on the last night; **butt notch** on in-window starts; same-day turnover nests nose into butt
 - [ ] Guest names sit **right of the butt** (not clipped into the V)
 - [ ] Day-state colors match EW legend (reservation / expected arrival / in-house / expected departure / checkout / multiple / option)
-- [ ] HK squares on bar tail (clean / dirty / maintenance / closed)
+- [ ] Date header: large day number + weekday under (weekends red)
+- [ ] Arrow **stroke** = exclusive / shared male / shared female (not HK squares)
+- [ ] OOO / OOS / repair doors are **absent** from the plan (HK owns dirty / OOO)
+- [ ] Two guests on a door → both names on the bar; guest folio debt on the arrow nose
 - [ ] Share rows use the **same vertical gutter** as exclusive stays; no painted overlay of overlapping share stays
 - [ ] Hover a bar → tooltip with res no., guest, dates, agency, payment
 - [ ] Table uses **full content width**; exclusive row ~36px; share door = N × 36px
@@ -239,15 +242,15 @@ Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d
 2. No **FO with notes** in Core; no **New booking** in header.
 3. `/bookings/new` redirects to `/?openReservation=1`.
 4. `/executive` (manager/admin): seven KPI cards (occupancy %, in-house, arrivals/departures, revenue, AR, ADR, RevPAR).
-5. Reports section: **Actual check-in/out times** → `/reports/reservation-times` (not in Core).
+5. Reports section: **Actual check-in/out times** → `/fo/reservation-times` (guest + agency filters; only actual CI/CO; newest actual CI first).
 
 ### Room rack & plan
-6. Rack tile shows: status, guest name, stay dates, pay badge, procedure count.
+6. Rack tile for the **filter date range** (From–To): guest + stay dates only if the stay overlaps that interval. Gender chip uses `normalizeShareGender` (EW `0` = male). Filter column and room grid scroll independently. Unassigned arrivals: compact room search + Assign (same type, assignable doors only).
 7. Drag in-house/confirmed reservation to another room → confirm → room updates (HK-03 enforced).
 8. `/room-plan`: **Grouping** and **Period** dropdowns (14/21/30); drag bar to another room row.
 
 ### Lists & cards
-9. `/reports/reservations`: notes column, amber rows with notes, filter **With notes**; `/reports/reservations/notes` → `?hasNotes=1`.
+9. `/fo/reservations`: notes column is **penultimate** (before Res. ID); notes search field + **With notes** filter; `/fo/reservations/notes` → `?hasNotes=1`.
 10. **+** on vacant rack tile opens reservation create with `roomId`; create/edit share toolbar + bottom bar chrome.
 11. Guest card: stats bar, CRM + Reservation Details button grids (not three links only).
 
@@ -416,7 +419,7 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / HOT-NA-04:
 
-1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → payments / HELD deposits / pending / method totals (incl. BANK_TRANSFER); select CashShift → **Print Z** → **Close shift** (ops packet, not fiscal KKM Z).
+1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → **Payments** / **Deposits** tabs + pending **link** (not a second queue) / method totals; select CashShift → **Print Z** (modal) → **Close shift** (ops packet, not fiscal KKM Z).
 2. **EOD hub (HOT-NA-03):** `/night-audit/reports` — pick date → open **09 Cancelled**, **10 Created**, **11 Folio transactions**, **12 Room price control**, **13 No-shows**, **14 Room moves**, **15 VIP in-house** → each shows a grid; **Export CSV** on report pages.
 3. **Folio day ledger:** `/night-audit/reports/folio-transactions?date=…` — CHARGE and PAYMENT rows for the day; Folio link opens `/folio/[reservationId]`.
 4. **Reservation updates (HOT-NA-04):** `/night-audit/reservation-updates` — filter Action type Cancel/Extend/Note/Other → grid updates; **Export CSV** downloads file.
@@ -443,7 +446,7 @@ UI paths (OpsUI) — required before Status=SHIPPED. Queue APIs are API-only (no
 5. **Check-in second:** second share check-in on OCCUPIED succeeds.
 6. **Partial checkout / cancel:** first share leaves while roommate remains → door OCCUPIED (bed-HK note allowed, not full DIRTY); last-out → DIRTY + HK task.
 7. **Break share:** with no roommate → Break share → exclusive; with roommate → refused until relocate.
-8. **Import/bridge (ops note, not SHIPPED):** re-import reservations where Room No is `707` + `707S` (or detail SHARE / Room Count 0) → both stays `shareEligible` on door `707`, occupancy doors = 1; NORMAL primary is never treated as clear-share. See ADR hotel-shared-twin-assignment § Elektraweb cutover.
+8. **Import/bridge (ops note, not SHIPPED):** re-import reservations where Room No is `707` + `707S` (or detail SHARE / Room Count 0) → both stays `shareEligible` on door `707`, occupancy doors = 1. Alone after first-out + NORMAL → orphan `shareEligible` **cleared**; FO Break share + Save with `shareEligible=false` must stick (no autoShare / join-pool 409). See ADR hotel-shared-twin-assignment § Elektraweb cutover.
 9. **Door+overlap auto-pair (307 / Nafta):** two single M/F stays on the **same door** with overlapping nights (e.g. room **307**) → assign second without manual share checkbox **or** re-import without `S` suffix → both rows `shareEligible`, beds 1/2; `/fo/room-plan` shows **2 parallel lanes** (no bar overlay). OTA / adults>1 / ungendered → **409** with explicit message. Ops backfill: `npx tsx scripts/ops/pair-share-overlaps.ts [--dry-run]`; add `--include-checked-out` for IN_HOUSE + CHECKED_OUT history pairs.
 
 ## 31. Agency portal P0–P1 (HOT-AGP) (2026-08-20)
@@ -475,7 +478,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
 3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
-4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` fallback Delivered on the **same** ticket only.
+4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` **grid** (empty headers + guest/room/status/date filters) + fallback Delivered on the **same** ticket only.
 5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
 6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
 7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
@@ -603,5 +606,17 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 3. Folio nightly sell still **289** (Wave D compose) — one folio, not split.
 4. Share `707`/`707S` still two reservations / two episodes (no merge).
 5. Checkout closes **both** OPEN episodes for the reservation.
+
+## 42. Front cash deepen + agency vs company (HOT-CASH-07/08, HOT-CL-06)
+
+**Status:** Engineering API/SCREEN — not SHIPPED (except existing pending / cash journal / agency settle).
+
+1. `/front-cash/folio-balances` — tabs In house / any balance / guest balance / reservations; columns guest vs agency vs company; Folio link.
+2. `/front-cash/folio-journal` — date range charges+payments; no add/edit/delete; Folio link to `/folio/[id]`.
+3. `/distribution/companies` — create company code+name+VÖEN+prepaid/postpaid (no commission).
+4. `/distribution/travel-agencies` — settlement prepaid/postpaid saved on agency.
+5. Reservation card Commercial: set **Agency** and **Company** independently → save.
+6. `/front-cash/agency-ledger` — code/name/commission %; AGENCY folio totals only.
+7. `/front-cash/company-ledger` — code/name/settlement; COMPANY folio totals; no commission column.
 
 

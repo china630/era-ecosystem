@@ -56,6 +56,34 @@ export function staysOverlap(
   return aIn.getTime() < bOut.getTime() && bIn.getTime() < aOut.getTime();
 }
 
+/**
+ * Guest is present on this civil hotel date (Asia/Baku): check-in through
+ * checkout morning inclusive. Used by the door rack (departure still shows).
+ */
+export function stayTouchesHotelDate(
+  checkIn: Date | string,
+  checkOut: Date | string,
+  dateKey: string,
+): boolean {
+  const ci = hotelDateKey(checkIn);
+  const co = hotelDateKey(checkOut);
+  return ci <= dateKey && co >= dateKey;
+}
+
+/** Inclusive hotel-date interval [fromKey, toKey] (order-independent). */
+export function stayTouchesHotelDateRange(
+  checkIn: Date | string,
+  checkOut: Date | string,
+  fromKey: string,
+  toKey: string,
+): boolean {
+  const lo = fromKey <= toKey ? fromKey : toKey;
+  const hi = fromKey <= toKey ? toKey : fromKey;
+  const ci = hotelDateKey(checkIn);
+  const co = hotelDateKey(checkOut);
+  return ci <= hi && co >= lo;
+}
+
 /** Reservation stay overlap (same rule as assign / share-lanes / paint). */
 export function reservationStayOverlaps(
   a: { checkInDate: Date | string; checkOutDate: Date | string },

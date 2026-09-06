@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
@@ -89,6 +90,7 @@ export async function createReservation(input: {
   roomId?: string;
   sourceId?: string;
   agencyId?: string;
+  companyId?: string;
   salesContractId?: string;
   /** Booking envelope (ReservationGroup) — multi-stay under one group. */
   groupId?: string;
@@ -240,6 +242,11 @@ export async function createReservation(input: {
     if (!agency) throw new Error('Agency not found');
     assertActiveForNewUse(`Agency ${agency.code}`, agency.active);
   }
+  if (input.companyId) {
+    const company = await prisma.company.findUnique({ where: { id: input.companyId } });
+    if (!company) throw new Error('Company not found');
+    assertActiveForNewUse(`Company ${company.code}`, company.active);
+  }
 
   let totalAmount = toDecimal(0);
   try {
@@ -269,6 +276,7 @@ export async function createReservation(input: {
       roomId: input.roomId,
       sourceId: input.sourceId,
       agencyId,
+      companyId: input.companyId,
       salesContractId,
       groupId: input.groupId,
       checkInDate: input.checkInDate,
@@ -428,11 +436,13 @@ export async function assignRoom(reservationId: string, roomId: string) {
   return updated;
 }
 
-export async function listArrivals(date: Date) {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
+export async function listArrivals(from: Date | string, to: Date | string = from) {
+  const fromKey = hotelDateKey(from);
+  const toKey = hotelDateKey(to);
+  const lo = fromKey <= toKey ? fromKey : toKey;
+  const hi = fromKey <= toKey ? toKey : fromKey;
+  const start = new Date(`${lo}T00:00:00.000Z`);
+  const end = new Date(`${hi}T23:59:59.999Z`);
 
   return prisma.reservation.findMany({
     where: {

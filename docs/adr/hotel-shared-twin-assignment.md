@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-20  
-**Updated:** 2026-08-20 (ops-closeout: gender law, N beds, break share, HK); 2026-08-20 (Elektraweb cutover Excel/bridge pairing); 2026-09-01 (door+overlap auto-pair before EW `S`; assign auto-share; ops backfill)
+**Updated:** 2026-08-20 (ops-closeout: gender law, N beds, break share, HK); 2026-08-20 (Elektraweb cutover Excel/bridge pairing); 2026-09-01 (door+overlap auto-pair before EW `S`; assign auto-share; ops backfill); 2026-09-02 (orphan clear on live bridge; FO clear-share without autoShare; CHECKED_OUT must not reopen live pool)
 **Scope:** `era-hotel-pms` — union/Nafta FO assignment, inventory, room plan
 
 ## Context
@@ -30,8 +30,8 @@ Block → Booking (ReservationGroup) → RoomStay (Reservation, one person/vouch
 
 - Opens when FO assigns the **first** share-eligible single to a door (explicit checkbox; default on for agency/union singles with M/F gender only), **or automatically** when a second schedulable single with real date overlap lands on the same door and passes M/F + `adults=1` + not-OTA gates (assign, relocate, schedule+room, import/bridge pairing).
 - Pool gender = first guest gender; locked until the pool ends.
-- Survives `n/maxBed` (waiting for roommate or after first checkout).
-- Clears when the **last assigned** stay on that door leaves → `DIRTY`, normal room.
+- Survives `n/maxBed` while a live roommate (or EW second signal) remains.
+- Clears when the **last live** share stay on that door leaves **or** FO Break share / explicit `shareEligible=false` — live bridge must not resurrect without a fresh EW second or a new live second guest.
 - Capacity: `Room.maxBed` / `RoomType.adultCapacity` (twin = 2, triple = 3, …). Same gender only on one door.
 
 ### Gender law (hard)
@@ -110,7 +110,8 @@ Elektraweb has **no share status on the primary guest**. Second guest only: Reco
 | Second: SHARE / RC=0 / `…S` | `shareEligible` + bed index; **pull** overlapping NORMAL neighbor into the same pool |
 | Two NORMAL rows, same door, overlapping nights, no EW `S` yet | **Heuristic pair** on re-import / bridge (`applyElektrawebSharePair` overlapEligible) — same as assign auto-share |
 | Primary always NORMAL | Never treat NORMAL as “clear share” |
-| After first checkout, FO flips remaining SHARE→NORMAL | Bridge/import **must not** clear `shareEligible`; pool stays share until ERA Break share |
+| After first checkout, FO flips remaining SHARE→NORMAL | Bridge/import **clears orphan** live `shareEligible` when alone and not EW second; FO Break share sticks. Excel cutover may pass `includeHistory` to pair CHECKED_OUT for occupancy only |
+| Sticky `reservation.shareEligible` alone | **Not** a reopen signal on live bridge |
 | `Room Count=0` inventory hack | Not stored — door math uses share pool |
 | Agency «Həmkarlar İttifaqı» | Hint only — **not** a trigger. Walk-in medical shares when EW marks the second guest the same way |
 
