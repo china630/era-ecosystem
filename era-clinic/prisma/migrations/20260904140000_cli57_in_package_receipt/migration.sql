@@ -7,5 +7,5 @@ CREATE INDEX IF NOT EXISTS "ProcedureOrder_in_package_idx" ON "ProcedureOrder"("
 -- Backfill historical in-quota rows (zero charge, not pending pay)
 UPDATE "ProcedureOrder"
 SET "in_package" = true
-WHERE "amount_net" <= 0
+WHERE "amountNet" <= 0
   AND "status"::text <> 'PENDING_PAY';
