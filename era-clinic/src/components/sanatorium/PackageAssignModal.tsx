@@ -757,7 +757,6 @@ export function PackageAssignModal({
                     value={formCode ?? ""}
                     onChange={(v) => selectPoolSku(String(v ?? ""))}
                     options={poolSkuOptions}
-                    widthPreset="select"
                   />
                 </div>
               ) : null}
@@ -841,7 +840,6 @@ export function PackageAssignModal({
                   value={replaceFrom}
                   onChange={(v) => setReplaceFrom(String(v ?? ""))}
                   options={packageCodeOptions}
-                  widthPreset="select"
                 />
               </div>
               <div className="mb-2 max-w-xs">
@@ -851,7 +849,6 @@ export function PackageAssignModal({
                   value={replaceTo}
                   onChange={(v) => setReplaceTo(String(v ?? ""))}
                   options={allCodes.length ? allCodes : packageCodeOptions}
-                  widthPreset="select"
                 />
               </div>
               <label className="mb-3 block text-[12px]">
