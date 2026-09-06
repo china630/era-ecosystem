@@ -344,6 +344,7 @@ describe("nafta cutover import rules", () => {
       patientRef: { create: jest.fn().mockResolvedValue({ id: "pat1" }) },
       clinicalEpisode: { create: jest.fn().mockResolvedValue({ id: "ep1" }) },
       visit: { create: createVisit, update: jest.fn() },
+      episodeCareDoctor: { upsert: jest.fn().mockResolvedValue({ id: "ecd1" }) },
     };
     await adapter.upsert(tx as never, adapter.rowSchema.parse(mapped), false);
     expect(createVisit).toHaveBeenCalledWith(
@@ -355,6 +356,7 @@ describe("nafta cutover import rules", () => {
         }),
       }),
     );
+    expect(tx.episodeCareDoctor.upsert).toHaveBeenCalled();
   });
   it("maps procedure rows from English headers", () => {
     const adapter = getImportAdapter("procedures")!;
