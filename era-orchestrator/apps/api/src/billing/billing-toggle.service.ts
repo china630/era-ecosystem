@@ -120,6 +120,22 @@ export class BillingToggleService {
         });
       }
 
+      if (dto.moduleKey === "clinic_sanatorium_clinical") {
+        const sanatoriumPack = await this.isModuleCoveredByActiveBundle(
+          organizationId,
+          "hotel_medical_sanatorium",
+          now,
+        );
+        if (sanatoriumPack) {
+          throw new BadRequestException({
+            code: "MUTEX_SANATORIUM_MEDICAL",
+            message:
+              "Hotel Sanatorium bundle includes hotel_medical_sanatorium. Disable that bundle (use Hotel Resort) before enabling clinic_sanatorium_clinical.",
+            bundleName: sanatoriumPack,
+          });
+        }
+      }
+
       if (this.pricing.isPremiumModuleKey(dto.moduleKey)) {
         this.premiumActivation.assertNotTrialLockedPremium(subRow, dto.moduleKey);
       }

@@ -301,6 +301,7 @@ export class AdminBillingService {
       pricingBundles,
       tierSpendCeilingsAzn: config.tierSpendCeilings,
       meterUnitPricing: config.meterUnitPricing,
+      quotaUnitPricing: config.quotaPricing,
     });
     return {
       currency: "AZN" as const,
@@ -309,12 +310,15 @@ export class AdminBillingService {
       pricingModules,
       pricingBundles,
       meterUnitPricing: config.meterUnitPricing,
+      quotaUnitPricing: config.quotaPricing,
       tierSpendCeilings: config.tierSpendCeilings,
       standardModules: storefront.standardModules,
       premiumModules: storefront.premiumModules,
       bundles: storefront.bundles,
       hospitalityBundles: storefront.hospitalityBundles,
       hospitalityModules: storefront.hospitalityModules,
+      industryGroups: storefront.industryGroups,
+      platformAddons: storefront.platformAddons,
       tiers: storefront.tiers,
     };
   }

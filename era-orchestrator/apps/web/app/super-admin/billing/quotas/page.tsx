@@ -65,8 +65,8 @@ export default function SuperAdminBillingQuotasPage() {
     () => Object.fromEntries(TIERS.map((t) => [t, ""])) as Record<Tier, string>,
   );
   const [quotaPricing, setQuotaPricing] = useState({
-    employeeBlockSize: "10",
-    pricePerEmployeeBlockAzn: "15",
+    employeeBlockSize: "1",
+    pricePerEmployeeBlockAzn: "2",
     documentPackSize: "1000",
     pricePerDocumentPackAzn: "5",
   });

@@ -34,6 +34,7 @@ import {
 import {
   composePersonFullName,
   hasPersonNameInput,
+  isPatronymicParticle,
   mergePersonNameParts,
   normalizeNationalityIso,
   resolveIncomingNameParts,
@@ -332,18 +333,33 @@ export class MdmService {
     let lastName = person.lastNameCipher
       ? (decryptText(person.lastNameCipher) ?? "").trim() || null
       : null;
-    if (!firstName && !lastName && person.fullNameCipher) {
-      const split = splitFullNameToParts(decryptText(person.fullNameCipher));
+    const fullPlain = person.fullNameCipher
+      ? (decryptText(person.fullNameCipher) ?? "").trim() || null
+      : null;
+    if (!firstName && !lastName && fullPlain) {
+      const split = splitFullNameToParts(fullPlain);
       firstName = split.firstName;
       middleName = split.middleName;
       lastName = split.lastName;
+    } else if (fullPlain) {
+      // Repair Western split of AZ surname-first blobs (last token = oğlu/qızı).
+      const tokens = fullPlain.split(/\s+/).filter(Boolean);
+      const particleLast =
+        tokens.length >= 3 && isPatronymicParticle(tokens[tokens.length - 1]);
+      if (
+        particleLast &&
+        (isPatronymicParticle(lastName) ||
+          lastName === tokens[tokens.length - 1] ||
+          !lastName)
+      ) {
+        const repaired = splitFullNameToParts(fullPlain);
+        firstName = repaired.firstName;
+        middleName = repaired.middleName;
+        lastName = repaired.lastName;
+      }
     }
     const composed = composePersonFullName(firstName, middleName, lastName);
-    const fullName =
-      composed ||
-      (person.fullNameCipher
-        ? (decryptText(person.fullNameCipher) ?? "").trim() || null
-        : null);
+    const fullName = composed || fullPlain;
     return { firstName, middleName, lastName, fullName };
   }
 

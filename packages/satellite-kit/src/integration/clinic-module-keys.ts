@@ -16,16 +16,34 @@ export const CLINIC_PRICING_MODULE_KEYS = [
   "clinic_insurance",
   "clinic_inpatient",
   "clinic_telehealth",
+  "clinic_nurse_roster",
+  "clinic_registry_emr",
+  "clinic_sanatorium_clinical",
 ] as const;
 
 export type ClinicPricingModuleKey = (typeof CLINIC_PRICING_MODULE_KEYS)[number];
+
+const CLINIC_FEATURE_PARENTS: Readonly<Record<string, readonly string[]>> = {
+  clinic_patients: ["clinic_registry_emr"],
+  clinic_visit: ["clinic_registry_emr"],
+  clinic_ehr: ["clinic_registry_emr"],
+  clinic_reschedule: ["clinic_registry_emr"],
+  clinic_lis_import: ["clinic_lab"],
+};
 
 export function isClinicModuleActive(
   activeModules: readonly string[],
   moduleKey: string,
 ): boolean {
   const set = new Set(activeModules.map((m) => m.trim()).filter(Boolean));
-  return set.has(moduleKey);
+  if (set.has(moduleKey)) return true;
+  for (const parent of CLINIC_FEATURE_PARENTS[moduleKey] ?? []) {
+    if (set.has(parent)) return true;
+  }
+  if (moduleKey === "clinic_sanatorium_clinical" && set.has("clinic_inpatient")) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -47,8 +65,9 @@ export const CLINIC_MODULE_BY_ROUTE: Record<string, string> = {
   "/api/lis": "clinic_lis_import",
   "/catalog": "clinic_service_catalog",
   "/api/catalog": "clinic_service_catalog",
-  "/sanatorium": "clinic_inpatient",
-  "/api/sanatorium": "clinic_inpatient",
+  "/sanatorium/nurse-roster": "clinic_nurse_roster",
+  "/sanatorium": "clinic_sanatorium_clinical",
+  "/api/sanatorium": "clinic_sanatorium_clinical",
   "/inpatient": "clinic_inpatient",
   "/api/inpatient": "clinic_inpatient",
   "/portal": "clinic_portal",

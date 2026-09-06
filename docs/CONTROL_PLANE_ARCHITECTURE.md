@@ -69,8 +69,8 @@ Two **independent** money flows per organization (VÖEN):
 | **Trial / license** | SHARED: system trial days at signup. DEDICATED/ONPREM: no trial, perpetual until super-admin sets a date. Super-admin may shrink, extend, or clear the clock (`null` = perpetual). See ADR platform-trial-hierarchy §1. |
 | **During trial** | Base ERP + trial bundle modules; **no** monthly platform invoice for modules |
 | **After trial** | **Post-paid:** usage in month **M** → platform invoice on **1st of M+1** for full month M |
-| **What is billed** | ERA Core (Foundation) + ERA Banking Core (Foundation, only when `industry_banking` is connected) + active `organization_modules` (ERP modules, `industry_*` satellites, platform add-ons) + bundle discounts |
-| **OCR** | Included pages via tier `maxOcrPagesPerMonth`; overlimit metered at `pricePerOcrPageAzn` (no separate hard-cap on OCR jobs) |
+| **What is billed** | ERA Core (Foundation **29 AZN**) + SKU palette **19/29/39/99** (`pricing_modules`, [ADR era-commercial-catalog](./adr/era-commercial-catalog.md)) + bundle discounts + meters (headcount, documents, OCR, SMS/WA, storage GB, acquiring) |
+| **OCR** | **50** pages included (Foundation); overlimit `pricePerOcrPageAzn` (0.02). Documents in `nas`: 1000/mo then **5 AZN / 1000**. Invoices count as documents (no per-invoice 0.10 meter). |
 | **Deactivation** | Module stays active until end of calendar month (`pendingDeactivation`) |
 
 ### 2. Metered quotas — tier spend ceiling (real-time accumulation)

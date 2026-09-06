@@ -26,13 +26,14 @@ export const PRICING_HOSPITALITY_BUNDLE_MARKETING: readonly {
 }[] = [
   {
     marketingId: "hotel_city",
-    matchModuleKeys: ["hotel_core", "hotel_housekeeping"],
+    matchModuleKeys: ["hotel_core", "hotel_housekeeping", "hotel_migration_pro"],
   },
   {
     marketingId: "hotel_resort",
     matchModuleKeys: [
       "hotel_core",
       "hotel_housekeeping",
+      "hotel_migration_pro",
       "hotel_distribution",
       "hotel_guest_experience",
       "hotel_transfers",
@@ -45,6 +46,7 @@ export const PRICING_HOSPITALITY_BUNDLE_MARKETING: readonly {
     matchModuleKeys: [
       "hotel_core",
       "hotel_housekeeping",
+      "hotel_migration_pro",
       "hotel_distribution",
       "hotel_guest_experience",
       "hotel_transfers",

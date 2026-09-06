@@ -342,7 +342,7 @@ Product lines & presets: [ADR clinic-product-lines-and-presets](./adr/clinic-pro
 | Events | — | visit + lab completed | — |
 | Growth | — | DELIVERY K6 | — |
 
-Satellite gate: `industry_clinic`. Clinic module keys live in orchestrator `pricing_modules` (`satelliteKey = industry_clinic`), default free.
+Satellite gate: `industry_clinic` **29 AZN**. Commercial SKUs (2026-09 catalog): EMR `clinic_registry_emr` 29, lab 29, sanatorium chart `clinic_sanatorium_clinical` 29, insurance 39, inpatient/telehealth/nurse roster 19. Gate includes schedule + appointments + cashier. XOR with `hotel_medical_sanatorium` — [ADR era-commercial-catalog](./adr/era-commercial-catalog.md).
 
 ---
 

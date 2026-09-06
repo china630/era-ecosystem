@@ -30,8 +30,8 @@ function normalize(raw: Partial<BillingPayload>): BillingPayload {
     trialPeriodDays: raw.trialPeriodDays ?? 90,
     yearlyDiscountPercent: raw.yearlyDiscountPercent ?? 20,
     quotaPricing: raw.quotaPricing ?? {
-      employeeBlockSize: 10,
-      pricePerEmployeeBlockAzn: 15,
+      employeeBlockSize: 1,
+      pricePerEmployeeBlockAzn: 2,
       documentPackSize: 1000,
       pricePerDocumentPackAzn: 5,
     },

@@ -95,6 +95,19 @@ describe("MDM person name parts (SoR)", () => {
     });
   });
 
+  it("splits AZ surname-first when patronymic particle is last token", () => {
+    expect(splitFullNameToParts("Əlizadə Mehman Mahmud oğlu")).toEqual({
+      firstName: "Mehman",
+      middleName: "Mahmud oğlu",
+      lastName: "Əlizadə",
+    });
+    expect(splitFullNameToParts("Mammadova Leyla Rauf qızı")).toEqual({
+      firstName: "Leyla",
+      middleName: "Rauf qızı",
+      lastName: "Mammadova",
+    });
+  });
+
   it("composes fullName skipping empty parts", () => {
     expect(composePersonFullName("Ali", "Vali", "Mammadov")).toBe(
       "Ali Vali Mammadov",

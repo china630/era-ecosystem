@@ -485,6 +485,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-07 | Platform commercial catalog freeze (19/29/39/99 AZN); clinic commercial SKUs + hotel/clinic sanatorium XOR. ADR era-commercial-catalog. |
 | 2026-09-07 | HOT-CL-06 company profile + `/front-cash/company-ledger`; HOT-CASH-07/08 folio balances + journal; Agency.settlementMode. Status API / SCREEN — not SHIPPED. |
 | 2026-09-06 | FO laundry grid+filters; room-changes journal + card/plan relocate hint; reservation-times actual CI/CO + guest/agency, sort actual CI desc. |
 | 2026-09-06 | HOT-FO-03 room plan: drop HK squares; hide OOO/OOS/repair; occupancy-frame strokes; two names + folio debt on nose; EW day+weekday header. Status API (UAT §9 unsigned). |

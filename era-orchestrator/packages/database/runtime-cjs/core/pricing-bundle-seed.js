@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PRICING_BUNDLE_SEED_DEFAULTS = void 0;
 exports.seedPricingBundleDefaultsIfEmpty = seedPricingBundleDefaultsIfEmpty;
 exports.ensureMissingPricingBundles = ensureMissingPricingBundles;
-const client_1 = require("../../generated/client");
+const client_1 = require("../../../generated/client");
 const pricing_module_keys_1 = require("./pricing-module-keys");
 const hotel_module_keys_1 = require("./hotel-module-keys");
 /** Retail banking pack — no treasury/regreporting/risk by default (ADR R6). */

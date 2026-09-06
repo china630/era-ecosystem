@@ -1,5 +1,10 @@
 import type { PricingStorefrontUiCopy } from "../i18n/pricing-storefront-copy";
-import type { MeterUnitPricing, PublicPricingResponse } from "../public-pricing-types";
+import type {
+  MeterUnitPricing,
+  PublicIndustryGroup,
+  PublicPricingResponse,
+  QuotaUnitPricing,
+} from "../public-pricing-types";
 
 export type PricingStorefrontView = {
   currency: "AZN";
@@ -66,11 +71,39 @@ export type PricingStorefrontView = {
   unitPriceLabels: {
     users: string;
     invoices: string;
+    documents: string;
     storage: string;
     whatsapp: string;
     ocr: string;
     metricColumn: string;
   };
+  quotaUnitPricing: QuotaUnitPricing | null;
+  industriesTitle: string;
+  industriesIntro: string;
+  platformAddonsTitle: string;
+  platformAddonsHint: string;
+  platformAddonsXor: string;
+  industryGroups: Array<{
+    satelliteKey: string;
+    title: string;
+    intro: string;
+    gateLabel: string;
+    gate: { key: string; name: string; pricePerMonth: number } | null;
+    capacityLine: string | null;
+    note: string | null;
+    bundles: Array<{
+      marketingId: string;
+      name: string;
+      moduleLine: string;
+      discountBadge: string;
+      listPriceAzn: number;
+      discountedPriceAzn: number;
+      moduleKeys: string[];
+      ctaHref: string;
+    }>;
+    modules: Array<{ key: string; name: string; pricePerMonth: number; isPremium: boolean }>;
+  }>;
+  platformAddons: Array<{ key: string; name: string; pricePerMonth: number }>;
   matrixTitle: string;
   matrixHint: string;
   bundlesTitle: string;
@@ -125,7 +158,7 @@ const DEFAULT_METER: MeterUnitPricing = {
   pricePerUserMonthAzn: 2,
   pricePerGbMonthAzn: 0.5,
   pricePerWhatsappAlertAzn: 0.05,
-  pricePerInvoiceAzn: 0.1,
+  pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
 };
 
@@ -189,6 +222,78 @@ export function buildPricingStorefrontView(
     isPremium: Boolean(m.isPremium),
   }));
 
+  const mapBundleRow = (b: {
+    marketingId: string;
+    name: string;
+    moduleKeys: string[];
+    discountPercent: number;
+    listPriceAzn: number;
+    discountedPriceAzn: number;
+  }) => {
+    const meta = ui.bundles[b.marketingId];
+    return {
+      marketingId: b.marketingId,
+      name: meta?.name ?? b.name,
+      moduleLine: meta?.moduleLine ?? b.moduleKeys.join(", "),
+      discountBadge: `${b.discountPercent}% ${ui.bundleDiscountSuffix}`,
+      listPriceAzn: b.listPriceAzn,
+      discountedPriceAzn: b.discountedPriceAzn,
+      moduleKeys: b.moduleKeys,
+      ctaHref: `/register-org?bundle=${encodeURIComponent(b.marketingId)}`,
+    };
+  };
+
+  const sourceGroups: PublicIndustryGroup[] =
+    api.industryGroups && api.industryGroups.length > 0
+      ? api.industryGroups
+      : hospitalityModules.length > 0
+        ? [
+            {
+              satelliteKey: "industry_hotel_pms",
+              gate:
+                hospitalityModules.find((m) => m.key === "industry_hotel_pms") ??
+                null,
+              modules: hospitalityModules.filter((m) => m.key !== "industry_hotel_pms"),
+              bundles: api.hospitalityBundles ?? [],
+              capacity: { includedInGate: 5, unitAzn: 4, unit: "room" },
+              note: null,
+            },
+          ]
+        : [];
+
+  const industryGroups = sourceGroups.map((g) => {
+    const copy = ui.industryCopy[g.satelliteKey];
+    const cap = g.capacity;
+    const capacityLine = cap
+      ? ui.industryCapacityTemplate
+          .replace("{{included}}", String(cap.includedInGate))
+          .replace("{{unit}}", copy?.capacityUnit ?? cap.unit)
+          .replace("{{price}}", fmtAzn(cap.unitAzn))
+      : null;
+    return {
+      satelliteKey: g.satelliteKey,
+      title: copy?.title ?? g.gate?.name ?? g.satelliteKey,
+      intro: copy?.intro ?? "",
+      gateLabel: copy?.gateLabel ?? ui.hospitalityGateLabel,
+      gate: g.gate,
+      capacityLine,
+      note: g.note === "banking_sandbox" ? ui.bankingSandboxNote : null,
+      bundles: g.bundles.filter((b) => b.discountedPriceAzn > 0).map(mapBundleRow),
+      modules: g.modules.map((m) => ({
+        key: m.key,
+        name: ui.hospitalityModuleNames[m.key] ?? ui.industryModuleNames[m.key] ?? m.name,
+        pricePerMonth: m.pricePerMonth,
+        isPremium: Boolean(m.isPremium),
+      })),
+    };
+  });
+
+  const platformAddons = (api.platformAddons ?? []).map((m) => ({
+    key: m.key,
+    name: ui.platformAddonNames[m.key] ?? m.name,
+    pricePerMonth: m.pricePerMonth,
+  }));
+
   const tiers = (api.tiers ?? []).map((t) => {
     const isT0 = t.id === "TIER_0";
     const ceiling = t.spendCeilingAzn ?? 0;
@@ -249,11 +354,20 @@ export function buildPricingStorefrontView(
     unitPriceLabels: {
       users: ui.resourceUsers,
       invoices: ui.resourceInvoices,
+      documents: ui.resourceDocuments,
       storage: ui.resourceStorage,
       whatsapp: ui.resourceWhatsapp,
       ocr: ui.resourceOcr,
       metricColumn: ui.matrixMetricLabel,
     },
+    quotaUnitPricing: api.quotaUnitPricing ?? null,
+    industriesTitle: ui.industriesTitle,
+    industriesIntro: ui.industriesIntro,
+    platformAddonsTitle: ui.platformAddonsTitle,
+    platformAddonsHint: ui.platformAddonsHint,
+    platformAddonsXor: ui.platformAddonsXor,
+    industryGroups,
+    platformAddons,
     matrixTitle: ui.matrixTitle,
     matrixHint: ui.spendTierMatrixHint,
     bundlesTitle: ui.bundlesTitle,

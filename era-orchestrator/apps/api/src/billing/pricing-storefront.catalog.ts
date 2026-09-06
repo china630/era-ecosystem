@@ -18,6 +18,8 @@ export const PRICING_STANDARD_MODULE_REGISTRY: readonly PricingStandardModuleDef
     { id: "manufacturing_wip", moduleKeys: ["manufacturing"] },
     { id: "fixed_assets", moduleKeys: ["fixed_assets"] },
     { id: "hr_payroll", moduleKeys: ["hr_full"] },
+    { id: "ifrs_mapping", moduleKeys: ["ifrs_mapping"] },
+    { id: "consolidation_pro", moduleKeys: ["consolidation_pro"] },
   ] as const;
 
 export const PRICING_STOREFRONT_BUNDLE_MARKETING: readonly {
