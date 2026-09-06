@@ -91,6 +91,9 @@ export async function POST(
       icdCodeId: body.icdCodeId,
       note: body.note,
       recordedByUserId: session!.sub,
+      recordedByPractitionerId: await (
+        await import("@/lib/auth/session-practitioner")
+      ).resolveSessionPractitionerId(session!.sub),
     });
     return jsonOk(row, 201);
   } catch (err) {

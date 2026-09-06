@@ -5,7 +5,12 @@ import type { AdmissionDiagnosisKind, DiagnosisRole } from "@prisma/client";
 
 export async function addEpisodeDiagnosis(
   episodeId: string,
-  input: { icdCodeId: string; note?: string | null; recordedByUserId?: string | null },
+  input: {
+    icdCodeId: string;
+    note?: string | null;
+    recordedByUserId?: string | null;
+    recordedByPractitionerId?: string | null;
+  },
 ) {
   const episode = await prisma.clinicalEpisode.findUnique({ where: { id: episodeId } });
   if (!episode) throw new IcdCatalogError("Episode not found", 404);
@@ -16,15 +21,22 @@ export async function addEpisodeDiagnosis(
       icdCodeId: input.icdCodeId,
       note: input.note?.trim() || null,
       recordedByUserId: input.recordedByUserId ?? null,
+      recordedByPractitionerId: input.recordedByPractitionerId ?? null,
     },
-    include: { icdCode: true },
+    include: {
+      icdCode: true,
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
 export async function listEpisodeDiagnoses(episodeId: string) {
   return prisma.clinicalDiagnosis.findMany({
     where: { episodeId },
-    include: { icdCode: true },
+    include: {
+      icdCode: true,
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
     orderBy: { recordedAt: "desc" },
   });
 }
@@ -65,7 +77,10 @@ export async function updateEpisodeDiagnosis(
       ...(input.icdCodeId ? { icdCodeId: input.icdCodeId } : {}),
       ...(input.note !== undefined ? { note: input.note?.trim() || null } : {}),
     },
-    include: { icdCode: true },
+    include: {
+      icdCode: true,
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 

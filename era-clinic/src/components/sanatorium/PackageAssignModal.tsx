@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -14,9 +15,9 @@ import {
   PhysioSiteChips,
   type PhysioCatalogListItem,
   type PhysioCatalogSite,
-  type PhysioChipsLabels,
   type PhysioChipsValue,
 } from "@/components/physio/PhysioSiteChips";
+import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -28,6 +29,8 @@ export type PackageBalanceRow = {
   remaining: number;
   consumed: number;
   inCirculation: number;
+  /** PHYSIO_POOL / PARAFFIN_POOL — pick a real SKU, do not assign the pool code. */
+  isPool?: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -38,7 +41,11 @@ export type PackageAssignedAgg = {
   statusKind: "active" | "consumed";
   locked: boolean;
   paramsLabel?: string;
+  /** Balance line burned (pool or same as procedureCode). */
+  packageQuotaCode?: string | null;
 };
+
+type PoolEligibleSku = { code: string; name: string };
 
 type DraftLine = {
   key: string;
@@ -53,6 +60,8 @@ type DraftLine = {
   siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
   paramsLabel: string;
   fingerprint: string;
+  /** When set, Save burns this pool balance instead of procedureCode. */
+  burnPoolCode?: string | null;
 };
 
 type Props = {
@@ -82,6 +91,7 @@ type Props = {
     replaceSubmit?: string;
     qtyDown?: string;
     checkedInLocked?: string;
+    pickPoolSku?: string;
   };
 };
 
@@ -96,57 +106,6 @@ const EMPTY_PHYSIO: PhysioChipsValue = {
   siteLaterality: {},
   physioFields: {},
   note: null,
-};
-
-const DEFAULT_PHYSIO_LABELS: PhysioChipsLabels = {
-  sites: "Sites",
-  addSite: "Add site",
-  applyMode: "Apply",
-  together: "Together",
-  turn: "In turn",
-  note: "Note",
-  noteHint: "Comments",
-  remove: "Remove",
-  laterality: "Side",
-  left: "Left",
-  right: "Right",
-  both: "Both",
-  workKind: "Work kind",
-  deviceProgram: "Program",
-  electrodeCount: "Electrodes",
-  deviceParam: "Device param",
-  noAdditive: "No additive",
-  applicationSurface: "Surface",
-  substance: "Substance",
-  extraOil: "Extra oil",
-  holdOrStop: "Hold / stop",
-  spineLevel: "Spine level",
-  dayBlock: "Day block",
-  bathSequence: "Bath sequence",
-  naftalanFill: "Naftalan fill",
-  intensity: "Intensity",
-  smear: "Smear",
-  yes: "Yes",
-  no: "No",
-  unset: "—",
-  surfaceFrontBack: "Front / back",
-  surfaceUpper: "Upper",
-  surfaceLower: "Lower",
-  dayBlockAlt: "Every other day",
-  dayBlockThen: "5 days then",
-  bathSitzThenFull: "Sitz then full",
-  fillTam: "Full body",
-  fillOturaq: "Sitz",
-  fillQursaq: "To waist",
-  catalogEmpty: "Physio site catalog is not seeded.",
-  catalogEmptyLink: "Open Physio sites",
-  intensityLight: "Light",
-  intensityWeak: "Weak",
-  intensityNotHot: "Not hot",
-  intensityMedium: "Medium",
-  intensityMore: "More",
-  sitesHintHydroJets:
-    "Do not aim jets at the heart, breasts, or groin. Prefer back, lumbar, thighs, calves, and feet.",
 };
 
 function fingerprintFromPhysio(p: PhysioChipsValue): string {
@@ -201,6 +160,12 @@ export function PackageAssignModal({
   onSaved,
   labels,
 }: Props) {
+  const locale = useLocale();
+  const tPhysio = useTranslations("patientCard");
+  const tc = useTranslations("common");
+  const physioLabels = useMemo(() => buildPhysioChipsLabels(tPhysio), [tPhysio]);
+  const cancelLabel =
+    labels.cancel && !labels.cancel.includes(".") ? labels.cancel : tc("cancel");
   const { auth } = useClinicAuth();
   const canOutOfPackage =
     auth?.permissions?.includes(CLINIC_PERMISSION.API_PROCEDURES_FO_MANAGER) === true ||
@@ -208,8 +173,10 @@ export function PackageAssignModal({
 
   const [balances, setBalances] = useState<PackageBalanceRow[]>([]);
   const [assigned, setAssigned] = useState<PackageAssignedAgg[]>([]);
+  const [poolEligible, setPoolEligible] = useState<Record<string, PoolEligibleSku[]>>({});
   const [draft, setDraft] = useState<DraftLine[]>([]);
   const [formCode, setFormCode] = useState<string | null>(null);
+  const [formBurnPool, setFormBurnPool] = useState<string | null>(null);
   const [formQty, setFormQty] = useState(1);
   const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
   const [busy, setBusy] = useState(false);
@@ -237,12 +204,14 @@ export function PackageAssignModal({
     const payload = d.data ?? d;
     setBalances(payload.balances ?? []);
     setAssigned(payload.assigned ?? []);
+    setPoolEligible(payload.poolEligible ?? {});
   }, [episodeId]);
 
   useEffect(() => {
     if (!open) return;
     setDraft([]);
     setFormCode(null);
+    setFormBurnPool(null);
     setError(null);
     setSoftWarn(null);
     setReplaceOpen(false);
@@ -269,7 +238,7 @@ export function PackageAssignModal({
           }>;
           if (Array.isArray(rows)) {
             setAllCodes(
-              rows.map((r) => ({ value: r.code, label: `${r.name} (${r.code})` })),
+              rows.map((r) => ({ value: r.code, label: r.name || r.code })),
             );
           }
         }
@@ -280,39 +249,96 @@ export function PackageAssignModal({
   }, [open, load]);
 
   const formName = useMemo(() => {
-    if (!formCode) return "";
-    return balances.find((b) => b.procedureCode === formCode)?.procedureName ?? formCode;
-  }, [formCode, balances]);
+    if (!formCode) {
+      if (formBurnPool) {
+        return (
+          balances.find((b) => b.procedureCode === formBurnPool)?.procedureName ??
+          formBurnPool
+        );
+      }
+      return "";
+    }
+    const fromPool = formBurnPool
+      ? poolEligible[formBurnPool]?.find((s) => s.code === formCode)?.name
+      : null;
+    if (fromPool) return fromPool;
+    return (
+      balances.find((b) => b.procedureCode === formCode)?.procedureName ??
+      allCodes.find((c) => c.value === formCode)?.label ??
+      formCode
+    );
+  }, [formCode, formBurnPool, balances, poolEligible, allCodes]);
 
   const draftRemaining = useMemo(() => {
     const map = new Map(balances.map((b) => [b.procedureCode, b.remaining]));
     for (const d of draft) {
-      map.set(d.procedureCode, Math.max(0, (map.get(d.procedureCode) ?? 0) - d.qty));
+      const quota = d.burnPoolCode || d.procedureCode;
+      map.set(quota, Math.max(0, (map.get(quota) ?? 0) - d.qty));
     }
     return map;
   }, [balances, draft]);
 
   const packageCodeOptions = useMemo(
     () =>
-      balances.map((b) => ({
-        value: b.procedureCode,
-        label: `${b.procedureName} (${b.procedureCode})`,
-      })),
+      balances
+        .filter((b) => !b.isPool)
+        .map((b) => ({
+          value: b.procedureCode,
+          label: b.procedureName || b.procedureCode,
+        })),
     [balances],
   );
 
-  function openForm(code: string) {
+  const poolSkuOptions = useMemo(() => {
+    if (!formBurnPool) return [];
+    return (poolEligible[formBurnPool] ?? []).map((s) => ({
+      value: s.code,
+      label: s.name || s.code,
+    }));
+  }, [formBurnPool, poolEligible]);
+
+  const formQuotaCode = formBurnPool || formCode;
+
+  function closeForm() {
+    setFormCode(null);
+    setFormBurnPool(null);
+    setFormPhysio(EMPTY_PHYSIO);
+  }
+
+  function openForm(code: string, fillAllQty = false) {
+    const bal = balances.find((b) => b.procedureCode === code);
     const rem = draftRemaining.get(code) ?? 0;
-    const name = balances.find((b) => b.procedureCode === code)?.procedureName ?? code;
+    if (bal?.isPool) {
+      setFormBurnPool(code);
+      setFormCode(null);
+      setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
+      setFormPhysio(EMPTY_PHYSIO);
+      return;
+    }
+    const name = bal?.procedureName ?? code;
+    setFormBurnPool(null);
     setFormCode(code);
-    setFormQty(Math.min(1, Math.max(1, rem)) || 1);
+    setFormQty(
+      fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1,
+    );
     setFormPhysio(gateToPhysio(code, name));
+  }
+
+  function selectPoolSku(skuCode: string) {
+    if (!formBurnPool || !skuCode) return;
+    const name =
+      poolEligible[formBurnPool]?.find((s) => s.code === skuCode)?.name ?? skuCode;
+    setFormCode(skuCode);
+    setFormPhysio(gateToPhysio(skuCode, name));
   }
 
   function pushDraft(line: Omit<DraftLine, "key">) {
     setDraft((prev) => {
       const same = prev.find(
-        (d) => d.procedureCode === line.procedureCode && d.fingerprint === line.fingerprint,
+        (d) =>
+          d.procedureCode === line.procedureCode &&
+          (d.burnPoolCode ?? null) === (line.burnPoolCode ?? null) &&
+          d.fingerprint === line.fingerprint,
       );
       if (same) {
         return prev.map((d) =>
@@ -330,8 +356,8 @@ export function PackageAssignModal({
   }
 
   function addDraft() {
-    if (!formCode) return;
-    const rem = draftRemaining.get(formCode) ?? 0;
+    if (!formCode || !formQuotaCode) return;
+    const rem = draftRemaining.get(formQuotaCode) ?? 0;
     const qty = Math.min(formQty, rem);
     if (qty < 1) return;
     const fp = fingerprintFromPhysio(formPhysio);
@@ -346,14 +372,20 @@ export function PackageAssignModal({
       siteLaterality: formPhysio.siteLaterality,
       paramsLabel: paramsLabelFromPhysio(formPhysio, catalog),
       fingerprint: fp,
+      burnPoolCode: formBurnPool,
     });
-    setFormCode(null);
+    closeForm();
   }
 
   function fillAll(code: string) {
+    const bal = balances.find((b) => b.procedureCode === code);
+    if (bal?.isPool) {
+      openForm(code, true);
+      return;
+    }
     const rem = draftRemaining.get(code) ?? 0;
     if (rem < 1) return;
-    const name = balances.find((b) => b.procedureCode === code)?.procedureName ?? code;
+    const name = bal?.procedureName ?? code;
     const physio = gateToPhysio(code, name);
     pushDraft({
       procedureCode: code,
@@ -388,6 +420,7 @@ export function PackageAssignModal({
             siteIds: d.siteIds ?? [],
             siteApplyMode: d.siteApplyMode ?? null,
             siteLaterality: d.siteLaterality ?? {},
+            burnPoolCode: d.burnPoolCode ?? null,
           })),
         }),
       });
@@ -476,7 +509,9 @@ export function PackageAssignModal({
 
   async function submitReplace() {
     if (!replaceFrom || !replaceTo || replaceQty < 1) return;
-    const toInPackage = balances.some((b) => b.procedureCode === replaceTo);
+    const toInPackage =
+      balances.some((b) => !b.isPool && b.procedureCode === replaceTo) ||
+      Object.values(poolEligible).some((list) => list.some((s) => s.code === replaceTo));
     if (!toInPackage && !canOutOfPackage) {
       setError(
         "Out-of-package replace requires FO manager (creates PENDING_PAY paid extra).",
@@ -528,7 +563,7 @@ export function PackageAssignModal({
             disabled={busy}
             onClick={onClose}
           >
-            {labels.cancel}
+            {cancelLabel}
           </button>
           <button
             type="button"
@@ -553,24 +588,24 @@ export function PackageAssignModal({
           {balances.length === 0 ? (
             <p className={TEXT_MUTED_CLASS}>{labels.emptyLeft}</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {balances.map((b) => {
                 const rem = draftRemaining.get(b.procedureCode) ?? b.remaining;
                 return (
                   <li
                     key={b.procedureCode}
-                    className={`${CARD_CONTAINER_CLASS} flex items-center justify-between gap-2 px-3 py-2 text-[13px]`}
+                    className="flex items-center justify-between gap-2 border-b border-slate-100 px-1 py-1.5 text-[13px]"
                   >
                     <div className="min-w-0">
-                      <div className="truncate font-medium">{b.procedureName}</div>
-                      <p className={TEXT_MUTED_CLASS}>
+                      <div className="truncate font-medium leading-tight">{b.procedureName}</div>
+                      <p className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}>
                         {labels.remaining}: {rem} / {b.quotaTotal}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
                       <button
                         type="button"
-                        className={SECONDARY_BUTTON_CLASS}
+                        className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
                         disabled={rem < 1 || busy}
                         onClick={() => fillAll(b.procedureCode)}
                       >
@@ -578,7 +613,7 @@ export function PackageAssignModal({
                       </button>
                       <button
                         type="button"
-                        className={PRIMARY_BUTTON_CLASS}
+                        className={`${PRIMARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
                         disabled={rem < 1 || busy}
                         onClick={() => openForm(b.procedureCode)}
                       >
@@ -634,10 +669,12 @@ export function PackageAssignModal({
                         className={SECONDARY_BUTTON_CLASS}
                         disabled={busy}
                         onClick={() => {
-                          const rem =
-                            balances.find((b) => b.procedureCode === row.procedureCode)
-                              ?.remaining ?? 0;
+                          const quota =
+                            row.packageQuotaCode || row.procedureCode;
+                          const rem = draftRemaining.get(quota) ?? 0;
                           if (rem < 1) return;
+                          const burn =
+                            quota !== row.procedureCode ? quota : null;
                           pushDraft({
                             procedureCode: row.procedureCode,
                             procedureName: row.procedureName,
@@ -645,6 +682,7 @@ export function PackageAssignModal({
                             note: "",
                             paramsLabel: row.paramsLabel ?? "",
                             fingerprint: `committed:${row.assignBatchId ?? row.procedureCode}`,
+                            burnPoolCode: burn,
                           });
                         }}
                       >
@@ -703,58 +741,85 @@ export function PackageAssignModal({
             </ul>
           )}
 
-          {formCode ? (
+          {formBurnPool || formCode ? (
             <div className="absolute inset-y-0 right-0 z-10 max-h-full w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-lg md:w-[calc(50%-0.5rem)]">
-              <h4 className="mb-2 font-medium">{formName}</h4>
-              <label className="mb-2 block text-[12px]">
-                {labels.qty}
-                <input
-                  type="number"
-                  min={1}
-                  max={draftRemaining.get(formCode) ?? 1}
-                  className={`${MODAL_INPUT_CLASS} mt-1`}
-                  value={formQty}
-                  onChange={(e) => setFormQty(Number(e.target.value) || 1)}
-                />
-              </label>
-              <div className="mb-3">
-                <PhysioSiteChips
-                  value={formPhysio}
-                  catalog={catalog}
-                  programs={programs}
-                  substances={substances}
-                  locale="en"
-                  editable
-                  labels={DEFAULT_PHYSIO_LABELS}
-                  onSitesChange={(siteIds) =>
-                    setFormPhysio((prev) => ({ ...prev, siteIds }))
-                  }
-                  onModeChange={(siteApplyMode) =>
-                    setFormPhysio((prev) => ({ ...prev, siteApplyMode }))
-                  }
-                  onNoteBlur={(note) => setFormPhysio((prev) => ({ ...prev, note }))}
-                  onLateralityChange={(siteId, laterality) =>
-                    setFormPhysio((prev) => ({
-                      ...prev,
-                      siteLaterality: { ...prev.siteLaterality, [siteId]: laterality },
-                    }))
-                  }
-                  onFieldsChange={(physioFields) =>
-                    setFormPhysio((prev) => ({ ...prev, physioFields }))
-                  }
-                />
-              </div>
+              <h4 className="mb-2 font-medium">
+                {formBurnPool && !formCode
+                  ? balances.find((b) => b.procedureCode === formBurnPool)?.procedureName ??
+                    formBurnPool
+                  : formName}
+              </h4>
+              {formBurnPool ? (
+                <div className="mb-2 max-w-xs">
+                  <CatalogField
+                    kind="SEARCHABLE"
+                    label={labels.pickPoolSku ?? "Procedure"}
+                    value={formCode ?? ""}
+                    onChange={(v) => selectPoolSku(String(v ?? ""))}
+                    options={poolSkuOptions}
+                    widthPreset="select"
+                  />
+                </div>
+              ) : null}
+              {formCode ? (
+                <>
+                  <label className="mb-2 block text-[12px]">
+                    {labels.qty}
+                    <input
+                      type="number"
+                      min={1}
+                      max={draftRemaining.get(formQuotaCode ?? formCode) ?? 1}
+                      className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
+                      value={formQty}
+                      onChange={(e) => setFormQty(Number(e.target.value) || 1)}
+                    />
+                  </label>
+                  <div className="mb-3">
+                    <PhysioSiteChips
+                      value={formPhysio}
+                      catalog={catalog}
+                      programs={programs}
+                      substances={substances}
+                      locale={locale}
+                      editable
+                      compact
+                      labels={physioLabels}
+                      onSitesChange={(siteIds) =>
+                        setFormPhysio((prev) => ({ ...prev, siteIds }))
+                      }
+                      onModeChange={(siteApplyMode) =>
+                        setFormPhysio((prev) => ({ ...prev, siteApplyMode }))
+                      }
+                      onNoteBlur={(note) => setFormPhysio((prev) => ({ ...prev, note }))}
+                      onLateralityChange={(siteId, laterality) =>
+                        setFormPhysio((prev) => ({
+                          ...prev,
+                          siteLaterality: { ...prev.siteLaterality, [siteId]: laterality },
+                        }))
+                      }
+                      onFieldsChange={(physioFields) =>
+                        setFormPhysio((prev) => ({ ...prev, physioFields }))
+                      }
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                  {labels.pickPoolSku ?? "Select a real procedure from the pool."}
+                </p>
+              )}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   className={SECONDARY_BUTTON_CLASS}
-                  onClick={() => setFormCode(null)}
+                  onClick={closeForm}
                 >
-                  {labels.cancel}
+                  {cancelLabel}
                 </button>
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
+                  disabled={!formCode}
                   onClick={addDraft}
                 >
                   {labels.addToDraft}
@@ -769,22 +834,24 @@ export function PackageAssignModal({
               <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
                 Out-of-package target → PENDING_PAY (manager only).
               </p>
-              <div className="mb-2">
+              <div className="mb-2 max-w-xs">
                 <CatalogField
                   kind="SEARCHABLE"
                   label={labels.replaceFrom ?? "From"}
                   value={replaceFrom}
                   onChange={(v) => setReplaceFrom(String(v ?? ""))}
                   options={packageCodeOptions}
+                  widthPreset="select"
                 />
               </div>
-              <div className="mb-2">
+              <div className="mb-2 max-w-xs">
                 <CatalogField
                   kind="SEARCHABLE"
                   label={labels.replaceTo ?? "To"}
                   value={replaceTo}
                   onChange={(v) => setReplaceTo(String(v ?? ""))}
                   options={allCodes.length ? allCodes : packageCodeOptions}
+                  widthPreset="select"
                 />
               </div>
               <label className="mb-3 block text-[12px]">
@@ -792,7 +859,7 @@ export function PackageAssignModal({
                 <input
                   type="number"
                   min={1}
-                  className={`${MODAL_INPUT_CLASS} mt-1`}
+                  className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                   value={replaceQty}
                   onChange={(e) => setReplaceQty(Number(e.target.value) || 1)}
                 />
@@ -804,7 +871,7 @@ export function PackageAssignModal({
                   disabled={busy}
                   onClick={() => setReplaceOpen(false)}
                 >
-                  {labels.cancel}
+                  {cancelLabel}
                 </button>
                 <button
                   type="button"

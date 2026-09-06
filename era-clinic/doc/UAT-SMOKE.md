@@ -227,6 +227,7 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
 7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
+9. **Pool lines** (Fizioprosedurlar* / Parafin*): `+` opens real SKU picker (not draft of `PHYSIO_POOL`); Save places SKU and burns pool remaining; Naftalan stays on its own line.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=cli57-package-assign
@@ -402,7 +403,7 @@ Doctor card (no curl):
 
 ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md).
 
-1. Patient card — episode CatalogField (default latest); anamnesis above CI → ICD → clinical blocks; CLOSED = read-only.
+1. Patient card — episode CatalogField (default latest); anamnesis (+Anamnesis modal once per episode, then edit; author specialty + name under text) above CI → complaints/ICD (author under each row) → clinical blocks; CLOSED = read-only.
 2. Empty OPEN anamnesis → confirm procedures disabled / API `409 ANAMNESIS_REQUIRED`; demographics save works without anamnesis.
 3. Second OPEN walk-in for same patient → `409 WALK_IN_OPEN_EXISTS`.
 4. `/sanatorium` Close on idle WALK_IN; refuse when live procedures or open labs remain (no silent cancel).

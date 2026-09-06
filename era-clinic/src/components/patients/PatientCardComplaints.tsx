@@ -15,7 +15,16 @@ import {
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
-type Row = { id: string; text: string; recordedAt: string };
+import {
+  authorLabelFrom,
+} from "@/domain/staff/practitioner-label";
+
+type Row = {
+  id: string;
+  text: string;
+  recordedAt: string;
+  recordedByPractitioner?: { fullName: string; specialty: string | null } | null;
+};
 
 type Props = {
   patientRefId: string;
@@ -159,34 +168,42 @@ export function PatientCardComplaints({
             </Link>
           </p>
         ) : (
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            {items.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-baseline gap-2">
-                <span>{c.text}</span>
-                {!readOnly ? (
-                  <>
-                    <button
-                      type="button"
-                      className={TABLE_ROW_ICON_BTN_CLASS}
-                      aria-label={tc("edit")}
-                      onClick={() => openEdit(c)}
-                    >
-                      <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                    </button>
-                    <button
-                      type="button"
-                      className={TABLE_ROW_ICON_BTN_CLASS}
-                      aria-label={tc("delete")}
-                      onClick={() => void remove(c.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                    </button>
-                  </>
-                ) : null}
-              </li>
-            ))}
+          <ul className="list-none space-y-3 text-sm">
+            {items.map((c) => {
+              const author = authorLabelFrom(c.recordedByPractitioner ?? null);
+              return (
+                <li key={c.id} className="border-b border-slate-100 pb-2 last:border-0">
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span>{c.text}</span>
+                    {!readOnly ? (
+                      <>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("edit")}
+                          onClick={() => openEdit(c)}
+                        >
+                          <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("delete")}
+                          onClick={() => void remove(c.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                  {author ? (
+                    <p className={`mt-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>{author}</p>
+                  ) : null}
+                </li>
+              );
+            })}
             {items.length === 0 ? (
-              <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
+              <li className={TEXT_MUTED_CLASS}>—</li>
             ) : null}
           </ul>
         )}

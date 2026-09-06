@@ -8,6 +8,7 @@ import { PatientContraindicationsPanel } from "@/components/PatientContraindicat
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
 import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
 import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
+import { PatientCardAnamnesis } from "@/components/patients/PatientCardAnamnesis";
 import { day1ProgramToastKey } from "@/lib/day1-program-toast";
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
@@ -18,19 +19,17 @@ import {
   Field,
   FieldRow,
   FieldSelect,
-  FieldTextarea,
   ModalFooter,
   ModalShell,
   NATIONALITY_OPTIONS,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  SUBSECTION_SURFACE_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
+import type { PractitionerAuthorRef } from "@/domain/staff/practitioner-label";
 
 function nationalityLabel(code: string | null | undefined): string {
   if (!code) return "—";
@@ -75,6 +74,7 @@ type EpisodeOption = {
   label: string;
   status: string;
   anamnesisText: string | null;
+  anamnesisByPractitioner?: PractitionerAuthorRef;
   programCode: string | null;
   roomNumber: string | null;
   patientOrigin: string;
@@ -136,7 +136,6 @@ export function PatientCardBody({
   const [episodes, setEpisodes] = useState<EpisodeOption[]>([]);
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
   const [anamnesis, setAnamnesis] = useState("");
-  const [anamnesisSaving, setAnamnesisSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [ciOpen, setCiOpen] = useState(false);
   const [ciCount, setCiCount] = useState(0);
@@ -232,29 +231,25 @@ export function PatientCardBody({
     setCareTeamCount(items.length);
   }, []);
 
-  async function saveAnamnesis() {
-    if (!selectedEpisodeId || selectedEpisode?.status !== "OPEN") return;
-    setAnamnesisSaving(true);
-    setMsg(null);
-    const trimmed = anamnesis.trim();
-    const res = await fetch(`/api/sanatorium/episodes/${selectedEpisodeId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ anamnesisText: trimmed }),
-    });
-    const data = await res.json();
-    setAnamnesisSaving(false);
-    if (!res.ok) {
-      setMsg(data.error ?? data.message ?? tc("saveFailed"));
-      return;
-    }
+  function onAnamnesisSaved(payload: {
+    anamnesisText: string | null;
+    anamnesisByPractitioner: PractitionerAuthorRef;
+    day1Program?: unknown;
+  }) {
+    if (!selectedEpisodeId) return;
+    setAnamnesis(payload.anamnesisText ?? "");
     setEpisodes((prev) =>
       prev.map((e) =>
-        e.id === selectedEpisodeId ? { ...e, anamnesisText: trimmed || null } : e,
+        e.id === selectedEpisodeId
+          ? {
+              ...e,
+              anamnesisText: payload.anamnesisText,
+              anamnesisByPractitioner: payload.anamnesisByPractitioner ?? e.anamnesisByPractitioner,
+            }
+          : e,
       ),
     );
-    const day1Key = day1ProgramToastKey(data.day1Program ?? data.data?.day1Program);
-    setMsg(day1Key ? t(day1Key) : tc("saved"));
+    applyDay1Toast(payload.day1Program);
     setClinicalRefreshKey((n) => n + 1);
   }
 
@@ -499,41 +494,13 @@ export function PatientCardBody({
 
         {selectedEpisode && (careTeamOk || episodeReadOnly) ? (
           <>
-            <section className="space-y-2">
-              <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-                {t("anamnesis")}
-              </h2>
-              <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-                {selectedEpisode.status === "OPEN" ? (
-                  <>
-                    <FieldTextarea
-                      label={t("anamnesis")}
-                      rows={4}
-                      value={anamnesis}
-                      onChange={(e) => setAnamnesis(e.target.value)}
-                      placeholder={t("anamnesisHint")}
-                    />
-                    <button
-                      type="button"
-                      className={PRIMARY_BUTTON_CLASS}
-                      disabled={anamnesisSaving}
-                      onClick={() => void saveAnamnesis()}
-                    >
-                      {t("anamnesisSave")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
-                    <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
-                      <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
-                        {anamnesis.trim() || "—"}
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </section>
+            <PatientCardAnamnesis
+              episodeId={selectedEpisode.id}
+              readOnly={episodeReadOnly}
+              initialText={selectedEpisode.anamnesisText}
+              initialAuthor={selectedEpisode.anamnesisByPractitioner ?? null}
+              onSaved={onAnamnesisSaved}
+            />
 
             <section className="space-y-2">
               <div

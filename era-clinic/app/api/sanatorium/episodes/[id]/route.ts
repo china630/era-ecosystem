@@ -86,7 +86,12 @@ export async function PATCH(
     const body = patchSchema.parse(await req.json());
     const episode = await prisma.clinicalEpisode.findUnique({
       where: { id },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        anamnesisText: true,
+        anamnesisByPractitionerId: true,
+      },
     });
     if (!episode) return jsonError("Episode not found", 404);
     const { EPISODE_CLOSED, episodeWriteDenied } = await import(
@@ -102,15 +107,33 @@ export async function PATCH(
       }
     }
 
-    const data: { anamnesisText?: string | null; anamnesisUpdatedAt?: Date | null } = {};
+    const { resolveSessionPractitionerId } = await import(
+      "@/lib/auth/session-practitioner"
+    );
+    const practitionerId = await resolveSessionPractitionerId(session.sub);
+
+    const data: {
+      anamnesisText?: string | null;
+      anamnesisUpdatedAt?: Date | null;
+      anamnesisByPractitionerId?: string | null;
+    } = {};
     if (body.anamnesisText !== undefined) {
       const trimmed = body.anamnesisText?.trim() || null;
       data.anamnesisText = trimmed;
       data.anamnesisUpdatedAt = trimmed ? new Date() : null;
+      if (!trimmed) {
+        data.anamnesisByPractitionerId = null;
+      } else if (!episode.anamnesisByPractitionerId && practitionerId) {
+        // Stamp author only on first write; later edits keep original doctor.
+        data.anamnesisByPractitionerId = practitionerId;
+      }
     }
     const updated = await prisma.clinicalEpisode.update({
       where: { id },
       data,
+      include: {
+        anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
+      },
     });
 
     let day1Program: Awaited<
@@ -175,7 +198,12 @@ export async function POST(
 
     if (action === "complaint") {
       const parsed = complaintSchema.parse(body);
-      const row = await addComplaint(id, parsed.text);
+      const { resolveSessionPractitionerId } = await import(
+        "@/lib/auth/session-practitioner"
+      );
+      const row = await addComplaint(id, parsed.text, {
+        recordedByPractitionerId: await resolveSessionPractitionerId(session.sub),
+      });
       let day1Program = null;
       try {
         const { tryOpenProgramAfterTherapistStage } = await import(
@@ -193,6 +221,9 @@ export async function POST(
         await addDiagnosis(id, {
           ...parsed,
           recordedByUserId: session.sub,
+          recordedByPractitionerId: await (
+            await import("@/lib/auth/session-practitioner")
+          ).resolveSessionPractitionerId(session.sub),
         }),
       );
     }
