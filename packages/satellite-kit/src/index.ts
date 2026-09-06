@@ -222,6 +222,7 @@ export {
   linkPersonIdentity,
   listPersonIdentifiers,
   getPersonOpsProfile,
+  batchGetPersonOpsProfiles,
   resolveIdentifierForCompliance,
   isValidAzFin,
   type MdmLookupOptions,
@@ -247,6 +248,7 @@ export {
   normalizeNationalityIso,
   hasPersonNameInput,
   resolveIncomingNameParts,
+  isPatronymicParticle,
   type PersonNameParts,
 } from "./integration/person-name";
 export {

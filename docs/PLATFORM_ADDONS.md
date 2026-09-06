@@ -21,15 +21,18 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 
 | Slug (draft) | Name | Primary users | Monetization | Status |
 |--------------|------|---------------|--------------|--------|
-| `platform_notifications` | **Notifications Pack** | All verticals + Finance | Tier-included WA/email alerts + meter overlimit; SMS as Pro | **Production-ready (CP-B2)** on orchestrator |
-| `platform_booking` | **Online Booking Widget** | Clinic, auto-sto, retail pickup, hotel spa | +AZN/mo per bookable resource group | **Live** (CP-B3, v2.0) |
-| `platform_portal` | **Customer Portal** | All B2C-facing verticals | Basic included; white-label + custom domain premium | **Live** (CP-B4, v2.0) |
-| `platform_payments` | **Payment links & deposits** | Finance invoices, booking deposits | % or fixed per successful payment | **Live** (CP-B5, v2.0) |
-| `platform_loyalty` | **Loyalty & promotions** | Retail, clinic storefront | +AZN/mo; marketing messages use Notifications meter | **Live** (CP-B6, v2.0) |
-| `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | +AZN/mo per domain | **Live** (CP-B7, v2.0) |
-| `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | +AZN/mo + per-shipment meter | **Live** (CP-B8, v2.0) |
-| `platform_storage` | **Cloud object storage (S3)** | All products (attachments, exports) | +AZN/mo + GB meter over tier | **Live** (shared `@era/storage`) |
-| `platform_reference_data` | **ERA Data Hub (Reference Data / DaaS)** | All verticals + external API clients | API-key plans + per-call meter; compliance shelf premium | **Live** (validate-key Pass 2) — [ADR era-data-hub](./adr/era-data-hub.md), [consumer guide](../era-data-hub/doc/DATA-HUB-CONSUMER.md) |
+| `platform_notifications` | **Notifications Pack** | All verticals + Finance | **19 AZN**; 5k email + 10k push; WA **0.05**/msg | **Production-ready (CP-B2)** |
+| `platform_booking` | **Online Booking Widget** | Clinic, auto-sto, retail pickup, hotel spa | **29 AZN** | **Live** (CP-B3, v2.0) |
+| `platform_portal` | **Customer Portal** | All B2C-facing verticals | **19 AZN** | **Live** (CP-B4, v2.0) |
+| `platform_payments` | **Payment links & deposits** | Finance invoices, booking deposits | take-rate **1.5%** (0 base SKU) | **Live** (CP-B5, v2.0) |
+| `platform_loyalty` | **Loyalty & promotions** | Retail, clinic storefront | **29 AZN**; XOR `retail_promotions` | **Live** (CP-B6, v2.0) |
+| `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | **19 AZN** | **Live** (CP-B7, v2.0) |
+| `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | **29 AZN**; XOR `fnb_delivery_hub` | **Live** (CP-B8, v2.0) |
+| `platform_storage` | **Cloud object storage (S3)** | All products (attachments, exports) | **19 AZN** incl. 20 GB; **0.50 AZN/GB** | **Live** |
+| `platform_reference_data` | **ERA Data Hub Bronze** | All verticals + external API | **29 AZN**; XOR Silver/Gold | **Live** |
+| `platform_datahub_silver` | **Data Hub Silver** | VÖEN enrich | **39 AZN** | Catalog 2026-09 |
+| `platform_datahub_gold` | **Data Hub Gold** | Real-time / BI | **99 AZN** | Catalog 2026-09 |
+| `platform_workforce_base` / `_pro` | **Workforce headcount** | HRIS | **2 / 4 AZN per person** (XOR) | Hub SKU `platform_workforce` |
 
 **Bundles (commercial packaging):**
 
@@ -192,16 +195,20 @@ Add to orchestrator `pricing_modules` (Super-Admin):
 
 | key | kind | notes |
 |-----|------|-------|
-| `platform_notifications` | MODULE | Notifications Pack base |
-| `platform_notifications_sms` | MODULE | SMS enablement |
-| `platform_booking` | MODULE | Booking widget |
-| `platform_portal` | MODULE | Customer portal |
-| `platform_payments` | MODULE | Payment links |
-| `platform_loyalty` | MODULE | Loyalty engine |
-| `platform_domain` | MODULE | Custom domain |
-| `platform_delivery` | MODULE | Delivery orchestration |
-| `platform_storage` | MODULE | S3 / object storage add-on |
-| `platform_reference_data` | ADDON | ERA Data Hub — справочники как DaaS ([ADR](./adr/era-data-hub.md)) |
+| `platform_notifications` | ADDON | Notifications Pack **19 AZN** |
+| `platform_notifications_sms` | ADDON | SMS meter (0 base) |
+| `platform_booking` | ADDON | Booking widget **29** |
+| `platform_portal` | ADDON | Customer portal **19** |
+| `platform_payments` | ADDON | Payment links, 1.5% take-rate |
+| `platform_loyalty` | ADDON | Loyalty engine **29** |
+| `platform_domain` | ADDON | Custom domain **19** |
+| `platform_delivery` | ADDON | Delivery orchestration **29** |
+| `platform_storage` | ADDON | S3 **19** + GB meter |
+| `platform_reference_data` | ADDON | Data Hub Bronze **29** |
+| `platform_datahub_silver` | ADDON | Data Hub Silver **39** |
+| `platform_datahub_gold` | ADDON | Data Hub Gold **99** |
+| `platform_workforce_base` | ADDON | Headcount 2 AZN |
+| `platform_workforce_pro` | ADDON | Headcount 4 AZN |
 
 Industry slugs (`industry_clinic`, `industry_hotel_pms`, …) remain **separate** — they gate satellite app access; platform add-ons gate **shared services** inside those apps.
 

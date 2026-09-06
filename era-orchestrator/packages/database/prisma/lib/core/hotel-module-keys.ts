@@ -1,3 +1,5 @@
+import { isPassThroughCatalogModuleKeyExtended } from "./pricing-catalog-canon";
+
 /** Canonical hotel PMS submodule keys (`pricing_modules`) — hotel submodule taxonomy. */
 export const HOTEL_PRICING_MODULE_KEYS = [
   "hotel_core",
@@ -86,6 +88,9 @@ export const CLINIC_PRICING_MODULE_KEYS = [
   "clinic_insurance",
   "clinic_inpatient",
   "clinic_telehealth",
+  "clinic_nurse_roster",
+  "clinic_registry_emr",
+  "clinic_sanatorium_clinical",
 ] as const;
 
 export type ClinicPricingModuleKey = (typeof CLINIC_PRICING_MODULE_KEYS)[number];
@@ -119,13 +124,7 @@ export function isHotelModuleActive(
 }
 
 export function isPassThroughCatalogModuleKey(moduleKey: string): boolean {
-  return (
-    moduleKey.startsWith("hotel_") ||
-    moduleKey.startsWith("clinic_") ||
-    moduleKey.startsWith("banking_") ||
-    moduleKey.startsWith("industry_") ||
-    moduleKey.startsWith("platform_")
-  );
+  return isPassThroughCatalogModuleKeyExtended(moduleKey);
 }
 
 /** Infer PricingCatalogKind from module key prefix. */

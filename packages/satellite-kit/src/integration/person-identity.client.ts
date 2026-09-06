@@ -269,6 +269,64 @@ export async function getPersonOpsProfile(
   return (await res.json()) as PersonOpsProfile;
 }
 
+/**
+ * Batch ops-profile (max 100 ids). Returns sex / birthDate / name parts when granted.
+ * Used by clinic patient-list fill for rows with demographic holes.
+ */
+export async function batchGetPersonOpsProfiles(
+  personIds: string[],
+  organizationId: string,
+  opts?: MdmClientOptions,
+): Promise<Record<string, PersonOpsProfile>> {
+  const token = serviceToken(opts);
+  const orgId = organizationId.trim();
+  const unique = [...new Set(personIds.map((id) => id.trim()).filter(Boolean))];
+  if (!token || !orgId || unique.length === 0) return {};
+
+  const out: Record<string, PersonOpsProfile> = {};
+  const CHUNK = 100;
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const chunk = unique.slice(i, i + CHUNK);
+    const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons/ops-profile/batch`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ personIds: chunk, organizationId: orgId }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) continue;
+    const data = (await res.json()) as Record<
+      string,
+      {
+        globalPersonId?: string;
+        displayName?: string | null;
+        firstName?: string | null;
+        middleName?: string | null;
+        lastName?: string | null;
+        sex?: string | null;
+        birthDate?: string | null;
+        accessDenied?: boolean;
+        primaryIdentifierMasked?: string | null;
+      }
+    >;
+    for (const [id, row] of Object.entries(data)) {
+      const gpid = (row.globalPersonId ?? id).trim();
+      out[gpid] = {
+        globalPersonId: gpid,
+        fullName: row.displayName ?? null,
+        firstName: row.firstName ?? null,
+        middleName: row.middleName ?? null,
+        lastName: row.lastName ?? null,
+        phoneMasked: null,
+        sex: (row.sex as PersonOpsProfile["sex"]) ?? null,
+        birthDate: row.birthDate ?? null,
+        identifiers: [],
+        accessDenied: Boolean(row.accessDenied),
+      };
+    }
+  }
+  return out;
+}
+
 export async function resolveIdentifierForCompliance(
   globalPersonId: string,
   opts?: MdmClientOptions & { organizationId?: string },

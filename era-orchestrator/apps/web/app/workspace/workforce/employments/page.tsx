@@ -14,6 +14,10 @@ import {
   UserMinus,
 } from "lucide-react";
 import {
+  isPatronymicParticle,
+  splitFullNameToParts,
+} from "@era/satellite-kit/integration/person-name";
+import {
   CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
@@ -707,21 +711,32 @@ export default function WorkforceEmploymentsPage() {
         phoneMasked?: string | null;
       };
       if (ops.firstName || ops.lastName) {
-        setCardFirstName(ops.firstName ?? "");
-        setCardMiddleName(ops.middleName ?? "");
-        setCardLastName(ops.lastName ?? "");
-      } else if (ops.fullName) {
-        const parts = ops.fullName.trim().split(/\s+/).filter(Boolean);
-        if (parts.length === 1) {
-          setCardFirstName(parts[0] ?? "");
-        } else if (parts.length === 2) {
-          setCardFirstName(parts[0] ?? "");
-          setCardLastName(parts[1] ?? "");
-        } else if (parts.length >= 3) {
-          setCardFirstName(parts[0] ?? "");
-          setCardMiddleName(parts.slice(1, -1).join(" "));
-          setCardLastName(parts[parts.length - 1] ?? "");
+        const scrambled =
+          isPatronymicParticle(ops.lastName) ||
+          (ops.fullName &&
+            (() => {
+              const tokens = ops.fullName.trim().split(/\s+/).filter(Boolean);
+              return (
+                tokens.length >= 3 &&
+                isPatronymicParticle(tokens[tokens.length - 1]) &&
+                ops.lastName === tokens[tokens.length - 1]
+              );
+            })());
+        if (scrambled && ops.fullName) {
+          const parts = splitFullNameToParts(ops.fullName);
+          setCardFirstName(parts.firstName ?? "");
+          setCardMiddleName(parts.middleName ?? "");
+          setCardLastName(parts.lastName ?? "");
+        } else {
+          setCardFirstName(ops.firstName ?? "");
+          setCardMiddleName(ops.middleName ?? "");
+          setCardLastName(ops.lastName ?? "");
         }
+      } else if (ops.fullName) {
+        const parts = splitFullNameToParts(ops.fullName);
+        setCardFirstName(parts.firstName ?? "");
+        setCardMiddleName(parts.middleName ?? "");
+        setCardLastName(parts.lastName ?? "");
       }
       if (ops.sex) setCardSex(ops.sex);
       if (ops.birthDate) setCardBirthDate(ops.birthDate);

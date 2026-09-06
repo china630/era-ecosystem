@@ -13,6 +13,9 @@ import {
   hasCashBankModuleInList,
   normalizeCashBankActiveModules,
   PRICING_MODULE_CASH_BANK_PRO,
+  applyCatalogMutex,
+  isClinicFeatureEntitled,
+  isWorkforceHubKey,
 } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { PricingService } from "../admin/pricing.service";
@@ -532,10 +535,14 @@ export class SubscriptionAccessService {
           "recovery_pro",
         );
         break;
-      default:
-        allowed = new Set(normalizeActiveModules(sub.activeModules)).has(
-          String(moduleKey),
-        );
+      default: {
+        const mods = normalizeActiveModules(sub.activeModules);
+        allowed =
+          mods.includes(String(moduleKey)) ||
+          (isWorkforceHubKey(String(moduleKey)) && mods.some((k) => isWorkforceHubKey(k))) ||
+          isClinicFeatureEntitled(mods, String(moduleKey));
+        break;
+      }
     }
 
     if (!allowed) {
@@ -743,13 +750,18 @@ export class SubscriptionAccessService {
       set.delete("ifrs");
     }
 
+    let preferEnabled: string | undefined;
     if (patch.extraSlugs) {
       for (const [slug, v] of Object.entries(patch.extraSlugs)) {
         apply(slug, v);
+        if (v) preferEnabled = slug;
       }
     }
 
-    const activeModules = normalizeCashBankActiveModules(Array.from(set));
+    const activeModules = applyCatalogMutex(
+      normalizeCashBankActiveModules(Array.from(set)),
+      preferEnabled,
+    );
 
     const customList = parseCustomModules(sub.customConfig);
     let customConfigData: Prisma.InputJsonValue | undefined;

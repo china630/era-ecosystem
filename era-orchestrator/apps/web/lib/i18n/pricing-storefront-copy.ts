@@ -40,6 +40,7 @@ export type PricingStorefrontUiCopy = {
   tierTrialLine: string;
   resourceUsers: string;
   resourceInvoices: string;
+  resourceDocuments: string;
   resourceStorage: string;
   resourceWhatsapp: string;
   resourceOcr: string;
@@ -59,17 +60,30 @@ export type PricingStorefrontUiCopy = {
   hospitalityGateLabel: string;
   hospitalityBundleSelect: string;
   hospitalityModuleNames: Record<string, string>;
+  industriesTitle: string;
+  industriesIntro: string;
+  industryCapacityTemplate: string;
+  bankingSandboxNote: string;
+  platformAddonsTitle: string;
+  platformAddonsHint: string;
+  platformAddonsXor: string;
+  industryCopy: Record<
+    string,
+    { title: string; intro: string; gateLabel: string; capacityUnit?: string }
+  >;
+  industryModuleNames: Record<string, string>;
+  platformAddonNames: Record<string, string>;
 };
 
 const uiRu: PricingStorefrontUiCopy = {
-  heroTitle: "ERA Finance: Гибкое и Прозрачное Ценообразование",
+  heroTitle: "ERA: конструктор модулей 19 / 29 / 39 / 99 AZN",
   heroSubtitle:
-    "Новая финансовая платформа для бизнеса Азербайджана. Полное соответствие стандартам MMUS и MHBS.",
+    "Foundation 29 AZN + отраслевые спутники (Gate) и модули. Банк CBS в списке — Sandbox / Pilot; промышленный контур — Custom Quote.",
   ctaRegister: "Начать 3 месяца бесплатно",
   ctaLogin: "Войти",
   coreSuiteTitle: "ERA Core",
   coreSuiteIntro:
-    "Базовая платформа и стандартные модули — единый контур учёта для бизнеса в Азербайджане.",
+    "ERA Core (Foundation) — учёт NAS/MMUS. Стандартные модули — палитра 19/29/39 AZN. Счета считаются документами (пачка 1000), не отдельным метром 0.10.",
   foundationTitle: "ERA Core (Foundation)",
   foundationDescription:
     "Учёт, проводки, закрытие периода и соответствие MMUS/MHBS.",
@@ -96,7 +110,7 @@ const uiRu: PricingStorefrontUiCopy = {
   spendTierMatrixHint:
     "3 месяца: ERA Core (Foundation) = 0 AZN; metered-расход начисляется. При достижении потолка tier — счёт в тот же день; иначе — 1-го числа за прошлый месяц.",
   trialMeterMayBillLine:
-    "Metered-услуги (счета, OCR, WhatsApp, GB) могут выставляться в trial по unit-ценам.",
+    "Metered: документы (5 AZN / 1000 сверх лимита NAS), OCR 0.02, WhatsApp 0.05, хранение 0.50/GB. Счета входят в документы.",
   tierSpendCeilingTemplate: "до {{amount}} / мес.",
   tierSpendCeilingStarter: "старт 0 AZN",
   matrixMetricLabel: "Ресурс",
@@ -106,9 +120,10 @@ const uiRu: PricingStorefrontUiCopy = {
   tierCustom: "Кастомный",
   tierPerMonth: "/ месяц",
   tierTrialLine: "0 AZN / первые 3 мес.",
-  resourceUsers: "Пользователи (seats)",
-  resourceInvoices: "Счета / мес. (Baku)",
-  resourceStorage: "Хранилище (Disk)",
+  resourceUsers: "ERP-логин Foundation (сверх 1 × 2 AZN)",
+  resourceInvoices: "Счета (входят в документы)",
+  resourceDocuments: "Документы / 1000 шт.",
+  resourceStorage: "Хранилище (сверх 20 GB)",
   resourceWhatsapp: "WhatsApp / мес.",
   resourceOcr: "AI-OCR страниц / мес.",
   resourceWorkspaces: "Рабочие пространства",
@@ -153,6 +168,16 @@ const uiRu: PricingStorefrontUiCopy = {
       name: "Кадры и зарплаты",
       subtitle: "Штат, табель и расчёт зарплаты",
       bullets: ["Штатное расписание", "Табель", "Начисления", "Ведомости и выплаты"],
+    },
+    ifrs_mapping: {
+      name: "IFRS / MHBS",
+      subtitle: "Параллельный контур МСФО поверх NAS",
+      bullets: ["Карта счетов IFRS", "Параллельные проводки", "Отчёты MHBS"],
+    },
+    consolidation_pro: {
+      name: "Консолидация холдинга",
+      subtitle: "Свод нескольких юрлиц",
+      bullets: ["Элиминации", "Холдинговые отчёты", "Несколько VÖEN"],
     },
   },
   premiumFeatures: {
@@ -212,7 +237,15 @@ const uiRu: PricingStorefrontUiCopy = {
     },
     hotel_sanatorium: {
       name: "Hotel Sanatorium",
-      moduleLine: "Resort + Medical & Sanatorium",
+      moduleLine: "Resort + Medical & Sanatorium (XOR с clinic sanatorium)",
+    },
+    banking_retail: {
+      name: "Banking Retail (Sandbox / Pilot)",
+      moduleLine: "Core, deposits, loans, cards, payments, DBO, AML",
+    },
+    banking_universal: {
+      name: "Banking Universal (Sandbox / Pilot)",
+      moduleLine: "Полный CBS-набор — production = Custom Quote от 25 000 AZN",
     },
   },
   hospitalityTitle: "Hotel PMS — гостеприимство",
@@ -224,6 +257,7 @@ const uiRu: PricingStorefrontUiCopy = {
     industry_hotel_pms: "Hotel PMS",
     hotel_core: "PMS Core (Front Office, Front Cash, Night Audit)",
     hotel_housekeeping: "Housekeeping & Room Rack",
+    hotel_migration_pro: "Migration PRO",
     hotel_distribution: "Distribution (Channel Manager & Contracts)",
     hotel_guest_experience: "Guest Profiles & Tasks",
     hotel_spa_scheduling: "SPA & Scheduling",
@@ -232,17 +266,111 @@ const uiRu: PricingStorefrontUiCopy = {
     hotel_medical_sanatorium: "Medical & Sanatorium",
     hotel_setup_advanced: "Advanced master data",
   },
+  industriesTitle: "Отраслевые спутники",
+  industriesIntro:
+    "Gate 29 AZN (банк — 99) открывает приложение и 1 единицу ёмкости. Операционные ядра (hotel_core, EMR) — отдельные SKU. Hotel Sanatorium и clinic_sanatorium_clinical не совмещаются.",
+  industryCapacityTemplate: "В Gate: {{included}} {{unit}}, далее {{price}} за единицу.",
+  bankingSandboxNote:
+    "Цены CBS — Sandbox / Pilot. Промышленный контур (AzeriCard / AZIPS) — Custom Quote, setup от 25 000 AZN.",
+  platformAddonsTitle: "Платформенные add-on",
+  platformAddonsHint:
+    "Кросс-вертикальные сервисы оркестратора. Workforce headcount — 2 AZN Base XOR 4 AZN PRO за человека (не SKU на этой полке).",
+  platformAddonsXor:
+    "XOR: Data HUB Bronze / Silver / Gold · Loyalty XOR Retail promotions · Delivery XOR F&B delivery hub.",
+  industryCopy: {
+    industry_hotel_pms: {
+      title: "Hotel PMS",
+      intro: "Front office, HK, channel, SPA. Resort list 222 AZN × 15% = 188.70 AZN.",
+      gateLabel: "Hotel PMS Gate (приложение + 5 номеров)",
+      capacityUnit: "номер",
+    },
+    industry_clinic: {
+      title: "Clinic",
+      intro: "EMR 29, лаборатория 29, санаторная карта 29, страховка 39. Расписание и касса — в Gate.",
+      gateLabel: "Clinic Gate (приложение + 1 кабинет)",
+      capacityUnit: "кабинет",
+    },
+    industry_fnb_pos: {
+      title: "F&B POS",
+      intro: "Кухня KDS, PIN официанта, рецепты. XOR: platform_delivery vs fnb_delivery_hub.",
+      gateLabel: "F&B Gate (1 касса)",
+      capacityUnit: "касса",
+    },
+    industry_retail: {
+      title: "Retail POS",
+      intro: "Промо и omni. XOR: platform_loyalty vs retail_promotions.",
+      gateLabel: "Retail Gate (1 касса)",
+      capacityUnit: "касса",
+    },
+    industry_auto_service: {
+      title: "Auto STO",
+      intro: "Запчасти B2B и нормы/TecDoc.",
+      gateLabel: "Auto Gate (1 пост)",
+      capacityUnit: "пост",
+    },
+    industry_logistics: {
+      title: "Logistics",
+      intro: "Путевые, топливо, мобильный водитель.",
+      gateLabel: "Logistics Gate (2 ТС)",
+      capacityUnit: "ТС",
+    },
+    industry_construction: {
+      title: "Construction",
+      intro: "Площадки, акты, субподряд.",
+      gateLabel: "Construction Gate (1 объект)",
+      capacityUnit: "объект",
+    },
+    industry_wholesale: {
+      title: "Wholesale",
+      intro: "Склад дистрибуции.",
+      gateLabel: "Wholesale Gate (1 склад)",
+      capacityUnit: "склад",
+    },
+    industry_crm: {
+      title: "CRM Field",
+      intro: "Полевые продажи. Место CRM 5 AZN сверх 1 в Gate.",
+      gateLabel: "CRM Gate (1 место)",
+      capacityUnit: "место",
+    },
+    industry_banking: {
+      title: "Bank CBS",
+      intro: "Финтех-шлюз и 1 филиал в Gate 99. Не коммерческий ABS.",
+      gateLabel: "Banking Gate (Sandbox / Pilot, 1 филиал)",
+      capacityUnit: "филиал",
+    },
+  },
+  industryModuleNames: {
+    clinic_registry_emr: "EMR / протоколы визита",
+    clinic_lab: "Лаборатория",
+    clinic_sanatorium_clinical: "Санаторная клиническая карта",
+    clinic_insurance: "Страхование / ДМС",
+    clinic_inpatient: "Стационар / койки",
+    clinic_telehealth: "Телемедицина",
+    clinic_nurse_roster: "Сестринский пост / процедуры",
+  },
+  platformAddonNames: {
+    platform_notifications: "Notifications Pack",
+    platform_storage: "Cloud Storage (20 GB в SKU)",
+    platform_reference_data: "Data HUB Bronze",
+    platform_datahub_silver: "Data HUB Silver",
+    platform_datahub_gold: "Data HUB Gold",
+    platform_booking: "Online Booking",
+    platform_portal: "Client Portal",
+    platform_domain: "White-label domain",
+    platform_loyalty: "Loyalty (XOR retail promo)",
+    platform_delivery: "Delivery (XOR F&B hub)",
+  },
 };
 
 const uiAz: PricingStorefrontUiCopy = {
-  heroTitle: "ERA Finance: Çevik və Şəffaf Qiymətləndirmə",
+  heroTitle: "ERA: modul konstruktoru 19 / 29 / 39 / 99 AZN",
   heroSubtitle:
-    "Azərbaycan biznesi üçün yeni maliyyə platforması. MMUS və MHBS standartlarına tam uyğunluq.",
+    "Foundation 29 AZN + sənaye peykləri (Gate) və modullar. Bank CBS siyahıda Sandbox / Pilot-dur; istehsal konturu — Custom Quote.",
   ctaRegister: "3 ay tam pulsuz başla",
   ctaLogin: "Daxil ol",
   coreSuiteTitle: "ERA Core",
   coreSuiteIntro:
-    "Əsas platforma və standart modullar — Azərbaycan biznesi üçün vahid uçot konturu.",
+    "ERA Core (Foundation) — NAS/MMUS uçotu. Standart modullar — 19/29/39 AZN palitrası. Qaimələr sənəd paketindədir (1000), ayrıca 0.10 metrik yoxdur.",
   foundationTitle: "ERA Core (Foundation)",
   foundationDescription:
     "Uçot, yazılışlar, dövr bağlanması, MMUS/MHBS uyğunluğu.",
@@ -269,7 +397,7 @@ const uiAz: PricingStorefrontUiCopy = {
   spendTierMatrixHint:
     "3 ay: ERA Core (Foundation) = 0 AZN; metered xərc hesablanır. Tavan çatanda — eyni gün faktura; əks halda — keçən ay üçün ayın 1-də.",
   trialMeterMayBillLine:
-    "Trialda metered xidmətlər (hesab, OCR, WhatsApp, GB) unit qiymətə görə hesablanır.",
+    "Metered: sənədlər (NAS limitindən sonra 5 AZN / 1000), OCR 0.02, WhatsApp 0.05, yaddaş 0.50/GB. Qaimələr sənədlərə daxildir.",
   tierSpendCeilingTemplate: "{{amount}} / ay qədər",
   tierSpendCeilingStarter: "0 AZN start",
   matrixMetricLabel: "Resurs",
@@ -279,9 +407,10 @@ const uiAz: PricingStorefrontUiCopy = {
   tierCustom: "Fərdi",
   tierPerMonth: "/ ay",
   tierTrialLine: "0 AZN / ilk 3 ay",
-  resourceUsers: "İstifadəçilər (oturacaq)",
-  resourceInvoices: "Hesablar / ay (Baku)",
-  resourceStorage: "Sənəd yaddaşı (Disk)",
+  resourceUsers: "Foundation ERP login (1-dən artıq × 2 AZN)",
+  resourceInvoices: "Qaimələr (sənədlərə daxildir)",
+  resourceDocuments: "Sənədlər / 1000 əd.",
+  resourceStorage: "Yaddaş (20 GB-dan artıq)",
   resourceWhatsapp: "WhatsApp / ay",
   resourceOcr: "AI-OCR səhifə / ay",
   resourceWorkspaces: "İş məkanları",
@@ -326,6 +455,16 @@ const uiAz: PricingStorefrontUiCopy = {
       name: "Kadrlar və əməkhaqqı",
       subtitle: "Ştat, tabel və əməkhaqqı hesablanması",
       bullets: ["Ştat cədvəli", "Tabel", "Hesablamalar", "Vərəqələr və ödənişlər"],
+    },
+    ifrs_mapping: {
+      name: "IFRS / MHBS",
+      subtitle: "NAS üzərində paralel MHBS konturu",
+      bullets: ["IFRS hesab planı", "Paralel yazılışlar", "MHBS hesabatları"],
+    },
+    consolidation_pro: {
+      name: "Holdinq konsolidasiyası",
+      subtitle: "Bir neçə hüquqi şəxsin svodu",
+      bullets: ["Eliminasiyalar", "Holdinq hesabatları", "Bir neçə VÖEN"],
     },
   },
   premiumFeatures: {
@@ -385,7 +524,15 @@ const uiAz: PricingStorefrontUiCopy = {
     },
     hotel_sanatorium: {
       name: "Hotel Sanatorium",
-      moduleLine: "Resort + Tibbi & Sanatoriya",
+      moduleLine: "Resort + Tibbi & Sanatoriya (clinic sanatorium ilə XOR)",
+    },
+    banking_retail: {
+      name: "Banking Retail (Sandbox / Pilot)",
+      moduleLine: "Core, depozit, kredit, kart, ödəniş, DBO, AML",
+    },
+    banking_universal: {
+      name: "Banking Universal (Sandbox / Pilot)",
+      moduleLine: "Tam CBS dəsti — production Custom Quote, 25 000 AZN-dən",
     },
   },
   hospitalityTitle: "Hotel PMS — Hospitality",
@@ -397,6 +544,7 @@ const uiAz: PricingStorefrontUiCopy = {
     industry_hotel_pms: "Hotel PMS",
     hotel_core: "PMS Core (Front Office, Front Cash, Night Audit)",
     hotel_housekeeping: "Housekeeping & Room Rack",
+    hotel_migration_pro: "Migration PRO",
     hotel_distribution: "Distribution (Channel Manager & Contracts)",
     hotel_guest_experience: "Guest Profiles & Tasks",
     hotel_spa_scheduling: "SPA & Scheduling",
@@ -404,6 +552,100 @@ const uiAz: PricingStorefrontUiCopy = {
     hotel_banquets: "Banquets & BEO",
     hotel_medical_sanatorium: "Medical & Sanatorium",
     hotel_setup_advanced: "Advanced master data",
+  },
+  industriesTitle: "Sənaye peykləri",
+  industriesIntro:
+    "Gate 29 AZN (bank — 99) tətbiqi və 1 tutum vahidini açır. Əməliyyat nüvələri ayrıca SKU-dur. Hotel Sanatorium və clinic_sanatorium_clinical birlikdə olmur.",
+  industryCapacityTemplate: "Gate-də: {{included}} {{unit}}, sonra vahid {{price}}.",
+  bankingSandboxNote:
+    "CBS qiymətləri Sandbox / Pilot-dur. İstehsal konturu (AzeriCard / AZIPS) — Custom Quote, setup 25 000 AZN-dən.",
+  platformAddonsTitle: "Platforma add-on-ları",
+  platformAddonsHint:
+    "Orkestratorun kəsişən servisləri. Workforce headcount — şəxs başına 2 AZN Base XOR 4 AZN PRO (bu rəfdə SKU deyil).",
+  platformAddonsXor:
+    "XOR: Data HUB Bronze / Silver / Gold · Loyalty XOR Retail promotions · Delivery XOR F&B delivery hub.",
+  industryCopy: {
+    industry_hotel_pms: {
+      title: "Hotel PMS",
+      intro: "Front office, HK, channel, SPA. Resort siyahı 222 AZN × 15% = 188.70 AZN.",
+      gateLabel: "Hotel PMS Gate (tətbiq + 5 otaq)",
+      capacityUnit: "otaq",
+    },
+    industry_clinic: {
+      title: "Clinic",
+      intro: "EMR 29, laboratoriya 29, sanatoriya xəritəsi 29, sığorta 39. Cədvəl və kassa Gate-dədir.",
+      gateLabel: "Clinic Gate (tətbiq + 1 kabinet)",
+      capacityUnit: "kabinet",
+    },
+    industry_fnb_pos: {
+      title: "F&B POS",
+      intro: "Mətbəx KDS, ofisiant PIN, reseptlər. XOR: platform_delivery vs fnb_delivery_hub.",
+      gateLabel: "F&B Gate (1 kassa)",
+      capacityUnit: "kassa",
+    },
+    industry_retail: {
+      title: "Retail POS",
+      intro: "Promo və omni. XOR: platform_loyalty vs retail_promotions.",
+      gateLabel: "Retail Gate (1 kassa)",
+      capacityUnit: "kassa",
+    },
+    industry_auto_service: {
+      title: "Auto STO",
+      intro: "B2B ehtiyat hissələri və TecDoc normaları.",
+      gateLabel: "Auto Gate (1 post)",
+      capacityUnit: "post",
+    },
+    industry_logistics: {
+      title: "Logistics",
+      intro: "Yol vərəqələri, yanacaq, sürücü mobil.",
+      gateLabel: "Logistics Gate (2 NQ)",
+      capacityUnit: "NQ",
+    },
+    industry_construction: {
+      title: "Construction",
+      intro: "Sahələr, aktlar, subpodrat.",
+      gateLabel: "Construction Gate (1 obyekt)",
+      capacityUnit: "obyekt",
+    },
+    industry_wholesale: {
+      title: "Wholesale",
+      intro: "Distribusiya anbarı.",
+      gateLabel: "Wholesale Gate (1 anbar)",
+      capacityUnit: "anbar",
+    },
+    industry_crm: {
+      title: "CRM Field",
+      intro: "Sahə satışları. CRM yeri Gate-dən sonra 5 AZN.",
+      gateLabel: "CRM Gate (1 yer)",
+      capacityUnit: "yer",
+    },
+    industry_banking: {
+      title: "Bank CBS",
+      intro: "Fintech şlüz və Gate 99-da 1 filial. Kommersiya ABS deyil.",
+      gateLabel: "Banking Gate (Sandbox / Pilot, 1 filial)",
+      capacityUnit: "filial",
+    },
+  },
+  industryModuleNames: {
+    clinic_registry_emr: "EMR / vizit protokolları",
+    clinic_lab: "Laboratoriya",
+    clinic_sanatorium_clinical: "Sanatoriya klinik xəritəsi",
+    clinic_insurance: "Sığorta / DMS",
+    clinic_inpatient: "Stasionar / çarpayı",
+    clinic_telehealth: "Telehealth",
+    clinic_nurse_roster: "Tibb bacısı postu / prosedurlar",
+  },
+  platformAddonNames: {
+    platform_notifications: "Notifications Pack",
+    platform_storage: "Cloud Storage (SKU-da 20 GB)",
+    platform_reference_data: "Data HUB Bronze",
+    platform_datahub_silver: "Data HUB Silver",
+    platform_datahub_gold: "Data HUB Gold",
+    platform_booking: "Online Booking",
+    platform_portal: "Client Portal",
+    platform_domain: "White-label domain",
+    platform_loyalty: "Loyalty (XOR retail promo)",
+    platform_delivery: "Delivery (XOR F&B hub)",
   },
 };
 

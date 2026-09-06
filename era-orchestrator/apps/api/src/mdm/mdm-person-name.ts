@@ -12,6 +12,7 @@ export {
   normalizeNationalityIso,
   hasPersonNameInput,
   resolveIncomingNameParts,
+  isPatronymicParticle,
   type PersonNameParts,
 } from "@era/satellite-kit/integration/person-name";
 

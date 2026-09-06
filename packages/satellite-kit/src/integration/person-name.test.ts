@@ -16,6 +16,27 @@ test("split Ali Vali Mammadov", () => {
   });
 });
 
+test("split AZ surname-first when particle is last", () => {
+  assert.deepEqual(splitFullNameToParts("Əlizadə Mehman Mahmud oğlu"), {
+    firstName: "Mehman",
+    middleName: "Mahmud oğlu",
+    lastName: "Əlizadə",
+  });
+  assert.deepEqual(splitFullNameToParts("Mammadova Leyla Rauf qızı"), {
+    firstName: "Leyla",
+    middleName: "Rauf qızı",
+    lastName: "Mammadova",
+  });
+});
+
+test("given-first with particle in middle stays unchanged", () => {
+  assert.deepEqual(splitFullNameToParts("Ali Vali oglu Mammadov"), {
+    firstName: "Ali",
+    middleName: "Vali oglu",
+    lastName: "Mammadov",
+  });
+});
+
 test("fill-not-clear middle", () => {
   const m = mergePersonNameParts(
     { firstName: "Ali", middleName: "Vali", lastName: "Mammadov" },
