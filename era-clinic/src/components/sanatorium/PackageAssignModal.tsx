@@ -781,7 +781,6 @@ export function PackageAssignModal({
                       substances={substances}
                       locale={locale}
                       editable
-                      compact
                       labels={physioLabels}
                       onSitesChange={(siteIds) =>
                         setFormPhysio((prev) => ({ ...prev, siteIds }))
