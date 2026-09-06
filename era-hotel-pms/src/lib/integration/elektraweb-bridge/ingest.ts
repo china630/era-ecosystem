@@ -130,14 +130,21 @@ export async function ingestElektrawebBridgeEnvelope(
       }
 
       if (entity === 'guest') {
+        if (objectName === 'QA_HOTEL_RES_GUEST') {
+          await stampStayGuestResNameId(row);
+          // ID on this object is SPA RESNAMEID — only upsert Guest Card when GUESTID is present.
+          const guestCardId =
+            row.GUESTID != null && row.GUESTID !== '' ? String(row.GUESTID) : '';
+          if (!guestCardId) {
+            summary.skipped += 1;
+            continue;
+          }
+        }
         const r = await upsertGuestFromElektrawebRow(row);
         summary.accepted += 1;
         if (r.action === 'created') summary.created += 1;
         else if (r.action === 'updated') summary.updated += 1;
         else summary.skipped += 1;
-        if (objectName === 'QA_HOTEL_RES_GUEST') {
-          await stampStayGuestResNameId(row);
-        }
       } else if (entity === 'reservation') {
         const r = await upsertReservationFromElektrawebRow(row);
         summary.accepted += 1;

@@ -64,6 +64,7 @@ export type ReservationCardLeftPanelProps = {
   checkOutTime: string;
   voucherNo: string;
   agencyId: string;
+  companyId: string;
   sourceId: string;
   roomTypeId: string;
   roomId: string;
@@ -108,6 +109,7 @@ export type ReservationCardLeftPanelProps = {
   statusLabel?: string;
   reservationId?: string | null;
   agencies: AgencyOption[];
+  companies: AgencyOption[];
   sources: SourceOption[];
   salesContracts: Array<{ id: string; label: string; agencyId: string | null; ratePlanId: string; code: string }>;
   roomTypes: SelectOption[];
@@ -143,6 +145,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     recordType = '',
     tripReason = '',
     agencies,
+    companies,
     sources,
     salesContracts,
     roomTypes,
@@ -438,7 +441,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
       {/* 5. Commercial — agency / contract / payer */}
       <FieldPanel title={t('commercialSales')}>
         <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
-          <FieldRow cols={2}>
+          <FieldRow cols={3}>
             <FieldSelect
               label={t('source')}
               preset="select"
@@ -469,6 +472,20 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                     </option>
                   ))
                 : null}
+            </FieldSelect>
+            <FieldSelect
+              label={t('company')}
+              preset="selectWide"
+              value={props.companyId}
+              onChange={set('companyId')}
+              hint={t('hintCompany')}
+            >
+              <option value="">{tc('select')}</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
             </FieldSelect>
           </FieldRow>
           <FieldRow cols={2}>

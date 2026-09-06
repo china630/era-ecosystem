@@ -101,7 +101,7 @@ describe('listReservationsForGrid pagination', () => {
     expect(prisma.reservation.findMany).not.toHaveBeenCalled();
   });
 
-  it('applies q to guest/room/agency/id', async () => {
+  it('applies q to guest/room/agency/id/notes', async () => {
     const { prisma } = await import('@/lib/prisma');
     (prisma.reservation.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.reservation.count as jest.Mock).mockResolvedValue(0);
@@ -113,6 +113,34 @@ describe('listReservationsForGrid pagination', () => {
 
     const where = (prisma.reservation.findMany as jest.Mock).mock.calls[0][0]
       .where;
-    expect(where.OR).toEqual(expect.any(Array));
+    expect(where.OR).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          notes: { some: { text: { contains: 'Ali', mode: 'insensitive' } } },
+        }),
+      ]),
+    );
+  });
+
+  it('noteQ matches note text (trim) and returns empty when none', async () => {
+    const { prisma } = await import('@/lib/prisma');
+    (prisma.reservationNote.findMany as jest.Mock).mockResolvedValue([
+      { reservationId: 'r1', text: '  Extra pillow  ' },
+      { reservationId: 'r2', text: '   ' },
+    ]);
+
+    const { listReservationsForGrid } = await import(
+      '@/lib/services/reservation-full.service'
+    );
+    const empty = await listReservationsForGrid({ noteQ: 'late checkout' });
+    expect(empty).toEqual({ items: [], total: 0, page: 1, pageSize: 25 });
+    expect(prisma.reservation.findMany).not.toHaveBeenCalled();
+
+    (prisma.reservation.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.reservation.count as jest.Mock).mockResolvedValue(0);
+    await listReservationsForGrid({ noteQ: 'pillow' });
+    const where = (prisma.reservation.findMany as jest.Mock).mock.calls[0][0]
+      .where;
+    expect(where.id).toEqual({ in: ['r1'] });
   });
 });

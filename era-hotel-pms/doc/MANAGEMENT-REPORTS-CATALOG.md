@@ -95,7 +95,7 @@ SatAdmin pack membership: `/settings/report-pack` (not a Reports sidebar row).
 | Night Audit console (after successful roll) | Same ZIP button + short pack list. |
 | Front Cash journal | Link to `cash-report` (`/reports/financial/cash`). |
 | FO in-house | Link to `in-house` (`/reports/daily/in-house`). Existing `/fo/in-house` remains the **ops** list; the report is the printable/PDF view. |
-| Agency ledger | Stays `/front-cash/agency-ledger` (ops). Profitability report stays under Agency & market. |
+| Agency ledger | Stays `/front-cash/agency-ledger` (ops). Company CL: `/front-cash/company-ledger`. Profitability report stays under Agency & market. |
 
 **Anti-pattern:** duplicating Daily Management as a Night Audit-only PDF generator that cannot be opened from Reports.
 

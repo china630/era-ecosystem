@@ -14,6 +14,7 @@ export async function GET(req: Request) {
     const result = await listReservationsForGrid({
       guestId: params.get('guestId') ?? undefined,
       q: params.get('q') ?? undefined,
+      noteQ: params.get('noteQ') ?? undefined,
       status: params.get('status') ?? undefined,
       hasNotes: hasNotesRaw === '1' || hasNotesRaw === 'true',
       page: params.get('page') ? Number(params.get('page')) : undefined,

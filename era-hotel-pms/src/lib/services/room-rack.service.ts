@@ -6,7 +6,7 @@ import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 export type RackReservationSummary = {
   id: string;
   status: string;
-  guest: { fullName: string };
+  guest: { fullName: string; sex?: string | null };
   checkInDate: string;
   checkOutDate: string;
   payStatus: 'PAID' | 'PARTIAL' | 'UNPAID' | 'NONE';
@@ -16,6 +16,9 @@ export type RackReservationSummary = {
   agencyCode: string | null;
   sourceId: string | null;
   sourceCode: string | null;
+  shareEligible?: boolean;
+  shareGender?: string | null;
+  adults?: number;
 };
 
 export type RackRoomDto = {
@@ -92,7 +95,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         return {
           id: r.id,
           status: r.status,
-          guest: { fullName: r.guest.fullName },
+          guest: { fullName: r.guest.fullName, sex: r.guest.sex },
           checkInDate: r.checkInDate.toISOString(),
           checkOutDate: r.checkOutDate.toISOString(),
           payStatus: resolvePayStatus(balance, r.folios.length > 0),
@@ -102,6 +105,9 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           agencyCode: r.agency?.code ?? null,
           sourceId: r.sourceId,
           sourceCode: r.source?.code ?? null,
+          shareEligible: r.shareEligible,
+          shareGender: r.shareGender,
+          adults: r.adults,
         };
       }),
     };

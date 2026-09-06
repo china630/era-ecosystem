@@ -30,6 +30,18 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
       include: { lines: true },
     });
+    const roomIds = [...new Set(tickets.map((tk) => tk.roomId))];
+    const rooms = roomIds.length
+      ? await prisma.room.findMany({
+          where: { id: { in: roomIds } },
+          select: { id: true, roomNumber: true },
+        })
+      : [];
+    const roomNo = new Map(rooms.map((r) => [r.id, r.roomNumber]));
+    const ticketsWithRoom = tickets.map((tk) => ({
+      ...tk,
+      roomNumber: roomNo.get(tk.roomId) ?? null,
+    }));
     const stays = await prisma.reservation.findMany({
       where: { status: { in: ['IN_HOUSE', 'CONFIRMED'] } },
       select: {
@@ -45,7 +57,7 @@ export async function GET(request: Request) {
     return jsonOk(
       serialize({
         items,
-        tickets,
+        tickets: ticketsWithRoom,
         stays,
         laundryExpressEnabled: policy.laundryExpressEnabled,
       }),

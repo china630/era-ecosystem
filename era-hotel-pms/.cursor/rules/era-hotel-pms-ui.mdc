@@ -59,7 +59,11 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 
 Priority: **Room type availability** `/availability` → reservation list → rack `/` → room plan. See `docs/adr/hotel-fo-screen-chain.md`. Empty plan/rack cells = free doors, not sellable Avl.
 
+## Room rack
+
+- `/fo/rack`: From–To `DatePicker` interval (stay overlap); left filter column `overflow-y-auto` and room grid `overflow-y-auto` as separate panes (`LIST_PAGE_SHELL_CLASS`).
+
 ## Room plan
 
 - Room plan (`/room-plan`): `EraListFilterBar` Tarix (`DatePicker` → API `from`) + Otaq/Qonaq client filters; grouping/period stay as `FilterMenuButton`; fullscreen overlay like clinic resource matrix (Esc exits).
-- Room plan bars (`room-plan/shapes.ts`): half-day (noon) model — box spans mid check-in column → mid check-out column. Right edge = blunt `arrow` (fixed `CHEVRON_PX`, not % of bar width) whenever checkout is in-window; `flat` only when clipped past the window. Left edge = matching EW butt notch for any in-window multi-night start; clipped start stays flat. Geometry is precomputed in `computePlacedBars`; `barSvgPath(flags, widthPx)` builds pixel user-space. Exclusive doors = single lane; share doors = N lanes via `share-lanes.ts` (never paint overlapping stays on the same `top`). Day-state colors + HK squares: `plan-bar-theme.ts` (ElektraWeb palette; rack unchanged).
+- Room plan bars (`room-plan/shapes.ts`): half-day (noon) model — box spans mid check-in column → mid check-out column. Right edge = blunt `arrow` (fixed `CHEVRON_PX`, not % of bar width) whenever checkout is in-window; `flat` only when clipped past the window. Left edge = matching EW butt notch for any in-window multi-night start; clipped start stays flat. Geometry is precomputed in `computePlacedBars`; `barSvgPath(flags, widthPx)` builds pixel user-space. Exclusive doors = single lane; share doors = N lanes via `share-lanes.ts` (never paint overlapping stays on the same `top`). Fill = day-state (`plan-bar-theme.ts`); **stroke** = occupancy (exclusive / share M / share F). No HK squares on the plan — OOO/OOS/repair rooms omitted. Two names on the bar when party or overlapping share roommate; guest folio debt badge on the arrow nose. Date header = large day + weekday (EW).

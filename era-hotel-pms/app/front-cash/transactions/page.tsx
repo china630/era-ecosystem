@@ -15,12 +15,14 @@ import {
   DatePicker,
   EraListFilterBar,
   FieldSelect,
+  FilterMenuButton,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { EraModal } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -116,6 +118,8 @@ export default function FrontCashTransactionsPage() {
   const [cashShiftId, setCashShiftId] = useState('');
   const [journal, setJournal] = useState<Journal | null>(null);
   const [busy, setBusy] = useState(false);
+  const [journalTab, setJournalTab] = useState<'payments' | 'deposits'>('payments');
+  const [zOpen, setZOpen] = useState(false);
 
   useEffect(() => {
     const f = searchParams.get('from');
@@ -189,7 +193,12 @@ export default function FrontCashTransactionsPage() {
             <Link href="/reports/financial/cash-report" className={SECONDARY_BUTTON_CLASS}>
               {t('pdfCashReport')}
             </Link>
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={printZ}>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={!z}
+              onClick={() => setZOpen(true)}
+            >
               {t('printZ')}
             </button>
             {journal?.openShift && can(PERMISSIONS.CASH_SHIFT) ? (
@@ -243,29 +252,41 @@ export default function FrontCashTransactionsPage() {
         </FieldSelect>
       </EraListFilterBar>
 
-      {z ? (
-        <section
-          className={`${CARD_CONTAINER_CLASS} mb-3 space-y-1 p-3 text-[13px] text-[#34495E] print:border print:shadow-none`}
-          id="z-report"
+      {zOpen && z ? (
+        <EraModal
+          open={zOpen}
+          onClose={() => setZOpen(false)}
+          title={t('zTitle')}
+          footer={
+            <div className="flex justify-end gap-2">
+              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setZOpen(false)}>
+                {tc('cancel')}
+              </button>
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={printZ}>
+                {t('printZ')}
+              </button>
+            </div>
+          }
         >
-          <h2 className="m-0 text-sm font-semibold">{t('zTitle')}</h2>
-          <p className="m-0 text-[12px] text-[#7F8C8D]">
-            {z.cashier ?? '—'} · {z.registerId ?? '—'} · {z.status ?? '—'}
-          </p>
-          <p className="m-0">
-            {t('zNet')}: {z.paymentsNet.toFixed(2)} {tc('azn')} · {t('zHeld')}:{' '}
-            {z.depositsHeld.toFixed(2)} · {t('pendingSummary')}: {z.pendingCount} /{' '}
-            {Number(z.pendingAmount).toFixed(2)}
-          </p>
-          <ul className="m-0 list-disc pl-5">
-            {z.totalsByMethod.map((row) => (
-              <li key={row.method}>
-                {row.method}: pay {row.payments.toFixed(2)} / refund {row.refunds.toFixed(2)} /
-                net {row.net.toFixed(2)}
-              </li>
-            ))}
-          </ul>
-        </section>
+          <div id="z-report" className="space-y-1 text-[13px] text-[#34495E]">
+            <p className="m-0 text-[12px] text-[#7F8C8D]">
+              {z.cashier ?? '—'} · {z.registerId ?? '—'} · {z.status ?? '—'}
+            </p>
+            <p className="m-0">
+              {t('zNet')}: {z.paymentsNet.toFixed(2)} {tc('azn')} · {t('zHeld')}:{' '}
+              {z.depositsHeld.toFixed(2)} · {t('pendingSummary')}: {z.pendingCount} /{' '}
+              {Number(z.pendingAmount).toFixed(2)}
+            </p>
+            <ul className="m-0 list-disc pl-5">
+              {z.totalsByMethod.map((row) => (
+                <li key={row.method}>
+                  {row.method}: pay {row.payments.toFixed(2)} / refund {row.refunds.toFixed(2)} /
+                  net {row.net.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </EraModal>
       ) : null}
 
       <section className={`${CARD_CONTAINER_CLASS} mb-3 grid gap-2 p-3 text-[13px] text-[#34495E] md:grid-cols-3 print:hidden`}>
@@ -312,6 +333,20 @@ export default function FrontCashTransactionsPage() {
         </div>
       </section>
 
+      <div className="mb-3">
+        <FilterMenuButton
+          label={t('journalTab')}
+          value={journalTab}
+          options={[
+            { value: 'payments', label: t('paymentsSection') },
+            { value: 'deposits', label: t('depositsSection') },
+          ]}
+          onChange={(v) => setJournalTab(v as 'payments' | 'deposits')}
+        />
+      </div>
+
+      {journalTab === 'payments' ? (
+      <>
       <h2 className="mb-2 text-[14px] font-semibold text-[#2C3E50]">{t('paymentsSection')}</h2>
       <section className={`${CARD_CONTAINER_CLASS} mb-4 p-0`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
@@ -364,7 +399,9 @@ export default function FrontCashTransactionsPage() {
           </table>
         </div>
       </section>
-
+      </>
+      ) : (
+      <>
       <h2 className="mb-2 text-[14px] font-semibold text-[#2C3E50]">{t('depositsSection')}</h2>
       <section className={`${CARD_CONTAINER_CLASS} p-0`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
@@ -414,6 +451,8 @@ export default function FrontCashTransactionsPage() {
           </table>
         </div>
       </section>
+      </>
+      )}
     </>
   );
 }

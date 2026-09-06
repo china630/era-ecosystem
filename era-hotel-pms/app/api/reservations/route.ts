@@ -15,6 +15,7 @@ const createSchema = z.object({
   roomId: z.string().uuid().optional(),
   sourceId: z.string().uuid().optional(),
   agencyId: z.string().uuid().optional(),
+  companyId: z.string().uuid().optional(),
   salesContractId: z.string().uuid().optional(),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),

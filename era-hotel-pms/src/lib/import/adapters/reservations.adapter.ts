@@ -174,7 +174,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         children11_6: data.children11_6,
         voucherNo: data.voucherNo,
         shareNo: data.shareNo,
-        // Do NOT clear shareEligible / shareGender / shareBedIndex on NORMAL re-import.
+        // shareEligible owned by applyElektrawebSharePair (includeHistory for cutover).
       },
     });
 
@@ -199,6 +199,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       reservationId: reservation.id,
       isSecond,
       shareNo: row.shareNo,
+      includeHistory: true,
     });
     if (isSecond && !pair.applied && pair.skippedReason) {
       console.warn(

@@ -6,6 +6,7 @@ export const reservationFullPatchSchema = z.object({
   ratePlanId: z.string().uuid().optional(),
   mealPlanId: z.string().uuid().nullable().optional(),
   agencyId: z.string().uuid().nullable().optional(),
+  companyId: z.string().uuid().nullable().optional(),
   salesContractId: z.string().uuid().nullable().optional(),
   sourceId: z.string().uuid().nullable().optional(),
   roomId: z.string().uuid().nullable().optional(),

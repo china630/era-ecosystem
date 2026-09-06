@@ -136,7 +136,7 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 | ERA field / behavior | Elektraweb source (Excel parity) | Notes |
 |----------------------|----------------------------------|--------|
 | `Reservation.externalRef` | Res Id | Required |
-| Guest link | Guest Id (`RESGUESTID` / `CONTACTGUESTID` / `GUESTID`); else same name matcher as Excel import | Never attach FOCP to an arbitrary first guest. Create only when EW Guest Id is new. Backfill stub `import-guest-*` / `ew-fo-name:*` refs. Sync Guest Cards before FOCP. |
+| Guest link | Guest Id (`RESGUESTID` / `CONTACTGUESTID` / `GUESTID`) for **primary**; FOCP `GUESTNAMES` `A / B` → `ReservationGuest` party (co-guests matched by name / later `QA_HOTEL_RES_GUEST.GUESTID`) | Never create one Guest Card named `A / B`. Never attach FOCP to an arbitrary first guest. Create primary only when EW Id is new. Check-in emits **one lifecycle event per pax**. Sync Guest Cards before FOCP. |
 | Room type / room | Room Type, Room No | Resolve existing master data |
 | Dates | Arrival, Departure | |
 | Status | State | **Critical** for lifecycle |
@@ -264,14 +264,14 @@ Same browser page + tab filter is enough: each tab hits a **different Select obj
 | `CHECKIN` / `CHECKOUT` | yes | yes | yes | dates |
 | `ROOMNO` / `ROOMTYPECODE` | partial / yes | yes / yes | yes | room — **strip** trailing `S` (`707S`→`707`); never create virtual room |
 | `RATECODE` / `RATECODEID` | yes | yes | yes | rate / medical program |
-| `AGENCY` | yes | yes | yes | agency |
+| `AGENCY` (+ `AGENCYNAME` / `AGENCYID_AGENCYCODE`) | yes | yes | yes | agency — **resolve-or-create** by exact name/code (not loose `contains`); sparse row must not wipe |
 | `GUESTNAMES` | yes | yes | yes | display |
 | `RESGUESTID` / `CONTACTGUESTID` | ~36–47% | ~83% | ~93% | soft guest link |
 | Detail `GUESTID` + `QA_HOTEL_RES_GUEST` | when card opened | when card opened | when card opened | hard `Guest.externalRef` |
 | Detail `RECORDTYPE` / `RESTYPE` / `ROOMCOUNT` / `ROOMCNT` | often missing on list | — | — | share second-guest signal when present on card |
 | `SHARENO` | optional | optional | optional | display label only |
 
-**Shared twin:** after reservation upsert, `applyElektrawebSharePair` (`elektraweb-share-map.ts`) pairs SHARE / Room Count 0 / `…S` with the NORMAL neighbor on the same physical door. **Do not** clear `shareEligible` when EW later sets Record Type NORMAL after first-out. Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assignment.md).
+**Shared twin:** after reservation upsert, `applyElektrawebSharePair` (`elektraweb-share-map.ts`) pairs SHARE / Room Count 0 / `…S` with the NORMAL neighbor on the same physical door. Live bridge opens the pool only on EW second / live share neighbor / ≥2 live same-gender singles — **not** sticky `shareEligible` alone. Alone + NORMAL (or `adults≠1`) **clears** orphan share so FO Break share sticks; `CHECKED_OUT` history does not reopen live pools (Excel cutover uses `includeHistory`). Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assignment.md).
 
 **Extension:** allowlist all three list objects + detail/guest-on-stay when FO opens a card.
 
@@ -293,8 +293,11 @@ UI: `/app/grid/guest-card-simple` (config also references `guest-cards`).
 | `PASSPORTNO` | ~95% | MDM / identity |
 | `NATIONALIDNO` (FIN) | often empty on list | use when present; card/doc child may help |
 | `PHONE` | ~50% | ops |
-| `BIRTHDATE` | ~94% | ops |
+| `BIRTHDATE` | ~94% | ops (fill-not-clear on re-ingest) |
+| `GENDER` / `GENDERID` (`0`/`1`) | when EW sends it | `Guest.sex` M/F; sparse FOCP must not wipe |
 | `COUNTRYCODE` / nationality | yes | nationality |
+
+**Duplicates:** EW often has **two Guest Ids** for one person (FOCP `RESGUESTID` ≠ richer Guest Card `ID`). Bridge keys by EW Id; FOCP attach prefers the **richest** same-name card (sex/DOB/phone) instead of spawning another thin stub. Orphans with empty demographics are leftover EW second Ids — merge/delete in ERA FO when confirmed.
 
 ### 6.3 Folio — DONE
 

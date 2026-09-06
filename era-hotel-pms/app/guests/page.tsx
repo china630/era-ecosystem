@@ -145,7 +145,6 @@ export default function GuestsPage() {
         <PageHeader
           className="!mb-0"
           title={t('title')}
-          subtitle={t('subtitle')}
           actions={
             can(PERMISSIONS.RESERVATIONS_WRITE) ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
