@@ -61,6 +61,12 @@ describe("ReportingService golden: posted-only trial balance", () => {
       { get: jest.fn() } as never,
       createMockPostingResolver(),
       {} as never,
+      {
+        resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+          id: bookId ?? "book-nas",
+          gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+        })),
+      } as never,
     );
 
     const out = await svc.trialBalance(

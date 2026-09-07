@@ -70,6 +70,9 @@ describe("ReportingService compareBooks", () => {
       undefined as never,
       undefined as never,
       undefined as never,
+      {
+        resolveByIdOrLedgerAlias: jest.fn(),
+      } as never,
     );
 
     const result = await service.compareBooks(

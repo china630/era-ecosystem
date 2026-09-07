@@ -113,7 +113,17 @@ describe("NettingService.createNetting (взаимозачёт)", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new NettingService(prisma, accounting, createMockPostingResolver());
+    const svc = new NettingService(
+      prisma,
+      accounting,
+      createMockPostingResolver(),
+      {
+        resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+          id: bookId ?? "book-nas",
+          gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+        })),
+      } as never,
+    );
 
     const out = await svc.createNetting(orgId, cpId, 100, LedgerType.NAS);
 
@@ -208,7 +218,17 @@ describe("NettingService.createNetting (взаимозачёт)", () => {
       $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     } as unknown as PrismaService;
 
-    const svc = new NettingService(prisma, accounting, createMockPostingResolver());
+    const svc = new NettingService(
+      prisma,
+      accounting,
+      createMockPostingResolver(),
+      {
+        resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+          id: bookId ?? "book-nas",
+          gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+        })),
+      } as never,
+    );
     await svc.createNetting(orgId, cpId, 50, LedgerType.NAS, undefined, {
       userId: "user-1",
       previewSuggestedAmount: 200,

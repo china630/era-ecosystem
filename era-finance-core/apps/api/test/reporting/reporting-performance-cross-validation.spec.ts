@@ -39,6 +39,12 @@ describe("ReportingService performance and cross-validation", () => {
       { get: jest.fn() } as never,
       createMockPostingResolver(),
       {} as never,
+      {
+        resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+          id: bookId ?? "book-nas",
+          gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+        })),
+      } as never,
     );
     const out = await svc.trialBalance(
       "org-1",
@@ -119,6 +125,12 @@ describe("ReportingService performance and cross-validation", () => {
       { get: jest.fn() } as never,
       createMockPostingResolver(),
       {} as never,
+      {
+        resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+          id: bookId ?? "book-nas",
+          gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+        })),
+      } as never,
     );
     const out = await svc.profitAndLoss(
       "org-1",

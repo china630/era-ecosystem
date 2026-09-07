@@ -36,7 +36,12 @@ describe("Finance AR/AP negative paths (AC-FIN-ARAP)", () => {
     const accounting = {
       postJournalInTransaction: jest.fn(),
     } as unknown as AccountingService;
-    const svc = new NettingService(prisma, accounting, mockPosting());
+    const svc = new NettingService(prisma, accounting, mockPosting(), {
+      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+        id: bookId ?? "book-nas",
+        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+      })),
+    } as never);
 
     await expect(
       svc.createNetting(orgId, foreignCpId, 10, LedgerType.NAS, UserRole.ACCOUNTANT),
@@ -79,7 +84,12 @@ describe("Finance AR/AP negative paths (AC-FIN-ARAP)", () => {
     const accounting = {
       postJournalInTransaction: jest.fn(),
     } as unknown as AccountingService;
-    const svc = new NettingService(prisma, accounting, mockPosting());
+    const svc = new NettingService(prisma, accounting, mockPosting(), {
+      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+        id: bookId ?? "book-nas",
+        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+      })),
+    } as never);
 
     await expect(
       svc.createNetting(orgId, foreignCpId, 100, LedgerType.NAS, UserRole.ACCOUNTANT),

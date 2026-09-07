@@ -35,7 +35,12 @@ describe("CashFlowService IFRS bank include (P1 hardening)", () => {
       setJson: jest.fn().mockResolvedValue(undefined),
     } as unknown as ReportsCacheService;
 
-    const svc = new CashFlowService(prisma, cache);
+    const svc = new CashFlowService(prisma, cache, {
+      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+        id: bookId ?? "book-nas",
+        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+      })),
+    } as never);
     return { svc, ledgerMappingSet, bankStatementLine, cashOrder };
   }
 

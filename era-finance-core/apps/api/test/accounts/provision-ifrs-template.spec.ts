@@ -57,11 +57,18 @@ describe("AccountsService.provisionIfrsFromTemplate (P1)", () => {
       bootstrapDraftFromAccountPairs: jest.fn().mockResolvedValue(undefined),
     } as unknown as LedgerMappingService;
 
+    const accountingBooks = {
+      ensureSystemBooks: jest.fn().mockResolvedValue({
+        ifrs: { id: "book-ifrs" },
+      }),
+    };
+
     const svc = new AccountsService(
       {} as PrismaService,
       {} as PostingAccountResolver,
       ledgerMapping,
       { hasModule: jest.fn().mockResolvedValue(true) } as never,
+      accountingBooks as never,
     );
 
     const out = await svc.provisionIfrsFromTemplate("org-1", db as never);

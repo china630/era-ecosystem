@@ -50,6 +50,7 @@ describe("AccountingService closed-period post guard (P1 hardening)", () => {
       prisma,
       {
         mirrorFromNas: jest.fn().mockResolvedValue({ status: "NONE" }),
+        mirrorFromBook: jest.fn().mockResolvedValue({ status: "NONE" }),
       } as unknown as IfrsAutoMappingService,
       {} as PostingAccountResolver,
       {

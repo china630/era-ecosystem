@@ -16,6 +16,7 @@ import { SubscriptionAccessService } from "../../src/subscription/subscription-a
 describe("AccountingService", () => {
   const ifrsAutoMappingStub = {
     mirrorFromNas: jest.fn().mockResolvedValue(undefined),
+    mirrorFromBook: jest.fn().mockResolvedValue(undefined),
   } as unknown as IfrsAutoMappingService;
   const subcontoStub = {
     applyDimensionsToJournalEntries: jest.fn().mockResolvedValue(undefined),
