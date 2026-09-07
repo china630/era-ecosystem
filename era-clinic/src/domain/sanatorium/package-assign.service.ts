@@ -465,7 +465,7 @@ export async function assignPackageProcedures(
       quotaCode = line.procedureCode;
       const resolved = resolvePackageQuotaSku(
         line.procedureCode,
-        episode.patientRef.sex,
+        episode.patientRef?.sex,
         typeByCode.keys(),
       );
       if (!resolved) {
