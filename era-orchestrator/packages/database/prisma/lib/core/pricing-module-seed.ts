@@ -1,6 +1,6 @@
 import type { PrismaClient } from "../../../generated/client";
 import { Prisma } from "../../../generated/client";
-import { PRICING_MODULE_CASH_BANK_PRO } from "./pricing-module-keys";
+import { PRICING_MODULE_CASH_BANK_PRO, PRICING_MODULE_ACCOUNTING_BOOK_EXTRA } from "./pricing-module-keys";
 import { inferPricingCatalogKind, INDUSTRY_SATELLITE_MODULE_KEYS } from "./hotel-module-keys";
 import { inferSatelliteKeyFromModuleKey } from "./pricing-catalog-canon";
 
@@ -118,6 +118,15 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     sortOrder: 4,
     satelliteKey: "finance_core",
     trialEligibleInTrial: true,
+  },
+  {
+    key: PRICING_MODULE_ACCOUNTING_BOOK_EXTRA,
+    name: "Extra accounting book (slot)",
+    pricePerMonth: 19,
+    sortOrder: 5,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: false,
+    isPremium: false,
   },
   { key: "tax_pro", name: "Tax Pro", pricePerMonth: 39, sortOrder: 10, isPremium: true },
   { key: "trade_pro", name: "Trade Pro", pricePerMonth: 39, sortOrder: 11, isPremium: true },
