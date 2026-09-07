@@ -103,6 +103,13 @@ type CardSummary = {
   resultsPreview: TimelineEvent[];
   planPreview: TimelineEvent[];
   proposedPreview?: TimelineEvent[];
+  pendingExtras?: Array<{
+    id: string;
+    title: string;
+    code: string;
+    amountNet: number;
+    status: string;
+  }>;
   intakeChecklist?: {
     packageCode: string;
     packageTitle: L10n | null;
@@ -443,6 +450,7 @@ export function PatientCardClinicalSections({
 
   const { resultsPreview, planPreview } = summary;
   const proposedPreview = summary.proposedPreview ?? [];
+  const pendingExtras = summary.pendingExtras ?? [];
   const intakeChecklist = summary.intakeChecklist;
   const allProposedIds = proposedPreview
     .map(orderIdFromEvent)
@@ -622,6 +630,13 @@ export function PatientCardClinicalSections({
             readOnly={readOnly || !anamnesisOk}
             day1Busy={day1Busy}
             hidePackage={patientOrigin === "WALK_IN"}
+            extrasPending={pendingExtras.map((row) => ({
+              id: row.id,
+              title: row.title,
+              amountNet: row.amountNet,
+              status: row.status,
+            }))}
+            pendingPayLabel={t("pendingPay", { defaultValue: "Awaiting payment" })}
             onPackagePlus={() => setPackageModalOpen(true)}
             onExtrasPlus={() => setExtrasModalOpen(true)}
             onDay1={

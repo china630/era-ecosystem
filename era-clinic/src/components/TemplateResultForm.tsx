@@ -6,7 +6,6 @@ import {
   Field,
   FieldSelect,
   FieldTextarea,
-  FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
   MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
@@ -55,8 +54,15 @@ type Props = {
   };
 };
 
+/** Label capped; controls fill remaining width; tight gap to labels. */
 const ROW_CLASS =
-  "grid grid-cols-[minmax(10rem,1fr)_minmax(8rem,14rem)] items-start gap-x-3 gap-y-1";
+  "grid grid-cols-[minmax(5.5rem,10rem)_minmax(0,1fr)] items-start gap-x-2 gap-y-1";
+
+const CONTROL_CLASS = "!mt-0 w-full min-w-0 [&>label]:sr-only";
+
+const COMPACT_TEXTAREA_CLASS = "!min-h-[2.25rem] w-full max-w-full py-1.5 leading-snug";
+
+const LABEL_CLASS = `${MODAL_FIELD_LABEL_CLASS} max-w-[10rem] leading-snug`;
 
 function FieldInput({
   field,
@@ -81,14 +87,15 @@ function FieldInput({
   ) {
     return (
       <div className={ROW_CLASS}>
-        <span className={MODAL_FIELD_LABEL_CLASS}>
+        <span className={LABEL_CLASS}>
           {labelText}
           {field.required ? <span className="text-[#E74C3C]"> *</span> : null}
         </span>
         <FieldSelect
           label={labelText}
-          preset="select"
-          className="!mt-0 [&>label]:sr-only"
+          preset="selectWide"
+          className={CONTROL_CLASS}
+          selectClassName="!w-full max-w-full"
           required={field.required}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -107,7 +114,7 @@ function FieldInput({
   if (field.type === "boolean") {
     return (
       <label className={`${ROW_CLASS} text-[13px]`}>
-        <span className={MODAL_FIELD_LABEL_CLASS}>{labelText}</span>
+        <span className={LABEL_CLASS}>{labelText}</span>
         <input
           type="checkbox"
           className={`${MODAL_CHECKBOX_CLASS} mt-1`}
@@ -121,14 +128,15 @@ function FieldInput({
   if (field.type === "select" && field.options?.length) {
     return (
       <div className={ROW_CLASS}>
-        <span className={MODAL_FIELD_LABEL_CLASS}>
+        <span className={LABEL_CLASS}>
           {labelText}
           {field.required ? <span className="text-[#E74C3C]"> *</span> : null}
         </span>
         <FieldSelect
           label={labelText}
-          preset="select"
-          className="!mt-0 [&>label]:sr-only"
+          preset="selectWide"
+          className={CONTROL_CLASS}
+          selectClassName="!w-full max-w-full"
           required={field.required}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -147,13 +155,14 @@ function FieldInput({
   if (field.type === "textarea") {
     return (
       <div className={ROW_CLASS}>
-        <span className={MODAL_FIELD_LABEL_CLASS}>
+        <span className={LABEL_CLASS}>
           {labelText}
           {field.required ? <span className="text-[#E74C3C]"> *</span> : null}
         </span>
         <FieldTextarea
           label={labelText}
-          className="!mt-0 [&>label]:sr-only"
+          className={CONTROL_CLASS}
+          textareaClassName={COMPACT_TEXTAREA_CLASS}
           required={field.required}
           rows={2}
           value={value}
@@ -165,14 +174,17 @@ function FieldInput({
 
   return (
     <div className={ROW_CLASS}>
-      <span className={MODAL_FIELD_LABEL_CLASS}>
+      <span className={LABEL_CLASS}>
         {labelText}
         {field.required ? <span className="text-[#E74C3C]"> *</span> : null}
       </span>
       <Field
         label={labelText}
-        preset={field.type === "number" ? "count" : field.type === "date" ? "date" : "shortText"}
-        className="!mt-0 [&>label]:sr-only"
+        preset={field.type === "number" ? "count" : "longText"}
+        className={CONTROL_CLASS}
+        inputClassName={
+          field.type === "number" ? undefined : "!w-full max-w-full"
+        }
         required={field.required}
         type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
         value={value}
@@ -215,9 +227,9 @@ export function TemplateResultForm({
   const fields = item.fields ?? [];
 
   return (
-    <div className={FORM_STACK_CLASS}>
+    <div className="space-y-3">
       {metaFields.length > 0 && !isLab && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <p className={`text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>{labels.meta}</p>
           {metaFields.map((f) => (
             <FieldInput
@@ -232,7 +244,7 @@ export function TemplateResultForm({
       )}
 
       {isLab ? (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className={ROW_CLASS}>
             <p className={`m-0 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>{labels.analytes}</p>
             <p className={`m-0 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>{labels.value}</p>
@@ -270,8 +282,9 @@ export function TemplateResultForm({
                 {isQual ? (
                   <FieldSelect
                     label={name}
-                    preset="select"
-                    className="!mt-0 [&>label]:sr-only"
+                    preset="selectWide"
+                    className={CONTROL_CLASS}
+                    selectClassName="!w-full max-w-full"
                     value={line.value}
                     onChange={(e) => setValue(e.target.value)}
                   >
@@ -296,7 +309,7 @@ export function TemplateResultForm({
           })}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <p className={`text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>{labels.fields}</p>
           {fields.map((f) => (
             <FieldInput

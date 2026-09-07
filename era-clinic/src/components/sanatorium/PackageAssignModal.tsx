@@ -554,7 +554,8 @@ export function PackageAssignModal({
       onClose={() => {
         if (!busy) onClose();
       }}
-      maxWidthClass="max-w-4xl"
+      maxWidthClass="max-w-4xl w-full min-h-[min(70vh,42rem)] max-h-[90vh]"
+      bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
           <button
@@ -582,7 +583,7 @@ export function PackageAssignModal({
           {labels.softWarnPrefix}: {softWarn}
         </p>
       ) : null}
-      <div className="relative grid gap-4 md:grid-cols-2">
+      <div className="relative grid min-h-[min(55vh,28rem)] flex-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <h4 className="text-sm font-medium">{labels.leftMenu}</h4>
           {balances.length === 0 ? (
@@ -757,6 +758,7 @@ export function PackageAssignModal({
                     value={formCode ?? ""}
                     onChange={(v) => selectPoolSku(String(v ?? ""))}
                     options={poolSkuOptions}
+                    widthPreset="select"
                   />
                 </div>
               ) : null}
@@ -781,6 +783,7 @@ export function PackageAssignModal({
                       substances={substances}
                       locale={locale}
                       editable
+                      compact
                       labels={physioLabels}
                       onSitesChange={(siteIds) =>
                         setFormPhysio((prev) => ({ ...prev, siteIds }))
@@ -839,6 +842,7 @@ export function PackageAssignModal({
                   value={replaceFrom}
                   onChange={(v) => setReplaceFrom(String(v ?? ""))}
                   options={packageCodeOptions}
+                  widthPreset="select"
                 />
               </div>
               <div className="mb-2 max-w-xs">
@@ -848,6 +852,7 @@ export function PackageAssignModal({
                   value={replaceTo}
                   onChange={(v) => setReplaceTo(String(v ?? ""))}
                   options={allCodes.length ? allCodes : packageCodeOptions}
+                  widthPreset="select"
                 />
               </div>
               <label className="mb-3 block text-[12px]">
