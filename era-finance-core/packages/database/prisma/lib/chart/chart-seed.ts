@@ -2,6 +2,9 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   AccountType,
+  AccountingBookBillingSlotKind,
+  AccountingBookGaapKind,
+  AccountingBookStatus,
   LedgerType,
   OrganizationKind,
   PrismaClient,
@@ -34,6 +37,34 @@ function toAccountType(value: string): AccountType {
     return AccountType[upper as keyof typeof AccountType];
   }
   throw new Error(`Unknown AccountType: ${value}`);
+}
+
+async function ensureNasBookId(
+  db: PrismaClient | Prisma.TransactionClient,
+  organizationId: string,
+): Promise<string> {
+  const existing = await db.accountingBook.findFirst({
+    where: { organizationId, code: "NAS" },
+    select: { id: true },
+  });
+  if (existing) return existing.id;
+  const created = await db.accountingBook.create({
+    data: {
+      organizationId,
+      code: "NAS",
+      nameAz: "Milli Mühasibat Uçotu Standartları",
+      nameRu: "Национальные стандарты бухгалтерского учёта",
+      nameEn: "National Accounting Standards",
+      gaapKind: AccountingBookGaapKind.NAS,
+      isSystem: true,
+      isDefaultOps: true,
+      status: AccountingBookStatus.ACTIVE,
+      billingSlotKind: AccountingBookBillingSlotKind.INCLUDED,
+      sortOrder: 0,
+    },
+    select: { id: true },
+  });
+  return created.id;
 }
 
 /** Normalize JSON row (legacy `name` → AZ/RU/EN; `nameEn` may fall back to `nameAz`). */
@@ -116,6 +147,7 @@ export async function seedChartOfAccountsForOrganization(
 
   const roots = accounts.filter((a) => !a.parentCode);
   const children = accounts.filter((a) => a.parentCode);
+  const nasBookId = await ensureNasBookId(db, organizationId);
 
   async function upsertOne(row: ChartAccountSeed, parentId: string | null) {
     const type = toAccountType(row.type as string);
@@ -124,14 +156,15 @@ export async function seedChartOfAccountsForOrganization(
     });
     const account = await db.account.upsert({
       where: {
-        organizationId_code_ledgerType: {
+        organizationId_accountingBookId_code: {
           organizationId,
+          accountingBookId: nasBookId,
           code: row.code,
-          ledgerType: LedgerType.NAS,
         },
       },
       create: {
         organizationId,
+        accountingBookId: nasBookId,
         code: row.code,
         nameAz: row.nameAz,
         nameRu: row.nameRu,
@@ -400,6 +433,7 @@ export async function seedOrganizationNasFromTemplateAccounts(
 
   const roots = tplRows.filter((a) => !a.parentCode?.trim());
   const children = tplRows.filter((a) => a.parentCode?.trim());
+  const nasBookId = await ensureNasBookId(db, organizationId);
 
   async function upsertOne(row: (typeof tplRows)[0], parentId: string | null) {
     const catalogRow = await db.chartOfAccountsEntry.findFirst({
@@ -407,14 +441,15 @@ export async function seedOrganizationNasFromTemplateAccounts(
     });
     const account = await db.account.upsert({
       where: {
-        organizationId_code_ledgerType: {
+        organizationId_accountingBookId_code: {
           organizationId,
+          accountingBookId: nasBookId,
           code: row.code,
-          ledgerType: LedgerType.NAS,
         },
       },
       create: {
         organizationId,
+        accountingBookId: nasBookId,
         code: row.code,
         nameAz: row.nameAz,
         nameRu: row.nameRu,

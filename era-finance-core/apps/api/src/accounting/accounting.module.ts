@@ -1,11 +1,15 @@
 import { Module } from "@nestjs/common";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { AccountingBookController } from "./accounting-book.controller";
+import { AccountingBookService } from "./accounting-book.service";
 import { AccountingController } from "./accounting.controller";
 import { AccountingService } from "./accounting.service";
 import { ManualAdjustmentController } from "./manual-adjustment.controller";
 import { ManualAdjustmentService } from "./manual-adjustment.service";
 import { BankSubaccountService } from "./bank-subaccount.service";
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
+import { LedgerMappingController } from "./ledger-mapping.controller";
+import { LedgerMappingService } from "./ledger-mapping.service";
 import { NettingService } from "./netting.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { PostingJournalBuilder } from "./posting/posting-journal-builder.service";
@@ -22,17 +26,21 @@ import { VatDepositService } from "./vat-deposit.service";
   imports: [],
   controllers: [
     AccountingController,
+    AccountingBookController,
     ManualAdjustmentController,
     PostingRolesController,
     GrantReceiptController,
     SubcontoController,
     VatDepositController,
+    LedgerMappingController,
   ],
   providers: [
     AccountingService,
+    AccountingBookService,
     ManualAdjustmentService,
     BankSubaccountService,
     IfrsAutoMappingService,
+    LedgerMappingService,
     NettingService,
     PostingAccountResolver,
     PostingJournalBuilder,
@@ -44,6 +52,7 @@ import { VatDepositService } from "./vat-deposit.service";
   ],
   exports: [
     AccountingService,
+    AccountingBookService,
     ManualAdjustmentService,
     BankSubaccountService,
     NettingService,
@@ -52,6 +61,8 @@ import { VatDepositService } from "./vat-deposit.service";
     GrantReceiptService,
     SubcontoService,
     VatDepositService,
+    LedgerMappingService,
+    IfrsAutoMappingService,
   ],
 })
 export class AccountingModule {}

@@ -35,6 +35,7 @@ export class MhbsStatementsController {
     @OrganizationId() organizationId: string,
     @Query("asOfDate") asOfDate: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     if (!asOfDate?.trim()) {
       throw new BadRequestException("asOfDate is required (YYYY-MM-DD)");
@@ -43,6 +44,7 @@ export class MhbsStatementsController {
       organizationId,
       asOfDate.trim(),
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -53,6 +55,7 @@ export class MhbsStatementsController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     if (!dateFrom?.trim() || !dateTo?.trim()) {
       throw new BadRequestException("dateFrom and dateTo are required (YYYY-MM-DD)");
@@ -62,6 +65,7 @@ export class MhbsStatementsController {
       dateFrom.trim(),
       dateTo.trim(),
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -72,6 +76,7 @@ export class MhbsStatementsController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     if (!dateFrom?.trim() || !dateTo?.trim()) {
       throw new BadRequestException("dateFrom and dateTo are required (YYYY-MM-DD)");
@@ -81,6 +86,7 @@ export class MhbsStatementsController {
       dateFrom.trim(),
       dateTo.trim(),
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -90,6 +96,7 @@ export class MhbsStatementsController {
     @OrganizationId() organizationId: string,
     @Query("year") yearStr: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const year = Number(yearStr);
     if (!Number.isFinite(year)) {
@@ -99,6 +106,7 @@ export class MhbsStatementsController {
       organizationId,
       year,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -108,6 +116,7 @@ export class MhbsStatementsController {
     @OrganizationId() organizationId: string,
     @Query("asOfDate") asOfDate: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     if (!asOfDate?.trim()) {
       throw new BadRequestException("asOfDate is required (YYYY-MM-DD)");
@@ -116,6 +125,7 @@ export class MhbsStatementsController {
       organizationId,
       asOfDate.trim(),
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -126,11 +136,13 @@ export class MhbsStatementsController {
     @Query("asOfDate") asOfDate: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.mhbs.balanceSheet(
       organizationId,
       asOfDate,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
     return this.streamExport(data, format, `mhbs-balance-${asOfDate}`);
   }
@@ -143,12 +155,14 @@ export class MhbsStatementsController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.mhbs.incomeStatement(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
     return this.streamExport(data, format, `mhbs-pl-${dateFrom}-${dateTo}`);
   }
@@ -161,12 +175,14 @@ export class MhbsStatementsController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.mhbs.cashFlowStatement(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
     return this.streamExport(data, format, `mhbs-cash-flow-${dateFrom}-${dateTo}`);
   }
@@ -178,12 +194,14 @@ export class MhbsStatementsController {
     @Query("year") yearStr: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const year = Number(yearStr);
     const data = await this.mhbs.equityChanges(
       organizationId,
       year,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
     return this.streamExport(data, format, `mhbs-equity-${year}`);
   }
@@ -195,11 +213,13 @@ export class MhbsStatementsController {
     @Query("asOfDate") asOfDate: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.mhbs.notes(
       organizationId,
       asOfDate,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
     return this.streamExport(data, format, `mhbs-notes-${asOfDate}`);
   }

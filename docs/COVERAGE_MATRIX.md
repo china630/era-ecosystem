@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-07
 
 ---
 
@@ -95,7 +95,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-48 | Nafta Hour X Excel wizard + lab Word/PDF on patient card | NAFTA-CUTOVER-IMPORT | Y `/api/import/*`; `#23` `parseBakuDateTime(+04:00)` + always `replaceSites`; lab file; hotel stay bridge | Y patient card download | Y `/admin/import` | — | — | SHIPPED | Re-Apply `#23` rewrites clock + rematches S; `#31` closes intake USM; `#27` LabOrderItem top-level create; Word Dimer/CRP/PRL/Insulin/Hormon |
 | CLI-49 | Physio S + program/substance catalogs + order sites | ADR clinic-physio-site-catalog + physio-site-canon | Y physio admin/catalog/nahiye-queue APIs; `physioFields` incl. `NAFTALAN_FILL`; `#23` nahiye | Y card chips (Solyuks gate); empty-catalog banner; PLAN site titles; note = residue | Y `/admin/physio-sites` + Unmatched | — | — | SHIPPED | Seed S **before** `#23`; UAT open until droplet proof |
 | CLI-50 | In-house episode without hotel program + staff assign 4 SKUs + `?episode=` chart | [ADR dual-run](./adr/nafta-medical-sku-dual-run.md) | Y lifecycle always open episode; templates PKG-* | Y `/sanatorium` Select 4 SKUs; deep link opens chart | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave A |
-| CLI-51 | PDF quota knots + nights interpolate + stay recalc | [ADR knots](./adr/nafta-program-quota-knots.md) | Y `quotaFor` + `recalcProgramQuotas` + charge by quota | Y `/admin/program-templates` procedures+knots | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave B. Stay-shorten future SCHEDULED cancel → CLI-57 |
+| CLI-51 | PDF quota knots + nights interpolate + stay recalc | [ADR knots](./adr/nafta-program-quota-knots.md) | Y versioned templates + snapshot pin + one-current unique + GC | Y `/admin/program-templates` blocks + retired toggle + purge | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave B harden |
 | CLI-52 | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP admin; 4th same-day paid | [ADR FIFO](./adr/clinic-doctor-confirmed-fifo-planning.md) | Y exam-prefix sort; daily-cap charge; manual POST guard | Y `/sanatorium` + card; `/admin/settings` mode | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave C |
 | CLI-53 | Doctor bonus extras-only + IN_HOUSE/WALK_IN buckets | [ADR compose/bonus](./adr/nafta-compose-sell-and-doctor-bonus.md) | Y `bonusEligible` + doctor-bonus split | Y `/reports/procedures` doctor-bonus | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave D |
 | CLI-54 | One reservation → two episodes (per pax PatientRef + program) | [ADR episode-per-pax](./adr/nafta-episode-per-pax.md) | Y openEpisode per patient; charge by episode | Y `/sanatorium` one row per episode | — | — | — | SCREEN | Not SHIPPED — UAT open; Wave E |
@@ -210,10 +210,10 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-CO-04 | Early checkout unused-nights refund (net of 18% VAT, default CASH) | ADR hotel-early-checkout-unused-nights | Y preview + apply on check-out | Y folio + chessboard checkout modal | — | — | — | SHIPPED | UAT-SMOKE §33; all folios reverse; guest cash net VAT; H-BL-49 |
 | HOT-CL-01 | Folio routing rules + stay overrides (revenue → GUEST/COMPANY/AGENCY) | ADR CL | Y stay PUT | Y card routing table | Y master data | — | — | SHIPPED | Stay overrides > property FolioRoutingRule on postCharge |
 | HOT-CL-02 | Credit limit on stay / room charge | H-BL-03 | Y | Y Billing field | — | — | — | SHIPPED | UAT-SMOKE card billing; CL gate uses limit |
-| HOT-CL-03 | Agency City Ledger ops snapshot | Stage 23 | Y ledger+settle | Y `/front-cash/agency-ledger` | — | — | — | SHIPPED | AGENCY folios only; code/name/commission/settlement; UAT-SMOKE §27 |
+| HOT-CL-03 | Agency City Ledger ops snapshot + statement | Stage 23 | Y ledger+settle+lines | Y `/front-cash/agency-ledger` statement | — | — | — | SHIPPED | AGENCY folios only; opening from full party history; REFUND netted; UAT-SMOKE §27 |
 | HOT-CL-04 | City Ledger → Finance snapshot + ops re-push | boundary | Y event + `/api/agencies/[id]/city-ledger-snapshot` | Y agency-ledger push + Finance deep link | — | Y AR | — | SHIPPED | Aging/match stays Finance; agency tab only |
 | HOT-CL-05 | Payment terms + aging + invoice matching | ADR CL D2 | — | — | terms on CP | Y aging+allocate | — | SHIPPED | Finance UAT aging+allocate; hotel handoff only |
-| HOT-CL-06 | Company profile + company City Ledger | [ADR agency vs company](./adr/hotel-agency-vs-company-profiles.md) | Y Company + `GET /api/companies/[id]/ledger` | Y `/distribution/companies` + `/front-cash/company-ledger` | Y CRUD | — | — | API | Independent of `agencyId`; no commission; UAT open |
+| HOT-CL-06 | Company profile + company City Ledger statement | [ADR agency vs company](./adr/hotel-agency-vs-company-profiles.md) | Y Company + ledger+settlement list+lines | Y `/distribution/companies` + `/front-cash/company-ledger` | Y CRUD | — | — | SHIPPED | Independent of `agencyId`; no commission; TRANSFERRED_AR list; UAT §42 |
 | HOT-NA-01 | Night Audit EOD (post room/package, roll day, E1) | clone-spec 07 | Y `/api/night-audit/*` | Y `/night-audit` | — | — | — | SHIPPED | UAT-SMOKE §6; legacy `/operations` redirects |
 | HOT-NA-02 | Night Audit polish (exceptions, auto no-show, trial) | ADR CL | Y polish steps | Y `/night-audit` preview | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-44 |
 | HOT-NA-03 | EOD reports hub + P1 grids (+ no-show / room-move / VIP + CSV) | MENU-IA + ADR | Y `/api/night-audit/eod-reports` | Y `/night-audit/reports*` | — | — | — | SHIPPED | UAT-SMOKE §28; Management PDF catalog is HOT-RPT-01/02 (API, not SHIPPED) |
@@ -224,14 +224,15 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-XFER-01 | Transfers (airport / fleet → folio + cancel + routing) | module map | Y | Y `/transfers` | — | — | — | SHIPPED | Charge via postCharge routing; cancel/void; UAT transfers |
 | HOT-TOUR-01 | Guest group tours (Nafta weekend roster + TOUR folio) | [ADR hotel-guest-tours](./adr/hotel-guest-tours.md) | Y `/api/tours/*` `/api/fleet/*` `/api/folios/charges/[chargeId]/pay` | Y `/tours` `/tours/[id]` `/tours/[id]/print` | Y `/fleet` | — | — | SHIPPED | SKU `hotel_transfers`. UAT-SMOKE §14b. City ledger ≠ Paid. DispatchVehicle not merged. |
 | HOT-BEO-01 | Banquets / BEO MVP + day sheet print | H-BL-31 | Y day-sheet | Y `/banquets*` | — | — | — | SHIPPED | UAT-SMOKE §15; not full Opera S&C |
-| HOT-AG-01 | Tour agency contracts + commission % | H-BL-30 | Y | Y `/admin/contracts` | Y | — | — | SHIPPED | UAT-SMOKE §18 |
+| HOT-AG-01 | Tour agency contracts + commission % | H-BL-30 | Y | Y `/distribution/contracts` | Y | — | — | SHIPPED | UAT-SMOKE §18 |
 | HOT-AG-02 | Agency prepaid/postpaid settlement + refunds | ADR CL | Y settlement API + `Agency.settlementMode` | Y agency-ledger + travel-agencies | Y settlement field | Finance match | — | SHIPPED | UAT-SMOKE §27; bank match Finance |
 | HOT-AGP-01 | Agency portal book (contract allotment + isolation) | [ADR agency portal](./adr/hotel-agency-portal.md) | Y `/api/agency/*` | Y `/agency/*` (extranet) | Y invite | — | — | API | P0–P1; multi-hotel grant on CP; AUTO default OFF → OPTION |
 | HOT-AGP-02 | FO agency inbox confirm / decline | ADR agency portal | Y `/api/fo/agency-inbox` | Y `/fo/agency-inbox` | — | — | — | API | Confirm → CONFIRMED; decline → CANCELLED |
 | HOT-AGP-03 | Optional passport scan on agency booking | ADR agency portal | Y attachment upload | Y card + agency UI | — | — | — | API | Not KBS; storage key org-scoped |
+| HOT-AGP-04 | Agency portal own City Ledger statement | ADR agency portal §7 | Y `GET /api/agency/ledger` (session-scoped) | Y `/agency/ledger` | — | — | — | SHIPPED | Read-only; AGENCY folios; no push/settle; UAT-SMOKE §27 |
 | HOT-UI-01 | List/filter enrichment (EraListFilterBar parity) | CLI-37 pattern | — | Y FO lists; guests + reservations server page+COUNT via `EraListWorkspace`; FO `rowClassName` status tint; `?guestId=` → status ALL; FO notes column penultimate + `noteQ` | allotment | — | — | SHIPPED | UAT list filters; H-BL-47; Live default on reservations (guest deep-link = All) |
 | HOT-PC-01 | Pricing components (service fee / meals / COGS versions + history) | [ADR bar vs package](./adr/hotel-bar-accounting-vs-package-sell.md) | Y `/api/admin/pricing-components` | Y `/settings/pricing-components` | Y | — | — | SHIPPED | Seeds Nafta defaults; audit on version create |
-| HOT-OCC-01 | Occupancy / load / child pricing feature flags + 2nd/3rd adult + extra bed + child matrix CRUD | [ADR occupancy flags](./adr/hotel-occupancy-and-load-pricing-flags.md) | Y `/api/admin/pricing-policy`, child-matrix, yield | Y `/settings/pricing-policy`, master-data rate plans, `/distribution/child-matrix` | Y | — | — | SHIPPED | Flags default OFF; yield only when load flag ON |
+| HOT-OCC-01 | Occupancy / load / child pricing feature flags + 2nd/3rd adult + extra bed + child matrix CRUD | [ADR occupancy flags](./adr/hotel-occupancy-and-load-pricing-flags.md) | Y `/api/admin/pricing-policy`, child-matrix, yield | Y `/settings/pricing-policy`, `/settings/bar-calendar`, `/settings/child-matrix`, `/settings/yield-rules`, master-data rate plans | Y | — | — | SHIPPED | Flags default OFF; yield only when load flag ON; Rates & pricing menu umbrella |
 | HOT-PKG-01 | Package sell + costFloor versions (1/2 adult occupancy) | [ADR bar vs package](./adr/hotel-bar-accounting-vs-package-sell.md) | Y `/api/admin/rate-plans/[id]/sell-versions` | Y `/settings/package-prices` | Y | — | — | SHIPPED | Syncs `pricePerNight` for occupancy=1 |
 | HOT-PKG-02 | Medical SKU resolve (Extra Req / agency) + notes import | [ADR dual-run](./adr/nafta-medical-sku-dual-run.md) | Y resolve + notes adapter + bridge upsert | Y notes on card / import wizard | — | — | — | API | Not SHIPPED — UAT open; no EW rate as SKU |
 | HOT-PKG-03 | Composed nightly sell from per-pax SKUs (193+96 / half-double) | [ADR compose](./adr/nafta-compose-sell-and-doctor-bonus.md) | Y `composeNaftaPackageNightlySell` + dailyRates + night audit | — | — | — | — | API | Not SHIPPED — UAT open; Wave D |
@@ -280,6 +281,8 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
 | FIN-EQAIME-IN-01 | Incoming e-qaimə compare + ingest | Y network-inbox | API | amount/VÖEN MATCH/MISMATCH |
 | FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | Q-01 commercial kassa **221** / bank **223**; NAS-GOV **101/103**; İ-05 **221/223** |
+| FIN-GAAP-01 | Multi-GAAP NAS↔IFRS (P0–P1.5); AccountingBook | Y `/accounting/ledger-mappings`, `/accounting/chart`, `/accounting/adjustments`, `/accounting/books` | API | PARTIAL eng-complete for declared waves; multi-target mirror + book selector + mappings; Lab RT deferred — not SHIPPED. [ADR AccountingBook](./adr/finance-accounting-book.md) |
+| FIN-BOOK-01 | Extra books + MANAGEMENT CoA + compare + slots | Y `/accounting/books`, `/reporting/compare-books`, Audit Hub | API | SCREEN eng; slots/retire/wizard/compare/Audit Hub; reports+exports+FY close book-scoped; holdings via `bookCode`; account codes unique per book; Lab RT pending — not Pilot |
 | FIN-TAX-01 | Tax declarations (simplified / profit / payroll); property = aggregate/preview | Y `/reporting/tax-export`, `/reporting/property-tax/preview` | API | tax_pro; property declaration-file export pending; UAT-SMOKE pending |
 | FIN-TAX-02 | Profit tax adjustments + preview | Y API + tax-export | API | tax_pro |
 | FIN-STAT-01 | Goskomstat engine (1-müəssisə, 1/4-əmək, 1-İKT) | Y `/reporting/statforms` | API | compliance_pro or tax_pro |
@@ -485,10 +488,12 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
-| 2026-09-07 | Clinic: NAFTALAN_BATH quota→gender SVC; hide pool buckets in package assign menu; PENDING_PAY extras on patient card; CatalogField portal + widthPreset for compact modals; body silhouette static image. |
-| 2026-09-07 | Clinic: packageQuotaCode on ProcedureOrder + clinical author practitioner on anamnesis/complaints/diagnoses; pool SKU picker in package assign. |
-| 2026-09-07 | Platform commercial catalog freeze (19/29/39/99 AZN); clinic commercial SKUs + hotel/clinic sanatorium XOR. ADR era-commercial-catalog. |
-| 2026-09-07 | HOT-CL-06 company profile + `/front-cash/company-ledger`; HOT-CASH-07/08 folio balances + journal; Agency.settlementMode. Status API / SCREEN — not SHIPPED. |
+| 2026-09-08 | `/workspace` chrome: drop Hotel upsell banner + env-UUID panel (Super-Admin orgs); workforce tile only while SKU off. Status API. |
+| 2026-09-07 | HOT-CL-03/06 statement lines + HOT-AGP-04 portal CL; opening from full party history; REFUND netted; company TRANSFERRED_AR list. |
+| 2026-09-07 | Meter canon: persist invoice 0 and 1×2 headcount into SystemConfig JSON; public locale cookie on `/` `/satellites` `/pricing`. Status API. |
+| 2026-09-07 | Public IA: guest hub `/` (no sidebar); `/satellites/[slug]`; `/pricing` catalog + meters; FAQ accordion. Status API (guest marketing, not SHIPPED ops). |
+| 2026-09-07 | Public landing + `/pricing` rebuilt to catalog freeze (industry Gates, XOR, documents meter, Hotel Resort 188.70). Status API. |
+| 2026-09-07 | CP-BILL-OWNER-01: commercial catalog freeze (palette 19/29/39/99, XOR mutex, `syncPricingModuleCatalog`). Status API. ADR era-commercial-catalog. |
 | 2026-09-06 | FO laundry grid+filters; room-changes journal + card/plan relocate hint; reservation-times actual CI/CO + guest/agency, sort actual CI desc. |
 | 2026-09-06 | HOT-FO-03 room plan: drop HK squares; hide OOO/OOS/repair; occupancy-frame strokes; two names + folio debt on nose; EW day+weekday header. Status API (UAT §9 unsigned). |
 | 2026-09-02 | CLI-48: `#27`/`#29` create `LabOrderItem` after `LabOrder` (nested `items.create` stamps `organizationId` and is rejected). Word filenames Dimer/CRP/PRL/Insulin/Hormon map to catalog codes. Status SHIPPED. |

@@ -177,7 +177,7 @@ type FxRatesPayload = {
 export function DashboardWidgets() {
   const { t } = useTranslation();
   const { token, ready, user } = useAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -206,7 +206,7 @@ export function DashboardWidgets() {
     setLoading(true);
     setError(null);
     const res = await apiFetch(
-      `/api/reporting/dashboard?${ledgerQueryParam(ledgerType)}`,
+      `/api/reporting/dashboard?${ledgerQueryParam(ledgerType, accountingBookId)}`,
     );
     if (!res.ok) {
       setError(t("dashboard.dashErr", { status: String(res.status) }));
@@ -237,7 +237,9 @@ export function DashboardWidgets() {
       setClosePrompt(null);
       return;
     }
-    const res = await apiFetch("/api/reporting/close-period-prompt");
+    const res = await apiFetch(
+      `/api/reporting/close-period-prompt?${ledgerQueryParam(ledgerType, accountingBookId)}`,
+    );
     if (!res.ok) {
       setClosePrompt(null);
       return;
@@ -248,7 +250,7 @@ export function DashboardWidgets() {
       setCloseYear(p.year);
       setCloseMonth(p.month);
     }
-  }, [token]);
+  }, [token, ledgerType]);
 
   const loadMiniFin = useCallback(async () => {
     if (!token) {
@@ -257,7 +259,7 @@ export function DashboardWidgets() {
     }
     setMiniFinErr(null);
     const res = await apiFetch(
-      `/api/reporting/dashboard-mini?${ledgerQueryParam(ledgerType)}`,
+      `/api/reporting/dashboard-mini?${ledgerQueryParam(ledgerType, accountingBookId)}`,
     );
     if (!res.ok) {
       setMiniFinErr(t("dashboard.miniErr", { status: String(res.status) }));
@@ -273,7 +275,7 @@ export function DashboardWidgets() {
       return;
     }
     setExecErr(null);
-    const res = await apiFetch(`/api/reports/executive-widgets?${ledgerQueryParam(ledgerType)}`);
+    const res = await apiFetch(`/api/reports/executive-widgets?${ledgerQueryParam(ledgerType, accountingBookId)}`);
     if (!res.ok) {
       setExecErr(t("dashboard.miniErr", { status: String(res.status) }));
       setExec(null);
@@ -290,10 +292,10 @@ export function DashboardWidgets() {
   }, [load, loadMiniFin, loadExec, ready, ledgerReady]);
 
   useEffect(() => {
-    if (!ready || !token) return;
+    if (!ready || !token || !ledgerReady) return;
     void loadFx();
     void loadClosePrompt();
-  }, [loadFx, loadClosePrompt, ready, token]);
+  }, [loadFx, loadClosePrompt, ready, token, ledgerReady, ledgerType]);
 
   const chartData = useMemo(() => {
     const keys = utcDayKeys(29);
@@ -313,7 +315,12 @@ export function DashboardWidgets() {
     const res = await apiFetch("/api/reporting/close-period", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ year: closeYear, month: closeMonth }),
+      body: JSON.stringify({
+        year: closeYear,
+        month: closeMonth,
+        ledgerType,
+        accountingBookId,
+      }),
     });
     setClosing(false);
     if (!res.ok) {

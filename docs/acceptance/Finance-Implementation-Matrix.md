@@ -23,6 +23,7 @@
 | AC-FIN-FA | Fixed + intangible assets | ✅ | [ ] | `__tests__/fin-fa-negative.spec.ts` | Negative: dispose refuses already DISPOSED asset; **DONATION** acquire without note ≥10 |
 | AC-FIN-EVT | Satellite event ingress → accounting dispatch | ✅ | [ ] | `__tests__/fin-evt-negative.spec.ts` | Negative: InternalServiceTokenGuard 401 without/wrong Bearer; fail-closed in production |
 | AC-FIN-CFG | Desired-state SSO / service tokens from orchestrator (no compose folklore) | ✅ | [ ] | `__tests__/fin-cfg-negative.spec.ts` | Negative: runtime-config without Bearer → 401; short `ssoSharedSecret` rejected by DTO |
+| AC-FIN-GAAP | Multi-GAAP NAS→IFRS + AccountingBook Waves A–C engineering slice | 🟡 | [ ] | integrity + per-book + CF specs; multi-target mirror and Audit Hub specs; `accounting-book.spec.ts`; `compare-books.spec.ts`; UAT-SMOKE FIN-GAAP/FIN-BOOK | PARTIAL until UAT. Multi-target PUBLISHED-set fan-out, per-book idempotency/outcomes, and default-ops vs ACTIVE non-ops Audit Hub presence/debit parity are covered; remaining report/close edges and Lab RT remain. [ADR AccountingBook](../adr/finance-accounting-book.md). COVERAGE FIN-GAAP-01 / FIN-BOOK-01 |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
 Do not call this table «product readiness».

@@ -1048,7 +1048,7 @@
 | **Balance Sheet** | Активы, обязательства, капитал на дату |
 | **Cash Flow** | Движение денег (**cash basis** — по факту оплаты), параметр `ledgerType` (`NAS`/`IFRS`) |
 
-Горизонт v2 по Multi-GAAP отчётности закрыт: UI поддерживает глобальный NAS/IFRS переключатель, backend отчётов использует `ledgerType` для параллельных представлений книг.
+Multi-GAAP отчётность: UI NAS/IFRS toggle + `ledgerType` на backend — **PARTIAL**; integrity mirror P0; полный IFRS product (chart, adjustments, per-book close) — P1.
 
 ---
 
@@ -1422,18 +1422,20 @@ Cash Flow is generated for a period (`dateFrom`..`dateTo`, UTC inclusive). API: 
 - [x] **COMPLETED (Auditor Guard):** внедрён глобальный `AuditorMutationGuard` (мутации для `AUDITOR` блокируются на уровне APP_GUARD).
 - [x] **COMPLETED (Billing Security):** `/api/billing/*` доступен только роли `OWNER` (не-owner роли получают `403`).
 
-### 12.1. Multi-GAAP (параллельный учёт)
+### 12.1. Multi-GAAP (параллельный учёт) — **PARTIAL (P0 + P1.5)**
 
-- **БД:** поле `ledgerType` (Enum: NAS, IFRS) в `JournalEntry` и `Account` (или эквивалентная модель).
-- **Таблица** `AccountMapping`: `{ nasAccountId, ifrsAccountId, ratio }`.
-- **Логика:** при сохранении проводки в режиме NAS — проверка маппинга и создание «теневой» копии для IFRS.
-- **UI:** глобальный переключатель в хедере: «Режим учета: NAS / IFRS».
-- **Foundation v2026.04.21 (PRD §5.C):**
-  - Введена сущность `IfrsMappingRule` (`organizationId`, `sourceNasAccountCode`, `targetIfrsAccountCode`, `isActive`) для rule-based NAS→IFRS auto-mapping по кодам счетов.
-  - Добавлена модель `AccountBalance` с `ledgerType` для хранения ledger-aware остатков в разрезе даты.
-  - `AccountingService.postJournalInTransaction(...)` принимает `ledgerType` (по умолчанию `NAS` для backward compatibility).
-  - `IfrsAutoMappingService` после успешной NAS-проводки генерирует IFRS mirror-entries на основании активных `IfrsMappingRule`.
-  - Веб-контур: CRUD правил соответствия — страница **`/accounting/ifrs-mapping`** (редирект с **`/settings/finance/ifrs-mapping`**).
+- **Статус:** P0 integrity + P1 product + P1.5 close correctness. Not Pilot-ready until UAT.  
+- **Next:** UAT FIN-GAAP; then multi-book `AccountingBook` + slot SKU `accounting_book_extra` — ADR [finance-accounting-book.md](../docs/adr/finance-accounting-book.md).  
+- ADR: [finance-ledger-mapping-integrity.md](../docs/adr/finance-ledger-mapping-integrity.md), [finance-per-book-period-close.md](../docs/adr/finance-per-book-period-close.md).
+- **БД:** `ledgerType` (`NAS` | `IFRS`) на `Account` / `JournalEntry` / `AccountBalance`.
+- **SSOT mapping (P0):** `LedgerMappingSet` (`code=NAS_TO_IFRS`) + `LedgerMappingLine`. Legacy write API → **410 Gone**.
+- **IFRS CoA (P1):** `provisionIfrsFromTemplate` / onboarding — IFRS accounts from `TemplateIFRSMapping` (MVP catalog); **not** full NAS clone. `POST /accounts/ifrs-mirror` = ops escape hatch only.
+- **IFRS-only adjustments (P1):** manual adjustments with `ledgerType=IFRS` (no NAS mirror).
+- **Per-book close (P1):** `closedPeriodsByLedger`; `POST /reporting/close-period` + `ledgerType`.
+- **Mirror policy:** soft|strict (default soft). Provenance + pin set id unchanged.
+- **Entitlement:** без `ifrsMapping` → `mirrorStatus=NONE`.
+- **UI:** chart respects ledger toggle; `/accounting/ledger-mappings`; adjustments use active ledger.
+- **Reporting:** TB/P&L by ledger; IFRS CF includes bank lines when PUBLISHED mapping exists.
 
 ### 12.2. Дебиторка и акты сверки
 

@@ -5,6 +5,14 @@ import type { IfrsAutoMappingService } from "../../src/accounting/ifrs-auto-mapp
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
+jest.mock("../../src/subscription/subscription-access.service", () => ({
+  SubscriptionAccessService: class SubscriptionAccessService {
+    hasModule = jest.fn().mockResolvedValue(false);
+  },
+}));
+
+import { SubscriptionAccessService } from "../../src/subscription/subscription-access.service";
+
 describe("AccountingService", () => {
   const ifrsAutoMappingStub = {
     mirrorFromNas: jest.fn().mockResolvedValue(undefined),
@@ -12,6 +20,9 @@ describe("AccountingService", () => {
   const subcontoStub = {
     applyDimensionsToJournalEntries: jest.fn().mockResolvedValue(undefined),
   } as never;
+  const subscriptionStub = {
+    hasModule: jest.fn().mockResolvedValue(false),
+  } as unknown as SubscriptionAccessService;
 
   const orgId = "00000000-0000-0000-0000-000000000001";
   const acc101 = {
@@ -65,6 +76,7 @@ describe("AccountingService", () => {
       ifrsAutoMappingStub,
       createMockPostingResolver(),
       subcontoStub,
+      subscriptionStub,
     );
     const date = new Date(Date.UTC(2025, 5, 10, 12, 0, 0, 0));
 
@@ -95,6 +107,7 @@ describe("AccountingService", () => {
       ifrsAutoMappingStub,
       createMockPostingResolver(),
       subcontoStub,
+      subscriptionStub,
     );
     const date = new Date(Date.UTC(2025, 5, 10, 12, 0, 0, 0));
 
@@ -129,6 +142,7 @@ describe("AccountingService", () => {
       ifrsAutoMappingStub,
       createMockPostingResolver(),
       subcontoStub,
+      subscriptionStub,
     );
     const date = new Date(Date.UTC(2025, 5, 15, 12, 0, 0, 0));
 
@@ -161,6 +175,7 @@ describe("AccountingService", () => {
       ifrsAutoMappingStub,
       createMockPostingResolver(),
       subcontoStub,
+      subscriptionStub,
     );
     const date = new Date(Date.UTC(2025, 5, 15, 12, 0, 0, 0));
 
@@ -191,6 +206,7 @@ describe("AccountingService", () => {
       ifrsAutoMappingStub,
       createMockPostingResolver(),
       subcontoStub,
+      subscriptionStub,
     );
 
     await expect(

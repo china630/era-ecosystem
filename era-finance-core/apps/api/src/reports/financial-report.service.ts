@@ -4,6 +4,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { ReportingService } from "../reporting/reporting.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportsCacheService } from "./reports-cache.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 
 type DecimalLike = Prisma.Decimal | number | string;
 type Decimal = Prisma.Decimal;
@@ -24,12 +25,14 @@ export class FinancialReportService {
     private readonly reporting: ReportingService,
     private readonly cache: ReportsCacheService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   async generateBalanceSheet(
     organizationId: string,
     asOfDate: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<{
     asOfDate: string;
     ledgerType: LedgerType;
@@ -41,12 +44,24 @@ export class FinancialReportService {
     journalEntryCount: number;
   }> {
     const dateTo = utcDateOnlyStr(asOfDate);
-    const cacheKey = `reports:bs:${organizationId}:${ledgerType}:${dateTo}`;
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    ledgerType =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
+    const cacheKey = `reports:bs:${organizationId}:${book.id}:${dateTo}`;
 
     const journalEntryCount = await this.prisma.journalEntry.count({
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: book.id,
         transaction: {
           date: { lte: new Date(`${dateTo}T23:59:59.999Z`) },
         },
@@ -65,6 +80,7 @@ export class FinancialReportService {
       "1970-01-01",
       dateTo,
       ledgerType,
+      book.id,
     );
 
     const sumByPrefix = (prefixes: string[]): Prisma.Decimal => {
@@ -162,6 +178,7 @@ export class FinancialReportService {
   async executiveWidgets(
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<{
     ledgerType: LedgerType;
     periodLabel: string;
@@ -181,8 +198,15 @@ export class FinancialReportService {
     const dateToStr = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
     const [pl, bs] = await Promise.all([
-      this.reporting.profitAndLoss(organizationId, dateFromStr, dateToStr, ledgerType),
-      this.generateBalanceSheet(organizationId, dateToStr, ledgerType),
+      this.reporting.profitAndLoss(
+        organizationId,
+        dateFromStr,
+        dateToStr,
+        ledgerType,
+        undefined,
+        accountingBookId,
+      ),
+      this.generateBalanceSheet(organizationId, dateToStr, ledgerType, accountingBookId),
     ]);
 
     const totalCash = bs.assets.find((x) => x.code === "CASH")?.amount ?? "0.00";

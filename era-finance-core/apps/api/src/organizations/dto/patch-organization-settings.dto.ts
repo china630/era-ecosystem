@@ -7,6 +7,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   ValidateNested,
 } from "class-validator";
@@ -110,9 +111,24 @@ export class PatchOrganizationSettingsDto {
   @IsDateString()
   lockedPeriodUntil?: string | null;
 
+  /** Legacy ledger alias; also syncs lockedPeriodUntilByLedger. */
+  @IsOptional()
+  @IsIn(["NAS", "IFRS", "MANAGEMENT"])
+  ledgerType?: "NAS" | "IFRS" | "MANAGEMENT";
+
+  /** Active AccountingBook; authoritative key for N-book period locks. */
+  @IsOptional()
+  @IsUUID()
+  accountingBookId?: string;
+
   /** ASAN İmza / HSM subscriber id stored at Organization.settings.tax.asanUserId */
   @IsOptional()
   @IsString()
   @MaxLength(128)
   asanUserId?: string | null;
+
+  /** P0 Multi-GAAP: soft (default) | strict IFRS mirror policy */
+  @IsOptional()
+  @IsIn(["soft", "strict"])
+  ledgerMirrorMode?: "soft" | "strict";
 }

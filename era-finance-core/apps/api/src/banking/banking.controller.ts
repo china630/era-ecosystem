@@ -78,9 +78,10 @@ export class BankingController {
   accountCards(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const lt = parseLedgerTypeQuery(ledgerType);
-    return this.banking.getAccountCards(organizationId, lt);
+    return this.banking.getAccountCards(organizationId, lt, accountingBookId);
   }
 
   @Get("balances")

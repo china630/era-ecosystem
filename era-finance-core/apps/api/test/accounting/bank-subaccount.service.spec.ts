@@ -7,6 +7,13 @@ import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 describe("BankSubaccountService", () => {
   const orgId = "00000000-0000-0000-0000-000000000001";
   const branchId = "00000000-0000-0000-0000-00000000000b";
+  const nasBookId = "00000000-0000-0000-0000-0000000000aa";
+
+  function makeAccountingBooks() {
+    return {
+      resolveByLedgerType: jest.fn().mockResolvedValue({ id: nasBookId }),
+    } as unknown as import("../../src/accounting/accounting-book.service").AccountingBookService;
+  }
 
   function makePrisma(rows: ReadonlyArray<{ code: string }>) {
     const prisma = {
@@ -42,7 +49,11 @@ describe("BankSubaccountService", () => {
 
   it("nextSubaccountCode returns 01 when there are no existing subaccounts", async () => {
     const prisma = makePrisma([]);
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     const code = await svc.nextSubaccountCode(orgId, "14");
     expect(code).toBe("223.14.01");
   });
@@ -54,14 +65,22 @@ describe("BankSubaccountService", () => {
       { code: "223.14.05.01" },
       { code: "223.14.03" },
     ]);
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     const code = await svc.nextSubaccountCode(orgId, "14");
     expect(code).toBe("223.14.06");
   });
 
   it("nextSubaccountCode rejects invalid bank code", async () => {
     const prisma = makePrisma([]);
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     await expect(svc.nextSubaccountCode(orgId, "1")).rejects.toBeInstanceOf(
       BadRequestException,
     );
@@ -69,7 +88,11 @@ describe("BankSubaccountService", () => {
 
   it("nextSubaccountCode overflows past 99", async () => {
     const prisma = makePrisma([{ code: "223.14.99" }]);
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     await expect(svc.nextSubaccountCode(orgId, "14")).rejects.toBeInstanceOf(
       BadRequestException,
     );
@@ -77,7 +100,11 @@ describe("BankSubaccountService", () => {
 
   it("ensureSubaccountForBranch creates a MAIN_BANK.<bankCode>.<seq> ASSET account", async () => {
     const prisma = makePrisma([{ code: "223.14.01" }]);
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     const result = await svc.ensureSubaccountForBranch(orgId, branchId, {
       currency: "AZN",
     });
@@ -86,6 +113,7 @@ describe("BankSubaccountService", () => {
     const create = (prisma.account.create as jest.Mock).mock.calls[0][0];
     expect(create.data).toMatchObject({
       organizationId: orgId,
+      accountingBookId: nasBookId,
       code: "223.14.02",
       type: AccountType.ASSET,
       ledgerType: LedgerType.NAS,
@@ -105,7 +133,11 @@ describe("BankSubaccountService", () => {
       nameAz: "Kapital — Baş ofis",
       currency: "AZN",
     });
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     const result = await svc.ensureSubaccountForBranch(orgId, branchId, {
       currency: "AZN",
     });
@@ -117,7 +149,11 @@ describe("BankSubaccountService", () => {
   it("ensureSubaccountForBranch rejects unknown branch", async () => {
     const prisma = makePrisma([]);
     (prisma.bankBranch.findUnique as jest.Mock).mockResolvedValueOnce(null);
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     await expect(
       svc.ensureSubaccountForBranch(orgId, branchId),
     ).rejects.toBeInstanceOf(NotFoundException);
@@ -131,7 +167,11 @@ describe("BankSubaccountService", () => {
       isActive: false,
       bank: { id: "b", code: "14", nameAz: "X", isActive: true },
     });
-    const svc = new BankSubaccountService(prisma, createMockPostingResolver());
+    const svc = new BankSubaccountService(
+      prisma,
+      createMockPostingResolver(),
+      makeAccountingBooks(),
+    );
     await expect(
       svc.ensureSubaccountForBranch(orgId, branchId),
     ).rejects.toBeInstanceOf(BadRequestException);

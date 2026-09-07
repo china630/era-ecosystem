@@ -15,6 +15,7 @@ import {
 } from "../../lib/design-system";
 import { Button } from "../ui/button";
 import { SalesModalShell } from "../sales/modals/modal-shell";
+import { ledgerQueryParam, useLedger } from "../../lib/ledger-context";
 
 const TEMPLATES = [
   "FREEFORM",
@@ -62,6 +63,7 @@ export function ManualAdjustmentModal({
   prefill?: ManualAdjustmentPrefill | null;
 }) {
   const { t } = useTranslation();
+  const { ledgerType, accountingBookId } = useLedger();
   const [date, setDate] = useState(todayIso);
   const [template, setTemplate] = useState<TemplateCode>("FREEFORM");
   const [reason, setReason] = useState("");
@@ -82,7 +84,7 @@ export function ManualAdjustmentModal({
 
   const loadLookups = useCallback(async () => {
     const [accRes, cpRes, deptRes] = await Promise.all([
-      apiFetch("/api/accounts?ledgerType=NAS"),
+      apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType, accountingBookId)}`),
       apiFetch("/api/counterparties?pageSize=200"),
       apiFetch("/api/hr/departments"),
     ]);
@@ -94,7 +96,7 @@ export function ManualAdjustmentModal({
     if (deptRes.ok) {
       setDepartments((await deptRes.json()) as DepartmentOpt[]);
     }
-  }, []);
+  }, [accountingBookId, ledgerType]);
 
   useEffect(() => {
     if (!open) return;
@@ -128,12 +130,18 @@ export function ManualAdjustmentModal({
     if (!open || template === "FREEFORM" || prefill?.lines?.length) return;
     void (async () => {
       const res = await apiFetch(
-        `/api/accounting/manual-adjustments/templates?template=${encodeURIComponent(template)}`,
+        `/api/accounting/manual-adjustments/templates?template=${encodeURIComponent(template)}&ledgerType=${encodeURIComponent(ledgerType)}`,
       );
       if (!res.ok) return;
       const data = (await res.json()) as {
         lines: Array<{ accountCode: string; debitHint: "debit" | "credit" }>;
+        warning?: string | null;
       };
+      if (data.warning) {
+        toast.message(t("manualAdjustments.templateMapWarn", {
+          defaultValue: "IFRS template accounts not mapped — enter codes manually",
+        }));
+      }
       if (!data.lines.length) return;
       setLines(
         data.lines.map((l) => ({
@@ -145,7 +153,7 @@ export function ManualAdjustmentModal({
       );
       setPreviewOk(false);
     })();
-  }, [open, template, prefill?.lines?.length]);
+  }, [open, template, prefill?.lines?.length, ledgerType]);
 
   const totals = useMemo(() => {
     let dr = 0;
@@ -162,6 +170,8 @@ export function ManualAdjustmentModal({
       date,
       reason: reason.trim(),
       template,
+      ledgerType,
+      ...(accountingBookId ? { accountingBookId } : {}),
       ...(counterpartyId ? { counterpartyId } : {}),
       ...(departmentId ? { departmentId } : {}),
       ...(basisInvoiceId ? { basisInvoiceId } : {}),

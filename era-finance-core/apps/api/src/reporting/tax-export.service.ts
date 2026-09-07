@@ -7,7 +7,6 @@ import {
 import {
   Decimal,
   EmployeeKind,
-  LedgerType,
   PayrollRunStatus,
   Prisma,
   TaxDeclarationExportStatus,
@@ -17,6 +16,10 @@ import ExcelJS from "exceljs";
 import { endOfUtcDay, monthRangeUtc } from "./reporting-period.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import {
+  AccountingBookService,
+  ledgerTypeForBookGaap,
+} from "../accounting/accounting-book.service";
 import { STORAGE_SERVICE, type StorageService } from "../storage/storage.interface";
 import type { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
@@ -151,6 +154,7 @@ export class TaxExportService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
     private readonly etaxes: ETaxesIntegrationService,
     private readonly mdm: OrchestratorMdmClientService,
     private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
@@ -470,8 +474,16 @@ export class TaxExportService {
     const { year, month } = parsePeriod(period);
     const { start, end } = monthRangeUtc(year, month);
     const revenueCode = await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
+    const opsBook =
+      await this.accountingBooks.resolveDefaultOpsBook(organizationId);
+    const ledgerType = ledgerTypeForBookGaap(opsBook.gaapKind);
     const account = await this.prisma.account.findFirst({
-      where: { organizationId, code: revenueCode, ledgerType: LedgerType.NAS },
+      where: {
+        organizationId,
+        code: revenueCode,
+        ledgerType,
+        accountingBookId: opsBook.id,
+      },
       select: { id: true },
     });
     if (!account) {
@@ -484,7 +496,8 @@ export class TaxExportService {
       where: {
         organizationId,
         accountId: account.id,
-        ledgerType: LedgerType.NAS,
+        ledgerType,
+        accountingBookId: opsBook.id,
         transaction: { date: { gte: start, lte: endOfUtcDay(end) } },
       },
       _sum: { credit: true },

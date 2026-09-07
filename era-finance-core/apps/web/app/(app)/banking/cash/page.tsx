@@ -166,8 +166,8 @@ function monthDateRange(ym: string): { from: string; to: string } {
 export default function BankingCashPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType } = useLedger();
-  const lq = ledgerQueryParam(ledgerType);
+  const { ledgerType, accountingBookId } = useLedger();
+  const lq = ledgerQueryParam(ledgerType, accountingBookId);
 
   const [balances, setBalances] = useState<Record<string, string> | null>(null);
   const [orders, setOrders] = useState<CashOrderRow[]>([]);
@@ -269,8 +269,9 @@ export default function BankingCashPage() {
 
   const fetchOffsetAccounts = useCallback(
     async (search: string) => {
-      const q = new URLSearchParams();
-      q.set("ledgerType", ledgerType);
+      const q = new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      );
       const trimmed = search.trim();
       if (trimmed) q.set("search", trimmed);
       const res = await apiFetch(`/api/accounts?${q}`);
@@ -295,7 +296,7 @@ export default function BankingCashPage() {
         name: `${a.code} — ${a.displayName ?? a.name ?? a.code}`,
       }));
     },
-    [ledgerType],
+    [ledgerType, accountingBookId],
   );
 
   const loadCore = useCallback(async () => {

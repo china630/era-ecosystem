@@ -22,7 +22,7 @@ import {
 } from "../../../lib/design-system";
 import { coerceSupportedCurrency, type SupportedCurrency } from "../../../lib/currencies";
 import { fetchExchangeRateMock } from "../../../lib/mock-exchange-rates";
-import { useLedger } from "../../../lib/ledger-context";
+import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { notifyListRefresh } from "../../../lib/list-refresh-bus";
 import { useAuth } from "../../../lib/auth-context";
 import {
@@ -188,7 +188,7 @@ export function CreateInvoiceModal({
   const { t } = useTranslation();
   const { currencyCodes } = useAuth();
   const [vatRateOptions, setVatRateOptions] = useState<number[]>(() => [...DEFAULT_INVOICE_VAT_RATES]);
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [busy, setBusy] = useState(false);
   const [netting, setNetting] = useState<NettingPreview | null>(null);
   const [counterpartyLabel, setCounterpartyLabel] = useState("");
@@ -440,7 +440,7 @@ export function CreateInvoiceModal({
     const h = window.setTimeout(() => {
       void (async () => {
         const res = await apiFetch(
-          `/api/reporting/netting/preview?counterpartyId=${encodeURIComponent(watchedCounterpartyId)}&ledgerType=${encodeURIComponent(ledgerType)}`,
+          `/api/reporting/netting/preview?counterpartyId=${encodeURIComponent(watchedCounterpartyId)}&${ledgerQueryParam(ledgerType, accountingBookId)}`,
         );
         if (cancelled) return;
         if (!res.ok) {
@@ -454,7 +454,7 @@ export function CreateInvoiceModal({
       cancelled = true;
       window.clearTimeout(h);
     };
-  }, [open, watchedCounterpartyId, ledgerType, ledgerReady]);
+  }, [open, watchedCounterpartyId, ledgerType, accountingBookId, ledgerReady]);
 
   const vatTotals = useMemo(() => {
     let net = 0;

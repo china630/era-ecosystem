@@ -15,6 +15,7 @@ import {
 } from "../../../lib/design-system";
 import { PageHeader } from "../../../components/layout/page-header";
 import { uiLangRuAz } from "../../../lib/i18n/ui-lang";
+import { useLedger } from "../../../lib/ledger-context";
 
 type AccountRow = {
   id: string;
@@ -46,12 +47,17 @@ export default function NasChartSettingsPage() {
   const { t, i18n } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { user, organizations } = useAuth();
+  const { ledgerType } = useLedger();
   const canImport = canImportNas(user?.role);
   const loc = uiLangRuAz(i18n.language);
 
   const [accounts, setAccounts] = useState<AccountRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [provisionBusy, setProvisionBusy] = useState(false);
+  const [ifrsCode, setIfrsCode] = useState("");
+  const [ifrsName, setIfrsName] = useState("");
+  const [ifrsType, setIfrsType] = useState("ASSET");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -72,7 +78,7 @@ export default function NasChartSettingsPage() {
     setLoading(true);
     setErr(null);
     const res = await apiFetch(
-      `/api/accounts?ledgerType=NAS&locale=${encodeURIComponent(loc)}`,
+      `/api/accounts?ledgerType=${ledgerType}&locale=${encodeURIComponent(loc)}`,
     );
     if (!res.ok) {
       setErr(t("chartPage.loadErr"));
@@ -83,7 +89,7 @@ export default function NasChartSettingsPage() {
     const rows = (await res.json()) as AccountRow[];
     setAccounts(rows);
     setLoading(false);
-  }, [token, loc, t]);
+  }, [token, loc, t, ledgerType]);
 
   useEffect(() => {
     if (!ready || !token) return;
@@ -141,19 +147,63 @@ export default function NasChartSettingsPage() {
       : currentOrg?.kind === "NGO"
         ? "chartPage.planKindNgo"
         : "chartPage.planKindCommercial";
-  const chartSubtitle = `${t(planKindKey)} — ${t("chartPage.subtitle")}`;
+  const chartSubtitle = `${t(planKindKey)} — ${ledgerType} — ${t("chartPage.subtitle")}`;
+
+  async function onProvisionIfrs() {
+    if (!token || !canImport) return;
+    setProvisionBusy(true);
+    setErr(null);
+    const res = await apiFetch("/api/accounts/ifrs-provision", { method: "POST" });
+    setProvisionBusy(false);
+    if (!res.ok) {
+      setErr(`${t("chartPage.importErr")}: ${res.status}`);
+      return;
+    }
+    await loadAccounts();
+  }
+
+  async function onCreateIfrs(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token || !canImport || !ifrsCode.trim() || !ifrsName.trim()) return;
+    setProvisionBusy(true);
+    setErr(null);
+    const res = await apiFetch("/api/accounts/ifrs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: ifrsCode.trim(),
+        nameAz: ifrsName.trim(),
+        type: ifrsType,
+      }),
+    });
+    setProvisionBusy(false);
+    if (!res.ok) {
+      setErr(`${t("chartPage.importErr")}: ${res.status}`);
+      return;
+    }
+    setIfrsCode("");
+    setIfrsName("");
+    await loadAccounts();
+  }
 
   return (
     <div className="space-y-6 max-w-5xl">
       <PageHeader
-        title={t("chartPage.title")}
+        title={
+          ledgerType === "IFRS"
+            ? t("chartPage.ifrsTitle", "IFRS chart of accounts")
+            : t("chartPage.title")
+        }
         subtitle={chartSubtitle}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Link href="/accounting/books" className={SECONDARY_BUTTON_CLASS}>
+              {t("accountingBooks.title")}
+            </Link>
             <Link href="/accounting/posting-roles" className={SECONDARY_BUTTON_CLASS}>
               {t("chartPage.postingRolesLink", "Posting roles")}
             </Link>
-            {canImport ? (
+            {canImport && ledgerType === "NAS" ? (
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
@@ -166,9 +216,62 @@ export default function NasChartSettingsPage() {
                 {t("chartPage.addFromCatalog")}
               </button>
             ) : null}
+            {canImport && ledgerType === "IFRS" ? (
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={provisionBusy}
+                onClick={() => void onProvisionIfrs()}
+              >
+                {t("chartPage.provisionIfrs", "Provision from IFRS template")}
+              </button>
+            ) : null}
           </div>
         }
       />
+
+      {ledgerType === "IFRS" && canImport ? (
+        <form
+          className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-2 items-end p-4`}
+          onSubmit={(e) => void onCreateIfrs(e)}
+        >
+          <label className="text-xs">
+            code
+            <input
+              className={INPUT_BORDERED_CLASS}
+              value={ifrsCode}
+              onChange={(e) => setIfrsCode(e.target.value)}
+              required
+            />
+          </label>
+          <label className="text-xs">
+            name
+            <input
+              className={INPUT_BORDERED_CLASS}
+              value={ifrsName}
+              onChange={(e) => setIfrsName(e.target.value)}
+              required
+            />
+          </label>
+          <label className="text-xs">
+            type
+            <select
+              className={INPUT_BORDERED_CLASS}
+              value={ifrsType}
+              onChange={(e) => setIfrsType(e.target.value)}
+            >
+              <option value="ASSET">ASSET</option>
+              <option value="LIABILITY">LIABILITY</option>
+              <option value="EQUITY">EQUITY</option>
+              <option value="REVENUE">REVENUE</option>
+              <option value="EXPENSE">EXPENSE</option>
+            </select>
+          </label>
+          <button type="submit" className={SECONDARY_BUTTON_CLASS} disabled={provisionBusy}>
+            {t("chartPage.createIfrs", "Create IFRS account")}
+          </button>
+        </form>
+      ) : null}
 
       {!canImport ? (
         <p className="text-sm text-slate-600">{t("chartPage.readOnlyHint")}</p>

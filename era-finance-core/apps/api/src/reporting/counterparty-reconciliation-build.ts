@@ -10,6 +10,7 @@ export type CounterpartyReconciliationAccountCodes = {
 export type CounterpartyReconciliationOptions = {
   currency?: string | null;
   ledgerType?: LedgerType;
+  accountingBookId?: string;
 };
 
 export type ReconciliationJournalLine = {
@@ -114,6 +115,7 @@ export async function buildCounterpartyReconciliationPayload(
   primaryCurrency: string;
 }> {
   const ledgerType = options?.ledgerType ?? LedgerType.NAS;
+  const accountingBookId = options?.accountingBookId;
   const currencyUpper = options?.currency?.trim().toUpperCase() ?? null;
   const receivableCode = accountCodes.receivable;
   const revenueCode = accountCodes.revenue;
@@ -176,10 +178,10 @@ export async function buildCounterpartyReconciliationPayload(
 
   const [acc211, acc601] = await Promise.all([
     prisma.account.findFirst({
-      where: { organizationId, ledgerType, code: receivableCode },
+      where: { organizationId, ledgerType, accountingBookId, code: receivableCode },
     }),
     prisma.account.findFirst({
-      where: { organizationId, ledgerType, code: revenueCode },
+      where: { organizationId, ledgerType, accountingBookId, code: revenueCode },
     }),
   ]);
   const fallback211 = acc211 ? pickAccountDisplayName(acc211, "ru") : "Дебиторская задолженность";
@@ -198,7 +200,7 @@ export async function buildCounterpartyReconciliationPayload(
           },
           include: {
             journalEntries: {
-              where: { ledgerType },
+              where: { ledgerType, accountingBookId },
               include: { account: true },
               orderBy: { id: "asc" },
             },
@@ -223,6 +225,7 @@ export async function buildCounterpartyReconciliationPayload(
       where: {
         organizationId,
         ledgerType,
+        accountingBookId,
         transactionId: { in: paymentTxIds },
       },
       include: { account: true },

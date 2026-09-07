@@ -98,6 +98,20 @@ export class SatelliteEventDispatchService {
     private readonly inventory: InventoryService,
   ) {}
 
+  private async defaultOpsBookId(
+    organizationId: string,
+  ): Promise<string | null> {
+    const book = await this.prisma.accountingBook.findFirst({
+      where: {
+        organizationId,
+        isDefaultOps: true,
+        status: "ACTIVE",
+      },
+      select: { id: true },
+    });
+    return book?.id ?? null;
+  }
+
   async dispatch(
     organizationId: string,
     data: unknown,
@@ -309,6 +323,7 @@ export class SatelliteEventDispatchService {
       description: params.description,
       counterpartyId: params.counterpartyId ?? undefined,
       ledgerType: LedgerType.NAS,
+      accountingBookId: await this.defaultOpsBookId(organizationId),
       lines,
     });
     return transactionId;
@@ -580,6 +595,7 @@ export class SatelliteEventDispatchService {
         reference: `hotel-na:${event.payload.businessDate}`,
         description: `Hotel night audit ${event.payload.businessDate} (${event.correlationId})`,
         ledgerType: LedgerType.NAS,
+        accountingBookId: await this.defaultOpsBookId(organizationId),
         lines,
       });
       return txId;
@@ -1153,6 +1169,7 @@ export class SatelliteEventDispatchService {
         reference: ref,
         description: `Bank CBS GL daily summary ${event.payload.businessDate}`,
         ledgerType: LedgerType.NAS,
+        accountingBookId: await this.defaultOpsBookId(organizationId),
         lines,
       });
       return posted;

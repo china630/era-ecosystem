@@ -17,10 +17,22 @@ export type NasIfrsPayload = {
   from: string;
   to: string;
   includeTotalsMismatch: boolean;
+  intentionalIfrsOnlyCount: number;
+  intentionalNonOpsBookCount: number;
+  intentionalNonOpsBookBreakdown: Array<{
+    accountingBookId: string;
+    bookCode: string;
+    bookName: string;
+    transactionCount: number;
+  }>;
   items: Array<{
     transactionId: string;
     date: string;
     reference: string | null;
+    opsBookCode: string;
+    targetBookCode: string;
+    hasOps: boolean;
+    hasTarget: boolean;
     hasNas: boolean;
     hasIfrs: boolean;
     issue: string;
@@ -30,6 +42,10 @@ export type NasIfrsPayload = {
     date: string;
     reference: string | null;
     issue: string;
+    opsBookCode: string;
+    targetBookCode: string;
+    opsDebitSum: string;
+    targetDebitSum: string;
     nasDebitSum: string;
     ifrsDebitSum: string;
   }>;
@@ -42,6 +58,8 @@ function isNasPayload(v: unknown): v is NasIfrsPayload {
     typeof o.from === "string" &&
     typeof o.to === "string" &&
     typeof o.includeTotalsMismatch === "boolean" &&
+    typeof o.intentionalNonOpsBookCount === "number" &&
+    Array.isArray(o.intentionalNonOpsBookBreakdown) &&
     Array.isArray(o.items) &&
     Array.isArray(o.totalsMismatchItems)
   );
@@ -60,6 +78,10 @@ export function buildNasIfrsExportSheets(payload: NasIfrsPayload) {
     {
       name: "totals_mismatch",
       rows: payload.totalsMismatchItems as unknown as Record<string, unknown>[],
+    },
+    {
+      name: "non_ops_books",
+      rows: payload.intentionalNonOpsBookBreakdown as unknown as Record<string, unknown>[],
     },
   ];
 }
@@ -82,7 +104,7 @@ export function AuditHubNasIfrsResultPanel({ payload }: { payload: unknown }) {
     );
   }
 
-  const baseName = `audit-nas-ifrs-${parsed.from}_${parsed.to}`;
+  const baseName = `audit-ops-vs-books-${parsed.from}_${parsed.to}`;
 
   return (
     <div className="space-y-4">
@@ -114,7 +136,7 @@ export function AuditHubNasIfrsResultPanel({ payload }: { payload: unknown }) {
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <div className={`${CARD_CONTAINER_CLASS} p-4`}>
           <div className="text-xs font-semibold text-[#34495E]">{t("auditHub.reconCardAsym")}</div>
           <div className="mt-1 text-2xl font-bold tabular-nums text-[#34495E]">
@@ -126,6 +148,23 @@ export function AuditHubNasIfrsResultPanel({ payload }: { payload: unknown }) {
           <div className="mt-1 text-2xl font-bold tabular-nums text-[#34495E]">
             {parsed.totalsMismatchItems.length}
           </div>
+        </div>
+        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+          <div className="text-xs font-semibold text-[#34495E]">
+            {t("auditHub.reconCardNonOpsBooks")}
+          </div>
+          <div className="mt-1 text-2xl font-bold tabular-nums text-[#34495E]">
+            {parsed.intentionalNonOpsBookCount ?? 0}
+          </div>
+          {parsed.intentionalNonOpsBookBreakdown?.length ? (
+            <ul className="mt-2 space-y-0.5 text-[11px] text-[#7F8C8D]">
+              {parsed.intentionalNonOpsBookBreakdown.map((row) => (
+                <li key={row.accountingBookId}>
+                  {row.bookCode}: {row.transactionCount}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
 
@@ -140,15 +179,19 @@ export function AuditHubNasIfrsResultPanel({ payload }: { payload: unknown }) {
                 <tr>
                   <th className="border-b px-2 py-1.5">transactionId</th>
                   <th className="border-b px-2 py-1.5">date</th>
+                  <th className="border-b px-2 py-1.5">opsBook</th>
+                  <th className="border-b px-2 py-1.5">comparedBook</th>
                   <th className="border-b px-2 py-1.5">issue</th>
                   <th className="border-b px-2 py-1.5">{t("auditHub.reconColExplain")}</th>
                 </tr>
               </thead>
               <tbody>
                 {parsed.items.map((row) => (
-                  <tr key={row.transactionId} className="border-b border-[#D5DADF]">
+                  <tr key={`${row.transactionId}:${row.targetBookCode}`} className="border-b border-[#D5DADF]">
                     <td className="px-2 py-1.5 font-mono">{row.transactionId}</td>
                     <td className="px-2 py-1.5">{row.date}</td>
+                    <td className="px-2 py-1.5">{row.opsBookCode}</td>
+                    <td className="px-2 py-1.5">{row.targetBookCode}</td>
                     <td className="px-2 py-1.5">{row.issue}</td>
                     <td className="px-2 py-1.5">
                       <Link
@@ -178,18 +221,22 @@ export function AuditHubNasIfrsResultPanel({ payload }: { payload: unknown }) {
                   <tr>
                     <th className="border-b px-2 py-1.5">transactionId</th>
                     <th className="border-b px-2 py-1.5">date</th>
-                    <th className="border-b px-2 py-1.5">nasDebitSum</th>
-                    <th className="border-b px-2 py-1.5">ifrsDebitSum</th>
+                    <th className="border-b px-2 py-1.5">opsBook</th>
+                    <th className="border-b px-2 py-1.5">comparedBook</th>
+                    <th className="border-b px-2 py-1.5">opsDebitSum</th>
+                    <th className="border-b px-2 py-1.5">bookDebitSum</th>
                     <th className="border-b px-2 py-1.5">{t("auditHub.reconColExplain")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {parsed.totalsMismatchItems.map((row) => (
-                    <tr key={row.transactionId} className="border-b border-[#D5DADF]">
+                  <tr key={`${row.transactionId}:${row.targetBookCode}`} className="border-b border-[#D5DADF]">
                       <td className="px-2 py-1.5 font-mono">{row.transactionId}</td>
                       <td className="px-2 py-1.5">{row.date}</td>
-                      <td className="px-2 py-1.5 font-mono">{row.nasDebitSum}</td>
-                      <td className="px-2 py-1.5 font-mono">{row.ifrsDebitSum}</td>
+                      <td className="px-2 py-1.5">{row.opsBookCode}</td>
+                      <td className="px-2 py-1.5">{row.targetBookCode}</td>
+                      <td className="px-2 py-1.5 font-mono">{row.opsDebitSum}</td>
+                      <td className="px-2 py-1.5 font-mono">{row.targetDebitSum}</td>
                       <td className="px-2 py-1.5">
                         <Link
                           className={LINK_ACCENT_CLASS}

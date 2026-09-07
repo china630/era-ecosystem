@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { useAuth } from "../../../lib/auth-context";
+import { useLedger } from "../../../lib/ledger-context";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
@@ -29,6 +30,12 @@ type OrgSettings = {
   settings?: {
     ledger?: {
       lockedPeriodUntil?: string | null;
+      lockedPeriodUntilByLedger?: {
+        NAS?: string | null;
+        IFRS?: string | null;
+        MANAGEMENT?: string | null;
+      };
+      lockedPeriodUntilByBookId?: Record<string, string | null | undefined>;
     };
     tax?: {
       asanUserId?: string | null;
@@ -40,6 +47,7 @@ export default function OrganizationSettingsPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
   const { user } = useAuth();
+  const { ledgerType, accountingBookId, activeBook } = useLedger();
   const canEditGeneral = user?.role === "OWNER" || user?.role === "ADMIN";
   const canEditPeriodLock = user?.role === "OWNER" || user?.role === "ACCOUNTANT";
   const canOpenPage = canEditGeneral || canEditPeriodLock;
@@ -77,10 +85,17 @@ export default function OrganizationSettingsPage() {
     setDirectorName(o.directorName ?? "");
     setValuationMethod(o.valuationMethod === "FIFO" ? "FIFO" : "AVCO");
     setLogoUrl(o.logoUrl ?? null);
-    setLockedPeriodUntil(o.settings?.ledger?.lockedPeriodUntil ?? "");
+    setLockedPeriodUntil(
+      (accountingBookId
+        ? o.settings?.ledger?.lockedPeriodUntilByBookId?.[accountingBookId]
+        : null) ??
+        o.settings?.ledger?.lockedPeriodUntilByLedger?.[ledgerType] ??
+        (ledgerType === "NAS" ? o.settings?.ledger?.lockedPeriodUntil ?? "" : "") ??
+        "",
+    );
     setAsanUserId(o.settings?.tax?.asanUserId ?? "");
     setLoading(false);
-  }, [token]);
+  }, [token, ledgerType, accountingBookId]);
 
   useEffect(() => {
     if (!ready || !token) return;
@@ -156,7 +171,7 @@ export default function OrganizationSettingsPage() {
       const month = lockDate.slice(0, 7);
       if (/^\d{4}-\d{2}$/.test(month)) {
         const checkRes = await apiFetch(
-          `/api/accounting/period-close/checklist?month=${encodeURIComponent(month)}`,
+          `/api/accounting/period-close/checklist?month=${encodeURIComponent(month)}&ledgerType=${encodeURIComponent(ledgerType)}${accountingBookId ? `&accountingBookId=${encodeURIComponent(accountingBookId)}` : ""}`,
         );
         if (!checkRes.ok) {
           toast.error(t("orgSettings.periodChecklistErr", { defaultValue: "Не удалось выполнить checklist закрытия периода" }));
@@ -217,6 +232,8 @@ export default function OrganizationSettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         lockedPeriodUntil: lockedPeriodUntil.trim() || null,
+        ledgerType,
+        accountingBookId,
       }),
     });
     setSaving(false);
@@ -412,6 +429,11 @@ export default function OrganizationSettingsPage() {
                   {t("orgSettings.periodLockTitle")}
                 </p>
                 <p className="text-xs text-[#7F8C8D]">{t("orgSettings.periodLockHint")}</p>
+                {activeBook ? (
+                  <p className="text-xs font-semibold text-[#34495E]">
+                    {t("ledger.bookLabel")} {activeBook.code}
+                  </p>
+                ) : null}
                 <label className="block text-[#34495E] text-sm">
                   {t("orgSettings.periodLockUntil")}
                   <DatePicker

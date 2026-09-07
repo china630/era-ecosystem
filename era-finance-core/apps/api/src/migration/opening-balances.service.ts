@@ -13,6 +13,7 @@ import {
   StockMovementType,
 } from "@erafinance/database";
 import { AccountingService, type PostTransactionLine } from "../accounting/accounting.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { assertWarehouseNotUnderReconciliation } from "../inventory/inventory-reconciliation-lock";
 import { PrismaService } from "../prisma/prisma.service";
@@ -42,6 +43,7 @@ export class OpeningBalancesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly accountingBooks: AccountingBookService,
     private readonly posting: PostingAccountResolver,
     private readonly mdm: OrchestratorMdmClientService,
   ) {}
@@ -50,17 +52,24 @@ export class OpeningBalancesService {
     tx: Prisma.TransactionClient,
     organizationId: string,
   ) {
+    const nasBook = await this.accountingBooks.resolveByLedgerType(
+      organizationId,
+      LedgerType.NAS,
+      tx,
+    );
     const existing = await tx.account.findFirst({
       where: {
         organizationId,
         code: OPENING_ACCOUNT_CODE,
         ledgerType: LedgerType.NAS,
+        accountingBookId: nasBook.id,
       },
     });
     if (existing) return existing;
     return tx.account.create({
       data: {
         organizationId,
+        accountingBookId: nasBook.id,
         code: OPENING_ACCOUNT_CODE,
         nameAz: "İlkin qalıqlar texniki hesabı",
         nameRu: "Технический счёт начальных остатков",

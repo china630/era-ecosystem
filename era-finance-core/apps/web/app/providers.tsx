@@ -71,9 +71,9 @@ export function Providers({ children }: { children: ReactNode }) {
           <ApiErrorToaster />
           <NetworkErrorToaster />
           <Toaster richColors position="top-right" closeButton />
-          <LedgerPeriodLockProvider>
-            <LedgerProvider>{children}</LedgerProvider>
-          </LedgerPeriodLockProvider>
+          <LedgerProvider>
+            <LedgerPeriodLockProvider>{children}</LedgerPeriodLockProvider>
+          </LedgerProvider>
         </SubscriptionProvider>
       </AuthProvider>
     </I18nextProvider>

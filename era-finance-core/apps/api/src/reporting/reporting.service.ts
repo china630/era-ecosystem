@@ -28,6 +28,7 @@ import {
   mergeClosedYear,
   monthRangeUtc,
   parseIsoDateOnly,
+  unmergeClosedPeriod,
   unmergeClosedYear,
   yearRangeUtc,
 } from "./reporting-period.util";
@@ -40,6 +41,7 @@ import {
 } from "./counterparty-reconciliation-build";
 import { renderReconciliationPdfAz } from "./reconciliation-pdf.render";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 
 /**
  * Cash/Bank balances for dashboards — prefixes derived from posting roles
@@ -89,7 +91,29 @@ export class ReportingService {
     private readonly config: ConfigService,
     private readonly posting: PostingAccountResolver,
     private readonly accounting: AccountingService,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
+
+  private async resolveBookScope(
+    organizationId: string,
+    ledgerType: LedgerType,
+    accountingBookId?: string,
+  ): Promise<{ ledgerType: LedgerType; accountingBookId: string }> {
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    return {
+      accountingBookId: book.id,
+      ledgerType:
+        book.gaapKind === "IFRS"
+          ? LedgerType.IFRS
+          : book.gaapKind === "MANAGEMENT"
+            ? LedgerType.MANAGEMENT
+            : LedgerType.NAS,
+    };
+  }
 
   /** Account code prefixes for cash desks + bank from posting roles (FEAT-FC-COA-001). */
   private async cashBankCodePrefixes(
@@ -106,6 +130,7 @@ export class ReportingService {
   private async cashBankAccountWhere(
     organizationId: string,
     ledgerType: LedgerType,
+    accountingBookId?: string,
   ): Promise<Prisma.AccountWhereInput> {
     const { cashPrefixes, bankPrefixes } = await this.cashBankCodePrefixes(
       organizationId,
@@ -113,6 +138,7 @@ export class ReportingService {
     return {
       organizationId,
       ledgerType,
+      ...(accountingBookId ? { accountingBookId } : {}),
       OR: [
         ...cashPrefixes.map((p) => ({ code: { startsWith: p } })),
         ...bankPrefixes.map((p) => ({ code: { startsWith: p } })),
@@ -125,7 +151,14 @@ export class ReportingService {
     dateFromStr: string,
     dateToStr: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    ledgerType = scope.ledgerType;
     const startedAt = Date.now();
     if (!dateFromStr?.trim() || !dateToStr?.trim()) {
       throw new BadRequestException("dateFrom and dateTo are required");
@@ -152,7 +185,7 @@ export class ReportingService {
     ]);
 
     const accounts = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType },
+      where: { organizationId, ledgerType, accountingBookId: scope.accountingBookId },
       orderBy: { code: "asc" },
     });
     if (accounts.length === 0) {
@@ -160,6 +193,7 @@ export class ReportingService {
         dateFrom: dateFromStr,
         dateTo: dateToStr,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         rows: [],
       };
     }
@@ -170,7 +204,11 @@ export class ReportingService {
       where: { id: organizationId },
       select: { settings: true },
     });
-    const closedKeys = getClosedPeriodKeys(org?.settings);
+    const closedKeys = getClosedPeriodKeys(
+      org?.settings,
+      ledgerType === LedgerType.IFRS ? "IFRS" : "NAS",
+      scope.accountingBookId,
+    );
     const closedEnds = closedKeys
       .map(parseClosedPeriodEnd)
       .filter((d): d is Date => d != null)
@@ -183,6 +221,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: { in: accountIds },
         transaction: {
           date: { gte: dateFrom, lte: dateTo },
@@ -220,6 +259,7 @@ export class ReportingService {
           where: {
             organizationId,
             ledgerType,
+            accountingBookId: scope.accountingBookId,
             accountId: { in: missing },
             transaction: { date: { lt: dateFrom }, isFinal: true },
           },
@@ -238,6 +278,7 @@ export class ReportingService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId: scope.accountingBookId,
           accountId: { in: accountIds },
           transaction: { date: { lt: dateFrom }, isFinal: true },
         },
@@ -327,6 +368,7 @@ export class ReportingService {
       dateFrom: dateFromStr,
       dateTo: dateToStr,
       ledgerType,
+      accountingBookId: scope.accountingBookId,
       openingSnapshotDate: snapshotDate?.toISOString().slice(0, 10) ?? null,
       rows,
       totals: {
@@ -344,6 +386,143 @@ export class ReportingService {
     };
   }
 
+  async compareBooks(
+    organizationId: string,
+    bookAId: string,
+    bookBId: string,
+    dateFromStr: string,
+    dateToStr: string,
+  ) {
+    if (!bookAId?.trim() || !bookBId?.trim() || bookAId === bookBId) {
+      throw new BadRequestException("Two different accounting books are required");
+    }
+    let dateFrom: Date;
+    let dateTo: Date;
+    try {
+      dateFrom = parseIsoDateOnly(dateFromStr);
+      dateTo = parseIsoDateOnly(dateToStr);
+    } catch {
+      throw new BadRequestException(
+        "Invalid dateFrom/dateTo (expected YYYY-MM-DD)",
+      );
+    }
+    if (dateFrom.getTime() > dateTo.getTime()) {
+      throw new BadRequestException("dateFrom must be <= dateTo");
+    }
+
+    const books = await this.prisma.accountingBook.findMany({
+      where: {
+        organizationId,
+        id: { in: [bookAId, bookBId] },
+        status: "ACTIVE",
+      },
+    });
+    if (books.length !== 2) {
+      throw new BadRequestException("Both accounting books must be active");
+    }
+
+    const build = async (bookId: string) => {
+      const book = books.find((row) => row.id === bookId)!;
+      const accounts = await this.prisma.account.findMany({
+        where: { organizationId, accountingBookId: bookId },
+        orderBy: { code: "asc" },
+      });
+      const accountIds = accounts.map((account) => account.id);
+      const [opening, period] =
+        accountIds.length === 0
+          ? [[], []]
+          : await Promise.all([
+              this.prisma.journalEntry.groupBy({
+                by: ["accountId"],
+                where: {
+                  organizationId,
+                  accountingBookId: bookId,
+                  accountId: { in: accountIds },
+                  transaction: { date: { lt: dateFrom }, isFinal: true },
+                },
+                _sum: { debit: true, credit: true },
+              }),
+              this.prisma.journalEntry.groupBy({
+                by: ["accountId"],
+                where: {
+                  organizationId,
+                  accountingBookId: bookId,
+                  accountId: { in: accountIds },
+                  transaction: {
+                    date: { gte: dateFrom, lte: dateTo },
+                    isFinal: true,
+                  },
+                },
+                _sum: { debit: true, credit: true },
+              }),
+            ]);
+      const openingByAccount = new Map(
+        opening.map((row) => [
+          row.accountId,
+          { debit: d(row._sum.debit), credit: d(row._sum.credit) },
+        ]),
+      );
+      const periodByAccount = new Map(
+        period.map((row) => [
+          row.accountId,
+          { debit: d(row._sum.debit), credit: d(row._sum.credit) },
+        ]),
+      );
+      const rows = accounts.map((account) => {
+        const openingValue = openingByAccount.get(account.id) ?? {
+          debit: new Decimal(0),
+          credit: new Decimal(0),
+        };
+        const periodValue = periodByAccount.get(account.id) ?? {
+          debit: new Decimal(0),
+          credit: new Decimal(0),
+        };
+        const openingSplit = splitDrCr(
+          openingValue.debit.sub(openingValue.credit),
+        );
+        const closingSplit = splitDrCr(
+          openingValue.debit
+            .sub(openingValue.credit)
+            .add(periodValue.debit)
+            .sub(periodValue.credit),
+        );
+        return {
+          accountId: account.id,
+          accountCode: account.code,
+          accountName: pickAccountDisplayName(account, "ru"),
+          accountType: account.type,
+          openingDebit: openingSplit.debit.toFixed(4),
+          openingCredit: openingSplit.credit.toFixed(4),
+          periodDebit: periodValue.debit.toFixed(4),
+          periodCredit: periodValue.credit.toFixed(4),
+          closingDebit: closingSplit.debit.toFixed(4),
+          closingCredit: closingSplit.credit.toFixed(4),
+        };
+      });
+      return {
+        book,
+        rows,
+        totals: {
+          periodDebit: rows
+            .reduce(
+              (sum, row) => sum.add(row.periodDebit),
+              new Decimal(0),
+            )
+            .toFixed(4),
+          periodCredit: rows
+            .reduce(
+              (sum, row) => sum.add(row.periodCredit),
+              new Decimal(0),
+            )
+            .toFixed(4),
+        },
+      };
+    };
+
+    const [bookA, bookB] = await Promise.all([build(bookAId), build(bookBId)]);
+    return { dateFrom: dateFromStr, dateTo: dateToStr, bookA, bookB };
+  }
+
   /**
    * P&L по проводкам (начисление): 601 − 701 − 721 − 662 (см. ТЗ).
    * 662 — прочие доходы (курсовая прибыль): при преобладании кредита уменьшает «расходную» часть формулы.
@@ -354,7 +533,14 @@ export class ReportingService {
     dateToStr: string,
     ledgerType: LedgerType = LedgerType.NAS,
     departmentId?: string | null,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    ledgerType = scope.ledgerType;
     const startedAt = Date.now();
     if (!dateFromStr?.trim() || !dateToStr?.trim()) {
       throw new BadRequestException("dateFrom and dateTo are required");
@@ -387,7 +573,12 @@ export class ReportingService {
       fxGainCode,
     ] as const;
     const accs = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType, code: { in: [...codes] } },
+      where: {
+        organizationId,
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
+        code: { in: [...codes] },
+      },
     });
     const byCode = new Map(accs.map((a) => [a.code, a]));
     const ids = accs.map((a) => a.id);
@@ -426,6 +617,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: { in: ids },
         transaction: { ...transactionWhere, isFinal: true },
       },
@@ -470,6 +662,7 @@ export class ReportingService {
             dateFromStr,
             dateToStr,
             ledgerType,
+            scope.accountingBookId,
           )
         : null;
     const tbProxy =
@@ -549,7 +742,10 @@ export class ReportingService {
     dateFromStr: string,
     dateToStr: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     if (!dateFromStr?.trim() || !dateToStr?.trim()) {
       throw new BadRequestException("dateFrom and dateTo are required");
     }
@@ -571,6 +767,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         type: { in: [AccountType.REVENUE, AccountType.EXPENSE] },
       },
       orderBy: { code: "asc" },
@@ -605,6 +802,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: { in: accounts.map((a) => a.id) },
         transaction: {
           date: { gte: dateFrom, lte: dateTo },
@@ -674,7 +872,14 @@ export class ReportingService {
   async accountsReceivable(
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    ledgerType = scope.ledgerType;
     const receivableCode = await this.posting.resolveAccountCode(
       organizationId,
       "TRADE_RECEIVABLE",
@@ -691,6 +896,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         code: receivableCode,
       },
     });
@@ -774,6 +980,16 @@ export class ReportingService {
     if (dateFrom.getTime() > dateTo.getTime()) {
       throw new BadRequestException("dateFrom must be <= dateTo");
     }
+    const scope = await this.resolveBookScope(
+      organizationId,
+      options?.ledgerType ?? LedgerType.NAS,
+      options?.accountingBookId,
+    );
+    options = {
+      ...options,
+      ledgerType: scope.ledgerType,
+      accountingBookId: scope.accountingBookId,
+    };
 
     const cp = await this.prisma.counterparty.findFirst({
       where: { id: counterpartyId, organizationId },
@@ -945,7 +1161,14 @@ export class ReportingService {
   }
 
   /** AR Aging: 0-30 / 31-60 / 61-90 / 90+ дней. */
-  async accountsReceivableAging(organizationId: string, asOfIso?: string) {
+  async accountsReceivableAging(
+    organizationId: string,
+    asOfIso?: string,
+    ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
+  ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
     const todayUtc = Date.UTC(
       today.getUTCFullYear(),
@@ -953,9 +1176,29 @@ export class ReportingService {
       today.getUTCDate(),
     );
 
-    const invoices = await this.prisma.invoice.findMany({
+    const recognizedTransactions = await this.prisma.transaction.findMany({
       where: {
         organizationId,
+        isFinal: true,
+        reference: { not: null },
+        journalEntries: {
+          some: {
+            organizationId,
+            ledgerType,
+            accountingBookId: scope.accountingBookId,
+          },
+        },
+      },
+      select: { reference: true },
+    });
+    const eligibleInvoiceNumbers = recognizedTransactions
+      .map((row) => row.reference)
+      .filter((value): value is string => Boolean(value));
+    const invoices = eligibleInvoiceNumbers.length
+      ? await this.prisma.invoice.findMany({
+      where: {
+        organizationId,
+        number: { in: eligibleInvoiceNumbers },
         revenueRecognized: true,
         status: { not: InvoiceStatus.CANCELLED },
         counterparty: {
@@ -965,7 +1208,8 @@ export class ReportingService {
       include: {
         counterparty: { select: { id: true, nameCipher: true, taxIdCipher: true } },
       },
-    });
+      })
+      : [];
 
     type Bucket = {
       b0_30: Decimal;
@@ -1053,6 +1297,8 @@ export class ReportingService {
 
     return {
       asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      ledgerType,
+      accountingBookId: scope.accountingBookId,
       rows,
       totals: {
         bucket0to30: sum.bucket0to30.toFixed(4),
@@ -1069,7 +1315,14 @@ export class ReportingService {
   async dashboard(
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    ledgerType = scope.ledgerType;
     const [
       payrollTaxPayableCode,
       supplierPayableCode,
@@ -1106,12 +1359,17 @@ export class ReportingService {
     );
 
     const cashAccs = await this.prisma.account.findMany({
-      where: await this.cashBankAccountWhere(organizationId, ledgerType),
+      where: await this.cashBankAccountWhere(
+        organizationId,
+        ledgerType,
+        scope.accountingBookId,
+      ),
     });
     const taxAcc = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         code: payrollTaxPayableCode,
       },
     });
@@ -1119,6 +1377,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         code: supplierPayableCode,
       },
     });
@@ -1126,6 +1385,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         code: revenueCode,
       },
     });
@@ -1138,6 +1398,7 @@ export class ReportingService {
             where: {
               organizationId,
               ledgerType,
+              accountingBookId: scope.accountingBookId,
               accountId: { in: cashIds },
               transaction: { isFinal: true },
             },
@@ -1149,6 +1410,7 @@ export class ReportingService {
             where: {
               organizationId,
               ledgerType,
+              accountingBookId: scope.accountingBookId,
               accountId: taxAcc.id,
               transaction: { isFinal: true },
             },
@@ -1160,6 +1422,7 @@ export class ReportingService {
             where: {
               organizationId,
               ledgerType,
+              accountingBookId: scope.accountingBookId,
               accountId: pay531Acc.id,
               transaction: { isFinal: true },
             },
@@ -1185,6 +1448,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         code: payrollExpenseCode,
       },
     });
@@ -1197,6 +1461,7 @@ export class ReportingService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId: scope.accountingBookId,
           accountId: exp721Acc.id,
           transaction: { date: { gte: monthStart, lte: monthEnd }, isFinal: true },
         },
@@ -1253,6 +1518,7 @@ export class ReportingService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId: scope.accountingBookId,
           accountId: revAcc.id,
           transaction: {
             date: { gte: from30, lte: toDay },
@@ -1279,7 +1545,11 @@ export class ReportingService {
         .map(([date, net]) => ({ date, amount: net.toFixed(4) }));
     }
 
-    const arData = await this.accountsReceivable(organizationId, ledgerType);
+    const arData = await this.accountsReceivable(
+      organizationId,
+      ledgerType,
+      scope.accountingBookId,
+    );
     const topDebtors = arData.rows.slice(0, 5).map((r) => ({
       counterpartyId: r.counterpartyId,
       name: r.name,
@@ -1292,6 +1562,7 @@ export class ReportingService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId: scope.accountingBookId,
           accountId: pay531Acc.id,
           transaction: { counterpartyId: { not: null }, isFinal: true },
         },
@@ -1342,8 +1613,17 @@ export class ReportingService {
     };
   }
 
-  /** Текущий календарный месяц (UTC): закрыт ли месяц в settings.reporting.closedPeriods. */
-  async getPeriodStatus(organizationId: string) {
+  /** Текущий календарный месяц (UTC): закрыт ли месяц для указанной книги. */
+  async getPeriodStatus(
+    organizationId: string,
+    ledgerType: "NAS" | "IFRS" | "MANAGEMENT" = "NAS",
+    accountingBookId?: string,
+  ) {
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
     const now = new Date();
     const year = now.getUTCFullYear();
     const month = now.getUTCMonth() + 1;
@@ -1352,25 +1632,39 @@ export class ReportingService {
       where: { id: organizationId },
       select: { settings: true },
     });
-    const closed = getClosedPeriodKeys(org?.settings);
+    const closed = getClosedPeriodKeys(
+      org?.settings,
+      book.gaapKind,
+      book.id,
+    );
     return {
       year,
       month,
       periodKey: key,
+      ledgerType: book.gaapKind,
+      accountingBookId: book.id,
       isClosed: closed.includes(key),
     };
   }
 
   /**
-   * Самый ранний прошедший UTC-месяц, ещё не закрытый в settings.reporting.closedPeriods.
-   * Пока такой месяц есть — UI предлагает закрыть период (после окончания месяца по календарю).
+   * Самый ранний прошедший UTC-месяц, ещё не закрытый для указанной книги.
    */
-  async getClosePeriodPrompt(organizationId: string) {
+  async getClosePeriodPrompt(
+    organizationId: string,
+    ledgerType: "NAS" | "IFRS" | "MANAGEMENT" = "NAS",
+    accountingBookId?: string,
+  ) {
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
       select: { settings: true },
     });
-    const closed = getClosedPeriodKeys(org?.settings);
+    const closed = getClosedPeriodKeys(org?.settings, book.gaapKind, book.id);
     const now = new Date();
     const curY = now.getUTCFullYear();
     const curM = now.getUTCMonth() + 1;
@@ -1387,6 +1681,8 @@ export class ReportingService {
           year: y,
           month: m,
           periodKey: key,
+          ledgerType: book.gaapKind,
+          accountingBookId: book.id,
         };
       }
     }
@@ -1395,6 +1691,8 @@ export class ReportingService {
       year: null,
       month: null,
       periodKey: null,
+      ledgerType: book.gaapKind,
+      accountingBookId: book.id,
     };
   }
 
@@ -1405,7 +1703,14 @@ export class ReportingService {
   async dashboardMiniFinancials(
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    ledgerType = scope.ledgerType;
     const today = new Date();
     const y = today.getUTCFullYear();
     const m = today.getUTCMonth() + 1;
@@ -1419,6 +1724,8 @@ export class ReportingService {
       dateFromStr,
       dateToStr,
       ledgerType,
+      undefined,
+      scope.accountingBookId,
     );
 
     const tb = await this.trialBalance(
@@ -1426,6 +1733,7 @@ export class ReportingService {
       "1970-01-01",
       dateToStr,
       ledgerType,
+      scope.accountingBookId,
     );
 
     let assets = new Decimal(0);
@@ -1445,7 +1753,11 @@ export class ReportingService {
 
     const { start: monthStart, end: monthEnd } = monthRangeUtc(y, m);
     const cashAccs = await this.prisma.account.findMany({
-      where: await this.cashBankAccountWhere(organizationId, ledgerType),
+      where: await this.cashBankAccountWhere(
+        organizationId,
+        ledgerType,
+        scope.accountingBookId,
+      ),
       select: { id: true },
     });
     const cashIds = cashAccs.map((a) => a.id);
@@ -1455,6 +1767,7 @@ export class ReportingService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId: scope.accountingBookId,
           accountId: { in: cashIds },
           transaction: {
             date: { gte: monthStart, lte: endOfUtcDay(monthEnd) },
@@ -1479,27 +1792,41 @@ export class ReportingService {
   }
 
   /**
-   * Close fiscal year: require 12 closed months, roll P&L to PERIOD_RESULT (801),
-   * then to RETAINED_EARNINGS (802). Records FiscalYearClose + settings.reporting.closedYears.
+   * Close fiscal year for one AccountingBook: require 12 closed months on that book,
+   * roll P&L to PERIOD_RESULT (801), then to RETAINED_EARNINGS (802).
+   * Records FiscalYearClose + settings.reporting.closedYearsByBookId (legacy NAS dual-write).
    */
   async closeFiscalYear(
     organizationId: string,
     year: number,
     closedByUserId?: string | null,
+    ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
     if (!Number.isFinite(year) || year < 2000 || year > 2100) {
       throw new BadRequestException("year must be 2000-2100");
     }
+
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    const bookLedger = scope.ledgerType;
+    const bookId = scope.accountingBookId;
+    const dualWriteLegacyNas = bookLedger === LedgerType.NAS;
 
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
     });
     if (!org) throw new BadRequestException("Organization not found");
 
-    if (getClosedYearKeys(org.settings).includes(year)) {
-      throw new BadRequestException(`Fiscal year ${year} is already closed`);
+    if (getClosedYearKeys(org.settings, bookId).includes(year)) {
+      throw new BadRequestException(
+        `Fiscal year ${year} is already closed for this accounting book`,
+      );
     }
-    if (!areAllMonthsClosed(org.settings, year)) {
+    if (!areAllMonthsClosed(org.settings, year, bookLedger, bookId)) {
       throw new BadRequestException(
         `All 12 months of ${year} must be closed before fiscal year close`,
       );
@@ -1507,11 +1834,17 @@ export class ReportingService {
 
     const existing = await this.prisma.fiscalYearClose.findUnique({
       where: {
-        organizationId_year: { organizationId, year },
+        organizationId_accountingBookId_year: {
+          organizationId,
+          accountingBookId: bookId,
+          year,
+        },
       },
     });
-    if (existing) {
-      throw new BadRequestException(`Fiscal year ${year} is already closed`);
+    if (existing && !existing.reversedAt) {
+      throw new BadRequestException(
+        `Fiscal year ${year} is already closed for this accounting book`,
+      );
     }
 
     const { fromStr, toStr, end } = yearRangeUtc(year);
@@ -1519,7 +1852,8 @@ export class ReportingService {
       organizationId,
       fromStr,
       toStr,
-      LedgerType.NAS,
+      bookLedger,
+      bookId,
     );
     const result = new Decimal(stmt.accountingResult);
 
@@ -1594,6 +1928,8 @@ export class ReportingService {
 
     const protocolJson = {
       year,
+      accountingBookId: bookId,
+      ledgerType: bookLedger,
       closedAt: closedAt.toISOString(),
       revenue: stmt.revenue,
       expenses: stmt.expenses,
@@ -1613,23 +1949,41 @@ export class ReportingService {
           description: `Fiscal year ${year} close: P&L → ${periodResultCode} → ${retainedCode}`,
           isFinal: true,
           lines,
+          ledgerType: bookLedger,
+          accountingBookId: bookId,
           skipClosedPeriodGuard: true,
         });
         transactionId = posted.transactionId;
         protocolJson.transactionId = transactionId;
       }
 
-      await tx.fiscalYearClose.create({
-        data: {
-          organizationId,
-          year,
-          closedAt,
-          closedByUserId: closedByUserId ?? null,
-          resultAmount: result,
-          transactionId,
-          protocolJson: protocolJson as Prisma.InputJsonValue,
-        },
-      });
+      if (existing?.reversedAt) {
+        await tx.fiscalYearClose.update({
+          where: { id: existing.id },
+          data: {
+            closedAt,
+            closedByUserId: closedByUserId ?? null,
+            resultAmount: result,
+            transactionId,
+            protocolJson: protocolJson as Prisma.InputJsonValue,
+            reversedAt: null,
+            reversalTransactionId: null,
+          },
+        });
+      } else {
+        await tx.fiscalYearClose.create({
+          data: {
+            organizationId,
+            accountingBookId: bookId,
+            year,
+            closedAt,
+            closedByUserId: closedByUserId ?? null,
+            resultAmount: result,
+            transactionId,
+            protocolJson: protocolJson as Prisma.InputJsonValue,
+          },
+        });
+      }
 
       const fresh = await tx.organization.findUnique({
         where: { id: organizationId },
@@ -1638,13 +1992,20 @@ export class ReportingService {
       await tx.organization.update({
         where: { id: organizationId },
         data: {
-          settings: mergeClosedYear(fresh.settings, year) as Prisma.InputJsonValue,
+          settings: mergeClosedYear(
+            fresh.settings,
+            year,
+            bookId,
+            dualWriteLegacyNas,
+          ) as Prisma.InputJsonValue,
         },
       });
     });
 
     return {
       year,
+      accountingBookId: bookId,
+      ledgerType: bookLedger,
       closedAt: closedAt.toISOString(),
       accountingResult: result.toFixed(4),
       periodResultAccount: periodResultCode,
@@ -1655,40 +2016,74 @@ export class ReportingService {
   }
 
   /** Fiscal year close protocol row (reformation report). */
-  async getFiscalYearClose(organizationId: string, year: number) {
+  async getFiscalYearClose(
+    organizationId: string,
+    year: number,
+    ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
+  ) {
     if (!Number.isFinite(year) || year < 2000 || year > 2100) {
       throw new BadRequestException("year must be 2000-2100");
     }
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
     const row = await this.prisma.fiscalYearClose.findUnique({
-      where: { organizationId_year: { organizationId, year } },
+      where: {
+        organizationId_accountingBookId_year: {
+          organizationId,
+          accountingBookId: scope.accountingBookId,
+          year,
+        },
+      },
     });
-    if (!row) {
-      throw new BadRequestException(`Fiscal year ${year} is not closed`);
+    if (!row || row.reversedAt) {
+      throw new BadRequestException(
+        `Fiscal year ${year} is not closed for this accounting book`,
+      );
     }
     return row;
   }
 
   /**
    * Reopen a closed fiscal year: reverse the close journal, mark FiscalYearClose reversed,
-   * remove year from settings.reporting.closedYears.
+   * remove year from settings.reporting.closedYearsByBookId (legacy NAS dual-write).
    */
   async reopenFiscalYear(
     organizationId: string,
     year: number,
     reopenedByUserId?: string | null,
+    ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
     if (!Number.isFinite(year) || year < 2000 || year > 2100) {
       throw new BadRequestException("year must be 2000-2100");
     }
 
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      accountingBookId,
+    );
+    const bookLedger = scope.ledgerType;
+    const bookId = scope.accountingBookId;
+    const dualWriteLegacyNas = bookLedger === LedgerType.NAS;
+
     const closeRow = await this.prisma.fiscalYearClose.findUnique({
-      where: { organizationId_year: { organizationId, year } },
+      where: {
+        organizationId_accountingBookId_year: {
+          organizationId,
+          accountingBookId: bookId,
+          year,
+        },
+      },
     });
-    if (!closeRow) {
-      throw new BadRequestException(`Fiscal year ${year} is not closed`);
-    }
-    if (closeRow.reversedAt) {
-      throw new BadRequestException(`Fiscal year ${year} is already reopened`);
+    if (!closeRow || closeRow.reversedAt) {
+      throw new BadRequestException(
+        `Fiscal year ${year} is not closed for this accounting book`,
+      );
     }
 
     const { end } = yearRangeUtc(year);
@@ -1707,7 +2102,8 @@ export class ReportingService {
           where: {
             organizationId,
             transactionId: closeRow.transactionId,
-            ledgerType: LedgerType.NAS,
+            ledgerType: bookLedger,
+            accountingBookId: bookId,
           },
           include: { account: { select: { code: true } } },
           orderBy: { createdAt: "asc" },
@@ -1787,6 +2183,8 @@ export class ReportingService {
           description: `Fiscal year ${year} reopen (reversal of FY-CLOSE-${year})`,
           isFinal: true,
           lines: reverseLines,
+          ledgerType: bookLedger,
+          accountingBookId: bookId,
           skipClosedPeriodGuard: true,
         });
         reversalTransactionId = posted.transactionId;
@@ -1807,53 +2205,114 @@ export class ReportingService {
       await tx.organization.update({
         where: { id: organizationId },
         data: {
-          settings: unmergeClosedYear(fresh.settings, year) as Prisma.InputJsonValue,
+          settings: unmergeClosedYear(
+            fresh.settings,
+            year,
+            bookId,
+            dualWriteLegacyNas,
+          ) as Prisma.InputJsonValue,
         },
       });
     });
 
     return {
       year,
+      accountingBookId: bookId,
+      ledgerType: bookLedger,
       reversedAt: reversedAt.toISOString(),
       reversalTransactionId,
       reopenedByUserId: reopenedByUserId ?? null,
     };
   }
 
-  async closePeriod(organizationId: string, year: number, month: number) {
+  async closePeriod(
+    organizationId: string,
+    year: number,
+    month: number,
+    ledgerType: "NAS" | "IFRS" | "MANAGEMENT" = "NAS",
+    accountingBookId?: string,
+  ) {
     if (month < 1 || month > 12) {
       throw new BadRequestException("month must be 1-12");
     }
     const key = `${year}-${String(month).padStart(2, "0")}`;
     const { start, end } = monthRangeUtc(year, month);
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    const ledgerEnum =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
 
     const dep = await this.prisma.$transaction(async (tx) => {
-      const depResult = await this.depreciation.applyForClosedMonth(
-        tx,
-        organizationId,
-        year,
-        month,
-      );
-      const iaResult = await this.intangibleAmortization.applyForClosedMonth(
-        tx,
-        organizationId,
-        year,
-        month,
-      );
+      const depResult =
+        ledgerType === "NAS"
+          ? await this.depreciation.applyForClosedMonth(
+              tx,
+              organizationId,
+              year,
+              month,
+            )
+          : { applied: 0 };
+      const iaResult =
+        ledgerType === "NAS"
+          ? await this.intangibleAmortization.applyForClosedMonth(
+              tx,
+              organizationId,
+              year,
+              month,
+            )
+          : { applied: 0 };
 
-      await tx.transaction.updateMany({
+      // Lock policy (per-book):
+      // - NAS close: lock all txs with NAS JE in the month (legacy).
+      // - IFRS close: lock only IFRS-only txs (no NAS JE) so mirrored posts stay reversible on NAS.
+      const txs = await tx.journalEntry.findMany({
         where: {
           organizationId,
-          date: { gte: start, lte: end },
+          ledgerType: ledgerEnum,
+          accountingBookId: book.id,
+          transaction: {
+            organizationId,
+            date: { gte: start, lte: end },
+          },
         },
-        data: { isLocked: true },
+        select: { transactionId: true },
+        distinct: ["transactionId"],
       });
+      let txIds = txs.map((t) => t.transactionId);
+      if (ledgerEnum === LedgerType.IFRS && txIds.length > 0) {
+        const withNas = await tx.journalEntry.findMany({
+          where: {
+            organizationId,
+            ledgerType: "NAS",
+            transactionId: { in: txIds },
+          },
+          select: { transactionId: true },
+          distinct: ["transactionId"],
+        });
+        const nasSet = new Set(withNas.map((x) => x.transactionId));
+        txIds = txIds.filter((id) => !nasSet.has(id));
+      }
+      if (txIds.length > 0) {
+        await tx.transaction.updateMany({
+          where: { id: { in: txIds }, organizationId },
+          data: { isLocked: true },
+        });
+      }
 
       const snapshotDate = end;
       const grouped = await tx.journalEntry.groupBy({
         by: ["accountId", "ledgerType"],
         where: {
           organizationId,
+          ledgerType: ledgerEnum,
+          accountingBookId: book.id,
           transaction: { date: { lte: end }, isFinal: true },
         },
         _sum: { debit: true, credit: true },
@@ -1887,7 +2346,12 @@ export class ReportingService {
         where: { id: organizationId },
       });
       if (!org) throw new BadRequestException("Organization not found");
-      const nextSettings = mergeClosedPeriod(org.settings, key);
+      const nextSettings = mergeClosedPeriod(
+        org.settings,
+        key,
+        ledgerEnum,
+        book.id,
+      );
       await tx.organization.update({
         where: { id: organizationId },
         data: { settings: nextSettings as Prisma.InputJsonValue },
@@ -1897,6 +2361,8 @@ export class ReportingService {
 
     return {
       closedPeriod: key,
+      ledgerType: ledgerEnum,
+      accountingBookId: book.id,
       transactionsMarked: true,
       depreciation: dep.depreciation,
       intangibleAmortization: dep.intangibleAmortization,
@@ -1904,10 +2370,111 @@ export class ReportingService {
   }
 
   /**
+   * Reopen a previously closed month for one ledger (inverse of closePeriod).
+   * Clears closedPeriodsByLedger key and unlocks txs that were locked solely for this book.
+   */
+  async reopenPeriod(
+    organizationId: string,
+    year: number,
+    month: number,
+    ledgerType: "NAS" | "IFRS" | "MANAGEMENT" = "NAS",
+    accountingBookId?: string,
+  ) {
+    if (month < 1 || month > 12) {
+      throw new BadRequestException("month must be 1-12");
+    }
+    const key = `${year}-${String(month).padStart(2, "0")}`;
+    const { start, end } = monthRangeUtc(year, month);
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    const ledgerEnum =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
+
+    await this.prisma.$transaction(async (tx) => {
+      const org = await tx.organization.findUnique({
+        where: { id: organizationId },
+      });
+      if (!org) throw new BadRequestException("Organization not found");
+      const closed = getClosedPeriodKeys(
+        org.settings,
+        ledgerEnum,
+        book.id,
+      );
+      if (!closed.includes(key)) {
+        throw new BadRequestException(
+          `Period ${key} is not closed for ${ledgerType}`,
+        );
+      }
+      await tx.organization.update({
+        where: { id: organizationId },
+        data: {
+          settings: unmergeClosedPeriod(
+            org.settings,
+            key,
+            ledgerEnum,
+            book.id,
+          ) as Prisma.InputJsonValue,
+        },
+      });
+
+      const txs = await tx.journalEntry.findMany({
+        where: {
+          organizationId,
+          ledgerType: ledgerEnum,
+          accountingBookId: book.id,
+          transaction: {
+            organizationId,
+            date: { gte: start, lte: end },
+            isLocked: true,
+          },
+        },
+        select: { transactionId: true },
+        distinct: ["transactionId"],
+      });
+      let txIds = txs.map((t) => t.transactionId);
+      if (ledgerEnum === LedgerType.IFRS && txIds.length > 0) {
+        const withNas = await tx.journalEntry.findMany({
+          where: {
+            organizationId,
+            ledgerType: LedgerType.NAS,
+            transactionId: { in: txIds },
+          },
+          select: { transactionId: true },
+          distinct: ["transactionId"],
+        });
+        const nasSet = new Set(withNas.map((x) => x.transactionId));
+        txIds = txIds.filter((id) => !nasSet.has(id));
+      }
+      if (txIds.length > 0) {
+        await tx.transaction.updateMany({
+          where: { id: { in: txIds }, organizationId },
+          data: { isLocked: false },
+        });
+      }
+    });
+
+    return { reopenedPeriod: key, ledgerType: ledgerEnum, accountingBookId: book.id };
+  }
+
+  /**
    * AP aging on supplier payables (531): open credit balance per purchase transaction,
    * aged by document date buckets 0-30 / 31-60 / 61-90 / 90+.
    */
-  async accountsPayableAging(organizationId: string, asOfIso?: string) {
+  async accountsPayableAging(
+    organizationId: string,
+    asOfIso?: string,
+    ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
+  ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
     const todayUtc = Date.UTC(
       today.getUTCFullYear(),
@@ -1920,16 +2487,54 @@ export class ReportingService {
       organizationId,
       "SUPPLIER_PAYABLE",
     );
+    let payableCode = supplierPayableCode;
+    if (ledgerType === LedgerType.IFRS) {
+      const nasBook = await this.accountingBooks.resolveByIdOrLedgerAlias(
+        organizationId,
+        undefined,
+        LedgerType.NAS,
+      );
+      const nasAcc = await this.prisma.account.findFirst({
+        where: {
+          organizationId,
+          ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
+          code: supplierPayableCode,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      if (nasAcc) {
+        const mapLine = await this.prisma.ledgerMappingLine.findFirst({
+          where: {
+            sourceAccountId: nasAcc.id,
+            mappingSet: {
+              organizationId,
+              code: "NAS_TO_IFRS",
+              status: "PUBLISHED",
+            },
+            targetAccount: { deletedAt: null },
+          },
+          select: { targetAccount: { select: { code: true } } },
+        });
+        if (mapLine?.targetAccount.code) {
+          payableCode = mapLine.targetAccount.code;
+        }
+      }
+    }
     const acc = await this.prisma.account.findFirst({
       where: {
         organizationId,
-        ledgerType: LedgerType.NAS,
-        code: supplierPayableCode,
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
+        code: payableCode,
       },
     });
     if (!acc) {
       return {
         asOf: new Date(todayUtc).toISOString().slice(0, 10),
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
         rows: [],
         totals: {
           bucket0to30: "0.0000",
@@ -1939,14 +2544,17 @@ export class ReportingService {
           total: "0.0000",
         },
         methodologyNote:
-          "Supplier payable account (SUPPLIER_PAYABLE) not found in NAS chart of accounts.",
+          ledgerType === LedgerType.IFRS
+            ? "Supplier payable account not found in IFRS chart (map SUPPLIER_PAYABLE via NAS_TO_IFRS)."
+            : "Supplier payable account (SUPPLIER_PAYABLE) not found in NAS chart of accounts.",
       };
     }
 
     const entries = await this.prisma.journalEntry.findMany({
       where: {
         organizationId,
-        ledgerType: LedgerType.NAS,
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: acc.id,
         transaction: {
           date: { lte: asOfEnd },
@@ -2078,6 +2686,8 @@ export class ReportingService {
 
     return {
       asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      ledgerType,
+      accountingBookId: scope.accountingBookId,
       rows,
       totals: {
         bucket0to30: sum.bucket0to30.toFixed(4),
@@ -2095,7 +2705,14 @@ export class ReportingService {
    * Creditor payment plan: unpaid supplier payables with suggested pay date
    * = asOf+7 when no explicit due date.
    */
-  async creditorPaymentPlan(organizationId: string, asOfIso?: string) {
+  async creditorPaymentPlan(
+    organizationId: string,
+    asOfIso?: string,
+    ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
+  ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
     const todayUtc = Date.UTC(
       today.getUTCFullYear(),
@@ -2114,18 +2731,25 @@ export class ReportingService {
     const acc = await this.prisma.account.findFirst({
       where: {
         organizationId,
-        ledgerType: LedgerType.NAS,
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
         code: supplierPayableCode,
       },
     });
     if (!acc) {
-      return { asOf: new Date(todayUtc).toISOString().slice(0, 10), rows: [] };
+      return {
+        asOf: new Date(todayUtc).toISOString().slice(0, 10),
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
+        rows: [],
+      };
     }
 
     const entries = await this.prisma.journalEntry.findMany({
       where: {
         organizationId,
-        ledgerType: LedgerType.NAS,
+        ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: acc.id,
         transaction: {
           date: { lte: asOfEnd },
@@ -2203,6 +2827,8 @@ export class ReportingService {
 
     return {
       asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      ledgerType,
+      accountingBookId: scope.accountingBookId,
       rows,
       methodologyNote:
         "Unpaid AP 531 by transaction; suggestedPayDate = asOf+7 when no explicit due date.",
