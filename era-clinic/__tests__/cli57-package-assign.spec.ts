@@ -5,6 +5,7 @@ import {
   isPackagePoolCode,
   eligibleSkusForPool,
   isPackageAssignTreatmentLine,
+  resolvePackageQuotaSku,
 } from "@/domain/sanatorium/package-assign.service";
 import { applyQuotaRecalc } from "@/lib/program-quota";
 import { extraNeedsPaperTicket } from "@/domain/procedure/extra-ticket";
@@ -30,9 +31,20 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackagePoolCode("NAFTALAN")).toBe(false);
   });
 
-  it("isPackageAssignTreatmentLine keeps pools/WO/SVC, drops labs and exams", () => {
-    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(true);
-    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(true);
+  it("resolvePackageQuotaSku maps NAFTALAN_BATH by sex", () => {
+    const types = ["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"];
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", types)).toBe(
+      "SVC-NAFTALAN-VANNASI-KISI",
+    );
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", types)).toBe(
+      "SVC-NAFTALAN-VANNASI-QADIN",
+    );
+    expect(resolvePackageQuotaSku("SVC-OZONE", "MALE", types)).toBe(null);
+  });
+
+  it("isPackageAssignTreatmentLine keeps WO/SVC/naftalan, drops pools labs exams", () => {
+    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(false);
+    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(false);
     expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
     expect(isPackageAssignTreatmentLine("SVC-OZONE", "Ozone")).toBe(true);
     expect(isPackageAssignTreatmentLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);

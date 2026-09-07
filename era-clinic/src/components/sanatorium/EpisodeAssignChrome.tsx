@@ -59,6 +59,14 @@ type AssignBlocksProps = {
   readOnly?: boolean;
   /** CLI-57 walk-in: hide package block (extras only). */
   hidePackage?: boolean;
+  /** PENDING_PAY rows visible on the card (ADR D8). */
+  extrasPending?: Array<{
+    id: string;
+    title: string;
+    amountNet: number;
+    status: string;
+  }>;
+  pendingPayLabel?: string;
 };
 
 export function EpisodeAssignBlocks({
@@ -72,6 +80,8 @@ export function EpisodeAssignBlocks({
   day1Disabled,
   readOnly,
   hidePackage,
+  extrasPending = [],
+  pendingPayLabel = "Awaiting payment",
 }: AssignBlocksProps) {
   return (
     <div className="space-y-3">
@@ -101,17 +111,34 @@ export function EpisodeAssignBlocks({
           </div>
         </div>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold">{extrasTitle}</h3>
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={readOnly}
-          onClick={onExtrasPlus}
-          aria-label={extrasTitle}
-        >
-          +
-        </button>
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold">{extrasTitle}</h3>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={readOnly}
+            onClick={onExtrasPlus}
+            aria-label={extrasTitle}
+          >
+            +
+          </button>
+        </div>
+        {extrasPending.length > 0 ? (
+          <ul className="space-y-1.5">
+            {extrasPending.map((row) => (
+              <li
+                key={row.id}
+                className={`${CARD_CONTAINER_CLASS} border border-amber-100 bg-amber-50/50 px-3 py-2 text-[13px]`}
+              >
+                <div className="font-medium">{row.title}</div>
+                <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                  {Number(row.amountNet).toFixed(2)} AZN · {pendingPayLabel}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </div>
   );

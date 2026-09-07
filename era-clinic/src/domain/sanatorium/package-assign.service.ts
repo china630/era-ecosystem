@@ -35,6 +35,37 @@ export function isPackagePoolCode(code: string): boolean {
   return (PACKAGE_POOL_CODES as readonly string[]).includes(code) || /_POOL$/i.test(code);
 }
 
+/**
+ * Program-template quota codes that are not ProcedureType rows.
+ * Assign resolves to a real SVC-* (e.g. gender-specific naftalan bath).
+ */
+export const PACKAGE_QUOTA_ALIAS_CODES = ["NAFTALAN_BATH"] as const;
+
+export function isPackageQuotaAlias(code: string): boolean {
+  const c = code.trim().toUpperCase();
+  return (PACKAGE_QUOTA_ALIAS_CODES as readonly string[]).includes(c);
+}
+
+/** Map PDF/knot quota alias → bookable ProcedureType code. */
+export function resolvePackageQuotaSku(
+  quotaCode: string,
+  sex: string | null | undefined,
+  typeCodes: Iterable<string>,
+): string | null {
+  const c = quotaCode.trim().toUpperCase();
+  if (!isPackageQuotaAlias(c)) return null;
+  const set = new Set([...typeCodes].map((x) => x.toUpperCase()));
+  const male = "SVC-NAFTALAN-VANNASI-KISI";
+  const female = "SVC-NAFTALAN-VANNASI-QADIN";
+  if (c === "NAFTALAN_BATH") {
+    if (sex === "MALE" && set.has(male)) return male;
+    if (sex === "FEMALE" && set.has(female)) return female;
+    if (set.has(male)) return male;
+    if (set.has(female)) return female;
+  }
+  return null;
+}
+
 function foldHay(s: string): string {
   return s
     .toLowerCase()
@@ -55,7 +86,8 @@ function foldHay(s: string): string {
 export function isPackageAssignTreatmentLine(code: string, name?: string | null): boolean {
   const c = code.trim().toUpperCase();
   if (!c) return false;
-  if (isPackagePoolCode(c)) return true;
+  // Pool buckets (Fizioprosedurlar* / Parafin*) confuse the assign menu — show named SKUs only.
+  if (isPackagePoolCode(c)) return false;
   if (c.startsWith("WO-TR-") || c.startsWith("SVC-")) return true;
   if (c.includes("NAFTALAN") || c === "PHYSIO_PAID") return true;
 
@@ -426,8 +458,25 @@ export async function assignPackageProcedures(
       );
     }
     const burnPool = line.burnPoolCode?.trim() || null;
-    const quotaCode = burnPool || line.procedureCode;
-    if (burnPool) {
+    let skuCode = line.procedureCode;
+    let quotaCode = burnPool || line.procedureCode;
+
+    if (isPackageQuotaAlias(line.procedureCode)) {
+      quotaCode = line.procedureCode;
+      const resolved = resolvePackageQuotaSku(
+        line.procedureCode,
+        episode.patientRef?.sex,
+        typeByCode.keys(),
+      );
+      if (!resolved) {
+        throw new PackageAssignError(
+          `Cannot resolve ${line.procedureCode} to a procedure type (check patient sex / catalog)`,
+          "UNKNOWN_TYPE",
+          400,
+        );
+      }
+      skuCode = resolved;
+    } else if (burnPool) {
       if (!isPackagePoolCode(burnPool)) {
         throw new PackageAssignError(
           `burnPoolCode ${burnPool} is not a pool`,
@@ -469,7 +518,7 @@ export async function assignPackageProcedures(
       remaining: bal.remaining - line.qty,
     });
     totalQty += line.qty;
-    resolved.push({ ...line, quotaCode });
+    resolved.push({ ...line, procedureCode: skuCode, quotaCode });
   }
 
   const softWarn =

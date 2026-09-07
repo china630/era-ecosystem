@@ -90,7 +90,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/help" ||
     pathname.startsWith("/help/") ||
     pathname === "/portal" ||
-    pathname.startsWith("/booking")
+    pathname.startsWith("/booking") ||
+    pathname.startsWith("/images/")
   ) {
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
@@ -155,5 +156,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)",
+  ],
 };

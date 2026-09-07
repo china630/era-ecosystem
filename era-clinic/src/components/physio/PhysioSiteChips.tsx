@@ -104,20 +104,21 @@ export type PhysioChipsLabels = {
 };
 
 function siteChipLabel(site: PhysioCatalogSite, locale: string): string {
-  const loc =
-    locale.startsWith("ru") ? site.titleRu : locale.startsWith("az") ? site.titleAz : site.titleEn;
-  return `${loc} / ${site.titleLa}`;
+  if (locale.startsWith("az") && site.titleAz?.trim()) return site.titleAz.trim();
+  if (locale.startsWith("ru") && site.titleRu?.trim()) return site.titleRu.trim();
+  if (site.titleEn?.trim()) return site.titleEn.trim();
+  return site.titleLa?.trim() || site.code;
 }
 
 function siteSearchLabel(site: PhysioCatalogSite, locale: string): string {
-  const aliases = (site.aliases ?? []).map((a) => a.alias).join(" ");
-  return `${siteChipLabel(site, locale)} ${site.code} ${aliases}`.trim();
+  return siteChipLabel(site, locale);
 }
 
 function listItemLabel(item: PhysioCatalogListItem, locale: string): string {
-  const loc =
-    locale.startsWith("ru") ? item.titleRu : locale.startsWith("az") ? item.titleAz : item.titleEn;
-  return `${loc} (${item.code})`;
+  if (locale.startsWith("az") && item.titleAz?.trim()) return item.titleAz.trim();
+  if (locale.startsWith("ru") && item.titleRu?.trim()) return item.titleRu.trim();
+  if (item.titleEn?.trim()) return item.titleEn.trim();
+  return item.code;
 }
 
 function hasField(fields: string[], code: PhysioOrderFieldCode): boolean {
@@ -148,6 +149,7 @@ export function PhysioSiteChips({
   onNoteBlur,
   onLateralityChange,
   onFieldsChange,
+  compact = false,
 }: {
   value: PhysioChipsValue;
   catalog: PhysioCatalogSite[];
@@ -161,6 +163,8 @@ export function PhysioSiteChips({
   onNoteBlur: (note: string) => void;
   onLateralityChange: (siteId: string, laterality: PhysioLateralityCode | null) => void;
   onFieldsChange: (fields: PhysioOrderFields) => void;
+  /** Narrow selects / 2-col grid for assign modals. */
+  compact?: boolean;
 }) {
   const [note, setNote] = useState(value.note ?? "");
   useEffect(() => {
@@ -181,7 +185,11 @@ export function PhysioSiteChips({
     () =>
       pickerCatalog
         .filter((s) => !value.siteIds.includes(s.id))
-        .map((s) => ({ value: s.id, label: siteSearchLabel(s, locale) })),
+        .map((s) => ({
+          value: s.id,
+          // Visible title; codes/aliases stay searchable via label text for local filter
+          label: siteSearchLabel(s, locale),
+        })),
     [pickerCatalog, locale, value.siteIds],
   );
 
@@ -208,12 +216,16 @@ export function PhysioSiteChips({
   }
 
   const showLaterality = hasField(allowed, "LATERALITY");
+  const fieldWidth = compact ? ("select" as const) : undefined;
+  const fieldsGridClass = compact
+    ? "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
+    : "mt-2 space-y-2";
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className={fieldsGridClass}>
       {value.needsSite ? (
         <>
-          <div>
+          <div className={compact ? "sm:col-span-2" : undefined}>
             <p className="mb-1 text-[12px] font-medium text-[#2C3E50]">{labels.sites}</p>
             <div className="flex flex-wrap gap-1">
               {value.siteIds.map((id) => {
@@ -294,6 +306,8 @@ export function PhysioSiteChips({
                 }}
                 options={options}
                 emptyLabel={null}
+                widthPreset={fieldWidth}
+                className={compact ? "sm:col-span-2" : undefined}
               />
             )
           ) : null}
@@ -332,6 +346,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ deviceProgramId: String(next) || null })}
           options={programs.map((p) => ({ value: p.id, label: listItemLabel(p, locale) }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "ELECTRODE_COUNT") ? (
@@ -368,6 +383,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ substanceId: String(next) || null })}
           options={substances.map((p) => ({ value: p.id, label: listItemLabel(p, locale) }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "APPLICATION_SURFACE") ? (
@@ -392,6 +408,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ spineLevel: pickOpt(SPINE_LEVEL_CODES, next) })}
           options={SPINE_LEVEL_CODES.map((v) => ({ value: v, label: v }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "DAY_BLOCK") ? (
@@ -518,16 +535,18 @@ export function PhysioSiteChips({
       ) : null}
 
       {editable ? (
-        <FieldTextarea
-          label={labels.note}
-          hint={labels.noteHint}
-          rows={2}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={() => {
-            if (note !== (value.note ?? "")) onNoteBlur(note);
-          }}
-        />
+        <div className={compact ? "sm:col-span-2 max-w-md" : undefined}>
+          <FieldTextarea
+            label={labels.note}
+            hint={labels.noteHint}
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => {
+              if (note !== (value.note ?? "")) onNoteBlur(note);
+            }}
+          />
+        </div>
       ) : value.note ? (
         <p className="text-[12px] text-[#7F8C8D]">{value.note}</p>
       ) : null}

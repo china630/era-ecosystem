@@ -227,7 +227,7 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
 7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
-9. **Pool lines** (Fizioprosedurlar* / Parafin*): `+` opens real SKU picker (not draft of `PHYSIO_POOL`); Save places SKU and burns pool remaining; Naftalan stays on its own line.
+9. **Pools / aliases:** left menu shows named treatment SKUs only (no `PHYSIO_POOL`/`PARAFFIN_POOL` rows). `NAFTALAN_BATH` quota resolves to gender bath SVC by patient sex. Pending_PAY extras appear under Extras on the patient card.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=cli57-package-assign

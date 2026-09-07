@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   FORM_FIELD_GROUP_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -39,6 +40,8 @@ export type CatalogFieldProps = {
   onQueryChange?: (q: string) => void;
   /** When onQueryChange is set, options are treated as server results (no local-only filter). */
   serverSearch?: boolean;
+  /** Override kind-default width (e.g. select instead of selectWide in compact modals). */
+  widthPreset?: FieldWidthPreset;
 };
 
 function Shell({
@@ -96,8 +99,10 @@ export function CatalogField({
   name,
   onQueryChange,
   serverSearch,
+  widthPreset: widthPresetOverride,
 }: CatalogFieldProps) {
   const resolved = resolveCatalogControl(kind);
+  const widthPreset = widthPresetOverride ?? resolved.widthPreset;
   const control =
     preferChips && kind === "CLOSED_SMALL" ? "radioChips" : resolved.control;
   const inputId = id ?? name;
@@ -107,7 +112,7 @@ export function CatalogField({
     return (
       <Field
         label={label}
-        preset={resolved.widthPreset}
+        preset={widthPreset}
         required={required}
         hint={hint}
         error={error}
@@ -205,7 +210,7 @@ export function CatalogField({
         className={className}
         disabled={disabled}
         name={name}
-        widthPreset={resolved.widthPreset}
+        widthPreset={widthPreset}
         options={options}
         value={Array.isArray(value) ? value[0] ?? "" : value}
         onChange={(v) => onChange(v)}
@@ -217,11 +222,12 @@ export function CatalogField({
 
   // select / selectWide
   const str = Array.isArray(value) ? value[0] ?? "" : value;
-  const preset = control === "selectWide" ? "selectWide" : "select";
+  const selectPreset =
+    widthPresetOverride ?? (control === "selectWide" ? "selectWide" : "select");
   return (
     <FieldSelect
       label={label}
-      preset={preset}
+      preset={selectPreset}
       required={required}
       hint={hint}
       error={error}
@@ -273,8 +279,15 @@ function CatalogCombobox({
   onQueryChange?: (q: string) => void;
   serverSearch?: boolean;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
   const selectedLabel = options.find((o) => o.value === value)?.label ?? value;
 
   const filtered = useMemo(() => {
@@ -289,10 +302,93 @@ function CatalogCombobox({
       .slice(0, 50);
   }, [options, query, serverSearch]);
 
+  function updateCoords() {
+    const el = inputRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const gap = 4;
+    const spaceBelow = window.innerHeight - r.bottom - gap;
+    const spaceAbove = r.top - gap;
+    const preferUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+    const maxHeight = Math.min(192, preferUp ? spaceAbove : spaceBelow);
+    setCoords({
+      top: preferUp ? Math.max(gap, r.top - maxHeight - gap) : r.bottom + gap,
+      left: r.left,
+      width: Math.max(r.width, 12 * 16),
+      maxHeight: Math.max(96, maxHeight),
+    });
+  }
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setCoords(null);
+      return;
+    }
+    updateCoords();
+    const onReposition = () => updateCoords();
+    window.addEventListener("resize", onReposition);
+    // Capture scroll from modal body / nested overflow containers
+    window.addEventListener("scroll", onReposition, true);
+    return () => {
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+    };
+  }, [open, filtered.length]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   function handleQueryChange(next: string) {
     setQuery(next);
     onQueryChange?.(next);
   }
+
+  const list =
+    open && !disabled && coords && typeof document !== "undefined"
+      ? createPortal(
+          <ul
+            className="overflow-y-auto rounded border border-[#BDC3C7] bg-white shadow-lg"
+            style={{
+              position: "fixed",
+              top: coords.top,
+              left: coords.left,
+              width: coords.width,
+              maxHeight: coords.maxHeight,
+              zIndex: 400,
+            }}
+            role="listbox"
+          >
+            {filtered.length === 0 ? (
+              <li className="px-2 py-1.5 text-sm text-[#95A5A6]">No matches</li>
+            ) : (
+              filtered.map((opt) => (
+                <li key={opt.value} role="option">
+                  <button
+                    type="button"
+                    className="block w-full px-2 py-1.5 text-left text-sm hover:bg-[#EBEDF0]"
+                    disabled={opt.disabled}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>,
+          document.body,
+        )
+      : null;
 
   return (
     <Shell
@@ -305,6 +401,7 @@ function CatalogCombobox({
     >
       <div className="relative">
         <input
+          ref={inputRef}
           id={id}
           name={name}
           disabled={disabled}
@@ -324,31 +421,7 @@ function CatalogCombobox({
             window.setTimeout(() => setOpen(false), 150);
           }}
         />
-        {open && !disabled ? (
-          <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded border border-[#BDC3C7] bg-white shadow">
-            {filtered.length === 0 ? (
-              <li className="px-2 py-1.5 text-sm text-[#95A5A6]">No matches</li>
-            ) : (
-              filtered.map((opt) => (
-                <li key={opt.value}>
-                  <button
-                    type="button"
-                    className="block w-full px-2 py-1.5 text-left text-sm hover:bg-[#EBEDF0]"
-                    disabled={opt.disabled}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      onChange(opt.value);
-                      setOpen(false);
-                      setQuery("");
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        ) : null}
+        {list}
       </div>
     </Shell>
   );

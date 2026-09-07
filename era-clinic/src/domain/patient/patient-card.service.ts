@@ -197,6 +197,7 @@ export async function getPatientCardSummary(
     resultLabs,
     upcomingProcedures,
     proposedProcedures,
+    pendingExtras,
     intakeChecklist,
     examNotes,
   ] = await Promise.all([
@@ -260,6 +261,16 @@ export async function getPatientCardSummary(
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
+    }),
+    prisma.procedureOrder.findMany({
+      where: {
+        patientRefId,
+        ...episodeFilter,
+        status: "PENDING_PAY",
+        inPackage: false,
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: 40,
     }),
     getIntakeChecklist(patientRefId, { episodeId: checklistEpisodeId }),
     prisma.cpoeEntry.findMany({
@@ -325,6 +336,13 @@ export async function getPatientCardSummary(
     resultsPreview: resultLabs.map((o) => mapLabEvent(o, catalog.items)).map(withTimeSubtitle),
     planPreview: upcomingProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
     proposedPreview: proposedProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
+    pendingExtras: pendingExtras.map((p) => ({
+      id: p.id,
+      title: p.procedureName,
+      code: p.procedureCode,
+      amountNet: Number(p.amountNet ?? 0),
+      status: p.status,
+    })),
     intakeChecklist,
     examNotesPreview: examNotes.map((e) => {
       let titleL10n: L10n | undefined;

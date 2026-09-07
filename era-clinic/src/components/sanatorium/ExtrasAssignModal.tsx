@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -14,9 +15,9 @@ import {
   PhysioSiteChips,
   type PhysioCatalogListItem,
   type PhysioCatalogSite,
-  type PhysioChipsLabels,
   type PhysioChipsValue,
 } from "@/components/physio/PhysioSiteChips";
+import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 
 type ProcOption = { value: string; label: string; name: string; amount?: number };
@@ -77,57 +78,6 @@ const EMPTY_PHYSIO: PhysioChipsValue = {
   note: null,
 };
 
-const DEFAULT_PHYSIO_LABELS: PhysioChipsLabels = {
-  sites: "Sites",
-  addSite: "Add site",
-  applyMode: "Apply",
-  together: "Together",
-  turn: "In turn",
-  note: "Note",
-  noteHint: "Comments",
-  remove: "Remove",
-  laterality: "Side",
-  left: "Left",
-  right: "Right",
-  both: "Both",
-  workKind: "Work kind",
-  deviceProgram: "Program",
-  electrodeCount: "Electrodes",
-  deviceParam: "Device param",
-  noAdditive: "No additive",
-  applicationSurface: "Surface",
-  substance: "Substance",
-  extraOil: "Extra oil",
-  holdOrStop: "Hold / stop",
-  spineLevel: "Spine level",
-  dayBlock: "Day block",
-  bathSequence: "Bath sequence",
-  naftalanFill: "Naftalan fill",
-  intensity: "Intensity",
-  smear: "Smear",
-  yes: "Yes",
-  no: "No",
-  unset: "—",
-  surfaceFrontBack: "Front / back",
-  surfaceUpper: "Upper",
-  surfaceLower: "Lower",
-  dayBlockAlt: "Every other day",
-  dayBlockThen: "5 days then",
-  bathSitzThenFull: "Sitz then full",
-  fillTam: "Full body",
-  fillOturaq: "Sitz",
-  fillQursaq: "To waist",
-  catalogEmpty: "Physio site catalog is not seeded.",
-  catalogEmptyLink: "Open Physio sites",
-  intensityLight: "Light",
-  intensityWeak: "Weak",
-  intensityNotHot: "Not hot",
-  intensityMedium: "Medium",
-  intensityMore: "More",
-  sitesHintHydroJets:
-    "Do not aim jets at the heart, breasts, or groin. Prefer back, lumbar, thighs, calves, and feet.",
-};
-
 function gateToPhysio(code: string, name: string): PhysioChipsValue {
   const gate = inferPhysioTypeGate(code, name);
   return {
@@ -169,6 +119,12 @@ export function ExtrasAssignModal({
   onSaved,
   labels,
 }: Props) {
+  const locale = useLocale();
+  const tPhysio = useTranslations("patientCard");
+  const tc = useTranslations("common");
+  const physioLabels = useMemo(() => buildPhysioChipsLabels(tPhysio), [tPhysio]);
+  const cancelLabel =
+    labels.cancel && !labels.cancel.includes(".") ? labels.cancel : tc("cancel");
   const [options, setOptions] = useState<ProcOption[]>([]);
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [pending, setPending] = useState<PendingRow[]>([]);
@@ -207,7 +163,7 @@ export function ExtrasAssignModal({
         setOptions(
           rows.map((r) => ({
             value: r.code,
-            label: `${r.name} (${r.code})`,
+            label: r.name || r.code,
             name: r.name,
             amount: priceMap[r.code] ?? 25,
           })),
@@ -345,7 +301,8 @@ export function ExtrasAssignModal({
       onClose={() => {
         if (!busy) onClose();
       }}
-      maxWidthClass="max-w-3xl"
+      maxWidthClass="max-w-4xl w-full min-h-[min(70vh,42rem)] max-h-[90vh]"
+      bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto"
       footer={
         <div className="flex justify-end gap-2">
           <button
@@ -354,7 +311,7 @@ export function ExtrasAssignModal({
             disabled={busy}
             onClick={onClose}
           >
-            {labels.cancel}
+            {cancelLabel}
           </button>
           <button
             type="button"
@@ -369,20 +326,23 @@ export function ExtrasAssignModal({
     >
       {error ? <p className="mb-2 text-sm text-red-600">{error}</p> : null}
       <div className="relative mb-4 space-y-2">
-        <CatalogField
-          kind="SEARCHABLE"
-          label={labels.pickProcedure}
-          value={code}
-          onChange={(v) => {
-            const next = String(v ?? "");
-            if (next) openFormForCode(next);
-            else {
-              setCode("");
-              setFormOpen(false);
-            }
-          }}
-          options={options}
-        />
+        <div className="max-w-md">
+          <CatalogField
+            kind="SEARCHABLE"
+            label={labels.pickProcedure}
+            value={code}
+            onChange={(v) => {
+              const next = String(v ?? "");
+              if (next) openFormForCode(next);
+              else {
+                setCode("");
+                setFormOpen(false);
+              }
+            }}
+            options={options}
+            widthPreset="select"
+          />
+        </div>
         {selected && !formOpen ? (
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
             {labels.price}: {(prices[code] ?? selected.amount ?? 25).toFixed(2)} AZN
@@ -390,7 +350,7 @@ export function ExtrasAssignModal({
         ) : null}
 
         {formOpen && selected ? (
-          <div className="z-10 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
+          <div className="z-10 max-w-xl rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
             <h4 className="mb-1 font-medium">{selected.name}</h4>
             <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
               {labels.price}: {(prices[code] ?? selected.amount ?? 25).toFixed(2)} AZN
@@ -400,7 +360,7 @@ export function ExtrasAssignModal({
               <input
                 type="number"
                 min={1}
-                className={`${MODAL_INPUT_CLASS} mt-1 w-24`}
+                className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                 value={qty}
                 onChange={(e) => setQty(Number(e.target.value) || 1)}
               />
@@ -410,9 +370,10 @@ export function ExtrasAssignModal({
               catalog={catalog}
               programs={programs}
               substances={substances}
-              locale="en"
+              locale={locale}
               editable
-              labels={DEFAULT_PHYSIO_LABELS}
+              compact
+              labels={physioLabels}
               onSitesChange={(siteIds) =>
                 setFormPhysio((prev) => ({ ...prev, siteIds }))
               }
@@ -439,7 +400,7 @@ export function ExtrasAssignModal({
                   setCode("");
                 }}
               >
-                {labels.cancel}
+                {cancelLabel}
               </button>
               <button
                 type="button"
@@ -505,7 +466,7 @@ export function ExtrasAssignModal({
         </ul>
       )}
       {(pending.length > 0 || draft.length > 0) && (
-        <p className={`mt-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
+        <p className="mt-3 text-right text-[15px] font-bold text-[#2C3E50]">
           Total: {(pendingTotal + draftTotal).toFixed(2)} AZN
         </p>
       )}
