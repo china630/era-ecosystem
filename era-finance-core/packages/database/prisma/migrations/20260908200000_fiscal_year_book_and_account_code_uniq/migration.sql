@@ -40,17 +40,17 @@ SELECT DISTINCT
     'İdarəetmə (miqrasiya)',
     'Управленческая (миграция)',
     'Management (migration)',
-    'MANAGEMENT',
+    'MANAGEMENT'::"AccountingBookGaapKind",
     false,
     false,
-    'ACTIVE',
-    'EXTRA',
+    'ACTIVE'::"AccountingBookStatus",
+    'EXTRA'::"AccountingBookBillingSlotKind",
     90,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 FROM "accounts" a
 WHERE a."accounting_book_id" IS NULL
-  AND a."ledger_type" = 'MANAGEMENT'
+  AND a."ledger_type" = 'MANAGEMENT'::"LedgerType"
   AND NOT EXISTS (
     SELECT 1
     FROM "accounting_books" b
