@@ -42,6 +42,7 @@ describe("CLI-57 package assign helpers", () => {
     expect(resolvePackageQuotaSku("SVC-OZONE", "MALE", types)).toBe(null);
   });
 
+  it("isPackageAssignTreatmentLine keeps WO/SVC/naftalan, drops pools labs exams", () => {
     expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(false);
     expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(false);
     expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
