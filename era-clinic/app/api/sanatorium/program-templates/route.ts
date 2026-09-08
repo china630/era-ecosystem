@@ -16,8 +16,15 @@ export async function GET() {
     );
     if (denied) return denied;
     const rows = await prisma.programTemplate.findMany({
+      where: { isCurrent: true, retiredAt: null },
       orderBy: { code: "asc" },
-      select: { id: true, code: true, name: true, durationDays: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        durationDays: true,
+        version: true,
+      },
     });
     return jsonOk(rows);
   } catch (err) {

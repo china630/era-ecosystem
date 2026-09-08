@@ -35,7 +35,7 @@
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
 | Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
-| Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
+| Agency portal (extranet) | `/agency/*` + `/agency/ledger` + FO `/fo/agency-inbox` | SCREEN / 🟡 book+inbox; CL statement SHOW (HOT-AGP-04) |
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
 | Nafta HK deepen | `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open) |
 | Management reports catalog / nightly ZIP | `/reports/*` hubs + nightly pack + cubes (HOT-RPT W1–W3) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |

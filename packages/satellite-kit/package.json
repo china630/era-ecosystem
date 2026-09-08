@@ -42,7 +42,6 @@
       "types": "./dist/auth/platform-super-admin.d.ts",
       "default": "./dist/auth/platform-super-admin.js"
     },
-
     "./tenancy": {
       "types": "./dist/tenancy/satellite-tenant-extension.d.ts",
       "default": "./dist/tenancy/satellite-tenant-extension.js"
@@ -72,9 +71,9 @@
     "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/auth/login-user.test.js dist/integration/org-entitlement-gate.test.js dist/integration/person-name.test.js dist/placement/slice-export.test.js dist/ui/paginated-list.test.js"
   },
   "dependencies": {
+    "@era/contracts": "file:../era-contracts",
     "@era/fiscal": "file:../era-fiscal",
     "@era/i18n-common": "file:../i18n-common",
-    "@era/contracts": "file:../era-contracts",
     "@era/storage": "file:../era-storage",
     "jose": "^6.0.11",
     "lucide-react": "^0.511.0",
@@ -96,6 +95,7 @@
     "next": "^15.3.3",
     "next-intl": "^4.12.0",
     "react": "^19.1.0",
-        "typescript": "^5.7.3"
+    "react-dom": "^19.2.8",
+    "typescript": "^5.7.3"
   }
 }

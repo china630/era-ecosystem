@@ -198,7 +198,7 @@ export default function SuperAdminBillingQuotasPage() {
           pricePerWhatsappAlertAzn: Number.parseFloat(
             meterPricing.pricePerWhatsappAlertAzn,
           ),
-          pricePerInvoiceAzn: Number.parseFloat(meterPricing.pricePerInvoiceAzn),
+          pricePerInvoiceAzn: 0,
           pricePerOcrPageAzn: Number.parseFloat(meterPricing.pricePerOcrPageAzn),
         }),
       });
@@ -330,8 +330,10 @@ export default function SuperAdminBillingQuotasPage() {
             <label key={k} className="text-sm">
               {t(`meterPricing.${k}`)}
               <input
-                className="mt-1 block h-9 w-full rounded-lg border border-[#D5DADF] px-2 text-sm"
-                value={meterPricing[k]}
+                className="mt-1 block h-9 w-full rounded-lg border border-[#D5DADF] px-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                value={k === "pricePerInvoiceAzn" ? "0" : meterPricing[k]}
+                disabled={k === "pricePerInvoiceAzn"}
+                readOnly={k === "pricePerInvoiceAzn"}
                 onChange={(e) =>
                   setMeterPricing((p) => ({ ...p, [k]: e.target.value }))
                 }

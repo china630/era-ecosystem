@@ -9,7 +9,15 @@ const fullInclude = {
   room: { include: { roomType: true } },
   roomType: true,
   givenRoomType: true,
-  guest: true,
+  guest: {
+    include: {
+      documents: {
+        select: { docType: true, docNumber: true, isPrimary: true },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        take: 8,
+      },
+    },
+  },
   attachments: { orderBy: { createdAt: 'desc' as const } },
   ratePlan: true,
   mealPlan: true,
@@ -27,6 +35,18 @@ const fullInclude = {
           firstName: true,
           middleName: true,
           lastName: true,
+          sex: true,
+          nationality: true,
+          birthDate: true,
+          documents: {
+            select: {
+              docType: true,
+              docNumber: true,
+              isPrimary: true,
+            },
+            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+            take: 8,
+          },
         },
       },
     },
@@ -45,7 +65,7 @@ const fullInclude = {
     },
   },
   fiscalDocuments: true,
-} as const;
+} satisfies Prisma.ReservationInclude;
 
 export async function getReservationFull(id: string) {
   const reservation = await prisma.reservation.findUnique({

@@ -38,7 +38,7 @@
 | Room changes | `/reports/room-changes` | `GET/POST /api/reports/room-changes` |
 | Guest identity | Guest Card tab | `/api/guests/:id/documents|contacts|addresses` |
 | Group balance | `/reports/group-reservations` | `groupBalance` in groups API |
-| Promotion codes | `/admin/promotion-codes` | CRUD API |
+| Promotion codes | `/distribution/promotion-codes` | CRUD API only — **debt H-BL-52** apply on stay; do not use as agency voucher ([ADR](../../docs/adr/hotel-vouchers-promotions-certificates.md)) |
 | Travel agencies | `/admin/travel-agencies` | Agency CRUD |
 | Child matrix | `/admin/child-matrix` | CRUD API |
 | Channel availability | `/channel` | Matrix + `GET /api/channel/availability` |

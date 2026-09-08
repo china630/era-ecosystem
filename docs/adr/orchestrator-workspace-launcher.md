@@ -32,6 +32,7 @@ Orchestrator web home (`/`) rendered all nine industry tiles. When `hasIndustryM
 ## Consequences
 
 - New users: register → `/organizations` → create org → `/workspace`.
+- `/workspace` is the satellite launcher (Open / Modules / Settings). Hotel Channel Manager upsell is not a banner (use the Hotel card **Modules**). Department UUIDs and satellite URLs are Super-Admin `/super-admin/orgs/{id}` (copy UUID). Workforce card appears only while `platform_workforce` is off; entitled orgs use the sidebar.
 - Nafta UAT: owner **Connect** satellites on `/workspace`; ops extends trial via `/super-admin/orgs/{id}/subscription` — see [platform-trial-hierarchy](./platform-trial-hierarchy.md).
 - Docs: `ECOSYSTEM_URLS.md`, `LOCAL_UAT_GAP_CHECKLIST.md`, `NAFTA_SANATORIUM_UAT.md`, `QUARTET_UAT.md`, module-map rule.
 

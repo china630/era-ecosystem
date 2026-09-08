@@ -5,6 +5,7 @@ import type { SalesContractStatus, SalesContractCounterpartyType } from '@prisma
 
 const contractInclude = {
   agency: true,
+  company: true,
   companyGuest: true,
   ratePlan: true,
   allotments: { include: { roomType: true } },
@@ -36,6 +37,7 @@ export async function createSalesContract(input: {
   name: string;
   counterpartyType?: SalesContractCounterpartyType;
   agencyId?: string;
+  companyId?: string;
   companyGuestId?: string;
   validFrom: Date;
   validTo?: Date;
@@ -50,11 +52,12 @@ export async function createSalesContract(input: {
   notes?: string;
   externalRef?: string;
 }) {
-  if (input.counterpartyType === 'AGENCY' && !input.agencyId) {
+  const counterpartyType = input.counterpartyType ?? 'AGENCY';
+  if (counterpartyType === 'AGENCY' && !input.agencyId) {
     throw new Error('Agency is required for AGENCY counterparty type');
   }
-  if (input.counterpartyType === 'CORPORATE' && !input.companyGuestId) {
-    throw new Error('Company guest is required for CORPORATE counterparty type');
+  if (counterpartyType === 'CORPORATE' && !input.companyId && !input.companyGuestId) {
+    throw new Error('Company is required for CORPORATE counterparty type');
   }
 
   const ratePlan = await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
@@ -64,9 +67,10 @@ export async function createSalesContract(input: {
     data: {
       code: input.code.trim().toUpperCase(),
       name: input.name,
-      counterpartyType: input.counterpartyType ?? 'AGENCY',
-      agencyId: input.agencyId,
-      companyGuestId: input.companyGuestId,
+      counterpartyType,
+      agencyId: counterpartyType === 'AGENCY' ? input.agencyId : null,
+      companyId: counterpartyType === 'CORPORATE' ? input.companyId ?? null : null,
+      companyGuestId: counterpartyType === 'CORPORATE' ? input.companyGuestId ?? null : null,
       validFrom: input.validFrom,
       validTo: input.validTo,
       status: input.status ?? 'DRAFT',
@@ -78,8 +82,8 @@ export async function createSalesContract(input: {
         input.commissionPercent != null ? toDecimal(input.commissionPercent) : undefined,
       depositRequired: input.depositRequired ?? false,
       depositAmount: input.depositAmount != null ? toDecimal(input.depositAmount) : undefined,
-      notes: input.notes,
-      externalRef: input.externalRef,
+      notes: input.notes?.trim() || null,
+      externalRef: input.externalRef?.trim() || null,
     },
     include: contractInclude,
   });
@@ -91,6 +95,7 @@ export async function updateSalesContract(
     name: string;
     counterpartyType: SalesContractCounterpartyType;
     agencyId: string | null;
+    companyId: string | null;
     companyGuestId: string | null;
     validFrom: Date;
     validTo: Date | null;
@@ -106,14 +111,60 @@ export async function updateSalesContract(
     externalRef: string | null;
   }>,
 ) {
+  if (input.counterpartyType === 'AGENCY' && input.agencyId === null) {
+    throw new Error('Agency is required for AGENCY counterparty type');
+  }
+  if (input.counterpartyType === 'CORPORATE' && input.companyId === null && !input.companyGuestId) {
+    throw new Error('Company is required for CORPORATE counterparty type');
+  }
+
+  const counterpartyType = input.counterpartyType;
+
   return prisma.salesContract.update({
     where: { id },
     data: {
-      ...input,
+      name: input.name,
+      counterpartyType: input.counterpartyType,
+      agencyId:
+        counterpartyType === 'CORPORATE'
+          ? null
+          : input.agencyId !== undefined
+            ? input.agencyId
+            : undefined,
+      companyId:
+        counterpartyType === 'AGENCY'
+          ? null
+          : input.companyId !== undefined
+            ? input.companyId
+            : undefined,
+      companyGuestId:
+        counterpartyType === 'AGENCY'
+          ? null
+          : input.companyGuestId !== undefined
+            ? input.companyGuestId
+            : undefined,
+      validFrom: input.validFrom,
+      validTo: input.validTo,
+      status: input.status,
+      ratePlanId: input.ratePlanId,
+      minStay: input.minStay,
+      cta: input.cta,
+      ctd: input.ctd,
+      depositRequired: input.depositRequired,
+      notes: input.notes !== undefined ? input.notes?.trim() || null : undefined,
+      externalRef: input.externalRef !== undefined ? input.externalRef?.trim() || null : undefined,
       commissionPercent:
-        input.commissionPercent != null ? toDecimal(input.commissionPercent) : input.commissionPercent,
+        input.commissionPercent != null
+          ? toDecimal(input.commissionPercent)
+          : input.commissionPercent === null
+            ? null
+            : undefined,
       depositAmount:
-        input.depositAmount != null ? toDecimal(input.depositAmount) : input.depositAmount,
+        input.depositAmount != null
+          ? toDecimal(input.depositAmount)
+          : input.depositAmount === null
+            ? null
+            : undefined,
     },
     include: contractInclude,
   });

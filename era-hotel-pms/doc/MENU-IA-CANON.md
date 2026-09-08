@@ -113,16 +113,29 @@ Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
 | Menu item | URL | Description |
 |-----------|-----|-------------|
-| Channel manager | `/distribution/channel` | OTA push/pull, mappings, stop-sell |
+| Channel manager | `/distribution/channel` | OTA push/pull, mappings, stop-sell — tabs Overview / Channels / Inventory / Journal (`?tab=`) |
 | Sales contracts | `/distribution/contracts` | B2B contracts, commission, pickup |
-| Allotment blocks | `/distribution/allotment-blocks` | Blocks / quotas, pickup → booking |
-| Promotion codes | `/distribution/promotion-codes` | Promotions |
+| Allotment blocks | `/distribution/allotment-blocks` | Multi-line holds, optional sales contract, pickup → booking |
+| Promotion codes | `/distribution/promotion-codes` | Promo master (CRUD). Apply-on-stay + certificates = debt H-BL-52/53 — [ADR vouchers split](../../docs/adr/hotel-vouchers-promotions-certificates.md). Agency voucher # stays on reservation `voucherNo` (H-BL-51). |
 | Travel agencies | `/distribution/travel-agencies` | Agency master (commission + prepaid/postpaid) |
 | Companies | `/distribution/companies` | Corporate master (direct bill, no commission) |
-| Child matrix | `/distribution/child-matrix` | Child rate matrix |
-| Yield rules | `/distribution/yield-rules` | Yield / stop rules |
 
 Legacy: `/channel` → `/distribution/channel`, `/admin/contracts` → `/distribution/contracts`, etc.
+
+---
+
+### 2.5b Rates & pricing — `/settings/*` (BAR umbrella)
+
+| Menu item | URL | Description |
+|-----------|-----|-------------|
+| BAR calendar | `/settings/bar-calendar` | All BAR BASE plans with plan tabs + daily grid |
+| Pricing policy | `/settings/pricing-policy` | Occupancy / load-yield / child-absolute flags |
+| Child matrix | `/settings/child-matrix` | Child age bands (% / absolute / freeCount) on top of adult nightly |
+| Yield rules | `/settings/yield-rules` | Load-based % uplift (only if policy flag ON; not stop-sell) |
+| Pricing components | `/settings/pricing-components` | Versioned service fee / meals / COGS (BAR floor inputs) |
+| Package prices | `/settings/package-prices` | Package sell + cost floor |
+
+Legacy: `/distribution/child-matrix` → `/settings/child-matrix`, `/distribution/yield-rules` → `/settings/yield-rules`, `/admin/*` same.
 
 ---
 
@@ -198,8 +211,6 @@ Deep clinical / lab → **Clinic** (external).
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | Master data | `/settings/master-data` | Rooms, types, rates, revenue codes, routing |
-| BAR calendar | `/settings/bar-calendar` | All BAR BASE plans (`BAR-BB`, `BAR-FB`, …) with plan tabs + daily grid |
-| Pricing components | `/settings/pricing-components` | Versioned service fee / meals / COGS (BAR floor inputs, HOT-PC-01) |
 | Users | `/settings/users` | Local hotel users/roles (SSO seats → CP) |
 | Integration | `/settings/integration` | Bridges, tokens, Finance handoff |
 | Audit viewer | `/settings/audit` | Action audit |

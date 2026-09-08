@@ -533,7 +533,8 @@ Wave A (Nafta ops slice) + Wave B (OTA safety / ARI / honest live STUB):
 - [x] HOT-CL-01 stay folio routing overrides + card table + `postCharge` prefer override
 - [x] HOT-CASH-06 front-cash shift filter + printable ops Z + Close shift
 - [~] HOT-CASH-07 reservation folio balances + HOT-CASH-08 folio journal (API/SCREEN; UAT §42)
-- [~] HOT-CL-06 Company profile + company CL at `/front-cash/company-ledger` (separate from agency; ADR hotel-agency-vs-company-profiles)
+- [x] HOT-CL-06 Company profile + company CL statement at `/front-cash/company-ledger` (lines + TRANSFERRED_AR; ADR hotel-agency-vs-company-profiles)
+- [x] HOT-AGP-04 Agency portal own CL statement `/agency/ledger` + `GET /api/agency/ledger` (session-scoped, read-only)
 - [x] HOT-XFER-01 transfer charge via routing + cancel/void + day-board driver print
 - [x] HOT-CASH-01 `BANK_TRANSFER` tender + `bankReference` on pay/settle
 - [x] HOT-NA-03 EOD no-shows / room-moves / VIP + CSV

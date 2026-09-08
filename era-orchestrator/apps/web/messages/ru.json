@@ -317,7 +317,7 @@
         "pricePerUserMonthAzn": "AZN / пользователь / мес",
         "pricePerGbMonthAzn": "AZN / ГБ / мес",
         "pricePerWhatsappAlertAzn": "AZN / WhatsApp",
-        "pricePerInvoiceAzn": "AZN / счёт",
+        "pricePerInvoiceAzn": "Счета — в пачке документов (0 AZN)",
         "pricePerOcrPageAzn": "AZN / OCR страница"
       },
       "field": {
@@ -739,6 +739,8 @@
       "priceLine": "{price} AZN/мес",
       "included": "Включено в платформу",
       "pendingOff": "отключится в конце месяца",
+      "quantityLabel": "Слоты",
+      "quantityApply": "Применить",
       "disableBillingNotice": "Модуль остаётся в биллинге текущего месяца; доступ до конца месяца.",
       "enabled": "Модуль включён",
       "connectFailed": "Не удалось подключить сателлит — повторите или обратитесь в поддержку.",

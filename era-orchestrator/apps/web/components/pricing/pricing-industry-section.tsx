@@ -42,6 +42,8 @@ export function PricingIndustrySection({
   groups,
   selectedBySatellite,
   onSelectBundle,
+  registerCta,
+  afterSignup,
 }: {
   title: string;
   intro: string;
@@ -50,6 +52,8 @@ export function PricingIndustrySection({
   groups: PricingStorefrontView["industryGroups"];
   selectedBySatellite: Record<string, string | null>;
   onSelectBundle: (satelliteKey: string, marketingId: string | null) => void;
+  registerCta: string;
+  afterSignup: string;
 }) {
   if (groups.length === 0) return null;
 
@@ -149,10 +153,10 @@ export function PricingIndustrySection({
 
         <p className="mt-4 text-[12px] text-slate-500">
           <Link href="/register-org" className="font-medium text-sky-700 hover:underline">
-            Register
+            {registerCta}
           </Link>
           {" · "}
-          à la carte modules available in Billing → Modules after sign-up.
+          {afterSignup}
         </p>
       </div>
     </section>

@@ -125,7 +125,7 @@ export function PricingCoreSuiteSection({
   const addonModules = standardModules.filter((m) => m.id !== "core_accounting");
 
   return (
-    <section className="px-4 py-6" aria-labelledby="pricing-core-suite-title">
+    <section id="core" className="scroll-mt-24 px-4 py-6" aria-labelledby="pricing-core-suite-title">
       <div className="mx-auto max-w-6xl">
         <h2
           id="pricing-core-suite-title"

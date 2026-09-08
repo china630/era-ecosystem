@@ -1,14 +1,20 @@
 import type { PublicPricingResponse } from "../public-pricing-types";
 
-const ORCH_API = process.env.NEXT_PUBLIC_ORCH_API_URL ?? "http://127.0.0.1:4000";
+function orchApiBase(): string {
+  return (process.env.ORCH_API_INTERNAL_URL || "http://127.0.0.1:4000").replace(/\/$/, "");
+}
 
 export async function fetchPublicPricingSnapshot(): Promise<PublicPricingResponse> {
+  const url =
+    typeof window === "undefined"
+      ? `${orchApiBase()}/v1/public/pricing`
+      : "/api/public/pricing";
   try {
-    const res = await fetch(`${ORCH_API.replace(/\/$/, "")}/v1/public/pricing`, {
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return unavailablePricingSnapshot();
-    return (await res.json()) as PublicPricingResponse;
+    const body = (await res.json()) as PublicPricingResponse;
+    if (body.unavailable) return { ...unavailablePricingSnapshot(), ...body, unavailable: true };
+    return body;
   } catch {
     return unavailablePricingSnapshot();
   }
@@ -17,7 +23,7 @@ export async function fetchPublicPricingSnapshot(): Promise<PublicPricingRespons
 function unavailablePricingSnapshot(): PublicPricingResponse {
   return {
     currency: "AZN",
-    foundationMonthlyAzn: 0,
+    foundationMonthlyAzn: 29,
     yearlyDiscountPercent: 0,
     pricingModules: [],
     pricingBundles: [],

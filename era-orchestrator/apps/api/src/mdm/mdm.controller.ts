@@ -102,6 +102,19 @@ export class MdmController {
     return this.mdm.workforceResolvePerson(body);
   }
 
+  @Post("persons/:personId/access-grant")
+  ensureAccessGrant(
+    @Param("personId") personId: string,
+    @Body() body: { organizationId: string },
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    const orgId = body.organizationId?.trim();
+    if (!orgId) throw new BadRequestException("organizationId required");
+    return this.mdm.ensureWorkforceAccessGrant(personId, orgId);
+  }
+
   @Get("persons/:personId/ops-profile")
   opsProfile(
     @Param("personId") personId: string,

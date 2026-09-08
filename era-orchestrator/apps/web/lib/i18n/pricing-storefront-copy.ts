@@ -73,6 +73,8 @@ export type PricingStorefrontUiCopy = {
   >;
   industryModuleNames: Record<string, string>;
   platformAddonNames: Record<string, string>;
+  industryRegisterCta: string;
+  industryAfterSignup: string;
 };
 
 const uiRu: PricingStorefrontUiCopy = {
@@ -95,7 +97,7 @@ const uiRu: PricingStorefrontUiCopy = {
   corePostTrialTemplate: "{{price}} / мес после trial (первые 3 месяца 0 AZN)",
   standardModulesTitle: "Стандартные модули ERA Core",
   standardModulesHint:
-    "Входят в подписку Core или подключаются пакетами ниже — без отдельной à la carte-витрины.",
+    "Входят в подписку Core или подключаются пакетами ниже — без отдельной витрины по одной позиции.",
   bundlesTitle: "Готовые пакеты",
   bundlesHint:
     "Стандартные модули со скидкой — готовые наборы под типовой сценарий бизнеса.",
@@ -133,9 +135,9 @@ const uiRu: PricingStorefrontUiCopy = {
   premiumLockedTitle: "Требуется коммерческий статус (TIER 1+)",
   premiumUpgradeCta: "Перейти на Tier 1+",
   calculatorDueTodayLabel:
-    "Сумма к оплате сегодня (входит в 3-месячный trial): {{amount}}",
+    "Сегодня (trial): {{amount}}",
   calculatorPostpaidLabel:
-    "Плата за лимиты и premium-модули (постоплата в следующем месяце): {{amount}}",
+    "Модули после trial (без метров и ёмкости): {{amount}}",
   calculatorBakuNotice:
     "Все расчеты лимитов и закрытие биллингового периода выполняются 1-го числа календарного месяца строго по времени Баку (Asia/Baku).",
   standardModules: {
@@ -360,6 +362,8 @@ const uiRu: PricingStorefrontUiCopy = {
     platform_loyalty: "Loyalty (XOR retail promo)",
     platform_delivery: "Delivery (XOR F&B hub)",
   },
+  industryRegisterCta: "Регистрация",
+  industryAfterSignup: "отдельные модули — в Биллинг → Модули после входа.",
 };
 
 const uiAz: PricingStorefrontUiCopy = {
@@ -420,9 +424,9 @@ const uiAz: PricingStorefrontUiCopy = {
   premiumLockedTitle: "Kommersiya statusu tələb olunur (TİER 1+)",
   premiumUpgradeCta: "Tier 1+ seçin",
   calculatorDueTodayLabel:
-    "Bu gün ödənilən məbləğ (3 aylıq triala daxildir): {{amount}}",
+    "Bu gün (trial): {{amount}}",
   calculatorPostpaidLabel:
-    "Limitlər və premium modullar üçün ödəniş (növbəti ayda postoplat): {{amount}}",
+    "Trial-dan sonra modullar (metrsiz, tutumsuz): {{amount}}",
   calculatorBakuNotice:
     "Bütün limit hesablamaları və billing dövrünün bağlanması ayın 1-də cədvəl vaxtı ilə Bakı (Asia/Baku) üzrə aparılır.",
   standardModules: {
@@ -647,6 +651,8 @@ const uiAz: PricingStorefrontUiCopy = {
     platform_loyalty: "Loyalty (XOR retail promo)",
     platform_delivery: "Delivery (XOR F&B hub)",
   },
+  industryRegisterCta: "Qeydiyyat",
+  industryAfterSignup: "ayrıca modullar girişdən sonra Billing → Modullar bölməsindədir.",
 };
 
 export function getPricingStorefrontUiCopy(locale: "ru" | "az"): PricingStorefrontUiCopy {

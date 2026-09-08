@@ -77,6 +77,7 @@ export class PricingService implements OnModuleInit {
     await seedPricingModuleIfEmpty(this.prisma);
     await ensureMissingPricingModules(this.prisma);
     await syncPricingModuleCatalog(this.prisma);
+    await this.systemConfig.syncMeterCatalogCanon();
     await seedPricingBundleDefaultsIfEmpty(this.prisma);
     await ensureMissingPricingBundles(this.prisma);
   }

@@ -19,7 +19,7 @@ export async function recordAgencySettlementPayment(input: {
   const folios = await prisma.folio.findMany({
     where: {
       status: 'TRANSFERRED_AR',
-      type: { in: ['AGENCY', 'COMPANY'] },
+      type: 'AGENCY',
       reservation: { agencyId: input.agencyId },
     },
     include: { charges: true, payments: true },
@@ -69,11 +69,36 @@ export async function recordAgencySettlementPayment(input: {
 }
 
 export async function listAgencyTransferredFolios(agencyId: string) {
+  /** Agency CL tab: AGENCY folios only — COMPANY AR belongs on company ledger. */
   const folios = await prisma.folio.findMany({
     where: {
       status: 'TRANSFERRED_AR',
-      type: { in: ['AGENCY', 'COMPANY'] },
+      type: 'AGENCY',
       reservation: { agencyId },
+    },
+    include: {
+      charges: true,
+      payments: true,
+      reservation: { select: { id: true, checkInDate: true, checkOutDate: true } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+  return folios.map((f) => ({
+    id: f.id,
+    type: f.type,
+    reservationId: f.reservationId,
+    balance: folioBalance(f.charges, f.payments),
+    checkInDate: f.reservation.checkInDate,
+    checkOutDate: f.reservation.checkOutDate,
+  }));
+}
+
+export async function listCompanyTransferredFolios(companyId: string) {
+  const folios = await prisma.folio.findMany({
+    where: {
+      status: 'TRANSFERRED_AR',
+      type: 'COMPANY',
+      reservation: { companyId },
     },
     include: {
       charges: true,

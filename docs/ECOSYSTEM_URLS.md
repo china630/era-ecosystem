@@ -77,15 +77,16 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | `/register` | User signup; captures `?ref=` referral code | Orch auth API |
 | `/register-org` | Organization registration (VÖEN) — fallback/deep link; primary path is modal on `/organizations` | Orch auth + MDM |
 | `/organizations` | Org hub — list memberships, switch org, **+ Organization** modal | `GET /memberships`, `POST /auth/register-organization` |
-| `/workspace` | Active org systems (Finance + industry); entitled → **Open**, else → pricing (no waitlist) | `GET /v1/subscription/me` |
+| `/workspace` | Active org systems (Finance + industry). Workforce tile only while SKU is off (sidebar otherwise). Department UUIDs / satellite URLs: `/super-admin/orgs/{id}` | `GET /v1/subscription/me` |
 | `/settings` | Settings hub (team, subscription) | — |
 | `/settings/subscription` | Plan, trial, module chips | `GET /v1/subscription/me` |
-| `/pricing` | Public pricing storefront | `GET /v1/public/pricing` |
+| `/pricing` | Public catalog (Foundation, satellites, add-ons, meters) | `GET /v1/public/pricing` (web BFF `/api/public/pricing`) |
+| `/satellites`, `/satellites/[slug]` | Public satellite pages (Gate vs core; canon = `/pricing#…`) | same snapshot |
 | `/help` | Canonical FAQ (az \| ru \| en) | — |
 | `/terms` | User agreement (az \| ru \| en) | — |
 | `/partner` | Referral / partner dashboard | `GET /v1/partner/dashboard` |
-| `/` | **Marketing landing** (guest) / auth redirect (authed → workspace/orgs) | `GET /v1/public/landing-modules` |
-| `/industry/[vertical]` | SSO deep link for a vertical (entitlement-gated) | SSO launch |
+| `/` | **Marketing hub** (guest, no sidebar) / auth redirect (authed → workspace/orgs) | overlay `GET /v1/public/pricing` |
+| `/industry/[vertical]` | SSO deep link for a vertical (entitlement-gated, **not** public marketing) | SSO launch |
 
 **Redirects to Orchestrator:** Finance `/` (marketing), `/register`, `/register-org`, `/pricing`, `/partner`, `/companies` → `/organizations`, `/settings/subscription`, `/settings/team`, `/dispute/*`, `/super-admin/*`, `/industry/*`; unauthenticated Finance `/login` → `{ORCH_WEB}/login?next=finance` when CP handoff is enabled.
 

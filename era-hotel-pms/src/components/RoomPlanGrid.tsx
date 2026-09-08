@@ -20,8 +20,9 @@ import {
 } from '@/components/room-plan/share-lanes';
 import {
   PLAN_BAR_COLORS,
-  PLAN_BAR_OCCUPANCY_STROKE,
+  PLAN_BAR_OCCUPANCY_MARK,
   isPlanVisibleRoom,
+  occupancyMarkLabel,
   type PlanBarDayState,
   type PlanBarOccupancyKind,
 } from '@/components/room-plan/plan-bar-theme';
@@ -77,16 +78,28 @@ function ChevronSwatch({ fill }: { fill: string }) {
   );
 }
 
-function OccupancySwatch({ stroke }: { stroke: string }) {
+function OccupancySwatch({ kind }: { kind: PlanBarOccupancyKind }) {
+  const mark = PLAN_BAR_OCCUPANCY_MARK[kind];
+  if (kind === 'exclusive') {
+    return (
+      <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden className="shrink-0">
+        <path
+          d="M0 0 L12 0 L18 6 L12 12 L0 12 L4 6 Z"
+          fill="#8BC34A"
+          stroke="#D5DADF"
+          strokeWidth="0.5"
+        />
+      </svg>
+    );
+  }
   return (
-    <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden className="shrink-0">
-      <path
-        d="M0 0 L12 0 L18 6 L12 12 L0 12 L4 6 Z"
-        fill="#FFFFFF"
-        stroke={stroke}
-        strokeWidth="1.6"
-      />
-    </svg>
+    <span
+      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] text-[10px] font-black leading-none text-white"
+      style={{ backgroundColor: mark }}
+      aria-hidden
+    >
+      {occupancyMarkLabel(kind)}
+    </span>
   );
 }
 
@@ -459,7 +472,7 @@ export default function RoomPlanGrid({
     id: item.id,
     label: item.label,
     swatchClassName: '',
-    swatch: <OccupancySwatch stroke={PLAN_BAR_OCCUPANCY_STROKE[item.id]} />,
+    swatch: <OccupancySwatch kind={item.id} />,
   }));
 
   const renderRoomBlock = (roomList: RoomPlanRoom[]) =>

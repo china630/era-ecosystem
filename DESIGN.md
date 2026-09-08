@@ -180,8 +180,8 @@ Semantic widths live in `@era/satellite-kit/ui` — **`field-presets.ts`** (`FIE
 
 ## Page chrome & navigation
 
-- **App main content padding (canonical):** under the fixed header, every shell uses **`APP_MAIN_CONTENT_PADDED_CLASS`** from `@era/satellite-kit/ui` (`px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8`). Orchestrator and Finance wrap with **`APP_MAIN_CONTENT_CLASS`** (`app-shell-main` + padded); satellites use **`EraOpsContent`** (same padded token). **Do not** invent alternate top padding per app.
-- **`PageHeader`** (`@era/satellite-kit/ui` / Finance `page-header.tsx`) is for **full pages only** — title (line 1, left), optional subtitle, **`PageHeader.actions`** inline on the same row (primary actions such as `+ Add`). **Do not** use `PageHeader` inside modals; modals follow § Modal & dialog standards.
+- **App main content padding (canonical):** under the fixed header, every shell uses **`APP_MAIN_CONTENT_PADDED_CLASS`** from `@era/satellite-kit/ui` (`px-4 pt-3 pb-24 sm:px-6 sm:pt-4 lg:px-8 lg:pt-4 lg:pb-8`). Top is tight so the title band is not a empty slab; bottom stays roomy on small screens. Orchestrator and Finance wrap with **`APP_MAIN_CONTENT_CLASS`** (`app-shell-main` + padded); satellites use **`EraOpsContent`** (same padded token). **Do not** invent alternate top padding per app.
+- **`PageHeader`** (`@era/satellite-kit/ui`): **full pages only** — title (`text-xl`, left) + optional one-line subtitle (`text-xs`); **`actions` on the same row**. Default margin under header is **`mb-3`** (not a tall empty band). **Do not** use `PageHeader` inside modals; modals follow § Modal & dialog standards. Prefer omitting subtitle when it adds no ops value.
 - **Cross-module / in-app section links:** **sidebar only** — do not duplicate left-nav destinations as `PageHeader` buttons (Home, sibling boards).
 - **List filters (canonical):**
   - **1–3 compact toggles** (period, grouping, horizon): `FilterMenuButton` / compact controls in **`PageHeader.actions`** or an ops toolbar.
@@ -213,7 +213,7 @@ Semantic widths live in `@era/satellite-kit/ui` — **`field-presets.ts`** (`FIE
 ### Table footer — pagination
 
 - **Placement:** directly **below** the table viewport (same horizontal padding as the table container), **outside** the scrollable `<tbody>` region.
-- **Unbounded lists (`EraListWorkspace`):** footer is **docked at the bottom of the content column** (not mid-page under a short table). Wrap `PageHeader` + workspace in `LIST_PAGE_SHELL_CLASS` so the **page does not scroll** — only the table body scrolls. Prefer `PageHeader`/`EraListFilterBar` with `className="!mb-0"` inside the shell to avoid double vertical gaps.
+- **Unbounded lists (`EraListWorkspace`):** footer is **docked at the bottom of the content column** (not mid-page under a short table). Wrap `PageHeader` + workspace in `LIST_PAGE_SHELL_CLASS` (`flex-1` under height-constrained `EraOpsContent`) so the **page does not scroll** — only the table body scrolls. Shell reclaims main bottom padding (`-mb-16` / `lg:-mb-8`) so the paginator sits on the viewport edge.
 - **Row height:** controls **`h-8`** (32px) to match compact toolbar buttons; vertical gap **`mt-2`** or **`mt-3`** from the table bottom border.
 - **Copy:** page indicator **`text-[12px] text-[#7F8C8D]`** (e.g. “Page X of Y” / localized equivalent); numeric page values may use **`font-mono`** for alignment with amounts elsewhere.
 - **Controls:** prev/next use the same **ghost / secondary** affordance as table toolbars (`rounded-lg`, **13px** label); rows-per-page selector matches **form** input height (`h-8`, bordered `#D5DADF`). Default sizes **25 / 50 / 100**.

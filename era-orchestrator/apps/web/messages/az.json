@@ -317,7 +317,7 @@
         "pricePerUserMonthAzn": "AZN / istifadəçi / ay",
         "pricePerGbMonthAzn": "AZN / GB / ay",
         "pricePerWhatsappAlertAzn": "AZN / WhatsApp",
-        "pricePerInvoiceAzn": "AZN / qaimə",
+        "pricePerInvoiceAzn": "Qaimələr sənəd paketindədir (0 AZN)",
         "pricePerOcrPageAzn": "AZN / OCR səhifə"
       },
       "field": {
@@ -739,6 +739,8 @@
       "priceLine": "{price} AZN/ay",
       "included": "Platformaya daxildir",
       "pendingOff": "ay sonunda söndürüləcək",
+      "quantityLabel": "Slotlar",
+      "quantityApply": "Tətbiq et",
       "disableBillingNotice": "Modul cari ayın hesab-fakturasında qalır; giriş ay sonunadək.",
       "enabled": "Modul aktiv edildi",
       "connectFailed": "Satellit qoşulmadı — yenidən cəhd edin və ya dəstəyə yazın.",

@@ -179,11 +179,14 @@ Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`.
 
 ## 18. B2B SALES CONTRACTS (Stage 24 / NW-3 PROC-24 / H-BL-30)
 
-1. `/admin/contracts` — create ACTIVE contract for TRAVEL-AZ with DERIVED −10% plan + 20 room-night allotment on STANDARD.
-2. `GET /api/admin/contracts/{id}?utilization=1` — utilization metrics after bookings.
-3. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
-4. `/reports/agency-profitability` — contract-sourced revenue visible.
-5. Legacy `/admin/contract-pricing` redirects to `/admin/contracts`; run `npx tsx prisma/scripts/migrate-contract-pricing-to-derived.ts` for CPR migration.
+1. `/distribution/contracts` — create DRAFT contract for TRAVEL-AZ (explicit agency + DERIVED plan, no silent defaults); set commission/notes/minStay as needed; **Activate** (confirm if no allotments).
+2. **Edit** contract — change notes/commission/CTA; code stays locked.
+3. **Allotments** — add STANDARD nightly quota (+ release days) inside the contract season; edit and delete work from the same modal.
+4. **Create block** — opens `/distribution/allotment-blocks?contractId=` with season/agency prefilled; add multi-line hold → DEFINITE → Pickup.
+5. `GET /api/admin/contracts/{id}?utilization=1` — utilization metrics after bookings.
+6. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
+7. `/reports/agency-profitability` — contract-sourced revenue visible.
+8. Legacy `/admin/contracts` and `/admin/contract-pricing` redirect to `/distribution/contracts`.
 
 ## 19. CHANNEL stop-sell regression (NW-4 / PROC-23)
 
@@ -298,7 +301,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 
 ## 22. Nafta W0 — analytics, child pricing, OTA (2026-06-13)
 
-1. `/admin/child-matrix` — ensure row 0–6 = 100% discount; create reservation with `children5_2=1` → **Pricing recalc** → nightly total unchanged vs adult-only baseline.
+1. `/settings/child-matrix` — ensure row 0–6 = 100% discount; create reservation with `children5_2=1` → **Pricing recalc** → nightly total unchanged vs adult-only baseline.
 2. `/reports/analytics` — set date range → booking sources, cancellations, nationality tables load.
 3. OTA webhook (with `ERA_OTA_WEBHOOK_SECRET` if set):
    ```bash
@@ -352,7 +355,7 @@ UI paths (no curl) for [NAFTA_DOC_API_UI_AUDIT](../../docs/NAFTA_DOC_API_UI_AUDI
 1. **Migration:** `/migration` → Prefill + Submit to registry on a registration row.
 2. **Folio card:** open reservation → Folio tab → Place card hold / Release; Billing → credit limit; early/late preview under check-in/out times.
 3. **Channel:** `/channel` → **Push OTA** / **Pull OTA**; confirm last sync message.
-4. **Admin:** `/admin/yield-rules` CRUD; `/admin/audit` filter by entity type + date range.
+4. **Admin:** `/settings/yield-rules` CRUD; `/settings/audit` filter by entity type + date range.
 
 ## 30. Reports W1 — Management reports catalog + nightly ZIP (HOT-RPT-01/02)
 
@@ -411,9 +414,12 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
 5. **Discount:** settle or check-out with discount amount → negative DISCOUNT charge.
 6. **Per-guest close:** EQUAL party → Close on one personal folio when balance 0.
-7. **Agency settle:** `/front-cash/agency-ledger` → TRANSFERRED_AR list → Apply to City Ledger.
+7. **Agency settle handoff:** `/front-cash/agency-ledger` → TRANSFERRED_AR list (AGENCY folios only) → bank match in Finance (hotel POST settle returns 409).
 8. **NA polish:** `/night-audit` → night audit status shows polishPreview (exceptions / auto no-show / trial).
 9. **Finance matching:** Finance `/reporting/aging` buckets; counterparty payment terms; `/sales/invoices/allocate` allocate tranche.
+10. **Agency statement lines (HOT-CL-03):** `/front-cash/agency-ledger` → pick agency + period → metrics opening/charges/payments → **Statement lines** grid (date, kind, stay, amount, running). Prior-stay opening must appear when period starts after checkout.
+11. **Company statement lines (HOT-CL-06):** `/front-cash/company-ledger` → pick company → same statement grid for COMPANY folios; TRANSFERRED_AR list; no commission / no Push snapshot.
+12. **Agency portal CL (HOT-AGP-04):** `/agency/ledger` (agency session) → period filters → own statement only; no Push / settle controls.
 
 ## 28. MENU-IA deepen — cash journal / EOD grids / updates (2026-08-07 → thin MVP 2026-08-11)
 
@@ -609,14 +615,15 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 ## 42. Front cash deepen + agency vs company (HOT-CASH-07/08, HOT-CL-06)
 
-**Status:** Engineering API/SCREEN — not SHIPPED (except existing pending / cash journal / agency settle).
+**Status:** CL statement paths SHIPPED (HOT-CL-03/06 + HOT-AGP-04); folio-balances / journal remain SCREEN deepen.
 
 1. `/front-cash/folio-balances` — tabs In house / any balance / guest balance / reservations; columns guest vs agency vs company; Folio link.
 2. `/front-cash/folio-journal` — date range charges+payments; no add/edit/delete; Folio link to `/folio/[id]`.
 3. `/distribution/companies` — create company code+name+VÖEN+prepaid/postpaid (no commission).
 4. `/distribution/travel-agencies` — settlement prepaid/postpaid saved on agency.
 5. Reservation card Commercial: set **Agency** and **Company** independently → save.
-6. `/front-cash/agency-ledger` — code/name/commission %; AGENCY folio totals only.
-7. `/front-cash/company-ledger` — code/name/settlement; COMPANY folio totals; no commission column.
+6. `/front-cash/agency-ledger` — code/name/commission %; AGENCY folio totals + statement lines; opening from full history.
+7. `/front-cash/company-ledger` — code/name/settlement; COMPANY folio totals + statement lines; TRANSFERRED_AR list; no commission column.
+8. `/agency/ledger` — agency portal read-only statement (session agency only).
 
 

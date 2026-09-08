@@ -191,6 +191,7 @@ describe('room-plan EW wave smoke', () => {
     ).toBe('shareF');
     expect(PLAN_BAR_OCCUPANCY_STROKE.shareM).toBe('#1565C0');
     expect(PLAN_BAR_OCCUPANCY_STROKE.shareF).toBe('#AD1457');
+    expect(PLAN_BAR_OCCUPANCY_STROKE.exclusive).toBe('#34495E');
   });
 
   it('hides OOO/OOS/repair doors from the plan', () => {
