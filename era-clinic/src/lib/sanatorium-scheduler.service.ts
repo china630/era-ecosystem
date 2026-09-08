@@ -4,6 +4,7 @@ import {
   buildEntitlementSnapshot,
   findCurrentProgramTemplate,
   programTemplateInclude,
+  type ProgramTemplateFull,
 } from "@/domain/sanatorium/program-template-admin";
 
 export async function instantiateProgramFromTemplate(input: {
@@ -127,12 +128,12 @@ export async function recalcProgramQuotas(
   const code = opts.programCode ?? instance.programCode;
   const packageCodeChanged = Boolean(opts.programCode && opts.programCode !== instance.programCode);
 
-  let template = packageCodeChanged
+  let template: ProgramTemplateFull | null = packageCodeChanged
     ? await findCurrentProgramTemplate(code)
-    : await prisma.programTemplate.findUnique({
+    : ((await prisma.programTemplate.findUnique({
         where: { id: instance.templateId },
         include: programTemplateInclude,
-      });
+      })) as ProgramTemplateFull | null);
 
   if (!template) throw new Error(`Program template ${code} not found`);
 
