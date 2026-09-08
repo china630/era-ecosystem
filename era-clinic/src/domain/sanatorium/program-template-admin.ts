@@ -41,10 +41,12 @@ export type ProgramProcedureInput = z.infer<typeof procedureSchema>;
 export type ProgramKnotInput = z.infer<typeof knotSchema>;
 
 export const programTemplateInclude = {
-  procedures: { orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }] },
+  procedures: {
+    orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }],
+  },
   quotaKnots: true,
   blockMembers: true,
-} as const;
+} satisfies import("@prisma/client").Prisma.ProgramTemplateInclude;
 
 export type EntitlementSnapshot = {
   version: number;
