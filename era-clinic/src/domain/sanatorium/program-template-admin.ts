@@ -516,9 +516,10 @@ export async function purgeRetiredTemplatesWithoutInstances(opts?: {
 
 /** Backfill entitlementSnapshot for instances that still lack one. */
 export async function backfillEntitlementSnapshots(): Promise<{ updated: number }> {
-  const missing = await prisma.$queryRaw<Array<{ id: string; templateId: string }>>`
-    SELECT id, "templateId" FROM "ProgramInstance" WHERE entitlement_snapshot IS NULL
-  `;
+  const missing = await prisma.programInstance.findMany({
+    where: { entitlementSnapshot: null },
+    select: { id: true, templateId: true },
+  });
   let updated = 0;
   for (const row of missing) {
     const template = await prisma.programTemplate.findUnique({
