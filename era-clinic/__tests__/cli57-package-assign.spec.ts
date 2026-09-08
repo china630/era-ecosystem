@@ -3,7 +3,9 @@ import {
   PackageAssignError,
   paramsLabelFromOrder,
   isPackagePoolCode,
+  isEntitlementBucket,
   eligibleSkusForPool,
+  eligibleSkusForQuotaAlias,
   isPackageAssignTreatmentLine,
   resolvePackageQuotaSku,
 } from "@/domain/sanatorium/package-assign.service";
@@ -31,20 +33,9 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackagePoolCode("NAFTALAN")).toBe(false);
   });
 
-  it("resolvePackageQuotaSku maps NAFTALAN_BATH by sex", () => {
-    const types = ["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"];
-    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", types)).toBe(
-      "SVC-NAFTALAN-VANNASI-KISI",
-    );
-    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", types)).toBe(
-      "SVC-NAFTALAN-VANNASI-QADIN",
-    );
-    expect(resolvePackageQuotaSku("SVC-OZONE", "MALE", types)).toBe(null);
-  });
-
-  it("isPackageAssignTreatmentLine keeps WO/SVC/naftalan, drops pools labs exams", () => {
-    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(false);
-    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(false);
+  it("isPackageAssignTreatmentLine keeps pools WO/SVC/naftalan, drops labs exams", () => {
+    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(true);
+    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(true);
     expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
     expect(isPackageAssignTreatmentLine("SVC-OZONE", "Ozone")).toBe(true);
     expect(isPackageAssignTreatmentLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);
@@ -58,6 +49,36 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackageAssignTreatmentLine("LAB-CBC", "Qan umumi analiz")).toBe(false);
     expect(isPackageAssignTreatmentLine("LAB-URINE", "Sidik")).toBe(false);
     expect(isPackageAssignTreatmentLine("THERAPIST", "Hekim muayinesi")).toBe(false);
+  });
+
+  it("resolvePackageQuotaSku maps NAFTALAN_BATH by sex and WO-TR fallbacks", () => {
+    const svc = ["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"];
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", svc)).toBe(
+      "SVC-NAFTALAN-VANNASI-KISI",
+    );
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", svc)).toBe(
+      "SVC-NAFTALAN-VANNASI-QADIN",
+    );
+    expect(resolvePackageQuotaSku("SVC-OZONE", "MALE", svc)).toBe(null);
+
+    const woMeta = [
+      { code: "WO-TR-68", name: "Naftalan vannası (Qadın)" },
+      { code: "WO-TR-72", name: "Naftalan vannası (Kişi)" },
+    ];
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", [], woMeta)).toBe("WO-TR-68");
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", [], woMeta)).toBe("WO-TR-72");
+    // UNKNOWN + both genders → picker (null)
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "UNKNOWN", [], woMeta)).toBe(null);
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", null, [], woMeta)).toBe(null);
+  });
+
+  it("eligibleSkusForQuotaAlias returns both gender baths from WO-TR catalog", () => {
+    const list = eligibleSkusForQuotaAlias("NAFTALAN_BATH", [
+      { code: "WO-TR-68", name: "Naftalan vannası (Qadın)" },
+      { code: "WO-TR-72", name: "Naftalan vannası (Kişi)" },
+      { code: "SVC-OZONE", name: "Ozone" },
+    ]);
+    expect(list.map((x) => x.code).sort()).toEqual(["WO-TR-68", "WO-TR-72"]);
   });
 
   it("eligibleSkusForPool paraffin vs physio and excludes dedicated balances", () => {
@@ -80,6 +101,25 @@ describe("CLI-57 package assign helpers", () => {
     expect(codes).not.toContain("SVC-NAFTALAN");
     expect(codes).not.toContain("PHYSIO_POOL");
     expect(codes).not.toContain("SVC-LAB-CBC");
+  });
+
+  it("eligibleSkusForPool uses configured membership whitelist when present", () => {
+    const types = [
+      { code: "SVC-LASER", name: "Laser", needsSite: true, active: true },
+      { code: "SVC-OZONE", name: "Ozone", needsSite: true, active: true },
+      { code: "SVC-MAGNET", name: "Magnet", needsSite: true, active: true },
+    ];
+    const list = eligibleSkusForPool("PHYSIO_POOL", ["PHYSIO_POOL"], types, [
+      "SVC-LASER",
+      "SVC-MAGNET",
+    ]);
+    expect(list.map((s) => s.code).sort()).toEqual(["SVC-LASER", "SVC-MAGNET"]);
+  });
+
+  it("isEntitlementBucket is true for configured members or *_POOL", () => {
+    expect(isEntitlementBucket("PHYSIO_POOL")).toBe(true);
+    expect(isEntitlementBucket("CUSTOM_BLOCK", ["SVC-A"])).toBe(true);
+    expect(isEntitlementBucket("SVC-OZONE", [])).toBe(false);
   });
 
   it("applyQuotaRecalc never shrinks below used (stay shorten over-consume)", () => {
