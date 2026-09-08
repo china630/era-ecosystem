@@ -554,9 +554,15 @@ model VisitServiceLine {
   serviceCode String
   description String
   amount      Decimal @db.Decimal(12, 2)
+  /// Burns a package entitlement when true (CLI package quota sync).
+  inPackage         Boolean @default(false) @map("in_package")
+  /// Balance line code burned (may differ from serviceCode for pools/aliases).
+  packageQuotaCode  String? @map("package_quota_code")
   visit       Visit   @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([visitId])
+  @@index([packageQuotaCode])
+  @@index([inPackage])
 }
 
 model LabOrder {
@@ -735,12 +741,18 @@ model LabOrderItem {
   serviceCode         String             @map("service_code")
   amountNet           Decimal            @default(0) @db.Decimal(12, 2) @map("amount_net")
   sortOrder           Int                @default(0) @map("sort_order")
+  /// Burns a package entitlement when true (CLI package quota sync).
+  inPackage           Boolean            @default(false) @map("in_package")
+  /// Balance line code burned (may differ from serviceCode for pools/aliases).
+  packageQuotaCode    String?            @map("package_quota_code")
   results             LabResult[]
   createdAt           DateTime           @default(now())
 
   @@index([labOrderId])
   @@index([diagnosticServiceId])
   @@index([serviceCode])
+  @@index([packageQuotaCode])
+  @@index([inPackage])
 }
 
 model LabResult {
@@ -783,6 +795,9 @@ model ClinicalEpisode {
   status              String              @default("OPEN")
   openedAt            DateTime            @default(now())
   closedAt            DateTime?
+  /// Ops confirmed guest has no medical package (signal, not a ProgramInstance).
+  noPackageConfirmedAt DateTime?          @map("no_package_confirmed_at")
+  noPackageConfirmedByUserId String?      @map("no_package_confirmed_by_user_id")
   complaints          ClinicalComplaint[]
   diagnoses           ClinicalDiagnosis[]
   contraindications   PatientContraindication[]
@@ -1301,6 +1316,8 @@ model ServiceCatalogCache {
   descriptionRu    String?            @map("description_ru")
   descriptionEn    String?            @map("description_en")
   amount           Decimal            @db.Decimal(12, 2)
+  /// Retail / walk-in / over-quota list price (kept when package `amount` is 0).
+  listAmount       Decimal?           @map("list_amount") @db.Decimal(12, 2)
   packageIncluded  Boolean            @default(false) @map("package_included")
   department       String?
   kind             ServiceCatalogKind @default(OTHER)
@@ -1339,6 +1356,13 @@ model ProgramTemplate {
   version     Int                     @default(1)
   /** Only one current row per code — used for new check-ins. */
   isCurrent   Boolean                 @default(true) @map("is_current")
+  /**
+   * Sales window (product level, admin-editable, never bumps version).
+   * `effectiveTo` null = open-ended; delete of a pinned package closes it instead of erasing.
+   * Distinct from `retiredAt`, which is the technical version-supersession stamp.
+   */
+  effectiveFrom DateTime?             @map("effective_from") @db.Date
+  effectiveTo   DateTime?             @map("effective_to") @db.Date
   retiredAt   DateTime?               @map("retired_at")
   /** Previous version id when this row was created by a composition bump. */
   supersedesId String?                @map("supersedes_id")
@@ -1389,6 +1413,13 @@ model ProgramTemplateProcedure {
   /** Admin UI block kind: PHYSIO | BATH | PARAFFIN | LAB | EXAM | CUSTOM */
   kind             String?
   sortOrder        Int             @default(0) @map("sort_order")
+  /** AUTO_ON_OPEN | AUTO_DAY1 | ON_INDICATION | MANUAL */
+  assignMode       String          @default("MANUAL") @map("assign_mode")
+  /** PROCEDURE_ORDER | LAB_ORDER | VISIT */
+  fulfillment      String          @default("PROCEDURE_ORDER")
+  /** PER_NIGHTS | PER_STAY */
+  quotaBasis       String          @default("PER_NIGHTS") @map("quota_basis")
+  requiresDoctor   Boolean         @default(false) @map("requires_doctor")
   template         ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([templateId])
@@ -1409,6 +1440,10 @@ model ProgramInstance {
    * { version, procedures, knots, members: { blockCode, procedureCode }[] }
    */
   entitlementSnapshot Json?       @map("entitlement_snapshot")
+  /** PENDING | APPLIED | PARTIAL | PENDING_DOCTOR */
+  autoApplyState  String          @default("PENDING") @map("auto_apply_state")
+  autoApplyAt     DateTime?       @map("auto_apply_at")
+  autoApplyNote   String?         @map("auto_apply_note")
   template        ProgramTemplate @relation(fields: [templateId], references: [id])
   episode         ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   procedureLines  ProgramProcedureBalance[]

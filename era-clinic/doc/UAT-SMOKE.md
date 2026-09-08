@@ -363,7 +363,16 @@ Doctor card (no curl):
 2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
 3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
 4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.
-5. In-quota procedure charge = 0 AZN; over-quota = list price; walk-in without package paid.
+5. In-quota procedure/lab/visit charge = 0 AZN; over-quota = **listAmount** (retail); walk-in without package paid; guest with `noPackageConfirmedAt` paid; missing list → `priceMissing` (admin `?missingListPrice=1`).
+6. **W2 block axes:** set assignMode / fulfillment / quotaBasis / requiresDoctor on a block; AUTO badge appears; PER_STAY shows one stay-qty cell.
+7. Open episode with AUTO_ON_OPEN lab block → LabOrder created; requiresDoctor visit without care team → `PENDING_DOCTOR`; add care doctor → auto retry.
+8. `/sanatorium` list shows packageSignal badge when not OK; Confirm no package stamps `noPackageConfirmedAt`; **Undo no-package** clears it, and assigning a package clears it automatically (guest stops being billed at list price).
+9. `POST /api/sanatorium/episodes/[id]/package-apply` retries auto blocks (api:procedures.confirm).
+10. Complete a procedure on a hotel episode **without** a package code: amount stays 0 (`awaiting_package`) **and** a `ProcedureChargeLog` row appears — delivered work must not vanish from the cashier backlog.
+11. Order a lab for a code without `listAmount` on a paid path (walk-in / confirmed no-package): line posts `DEFAULT_OVER_QUOTA_AZN`, never 0, and the code still appears in `?missingListPrice=1`.
+12. Switch package on an open episode: codes added by the switch show `quotaUsed` matching already-created in-package fulfillments (not 0).
+13. Cancel an intake lab, then `package-apply` → the lab is re-created (a cancelled order must not block retry).
+14. With `procedureOverQuotaPolicy = BLOCK`, ordering an over-quota package lab returns 409 `LAB_OVER_QUOTA_BLOCKED`.
 
 ## Doctor first-day confirm (CLI-52 / Wave C)
 

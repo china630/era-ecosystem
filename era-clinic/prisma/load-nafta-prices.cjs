@@ -49,7 +49,9 @@ async function main() {
         ? String(enByCode[code]).trim()
         : null;
     const packageIncluded = Boolean(row.packageIncluded);
-    const amount = packageIncluded ? 0 : Number(row.amount ?? 0);
+    const rowAmount = Number(row.amount ?? 0);
+    const amount = packageIncluded ? 0 : rowAmount;
+    const listAmount = rowAmount > 0 ? rowAmount : null;
     const department = row.department ? String(row.department).trim() : null;
 
     await prisma.serviceCatalogCache.upsert({
@@ -61,6 +63,7 @@ async function main() {
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
         kind: "PROCEDURE",
@@ -72,6 +75,7 @@ async function main() {
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
         kind: "PROCEDURE",

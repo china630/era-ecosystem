@@ -14,6 +14,9 @@ import {
 
 export type { ResultLineInput };
 
+/** Thrown when over-quota labs are blocked by `procedureOverQuotaPolicy`. */
+export const LAB_OVER_QUOTA_BLOCKED = "LAB_OVER_QUOTA_BLOCKED";
+
 type Tx = SatelliteTransactionClient;
 
 type RawResultLine = {
@@ -96,17 +99,27 @@ async function createOrderItems(
   labOrderId: string,
   codes: string[],
   servicesByCode: Map<string, ServiceWithAnalytes>,
+  stamps?: Map<string, { inPackage: boolean; packageQuotaCode: string | null }>,
+  amountsByCode?: Record<string, number>,
 ): Promise<Array<ResultTargetItem>> {
   const items: Array<ResultTargetItem> = [];
   for (let i = 0; i < codes.length; i++) {
     const code = codes[i];
     const svc = servicesByCode.get(code);
+    const stamp = stamps?.get(code);
+    const amountNet =
+      amountsByCode && Object.prototype.hasOwnProperty.call(amountsByCode, code)
+        ? Number(amountsByCode[code] ?? 0)
+        : 0;
     const item = await tx.labOrderItem.create({
       data: {
         labOrderId,
         diagnosticServiceId: svc?.id,
         serviceCode: code,
         sortOrder: i,
+        amountNet,
+        inPackage: stamp?.inPackage ?? false,
+        packageQuotaCode: stamp?.packageQuotaCode ?? null,
       },
     });
     items.push({
@@ -179,6 +192,8 @@ export type CreateLabOrderWithItemsParams = {
   clinicalEpisodeId?: string;
   codes: string[];
   amountNet?: number;
+  /** Optional per-code amounts; when omitted with episode, resolved via entitlement charge. */
+  amountsByCode?: Record<string, number>;
   source?: LabResultSource;
   resultDate?: Date;
   fasting?: boolean;
@@ -187,6 +202,7 @@ export type CreateLabOrderWithItemsParams = {
   resultLines?: RawResultLine[];
   /** Allow repeat when a prior PUBLISHED/COMPLETED order exists on the episode. */
   confirmRepeat?: boolean;
+  patientOrigin?: "WALK_IN" | "IN_HOUSE";
 };
 
 /**
@@ -209,6 +225,79 @@ export async function createLabOrderWithItems(
       ? enrichResultLines(normalizeResultLines(params.resultLines))
       : [];
 
+  const stamps = new Map<string, { inPackage: boolean; packageQuotaCode: string | null }>();
+  const amountsByCode: Record<string, number> = { ...(params.amountsByCode ?? {}) };
+  let resolvedOrigin: "WALK_IN" | "IN_HOUSE" = params.patientOrigin ?? "IN_HOUSE";
+  const overQuotaCodes: string[] = [];
+
+  if (params.clinicalEpisodeId) {
+    const episode = await prisma.clinicalEpisode.findUnique({
+      where: { id: params.clinicalEpisodeId },
+      select: { patientOrigin: true },
+    });
+    if (episode?.patientOrigin === "WALK_IN") resolvedOrigin = "WALK_IN";
+    else if (params.patientOrigin) resolvedOrigin = params.patientOrigin;
+  }
+
+  {
+    const { resolvePackageStampForEpisode } = await import(
+      "@/domain/sanatorium/entitlement-usage.service"
+    );
+    const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
+      "@/domain/sanatorium/entitlement-charge.service"
+    );
+
+    // Runs without an episode too: no package can apply, so every code must carry
+    // its list price instead of the silent 0 that used to be written.
+    for (const code of codes) {
+      const stamp = params.clinicalEpisodeId
+        ? await resolvePackageStampForEpisode({
+            episodeId: params.clinicalEpisodeId,
+            serviceCode: code,
+          })
+        : null;
+      if (stamp) {
+        stamps.set(code, {
+          inPackage: true,
+          packageQuotaCode: stamp.packageQuotaCode,
+        });
+      }
+      if (!Object.prototype.hasOwnProperty.call(amountsByCode, code)) {
+        const charge = applyPriceMissingFallback(
+          await resolveEntitlementCharge({
+            episodeId: params.clinicalEpisodeId,
+            patientOrigin: resolvedOrigin,
+            quotaCode: stamp?.packageQuotaCode,
+            serviceCode: code,
+            inPackage: Boolean(stamp),
+          }),
+          { serviceCode: code, where: "lab" },
+        );
+        amountsByCode[code] = charge.amountNet;
+        if (charge.overQuota) overQuotaCodes.push(code);
+      }
+    }
+  }
+
+  if (overQuotaCodes.length > 0) {
+    const { getSchedulingSettings } = await import(
+      "@/domain/settings/scheduling-settings"
+    );
+    const settings = await getSchedulingSettings();
+    if (settings.procedureOverQuotaPolicy === "BLOCK") {
+      const err = new Error(
+        `Package quota exceeded for ${overQuotaCodes.join(", ")} — lab order blocked`,
+      );
+      (err as Error & { code?: string }).code = LAB_OVER_QUOTA_BLOCKED;
+      throw err;
+    }
+    console.warn("[lab-order] over-quota codes charged at list price", overQuotaCodes);
+  }
+
+  const orderAmountNet =
+    params.amountNet ??
+    Object.values(amountsByCode).reduce((sum, n) => sum + Number(n || 0), 0);
+
   const orderId = await prisma.$transaction(async (tx) => {
     const created = await tx.labOrder.create({
       data: {
@@ -217,7 +306,7 @@ export async function createLabOrderWithItems(
         visitId: params.visitId,
         clinicalEpisodeId: params.clinicalEpisodeId,
         testCode: codes.join(","),
-        amountNet: params.amountNet ?? 0,
+        amountNet: orderAmountNet,
         source: params.source ?? "IN_HOUSE",
         resultDate: params.resultDate,
         fasting: params.fasting ?? false,
@@ -233,13 +322,39 @@ export async function createLabOrderWithItems(
       },
     });
 
-    const items = await createOrderItems(tx, created.id, codes, servicesByCode);
+    const items = await createOrderItems(
+      tx,
+      created.id,
+      codes,
+      servicesByCode,
+      stamps,
+      amountsByCode,
+    );
     if (isExternal && enrichedLines.length) {
       await createResultsForItems(tx, items, enrichedLines);
     }
 
     return created.id;
   });
+
+  if (params.clinicalEpisodeId && stamps.size > 0) {
+    const { resolveEntitlementInstance, syncEntitlementUsage } = await import(
+      "@/domain/sanatorium/entitlement-usage.service"
+    );
+    const instance = await resolveEntitlementInstance(params.clinicalEpisodeId);
+    if (instance) {
+      const codesSynced = new Set<string>();
+      for (const stamp of stamps.values()) {
+        if (!stamp.packageQuotaCode || codesSynced.has(stamp.packageQuotaCode)) continue;
+        codesSynced.add(stamp.packageQuotaCode);
+        await syncEntitlementUsage({
+          instanceId: instance.id,
+          episodeId: params.clinicalEpisodeId,
+          quotaCode: stamp.packageQuotaCode,
+        });
+      }
+    }
+  }
 
   return prisma.labOrder.findUniqueOrThrow({
     where: { id: orderId },

@@ -2,9 +2,15 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     clinicalEpisode: { findUnique: jest.fn() },
     episodeCareDoctor: { findFirst: jest.fn() },
-    visitServiceLine: { findFirst: jest.fn() },
-    visit: { findFirst: jest.fn(), create: jest.fn() },
+    visitServiceLine: { findFirst: jest.fn(), create: jest.fn(), count: jest.fn() },
+    visit: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
     labOrder: { findFirst: jest.fn() },
+    programInstance: { findFirst: jest.fn() },
+    programTemplateBlockMember: { findMany: jest.fn() },
+    procedureOrder: { count: jest.fn() },
+    labOrderItem: { count: jest.fn() },
+    programProcedureBalance: { updateMany: jest.fn(), findUnique: jest.fn() },
+    serviceCatalogCache: { findFirst: jest.fn() },
   },
 }));
 
@@ -19,9 +25,15 @@ import { instantiateIntakePackage } from "@/domain/patient/instantiate-intake.se
 const mockedPrisma = prisma as unknown as {
   clinicalEpisode: { findUnique: jest.Mock };
   episodeCareDoctor: { findFirst: jest.Mock };
-  visitServiceLine: { findFirst: jest.Mock };
-  visit: { findFirst: jest.Mock; create: jest.Mock };
+  visitServiceLine: { findFirst: jest.Mock; create: jest.Mock; count: jest.Mock };
+  visit: { findFirst: jest.Mock; create: jest.Mock; update: jest.Mock };
   labOrder: { findFirst: jest.Mock };
+  programInstance: { findFirst: jest.Mock };
+  programTemplateBlockMember: { findMany: jest.Mock };
+  procedureOrder: { count: jest.Mock };
+  labOrderItem: { count: jest.Mock };
+  programProcedureBalance: { updateMany: jest.Mock; findUnique: jest.Mock };
+  serviceCatalogCache: { findFirst: jest.Mock };
 };
 
 describe("instantiateIntakePackage", () => {
@@ -40,9 +52,18 @@ describe("instantiateIntakePackage", () => {
       practitionerId: "doc1",
     });
     mockedPrisma.visitServiceLine.findFirst.mockResolvedValue(null);
+    mockedPrisma.visitServiceLine.create.mockResolvedValue({ id: "line1" });
     mockedPrisma.visit.findFirst.mockResolvedValue(null);
     mockedPrisma.labOrder.findFirst.mockResolvedValue(null);
     mockedPrisma.visit.create.mockResolvedValue({ id: "v1" });
+    mockedPrisma.visit.update.mockResolvedValue({ id: "v1" });
+    mockedPrisma.serviceCatalogCache.findFirst.mockResolvedValue(null);
+    mockedPrisma.programInstance.findFirst.mockResolvedValue(null);
+    mockedPrisma.programTemplateBlockMember.findMany.mockResolvedValue([]);
+    mockedPrisma.procedureOrder.count.mockResolvedValue(0);
+    mockedPrisma.labOrderItem.count.mockResolvedValue(0);
+    mockedPrisma.visitServiceLine.count.mockResolvedValue(0);
+    mockedPrisma.programProcedureBalance.updateMany.mockResolvedValue({ count: 1 });
     (createLabOrderWithItems as jest.Mock).mockResolvedValue({ id: "lo1" });
   });
 
@@ -51,6 +72,7 @@ describe("instantiateIntakePackage", () => {
     expect(r.createdVisitCodes).toEqual(["SANATORIUM-INTAKE", "GYN-VISIT"]);
     expect(r.createdLabCodes).toEqual(["ECG-12", "USG-ABD"]);
     expect(mockedPrisma.visit.create).toHaveBeenCalledTimes(2);
+    expect(mockedPrisma.visitServiceLine.create).toHaveBeenCalledTimes(2);
     expect(createLabOrderWithItems).toHaveBeenCalledTimes(2);
   });
 
@@ -72,5 +94,26 @@ describe("instantiateIntakePackage", () => {
     expect(r.createdLabCodes).toEqual([]);
     expect(mockedPrisma.visit.create).not.toHaveBeenCalled();
     expect(createLabOrderWithItems).not.toHaveBeenCalled();
+  });
+
+  it("stamps visit lines with packageQuotaCode when balance matches", async () => {
+    mockedPrisma.programInstance.findFirst.mockResolvedValue({
+      id: "inst1",
+      entitlementSnapshot: null,
+      procedureLines: [
+        { procedureCode: "SANATORIUM-INTAKE" },
+        { procedureCode: "GYN-VISIT" },
+      ],
+    });
+    await instantiateIntakePackage("ep1");
+    expect(mockedPrisma.visitServiceLine.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          serviceCode: "SANATORIUM-INTAKE",
+          inPackage: true,
+          packageQuotaCode: "SANATORIUM-INTAKE",
+        }),
+      }),
+    );
   });
 });

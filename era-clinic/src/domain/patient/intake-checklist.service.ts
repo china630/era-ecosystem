@@ -9,6 +9,7 @@ import {
   resolveNaftaIntakeCode,
   type NaftaIntakeSlotCode,
 } from "@/lib/import/nafta-intake-map";
+import { parseEntitlementSnapshot } from "@/domain/sanatorium/program-template-admin";
 
 export type IntakeChecklistStatus = "DONE" | "ORDERED" | "MISSING";
 
@@ -32,6 +33,17 @@ const LAB_DONE = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const LAB_ORDERED = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
 const VISIT_DONE = new Set(["COMPLETED"]);
 const VISIT_OPEN = new Set(["IN_PROGRESS"]);
+
+const SLOT_ALIASES: Record<string, NaftaIntakeSlotCode> = {
+  "SANATORIUM-INTAKE": "SANATORIUM-INTAKE",
+  THERAPIST: "SANATORIUM-INTAKE",
+  "GYN-OR-URO": "GYN-OR-URO",
+  GYN: "GYN-OR-URO",
+  "ECG-12": "ECG-12",
+  ECG: "ECG-12",
+  "USG-ABD": "USG-ABD",
+  USG: "USG-ABD",
+};
 
 function labStatus(status: string): IntakeChecklistStatus {
   if (LAB_DONE.has(status)) return "DONE";
@@ -156,6 +168,45 @@ async function findGynOrUroVisit(
 }
 
 /**
+ * Prefer entitlement snapshot intake blocks (LAB_ORDER|VISIT or kind LAB|EXAM).
+ * Falls back to PKG-NAFTA-INTAKE catalog includes.
+ */
+async function resolveIntakeSlots(
+  episodeId: string | null | undefined,
+): Promise<{ packageCode: string; slots: NaftaIntakeSlotCode[] }> {
+  if (episodeId) {
+    const instance = await prisma.programInstance.findFirst({
+      where: { episodeId },
+      select: { programCode: true, entitlementSnapshot: true },
+    });
+    const snap = parseEntitlementSnapshot(instance?.entitlementSnapshot);
+    if (snap?.procedures?.length) {
+      const fromSnap: NaftaIntakeSlotCode[] = [];
+      const seen = new Set<string>();
+      for (const p of snap.procedures) {
+        const isIntakeFulfillment =
+          p.fulfillment === "LAB_ORDER" || p.fulfillment === "VISIT";
+        const isIntakeKind =
+          p.kind === "LAB" || p.kind === "EXAM";
+        if (!isIntakeFulfillment && !isIntakeKind) continue;
+        const slot = SLOT_ALIASES[p.procedureCode.trim().toUpperCase()]
+          ?? SLOT_ALIASES[p.procedureCode.trim()];
+        if (!slot || seen.has(slot)) continue;
+        seen.add(slot);
+        fromSnap.push(slot);
+      }
+      if (fromSnap.length > 0) {
+        return {
+          packageCode: instance?.programCode ?? snap.code ?? PKG_NAFTA_INTAKE,
+          slots: fromSnap,
+        };
+      }
+    }
+  }
+  return { packageCode: PKG_NAFTA_INTAKE, slots: [...NAFTA_INTAKE_SLOT_CODES] };
+}
+
+/**
  * Derive Nafta check-in checklist from existing Visit / LabOrder rows.
  * When episodeId is set, only that care course counts (CLI-55).
  */
@@ -166,19 +217,21 @@ export async function getIntakeChecklist(
   const episode = opts?.episodeId
     ? { clinicalEpisodeId: opts.episodeId }
     : undefined;
-  const [catalog, patient] = await Promise.all([
+  const [catalog, patient, slotSource] = await Promise.all([
     getDiagnosticCatalog(),
     prisma.patientRef.findUnique({
       where: { id: patientRefId },
       select: { id: true, sex: true },
     }),
+    resolveIntakeSlots(opts?.episodeId),
   ]);
   const pkg = catalog.items.find((i) => i.code === PKG_NAFTA_INTAKE && i.kind === "package");
-  const slots = (pkg?.includes?.length
-    ? pkg.includes.filter((c): c is NaftaIntakeSlotCode =>
-        (NAFTA_INTAKE_SLOT_CODES as readonly string[]).includes(c),
-      )
-    : [...NAFTA_INTAKE_SLOT_CODES]) as NaftaIntakeSlotCode[];
+  const slots =
+    slotSource.packageCode === PKG_NAFTA_INTAKE && pkg?.includes?.length
+      ? (pkg.includes.filter((c): c is NaftaIntakeSlotCode =>
+          (NAFTA_INTAKE_SLOT_CODES as readonly string[]).includes(c),
+        ) as NaftaIntakeSlotCode[])
+      : slotSource.slots;
 
   const items: IntakeChecklistItem[] = [];
   for (const slot of slots) {
@@ -258,7 +311,7 @@ export async function getIntakeChecklist(
   }
 
   return {
-    packageCode: PKG_NAFTA_INTAKE,
+    packageCode: slotSource.packageCode,
     packageTitle: pkg?.title ?? {
       en: "Nafta initial diagnostic procedures",
       ru: "Nafta первичные диагностические процедуры",

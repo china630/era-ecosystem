@@ -3,6 +3,15 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 
+const assignModeSchema = z.enum([
+  "AUTO_ON_OPEN",
+  "AUTO_DAY1",
+  "ON_INDICATION",
+  "MANUAL",
+]);
+const fulfillmentSchema = z.enum(["PROCEDURE_ORDER", "LAB_ORDER", "VISIT"]);
+const quotaBasisSchema = z.enum(["PER_NIGHTS", "PER_STAY"]);
+
 const procedureSchema = z.object({
   procedureCode: z.string().min(1),
   procedureName: z.string().min(1),
@@ -14,6 +23,10 @@ const procedureSchema = z.object({
     .optional(),
   sortOrder: z.number().int().nonnegative().optional(),
   memberCodes: z.array(z.string().min(1)).optional(),
+  assignMode: assignModeSchema.optional(),
+  fulfillment: fulfillmentSchema.optional(),
+  quotaBasis: quotaBasisSchema.optional(),
+  requiresDoctor: z.boolean().optional(),
 });
 
 const knotSchema = z.object({
@@ -22,12 +35,22 @@ const knotSchema = z.object({
   qty: z.number().int().nonnegative(),
 });
 
+/** Calendar date `YYYY-MM-DD`; empty string clears the bound. */
+const dateOnlySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .or(z.literal(""))
+  .nullable()
+  .optional();
+
 export const programTemplateWriteSchema = z.object({
   code: z.string().min(1).optional(),
   name: z.string().min(1).optional(),
   durationDays: z.number().int().positive().optional(),
   minNights: z.number().int().positive().nullable().optional(),
   maxNights: z.number().int().positive().nullable().optional(),
+  effectiveFrom: dateOnlySchema,
+  effectiveTo: dateOnlySchema,
   procedures: z.array(procedureSchema).optional(),
   knots: z.array(knotSchema).optional(),
 });
@@ -48,11 +71,14 @@ export const programTemplateInclude = {
   },
   quotaKnots: true,
   blockMembers: true,
-} satisfies Prisma.ProgramTemplateInclude;
+};
 
-export type ProgramTemplateFull = Prisma.ProgramTemplateGetPayload<{
-  include: typeof programTemplateInclude;
-}>;
+export type EntitlementBlockAxes = {
+  assignMode: "AUTO_ON_OPEN" | "AUTO_DAY1" | "ON_INDICATION" | "MANUAL";
+  fulfillment: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
+  quotaBasis: "PER_NIGHTS" | "PER_STAY";
+  requiresDoctor: boolean;
+};
 
 export type EntitlementSnapshot = {
   version: number;
@@ -64,10 +90,27 @@ export type EntitlementSnapshot = {
     quotaTotal: number;
     kind?: string | null;
     sortOrder?: number;
-  }>;
+  } & EntitlementBlockAxes>;
   knots: Array<{ nights: number; procedureCode: string; qty: number }>;
   members: Array<{ blockCode: string; procedureCode: string }>;
 };
+
+function normalizeBlockAxes(p: {
+  assignMode?: string | null;
+  fulfillment?: string | null;
+  quotaBasis?: string | null;
+  requiresDoctor?: boolean | null;
+}): EntitlementBlockAxes {
+  const assignMode = assignModeSchema.safeParse(p.assignMode);
+  const fulfillment = fulfillmentSchema.safeParse(p.fulfillment);
+  const quotaBasis = quotaBasisSchema.safeParse(p.quotaBasis);
+  return {
+    assignMode: assignMode.success ? assignMode.data : "MANUAL",
+    fulfillment: fulfillment.success ? fulfillment.data : "PROCEDURE_ORDER",
+    quotaBasis: quotaBasis.success ? quotaBasis.data : "PER_NIGHTS",
+    requiresDoctor: Boolean(p.requiresDoctor),
+  };
+}
 
 export function shapeProgramTemplate<
   T extends {
@@ -82,8 +125,13 @@ export function shapeProgramTemplate<
     quotaKnots?: unknown;
     blockMembers: Array<{ blockCode: string; procedureCode: string }>;
     openInstanceCount?: number;
+    pinInstanceCount?: number;
   },
->(row: T) {
+>(row: T): T & {
+  procedures: Array<
+    T["procedures"][number] & { memberCodes: string[] }
+  >;
+} {
   const membersByBlock = new Map<string, string[]>();
   for (const m of row.blockMembers) {
     const arr = membersByBlock.get(m.blockCode) ?? [];
@@ -99,18 +147,91 @@ export function shapeProgramTemplate<
   };
 }
 
-type Tx = SatelliteTransactionClient | typeof prisma;
+type Tx = SatelliteTransactionClient;
+
+const BAKU_TZ = "Asia/Baku";
+
+/** Calendar date in Asia/Baku as `YYYY-MM-DD` (validity is a business day, not an instant). */
+export function bakuDateOnly(at: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: BAKU_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(at);
+}
+
+/** `YYYY-MM-DD` → UTC midnight for a `@db.Date` column; blank / malformed → null. */
+export function parseDateOnly(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Baku calendar day as UTC midnight — comparison anchor for `@db.Date` bounds. */
+export function bakuDayUtc(at: Date = new Date()): Date {
+  return new Date(`${bakuDateOnly(at)}T00:00:00.000Z`);
+}
+
+export function dateOnlyString(value: Date | null | undefined): string | null {
+  if (!value) return null;
+  return value.toISOString().slice(0, 10);
+}
+
+/**
+ * Sales window check. Both bounds inclusive; null bound = open on that side.
+ * Legacy rows without `effectiveFrom` stay sellable (no backfill required).
+ */
+export function isWithinValidity(
+  row: { effectiveFrom?: Date | null; effectiveTo?: Date | null },
+  onYmd: string = bakuDateOnly(),
+): boolean {
+  const from = dateOnlyString(row.effectiveFrom ?? null);
+  const to = dateOnlyString(row.effectiveTo ?? null);
+  if (from && onYmd < from) return false;
+  if (to && onYmd > to) return false;
+  return true;
+}
+
+/** Validity is admin metadata — it must never trigger a version bump. */
+export function validityChanged(
+  existing: { effectiveFrom: Date | null; effectiveTo: Date | null },
+  next: { effectiveFrom: Date | null; effectiveTo: Date | null },
+): boolean {
+  return (
+    dateOnlyString(existing.effectiveFrom) !== dateOnlyString(next.effectiveFrom) ||
+    dateOnlyString(existing.effectiveTo) !== dateOnlyString(next.effectiveTo)
+  );
+}
+
+/**
+ * Prisma filter for «sellable today»: the current version, inside its validity window.
+ * Use for every new-check-in lookup and package picker so an expired package cannot be chosen.
+ */
+export function sellableTemplateWhere(asOf: Date = new Date()) {
+  const day = bakuDayUtc(asOf);
+  return {
+    isCurrent: true,
+    retiredAt: null,
+    AND: [
+      { OR: [{ effectiveFrom: null }, { effectiveFrom: { lte: day } }] },
+      { OR: [{ effectiveTo: null }, { effectiveTo: { gte: day } }] },
+    ],
+  };
+}
 
 /** Current (sellable) template for a product code — new check-ins. */
 export async function findCurrentProgramTemplate(
   code: string,
-  tx: Tx = prisma,
-): Promise<ProgramTemplateFull | null> {
+  tx: Tx | typeof prisma = prisma,
+  asOf: Date = new Date(),
+) {
   return tx.programTemplate.findFirst({
-    where: { code, isCurrent: true, retiredAt: null },
+    where: { code, ...sellableTemplateWhere(asOf) },
     include: programTemplateInclude,
     orderBy: { version: "desc" },
-  }) as Promise<ProgramTemplateFull | null>;
+  });
 }
 
 export function buildEntitlementSnapshot(input: {
@@ -123,9 +244,13 @@ export function buildEntitlementSnapshot(input: {
     quotaTotal: number;
     kind?: string | null;
     sortOrder?: number;
+    assignMode?: string | null;
+    fulfillment?: string | null;
+    quotaBasis?: string | null;
+    requiresDoctor?: boolean | null;
   }>;
-  knots?: Array<{ nights: number; procedureCode: string; qty: number }> | null;
-  members?: Array<{ blockCode: string; procedureCode: string }> | null;
+  knots: Array<{ nights: number; procedureCode: string; qty: number }>;
+  members: Array<{ blockCode: string; procedureCode: string }>;
 }): EntitlementSnapshot {
   return {
     version: input.version,
@@ -137,13 +262,14 @@ export function buildEntitlementSnapshot(input: {
       quotaTotal: p.quotaTotal,
       kind: p.kind ?? null,
       sortOrder: p.sortOrder ?? 0,
+      ...normalizeBlockAxes(p),
     })),
-    knots: (input.knots ?? []).map((k) => ({
+    knots: input.knots.map((k) => ({
       nights: k.nights,
       procedureCode: k.procedureCode,
       qty: k.qty,
     })),
-    members: (input.members ?? []).map((m) => ({
+    members: input.members.map((m) => ({
       blockCode: m.blockCode,
       procedureCode: m.procedureCode,
     })),
@@ -197,15 +323,22 @@ export async function replaceTemplateProceduresAndKnots(
   await tx.programTemplateProcedure.deleteMany({ where: { templateId } });
   if (procedures.length > 0) {
     await tx.programTemplateProcedure.createMany({
-      data: procedures.map((p, i) => ({
-        templateId,
-        procedureCode: p.procedureCode,
-        procedureName: p.procedureName,
-        quotaTotal: p.quotaTotal,
-        avoidAfterHour: p.avoidAfterHour ?? null,
-        kind: p.kind ?? null,
-        sortOrder: p.sortOrder ?? i,
-      })),
+      data: procedures.map((p, i) => {
+        const axes = normalizeBlockAxes(p);
+        return {
+          templateId,
+          procedureCode: p.procedureCode,
+          procedureName: p.procedureName,
+          quotaTotal: p.quotaTotal,
+          avoidAfterHour: p.avoidAfterHour ?? null,
+          kind: p.kind ?? null,
+          sortOrder: p.sortOrder ?? i,
+          assignMode: axes.assignMode,
+          fulfillment: axes.fulfillment,
+          quotaBasis: axes.quotaBasis,
+          requiresDoctor: axes.requiresDoctor,
+        };
+      }),
     });
     const memberRows: Array<{ templateId: string; blockCode: string; procedureCode: string }> =
       [];
@@ -242,14 +375,18 @@ function compositionFingerprint(
   knots: ProgramKnotInput[] | undefined,
 ): string {
   const procs = [...procedures]
-    .map((p) => ({
-      procedureCode: p.procedureCode,
-      procedureName: p.procedureName,
-      quotaTotal: p.quotaTotal,
-      kind: p.kind ?? null,
-      sortOrder: p.sortOrder ?? 0,
-      memberCodes: [...(p.memberCodes ?? [])].sort(),
-    }))
+    .map((p) => {
+      const axes = normalizeBlockAxes(p);
+      return {
+        procedureCode: p.procedureCode,
+        procedureName: p.procedureName,
+        quotaTotal: p.quotaTotal,
+        kind: p.kind ?? null,
+        sortOrder: p.sortOrder ?? 0,
+        memberCodes: [...(p.memberCodes ?? [])].sort(),
+        ...axes,
+      };
+    })
     .sort((a, b) => a.procedureCode.localeCompare(b.procedureCode));
   const ks = [...(knots ?? [])]
     .map((k) => ({ nights: k.nights, procedureCode: k.procedureCode, qty: k.qty }))
@@ -268,6 +405,10 @@ export function compositionChanged(
       kind?: string | null;
       sortOrder?: number;
       memberCodes?: string[];
+      assignMode?: string | null;
+      fulfillment?: string | null;
+      quotaBasis?: string | null;
+      requiresDoctor?: boolean | null;
     }>;
     quotaKnots: Array<{ nights: number; procedureCode: string; qty: number }>;
     blockMembers: Array<{ blockCode: string; procedureCode: string }>;
@@ -277,14 +418,23 @@ export function compositionChanged(
 ): boolean {
   const shaped = shapeProgramTemplate(existing);
   const before = compositionFingerprint(
-    shaped.procedures.map((p) => ({
-      procedureCode: p.procedureCode,
-      procedureName: p.procedureName,
-      quotaTotal: p.quotaTotal,
-      kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
-      sortOrder: p.sortOrder,
-      memberCodes: p.memberCodes,
-    })),
+    shaped.procedures.map((p) => {
+      const axes = normalizeBlockAxes(p as {
+        assignMode?: string | null;
+        fulfillment?: string | null;
+        quotaBasis?: string | null;
+        requiresDoctor?: boolean | null;
+      });
+      return {
+        procedureCode: p.procedureCode,
+        procedureName: p.procedureName,
+        quotaTotal: p.quotaTotal,
+        kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
+        sortOrder: p.sortOrder,
+        memberCodes: p.memberCodes,
+        ...axes,
+      };
+    }),
     existing.quotaKnots,
   );
   const after = compositionFingerprint(procedures, knots ?? existing.quotaKnots);
@@ -334,19 +484,32 @@ function proceduresFromExisting(existing: {
     avoidAfterHour?: number | null;
     kind?: string | null;
     sortOrder?: number;
+    assignMode?: string | null;
+    fulfillment?: string | null;
+    quotaBasis?: string | null;
+    requiresDoctor?: boolean | null;
   }>;
   blockMembers: Array<{ blockCode: string; procedureCode: string }>;
 }): ProgramProcedureInput[] {
-  const shaped = shapeProgramTemplate(existing);
-  return shaped.procedures.map((p) => ({
-    procedureCode: p.procedureCode,
-    procedureName: p.procedureName,
-    quotaTotal: p.quotaTotal,
-    avoidAfterHour: p.avoidAfterHour ?? undefined,
-    kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
-    sortOrder: p.sortOrder,
-    memberCodes: "memberCodes" in p ? (p.memberCodes as string[]) : [],
-  }));
+  const membersByBlock = new Map<string, string[]>();
+  for (const m of existing.blockMembers) {
+    const arr = membersByBlock.get(m.blockCode) ?? [];
+    arr.push(m.procedureCode);
+    membersByBlock.set(m.blockCode, arr);
+  }
+  return existing.procedures.map((p) => {
+    const axes = normalizeBlockAxes(p);
+    return {
+      procedureCode: p.procedureCode,
+      procedureName: p.procedureName,
+      quotaTotal: p.quotaTotal,
+      avoidAfterHour: p.avoidAfterHour ?? undefined,
+      kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
+      sortOrder: p.sortOrder,
+      memberCodes: membersByBlock.get(p.procedureCode) ?? [],
+      ...axes,
+    };
+  });
 }
 
 async function bumpTemplateVersion(
@@ -365,6 +528,8 @@ async function bumpTemplateVersion(
     durationDays: number;
     minNights: number | null;
     maxNights: number | null;
+    effectiveFrom: Date | null;
+    effectiveTo: Date | null;
     procedures: ProgramProcedureInput[];
     knots: ProgramKnotInput[];
   },
@@ -380,6 +545,8 @@ async function bumpTemplateVersion(
       durationDays: next.durationDays,
       minNights: next.minNights,
       maxNights: next.maxNights,
+      effectiveFrom: next.effectiveFrom,
+      effectiveTo: next.effectiveTo,
       version: existing.version + 1,
       isCurrent: true,
       retiredAt: null,
@@ -413,16 +580,20 @@ export async function ensureWritableCurrentTemplate(
   if (pinned === 0) return templateId;
 
   const procs = proceduresFromExisting(existing);
-  const knots = existing.quotaKnots.map((k: ProgramKnotInput) => ({
-    nights: k.nights,
-    procedureCode: k.procedureCode,
-    qty: k.qty,
-  }));
+  const knots = existing.quotaKnots.map(
+    (k: { nights: number; procedureCode: string; qty: number }) => ({
+      nights: k.nights,
+      procedureCode: k.procedureCode,
+      qty: k.qty,
+    }),
+  );
   const created = await bumpTemplateVersion(tx, existing, {
     name: existing.name,
     durationDays: existing.durationDays,
     minNights: existing.minNights,
     maxNights: existing.maxNights,
+    effectiveFrom: existing.effectiveFrom,
+    effectiveTo: existing.effectiveTo,
     procedures: procs,
     knots,
   });
@@ -430,8 +601,10 @@ export async function ensureWritableCurrentTemplate(
 }
 
 /**
- * Apply admin PATCH: any contract change (composition OR name/duration/min/max)
- * creates a new version; pinned instances keep the retired row untouched.
+ * Apply admin PATCH.
+ * - Any guest pin on this template version → bump to a new current version
+ *   (open stays keep the retired row).
+ * - Zero pins → in-place mutate (bootstrap / fill empty quotas without v+1).
  */
 export async function saveProgramTemplatePatch(
   id: string,
@@ -464,13 +637,30 @@ export async function saveProgramTemplatePatch(
     const nextDuration = body.durationDays ?? existing.durationDays;
     const nextMin = body.minNights !== undefined ? body.minNights : existing.minNights;
     const nextMax = body.maxNights !== undefined ? body.maxNights : existing.maxNights;
+    const nextFrom =
+      body.effectiveFrom !== undefined
+        ? parseDateOnly(body.effectiveFrom)
+        : existing.effectiveFrom;
+    const nextTo =
+      body.effectiveTo !== undefined ? parseDateOnly(body.effectiveTo) : existing.effectiveTo;
+    if (nextFrom && nextTo && nextTo < nextFrom) {
+      const err = new Error("INVALID_VALIDITY_RANGE");
+      (err as Error & { code?: string }).code = "INVALID_VALIDITY_RANGE";
+      throw err;
+    }
+    const datesChanged = validityChanged(existing, {
+      effectiveFrom: nextFrom,
+      effectiveTo: nextTo,
+    });
 
     const existingProcs = proceduresFromExisting(existing);
-    const existingKnots = existing.quotaKnots.map((k: ProgramKnotInput) => ({
-      nights: k.nights,
-      procedureCode: k.procedureCode,
-      qty: k.qty,
-    }));
+    const existingKnots = existing.quotaKnots.map(
+      (k: { nights: number; procedureCode: string; qty: number }) => ({
+        nights: k.nights,
+        procedureCode: k.procedureCode,
+        qty: k.qty,
+      }),
+    );
 
     let nextProcs = existingProcs;
     let nextKnots = existingKnots;
@@ -482,8 +672,31 @@ export async function saveProgramTemplatePatch(
       compChanged = compositionChanged(existing, nextProcs, nextKnots);
     }
 
-    if (!metaChanged && !compChanged) {
+    if (!metaChanged && !compChanged && !datesChanged) {
       return existing;
+    }
+
+    const pinned = await countAnyInstancesForTemplate(existing.id, tx);
+    /** Validity is a sales window, not a contract term — it edits the pinned row directly. */
+    if (pinned === 0 || (!metaChanged && !compChanged)) {
+      await tx.programTemplate.update({
+        where: { id: existing.id },
+        data: {
+          name: nextName,
+          durationDays: nextDuration,
+          minNights: nextMin,
+          maxNights: nextMax,
+          effectiveFrom: nextFrom,
+          effectiveTo: nextTo,
+        },
+      });
+      if (pinned === 0 && body.procedures) {
+        await replaceTemplateProceduresAndKnots(tx, existing.id, nextProcs, nextKnots);
+      }
+      return tx.programTemplate.findUniqueOrThrow({
+        where: { id: existing.id },
+        include: programTemplateInclude,
+      });
     }
 
     return bumpTemplateVersion(tx, existing, {
@@ -491,10 +704,46 @@ export async function saveProgramTemplatePatch(
       durationDays: nextDuration,
       minNights: nextMin,
       maxNights: nextMax,
+      effectiveFrom: nextFrom,
+      effectiveTo: nextTo,
       procedures: nextProcs,
       knots: nextKnots,
     });
   });
+}
+
+/**
+ * Admin «delete» for a package that guests already pinned: close the sales window instead
+ * of erasing history. Open stays keep their entitlement snapshot; new check-ins stop resolving it.
+ */
+export async function closeProgramTemplateValidity(
+  id: string,
+  onYmd: string = bakuDateOnly(),
+): Promise<{ effectiveTo: string }> {
+  const effectiveTo = parseDateOnly(onYmd);
+  if (!effectiveTo) throw new Error(`Invalid validity date ${onYmd}`);
+  const existing = await prisma.programTemplate.findUnique({
+    where: { id },
+    select: { effectiveFrom: true },
+  });
+  if (!existing) {
+    const err = new Error("NOT_FOUND");
+    (err as Error & { code?: string }).code = "NOT_FOUND";
+    throw err;
+  }
+  await prisma.programTemplate.update({
+    where: { id },
+    data: {
+      effectiveTo,
+      // Keep the from-bound sane when an admin closes a package on its very first day.
+      ...(existing.effectiveFrom && existing.effectiveFrom > effectiveTo
+        ? { effectiveFrom: effectiveTo }
+        : {}),
+      isCurrent: false,
+      retiredAt: new Date(),
+    },
+  });
+  return { effectiveTo: onYmd };
 }
 
 /** Delete retired versions that no guest instance pins (optional age filter). */

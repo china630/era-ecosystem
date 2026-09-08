@@ -75,6 +75,45 @@ describe("program-quota quotaFor", () => {
     ).toThrow(QuotaBelowMinError);
   });
 
+  it("PER_STAY uses single knot qty without interpolation", () => {
+    const intake = [
+      { nights: 7, procedureCode: "ECG-12", qty: 1 },
+      { nights: 10, procedureCode: "ECG-12", qty: 1 },
+      { nights: 14, procedureCode: "ECG-12", qty: 1 },
+    ];
+    expect(
+      quotaFor({
+        knots: intake,
+        nights: 12,
+        procedureCode: "ECG-12",
+        minNights: 7,
+        maxNights: 21,
+        quotaBasis: "PER_STAY",
+      }),
+    ).toBe(1);
+    // Contrast: PER_NIGHTS would still return 1 here (same qty), so use unequal qtys
+    const unequal = [
+      { nights: 7, procedureCode: "EXAM", qty: 1 },
+      { nights: 14, procedureCode: "EXAM", qty: 3 },
+    ];
+    expect(
+      quotaFor({
+        knots: unequal,
+        nights: 10,
+        procedureCode: "EXAM",
+        quotaBasis: "PER_NIGHTS",
+      }),
+    ).toBe(2);
+    expect(
+      quotaFor({
+        knots: unequal,
+        nights: 10,
+        procedureCode: "EXAM",
+        quotaBasis: "PER_STAY",
+      }),
+    ).toBe(1);
+  });
+
   it("nightsBetween uses UTC date parts", () => {
     expect(
       nightsBetween(new Date("2026-08-01T10:00:00Z"), new Date("2026-08-11T10:00:00Z")),

@@ -59,7 +59,11 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
       }
     }
     const packageIncluded = Boolean(row.packageIncluded);
+    const rowAmount = row.amount != null ? Number(row.amount) : NaN;
+    const hasRowAmount = Number.isFinite(rowAmount) && rowAmount > 0;
+    // Commercial package amount stays 0 when included; listAmount keeps retail.
     const amount = packageIncluded ? 0 : Number(row.amount ?? 0);
+    const listAmount = hasRowAmount ? rowAmount : null;
     const department = row.department?.trim() || null;
     const kind = inferServiceCatalogKind(code, department);
 
@@ -72,6 +76,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
         kind,
@@ -83,6 +88,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
         kind,

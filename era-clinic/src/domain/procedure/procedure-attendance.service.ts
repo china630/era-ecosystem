@@ -11,6 +11,7 @@ import {
 } from "@/domain/procedure/procedure-check-in-window";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import {
+  AWAITING_PACKAGE_REASON,
   resolveProcedureCharge,
   postProcedureFolioCharge,
   logProcedureCharge,
@@ -438,6 +439,7 @@ export async function markProcedureNoShow(orderId: string, actor: AttendanceActo
     overQuota: charge.overQuota,
     channel: logChannel,
     externalTicketId: charge.shouldChargeFolio ? ticketId : null,
+    forceLog: charge.reason === AWAITING_PACKAGE_REASON,
   });
 
   return { ...updated, overQuota: charge.overQuota, folioCharged: charge.shouldChargeFolio };

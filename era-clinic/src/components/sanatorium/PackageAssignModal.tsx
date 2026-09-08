@@ -35,6 +35,8 @@ export type PackageBalanceRow = {
   isQuotaAlias?: boolean;
   /** Open SKU picker (pool or unresolved quota alias). */
   needsSkuPicker?: boolean;
+  /** False for intake labs/exams — read-only in W2; hidden from assign menu in W1. */
+  assignable?: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -339,7 +341,8 @@ export function PackageAssignModal({
 
   function needsPicker(bal: PackageBalanceRow | undefined): boolean {
     if (!bal) return false;
-    return Boolean(bal.isPool || bal.isQuotaAlias || bal.needsSkuPicker);
+    // Do not force picker for quota aliases when sex already resolved (needsSkuPicker=false).
+    return Boolean(bal.isPool || bal.needsSkuPicker);
   }
 
   function closeForm() {
@@ -353,14 +356,25 @@ export function PackageAssignModal({
     const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
     if (needsPicker(bal)) {
       setFormBurnPool(code);
-      // Auto-select when only one eligible SKU (e.g. sex-resolved alias with single match).
+      // Auto-select when only one eligible SKU (sex-filtered alias or single-member block).
       const eligible = poolEligible[code] ?? [];
-      const auto =
-        !bal?.needsSkuPicker && eligible.length === 1 ? eligible[0].code : null;
+      const auto = eligible.length === 1 ? eligible[0].code : null;
       setFormCode(auto);
       setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
       setFormPhysio(auto ? gateToPhysio(auto, eligible[0]?.name ?? auto) : EMPTY_PHYSIO);
       return;
+    }
+    // Resolved alias (known sex): burn balance code, assign concrete SKU.
+    if (bal?.isQuotaAlias) {
+      const eligible = poolEligible[code] ?? [];
+      const sku = eligible[0];
+      if (sku) {
+        setFormBurnPool(code);
+        setFormCode(sku.code);
+        setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
+        setFormPhysio(gateToPhysio(sku.code, sku.name));
+        return;
+      }
     }
     const name = bal?.procedureName ?? code;
     setFormBurnPool(null);
@@ -432,6 +446,29 @@ export function PackageAssignModal({
     }
     const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
     if (rem < 1) return;
+    // Resolved quota alias (known sex): burn pool code + concrete SKU.
+    if (bal?.isQuotaAlias) {
+      const eligible = poolEligible[code] ?? [];
+      const sku = eligible[0];
+      if (!sku) {
+        openForm(code, true);
+        return;
+      }
+      const physio = gateToPhysio(sku.code, sku.name);
+      pushDraft({
+        procedureCode: sku.code,
+        procedureName: sku.name,
+        qty: rem,
+        note: "",
+        physioFields: {},
+        siteIds: [],
+        siteApplyMode: null,
+        paramsLabel: "",
+        fingerprint: fingerprintFromPhysio(physio),
+        burnPoolCode: code,
+      });
+      return;
+    }
     const name = bal?.procedureName ?? code;
     const physio = gateToPhysio(code, name);
     pushDraft({
@@ -473,7 +510,18 @@ export function PackageAssignModal({
       });
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error ?? "Save failed");
+        const code = typeof d?.code === "string" ? d.code : null;
+        const msg =
+          code === "PLACE_FAILED"
+            ? tPhysio("packageAssignPlaceFailed")
+            : typeof d?.error === "string" && d.error.trim()
+              ? d.error
+              : "Save failed";
+        setError(
+          code && code !== "PLACE_FAILED" && !msg.includes(code)
+            ? `${msg} (${code})`
+            : msg,
+        );
         return;
       }
       const payload = d.data ?? d;
@@ -644,11 +692,13 @@ export function PackageAssignModal({
       <div className="relative grid min-h-[min(55vh,28rem)] flex-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <h4 className="text-sm font-medium">{labels.leftMenu}</h4>
-          {balances.length === 0 ? (
+          {balances.filter((b) => b.assignable !== false).length === 0 ? (
             <p className={TEXT_MUTED_CLASS}>{labels.emptyLeft}</p>
           ) : (
             <ul className="space-y-1">
-              {balances.map((b) => {
+              {balances
+                .filter((b) => b.assignable !== false)
+                .map((b) => {
                 const rem = draftRemaining.get(b.procedureCode) ?? b.remaining;
                 const picker = needsPicker(b);
                 return (
@@ -832,10 +882,10 @@ export function PackageAssignModal({
                   <label className="mb-2 block text-[12px]">
                     {labels.qty}
                     <input
+                      className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                       type="number"
                       min={1}
                       max={draftRemaining.get(formQuotaCode ?? formCode) ?? 1}
-                      className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                       value={formQty}
                       onChange={(e) => setFormQty(Number(e.target.value) || 1)}
                     />
@@ -923,9 +973,9 @@ export function PackageAssignModal({
               <label className="mb-3 block text-[12px]">
                 {labels.qty}
                 <input
+                  className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                   type="number"
                   min={1}
-                  className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                   value={replaceQty}
                   onChange={(e) => setReplaceQty(Number(e.target.value) || 1)}
                 />

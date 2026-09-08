@@ -14,7 +14,7 @@ import {
   removeEpisodeCareDoctor,
 } from "@/domain/sanatorium/episode-care-team.service";
 import { EPISODE_CLOSED } from "@/domain/sanatorium/episode-gates";
-import { instantiateIntakePackage } from "@/domain/patient/instantiate-intake.service";
+import { applyPackageAutoBlocks } from "@/domain/sanatorium/package-auto-apply.service";
 import { resolveClinicDataScope } from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 
@@ -109,14 +109,20 @@ export async function POST(
 
     const body = addSchema.parse(await req.json());
     const before = await prisma.episodeCareDoctor.count({ where: { episodeId: id } });
+    const instance = await prisma.programInstance.findFirst({
+      where: { episodeId: id },
+      select: { autoApplyState: true },
+    });
     try {
       const row = await addEpisodeCareDoctor({
         episodeId: id,
         practitionerId: body.practitionerId,
         assignedByUserId: session.sub,
       });
-      if (before === 0) {
-        await instantiateIntakePackage(id).catch(() => null);
+      const shouldRetryAuto =
+        before === 0 || instance?.autoApplyState === "PENDING_DOCTOR";
+      if (shouldRetryAuto) {
+        await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM" }).catch(() => null);
       }
       return jsonOk(row);
     } catch (err) {

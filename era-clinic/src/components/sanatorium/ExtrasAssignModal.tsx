@@ -65,6 +65,12 @@ type Props = {
   };
 };
 
+/** No invented default: an unpriced extra shows a dash, server resolves the real amount. */
+function formatUnitPrice(amount: number | null | undefined): string {
+  const n = Number(amount);
+  return Number.isFinite(n) && n > 0 ? `${n.toFixed(2)} AZN` : "—";
+}
+
 const EMPTY_PHYSIO: PhysioChipsValue = {
   needsSite: false,
   physioOrderFields: [],
@@ -165,7 +171,7 @@ export function ExtrasAssignModal({
             value: r.code,
             label: r.name || r.code,
             name: r.name,
-            amount: priceMap[r.code] ?? 25,
+            amount: priceMap[r.code] ?? 0,
           })),
         );
       }
@@ -213,7 +219,8 @@ export function ExtrasAssignModal({
 
   function addDraft() {
     if (!code || !selected) return;
-    const unit = prices[code] ?? selected.amount ?? 25;
+    // Display-only total; the server prices the order from the catalog on create.
+    const unit = prices[code] ?? selected.amount ?? 0;
     setDraft((prev) => [
       ...prev,
       {
@@ -345,7 +352,7 @@ export function ExtrasAssignModal({
         </div>
         {selected && !formOpen ? (
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-            {labels.price}: {(prices[code] ?? selected.amount ?? 25).toFixed(2)} AZN
+            {labels.price}: {formatUnitPrice(prices[code] ?? selected.amount)}
           </p>
         ) : null}
 
@@ -353,14 +360,14 @@ export function ExtrasAssignModal({
           <div className="z-10 max-w-xl rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
             <h4 className="mb-1 font-medium">{selected.name}</h4>
             <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
-              {labels.price}: {(prices[code] ?? selected.amount ?? 25).toFixed(2)} AZN
+              {labels.price}: {formatUnitPrice(prices[code] ?? selected.amount)}
             </p>
             <label className="mb-2 block text-[12px]">
               {labels.qty}
               <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                 type="number"
                 min={1}
-                className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                 value={qty}
                 onChange={(e) => setQty(Number(e.target.value) || 1)}
               />
