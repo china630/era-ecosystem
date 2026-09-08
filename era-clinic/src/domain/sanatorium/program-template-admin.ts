@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 
 const procedureSchema = z.object({
   procedureCode: z.string().min(1),
@@ -46,7 +48,11 @@ export const programTemplateInclude = {
   },
   quotaKnots: true,
   blockMembers: true,
-} satisfies import("@prisma/client").Prisma.ProgramTemplateInclude;
+} satisfies Prisma.ProgramTemplateInclude;
+
+export type ProgramTemplateFull = Prisma.ProgramTemplateGetPayload<{
+  include: typeof programTemplateInclude;
+}>;
 
 export type EntitlementSnapshot = {
   version: number;
@@ -73,7 +79,7 @@ export function shapeProgramTemplate<
       kind?: string | null;
       sortOrder?: number;
     }>;
-    quotaKnots: unknown;
+    quotaKnots?: unknown;
     blockMembers: Array<{ blockCode: string; procedureCode: string }>;
     openInstanceCount?: number;
   },
@@ -93,15 +99,18 @@ export function shapeProgramTemplate<
   };
 }
 
-type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+type Tx = SatelliteTransactionClient | typeof prisma;
 
 /** Current (sellable) template for a product code — new check-ins. */
-export async function findCurrentProgramTemplate(code: string, tx: Tx | typeof prisma = prisma) {
+export async function findCurrentProgramTemplate(
+  code: string,
+  tx: Tx = prisma,
+): Promise<ProgramTemplateFull | null> {
   return tx.programTemplate.findFirst({
     where: { code, isCurrent: true, retiredAt: null },
     include: programTemplateInclude,
     orderBy: { version: "desc" },
-  });
+  }) as Promise<ProgramTemplateFull | null>;
 }
 
 export function buildEntitlementSnapshot(input: {
@@ -336,7 +345,7 @@ function proceduresFromExisting(existing: {
     avoidAfterHour: p.avoidAfterHour ?? undefined,
     kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
     sortOrder: p.sortOrder,
-    memberCodes: p.memberCodes,
+    memberCodes: "memberCodes" in p ? (p.memberCodes as string[]) : [],
   }));
 }
 
@@ -404,7 +413,7 @@ export async function ensureWritableCurrentTemplate(
   if (pinned === 0) return templateId;
 
   const procs = proceduresFromExisting(existing);
-  const knots = existing.quotaKnots.map((k) => ({
+  const knots = existing.quotaKnots.map((k: ProgramKnotInput) => ({
     nights: k.nights,
     procedureCode: k.procedureCode,
     qty: k.qty,
@@ -457,7 +466,7 @@ export async function saveProgramTemplatePatch(
     const nextMax = body.maxNights !== undefined ? body.maxNights : existing.maxNights;
 
     const existingProcs = proceduresFromExisting(existing);
-    const existingKnots = existing.quotaKnots.map((k) => ({
+    const existingKnots = existing.quotaKnots.map((k: ProgramKnotInput) => ({
       nights: k.nights,
       procedureCode: k.procedureCode,
       qty: k.qty,
@@ -519,7 +528,7 @@ export async function purgeRetiredTemplatesWithoutInstances(opts?: {
 /** Backfill entitlementSnapshot for instances that still lack one. */
 export async function backfillEntitlementSnapshots(): Promise<{ updated: number }> {
   const missing = await prisma.programInstance.findMany({
-    where: { entitlementSnapshot: null },
+    where: { entitlementSnapshot: { equals: Prisma.DbNull } },
     select: { id: true, templateId: true },
   });
   let updated = 0;
