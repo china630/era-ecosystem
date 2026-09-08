@@ -92,6 +92,12 @@ export type PublicPricingResponse = {
   hospitalityModules?: Array<PublicPricingModule & { isPremium?: boolean }>;
   industryGroups?: PublicIndustryGroup[];
   platformAddons?: PublicPlatformAddon[];
+  capacityDrivers?: Array<{
+    satelliteKey: string;
+    includedInGate: number;
+    unitAzn: number;
+    unit: string;
+  }>;
   tiers?: PublicTierStorefront[];
   unavailable?: true;
 };

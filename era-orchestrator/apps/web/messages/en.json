@@ -317,7 +317,7 @@
         "pricePerUserMonthAzn": "AZN / user / mo",
         "pricePerGbMonthAzn": "AZN / GB / mo",
         "pricePerWhatsappAlertAzn": "AZN / WhatsApp",
-        "pricePerInvoiceAzn": "AZN / invoice",
+        "pricePerInvoiceAzn": "Invoices are documents (0 AZN)",
         "pricePerOcrPageAzn": "AZN / OCR page"
       },
       "field": {
@@ -740,6 +740,8 @@
       "priceLine": "{price} AZN/mo",
       "included": "Included in platform",
       "pendingOff": "turns off at month end",
+      "quantityLabel": "Slots",
+      "quantityApply": "Apply",
       "disableBillingNotice": "Module stays billable for the current month; access ends at month end.",
       "enabled": "Module enabled",
       "connectFailed": "Could not connect satellite — try again or contact support.",

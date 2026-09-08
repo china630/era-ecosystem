@@ -83,7 +83,7 @@ export function PricingResourceMatrix({
   ];
 
   return (
-    <section className="px-4 py-4" aria-labelledby="pricing-limits-title">
+    <section id="spend-tiers" className="scroll-mt-24 px-4 py-4" aria-labelledby="pricing-limits-title">
       <div className="mx-auto max-w-[88rem]">
         <h2
           id="pricing-limits-title"

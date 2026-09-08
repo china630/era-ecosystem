@@ -310,7 +310,13 @@ export class MdmService {
   }
 
   async resolvePersonIdentity(input: ResolvePersonInput) {
-    return this.resolveOrCreatePerson(input, true);
+    const person = await this.resolveOrCreatePerson(input, true);
+    const orgId =
+      input.organizationId?.trim() || input.requesterOrgId?.trim() || "";
+    if (orgId && person?.id) {
+      await this.ensureWorkforceAccessGrant(person.id, orgId);
+    }
+    return person;
   }
 
   /** @deprecated Prefer resolvePersonIdentity — kept for backward compatibility. */
@@ -1288,6 +1294,7 @@ export class MdmService {
       },
       update: {},
     });
+    return { globalPersonId: canonical, organizationId: granteeOrgId.trim() };
   }
 
   private async resolveOpsProfileData(

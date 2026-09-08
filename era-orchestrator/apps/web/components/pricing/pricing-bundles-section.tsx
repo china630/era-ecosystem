@@ -38,7 +38,7 @@ export function PricingBundlesSection({
   const featuredIndex = bundles.length >= 3 ? 1 : 0;
 
   return (
-    <section className="px-4 pb-10" aria-labelledby="pricing-bundles-title">
+    <section id="bundles" className="scroll-mt-24 px-4 pb-10" aria-labelledby="pricing-bundles-title">
       <div className="mx-auto max-w-6xl">
         <h2
           id="pricing-bundles-title"

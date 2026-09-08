@@ -19,8 +19,9 @@ export function PricingPremiumPanel({
   selectedPremiumSlugs: readonly string[];
   onTogglePremium: (slug: string) => void;
 }) {
+  if (premiumModules.length === 0) return null;
   return (
-    <section className="px-4 pb-12" aria-labelledby="pricing-premium-title">
+    <section id="premium" className="px-4 pb-12" aria-labelledby="pricing-premium-title">
       <div className="mx-auto max-w-6xl">
         <h2
           id="pricing-premium-title"

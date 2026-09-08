@@ -19,6 +19,13 @@ export type ResolvePersonInput = {
   sex?: string;
   gender?: string;
   birthDate?: string | Date | null;
+  /**
+   * Satellite org that holds an ops link (Guest / PatientRef).
+   * When set, upserts PersonAccessGrant so ops-profile returns sex/DOB.
+   */
+  organizationId?: string;
+  /** Alias for organizationId (lookup / link clients). */
+  requesterOrgId?: string;
 };
 
 export type IdentifierInput = {

@@ -20,7 +20,7 @@ export function PricingPlatformAddonsSection({
   if (addons.length === 0) return null;
 
   return (
-    <section id="platform-addons" className="px-4 pb-10" aria-labelledby="pricing-addons-title">
+    <section id="addons" className="scroll-mt-24 px-4 pb-10" aria-labelledby="pricing-addons-title">
       <div className="mx-auto max-w-6xl">
         <h2 id="pricing-addons-title" className="m-0 text-lg font-bold text-slate-800 md:text-xl">
           {title}

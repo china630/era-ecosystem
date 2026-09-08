@@ -22,18 +22,22 @@ Payment webhooks: `POST https://<cp-host>/v1/billing/webhooks/pasha_bank` — se
 
 ## SP9 — Launcher web (M9 DONE)
 
-1. Open `http://localhost:3000` — industry module grid loads for entitled org.
-2. Owner SSO → tile **era-retail-pos** (or any satellite) → **Open** → satellite session.
-3. `node scripts/sso-launch-smoke.mjs` from umbrella root (`ERA_SSO_SHARED_SECRET` aligned).
+1. Open `http://localhost:3000/workspace` — satellite grid (Finance, Hotel, …). No Hotel upsell banner, no env-UUID panel. Workforce tile only if `platform_workforce` is off; otherwise sidebar **Kadrlar**.
+2. Owner SSO → tile **Open** (Hotel / Clinic / F&B / Finance) → satellite session.
+3. Department UUIDs and satellite URLs: `/super-admin/orgs/{orgId}` (Copy UUID).
+4. `node scripts/sso-launch-smoke.mjs` from umbrella root (`ERA_SSO_SHARED_SECRET` aligned).
 
-## Public hub (2026-05-30)
+## Public hub (2026-09-07)
 
-1. `GET http://localhost:3000/pricing` — 200; module prices from `GET /v1/public/pricing`.
-2. `GET http://localhost:3000/help` — FAQ renders in az (default), ru, en via locale toggle.
-3. `GET http://localhost:3000/terms` — user agreement page.
-4. `GET http://localhost:3000/register` — signup; `?ref=CODE` stored for org registration.
-5. Finance `http://localhost:3100/pricing` and `/register` redirect to Orch (no loop when `NEXT_PUBLIC_ORCH_WEB_URL=:3000`).
-6. Satellite `/login` — `AuthLoginCard`, locale toggle works (`POST /api/locale` without session).
+1. Guest `GET http://localhost:3000/` — hub (Core, satellites, Data HUB, add-ons); **no app sidebar**. Locale from cookie (az default, ru). Authed `/` still redirects to workspace.
+2. `GET http://localhost:3000/satellites` and `/satellites/hotel` (or clinic/finance) — Gate vs Core, live SKUs from snapshot.
+3. `GET http://localhost:3000/pricing` — TOC + meters; invoices are documents (no 0.10/invoice). SSR via same-origin `GET /api/public/pricing` (not Traefik `https://api…` loop). Checkout bar: trial today / modules after trial without meters.
+4. Locale toggle on `/`, `/satellites`, `/pricing` — cookie `era_i18n_lang` (az/ru). Industry footer is localized (Регистрация / Qeydiyyat), not English “Register · à la carte…”.
+5. `GET http://localhost:3000/help` — FAQ accordion; locale toggle.
+6. `GET http://localhost:3000/terms` — user agreement page.
+7. `GET http://localhost:3000/register` — signup; `?ref=CODE` stored for org registration.
+8. Finance `http://localhost:3100/pricing` and `/register` redirect to Orch (no loop when `NEXT_PUBLIC_ORCH_WEB_URL=:3000`).
+9. Satellite `/login` — `AuthLoginCard`, locale toggle works (`POST /api/locale` without session).
 
 ## CP-B3–B8 Live
 
