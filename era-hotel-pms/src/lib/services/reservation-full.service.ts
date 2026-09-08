@@ -65,7 +65,7 @@ const fullInclude = {
     },
   },
   fiscalDocuments: true,
-} as const;
+} satisfies Prisma.ReservationInclude;
 
 export async function getReservationFull(id: string) {
   const reservation = await prisma.reservation.findUnique({
