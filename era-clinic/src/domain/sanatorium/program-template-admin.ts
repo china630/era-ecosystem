@@ -113,8 +113,8 @@ export function buildEntitlementSnapshot(input: {
     kind?: string | null;
     sortOrder?: number;
   }>;
-  knots: Array<{ nights: number; procedureCode: string; qty: number }>;
-  members: Array<{ blockCode: string; procedureCode: string }>;
+  knots?: Array<{ nights: number; procedureCode: string; qty: number }> | null;
+  members?: Array<{ blockCode: string; procedureCode: string }> | null;
 }): EntitlementSnapshot {
   return {
     version: input.version,
@@ -127,12 +127,12 @@ export function buildEntitlementSnapshot(input: {
       kind: p.kind ?? null,
       sortOrder: p.sortOrder ?? 0,
     })),
-    knots: input.knots.map((k) => ({
+    knots: (input.knots ?? []).map((k) => ({
       nights: k.nights,
       procedureCode: k.procedureCode,
       qty: k.qty,
     })),
-    members: input.members.map((m) => ({
+    members: (input.members ?? []).map((m) => ({
       blockCode: m.blockCode,
       procedureCode: m.procedureCode,
     })),
