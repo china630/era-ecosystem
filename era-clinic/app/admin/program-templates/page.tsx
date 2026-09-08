@@ -1198,7 +1198,6 @@ export default function ProgramTemplatesAdminPage() {
         title={blockOriginalCode == null ? t("addBlockTitle") : t("editBlockTitle")}
         onClose={closeBlockModal}
         maxWidthClass="max-w-lg"
-        overlayZClass="z-[210]"
       >
         {blockDraft ? (
           <div className={`${FORM_STACK_CLASS} max-h-[min(60vh,32rem)] overflow-y-auto pr-1`}>
