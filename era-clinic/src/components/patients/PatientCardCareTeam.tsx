@@ -12,6 +12,8 @@ import {
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
+import { formatPractitionerLabel } from "@/domain/staff/practitioner-label";
+
 export type CareDoctorItem = {
   id: string;
   practitionerId: string;
@@ -35,6 +37,14 @@ type Props = {
   readOnly: boolean;
   onTeamChange?: (items: CareDoctorItem[]) => void;
 };
+
+/** Display: "Terapevt - Kəngərli Rəna …" (specialty first; no staff codes). */
+export function formatCareDoctorLabel(
+  specialty: string | null | undefined,
+  fullName: string,
+): string {
+  return formatPractitionerLabel(specialty, fullName);
+}
 
 export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props) {
   const t = useTranslations("patientRegistry");
@@ -72,7 +82,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
     () =>
       candidates.map((d) => ({
         value: d.id,
-        label: `${d.fullName}${d.specialty ? ` · ${d.specialty}` : ""} (${d.code})`,
+        label: formatCareDoctorLabel(d.specialty, d.fullName),
       })),
     [candidates],
   );
@@ -106,7 +116,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
     );
     setBusy(false);
     if (!res.ok) {
-      const data = await res.json().catch(() => ({})) as {
+      const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         code?: string;
       };
@@ -130,19 +140,17 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
         {items.length === 0 ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("careTeamEmpty")}</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {items.map((row) => (
               <li
                 key={row.id}
-                className="flex items-center justify-between gap-2 rounded border px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2.5 py-1.5 text-sm"
               >
-                <span>
-                  {row.practitioner.fullName}
-                  {row.practitioner.specialty ? (
-                    <span className={`ml-2 text-xs ${TEXT_MUTED_CLASS}`}>
-                      {row.practitioner.specialty}
-                    </span>
-                  ) : null}
+                <span className="min-w-0 truncate font-medium text-[#2C3E50]">
+                  {formatCareDoctorLabel(
+                    row.practitioner.specialty,
+                    row.practitioner.fullName,
+                  )}
                 </span>
                 {!readOnly ? (
                   <button
@@ -161,7 +169,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
         )}
         {!readOnly ? (
           <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-[16rem] flex-1">
+            <div className="w-full max-w-md">
               <CatalogField
                 kind="SEARCHABLE"
                 label={t("careTeamPick")}
@@ -169,6 +177,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
                 onChange={(v) => setPickId(String(v ?? ""))}
                 options={doctorOptions}
                 emptyLabel={t("careTeamPickEmpty")}
+                widthPreset="select"
               />
             </div>
             <button

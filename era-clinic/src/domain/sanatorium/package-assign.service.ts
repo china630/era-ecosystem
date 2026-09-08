@@ -12,6 +12,10 @@ import {
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { DAY1_SOFT_CONFIRM_CAP } from "@/lib/sanatorium-day1";
+import {
+  resolveMembersByBlock,
+  parseEntitlementSnapshot,
+} from "@/domain/sanatorium/program-template-admin";
 
 export class PackageAssignError extends Error {
   constructor(
@@ -35,36 +39,7 @@ export function isPackagePoolCode(code: string): boolean {
   return (PACKAGE_POOL_CODES as readonly string[]).includes(code) || /_POOL$/i.test(code);
 }
 
-/**
- * Program-template quota codes that are not ProcedureType rows.
- * Assign resolves to a real SVC-* (e.g. gender-specific naftalan bath).
- */
-export const PACKAGE_QUOTA_ALIAS_CODES = ["NAFTALAN_BATH"] as const;
-
-export function isPackageQuotaAlias(code: string): boolean {
-  const c = code.trim().toUpperCase();
-  return (PACKAGE_QUOTA_ALIAS_CODES as readonly string[]).includes(c);
-}
-
-/** Map PDF/knot quota alias → bookable ProcedureType code. */
-export function resolvePackageQuotaSku(
-  quotaCode: string,
-  sex: string | null | undefined,
-  typeCodes: Iterable<string>,
-): string | null {
-  const c = quotaCode.trim().toUpperCase();
-  if (!isPackageQuotaAlias(c)) return null;
-  const set = new Set([...typeCodes].map((x) => x.toUpperCase()));
-  const male = "SVC-NAFTALAN-VANNASI-KISI";
-  const female = "SVC-NAFTALAN-VANNASI-QADIN";
-  if (c === "NAFTALAN_BATH") {
-    if (sex === "MALE" && set.has(male)) return male;
-    if (sex === "FEMALE" && set.has(female)) return female;
-    if (set.has(male)) return male;
-    if (set.has(female)) return female;
-  }
-  return null;
-}
+export type PoolEligibleSku = { code: string; name: string };
 
 function foldHay(s: string): string {
   return s
@@ -79,6 +54,124 @@ function foldHay(s: string): string {
 }
 
 /**
+ * Program-template quota codes that are not ProcedureType rows.
+ * Assign resolves to a real SVC-* / WO-TR-* (e.g. gender-specific naftalan bath).
+ */
+export const PACKAGE_QUOTA_ALIAS_CODES = ["NAFTALAN_BATH"] as const;
+
+/** Preferred catalog codes first; WO-TR-* are live Nafta cutover fallbacks when SVC seed missing. */
+export const NAFTALAN_BATH_SKU_CANDIDATES = {
+  MALE: ["SVC-NAFTALAN-VANNASI-KISI", "WO-TR-72"] as const,
+  FEMALE: ["SVC-NAFTALAN-VANNASI-QADIN", "WO-TR-68"] as const,
+};
+
+export function isPackageQuotaAlias(code: string): boolean {
+  const c = code.trim().toUpperCase();
+  return (PACKAGE_QUOTA_ALIAS_CODES as readonly string[]).includes(c);
+}
+
+function sexNorm(sex: string | null | undefined): "MALE" | "FEMALE" | "UNKNOWN" {
+  const s = String(sex ?? "")
+    .trim()
+    .toUpperCase();
+  if (s === "MALE" || s === "M" || s === "KISI" || s === "KIŞI") return "MALE";
+  if (s === "FEMALE" || s === "F" || s === "QADIN") return "FEMALE";
+  return "UNKNOWN";
+}
+
+function isMaleBathSku(code: string, name: string): boolean {
+  const hay = foldHay(`${code} ${name}`);
+  if (/svc-naftalan-vannasi-kisi|wo-tr-72/.test(hay)) return true;
+  return /naftalan/.test(hay) && /(kisi|kişi|male|\(m\)|men\b)/.test(hay);
+}
+
+function isFemaleBathSku(code: string, name: string): boolean {
+  const hay = foldHay(`${code} ${name}`);
+  if (/svc-naftalan-vannasi-qadin|wo-tr-68/.test(hay)) return true;
+  return /naftalan/.test(hay) && /(qadin|qadın|female|\(f\)|women\b)/.test(hay);
+}
+
+/**
+ * Real ProcedureTypes that may burn a NAFTALAN_BATH (or other quota-alias) balance line.
+ * Prefers seeded SVC gender SKUs; falls back to WO-TR / name-matched baths when seed is missing.
+ */
+export function eligibleSkusForQuotaAlias(
+  quotaCode: string,
+  types: Array<{ code: string; name: string; active?: boolean | null }>,
+): PoolEligibleSku[] {
+  const c = quotaCode.trim().toUpperCase();
+  if (!isPackageQuotaAlias(c)) return [];
+  const active = types.filter((t) => t.active !== false);
+  const byCode = new Map(active.map((t) => [t.code.toUpperCase(), t]));
+
+  const pickCandidates = (codes: readonly string[]): PoolEligibleSku[] => {
+    const out: PoolEligibleSku[] = [];
+    for (const code of codes) {
+      const hit = byCode.get(code.toUpperCase());
+      if (hit) out.push({ code: hit.code, name: hit.name });
+    }
+    return out;
+  };
+
+  if (c === "NAFTALAN_BATH") {
+    const male = pickCandidates(NAFTALAN_BATH_SKU_CANDIDATES.MALE);
+    const female = pickCandidates(NAFTALAN_BATH_SKU_CANDIDATES.FEMALE);
+    if (male.length || female.length) {
+      const seen = new Set<string>();
+      const out: PoolEligibleSku[] = [];
+      for (const s of [...female, ...male]) {
+        const k = s.code.toUpperCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(s);
+      }
+      return out;
+    }
+    // Last resort: any gender-tagged naftalan bath in catalog
+    return active
+      .filter((t) => isMaleBathSku(t.code, t.name) || isFemaleBathSku(t.code, t.name))
+      .map((t) => ({ code: t.code, name: t.name }));
+  }
+  return [];
+}
+
+/**
+ * Map PDF/knot quota alias → bookable ProcedureType code.
+ * Returns null when sex is UNKNOWN/empty and both genders exist — UI must pick.
+ */
+export function resolvePackageQuotaSku(
+  quotaCode: string,
+  sex: string | null | undefined,
+  typeCodes: Iterable<string>,
+  typeMeta?: Array<{ code: string; name: string; active?: boolean | null }>,
+): string | null {
+  const c = quotaCode.trim().toUpperCase();
+  if (!isPackageQuotaAlias(c)) return null;
+
+  const types =
+    typeMeta ??
+    [...typeCodes].map((code) => ({ code, name: code, active: true as boolean | null }));
+  const eligible = eligibleSkusForQuotaAlias(c, types);
+  if (eligible.length === 0) return null;
+
+  const gender = sexNorm(sex);
+  const male = eligible.find((e) => isMaleBathSku(e.code, e.name));
+  const female = eligible.find((e) => isFemaleBathSku(e.code, e.name));
+
+  if (gender === "MALE" && male) return male.code;
+  if (gender === "FEMALE" && female) return female.code;
+
+  // Known sex but only opposite / untagged SKU present — take the only option.
+  if (gender !== "UNKNOWN" && eligible.length === 1) return eligible[0].code;
+
+  // UNKNOWN / empty sex: do not auto-pick when both genders exist (picker).
+  if (gender === "UNKNOWN" && male && female) return null;
+  if (male) return male.code;
+  if (female) return female.code;
+  return eligible[0]?.code ?? null;
+}
+
+/**
  * CLI-57 package assign left menu = treatment entitlements only.
  * Intake labs / doctor exams stay on ProgramProcedureBalance for quota truth but are out of scope
  * for this modal (ADR clinic-episode-procedure-assign-modal — intake on separate card blocks).
@@ -86,8 +179,8 @@ function foldHay(s: string): string {
 export function isPackageAssignTreatmentLine(code: string, name?: string | null): boolean {
   const c = code.trim().toUpperCase();
   if (!c) return false;
-  // Pool buckets (Fizioprosedurlar* / Parafin*) confuse the assign menu — show named SKUs only.
-  if (isPackagePoolCode(c)) return false;
+  // Pool buckets stay visible — modal opens a SKU picker (eligibleSkusForPool).
+  if (isPackagePoolCode(c)) return true;
   if (c.startsWith("WO-TR-") || c.startsWith("SVC-")) return true;
   if (c.includes("NAFTALAN") || c === "PHYSIO_PAID") return true;
 
@@ -138,22 +231,38 @@ function isParaffinType(code: string, name: string): boolean {
   return /parafin|paraffin/.test(hay);
 }
 
-export type PoolEligibleSku = { code: string; name: string };
+/**
+ * True when the balance line is an entitlement bucket (legacy *_POOL or configured members).
+ */
+export function isEntitlementBucket(
+  code: string,
+  configuredMemberCodes?: string[] | null,
+): boolean {
+  if (configuredMemberCodes && configuredMemberCodes.length > 0) return true;
+  return isPackagePoolCode(code);
+}
 
 /**
- * Which real ProcedureTypes may burn a pool balance line.
- * PARAFFIN_POOL → paraffin SKUs only.
- * PHYSIO_POOL → needsSite (or SVC-*) minus paraffin and minus codes that already have their own non-pool package line.
+ * Which real ProcedureTypes may burn a pool / entitlement-block balance line.
+ * When `configuredMemberCodes` is non-empty → whitelist only (admin block membership).
+ * Else legacy heuristic: PARAFFIN_POOL → paraffin; PHYSIO_POOL → needsSite/SVC* minus paraffin/dedicated.
  */
 export function eligibleSkusForPool(
   poolCode: string,
   packageBalanceCodes: string[],
   types: Array<{ code: string; name: string; needsSite?: boolean | null; active?: boolean | null }>,
+  configuredMemberCodes?: string[] | null,
 ): PoolEligibleSku[] {
+  const active = types.filter((t) => t.active !== false);
+  if (configuredMemberCodes && configuredMemberCodes.length > 0) {
+    const want = new Set(configuredMemberCodes.map((c) => c.trim().toUpperCase()));
+    return active
+      .filter((t) => want.has(t.code.toUpperCase()))
+      .map((t) => ({ code: t.code, name: t.name }));
+  }
   const dedicated = new Set(
     packageBalanceCodes.filter((c) => !isPackagePoolCode(c)),
   );
-  const active = types.filter((t) => t.active !== false);
   if (poolCode === "PARAFFIN_POOL" || /paraffin/i.test(poolCode)) {
     return active
       .filter((t) => isParaffinType(t.code, t.name))
@@ -257,6 +366,10 @@ export type PackageBalanceRow = {
   consumed: number;
   /** True for PHYSIO_POOL / PARAFFIN_POOL — not a bookable SKU. */
   isPool: boolean;
+  /** True for NAFTALAN_BATH — pick gender SKU (or auto-resolve when sex known). */
+  isQuotaAlias: boolean;
+  /** When set, UI should open SKU picker (pool or unresolved quota alias). */
+  needsSkuPicker: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -272,11 +385,27 @@ export type PackageAssignedAgg = {
   packageQuotaCode: string;
 };
 
-async function loadEpisodeForAssign(episodeId: string) {
+/**
+ * @param requireClinicalGates — CLI-55/56 anamnesis + care team.
+ * GET snapshot must load without care-team/anamnesis gates (Nafta: many OPEN episodes still lack
+ * care team; /sanatorium opens the modal without the patient-card gate). Mutations keep gates.
+ * @param requireProgram — mutations need ProgramInstance; GET may soft-return without one.
+ */
+async function loadEpisodeForAssign(
+  episodeId: string,
+  opts?: { requireClinicalGates?: boolean; requireProgram?: boolean },
+) {
+  const requireClinicalGates = opts?.requireClinicalGates !== false;
+  const requireProgram = opts?.requireProgram !== false;
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
     include: {
-      programInstance: { include: { procedureLines: true, template: { include: { procedures: true } } } },
+      programInstance: {
+        include: {
+          procedureLines: true,
+          template: { include: { procedures: true } },
+        },
+      },
       patientRef: true,
     },
   });
@@ -284,16 +413,18 @@ async function loadEpisodeForAssign(episodeId: string) {
   if (episode.status !== "OPEN") {
     throw new PackageAssignError("Episode is not OPEN", "NOT_OPEN");
   }
-  if (!episode.programInstance) {
+  if (requireProgram && !episode.programInstance) {
     throw new PackageAssignError("No program instance", "NO_PROGRAM");
   }
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-  if (anamnesisDenied) {
-    throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
-  }
-  const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
-  if (careDenied) {
-    throw new PackageAssignError(careDenied, CARE_TEAM_REQUIRED);
+  if (requireClinicalGates) {
+    const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
+    if (anamnesisDenied) {
+      throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
+    }
+    const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
+    if (careDenied) {
+      throw new PackageAssignError(careDenied, CARE_TEAM_REQUIRED);
+    }
   }
   return episode;
 }
@@ -302,14 +433,59 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   balances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
   softWarnDay1: string | null;
+  /** Present when balances cannot load yet (set package / open day-1). */
+  blockReason: "NO_PROGRAM" | "NO_PROGRAM_CODE" | null;
   /** poolCode → eligible real SKUs for the picker */
   poolEligible: Record<string, PoolEligibleSku[]>;
+  /** Pinned package identity for support (code + version). */
+  packageCode: string | null;
+  packageVersion: number | null;
+  templateId: string | null;
 }> {
-  const episode = await loadEpisodeForAssign(episodeId);
-  const instance = episode.programInstance!;
+  const episode = await loadEpisodeForAssign(episodeId, {
+    requireClinicalGates: false,
+    requireProgram: false,
+  });
+
+  if (!episode.programInstance) {
+    const hasCode = Boolean(episode.programCode?.trim());
+    return {
+      balances: [],
+      assigned: [],
+      softWarnDay1: hasCode
+        ? "Program code is set but package is not open yet — use Complete checkup / Day-1 to instantiate balances."
+        : "No program code on this stay — set the package (Complete checkup & schedule) before assigning procedures.",
+      blockReason: hasCode ? "NO_PROGRAM" : "NO_PROGRAM_CODE",
+      poolEligible: {},
+      packageCode: episode.programCode?.trim() || null,
+      packageVersion: null,
+      templateId: null,
+    };
+  }
+
+  const instance = episode.programInstance;
+  const snapMeta = parseEntitlementSnapshot(instance.entitlementSnapshot);
   const nameByCode = new Map(
     (instance.template?.procedures ?? []).map((p) => [p.procedureCode, p.procedureName]),
   );
+  if (snapMeta) {
+    for (const p of snapMeta.procedures) {
+      if (!nameByCode.has(p.procedureCode)) nameByCode.set(p.procedureCode, p.procedureName);
+    }
+  }
+
+  const blockMemberRows = await prisma.programTemplateBlockMember.findMany({
+    where: { templateId: instance.templateId },
+    select: { blockCode: true, procedureCode: true },
+  });
+  const membersByBlock = resolveMembersByBlock({
+    entitlementSnapshot: instance.entitlementSnapshot,
+    templateMembers: blockMemberRows,
+  });
+
+  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
+  const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
+  const softWarnDay1 = careDenied ?? anamnesisDenied;
 
   const orders = await prisma.procedureOrder.findMany({
     where: {
@@ -347,6 +523,13 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   }
 
   const balanceCodes = instance.procedureLines.map((l) => l.procedureCode);
+
+  const types = await prisma.procedureType.findMany({
+    select: { code: true, name: true, needsSite: true },
+  });
+  const typeRows = types.map((t) => ({ ...t, active: true as boolean | null }));
+  const patientSex = episode.patientRef?.sex ?? null;
+
   const balances: PackageBalanceRow[] = instance.procedureLines
     .filter((line) =>
       isPackageAssignTreatmentLine(
@@ -357,6 +540,25 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
     .map((line) => {
     const c = counts.get(line.procedureCode) ?? { circ: 0, consumed: 0 };
     const used = c.circ + c.consumed;
+    const configured = membersByBlock.get(line.procedureCode) ?? [];
+    const isPool = isEntitlementBucket(line.procedureCode, configured);
+    const isQuotaAlias = isPackageQuotaAlias(line.procedureCode);
+    let needsSkuPicker = false;
+    if (configured.length > 1) {
+      needsSkuPicker = true;
+    } else if (configured.length === 1) {
+      needsSkuPicker = false;
+    } else if (isPackagePoolCode(line.procedureCode)) {
+      needsSkuPicker = true;
+    } else if (isQuotaAlias) {
+      const auto = resolvePackageQuotaSku(
+        line.procedureCode,
+        patientSex,
+        types.map((t) => t.code),
+        typeRows,
+      );
+      needsSkuPicker = auto == null;
+    }
     return {
       procedureCode: line.procedureCode,
       procedureName: nameByCode.get(line.procedureCode) ?? line.procedureCode,
@@ -365,21 +567,28 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
       remaining: Math.max(0, line.quotaTotal - used),
       inCirculation: c.circ,
       consumed: c.consumed,
-      isPool: isPackagePoolCode(line.procedureCode),
+      isPool,
+      isQuotaAlias,
+      needsSkuPicker,
     };
   });
 
-  const types = await prisma.procedureType.findMany({
-    select: { code: true, name: true, needsSite: true },
-  });
   const poolEligible: Record<string, PoolEligibleSku[]> = {};
   for (const b of balances) {
-    if (!b.isPool) continue;
-    poolEligible[b.procedureCode] = eligibleSkusForPool(
-      b.procedureCode,
-      balanceCodes,
-      types.map((t) => ({ ...t, active: true })),
-    );
+    const configured = membersByBlock.get(b.procedureCode) ?? [];
+    if (configured.length > 0 || isPackagePoolCode(b.procedureCode)) {
+      poolEligible[b.procedureCode] = eligibleSkusForPool(
+        b.procedureCode,
+        balanceCodes,
+        typeRows,
+        configured.length > 0 ? configured : null,
+      );
+    } else if (b.isQuotaAlias) {
+      poolEligible[b.procedureCode] = eligibleSkusForQuotaAlias(
+        b.procedureCode,
+        typeRows,
+      );
+    }
   }
 
   const batchMap = new Map<string, PackageAssignedAgg>();
@@ -408,8 +617,15 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   return {
     balances,
     assigned: [...batchMap.values()],
-    softWarnDay1: null,
+    softWarnDay1,
+    blockReason: null,
     poolEligible,
+    packageCode: instance.programCode,
+    packageVersion:
+      snapMeta?.version ??
+      (instance.template as { version?: number } | null | undefined)?.version ??
+      null,
+    templateId: instance.templateId,
   };
 }
 
@@ -438,9 +654,18 @@ export async function assignPackageProcedures(
 ): Promise<{ placed: number; softWarn: string | null; orderIds: string[] }> {
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
-  const snap = await getPackageAssignSnapshot(episodeId);
-  const remByCode = new Map(snap.balances.map((b) => [b.procedureCode, b]));
-  const balanceCodes = snap.balances.map((b) => b.procedureCode);
+  const packageSnap = await getPackageAssignSnapshot(episodeId);
+  const remByCode = new Map(packageSnap.balances.map((b) => [b.procedureCode, b]));
+  const balanceCodes = packageSnap.balances.map((b) => b.procedureCode);
+
+  const blockMemberRows = await prisma.programTemplateBlockMember.findMany({
+    where: { templateId: instance.templateId },
+    select: { blockCode: true, procedureCode: true },
+  });
+  const membersByBlock = resolveMembersByBlock({
+    entitlementSnapshot: instance.entitlementSnapshot,
+    templateMembers: blockMemberRows,
+  });
 
   const types = await prisma.procedureType.findMany();
   const typeByCode = new Map(types.map((t) => [t.code, t]));
@@ -457,41 +682,70 @@ export async function assignPackageProcedures(
         400,
       );
     }
-    const burnPool = line.burnPoolCode?.trim() || null;
+    const burnQuota = line.burnPoolCode?.trim() || null;
     let skuCode = line.procedureCode;
-    let quotaCode = burnPool || line.procedureCode;
+    let quotaCode = burnQuota || line.procedureCode;
 
-    if (isPackageQuotaAlias(line.procedureCode)) {
+    if (isPackageQuotaAlias(line.procedureCode) && !burnQuota) {
+      // Alias sent without picker SKU — resolve by sex when unambiguous.
       quotaCode = line.procedureCode;
-      const resolved = resolvePackageQuotaSku(
+      const resolvedSku = resolvePackageQuotaSku(
         line.procedureCode,
         episode.patientRef?.sex,
         typeByCode.keys(),
+        types.map((t) => ({ code: t.code, name: t.name, active: true })),
       );
-      if (!resolved) {
+      if (!resolvedSku) {
         throw new PackageAssignError(
-          `Cannot resolve ${line.procedureCode} to a procedure type (check patient sex / catalog)`,
-          "UNKNOWN_TYPE",
+          `Cannot resolve ${line.procedureCode} — patient sex is unknown/empty; pick male or female bath SKU`,
+          "ALIAS_SKU_REQUIRED",
           400,
         );
       }
-      skuCode = resolved;
-    } else if (burnPool) {
-      if (!isPackagePoolCode(burnPool)) {
+      skuCode = resolvedSku;
+    } else if (burnQuota && isPackageQuotaAlias(burnQuota) && !(membersByBlock.get(burnQuota)?.length)) {
+      quotaCode = burnQuota;
+      const eligible = eligibleSkusForQuotaAlias(
+        burnQuota,
+        types.map((t) => ({ code: t.code, name: t.name, active: true })),
+      );
+      if (!eligible.some((e) => e.code === line.procedureCode)) {
         throw new PackageAssignError(
-          `burnPoolCode ${burnPool} is not a pool`,
+          `SKU ${line.procedureCode} is not eligible for alias ${burnQuota}`,
+          "ALIAS_SKU_NOT_ELIGIBLE",
+          400,
+        );
+      }
+      skuCode = line.procedureCode;
+    } else if (burnQuota) {
+      const configured = membersByBlock.get(burnQuota) ?? [];
+      if (!isEntitlementBucket(burnQuota, configured) && !isPackageQuotaAlias(burnQuota)) {
+        throw new PackageAssignError(
+          `burnPoolCode ${burnQuota} is not an entitlement block`,
           "INVALID",
           400,
         );
       }
-      const eligible = eligibleSkusForPool(
-        burnPool,
-        balanceCodes,
-        types.map((t) => ({ code: t.code, name: t.name, needsSite: t.needsSite, active: true })),
-      );
+      const eligible =
+        configured.length > 0 || isPackagePoolCode(burnQuota)
+          ? eligibleSkusForPool(
+              burnQuota,
+              balanceCodes,
+              types.map((t) => ({
+                code: t.code,
+                name: t.name,
+                needsSite: t.needsSite,
+                active: true,
+              })),
+              configured.length > 0 ? configured : null,
+            )
+          : eligibleSkusForQuotaAlias(
+              burnQuota,
+              types.map((t) => ({ code: t.code, name: t.name, active: true })),
+            );
       if (!eligible.some((e) => e.code === line.procedureCode)) {
         throw new PackageAssignError(
-          `SKU ${line.procedureCode} is not eligible for pool ${burnPool}`,
+          `SKU ${line.procedureCode} is not eligible for pool ${burnQuota}`,
           "POOL_SKU_NOT_ELIGIBLE",
           400,
         );
@@ -696,12 +950,29 @@ export async function replacePackageProcedures(
     const types = await prisma.procedureType.findMany({
       select: { code: true, name: true, needsSite: true },
     });
-    for (const pool of balanceCodes.filter(isPackagePoolCode)) {
-      const eligible = eligibleSkusForPool(
-        pool,
-        balanceCodes,
-        types.map((t) => ({ ...t, active: true })),
-      );
+    const blockMemberRows = await prisma.programTemplateBlockMember.findMany({
+      where: { templateId: instance.templateId },
+      select: { blockCode: true, procedureCode: true },
+    });
+    const membersByBlock = resolveMembersByBlock({
+      entitlementSnapshot: instance.entitlementSnapshot,
+      templateMembers: blockMemberRows,
+    });
+    for (const pool of balanceCodes) {
+      const configured = membersByBlock.get(pool) ?? [];
+      if (!isEntitlementBucket(pool, configured) && !isPackageQuotaAlias(pool)) continue;
+      const eligible =
+        configured.length > 0 || isPackagePoolCode(pool)
+          ? eligibleSkusForPool(
+              pool,
+              balanceCodes,
+              types.map((t) => ({ ...t, active: true })),
+              configured.length > 0 ? configured : null,
+            )
+          : eligibleSkusForQuotaAlias(
+              pool,
+              types.map((t) => ({ ...t, active: true })),
+            );
       if (eligible.some((e) => e.code === input.toCode)) {
         inPackageTarget = true;
         burnPoolCode = pool;
@@ -792,7 +1063,7 @@ export async function day1AutoAssign(
 ): Promise<{ placed: number; softWarn: string | null; orderIds: string[] }> {
   const snap = await getPackageAssignSnapshot(episodeId);
   const picks = snap.balances
-    .filter((b) => !b.isPool && b.remaining > 0)
+    .filter((b) => !b.isPool && !b.isQuotaAlias && !b.needsSkuPicker && b.remaining > 0)
     .slice(0, DAY1_SOFT_CONFIRM_CAP);
   if (picks.length === 0) {
     throw new PackageAssignError("No remaining package quota", "EMPTY_REMAINING", 400);

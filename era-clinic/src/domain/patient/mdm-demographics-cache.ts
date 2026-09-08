@@ -1,4 +1,5 @@
 import {
+  ensurePersonAccessGrant,
   getPersonOpsProfile,
   normalizePersonSex,
   parsePersonBirthDate,
@@ -6,6 +7,7 @@ import {
 } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 export type PatientDemographicsCacheRow = {
   id: string;
@@ -18,12 +20,16 @@ export type PatientDemographicsCacheRow = {
   fullName: string;
 };
 
+function sexNeedsFill(sex: string | null | undefined): boolean {
+  return !sex || sex === "UNKNOWN";
+}
+
 /** Rows with MDM link and missing required demographics — reception-filled rows stay out. */
 export function patientNeedsMdmDemographicsFill(
   row: PatientDemographicsCacheRow,
 ): boolean {
   if (!row.globalPersonId?.trim()) return false;
-  if (!row.sex || row.sex === "UNKNOWN") return true;
+  if (sexNeedsFill(row.sex)) return true;
   if (!row.birthDate) return true;
   if (!row.firstName?.trim() || !row.lastName?.trim()) return true;
   return false;
@@ -50,10 +56,7 @@ export function buildPatientDemographicsFillPatch(
   if (profile.accessDenied) return null;
   const patch: PatientDemographicsFillPatch = {};
   const sex = normalizePersonSex(profile.sex);
-  if (
-    (sex === "MALE" || sex === "FEMALE") &&
-    (!patient.sex || patient.sex === "UNKNOWN")
-  ) {
+  if ((sex === "MALE" || sex === "FEMALE") && sexNeedsFill(patient.sex)) {
     patch.sex = sex;
   }
   const birthDate = parsePersonBirthDate(profile.birthDate);
@@ -93,13 +96,44 @@ async function persistFill(
   });
 }
 
+function clinicOrganizationId(): string | undefined {
+  try {
+    return requestOrganizationId();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Ops-profile with org grant. Existing PatientRef.globalPersonId implies
+ * operational need — ensure PersonAccessGrant then re-read when denied.
+ */
+export async function fetchOpsProfileForPatientFill(
+  globalPersonId: string,
+  organizationId?: string | null,
+): Promise<PersonOpsProfile | null> {
+  const gpid = globalPersonId.trim();
+  if (!gpid) return null;
+  const orgId = organizationId?.trim() || clinicOrganizationId();
+  let profile = await getPersonOpsProfile(gpid, {
+    ...(orgId ? { organizationId: orgId } : {}),
+  });
+  if (!profile) return null;
+  if (profile.accessDenied && orgId) {
+    const granted = await ensurePersonAccessGrant(gpid, orgId);
+    if (!granted) return profile;
+    profile = await getPersonOpsProfile(gpid, { organizationId: orgId });
+  }
+  return profile;
+}
+
 /** Single-person fill (check-in / episode open). */
 export async function applyMdmDemographicsCache(
   patientId: string,
   globalPersonId: string | null | undefined,
 ): Promise<void> {
   if (!globalPersonId?.trim()) return;
-  const profile = await getPersonOpsProfile(globalPersonId.trim());
+  const profile = await fetchOpsProfileForPatientFill(globalPersonId.trim());
   if (!profile) return;
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return;
@@ -110,7 +144,6 @@ export async function applyMdmDemographicsCache(
 
 /**
  * Page fill for demographic holes + MDM id.
- * Uses parallel single ops-profile calls (kit batch export not required for this ship).
  * Reception-filled fields are never overwritten (fill-not-clear).
  */
 export async function fillPatientPageDemographicsFromMdm<T extends PatientDemographicsCacheRow>(
@@ -119,11 +152,12 @@ export async function fillPatientPageDemographicsFromMdm<T extends PatientDemogr
   const needy = rows.filter(patientNeedsMdmDemographicsFill);
   if (needy.length === 0) return rows;
 
+  const orgId = clinicOrganizationId();
   const byId = new Map(rows.map((r) => [r.id, { ...r }]));
   await Promise.all(
     needy.map(async (row) => {
       const gpid = row.globalPersonId!.trim();
-      const profile = await getPersonOpsProfile(gpid);
+      const profile = await fetchOpsProfileForPatientFill(gpid, orgId);
       if (!profile) return;
       const patch = buildPatientDemographicsFillPatch(row, profile);
       if (!patch) return;

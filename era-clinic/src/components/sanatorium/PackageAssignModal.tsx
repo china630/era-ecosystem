@@ -31,6 +31,10 @@ export type PackageBalanceRow = {
   inCirculation: number;
   /** PHYSIO_POOL / PARAFFIN_POOL — pick a real SKU, do not assign the pool code. */
   isPool?: boolean;
+  /** NAFTALAN_BATH — pick gender SKU when sex unknown. */
+  isQuotaAlias?: boolean;
+  /** Open SKU picker (pool or unresolved quota alias). */
+  needsSkuPicker?: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -182,6 +186,9 @@ export function PackageAssignModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [softWarn, setSoftWarn] = useState<string | null>(null);
+  const [blockReason, setBlockReason] = useState<"NO_PROGRAM" | "NO_PROGRAM_CODE" | null>(
+    null,
+  );
 
   const [catalog, setCatalog] = useState<PhysioCatalogSite[]>([]);
   const [programs, setPrograms] = useState<PhysioCatalogListItem[]>([]);
@@ -193,19 +200,48 @@ export function PackageAssignModal({
   const [replaceTo, setReplaceTo] = useState("");
   const [replaceQty, setReplaceQty] = useState(1);
   const [replaceBatchId, setReplaceBatchId] = useState<string | null>(null);
+  const [packagePin, setPackagePin] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`);
+    const d = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError("Failed to load package assign");
+      const code = typeof d?.code === "string" ? d.code : null;
+      const msg =
+        code === "NO_PROGRAM_CODE"
+          ? tPhysio("packageAssignNoProgramCode")
+          : code === "NO_PROGRAM"
+            ? tPhysio("packageAssignNoProgram")
+            : typeof d?.error === "string" && d.error.trim()
+              ? d.error
+              : tPhysio("packageAssignLoadFailed");
+      setBlockReason(
+        code === "NO_PROGRAM" || code === "NO_PROGRAM_CODE" ? code : null,
+      );
+      setError(code && !msg.includes(code) ? `${msg} (${code})` : msg);
       return;
     }
-    const d = await res.json();
     const payload = d.data ?? d;
     setBalances(payload.balances ?? []);
     setAssigned(payload.assigned ?? []);
     setPoolEligible(payload.poolEligible ?? {});
-  }, [episodeId]);
+    const code = typeof payload.packageCode === "string" ? payload.packageCode : null;
+    const ver =
+      typeof payload.packageVersion === "number" ? payload.packageVersion : null;
+    setPackagePin(code ? (ver != null ? `${code} · v${ver}` : code) : null);
+    const block =
+      payload.blockReason === "NO_PROGRAM" || payload.blockReason === "NO_PROGRAM_CODE"
+        ? (payload.blockReason as "NO_PROGRAM" | "NO_PROGRAM_CODE")
+        : null;
+    setBlockReason(block);
+    if (block === "NO_PROGRAM_CODE") {
+      setError(tPhysio("packageAssignNoProgramCode"));
+    } else if (block === "NO_PROGRAM") {
+      setError(tPhysio("packageAssignNoProgram"));
+    } else if (payload.softWarnDay1) {
+      setSoftWarn(String(payload.softWarnDay1));
+    }
+  }, [episodeId, tPhysio]);
 
   useEffect(() => {
     if (!open) return;
@@ -214,6 +250,8 @@ export function PackageAssignModal({
     setFormBurnPool(null);
     setError(null);
     setSoftWarn(null);
+    setBlockReason(null);
+    setPackagePin(null);
     setReplaceOpen(false);
     void load();
     void (async () => {
@@ -281,7 +319,7 @@ export function PackageAssignModal({
   const packageCodeOptions = useMemo(
     () =>
       balances
-        .filter((b) => !b.isPool)
+        .filter((b) => !b.isPool && !b.isQuotaAlias && !b.needsSkuPicker)
         .map((b) => ({
           value: b.procedureCode,
           label: b.procedureName || b.procedureCode,
@@ -299,6 +337,11 @@ export function PackageAssignModal({
 
   const formQuotaCode = formBurnPool || formCode;
 
+  function needsPicker(bal: PackageBalanceRow | undefined): boolean {
+    if (!bal) return false;
+    return Boolean(bal.isPool || bal.isQuotaAlias || bal.needsSkuPicker);
+  }
+
   function closeForm() {
     setFormCode(null);
     setFormBurnPool(null);
@@ -307,12 +350,16 @@ export function PackageAssignModal({
 
   function openForm(code: string, fillAllQty = false) {
     const bal = balances.find((b) => b.procedureCode === code);
-    const rem = draftRemaining.get(code) ?? 0;
-    if (bal?.isPool) {
+    const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
+    if (needsPicker(bal)) {
       setFormBurnPool(code);
-      setFormCode(null);
+      // Auto-select when only one eligible SKU (e.g. sex-resolved alias with single match).
+      const eligible = poolEligible[code] ?? [];
+      const auto =
+        !bal?.needsSkuPicker && eligible.length === 1 ? eligible[0].code : null;
+      setFormCode(auto);
       setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
-      setFormPhysio(EMPTY_PHYSIO);
+      setFormPhysio(auto ? gateToPhysio(auto, eligible[0]?.name ?? auto) : EMPTY_PHYSIO);
       return;
     }
     const name = bal?.procedureName ?? code;
@@ -379,11 +426,11 @@ export function PackageAssignModal({
 
   function fillAll(code: string) {
     const bal = balances.find((b) => b.procedureCode === code);
-    if (bal?.isPool) {
+    if (needsPicker(bal)) {
       openForm(code, true);
       return;
     }
-    const rem = draftRemaining.get(code) ?? 0;
+    const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
     if (rem < 1) return;
     const name = bal?.procedureName ?? code;
     const physio = gateToPhysio(code, name);
@@ -510,7 +557,13 @@ export function PackageAssignModal({
   async function submitReplace() {
     if (!replaceFrom || !replaceTo || replaceQty < 1) return;
     const toInPackage =
-      balances.some((b) => !b.isPool && b.procedureCode === replaceTo) ||
+      balances.some(
+        (b) =>
+          !b.isPool &&
+          !b.isQuotaAlias &&
+          !b.needsSkuPicker &&
+          b.procedureCode === replaceTo,
+      ) ||
       Object.values(poolEligible).some((list) => list.some((s) => s.code === replaceTo));
     if (!toInPackage && !canOutOfPackage) {
       setError(
@@ -569,7 +622,7 @@ export function PackageAssignModal({
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            disabled={busy || draft.length === 0}
+            disabled={busy || draft.length === 0 || Boolean(blockReason)}
             onClick={() => void save()}
           >
             {labels.save}
@@ -577,6 +630,11 @@ export function PackageAssignModal({
         </div>
       }
     >
+      {packagePin ? (
+        <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
+          {tPhysio("packageAssignPinnedVersion", { pin: packagePin })}
+        </p>
+      ) : null}
       {error ? <p className="mb-2 text-sm text-red-600">{error}</p> : null}
       {softWarn ? (
         <p className="mb-2 text-[12px] text-amber-700">
@@ -592,6 +650,7 @@ export function PackageAssignModal({
             <ul className="space-y-1">
               {balances.map((b) => {
                 const rem = draftRemaining.get(b.procedureCode) ?? b.remaining;
+                const picker = needsPicker(b);
                 return (
                   <li
                     key={b.procedureCode}
@@ -601,6 +660,11 @@ export function PackageAssignModal({
                       <div className="truncate font-medium leading-tight">{b.procedureName}</div>
                       <p className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}>
                         {labels.remaining}: {rem} / {b.quotaTotal}
+                        {b.isPool
+                          ? " · pool — pick procedure"
+                          : b.isQuotaAlias
+                            ? " · pick gender bath"
+                            : ""}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
@@ -617,6 +681,7 @@ export function PackageAssignModal({
                         className={`${PRIMARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
                         disabled={rem < 1 || busy}
                         onClick={() => openForm(b.procedureCode)}
+                        title={picker ? labels.pickPoolSku ?? "Pick procedure" : undefined}
                       >
                         +
                       </button>

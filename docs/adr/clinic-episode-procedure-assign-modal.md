@@ -180,11 +180,30 @@ Below assign/summary:
 - Presentation: **cards stacked vertically** (datetime, title, status, optional access code / resource).
 - Pending extras stay in the Additional assign block, not in this schedule list.
 
-### D10 — Non-goals (this ADR)
+### D10 — Package pool codes (`PHYSIO_POOL` / `PARAFFIN_POOL`)
+
+Nafta PDF lines **Fizioprosedurlar*** / **Parafin*** map to entitlement buckets (`*_POOL`), not `ProcedureType` rows.
+
+| Rule | Detail |
+|------|--------|
+| Never assign pool as SKU | `ProcedureOrder.procedureCode` is always a real catalog code |
+| Burn column | `ProcedureOrder.packageQuotaCode` = pool code (or same as `procedureCode` for dedicated lines) |
+| Modal `+` / All on pool | **Visible with SKU picker** — FO picks a real ProcedureType; Save burns pool via `packageQuotaCode` / `burnPoolCode`. |
+| `PARAFFIN_POOL` eligibility | Types whose code/name match `/parafin|paraffin/i` |
+| `PHYSIO_POOL` eligibility | Active treatment types (`needsSite` or physio-ish `SVC-*`), excluding paraffin and excluding codes that already have their own non-pool balance line (Naftalan, ECG, labs stay on dedicated quotas) |
+| Day-1 auto | Skips pool + quota-alias rows that need a SKU picker |
+| Reject codes | `POOL_NOT_ASSIGNABLE`, `POOL_SKU_NOT_ELIGIBLE`, `ALIAS_SKU_REQUIRED`, `ALIAS_SKU_NOT_ELIGIBLE` |
+| Assign menu scope | Treatment lines: pools (`PHYSIO_POOL` / `PARAFFIN_POOL`), `NAFTALAN_BATH` alias, `WO-TR-*` / `SVC-*`. Intake labs/exams filtered out. |
+| `NAFTALAN_BATH` resolve | Prefer `SVC-NAFTALAN-VANNASI-KISI/QADIN` by patient sex; **fallback** `WO-TR-72` / `WO-TR-68` when SVC seed missing. Sex `UNKNOWN`/empty + both genders → modal SKU picker (do not auto-pick). |
+
+Named package lines (e.g. Naftalan) do **not** burn `PHYSIO_POOL` — they keep separate `ProgramProcedureBalance` rows.
+
+### D11 — Non-goals (this ADR)
 
 - Redesign of intake diagnostic / lab ordering UX.
 - Final extras catalog control (category tree vs flat searchable) — searchable is v1.
 - Changing knot math itself (CLI-51 `quotaFor`) except stay-shorten cancel of future slots and lazy-assign UX.
+- Merging Naftalan (or other dedicated lines) into `PHYSIO_POOL`.
 - Claiming SHIPPED / Pilot / edition `ga` — delivery wave + UAT required.
 
 ---
@@ -265,5 +284,16 @@ Exact enum names are implementation choice; semantics required:
 | Print extras | Field noise: **3× `window.open`** per procedure (`sheets=1&copy=1..3`); single open without `sheets=1` still prints 3 page-breaks |
 | Legacy | `buildProposedPlan` no-op; hidden proposed checkbox UI removed |
 | RBAC D7 | Reception may assign (`api:procedures.confirm`); FO manager permission for Replace out-of-package |
+
+## Amendment 2026-09-07 — package pools (SCREEN)
+
+| Decision | Detail |
+|----------|--------|
+| Pool codes | `PHYSIO_POOL` / `PARAFFIN_POOL` are entitlement only (D10); never `ProcedureOrder.procedureCode` |
+| `packageQuotaCode` | Orders store which balance line was burned; `syncQuotaUsed` counts by this field |
+| Modal | **Pool rows hidden** from left menu (named SKUs only). Legacy pool burn helpers remain server-side |
+| Errors | `POOL_NOT_ASSIGNABLE`, `POOL_SKU_NOT_ELIGIBLE` |
+| Day-1 | Skips `isPool` balance rows |
+| Assign menu filter | Pools + labs / doctor exams excluded via `isPackageAssignTreatmentLine` |
 
 Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).

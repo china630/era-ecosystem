@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 
 const procedureSchema = z.object({
   procedureCode: z.string().min(1),
@@ -43,16 +41,10 @@ export type ProgramProcedureInput = z.infer<typeof procedureSchema>;
 export type ProgramKnotInput = z.infer<typeof knotSchema>;
 
 export const programTemplateInclude = {
-  procedures: {
-    orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }],
-  },
+  procedures: { orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }] },
   quotaKnots: true,
   blockMembers: true,
-} satisfies Prisma.ProgramTemplateInclude;
-
-export type ProgramTemplateFull = Prisma.ProgramTemplateGetPayload<{
-  include: typeof programTemplateInclude;
-}>;
+} as const;
 
 export type EntitlementSnapshot = {
   version: number;
@@ -79,7 +71,7 @@ export function shapeProgramTemplate<
       kind?: string | null;
       sortOrder?: number;
     }>;
-    quotaKnots?: unknown;
+    quotaKnots: unknown;
     blockMembers: Array<{ blockCode: string; procedureCode: string }>;
     openInstanceCount?: number;
   },
@@ -99,18 +91,15 @@ export function shapeProgramTemplate<
   };
 }
 
-type Tx = SatelliteTransactionClient | typeof prisma;
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 /** Current (sellable) template for a product code — new check-ins. */
-export async function findCurrentProgramTemplate(
-  code: string,
-  tx: Tx = prisma,
-): Promise<ProgramTemplateFull | null> {
+export async function findCurrentProgramTemplate(code: string, tx: Tx | typeof prisma = prisma) {
   return tx.programTemplate.findFirst({
     where: { code, isCurrent: true, retiredAt: null },
     include: programTemplateInclude,
     orderBy: { version: "desc" },
-  }) as Promise<ProgramTemplateFull | null>;
+  });
 }
 
 export function buildEntitlementSnapshot(input: {
@@ -124,8 +113,8 @@ export function buildEntitlementSnapshot(input: {
     kind?: string | null;
     sortOrder?: number;
   }>;
-  knots?: Array<{ nights: number; procedureCode: string; qty: number }> | null;
-  members?: Array<{ blockCode: string; procedureCode: string }> | null;
+  knots: Array<{ nights: number; procedureCode: string; qty: number }>;
+  members: Array<{ blockCode: string; procedureCode: string }>;
 }): EntitlementSnapshot {
   return {
     version: input.version,
@@ -138,12 +127,12 @@ export function buildEntitlementSnapshot(input: {
       kind: p.kind ?? null,
       sortOrder: p.sortOrder ?? 0,
     })),
-    knots: (input.knots ?? []).map((k) => ({
+    knots: input.knots.map((k) => ({
       nights: k.nights,
       procedureCode: k.procedureCode,
       qty: k.qty,
     })),
-    members: (input.members ?? []).map((m) => ({
+    members: input.members.map((m) => ({
       blockCode: m.blockCode,
       procedureCode: m.procedureCode,
     })),
@@ -345,7 +334,7 @@ function proceduresFromExisting(existing: {
     avoidAfterHour: p.avoidAfterHour ?? undefined,
     kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
     sortOrder: p.sortOrder,
-    memberCodes: "memberCodes" in p ? (p.memberCodes as string[]) : [],
+    memberCodes: p.memberCodes,
   }));
 }
 
@@ -413,7 +402,7 @@ export async function ensureWritableCurrentTemplate(
   if (pinned === 0) return templateId;
 
   const procs = proceduresFromExisting(existing);
-  const knots = existing.quotaKnots.map((k: ProgramKnotInput) => ({
+  const knots = existing.quotaKnots.map((k) => ({
     nights: k.nights,
     procedureCode: k.procedureCode,
     qty: k.qty,
@@ -466,7 +455,7 @@ export async function saveProgramTemplatePatch(
     const nextMax = body.maxNights !== undefined ? body.maxNights : existing.maxNights;
 
     const existingProcs = proceduresFromExisting(existing);
-    const existingKnots = existing.quotaKnots.map((k: ProgramKnotInput) => ({
+    const existingKnots = existing.quotaKnots.map((k) => ({
       nights: k.nights,
       procedureCode: k.procedureCode,
       qty: k.qty,
@@ -527,10 +516,9 @@ export async function purgeRetiredTemplatesWithoutInstances(opts?: {
 
 /** Backfill entitlementSnapshot for instances that still lack one. */
 export async function backfillEntitlementSnapshots(): Promise<{ updated: number }> {
-  const missing = await prisma.programInstance.findMany({
-    where: { entitlementSnapshot: { equals: Prisma.DbNull } },
-    select: { id: true, templateId: true },
-  });
+  const missing = await prisma.$queryRaw<Array<{ id: string; templateId: string }>>`
+    SELECT id, "templateId" FROM "ProgramInstance" WHERE entitlement_snapshot IS NULL
+  `;
   let updated = 0;
   for (const row of missing) {
     const template = await prisma.programTemplate.findUnique({
