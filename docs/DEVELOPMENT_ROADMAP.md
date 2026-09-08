@@ -153,6 +153,7 @@ Gaps **not** covered by sibling satellites (hotel + fb + clinic + finance + orch
 | **P3** | H-BL-20 … H-BL-28 | Excursions, smart minibar, dispatch, KBS, e-qaimə, extra OTA, guest CRM P2/P3, loyalty redeem, clinic procedure rules |
 | **P4** | H-BL-30 … H-BL-31 | B2B contracts + BEO MVP **Done**; agency settlement depth → **H-BL-46** |
 | **P5** | H-BL-40 … H-BL-48 | **FO money close + City Ledger** — transfer-to-CL, deposit@settle, refunds, CO discounts, NA polish, per-guest close, agency settlement, filters, Finance AR (terms/aging/match) |
+| **P8** | H-BL-51 … H-BL-53 | **Vouchers split (debt)** — agency `voucherNo` polish; promo apply; gift certificates. ADR [hotel-vouchers-promotions-certificates.md](./adr/hotel-vouchers-promotions-certificates.md). Not Nafta cutover. |
 
 **Next implementation wave:** **P5** ([ADR](./adr/hotel-city-ledger-and-fo-money.md), coverage `HOT-CASH-*` / `HOT-CL-*`). Do not treat DELIVERY Stage 4/23 `[x]` as Opera-depth City Ledger.
 
@@ -169,6 +170,26 @@ Headless **era-bank-core** (P0–P7) + ops **era-bank** + customer **era-bank-db
 | Engine DELIVERY P0–P7 | [DELIVERY-BANK-CORE](../era-bank-core/doc/DELIVERY-BANK-CORE.md) |
 | Full-stack UAT | [UAT-SMOKE-FULL](../era-bank-core/doc/UAT-SMOKE-FULL.md) |
 | Security / performance | [SECURITY-CHECKLIST](../era-bank-core/doc/SECURITY-CHECKLIST.md) · [PERFORMANCE](../era-bank-core/doc/PERFORMANCE.md) |
+
+---
+
+## Finance — Multi-book (`AccountingBook`) roadmap
+
+**ADR:** [finance-accounting-book.md](./adr/finance-accounting-book.md) (Accepted 2026-09-08).  
+**Billing:** stackable SKU `accounting_book_extra` @ **19 AZN/mo** (orchestrator `pricing_modules`); included statutory NAS book; `ifrs_mapping` bundles first IFRS book slot (no double-charge).
+
+| Phase | Scope | Status |
+|-------|--------|--------|
+| **0 — UAT FIN-GAAP** | Lab path in [UAT-SMOKE](../era-finance-core/doc/UAT-SMOKE.md); Product-Readiness Pilot open until human signoff | **Eng suite done; Lab RT deferred** |
+| **Wave A** | Schema, system NAS/IFRS, selector, close `byBookId` | **Done (eng)** |
+| **Wave B** | Wizard + MANAGEMENT CoA strategies + quota + retire | **Done (eng)** |
+| **Wave C** | Arbitrary pairs + compare + multi-target mirror MVP + Audit Hub ops vs non-ops | **Done (eng)** |
+| **Thin edges** | bookId on aging/holdings/main reports; slots N; default-ops; selector warn | **Done (eng)** |
+| **Structural tails** | FY-by-book, holdings `bookCode`, account uniqueness per book, niche export callers | **Done (eng)** |
+
+**SSOT residuals:** [ADR finance-accounting-book § Residuals](./adr/finance-accounting-book.md#residuals-inventory--2026-09-08-updated-lab-rt-deferred).  
+Ignore older agent chat summaries that still list multi-target / aging / Audit Hub / FY / uniqueness as open — superseded by ADR.  
+**Not combat-ready claims:** no SHIPPED / Pilot `[x]` / edition `ga` until Lab RT.
 
 ---
 

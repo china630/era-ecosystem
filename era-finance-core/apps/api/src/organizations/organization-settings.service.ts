@@ -71,7 +71,11 @@ export class OrganizationSettingsService {
         : {};
 
     let mergedSettings: Record<string, unknown> | undefined;
-    if (valuation !== undefined || dto.asanUserId !== undefined) {
+    if (
+      valuation !== undefined ||
+      dto.asanUserId !== undefined ||
+      dto.ledgerMirrorMode !== undefined
+    ) {
       mergedSettings = { ...baseSettings };
       if (valuation !== undefined) {
         mergedSettings.inventory = {
@@ -94,6 +98,19 @@ export class OrganizationSettingsService {
         mergedSettings.tax = {
           ...prevTax,
           asanUserId: trimmed,
+        };
+      }
+      if (dto.ledgerMirrorMode !== undefined) {
+        const prevLm =
+          baseSettings.ledgerMirror &&
+          typeof baseSettings.ledgerMirror === "object" &&
+          !Array.isArray(baseSettings.ledgerMirror)
+            ? (baseSettings.ledgerMirror as Record<string, unknown>)
+            : {};
+        mergedSettings.ledgerMirror = {
+          ...prevLm,
+          mode: dto.ledgerMirrorMode,
+          mappingSetCode: prevLm.mappingSetCode ?? "NAS_TO_IFRS",
         };
       }
     }
@@ -130,6 +147,7 @@ export class OrganizationSettingsService {
             settings: mergeLockedPeriodUntil(
               nextSettings ?? org.settings,
               dto.lockedPeriodUntil ? dto.lockedPeriodUntil.trim() : null,
+              dto.ledgerType === "IFRS" ? "IFRS" : "NAS",
             ) as Prisma.InputJsonValue,
           }),
         },
@@ -195,7 +213,12 @@ export class OrganizationSettingsService {
     };
   }
 
-  async patchPeriodLock(organizationId: string, lockedPeriodUntil: string | null) {
+  async patchPeriodLock(
+    organizationId: string,
+    lockedPeriodUntil: string | null,
+    ledgerType: "NAS" | "IFRS" | "MANAGEMENT" = "NAS",
+    accountingBookId?: string,
+  ) {
     const org = await this.prisma.organization.findFirst({
       where: { id: organizationId, isDeleted: false },
       select: { id: true, settings: true },
@@ -203,12 +226,27 @@ export class OrganizationSettingsService {
     if (!org) {
       throw new NotFoundException("Organization not found");
     }
+    if (accountingBookId) {
+      const book = await this.prisma.accountingBook.findFirst({
+        where: {
+          id: accountingBookId,
+          organizationId,
+          status: "ACTIVE",
+        },
+        select: { id: true },
+      });
+      if (!book) {
+        throw new BadRequestException("Active accounting book not found");
+      }
+    }
     await this.prisma.organization.update({
       where: { id: organizationId },
       data: {
         settings: mergeLockedPeriodUntil(
           org.settings,
           lockedPeriodUntil ? lockedPeriodUntil.trim() : null,
+          ledgerType,
+          accountingBookId,
         ) as Prisma.InputJsonValue,
       },
     });

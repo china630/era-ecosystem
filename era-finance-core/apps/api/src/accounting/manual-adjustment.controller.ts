@@ -15,7 +15,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import type { Response } from "express";
-import { UserRole } from "@erafinance/database";
+import { LedgerType, UserRole } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
@@ -43,13 +43,18 @@ export class ManualAdjustmentController {
   suggest(
     @OrganizationId() organizationId: string,
     @Query("template") template: string,
+    @Query("ledgerType") ledgerTypeRaw?: string,
   ) {
     const t = MANUAL_ADJUSTMENT_TEMPLATES.includes(
       template as ManualAdjustmentTemplate,
     )
       ? (template as ManualAdjustmentTemplate)
       : "FREEFORM";
-    return this.adjustments.suggestLines(organizationId, t);
+    const ledgerType =
+      ledgerTypeRaw?.trim().toUpperCase() === "IFRS"
+        ? LedgerType.IFRS
+        : LedgerType.NAS;
+    return this.adjustments.suggestLines(organizationId, t, ledgerType);
   }
 
   @Post("preview")
@@ -112,12 +117,24 @@ export class ManualAdjustmentController {
     @Query("dateTo") dateTo?: string,
     @Query("page") page?: string,
     @Query("pageSize") pageSize?: string,
+    @Query("ledgerType") ledgerTypeRaw?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
+    const ledgerType =
+      ledgerTypeRaw?.trim().toUpperCase() === "IFRS"
+        ? LedgerType.IFRS
+        : ledgerTypeRaw?.trim().toUpperCase() === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+        : ledgerTypeRaw?.trim().toUpperCase() === "NAS"
+          ? LedgerType.NAS
+          : undefined;
     return this.adjustments.list(organizationId, {
       dateFrom,
       dateTo,
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
+      ledgerType,
+      accountingBookId,
     });
   }
 

@@ -8,6 +8,7 @@ import {
   FixedAssetLifecycleEventType,
   InvoicePaymentKind,
   InvoiceStatus,
+  LedgerMappingSetStatus,
   LedgerType,
   Prisma,
   TransactionKind,
@@ -36,6 +37,8 @@ import {
   getClosedPeriodKeys,
   monthKeyUtc,
 } from "../reporting/reporting-period.util";
+import { LEDGER_MAPPING_CODE_NAS_TO_IFRS } from "./ledger-mapping.constants";
+import { AccountingBookService } from "./accounting-book.service";
 
 const Decimal = Prisma.Decimal;
 
@@ -45,6 +48,7 @@ export class ManualAdjustmentService {
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   async create(
@@ -98,6 +102,17 @@ export class ManualAdjustmentService {
 
     const dayKey = dto.date.replace(/-/g, "");
     const reference = `ADJ-${dayKey}-${crypto.randomUUID().slice(0, 8)}`;
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      dto.accountingBookId,
+      dto.ledgerType,
+    );
+    const ledgerType =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
 
     const { transactionId } = await this.accounting.postTransaction({
       organizationId,
@@ -113,6 +128,8 @@ export class ManualAdjustmentService {
       departmentId: dto.departmentId ?? null,
       basisInvoiceId: dto.basisInvoiceId ?? null,
       basisFixedAssetId: dto.basisFixedAssetId ?? null,
+      ledgerType,
+      accountingBookId: book.id,
       lines: dto.lines.map((l) => ({
         accountCode: l.accountCode.trim(),
         debit: String(l.debit ?? 0),
@@ -161,7 +178,16 @@ export class ManualAdjustmentService {
       where: { id: organizationId },
       select: { settings: true },
     });
-    const closed = getClosedPeriodKeys(org?.settings);
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      dto.accountingBookId,
+      dto.ledgerType,
+    );
+    const closed = getClosedPeriodKeys(
+      org?.settings,
+      book.gaapKind,
+      book.id,
+    );
     const periodKey = monthKeyUtc(date);
     const periodClosed = closed.includes(periodKey);
 
@@ -186,8 +212,7 @@ export class ManualAdjustmentService {
       include: {
         counterparty: { select: { nameCipher: true } },
         journalEntries: {
-          where: { ledgerType: LedgerType.NAS },
-          include: { account: { select: { code: true, nameRu: true, nameAz: true, nameEn: true } } },
+          include: { account: { select: { code: true, nameRu: true, nameAz: true, nameEn: true, ledgerType: true } } },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -214,8 +239,9 @@ export class ManualAdjustmentService {
       basisLabel = fa ? `FA ${fa.inventoryNumber}` : row.basisFixedAssetId;
     }
 
+    const bookEntries = this.primaryBookEntries(row.journalEntries);
     let amount = new Decimal(0);
-    for (const e of row.journalEntries) {
+    for (const e of bookEntries) {
       amount = amount.add(e.debit);
     }
 
@@ -235,7 +261,8 @@ export class ManualAdjustmentService {
       basisLabel,
       reversedById: reversedBy?.id ?? null,
       amount: amount.toFixed(2),
-      lines: row.journalEntries.map((e) => ({
+      ledgerType: bookEntries[0]?.ledgerType ?? LedgerType.NAS,
+      lines: bookEntries.map((e) => ({
         accountCode: e.account.code,
         accountName: e.account.nameAz || e.account.nameRu || e.account.nameEn || e.account.code,
         debit: e.debit.toFixed(4),
@@ -273,13 +300,32 @@ export class ManualAdjustmentService {
       where: { id, organizationId, kind: TransactionKind.MANUAL_ADJUSTMENT },
       include: {
         journalEntries: {
-          where: { ledgerType: LedgerType.NAS },
           include: { account: { select: { code: true } } },
           orderBy: { createdAt: "asc" },
         },
       },
     });
     if (!original) throw new NotFoundException("Manual adjustment not found");
+
+    const hasNas = original.journalEntries.some(
+      (e) => e.ledgerType === LedgerType.NAS,
+    );
+    const book = hasNas ? LedgerType.NAS : LedgerType.IFRS;
+
+    const orgForClose = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const closedForBook = getClosedPeriodKeys(
+      orgForClose?.settings,
+      book === LedgerType.IFRS ? "IFRS" : "NAS",
+    );
+    const origPeriodKey = monthKeyUtc(original.date);
+    if (closedForBook.includes(origPeriodKey)) {
+      throw new BadRequestException(
+        `Period ${origPeriodKey} closed (${book}): cannot reverse`,
+      );
+    }
 
     const existingReverse = await this.prisma.transaction.findFirst({
       where: { organizationId, reversesTransactionId: id },
@@ -308,7 +354,8 @@ export class ManualAdjustmentService {
       );
     }
 
-    const mirroredLines = original.journalEntries.map((e) => ({
+    const bookLines = original.journalEntries.filter((e) => e.ledgerType === book);
+    const mirroredLines = bookLines.map((e) => ({
       accountCode: e.account.code,
       debit: e.credit.toString(),
       credit: e.debit.toString(),
@@ -340,6 +387,7 @@ export class ManualAdjustmentService {
         basisInvoiceId: original.basisInvoiceId,
         basisFixedAssetId: original.basisFixedAssetId,
         reversesTransactionId: id,
+        ledgerType: book,
         lines: mirroredLines,
       });
 
@@ -421,6 +469,8 @@ export class ManualAdjustmentService {
       dateTo?: string;
       page?: number;
       pageSize?: number;
+      ledgerType?: LedgerType;
+      accountingBookId?: string;
     },
   ): Promise<{
     items: Array<{
@@ -436,6 +486,7 @@ export class ManualAdjustmentService {
       reversedById: string | null;
       canReverse: boolean;
       amount: string;
+      ledgerType: LedgerType;
     }>;
     total: number;
     page: number;
@@ -447,6 +498,31 @@ export class ManualAdjustmentService {
       organizationId,
       kind: TransactionKind.MANUAL_ADJUSTMENT,
     };
+    if (query.accountingBookId) {
+      const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+        organizationId,
+        query.accountingBookId,
+        query.ledgerType,
+      );
+      where.journalEntries = {
+        some: { organizationId, accountingBookId: book.id },
+      };
+    } else if (query.ledgerType) {
+      where.journalEntries = {
+        some: { organizationId, ledgerType: query.ledgerType },
+      };
+      if (query.ledgerType === LedgerType.IFRS) {
+        where.AND = [
+          {
+            NOT: {
+              journalEntries: {
+                some: { organizationId, ledgerType: LedgerType.NAS },
+              },
+            },
+          },
+        ];
+      }
+    }
     if (query.dateFrom || query.dateTo) {
       where.date = {};
       if (query.dateFrom) {
@@ -465,6 +541,25 @@ export class ManualAdjustmentService {
       }
     }
 
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const selectedBook = query.accountingBookId
+      ? await this.accountingBooks.resolveByIdOrLedgerAlias(
+          organizationId,
+          query.accountingBookId,
+          query.ledgerType,
+        )
+      : null;
+    const closedNas = getClosedPeriodKeys(org?.settings, "NAS", selectedBook?.id);
+    const closedIfrs = getClosedPeriodKeys(org?.settings, "IFRS", selectedBook?.id);
+    const closedManagement = getClosedPeriodKeys(
+      org?.settings,
+      "MANAGEMENT",
+      selectedBook?.id,
+    );
+
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.transaction.count({ where }),
       this.prisma.transaction.findMany({
@@ -475,8 +570,7 @@ export class ManualAdjustmentService {
         include: {
           counterparty: { select: { nameCipher: true } },
           journalEntries: {
-            where: { ledgerType: LedgerType.NAS },
-            select: { debit: true },
+            select: { debit: true, ledgerType: true },
           },
         },
       }),
@@ -518,8 +612,10 @@ export class ManualAdjustmentService {
 
     return {
       items: rows.map((r) => {
+        const bookEntries = this.primaryBookEntries(r.journalEntries);
+        const book = bookEntries[0]?.ledgerType ?? LedgerType.NAS;
         let amount = new Decimal(0);
-        for (const e of r.journalEntries) {
+        for (const e of bookEntries) {
           amount = amount.add(e.debit);
         }
         let basisLabel: string | null = null;
@@ -529,6 +625,13 @@ export class ManualAdjustmentService {
           const invNo = assetById.get(r.basisFixedAssetId);
           basisLabel = invNo ? `FA ${invNo}` : r.basisFixedAssetId;
         }
+        const periodKey = monthKeyUtc(r.date);
+        const periodClosed =
+          book === LedgerType.MANAGEMENT
+            ? closedManagement.includes(periodKey)
+            : book === LedgerType.IFRS
+            ? closedIfrs.includes(periodKey)
+            : closedNas.includes(periodKey);
         return {
           id: r.id,
           date: r.date.toISOString().slice(0, 10),
@@ -542,8 +645,12 @@ export class ManualAdjustmentService {
           basisInvoiceId: r.basisInvoiceId,
           basisFixedAssetId: r.basisFixedAssetId,
           reversedById: reversedByMap.get(r.id) ?? null,
-          canReverse: !reversedByMap.has(r.id) && !r.reversesTransactionId,
+          canReverse:
+            !reversedByMap.has(r.id) &&
+            !r.reversesTransactionId &&
+            !periodClosed,
           amount: amount.toFixed(2),
+          ledgerType: book,
         };
       }),
       total,
@@ -555,17 +662,101 @@ export class ManualAdjustmentService {
   async suggestLines(
     organizationId: string,
     template: ManualAdjustmentTemplate,
-  ): Promise<{ lines: Array<{ accountCode: string; debitHint: "debit" | "credit" }> }> {
+    ledgerType: LedgerType = LedgerType.NAS,
+  ): Promise<{
+    lines: Array<{ accountCode: string; debitHint: "debit" | "credit" }>;
+    warning?: string | null;
+  }> {
     const pair = await this.templateAccountPair(organizationId, template);
     if (!pair) {
-      return { lines: [] };
+      return { lines: [], warning: null };
+    }
+    if (ledgerType === LedgerType.IFRS) {
+      const mapped = await this.mapNasCodesToIfrs(organizationId, [
+        pair.debit,
+        pair.credit,
+      ]);
+      if (!mapped[0] || !mapped[1]) {
+        return {
+          lines: [],
+          warning:
+            "NO_IFRS_MAPPING: publish NAS_TO_IFRS mapping or provision IFRS accounts for template codes",
+        };
+      }
+      return {
+        lines: [
+          { accountCode: mapped[0], debitHint: "debit" },
+          { accountCode: mapped[1], debitHint: "credit" },
+        ],
+        warning: null,
+      };
     }
     return {
       lines: [
         { accountCode: pair.debit, debitHint: "debit" },
         { accountCode: pair.credit, debitHint: "credit" },
       ],
+      warning: null,
     };
+  }
+
+  /** Prefer NAS book totals; fall back to IFRS for IFRS-only adjustments. */
+  private primaryBookEntries<T extends { ledgerType: LedgerType }>(
+    entries: T[],
+  ): T[] {
+    const nas = entries.filter((e) => e.ledgerType === LedgerType.NAS);
+    if (nas.length > 0) return nas;
+    const ifrs = entries.filter((e) => e.ledgerType === LedgerType.IFRS);
+    return ifrs.length > 0 ? ifrs : entries;
+  }
+
+  /**
+   * Map NAS posting-role codes → IFRS via PUBLISHED NAS_TO_IFRS, else same-code IFRS CoA.
+   */
+  private async mapNasCodesToIfrs(
+    organizationId: string,
+    nasCodes: string[],
+  ): Promise<Array<string | null>> {
+    const published = await this.prisma.ledgerMappingSet.findFirst({
+      where: {
+        organizationId,
+        code: LEDGER_MAPPING_CODE_NAS_TO_IFRS,
+        status: LedgerMappingSetStatus.PUBLISHED,
+      },
+      include: {
+        lines: {
+          include: {
+            sourceAccount: { select: { code: true } },
+            targetAccount: { select: { code: true, deletedAt: true } },
+          },
+        },
+      },
+    });
+    const byNas = new Map<string, string>();
+    for (const line of published?.lines ?? []) {
+      if (line.targetAccount.deletedAt) continue;
+      byNas.set(line.sourceAccount.code, line.targetAccount.code);
+    }
+
+    const out: Array<string | null> = [];
+    for (const code of nasCodes) {
+      const mapped = byNas.get(code);
+      if (mapped) {
+        out.push(mapped);
+        continue;
+      }
+      const same = await this.prisma.account.findFirst({
+        where: {
+          organizationId,
+          ledgerType: LedgerType.IFRS,
+          code,
+          deletedAt: null,
+        },
+        select: { code: true },
+      });
+      out.push(same?.code ?? null);
+    }
+    return out;
   }
 
   private async templateAccountPair(

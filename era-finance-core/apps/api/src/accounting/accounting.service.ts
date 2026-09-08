@@ -3,6 +3,7 @@ import {
   HttpException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   AccountType,
@@ -14,6 +15,7 @@ import {
   OrganizationKind,
   Prisma,
   TransactionKind,
+  TransactionMirrorStatus,
   UserRole,
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
@@ -28,6 +30,9 @@ import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { SubcontoService } from "./subconto.service";
 import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
+import { SubscriptionAccessService } from "../subscription/subscription-access.service";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { AccountingBookService } from "./accounting-book.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -65,6 +70,9 @@ export class AccountingService {
     private readonly ifrsAutoMapping: IfrsAutoMappingService,
     private readonly posting: PostingAccountResolver,
     private readonly subconto: SubcontoService,
+    private readonly subscriptionAccess: SubscriptionAccessService,
+    @Optional()
+    private readonly accountingBooks?: AccountingBookService,
   ) {}
 
   validateBalance(lines: PostTransactionLine[]): void {
@@ -108,6 +116,7 @@ export class AccountingService {
       /** ЦФО: фильтр P&L по департаменту для расходных/прочих проводок. */
       departmentId?: string | null;
       ledgerType?: LedgerType;
+      accountingBookId?: string | null;
       lines: PostTransactionLine[];
       kind?: TransactionKind;
       reason?: string | null;
@@ -128,6 +137,7 @@ export class AccountingService {
       counterpartyId,
       departmentId,
       ledgerType = LedgerType.NAS,
+      accountingBookId,
       lines,
       kind = TransactionKind.SYSTEM,
       reason,
@@ -146,22 +156,59 @@ export class AccountingService {
     if (!org) {
       throw new NotFoundException("Organization not found");
     }
+    const accountingBook = this.accountingBooks
+      ? await this.accountingBooks.resolveByIdOrLedgerAlias(
+          organizationId,
+          accountingBookId ?? undefined,
+          ledgerType,
+          tx,
+        )
+      : null;
     assertBudgetJournalLinesSafe(
       org.kind,
       lines.map((l) => l.accountCode),
     );
     if (!skipClosedPeriodGuard) {
-      const closed = getClosedPeriodKeys(org?.settings);
+      const closed = getClosedPeriodKeys(
+        org?.settings,
+        ledgerType,
+        accountingBook?.id,
+      );
       const key = monthKeyUtc(date);
       if (closed.includes(key)) {
         throw new BadRequestException(
-          `Период ${key} закрыт: новые проводки на эту дату недоступны`,
+          `Период ${key} закрыт (${ledgerType}): новые проводки на эту дату недоступны`,
         );
       }
     }
-    const lockedPeriodUntil = getLockedPeriodUntil(org?.settings);
+    const lockedPeriodUntil = getLockedPeriodUntil(
+      org?.settings,
+      ledgerType === LedgerType.IFRS ? "IFRS" : "NAS",
+    );
     if (lockedPeriodUntil && date.getTime() <= lockedPeriodUntil.getTime()) {
       throw new HttpException("Период закрыт для изменений", 423);
+    }
+
+    if (reversesTransactionId) {
+      const original = await tx.transaction.findFirst({
+        where: { id: reversesTransactionId, organizationId },
+        select: { id: true, date: true },
+      });
+      if (!original) {
+        throw new NotFoundException("Original transaction not found");
+      }
+      // Per-book SSOT: closedPeriodsByLedger (not shared Transaction.isLocked).
+      const revClosed = getClosedPeriodKeys(
+        org?.settings,
+        ledgerType,
+        accountingBook?.id,
+      );
+      const revKey = monthKeyUtc(original.date);
+      if (revClosed.includes(revKey)) {
+        throw new BadRequestException(
+          `Период ${revKey} закрыт (${ledgerType}): сторно недоступно`,
+        );
+      }
     }
 
     const codes = [...new Set(lines.map((l) => l.accountCode))];
@@ -171,6 +218,7 @@ export class AccountingService {
         organizationId,
         code: { in: codes },
         ledgerType,
+        ...(accountingBook ? { accountingBookId: accountingBook.id } : {}),
       },
     });
     const byCode = new Map<string, { id: string; code: string }>();
@@ -208,10 +256,14 @@ export class AccountingService {
         basisInvoiceId: basisInvoiceId ?? null,
         basisFixedAssetId: basisFixedAssetId ?? null,
         reversesTransactionId: reversesTransactionId ?? null,
+        // IFRS-only posts intentionally skip NAS→IFRS mirror (status stays NONE).
+        ...(ledgerType === LedgerType.IFRS
+          ? { mirrorStatus: TransactionMirrorStatus.NONE }
+          : {}),
       },
     });
 
-    const nasLines: Array<{
+    const sourceLines: Array<{
       accountCode: string;
       accountId: string;
       debit: Decimal;
@@ -239,9 +291,10 @@ export class AccountingService {
           debit,
           credit,
           ledgerType,
+          ...(accountingBook ? { accountingBookId: accountingBook.id } : {}),
         },
       });
-      nasLines.push({
+      sourceLines.push({
         accountCode: line.accountCode,
         accountId: account.id,
         debit,
@@ -262,15 +315,20 @@ export class AccountingService {
       departmentId,
     });
 
-    if (ledgerType === LedgerType.NAS) {
-      await this.ifrsAutoMapping.mirrorFromNas({
-        tx,
-        organizationId,
-        transactionId: transaction.id,
-        nasLines,
-        subcontoService: this.subconto,
-      });
-    }
+    const entitled = await this.subscriptionAccess.hasModule(
+      organizationId,
+      ModuleEntitlement.IFRS_MAPPING,
+    );
+    await this.ifrsAutoMapping.mirrorFromBook({
+      tx,
+      organizationId,
+      transactionId: transaction.id,
+      sourceLines,
+      sourceBookId: accountingBook?.id,
+      sourceLedgerType: ledgerType,
+      subcontoService: this.subconto,
+      entitled,
+    });
 
     return { transactionId: transaction.id };
   }
@@ -284,6 +342,7 @@ export class AccountingService {
     counterpartyId?: string | null;
     departmentId?: string | null;
     ledgerType?: LedgerType;
+    accountingBookId?: string | null;
     lines: PostTransactionLine[];
     kind?: TransactionKind;
     reason?: string | null;
@@ -306,25 +365,34 @@ export class AccountingService {
   async getPeriodCloseChecklist(
     organizationId: string,
     month: string,
+    ledgerType: LedgerType = LedgerType.NAS,
   ): Promise<{
     month: string;
+    ledgerType: LedgerType;
     allPassed: boolean;
     checks: {
-      noDraftInvoices: { ok: boolean; draftCount: number };
-      noNegativeStock: { ok: boolean; affectedCount: number };
-      noNegativeCash: { ok: boolean; affectedAccounts: string[] };
+      noDraftInvoices: { ok: boolean; draftCount: number; skipped?: boolean };
+      noNegativeStock: { ok: boolean; affectedCount: number; skipped?: boolean };
+      noNegativeCash: {
+        ok: boolean;
+        affectedAccounts: string[];
+        skipped?: boolean;
+      };
       depreciationAccruedIfNeeded: {
         ok: boolean;
         activeAssets: number;
         depreciationMonthsFound: number;
+        skipped?: boolean;
       };
       noUnfinishedManufacturingCycles: {
         ok: boolean;
         unresolvedCount: number;
+        skipped?: boolean;
       };
       noBrokenJournalLinks: {
         ok: boolean;
         brokenLinksCount: number;
+        skipped?: boolean;
       };
     };
   }> {
@@ -334,6 +402,7 @@ export class AccountingService {
     const year = Number(month.slice(0, 4));
     const mon = Number(month.slice(5, 7));
     const { start, end } = monthRangeUtc(year, mon);
+    const isIfrs = ledgerType === LedgerType.IFRS;
 
     const draftCount = await this.prisma.invoice.count({
       where: {
@@ -343,19 +412,21 @@ export class AccountingService {
       },
     });
 
-    const negativeStockItems = await this.prisma.stockItem.count({
-      where: {
-        organizationId,
-        quantity: { lt: 0 },
-      },
-    });
+    const negativeStockItems = isIfrs
+      ? 0
+      : await this.prisma.stockItem.count({
+          where: {
+            organizationId,
+            quantity: { lt: 0 },
+          },
+        });
 
     const kind = await this.posting.getOrganizationKind(organizationId);
-    const nasAccounts = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType: LedgerType.NAS },
+    const bookAccounts = await this.prisma.account.findMany({
+      where: { organizationId, ledgerType },
       select: { id: true, code: true },
     });
-    const cashAccounts = nasAccounts.filter((a) => {
+    const cashAccounts = bookAccounts.filter((a) => {
       if (isNasCashDeskCode(kind, a.code) || isNasBankLedgerCode(kind, a.code)) {
         return true;
       }
@@ -375,7 +446,7 @@ export class AccountingService {
           by: ["accountId"],
           where: {
             organizationId,
-            ledgerType: LedgerType.NAS,
+            ledgerType,
             accountId: { in: cashAccounts.map((a) => a.id) },
             transaction: { isFinal: true, date: { lte: end } },
           },
@@ -391,22 +462,27 @@ export class AccountingService {
       })
       .map((row) => cashById.get(row.accountId))
       .filter((x): x is string => Boolean(x));
+    const cashSkipped = isIfrs && cashAccounts.length === 0;
 
-    const activeAssets = await this.prisma.fixedAsset.count({
-      where: { organizationId, status: FixedAssetStatus.ACTIVE },
-    });
+    const activeAssets = isIfrs
+      ? 0
+      : await this.prisma.fixedAsset.count({
+          where: { organizationId, status: FixedAssetStatus.ACTIVE },
+        });
     const depreciationMonthsFound =
-      activeAssets > 0
+      !isIfrs && activeAssets > 0
         ? await this.prisma.fixedAssetDepreciationMonth.count({
             where: { organizationId, year, month: mon },
           })
         : 0;
     const depreciationOk =
-      activeAssets === 0 || depreciationMonthsFound > 0;
+      isIfrs || activeAssets === 0 || depreciationMonthsFound > 0;
 
-    const unresolvedManufacturingRows = await this.prisma.$queryRaw<
-      Array<{ count: unknown }>
-    >(Prisma.sql`
+    const unresolvedManufacturing = isIfrs
+      ? 0
+      : asCount(
+          (
+            await this.prisma.$queryRaw<Array<{ count: unknown }>>(Prisma.sql`
       SELECT COUNT(*)::bigint AS count
       FROM stock_movements sm
       WHERE sm.organization_id = ${organizationId}::uuid
@@ -422,38 +498,45 @@ export class AccountingService {
             AND t.date >= ${start}
             AND t.date <= ${end}
         )
-    `);
-    const unresolvedManufacturing = asCount(unresolvedManufacturingRows[0]?.count);
+    `)
+          )[0]?.count,
+        );
 
-    const brokenJournalRows = await this.prisma.$queryRaw<
-      Array<{ count: unknown }>
-    >(Prisma.sql`
+    const brokenJournalLinks = asCount(
+      (
+        await this.prisma.$queryRaw<Array<{ count: unknown }>>(Prisma.sql`
       SELECT COUNT(*)::bigint AS count
       FROM journal_entries je
       LEFT JOIN transactions t ON t.id = je.transaction_id
       WHERE je.organization_id = ${organizationId}::uuid
+        AND je.ledger_type = CAST(${ledgerType} AS "LedgerType")
         AND t.id IS NULL
-    `);
-    const brokenJournalLinks = asCount(brokenJournalRows[0]?.count);
+    `)
+      )[0]?.count,
+    );
 
     const checks = {
       noDraftInvoices: { ok: draftCount === 0, draftCount },
       noNegativeStock: {
         ok: negativeStockItems === 0,
         affectedCount: negativeStockItems,
+        ...(isIfrs ? { skipped: true as const } : {}),
       },
       noNegativeCash: {
         ok: negativeCashAccounts.length === 0,
         affectedAccounts: negativeCashAccounts,
+        ...(cashSkipped ? { skipped: true as const } : {}),
       },
       depreciationAccruedIfNeeded: {
         ok: depreciationOk,
         activeAssets,
         depreciationMonthsFound,
+        ...(isIfrs ? { skipped: true as const } : {}),
       },
       noUnfinishedManufacturingCycles: {
         ok: unresolvedManufacturing === 0,
         unresolvedCount: unresolvedManufacturing,
+        ...(isIfrs ? { skipped: true as const } : {}),
       },
       noBrokenJournalLinks: {
         ok: brokenJournalLinks === 0,
@@ -468,7 +551,7 @@ export class AccountingService {
       checks.noUnfinishedManufacturingCycles.ok &&
       checks.noBrokenJournalLinks.ok;
 
-    return { month, allPassed, checks };
+    return { month, ledgerType, allPassed, checks };
   }
 
   private async findChartEntryForCode(
@@ -527,8 +610,24 @@ export class AccountingService {
   ): Promise<void> {
     if (ledgerType !== LedgerType.NAS) return;
 
+    const nasBook = this.accountingBooks
+      ? await this.accountingBooks.resolveByLedgerType(
+          organizationId,
+          LedgerType.NAS,
+          tx,
+        )
+      : null;
+    if (!nasBook) {
+      throw new NotFoundException("Active NAS accounting book not found");
+    }
+
     const already = await tx.account.findFirst({
-      where: { organizationId, ledgerType, code },
+      where: {
+        organizationId,
+        ledgerType,
+        code,
+        accountingBookId: nasBook.id,
+      },
       select: { id: true },
     });
     if (already) return;
@@ -551,7 +650,12 @@ export class AccountingService {
           stack,
         );
         const parent = await tx.account.findFirst({
-          where: { organizationId, ledgerType, code: entry.parentCode },
+          where: {
+            organizationId,
+            ledgerType,
+            code: entry.parentCode,
+            accountingBookId: nasBook.id,
+          },
           select: { id: true },
         });
         parentId = parent?.id ?? null;
@@ -559,6 +663,7 @@ export class AccountingService {
       await tx.account.create({
         data: {
           organizationId,
+          accountingBookId: nasBook.id,
           ledgerType,
           code: entry.code,
           nameAz: entry.nameAz,
@@ -586,7 +691,12 @@ export class AccountingService {
 
     await this.ensureNasAccountExists(tx, organizationId, fb.parentCode, ledgerType, kind, stack);
     const parentAcc = await tx.account.findFirst({
-      where: { organizationId, ledgerType, code: fb.parentCode },
+      where: {
+        organizationId,
+        ledgerType,
+        code: fb.parentCode,
+        accountingBookId: nasBook.id,
+      },
       select: { id: true },
     });
     if (!parentAcc) {
@@ -599,6 +709,7 @@ export class AccountingService {
     await tx.account.create({
       data: {
         organizationId,
+        accountingBookId: nasBook.id,
         ledgerType,
         code,
         nameAz: fb.nameAz,

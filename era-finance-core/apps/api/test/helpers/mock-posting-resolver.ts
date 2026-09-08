@@ -134,5 +134,6 @@ export function createTestInventoryService(
       accounting as unknown as { postJournalInTransaction?: jest.Mock },
       posting,
     ),
+    { ensureLatestRates: jest.fn() } as never,
   );
 }

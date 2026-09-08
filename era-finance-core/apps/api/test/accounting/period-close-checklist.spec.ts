@@ -1,6 +1,12 @@
 import { AccountingService } from "../../src/accounting/accounting.service";
 import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
+jest.mock("../../src/subscription/subscription-access.service", () => ({
+  SubscriptionAccessService: class SubscriptionAccessService {
+    hasModule = jest.fn().mockResolvedValue(false);
+  },
+}));
+
 describe("AccountingService period-close checklist hardening", () => {
   function makeService(overrides?: {
     unresolvedManufacturing?: number;
@@ -27,6 +33,7 @@ describe("AccountingService period-close checklist hardening", () => {
       {} as any,
       createMockPostingResolver(),
       {} as never,
+      { hasModule: jest.fn().mockResolvedValue(false) } as never,
     );
     return { svc, prisma };
   }

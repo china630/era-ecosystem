@@ -679,6 +679,9 @@ export class SubscriptionAccessService {
       gov_budget_pro?: boolean;
       recovery_pro?: boolean;
       ifrs_mapping?: boolean;
+      accounting_book_extra?: boolean;
+      /** Stackable EXTRA book slots (0–7). Takes precedence over boolean→1/0. */
+      accountingBookExtraSlots?: number;
       extraSlugs?: Record<string, boolean>;
     },
     tx?: Prisma.TransactionClient,
@@ -727,6 +730,7 @@ export class SubscriptionAccessService {
     apply("gov_budget_pro", patch.gov_budget_pro);
     apply("recovery_pro", patch.recovery_pro);
     apply("ifrs_mapping", patch.ifrs_mapping);
+    apply("accounting_book_extra", patch.accounting_book_extra);
 
     if (patch.production === true) {
       set.add("production");
@@ -765,12 +769,36 @@ export class SubscriptionAccessService {
 
     const customList = parseCustomModules(sub.customConfig);
     let customConfigData: Prisma.InputJsonValue | undefined;
-    if (customList && customList.length > 0) {
+    const slotsPatch =
+      patch.accountingBookExtraSlots !== undefined
+        ? Math.min(
+            7,
+            Math.max(0, Math.floor(Number(patch.accountingBookExtraSlots) || 0)),
+          )
+        : patch.accounting_book_extra === undefined
+          ? undefined
+          : patch.accounting_book_extra
+            ? 1
+            : 0;
+    if ((customList && customList.length > 0) || slotsPatch !== undefined) {
       const raw =
         sub.customConfig != null && typeof sub.customConfig === "object"
           ? (sub.customConfig as Record<string, unknown>)
           : {};
-      customConfigData = { ...raw, modules: activeModules } as Prisma.InputJsonValue;
+      const rawQuotas =
+        raw.quotas != null && typeof raw.quotas === "object" && !Array.isArray(raw.quotas)
+          ? (raw.quotas as Record<string, unknown>)
+          : {};
+      customConfigData = {
+        ...raw,
+        ...(customList && customList.length > 0 ? { modules: activeModules } : {}),
+        quotas: {
+          ...rawQuotas,
+          ...(slotsPatch === undefined
+            ? {}
+            : { accountingBookExtraSlots: slotsPatch }),
+        },
+      } as Prisma.InputJsonValue;
     }
 
     await db.organizationSubscription.update({

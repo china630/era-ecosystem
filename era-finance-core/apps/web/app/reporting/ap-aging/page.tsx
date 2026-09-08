@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { TrendingDown } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
@@ -48,6 +49,7 @@ type Payload = {
 export default function ApAgingPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [data, setData] = useState<Payload | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -61,7 +63,9 @@ export default function ApAgingPage() {
     }
     setLoading(true);
     setErr(null);
-    const qs = new URLSearchParams();
+    const qs = new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    );
     if (asOf.trim()) qs.set("asOf", asOf.trim());
     const res = await apiFetch(`/api/reporting/ap-aging?${qs.toString()}`);
     setLoading(false);
@@ -71,12 +75,12 @@ export default function ApAgingPage() {
     } else {
       setData((await res.json()) as Payload);
     }
-  }, [token, t, asOf]);
+  }, [token, t, asOf, ledgerType, accountingBookId]);
 
   useEffect(() => {
-    if (!ready || !token) return;
+    if (!ready || !ledgerReady || !token) return;
     void load();
-  }, [load, ready, token]);
+  }, [load, ready, ledgerReady, token]);
 
   if (!ready) return null;
   if (!token) return null;

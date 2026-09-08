@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -21,7 +22,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { UserRole } from "@erafinance/database";
+import { LedgerType, UserRole } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
@@ -37,6 +38,7 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { ClosePeriodDto } from "./dto/close-period.dto";
 import { CloseFiscalYearDto } from "./dto/close-fiscal-year.dto";
 import { ReopenFiscalYearDto } from "./dto/reopen-fiscal-year.dto";
+import { ReopenPeriodDto } from "./dto/reopen-period.dto";
 import { CreateNettingDto } from "./dto/create-netting.dto";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
 import { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
@@ -83,6 +85,24 @@ export class ReportingController {
     private readonly finance: FinanceService,
   ) {}
 
+  @Get("compare-books")
+  @ApiOperation({ summary: "Compare trial-balance totals for two accounting books" })
+  compareBooks(
+    @OrganizationId() organizationId: string,
+    @Query("bookA", ParseUUIDPipe) bookA: string,
+    @Query("bookB", ParseUUIDPipe) bookB: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+  ) {
+    return this.reporting.compareBooks(
+      organizationId,
+      bookA,
+      bookB,
+      dateFrom,
+      dateTo,
+    );
+  }
+
   @Get("trial-balance")
   @ApiOperation({ summary: "Оборотно-сальдовая ведомость за период" })
   trialBalance(
@@ -90,12 +110,14 @@ export class ReportingController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.trialBalance(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -107,12 +129,14 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.reporting.trialBalance(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -137,6 +161,7 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("accountCode") accountCode: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.accountCard(
       organizationId,
@@ -144,6 +169,7 @@ export class ReportingController {
       dateTo,
       accountCode,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -156,6 +182,7 @@ export class ReportingController {
     @Query("accountCode") accountCode: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.accountCard(
       organizationId,
@@ -163,6 +190,7 @@ export class ReportingController {
       dateTo,
       accountCode,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     const code = data.account.code;
@@ -187,12 +215,14 @@ export class ReportingController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.accountTurnovers(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -204,12 +234,14 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.accountTurnovers(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -238,6 +270,7 @@ export class ReportingController {
     @Query("accountCode") accountCode: string,
     @Query("dimension") dimension: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const dim = (dimension ?? "counterparty").trim() as AnalysisDimension;
     return this.standardReports.accountAnalysis(
@@ -247,6 +280,7 @@ export class ReportingController {
       accountCode,
       dim,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -260,6 +294,7 @@ export class ReportingController {
     @Query("dimension") dimension: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const dim = (dimension ?? "counterparty").trim() as AnalysisDimension;
     const data = await this.standardReports.accountAnalysis(
@@ -269,6 +304,7 @@ export class ReportingController {
       accountCode,
       dim,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     const code = data.account.code;
@@ -298,6 +334,7 @@ export class ReportingController {
     @Query("accountCode") accountCode?: string,
     @Query("subcontoTypeId") subcontoTypeId?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.trialBalanceBySubconto(
       organizationId,
@@ -306,6 +343,7 @@ export class ReportingController {
       accountCode,
       subcontoTypeId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -322,6 +360,7 @@ export class ReportingController {
     @Query("subcontoTypeId") subcontoTypeId?: string,
     @Query("valueId") valueId?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.accountCardBySubconto(
       organizationId,
@@ -331,6 +370,7 @@ export class ReportingController {
       subcontoTypeId,
       valueId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -345,6 +385,7 @@ export class ReportingController {
     @Query("subcontoTypeId") subcontoTypeId: string,
     @Query("accountCode") accountCode?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.subcontoAnalysis(
       organizationId,
@@ -353,6 +394,7 @@ export class ReportingController {
       subcontoTypeId,
       accountCode,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -366,12 +408,14 @@ export class ReportingController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.chessboard(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -383,12 +427,14 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.chessboard(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -417,6 +463,7 @@ export class ReportingController {
     @Query("departmentId") departmentId?: string,
     @Query("skip") skipStr?: string,
     @Query("take") takeStr?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const skip = skipStr != null && skipStr !== "" ? Number(skipStr) : undefined;
     const take = takeStr != null && takeStr !== "" ? Number(takeStr) : undefined;
@@ -431,6 +478,7 @@ export class ReportingController {
         departmentId,
         skip: Number.isFinite(skip) ? skip : undefined,
         take: Number.isFinite(take) ? take : undefined,
+        accountingBookId,
       },
     );
   }
@@ -446,6 +494,7 @@ export class ReportingController {
     @Query("accountCode") accountCode?: string,
     @Query("counterpartyId") counterpartyId?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.generalLedger(
       organizationId,
@@ -458,6 +507,7 @@ export class ReportingController {
         departmentId,
         skip: 0,
         take: 5000,
+        accountingBookId,
       },
     );
     const fmt = (format ?? "").toLowerCase();
@@ -493,6 +543,7 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("accountingBookId") accountingBookId?: string,
     @CurrentUser() user?: AuthUser,
   ) {
     const requestedDepartment = departmentId?.trim();
@@ -514,6 +565,7 @@ export class ReportingController {
       dateTo,
       parseLedgerTypeQuery(ledgerType),
       requestedDepartment,
+      accountingBookId,
     );
   }
 
@@ -536,6 +588,7 @@ export class ReportingController {
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("accountingBookId") accountingBookId?: string,
     @CurrentUser() user?: AuthUser,
   ): Promise<StreamableFile> {
     const requestedDepartment = departmentId?.trim();
@@ -557,6 +610,7 @@ export class ReportingController {
       dateTo,
       parseLedgerTypeQuery(ledgerType),
       requestedDepartment,
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -581,28 +635,46 @@ export class ReportingController {
   dashboard(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.dashboard(
       organizationId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
   @Get("period-status")
   @ApiOperation({
-    summary: "Статус закрытия текущего UTC-месяца (Maliyyə dövrü / виджет главной)",
+    summary: "Статус закрытия текущего UTC-месяца (per ledgerType)",
   })
-  periodStatus(@OrganizationId() organizationId: string) {
-    return this.reporting.getPeriodStatus(organizationId);
+  periodStatus(
+    @OrganizationId() organizationId: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
+  ) {
+    return this.reporting.getPeriodStatus(
+      organizationId,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("close-period-prompt")
   @ApiOperation({
     summary:
-      "Нужно ли показывать блок закрытия месяца: самый ранний незакрытый прошедший UTC-месяц",
+      "Нужно ли показывать блок закрытия месяца: самый ранний незакрытый прошедший UTC-месяц (per ledger)",
   })
-  closePeriodPrompt(@OrganizationId() organizationId: string) {
-    return this.reporting.getClosePeriodPrompt(organizationId);
+  closePeriodPrompt(
+    @OrganizationId() organizationId: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
+  ) {
+    return this.reporting.getClosePeriodPrompt(
+      organizationId,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("dashboard-mini")
@@ -613,10 +685,12 @@ export class ReportingController {
   dashboardMini(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.dashboardMiniFinancials(
       organizationId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -637,10 +711,12 @@ export class ReportingController {
   receivables(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.accountsReceivable(
       organizationId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -653,6 +729,7 @@ export class ReportingController {
     @OrganizationId() organizationId: string,
     @Query("counterpartyId") counterpartyId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     if (!counterpartyId?.trim()) {
       throw new BadRequestException("counterpartyId is required");
@@ -661,6 +738,7 @@ export class ReportingController {
       organizationId,
       counterpartyId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -675,6 +753,7 @@ export class ReportingController {
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateNettingDto,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.finance.executeNetting(
       organizationId,
@@ -686,6 +765,7 @@ export class ReportingController {
         userId: user.userId,
         previewSuggestedAmount: dto.previewSuggestedAmount,
       },
+      accountingBookId,
     );
   }
 
@@ -703,6 +783,7 @@ export class ReportingController {
     @Query("endDate") endDate?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -719,6 +800,7 @@ export class ReportingController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
   }
@@ -737,6 +819,7 @@ export class ReportingController {
     @Query("endDate") endDate?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -754,6 +837,7 @@ export class ReportingController {
         {
           currency: currency ?? null,
           ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+          accountingBookId,
         },
       );
     return new StreamableFile(buffer, {
@@ -770,8 +854,15 @@ export class ReportingController {
   aging(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.accountsReceivableAging(organizationId, asOf);
+    return this.reporting.accountsReceivableAging(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("ar-aging")
@@ -782,8 +873,15 @@ export class ReportingController {
   arAging(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.accountsReceivableAging(organizationId, asOf);
+    return this.reporting.accountsReceivableAging(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("ap-aging")
@@ -802,8 +900,15 @@ export class ReportingController {
   apAging(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.accountsPayableAging(organizationId, asOf);
+    return this.reporting.accountsPayableAging(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("creditor-payment-plan")
@@ -822,8 +927,15 @@ export class ReportingController {
   creditorPaymentPlan(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.creditorPaymentPlan(organizationId, asOf);
+    return this.reporting.creditorPaymentPlan(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("eqf-registry")
@@ -1114,12 +1226,41 @@ export class ReportingController {
   @Post("close-period")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: "Закрыть месяц: isLocked + запись в settings.reporting.closedPeriods" })
+  @ApiOperation({
+    summary:
+      "Close a month for one ledger (NAS or IFRS): isLocked + closedPeriodsByLedger",
+  })
   closePeriod(
     @OrganizationId() organizationId: string,
     @Body() dto: ClosePeriodDto,
   ) {
-    return this.reporting.closePeriod(organizationId, dto.year, dto.month);
+    return this.reporting.closePeriod(
+      organizationId,
+      dto.year,
+      dto.month,
+      dto.ledgerType ?? "NAS",
+      dto.accountingBookId,
+    );
+  }
+
+  @Post("reopen-period")
+  @UseGuards(RolesGuard, VoenIntegrityGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary:
+      "Reopen a closed month for one ledger (clears closedPeriodsByLedger + unlocks book-scoped txs)",
+  })
+  reopenPeriod(
+    @OrganizationId() organizationId: string,
+    @Body() dto: ReopenPeriodDto,
+  ) {
+    return this.reporting.reopenPeriod(
+      organizationId,
+      dto.year,
+      dto.month,
+      dto.ledgerType ?? "NAS",
+      dto.accountingBookId,
+    );
   }
 
   @Get("income-statement")
@@ -1139,12 +1280,14 @@ export class ReportingController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.fullIncomeStatement(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -1163,6 +1306,8 @@ export class ReportingController {
       organizationId,
       dto.year,
       user?.userId ?? null,
+      parseLedgerTypeQuery(dto.ledgerType),
+      dto.accountingBookId,
     );
   }
 
@@ -1173,12 +1318,19 @@ export class ReportingController {
   fiscalYearClose(
     @OrganizationId() organizationId: string,
     @Param("year") yearStr: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const year = Number(yearStr);
     if (!Number.isFinite(year)) {
       throw new BadRequestException("year must be a number");
     }
-    return this.reporting.getFiscalYearClose(organizationId, year);
+    return this.reporting.getFiscalYearClose(
+      organizationId,
+      year,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Post("reopen-fiscal-year")
@@ -1196,6 +1348,8 @@ export class ReportingController {
       organizationId,
       dto.year,
       user?.userId ?? null,
+      parseLedgerTypeQuery(dto.ledgerType),
+      dto.accountingBookId,
     );
   }
 }

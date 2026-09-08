@@ -45,6 +45,8 @@ export class HoldingsController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
+    @Query("bookCode") bookCode?: string,
   ) {
     return this.holdingsReporting.consolidatedProfitAndLoss(
       user.userId,
@@ -52,6 +54,8 @@ export class HoldingsController {
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+      bookCode,
     );
   }
 
@@ -65,10 +69,14 @@ export class HoldingsController {
     @Param("id") id: string,
     @Query("asOf") asOf?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
+    @Query("bookCode") bookCode?: string,
   ) {
     return this.holdingsReporting.getHoldingSummary(user.userId, id, {
       asOf,
       ledgerType: parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+      bookCode,
     });
   }
 

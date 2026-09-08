@@ -4,7 +4,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+import { UserRole, LedgerType } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
@@ -73,12 +73,21 @@ export class AccountingController {
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({
     summary:
-      "Проверка готовности к закрытию месяца: draft invoices, negative stock/cash, depreciation",
+      "Проверка готовности к закрытию месяца: draft invoices, negative stock/cash, depreciation (ledger-aware)",
   })
   periodCloseChecklist(
     @OrganizationId() organizationId: string,
     @Query("month") month: string,
+    @Query("ledgerType") ledgerTypeRaw?: string,
   ) {
-    return this.accounting.getPeriodCloseChecklist(organizationId, month);
+    const ledgerType =
+      ledgerTypeRaw?.trim().toUpperCase() === "IFRS"
+        ? LedgerType.IFRS
+        : LedgerType.NAS;
+    return this.accounting.getPeriodCloseChecklist(
+      organizationId,
+      month,
+      ledgerType,
+    );
   }
 }

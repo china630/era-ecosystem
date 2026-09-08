@@ -15,8 +15,14 @@ export class FinanceService {
     organizationId: string,
     counterpartyId: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
-    return this.netting.preview(organizationId, counterpartyId, ledgerType);
+    return this.netting.preview(
+      organizationId,
+      counterpartyId,
+      ledgerType,
+      accountingBookId,
+    );
   }
 
   /** Проводка Дт 531 — Кт 211 и распределение по инвойсам (для отчётов по дебиторке). */
@@ -27,6 +33,7 @@ export class FinanceService {
     ledgerType: LedgerType = LedgerType.NAS,
     actingUserRole?: UserRole,
     audit?: { userId?: string; previewSuggestedAmount?: number },
+    accountingBookId?: string,
   ) {
     return this.netting.createNetting(
       organizationId,
@@ -35,6 +42,7 @@ export class FinanceService {
       ledgerType,
       actingUserRole,
       audit,
+      accountingBookId,
     );
   }
 }

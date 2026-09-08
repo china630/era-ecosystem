@@ -22,6 +22,16 @@ type ModuleStateRow = {
   pendingDeactivation: boolean;
 };
 
+function accountingBookExtraQuantity(customConfig: unknown): number {
+  if (!customConfig || typeof customConfig !== "object") return 1;
+  const quotas = (customConfig as { quotas?: unknown }).quotas;
+  if (!quotas || typeof quotas !== "object") return 1;
+  const raw = Number(
+    (quotas as { accountingBookExtraSlots?: unknown }).accountingBookExtraSlots,
+  );
+  return Number.isFinite(raw) ? Math.min(7, Math.max(1, Math.floor(raw))) : 1;
+}
+
 const SYSTEM_I18N: Partial<Record<WorkspaceSystemKey, string>> = {
   FINANCE: "finance",
   HOTEL_PMS: "hotel",
@@ -55,6 +65,7 @@ export function WorkspaceSatelliteModulesModal({
   const [moduleStates, setModuleStates] = useState<ModuleStateRow[]>([]);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [loadingStates, setLoadingStates] = useState(false);
+  const [bookExtraQuantity, setBookExtraQuantity] = useState(1);
 
   const satelliteKey = systemKey ? workspaceSatelliteKey(systemKey) : null;
 
@@ -103,8 +114,11 @@ export function WorkspaceSatelliteModulesModal({
   }, []);
 
   useEffect(() => {
-    if (open) void loadModuleStates();
-  }, [open, loadModuleStates]);
+    if (open) {
+      setBookExtraQuantity(accountingBookExtraQuantity(snapshot?.customConfig));
+      void loadModuleStates();
+    }
+  }, [open, loadModuleStates, snapshot?.customConfig]);
 
   async function ensureSatelliteConnected() {
     if (!systemKey || !satelliteKey || !snapshot) return true;
@@ -123,7 +137,7 @@ export function WorkspaceSatelliteModulesModal({
     return res.ok;
   }
 
-  async function toggleModule(moduleKey: string, enabled: boolean) {
+  async function toggleModule(moduleKey: string, enabled: boolean, quantity?: number) {
     const token = getOrchAccessToken();
     if (!token) return;
     setBusyKey(moduleKey);
@@ -140,7 +154,13 @@ export function WorkspaceSatelliteModulesModal({
         token,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleKey, enabled }),
+        body: JSON.stringify({
+          moduleKey,
+          enabled,
+          ...(moduleKey === "accounting_book_extra" && enabled
+            ? { quantity: quantity ?? bookExtraQuantity }
+            : {}),
+        }),
       });
 
       if (!res.ok) {
@@ -214,7 +234,41 @@ export function WorkspaceSatelliteModulesModal({
                     ) : null}
                   </p>
                 </div>
-                <label className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
+                  {mod.key === "accounting_book_extra" ? (
+                    <>
+                      <label className="flex items-center gap-1 text-xs text-[#34495E]">
+                        {t("quantityLabel")}
+                        <input
+                          type="number"
+                          min={1}
+                          max={7}
+                          step={1}
+                          value={bookExtraQuantity}
+                          disabled={disabled}
+                          onChange={(e) =>
+                            setBookExtraQuantity(
+                              Math.min(7, Math.max(1, Math.floor(Number(e.target.value) || 1))),
+                            )
+                          }
+                          className="w-14 rounded-lg border border-[#D5DADF] px-2 py-1"
+                        />
+                      </label>
+                      {checked ? (
+                        <button
+                          type="button"
+                          className={MODAL_FOOTER_OUTLINE_CLASS}
+                          disabled={disabled}
+                          onClick={() =>
+                            void toggleModule(mod.key, true, bookExtraQuantity)
+                          }
+                        >
+                          {t("quantityApply")}
+                        </button>
+                      ) : null}
+                    </>
+                  ) : null}
+                  <label className="flex items-center gap-2">
                   <span className="sr-only">{mod.name}</span>
                   <input
                     type="checkbox"
@@ -223,7 +277,8 @@ export function WorkspaceSatelliteModulesModal({
                     disabled={disabled}
                     onChange={(e) => void toggleModule(mod.key, e.target.checked)}
                   />
-                </label>
+                  </label>
+                </div>
               </li>
             );
           })}

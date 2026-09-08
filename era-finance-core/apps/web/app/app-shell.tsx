@@ -201,8 +201,15 @@ function QuickActionsMobileFab({
 }
 
 function LedgerToggle() {
-  const { t } = useTranslation();
-  const { ledgerType, setLedgerType, ready } = useLedger();
+  const { t, i18n } = useTranslation();
+  const {
+    ready,
+    books,
+    accountingBookId,
+    setActiveBookId,
+    setLedgerType,
+  } = useLedger();
+  const [filter, setFilter] = useState("");
 
   if (!ready) {
     return (
@@ -210,41 +217,100 @@ function LedgerToggle() {
     );
   }
 
-  return (
-    <div className="inline-flex items-center gap-2">
-      <span className="text-xs font-medium text-gray-600">
-        {t("ledger.standardLabel")}
-      </span>
-      <div
-        className="inline-flex rounded-lg border border-gray-200 bg-slate-50 p-0.5"
-        role="group"
-        aria-label={t("ledger.toggleAria")}
-      >
-        <button
-          type="button"
-          onClick={() => setLedgerType("NAS")}
-          className={[
-            "px-2.5 py-1.5 text-xs font-semibold rounded-md transition",
-            ledgerType === "NAS"
-              ? "bg-white text-primary shadow-sm border border-action/20"
-              : "text-gray-600 hover:text-gray-900",
-          ].join(" ")}
+  const lang = (i18n.language || "en").slice(0, 2);
+  const bookLabel = (book: {
+    code: string;
+    nameAz: string;
+    nameRu: string;
+    nameEn: string;
+  }) => {
+    const name =
+      lang === "az"
+        ? book.nameAz
+        : lang === "ru"
+          ? book.nameRu
+          : book.nameEn;
+    return `${book.code} — ${name}`;
+  };
+
+  // Fallback when books API empty: keep NAS|IFRS alias buttons.
+  if (books.length === 0) {
+    return (
+      <div className="inline-flex items-center gap-2">
+        <span className="text-xs font-medium text-gray-600">
+          {t("ledger.standardLabel")}
+        </span>
+        <div
+          className="inline-flex rounded-lg border border-gray-200 bg-slate-50 p-0.5"
+          role="group"
+          aria-label={t("ledger.toggleAria")}
         >
-          {t("ledger.nas")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setLedgerType("IFRS")}
-          className={[
-            "px-2.5 py-1.5 text-xs font-semibold rounded-md transition",
-            ledgerType === "IFRS"
-              ? "bg-white text-primary shadow-sm border border-action/20"
-              : "text-gray-600 hover:text-gray-900",
-          ].join(" ")}
-        >
-          {t("ledger.ifrs")}
-        </button>
+          <button
+            type="button"
+            onClick={() => setLedgerType("NAS")}
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-md transition bg-white text-primary shadow-sm border border-action/20"
+          >
+            {t("ledger.nas")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLedgerType("IFRS")}
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-md text-gray-600 hover:text-gray-900"
+          >
+            {t("ledger.ifrs")}
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  const q = filter.trim().toLowerCase();
+  const filtered = q
+    ? books.filter((book) => bookLabel(book).toLowerCase().includes(q))
+    : books;
+  const options = filtered.length > 0 ? filtered : books;
+
+  return (
+    <div className="inline-flex items-center gap-2 min-w-0">
+      <span className="text-xs font-medium text-gray-600 shrink-0">
+        {t("ledger.bookLabel")}
+      </span>
+      {books.length > 5 ? (
+        <>
+          <label className="sr-only" htmlFor="era-accounting-book-filter">
+            {t("ledger.searchBooks")}
+          </label>
+          <input
+            id="era-accounting-book-filter"
+            type="search"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder={t("ledger.searchBooks")}
+            className="w-24 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-action/30"
+          />
+        </>
+      ) : null}
+      <label className="sr-only" htmlFor="era-accounting-book-select">
+        {t("ledger.toggleAria")}
+      </label>
+      <select
+        id="era-accounting-book-select"
+        aria-label={t("ledger.toggleAria")}
+        className="max-w-[14rem] truncate rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs font-semibold text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-action/30"
+        value={accountingBookId ?? ""}
+        onChange={(e) => setActiveBookId(e.target.value)}
+      >
+        {options.map((book) => (
+          <option key={book.id} value={book.id} title={bookLabel(book)}>
+            {bookLabel(book)}
+          </option>
+        ))}
+      </select>
+      {books.length > 5 ? (
+        <span className="hidden sm:inline text-[10px] text-amber-700 max-w-[9rem] leading-tight">
+          {t("ledger.softWarnManyBooks", { count: books.length })}
+        </span>
+      ) : null}
     </div>
   );
 }

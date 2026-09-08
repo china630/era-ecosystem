@@ -83,6 +83,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | BANK-REF-01 | Bank | hub catalog snapshot | Y | file/env loader | **HEADLESS** | Owner: not a cashier workflow | BK-FX teller SHIPPED |
 | IND-MDM-PERSON | Thin industry | person card | CRM only | CRM Done; others N/A or legal VÖEN | **N/A** / **PARTIAL** | Re-audit 2026-08-18: do not invent person SoR | Hotel / Clinic / Finance person UI SHIPPED |
 | FIN-GL-02 | Finance | manual journal voucher | Y | `/accounting/adjustments` | **SCREEN** | Lab RT: preview, PDF, reverse, copy, basis links | wave 3 UX |
+| FIN-BOOK-01 | Finance | accounting books + comparison | Y | `/accounting/books`, `/reporting/compare-books` | **SCREEN** | UAT-SMOKE § Accounting books + compare | slot upsell; arbitrary-pair mirror remains |
 | FIN-AR-CRADJ-01 | Finance | invoice credit adjustment | Y | `ViewInvoiceModal` | **SCREEN** | UAT-SMOKE § Invoice credit adjustment | not PDF credit note |
 | FIN-FA-DON-01 | Finance | FA in-kind donation | Y | `/fixed-assets` lifecycle | **SCREEN** | UAT-SMOKE § FA donation | GL template hint only |
 | FIN-STAT-01 | Finance | Goskomstat | Y | `/reporting/statforms` | **SCREEN** | UAT-SMOKE UI | duplicate SHIPPED row in later COVERAGE block = engine+path, still Demo ❌ |
@@ -97,8 +98,9 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-UE-01 | Hotel | unit economics | Y | `/executive/unit-economics` | **SCREEN** | deepen + UAT | Hotel SHOW rollup unchanged (core FO SHOW) |
 | HOT-RPT-01/02 | Hotel | management PDF catalog + nightly ZIP | Y | `/reports/*` hubs + cubes | **SCREEN** | W1–W3 catalog + ZIP; email cron HEADLESS; out of Hotel SHOW rollup | HOT-NA-03 ops grids already SHIPPED |
 | HOT-AGP-01/02/03 | Hotel | agency portal + FO inbox | Y | `/agency/*` + `/fo/agency-inbox` | **SCREEN** | P0–P1; AC-HOT-AGP 🟡; out of Hotel SHOW rollup | ADR hotel-agency-portal |
+| HOT-AGP-04 | Hotel | portal own CL statement | Y session ledger | `/agency/ledger` | **SHOW** | HOT-AGP-04 SHIPPED; UAT §27.12 | ADR §7 read-only |
 | CLI-50 | Clinic | Nafta package Select + deep-link chart | Y lifecycle + templates | `/sanatorium` Select + `?episode=` | **SCREEN** | UAT CLI-50 open; AC-CLI-SAN-PKG 🟡 | Wave A dual-run |
-| CLI-51 | Clinic | PDF quota knots + template editor | Y `quotaFor` / recalc | `/admin/program-templates` knots | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B |
+| CLI-51 | Clinic | PDF quota knots + versioned entitlement editor | Y `quotaFor` / version bump + snapshot | `/admin/program-templates` blocks+vN | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B; open stays pinned |
 | CLI-52 | Clinic | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP; 4th same-day paid | Y exam-prefix + daily-cap + POST guard | `/sanatorium` + card + `/admin/settings` | **SCREEN** | UAT CLI-52 open; AC-CLI-SAN-DAY1 🟡 | Wave C; FIFO unchanged |
 | CLI-53 | Clinic | Doctor bonus extras-only + origin buckets | Y `bonusEligible` + % settings | `/reports/procedures` doctor-bonus | **SCREEN** | UAT CLI-53 open; AC-CLI-BONUS 🟡 | Wave D |
 | CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E |
@@ -112,8 +114,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey` | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
 | HOT-TOUR-01 | Hotel | Nafta weekend tours | Y | `/tours` `/tours/[id]/print` `/fleet` | **SCREEN** | Out of Hotel SHOW rollup (no Demo/TE); SHIPPED ops | ADR hotel-guest-tours |
 | HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | UAT §42 open; Status=API | out of Hotel SHOW rollup |
-| HOT-CL-06 | Hotel | Company profile + company CL | Y Company + ledger | `/distribution/companies` + `/front-cash/company-ledger` | **SCREEN** | UAT §42 open; Status=API | Opera split; ADR hotel-agency-vs-company-profiles |
-| HOT-HK-01…05 | Hotel | Nafta HK deepen | Y | `/hk` roster rotation laundry forecast discrepancy policy | **SCREEN** | UAT-SMOKE §34 open; out of Hotel SHOW rollup | AC-HOT-HK remains Dirty/Clean/Inspected |
+| HOT-CL-06 | Hotel | Company profile + company CL statement | Y Company + ledger+lines | `/distribution/companies` + `/front-cash/company-ledger` | **SHOW** | UAT §27.11 / §42; Status=SHIPPED | Opera split; ADR hotel-agency-vs-company-profiles |
 | BANK-GL / PAY-APPR / LOAN-* / ECL / CAP | Bank | ops lab | Y | paths Y | **SHOW** lab | field / cert is VENDOR or Pilot — not a missing screen | Inventory OUT |
 | CLI-* admin/ops | Clinic | catalogs / appts / cash | Y | `/admin/*`, `/appointments`, `/cashier` | **SCREEN** | Demo/TE sign-off | Nafta 2026-06 API-only master-data is closed |
 | FNB/RET/CRM/AUTO/CON/WS/LOG surfaces | Industry | POS / orders / trips | Y | routes in PRM UI (short) | **SCREEN** | thin-industry modal CRUD wave closed: all listed products now have modal CRUD/admin surfaces; do not claim SHIPPED from route alone | do not claim SHIPPED from route alone |
@@ -141,8 +142,9 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-09-07 | Platform public IA: guest `/` hub + `/satellites/[slug]` + `/pricing` catalog/meters (SCREEN marketing, not SHOW). |
+| 2026-09-07 | HOT-CL-06 + HOT-AGP-04 statement SHOW; company CL SHIPPED with line statement. |
 | 2026-09-07 | HOT-CL-06 company CL moved to own `/front-cash/company-ledger` (Opera IA split from agency-ledger tabs). |
-| 2026-08-31 | Clinic CLI-WF-PWD-01 local password self-service SHIPPED (`/account/password`). Hotel/F&B STAFF_PROVISIONED User hash aligned to scrypt. |
 | 2026-08-30 | Clinic Nafta card wave SCREEN: intake checklist (`PKG-NAFTA-INTAKE`), physio empty-catalog/Solyuks, Baku `#23` clock — UAT open; not SHOW / not GA. |
 | 2026-08-23 | HOT-TOUR-01 guest tours SHIPPED as SCREEN (`/tours` + `/fleet`); still out of Hotel SHOW rollup. |
 | 2026-08-27 | HOT-06 outbox drain + clinic `/reception/extra-tickets` SCREEN (dual-run). Hotel write remains HEADLESS (extension). Reverse folio ADR accepted. |

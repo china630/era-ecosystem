@@ -66,7 +66,7 @@ export class OrganizationSettingsController {
 
   @Patch("settings/period-lock")
   @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Set ledger period lock date (lockedPeriodUntil)" })
+  @ApiOperation({ summary: "Set accounting-book period lock date (book + legacy ledger maps)" })
   patchPeriodLock(
     @OrganizationId() organizationId: string,
     @Body() dto: PatchOrganizationSettingsDto,
@@ -74,6 +74,8 @@ export class OrganizationSettingsController {
     return this.settings.patchPeriodLock(
       organizationId,
       dto.lockedPeriodUntil ? dto.lockedPeriodUntil : null,
+      dto.ledgerType ?? "NAS",
+      dto.accountingBookId,
     );
   }
 

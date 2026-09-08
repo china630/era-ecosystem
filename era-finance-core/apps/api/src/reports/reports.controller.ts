@@ -60,6 +60,7 @@ export class ReportsController {
     @Query("cashDeskId") cashDeskId?: string,
     @Query("bankName") bankName?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.cashFlow.getDirectCashFlow(organizationId, {
       dateFrom,
@@ -67,6 +68,7 @@ export class ReportsController {
       cashDeskId,
       bankName,
       ledgerType: parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     });
   }
 
@@ -82,6 +84,7 @@ export class ReportsController {
     @Query("cashDeskId") cashDeskId?: string,
     @Query("bankName") bankName?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.cashFlow.getDirectCashFlow(organizationId, {
       dateFrom,
@@ -89,6 +92,7 @@ export class ReportsController {
       cashDeskId,
       bankName,
       ledgerType: parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     });
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -113,11 +117,13 @@ export class ReportsController {
     @OrganizationId() organizationId: string,
     @Query("asOfDate") asOfDate: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.financial.generateBalanceSheet(
       organizationId,
       asOfDate,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -131,10 +137,12 @@ export class ReportsController {
   executiveWidgets(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.financial.executiveWidgets(
       organizationId,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
@@ -154,6 +162,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -170,6 +179,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
   }
@@ -187,6 +197,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -203,6 +214,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
     return new StreamableFile(buffer, {
@@ -224,6 +236,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -240,6 +253,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
     return new StreamableFile(buffer, {
@@ -324,6 +338,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<{ ok: boolean; sentTo: string }> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -353,6 +368,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
     await this.mail.sendMail({

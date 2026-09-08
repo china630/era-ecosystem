@@ -80,7 +80,7 @@ const DEFAULT_METER_UNIT_PRICING: MeterUnitPricing = {
   pricePerUserMonthAzn: 2,
   pricePerGbMonthAzn: 0.5,
   pricePerWhatsappAlertAzn: 0.05,
-  pricePerInvoiceAzn: 0.1,
+  pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
 };
 
@@ -214,16 +214,19 @@ export class SystemConfigService {
     const raw = await this.getJson(QUOTA_UNIT_PRICING_KEY);
     if (raw && typeof raw === "object" && !Array.isArray(raw)) {
       const o = raw as Record<string, unknown>;
+      const employeeBlockSize = Math.max(1, toPositiveNum(o.employeeBlockSize, 1));
+      const pricePerEmployeeBlockAzn = toPositiveNum(o.pricePerEmployeeBlockAzn, 2);
+      const legacyHeadcount = employeeBlockSize === 10 && pricePerEmployeeBlockAzn === 15;
       return {
-        employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 10)),
-        pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 15),
+        employeeBlockSize: legacyHeadcount ? 1 : employeeBlockSize,
+        pricePerEmployeeBlockAzn: legacyHeadcount ? 2 : pricePerEmployeeBlockAzn,
         documentPackSize: Math.max(1, toPositiveNum(o.documentPackSize, 1000)),
         pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
       };
     }
     return {
-      employeeBlockSize: 10,
-      pricePerEmployeeBlockAzn: 15,
+      employeeBlockSize: 1,
+      pricePerEmployeeBlockAzn: 2,
       documentPackSize: 1000,
       pricePerDocumentPackAzn: 5,
     };
@@ -240,7 +243,7 @@ export class SystemConfigService {
           o.pricePerWhatsappAlertAzn,
           DEFAULT_METER_UNIT_PRICING.pricePerWhatsappAlertAzn,
         ),
-        pricePerInvoiceAzn: toPositiveNum(o.pricePerInvoiceAzn, DEFAULT_METER_UNIT_PRICING.pricePerInvoiceAzn),
+        pricePerInvoiceAzn: 0,
         pricePerOcrPageAzn: toPositiveNum(o.pricePerOcrPageAzn, DEFAULT_METER_UNIT_PRICING.pricePerOcrPageAzn),
       };
     }
@@ -262,10 +265,7 @@ export class SystemConfigService {
         patch.pricePerWhatsappAlertAzn !== undefined
           ? Math.max(0, patch.pricePerWhatsappAlertAzn)
           : current.pricePerWhatsappAlertAzn,
-      pricePerInvoiceAzn:
-        patch.pricePerInvoiceAzn !== undefined
-          ? Math.max(0, patch.pricePerInvoiceAzn)
-          : current.pricePerInvoiceAzn,
+      pricePerInvoiceAzn: 0,
       pricePerOcrPageAzn:
         patch.pricePerOcrPageAzn !== undefined
           ? Math.max(0, patch.pricePerOcrPageAzn)

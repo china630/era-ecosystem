@@ -8,7 +8,8 @@ export function parseLedgerTypeQuery(value: string | undefined): LedgerType {
   const u = value.trim().toUpperCase();
   if (u === "NAS") return LedgerType.NAS;
   if (u === "IFRS") return LedgerType.IFRS;
+  if (u === "MANAGEMENT") return LedgerType.MANAGEMENT;
   throw new BadRequestException(
-    'Invalid ledgerType (expected "NAS" or "IFRS")',
+    'Invalid ledgerType (expected "NAS", "IFRS", or "MANAGEMENT")',
   );
 }

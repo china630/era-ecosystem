@@ -31,8 +31,13 @@
 | GL / invoices / adjustments | `/chart-of-accounts`, `/sales/invoices`, `/accounting/adjustments` | 🟡 |
 | Payroll / employees | `/payroll, /employees` | 🟡 |
 | FA / reporting | `/fixed-assets, /reporting/*` | 🟡 |
+| Multi-GAAP mapping | `/accounting/ledger-mappings` | 🟡 |
+| IFRS chart / adj / close | `/accounting/chart`, adjustments, reporting close | 🟡 |
+| Accounting books / compare | `/accounting/books`, `/reporting/compare-books` | 🟡 |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays ❌ until live sign-off.
+
+**FIN-GAAP engineering (2026-09):** Waves A–C + thin edges + structural tails eng-complete per [ADR residuals](../adr/finance-accounting-book.md) (selector, slots, wizard CoA strategies, multi-target mirror, book-scoped reports/exports/FY close, holdings `bookCode`, account uniqueness per book, Audit Hub ops vs non-ops). UI 🟡 / Demo/Pilot unchanged until Lab RT. Do not treat older agent “remaining gaps” lists as SSOT. Lab paths: [UAT-SMOKE](../../era-finance-core/doc/UAT-SMOKE.md).
 
 ---
 
@@ -40,9 +45,10 @@
 
 | Item | Status | Evidence |
 |------|--------|----------|
-| Lab RT (UAT-SMOKE) | [ ] | `era-finance-core/doc/UAT-SMOKE.md` deny paths automated; lab RT signoff pending |
+| Lab RT (UAT-SMOKE) | [ ] | Path documented + deny/unit automation; **human Lab RT signoff pending** before Pilot `[x]` |
 | Field checklist | [ ] | — |
 | Partner / customer sign-off | [ ] | — |
+| Multi-GAAP eng. suite | ✅ | Jest FIN-GAAP suite (Phase 0 gate for Wave A) |
 
 ---
 

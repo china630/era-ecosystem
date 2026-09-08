@@ -123,7 +123,7 @@ export class AuditHubController {
   )
   @ApiOperation({
     summary:
-      "Final transactions where NAS journal lines exist but IFRS do not (or vice versa)",
+      "Default-ops book vs each ACTIVE non-ops book: presence and debit parity",
   })
   getNasIfrsReconciliation(
     @OrganizationId() organizationId: string,
