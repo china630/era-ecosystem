@@ -227,7 +227,8 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
 7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
-9. **Pools / aliases:** left menu shows named treatment SKUs only (no `PHYSIO_POOL`/`PARAFFIN_POOL` rows). `NAFTALAN_BATH` quota resolves to gender bath SVC by patient sex. Pending_PAY extras appear under Extras on the patient card.
+9. **Package left menu** shows **named treatment SKUs only** (e.g. Naftalan). Pool buckets (Fizioprosedurlar* / Parafin* / `PHYSIO_POOL`) are **hidden** — not assignable as a catch-all from this modal.
+10. Opening package assign on an OPEN episode **without** `ProgramInstance` returns **200** + `blockReason` (`NO_PROGRAM_CODE` / `NO_PROGRAM`) — modal shows how to set/open the package (not a generic load failure). Mutations still 409 `NO_PROGRAM`.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=cli57-package-assign
@@ -358,7 +359,7 @@ Doctor card (no curl):
 
 **Status:** Engineering API — not SHIPPED.
 
-1. `/admin/program-templates` — edit multi-procedure + knots matrix; Save keeps all lines. Empty list shows empty-state row.
+1. `/admin/program-templates` — edit entitlement blocks (member SKUs) + knots matrix; composition save bumps version (open stays stay pinned). Empty list shows empty-state row.
 2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
 3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
 4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.

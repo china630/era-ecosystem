@@ -93,8 +93,12 @@ export async function upsertTravelAgency(input: {
   voen?: string;
   commissionPercent?: number;
   settlementMode?: 'PREPAID' | 'POSTPAID';
+  creditLimitAzn?: number | null;
+  paymentTermsDays?: number | null;
   active?: boolean;
 }) {
+  const creditLimitAzn =
+    input.creditLimitAzn != null ? toDecimal(input.creditLimitAzn) : input.creditLimitAzn;
   if (input.id) {
     return prisma.agency.update({
       where: { id: input.id },
@@ -105,6 +109,8 @@ export async function upsertTravelAgency(input: {
         commissionPercent:
           input.commissionPercent != null ? toDecimal(input.commissionPercent) : undefined,
         settlementMode: input.settlementMode,
+        creditLimitAzn,
+        paymentTermsDays: input.paymentTermsDays,
         active: input.active,
       },
     });
@@ -117,6 +123,8 @@ export async function upsertTravelAgency(input: {
       commissionPercent:
         input.commissionPercent != null ? toDecimal(input.commissionPercent) : null,
       settlementMode: input.settlementMode ?? 'POSTPAID',
+      creditLimitAzn: creditLimitAzn ?? null,
+      paymentTermsDays: input.paymentTermsDays ?? null,
       active: input.active ?? true,
     },
   });

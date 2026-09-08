@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   Field,
   FORM_STACK_CLASS,
@@ -128,6 +129,11 @@ export default function AgencyPortalHomePage() {
       <PageHeader
         title="Agency portal"
         subtitle={agencyCode ? `Agency ${agencyCode}` : 'Your contract bookings'}
+        actions={
+          <Link className="text-[13px] text-[#2980B9] hover:underline" href="/agency/ledger">
+            City ledger statement
+          </Link>
+        }
       />
 
       <form className={FORM_STACK_CLASS} onSubmit={(e) => void createStay(e)}>

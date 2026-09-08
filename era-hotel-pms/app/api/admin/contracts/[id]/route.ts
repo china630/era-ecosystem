@@ -14,6 +14,7 @@ const updateSchema = z.object({
   name: z.string().min(1).optional(),
   counterpartyType: z.enum(['AGENCY', 'CORPORATE']).optional(),
   agencyId: z.string().uuid().nullable().optional(),
+  companyId: z.string().uuid().nullable().optional(),
   companyGuestId: z.string().uuid().nullable().optional(),
   validFrom: z.coerce.date().optional(),
   validTo: z.coerce.date().nullable().optional(),

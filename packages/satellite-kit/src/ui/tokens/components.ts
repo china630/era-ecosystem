@@ -92,16 +92,18 @@ export const DATA_TABLE_SCROLL_CLASS = "max-h-[min(70vh,56rem)] overflow-auto";
 export const DATA_TABLE_SCROLL_FILL_CLASS = "min-h-0 flex-1 overflow-auto";
 
 /**
- * Page root for unbounded lists: fills viewport under fixed header (4rem),
- * counters main `pb-24` / `lg:pb-8` so the page itself does not scroll.
+ * Page root for unbounded lists: fills the ops main column under the fixed header.
+ * Parent chain must be height-constrained (`EraAppShellLayout` → `EraOpsContent`).
+ * Negative bottom margin reclaims `APP_MAIN` `pb-24` / `lg:pb-8` so the paginator
+ * sits on the viewport edge (page itself does not scroll — only the table body).
  * Put PageHeader + EraListWorkspace inside.
  */
 export const LIST_PAGE_SHELL_CLASS =
-  "flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden -mb-16 pb-3 lg:-mb-8 lg:pb-2";
+  "flex min-h-0 flex-1 flex-col overflow-hidden -mb-16 pb-2 lg:-mb-8 lg:pb-2";
 
 /** Flex column used by EraListWorkspace when fill=true (parent is LIST_PAGE_SHELL_CLASS). */
 export const LIST_PAGE_FILL_CLASS =
-  "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden";
+  "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden";
 
 /** Non-fill workspace (nested / partial embeds). */
 export const LIST_WORKSPACE_CLASS = "flex min-h-0 flex-1 flex-col gap-3";
@@ -226,9 +228,11 @@ export const APP_HEADER_OFFSET_CLASS = "pt-16";
  * Canonical main content padding under the fixed app header.
  * Single source of truth for orchestrator, finance, and industry satellites —
  * do not fork these classes in app shells.
+ * Top is intentionally tight (title band); bottom stays roomy on small screens
+ * for thumb reach / mobile chrome (`pb-24`), reduced on `lg+`.
  */
 export const APP_MAIN_CONTENT_PADDED_CLASS =
-  "px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8";
+  "px-4 pt-3 pb-24 sm:px-6 sm:pt-4 lg:px-8 lg:pt-4 lg:pb-8";
 
 /** `<main>` chrome for shells that render raw main (orch / finance). */
 export const APP_MAIN_CONTENT_CLASS = `app-shell-main w-full min-w-0 ${APP_MAIN_CONTENT_PADDED_CLASS}`;

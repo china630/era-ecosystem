@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
+import {
+  buildEntitlementSnapshot,
+  findCurrentProgramTemplate,
+  programTemplateInclude,
+} from "@/domain/sanatorium/program-template-admin";
 
 export async function instantiateProgramFromTemplate(input: {
   episodeId: string;
@@ -11,10 +16,7 @@ export async function instantiateProgramFromTemplate(input: {
   checkInDate?: Date;
   nights?: number;
 }) {
-  const template = await prisma.programTemplate.findFirst({
-    where: { code: input.programCode },
-    include: { procedures: true, quotaKnots: true },
-  });
+  const template = await findCurrentProgramTemplate(input.programCode);
   if (!template) throw new Error(`Program template ${input.programCode} not found`);
 
   const checkIn = input.checkInDate ?? input.startsOn;
@@ -49,6 +51,15 @@ export async function instantiateProgramFromTemplate(input: {
     };
   });
 
+  const entitlementSnapshot = buildEntitlementSnapshot({
+    templateId: template.id,
+    code: template.code,
+    version: template.version,
+    procedures: template.procedures,
+    knots: template.quotaKnots,
+    members: template.blockMembers,
+  });
+
   /**
    * ProgramProcedureBalance is not tenant-scoped. Nested `procedureLines.create`
    * under ProgramInstance is stamped with organizationId and rejected (same class
@@ -62,6 +73,7 @@ export async function instantiateProgramFromTemplate(input: {
       programCode: template.code,
       startsOn: input.startsOn,
       endsOn,
+      entitlementSnapshot,
     },
   });
   if (balanceRows.length > 0) {
@@ -93,6 +105,9 @@ export async function instantiateProgramFromTemplate(input: {
  * Never decreases quotaUsed below consumed; does not cancel CHECKED_IN/COMPLETED.
  * Drops orphan PROPOSED for codes removed from the new package.
  * CLI-57: when endsOn shortens, cancel future SCHEDULED past the new end.
+ *
+ * Night-only recalc keeps pinned templateId + snapshot knots.
+ * Explicit programCode change switches to the **current** template version and refreshes snapshot.
  */
 export async function recalcProgramQuotas(
   instanceId: string,
@@ -110,11 +125,25 @@ export async function recalcProgramQuotas(
   if (!instance) throw new Error("Program instance not found");
 
   const code = opts.programCode ?? instance.programCode;
-  const template = await prisma.programTemplate.findFirst({
-    where: { code },
-    include: { procedures: true, quotaKnots: true },
-  });
+  const packageCodeChanged = Boolean(opts.programCode && opts.programCode !== instance.programCode);
+
+  let template = packageCodeChanged
+    ? await findCurrentProgramTemplate(code)
+    : await prisma.programTemplate.findUnique({
+        where: { id: instance.templateId },
+        include: programTemplateInclude,
+      });
+
   if (!template) throw new Error(`Program template ${code} not found`);
+
+  const snapshot = buildEntitlementSnapshot({
+    templateId: template.id,
+    code: template.code,
+    version: template.version,
+    procedures: template.procedures,
+    knots: template.quotaKnots,
+    members: template.blockMembers,
+  });
 
   const newCodes = new Set(template.procedures.map((p) => p.procedureCode));
   const existingByCode = new Map(
@@ -179,7 +208,11 @@ export async function recalcProgramQuotas(
     where: { id: instanceId },
     data: {
       programCode: code,
-      templateId: template.id,
+      ...(packageCodeChanged
+        ? { templateId: template.id, entitlementSnapshot: snapshot }
+        : instance.entitlementSnapshot
+          ? {}
+          : { entitlementSnapshot: snapshot }),
       ...(opts.endsOn ? { endsOn: opts.endsOn } : {}),
     },
   });

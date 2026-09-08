@@ -1328,17 +1328,41 @@ model VisitDiscountAudit {
 model ProgramTemplate {
   id          String                  @id @default(cuid())
   organizationId String @map("organization_id")
+  /** Stable product code (PKG-STANDART). Versions share the same code. */
   code        String
   name        String
   durationDays Int
   /** Wave B — PDF stay window; instantiate refuses below min, clamps to max. */
   minNights   Int?
   maxNights   Int?
+  /** Monotonic version per code; new composition save bumps. */
+  version     Int                     @default(1)
+  /** Only one current row per code — used for new check-ins. */
+  isCurrent   Boolean                 @default(true) @map("is_current")
+  retiredAt   DateTime?               @map("retired_at")
+  /** Previous version id when this row was created by a composition bump. */
+  supersedesId String?                @map("supersedes_id")
   procedures  ProgramTemplateProcedure[]
   quotaKnots  ProgramTemplateQuotaKnot[]
+  blockMembers ProgramTemplateBlockMember[]
   instances   ProgramInstance[]
-  @@unique([organizationId, code])
+  @@unique([organizationId, code, version])
   @@index([organizationId])
+  @@index([organizationId, code, isCurrent])
+}
+
+/** Explicit SKUs that may burn a package entitlement block (PHYSIO_POOL, custom, …). */
+model ProgramTemplateBlockMember {
+  id            String          @id @default(cuid())
+  templateId    String          @map("template_id")
+  /** Matches ProgramTemplateProcedure.procedureCode / ProgramProcedureBalance.procedureCode. */
+  blockCode     String          @map("block_code")
+  procedureCode String          @map("procedure_code")
+  template      ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, blockCode, procedureCode])
+  @@index([templateId, blockCode])
+  @@map("program_template_block_member")
 }
 
 model ProgramTemplateQuotaKnot {
@@ -1362,6 +1386,9 @@ model ProgramTemplateProcedure {
   quotaTotal       Int
   minGapMinutes    Int?
   avoidAfterHour   Int?
+  /** Admin UI block kind: PHYSIO | BATH | PARAFFIN | LAB | EXAM | CUSTOM */
+  kind             String?
+  sortOrder        Int             @default(0) @map("sort_order")
   template         ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([templateId])
@@ -1370,12 +1397,18 @@ model ProgramTemplateProcedure {
 model ProgramInstance {
   id              String          @id @default(cuid())
   organizationId String @map("organization_id")
+  /** Pinned template version — night recalc must not re-point to latest. */
   templateId      String
   episodeId       String          @unique
   reservationId   String?
   programCode     String
   startsOn        DateTime
   endsOn          DateTime
+  /**
+   * Frozen entitlement at instantiate / package-code change:
+   * { version, procedures, knots, members: { blockCode, procedureCode }[] }
+   */
+  entitlementSnapshot Json?       @map("entitlement_snapshot")
   template        ProgramTemplate @relation(fields: [templateId], references: [id])
   episode         ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   procedureLines  ProgramProcedureBalance[]

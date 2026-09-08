@@ -101,14 +101,19 @@ export function EraAppShellLayout({
       ) : null}
       {sidebar}
       {header}
+      {/*
+        h-screen + pt-16 (border-box) → content box is viewport minus header.
+        Flex column so EraOpsContent / LIST_PAGE_SHELL can flex-1 fill without
+        fragile calc(100dvh − …) hacks.
+      */}
       <div
         className={[
-          "min-w-0 transition-[padding] duration-200 ease-out",
+          "flex h-screen min-h-0 min-w-0 flex-col transition-[padding] duration-200 ease-out",
           APP_HEADER_OFFSET_CLASS,
           mainOffset,
         ].join(" ")}
       >
-        <div className="w-full min-w-0">{children}</div>
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">{children}</div>
       </div>
     </div>
   );

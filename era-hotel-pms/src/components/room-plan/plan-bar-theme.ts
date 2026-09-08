@@ -92,14 +92,24 @@ export const HK_SQUARE_COLORS: Record<Exclude<HkSquareKind, null>, string> = {
   closed: '#212121',
 };
 
-/** Arrow-frame occupancy (not HK). Fill stays day-state. */
+/** Occupancy mark (not HK). Fill stays day-state; mark is a left badge, not a thin stroke. */
 export type PlanBarOccupancyKind = 'exclusive' | 'shareM' | 'shareF';
 
-export const PLAN_BAR_OCCUPANCY_STROKE: Record<PlanBarOccupancyKind, string> = {
+/** Solid mark colors for occupancy badge / legend (readable on any day-state fill). */
+export const PLAN_BAR_OCCUPANCY_MARK: Record<PlanBarOccupancyKind, string> = {
   exclusive: '#34495E',
   shareM: '#1565C0',
   shareF: '#AD1457',
 };
+
+/** @deprecated Use PLAN_BAR_OCCUPANCY_MARK — kept for smoke tests / call-site compat. */
+export const PLAN_BAR_OCCUPANCY_STROKE = PLAN_BAR_OCCUPANCY_MARK;
+
+export function occupancyMarkLabel(kind: PlanBarOccupancyKind): string {
+  if (kind === 'shareM') return '♂';
+  if (kind === 'shareF') return '♀';
+  return '■';
+}
 
 export type PlanBarInput = {
   id: string;

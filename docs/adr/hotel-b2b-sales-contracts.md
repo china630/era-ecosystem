@@ -24,7 +24,8 @@ P2 **H-BL-08** replaced legacy pricing with BAR + DERIVED rate plans ([hotel-dyn
 - **`ContractAllotment`**: room type × date range × nightly quota; consumed in availability (`contract-allotment.service.ts`, `channel.service.ts`).
 - **Priority:** contract allotment block > OTA quota > BAR.
 - **Migration:** `migrate-contract-pricing-to-derived.ts` creates DERIVED plans; extended script creates `SalesContract` rows with `legacyRuleId`.
-- **UI:** `/admin/contracts` replaces `/admin/contract-pricing` (redirect).
+- **UI:** `/distribution/contracts` (legacy `/admin/contracts` redirects). Create/edit is DRAFT-first with explicit counterparty (agency **or** company), rate plan, season, commission/deposit/notes/minStay/CTA/CTD — no silent defaults. Allotments are managed per contract (list / add / edit / delete, including `releaseDays`); allotment date windows must sit inside the contract season (API-enforced). **Create block** deep-links to `/distribution/allotment-blocks?contractId=` for operational holds (separate from contract quotas).
+- **Allotment blocks UI:** `/distribution/allotment-blocks` — multi-line holds, optional `salesContractId`, edit + status (DEFINITE / RELEASED / CANCELLED), pickup → bookings. See [hotel-booking-hierarchy.md](./hotel-booking-hierarchy.md).
 
 ### H-BL-31 — Event order extensions on `BanquetEvent`
 

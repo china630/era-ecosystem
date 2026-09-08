@@ -59,4 +59,52 @@ describe('city ledger folio type split', () => {
   it('company ledger ignores AGENCY folio charges', () => {
     expect(sumFolioTypeActivity(folios, 'COMPANY', from, to).newCharges).toBe(50);
   });
+
+  it('treats REFUND as negative net payment (increases debt)', () => {
+    const withRefund = [
+      {
+        type: 'AGENCY' as const,
+        charges: [{ amount: toDecimal(100), qty: 1, businessDate: new Date('2026-09-02') }],
+        payments: [
+          {
+            amount: toDecimal(40),
+            paymentMethod: 'COMPANY_ACCOUNT',
+            createdAt: new Date('2026-09-03'),
+            kind: 'PAYMENT',
+          },
+          {
+            amount: toDecimal(10),
+            paymentMethod: 'COMPANY_ACCOUNT',
+            createdAt: new Date('2026-09-04'),
+            kind: 'REFUND',
+          },
+        ],
+      },
+    ];
+    const slice = sumFolioTypeActivity(withRefund, 'AGENCY', from, to);
+    expect(slice.newCharges).toBe(100);
+    expect(slice.payments).toBe(30);
+    expect(slice.opening + slice.newCharges - slice.payments).toBe(70);
+  });
+
+  it('opening includes prior stay activity (not stay-overlap only)', () => {
+    const prior = [
+      {
+        type: 'AGENCY' as const,
+        charges: [{ amount: toDecimal(80), qty: 1, businessDate: new Date('2026-08-15') }],
+        payments: [
+          {
+            amount: toDecimal(20),
+            paymentMethod: 'CASH',
+            createdAt: new Date('2026-08-20'),
+            kind: 'PAYMENT',
+          },
+        ],
+      },
+    ];
+    const slice = sumFolioTypeActivity(prior, 'AGENCY', from, to);
+    expect(slice.opening).toBe(60);
+    expect(slice.newCharges).toBe(0);
+    expect(slice.payments).toBe(0);
+  });
 });

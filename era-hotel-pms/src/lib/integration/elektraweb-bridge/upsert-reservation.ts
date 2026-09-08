@@ -273,6 +273,9 @@ export async function upsertReservationFromElektrawebRow(
           reservationId: reservation.id,
           guestName: name,
           globalPersonId: pax.guest?.globalPersonId ?? full?.guest.globalPersonId,
+          programCode: pax.medicalPackageCode ?? programCode,
+          roomNumber: newRoom ?? null,
+          paxKey,
         }).catch((e) => console.error('clinic bridge', e));
       }
     }

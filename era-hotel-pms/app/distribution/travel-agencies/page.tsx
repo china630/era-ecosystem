@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, UserPlus } from 'lucide-react';
 import {
   CatalogField,
   EraListFilterBar,
   useDebouncedValue,
   Field,
-  FieldSelect,
+  FieldRow,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
   PageHeader,
@@ -17,21 +17,35 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
-import { HotelDataGrid } from "@/components/HotelDataGrid";
+import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { matchesActiveFilter, matchesCodeNameQuery } from '@/lib/list-filter';
+import { isOtaAgency } from '@/lib/booking-source-kind';
 
 type AgencyRow = {
   id: string;
   code: string;
   name: string;
   voen: string | null;
-  commissionPercent: string | null;
+  commissionPercent: string | number | null;
   settlementMode?: 'PREPAID' | 'POSTPAID';
+  creditLimitAzn?: string | number | null;
+  paymentTermsDays?: number | null;
+  financeCounterpartyId?: string | null;
   active: boolean;
 };
+
+function catalogStr(v: string | string[]): string {
+  return Array.isArray(v) ? (v[0] ?? '') : v;
+}
+
+function financeHint(row: AgencyRow, t: (key: string) => string): string {
+  if (row.financeCounterpartyId) return t('financeLinked');
+  if (row.voen && row.voen.replace(/\D/g, '').length === 10) return t('financeVoenOnly');
+  return t('financeMissing');
+}
 
 export default function TravelAgenciesPage() {
   const { can } = useAuth();
@@ -44,12 +58,32 @@ export default function TravelAgenciesPage() {
   const [q, setQ] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [settlementFilter, setSettlementFilter] = useState('');
   const [agencyVoen, setAgencyVoen] = useState('');
   const [agencyNameHint, setAgencyNameHint] = useState('');
   const [settlementMode, setSettlementMode] = useState<'PREPAID' | 'POSTPAID'>('POSTPAID');
+  const [creditLimitAzn, setCreditLimitAzn] = useState('');
+  const [paymentTermsDays, setPaymentTermsDays] = useState('');
 
   const [inviteAgency, setInviteAgency] = useState<AgencyRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
+
+  const statusOptions = useMemo(
+    () => [
+      { value: 'ALL', label: t('allStatuses') },
+      { value: 'ACTIVE', label: t('activeOnly') },
+      { value: 'INACTIVE', label: t('inactiveOnly') },
+    ],
+    [t],
+  );
+  const settlementFilterOptions = useMemo(
+    () => [
+      { value: '', label: tc('all') },
+      { value: 'POSTPAID', label: t('postpaid') },
+      { value: 'PREPAID', label: t('prepaid') },
+    ],
+    [t, tc],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -71,10 +105,16 @@ export default function TravelAgenciesPage() {
 
   const filteredRows = useMemo(
     () =>
-      rows.filter(
-        (r) => matchesCodeNameQuery(r, debouncedQ) && matchesActiveFilter(r, activeFilter),
-      ),
-    [rows, debouncedQ, activeFilter],
+      rows.filter((r) => {
+        if (!matchesCodeNameQuery(r, debouncedQ)) return false;
+        if (!matchesActiveFilter(r, activeFilter)) return false;
+        if (settlementFilter) {
+          const mode = r.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID';
+          if (mode !== settlementFilter) return false;
+        }
+        return true;
+      }),
+    [rows, debouncedQ, activeFilter, settlementFilter],
   );
 
   const formId = 'travel-agency-form';
@@ -84,6 +124,8 @@ export default function TravelAgenciesPage() {
     setAgencyVoen('');
     setAgencyNameHint('');
     setSettlementMode('POSTPAID');
+    setCreditLimitAzn('');
+    setPaymentTermsDays('');
     setModalOpen(true);
   }
 
@@ -92,6 +134,8 @@ export default function TravelAgenciesPage() {
     setAgencyVoen(row.voen ?? '');
     setAgencyNameHint('');
     setSettlementMode(row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID');
+    setCreditLimitAzn(row.creditLimitAzn != null && row.creditLimitAzn !== '' ? String(row.creditLimitAzn) : '');
+    setPaymentTermsDays(row.paymentTermsDays != null ? String(row.paymentTermsDays) : '');
     setModalOpen(true);
   }
 
@@ -103,6 +147,7 @@ export default function TravelAgenciesPage() {
     <>
       <PageHeader
         title={t('title')}
+        subtitle={t('subtitle')}
         actions={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             <Plus className="h-4 w-4" aria-hidden />
@@ -110,11 +155,14 @@ export default function TravelAgenciesPage() {
           </button>
         }
       />
+      <p className="mb-4 text-xs text-[#7F8C8D]">{t('productNote')}</p>
+
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {
           setQ('');
           setActiveFilter('ALL');
+          setSettlementFilter('');
         }}
       >
         <Field
@@ -124,47 +172,102 @@ export default function TravelAgenciesPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder={t('filterPlaceholder')}
         />
-        <FieldSelect
+        <CatalogField
+          kind="CLOSED_SMALL"
           label={tc('status')}
-          preset="select"
           value={activeFilter}
-          onChange={(e) => setActiveFilter(e.target.value)}
-        >
-          <option value="ALL">{t('allStatuses')}</option>
-          <option value="ACTIVE">{t('activeOnly')}</option>
-          <option value="INACTIVE">{t('inactiveOnly')}</option>
-        </FieldSelect>
+          onChange={(v) => setActiveFilter(catalogStr(v) || 'ALL')}
+          options={statusOptions}
+          emptyLabel={null}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('settlementMode')}
+          value={settlementFilter}
+          onChange={(v) => setSettlementFilter(catalogStr(v))}
+          options={settlementFilterOptions}
+          emptyLabel={null}
+        />
       </EraListFilterBar>
+
       <HotelDataGrid<AgencyRow & Record<string, unknown>>
         columns={[
-          { key: 'code', header: t('code') },
           { key: 'name', header: t('name') },
+          {
+            key: 'code',
+            header: t('code'),
+            render: (r) => (
+              <span className="inline-flex flex-wrap items-center gap-1.5">
+                <span>{r.code}</span>
+                {isOtaAgency(r.code, r.name) ? (
+                  <span className="rounded bg-[#ECF0F1] px-1.5 py-0.5 text-[10px] font-medium uppercase text-[#7F8C8D]">
+                    OTA
+                  </span>
+                ) : null}
+              </span>
+            ),
+          },
           { key: 'voen', header: 'VÖEN', render: (r) => r.voen ?? '—' },
-          { key: 'commissionPercent', header: t('commission'), render: (r) => r.commissionPercent ?? '—' },
+          {
+            key: 'commissionPercent',
+            header: t('commission'),
+            render: (r) => r.commissionPercent ?? '—',
+          },
           {
             key: 'settlementMode',
             header: t('settlementMode'),
             render: (r) => t(r.settlementMode === 'PREPAID' ? 'prepaid' : 'postpaid'),
           },
-          { key: 'active', header: t('active'), render: (r) => String(r.active) },
+          {
+            key: 'finance',
+            header: t('finance'),
+            render: (r) => (
+              <span className="text-[12px] text-[#7F8C8D]" title={t('financeHint')}>
+                {financeHint(r, t)}
+              </span>
+            ),
+          },
+          {
+            key: 'active',
+            header: t('active'),
+            render: (r) => (
+              <span
+                className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                  r.active
+                    ? 'bg-[#E8F8F5] text-[#1E8449]'
+                    : 'bg-[#F5F6F7] text-[#7F8C8D]'
+                }`}
+              >
+                {r.active ? t('activeBadge') : t('inactiveBadge')}
+              </span>
+            ),
+          },
           {
             key: 'actions',
             header: tc('actions'),
             render: (r) => (
-              <span className="flex flex-wrap gap-2">
-                <button type="button" className="text-[#2980B9] hover:underline" onClick={() => openEdit(r)}>
-                  {tc('edit')}
+              <span className="flex flex-wrap items-center gap-1">
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#BDC3C7] text-[#2C3E50] hover:bg-[#ECF0F1]"
+                  title={tc('edit')}
+                  aria-label={tc('edit')}
+                  onClick={() => openEdit(r)}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
                 </button>
                 <button
                   type="button"
-                  className="text-[#2980B9] hover:underline"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#BDC3C7] text-[#2C3E50] hover:bg-[#ECF0F1] disabled:opacity-50"
+                  title={t('invitePortal')}
+                  aria-label={t('invitePortal')}
                   disabled={busy}
                   onClick={() => {
                     setInviteAgency(r);
                     setInviteEmail('');
                   }}
                 >
-                  {t('invitePortal')}
+                  <UserPlus className="h-4 w-4" aria-hidden />
                 </button>
               </span>
             ),
@@ -234,7 +337,7 @@ export default function TravelAgenciesPage() {
 
       <EraModal
         open={modalOpen}
-        title={t('title')}
+        title={editRow ? t('editTitle') : t('createTitle')}
         onClose={() => setModalOpen(false)}
         footer={
           <EraModalFooter
@@ -265,6 +368,9 @@ export default function TravelAgenciesPage() {
                     ? Number(fd.get('commission'))
                     : undefined,
                   settlementMode,
+                  creditLimitAzn: creditLimitAzn.trim() === '' ? null : Number(creditLimitAzn),
+                  paymentTermsDays:
+                    paymentTermsDays.trim() === '' ? null : Number(paymentTermsDays),
                   active: fd.get('active') === 'on',
                 }),
               });
@@ -284,22 +390,24 @@ export default function TravelAgenciesPage() {
             }
           }}
         >
-          <Field
-            label={t('code')}
-            preset="code"
-            id="ag-code"
-            name="code"
-            defaultValue={editRow?.code ?? ''}
-            required
-          />
-          <Field
-            label={t('name')}
-            preset="shortText"
-            id="ag-name"
-            name="name"
-            defaultValue={editRow?.name ?? ''}
-            required
-          />
+          <FieldRow cols={2}>
+            <Field
+              label={t('name')}
+              preset="shortText"
+              id="ag-name"
+              name="name"
+              defaultValue={editRow?.name ?? ''}
+              required
+            />
+            <Field
+              label={t('code')}
+              preset="code"
+              id="ag-code"
+              name="code"
+              defaultValue={editRow?.code ?? ''}
+              required
+            />
+          </FieldRow>
           <VoenLookupField
             value={agencyVoen}
             onChange={setAgencyVoen}
@@ -314,9 +422,14 @@ export default function TravelAgenciesPage() {
               invalid: tc('invalid'),
             }}
           />
-          {agencyNameHint ? (
-            <p className="text-xs text-[#7F8C8D]">{agencyNameHint}</p>
-          ) : null}
+          {agencyNameHint ? <p className="text-xs text-[#7F8C8D]">{agencyNameHint}</p> : null}
+          {editRow ? (
+            <p className="text-xs text-[#7F8C8D]">
+              {t('financeHint')}: {financeHint(editRow, t)}
+            </p>
+          ) : (
+            <p className="text-xs text-[#7F8C8D]">{t('financeHint')}</p>
+          )}
           <input type="hidden" name="voen" value={agencyVoen} />
           <Field
             label={t('commission')}
@@ -331,12 +444,34 @@ export default function TravelAgenciesPage() {
             kind="CLOSED_SMALL"
             label={t('settlementMode')}
             value={settlementMode}
-            onChange={(v) => setSettlementMode(v === 'PREPAID' ? 'PREPAID' : 'POSTPAID')}
+            onChange={(v) => setSettlementMode(catalogStr(v) === 'PREPAID' ? 'PREPAID' : 'POSTPAID')}
             options={[
               { value: 'POSTPAID', label: t('postpaid') },
               { value: 'PREPAID', label: t('prepaid') },
             ]}
+            emptyLabel={null}
           />
+          <FieldRow cols={2}>
+            <Field
+              label={t('creditLimitAzn')}
+              preset="amount"
+              type="number"
+              min={0}
+              step="0.01"
+              value={creditLimitAzn}
+              onChange={(e) => setCreditLimitAzn(e.target.value)}
+              hint={t('creditLimitHint')}
+            />
+            <Field
+              label={t('paymentTermsDays')}
+              preset="count"
+              type="number"
+              min={0}
+              value={paymentTermsDays}
+              onChange={(e) => setPaymentTermsDays(e.target.value)}
+              hint={t('paymentTermsHint')}
+            />
+          </FieldRow>
           <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
             <input
               name="active"

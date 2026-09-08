@@ -163,7 +163,7 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 - [~] CLI-57 SCREEN: package balance assign modal + extras `PENDING_PAY`→Pay→folio→plan→ticket×3; `inPackage` flag; walk-in extras-only; Replace+FO manager; day-1 auto ≤3; UAT open — not SHIPPED
 - [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
 - [~] Wave A dual-run (CLI-50 SCREEN): episode always opens without hotel `programCode`; staff Select `PKG-STANDART|PREMIUM|DERMO|DETOKS` on `/sanatorium`; `?episode=` opens treatment chart; ADR [nafta-medical-sku-dual-run.md](../../docs/adr/nafta-medical-sku-dual-run.md)
-- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `recalcProgramQuotas` on stay-product/date change (no cancel SCHEDULED); free = remaining quota; `/admin/program-templates` multi-procedure + knots matrix; ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
+- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `ProgramTemplateBlockMember` whitelist; **template versioning** + `entitlementSnapshot` pin; `recalcProgramQuotas` night-only keeps pin; `/admin/program-templates` entitlement blocks + knots matrix (`max-w-4xl`); ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
 - [x] Plan 2.9: `notifyClinicCheckIn` removed; `ProcessedEvent` idempotency on lifecycle ingress
 - [x] `PRESCRIPTION_ISSUED` / `PROCEDURE_COMPLETED` + retail reserve/write-off endpoints
 

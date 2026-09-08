@@ -24,7 +24,7 @@ Store toggles on `HotelProfile.policyJson` (typed in `hotel-policy.service.ts`),
 | `loadBasedPricingEnabled` | Apply active `YieldRule` % by estimated occupancy | Yield rules ignored |
 | `childAbsolutePricingEnabled` | Prefer `ChildPricingMatrix.amountOverride` when set | % discount only (+ `freeCount`) |
 
-SatAdmin UI: `/settings/pricing-policy`. Amounts live on Master data rate plans, Child matrix, Yield rules, Package prices.
+SatAdmin UI: `/settings/pricing-policy`. Amounts live on Master data rate plans, Child matrix (`/settings/child-matrix`), Yield rules (`/settings/yield-rules`), Package prices, BAR calendar — sidebar section **Rates & pricing**.
 
 ## Consequences
 

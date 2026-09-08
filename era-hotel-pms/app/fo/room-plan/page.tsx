@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Maximize2, Minimize2, X } from 'lucide-react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -439,35 +439,16 @@ export default function RoomPlanPage() {
     return (
       <>
         <div
-          className="fixed inset-0 z-[180] flex flex-col bg-[#EBEDF0]"
+          className="fixed inset-0 z-[180] flex flex-col bg-[#EBEDF0] px-4 py-3 sm:px-6"
           role="dialog"
           aria-modal="true"
           aria-label={t('fullscreenTitle')}
         >
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#D5DADF] bg-white px-4 py-3 sm:px-6">
-            <div className="min-w-0">
-              <h2 className="m-0 truncate text-lg font-semibold text-[#34495E]">{t('fullscreenTitle')}</h2>
-              <p className="m-0 truncate text-[13px] text-[#7F8C8D]">
-                {fromDate} · {t('days', { count: days })}
-              </p>
-            </div>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setFullscreen(false)}
-              aria-label={t('exitFullscreen')}
-            >
-              <X className="h-4 w-4" aria-hidden />
-              {t('exitFullscreen')}
-            </button>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6">
-            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-end gap-2">{headerActions}</div>
-            <div className="shrink-0">{filters}</div>
-            {unassignedBlock}
-            <div className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden p-4`}>
-              {grid}
-            </div>
+          <div className="mb-3 flex shrink-0 flex-wrap items-center justify-end gap-2">{headerActions}</div>
+          <div className="shrink-0">{filters}</div>
+          {unassignedBlock}
+          <div className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden p-4`}>
+            {grid}
           </div>
         </div>
         {modals}

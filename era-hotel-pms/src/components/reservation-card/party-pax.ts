@@ -243,3 +243,68 @@ export function hydratePaxNames(
     return { ...g, firstName: firstName || g.firstName, lastName: lastName || g.lastName };
   });
 }
+
+export type LinkedGuestDemographics = {
+  id?: string;
+  sex?: string | null;
+  nationality?: string | null;
+  birthDate?: string | Date | null;
+  passportNo?: string | null;
+  documents?: Array<{ docType?: string | null; docNumber?: string | null; isPrimary?: boolean }>;
+};
+
+function isoDate(value: string | Date | null | undefined): string {
+  if (value == null || value === '') return '';
+  if (typeof value === 'string') return value.slice(0, 10);
+  if (Number.isNaN(value.getTime())) return '';
+  return value.toISOString().slice(0, 10);
+}
+
+function ageYearsFromBirthDate(birthDate: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return '';
+  const [y, m, d] = birthDate.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  const today = new Date();
+  let age = today.getUTCFullYear() - y;
+  const md = today.getUTCMonth() + 1 - m;
+  if (md < 0 || (md === 0 && today.getUTCDate() < d)) age -= 1;
+  return age >= 0 && age < 130 ? String(age) : '';
+}
+
+function passportFromGuest(guest: LinkedGuestDemographics | null | undefined): string {
+  if (!guest) return '';
+  if (guest.passportNo?.trim()) return guest.passportNo.trim();
+  const docs = guest.documents ?? [];
+  const passport =
+    docs.find((d) => String(d.docType ?? '').toUpperCase().includes('PASSPORT') && d.docNumber?.trim()) ??
+    docs.find((d) => d.isPrimary && d.docNumber?.trim()) ??
+    docs.find((d) => d.docNumber?.trim());
+  return passport?.docNumber?.trim() ?? '';
+}
+
+/**
+ * Fill-not-clear party snapshot holes from linked Guest master
+ * (FOCP/import often writes names only).
+ */
+export function hydratePaxDemographicsFromGuest(
+  rows: PaxRow[],
+  guestById: Map<string, LinkedGuestDemographics>,
+  masterGuest?: LinkedGuestDemographics | null,
+): PaxRow[] {
+  return rows.map((row) => {
+    const linked =
+      (row.guestId ? guestById.get(row.guestId) : undefined) ??
+      (row.guestId && masterGuest?.id === row.guestId ? masterGuest : undefined);
+    if (!linked) return row;
+    const birthDate = row.birthDate?.trim() || isoDate(linked.birthDate);
+    const age = row.age?.trim() || (birthDate ? ageYearsFromBirthDate(birthDate) : '');
+    return {
+      ...row,
+      sex: row.sex?.trim() || linked.sex?.trim() || '',
+      nationality: row.nationality?.trim() || linked.nationality?.trim() || '',
+      birthDate,
+      age,
+      passportNo: row.passportNo?.trim() || passportFromGuest(linked) || '',
+    };
+  });
+}

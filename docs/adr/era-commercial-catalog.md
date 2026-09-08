@@ -20,6 +20,7 @@ Industry SKUs, finance add-ons, and platform meters used ad-hoc AZN prices (8, 1
 ## Consequences
 
 - `syncPricingModuleCatalog` overwrites `pricing_modules` prices/names from seed on API bootstrap.
+- `syncMeterCatalogCanon` (same boot) writes `billing.meter_unit_pricing_v1` / `billing.quota_unit_pricing_v1`: leftover `pricePerInvoiceAzn` 0.10 → **0**; leftover headcount **10 × 15** → **1 × 2**; document pack below 100 → **1000 / 5 AZN**. Super-admin cannot re-enable a per-invoice meter.
 - Hotel Resort bundle list: 222 AZN × 15% = **188.70 AZN** (see `pricing-catalog-canon.spec.ts`).
 - Capacity overage (rooms, cabinets, POS) is catalog policy (`CAPACITY_DRIVERS`); metering those units in QuotaGuard is a follow-up (not this ADR).
 - Existing orgs pick up new list prices at next catalog sync; entitlements are not rewritten except mutex on the next module toggle.

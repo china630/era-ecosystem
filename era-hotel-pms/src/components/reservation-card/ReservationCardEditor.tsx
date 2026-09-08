@@ -31,6 +31,7 @@ import {
 import type { AttachmentRow } from '@/components/reservation-card/types';
 import {
   attachGuestToPax,
+  hydratePaxDemographicsFromGuest,
   hydratePaxNames,
   partySizeFromCounts,
   syncCountsFromPaxLength,
@@ -301,7 +302,14 @@ export function ReservationCardEditor({
       })),
     );
     setNotes((json.notesMap as Record<string, string>) ?? {});
-    const masterGuest = json.guest as { id?: string; fullName?: string } | undefined;
+    const masterGuest = json.guest as {
+      id?: string;
+      fullName?: string;
+      sex?: string | null;
+      nationality?: string | null;
+      birthDate?: string | Date | null;
+      documents?: Array<{ docType?: string | null; docNumber?: string | null; isPrimary?: boolean }>;
+    } | undefined;
     const guests = (json.paxGuests as PaxRow[] | undefined) ?? [];
     const equalMode = (json.partyBillingMode as PartyBillingMode | undefined) === 'EQUAL';
     const adultN = Number(json.adults ?? 1) || 0;
@@ -321,12 +329,14 @@ export function ReservationCardEditor({
       nextPax = [
         {
           title: '',
-          sex: '',
+          sex: masterGuest.sex ?? '',
           middleName: '',
           firstName: parts[0] ?? '',
           lastName: parts.slice(1).join(' '),
-          nationality: '',
-          birthDate: '',
+          nationality: masterGuest.nationality ?? '',
+          birthDate: masterGuest.birthDate
+            ? String(masterGuest.birthDate).slice(0, 10)
+            : '',
           age: '',
           idCardNo: '',
           passportNo: '',
@@ -341,6 +351,19 @@ export function ReservationCardEditor({
             (json as { medicalPackageCode?: string | null }).medicalPackageCode ?? '',
         },
       ];
+      nextPax = hydratePaxDemographicsFromGuest(
+        nextPax,
+        new Map(),
+        masterGuest.id
+          ? {
+              id: masterGuest.id,
+              sex: masterGuest.sex,
+              nationality: masterGuest.nationality,
+              birthDate: masterGuest.birthDate,
+              documents: masterGuest.documents,
+            }
+          : null,
+      );
     } else {
       nextPax = guests.map((g) => ({
         id: g.id,
@@ -365,20 +388,77 @@ export function ReservationCardEditor({
           (g as { medicalPackageCode?: string | null }).medicalPackageCode ?? '',
       }));
       const nameByGuestId = new Map<string, string>();
+      const demoByGuestId = new Map<
+        string,
+        {
+          id: string;
+          sex?: string | null;
+          nationality?: string | null;
+          birthDate?: string | Date | null;
+          documents?: Array<{
+            docType?: string | null;
+            docNumber?: string | null;
+            isPrimary?: boolean;
+          }>;
+        }
+      >();
       for (const g of guests) {
-        const linked = (g as { guest?: { fullName?: string; firstName?: string | null; lastName?: string | null } })
-          .guest;
-        const gid = g.guestId ?? undefined;
+        const linked = (
+          g as {
+            guest?: {
+              id?: string;
+              fullName?: string;
+              firstName?: string | null;
+              lastName?: string | null;
+              sex?: string | null;
+              nationality?: string | null;
+              birthDate?: string | Date | null;
+              documents?: Array<{
+                docType?: string | null;
+                docNumber?: string | null;
+                isPrimary?: boolean;
+              }>;
+            };
+          }
+        ).guest;
+        const gid = g.guestId ?? linked?.id ?? undefined;
         if (!gid) continue;
         const label =
           linked?.fullName?.trim() ||
           [linked?.firstName, linked?.lastName].filter(Boolean).join(' ').trim();
         if (label) nameByGuestId.set(gid, label);
+        if (linked) {
+          demoByGuestId.set(gid, {
+            id: gid,
+            sex: linked.sex,
+            nationality: linked.nationality,
+            birthDate: linked.birthDate,
+            documents: linked.documents,
+          });
+        }
       }
-      nextPax = hydratePaxNames(nextPax, {
-        id: masterGuest?.id ?? String(json.guestId ?? ''),
-        fullName: masterGuest?.fullName,
-      }, nameByGuestId);
+      if (masterGuest?.id) {
+        demoByGuestId.set(masterGuest.id, {
+          id: masterGuest.id,
+          sex: masterGuest.sex,
+          nationality: masterGuest.nationality,
+          birthDate: masterGuest.birthDate,
+          documents: masterGuest.documents,
+        });
+      }
+      nextPax = hydratePaxNames(
+        nextPax,
+        {
+          id: masterGuest?.id ?? String(json.guestId ?? ''),
+          fullName: masterGuest?.fullName,
+        },
+        nameByGuestId,
+      );
+      nextPax = hydratePaxDemographicsFromGuest(
+        nextPax,
+        demoByGuestId,
+        masterGuest ?? null,
+      );
     }
     const sized = syncPaxToPartySize(nextPax, targetSize, equalMode);
     setPax(sized);
