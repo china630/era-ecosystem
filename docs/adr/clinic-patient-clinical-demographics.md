@@ -17,13 +17,14 @@ Add a **clinical demographics ops cache** on `PatientRef`:
 
 | Field | Notes |
 |-------|--------|
-| `sex` (`PatientSex`) | MALE / FEMALE / OTHER / UNKNOWN |
+| `sex` (`PatientSex`) | MALE / FEMALE / UNKNOWN (no OTHER — aligned with MDM person core) |
+| `firstName` / `middleName` / `lastName` | Canon name parts (physical `given_name` / `father_name` / `surname`); denorm `fullName` via `composePersonFullName` |
 | `birthDate` (date) | Source of truth for age; UI derives `ageYears` |
 | `bloodGroup` | ABO± for care / emergency; optional UNKNOWN |
 | `emergencyContactName` / `emergencyContactPhone` | Sanatorium emergency reachability |
 | `nationality` | Already present — surface on card |
 
-**Not stored locally as SoR:** FIN, passport, issuing country (remain MDM / transient intake). **Sex and birthDate** are MDM person-core SoR (`MALE`/`FEMALE`/`UNKNOWN` — no OTHER); `PatientRef` columns remain an ops cache filled from resolve/ops-profile.
+**Not stored locally as SoR:** FIN, passport, issuing country (remain MDM / transient intake). **Phone is not an MDM identifier** — create/walk-in requires FIN or passport+issuingCountry (or existing `globalPersonId`). **Sex and birthDate** are MDM person-core SoR (`MALE`/`FEMALE`/`UNKNOWN` — no OTHER); `PatientRef` columns remain an ops cache filled from resolve/ops-profile. **MDM link** sends `firstName`/`middleName`/`lastName` and ISO nationality (not collapsed to OTHER).
 
 **Anamnesis is not demographics.** As of 2026-08-31 / CLI-55 SCREEN: [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md) — anamnesis and contraindications live on `ClinicalEpisode`. Demographics PATCH no longer requires anamnesis; procedure assign/confirm requires OPEN-course anamnesis.
 

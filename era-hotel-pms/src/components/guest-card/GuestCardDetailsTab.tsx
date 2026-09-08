@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { EraModal } from '@/components/EraModal';
+import { buildMdmPersonLookupBody } from '@/lib/mdm-person-lookup-body';
 import {
   FORM_FIELD_GROUP_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -29,6 +30,9 @@ export function GuestCardDetailsTab({
   phoneVerified,
   emailVerified,
   fullName,
+  firstName = '',
+  middleName = '',
+  lastName = '',
   nationality,
   guestId,
   globalPersonId,
@@ -45,6 +49,9 @@ export function GuestCardDetailsTab({
   phoneVerified: boolean;
   emailVerified: boolean;
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   nationality: string;
   guestId: string | null;
   globalPersonId: string | null;
@@ -72,8 +79,8 @@ export function GuestCardDetailsTab({
     ['marriageDate', t('details.marriageDate')],
     ['bonusPercent', t('details.bonusPercent')],
     ['maritalStatus', t('details.maritalStatus')],
-    ['fatherName', t('details.fatherName')],
-    ['motherName', t('details.motherName')],
+    ['parentFatherName', t('details.fatherName')],
+    ['parentMotherName', t('details.motherName')],
     ['verificationStatus', t('details.verification')],
     ['registrationNumber', t('details.registration')],
     ['vehiclePlate', t('details.vehicle')],
@@ -89,22 +96,27 @@ export function GuestCardDetailsTab({
   const hasPassport = Boolean(maskedPassport && maskedPassport !== '***');
 
   async function lookupMdm() {
+    const hasParts = Boolean(firstName.trim() && lastName.trim());
     const name = fullName.trim();
-    if (!name) {
+    if (!hasParts && !name) {
       setMdmStatus(t('mdm.nameRequired'));
       return;
     }
     const res = await fetch('/api/mdm/person-lookup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fin: transientIdentity.nationalIdFin?.trim() || undefined,
-        passport: transientIdentity.passportNumber?.trim() || undefined,
-        issuingCountry: nationality === 'AZ' ? 'AZ' : nationality || undefined,
-        fullName: name,
-        phone: fields.phone?.trim() || undefined,
-        nationality: nationality === 'AZ' ? 'AZ' : 'OTHER',
-      }),
+      body: JSON.stringify(
+        buildMdmPersonLookupBody({
+          fin: transientIdentity.nationalIdFin?.trim() || undefined,
+          passport: transientIdentity.passportNumber?.trim() || undefined,
+          firstName: firstName.trim() || undefined,
+          middleName: middleName.trim() || undefined,
+          lastName: lastName.trim() || undefined,
+          fullName: name || undefined,
+          phone: fields.phone?.trim() || undefined,
+          nationality: nationality || undefined,
+        }),
+      ),
     });
     const data = await res.json();
     if (data.globalPersonId) {
@@ -126,7 +138,16 @@ export function GuestCardDetailsTab({
       const lookupRes = await fetch('/api/mdm/person-lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fin: targetFin, fullName: fullName.trim() }),
+        body: JSON.stringify(
+          buildMdmPersonLookupBody({
+            fin: targetFin,
+            firstName: firstName.trim() || undefined,
+            middleName: middleName.trim() || undefined,
+            lastName: lastName.trim() || undefined,
+            fullName: fullName.trim() || undefined,
+            nationality: nationality || undefined,
+          }),
+        ),
       });
       const lookup = await lookupRes.json();
       if (!lookup.globalPersonId) {

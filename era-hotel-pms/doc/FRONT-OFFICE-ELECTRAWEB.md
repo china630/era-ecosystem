@@ -16,6 +16,8 @@ Operational priority (Electra-aligned) — see [ADR hotel-fo-screen-chain](../..
 4. **Room plan** `/fo/room-plan` — timeline bars after roomId.
 5. Groups / allotment blocks — booking envelopes and corporate holds.
 
+**Sidebar FO order** (menu IA): availability → reservations → **room plan** → **rack**. See [MENU-IA-CANON.md](./MENU-IA-CANON.md).
+
 Empty rack/plan cells = free **doors**, not sellable type inventory. Create form shows sellable preview and links to RTA when Avl = 0.
 
 ## Wave C — Core navigation order
@@ -44,7 +46,7 @@ Empty rack/plan cells = free **doors**, not sellable type inventory. Create form
 | Spec item | Implementation | Wave |
 |-----------|----------------|------|
 | Əsas KPI dashboard | `ExecutiveDashboard`, 7 KPIs | C |
-| Rack tile: status, guest, dates, pay, procedures | `RoomRackView` + `listRoomsForRack` | C |
+| Rack tile: status, guest, dates, pay, procedures | `RoomRackView` + `listRoomsForRack` — tile stay must overlap **From–To**; filter pane and grid scroll separately; gender via `normalizeShareGender` | C |
 | Rack DnD relocate | `POST /api/reservations/:id/relocate` | C |
 | Room plan grouping/period dropdowns | `FilterMenuButton` | C |
 | Room plan layout | Fixed **room column** + scrollable timeline; full page width | C+ |

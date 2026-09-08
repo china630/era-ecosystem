@@ -11,6 +11,7 @@ import {
   Wallet,
   BedDouble,
   FileSpreadsheet,
+  Package,
   FileInput,
   GitBranch,
   Users,
@@ -256,11 +257,11 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
   },
   {
-    href: "/admin/templates",
-    labelKey: "templates",
-    icon: FileSpreadsheet,
+    href: "/admin/program-templates",
+    labelKey: "sanatoriumPackages",
+    icon: Package,
     group: "setup:catalogs",
-    permission: CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
   },
   {
     href: "/admin/import",

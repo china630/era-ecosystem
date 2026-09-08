@@ -30,6 +30,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../lib/design-system";
+import { formatAzEmployeeListName } from "../../lib/employee-display-name";
 import { CreateEmployeeModal } from "./employee-modal";
 import { EditEmployeeModal } from "./edit-employee-modal";
 import { RpaUpsellModal } from "../../components/rpa-upsell-modal";
@@ -41,6 +42,8 @@ type Employee = {
   voen?: string | null;
   firstName: string;
   lastName: string;
+  middleName?: string;
+  displayName?: string | null;
   positionId: string;
   jobPosition?: {
     id: string;
@@ -243,7 +246,7 @@ export default function EmployeesPage() {
                 className="rounded-2xl border border-[#D5DADF] bg-white p-4 shadow-sm text-[13px] space-y-1"
               >
                 <div className="font-semibold text-[#34495E]">
-                  {r.lastName} {r.firstName}
+                  {formatAzEmployeeListName(r)}
                 </div>
                 <label className="inline-flex items-center gap-2 text-xs text-slate-600">
                   <input
@@ -340,7 +343,7 @@ export default function EmployeesPage() {
                       {r.voen ?? "—"}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
-                      {r.lastName} {r.firstName}
+                      {formatAzEmployeeListName(r)}
                     </td>
                     <td className={`hidden xl:table-cell ${DATA_TABLE_TD_CLASS}`}>
                       {r.jobPosition

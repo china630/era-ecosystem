@@ -23,7 +23,7 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | 8 | `rooms` | `08-Rooms.xlsx` | [x] | Inventory only: `Room No`, `Room Type`, `Floor`, `Bed Type`. |
 | 9 | `agencies` | `09-Travel-Agencies.xlsx` | [x] | |
 | 10 | `guests` | `10-Guest-Cards.xlsx` | [x] | **8 782** after August overlay + FO-only `wo:fo:{id}`. |
-| 11 | `reservations` | `11-Reservations.xlsx` | [x] | **6 158** `Res Id` (August FOCP overlay + 41 new) |
+| 11 | `reservations` | `11-Reservations.xlsx` | [x] | **6 158** `Res Id` (August FOCP overlay + 41 new). One row = one `Res Id`. `Guest Id` = primary; `Guest Name` with `/` imports **ReservationGuest** party (co-guests matched from step 10). |
 | 12 | `reservation-notes` | `12-Reservation-Notes.xlsx` | [x] | YTD EW Notes → matched Res Id (skip Channel / empty type). 1 225 packed rows. |
 | 13 | `folios` | `hotel/13-folio-parts/13-Folio-p01.xlsx` … | [x] | Чанки Apply. Archive START `13-Folio-Transactions.merged.xlsx`. Splitter input: START `13-Folio-Transactions.hotel.xlsx`. |
 | 14 | `package-sell` | `14-Package-Sell-2026.xlsx` | [x] | After folios. Desk sell from PDF (not EW). Adapter skips `desk=N`. **Extra bed:** Standart **96 AZN**, other packages **48** (half, rounded). |

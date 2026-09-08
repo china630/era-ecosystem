@@ -30,7 +30,6 @@ type EmployeeDetail = {
   kind?: string;
   globalPersonId: string;
   voen?: string | null;
-  patronymic?: string | null;
   positionId: string;
   startDate: string;
   salary: unknown;
@@ -83,7 +82,7 @@ export function EditEmployeeModal({
   >(null);
   const [voen, setVoen] = useState("");
   const [contractorSocial, setContractorSocial] = useState("");
-  const [patronymic, setPatronymic] = useState("");
+  const [middleName, setMiddleName] = useState("");
   const [positionId, setPositionId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [salary, setSalary] = useState("");
@@ -130,7 +129,7 @@ export function EditEmployeeModal({
       setKind((r.kind as "EMPLOYEE" | "CONTRACTOR") || "EMPLOYEE");
       setPersonDisplay(r.person ?? null);
       setVoen((r.voen ?? "").replace(/\D/g, ""));
-      setPatronymic((r.patronymic ?? "").trim());
+      setMiddleName("");
       setPositionId(r.positionId);
       setStartDate(String(r.startDate).slice(0, 10));
       setSalary(
@@ -169,7 +168,7 @@ export function EditEmployeeModal({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!employeeId || !token || busy) return;
-    if (!patronymic.trim() || !startDate || salary === "" || !positionId) {
+    if (!startDate || salary === "" || !positionId) {
       toast.error(t("employees.fillRequired"));
       return;
     }
@@ -185,7 +184,6 @@ export function EditEmployeeModal({
 
     const body: Record<string, unknown> = {
       kind,
-      patronymic: patronymic.trim(),
       positionId,
       startDate,
       salary: sal,
@@ -197,6 +195,10 @@ export function EditEmployeeModal({
     } else {
       body.voen = null;
       body.contractorMonthlySocialAzn = null;
+    }
+
+    if (middleName.trim()) {
+      body.middleName = middleName.trim();
     }
 
     setBusy(true);
@@ -287,11 +289,14 @@ export function EditEmployeeModal({
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className={`${MODAL_FIELD_LABEL_CLASS} md:col-span-2`}>
-                  {t("employees.patronymic")}
+                  {t("employees.middleName", { defaultValue: "Ata adı (MDM)" })}
                   <input
                     className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={patronymic}
-                    onChange={(e) => setPatronymic(e.target.value)}
+                    value={middleName}
+                    onChange={(e) => setMiddleName(e.target.value)}
+                    placeholder={t("employees.middleNameOptional", {
+                      defaultValue: "Optional — updates MDM middle name",
+                    })}
                   />
                 </label>
                 <label className={MODAL_FIELD_LABEL_CLASS}>

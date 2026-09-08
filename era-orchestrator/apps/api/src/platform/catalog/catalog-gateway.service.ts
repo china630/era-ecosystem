@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { PlatformAuditService } from "../platform-audit.service";
 import { PlatformEntitlementService } from "../platform-entitlement.service";
 import { resolveOrganizationUuid } from "../../common/organization-id.util";
+import { DATA_HUB_XOR } from "@era365/database";
 import { DataHubProxyClient } from "./data-hub-proxy.client";
 
 const PLATFORM_REFERENCE_DATA = "platform_reference_data";
@@ -21,7 +22,7 @@ export class CatalogGatewayService {
   private async assertAccess(organizationId: string): Promise<string> {
     const orgId = resolveOrganizationUuid(organizationId) ?? organizationId;
     try {
-      await this.entitlement.assertPlatformModule(orgId, PLATFORM_REFERENCE_DATA);
+      await this.entitlement.assertAnyPlatformModule(orgId, DATA_HUB_XOR);
     } catch (e) {
       if (this.config.get<string>("REFERENCE_DATA_SKIP_ENTITLEMENT") === "1") {
         this.logger.warn(`catalog entitlement skipped for org=${orgId}`);

@@ -31,7 +31,7 @@
 | FO / front desk | chessboard, card, `/availability`, `/reports/reservations` | ✅ |
 | Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN — N lanes + EW palette; out of FO SHOW rollup until UAT-SMOKE §30 |
 | Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history | SCREEN (out of FO SHOW until UAT-SMOKE §35) |
-| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ |
+| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/front-cash/agency-ledger`, `/front-cash/company-ledger`, `/front-cash/transactions` | ✅ |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
 | Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |

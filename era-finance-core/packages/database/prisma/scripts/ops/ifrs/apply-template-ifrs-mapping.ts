@@ -4,7 +4,14 @@
  * Stores per-org applied version in OrganizationSubscription.customConfig:
  *   { templates: { ifrsMapping: { version: number } } }
  */
-import { LedgerType, AccountType, OrganizationKind } from "@prisma/client";
+import {
+  AccountingBookBillingSlotKind,
+  AccountingBookGaapKind,
+  AccountingBookStatus,
+  LedgerType,
+  AccountType,
+  OrganizationKind,
+} from "@prisma/client";
 import { closePrismaPool, createPrismaClient } from "../../../prisma-client";
 import { loadTemplateIfrsMappingPackage } from "../../../lib/chart/template-ifrs";
 
@@ -41,15 +48,46 @@ function withAppliedVersion(customConfig: unknown, version: number): object {
   };
 }
 
+async function ensureIfrsBookId(organizationId: string): Promise<string> {
+  const existing = await prisma.accountingBook.findFirst({
+    where: { organizationId, code: "IFRS" },
+    select: { id: true },
+  });
+  if (existing) return existing.id;
+  const created = await prisma.accountingBook.create({
+    data: {
+      organizationId,
+      code: "IFRS",
+      nameAz: "Beynəlxalq Maliyyə Hesabatı Standartları",
+      nameRu: "Международные стандарты финансовой отчётности",
+      nameEn: "International Financial Reporting Standards",
+      gaapKind: AccountingBookGaapKind.IFRS,
+      isSystem: true,
+      isDefaultOps: false,
+      status: AccountingBookStatus.ACTIVE,
+      billingSlotKind: AccountingBookBillingSlotKind.EXTRA,
+      sortOrder: 10,
+    },
+    select: { id: true },
+  });
+  return created.id;
+}
+
 async function ensureIfrsAccount(params: {
   organizationId: string;
+  accountingBookId: string;
   code: string;
   fallbackName: string;
   type: AccountType;
 }) {
-  const { organizationId, code, fallbackName, type } = params;
+  const { organizationId, accountingBookId, code, fallbackName, type } = params;
   const existing = await prisma.account.findFirst({
-    where: { organizationId, ledgerType: LedgerType.IFRS, code },
+    where: {
+      organizationId,
+      ledgerType: LedgerType.IFRS,
+      accountingBookId,
+      code,
+    },
   });
   if (existing) return existing;
   const catalog = await prisma.chartOfAccountsEntry.findFirst({
@@ -61,6 +99,7 @@ async function ensureIfrsAccount(params: {
   return prisma.account.create({
     data: {
       organizationId,
+      accountingBookId,
       ledgerType: LedgerType.IFRS,
       code,
       nameAz: catalog?.nameAz ?? fbAz,
@@ -103,6 +142,7 @@ async function applyToOrganization(orgId: string, targetVersion: number) {
 
   const pkg = await loadTemplateIfrsMappingPackage();
   const overrides = pkg.overrides;
+  const ifrsBookId = await ensureIfrsBookId(orgId);
 
   let applied = 0;
   let missingNas = 0;
@@ -122,6 +162,7 @@ async function applyToOrganization(orgId: string, targetVersion: number) {
 
     const ifrs = await ensureIfrsAccount({
       organizationId: orgId,
+      accountingBookId: ifrsBookId,
       code: ifrsCode,
       fallbackName: `${nas.nameRu} (IFRS)`,
       type: nas.type,

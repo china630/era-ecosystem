@@ -27,8 +27,12 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
-import type { DiagnosticCatalogGroup, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import type { CatalogFieldDef, DiagnosticCatalogGroup, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import {
+  CatalogFieldsEditor,
+  parseCatalogFieldsJson,
+} from "@/components/CatalogFieldsEditor";
 
 type Modality = {
   id: string;
@@ -113,11 +117,13 @@ export default function DiagnosticCatalogAdminPage() {
   const [services, setServices] = useState<DiagnosticService[]>([]);
   const [analytes, setAnalytes] = useState<DiagnosticAnalyte[]>([]);
   const [serviceModalityFilter, setServiceModalityFilter] = useState("");
+  const [serviceKindFilter, setServiceKindFilter] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [formFields, setFormFields] = useState<CatalogFieldDef[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
 
   const loadModalities = useCallback(async () => {
@@ -164,6 +170,21 @@ export default function DiagnosticCatalogAdminPage() {
     void loadFavorites();
   }, [loadFavorites]);
 
+  const filteredServices = useMemo(() => {
+    if (!serviceKindFilter) return services;
+    return services.filter((s) => s.kind === serviceKindFilter);
+  }, [services, serviceKindFilter]);
+
+  const kindOptions = useMemo(() => {
+    const set = new Set(services.map((s) => s.kind).filter(Boolean));
+    return [...set].sort();
+  }, [services]);
+
+  const visitModalityId = useMemo(
+    () => modalities.find((m) => m.code === "VISIT" || m.kind === "visit")?.id ?? "",
+    [modalities],
+  );
+
   const favModalityGroups = useMemo(
     () => favGroups.filter((g) => g.category === null),
     [favGroups],
@@ -201,9 +222,14 @@ export default function DiagnosticCatalogAdminPage() {
 
   function openCreate() {
     setEditingId(null);
+    setFormFields([]);
     setForm(
       tab === "services"
-        ? { modalityId: serviceModalityFilter || modalities[0]?.id || "", active: "true" }
+        ? {
+            modalityId: serviceModalityFilter || modalities[0]?.id || "",
+            kind: serviceKindFilter || "",
+            active: "true",
+          }
         : { active: "true" },
     );
     setModalOpen(true);
@@ -225,12 +251,7 @@ export default function DiagnosticCatalogAdminPage() {
 
   function openEditService(row: DiagnosticService) {
     setEditingId(row.id);
-    let fieldsText = "";
-    try {
-      fieldsText = row.fieldsJson ? JSON.stringify(JSON.parse(row.fieldsJson), null, 2) : "";
-    } catch {
-      fieldsText = row.fieldsJson ?? "";
-    }
+    setFormFields(parseCatalogFieldsJson(row.fieldsJson));
     let includesText = "";
     try {
       includesText = row.includesJson ? (JSON.parse(row.includesJson) as string[]).join(", ") : "";
@@ -246,7 +267,6 @@ export default function DiagnosticCatalogAdminPage() {
       titleRu: row.titleRu,
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
-      fields: fieldsText,
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
@@ -305,15 +325,18 @@ export default function DiagnosticCatalogAdminPage() {
     }
 
     if (tab === "services") {
-      let fields: unknown = null;
-      if (form.fields?.trim()) {
-        try {
-          fields = JSON.parse(form.fields);
-        } catch {
-          setMsg(t("invalidFieldsJson"));
-          return;
-        }
-      }
+      const fields =
+        formFields.length > 0
+          ? formFields.filter((f) => f.key.trim()).map((f) => ({
+              ...f,
+              key: f.key.trim(),
+              label: {
+                en: f.label?.en ?? "",
+                ru: f.label?.ru ?? "",
+                az: f.label?.az ?? "",
+              },
+            }))
+          : null;
       const includes = form.includes?.trim()
         ? form.includes.split(",").map((c) => c.trim()).filter(Boolean)
         : null;
@@ -535,20 +558,52 @@ export default function DiagnosticCatalogAdminPage() {
 
       {tab === "services" && (
         <div className="space-y-3">
-          <FieldSelect
-            label={t("filterModality")}
-            preset="select"
-            value={serviceModalityFilter}
-            onChange={(e) => setServiceModalityFilter(e.target.value)}
-            className="max-w-xs"
-          >
-            <option value="">{t("allModalities")}</option>
-            {modalities.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.code} — {m.titleEn}
-              </option>
-            ))}
-          </FieldSelect>
+          <div className="flex flex-wrap items-end gap-3">
+            <FieldSelect
+              label={t("filterModality")}
+              preset="select"
+              value={serviceModalityFilter}
+              onChange={(e) => setServiceModalityFilter(e.target.value)}
+              className="max-w-xs"
+            >
+              <option value="">{t("allModalities")}</option>
+              {modalities.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.code} — {m.titleEn}
+                </option>
+              ))}
+            </FieldSelect>
+            <FieldSelect
+              label={t("filterKind")}
+              preset="select"
+              value={serviceKindFilter}
+              onChange={(e) => setServiceKindFilter(e.target.value)}
+              className="max-w-xs"
+            >
+              <option value="">{t("allKinds")}</option>
+              {kindOptions.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </FieldSelect>
+            {visitModalityId ? (
+              <button
+                type="button"
+                className={
+                  serviceModalityFilter === visitModalityId && serviceKindFilter === "visit"
+                    ? PRIMARY_BUTTON_CLASS
+                    : SECONDARY_BUTTON_CLASS
+                }
+                onClick={() => {
+                  setServiceModalityFilter(visitModalityId);
+                  setServiceKindFilter("visit");
+                }}
+              >
+                {t("filterVisitTemplates")}
+              </button>
+            ) : null}
+          </div>
           <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
             <div className={DATA_TABLE_VIEWPORT_CLASS}>
               <table className={DATA_TABLE_CLASS}>
@@ -565,7 +620,7 @@ export default function DiagnosticCatalogAdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {services.map((row) => (
+                  {filteredServices.map((row) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{row.titleEn}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -614,7 +669,7 @@ export default function DiagnosticCatalogAdminPage() {
                       </td>
                     </tr>
                   ))}
-                  {services.length === 0 ? (
+                  {filteredServices.length === 0 ? (
                     <tr>
                       <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={8}>
                         {t("emptyServices")}
@@ -896,11 +951,26 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.includes ?? ""}
                 onChange={(e) => setForm({ ...form, includes: e.target.value })}
               />
-              <FieldTextarea
-                label={t("fields")}
-                hint={t("fieldsHint")}
-                value={form.fields ?? ""}
-                onChange={(e) => setForm({ ...form, fields: e.target.value })}
+              <CatalogFieldsEditor
+                value={formFields}
+                onChange={setFormFields}
+                labels={{
+                  fieldsTitle: t("fieldsEditorTitle"),
+                  addField: t("addField"),
+                  key: t("fieldKey"),
+                  type: t("fieldType"),
+                  labelEn: t("titleEn"),
+                  labelRu: t("titleRu"),
+                  labelAz: t("titleAz"),
+                  unit: t("unit"),
+                  required: t("fieldRequired"),
+                  options: t("fieldOptions"),
+                  optionsHint: t("fieldOptionsHint"),
+                  moveUp: t("moveUp"),
+                  moveDown: t("moveDown"),
+                  empty: t("fieldsEmpty"),
+                  remove: tc("delete"),
+                }}
               />
               <Field
                 label={t("sortOrder")}

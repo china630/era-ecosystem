@@ -178,18 +178,18 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
-              id: 'fo-rack',
-              href: '/fo/rack',
-              labelKey: 'chessboard',
-              icon: LayoutGrid,
-              show: true,
-            },
-            {
               id: 'fo-plan',
               href: '/fo/room-plan',
               labelKey: 'roomPlan',
               icon: BedDouble,
               show: can(PERMISSIONS.RESERVATIONS_READ),
+            },
+            {
+              id: 'fo-rack',
+              href: '/fo/rack',
+              labelKey: 'chessboard',
+              icon: LayoutGrid,
+              show: true,
             },
             {
               id: 'fo-groups',
@@ -248,10 +248,31 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.FOLIO_PAYMENT) || can(PERMISSIONS.FOLIO_VOID),
             },
             {
+              id: 'fc-balances',
+              href: '/front-cash/folio-balances',
+              labelKey: 'folioBalances',
+              icon: ClipboardList,
+              show: can(PERMISSIONS.FOLIO_READ),
+            },
+            {
+              id: 'fc-journal',
+              href: '/front-cash/folio-journal',
+              labelKey: 'folioJournal',
+              icon: FileBarChart,
+              show: can(PERMISSIONS.FOLIO_READ),
+            },
+            {
               id: 'fc-agency',
               href: '/front-cash/agency-ledger',
               labelKey: 'agencyLedger',
               icon: ClipboardList,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'fc-company',
+              href: '/front-cash/company-ledger',
+              labelKey: 'companyLedger',
+              icon: Building2,
               show: can(PERMISSIONS.REPORTS_READ),
             },
             {
@@ -441,6 +462,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/distribution/travel-agencies',
               labelKey: 'travelAgencies',
               icon: Users,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-companies',
+              href: '/distribution/companies',
+              labelKey: 'companies',
+              icon: Building2,
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
             {

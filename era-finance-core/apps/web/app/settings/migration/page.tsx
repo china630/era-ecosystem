@@ -27,7 +27,7 @@ type HrLine = {
   finCode: string;
   firstName: string;
   lastName: string;
-  patronymic: string;
+  middleName?: string;
   positionId: string;
   hireDate: string;
   salary: number;
@@ -166,7 +166,7 @@ function parseHr(rows: JsonRecord[]): HrLine[] {
     const finCode = toOptionalString(getFromAliases(row, ["finCode", "employeeId", "fin", "fincode"]));
     const firstName = toOptionalString(getFromAliases(row, ["firstName", "name"]));
     const lastName = toOptionalString(getFromAliases(row, ["lastName", "surname"]));
-    const patronymic = toOptionalString(getFromAliases(row, ["patronymic", "middleName"]));
+    const middleName = toOptionalString(getFromAliases(row, ["middleName", "patronymic"]));
     const positionId = toOptionalString(getFromAliases(row, ["positionId", "jobPositionId"]));
     const hireDate = parseDate(getFromAliases(row, ["hireDate", "employmentDate"]));
     const salary = parseNumber(getFromAliases(row, ["salary", "monthlySalary"]));
@@ -180,14 +180,14 @@ function parseHr(rows: JsonRecord[]): HrLine[] {
     );
     const voen = toOptionalString(getFromAliases(row, ["voen"]));
 
-    if (!finCode || !firstName || !lastName || !patronymic || !positionId || !hireDate || salary === null) {
+    if (!finCode || !firstName || !lastName || !positionId || !hireDate || salary === null) {
       throw new Error(`hr row ${idx + 2}`);
     }
     return {
       finCode,
       firstName,
       lastName,
-      patronymic,
+      middleName: middleName ?? undefined,
       positionId,
       hireDate,
       salary,

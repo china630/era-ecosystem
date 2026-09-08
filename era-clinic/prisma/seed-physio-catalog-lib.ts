@@ -192,7 +192,11 @@ export async function seedPhysioNafta(
     const gate = inferPhysioTypeGate(row.code, row.name);
     await prisma.procedureType.update({
       where: { id: row.id },
-      data: { needsSite: gate.needsSite, physioOrderFields: gate.fields },
+      data: {
+        needsSite: gate.needsSite,
+        physioOrderFields: gate.fields,
+        allowedSiteCodes: gate.allowedSiteCodes,
+      },
     });
   }
 

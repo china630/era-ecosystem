@@ -14,6 +14,24 @@ enum UserLocale {
   RU
 }
 
+enum AccountingBookStatus {
+  ACTIVE
+  RETIRED
+}
+
+enum AccountingBookBillingSlotKind {
+  INCLUDED
+  EXTRA
+}
+
+enum AccountingBookGaapKind {
+  NAS
+  IFRS
+  TAX
+  MANAGEMENT
+  CUSTOM
+}
+
 model Organization {
   id                              String                           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                            String
@@ -79,6 +97,8 @@ model Organization {
   absences                        Absence[]
   accessRequests                  AccessRequest[]
   accountMappings                 AccountMapping[]
+  ledgerMappingSets               LedgerMappingSet[]
+  accountingBooks                 AccountingBook[]
   accountBalances                 AccountBalance[]
   accounts                        Account[]
   advanceReports                  AdvanceReport[]
@@ -1290,7 +1310,7 @@ model Employee {
   /// *
   ///    * Дата выхода на работу (миграционная/кадровая точка отсчёта).
   hireDate                       DateTime                 @map("hire_date") @db.Date
-  dateOfBirth                    DateTime?                @map("date_of_birth") @db.Date
+  birthDate                      DateTime?                @map("date_of_birth") @db.Date
   contractEndDate                DateTime?                @map("contract_end_date") @db.Date
   /// *
   ///    * Оклад gross (AZN), частный ненефтяной сектор
@@ -1331,7 +1351,6 @@ model Employee {
   /// *
   ///    * Субсчёт 244.x для подотчёта (если задан).
   accountableAccountCode244      String?                  @map("accountable_account_code_244")
-  patronymic                     String?
   emasSyncStatus                 IntegrationSyncStatus    @default(NOT_SYNCED) @map("emas_sync_status")
   emasSyncedAt                   DateTime?                @map("emas_synced_at") @db.Timestamptz(6)
   emasSyncError                  String?                  @map("emas_sync_error")
@@ -1744,6 +1763,7 @@ model User {
   purchaseRequestApprovals       PurchaseRequestApproval[]  @relation("PurchaseRequestApprover")
   employeeDocumentsUploaded      EmployeeDocument[]         @relation("EmployeeDocumentUploader")
   supplierRatingsGiven           SupplierRating[]           @relation("SupplierRatingAuthor")
+  publishedLedgerMappingSets     LedgerMappingSet[]         @relation("LedgerMappingSetPublisher")
 
   @@index([defaultWarehouseId])
   @@map("users")
@@ -2654,6 +2674,33 @@ model OverheadAllocation {
   @@map("overhead_allocations")
 }
 
+model AccountingBook {
+  id                    String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId        String                        @map("organization_id") @db.Uuid
+  code                  String
+  nameAz                String                        @map("name_az")
+  nameRu                String                        @map("name_ru")
+  nameEn                String                        @map("name_en")
+  gaapKind              AccountingBookGaapKind        @map("gaap_kind")
+  isSystem              Boolean                       @default(false) @map("is_system")
+  isDefaultOps          Boolean                       @default(false) @map("is_default_ops")
+  status                AccountingBookStatus          @default(ACTIVE)
+  billingSlotKind       AccountingBookBillingSlotKind @default(EXTRA) @map("billing_slot_kind")
+  sortOrder             Int                           @default(0) @map("sort_order")
+  createdAt             DateTime                      @default(now()) @map("created_at")
+  updatedAt             DateTime                      @updatedAt @map("updated_at")
+  organization          Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  journalEntries        JournalEntry[]
+  accounts              Account[]
+  ledgerMappingSetsFrom LedgerMappingSet[]            @relation("LedgerMappingSetFromBook")
+  ledgerMappingSetsTo   LedgerMappingSet[]            @relation("LedgerMappingSetToBook")
+  fiscalYearCloses      FiscalYearClose[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@map("accounting_books")
+}
+
 model Account {
   id                String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId    String                  @map("organization_id") @db.Uuid
@@ -2674,6 +2721,7 @@ model Account {
   /// *
   ///    * Книга: NAS (основной план) или IFRS (параллельный учёт).
   ledgerType        LedgerType              @default(NAS) @map("ledger_type")
+  accountingBookId  String                  @map("accounting_book_id") @db.Uuid
   chartEntryId      String?                 @map("chart_entry_id") @db.Uuid
   templateAccountId String?                 @map("template_account_id") @db.Uuid
   mappingsAsIfrs    AccountMapping[]        @relation("AccountMappingIfrs")
@@ -2681,25 +2729,90 @@ model Account {
   chartEntry        ChartOfAccountsEntry?   @relation(fields: [chartEntryId], references: [id])
   templateAccount   TemplateAccount?        @relation(fields: [templateAccountId], references: [id], onDelete: SetNull)
   organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountingBook    AccountingBook          @relation(fields: [accountingBookId], references: [id], onDelete: Restrict)
   currencyRef       Currency                @relation("AccountCurrency", fields: [currency], references: [code], onUpdate: Cascade)
   parent            Account?                @relation("AccountHierarchy", fields: [parentId], references: [id])
   children          Account[]               @relation("AccountHierarchy")
   balances          AccountBalance[]
-  journalEntries    JournalEntry[]
-  subcontoConfigs   AccountSubcontoConfig[]
-  fixedAssetsAsCost FixedAsset[]            @relation("FixedAssetCostAccount")
-  deletedAt         DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  deletedByUserId   String?                 @map("deleted_by_user_id") @db.Uuid
-  deletedReason     String?                 @map("deleted_reason")
+  journalEntries           JournalEntry[]
+  subcontoConfigs          AccountSubcontoConfig[]
+  fixedAssetsAsCost        FixedAsset[]             @relation("FixedAssetCostAccount")
+  ledgerMappingLinesSource LedgerMappingLine[]      @relation("LedgerMappingLineSource")
+  ledgerMappingLinesTarget LedgerMappingLine[]      @relation("LedgerMappingLineTarget")
+  deletedAt                DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId          String?                  @map("deleted_by_user_id") @db.Uuid
+  deletedReason            String?                  @map("deleted_reason")
 
-  @@unique([organizationId, code, ledgerType])
+  @@unique([organizationId, accountingBookId, code])
   @@index([organizationId, createdAt])
   @@index([organizationId, currency])
   @@index([organizationId, ledgerType])
+  @@index([accountingBookId])
   @@index([chartEntryId])
   @@index([templateAccountId])
   @@index([organizationId, deletedAt], map: "accounts_org_deleted_at_idx")
   @@map("accounts")
+}
+
+enum LedgerMappingSetStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// Versioned NAS→IFRS mapping set (P0 Multi-GAAP integrity SSOT).
+model LedgerMappingSet {
+  id                String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String                  @map("organization_id") @db.Uuid
+  fromBookId        String?                 @map("from_book_id") @db.Uuid
+  toBookId          String?                 @map("to_book_id") @db.Uuid
+  /// Fixed product code for this transform; P0 uses NAS_TO_IFRS only.
+  code              String                  @default("NAS_TO_IFRS")
+  version           Int
+  status            LedgerMappingSetStatus  @default(DRAFT)
+  publishedAt       DateTime?               @map("published_at") @db.Timestamptz(6)
+  publishedByUserId String?                 @map("published_by_user_id") @db.Uuid
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
+  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fromBook          AccountingBook?         @relation("LedgerMappingSetFromBook", fields: [fromBookId], references: [id], onDelete: SetNull)
+  toBook            AccountingBook?         @relation("LedgerMappingSetToBook", fields: [toBookId], references: [id], onDelete: SetNull)
+  publishedByUser   User?                   @relation("LedgerMappingSetPublisher", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+  lines             LedgerMappingLine[]
+  mirroredTransactions Transaction[]        @relation("TransactionMirrorMappingSet")
+
+  @@unique([organizationId, code, version])
+  @@index([organizationId, code, status])
+  @@index([fromBookId])
+  @@index([toBookId])
+  @@map("ledger_mapping_sets")
+}
+
+model LedgerMappingLine {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  mappingSetId    String           @map("mapping_set_id") @db.Uuid
+  sourceAccountId String           @map("source_account_id") @db.Uuid
+  targetAccountId String           @map("target_account_id") @db.Uuid
+  ratio           Decimal          @default(1) @db.Decimal(19, 8)
+  sortOrder       Int              @default(0) @map("sort_order")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  mappingSet      LedgerMappingSet @relation(fields: [mappingSetId], references: [id], onDelete: Cascade)
+  sourceAccount   Account          @relation("LedgerMappingLineSource", fields: [sourceAccountId], references: [id], onDelete: Cascade)
+  targetAccount   Account          @relation("LedgerMappingLineTarget", fields: [targetAccountId], references: [id], onDelete: Cascade)
+  journalEntries  JournalEntry[]
+
+  @@unique([mappingSetId, sourceAccountId, sortOrder])
+  @@index([mappingSetId])
+  @@index([sourceAccountId])
+  @@index([targetAccountId])
+  @@map("ledger_mapping_lines")
+}
+
+enum TransactionMirrorStatus {
+  NONE
+  POSTED
+  FAILED
 }
 
 /// *
@@ -2798,6 +2911,11 @@ model Transaction {
   /// *
   ///    * Закрытый период: транзакция не должна корректироваться задним числом
   isLocked                     Boolean                       @default(false) @map("is_locked")
+  /// NAS→IFRS mirror outcome (P0 integrity). NONE when entitlement off or non-NAS post.
+  mirrorStatus                 TransactionMirrorStatus       @default(NONE) @map("mirror_status")
+  mirrorMappingSetId           String?                       @map("mirror_mapping_set_id") @db.Uuid
+  mirrorErrorCode              String?                       @map("mirror_error_code")
+  mirrorErrorDetail            Json?                         @map("mirror_error_detail")
   counterpartyId               String?                       @map("counterparty_id") @db.Uuid
   /// Аналитика ЦФО: расходы/прочие проводки, привязанные к департаменту.
   departmentId                 String?                       @map("department_id") @db.Uuid
@@ -2822,6 +2940,7 @@ model Transaction {
   counterparty                 Counterparty?                 @relation(fields: [counterpartyId], references: [id])
   department                   Department?                   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   organization                 Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mirrorMappingSet             LedgerMappingSet?             @relation("TransactionMirrorMappingSet", fields: [mirrorMappingSetId], references: [id], onDelete: SetNull)
   customsDeclarations          CustomsDeclaration[]
   inventoryAuditsPosted        InventoryAudit[]              @relation("InventoryAuditPosting")
   prepaidSchedulesPosted       PrepaidExpenseSchedule[]
@@ -2839,23 +2958,33 @@ model Transaction {
   @@index([organizationId, date, isLocked])
   @@index([departmentId])
   @@index([organizationId, kind, date])
+  @@index([organizationId, mirrorStatus], map: "transactions_org_mirror_status_idx")
+  @@index([mirrorMappingSetId])
   @@map("transactions")
 }
 
 model JournalEntry {
-  id             String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String                  @map("organization_id") @db.Uuid
-  transactionId  String                  @map("transaction_id") @db.Uuid
-  accountId      String                  @map("account_id") @db.Uuid
-  debit          Decimal                 @default(0) @db.Decimal(19, 4)
-  credit         Decimal                 @default(0) @db.Decimal(19, 4)
-  createdAt      DateTime                @default(now()) @map("created_at")
-  updatedAt      DateTime                @updatedAt @map("updated_at")
-  ledgerType     LedgerType              @default(NAS) @map("ledger_type")
-  account        Account                 @relation(fields: [accountId], references: [id])
-  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transaction    Transaction             @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  dimensions     JournalEntryDimension[]
+  id                   String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String                  @map("organization_id") @db.Uuid
+  transactionId        String                  @map("transaction_id") @db.Uuid
+  accountId            String                  @map("account_id") @db.Uuid
+  debit                Decimal                 @default(0) @db.Decimal(19, 4)
+  credit               Decimal                 @default(0) @db.Decimal(19, 4)
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+  ledgerType           LedgerType              @default(NAS) @map("ledger_type")
+  accountingBookId     String?                 @map("accounting_book_id") @db.Uuid
+  /// IFRS mirror provenance: source NAS journal line.
+  sourceJournalEntryId String?                 @map("source_journal_entry_id") @db.Uuid
+  mappingLineId        String?                 @map("mapping_line_id") @db.Uuid
+  account              Account                 @relation(fields: [accountId], references: [id])
+  organization         Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountingBook       AccountingBook?         @relation(fields: [accountingBookId], references: [id], onDelete: SetNull)
+  transaction          Transaction             @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  sourceJournalEntry   JournalEntry?           @relation("JournalEntryMirrorSource", fields: [sourceJournalEntryId], references: [id], onDelete: SetNull)
+  mirroredEntries      JournalEntry[]          @relation("JournalEntryMirrorSource")
+  mappingLine          LedgerMappingLine?      @relation(fields: [mappingLineId], references: [id], onDelete: SetNull)
+  dimensions           JournalEntryDimension[]
 
   @@index([organizationId, transactionId])
   @@index([organizationId, accountId])
@@ -2863,6 +2992,11 @@ model JournalEntry {
   @@index([organizationId, ledgerType, transactionId], map: "journal_entries_org_period_status_ledger_idx")
   @@index([organizationId, createdAt])
   @@index([organizationId, ledgerType])
+  @@index([accountingBookId])
+  @@index([sourceJournalEntryId])
+  @@index([mappingLineId])
+  /// Partial unique enforced in SQL migration; Prisma unique allows multiple NULL sources.
+  @@unique([sourceJournalEntryId, accountingBookId], map: "journal_entries_source_book_uidx")
   @@map("journal_entries")
 }
 
@@ -3435,21 +3569,24 @@ model EmasContractEvent {
 
 /// Fiscal year close: transfer period result (801) to retained earnings (802).
 model FiscalYearClose {
-  id                    String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId        String       @map("organization_id") @db.Uuid
+  id                    String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId        String         @map("organization_id") @db.Uuid
+  accountingBookId      String         @map("accounting_book_id") @db.Uuid
   year                  Int
-  closedAt              DateTime     @map("closed_at") @db.Timestamptz(6)
-  closedByUserId        String?      @map("closed_by_user_id") @db.Uuid
-  resultAmount          Decimal      @map("result_amount") @db.Decimal(19, 4)
-  transactionId         String?      @map("transaction_id") @db.Uuid
-  protocolJson          Json?        @map("protocol_json")
-  reversedAt            DateTime?    @map("reversed_at") @db.Timestamptz(6)
-  reversalTransactionId String?      @map("reversal_transaction_id") @db.Uuid
-  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transaction           Transaction? @relation(fields: [transactionId], references: [id])
-  reversalTransaction   Transaction? @relation("FiscalYearCloseReversal", fields: [reversalTransactionId], references: [id], onDelete: SetNull)
+  closedAt              DateTime       @map("closed_at") @db.Timestamptz(6)
+  closedByUserId        String?        @map("closed_by_user_id") @db.Uuid
+  resultAmount          Decimal        @map("result_amount") @db.Decimal(19, 4)
+  transactionId         String?        @map("transaction_id") @db.Uuid
+  protocolJson          Json?          @map("protocol_json")
+  reversedAt            DateTime?      @map("reversed_at") @db.Timestamptz(6)
+  reversalTransactionId String?        @map("reversal_transaction_id") @db.Uuid
+  organization          Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountingBook        AccountingBook @relation(fields: [accountingBookId], references: [id], onDelete: Restrict)
+  transaction           Transaction?   @relation(fields: [transactionId], references: [id])
+  reversalTransaction   Transaction?   @relation("FiscalYearCloseReversal", fields: [reversalTransactionId], references: [id], onDelete: SetNull)
 
-  @@unique([organizationId, year])
+  @@unique([organizationId, accountingBookId, year])
+  @@index([accountingBookId])
   @@map("fiscal_year_closes")
 }
 
@@ -4821,6 +4958,7 @@ enum InventoryAdjustmentDocType {
 enum LedgerType {
   NAS
   IFRS
+  MANAGEMENT
 }
 
 /// Resource-limit tariff ladder (hybrid billing). Replaces CreditTier / SubscriptionTier.

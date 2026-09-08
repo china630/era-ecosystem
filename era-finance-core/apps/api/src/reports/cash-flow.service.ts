@@ -2,12 +2,14 @@ import { Injectable } from "@nestjs/common";
 import {
   BankStatementLineOrigin,
   CashOrderStatus,
+  LedgerMappingSetStatus,
   LedgerType,
   Prisma,
   type BankStatementLineType,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportsCacheService } from "./reports-cache.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 
 type CashFlowSection = "OPERATING" | "INVESTING" | "FINANCING";
 
@@ -41,6 +43,7 @@ export class CashFlowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: ReportsCacheService,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   /**
@@ -57,6 +60,7 @@ export class CashFlowService {
       cashDeskId?: string;
       bankName?: string;
       ledgerType?: LedgerType;
+      accountingBookId?: string;
     },
   ): Promise<{
     dateFrom: string;
@@ -89,7 +93,18 @@ export class CashFlowService {
     const dateTo = params.dateTo.slice(0, 10);
     const cashDeskId = params.cashDeskId?.trim() || null;
     const bankName = params.bankName?.trim() || null;
-    const ledgerType = params.ledgerType ?? LedgerType.NAS;
+    let ledgerType = params.ledgerType ?? LedgerType.NAS;
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      params.accountingBookId,
+      ledgerType,
+    );
+    ledgerType =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
 
     const df = new Date(`${dateFrom}T00:00:00.000Z`);
     const dt = new Date(`${dateTo}T23:59:59.999Z`);
@@ -129,7 +144,11 @@ export class CashFlowService {
         ? {
             postedTransaction: {
               journalEntries: {
-                some: { organizationId, ledgerType },
+                some: {
+                  organizationId,
+                  ledgerType,
+                  accountingBookId: book.id,
+                },
               },
             },
           }
@@ -142,12 +161,24 @@ export class CashFlowService {
       dateRangeKey(dateFrom, dateTo),
       cashDeskId ?? "-",
       bankName ?? "-",
-      ledgerType,
+      book.id,
     ].join(":");
+
+    const includeBankForIfrs =
+      ledgerType === LedgerType.IFRS
+        ? (await this.prisma.ledgerMappingSet.findFirst({
+            where: {
+              organizationId,
+              code: "NAS_TO_IFRS",
+              status: LedgerMappingSetStatus.PUBLISHED,
+            },
+            select: { id: true },
+          })) != null
+        : true;
 
     const [countCashOrders, countBankLines] = await Promise.all([
       this.prisma.cashOrder.count({ where: cashOrderWhere }),
-      ledgerType === LedgerType.IFRS
+      !includeBankForIfrs
         ? Promise.resolve(0)
         : this.prisma.bankStatementLine.count({ where: bankLineWhere }),
     ]);
@@ -189,7 +220,7 @@ export class CashFlowService {
           cashFlowItem: { select: { id: true, code: true, name: true } },
         },
       }),
-      ledgerType === LedgerType.IFRS
+      !includeBankForIfrs
         ? Promise.resolve([])
         : this.prisma.bankStatementLine.findMany({
             where: bankLineWhere,
@@ -295,7 +326,9 @@ export class CashFlowService {
 
     const methodologyNote =
       ledgerType === LedgerType.IFRS
-        ? "IFRS-книга: учитываются только кассовые операции с проводками ledgerType=IFRS (по связанным posted transaction). Строки банковской выписки без проводок ГК в IFRS-режиме не включаются."
+        ? includeBankForIfrs
+          ? "IFRS book: cash orders with IFRS journal lines; bank statement lines included when a PUBLISHED NAS_TO_IFRS mapping set exists (CF item tags from the statement; GL parity via IFRS mirror)."
+          : "IFRS book: cash orders with IFRS journal lines only. Publish a NAS_TO_IFRS mapping set to include bank statement CF items."
         : "NAS-книга: касса — проведённые ордера KMO/KXO со статьёй ДДС. Банк — строки выписки с origin FILE_IMPORT или MANUAL_BANK_ENTRY и статьёй ДДС; дата периода — valueDate, иначе дата выписки. Прочие origin (DIRECT_SYNC, WEBHOOK и т.д.) в отчёт не входят.";
 
     const result = {
@@ -329,6 +362,7 @@ export class CashFlowService {
       cashDeskId?: string;
       bankName?: string;
       ledgerType?: LedgerType;
+      accountingBookId?: string;
     },
   ) {
     return this.getDirectCashFlow(organizationId, params);

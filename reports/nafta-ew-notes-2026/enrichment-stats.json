@@ -1,30 +1,32 @@
 {
-  "total": 1678,
-  "withMigrationSku": 1151,
-  "agencyPrefixHits": 140,
-  "mixHints": 95,
+  "total": 1744,
+  "withMigrationSku": 1215,
+  "agencyPrefixHits": 206,
+  "mixHints": 52,
   "leisureSkip": 207,
-  "needsFoReview": 707,
-  "coveragePct": 68.6,
+  "needsFoReview": 680,
   "bySku": {
-    "PKG-DERMO": 70,
-    "PKG-STANDART": 931,
-    "PKG-PREMIUM": 149,
+    "PKG-DERMO": 56,
+    "PKG-STANDART": 1010,
+    "PKG-PREMIUM": 148,
     "PKG-DETOKS": 1
   },
   "bySource": {
-    "agency-prefix": 140,
-    "price-note": 790,
-    "agency-medical-default": 167,
+    "agency-prefix": 188,
+    "price-note": 789,
+    "agency-medical-default": 180,
+    "mix-hint": 52,
     "leisure-skip": 207,
-    "phrase": 50,
-    "price-mix": 38,
-    "mix-hint": 14,
+    "phrase": 54,
+    "price-mix": 1,
     "ERA-PKG": 4
   },
-  "byConf": {
-    "high": 490,
-    "med": 368,
-    "low": 345
-  }
+  "hemkarlar": 153,
+  "phraseFromOperator": 2,
+  "phraseFromPayment": 1,
+  "coveragePct": 69.7,
+  "addedFromHemkarlarFo": 66,
+  "longNotesPath": "D:\\ERA-BACKUP\\NAFTA-ERA-READY\\hotel\\12-Reservation-Notes.xlsx",
+  "hemkarlarFoPath": "C:\\Users\\ASUS G752VT\\Downloads\\Front Office With Notes.2026-08-31.15-55-05.Nafta Sanatorium Hotel.xlsx",
+  "longNoteRows": 1225
 }

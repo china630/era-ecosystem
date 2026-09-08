@@ -9,10 +9,16 @@
     "target": "ES2022",
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "paths": {
+      "@era/satellite-kit/integration/person-name": [
+        "../../../packages/satellite-kit/dist/integration/person-name"
+      ]
+    }
   },
   "include": ["src/**/*"]
 }

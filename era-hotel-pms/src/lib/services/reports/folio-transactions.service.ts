@@ -14,6 +14,7 @@ export interface FolioTransactionRow {
   id: string;
   time: string;
   folioId: string;
+  reservationId: string | null;
   guestName: string | null;
   roomNumber: string | null;
   department: string | null;
@@ -48,8 +49,10 @@ export async function queryFolioTransactions(
         folio: {
           select: {
             id: true,
+            reservationId: true,
             reservation: {
               select: {
+                id: true,
                 guest: { select: { fullName: true } },
                 room: { select: { roomNumber: true } },
               },
@@ -68,8 +71,10 @@ export async function queryFolioTransactions(
         folio: {
           select: {
             id: true,
+            reservationId: true,
             reservation: {
               select: {
+                id: true,
                 guest: { select: { fullName: true } },
                 room: { select: { roomNumber: true } },
               },
@@ -94,6 +99,7 @@ export async function queryFolioTransactions(
         id: c.id,
         time: c.createdAt.toISOString(),
         folioId: c.folio.id,
+        reservationId: c.folio.reservationId,
         guestName: c.folio.reservation?.guest.fullName ?? null,
         roomNumber: c.folio.reservation?.room?.roomNumber ?? null,
         department: c.department?.name ?? null,
@@ -114,6 +120,7 @@ export async function queryFolioTransactions(
         id: p.id,
         time: p.createdAt.toISOString(),
         folioId: p.folio.id,
+        reservationId: p.folio.reservationId,
         guestName: p.folio.reservation?.guest.fullName ?? null,
         roomNumber: p.folio.reservation?.room?.roomNumber ?? null,
         department: null,

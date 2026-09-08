@@ -150,21 +150,33 @@ async function ensureAccountable244(
   tx: Prisma.TransactionClient,
   organizationId: string,
 ): Promise<void> {
+  const nasBook = await tx.accountingBook.findFirst({
+    where: { organizationId, code: "NAS" },
+    select: { id: true },
+  });
+  if (!nasBook) return;
+
   const p215 = await tx.account.findFirst({
-    where: { organizationId, code: "215", ledgerType: LedgerType.NAS },
+    where: {
+      organizationId,
+      code: "215",
+      ledgerType: LedgerType.NAS,
+      accountingBookId: nasBook.id,
+    },
   });
   if (!p215) return;
 
   await tx.account.upsert({
     where: {
-      organizationId_code_ledgerType: {
+      organizationId_accountingBookId_code: {
         organizationId,
+        accountingBookId: nasBook.id,
         code: "244",
-        ledgerType: LedgerType.NAS,
       },
     },
     create: {
       organizationId,
+      accountingBookId: nasBook.id,
       code: "244",
       nameAz: "Hesab verən şəxslər (qrup)",
       nameRu: "Подотчётные лица (группа)",
@@ -176,18 +188,24 @@ async function ensureAccountable244(
     update: {},
   });
   const p244 = await tx.account.findFirstOrThrow({
-    where: { organizationId, code: "244", ledgerType: LedgerType.NAS },
+    where: {
+      organizationId,
+      code: "244",
+      ledgerType: LedgerType.NAS,
+      accountingBookId: nasBook.id,
+    },
   });
   await tx.account.upsert({
     where: {
-      organizationId_code_ledgerType: {
+      organizationId_accountingBookId_code: {
         organizationId,
+        accountingBookId: nasBook.id,
         code: "244.01",
-        ledgerType: LedgerType.NAS,
       },
     },
     create: {
       organizationId,
+      accountingBookId: nasBook.id,
       code: "244.01",
       nameAz: "Təhtəlhesab — əməkdaşlar (demo)",
       nameRu: "Подотчёт — сотрудники (демо)",

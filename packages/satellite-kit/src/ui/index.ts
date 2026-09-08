@@ -96,6 +96,21 @@ export {
   type ListPaginationFooterLabels,
   type ListPaginationFooterProps,
 } from "./list-pagination-footer";
+export {
+  EraListWorkspace,
+  type EraListWorkspaceProps,
+} from "./era-list-workspace";
+export {
+  parsePaginatedList,
+  normalizeListPagination,
+  type PaginatedList,
+  type ListPagination,
+} from "./paginated-list";
+export {
+  usePaginatedList,
+  type UsePaginatedListOptions,
+  type UsePaginatedListResult,
+} from "./use-paginated-list";
 export { VoenLookupField, type VoenLookupResult } from "./voen-lookup-field";
 export { buildVoenLookupLabels, type VoenLookupFieldLabels } from "./voen-lookup-labels";
 export { FxEquivalentBadge, type FxEquivalentPreview } from "./fx-equivalent-badge";
@@ -105,4 +120,6 @@ export type {
   EraOpsQuickLink,
   EraDataGridColumn,
   EraDataGridProps,
+  EraDataGridPaginationMode,
+  EraDataGridLayout,
 } from "./era-ops-types";

@@ -60,7 +60,7 @@ type ChessCell = {
 export default function TurnoversPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const { types, enabled, ready: subcontoReady } = useSubcontoFilters(token);
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
@@ -89,9 +89,13 @@ export default function TurnoversPage() {
           const qs = new URLSearchParams({
             dateFrom: from,
             dateTo: to,
-            ledgerType,
             subcontoTypeId,
           });
+          for (const [key, value] of new URLSearchParams(
+            ledgerQueryParam(ledgerType, accountingBookId),
+          )) {
+            qs.set(key, value);
+          }
           const res = await apiFetch(`/api/reporting/subconto/trial-balance?${qs.toString()}`);
           if (!res.ok) {
             setErr(`${t("reporting.turnovers.err")}: ${res.status}`);
@@ -106,7 +110,7 @@ export default function TurnoversPage() {
           setRows(j.rows.length > 0 ? j.rows : (j.fallback?.rows ?? []));
           setReportNote(j.note ?? null);
         } else {
-          const path = `/api/reporting/account-turnovers?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType)}`;
+          const path = `/api/reporting/account-turnovers?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType, accountingBookId)}`;
           const res = await apiFetch(path);
           if (!res.ok) {
             setErr(`${t("reporting.turnovers.err")}: ${res.status}`);
@@ -118,7 +122,7 @@ export default function TurnoversPage() {
         }
         setCells(null);
       } else {
-        const path = `/api/reporting/chessboard?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType)}`;
+        const path = `/api/reporting/chessboard?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType, accountingBookId)}`;
         const res = await apiFetch(path);
         if (!res.ok) {
           setErr(`${t("reporting.chessboard.err")}: ${res.status}`);
@@ -138,14 +142,19 @@ export default function TurnoversPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, from, to, ledgerType, tab, t, useSubcontoTb, subcontoTypeId]);
+  }, [token, from, to, ledgerType, accountingBookId, tab, t, useSubcontoTb, subcontoTypeId]);
 
   async function exportFile(format: "pdf" | "xlsx") {
     if (!token) return;
     setExportBusy(true);
     try {
       const base = tab === "turnovers" ? "account-turnovers" : "chessboard";
-      const qs = new URLSearchParams({ dateFrom: from, dateTo: to, ledgerType, format });
+      const qs = new URLSearchParams({ dateFrom: from, dateTo: to, format });
+      for (const [key, value] of new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      )) {
+        qs.set(key, value);
+      }
       const res = await apiFetch(`/api/reporting/${base}/export?${qs.toString()}`);
       if (!res.ok) {
         setErr(`${t("reporting.exportErr")}: ${res.status}`);

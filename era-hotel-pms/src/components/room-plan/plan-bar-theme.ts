@@ -1,11 +1,12 @@
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { normalizeShareGender } from '@/lib/share-gender';
 import type { ReservationStatus, RoomStatus } from './types';
 
 /** Blunt EW-style chevron depth in CSS pixels (bar height ~26px). */
 export const CHEVRON_PX = 10;
 
-/** Caption left padding clears the butt notch (+ optional HK square). */
-export const BAR_LABEL_PAD_LEFT_PX = CHEVRON_PX + 12;
+/** Caption left padding clears the butt notch. */
+export const BAR_LABEL_PAD_LEFT_PX = CHEVRON_PX + 4;
 
 export type PlanBarDayState =
   | 'option'
@@ -91,6 +92,15 @@ export const HK_SQUARE_COLORS: Record<Exclude<HkSquareKind, null>, string> = {
   closed: '#212121',
 };
 
+/** Arrow-frame occupancy (not HK). Fill stays day-state. */
+export type PlanBarOccupancyKind = 'exclusive' | 'shareM' | 'shareF';
+
+export const PLAN_BAR_OCCUPANCY_STROKE: Record<PlanBarOccupancyKind, string> = {
+  exclusive: '#34495E',
+  shareM: '#1565C0',
+  shareF: '#AD1457',
+};
+
 export type PlanBarInput = {
   id: string;
   status: ReservationStatus;
@@ -105,8 +115,24 @@ export type PlanBarInput = {
 function isEffectiveShareBar(b: PlanBarInput): boolean {
   if (!b.shareEligible) return false;
   if ((b.adults ?? 1) !== 1) return false;
-  const g = (b.shareGender ?? '').trim().toUpperCase();
-  return g === 'M' || g === 'F' || g === 'MALE' || g === 'FEMALE' || g.startsWith('M') || g.startsWith('F');
+  return normalizeShareGender(b.shareGender) != null;
+}
+
+export function resolvePlanBarOccupancyKind(bar: PlanBarInput): PlanBarOccupancyKind {
+  if (!isEffectiveShareBar(bar)) return 'exclusive';
+  return normalizeShareGender(bar.shareGender) === 'F' ? 'shareF' : 'shareM';
+}
+
+/** Doors out of sale / repair are HK + inventory, not the room plan. */
+export function isPlanVisibleRoom(room: {
+  status?: string | null;
+  inventoryStatus?: string | null;
+}): boolean {
+  const status = (room.status ?? '').toUpperCase();
+  const inv = (room.inventoryStatus ?? '').toUpperCase();
+  if (status === 'OOO' || status === 'OOS' || status === 'MAINTENANCE') return false;
+  if (inv === 'OOO' || inv === 'OOS') return false;
+  return true;
 }
 
 function staysOverlapKeys(a: PlanBarInput, b: PlanBarInput): boolean {

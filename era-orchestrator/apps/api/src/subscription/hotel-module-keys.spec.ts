@@ -2,6 +2,7 @@ import {
   consolidateHotelModuleKeys,
   inferPricingCatalogKind,
   isHotelModuleActive,
+  isPassThroughCatalogModuleKey,
   resolveHotelModuleKey,
 } from "@era365/database";
 
@@ -21,5 +22,10 @@ describe("hotel-module-keys (database export)", () => {
   it("isHotelModuleActive dual-reads legacy slugs", () => {
     expect(isHotelModuleActive(["hotel_night_audit"], "hotel_core")).toBe(true);
     expect(resolveHotelModuleKey("hotel_contracts_yield")).toBe("hotel_distribution");
+  });
+
+  it("pass-through includes nas and clinic commercial keys", () => {
+    expect(isPassThroughCatalogModuleKey("nas")).toBe(true);
+    expect(isPassThroughCatalogModuleKey("clinic_registry_emr")).toBe(true);
   });
 });

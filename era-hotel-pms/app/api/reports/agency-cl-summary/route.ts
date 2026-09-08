@@ -1,6 +1,6 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { listAgencyClSummary } from '@/lib/services/agency-ledger.service';
+import { listCityLedgerSummary } from '@/lib/services/agency-ledger.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -13,7 +13,9 @@ export async function GET(request: Request) {
     const from = new Date(params.get('from') ?? new Date().toISOString().slice(0, 10));
     const to = new Date(params.get('to') ?? new Date().toISOString().slice(0, 10));
     to.setHours(23, 59, 59, 999);
-    return jsonOk(serialize(await listAgencyClSummary(from, to)));
+    const kind = (params.get('kind') ?? 'ALL').toUpperCase();
+    const scoped = kind === 'COMPANY' || kind === 'AGENCY' ? kind : 'ALL';
+    return jsonOk(serialize(await listCityLedgerSummary(from, to, scoped)));
   } catch (err) {
     return handleRouteError(err);
   }

@@ -8,6 +8,7 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { assertLabOrderDataScope } from "@/lib/auth/clinic-data-scope";
 import {
   createPortalLink,
   createShipment,
@@ -29,10 +30,13 @@ export async function POST(
 ) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
     if (denied) return denied;
 
     const { id } = await params;
+    const scopeDenied = await assertLabOrderDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const order = await prisma.labOrder.findUnique({
       where: { id },

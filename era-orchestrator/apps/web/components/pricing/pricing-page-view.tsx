@@ -14,9 +14,10 @@ import { PricingCheckoutBar } from "./pricing-checkout-bar";
 import { PricingCoreSuiteSection } from "./pricing-core-suite-section";
 import { PricingHeroSection } from "./pricing-hero-section";
 import { PricingPageShell } from "./pricing-page-shell";
+import { PricingIndustrySection } from "./pricing-industry-section";
+import { PricingPlatformAddonsSection } from "./pricing-platform-addons-section";
 import { PricingPremiumPanel } from "./pricing-premium-panel";
 import { PricingResourceMatrix } from "./pricing-resource-matrix";
-import { PricingHospitalitySection } from "./pricing-hospitality-section";
 
 const PRICING_LOGIN_BTN_CLASS =
   "inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm no-underline transition-all duration-200 hover:bg-slate-50";
@@ -35,9 +36,9 @@ export function PricingPageView({
   const [selectedTierId, setSelectedTierId] =
     useState<"TIER_0" | "TIER_1" | "TIER_2" | "TIER_3">("TIER_0");
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
-  const [selectedHospitalityBundleId, setSelectedHospitalityBundleId] = useState<string | null>(
-    null,
-  );
+  const [selectedIndustryBundles, setSelectedIndustryBundles] = useState<
+    Record<string, string | null>
+  >({});
   const [selectedPremiumSlugs, setSelectedPremiumSlugs] = useState<string[]>([]);
 
   const view = useMemo(
@@ -52,9 +53,9 @@ export function PricingPageView({
         selectedTierId,
         selectedPremiumSlugs,
         selectedBundleId,
-        selectedHospitalityBundleId,
+        selectedIndustryBundles,
       ),
-    [view, selectedTierId, selectedPremiumSlugs, selectedBundleId, selectedHospitalityBundleId],
+    [view, selectedTierId, selectedPremiumSlugs, selectedBundleId, selectedIndustryBundles],
   );
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export function PricingPageView({
             href="/"
             className="text-lg font-bold tracking-tight text-slate-800 no-underline"
           >
-            ERA Finance
+            ERA 365
           </Link>
           <div className="flex items-center gap-2">
             <LandingLanguageToggle locale={locale} onChange={onLocaleChange} />
@@ -89,8 +90,8 @@ export function PricingPageView({
       {view.unavailable ? (
         <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-amber-800">
           {locale === "ru"
-            ? "������� ��� �������� ����������. �������� ������ ������ ����������."
-            : "Qiym?t kataloqu muv?qq?ti ?lcatan deyil. Yaln?z interfeys m?tnl?ri gost?rilir."}
+            ? "Каталог цен временно недоступен. Показаны только тексты интерфейса."
+            : "Qiymət kataloqu müvəqqəti əlçatan deyil. Yalnız interfeys mətnləri göstərilir."}
         </p>
       ) : null}
 
@@ -119,16 +120,24 @@ export function PricingPageView({
           onSelectBundle={setSelectedBundleId}
         />
 
-        <PricingHospitalitySection
-          title={view.hospitalityTitle}
-          intro={view.hospitalityIntro}
-          gateLabel={view.hospitalityGateLabel}
+        <PricingIndustrySection
+          title={view.industriesTitle}
+          intro={view.industriesIntro}
           bundleSelectLabel={view.hospitalityBundleSelect}
           perMonthSuffix={view.pricePerMonthSuffix}
-          bundles={view.hospitalityBundles}
-          modules={view.hospitalityModules}
-          selectedHospitalityBundleId={selectedHospitalityBundleId}
-          onSelectHospitalityBundle={setSelectedHospitalityBundleId}
+          groups={view.industryGroups}
+          selectedBySatellite={selectedIndustryBundles}
+          onSelectBundle={(satelliteKey, marketingId) => {
+            setSelectedIndustryBundles((prev) => ({ ...prev, [satelliteKey]: marketingId }));
+          }}
+        />
+
+        <PricingPlatformAddonsSection
+          title={view.platformAddonsTitle}
+          hint={view.platformAddonsHint}
+          xorHint={view.platformAddonsXor}
+          perMonthSuffix={view.pricePerMonthSuffix}
+          addons={view.platformAddons}
         />
 
         <PricingPremiumPanel
@@ -147,6 +156,7 @@ export function PricingPageView({
           tiers={view.tiers}
           unitPriceLabels={view.unitPriceLabels}
           meterUnitPricing={view.meterUnitPricing}
+          quotaUnitPricing={view.quotaUnitPricing}
           selectedTierId={selectedTierId}
           onSelectTier={setSelectedTierId}
         />

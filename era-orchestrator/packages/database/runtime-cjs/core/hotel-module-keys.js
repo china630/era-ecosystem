@@ -6,6 +6,7 @@ exports.consolidateHotelModuleKeys = consolidateHotelModuleKeys;
 exports.isHotelModuleActive = isHotelModuleActive;
 exports.isPassThroughCatalogModuleKey = isPassThroughCatalogModuleKey;
 exports.inferPricingCatalogKind = inferPricingCatalogKind;
+const pricing_catalog_canon_1 = require("./pricing-catalog-canon");
 /** Canonical hotel PMS submodule keys (`pricing_modules`) — hotel submodule taxonomy. */
 exports.HOTEL_PRICING_MODULE_KEYS = [
     "hotel_core",
@@ -15,6 +16,7 @@ exports.HOTEL_PRICING_MODULE_KEYS = [
     "hotel_transfers",
     "hotel_spa_scheduling",
     "hotel_distribution",
+    "hotel_agency_portal",
     "hotel_guest_experience",
     "hotel_banquets",
     "hotel_medical_sanatorium",
@@ -64,6 +66,9 @@ exports.BANKING_PRICING_MODULE_KEYS = [
     "banking_cash",
     "banking_islamic",
     "banking_wealth",
+    "banking_markets",
+    "banking_pension",
+    "banking_psa",
 ];
 /** Clinic modules (MODULES_CATALOG M0–M14). */
 exports.CLINIC_PRICING_MODULE_KEYS = [
@@ -82,6 +87,9 @@ exports.CLINIC_PRICING_MODULE_KEYS = [
     "clinic_insurance",
     "clinic_inpatient",
     "clinic_telehealth",
+    "clinic_nurse_roster",
+    "clinic_registry_emr",
+    "clinic_sanatorium_clinical",
 ];
 /** Resolve canonical hotel module key (handles legacy slugs). */
 function resolveHotelModuleKey(moduleKey) {
@@ -105,11 +113,7 @@ function isHotelModuleActive(activeModules, moduleKey) {
     return set.has(canonical);
 }
 function isPassThroughCatalogModuleKey(moduleKey) {
-    return (moduleKey.startsWith("hotel_") ||
-        moduleKey.startsWith("clinic_") ||
-        moduleKey.startsWith("banking_") ||
-        moduleKey.startsWith("industry_") ||
-        moduleKey.startsWith("platform_"));
+    return (0, pricing_catalog_canon_1.isPassThroughCatalogModuleKeyExtended)(moduleKey);
 }
 /** Infer PricingCatalogKind from module key prefix. */
 function inferPricingCatalogKind(key) {

@@ -144,6 +144,8 @@ enum ProcedureStaffMode {
 enum ProcedureOrderStatus {
   /// Package line shown on patient card; not on resources until doctor confirms
   PROPOSED
+  /// Paid extra prescribed; not scheduled until reception Pay (CLI-57)
+  PENDING_PAY
   SCHEDULED
   CHECKED_IN
   COMPLETED
@@ -228,7 +230,6 @@ enum LisFileFormat {
 enum PatientSex {
   MALE
   FEMALE
-  OTHER
   UNKNOWN
 }
 
@@ -262,10 +263,10 @@ model PatientRef {
   id                      String             @id @default(cuid())
   organizationId String @map("organization_id")
   refCode                 String
-  /// Ops display parts (Ad / Soyad / Ata adı). fullName is denormalized for search.
-  givenName               String             @default("") @map("given_name")
-  surname                 String             @default("") @map("surname")
-  fatherName              String?            @map("father_name")
+  /// Ops display parts (Ad / Ata adı / Soyad). fullName is denormalized for search.
+  firstName               String             @default("") @map("given_name")
+  lastName                String             @default("") @map("surname")
+  middleName              String?            @map("father_name")
   fullName                String
   phone                   String?
   nationality             String?
@@ -318,6 +319,9 @@ model Practitioner {
   organizationId String @map("organization_id")
   code               String
   fullName           String
+  firstName          String?           @map("first_name")
+  middleName         String?           @map("middle_name")
+  lastName           String?           @map("last_name")
   specialty          String?
   /// Clinical staff class — doctors vs procedure nurses vs lab techs.
   staffKind          PractitionerStaffKind @default(DOCTOR) @map("staff_kind")
@@ -337,7 +341,12 @@ model Practitioner {
   scheduleRules      PractitionerScheduleRule[]
   scheduleExceptions PractitionerScheduleException[]
   dutyLines          StaffDutyLine[]
+  dutyDayOverrides   StaffDutyDayOverride[]
   absences           StaffAbsence[]
+  episodeCareRows    EpisodeCareDoctor[]
+  anamnesisEpisodes  ClinicalEpisode[] @relation("EpisodeAnamnesisAuthor")
+  authoredComplaints ClinicalComplaint[] @relation("ComplaintAuthor")
+  authoredDiagnoses  ClinicalDiagnosis[] @relation("DiagnosisAuthor")
   @@unique([organizationId, code])
   @@index([organizationId])
   @@index([staffKind])
@@ -768,6 +777,9 @@ model ClinicalEpisode {
   /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
   anamnesisText       String?             @map("anamnesis_text") @db.Text
   anamnesisUpdatedAt  DateTime?           @map("anamnesis_updated_at")
+  /// Practitioner who first wrote anamnesis (kept on later edits).
+  anamnesisByPractitionerId String?       @map("anamnesis_by_practitioner_id")
+  anamnesisByPractitioner   Practitioner? @relation("EpisodeAnamnesisAuthor", fields: [anamnesisByPractitionerId], references: [id], onDelete: SetNull)
   status              String              @default("OPEN")
   openedAt            DateTime            @default(now())
   closedAt            DateTime?
@@ -778,10 +790,29 @@ model ClinicalEpisode {
   visits              Visit[]
   procedureOrders     ProcedureOrder[]
   programInstance     ProgramInstance?
+  /// CLI-56 — doctors on this course (therapist, gyn, uro, …).
+  careDoctors         EpisodeCareDoctor[]
 
   @@index([reservationId])
   @@index([organizationId, status])
   @@index([reservationId, patientRefId, status])
+  @@index([anamnesisByPractitionerId])
+}
+
+/// CLI-56 — multi-doctor care team for a sanatorium / walk-in course.
+model EpisodeCareDoctor {
+  id               String          @id @default(cuid())
+  episodeId        String          @map("episode_id")
+  practitionerId   String          @map("practitioner_id")
+  assignedAt       DateTime        @default(now()) @map("assigned_at")
+  assignedByUserId String?         @map("assigned_by_user_id")
+  episode          ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  practitioner     Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@unique([episodeId, practitionerId])
+  @@index([practitionerId])
+  @@index([episodeId, assignedAt])
+  @@map("episode_care_doctor")
 }
 
 model ClinicalComplaint {
@@ -790,8 +821,11 @@ model ClinicalComplaint {
   episode    ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   text       String
   recordedAt DateTime        @default(now())
+  recordedByPractitionerId String?       @map("recorded_by_practitioner_id")
+  recordedByPractitioner   Practitioner? @relation("ComplaintAuthor", fields: [recordedByPractitionerId], references: [id], onDelete: SetNull)
 
   @@index([episodeId])
+  @@index([recordedByPractitionerId])
 }
 
 model ClinicalDiagnosis {
@@ -803,9 +837,12 @@ model ClinicalDiagnosis {
   note             String?
   recordedAt       DateTime        @default(now())
   recordedByUserId String?         @map("recorded_by_user_id")
+  recordedByPractitionerId String?       @map("recorded_by_practitioner_id")
+  recordedByPractitioner   Practitioner? @relation("DiagnosisAuthor", fields: [recordedByPractitionerId], references: [id], onDelete: SetNull)
 
   @@index([episodeId])
   @@index([icdCodeId])
+  @@index([recordedByPractitionerId])
 }
 
 enum IcdCodeKind {
@@ -1032,6 +1069,8 @@ model ProcedureType {
   needsSite          Boolean       @default(true) @map("needs_site")
   /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
   physioOrderFields  String[]      @default([]) @map("physio_order_fields")
+  /// PhysioSite.code allowlist for the doctor picker. Empty + needsSite = legacy all; seed fills concrete lists.
+  allowedSiteCodes   String[]      @default([]) @map("allowed_site_codes")
   afterLunchAllowed  Boolean       @default(true)
   /// When false, slot must start at or after lunchEndHour (men 4-chamber after lunch).
   beforeLunchAllowed Boolean       @default(true) @map("before_lunch_allowed")
@@ -1046,6 +1085,7 @@ model ProcedureType {
   consumableLines    ProcedureConsumableLine[]
   skills             PractitionerSkill[]
   dutyLines          StaffDutyLine[]
+  dutyDayOverrides   StaffDutyDayOverride[]
 
   @@index([resourceCode])
   @@unique([organizationId, code])
@@ -1088,6 +1128,7 @@ model StaffDutyRoster {
   copiedFromYearMonth String?                @map("copied_from_year_month")
   note                String?
   lines               StaffDutyLine[]
+  dayOverrides        StaffDutyDayOverride[]
   createdAt           DateTime               @default(now()) @map("created_at")
   updatedAt           DateTime               @updatedAt @map("updated_at")
 
@@ -1115,6 +1156,30 @@ model StaffDutyLine {
   @@index([practitionerId])
   @@index([organizationId])
   @@map("staff_duty_line")
+}
+
+/// Head-doctor day substitution for one procedure on one civil day (Asia/Baku).
+/// Wins over the monthly posted nurse; never invents a silent skilled-pool fallback.
+model StaffDutyDayOverride {
+  id              String          @id @default(cuid())
+  organizationId  String          @map("organization_id")
+  rosterId        String          @map("roster_id")
+  roster          StaffDutyRoster @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  /// UTC midnight of the Asia/Baku civil day
+  dutyDate        DateTime        @map("duty_date")
+  procedureTypeId String          @map("procedure_type_id")
+  procedureType   ProcedureType   @relation(fields: [procedureTypeId], references: [id], onDelete: Cascade)
+  practitionerId  String          @map("practitioner_id")
+  practitioner    Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  note            String?
+  createdByUserId String?         @map("created_by_user_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@unique([rosterId, dutyDate, procedureTypeId])
+  @@index([organizationId, dutyDate])
+  @@index([practitionerId])
+  @@map("staff_duty_day_override")
 }
 
 /// Clinic-local absence overlay (vacation / sick / training). Finance HR sync is later.
@@ -1260,18 +1325,6 @@ model VisitDiscountAudit {
   @@index([organizationId])
 }
 
-model ClinicalTemplate {
-  id          String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  code        String
-  title       String
-  specialty   String?
-  bodyJson    String
-  createdAt   DateTime @default(now())
-  @@unique([organizationId, code])
-  @@index([organizationId])
-}
-
 model ProgramTemplate {
   id          String                  @id @default(cuid())
   organizationId String @map("organization_id")
@@ -1370,6 +1423,14 @@ model ProcedureOrder {
   note             String?              @db.Text
   /// Type-gated physio values (program, substance, work-kind, …). W3.
   physioFields     Json?                @map("physio_fields")
+  /// CLI-57 package modal: groups sessions created in one Save batch.
+  assignBatchId    String?              @map("assign_batch_id")
+  /// CLI-57: true = burns package quota; false = paid extra / over-quota folio.
+  inPackage        Boolean              @default(false) @map("in_package")
+  /// CLI-57: package balance line burned (PHYSIO_POOL / PARAFFIN_POOL / same as procedureCode).
+  packageQuotaCode String?              @map("package_quota_code")
+  /// Clinic reception confirmed guest payment receipt before Pay (walk-in / extras).
+  paymentReceiptRef String?             @map("payment_receipt_ref")
   quantity         Int                  @default(1)
   patientOrigin    PatientOrigin        @default(WALK_IN)
   reservationId    String?
@@ -1417,6 +1478,9 @@ model ProcedureOrder {
   @@index([prescribedByPractitionerId, scheduledAt])
   @@index([organizationId])
   @@index([extraTicketId])
+  @@index([assignBatchId])
+  @@index([inPackage])
+  @@index([packageQuotaCode])
 }
 
 model ProcedureAllocation {

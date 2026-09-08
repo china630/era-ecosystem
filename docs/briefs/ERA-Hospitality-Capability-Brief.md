@@ -345,7 +345,7 @@ Sanatorium **business** = entitlements `industry_hotel_pms` + `industry_clinic` 
 | Area | Surfaces | Status (readiness) |
 |---|---|---|
 | Ops home / appointments / nurse | `/`, `/appointments`, `/nurse` | UI 🟡 |
-| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | UI 🟡 |
+| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | UI ✅ (CLI-38b dual view + day override) |
 | Sanatorium МКБ | `/sanatorium` | UI 🟡 |
 | Patient card (after contraindications) | `/patients/[id]` | UI 🟡 |
 | Visit / inpatient | `/visits/[id]`, `/inpatient` | UI 🟡 |

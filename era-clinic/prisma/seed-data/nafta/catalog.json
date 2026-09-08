@@ -152,14 +152,6 @@
     "nameEn": "Body wrap"
   },
   {
-    "code": "SVC-TURUNDA-BURUN-VE-QULAQ",
-    "nameAz": "Turunda (burun və qulaq)",
-    "nameRu": "Турунды (носовые и ухо)",
-    "price": 12,
-    "sheet": "Поликлиника",
-    "nameEn": "Nasal and ear turunda"
-  },
-  {
     "code": "SVC-LAZERTERAPIYA",
     "nameAz": "Lazerterapiya",
     "nameRu": "Лазеротерапия",
@@ -358,14 +350,6 @@
     "price": 16,
     "sheet": "Физиотерапия",
     "nameEn": "Herbal steam barrel (phytotherapy)"
-  },
-  {
-    "code": "SVC-TAM-BEDEN-NAFTALAN-VANNASI",
-    "nameAz": "Tam bədən naftalan vannası",
-    "nameRu": "Нафталановая ванна общая",
-    "price": 14,
-    "sheet": "Ванное отделение",
-    "nameEn": "Full-body Naftalan bath"
   },
   {
     "code": "SVC-OTURARQ-BEDEN-NAFTALAN-VANNASI",
@@ -758,5 +742,45 @@
     "price": null,
     "sheet": "Пакет услуг",
     "nameEn": "Physician-prescribed physiotherapy (3 sessions complimentary)"
+  },
+  {
+    "code": "SVC-TURUNDA-BURUN",
+    "nameAz": "Turunda burun",
+    "nameRu": "Турунда нос",
+    "price": 12,
+    "sheet": "Ödənişli Prosedurlar",
+    "nameEn": "Nasal turunda"
+  },
+  {
+    "code": "SVC-TURUNDA-QULAQ",
+    "nameAz": "Turunda qulaq",
+    "nameRu": "Турунда ухо",
+    "price": 12,
+    "sheet": "Ödənişli Prosedurlar",
+    "nameEn": "Ear turunda"
+  },
+  {
+    "code": "SVC-APLIKASIYA-NAFTALAN-QADIN",
+    "nameAz": "Aplikasiya Naftalan (Qadın)",
+    "nameRu": "Аппликация нафталана (жен.)",
+    "price": 24,
+    "sheet": "Ödənişli Prosedurlar",
+    "nameEn": "Naftalan application ♀"
+  },
+  {
+    "code": "SVC-APLIKASIYA-NAFTALAN-KISI",
+    "nameAz": "Aplikasiya Naftalan (Kişi)",
+    "nameRu": "Аппликация нафталана (муж.)",
+    "price": 24,
+    "sheet": "Ödənişli Prosedurlar",
+    "nameEn": "Naftalan application ♂"
+  },
+  {
+    "code": "SVC-TRAKSIYA",
+    "nameAz": "Traksiya",
+    "nameRu": "Тракция",
+    "price": 30,
+    "sheet": "Ödənişli Prosedurlar",
+    "nameEn": "Traction"
   }
 ]

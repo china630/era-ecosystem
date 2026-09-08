@@ -7,6 +7,8 @@ const createSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
   durationDays: z.number().int().positive(),
+  minNights: z.number().int().positive().nullable().optional(),
+  maxNights: z.number().int().positive().nullable().optional(),
   procedures: z
     .array(
       z.object({
@@ -52,6 +54,8 @@ export async function POST(req: Request) {
         code: body.code,
         name: body.name,
         durationDays: body.durationDays,
+        ...(body.minNights !== undefined ? { minNights: body.minNights } : {}),
+        ...(body.maxNights !== undefined ? { maxNights: body.maxNights } : {}),
         procedures: { create: body.procedures },
         ...(body.knots?.length
           ? {

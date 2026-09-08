@@ -26,6 +26,9 @@ import { cpAdminFetch } from "../../../../lib/cp-admin-fetch";
 type PersonRow = {
   id: string;
   fullName: string | null;
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
   finMasked: string | null;
   phoneMasked: string | null;
   sex: string | null;
@@ -40,6 +43,14 @@ const SEX_OPTIONS = [
   { value: "FEMALE", labelKey: "sexFemale" as const },
   { value: "UNKNOWN", labelKey: "sexUnknown" as const },
 ];
+
+function composeRowName(r: PersonRow): string {
+  const parts = [r.firstName, r.middleName, r.lastName]
+    .map((p) => p?.trim())
+    .filter(Boolean);
+  if (parts.length) return parts.join(" ");
+  return r.fullName?.trim() || "—";
+}
 
 export default function SuperAdminMdmPersonsPage() {
   const t = useTranslations("superAdmin.mdmPersons");
@@ -67,7 +78,9 @@ export default function SuperAdminMdmPersonsPage() {
 
   const [resolveOpen, setResolveOpen] = useState(false);
   const [resolveFin, setResolveFin] = useState("");
-  const [resolveName, setResolveName] = useState("");
+  const [resolveFirstName, setResolveFirstName] = useState("");
+  const [resolveMiddleName, setResolveMiddleName] = useState("");
+  const [resolveLastName, setResolveLastName] = useState("");
   const [resolvePhone, setResolvePhone] = useState("");
   const [resolveSex, setResolveSex] = useState("UNKNOWN");
   const [resolveDob, setResolveDob] = useState("");
@@ -158,12 +171,14 @@ export default function SuperAdminMdmPersonsPage() {
     if (!id) return "—";
     const row = items.find((x) => x.id === id);
     if (!row) return id.slice(0, 8);
-    return `${row.fullName ?? "—"} (${row.finMasked ?? id.slice(0, 8)})`;
+    return `${composeRowName(row)} (${row.finMasked ?? id.slice(0, 8)})`;
   }
 
   async function doResolve(e: React.FormEvent) {
     e.preventDefault();
-    if (!resolveFin.trim() || !resolveName.trim()) return;
+    if (!resolveFin.trim() || !resolveFirstName.trim() || !resolveLastName.trim()) {
+      return;
+    }
     setBusy(true);
     setResolveError(null);
     setMsg(null);
@@ -171,7 +186,9 @@ export default function SuperAdminMdmPersonsPage() {
       method: "POST",
       body: JSON.stringify({
         fin: resolveFin.trim().toUpperCase(),
-        fullName: resolveName.trim(),
+        firstName: resolveFirstName.trim(),
+        middleName: resolveMiddleName.trim() || undefined,
+        lastName: resolveLastName.trim(),
         phone: resolvePhone.trim() || undefined,
         sex: resolveSex || undefined,
         birthDate: resolveDob || undefined,
@@ -189,7 +206,9 @@ export default function SuperAdminMdmPersonsPage() {
     setMsg(t("resolveOk", { id: data.globalPersonId ?? data.id ?? "?" }));
     setResolveOpen(false);
     setResolveFin("");
-    setResolveName("");
+    setResolveFirstName("");
+    setResolveMiddleName("");
+    setResolveLastName("");
     setResolvePhone("");
     setResolveSex("UNKNOWN");
     setResolveDob("");
@@ -328,7 +347,9 @@ export default function SuperAdminMdmPersonsPage() {
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSelect")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("fullName")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("firstName")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("middleName")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("lastName")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFin")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("phone")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("sex")}</th>
@@ -348,7 +369,9 @@ export default function SuperAdminMdmPersonsPage() {
                       aria-label={t("colSelect")}
                     />
                   </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.fullName ?? "—"}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.firstName ?? "—"}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.middleName ?? "—"}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.lastName ?? "—"}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
                     {r.finMasked ?? "—"}
                   </td>
@@ -422,16 +445,37 @@ export default function SuperAdminMdmPersonsPage() {
               required
             />
           </label>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("fullName")}
-            <input
-              className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-              value={resolveName}
-              onChange={(e) => setResolveName(e.target.value)}
-              placeholder={t("fullNamePlaceholder")}
-              required
-            />
-          </label>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("firstName")}
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+                value={resolveFirstName}
+                onChange={(e) => setResolveFirstName(e.target.value)}
+                placeholder={t("firstNamePlaceholder")}
+                required
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("middleName")}
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+                value={resolveMiddleName}
+                onChange={(e) => setResolveMiddleName(e.target.value)}
+                placeholder={t("middleNamePlaceholder")}
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("lastName")}
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+                value={resolveLastName}
+                onChange={(e) => setResolveLastName(e.target.value)}
+                placeholder={t("lastNamePlaceholder")}
+                required
+              />
+            </label>
+          </div>
           <label className="block text-[13px] font-medium text-[#34495E]">
             {t("phone")}
             <input
@@ -492,7 +536,7 @@ export default function SuperAdminMdmPersonsPage() {
             onChange={(next) => setMergeSourceId(String(next) || null)}
             options={items.map((r) => ({
               value: r.id,
-              label: `${r.fullName ?? "—"} · ${r.finMasked ?? r.id.slice(0, 8)}`,
+              label: `${composeRowName(r)} · ${r.finMasked ?? r.id.slice(0, 8)}`,
             }))}
             emptyLabel={t("selectPerson")}
           />
@@ -503,7 +547,7 @@ export default function SuperAdminMdmPersonsPage() {
             onChange={(next) => setMergeTargetId(String(next) || null)}
             options={items.map((r) => ({
               value: r.id,
-              label: `${r.fullName ?? "—"} · ${r.finMasked ?? r.id.slice(0, 8)}`,
+              label: `${composeRowName(r)} · ${r.finMasked ?? r.id.slice(0, 8)}`,
             }))}
             emptyLabel={t("selectPerson")}
           />

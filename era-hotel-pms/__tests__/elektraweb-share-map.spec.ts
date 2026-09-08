@@ -21,7 +21,7 @@ function makeDb(state: {
       checkInDate: Date;
       checkOutDate: Date;
       status: string;
-      guest: { gender: string | null; title: string | null };
+      guest: { sex: string | null; title: string | null };
       agency: { code: string; name: string } | null;
       room: {
         id: string;
@@ -35,9 +35,18 @@ function makeDb(state: {
     reservation: {
       findUnique: async ({ where }: { where: { id: string } }) =>
         state.reservations.get(where.id) ?? null,
-      findMany: async ({ where }: { where: { roomId?: string } }) => {
+      findMany: async ({
+        where,
+      }: {
+        where: { roomId?: string; status?: { in: string[] } };
+      }) => {
         const roomId = where.roomId;
-        return [...state.reservations.values()].filter((r) => r.roomId === roomId);
+        const statuses = where.status?.in;
+        return [...state.reservations.values()].filter((r) => {
+          if (r.roomId !== roomId) return false;
+          if (statuses && !statuses.includes(r.status)) return false;
+          return true;
+        });
       },
       update: async ({
         where,
@@ -70,7 +79,7 @@ function stay(partial: {
   checkIn: string;
   checkOut: string;
   status?: string;
-  gender?: string | null;
+  sex?: string | null;
   agency?: { code: string; name: string } | null;
   maxBed?: number;
 }) {
@@ -85,7 +94,7 @@ function stay(partial: {
     checkInDate: new Date(partial.checkIn),
     checkOutDate: new Date(partial.checkOut),
     status: partial.status ?? 'CONFIRMED',
-    guest: { gender: partial.gender !== undefined ? partial.gender : 'M', title: null },
+    guest: { sex: partial.sex !== undefined ? partial.sex : 'M', title: null },
     agency: partial.agency ?? { code: 'UNION', name: 'Hamkarlar' },
     room: {
       id: roomId,
@@ -139,13 +148,13 @@ describe('elektraweb-share-map', () => {
         id: 'elnur',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-29T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const share = stay({
         id: 'yaqub',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-31T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const state = { reservations: new Map([[normal.id, normal], [share.id, share]]) };
       const db = makeDb(state);
@@ -199,7 +208,7 @@ describe('elektraweb-share-map', () => {
         id: 'yaqub',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-31T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const state = { reservations: new Map([[share.id, share]]) };
       const db = makeDb(state);
@@ -211,7 +220,7 @@ describe('elektraweb-share-map', () => {
         id: 'elnur',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-29T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       state.reservations.set(normal.id, normal);
 
@@ -234,7 +243,7 @@ describe('elektraweb-share-map', () => {
         id: 'walk',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-25T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
         agency: { code: 'WALKIN', name: 'Walkin medical' },
       });
       const state = { reservations: new Map([[walkin.id, walkin]]) };
@@ -251,7 +260,7 @@ describe('elektraweb-share-map', () => {
         id: 'walk2',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-28T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
         agency: { code: 'WALKIN', name: 'Walkin medical' },
       });
       state.reservations.set(second.id, second);
@@ -285,7 +294,7 @@ describe('elektraweb-share-map', () => {
       expect(share.shareEligible).toBe(true);
     });
 
-    it('6. EW NORMAL after first-out keeps remaining guest shareEligible', async () => {
+    it('6. EW NORMAL alone after first-out clears orphan shareEligible', async () => {
       const remaining = stay({
         id: 'yaqub',
         shareEligible: true,
@@ -298,34 +307,90 @@ describe('elektraweb-share-map', () => {
       const state = { reservations: new Map([[remaining.id, remaining]]) };
       const db = makeDb(state);
 
-      // EW flipped SHARE → NORMAL (isSecond=false); ERA must keep share.
       const result = await applyElektrawebSharePair(db, {
         reservationId: 'yaqub',
         isSecond: false,
       });
-      expect(result.applied).toBe(true);
-      expect(remaining.shareEligible).toBe(true);
-      expect(remaining.shareGender).toBe('M');
+      expect(result.cleared).toBe(true);
+      expect(result.skippedReason).toBe('orphan_cleared');
+      expect(remaining.shareEligible).toBe(false);
+      expect(remaining.shareGender).toBeNull();
+      expect(remaining.shareBedIndex).toBeNull();
     });
 
-    it('7. CHECKED_OUT history pair counts as 1 door', async () => {
+    it('6b. CHECKED_OUT former roommate does not reopen live share', async () => {
+      const live = stay({
+        id: 'live',
+        shareEligible: false,
+        checkIn: '2026-09-02T10:00:00Z',
+        checkOut: '2026-09-12T08:00:00Z',
+        status: 'IN_HOUSE',
+        sex: 'F',
+      });
+      const gone = stay({
+        id: 'gone',
+        shareEligible: true,
+        shareGender: 'F',
+        shareBedIndex: 2,
+        checkIn: '2026-09-02T10:00:00Z',
+        checkOut: '2026-09-10T08:00:00Z',
+        status: 'CHECKED_OUT',
+        sex: 'F',
+      });
+      const state = { reservations: new Map([[live.id, live], [gone.id, gone]]) };
+      const db = makeDb(state);
+      const result = await applyElektrawebSharePair(db, {
+        reservationId: 'live',
+        isSecond: false,
+      });
+      expect(result.applied).toBe(false);
+      expect(live.shareEligible).toBe(false);
+    });
+
+    it('6c. adults>1 clears shareEligible', async () => {
+      const family = stay({
+        id: 'fam',
+        adults: 3,
+        shareEligible: true,
+        shareGender: 'F',
+        shareBedIndex: 1,
+        checkIn: '2026-09-02T10:00:00Z',
+        checkOut: '2026-09-12T08:00:00Z',
+        status: 'IN_HOUSE',
+        sex: 'F',
+      });
+      const db = makeDb({ reservations: new Map([[family.id, family]]) });
+      const result = await applyElektrawebSharePair(db, {
+        reservationId: 'fam',
+        isSecond: false,
+      });
+      expect(result.cleared).toBe(true);
+      expect(result.skippedReason).toBe('adults_not_1');
+      expect(family.shareEligible).toBe(false);
+    });
+
+    it('7. CHECKED_OUT history pair counts as 1 door (includeHistory)', async () => {
       const a = stay({
         id: 'a',
         status: 'CHECKED_OUT',
         checkIn: '2026-06-01T10:00:00Z',
         checkOut: '2026-06-10T08:00:00Z',
-        gender: 'F',
+        sex: 'F',
       });
       const b = stay({
         id: 'b',
         status: 'CHECKED_OUT',
         checkIn: '2026-06-03T10:00:00Z',
         checkOut: '2026-06-12T08:00:00Z',
-        gender: 'F',
+        sex: 'F',
       });
       const state = { reservations: new Map([[a.id, a], [b.id, b]]) };
       const db = makeDb(state);
-      await applyElektrawebSharePair(db, { reservationId: 'b', isSecond: true });
+      await applyElektrawebSharePair(db, {
+        reservationId: 'b',
+        isSecond: true,
+        includeHistory: true,
+      });
       expect(a.shareEligible && b.shareEligible).toBe(true);
 
       const night = new Date('2026-06-05T00:00:00Z');
@@ -363,21 +428,21 @@ describe('elektraweb-share-map', () => {
         maxBed: 3,
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-29T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const m2 = stay({
         id: 'm2',
         maxBed: 3,
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-30T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const m3 = stay({
         id: 'm3',
         maxBed: 3,
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-31T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const state = {
         reservations: new Map([
@@ -398,14 +463,14 @@ describe('elektraweb-share-map', () => {
         roomId: 'room-x',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-25T08:00:00Z',
-        gender: 'F',
+        sex: 'F',
       });
       const male = stay({
         id: 'mx',
         roomId: 'room-x',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-25T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const mixed = {
         reservations: new Map([
@@ -426,7 +491,7 @@ describe('elektraweb-share-map', () => {
         roomId: 'room-y',
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-25T08:00:00Z',
-        gender: null,
+        sex: null,
       });
       const ngState = { reservations: new Map([[noGender.id, noGender]]) };
       const ng = await applyElektrawebSharePair(makeDb(ngState), {
@@ -442,7 +507,7 @@ describe('elektraweb-share-map', () => {
         adults: 2,
         checkIn: '2026-08-22T10:00:00Z',
         checkOut: '2026-08-25T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const cState = { reservations: new Map([[couple.id, couple]]) };
       const c = await applyElektrawebSharePair(makeDb(cState), {
@@ -459,14 +524,14 @@ describe('elektraweb-share-map', () => {
         roomId: 'room-307',
         checkIn: '2026-08-20T10:00:00Z',
         checkOut: '2026-08-27T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const rovsen = stay({
         id: 'rovsen',
         roomId: 'room-307',
         checkIn: '2026-08-21T10:00:00Z',
         checkOut: '2026-08-28T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const state = { reservations: new Map([[aqil.id, aqil], [rovsen.id, rovsen]]) };
       const db = makeDb(state);
@@ -491,14 +556,14 @@ describe('elektraweb-share-map', () => {
         roomId: 'room-x',
         checkIn: '2026-08-20T10:00:00Z',
         checkOut: '2026-08-27T08:00:00Z',
-        gender: 'M',
+        sex: 'M',
       });
       const female = stay({
         id: 'f',
         roomId: 'room-x',
         checkIn: '2026-08-21T10:00:00Z',
         checkOut: '2026-08-28T08:00:00Z',
-        gender: 'F',
+        sex: 'F',
       });
       const state = { reservations: new Map([[male.id, male], [female.id, female]]) };
       const db = makeDb(state);

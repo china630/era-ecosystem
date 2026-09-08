@@ -8,6 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import { PlatformAuditService } from "../platform-audit.service";
 import { PlatformEntitlementService } from "../platform-entitlement.service";
 import { resolveOrganizationUuid } from "../../common/organization-id.util";
+import { DATA_HUB_XOR } from "@era365/database";
 import type { ValidateReferenceDataKeyDto } from "./dto/validate-reference-data-key.dto";
 
 const PLATFORM_REFERENCE_DATA = "platform_reference_data";
@@ -69,7 +70,7 @@ export class ReferenceDataService {
     }
 
     try {
-      await this.entitlement.assertPlatformModule(orgId, PLATFORM_REFERENCE_DATA);
+      await this.entitlement.assertAnyPlatformModule(orgId, DATA_HUB_XOR);
     } catch (e) {
       if (this.config.get<string>("REFERENCE_DATA_SKIP_ENTITLEMENT") === "1") {
         this.logger.warn(`reference-data entitlement skipped for org=${orgId}`);

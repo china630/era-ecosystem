@@ -4,6 +4,7 @@ import {
   seedPricingModuleIfEmpty,
   ensureMissingPricingModules,
   ensureMissingPricingBundles,
+  syncPricingModuleCatalog,
 } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
@@ -75,6 +76,7 @@ export class PricingService implements OnModuleInit {
   async ensurePricingModulesFromDatabase(): Promise<void> {
     await seedPricingModuleIfEmpty(this.prisma);
     await ensureMissingPricingModules(this.prisma);
+    await syncPricingModuleCatalog(this.prisma);
     await seedPricingBundleDefaultsIfEmpty(this.prisma);
     await ensureMissingPricingBundles(this.prisma);
   }

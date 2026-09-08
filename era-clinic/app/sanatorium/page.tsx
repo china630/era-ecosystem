@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   CHIP_GROUP_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
@@ -25,10 +24,10 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
+  EraDataGrid,
   EraListFilterBar,
-  useDebouncedValue,
+  EraListWorkspace,
   FIELD_SECTION_BODY_CLASS,
   FIELD_SECTION_CLASS,
   Field,
@@ -37,6 +36,7 @@ import {
   FieldTextarea,
   FORM_STACK_CLASS,
   inferCatalogFieldKind,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   LINK_ACCENT_CLASS,
   LOCALE_TOGGLE_ACTIVE_CLASS,
@@ -51,13 +51,28 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  type EraDataGridColumn,
+  usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { IcdPicker } from "@/components/IcdPicker";
+import {
+  EpisodeAssignBlocks,
+  EpisodeScheduleCards,
+} from "@/components/sanatorium/EpisodeAssignChrome";
+import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
+import { ExtrasAssignModal } from "@/components/sanatorium/ExtrasAssignModal";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
+
+type EpisodeListFilters = {
+  q: string;
+  origin: string;
+  room: string;
+  program: string;
+};
 
 type ProcedureLine = {
   procedureCode: string;
@@ -91,7 +106,10 @@ type Episode = {
   checkupCompletedAt: string | null;
   status: string;
   openedAt: string;
+  anamnesisText?: string | null;
   canCloseWalkIn?: boolean;
+  /** CLI-56 — at least one care-team doctor assigned. */
+  hasCareTeam?: boolean;
   patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { id: string; text: string; recordedAt: string }[];
   diagnoses: {
@@ -130,9 +148,9 @@ type ProgramTemplate = {
 };
 
 type WalkInForm = {
-  givenName: string;
-  surname: string;
-  fatherName: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
   fin: string;
   passport: string;
   phone: string;
@@ -143,9 +161,9 @@ type WalkInForm = {
 };
 
 const emptyWalkIn = (): WalkInForm => ({
-  givenName: "",
-  surname: "",
-  fatherName: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
   fin: "",
   passport: "",
   phone: "",
@@ -167,16 +185,23 @@ function daysRemaining(endsOn: string): number {
   return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86_400_000));
 }
 
+function AssignmentDot({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
+        ok ? "bg-[#27AE60]" : "bg-[#E74C3C]"
+      }`}
+      title={ok ? yes : no}
+      aria-label={ok ? yes : no}
+    />
+  );
+}
+
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
   const tc = useTranslations("common");
   const tp = useTranslations("patients");
   const locale = useLocale();
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [listTotal, setListTotal] = useState(0);
-  const [listPage, setListPage] = useState(1);
-  const [listPageSize, setListPageSize] = useState(25);
-  const [listLoading, setListLoading] = useState(false);
   const [procedureTypeNames, setProcedureTypeNames] = useState<Map<string, string>>(new Map());
   const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
@@ -207,7 +232,6 @@ export default function SanatoriumPage() {
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
-  const debouncedQ = useDebouncedValue(q, 300);
   const [filterOrigin, setFilterOrigin] = useState("");
   const [filterRoom, setFilterRoom] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
@@ -217,42 +241,90 @@ export default function SanatoriumPage() {
     Array<{ id: string; procedureName: string; procedureCode: string; status: string; scheduledAt: string }>
   >([]);
   const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
+  const [packageModalOpen, setPackageModalOpen] = useState(false);
+  const [extrasModalOpen, setExtrasModalOpen] = useState(false);
+  const [scheduleCards, setScheduleCards] = useState<
+    Array<{ id: string; title: string; subtitle?: string; status: string; atLabel?: string }>
+  >([]);
+  const [pendingExtras, setPendingExtras] = useState<
+    Array<{ id: string; procedureName: string; amountNet: number }>
+  >([]);
+  const [day1Busy, setDay1Busy] = useState(false);
   const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
   const [bulkCancelReason, setBulkCancelReason] = useState("");
   const [bulkCancelReplace, setBulkCancelReplace] = useState("");
   const [labRepeatOpen, setLabRepeatOpen] = useState(false);
   const [pendingLabCode, setPendingLabCode] = useState("");
+  const [paidSameDayOpen, setPaidSameDayOpen] = useState(false);
+  const [paidSameDayCode, setPaidSameDayCode] = useState("");
+  const [paidSameDayTime, setPaidSameDayTime] = useState("10:00");
+  const [paidSameDayConfirm, setPaidSameDayConfirm] = useState(false);
+  const [paidSameDayWarn, setPaidSameDayWarn] = useState<string | null>(null);
 
-  const loadList = useCallback(async () => {
-    setListLoading(true);
-    try {
+  const listFilters = useMemo<EpisodeListFilters>(
+    () => ({
+      q,
+      origin: filterOrigin,
+      room: filterRoom,
+      program: filterProgram,
+    }),
+    [q, filterOrigin, filterRoom, filterProgram],
+  );
+
+  const listFetcher = useCallback(
+    async ({
+      page,
+      pageSize,
+      filters: f,
+    }: {
+      page: number;
+      pageSize: number;
+      filters: EpisodeListFilters;
+    }) => {
       const params = new URLSearchParams({
-        page: String(listPage),
-        pageSize: String(listPageSize),
+        page: String(page),
+        pageSize: String(pageSize),
         includeHotelRooms: "1",
         includeProgramCodes: "1",
       });
-      if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
-      if (filterOrigin) params.set("origin", filterOrigin);
-      if (filterRoom.trim()) params.set("roomNumber", filterRoom.trim());
-      if (filterProgram.trim()) params.set("programCode", filterProgram.trim());
+      if (f.q.trim()) params.set("q", f.q.trim());
+      if (f.origin) params.set("origin", f.origin);
+      if (f.room.trim()) params.set("roomNumber", f.room.trim());
+      if (f.program.trim()) params.set("programCode", f.program.trim());
       const res = await fetch(`/api/sanatorium/episodes?${params}`);
-      const data = await res.json();
-      const payload = data.data ?? data;
-      if (Array.isArray(payload)) {
-        setEpisodes(payload);
-        setListTotal(payload.length);
-      } else {
-        setEpisodes(Array.isArray(payload.data) ? payload.data : []);
-        setListTotal(typeof payload.total === "number" ? payload.total : 0);
-        // Do not echo page/pageSize from API — avoids race that snaps the pager back.
-        if (Array.isArray(payload.hotelRooms)) setHotelRooms(payload.hotelRooms);
-        if (Array.isArray(payload.programCodes)) setProgramCodes(payload.programCodes);
+      if (!res.ok) throw new Error("Failed to load episodes");
+      const json = await res.json();
+      // API shape: { data: Episode[], total, hotelRooms?, programCodes? }
+      // (hotelRooms/programCodes sit next to the array — not inside it).
+      const root =
+        json && typeof json === "object" ? (json as Record<string, unknown>) : {};
+      const nested =
+        root.data && typeof root.data === "object" && !Array.isArray(root.data)
+          ? (root.data as Record<string, unknown>)
+          : null;
+      const meta = nested ?? root;
+      if (Array.isArray(meta.hotelRooms)) setHotelRooms(meta.hotelRooms as string[]);
+      if (Array.isArray(meta.programCodes)) {
+        setProgramCodes(meta.programCodes as string[]);
       }
-    } finally {
-      setListLoading(false);
-    }
-  }, [listPage, listPageSize, debouncedQ, filterOrigin, filterRoom, filterProgram]);
+      return json;
+    },
+    [],
+  );
+
+  const {
+    items: episodes,
+    total: listTotal,
+    page: listPage,
+    pageSize: listPageSize,
+    setPage: setListPage,
+    setPageSize: setListPageSize,
+    loading: listLoading,
+    reload: loadList,
+  } = usePaginatedList<Episode, EpisodeListFilters>({
+    fetcher: listFetcher,
+    filters: listFilters,
+  });
 
   const loadDetail = useCallback(async (episodeId: string) => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`);
@@ -287,6 +359,7 @@ export default function SanatoriumPage() {
     const res = await fetch(`/api/patients/${patientRefId}/card-feed?section=plan&offset=0`);
     if (!res.ok) {
       setProposedOrders([]);
+      setScheduleCards([]);
       return;
     }
     const data = await res.json();
@@ -296,6 +369,8 @@ export default function SanatoriumPage() {
       title: string;
       status: string;
       at: string;
+      atLabel?: string;
+      subtitle?: string;
       codes?: string[];
     }>;
     const proposed = events
@@ -308,13 +383,41 @@ export default function SanatoriumPage() {
         scheduledAt: ev.at,
       }));
     setProposedOrders(proposed);
-    // Wave C: default-select first 2–3 for day-1 confirm
     setSelectedProposed(new Set(proposed.slice(0, 3).map((o) => o.id)));
+    // CLI-57 schedule cards — in-plan statuses only
+    setScheduleCards(
+      events
+        .filter((ev) =>
+          ["SCHEDULED", "CHECKED_IN", "COMPLETED", "IN_PROGRESS"].includes(ev.status),
+        )
+        .map((ev) => ({
+          id: ev.id,
+          title: ev.title.replace(/^Procedure · /, ""),
+          subtitle: ev.subtitle ?? ev.codes?.[0],
+          status: ev.status,
+          atLabel: ev.atLabel,
+        })),
+    );
   }, []);
 
-  useEffect(() => {
-    void loadList();
-  }, [loadList]);
+  const loadPendingExtras = useCallback(async (episodeId: string) => {
+    const res = await fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`);
+    if (!res.ok) {
+      setPendingExtras([]);
+      return;
+    }
+    const d = await res.json();
+    const payload = d.data ?? d;
+    setPendingExtras(
+      ((payload.items ?? []) as Array<{ id: string; procedureName: string; amountNet: number }>).map(
+        (r) => ({
+          id: r.id,
+          procedureName: r.procedureName,
+          amountNet: r.amountNet,
+        }),
+      ),
+    );
+  }, []);
 
   useEffect(() => {
     void fetch("/api/procedure-types")
@@ -375,15 +478,14 @@ export default function SanatoriumPage() {
     if (chartModalOpen && patientRefId && episodeDetail?.programInstance) {
       void loadProposed(patientRefId);
     }
-  }, [chartModalOpen, episodeDetail, loadProposed]);
+    if (chartModalOpen && selectedId) {
+      void loadPendingExtras(selectedId);
+    }
+  }, [chartModalOpen, episodeDetail, loadProposed, loadPendingExtras, selectedId]);
 
   const selected = episodeDetail?.id === selectedId
     ? episodeDetail
     : episodes.find((e) => e.id === selectedId) ?? null;
-
-  useEffect(() => {
-    setListPage(1);
-  }, [debouncedQ, filterOrigin, filterRoom, filterProgram, listPageSize]);
 
   function statusLabel(status: string): string {
     switch (status) {
@@ -537,7 +639,7 @@ export default function SanatoriumPage() {
   }
 
   function validateWalkIn(): string | null {
-    if (!walkIn.givenName.trim() || !walkIn.surname.trim()) return tp("namePartsRequired");
+    if (!walkIn.firstName.trim() || !walkIn.lastName.trim()) return tp("namePartsRequired");
     if (!walkIn.sex) return t("sexRequired");
     if (!walkIn.fin.trim() && !walkIn.passport.trim()) return t("finOrPassportRequired");
     return null;
@@ -550,17 +652,17 @@ export default function SanatoriumPage() {
       return;
     }
     setBusy(true);
-    const givenName = walkIn.givenName.trim();
-    const surname = walkIn.surname.trim();
-    const fatherName = walkIn.fatherName.trim() || null;
+    const firstName = walkIn.firstName.trim();
+    const lastName = walkIn.lastName.trim();
+    const middleName = walkIn.middleName.trim() || null;
     const res = await fetch("/api/sanatorium/episodes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        givenName,
-        surname,
-        fatherName,
-        fullName: composeFullName({ givenName, surname, fatherName }),
+        firstName,
+        lastName,
+        middleName,
+        fullName: composeFullName({ firstName, lastName, middleName }),
         fin: walkIn.fin.trim() || undefined,
         passport: walkIn.passport.trim() || undefined,
         phone: walkIn.phone.trim() || undefined,
@@ -611,6 +713,55 @@ export default function SanatoriumPage() {
     setBusy(false);
     setMsg(res.ok ? t("procedureCancelled") : (data.error ?? t("failed")));
     await reloadEpisode();
+  }
+
+  async function submitPaidSameDay(confirmPaidSameDay = false) {
+    if (!selected?.patientRef?.id || !paidSameDayCode) return;
+    const name =
+      procedureTypeNames.get(paidSameDayCode) ?? paidSameDayCode;
+    setBusy(true);
+    setPaidSameDayWarn(null);
+    try {
+      const scheduledAt = new Date(
+        `${chartDate}T${paidSameDayTime}:00`,
+      ).toISOString();
+      const res = await fetch("/api/procedures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientRefId: selected.patientRef.id,
+          procedureCode: paidSameDayCode,
+          procedureName: name,
+          scheduledAt,
+          patientOrigin: selected.patientOrigin,
+          reservationId: selected.reservationId,
+          confirmPaidSameDay,
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 409 && data.code === "SAME_DAY_FOURTH_PAID") {
+        setPaidSameDayConfirm(true);
+        setPaidSameDayWarn(
+          data.error ??
+            t("sameDayFourthWarn", {
+              defaultValue:
+                "Already 3 package procedures today. Confirm to post as paid folio (not package quota).",
+            }),
+        );
+        return;
+      }
+      if (!res.ok) {
+        setMsg(data.error ?? t("failed"));
+        return;
+      }
+      setPaidSameDayOpen(false);
+      setPaidSameDayConfirm(false);
+      setPaidSameDayCode("");
+      setMsg(t("paidSameDayAdded", { defaultValue: "Paid same-day procedure added" }));
+      if (selectedId) await loadSchedule(selectedId, chartDate);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function deleteComplaintRow(complaintId: string) {
@@ -687,187 +838,216 @@ export default function SanatoriumPage() {
     }
   }
 
+  const columns = useMemo<EraDataGridColumn<Episode & Record<string, unknown>>[]>(
+    () => [
+      {
+        key: "assignment",
+        header: t("colAssignment"),
+        className: "w-10",
+        render: (e) => (
+          <AssignmentDot
+            ok={e.hasCareTeam === true}
+            yes={t("assignmentYes")}
+            no={t("assignmentNo")}
+          />
+        ),
+      },
+      {
+        key: "patient",
+        header: t("colPatient"),
+        render: (e) => (
+          <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
+        ),
+      },
+      {
+        key: "ref",
+        header: t("colRef"),
+        render: (e) => e.patientRef?.refCode ?? "—",
+      },
+      {
+        key: "room",
+        header: t("colRoom"),
+        render: (e) => e.roomNumber ?? "—",
+      },
+      {
+        key: "origin",
+        header: t("colOrigin"),
+        render: (e) => originLabel(e.patientOrigin),
+      },
+      {
+        key: "program",
+        header: t("colProgram"),
+        render: (e) => e.programInstance?.programCode ?? e.programCode ?? "—",
+      },
+      {
+        key: "daysLeft",
+        header: t("colDaysLeft"),
+        render: (e) => {
+          const prog = e.programInstance;
+          return prog ? String(daysRemaining(prog.endsOn)) : "—";
+        },
+      },
+      { key: "status", header: t("colStatus"), render: (e) => e.status },
+      {
+        key: "actions",
+        header: tc("actions"),
+        render: (e) => (
+          <div className="flex flex-wrap items-center gap-1">
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={t("treatmentChart")}
+              onClick={() => void openChart(e.id)}
+            >
+              <ClipboardList className="h-4 w-4 text-[#2980B9]" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={t("proceduresBtn")}
+              onClick={() => void openProcedures(e.id)}
+            >
+              <ListChecks className="h-4 w-4 text-[#2980B9]" aria-hidden />
+            </button>
+            {e.patientRef?.id ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={t("patientCard")}
+                onClick={() => setPatientCardId(e.patientRef!.id)}
+              >
+                <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            ) : null}
+            {e.patientOrigin === "WALK_IN" && e.status === "OPEN" ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                disabled={busy || e.canCloseWalkIn === false}
+                aria-label={t("closeWalkIn")}
+                title={
+                  e.canCloseWalkIn === false ? t("closeWalkInBusyHint") : t("closeWalkIn")
+                }
+                onClick={() => void closeWalkIn(e.id)}
+              >
+                <DoorClosed className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [t, tc, busy],
+  );
+
   const program = selected?.programInstance;
   const canCompleteCheckup =
-    selected &&
+    Boolean(selected) &&
     !program &&
-    (selected.complaints.length > 0 || selected.diagnoses.length > 0);
+    Boolean(selected?.anamnesisText?.trim()) &&
+    selected!.complaints.length > 0;
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
-            {t("registerWalkIn")}
-          </button>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
+              {t("registerWalkIn")}
+            </button>
+          }
+        />
+        {msg ? <p className={`mb-3 text-[13px] ${TEXT_SUCCESS_CLASS}`}>{msg}</p> : null}
+      </div>
+
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tc("filterReset")}
+            onReset={() => {
+              setQ("");
+              setFilterOrigin("");
+              setFilterRoom("");
+              setFilterProgram("");
+            }}
+          >
+            <Field
+              label={tc("search")}
+              preset="shortText"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <FieldSelect
+              label={t("filterOrigin")}
+              preset="select"
+              value={filterOrigin}
+              onChange={(e) => setFilterOrigin(e.target.value)}
+            >
+              <option value="">{tc("all")}</option>
+              <option value="IN_HOUSE">{t("originInHouse")}</option>
+              <option value="WALK_IN">{t("originWalkIn")}</option>
+            </FieldSelect>
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("filterHotelRoom")}
+              value={filterRoom}
+              onChange={(v) => setFilterRoom(String(v ?? ""))}
+              options={[
+                { value: "", label: t("filterHotelRoomAll") },
+                ...hotelRooms.map((room) => ({ value: room, label: room })),
+              ]}
+              emptyLabel={t("filterHotelRoomAll")}
+            />
+            <CatalogField
+              kind={inferCatalogFieldKind({
+                optionCount: programCodes.length + 1,
+                searchable: programCodes.length > 12,
+              })}
+              label={t("filterProgramCode")}
+              value={filterProgram}
+              onChange={(v) => setFilterProgram(String(v ?? ""))}
+              options={[
+                { value: "", label: t("filterProgramCodeAll") },
+                ...programCodes.map((code) => ({ value: code, label: code })),
+              ]}
+              emptyLabel={null}
+            />
+          </EraListFilterBar>
+        }
+        table={
+          <EraDataGrid
+            columns={columns}
+            rows={episodes as (Episode & Record<string, unknown>)[]}
+            rowKey={(e) => e.id}
+            emptyMessage={
+              listLoading
+                ? tc("loading")
+                : `${t("noEpisodes")}${t("emptyHint") ? ` — ${t("emptyHint")}` : ""}`
+            }
+            pagination={false}
+            paginationMode="server"
+            embedded
+          />
+        }
+        footer={
+          <ListPaginationFooter
+            page={listPage}
+            pageSize={listPageSize}
+            total={listTotal}
+            onPageChange={setListPage}
+            onPageSizeChange={setListPageSize}
+            labels={{
+              rowsPerPage: tc("rowsPerPage"),
+              pageOf: tc("pageOf"),
+              prev: tc("prev"),
+              next: tc("next"),
+            }}
+          />
         }
       />
-      {msg ? <p className={`mb-3 text-[13px] ${TEXT_SUCCESS_CLASS}`}>{msg}</p> : null}
-
-      <EraListFilterBar
-        resetLabel={tc("filterReset")}
-        onReset={() => {
-          setQ("");
-          setFilterOrigin("");
-          setFilterRoom("");
-          setFilterProgram("");
-          setListPage(1);
-        }}
-      >
-        <Field
-          label={tc("search")}
-          preset="shortText"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <FieldSelect
-          label={t("filterOrigin")}
-          preset="select"
-          value={filterOrigin}
-          onChange={(e) => setFilterOrigin(e.target.value)}
-        >
-          <option value="">{tc("all")}</option>
-          <option value="IN_HOUSE">{t("originInHouse")}</option>
-          <option value="WALK_IN">{t("originWalkIn")}</option>
-        </FieldSelect>
-        <CatalogField
-          kind="SEARCHABLE"
-          label={t("filterHotelRoom")}
-          value={filterRoom}
-          onChange={(v) => setFilterRoom(String(v ?? ""))}
-          options={[
-            { value: "", label: t("filterHotelRoomAll") },
-            ...hotelRooms.map((room) => ({ value: room, label: room })),
-          ]}
-          emptyLabel={t("filterHotelRoomAll")}
-        />
-        <CatalogField
-          kind={inferCatalogFieldKind({
-            optionCount: programCodes.length + 1,
-            searchable: programCodes.length > 12,
-          })}
-          label={t("filterProgramCode")}
-          value={filterProgram}
-          onChange={(v) => setFilterProgram(String(v ?? ""))}
-          options={[
-            { value: "", label: t("filterProgramCodeAll") },
-            ...programCodes.map((code) => ({ value: code, label: code })),
-          ]}
-          emptyLabel={null}
-        />
-      </EraListFilterBar>
-
-      <div className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPatient")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRef")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRoom")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrigin")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colProgram")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colDaysLeft")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {episodes.map((e) => {
-                const prog = e.programInstance;
-                const days = prog ? daysRemaining(prog.endsOn) : null;
-                return (
-                  <tr key={e.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{e.patientRef?.refCode ?? "—"}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{e.roomNumber ?? "—"}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{originLabel(e.patientOrigin)}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {prog?.programCode ?? e.programCode ?? "—"}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{days != null ? days : "—"}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{e.status}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <div className="flex flex-wrap items-center gap-1">
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={t("treatmentChart")}
-                          onClick={() => void openChart(e.id)}
-                        >
-                          <ClipboardList className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={t("proceduresBtn")}
-                          onClick={() => void openProcedures(e.id)}
-                        >
-                          <ListChecks className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                        </button>
-                        {e.patientRef?.id ? (
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            aria-label={t("patientCard")}
-                            onClick={() => setPatientCardId(e.patientRef!.id)}
-                          >
-                            <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                          </button>
-                        ) : null}
-                        {e.patientOrigin === "WALK_IN" && e.status === "OPEN" ? (
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            disabled={busy || e.canCloseWalkIn === false}
-                            aria-label={t("closeWalkIn")}
-                            title={
-                              e.canCloseWalkIn === false
-                                ? t("closeWalkInBusyHint")
-                                : t("closeWalkIn")
-                            }
-                            onClick={() => void closeWalkIn(e.id)}
-                          >
-                            <DoorClosed className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {episodes.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                    {listLoading ? tc("loading") : t("noEpisodes")}
-                    <div className="mt-1 text-[12px]">{t("emptyHint")}</div>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-        <ListPaginationFooter
-          page={listPage}
-          pageSize={listPageSize}
-          total={listTotal}
-          onPageChange={setListPage}
-          onPageSizeChange={(n) => {
-            setListPageSize(n);
-            setListPage(1);
-          }}
-          labels={{
-            rowsPerPage: tc("rowsPerPage"),
-            pageOf: tc("pageOf"),
-            prev: tc("prev"),
-            next: tc("next"),
-          }}
-        />
-      </div>
 
       <ModalShell
         open={chartModalOpen && Boolean(selected)}
@@ -1027,63 +1207,96 @@ export default function SanatoriumPage() {
                   </ul>
                 </div>
                 <div>
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-semibold">
-                      {t("proposedPlanTitle", { defaultValue: "Proposed plan" })}
-                    </h3>
-                    {proposedOrders.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          className={PRIMARY_BUTTON_CLASS}
-                          disabled={busy || selectedProposed.size === 0}
-                          onClick={() => void confirmProposed([...selectedProposed])}
-                        >
-                          {t("confirmSelected", { defaultValue: "Confirm selected" })}
-                        </button>
-                        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                          {t("firstDayConfirmHint", {
-                            defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
-                          })}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                  {proposedOrders.length === 0 ? (
-                    <p className={TEXT_MUTED_CLASS}>
-                      {t("proposedEmpty", { defaultValue: "No proposed procedures." })}
-                    </p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {proposedOrders.map((o) => (
-                        <li
-                          key={o.id}
-                          className={`flex items-start gap-2 px-3 py-2 ${FIELD_SECTION_CLASS}`}
-                        >
-                          <input
-                            type="checkbox"
-                            className={`mt-1 ${MODAL_CHECKBOX_CLASS}`}
-                            checked={selectedProposed.has(o.id)}
-                            onChange={() => {
-                              setSelectedProposed((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(o.id)) next.delete(o.id);
-                                else next.add(o.id);
-                                return next;
-                              });
-                            }}
-                          />
-                          <div>
-                            <span className="font-medium">{o.procedureName}</span>
-                            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                              {o.procedureCode} · {statusLabel(o.status)}
-                            </p>
-                          </div>
+                  <EpisodeAssignBlocks
+                    packageTitle={t("assignPackageTitle", {
+                      defaultValue: "Procedures in package",
+                    })}
+                    extrasTitle={t("assignExtrasTitle", {
+                      defaultValue: "Additional procedures",
+                    })}
+                    day1Label={t("day1AutoAssign", {
+                      defaultValue: "Day-1 auto (≤3)",
+                    })}
+                    readOnly={busy}
+                    day1Busy={day1Busy}
+                    hidePackage={selected.patientOrigin === "WALK_IN"}
+                    onPackagePlus={() => setPackageModalOpen(true)}
+                    onExtrasPlus={() => setExtrasModalOpen(true)}
+                    onDay1={
+                      selected.patientOrigin === "WALK_IN"
+                        ? undefined
+                        : () => {
+                            if (!selectedId) return;
+                            setDay1Busy(true);
+                            void fetch(
+                              `/api/sanatorium/episodes/${selectedId}/package-assign/day1`,
+                              { method: "POST" },
+                            )
+                              .then(async (res) => {
+                                if (!res.ok) {
+                                  const d = await res.json();
+                                  window.alert(d.error ?? "Day-1 assign failed");
+                                  return;
+                                }
+                                const patientRefId = episodeDetail?.patientRef?.id;
+                                if (patientRefId) await loadProposed(patientRefId);
+                                await loadDetail(selectedId);
+                              })
+                              .finally(() => setDay1Busy(false));
+                          }
+                    }
+                  />
+                  {pendingExtras.length > 0 ? (
+                    <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {pendingExtras.map((p) => (
+                        <li key={p.id}>
+                          {p.procedureName} · {p.amountNet.toFixed(2)} AZN · PENDING_PAY
                         </li>
                       ))}
                     </ul>
-                  )}
+                  ) : null}
                 </div>
+                <EpisodeScheduleCards
+                  title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
+                  emptyLabel={t("scheduleCardsEmpty", {
+                    defaultValue: "No scheduled procedures yet.",
+                  })}
+                  items={scheduleCards}
+                />
+              </div>
+            ) : selected.patientOrigin === "WALK_IN" ? (
+              <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
+                <EpisodeAssignBlocks
+                  packageTitle={t("assignPackageTitle", {
+                    defaultValue: "Procedures in package",
+                  })}
+                  extrasTitle={t("assignExtrasTitle", {
+                    defaultValue: "Additional procedures",
+                  })}
+                  day1Label={t("day1AutoAssign", {
+                    defaultValue: "Day-1 auto (≤3)",
+                  })}
+                  readOnly={busy}
+                  hidePackage
+                  onPackagePlus={() => setPackageModalOpen(true)}
+                  onExtrasPlus={() => setExtrasModalOpen(true)}
+                />
+                {pendingExtras.length > 0 ? (
+                  <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                    {pendingExtras.map((p) => (
+                      <li key={p.id}>
+                        {p.procedureName} · {p.amountNet.toFixed(2)} AZN · PENDING_PAY
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <EpisodeScheduleCards
+                  title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
+                  emptyLabel={t("scheduleCardsEmpty", {
+                    defaultValue: "No scheduled procedures yet.",
+                  })}
+                  items={scheduleCards}
+                />
               </div>
             ) : (
               <div className={`border-dashed ${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-2`}>
@@ -1126,6 +1339,18 @@ export default function SanatoriumPage() {
               onClick={() => setBulkCancelOpen(true)}
             >
               {t("bulkCancel", { defaultValue: "Bulk cancel" })}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!selected?.patientRef}
+              onClick={() => {
+                setPaidSameDayConfirm(false);
+                setPaidSameDayWarn(null);
+                setPaidSameDayOpen(true);
+              }}
+            >
+              {t("addPaidSameDay", { defaultValue: "Add paid (same-day)" })}
             </button>
           </div>
           <div className={DATA_TABLE_SHELL_CLASS}>
@@ -1198,6 +1423,59 @@ export default function SanatoriumPage() {
               </table>
             </div>
           </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={paidSameDayOpen}
+        title={t("addPaidSameDay", { defaultValue: "Add paid (same-day)" })}
+        onClose={() => {
+          setPaidSameDayOpen(false);
+          setPaidSameDayConfirm(false);
+        }}
+        footer={
+          <ModalFooter
+            onCancel={() => {
+              setPaidSameDayOpen(false);
+              setPaidSameDayConfirm(false);
+            }}
+            onSubmit={() => void submitPaidSameDay(paidSameDayConfirm)}
+            busy={busy}
+            submitLabel={
+              paidSameDayConfirm
+                ? t("confirmPaidFolio", { defaultValue: "Confirm paid folio" })
+                : tc("save")
+            }
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          {paidSameDayWarn ? (
+            <p className="text-sm text-amber-800">{paidSameDayWarn}</p>
+          ) : (
+            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+              {t("addPaidSameDayHint", {
+                defaultValue:
+                  "Reception manual slot. If the guest already has 3 package procedures today, confirm to charge folio (does not burn package quota).",
+              })}
+            </p>
+          )}
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t("pickProcedure", { defaultValue: "Procedure" })}
+            value={paidSameDayCode}
+            onChange={(v) => setPaidSameDayCode(String(v ?? ""))}
+            options={[...procedureTypeNames.entries()].map(([code, name]) => ({
+              value: code,
+              label: `${name} (${code})`,
+            }))}
+          />
+          <Field
+            label={t("procedureTime")}
+            preset="shortText"
+            value={paidSameDayTime}
+            onChange={(e) => setPaidSameDayTime(e.target.value)}
+          />
         </div>
       </ModalShell>
 
@@ -1391,24 +1669,24 @@ export default function SanatoriumPage() {
         <div className={FORM_STACK_CLASS}>
           <FieldRow cols={3}>
             <Field
-              label={tp("givenName")}
+              label={tp("firstName")}
               preset="shortText"
-              value={walkIn.givenName}
-              onChange={(e) => setWalkIn({ ...walkIn, givenName: e.target.value })}
+              value={walkIn.firstName}
+              onChange={(e) => setWalkIn({ ...walkIn, firstName: e.target.value })}
               required
             />
             <Field
-              label={tp("surname")}
+              label={tp("lastName")}
               preset="shortText"
-              value={walkIn.surname}
-              onChange={(e) => setWalkIn({ ...walkIn, surname: e.target.value })}
+              value={walkIn.lastName}
+              onChange={(e) => setWalkIn({ ...walkIn, lastName: e.target.value })}
               required
             />
             <Field
-              label={tp("fatherName")}
+              label={tp("middleName")}
               preset="shortText"
-              value={walkIn.fatherName}
-              onChange={(e) => setWalkIn({ ...walkIn, fatherName: e.target.value })}
+              value={walkIn.middleName}
+              onChange={(e) => setWalkIn({ ...walkIn, middleName: e.target.value })}
             />
           </FieldRow>
           <FieldRow>
@@ -1536,6 +1814,68 @@ export default function SanatoriumPage() {
         open={Boolean(patientCardId)}
         onClose={() => setPatientCardId(null)}
       />
-    </>
+
+      {selectedId ? (
+        <>
+          <PackageAssignModal
+            open={packageModalOpen}
+            episodeId={selectedId}
+            onClose={() => setPackageModalOpen(false)}
+            onSaved={() => {
+              const patientRefId = episodeDetail?.patientRef?.id;
+              if (patientRefId) void loadProposed(patientRefId);
+              void loadDetail(selectedId);
+            }}
+            labels={{
+              title: t("packageAssignModalTitle", { defaultValue: "Procedures in package" }),
+              save: tc("save"),
+              cancel: tc("cancel"),
+              leftMenu: t("packageMenuLeft", { defaultValue: "Package remaining" }),
+              rightAssigned: t("packageMenuRight", { defaultValue: "Assigned" }),
+              remaining: t("remaining", { defaultValue: "Remaining" }),
+              qty: t("qty", { defaultValue: "Quantity" }),
+              note: t("note", { defaultValue: "Note" }),
+              addToDraft: t("addToDraft", { defaultValue: "Add" }),
+              all: t("assignAll", { defaultValue: "All" }),
+              delete: tc("delete"),
+              consumedLocked: t("consumedLocked", { defaultValue: "Completed" }),
+              emptyLeft: t("packageEmptyLeft", { defaultValue: "No package lines." }),
+              emptyRight: t("packageEmptyRight", { defaultValue: "Nothing assigned yet." }),
+              softWarnPrefix: t("softWarn", { defaultValue: "Note" }),
+              replace: t("replaceProcedure", { defaultValue: "Replace" }),
+              replaceFrom: t("replaceFrom", { defaultValue: "From" }),
+              replaceTo: t("replaceTo", { defaultValue: "To" }),
+              replaceSubmit: t("replaceSubmit", { defaultValue: "Replace" }),
+              qtyDown: t("qtyDown", { defaultValue: "−1" }),
+              checkedInLocked: t("checkedInLocked", { defaultValue: "Checked in" }),
+              pickPoolSku: t("pickProcedure", { defaultValue: "Procedure" }),
+            }}
+          />
+          <ExtrasAssignModal
+            open={extrasModalOpen}
+            episodeId={selectedId}
+            onClose={() => setExtrasModalOpen(false)}
+            onSaved={() => {
+              void loadPendingExtras(selectedId);
+              const patientRefId = episodeDetail?.patientRef?.id;
+              if (patientRefId) void loadProposed(patientRefId);
+            }}
+            labels={{
+              title: t("extrasAssignModalTitle", { defaultValue: "Additional procedures" }),
+              save: tc("save"),
+              cancel: tc("cancel"),
+              pickProcedure: t("pickProcedure", { defaultValue: "Procedure" }),
+              qty: t("qty", { defaultValue: "Quantity" }),
+              note: t("note", { defaultValue: "Note" }),
+              addToDraft: t("addToDraft", { defaultValue: "Add" }),
+              pending: t("pendingPay", { defaultValue: "Awaiting payment" }),
+              price: t("price", { defaultValue: "Price" }),
+              delete: tc("delete"),
+              empty: t("extrasEmpty", { defaultValue: "No additional procedures." }),
+            }}
+          />
+        </>
+      ) : null}
+    </div>
   );
 }

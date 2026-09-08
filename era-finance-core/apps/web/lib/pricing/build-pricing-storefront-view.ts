@@ -105,7 +105,7 @@ const DEFAULT_METER: MeterUnitPricing = {
   pricePerUserMonthAzn: 2,
   pricePerGbMonthAzn: 0.5,
   pricePerWhatsappAlertAzn: 0.05,
-  pricePerInvoiceAzn: 0.1,
+  pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
 };
 

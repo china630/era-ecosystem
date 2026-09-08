@@ -18,14 +18,14 @@ export default function AppNav() {
   return (
     <nav className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 pb-4 text-sm">
       <div className="flex flex-wrap gap-4">
-        <Link href="/fo/rack" className="text-sky-400 hover:underline">
-          {t('chessboard')}
-        </Link>
         {can(PERMISSIONS.RESERVATIONS_READ) && (
           <Link href="/fo/room-plan" className="text-sky-400 hover:underline">
             {t('roomPlan')}
           </Link>
         )}
+        <Link href="/fo/rack" className="text-sky-400 hover:underline">
+          {t('chessboard')}
+        </Link>
         {can(PERMISSIONS.RESERVATIONS_WRITE) && (
           <Link href="/bookings/new" className="text-sky-400 hover:underline">
             {t('roomBooking')}
@@ -38,6 +38,9 @@ export default function AppNav() {
             </Link>
             <Link href="/front-cash/agency-ledger" className="text-sky-400 hover:underline">
               {t('agencyLedger')}
+            </Link>
+            <Link href="/front-cash/company-ledger" className="text-sky-400 hover:underline">
+              {t('companyLedger')}
             </Link>
             <Link href="/reports/reconciliation" className="text-sky-400 hover:underline">
               {t('reconciliation')}

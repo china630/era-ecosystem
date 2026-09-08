@@ -6,9 +6,6 @@ jest.mock("@/lib/prisma", () => ({
     procedureCompatibilityRule: {
       update: jest.fn(),
     },
-    clinicalTemplate: {
-      update: jest.fn(),
-    },
   },
 }));
 

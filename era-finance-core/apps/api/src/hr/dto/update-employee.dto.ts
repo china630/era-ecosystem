@@ -51,7 +51,15 @@ export class UpdateEmployeeDto {
   @IsString()
   staffPin?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: "Ata adı — fill-not-clear in MDM when editing person (not stored on Employee)",
+  })
+  @IsOptional()
+  @IsString()
+  middleName?: string;
+
+  /** @deprecated alias for middleName — one release */
+  @ApiPropertyOptional({ deprecated: true })
   @IsOptional()
   @IsString()
   patronymic?: string;
@@ -118,6 +126,12 @@ export class UpdateEmployeeDto {
   initialSalaryBalance?: number | null;
 
   @ApiPropertyOptional({ description: "Date of birth (HR birthday reminders)" })
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  /** @deprecated alias for birthDate — one release */
+  @ApiPropertyOptional({ deprecated: true })
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;

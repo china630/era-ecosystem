@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { formatAzEmployeeListName } from "../../lib/employee-display-name";
 import { apiFetch } from "../../lib/api-client";
 import {
   MODAL_CLOSE_BUTTON_CLASS,
@@ -16,7 +17,7 @@ import {
 import { Button } from "../ui/button";
 
 type DeptFlat = { id: string; name: string; parentId: string | null };
-type EmployeeOpt = { id: string; firstName: string; lastName: string };
+type EmployeeOpt = { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null };
 
 export type DepartmentEditPayload = {
   id: string;
@@ -147,7 +148,7 @@ export function DepartmentModal({
                 <option value="">{t("hrStructure.noManager")}</option>
                 {employees.map((e) => (
                   <option key={e.id} value={e.id}>
-                    {e.lastName} {e.firstName}
+                    {formatAzEmployeeListName(e)}
                   </option>
                 ))}
               </select>

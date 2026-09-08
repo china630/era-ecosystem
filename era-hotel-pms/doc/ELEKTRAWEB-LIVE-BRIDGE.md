@@ -66,6 +66,7 @@ Open these grids so list/detail XHR fire under the logged-in session. Observed a
 | Domain | UI URL | Typical Elektraweb Excel analogue |
 |--------|--------|-----------------------------------|
 | Reservations | [app.elektraweb.com/app/grid/res-all/reservation](https://app.elektraweb.com/app/grid/res-all/reservation) | Reservations / FOCP |
+| Reservation notes | [app.elektraweb.com/app/grid/allresnotes](https://app.elektraweb.com/app/grid/allresnotes) | CRM → Reservation Notes (long Extra Req / Price Note) |
 | Folio posting / lines | [app.elektraweb.com/app/grid/toplu-islem-girisi](https://app.elektraweb.com/app/grid/toplu-islem-girisi) | Folio Transactions |
 | Guest cards | [app.elektraweb.com/app/grid/guest-card-simple](https://app.elektraweb.com/app/grid/guest-card-simple) | Guest Cards |
 
@@ -79,7 +80,7 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 ┌─────────────────────────────────────┐
 │  FO PC: Chrome + extension (MV3)    │
 │  Session: Elektraweb login + 2FA    │
-│  Tabs: res-all / guest-card / folio │
+│  Tabs: res-all / allresnotes / guest-card / folio │
 └──────────────┬──────────────────────┘
                │ intercept JSON responses
                │ (declarativeNetRequest / debugger /
@@ -135,14 +136,14 @@ Backend REST/Graph paths are **not** the same as these UI routes. Capture them v
 | ERA field / behavior | Elektraweb source (Excel parity) | Notes |
 |----------------------|----------------------------------|--------|
 | `Reservation.externalRef` | Res Id | Required |
-| Guest link | Guest Id preferred; name fallback last resort | Bridge must prefer Guest Id from API |
+| Guest link | Guest Id (`RESGUESTID` / `CONTACTGUESTID` / `GUESTID`) for **primary**; FOCP `GUESTNAMES` `A / B` → `ReservationGuest` party (co-guests matched by name / later `QA_HOTEL_RES_GUEST.GUESTID`) | Never create one Guest Card named `A / B`. Never attach FOCP to an arbitrary first guest. Create primary only when EW Id is new. Check-in emits **one lifecycle event per pax**. Sync Guest Cards before FOCP. |
 | Room type / room | Room Type, Room No | Resolve existing master data |
 | Dates | Arrival, Departure | |
 | Status | State | **Critical** for lifecycle |
 | Adults / children | Adult, TChd | |
 | Agency / voucher | Agency, Voucher | Soft |
 | Rate / package | Notes Extra Req / agency | Resolve `PKG-*` via Wave A dual-run; **not** EW rate as medical SKU |
-| Notes | Extra Req, Res Note, CIn, Price | Upsert `ReservationNote`; stamp `medicalPackageCode` |
+| Notes | Extra Req, Res Note, CIn, Price | Live: `QA_EASYPMS_NOTES` on `/app/grid/allresnotes` (NOTETYPE + NOTES + RESID). Excel wide FO-with-Notes still for import. Then stamp `medicalPackageCode`. |
 
 **Status-diff → events** (must call hotel service paths, not silent Prisma-only write):
 
@@ -246,6 +247,7 @@ Raw HAR = gitignored (`*.har`) — live tokens + guest PII.
 | In-house | `/app/grid/res-all/inHouse` | `QA_HOTEL_RESERVATION` | `RESSTATEID=3` + `HOTELID` |
 | Check-out (tab on same res-all page) | `/app/grid/res-all/…` tab | `QA_HOTEL_RESERVATION_CHECKOUT` | `HOTELID` (sample: all rows CheckOut) |
 | Card open | (from either grid) | `QA_EASYPMS_RESDETAIL` + `QA_HOTEL_RES_GUEST` | by Res Id |
+| Reservation Notes | `/app/grid/allresnotes` | `QA_EASYPMS_NOTES` | date range; long `NOTETYPE` + `NOTES` + `RESID` |
 
 Same browser page + tab filter is enough: each tab hits a **different Select object** (F5 alone may re-fetch only the active tab — mixed HAR with both Reservation list + CheckOut tab is fine).
 
@@ -262,14 +264,14 @@ Same browser page + tab filter is enough: each tab hits a **different Select obj
 | `CHECKIN` / `CHECKOUT` | yes | yes | yes | dates |
 | `ROOMNO` / `ROOMTYPECODE` | partial / yes | yes / yes | yes | room — **strip** trailing `S` (`707S`→`707`); never create virtual room |
 | `RATECODE` / `RATECODEID` | yes | yes | yes | rate / medical program |
-| `AGENCY` | yes | yes | yes | agency |
+| `AGENCY` (+ `AGENCYNAME` / `AGENCYID_AGENCYCODE`) | yes | yes | yes | agency — **resolve-or-create** by exact name/code (not loose `contains`); sparse row must not wipe |
 | `GUESTNAMES` | yes | yes | yes | display |
 | `RESGUESTID` / `CONTACTGUESTID` | ~36–47% | ~83% | ~93% | soft guest link |
 | Detail `GUESTID` + `QA_HOTEL_RES_GUEST` | when card opened | when card opened | when card opened | hard `Guest.externalRef` |
 | Detail `RECORDTYPE` / `RESTYPE` / `ROOMCOUNT` / `ROOMCNT` | often missing on list | — | — | share second-guest signal when present on card |
 | `SHARENO` | optional | optional | optional | display label only |
 
-**Shared twin:** after reservation upsert, `applyElektrawebSharePair` (`elektraweb-share-map.ts`) pairs SHARE / Room Count 0 / `…S` with the NORMAL neighbor on the same physical door. **Do not** clear `shareEligible` when EW later sets Record Type NORMAL after first-out. Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assignment.md).
+**Shared twin:** after reservation upsert, `applyElektrawebSharePair` (`elektraweb-share-map.ts`) pairs SHARE / Room Count 0 / `…S` with the NORMAL neighbor on the same physical door. Live bridge opens the pool only on EW second / live share neighbor / ≥2 live same-gender singles — **not** sticky `shareEligible` alone. Alone + NORMAL (or `adults≠1`) **clears** orphan share so FO Break share sticks; `CHECKED_OUT` history does not reopen live pools (Excel cutover uses `includeHistory`). Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assignment.md).
 
 **Extension:** allowlist all three list objects + detail/guest-on-stay when FO opens a card.
 
@@ -291,8 +293,11 @@ UI: `/app/grid/guest-card-simple` (config also references `guest-cards`).
 | `PASSPORTNO` | ~95% | MDM / identity |
 | `NATIONALIDNO` (FIN) | often empty on list | use when present; card/doc child may help |
 | `PHONE` | ~50% | ops |
-| `BIRTHDATE` | ~94% | ops |
+| `BIRTHDATE` | ~94% | ops (fill-not-clear on re-ingest) |
+| `GENDER` / `GENDERID` (`0`/`1`) | when EW sends it | `Guest.sex` M/F; sparse FOCP must not wipe |
 | `COUNTRYCODE` / nationality | yes | nationality |
+
+**Duplicates:** EW often has **two Guest Ids** for one person (FOCP `RESGUESTID` ≠ richer Guest Card `ID`). Bridge keys by EW Id; FOCP attach prefers the **richest** same-name card (sex/DOB/phone) instead of spawning another thin stub. Orphans with empty demographics are leftover EW second Ids — merge/delete in ERA FO when confirmed.
 
 ### 6.3 Folio — DONE
 
@@ -382,7 +387,7 @@ Do **not** treat these ids as product defaults. Config / inbound name match on o
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3 v0.3.8; overlay login when JWT missing/expired
+  manifest.json          # MV3 v0.3.10; overlay login when JWT missing/expired; QA_EASYPMS_NOTES allowlist
   background.js          # service worker: inbound queue + POST ingest + lamp + executeScript
   injected.js / content.js
   overlay-boot.js + overlay.js + overlay-frame.html  # in-page lamp (iframe UI, EW CSS isolated)
@@ -397,7 +402,7 @@ era-hotel-pms/extensions/elektraweb-bridge/
 
 Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
 
-Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on Elektraweb for Chrome **Open as window / installed app** (no extension toolbar). v0.3.8: overlay shows ERA login + password when there is no token or JWT `exp` has passed (URL/org UUID stay in Settings). Panel UI is `overlay-frame.html`. Click overlay → Capture / Write / settings. Drag the circle if it covers SPA buttons. After Load unpacked / update: **Reload** the extension on `chrome://extensions`.
+Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on Elektraweb for Chrome **Open as window / installed app** (no extension toolbar). v0.3.10: overlay shows ERA login + password when there is no token or JWT `exp` has passed (URL/org UUID stay in Settings). Panel UI is `overlay-frame.html`. Click overlay → Capture / Write / settings. Drag the circle if it covers SPA buttons. After Load unpacked / update: **Reload** the extension on `chrome://extensions` from `era-hotel-pms/extensions/elektraweb-bridge` (not a stale copy).
 
 | Color | Meaning |
 |-------|---------|
@@ -467,7 +472,7 @@ Popup shows the same toggles plus a matching lamp.
 | Symptom | Likely cause | Mitigation |
 |---------|--------------|------------|
 | Clinic empty, hotel has guests | Upsert without lifecycle emit | Fix ingest to call check-in services on status-diff |
-| Duplicate guests | Missing Guest Id / name fallback | Prefer API Guest Id; reconcile Excel externalRef |
+| Duplicate guests | FOCP created a guest when Excel already had a name stub | Prefer EW Guest Id; name-match import stubs and backfill `externalRef`; never first-guest fallback |
 | Orphan folio lines | Res not mirrored yet | Batch order + retry queue |
 | Sync silent on one desk | Extension missing / disabled | FO PC checklist |
 | Sudden mass errors | Elektraweb upgraded (new v18.x) | Version gate + pause bridge |

@@ -4,12 +4,15 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
-  LedgerType,
   PrepaidExpenseScheduleStatus,
   PrepaidExpenseStatus,
 } from "@erafinance/database";
 import { Decimal } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
+import {
+  AccountingBookService,
+  ledgerTypeForBookGaap,
+} from "../accounting/accounting-book.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreatePrepaidExpenseDto } from "./dto/create-prepaid-expense.dto";
@@ -47,6 +50,7 @@ export class PrepaidExpensesService {
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   list(organizationId: string) {
@@ -161,6 +165,10 @@ export class PrepaidExpensesService {
     const amountStr = new Decimal(line.amount).toFixed(4);
 
     const { transactionId } = await this.prisma.$transaction(async (tx) => {
+      const opsBook = await this.accountingBooks.resolveDefaultOpsBook(
+        params.organizationId,
+        tx,
+      );
       const { transactionId: tid } = await this.accounting.postJournalInTransaction(tx, {
         organizationId: params.organizationId,
         date: bookingDate,
@@ -168,7 +176,8 @@ export class PrepaidExpensesService {
         description: `Prepaid amortization ${period}`,
         isFinal: true,
         counterpartyId: prepaid.counterpartyId,
-        ledgerType: LedgerType.NAS,
+        ledgerType: ledgerTypeForBookGaap(opsBook.gaapKind),
+        accountingBookId: opsBook.id,
         lines: [
           {
             accountCode: prepaid.expenseAccountCode,

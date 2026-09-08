@@ -1,6 +1,39 @@
 jest.mock("@era/satellite-kit", () => ({
   linkPersonIdentity: jest.fn(),
   isValidAzFin: (v: string) => /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/.test(String(v || "").trim()),
+  composePersonFullName: (
+    firstName?: string | null,
+    middleName?: string | null,
+    lastName?: string | null,
+  ) =>
+    [firstName, middleName, lastName]
+      .map((p) => p?.trim())
+      .filter(Boolean)
+      .join(" "),
+  resolveIncomingNameParts: (input: {
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    fullName?: string | null;
+  }) => {
+    const first = input.firstName?.trim() || null;
+    const last = input.lastName?.trim() || null;
+    if (first || last) {
+      return { firstName: first, middleName: input.middleName?.trim() || null, lastName: last };
+    }
+    const blob = input.fullName?.trim();
+    if (!blob) return null;
+    const parts = blob.split(/\s+/).filter(Boolean);
+    if (parts.length <= 2) {
+      return { firstName: parts[0] ?? null, middleName: null, lastName: parts[1] ?? null };
+    }
+    return {
+      firstName: parts[0],
+      middleName: parts.slice(1, -1).join(" "),
+      lastName: parts[parts.length - 1],
+    };
+  },
+  normalizeNationalityIso: () => null,
 }));
 
 jest.mock("@/lib/hotel-stay-person", () => ({
@@ -52,8 +85,8 @@ describe("resolveCutoverPatientMdm", () => {
     link.mockResolvedValue({ globalPersonId: "gp-name" });
     const id = await resolveCutoverPatientMdm({
       fullName: "Gülarə Həşimova",
-      givenName: "Gülarə",
-      surname: "Həşimova",
+      firstName: "Gülarə",
+      lastName: "Həşimova",
       birthDate: "1972-08-05",
       phone: "+994501112233",
       hotelResNo: "11111472",
@@ -82,8 +115,8 @@ describe("resolveCutoverPatientMdm", () => {
     link.mockResolvedValue({ globalPersonId: "gp-name" });
     await resolveCutoverPatientMdm({
       fullName: "Gülarə Həşimova",
-      givenName: "Gülarə",
-      surname: "Həşimova",
+      firstName: "Gülarə",
+      lastName: "Həşimova",
       birthDate: "1972-08-05",
       passport: "AA5678987",
       sex: "FEMALE",

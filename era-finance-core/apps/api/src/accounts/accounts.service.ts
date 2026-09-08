@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
+  GoneException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import type { TemplateAccount } from "@prisma/client";
 import {
@@ -13,7 +16,11 @@ import {
   Prisma,
 } from "@erafinance/database";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { LedgerMappingService } from "../accounting/ledger-mapping.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { SubscriptionAccessService } from "../subscription/subscription-access.service";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import type { CreateAccountMappingDto } from "./dto/create-account-mapping.dto";
 import type { CreateBankAccountDto } from "./dto/create-bank-account.dto";
 import type { CreateIfrsMappingRuleDto } from "./dto/create-ifrs-mapping-rule.dto";
@@ -29,12 +36,40 @@ export class AccountsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly posting: PostingAccountResolver,
+    private readonly ledgerMapping: LedgerMappingService,
+    private readonly subscriptionAccess: SubscriptionAccessService,
+    @Optional()
+    private readonly accountingBooks?: AccountingBookService,
   ) {}
 
-  listAccounts(organizationId: string, ledgerType: LedgerType, locale?: string | null) {
+  async listAccounts(
+    organizationId: string,
+    ledgerType: LedgerType,
+    locale?: string | null,
+    accountingBookId?: string,
+  ) {
+    const book = this.accountingBooks
+      ? await this.accountingBooks.resolveByIdOrLedgerAlias(
+          organizationId,
+          accountingBookId,
+          ledgerType,
+        )
+      : null;
+    const resolvedLedgerType =
+      book?.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book?.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : book
+            ? LedgerType.NAS
+            : ledgerType;
     return this.prisma.account
       .findMany({
-        where: { organizationId, ledgerType },
+        where: {
+          organizationId,
+          ledgerType: resolvedLedgerType,
+          ...(book ? { accountingBookId: book.id } : {}),
+        },
         orderBy: { code: "asc" },
         select: {
           id: true,
@@ -177,6 +212,18 @@ export class AccountsService {
     templateAccountId: string,
   ) {
     return this.prisma.$transaction(async (tx) => {
+      await this.accountingBooks?.ensureSystemBooks(organizationId, {}, tx);
+      const nasBook = this.accountingBooks
+        ? await this.accountingBooks.resolveByLedgerType(
+            organizationId,
+            LedgerType.NAS,
+            tx,
+          )
+        : null;
+      if (!nasBook) {
+        throw new NotFoundException("Active NAS accounting book not found");
+      }
+
       const org = await tx.organization.findUnique({
         where: { id: organizationId },
         select: { kind: true },
@@ -194,6 +241,7 @@ export class AccountsService {
         where: {
           organizationId,
           ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
           code: leaf.code,
         },
       });
@@ -230,6 +278,7 @@ export class AccountsService {
           where: {
             organizationId,
             ledgerType: LedgerType.NAS,
+            accountingBookId: nasBook.id,
             code: row.code,
           },
         });
@@ -249,6 +298,7 @@ export class AccountsService {
         const created = await tx.account.create({
           data: {
             organizationId,
+            accountingBookId: nasBook.id,
             code: row.code,
             nameAz: row.nameAz,
             nameRu: row.nameRu,
@@ -274,12 +324,14 @@ export class AccountsService {
         idByCode.set(row.code, created.id);
       }
 
-      await this.mirrorNasToIfrs(organizationId, tx);
+      // P1: do not clone full NAS→IFRS on single-account import.
+      // Use bootstrapMultiGaap / provisionIfrsFromTemplate for IFRS CoA.
 
       return tx.account.findFirstOrThrow({
         where: {
           organizationId,
           ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
           code: leaf.code,
         },
         select: {
@@ -298,22 +350,39 @@ export class AccountsService {
   }
 
   /**
-   * Создаёт недостающие счета IFRS с теми же кодами/иерархией, что NAS (для маппинга и теневых проводок).
+   * Ops escape hatch: clone NAS CoA into IFRS (same codes). Not used on onboarding (P1).
    */
   async mirrorNasToIfrs(
     organizationId: string,
     db: AccountsDb = this.prisma,
-  ): Promise<{ created: number }> {
+  ): Promise<{ created: number; warning: string }> {
+    const systemBooks = await this.accountingBooks?.ensureSystemBooks(
+      organizationId,
+      { createIfrs: true },
+      db,
+    );
+    const ifrsBook = systemBooks?.ifrs;
+    if (!ifrsBook) {
+      throw new NotFoundException("Active IFRS accounting book not found");
+    }
+
     const nasAll = await db.account.findMany({
       where: { organizationId, ledgerType: LedgerType.NAS },
       orderBy: { code: "asc" },
     });
     if (nasAll.length === 0) {
-      return { created: 0 };
+      return {
+        created: 0,
+        warning: "No NAS accounts to clone",
+      };
     }
 
     const existingIfrs = await db.account.findMany({
-      where: { organizationId, ledgerType: LedgerType.IFRS },
+      where: {
+        organizationId,
+        ledgerType: LedgerType.IFRS,
+        accountingBookId: ifrsBook.id,
+      },
       select: { id: true, code: true },
     });
     const ifrsByCode = new Map(existingIfrs.map((a) => [a.code, a]));
@@ -340,6 +409,7 @@ export class AccountsService {
         const row = await db.account.create({
           data: {
             organizationId,
+            accountingBookId: ifrsBook.id,
             code: n.code,
             nameAz: n.nameAz,
             nameRu: n.nameRu,
@@ -362,114 +432,222 @@ export class AccountsService {
       pending = still;
     }
 
-    return { created };
+    return {
+      created,
+      warning:
+        "Ops clone of NAS→IFRS codes. Prefer TemplateIFRSMapping provision for production IFRS CoA.",
+    };
   }
 
   /**
-   * Для новой организации: зеркало NAS→IFRS + IFRS 1200/4000 + маппинг NAS 211→1200, NAS 601→4000.
-   * Идемпотентно (upsert маппингов, mirror пропускает уже существующие IFRS-коды).
+   * P1: provision IFRS CoA from TemplateIFRSMapping (+ JSON MVP overrides fallback),
+   * seed/publish LedgerMappingSet. Does NOT clone full NAS chart.
+   * Skipped when org lacks ifrs_mapping entitlement (chart UI can provision later).
    */
   async bootstrapMultiGaapForNewOrganization(
     organizationId: string,
     db: AccountsDb = this.prisma,
-  ): Promise<void> {
-    await this.mirrorNasToIfrs(organizationId, db);
-
-    const [receivableCode, revenueCode] = await Promise.all([
-      this.posting.resolveAccountCode(organizationId, "TRADE_RECEIVABLE"),
-      this.posting.resolveAccountCode(organizationId, "SALES_REVENUE"),
-    ]);
-    const nas211 = await db.account.findFirst({
-      where: {
-        organizationId,
-        ledgerType: LedgerType.NAS,
-        code: receivableCode,
-      },
-    });
-    const nas601 = await db.account.findFirst({
-      where: {
-        organizationId,
-        ledgerType: LedgerType.NAS,
-        code: revenueCode,
-      },
-    });
-    if (!nas211 || !nas601) {
-      return;
+  ): Promise<{ skipped: boolean; ifrsCreated?: number; mappingPairs?: number }> {
+    const entitled = await this.subscriptionAccess.hasModule(
+      organizationId,
+      ModuleEntitlement.IFRS_MAPPING,
+    );
+    await this.accountingBooks?.ensureSystemBooks(
+      organizationId,
+      { createIfrs: entitled },
+      db,
+    );
+    if (!entitled) {
+      return { skipped: true };
     }
+    const out = await this.provisionIfrsFromTemplate(organizationId, db);
+    return { skipped: false, ...out };
+  }
 
-    let ifrs1200 = await db.account.findFirst({
-      where: {
-        organizationId,
-        ledgerType: LedgerType.IFRS,
-        code: "1200",
+  async provisionIfrsFromTemplate(
+    organizationId: string,
+    db: AccountsDb = this.prisma,
+  ): Promise<{ ifrsCreated: number; mappingPairs: number }> {
+    const entitled = await this.subscriptionAccess.hasModule(
+      organizationId,
+      ModuleEntitlement.IFRS_MAPPING,
+    );
+    if (!entitled) {
+      throw new ForbiddenException(
+        "ifrsMapping entitlement required to provision IFRS chart",
+      );
+    }
+    const systemBooks = await this.accountingBooks?.ensureSystemBooks(
+      organizationId,
+      { createIfrs: true },
+      db,
+    );
+    const ifrsBook = systemBooks?.ifrs;
+    if (!ifrsBook) {
+      throw new NotFoundException("Active IFRS accounting book not found");
+    }
+    const templateRows = await this.loadTemplateIfrsRows(db);
+    const nasAccounts = await db.account.findMany({
+      where: { organizationId, ledgerType: LedgerType.NAS, deletedAt: null },
+      select: {
+        id: true,
+        code: true,
+        type: true,
+        nameAz: true,
+        nameRu: true,
+        nameEn: true,
+        currency: true,
       },
     });
-    if (!ifrs1200) {
-      ifrs1200 = await db.account.create({
-        data: {
+    const nasByCode = new Map(nasAccounts.map((a) => [a.code, a]));
+
+    let ifrsCreated = 0;
+    const pairs: Array<{
+      sourceAccountId: string;
+      targetAccountId: string;
+      ratio?: Prisma.Decimal;
+    }> = [];
+
+    for (const row of templateRows) {
+      const nas = nasByCode.get(row.nasCode);
+      if (!nas) continue;
+
+      let ifrs = await db.account.findFirst({
+        where: {
           organizationId,
-          code: "1200",
-          nameAz: "Debitor borcu (IFRS)",
-          nameRu: "Дебиторская задолженность (IFRS)",
-          nameEn: "Trade receivables (IFRS)",
-          type: AccountType.ASSET,
           ledgerType: LedgerType.IFRS,
+          accountingBookId: ifrsBook.id,
+          code: row.ifrsCode,
+          deletedAt: null,
         },
+      });
+      if (!ifrs) {
+        ifrs = await db.account.create({
+          data: {
+            organizationId,
+            accountingBookId: ifrsBook.id,
+            code: row.ifrsCode,
+            nameAz: row.description || `${nas.nameAz} (IFRS)`,
+            nameRu: row.description || `${nas.nameRu} (IFRS)`,
+            nameEn: row.description || `${nas.nameEn} (IFRS)`,
+            type: nas.type,
+            currency: nas.currency,
+            ledgerType: LedgerType.IFRS,
+          },
+        });
+        ifrsCreated += 1;
+      }
+      pairs.push({
+        sourceAccountId: nas.id,
+        targetAccountId: ifrs.id,
+        ratio: row.ratio,
       });
     }
 
-    let ifrs4000 = await db.account.findFirst({
+    if (pairs.length > 0) {
+      await this.ledgerMapping.bootstrapDraftFromAccountPairs(
+        organizationId,
+        pairs,
+        db,
+      );
+    }
+
+    return { ifrsCreated, mappingPairs: pairs.length };
+  }
+
+  async createIfrsAccount(
+    organizationId: string,
+    dto: {
+      code: string;
+      nameAz: string;
+      nameRu?: string;
+      nameEn?: string;
+      type: AccountType;
+      currency?: string;
+      parentId?: string;
+    },
+  ) {
+    const code = dto.code.trim();
+    if (!code) throw new BadRequestException("code is required");
+    const systemBooks = await this.accountingBooks?.ensureSystemBooks(
+      organizationId,
+      { createIfrs: true },
+    );
+    const ifrsBook = systemBooks?.ifrs;
+    if (!ifrsBook) {
+      throw new NotFoundException("Active IFRS accounting book not found");
+    }
+    const exists = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType: LedgerType.IFRS,
-        code: "4000",
+        accountingBookId: ifrsBook.id,
+        code,
       },
+      select: { id: true },
     });
-    if (!ifrs4000) {
-      ifrs4000 = await db.account.create({
-        data: {
-          organizationId,
-          code: "4000",
-          nameAz: "Gəlir (IFRS)",
-          nameRu: "Выручка (IFRS Revenue)",
-          nameEn: "Revenue (IFRS)",
-          type: AccountType.REVENUE,
-          ledgerType: LedgerType.IFRS,
-        },
-      });
+    if (exists) {
+      throw new ConflictException(`IFRS account ${code} already exists`);
     }
-
-    await db.accountMapping.upsert({
-      where: {
-        organizationId_nasAccountId: {
+    if (dto.parentId) {
+      const parent = await this.prisma.account.findFirst({
+        where: {
+          id: dto.parentId,
           organizationId,
-          nasAccountId: nas211.id,
+          ledgerType: LedgerType.IFRS,
+          accountingBookId: ifrsBook.id,
         },
-      },
-      create: {
+        select: { id: true },
+      });
+      if (!parent) throw new NotFoundException("IFRS parent account not found");
+    }
+    return this.prisma.account.create({
+      data: {
         organizationId,
-        nasAccountId: nas211.id,
-        ifrsAccountId: ifrs1200.id,
-        ratio: 1,
+        accountingBookId: ifrsBook.id,
+        code,
+        nameAz: dto.nameAz.trim(),
+        nameRu: (dto.nameRu ?? dto.nameAz).trim(),
+        nameEn: (dto.nameEn ?? dto.nameAz).trim(),
+        type: dto.type,
+        currency: dto.currency ?? "AZN",
+        ledgerType: LedgerType.IFRS,
+        parentId: dto.parentId ?? null,
       },
-      update: { ifrsAccountId: ifrs1200.id, ratio: 1 },
     });
+  }
 
-    await db.accountMapping.upsert({
-      where: {
-        organizationId_nasAccountId: {
-          organizationId,
-          nasAccountId: nas601.id,
-        },
-      },
-      create: {
-        organizationId,
-        nasAccountId: nas601.id,
-        ifrsAccountId: ifrs4000.id,
-        ratio: 1,
-      },
-      update: { ifrsAccountId: ifrs4000.id, ratio: 1 },
+  private async loadTemplateIfrsRows(
+    db: AccountsDb,
+  ): Promise<
+    Array<{
+      nasCode: string;
+      ifrsCode: string;
+      ratio: Prisma.Decimal;
+      description: string;
+    }>
+  > {
+    const fromDb = await db.templateIFRSMapping.findMany({
+      orderBy: { nasCode: "asc" },
     });
+    if (fromDb.length > 0) {
+      return fromDb.map((r) => ({
+        nasCode: r.nasCode,
+        ifrsCode: r.ifrsCode,
+        ratio: r.ratio,
+        description: r.description,
+      }));
+    }
+    // Fallback MVP overrides (keep in sync with template-ifrs-mapping.v1.json)
+    return [
+      { nasCode: "211", ifrsCode: "1200", ratio: new Decimal(1), description: "Trade receivables (IFRS MVP)" },
+      { nasCode: "601", ifrsCode: "4000", ratio: new Decimal(1), description: "Revenue (IFRS MVP)" },
+      { nasCode: "221", ifrsCode: "1100", ratio: new Decimal(1), description: "Cash at bank (IFRS MVP)" },
+      { nasCode: "101", ifrsCode: "1000", ratio: new Decimal(1), description: "Cash on hand (IFRS MVP)" },
+      { nasCode: "531", ifrsCode: "2100", ratio: new Decimal(1), description: "Trade payables (IFRS MVP)" },
+      { nasCode: "701", ifrsCode: "5000", ratio: new Decimal(1), description: "Cost of sales (IFRS MVP)" },
+      { nasCode: "721", ifrsCode: "5100", ratio: new Decimal(1), description: "Operating expenses (IFRS MVP)" },
+    ];
   }
 
   listMappings(organizationId: string) {
@@ -502,80 +680,22 @@ export class AccountsService {
   }
 
   async createMapping(
-    organizationId: string,
-    dto: CreateAccountMappingDto,
-  ) {
-    const ratio =
-      dto.ratio != null && dto.ratio !== ""
-        ? new Decimal(dto.ratio)
-        : new Decimal(1);
-    if (ratio.lte(0)) {
-      throw new BadRequestException("ratio must be positive");
-    }
-
-    const [nas, ifrs] = await Promise.all([
-      this.prisma.account.findFirst({
-        where: {
-          id: dto.nasAccountId,
-          organizationId,
-          ledgerType: LedgerType.NAS,
-        },
-      }),
-      this.prisma.account.findFirst({
-        where: {
-          id: dto.ifrsAccountId,
-          organizationId,
-          ledgerType: LedgerType.IFRS,
-        },
-      }),
-    ]);
-    if (!nas) {
-      throw new NotFoundException("NAS account not found in organization");
-    }
-    if (!ifrs) {
-      throw new NotFoundException("IFRS account not found in organization");
-    }
-
-    return this.prisma.accountMapping.create({
-      data: {
-        organizationId,
-        nasAccountId: nas.id,
-        ifrsAccountId: ifrs.id,
-        ratio,
-      },
-      include: {
-        nasAccount: {
-          select: {
-            id: true,
-            code: true,
-            nameAz: true,
-            nameRu: true,
-            nameEn: true,
-            ledgerType: true,
-          },
-        },
-        ifrsAccount: {
-          select: {
-            id: true,
-            code: true,
-            nameAz: true,
-            nameRu: true,
-            nameEn: true,
-            ledgerType: true,
-          },
-        },
-      },
+    _organizationId: string,
+    _dto: CreateAccountMappingDto,
+  ): Promise<never> {
+    throw new GoneException({
+      code: "LEGACY_MAPPING_GONE",
+      message:
+        "Legacy AccountMapping writes are closed. Use /api/accounting/ledger-mappings",
     });
   }
 
-  async deleteMapping(organizationId: string, id: string): Promise<void> {
-    const row = await this.prisma.accountMapping.findFirst({
-      where: { id, organizationId },
+  async deleteMapping(_organizationId: string, _id: string): Promise<never> {
+    throw new GoneException({
+      code: "LEGACY_MAPPING_GONE",
+      message:
+        "Legacy AccountMapping writes are closed. Use /api/accounting/ledger-mappings",
     });
-    if (!row) {
-      throw new NotFoundException("Mapping not found");
-    }
-    await this.prisma.accountMapping.delete({ where: { id } });
   }
 
   listIfrsMappingRules(organizationId: string) {
@@ -589,59 +709,37 @@ export class AccountsService {
   }
 
   async createIfrsMappingRule(
-    organizationId: string,
-    dto: CreateIfrsMappingRuleDto,
-  ) {
-    const source = dto.sourceNasAccountCode.trim();
-    const target = dto.targetIfrsAccountCode.trim();
-    if (!source || !target) {
-      throw new BadRequestException("sourceNasAccountCode and targetIfrsAccountCode are required");
-    }
-    return this.prisma.ifrsMappingRule.create({
-      data: {
-        organizationId,
-        sourceNasAccountCode: source,
-        targetIfrsAccountCode: target,
-        isActive: dto.isActive ?? true,
-      },
+    _organizationId: string,
+    _dto: CreateIfrsMappingRuleDto,
+  ): Promise<never> {
+    throw new GoneException({
+      code: "LEGACY_MAPPING_GONE",
+      message:
+        "Legacy IfrsMappingRule writes are closed. Use /api/accounting/ledger-mappings",
     });
   }
 
   async updateIfrsMappingRule(
-    organizationId: string,
-    id: string,
-    dto: UpdateIfrsMappingRuleDto,
-  ) {
-    const existing = await this.prisma.ifrsMappingRule.findFirst({
-      where: { id, organizationId },
-      select: { id: true },
-    });
-    if (!existing) throw new NotFoundException("IFRS mapping rule not found");
-
-    const data: Prisma.IfrsMappingRuleUpdateInput = {};
-    if (dto.sourceNasAccountCode !== undefined) {
-      data.sourceNasAccountCode = dto.sourceNasAccountCode.trim();
-    }
-    if (dto.targetIfrsAccountCode !== undefined) {
-      data.targetIfrsAccountCode = dto.targetIfrsAccountCode.trim();
-    }
-    if (dto.isActive !== undefined) {
-      data.isActive = dto.isActive;
-    }
-
-    return this.prisma.ifrsMappingRule.update({
-      where: { id },
-      data,
+    _organizationId: string,
+    _id: string,
+    _dto: UpdateIfrsMappingRuleDto,
+  ): Promise<never> {
+    throw new GoneException({
+      code: "LEGACY_MAPPING_GONE",
+      message:
+        "Legacy IfrsMappingRule writes are closed. Use /api/accounting/ledger-mappings",
     });
   }
 
-  async deleteIfrsMappingRule(organizationId: string, id: string): Promise<void> {
-    const existing = await this.prisma.ifrsMappingRule.findFirst({
-      where: { id, organizationId },
-      select: { id: true },
+  async deleteIfrsMappingRule(
+    _organizationId: string,
+    _id: string,
+  ): Promise<never> {
+    throw new GoneException({
+      code: "LEGACY_MAPPING_GONE",
+      message:
+        "Legacy IfrsMappingRule writes are closed. Use /api/accounting/ledger-mappings",
     });
-    if (!existing) throw new NotFoundException("IFRS mapping rule not found");
-    await this.prisma.ifrsMappingRule.delete({ where: { id } });
   }
 
   async createBankAccount(organizationId: string, dto: CreateBankAccountDto) {
@@ -657,8 +755,25 @@ export class AccountsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      await this.accountingBooks?.ensureSystemBooks(organizationId, {}, tx);
+      const nasBook = this.accountingBooks
+        ? await this.accountingBooks.resolveByLedgerType(
+            organizationId,
+            LedgerType.NAS,
+            tx,
+          )
+        : null;
+      if (!nasBook) {
+        throw new NotFoundException("Active NAS accounting book not found");
+      }
+
       const exists = await tx.account.findFirst({
-        where: { organizationId, ledgerType: LedgerType.NAS, code },
+        where: {
+          organizationId,
+          ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
+          code,
+        },
         select: { id: true },
       });
       if (exists) {
@@ -666,7 +781,12 @@ export class AccountsService {
       }
 
       const parent = await tx.account.findFirst({
-        where: { organizationId, ledgerType: LedgerType.NAS, code: mainBank },
+        where: {
+          organizationId,
+          ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
+          code: mainBank,
+        },
         select: { id: true },
       });
       if (!parent) {
@@ -676,6 +796,7 @@ export class AccountsService {
       return tx.account.create({
         data: {
           organizationId,
+          accountingBookId: nasBook.id,
           ledgerType: LedgerType.NAS,
           code,
           nameAz: name,

@@ -70,7 +70,7 @@ Shown only when the procedure type needs them. Managed lists, not free text.
 | Field | WO examples | UI |
 |-------|-------------|-----|
 | `siteApplyMode` | `növbəli` / `novveli` / `novb` → TURN; `eyni vaxtda` / `eyni vaxda` → TOGETHER | Chips when ≥2 sites |
-| Laterality | `sağ` / `sol` / `hər iki` / `hir iki` / `hər ikisinə` | Per site that allows it |
+| Laterality | `sağ` / `sol` / `hər iki` / `hir iki` / `hər ikisinə`; **import default BOTH** when site allows laterality and text omits side | Per site that allows it |
 | Amplipuls work-kind (I–V) | `4 cu rej` / `4- rej` = IV, `2 ci rej` = II | Select on Amplipuls only |
 | Device program | `tenslə`, `artroz pr` / `ödem pr` / `dermo rej` / `artrit proqrqmi` / `çapıq rej` (scar) / `(b)` variant on artroz (letter B in the device menu still unnamed) | SatAdmin `PhysioListItem` DEVICE_PROGRAM — **not** I–V, not hardcoded Select |
 | Electrode count | `4 lü` / `4 lu` / `4 lü rejim` = 4 plates; `2 li` = 2; `4 basliqli` / `iki basligi` | Select on Amplipuls + electrophoresis. **Planning:** `2 li` → any of **7, 8, 10–13** (12/13 as 2 of 4 paws). `4 lü` → **12 or 13** only when free. FIFO; do not hold 12/13 |
@@ -93,16 +93,65 @@ Typos (`4 lu`, `qarina`, `con tam`, `1ci son`, `kurem`, `boyunçiyin`, `bədn`) 
 
 Paraffin stays **four SKUs**. Extra nahiye on the "wrong" SKU is sloppy WO data, not a fifth procedure.
 
-## 5. Empty nahiye → default S
+## 5. Empty nahiye → default S (+ laterality)
+
+**Import / cutover defaults (locked 2026-09):**
+
+1. **Laterality:** if the chosen S allows laterality (`PhysioSite.laterality`) and WO did not write `sol` / `sağ` / `hər iki` → store **`BOTH`**. Midline sites stay null (no invented laterality). **Order field `LATERALITY` is omitted** on immersion baths (yod-brom, hidromasaj, naftalan ♀/♂), four-chamber, bükmə, paraffin bütün — anatomy is the chip, not L/R.
+2. **Site chips when nahiye is empty:**
+   - If the **procedure name already names the anatomy** → that chip (paraffin family, 4-kamera, limfo legs, turunda ear, …). **Do not** override with FULL.
+   - Else if the type allowlist includes **`ZONE-FULL-BODY`** → **`ZONE-FULL-BODY`**.
+   - Else if the allowlist is a **single** code → that code.
+   - Else leave empty (needs doctor / unmatched). Never invent FULL when the type forbids it (ESWT, turunda-only, four-chamber-only, …).
+3. Filled WO `nahiye` remains matcher SoR; defaults apply only when text is empty (or classifier returns no chips). Unmatched residue on non-empty text does **not** auto-FULL.
 
 | Procedure | Empty site |
 |-----------|------------|
-| Yod-brom, hidromassage, Massaj 30, UFB, Bükmə | Full body |
-| Massaj 15 | Full body **or** leave empty (both acceptable; import may default full body) |
-| Limfodrenaj | Legs; add abdomen only if `qarın` is written. **Not** arms |
+| Yod-brom | Full-body chip (= heart-sparing general bath: water ≤ nipple line, head+neck out) |
+| Hidromassage | Full-body chip (same immersion; jets not on heart/breast/groin) |
+| Massaj 30 / 15, UFB | Full body |
+| Bükmə (body wrap) | Full body (head out) |
+| Limfodrenaj | Legs (default); abdomen optional addon if `qarın` / note. **Not** arms |
 | `4 kamera*` | Four-chamber |
-| Naftalan bath | No guess — doctor fill required |
+| Naftalan ♀/♂ | **Full body** when fill omitted; `oturaq` text → sitz. **Order fields:** sit/full (`NAFTALAN_FILL`), multi-day sit→full (`BATH_SEQUENCE`), **`DAY_BLOCK`** (günaşırı / 2 / 3 / 5). **No SMEAR on bath** — paid smear = `SVC-APLIKASIYA-NAFTALAN-QADIN` / `-KISI` (same gender cabins). Gender = schedule slot |
+| Oturaq (text on naftalan) | Sitz chip — not a separate procedure |
+| Amplipuls / electro / UFF / surface (FULL in allowlist) | Full body when nahiye empty |
+| ESWT / types without FULL | No FULL invent — leave empty or single allowlist code |
 | Ozone, inhalation, colon, IV | No surface site |
+
+Code: `classifyEmptyNahiye` + `resolveEmptyImportSiteCodes` + `defaultLateralityForSite` → `applyNahiyeToProcedureOrder`.
+
+### 5.1 Doctor picker allowlist (`ProcedureType.allowedSiteCodes`)
+
+Seeded from `inferPhysioTypeGate` (SatAdmin may override). PATCH rejects sites outside the list.
+
+| Family | Allowed S | Clinical note |
+|--------|-----------|---------------|
+| No surface | none | — |
+| `4 kamera*` | `FOUR-CHAMBER` | limbs in four cells |
+| Yod-brom | `FULL-BODY`, `TO-WAIST` | water ≤ nipple line; heart open; head+neck always out |
+| Hidromasaj | `FULL-BODY`, `TO-WAIST` | same immersion; **jet safety hint** on form (not S chips) |
+| Naftalan ♀/♂ | `FULL-BODY` + `SITZ` | two chips; gender = schedule only. Fields: `NAFTALAN_FILL`, `BATH_SEQUENCE`, `DAY_BLOCK`. No SMEAR / laterality / device params |
+| Aplikasiya Naftalan ♀/♂ | anatomical surface (+ FULL) | paid smear 24 AZN; DAY_BLOCK; **shares RES-VANNA-\* with immersion bath** same gender |
+| İnfraqırmızı / Sollyuks | anatomical surface | lamp + substance/extra oil (NAFTALAN); **no lamp-count field** |
+| İşıq vannası | anatomical surface | light cabin after naftalan smear; **≠ İK**; no intensity from WO |
+| Paraffin aşağı | legs + hip/gluteal (to buttocks) | not abdomen |
+| Paraffin yuxarı | upper limb only | import prefers WO text |
+| Paraffin boyun-kürək | collar / back / spine | — |
+| Paraffin bütün | `FULL-BODY` | — |
+| Turunda burun | FACE | split SKU (new orders) |
+| Turunda qulaq | EAR | split SKU (new orders) |
+| Traksiya | anatomical | traction; added FO 2026-09-04 |
+| Limfodrenaj | lower limb + abdomen | doctor multi-picks; **always TOGETHER** (no TURN) |
+| ESWT (zərbə) | surface without head/face/ear/**FULL** | never cranial / general |
+| Amplipuls / electro / UFF | surface without EAR/SCALP | head field still allowed; fields expanded from WO reconcile 2026-09 |
+| Manual / Osteopathy | surface anatomical | intensity / hold / surface; laterality on order |
+| Gyn tampon / Prolotherapy | none | no surface site |
+| Xallar koaqulyasiya | surface anatomical | derm local |
+| Bükmə | `FULL-BODY` | wrap; head out |
+| Other massage / laser / … | surface anatomical | — |
+
+Import: filled `nahiye` text remains the matcher source of truth; allowlist only constrains the doctor picker + PATCH.
 
 Limfo string `umusol ve sol qola nobeli` is not an arm protocol — do not map to upper limb. `umumi` on limfo is likely massage bleed; do not treat as limfo anatomy.
 
@@ -157,6 +206,8 @@ A blank WO nahiye cell is N/A for **site chips**. The ERA `note` field is still 
 | W4 | Cutover mapper + unmatched queue + raw `nahiye` (done — TS port locked to CJS via `__tests__/nahiye-match.spec.ts`; SatAdmin queue aliases existing S only) |
 
 Do not mark Implementation-Matrix Scaffold ✅ for type-gated W3 as a standalone AC (CLI-49 stays out of BE rollup). Negative path lives in `__tests__/physio-order-fields.spec.ts` and `__tests__/nahiye-match.spec.ts`. W2–W4 have UAT-SMOKE CLI-49; Product-Readiness stays SCREEN until field UAT.
+
+**WO field reconcile (2026-09):** dump cards → matcher flags × `inferPhysioTypeGate`. Major gap_gate closed (Amplipuls program/surface/params, electro spine/params/surface, UFF surface/program, baths `DAY_BLOCK`, 4-chamber galvano substance, SIS/ESWT day block). Residual red cells (~9) need FO judgment — often matcher bleed (İnfraqırmızı/Sollyuks «oil», Elektro `AMPLIPULS_WORK_KIND`, Karboksi laterality on no-site). Rebuild: `gen-procedure-form-matrix.ts`, `gen-procedure-order-fields-matrix.ts`, `gen-wo-fields-reconcile.ts`.
 
 ## 9. Resources (planning — not W0 schema)
 

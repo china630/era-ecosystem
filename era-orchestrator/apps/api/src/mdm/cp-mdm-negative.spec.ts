@@ -39,4 +39,12 @@ describe("Platform MDM negative paths (AC-CP-MDM)", () => {
       UnauthorizedException,
     );
   });
+
+  it("assertServiceToken accepts SATELLITE_EVENT_SERVICE_TOKEN", () => {
+    process.env.NODE_ENV = "production";
+    process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN = "mdm-svc-token";
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN = "sat-token";
+    const service = new MdmService({} as never, {} as never);
+    expect(() => service.assertServiceToken("Bearer sat-token")).not.toThrow();
+  });
 });

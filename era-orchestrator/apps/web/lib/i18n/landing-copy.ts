@@ -139,11 +139,11 @@ const landingMarketingRu: LandingMarketingCopy = {
   chrome: {
     login: "Войти",
   },
-  footer: "ERA Finance — облачный учёт для бизнеса в Азербайджане",
+  footer: "ERA 365 — платформа учёта и отраслевых спутников в Азербайджане",
   hero: {
-    title: "Учёт и контроль бизнеса без штрафов и хаоса в Excel",
+    title: "Учёт, гостиница, клиника и касса — в одной платформе",
     subtitle:
-      "Новая финансовая платформа для бизнеса Азербайджана. Полное соответствие стандартам NAS/MMUS и МСФО/MHBS.",
+      "ERA Core (NAS/MMUS) и отраслевые спутники. Палитра модулей 19 / 29 / 39 / 99 AZN. 3 месяца trial без карты.",
     ctaPrimary: "Начать 3 месяца бесплатно",
     ctaSecondary: "Смотреть тарифы",
     ctaMicrocopy: "Без привязки карты • Отмена в любой момент",
@@ -152,16 +152,16 @@ const landingMarketingRu: LandingMarketingCopy = {
   trial: {
     cornerBadge: "Специальное предложение для старта",
     offerPrimary: "0 AZN / 3 месяца",
-    offerSubline: "Полный операционный контур без оплаты",
+    offerSubline: "Foundation и отраслевые Gate в trial",
     checklistTitle: "Активировано в trial",
     checklist: [
-      "NAS (MMUS) и IFRS (MHBS) — двойная запись",
-      "Касса, банк и казначейство (Treasury)",
-      "Склад, производство НЗП и ОС",
-      "Отраслевые beta-модули (Retail, Tikinti)",
+      "NAS / MMUS и IFRS / MHBS — двойная запись",
+      "Касса, склад, производство, ОС и кадры",
+      "Спутники: Hotel, Clinic, F&B, Retail… (Gate)",
+      "Документы 1000/мес в NAS; OCR 50 стр.",
     ],
     disclaimer:
-      "*Исключая специализированные премиум-пакеты (compliance_pro, tax_pro, trade_pro).",
+      "*Premium Finance (tax_pro, trade_pro, compliance_pro) и production CBS — вне trial list price.",
   },
   ecosystem: landingEcosystemRu,
   zeroKnowledge: {
@@ -264,6 +264,18 @@ const landingMarketingRu: LandingMarketingCopy = {
         question: "Можно ли войти через SSO?",
         answer:
           "Да. Используйте единый вход ERA (Orchestrator / Finance). Для усиленной аутентификации следуйте подсказкам ASAN İmza в интерфейсе.",
+      },
+      {
+        id: "catalog",
+        question: "Как устроены цены модулей и спутников?",
+        answer:
+          "SKU — палитра 19 / 29 / 39 / 99 AZN. Foundation 29. Отрасль: Gate открывает приложение и 1 единицу ёмкости; ядра (hotel_core, EMR) продаются отдельно. Счета входят в документы NAS. Банк CBS в прайсе — Sandbox / Pilot.",
+      },
+      {
+        id: "xor",
+        question: "Какие модули нельзя включить вместе?",
+        answer:
+          "Data HUB Bronze/Silver/Gold; Workforce Base/PRO; platform_loyalty и retail_promotions; platform_delivery и fnb_delivery_hub; hotel_medical_sanatorium и clinic_sanatorium_clinical.",
       },
     ],
   },
@@ -380,11 +392,11 @@ const landingMarketingAz: LandingMarketingCopy = {
   chrome: {
     login: "Daxil ol",
   },
-  footer: "ERA Finance — Azərbaycanda biznes üçün bulud uçotu",
+  footer: "ERA 365 — Azərbaycanda uçot və sənaye peykləri platforması",
   hero: {
-    title: "Cəriməsiz və Excel xaosu olmadan biznes uçotu",
+    title: "Uçot, otel, klinika və kassa — bir platformada",
     subtitle:
-      "Azərbaycan biznesi üçün yeni maliyyə platforması. MMUS və MHBS standartlarına tam uyğunluq.",
+      "ERA Core (NAS/MMUS) və sənaye peykləri. Modul palitrası 19 / 29 / 39 / 99 AZN. 3 ay trial, kart tələb olunmur.",
     ctaPrimary: "3 ay tam pulsuz başla",
     ctaSecondary: "Tariflərə baxın",
     ctaMicrocopy: "Kredit kartı tələb olunmur • İstənilən vaxt ləğv et",
@@ -393,16 +405,16 @@ const landingMarketingAz: LandingMarketingCopy = {
   trial: {
     cornerBadge: "Start üçün xüsusi təklif",
     offerPrimary: "İlk 3 ay — 0 AZN",
-    offerSubline: "Ödənişsiz tam operativ kontur",
+    offerSubline: "Foundation və sənaye Gate trial-dadır",
     checklistTitle: "Trial paketdə aktivləşdirilib",
     checklist: [
-      "NSU (MMUS) və MHBS (IFRS) — ikiqat yazılış",
-      "Kassa, bank və xəzinədarlıq (Treasury)",
-      "Anbar, NAT istehsalatı və ƏV",
-      "Sahəvi beta modullar (Retail, Tikinti)",
+      "NAS / MMUS və IFRS / MHBS — ikiqat yazılış",
+      "Kassa, anbar, istehsalat, ƏV və kadrlar",
+      "Peyklər: Hotel, Clinic, F&B, Retail… (Gate)",
+      "NAS-da 1000 sənəd/ay; 50 OCR səhifə",
     ],
     disclaimer:
-      "*AI Ağsaqqallar Şurası və e-taxes/ƏMAS RPA avtomatlaşdırılması istisna olmaqla.",
+      "*Finance premium (tax_pro, trade_pro, compliance_pro) və production CBS trial list price-ə daxil deyil.",
   },
   ecosystem: landingEcosystemAz,
   zeroKnowledge: {
@@ -505,6 +517,18 @@ const landingMarketingAz: LandingMarketingCopy = {
         question: "SSO ilə daxil olmaq olarmı?",
         answer:
           "Bəli. ERA vahid girişindən (Orchestrator / Finance) istifadə edin. Gücləndirilmiş autentifikasiya üçün interfeysdə ASAN İmza göstərişlərinə əməl edin.",
+      },
+      {
+        id: "catalog",
+        question: "Modul və peyk qiymətləri necə qurulub?",
+        answer:
+          "SKU palitrası 19 / 29 / 39 / 99 AZN. Foundation 29. Sənaye: Gate tətbiqi və 1 tutum vahidini açır; nüvələr (hotel_core, EMR) ayrıca satılır. Qaimələr NAS sənədlərinə daxildir. Bank CBS qiyməti Sandbox / Pilot-dur.",
+      },
+      {
+        id: "xor",
+        question: "Hansı modulları eyni anda açmaq olmaz?",
+        answer:
+          "Data HUB Bronze/Silver/Gold; Workforce Base/PRO; platform_loyalty və retail_promotions; platform_delivery və fnb_delivery_hub; hotel_medical_sanatorium və clinic_sanatorium_clinical.",
       },
     ],
   },

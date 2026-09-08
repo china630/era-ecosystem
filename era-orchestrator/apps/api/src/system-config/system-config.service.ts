@@ -82,7 +82,7 @@ const DEFAULT_METER_UNIT_PRICING: MeterUnitPricing = {
   pricePerUserMonthAzn: 2,
   pricePerGbMonthAzn: 0.5,
   pricePerWhatsappAlertAzn: 0.05,
-  pricePerInvoiceAzn: 0.1,
+  pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
 };
 
@@ -241,15 +241,15 @@ export class SystemConfigService {
     if (raw && typeof raw === "object" && !Array.isArray(raw)) {
       const o = raw as Record<string, unknown>;
       return {
-        employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 10)),
-        pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 15),
+        employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 1)),
+        pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 2),
         documentPackSize: Math.max(1, toPositiveNum(o.documentPackSize, 1000)),
         pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
       };
     }
     return {
-      employeeBlockSize: 10,
-      pricePerEmployeeBlockAzn: 15,
+      employeeBlockSize: 1,
+      pricePerEmployeeBlockAzn: 2,
       documentPackSize: 1000,
       pricePerDocumentPackAzn: 5,
     };
@@ -506,8 +506,8 @@ export class SystemConfigService {
         }
         case "quota_unit_pricing":
           defaultValue = {
-            employeeBlockSize: 10,
-            pricePerEmployeeBlockAzn: 15,
+            employeeBlockSize: 1,
+            pricePerEmployeeBlockAzn: 2,
             documentPackSize: 1000,
             pricePerDocumentPackAzn: 5,
           };
@@ -607,8 +607,8 @@ export class SystemConfigService {
         }
         const o = value as Record<string, unknown>;
         return {
-          employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 10)),
-          pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 15),
+          employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 1)),
+          pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 2),
           documentPackSize: Math.max(1, toPositiveNum(o.documentPackSize, 1000)),
           pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
         };

@@ -222,6 +222,7 @@ export {
   linkPersonIdentity,
   listPersonIdentifiers,
   getPersonOpsProfile,
+  batchGetPersonOpsProfiles,
   resolveIdentifierForCompliance,
   isValidAzFin,
   type MdmLookupOptions,
@@ -240,6 +241,16 @@ export {
   PERSON_SEX_VALUES,
   type PersonSex,
 } from "./integration/person-sex";
+export {
+  composePersonFullName,
+  splitFullNameToParts,
+  mergePersonNameParts,
+  normalizeNationalityIso,
+  hasPersonNameInput,
+  resolveIncomingNameParts,
+  isPatronymicParticle,
+  type PersonNameParts,
+} from "./integration/person-name";
 export {
   resolveGlobalPerson,
   issueGuestQrToken,
@@ -413,3 +424,10 @@ export {
 } from "./auth/agency-session";
 
 export { getSatelliteStorage, uploadSatelliteAttachment } from "./storage/satellite-upload";
+
+export {
+  parsePaginatedList,
+  normalizeListPagination,
+  type PaginatedList,
+  type ListPagination,
+} from "./ui/paginated-list";

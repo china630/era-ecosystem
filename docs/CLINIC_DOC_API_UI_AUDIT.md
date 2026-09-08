@@ -6,7 +6,7 @@ Living matrix for **era-clinic** (sanatorium/outpatient satellite). Tracks doc�
 
 **Plan:** `.cursor/plans/clinic_matrix_gaps_fix_4f17a326.plan.md` (Phases 0–7).
 
-**Last audit:** 2026-06-16 (matrix gaps closure wave)
+**Last audit:** 2026-09-03 (single Diagnostic SoT / CPOE closeout; `ClinicalTemplate` dropped)
 
 ---
 
@@ -34,8 +34,8 @@ Living matrix for **era-clinic** (sanatorium/outpatient satellite). Tracks doc�
 
 | Phase | Scope | Before | After | Key artifacts |
 |-------|-------|--------|-------|---------------|
-| **P0** | API hardening | PATCH missing on templates/rules; weak guards | ✅ | `clinical-templates/[id]`, `program-templates/[id]`, `procedure-rules/[id]`, `procedure-compatibility-rules/[id]` PATCH; SatAdmin guard; `PatientMdmRequiredError` on PATCH patients |
-| **P1** | SatAdmin modals | create-only or inline forms | ✅ | master-data FIN/MDM/slot; wards edit/delete; procedure-rules edit; templates edit |
+| **P0** | API hardening | PATCH missing on rules; weak guards | ✅ | program-templates / procedure-rules PATCH + SatAdmin guard; form SoT = diagnostic-catalog; `PatientMdmRequiredError` on PATCH patients |
+| **P1** | SatAdmin modals | create-only or inline forms | ✅ | master-data FIN/MDM/slot; wards edit/delete; procedure-rules edit; diagnostic/program templates |
 | **P2** | Patient & clinical ops | partial / prompt-based UX | ✅ | patient edit modal; contraindication modals; cancel/complete modals; prescription modal; lab create modal |
 | **P3** | Dashboards | executive bypass; minimal role UIs | ✅ | `ExecutiveDashboard.tsx`; doctor/nurse polish; cashier mock fiscal display |
 | **P4** | i18n | partial az/ru | ✅ | en/az/ru keys for all new modals |
@@ -53,7 +53,7 @@ Living matrix for **era-clinic** (sanatorium/outpatient satellite). Tracks doc�
 | **CLI-06** | No patient edit UI | Edit modal (fullName, phone, FIN, passport); MDM badge; back-link → `/patients` | `/patients/[id]` |
 | **CLI-08** | Compat rules: create+delete, no edit | PATCH API + edit modal; SatAdmin guard on route | `/admin/procedure-rules` |
 | **CLI-09** | Sequence rules: create+delete, no edit | PATCH API + shared create/edit ModalShell | `/admin/procedure-rules` |
-| **CLI-10** | Templates: create+delete, no edit | PATCH clinical + program templates; edit prefilled modal | `/admin/templates` |
+| **CLI-10** | Dual form SoT / thin templates UI | Single Diagnostic SoT + CPOE + program packages; `ClinicalTemplate` dropped | `/admin/diagnostic-catalog` + `/admin/program-templates` + `/visits/[id]` |
 | **CLI-12** | Lab list without create | **New lab order** modal (patient, testCode, visitId) | `/lab-orders` |
 | **CLI-15** | Wards/beds create-only | Edit/delete ward & bed modals; link from master-data | `/admin/wards` |
 | **CLI-17** | UI bypassed executive API | Client `ExecutiveDashboard` → `GET /api/executive/summary?date=&practitionerId=` | `/executive` |
@@ -73,7 +73,8 @@ Living matrix for **era-clinic** (sanatorium/outpatient satellite). Tracks doc�
 | **Practitioners** | create modal only; FIN not in form | create/edit modal + FIN MDM lookup + `defaultSlotMinutes` | — |
 | **Wards & beds** | create modals only | + edit ward, edit bed, confirm delete | — |
 | **Procedure rules** | inline create forms | unified create/edit ModalShell + delete confirm | — |
-| **Templates** | create + inline delete | create/edit ModalShell + delete confirm | — |
+| **Visit / exam templates** | legacy ClinicalTemplate admin | `/admin/diagnostic-catalog` (kind=visit) + field designer | ClinicalTemplate dropped |
+| **Sanatorium packages** | JSON / thin admin | `/admin/program-templates` procedures + knots | — |
 | **Patient card** | static server page | client fetch + **Edit patient** modal | — |
 | **Contraindications** | click zone → instant POST | add modal + remove confirm modal | body-map visual only |
 | **Appointments cancel** | `window.prompt(reason)` | CancelVisit modal (textarea) | — |
@@ -89,7 +90,7 @@ Living matrix for **era-clinic** (sanatorium/outpatient satellite). Tracks doc�
 
 | Resource | Method | File | Fields |
 |----------|--------|------|--------|
-| Clinical template | PATCH | `app/api/admin/clinical-templates/[id]/route.ts` | title, specialty, bodyJson |
+| Visit exam / diagnostic service | PATCH | `app/api/admin/diagnostic-catalog/services/[id]/route.ts` | fieldsJson, titles, kind |
 | Program template | PATCH | `app/api/admin/program-templates/[id]/route.ts` | name, durationDays, procedures[] |
 | Procedure sequence rule | PATCH | `app/api/admin/procedure-rules/[id]/route.ts` | minGapMinutes, kind |
 | Compat rule | PATCH | `app/api/admin/procedure-compatibility-rules/[id]/route.ts` | ruleType, minHours, note |
@@ -113,7 +114,7 @@ Living matrix for **era-clinic** (sanatorium/outpatient satellite). Tracks doc�
 | CLI-07 | Service catalog | ✅ | ✅ | — | ✅ | **SHIPPED** |
 | CLI-08 | Compat rules | ✅ | ✅ PATCH | — | ✅ edit modal | **SHIPPED** |
 | CLI-09 | Sequence rules | ✅ | ✅ PATCH | — | ✅ edit modal | **SHIPPED** |
-| CLI-10 | Templates | ✅ | ✅ PATCH | — | ✅ edit modal | **SHIPPED** |
+| CLI-10 | Visit forms + sanatorium packages | ✅ | ✅ catalog + cpoe | ✅ CPOE + print + card notes | ✅ diagnostic-catalog + program-templates | **SHOW** (diagnoses + label snapshot + AuthZ; FHIR/whole-visit debt) |
 | CLI-11 | LIS profiles | ✅ | ✅ | — | ✅ | **SHIPPED** |
 | CLI-12 | Lab lifecycle | ✅ | ✅ | ✅ + **create modal** | — | **SHIPPED** |
 | CLI-13 | Sanatorium chart | ✅ | ✅ | ✅ | ✅ | **SHIPPED** |

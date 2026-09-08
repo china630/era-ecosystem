@@ -117,6 +117,7 @@ export function ReservationCardEditor({
   const [recordType, setRecordType] = useState('');
   const [tripReason, setTripReason] = useState('');
   const [agencyId, setAgencyId] = useState('');
+  const [companyId, setCompanyId] = useState('');
   const [sourceId, setSourceId] = useState('');
   const [roomTypeId, setRoomTypeId] = useState('');
   const [roomId, setRoomId] = useState('');
@@ -156,6 +157,7 @@ export function ReservationCardEditor({
   const [amendOpen, setAmendOpen] = useState(false);
   const [dailyRates, setDailyRates] = useState<DailyRateRow[]>([]);
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
+  const [companies, setCompanies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
   const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('PRIMARY');
   const [roomTypes, setRoomTypes] = useState<SelectOption[]>([]);
@@ -219,6 +221,7 @@ export function ReservationCardEditor({
     setRecordType(String(json.recordType ?? ''));
     setTripReason(String(json.tripReason ?? ''));
     setAgencyId(String(json.agencyId ?? ''));
+    setCompanyId(String(json.companyId ?? ''));
     setSourceId(String(json.sourceId ?? ''));
     setPartyBillingMode(
       json.partyBillingMode === 'EQUAL' ? 'EQUAL' : 'PRIMARY',
@@ -232,8 +235,8 @@ export function ReservationCardEditor({
     setResNo(String(json.resNo ?? ''));
     setShareNo(String(json.shareNo ?? ''));
     setShareEligible(Boolean(json.shareEligible));
-    const guestObj = json.guest as { gender?: string | null } | undefined;
-    setGuestGender(String(json.shareGender ?? guestObj?.gender ?? ''));
+    const guestObj = json.guest as { sex?: string | null; gender?: string | null } | undefined;
+    setGuestGender(String(json.shareGender ?? guestObj?.sex ?? guestObj?.gender ?? ''));
     const neighbors = json.shareNeighbors as
       | Array<{ guestName: string; checkInDate: string; checkOutDate: string }>
       | undefined;
@@ -318,7 +321,8 @@ export function ReservationCardEditor({
       nextPax = [
         {
           title: '',
-          gender: '',
+          sex: '',
+          middleName: '',
           firstName: parts[0] ?? '',
           lastName: parts.slice(1).join(' '),
           nationality: '',
@@ -342,7 +346,8 @@ export function ReservationCardEditor({
         id: g.id,
         guestId: g.guestId ?? undefined,
         title: g.title ?? '',
-        gender: g.gender ?? '',
+        sex: g.sex ?? (g as { gender?: string | null }).gender ?? '',
+        middleName: g.middleName ?? '',
         firstName: g.firstName ?? '',
         lastName: g.lastName ?? '',
         nationality: g.nationality ?? '',
@@ -359,10 +364,21 @@ export function ReservationCardEditor({
         medicalPackageCode:
           (g as { medicalPackageCode?: string | null }).medicalPackageCode ?? '',
       }));
+      const nameByGuestId = new Map<string, string>();
+      for (const g of guests) {
+        const linked = (g as { guest?: { fullName?: string; firstName?: string | null; lastName?: string | null } })
+          .guest;
+        const gid = g.guestId ?? undefined;
+        if (!gid) continue;
+        const label =
+          linked?.fullName?.trim() ||
+          [linked?.firstName, linked?.lastName].filter(Boolean).join(' ').trim();
+        if (label) nameByGuestId.set(gid, label);
+      }
       nextPax = hydratePaxNames(nextPax, {
         id: masterGuest?.id ?? String(json.guestId ?? ''),
         fullName: masterGuest?.fullName,
-      });
+      }, nameByGuestId);
     }
     const sized = syncPaxToPartySize(nextPax, targetSize, equalMode);
     setPax(sized);
@@ -492,6 +508,7 @@ export function ReservationCardEditor({
       setRecordType('');
       setTripReason('');
       setAgencyId('');
+      setCompanyId('');
       setSourceId('');
       setRoomTypeId('');
       setRoomId('');
@@ -536,6 +553,7 @@ export function ReservationCardEditor({
     if (!open) return;
     void Promise.all([
       fetch('/api/agencies').then((r) => r.json()),
+      fetch('/api/companies').then((r) => r.json()),
       fetch('/api/master/booking-sources').then((r) => r.json()),
       fetch('/api/master/room-types').then((r) => r.json()),
       fetch('/api/master/meal-plans').then((r) => r.json()),
@@ -545,7 +563,7 @@ export function ReservationCardEditor({
       fetch('/api/admin/contracts?status=ACTIVE')
         .then((r) => (r.ok ? r.json() : []))
         .catch(() => []),
-    ]).then(([ag, src, rt, mp, rp, g, rm, contracts]) => {
+    ]).then(([ag, co, src, rt, mp, rp, g, rm, contracts]) => {
       if (Array.isArray(ag)) {
         setAgencies(
           ag.map((x: { id: string; code: string; name: string }) => ({
@@ -553,6 +571,16 @@ export function ReservationCardEditor({
             code: x.code,
             label: `${x.code} — ${x.name}`,
             isOta: isOtaAgency(x.code, x.name),
+          })),
+        );
+      }
+      if (Array.isArray(co)) {
+        setCompanies(
+          co.map((x: { id: string; code: string; name: string }) => ({
+            id: x.id,
+            code: x.code,
+            label: `${x.code} — ${x.name}`,
+            isOta: false,
           })),
         );
       }
@@ -878,6 +906,7 @@ export function ReservationCardEditor({
       checkOutTime,
       voucherNo,
       agencyId,
+      companyId,
       sourceId,
       roomTypeId,
       roomId: pendingRoomId,
@@ -923,6 +952,7 @@ export function ReservationCardEditor({
       checkOutTime,
       voucherNo,
       agencyId,
+      companyId,
       sourceId,
       roomTypeId,
       pendingRoomId,
@@ -1064,6 +1094,7 @@ export function ReservationCardEditor({
       checkOutTime: setCheckOutTime,
       voucherNo: setVoucherNo,
       agencyId: setAgencyId,
+      companyId: setCompanyId,
       sourceId: setSourceId,
       roomTypeId: setRoomTypeId,
       roomId: setPendingRoomId,
@@ -1197,6 +1228,7 @@ export function ReservationCardEditor({
             ratePlanId,
             guestId,
             agencyId: agencyId || undefined,
+            companyId: companyId || undefined,
             sourceId: sourceId || undefined,
             salesContractId: salesContractId || undefined,
             mealPlanId: mealPlanId || undefined,
@@ -1237,7 +1269,7 @@ export function ReservationCardEditor({
         await fetch(`/api/guests/${guestId}/full`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gender: guestGender }),
+          body: JSON.stringify({ sex: guestGender }),
         }).catch(() => undefined);
       }
       const res = await fetch(`/api/reservations/${reservationId}/full`, {
@@ -1249,6 +1281,7 @@ export function ReservationCardEditor({
           voucherNo: voucherNo || null,
           adults: Number(adults) || 1,
           agencyId: agencyId || null,
+          companyId: companyId || null,
           sourceId: sourceId || null,
           partyBillingMode,
           roomTypeId: roomTypeId || undefined,
@@ -1303,7 +1336,8 @@ export function ReservationCardEditor({
             id: p.id,
             guestId: p.guestId || null,
             title: p.title || null,
-            gender: p.gender || null,
+            sex: p.sex || null,
+            middleName: p.middleName || null,
             firstName: p.firstName || null,
             lastName: p.lastName || null,
             nationality: p.nationality || null,
@@ -1545,6 +1579,7 @@ export function ReservationCardEditor({
             showAssignment={showAssignment}
             sellable={isCreate ? sellable : null}
             agencies={agencies}
+            companies={companies}
             sources={sources}
             salesContracts={salesContracts}
             roomTypes={roomTypes}

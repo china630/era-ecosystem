@@ -3,10 +3,11 @@ import { isOtaAgency } from '@/lib/booking-source-kind';
 import { hotelDateKey, parseHotelNoon, reservationStayOverlaps } from '@/lib/hotel-calendar';
 import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 import type { ReservationStatus } from '@prisma/client';
+import { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
+
+export { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
 
 export const SCHEDULABLE_STATUSES: ReservationStatus[] = ['CONFIRMED', 'IN_HOUSE', 'OPTION'];
-
-export type ShareGender = 'M' | 'F';
 
 export type ShareReservationSlice = {
   id: string;
@@ -18,14 +19,6 @@ export type ShareReservationSlice = {
   checkOutDate: Date;
   shareBedIndex?: number | null;
 };
-
-export function normalizeShareGender(g: string | null | undefined): ShareGender | null {
-  if (!g) return null;
-  const u = g.trim().toUpperCase();
-  if (u === 'M' || u === 'MALE' || u === '♂') return 'M';
-  if (u === 'F' || u === 'FEMALE' || u === '♀') return 'F';
-  return null;
-}
 
 export function resolveMaxBed(
   roomMaxBed: number | null | undefined,
@@ -109,7 +102,7 @@ type DoorOverlapRow = {
   checkInDate: Date;
   checkOutDate: Date;
   shareBedIndex: number | null;
-  guest: { gender: string | null };
+  guest: { sex: string | null };
   agency: { code: string; name: string } | null;
 };
 
@@ -137,7 +130,7 @@ async function loadDoorOverlaps(input: {
       checkInDate: true,
       checkOutDate: true,
       shareBedIndex: true,
-      guest: { select: { gender: true } },
+      guest: { select: { sex: true } },
       agency: { select: { code: true, name: true } },
     },
   });
@@ -150,7 +143,7 @@ function gateRowForShare(row: DoorOverlapRow): ReturnType<typeof canGuestJoinSha
   return canGuestJoinSharePool({
     adults: row.adults,
     shareGender: row.shareGender,
-    guestGender: row.guest.gender,
+    guestGender: normalizeShareGender(row.guest.sex),
     isOta: row.agency ? isOtaAgency(row.agency.code, row.agency.name) : false,
   });
 }
@@ -943,7 +936,7 @@ export async function listShareRoomingQueue(input?: {
       ...(input?.roomTypeId ? { roomTypeId: input.roomTypeId } : {}),
     },
     include: {
-      guest: { select: { fullName: true, gender: true } },
+      guest: { select: { fullName: true, sex: true } },
       roomType: { select: { code: true, adultCapacity: true } },
       agency: { select: { code: true, name: true } },
     },
@@ -968,7 +961,7 @@ export async function suggestShareDoors(input: {
 > {
   const reservation = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
-    include: { roomType: true, guest: { select: { gender: true } } },
+    include: { roomType: true, guest: { select: { sex: true } } },
   });
   if (!reservation) throw new Error('Reservation not found');
   if (!isEffectiveShare(reservation)) {
@@ -1007,7 +1000,7 @@ export async function suggestShareDoors(input: {
           shareEligible: true,
           shareGender: gender,
           adults: 1,
-          guestGender: reservation.guest?.gender,
+          guestGender: normalizeShareGender(reservation.guest?.sex),
         },
       });
       const overlapping = await prisma.reservation.findMany({

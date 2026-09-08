@@ -46,7 +46,7 @@ type AnalysisRow = {
 export default function SubcontoAnalysisPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const { types, enabled, ready: subcontoReady } = useSubcontoFilters(token);
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
@@ -62,7 +62,7 @@ export default function SubcontoAnalysisPage() {
   useEffect(() => {
     if (!token || !ledgerReady) return;
     void (async () => {
-      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType)}`);
+      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType, accountingBookId)}`);
       if (!res.ok) return;
       const list = (await res.json()) as AccountOpt[];
       setAccounts(list);
@@ -85,8 +85,12 @@ export default function SubcontoAnalysisPage() {
         dateFrom: from,
         dateTo: to,
         subcontoTypeId,
-        ledgerType,
       });
+      for (const [key, value] of new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      )) {
+        qs.set(key, value);
+      }
       if (accountCode.trim()) qs.set("accountCode", accountCode.trim());
       const res = await apiFetch(`/api/reporting/subconto/analysis?${qs.toString()}`);
       if (!res.ok) {
@@ -100,7 +104,7 @@ export default function SubcontoAnalysisPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, from, to, subcontoTypeId, accountCode, ledgerType, t]);
+  }, [token, from, to, subcontoTypeId, accountCode, ledgerType, accountingBookId, t]);
 
   if (!ready || !ledgerReady) {
     return (

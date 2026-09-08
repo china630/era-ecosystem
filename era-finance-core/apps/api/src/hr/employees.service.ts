@@ -28,7 +28,7 @@ import {
   attachEmployeePerson,
   batchEmployeePersonMap,
   personDisplayFromOpsProfile,
-  splitAzPersonName,
+  type EmployeePersonDisplay,
 } from "./employee-person.util";
 import type { ResolvePersonInput } from "../orchestrator/orchestrator-mdm-client.service";
 
@@ -164,21 +164,12 @@ export class EmployeesService {
     };
   }
 
-  private async personDisplay(organizationId: string, globalPersonId: string) {
+  private async personDisplay(
+    organizationId: string,
+    globalPersonId: string,
+  ): Promise<EmployeePersonDisplay> {
     const map = await this.mdm.batchOpsProfile([globalPersonId], organizationId);
-    const row = map[globalPersonId];
-    if (!row) {
-      return {
-        displayName: null as string | null,
-        finMasked: null as string | null,
-        accessDenied: true,
-      };
-    }
-    return {
-      displayName: row.displayName,
-      finMasked: row.primaryIdentifierMasked,
-      accessDenied: row.accessDenied,
-    };
+    return personDisplayFromOpsProfile(map[globalPersonId]);
   }
 
   private async assertPositionSlotAvailableTx(
@@ -264,7 +255,6 @@ export class EmployeesService {
             cpEmploymentId: dto.cpEmploymentId?.trim() ?? null,
             voenBlindIndex: voenRaw ? blindIndex("voen", normalizeVoen(voenRaw)) : null,
             voenCipher: voenRaw ? encryptText(normalizeVoen(voenRaw)) : null,
-            patronymic: dto.patronymic?.trim() || null,
             positionId: dto.positionId,
             startDate: new Date(dto.startDate),
             hireDate: new Date(dto.hireDate),
@@ -313,8 +303,15 @@ export class EmployeesService {
     const current = await this.getOne(organizationId, id);
     const fin = dto.finCode.trim();
     let globalPersonId = current.globalPersonId;
-    const person = current.person as { displayName?: string | null };
-    const fullName = person?.displayName?.trim() || "Employee";
+    const person = current.person as EmployeePersonDisplay;
+    const resolveInput: ResolvePersonInput = {
+      fin,
+      globalPersonId,
+      firstName: person.firstName !== "—" ? person.firstName : undefined,
+      middleName: person.middleName || undefined,
+      lastName: person.lastName !== "—" ? person.lastName : undefined,
+      fullName: person.displayName?.trim() || undefined,
+    };
     if (globalPersonId) {
       const finLookup = await this.mdm.lookupPersonByFin(fin, organizationId);
       if (finLookup?.globalPersonId && finLookup.globalPersonId !== globalPersonId) {
@@ -327,7 +324,7 @@ export class EmployeesService {
       }
     } else {
       globalPersonId = (
-        await this.mdm.resolvePersonIdentity({ fin, fullName })
+        await this.mdm.resolvePersonIdentity(resolveInput)
       ).globalPersonId!;
     }
     const updated = await this.prisma.employee.update({
@@ -398,14 +395,20 @@ export class EmployeesService {
   ) {
     const row = await this.getOne(organizationId, id);
     const start = row.startDate.toISOString().slice(0, 10);
-    const person = row.person as {
-      displayName: string | null;
-      finMasked: string | null;
-      accessDenied: boolean;
-    };
+    const personMap = await batchEmployeePersonMap(this.mdm, organizationId, [
+      row.globalPersonId,
+    ]);
+    const person = personMap.get(row.globalPersonId)!;
     const compliance = await this.mdm.complianceIdentity(row.globalPersonId, organizationId);
 
     const cpEmploymentId = row.cpEmploymentId ?? cpEmploymentIdHint ?? null;
+    const lastName = person.lastName === "—" ? "" : person.lastName;
+    const middleName = person.middleName || "";
+    const givenFirst = person.firstName === "—" ? "" : person.firstName;
+    /** ƏMAS two-field adapter: given field = name + patronymic; lastName = surname. */
+    const emasGivenName =
+      middleName && givenFirst ? `${givenFirst} ${middleName}`.trim() : givenFirst;
+
     let absenceWindow: { startDate: string; endDate: string; kind: string } | null =
       null;
     if (cpEmploymentId) {
@@ -428,16 +431,14 @@ export class EmployeesService {
       }
     }
 
-    const nameParts = (person.displayName ?? "").split(/\s+/).filter(Boolean);
-    const firstName = nameParts[0] ?? "";
-    const lastName = nameParts.slice(1).join(" ") || firstName;
     if (!row.emasEligible || !compliance?.fin) {
       return {
         employeeId: row.id,
         cpEmploymentId,
         emasStatus: "PENDING_FIN" as const,
-        firstName,
+        firstName: emasGivenName,
         lastName,
+        middleName: middleName || null,
         finCode: null,
         positionTitle: row.jobPosition.name,
         departmentName: row.jobPosition.department?.name ?? null,
@@ -453,8 +454,9 @@ export class EmployeesService {
       employeeId: row.id,
       cpEmploymentId,
       emasStatus: "READY" as const,
-      firstName,
+      firstName: emasGivenName,
       lastName,
+      middleName: middleName || null,
       finCode: compliance.fin,
       positionTitle: row.jobPosition.name,
       departmentName: row.jobPosition.department?.name ?? null,
@@ -549,15 +551,27 @@ export class EmployeesService {
       data.workPermitNumber = dto.workPermitNumber?.trim() || null;
     }
     if (dto.userId !== undefined) data.userId = dto.userId;
-    if (dto.patronymic !== undefined) {
-      const p = dto.patronymic.trim();
-      data.patronymic = p.length ? p : null;
+    const middleName =
+      dto.middleName?.trim() ||
+      (dto as { patronymic?: string }).patronymic?.trim() ||
+      undefined;
+    if (middleName) {
+      const person = current.person as EmployeePersonDisplay;
+      await this.mdm.workforceResolve({
+        organizationId,
+        globalPersonId: current.globalPersonId,
+        firstName: person.firstName !== "—" ? person.firstName : undefined,
+        middleName,
+        lastName: person.lastName !== "—" ? person.lastName : undefined,
+        fullName: person.displayName?.trim() || undefined,
+      });
     }
     if (dto.positionId != null) data.positionId = dto.positionId;
     if (dto.startDate != null) data.startDate = new Date(dto.startDate);
     if (dto.hireDate != null) data.hireDate = new Date(dto.hireDate);
-    if (dto.dateOfBirth !== undefined) {
-      data.dateOfBirth = dto.dateOfBirth ? new Date(dto.dateOfBirth) : null;
+    const birthDateInput = dto.birthDate ?? dto.dateOfBirth;
+    if (birthDateInput !== undefined) {
+      data.birthDate = birthDateInput ? new Date(birthDateInput) : null;
     }
     if (dto.contractEndDate !== undefined) {
       data.contractEndDate = dto.contractEndDate ? new Date(dto.contractEndDate) : null;

@@ -8,6 +8,10 @@ import { apiFetch } from "../../../../../lib/api-client";
 import { safeJson } from "../../../../../lib/api-fetch";
 import { inputFieldClass } from "../../../../../lib/form-classes";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
+import {
+  ledgerQueryParam,
+  useLedger,
+} from "../../../../../lib/ledger-context";
 import { PageHeader } from "../../../../../components/layout/page-header";
 import {
   DATA_TABLE_CLASS,
@@ -64,6 +68,7 @@ function defaultPeriod(): { start: string; end: string } {
 export default function CounterpartyReconciliationPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const [email, setEmail] = useState("");
@@ -113,6 +118,11 @@ export default function CounterpartyReconciliationPage() {
       startDate: periodStart,
       endDate: periodEnd,
     });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     if (currencyFilter.trim()) q.set("currency", currencyFilter.trim().toUpperCase());
     const res = await apiFetch(`/api/reports/reconciliation/${id}?${q.toString()}`);
     setReconBusy(false);
@@ -128,6 +138,11 @@ export default function CounterpartyReconciliationPage() {
   async function downloadRecon(kind: "pdf" | "xlsx") {
     if (!token || !id) return;
     const q = new URLSearchParams({ startDate: periodStart, endDate: periodEnd });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     if (currencyFilter.trim()) q.set("currency", currencyFilter.trim().toUpperCase());
     const path =
       kind === "pdf"
@@ -157,6 +172,11 @@ export default function CounterpartyReconciliationPage() {
   async function emailReconciliation() {
     if (!token || !id) return;
     const q = new URLSearchParams({ startDate: periodStart, endDate: periodEnd });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     if (currencyFilter.trim()) q.set("currency", currencyFilter.trim().toUpperCase());
     setReconBusy(true);
     setReconErr(null);
@@ -172,7 +192,7 @@ export default function CounterpartyReconciliationPage() {
     alert(t("counterparties.reconEmailOk"));
   }
 
-  if (!ready) {
+  if (!ready || !ledgerReady) {
     return (
       <div className="text-gray-600">
         <p>{t("common.loading")}</p>

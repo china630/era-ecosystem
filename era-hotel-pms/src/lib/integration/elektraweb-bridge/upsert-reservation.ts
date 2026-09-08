@@ -7,7 +7,13 @@ import {
   parseElektrawebDate,
   str,
 } from '@/lib/integration/elektraweb-bridge/normalize';
+import {
+  guestDisplayNameFromRow,
+  resolveGuestIdForBridgeReservation,
+} from '@/lib/integration/elektraweb-bridge/guest-bridge-resolve';
+import { resolveAgencyIdFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/resolve-agency-from-ew';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
+import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
 import {
   applyElektrawebSharePair,
   elektrawebShareSignalsFromRow,
@@ -28,43 +34,6 @@ import {
 export type ReservationBridgeResult = UpsertResult & {
   events: string[];
 };
-
-async function resolveGuestId(row: Record<string, unknown>): Promise<string> {
-  const guestExt =
-    str(row.RESGUESTID) ??
-    str(row.CONTACTGUESTID) ??
-    str(row.GUESTID);
-  if (guestExt) {
-    const byRef = await prisma.guest.findFirst({ where: { externalRef: guestExt } });
-    if (byRef) return byRef.id;
-    const name =
-      str(row.GUESTNAMES) ??
-      ([str(row.NAME), str(row.LNAME)].filter(Boolean).join(' ') || `Guest ${guestExt}`);
-    const created = await prisma.guest.create({
-      data: {
-        organizationId: bridgeRequestOrganizationId(),
-        externalRef: guestExt,
-        fullName: name,
-        firstName: str(row.NAME) ?? undefined,
-        lastName: str(row.LNAME) ?? undefined,
-        phone: str(row.CONTACTPHONE) ?? str(row.PHONE) ?? undefined,
-      },
-    });
-    return created.id;
-  }
-
-  const guestName = str(row.GUESTNAMES);
-  if (guestName) {
-    const byName = await prisma.guest.findFirst({
-      where: { fullName: { equals: guestName, mode: 'insensitive' } },
-    });
-    if (byName) return byName.id;
-  }
-
-  const fallback = await prisma.guest.findFirst({ orderBy: { fullName: 'asc' } });
-  if (!fallback) throw new Error('No guests in database — sync guests first');
-  return fallback.id;
-}
 
 async function resolveRatePlanId(row: Record<string, unknown>): Promise<string> {
   const code = str(row.RATECODE) ?? str(row.RATECODEID_RATECODE);
@@ -121,18 +90,12 @@ export async function upsertReservationFromElektrawebRow(
   const { status } = mapElektrawebReservationStatus(row);
   const rawRoomNumber = str(row.ROOMNO) ?? str(row.ROOMID_ROOMNO);
   const doorNumber = physicalRoomNumber(rawRoomNumber);
-  const guestId = await resolveGuestId(row);
+  const guestId = await resolveGuestIdForBridgeReservation(row);
   const roomTypeId = await resolveRoomTypeId(row);
   const ratePlanId = await resolveRatePlanId(row);
 
-  let agencyId: string | undefined;
-  const agencyName = str(row.AGENCY) ?? str(row.AGENCYID_AGENCYCODE);
-  if (agencyName) {
-    const agency = await prisma.agency.findFirst({
-      where: { name: { contains: agencyName, mode: 'insensitive' } },
-    });
-    agencyId = agency?.id;
-  }
+  // Resolve-or-create (Excel agency-statement style). Missing EW agency must not wipe.
+  const resolvedAgencyId = await resolveAgencyIdFromElektrawebRow(row);
 
   let roomId: string | undefined;
   if (doorNumber) {
@@ -151,6 +114,8 @@ export async function upsertReservationFromElektrawebRow(
     where: { externalRef },
     include: { room: true, guest: true, ratePlan: true },
   });
+
+  const agencyId = resolvedAgencyId ?? existing?.agencyId ?? undefined;
 
   const data = {
     organizationId: bridgeRequestOrganizationId(),
@@ -179,7 +144,7 @@ export async function upsertReservationFromElektrawebRow(
       roomId: data.roomId,
       guestId: data.guestId,
       ratePlanId: data.ratePlanId,
-      agencyId: data.agencyId,
+      ...(resolvedAgencyId ? { agencyId: resolvedAgencyId } : {}),
       checkInDate: data.checkInDate,
       checkOutDate: data.checkOutDate,
       status: data.status,
@@ -188,7 +153,7 @@ export async function upsertReservationFromElektrawebRow(
       voucherNo: data.voucherNo,
       totalAmount: data.totalAmount,
       shareNo: data.shareNo,
-      // Never clear shareEligible when EW flips SHARE → NORMAL after first-out.
+      // shareEligible is owned by applyElektrawebSharePair (may clear orphans).
     },
     include: { room: true, guest: true, ratePlan: true },
   });
@@ -242,38 +207,82 @@ export async function upsertReservationFromElektrawebRow(
   const { stampMedicalPackagesForReservation } = await import(
     '@/lib/services/medical-package-stamp.service'
   );
+
+  // Party before SKU stamp — Extra Req / agency apply per ReservationGuest.
+  await syncReservationPaxFromImport(prisma, reservation.id, {
+    primaryGuestId: guestId,
+    guestName: guestDisplayNameFromRow(row),
+  });
+
   const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
   const programCode = stamped.programCode;
+
+  const full = await prisma.reservation.findUnique({
+    where: { id: reservation.id },
+    include: {
+      guest: true,
+      room: true,
+      paxGuests: {
+        orderBy: { sortOrder: 'asc' },
+        include: { guest: true },
+      },
+    },
+  });
 
   const events: string[] = [];
   const prevStatus = existing?.status;
   const prevRoom = existing?.room?.roomNumber ?? null;
-  const newRoom = reservation.room?.roomNumber ?? doorNumber ?? null;
+  const newRoom = full?.room?.roomNumber ?? doorNumber ?? null;
 
-  if (status === 'IN_HOUSE' && prevStatus !== 'IN_HOUSE') {
-    await dispatchGuestCheckedIn({
-      reservationId: reservation.id,
-      roomNumber: newRoom ?? undefined,
-      programCode,
-      globalPersonId: reservation.guest.globalPersonId ?? undefined,
-      guestName: reservation.guest.fullName,
-      checkInDate: checkInDate.toISOString(),
-      checkOutDate: checkOutDate.toISOString(),
-    });
-    events.push('GUEST_CHECKED_IN');
-    if (isClinicHttpBridgeEnabled()) {
-      await notifyClinicCheckIn({
+  if (status === 'IN_HOUSE' && prevStatus !== 'IN_HOUSE' && stamped.stayKind !== 'leisure') {
+    const paxList =
+      full && full.paxGuests.length > 0
+        ? full.paxGuests
+        : full
+          ? [
+              {
+                id: full.guest.id,
+                medicalPackageCode: full.medicalPackageCode,
+                firstName: full.guest.firstName,
+                lastName: full.guest.lastName,
+                guest: full.guest,
+              },
+            ]
+          : [];
+    for (const pax of paxList) {
+      const name =
+        [pax.firstName, pax.lastName].filter(Boolean).join(' ') ||
+        pax.guest?.fullName ||
+        full?.guest.fullName ||
+        'Guest';
+      const paxKey =
+        'id' in pax && typeof pax.id === 'string' ? pax.id : pax.guest?.id ?? undefined;
+      await dispatchGuestCheckedIn({
         reservationId: reservation.id,
-        guestName: reservation.guest.fullName,
-        globalPersonId: reservation.guest.globalPersonId,
-      }).catch((e) => console.error('clinic bridge', e));
+        roomNumber: newRoom ?? undefined,
+        programCode: pax.medicalPackageCode ?? programCode,
+        globalPersonId:
+          pax.guest?.globalPersonId ?? full?.guest.globalPersonId ?? undefined,
+        guestName: name,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        paxKey,
+      });
+      if (isClinicHttpBridgeEnabled()) {
+        await notifyClinicCheckIn({
+          reservationId: reservation.id,
+          guestName: name,
+          globalPersonId: pax.guest?.globalPersonId ?? full?.guest.globalPersonId,
+        }).catch((e) => console.error('clinic bridge', e));
+      }
     }
+    events.push('GUEST_CHECKED_IN');
   } else if (status === 'CONFIRMED' && !existing && programCode) {
     await dispatchSanatoriumBookingCreated({
       reservationId: reservation.id,
       programCode,
-      globalPersonId: reservation.guest.globalPersonId ?? undefined,
-      guestName: reservation.guest.fullName,
+      globalPersonId: full?.guest.globalPersonId ?? undefined,
+      guestName: full?.guest.fullName,
       checkInDate: checkInDate.toISOString(),
       checkOutDate: checkOutDate.toISOString(),
     });

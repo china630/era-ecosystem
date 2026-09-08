@@ -45,7 +45,6 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
     const svc = new EmployeesService(prisma, syncRuns, mdm as any);
     await svc.create("org-1", {
       globalPersonId: "person-1",
-      patronymic: "oglu",
       positionId: "pos-1",
       startDate: "2026-01-01",
       hireDate: "2026-01-01",
@@ -87,7 +86,6 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
     await expect(
       svc.create("org-1", {
         globalPersonId: "person-1",
-        patronymic: "oglu",
         positionId: "pos-1",
         startDate: "2026-01-01",
         hireDate: "2026-01-01",
@@ -110,7 +108,6 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
     await expect(
       svc.create("org-1", {
         globalPersonId: "missing",
-        patronymic: "oglu",
         positionId: "pos-1",
         startDate: "2026-01-01",
         hireDate: "2026-01-01",

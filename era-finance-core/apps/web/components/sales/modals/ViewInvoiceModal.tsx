@@ -106,7 +106,7 @@ export function ViewInvoiceModal({
   const { user } = useAuth();
   const mayCommentActivity = !isRestrictedUserRole(user?.role ?? undefined);
   const { canPostAccounting } = useOrgPermissions();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [inv, setInv] = useState<InvoiceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -190,8 +190,12 @@ export function ViewInvoiceModal({
     let cancelled = false;
     const q = new URLSearchParams({
       counterpartyId: inv.counterpartyId,
-      ledgerType,
     });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     void apiFetch(`/api/reporting/netting/preview?${q.toString()}`).then(
       async (res) => {
         if (cancelled) return;
@@ -205,7 +209,7 @@ export function ViewInvoiceModal({
     return () => {
       cancelled = true;
     };
-  }, [token, inv, ledgerType, ledgerReady]);
+  }, [token, inv, ledgerType, accountingBookId, ledgerReady]);
 
   const completedSig = useMemo(
     () => inv?.signatureLogs.find((l) => l.status === "COMPLETED"),
@@ -283,7 +287,7 @@ export function ViewInvoiceModal({
     setNetBusy(true);
     setNetErr(null);
     const res = await apiFetch(
-      `/api/reporting/netting?${ledgerQueryParam(ledgerType)}`,
+      `/api/reporting/netting?${ledgerQueryParam(ledgerType, accountingBookId)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

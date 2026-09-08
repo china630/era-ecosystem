@@ -15,9 +15,13 @@ import {
   parseElektrawebRoomCount,
   physicalRoomNumber,
 } from '@/lib/integration/elektraweb-share-map';
+import { resolveGuestIdForReservationImport } from '@/lib/import/resolve-reservation-guest';
+import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
+  /** Elektraweb Guest Id — stamp via enrich-reservations-guest-id.ts if missing from FO export. */
+  guestExternalRef: z.string().optional().nullable(),
   guestName: z.string().optional().nullable(),
   roomTypeCode: z.string().min(1),
   /** Raw EW Room No (may be 707S). */
@@ -34,44 +38,18 @@ const rowSchema = z.object({
   shareNo: z.string().optional().nullable(),
 });
 
-async function resolveGuestId(
-  tx: Parameters<ImportAdapter<z.infer<typeof rowSchema>>['upsert']>[0],
-  guestName: string | null | undefined,
-) {
-  if (!guestName) {
-    const fallback = await tx.guest.findFirst({ orderBy: { fullName: 'asc' } });
-    if (!fallback) throw new Error('No guests in database — import Guests first');
-    return fallback.id;
-  }
-  const byName = await tx.guest.findFirst({
-    where: {
-      OR: [
-        { fullName: { equals: guestName, mode: 'insensitive' } },
-        { lastName: { equals: guestName, mode: 'insensitive' } },
-      ],
-    },
-  });
-  if (byName) return byName.id;
-  const created = await tx.guest.create({
-    data: {
-      organizationId: requestOrganizationId(),
-      fullName: guestName,
-      firstName: guestName.split(' ')[0],
-      lastName: guestName.split(' ').slice(1).join(' ') || undefined,
-      externalRef: `import-guest-${guestName.replace(/\s+/g, '-').slice(0, 40)}`,
-    },
-  });
-  return created.id;
-}
-
 export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'reservations',
   label: 'Reservations',
   order: 11,
   permission: PERMISSIONS.RESERVATIONS_WRITE,
-  templateHint: '11-Reservations.xlsx — EW Front Office Control Panel',
+  templateHint:
+    '11-Reservations.xlsx — EW FOCP (+ Guest Id enrich). Multi-name `A / B` → ReservationGuest party on one Res Id.',
   headerAliases: {
     'Res Id': 'externalRef',
+    'Guest Id': 'guestExternalRef',
+    GuestId: 'guestExternalRef',
+    GUESTID: 'guestExternalRef',
     'Guest Name': 'guestName',
     'Room Type': 'roomTypeCode',
     'Room No': 'roomNumber',
@@ -99,6 +77,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (!checkIn || !checkOut) throw new Error('Arrival and Departure dates are required');
     return {
       externalRef: cellString(raw.externalRef),
+      guestExternalRef: cellString(raw.guestExternalRef),
       guestName: cellString(raw.guestName),
       roomTypeCode: cellString(raw.roomTypeCode),
       roomNumber: cellString(raw.roomNumber),
@@ -151,7 +130,11 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
 
     const guestId = dryRun
       ? (await tx.guest.findFirst())?.id ?? 'dry-run-guest'
-      : await resolveGuestId(tx, row.guestName);
+      : await resolveGuestIdForReservationImport(tx, {
+          guestExternalRef: row.guestExternalRef,
+          guestName: row.guestName,
+          reservationExternalRef: row.externalRef,
+        });
 
     const existing = await tx.reservation.findFirst({ where: { externalRef: row.externalRef } });
     const data = {
@@ -191,7 +174,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         children11_6: data.children11_6,
         voucherNo: data.voucherNo,
         shareNo: data.shareNo,
-        // Do NOT clear shareEligible / shareGender / shareBedIndex on NORMAL re-import.
+        // shareEligible owned by applyElektrawebSharePair (includeHistory for cutover).
       },
     });
 
@@ -216,10 +199,21 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       reservationId: reservation.id,
       isSecond,
       shareNo: row.shareNo,
+      includeHistory: true,
     });
     if (isSecond && !pair.applied && pair.skippedReason) {
       console.warn(
         `[import:reservations] share pair skipped for ${row.externalRef}: ${pair.skippedReason}`,
+      );
+    }
+
+    const pax = await syncReservationPaxFromImport(tx, reservation.id, {
+      primaryGuestId: guestId,
+      guestName: row.guestName,
+    });
+    if (pax.paxCount > 1) {
+      console.info(
+        `[import:reservations] Res ${row.externalRef}: ${pax.paxCount} pax (${pax.linkedCount} linked to Guest Cards)`,
       );
     }
 

@@ -18,6 +18,7 @@ import {
   type PhysioLateralityCode,
   type PhysioOrderFields,
 } from "./physio-order-fields";
+import { inferPhysioTypeGate } from "./physio-type-gate";
 
 export const PROCEDURE_PHYSIO_INCLUDE = {
   sites: {
@@ -38,12 +39,23 @@ export const PROCEDURE_PHYSIO_INCLUDE = {
       },
     },
   },
-  procedureType: { select: { needsSite: true, physioOrderFields: true } },
+  procedureType: {
+    select: {
+      needsSite: true,
+      physioOrderFields: true,
+      allowedSiteCodes: true,
+      code: true,
+      name: true,
+    },
+  },
 } as const;
 
 export type PhysioOrderPayload = {
   needsSite: boolean;
   physioOrderFields: string[];
+  allowedSiteCodes: string[];
+  forceSiteTogether: boolean;
+  sitesHintKey: "hydro_jet_safety" | null;
   siteIds: string[];
   siteApplyMode: ProcedureSiteApplyModeCode | null;
   siteLaterality: Record<string, PhysioLateralityCode | null>;
@@ -57,12 +69,25 @@ export function toPhysioOrderPayload(order: {
   bodyPart: string | null;
   siteApplyMode: ProcedureSiteApplyMode | null;
   physioFields?: unknown;
-  procedureType?: { needsSite: boolean; physioOrderFields?: string[] } | null;
+  procedureType?: {
+    needsSite: boolean;
+    physioOrderFields?: string[];
+    allowedSiteCodes?: string[];
+    code?: string;
+    name?: string;
+  } | null;
   sites: Array<{ siteId: string; laterality?: ProcedureSiteLaterality | null }>;
 }): PhysioOrderPayload {
+  const gate = inferPhysioTypeGate(
+    order.procedureType?.code ?? "",
+    order.procedureType?.name ?? "",
+  );
   return {
     needsSite: order.procedureType?.needsSite !== false,
     physioOrderFields: order.procedureType?.physioOrderFields ?? [],
+    allowedSiteCodes: order.procedureType?.allowedSiteCodes ?? [],
+    forceSiteTogether: gate.forceSiteTogether,
+    sitesHintKey: gate.sitesHintKey,
     siteIds: order.sites.map((s) => s.siteId),
     siteApplyMode: order.siteApplyMode,
     siteLaterality: lateralityBySiteId(
@@ -137,9 +162,16 @@ export async function patchProcedureOrderPhysio(
     }
     const byId = new Map(rows.map((r) => [r.id, r]));
     const ordered = siteIds.map((id) => byId.get(id)!);
+    const allowedCodes = existing.procedureType?.allowedSiteCodes ?? [];
     for (const site of ordered) {
       if (!site.active) {
         throw new PhysioCatalogError(`Physio site is inactive: ${site.code}`, 409);
+      }
+      if (allowedCodes.length > 0 && !allowedCodes.includes(site.code)) {
+        throw new PhysioCatalogError(
+          `Physio site not allowed for this procedure type: ${site.code}`,
+          400,
+        );
       }
     }
     const mergedLaterality: Record<string, PhysioLateralityCode | null> = {};
@@ -153,7 +185,13 @@ export async function patchProcedureOrderPhysio(
       mergedLaterality,
     );
     const bodyPart = deriveCoarseBodyPart(ordered);
-    const siteApplyMode = resolveSiteApplyMode(ordered.length, input.siteApplyMode ?? existing.siteApplyMode);
+    const gate = inferPhysioTypeGate(
+      existing.procedureType?.code ?? "",
+      existing.procedureType?.name ?? "",
+    );
+    const siteApplyMode = gate.forceSiteTogether
+      ? ("TOGETHER" as const)
+      : resolveSiteApplyMode(ordered.length, input.siteApplyMode ?? existing.siteApplyMode);
 
     return prisma.$transaction(async (tx) => {
       await tx.procedureOrderSite.deleteMany({ where: { procedureOrderId: orderId } });
@@ -206,10 +244,13 @@ export async function patchProcedureOrderPhysio(
   if (input.note !== undefined) data.note = input.note;
   if (input.bodyPart !== undefined) data.bodyPart = input.bodyPart;
   if (input.siteApplyMode !== undefined) {
-    data.siteApplyMode = resolveSiteApplyMode(
-      existing.sites.length,
-      parseApplyMode(input.siteApplyMode),
+    const gate = inferPhysioTypeGate(
+      existing.procedureType?.code ?? "",
+      existing.procedureType?.name ?? "",
     );
+    data.siteApplyMode = gate.forceSiteTogether
+      ? "TOGETHER"
+      : resolveSiteApplyMode(existing.sites.length, parseApplyMode(input.siteApplyMode));
   }
   if (input.physioFields !== undefined) data.physioFields = nextFields as Prisma.InputJsonValue;
 

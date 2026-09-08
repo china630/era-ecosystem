@@ -141,7 +141,30 @@ export class WorkforceImportService {
     const headers = parsed[0];
     const iFin = headerIndex(headers, "fin");
     const iPerson = headerIndex(headers, "globalPersonId", "globalpersonid");
-    const iName = headerIndex(headers, "fullName", "fullname", "displayname");
+    const iFirst = headerIndex(
+      headers,
+      "firstName",
+      "firstname",
+      "ad",
+      "givenname",
+    );
+    const iMiddle = headerIndex(
+      headers,
+      "middleName",
+      "middlename",
+      "ataadi",
+      "ata adi",
+      "patronymic",
+    );
+    const iLast = headerIndex(headers, "lastName", "lastname", "soyad", "surname");
+    const iName = headerIndex(
+      headers,
+      "fullName",
+      "fullname",
+      "displayname",
+      "tamadi",
+      "tam adi",
+    );
     const iUnit = headerIndex(headers, "orgUnit", "orgunit", "unit");
     const iPos = headerIndex(headers, "position");
     const iHire = headerIndex(headers, "hireDate", "hiredate");
@@ -151,7 +174,7 @@ export class WorkforceImportService {
     const iSats = headerIndex(headers, "satellites", "satelliteKeys", "satellitekeys");
     if ((iFin < 0 && iPerson < 0) || iUnit < 0 || iPos < 0 || iHire < 0) {
       throw new BadRequestException(
-        "CSV header must include (fin or globalPersonId), orgUnit, position, hireDate. New hires also need fullName with fin.",
+        "CSV header must include (fin or globalPersonId), orgUnit, position, hireDate. New hires need firstName+lastName or fullName with fin.",
       );
     }
 
@@ -174,6 +197,9 @@ export class WorkforceImportService {
       const fin = iFin >= 0 ? (cols[iFin] ?? "").trim().toUpperCase() : "";
       const globalPersonId =
         iPerson >= 0 ? (cols[iPerson] ?? "").trim() : "";
+      const firstName = iFirst >= 0 ? (cols[iFirst] ?? "").trim() : "";
+      const middleName = iMiddle >= 0 ? (cols[iMiddle] ?? "").trim() : "";
+      const lastName = iLast >= 0 ? (cols[iLast] ?? "").trim() : "";
       const fullName = iName >= 0 ? (cols[iName] ?? "").trim() : "";
       const orgUnitName = cols[iUnit] ?? "";
       const positionName = cols[iPos] ?? "";
@@ -186,7 +212,14 @@ export class WorkforceImportService {
         .trim()
         .toUpperCase();
       const satsRaw = iSats >= 0 ? cols[iSats] ?? "" : "";
-      const label = fullName || globalPersonId || fin || `row ${index}`;
+      const hasParts = Boolean(firstName && lastName);
+      const hasFullName = Boolean(fullName);
+      const label =
+        [firstName, middleName, lastName].filter(Boolean).join(" ") ||
+        fullName ||
+        globalPersonId ||
+        fin ||
+        `row ${index}`;
 
       if (!fin && !globalPersonId) {
         errors++;
@@ -197,24 +230,27 @@ export class WorkforceImportService {
         });
         continue;
       }
-      if (fin && !fullName) {
+      if (fin && !hasParts && !hasFullName) {
         errors++;
         results.push({
           index,
           status: "error",
-          message: "fullName is required when hiring by fin",
+          message:
+            "firstName+lastName or fullName is required when hiring by fin",
         });
         continue;
       }
 
       let personId = globalPersonId;
-      if (!dryRun && fullName) {
+      if (!dryRun && (hasParts || hasFullName)) {
         try {
           const resolved = await this.mdm.workforceResolvePerson({
             organizationId,
             ...(globalPersonId ? { globalPersonId } : {}),
             fin,
-            fullName,
+            ...(hasParts
+              ? { firstName, middleName: middleName || undefined, lastName }
+              : { fullName }),
             ...(birthDate ? { birthDate } : {}),
             ...(sex ? { sex } : {}),
           });

@@ -3,19 +3,19 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
-import { formatPax, formatPlanDate } from './format';
+import { formatPax, formatPlanBarNames, formatPlanDate, formatPlanDebtBadge } from './format';
 import { barSvgPath, type BarShapeFlags } from './shapes';
 import {
   BAR_LABEL_PAD_LEFT_PX,
   CHEVRON_PX,
-  HK_SQUARE_COLORS,
-  resolveHkSquareKind,
+  PLAN_BAR_OCCUPANCY_STROKE,
+  hasOverlappingShareRoommate,
   resolvePlanBarDayState,
+  resolvePlanBarOccupancyKind,
   themeForDayState,
-  type HkSquareKind,
   type PlanBarInput,
 } from './plan-bar-theme';
-import type { RoomPlanReservationBar, RoomStatus } from './types';
+import type { RoomPlanReservationBar } from './types';
 
 function formatMoney(value: number | string | undefined | null): string {
   if (value == null) return '—';
@@ -41,9 +41,11 @@ function Row({
 
 function BarTooltip({
   bar,
+  names,
   anchor,
 }: {
   bar: RoomPlanReservationBar;
+  names: string;
   anchor: DOMRect;
 }) {
   const t = useTranslations('roomPlan');
@@ -59,12 +61,11 @@ function BarTooltip({
   const pax = formatPax(bar.adults, bar.children11_6, bar.children5_2, bar.children1_0);
   const stay = `${formatPlanDate(bar.checkInDate)} – ${formatPlanDate(bar.checkOutDate)}`;
   const meal = bar.mealPlanCode ? ` (${bar.mealPlanCode})` : '';
-  const shareLabel =
-    bar.shareEligible && bar.shareBedIndex != null
-      ? `${bar.shareGender === 'F' || (bar.shareGender ?? '').toUpperCase().startsWith('F') ? '♀' : '♂'} ${t('tooltipShareBed', { bed: bar.shareBedIndex })}`
-      : bar.shareEligible
-        ? t('tooltipShare')
-        : null;
+  const shareLabel = bar.shareEligible
+    ? bar.shareBedIndex != null
+      ? t('tooltipShareBed', { bed: bar.shareBedIndex })
+      : t('tooltipShare')
+    : null;
 
   return createPortal(
     <div
@@ -73,7 +74,7 @@ function BarTooltip({
       style={{ left: Math.max(8, left), top: Math.max(8, top) }}
     >
       <div className="flex items-start justify-between gap-2 border-b border-[#E8EEF2] bg-[#F8FAFC] px-3 py-2">
-        <p className="text-[13px] font-semibold text-[#2C3E50]">{bar.guest.fullName}</p>
+        <p className="text-[13px] font-semibold text-[#2C3E50]">{names}</p>
         <span className="shrink-0 rounded-full bg-[#EBF5FB] px-2 py-0.5 text-[10px] font-semibold text-[#2980B9]">
           {tRes(bar.status)}
         </span>
@@ -105,24 +106,12 @@ function BarTooltip({
   );
 }
 
-function HkSquare({ kind }: { kind: Exclude<HkSquareKind, null> }) {
-  return (
-    <span
-      className="pointer-events-none absolute top-1/2 z-[1] h-2.5 w-2.5 -translate-y-1/2 rounded-[2px] border border-black/10"
-      style={{ left: 4, backgroundColor: HK_SQUARE_COLORS[kind] }}
-      aria-hidden
-    />
-  );
-}
-
 export function RoomPlanBar({
   bar,
   shape,
   selected,
   draggable,
   roomBars,
-  roomStatus,
-  roomHkCondition,
   onSelect,
   onDragStart,
   onDragEnd,
@@ -132,8 +121,6 @@ export function RoomPlanBar({
   selected: boolean;
   draggable: boolean;
   roomBars: RoomPlanReservationBar[];
-  roomStatus?: RoomStatus;
-  roomHkCondition?: string | null;
   onSelect: () => void;
   onDragStart: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDragEnd: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -177,15 +164,31 @@ export function RoomPlanBar({
   };
   const dayState = resolvePlanBarDayState(selfInput, inputs);
   const theme = themeForDayState(dayState);
-  const hkKind =
-    roomStatus != null
-      ? resolveHkSquareKind({ status: roomStatus, hkCondition: roomHkCondition })
-      : null;
-
+  const occupancy = resolvePlanBarOccupancyKind(selfInput);
+  const stroke = PLAN_BAR_OCCUPANCY_STROKE[occupancy];
+  const roommateNames = roomBars
+    .filter((other) => {
+      if (other.id === bar.id) return false;
+      return hasOverlappingShareRoommate(selfInput, [
+        selfInput,
+        {
+          id: other.id,
+          status: other.status,
+          checkInDate: other.checkInDate,
+          checkOutDate: other.checkOutDate,
+          shareEligible: other.shareEligible,
+          shareGender: other.shareGender,
+          adults: other.adults,
+          roomId: other.roomId,
+        },
+      ]);
+    })
+    .map((other) => other.guest.fullName);
+  const names = formatPlanBarNames(bar.guest.fullName, bar.partyNames, roommateNames);
   const pax = formatPax(bar.adults, bar.children11_6, bar.children5_2, bar.children1_0);
   const meal = bar.mealPlanCode ? ` (${bar.mealPlanCode})` : '';
-  const caption = `${bar.guest.fullName} ${pax}${meal}`;
-  const labelPad = BAR_LABEL_PAD_LEFT_PX + (hkKind ? 10 : 0);
+  const caption = `${names} ${pax}${meal}`;
+  const debt = formatPlanDebtBadge(bar.guestBalance);
 
   const showTooltip = useCallback((el: HTMLButtonElement | null) => {
     if (el) setHoverRect(el.getBoundingClientRect());
@@ -219,21 +222,30 @@ export function RoomPlanBar({
           <path
             d={barSvgPath(shape, widthPx, 26)}
             fill={theme.fill}
-            stroke={theme.stroke}
-            strokeWidth={0.6}
+            stroke={stroke}
+            strokeWidth={1.6}
             strokeDasharray={theme.dashed ? '3 2' : undefined}
             vectorEffect="non-scaling-stroke"
           />
         </svg>
-        {hkKind ? <HkSquare kind={hkKind} /> : null}
         <span
-          className="pointer-events-none absolute inset-0 flex items-center truncate pr-2 text-left text-[10px] font-bold"
-          style={{ paddingLeft: labelPad, color: theme.text }}
+          className={`pointer-events-none absolute inset-0 flex items-center truncate text-left text-[10px] font-bold ${
+            debt ? 'pr-8' : 'pr-2'
+          }`}
+          style={{ paddingLeft: BAR_LABEL_PAD_LEFT_PX, color: theme.text }}
         >
           {caption}
         </span>
+        {debt ? (
+          <span
+            className="pointer-events-none absolute top-1/2 z-[3] -translate-y-1/2 rounded-[2px] bg-[#E74C3C] px-1 py-px text-[9px] font-bold leading-none text-white shadow-sm"
+            style={{ right: Math.max(2, CHEVRON_PX / 2 - 4) }}
+          >
+            {debt}
+          </span>
+        ) : null}
       </button>
-      {hoverRect ? <BarTooltip bar={bar} anchor={hoverRect} /> : null}
+      {hoverRect ? <BarTooltip bar={bar} names={names} anchor={hoverRect} /> : null}
     </>
   );
 }

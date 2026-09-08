@@ -33,14 +33,15 @@ export async function openFoliosForReservation(reservationId: string, guestVoen:
     where: { id: reservationId },
     select: {
       agencyId: true,
+      companyId: true,
       group: { select: { folioMode: true, agencyId: true } },
     },
   });
 
-  const types: FolioType[] = guestVoen ? ['GUEST', 'COMPANY'] : ['GUEST'];
+  const types: FolioType[] = guestVoen || reservation?.companyId ? ['GUEST', 'COMPANY'] : ['GUEST'];
   const needsAgency =
     Boolean(reservation?.agencyId || reservation?.group?.agencyId) &&
-    (reservation?.group?.folioMode === 'MASTER' || reservation?.group?.folioMode === 'SPLIT');
+    (reservation?.group?.folioMode === 'MASTER' || reservation?.group?.folioMode === 'SPLIT' || Boolean(reservation?.agencyId));
   if (needsAgency && !types.includes('AGENCY')) types.push('AGENCY');
 
   return prisma.$transaction(

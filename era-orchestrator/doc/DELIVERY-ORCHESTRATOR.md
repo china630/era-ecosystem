@@ -48,6 +48,7 @@ PRD: [../PRD.md](../PRD.md)
 **One plan, one cutover** — full inventory: [CP-BILLING-MIGRATION.md](../../docs/CP-BILLING-MIGRATION.md)
 
 - [x] CP-BILLING-1 … CP-BILLING-10 (see migration doc checklist)
+- [x] Commercial catalog freeze 2026-09 — palette 19/29/39/99, XOR mutex, `syncPricingModuleCatalog` ([ADR](../../docs/adr/era-commercial-catalog.md))
 
 ## CP-PLATFORM — Notifications + add-ons (post-billing)
 
@@ -67,7 +68,7 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] `platform_reference_data` in `pricing-module-seed`
 - [x] `POST /platform/reference-data/v1/validate-key` (service token; `@Public`)
-- [x] Entitlement guard `assertPlatformModule(org, platform_reference_data)` (skippable via `REFERENCE_DATA_SKIP_ENTITLEMENT=1` for dev)
+- [x] Entitlement guard `assertAnyPlatformModule` Data HUB Bronze/Silver/Gold XOR (skippable via `REFERENCE_DATA_SKIP_ENTITLEMENT=1` for dev)
 - [x] Meter stub — `PlatformAuditLog` action `validate_api_key`
 - [x] UAT — [UAT-SMOKE-PLATFORM.md](./UAT-SMOKE-PLATFORM.md) § CP-REFERENCE-DATA
 

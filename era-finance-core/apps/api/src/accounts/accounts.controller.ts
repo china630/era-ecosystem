@@ -19,6 +19,7 @@ import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { AccountsService } from "./accounts.service";
 import { CreateBankAccountDto } from "./dto/create-bank-account.dto";
+import { CreateIfrsAccountDto } from "./dto/create-ifrs-account.dto";
 import { ImportFromTemplateDto } from "./dto/import-from-template.dto";
 
 function parseOrganizationKindQuery(raw?: string): OrganizationKind | undefined {
@@ -75,6 +76,7 @@ export class AccountsController {
   list(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
     @Query("locale") locale?: string,
     @Headers("accept-language") acceptLanguage?: string,
   ) {
@@ -82,6 +84,7 @@ export class AccountsController {
       organizationId,
       parseLedgerTypeQuery(ledgerType),
       locale?.trim() || acceptLanguage,
+      accountingBookId,
     );
   }
 
@@ -90,10 +93,32 @@ export class AccountsController {
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({
     summary:
-      "Создать недостающие IFRS-счета по структуре NAS (копия плана счетов)",
+      "Ops escape hatch: clone NAS CoA codes into IFRS (not onboarding default — P1 uses TemplateIFRSMapping)",
   })
   mirrorIfrs(@OrganizationId() organizationId: string) {
     return this.accounts.mirrorNasToIfrs(organizationId);
+  }
+
+  @Post("ifrs-provision")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Provision IFRS accounts + LedgerMappingSet from TemplateIFRSMapping (idempotent)",
+  })
+  provisionIfrs(@OrganizationId() organizationId: string) {
+    return this.accounts.provisionIfrsFromTemplate(organizationId);
+  }
+
+  @Post("ifrs")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Create an IFRS account in the org chart" })
+  createIfrs(
+    @OrganizationId() organizationId: string,
+    @Body() dto: CreateIfrsAccountDto,
+  ) {
+    return this.accounts.createIfrsAccount(organizationId, dto);
   }
 
   @Post("import-from-template")

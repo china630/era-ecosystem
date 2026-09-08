@@ -63,37 +63,12 @@ function loadDiagnosticCatalog(): DiagnosticCatalog {
   return JSON.parse(readFileSync(path, "utf8")) as DiagnosticCatalog;
 }
 
+/** ServiceCatalogCache only — ClinicalTemplate retired (Diagnostic catalog SoT). */
 async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
-  let clinicalCount = 0;
   let catalogCount = 0;
-  const meta = catalog.commonMetaFields ?? [];
 
   for (const modality of catalog.modalities) {
     for (const tpl of modality.templates) {
-      const bodyJson = JSON.stringify({
-        kind: modality.kind,
-        modality: modality.code,
-        category: tpl.category,
-        title: tpl.title,
-        metaFields: meta,
-        fields: tpl.fields,
-      });
-      await prisma.clinicalTemplate.upsert({
-        where: { code: tpl.code },
-        create: {
-          code: tpl.code,
-          title: tpl.title.en,
-          specialty: modality.code,
-          bodyJson,
-        },
-        update: {
-          title: tpl.title.en,
-          specialty: modality.code,
-          bodyJson,
-        },
-      });
-      clinicalCount += 1;
-
       const serviceCode = tpl.serviceCode ?? tpl.code;
       await prisma.serviceCatalogCache.upsert({
         where: { code: serviceCode },
@@ -120,28 +95,6 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
   }
 
   for (const panel of catalog.labPanels) {
-    const bodyJson = JSON.stringify({
-      kind: "lab_panel",
-      category: panel.category,
-      title: panel.title,
-      analytes: panel.analytes,
-    });
-    await prisma.clinicalTemplate.upsert({
-      where: { code: panel.code },
-      create: {
-        code: panel.code,
-        title: panel.title.en,
-        specialty: "LAB",
-        bodyJson,
-      },
-      update: {
-        title: panel.title.en,
-        specialty: "LAB",
-        bodyJson,
-      },
-    });
-    clinicalCount += 1;
-
     const serviceCode = panel.serviceCode ?? panel.code;
     await prisma.serviceCatalogCache.upsert({
       where: { code: serviceCode },
@@ -166,51 +119,7 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
     catalogCount += 1;
   }
 
-  for (const visit of catalog.visitTemplates) {
-    const bodyJson = JSON.stringify({
-      kind: "visit",
-      specialty: visit.specialty,
-      title: visit.title,
-      fields: visit.fields,
-    });
-    await prisma.clinicalTemplate.upsert({
-      where: { code: visit.code },
-      create: {
-        code: visit.code,
-        title: visit.title.en,
-        specialty: visit.specialty,
-        bodyJson,
-      },
-      update: {
-        title: visit.title.en,
-        specialty: visit.specialty,
-        bodyJson,
-      },
-    });
-    clinicalCount += 1;
-  }
-
   for (const pkg of catalog.packages ?? []) {
-    const bodyJson = JSON.stringify({
-      kind: "package",
-      title: pkg.title,
-      includes: pkg.includes,
-    });
-    await prisma.clinicalTemplate.upsert({
-      where: { code: pkg.code },
-      create: {
-        code: pkg.code,
-        title: pkg.title.en,
-        specialty: "PACKAGE",
-        bodyJson,
-      },
-      update: {
-        title: pkg.title.en,
-        specialty: "PACKAGE",
-        bodyJson,
-      },
-    });
-    clinicalCount += 1;
     await prisma.serviceCatalogCache.upsert({
       where: { code: pkg.code },
       create: {
@@ -234,7 +143,7 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
     catalogCount += 1;
   }
 
-  return { clinicalCount, catalogCount };
+  return { catalogCount };
 }
 
 async function seedDemoAdmin() {
@@ -600,7 +509,6 @@ async function main() {
 
   console.log("Clinic vNext seed OK", {
     usg: usg.code,
-    clinicalTemplates: seeded.clinicalCount,
     catalogCodes: seeded.catalogCount,
   });
 }

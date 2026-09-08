@@ -17,8 +17,8 @@ Hotel `Guest` carries a large operational profile (CRM, visa, loyalty, tourism c
 | Layer | System of record | Stored on `Guest` (satellite DB) |
 |-------|------------------|----------------------------------|
 | **Identity** | MDM `GlobalNaturalPerson` + `PersonIdentifier` | **`globalPersonId` only** (no plaintext FIN/passport on `Guest` after W4) |
-| **Core demographics** | MDM `sex` + `birthDate` | Ops cache: `gender`, `birthDate` (share rooms / FO speed). Resolve writes MDM. |
-| **Operational cache** | Satellite (denormalized for ops) | `fullName`, name parts, `phone`, `email`, `nationality`, `birthDate`, visa fields, consent flags, loyalty, CRM extensions |
+| **Core demographics** | MDM `sex` + `birthDate` | Ops cache: `Guest.sex` (physical column `gender`), `birthDate` (share rooms / FO speed). Resolve writes MDM. |
+| **Operational cache** | Satellite (denormalized for ops) | `firstName` / `middleName` / `lastName` + denorm `fullName`, `phone`, `email`, ISO `nationality`, `birthDate`, visa fields, consent flags, loyalty, CRM extensions |
 | **Travel documents (non-primary)** | Satellite `GuestDocument` | Scanned copies, secondary permits — **not** primary identity SoR |
 
 Intake FIN/passport is **transient** → `linkPersonIdentity` → persist `globalPersonId` only.
@@ -46,7 +46,7 @@ On `person-merge`, update `Guest.globalPersonId` only; refresh display names fro
 
 ### Import (ElectraWeb / Nafta)
 
-Guest import resolves identity via MDM; sets `globalPersonId`; **does not** persist FIN/passport on `Guest` row (Wave 4). **Gender and birth date** go to MDM person core on resolve; `Guest.gender` / `Guest.birthDate` remain FO ops cache.
+Guest import resolves identity via MDM; sets `globalPersonId`; **does not** persist FIN/passport on `Guest` row (Wave 4). **Name parts** (`firstName`/`middleName`/`lastName`) and **ISO citizenship** go to MDM on link (no `AZ|OTHER` collapse). **Sex and birth date** go to MDM person core on resolve; `Guest.sex` / `Guest.birthDate` remain FO ops cache. `parentFatherName` / `parentMotherName` (physical `fatherName`/`motherName`) are parent names — **not** patronymic (`middleName`). `Reservation.shareGender` is a separate M/F snapshot for share pool — not renamed.
 
 ### Compliance exports
 

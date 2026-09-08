@@ -17,7 +17,7 @@
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-CP-AUTH | Auth / SSO / hybrid RBAC | ✅ | [ ] | `cp-auth-negative.spec.ts`; UAT-SMOKE-RBAC § Deny | Negative: missing/invalid Bearer 401; spoofed SSO signature 401. Launch URL (CP-LAUNCH-01) still API / no UAT SHIPPED |
-| AC-CP-BILL | Billing / entitlements / subscription | ✅ | [ ] | `cp-bill-negative.spec.ts`; CP-BILLING | Negative: SUBSCRIPTION_MISSING 403; foreign invoice 403; non-owner billing 403 |
+| AC-CP-BILL | Billing / entitlements / subscription | ✅ | [ ] | `cp-bill-negative.spec.ts`; `pricing-catalog-canon.spec.ts`; CP-BILLING | Negative: SUBSCRIPTION_MISSING 403; foreign invoice 403; non-owner billing 403. Catalog XOR 2026-09 |
 | AC-CP-MDM | MDM natural person identity | ✅ | [ ] | `cp-mdm-negative.spec.ts`; ORCH-MDM-* | Negative: missing/wrong internal service token → 401 |
 | AC-CP-WF | Workforce hub (hire, absence, seats, security) | ✅ | [ ] | `cp-wf-negative.spec.ts`; `workforce-timesheets.month.spec.ts`; CP-WF-* | Negative: hire role deny 403; PLATFORM_WORKFORCE_REQUIRED 403. Month grid landed — still not Pilot (no UAT-SMOKE) |
 | AC-CP-SA | Super-admin platform ops | ✅ | [ ] | `cp-sa-negative.spec.ts`; UAT-SMOKE-PLATFORM § Deny | Negative: non-super-admin → 403 |
@@ -50,6 +50,7 @@ Do not call this table «product readiness».
 |-------|----|
 | `era-orchestrator/apps/api/src/auth/cp-auth-negative.spec.ts` | AC-CP-AUTH |
 | `era-orchestrator/apps/api/src/billing/cp-bill-negative.spec.ts` | AC-CP-BILL |
+| `era-orchestrator/apps/api/src/billing/pricing-catalog-canon.spec.ts` | AC-CP-BILL (catalog XOR / Resort 188.70) |
 | `era-orchestrator/apps/api/src/mdm/cp-mdm-negative.spec.ts` | AC-CP-MDM |
 | `era-orchestrator/apps/api/src/platform/workforce/cp-wf-negative.spec.ts` | AC-CP-WF |
 | `era-orchestrator/apps/api/src/admin/cp-sa-negative.spec.ts` | AC-CP-SA |

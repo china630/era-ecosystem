@@ -19,11 +19,26 @@ export type ResolvePersonInput = {
   passport?: string;
   issuingCountry?: string;
   residencePermit?: string;
-  fullName: string;
+  globalPersonId?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  /** Legacy blob; prefer name parts. */
+  fullName?: string;
   phone?: string;
   nationality?: string;
   sex?: string;
   birthDate?: string | Date | null;
+};
+
+export type MdmOpsProfilePayload = {
+  globalPersonId: string;
+  displayName: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  primaryIdentifierMasked: string | null;
+  accessDenied: boolean;
 };
 
 @Injectable()
@@ -166,17 +181,7 @@ export class OrchestratorMdmClientService {
   async batchOpsProfile(
     personIds: string[],
     organizationId: string,
-  ): Promise<
-    Record<
-      string,
-      {
-        globalPersonId: string;
-        displayName: string | null;
-        primaryIdentifierMasked: string | null;
-        accessDenied: boolean;
-      }
-    >
-  > {
+  ): Promise<Record<string, MdmOpsProfilePayload>> {
     const token = this.token();
     if (!token || personIds.length === 0) return {};
     try {
@@ -186,15 +191,7 @@ export class OrchestratorMdmClientService {
         body: JSON.stringify({ personIds, organizationId }),
       });
       if (!res.ok) return {};
-      return (await res.json()) as Record<
-        string,
-        {
-          globalPersonId: string;
-          displayName: string | null;
-          primaryIdentifierMasked: string | null;
-          accessDenied: boolean;
-        }
-      >;
+      return (await res.json()) as Record<string, MdmOpsProfilePayload>;
     } catch {
       return {};
     }
@@ -205,12 +202,7 @@ export class OrchestratorMdmClientService {
   ): Promise<{
     globalPersonId: string;
     created: boolean;
-    opsProfile: {
-      globalPersonId: string;
-      displayName: string | null;
-      primaryIdentifierMasked: string | null;
-      accessDenied: boolean;
-    };
+    opsProfile: MdmOpsProfilePayload;
   } | null> {
     const token = this.token();
     if (!token) return null;
@@ -224,12 +216,7 @@ export class OrchestratorMdmClientService {
       return (await res.json()) as {
         globalPersonId: string;
         created: boolean;
-        opsProfile: {
-          globalPersonId: string;
-          displayName: string | null;
-          primaryIdentifierMasked: string | null;
-          accessDenied: boolean;
-        };
+        opsProfile: MdmOpsProfilePayload;
       };
     } catch {
       return null;

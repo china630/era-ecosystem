@@ -3,7 +3,10 @@ import { nextFreeShareBedIndex } from '@/lib/services/share-assignment.service';
 import { assignSharePaintLanes } from '@/components/room-plan/share-lanes';
 import {
   PLAN_BAR_COLORS,
+  PLAN_BAR_OCCUPANCY_STROKE,
+  isPlanVisibleRoom,
   resolvePlanBarDayState,
+  resolvePlanBarOccupancyKind,
   themeForDayState,
 } from '@/components/room-plan/plan-bar-theme';
 import { barSvgPath, CHEVRON_PX, computePlacedBars, parseCalendarDate } from '@/components/room-plan/shapes';
@@ -152,5 +155,48 @@ describe('room-plan EW wave smoke', () => {
     ]);
     expect(placed[0]!.shape.leftConcave).toBe(true);
     expect(placed[0]!.shape.rightStyle).toBe('arrow');
+  });
+
+  it('occupancy stroke: exclusive vs EW 0=male share vs female share', () => {
+    expect(
+      resolvePlanBarOccupancyKind({
+        id: 'ex',
+        status: 'IN_HOUSE',
+        checkInDate: today,
+        checkOutDate: '2026-06-05',
+        adults: 2,
+      }),
+    ).toBe('exclusive');
+    expect(
+      resolvePlanBarOccupancyKind({
+        id: 'm',
+        status: 'IN_HOUSE',
+        checkInDate: today,
+        checkOutDate: '2026-06-05',
+        shareEligible: true,
+        shareGender: '0',
+        adults: 1,
+      }),
+    ).toBe('shareM');
+    expect(
+      resolvePlanBarOccupancyKind({
+        id: 'f',
+        status: 'IN_HOUSE',
+        checkInDate: today,
+        checkOutDate: '2026-06-05',
+        shareEligible: true,
+        shareGender: 'F',
+        adults: 1,
+      }),
+    ).toBe('shareF');
+    expect(PLAN_BAR_OCCUPANCY_STROKE.shareM).toBe('#1565C0');
+    expect(PLAN_BAR_OCCUPANCY_STROKE.shareF).toBe('#AD1457');
+  });
+
+  it('hides OOO/OOS/repair doors from the plan', () => {
+    expect(isPlanVisibleRoom({ status: 'DIRTY', inventoryStatus: 'IN_SERVICE' })).toBe(true);
+    expect(isPlanVisibleRoom({ status: 'OOO' })).toBe(false);
+    expect(isPlanVisibleRoom({ status: 'AVAILABLE', inventoryStatus: 'OOS' })).toBe(false);
+    expect(isPlanVisibleRoom({ status: 'MAINTENANCE' })).toBe(false);
   });
 });

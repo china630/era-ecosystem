@@ -30,11 +30,14 @@ export function parseToggleModuleMetadata(
 }
 
 /**
- * PATCH для `SubscriptionAccessService.updateModuleAddons` по ключу из `pricing_modules`.
+ * PATCH for `SubscriptionAccessService.updateModuleAddons` from `pricing_modules` key.
+ * `accounting_book_extra`: boolean toggle; optional `quantity` (1–7) sets
+ * `customConfig.quotas.accountingBookExtraSlots`. Disable clears slots to 0.
  */
 export function catalogModuleKeyToPatch(
   moduleKey: string,
   enabled: boolean,
+  quantity?: number,
 ): {
   production?: boolean;
   ifrs?: boolean;
@@ -50,6 +53,8 @@ export function catalogModuleKeyToPatch(
   compliance_pro?: boolean;
   contract_management_pro?: boolean;
   gov_budget_pro?: boolean;
+  accounting_book_extra?: boolean;
+  accountingBookExtraSlots?: number;
   extraSlugs?: Record<string, boolean>;
 } {
   if (isPassThroughCatalogModuleKey(moduleKey)) {
@@ -59,6 +64,19 @@ export function catalogModuleKeyToPatch(
     return { cash_bank_pro: enabled };
   }
   switch (moduleKey) {
+    case "accounting_book_extra": {
+      if (!enabled) {
+        return { accounting_book_extra: false, accountingBookExtraSlots: 0 };
+      }
+      const slots =
+        typeof quantity === "number" && Number.isFinite(quantity)
+          ? Math.min(7, Math.max(1, Math.floor(quantity)))
+          : 1;
+      return {
+        accounting_book_extra: true,
+        accountingBookExtraSlots: slots,
+      };
+    }
     case "inventory":
       return { inventory: enabled };
     case "manufacturing":

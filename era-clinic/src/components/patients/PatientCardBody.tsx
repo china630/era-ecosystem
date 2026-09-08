@@ -8,6 +8,9 @@ import { PatientContraindicationsPanel } from "@/components/PatientContraindicat
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
 import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
 import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
+import { PatientCardAnamnesis } from "@/components/patients/PatientCardAnamnesis";
+import { day1ProgramToastKey } from "@/lib/day1-program-toast";
+import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
 import {
   CARD_CONTAINER_CLASS,
@@ -16,19 +19,17 @@ import {
   Field,
   FieldRow,
   FieldSelect,
-  FieldTextarea,
   ModalFooter,
   ModalShell,
   NATIONALITY_OPTIONS,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  SUBSECTION_SURFACE_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
+import type { PractitionerAuthorRef } from "@/domain/staff/practitioner-label";
 
 function nationalityLabel(code: string | null | undefined): string {
   if (!code) return "—";
@@ -36,7 +37,7 @@ function nationalityLabel(code: string | null | undefined): string {
   return hit?.label ?? code;
 }
 
-export type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
+export type PatientSex = "MALE" | "FEMALE" | "UNKNOWN";
 export type PatientBloodGroup =
   | "A_POS"
   | "A_NEG"
@@ -51,9 +52,9 @@ export type PatientBloodGroup =
 export type PatientCardPatient = {
   id: string;
   refCode: string;
-  givenName?: string;
-  surname?: string;
-  fatherName?: string | null;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
   fullName: string;
   phone?: string | null;
   nationality?: string | null;
@@ -73,6 +74,10 @@ type EpisodeOption = {
   label: string;
   status: string;
   anamnesisText: string | null;
+  anamnesisByPractitioner?: PractitionerAuthorRef;
+  programCode: string | null;
+  roomNumber: string | null;
+  patientOrigin: string;
 };
 
 const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
@@ -94,9 +99,9 @@ function maskPersonId(id: string | null | undefined): string {
 }
 
 const emptyForm = {
-  givenName: "",
-  surname: "",
-  fatherName: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
   fullName: "",
   phone: "",
   nationality: "",
@@ -131,10 +136,11 @@ export function PatientCardBody({
   const [episodes, setEpisodes] = useState<EpisodeOption[]>([]);
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
   const [anamnesis, setAnamnesis] = useState("");
-  const [anamnesisSaving, setAnamnesisSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [ciOpen, setCiOpen] = useState(false);
   const [ciCount, setCiCount] = useState(0);
+  const [careTeamCount, setCareTeamCount] = useState(0);
+  const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -145,6 +151,7 @@ export function PatientCardBody({
   );
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
+  const careTeamOk = careTeamCount > 0;
   const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
   const episodeOptions = useMemo(
     () => episodes.map((e) => ({ value: e.id, label: e.label })),
@@ -190,9 +197,9 @@ export function PatientCardBody({
     setPatient(p);
     onPatientLoaded?.(p);
     setForm({
-      givenName: p.givenName ?? "",
-      surname: p.surname ?? "",
-      fatherName: p.fatherName ?? "",
+      firstName: p.firstName ?? "",
+      middleName: p.middleName ?? "",
+      lastName: p.lastName ?? "",
       fullName: p.fullName ?? "",
       phone: p.phone ?? "",
       nationality: p.nationality ?? "",
@@ -216,31 +223,41 @@ export function PatientCardBody({
     setSelectedEpisodeId(nextId);
     const ep = episodes.find((e) => e.id === nextId);
     setAnamnesis(ep?.anamnesisText ?? "");
+    setCareTeamCount(0);
     setMsg(null);
   }
 
-  async function saveAnamnesis() {
-    if (!selectedEpisodeId || selectedEpisode?.status !== "OPEN") return;
-    setAnamnesisSaving(true);
-    setMsg(null);
-    const trimmed = anamnesis.trim();
-    const res = await fetch(`/api/sanatorium/episodes/${selectedEpisodeId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ anamnesisText: trimmed }),
-    });
-    const data = await res.json();
-    setAnamnesisSaving(false);
-    if (!res.ok) {
-      setMsg(data.error ?? data.message ?? tc("saveFailed"));
-      return;
-    }
+  const onCareTeamChange = useCallback((items: { id: string }[]) => {
+    setCareTeamCount(items.length);
+  }, []);
+
+  function onAnamnesisSaved(payload: {
+    anamnesisText: string | null;
+    anamnesisByPractitioner: PractitionerAuthorRef;
+    day1Program?: unknown;
+  }) {
+    if (!selectedEpisodeId) return;
+    setAnamnesis(payload.anamnesisText ?? "");
     setEpisodes((prev) =>
       prev.map((e) =>
-        e.id === selectedEpisodeId ? { ...e, anamnesisText: trimmed || null } : e,
+        e.id === selectedEpisodeId
+          ? {
+              ...e,
+              anamnesisText: payload.anamnesisText,
+              anamnesisByPractitioner: payload.anamnesisByPractitioner ?? e.anamnesisByPractitioner,
+            }
+          : e,
       ),
     );
-    setMsg(tc("saved"));
+    applyDay1Toast(payload.day1Program);
+    setClinicalRefreshKey((n) => n + 1);
+  }
+
+  function applyDay1Toast(payload: unknown) {
+    const key = day1ProgramToastKey(
+      payload as Parameters<typeof day1ProgramToastKey>[0],
+    );
+    if (key) setMsg(t(key));
   }
 
   async function lookupMdm() {
@@ -309,9 +326,9 @@ export function PatientCardBody({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        givenName: form.givenName.trim(),
-        surname: form.surname.trim(),
-        fatherName: form.fatherName.trim() || null,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        middleName: form.middleName.trim() || null,
         phone: form.phone || null,
         nationality: form.nationality.trim() || null,
         sex: form.sex,
@@ -446,96 +463,104 @@ export function PatientCardBody({
         </section>
 
         {selectedEpisode ? (
-          <section className="space-y-2">
-            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-              {t("anamnesis")}
-            </h2>
-            <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-              {selectedEpisode.status === "OPEN" ? (
-                <>
-                  <FieldTextarea
-                    label={t("anamnesis")}
-                    rows={4}
-                    value={anamnesis}
-                    onChange={(e) => setAnamnesis(e.target.value)}
-                    placeholder={t("anamnesisHint")}
-                  />
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={anamnesisSaving}
-                    onClick={() => void saveAnamnesis()}
-                  >
-                    {t("anamnesisSave")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
-                  <div className={`${SUBSECTION_SURFACE_CLASS} p-3`}>
-                    <p className={`whitespace-pre-wrap ${TEXT_MUTED_CLASS}`}>
-                      {anamnesis.trim() || "—"}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
+          <>
+            <section className="space-y-2">
+              <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                {t("packageSummaryTitle")}
+              </h2>
+              <div className={`${CARD_CONTAINER_CLASS} space-y-1 p-4 text-sm`}>
+                <p>
+                  <span className="font-medium">{t("packageProgram")}:</span>{" "}
+                  {selectedEpisode.programCode ?? "—"}
+                </p>
+                <p>
+                  <span className="font-medium">{t("packageRoom")}:</span>{" "}
+                  {selectedEpisode.roomNumber ?? "—"}
+                </p>
+                <p>
+                  <span className="font-medium">{t("packageOrigin")}:</span>{" "}
+                  {selectedEpisode.patientOrigin}
+                </p>
+              </div>
+            </section>
+
+            <PatientCardCareTeam
+              episodeId={selectedEpisode.id}
+              readOnly={episodeReadOnly}
+              onTeamChange={onCareTeamChange}
+            />
+          </>
         ) : null}
 
-        <section className="space-y-2">
-          <div
-            className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
-              ciOpen ? "p-4" : "px-4 py-2"
-            }`}
-          >
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
-                {t("contraindicationsTitle")}
-                {ciCount > 0 ? (
-                  <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
-                    {ciCount}
-                  </span>
-                ) : null}
-              </h2>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                aria-expanded={ciOpen}
-                onClick={() => setCiOpen((open) => !open)}
+        {selectedEpisode && (careTeamOk || episodeReadOnly) ? (
+          <>
+            <PatientCardAnamnesis
+              episodeId={selectedEpisode.id}
+              readOnly={episodeReadOnly}
+              initialText={selectedEpisode.anamnesisText}
+              initialAuthor={selectedEpisode.anamnesisByPractitioner ?? null}
+              onSaved={onAnamnesisSaved}
+            />
+
+            <section className="space-y-2">
+              <div
+                className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
+                  ciOpen ? "p-4" : "px-4 py-2"
+                }`}
               >
-                {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
-              </button>
-            </div>
-            <PatientContraindicationsPanel
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
+                    {t("contraindicationsTitle")}
+                    {ciCount > 0 ? (
+                      <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
+                        {ciCount}
+                      </span>
+                    ) : null}
+                  </h2>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    aria-expanded={ciOpen}
+                    onClick={() => setCiOpen((open) => !open)}
+                  >
+                    {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
+                  </button>
+                </div>
+                <PatientContraindicationsPanel
+                  patientRefId={patient.id}
+                  episodeId={selectedEpisodeId}
+                  readOnly={episodeReadOnly}
+                  expanded={ciOpen}
+                  onCountChange={setCiCount}
+                />
+              </div>
+            </section>
+
+            <PatientCardComplaints
               patientRefId={patient.id}
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
-              expanded={ciOpen}
-              onCountChange={setCiCount}
+              onChanged={() => setClinicalRefreshKey((n) => n + 1)}
+              onDay1Program={applyDay1Toast}
             />
-          </div>
-        </section>
 
-        <PatientCardComplaints
-          patientRefId={patient.id}
-          episodeId={selectedEpisodeId}
-          readOnly={episodeReadOnly}
-        />
+            <PatientCardDiagnoses
+              patientRefId={patient.id}
+              episodeId={selectedEpisodeId}
+              readOnly={episodeReadOnly}
+            />
 
-        <PatientCardDiagnoses
-          patientRefId={patient.id}
-          episodeId={selectedEpisodeId}
-          readOnly={episodeReadOnly}
-        />
-
-        <PatientCardClinicalSections
-          patientRefId={patient.id}
-          panel={panel}
-          episodeId={selectedEpisodeId}
-          readOnly={episodeReadOnly}
-          anamnesisOk={anamnesisOk}
-        />
+            <PatientCardClinicalSections
+              patientRefId={patient.id}
+              panel={panel}
+              episodeId={selectedEpisodeId}
+              patientOrigin={selectedEpisode?.patientOrigin}
+              readOnly={episodeReadOnly}
+              anamnesisOk={anamnesisOk}
+              refreshKey={clinicalRefreshKey}
+            />
+          </>
+        ) : null}
       </div>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>
@@ -543,24 +568,24 @@ export function PatientCardBody({
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("demographicsHint")}</p>
           <FieldRow cols={3}>
             <Field
-              label={t("givenName")}
+              label={t("firstName")}
               preset="shortText"
-              value={form.givenName}
-              onChange={(e) => setForm({ ...form, givenName: e.target.value })}
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
               required
             />
             <Field
-              label={t("surname")}
+              label={t("lastName")}
               preset="shortText"
-              value={form.surname}
-              onChange={(e) => setForm({ ...form, surname: e.target.value })}
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
               required
             />
             <Field
-              label={t("fatherName")}
+              label={t("middleName")}
               preset="shortText"
-              value={form.fatherName}
-              onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
+              value={form.middleName}
+              onChange={(e) => setForm({ ...form, middleName: e.target.value })}
             />
           </FieldRow>
           <FieldRow cols={2}>

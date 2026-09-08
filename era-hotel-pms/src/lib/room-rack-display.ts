@@ -1,3 +1,5 @@
+import { hotelDateKey, stayTouchesHotelDateRange } from '@/lib/hotel-calendar';
+import { normalizeShareGender } from '@/lib/share-gender';
 import {
   canAssignDoor,
   isHkDirtyish,
@@ -88,13 +90,80 @@ export function formatSharePoolBadge(pool: {
   gender: string;
   occupied: number;
   capacity: number;
-}): { text: string; className: string } {
-  const isMale = pool.gender.toUpperCase().startsWith('M');
-  const sym = isMale ? '♂' : '♀';
+}): { text: string; className: string; gender: 'M' | 'F' | null } {
+  const gender = normalizeShareGender(pool.gender);
+  const isMale = gender === 'M';
+  const sym = gender === 'F' ? '♀' : gender === 'M' ? '♂' : '·';
   return {
+    gender,
     text: `${sym} ${pool.occupied}/${pool.capacity}`,
-    className: isMale ? 'text-sky-700' : 'text-rose-700',
+    className: isMale
+      ? 'bg-sky-100 text-sky-800'
+      : gender === 'F'
+        ? 'bg-rose-100 text-rose-800'
+        : 'bg-[#EBEDF0] text-[#7F8C8D]',
   };
+}
+
+export type RackStaySlice = {
+  status: ReservationStatus;
+  checkInDate?: string;
+  checkOutDate?: string;
+  shareEligible?: boolean;
+  shareGender?: string | null;
+  adults?: number;
+};
+
+export function reservationsTouchingDate<T extends RackStaySlice>(
+  reservations: T[],
+  fromKey: string,
+  toKey: string = fromKey,
+): T[] {
+  return reservations.filter(
+    (r) =>
+      Boolean(r.checkInDate) &&
+      Boolean(r.checkOutDate) &&
+      stayTouchesHotelDateRange(r.checkInDate!, r.checkOutDate!, fromKey, toKey),
+  );
+}
+
+/** Stay shown on the door tile for the filter interval. */
+export function pickRackStayForDate<T extends RackStaySlice>(
+  reservations: T[],
+  fromKey: string,
+  toKey: string = fromKey,
+): T | undefined {
+  const touching = reservationsTouchingDate(reservations, fromKey, toKey);
+  return (
+    touching.find((r) => r.status === 'IN_HOUSE') ??
+    touching.find((r) => r.status === 'CONFIRMED') ??
+    touching[0]
+  );
+}
+
+export function deriveSharePoolForDate(
+  room: {
+    maxBed?: number | null;
+    roomType?: { adultCapacity?: number };
+    reservations: RackStaySlice[];
+  },
+  fromKey: string,
+  toKey: string = fromKey,
+): { gender: string; occupied: number; capacity: number } | null {
+  const touching = reservationsTouchingDate(room.reservations, fromKey, toKey);
+  const shareStays = touching.filter(
+    (r) =>
+      r.shareEligible &&
+      (r.adults ?? 1) === 1 &&
+      normalizeShareGender(r.shareGender) != null,
+  );
+  if (shareStays.length === 0) return null;
+  const gender =
+    normalizeShareGender(shareStays.find((r) => r.status === 'IN_HOUSE')?.shareGender) ??
+    normalizeShareGender(shareStays[0]!.shareGender);
+  if (!gender) return null;
+  const capacity = room.maxBed ?? room.roomType?.adultCapacity ?? 2;
+  return { gender, occupied: shareStays.length, capacity };
 }
 
 export function canQuickBookRoom(room: {
@@ -108,12 +177,6 @@ export function canQuickBookRoom(room: {
   return canAssignDoor(room, false);
 }
 
-function dayStart(d: Date): number {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x.getTime();
-}
-
 export function computeRackDisplayState(
   room: {
     status: RoomStatus;
@@ -125,22 +188,28 @@ export function computeRackDisplayState(
       checkOutDate?: string;
     }>;
   },
-  today = new Date(),
+  today: Date | string = new Date(),
+  until: Date | string = today,
 ): RackDisplayState {
   if (isHkNotReady(room) || ['OOO', 'OOS', 'MAINTENANCE'].includes(room.status)) return 'notReady';
   if (isHkDirtyish(room) || room.status === 'DIRTY') return 'cleaning';
 
-  const t = dayStart(today);
-  const active =
-    room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
+  const fromKey = hotelDateKey(today);
+  const toKey = hotelDateKey(until);
+  const lo = fromKey <= toKey ? fromKey : toKey;
+  const hi = fromKey <= toKey ? toKey : fromKey;
+  const active = pickRackStayForDate(room.reservations, lo, hi);
 
   if (active?.checkInDate && active?.checkOutDate) {
-    const ci = dayStart(new Date(active.checkInDate));
-    const co = dayStart(new Date(active.checkOutDate));
-    if (active.status === 'CONFIRMED' && ci === t) return 'arrival';
-    if (active.status === 'IN_HOUSE' && co === t) return 'departure';
+    const ci = hotelDateKey(active.checkInDate);
+    const co = hotelDateKey(active.checkOutDate);
+    if (active.status === 'CONFIRMED' && ci >= lo && ci <= hi) return 'arrival';
+    if (active.status === 'IN_HOUSE' && co >= lo && co <= hi) return 'departure';
+    if (active.status === 'IN_HOUSE' || active.status === 'CONFIRMED' || active.status === 'OPTION') {
+      return 'occupied';
+    }
   }
 
-  if (room.status === 'OCCUPIED' || active?.status === 'IN_HOUSE') return 'occupied';
+  if (room.status === 'OCCUPIED') return 'occupied';
   return 'vacant';
 }

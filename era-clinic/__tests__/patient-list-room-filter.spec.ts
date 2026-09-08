@@ -1,6 +1,7 @@
 jest.mock("@era/satellite-kit", () => ({
   listPersonIdentifiers: jest.fn().mockResolvedValue({ identifiers: [] }),
   linkPersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
+  getPersonOpsProfile: jest.fn().mockResolvedValue(null),
   satelliteOrganizationId: jest.fn().mockReturnValue("test-org"),
 }));
 
@@ -9,11 +10,16 @@ jest.mock("@/lib/prisma", () => ({
     patientRef: {
       findMany: jest.fn(),
       count: jest.fn(),
+      update: jest.fn(),
     },
     clinicalEpisode: {
       findMany: jest.fn(),
     },
   },
+}));
+
+jest.mock("@/lib/request-organization", () => ({
+  requestOrganizationId: jest.fn(() => "test-org"),
 }));
 
 describe("listPatientsPaged hotel room filter", () => {

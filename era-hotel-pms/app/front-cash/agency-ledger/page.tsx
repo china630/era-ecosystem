@@ -4,13 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
   FieldSelect,
@@ -19,12 +12,13 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { HotelDataGrid } from '@/components/HotelDataGrid';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { financeDeepLink } from '@/lib/finance-links';
 
-interface Agency {
+interface Party {
   id: string;
   code: string;
   name: string;
@@ -42,9 +36,11 @@ interface Ledger {
 }
 
 interface SummaryRow {
-  agencyId: string;
-  agencyCode: string;
-  agencyName: string;
+  partyId: string;
+  code: string;
+  name: string;
+  settlementMode: string;
+  commissionPercent: number | null;
   cityLedger: number;
   cashPaid: number;
   netAmount: number;
@@ -57,14 +53,14 @@ interface TransferredRow {
   balance: number;
 }
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 interface SnapshotMeta {
   at: string;
   action: string;
   changes: { asOfDate?: string; result?: { balance?: number; correlationId?: string } } | null;
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export default function AgencyLedgerPage() {
@@ -72,7 +68,7 @@ export default function AgencyLedgerPage() {
   const searchParams = useSearchParams();
   const t = useTranslations('reports');
   const tc = useTranslations('common');
-  const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [agencies, setAgencies] = useState<Party[]>([]);
   const [agencyId, setAgencyId] = useState('');
   const [from, setFrom] = useState(todayIso);
   const [to, setTo] = useState(todayIso);
@@ -107,7 +103,9 @@ export default function AgencyLedgerPage() {
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch(`/api/reports/agency-cl-summary?from=${from}&to=${to}`);
+        const res = await fetch(
+          `/api/reports/agency-cl-summary?from=${from}&to=${to}&kind=AGENCY`,
+        );
         const data = await res.json();
         if (!res.ok) {
           showApiError(data, tc('loadError'));
@@ -222,46 +220,52 @@ export default function AgencyLedgerPage() {
 
       <FinanceBoundaryBanner target="counterparties" />
 
-      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 p-0`}>
-        <h2 className="mb-2 px-4 pt-4 text-sm font-semibold text-[#34495E]">{t('agencyClSummary')}</h2>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('agency')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('cityLedger')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('cashPaid')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('netAmount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.map((row) => (
-                <tr key={row.agencyId} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {row.agencyCode} — {row.agencyName}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {row.cityLedger.toFixed(2)} {tc('azn')}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {row.cashPaid.toFixed(2)} {tc('azn')}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {row.netAmount.toFixed(2)} {tc('azn')}
-                  </td>
-                </tr>
-              ))}
-              {summary.length === 0 && (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={4} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
-                    {t('noAgencies')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <HotelDataGrid<SummaryRow & Record<string, unknown>>
+        columns={[
+          {
+            key: 'code',
+            header: t('colCode'),
+            render: (r) => (
+              <button
+                type="button"
+                className="text-[#2980B9] hover:underline"
+                onClick={() => setAgencyId(r.partyId)}
+              >
+                {r.code}
+              </button>
+            ),
+          },
+          { key: 'name', header: t('colName') },
+          {
+            key: 'settlementMode',
+            header: t('settlementMode'),
+            render: (r) => t(`settlement_${r.settlementMode}` as 'settlement_POSTPAID'),
+          },
+          {
+            key: 'commissionPercent',
+            header: t('commissionPct'),
+            render: (r) => (r.commissionPercent == null ? '—' : String(r.commissionPercent)),
+          },
+          {
+            key: 'cityLedger',
+            header: t('cityLedger'),
+            render: (r) => `${r.cityLedger.toFixed(2)} ${tc('azn')}`,
+          },
+          {
+            key: 'cashPaid',
+            header: t('cashPaid'),
+            render: (r) => `${r.cashPaid.toFixed(2)} ${tc('azn')}`,
+          },
+          {
+            key: 'netAmount',
+            header: t('netAmount'),
+            render: (r) => `${r.netAmount.toFixed(2)} ${tc('azn')}`,
+          },
+        ]}
+        rows={summary as (SummaryRow & Record<string, unknown>)[]}
+        rowKey={(r) => r.partyId}
+        emptyMessage={t('noAgencies')}
+      />
 
       {ledger && agencyId ? (
         <>
@@ -278,7 +282,7 @@ export default function AgencyLedgerPage() {
                 </button>
                 {financeDeepLink('salesInvoices') ? (
                   <a
-                    className="text-[13px] text-[#2980B9] hover:underline self-center"
+                    className="self-center text-[13px] text-[#2980B9] hover:underline"
                     href={financeDeepLink('salesInvoices')!}
                     target="_blank"
                     rel="noreferrer"
@@ -304,52 +308,23 @@ export default function AgencyLedgerPage() {
           ) : (
             <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('noSnapshotYet')}</p>
           )}
-          <section className={`${CARD_CONTAINER_CLASS} p-4 p-0`}>
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <tbody>
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('opening')}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {ledger.opening.toFixed(2)} {tc('azn')}
-                    </td>
-                  </tr>
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('newCharges')}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {ledger.newCharges.toFixed(2)} {tc('azn')}
-                    </td>
-                  </tr>
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('payments')}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {ledger.payments.toFixed(2)} {tc('azn')}
-                    </td>
-                  </tr>
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('cashPaid')}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {ledger.cashPaid.toFixed(2)} {tc('azn')}
-                    </td>
-                  </tr>
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('netAmount')}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {ledger.netAmount.toFixed(2)} {tc('azn')}
-                    </td>
-                  </tr>
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{t('cityLedger')}</td>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold`}>
-                      {ledger.cityLedger.toFixed(2)} {tc('azn')}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <HotelDataGrid<Record<string, unknown>>
+            columns={[
+              { key: 'label', header: t('metric') },
+              { key: 'value', header: tc('amount') },
+            ]}
+            rows={[
+              { label: t('opening'), value: `${ledger.opening.toFixed(2)} ${tc('azn')}` },
+              { label: t('newCharges'), value: `${ledger.newCharges.toFixed(2)} ${tc('azn')}` },
+              { label: t('payments'), value: `${ledger.payments.toFixed(2)} ${tc('azn')}` },
+              { label: t('cashPaid'), value: `${ledger.cashPaid.toFixed(2)} ${tc('azn')}` },
+              { label: t('netAmount'), value: `${ledger.netAmount.toFixed(2)} ${tc('azn')}` },
+              { label: t('cityLedger'), value: `${ledger.cityLedger.toFixed(2)} ${tc('azn')}` },
+            ]}
+            rowKey={(r) => String(r.label)}
+          />
           {transferred.length > 0 ? (
-            <section className={`${CARD_CONTAINER_CLASS} mt-4 p-4`}>
+            <section className="mt-4 rounded-lg border border-[#E8EEF2] p-4">
               <h3 className="mb-2 text-sm font-semibold text-[#34495E]">
                 {t('transferredArTitle', { count: transferred.length })}
               </h3>
@@ -362,16 +337,6 @@ export default function AgencyLedgerPage() {
                 ))}
               </ul>
               <p className="mt-2 text-[12px] text-[#7F8C8D]">{t('financeBankMatchHint')}</p>
-              {financeDeepLink('salesInvoices') ? (
-                <a
-                  href={financeDeepLink('salesInvoices')!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-block text-[13px] font-medium text-[#2980B9] hover:underline"
-                >
-                  {t('openFinanceInvoices')}
-                </a>
-              ) : null}
             </section>
           ) : null}
         </>

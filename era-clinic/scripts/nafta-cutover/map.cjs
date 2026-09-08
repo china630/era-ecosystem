@@ -26,6 +26,9 @@ const HEADERS = {
     "externalRef",
     "woId",
     "fullName",
+    "firstName",
+    "middleName",
+    "lastName",
     "givenName",
     "surname",
     "sex",
@@ -69,7 +72,9 @@ const HEADERS = {
   diagnoses: ["patientRef", "rawText", "icd10", "recordedAt"],
   roster: [
     "fin",
-    "fullName",
+    "firstName",
+    "middleName",
+    "lastName",
     "sex",
     "birthDate",
     "orgUnit",
@@ -243,16 +248,26 @@ function pickCheckUpName(treatmentInfo) {
   return "";
 }
 
+function splitGivenAndPatronymic(givenField) {
+  const parts = String(givenField || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return { firstName: "", middleName: "" };
+  if (parts.length === 1) return { firstName: parts[0], middleName: "" };
+  return { firstName: parts[0], middleName: parts.slice(1).join(" ") };
+}
+
 function mapPatientImportRow(listRow, card) {
   const list = listRow && typeof listRow === "object" ? listRow : {};
   const c = card && card.patient && typeof card.patient === "object" ? card.patient : {};
   const ti0 = Array.isArray(card && card.treatmentInfo) && card.treatmentInfo.length ? card.treatmentInfo[0] : {};
   const id = list.id != null ? list.id : c.id;
-  const givenName = cell(c.name);
-  const surname = cell(c.surname);
+  const { firstName, middleName } = splitGivenAndPatronymic(c.name);
+  const lastName = cell(c.surname);
   const fullName =
     cell(list.fullName) ||
-    [givenName, surname].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+    [firstName, middleName, lastName].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
   const reservationId = c.reservationId != null && c.reservationId !== "" ? c.reservationId : list.reservationId;
   const checkUpName = pickCheckUpName(card && card.treatmentInfo);
   const gender = c.gender || ti0.gender || list.gender || list.sex;
@@ -261,8 +276,11 @@ function mapPatientImportRow(listRow, card) {
     externalRef: `wo:patient:${id}`,
     woId: id != null ? id : "",
     fullName,
-    givenName,
-    surname,
+    firstName,
+    middleName,
+    lastName,
+    givenName: firstName,
+    surname: lastName,
     sex: mapSex(gender),
     birthDate: ymd(c.birthDate || list.birthDate),
     nationality: cell(c.nationality || list.nationality),
@@ -318,6 +336,44 @@ function cellByHeader(row, ...needles) {
   return "";
 }
 
+/** AZ HR «Tam adı» is often surname-first; strip oğlu/qızı particles before splitting. */
+function isPatronymicParticle(token) {
+  const t = String(token)
+    .trim()
+    .toLowerCase()
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g");
+  return t === "oglu" || t === "ogly" || t === "qizi" || t === "kizi";
+}
+
+function parseAzHrTamAdi(raw) {
+  const blob = String(raw ?? "").trim();
+  if (!blob) return { firstName: "", middleName: "", lastName: "" };
+  let parts = blob.split(/\s+/).filter(Boolean);
+  while (parts.length > 0 && isPatronymicParticle(parts[parts.length - 1])) {
+    parts = parts.slice(0, -1);
+  }
+  if (parts.length === 0) {
+    return { firstName: "", middleName: "", lastName: "" };
+  }
+  if (parts.length === 1) {
+    return { firstName: "", middleName: "", lastName: parts[0] };
+  }
+  if (parts.length === 2) {
+    return { firstName: parts[1], middleName: "", lastName: parts[0] };
+  }
+  return {
+    firstName: parts[1],
+    middleName: parts.slice(2).join(" "),
+    lastName: parts[0],
+  };
+}
+
 function mapRosterRow(row) {
   const title = String(cellByHeader(row, "Vəzifə", "position") || "");
   const dept = String(cellByHeader(row, "Şöbə", "orgUnit") || "");
@@ -337,9 +393,12 @@ function mapRosterRow(row) {
       satellites = "industry_hotel_pms";
     }
   }
+  const nameParts = parseAzHrTamAdi(cellByHeader(row, "Tam adı", "fullName"));
   return {
     fin: String(cellByHeader(row, "FİN", "FIN", "fin") || "").trim(),
-    fullName: String(cellByHeader(row, "Tam adı", "fullName") || "").trim(),
+    firstName: nameParts.firstName,
+    middleName: nameParts.middleName,
+    lastName: nameParts.lastName,
     sex: mapSex(cellByHeader(row, "sex", "gender", "Cins", "Cinsi", "Cinsiyyət", "cinsi")),
     orgUnit: dept.trim(),
     position: title.trim(),
@@ -420,9 +479,11 @@ module.exports = {
   mapSex,
   mapWorkplace,
   mapPatientImportRow,
+  splitGivenAndPatronymic,
   loadPatientCardIndex,
   mapPractitionerRole,
   mapRosterRow,
+  parseAzHrTamAdi,
   mapOrgStructureRow,
   cellByHeader,
   isUsgExam,

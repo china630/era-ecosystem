@@ -43,6 +43,9 @@ export type PhysioCatalogListItem = {
 export type PhysioChipsValue = {
   needsSite: boolean;
   physioOrderFields: string[];
+  allowedSiteCodes: string[];
+  forceSiteTogether?: boolean;
+  sitesHintKey?: "hydro_jet_safety" | null;
   siteIds: string[];
   siteApplyMode: "TOGETHER" | "TURN" | null;
   siteLaterality: Record<string, PhysioLateralityCode | null>;
@@ -97,23 +100,25 @@ export type PhysioChipsLabels = {
   intensityNotHot: string;
   intensityMedium: string;
   intensityMore: string;
+  sitesHintHydroJets: string;
 };
 
 function siteChipLabel(site: PhysioCatalogSite, locale: string): string {
-  const loc =
-    locale.startsWith("ru") ? site.titleRu : locale.startsWith("az") ? site.titleAz : site.titleEn;
-  return `${loc} / ${site.titleLa}`;
+  if (locale.startsWith("az") && site.titleAz?.trim()) return site.titleAz.trim();
+  if (locale.startsWith("ru") && site.titleRu?.trim()) return site.titleRu.trim();
+  if (site.titleEn?.trim()) return site.titleEn.trim();
+  return site.titleLa?.trim() || site.code;
 }
 
 function siteSearchLabel(site: PhysioCatalogSite, locale: string): string {
-  const aliases = (site.aliases ?? []).map((a) => a.alias).join(" ");
-  return `${siteChipLabel(site, locale)} ${site.code} ${aliases}`.trim();
+  return siteChipLabel(site, locale);
 }
 
 function listItemLabel(item: PhysioCatalogListItem, locale: string): string {
-  const loc =
-    locale.startsWith("ru") ? item.titleRu : locale.startsWith("az") ? item.titleAz : item.titleEn;
-  return `${loc} (${item.code})`;
+  if (locale.startsWith("az") && item.titleAz?.trim()) return item.titleAz.trim();
+  if (locale.startsWith("ru") && item.titleRu?.trim()) return item.titleRu.trim();
+  if (item.titleEn?.trim()) return item.titleEn.trim();
+  return item.code;
 }
 
 function hasField(fields: string[], code: PhysioOrderFieldCode): boolean {
@@ -144,6 +149,7 @@ export function PhysioSiteChips({
   onNoteBlur,
   onLateralityChange,
   onFieldsChange,
+  compact = false,
 }: {
   value: PhysioChipsValue;
   catalog: PhysioCatalogSite[];
@@ -157,6 +163,8 @@ export function PhysioSiteChips({
   onNoteBlur: (note: string) => void;
   onLateralityChange: (siteId: string, laterality: PhysioLateralityCode | null) => void;
   onFieldsChange: (fields: PhysioOrderFields) => void;
+  /** Narrow selects / 2-col grid for assign modals. */
+  compact?: boolean;
 }) {
   const [note, setNote] = useState(value.note ?? "");
   useEffect(() => {
@@ -165,13 +173,24 @@ export function PhysioSiteChips({
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const allowed = value.physioOrderFields ?? [];
   const fields = value.physioFields ?? {};
+  const allowedSiteCodes = value.allowedSiteCodes ?? [];
+
+  const pickerCatalog = useMemo(() => {
+    if (!allowedSiteCodes.length) return catalog;
+    const allow = new Set(allowedSiteCodes);
+    return catalog.filter((s) => allow.has(s.code) || value.siteIds.includes(s.id));
+  }, [catalog, allowedSiteCodes, value.siteIds]);
 
   const options: CatalogOption[] = useMemo(
     () =>
-      catalog
+      pickerCatalog
         .filter((s) => !value.siteIds.includes(s.id))
-        .map((s) => ({ value: s.id, label: siteSearchLabel(s, locale) })),
-    [catalog, locale, value.siteIds],
+        .map((s) => ({
+          value: s.id,
+          // Visible title; codes/aliases stay searchable via label text for local filter
+          label: siteSearchLabel(s, locale),
+        })),
+    [pickerCatalog, locale, value.siteIds],
   );
 
   const modeOptions: CatalogOption[] = [
@@ -197,12 +216,16 @@ export function PhysioSiteChips({
   }
 
   const showLaterality = hasField(allowed, "LATERALITY");
+  const fieldWidth = compact ? ("select" as const) : undefined;
+  const fieldsGridClass = compact
+    ? "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
+    : "mt-2 space-y-2";
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className={fieldsGridClass}>
       {value.needsSite ? (
         <>
-          <div>
+          <div className={compact ? "sm:col-span-2" : undefined}>
             <p className="mb-1 text-[12px] font-medium text-[#2C3E50]">{labels.sites}</p>
             <div className="flex flex-wrap gap-1">
               {value.siteIds.map((id) => {
@@ -228,6 +251,9 @@ export function PhysioSiteChips({
                 );
               })}
             </div>
+            {value.sitesHintKey === "hydro_jet_safety" ? (
+              <p className="mt-1 text-[11px] leading-snug text-[#7F8C8D]">{labels.sitesHintHydroJets}</p>
+            ) : null}
             {showLaterality
               ? value.siteIds.map((id) => {
                   const site = byId.get(id);
@@ -280,10 +306,12 @@ export function PhysioSiteChips({
                 }}
                 options={options}
                 emptyLabel={null}
+                widthPreset={fieldWidth}
+                className={compact ? "sm:col-span-2" : undefined}
               />
             )
           ) : null}
-          {value.siteIds.length >= 2 && editable ? (
+          {value.siteIds.length >= 2 && editable && !value.forceSiteTogether ? (
             <CatalogField
               kind="OPS_HOT"
               label={labels.applyMode}
@@ -292,7 +320,7 @@ export function PhysioSiteChips({
               options={modeOptions}
             />
           ) : null}
-          {value.siteIds.length >= 2 && !editable && value.siteApplyMode ? (
+          {value.siteIds.length >= 2 && !editable && value.siteApplyMode && !value.forceSiteTogether ? (
             <p className="text-[12px] text-[#7F8C8D]">
               {value.siteApplyMode === "TURN" ? labels.turn : labels.together}
             </p>
@@ -318,6 +346,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ deviceProgramId: String(next) || null })}
           options={programs.map((p) => ({ value: p.id, label: listItemLabel(p, locale) }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "ELECTRODE_COUNT") ? (
@@ -354,6 +383,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ substanceId: String(next) || null })}
           options={substances.map((p) => ({ value: p.id, label: listItemLabel(p, locale) }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "APPLICATION_SURFACE") ? (
@@ -378,6 +408,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ spineLevel: pickOpt(SPINE_LEVEL_CODES, next) })}
           options={SPINE_LEVEL_CODES.map((v) => ({ value: v, label: v }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "DAY_BLOCK") ? (
@@ -388,7 +419,16 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ dayBlock: pickOpt(DAY_BLOCK_CODES, next) })}
           options={DAY_BLOCK_CODES.map((v) => ({
             value: v,
-            label: v === "ALTERNATING" ? labels.dayBlockAlt : v === "5_THEN" ? labels.dayBlockThen : v,
+            label:
+              v === "ALTERNATING"
+                ? labels.dayBlockAlt
+                : v === "2"
+                  ? "2"
+                  : v === "3"
+                    ? "3"
+                    : v === "5"
+                      ? "5"
+                      : v,
           }))}
           disabled={!editable}
         />
@@ -495,16 +535,18 @@ export function PhysioSiteChips({
       ) : null}
 
       {editable ? (
-        <FieldTextarea
-          label={labels.note}
-          hint={labels.noteHint}
-          rows={2}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={() => {
-            if (note !== (value.note ?? "")) onNoteBlur(note);
-          }}
-        />
+        <div className={compact ? "sm:col-span-2 max-w-md" : undefined}>
+          <FieldTextarea
+            label={labels.note}
+            hint={labels.noteHint}
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => {
+              if (note !== (value.note ?? "")) onNoteBlur(note);
+            }}
+          />
+        </div>
       ) : value.note ? (
         <p className="text-[12px] text-[#7F8C8D]">{value.note}</p>
       ) : null}

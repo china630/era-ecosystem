@@ -7,6 +7,7 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import {
@@ -18,6 +19,11 @@ import {
   getEpisode,
 } from "@/lib/services/sanatorium.service";
 import { ANAMNESIS_REQUIRED, episodeAnamnesisDenied } from "@/domain/sanatorium/episode-gates";
+import {
+  CARE_TEAM_REQUIRED,
+  episodeCareTeamDenied,
+} from "@/domain/sanatorium/episode-care-team-gates";
+import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 
 const complaintSchema = z.object({ text: z.string().min(1) });
 const diagnosisSchema = z.object({
@@ -46,12 +52,15 @@ export async function GET(
 ) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
     );
     if (denied) return denied;
     const { id } = await params;
+    const scopeDenied = await assertEpisodeDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const episode = await getEpisode(id);
     return jsonOk(episode);
   } catch (err) {
@@ -65,16 +74,24 @@ export async function PATCH(
 ) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const permDenied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
     );
     if (permDenied) return permDenied;
     const { id } = await params;
+    const scopeDenied = await assertEpisodeDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const body = patchSchema.parse(await req.json());
     const episode = await prisma.clinicalEpisode.findUnique({
       where: { id },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        anamnesisText: true,
+        anamnesisByPractitionerId: true,
+      },
     });
     if (!episode) return jsonError("Episode not found", 404);
     const { EPISODE_CLOSED, episodeWriteDenied } = await import(
@@ -83,17 +100,63 @@ export async function PATCH(
     const closed = episodeWriteDenied(episode.status);
     if (closed) return jsonError(closed, 409, { code: EPISODE_CLOSED });
 
-    const data: { anamnesisText?: string | null; anamnesisUpdatedAt?: Date | null } = {};
+    if (body.anamnesisText !== undefined) {
+      const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(id));
+      if (careDenied) {
+        return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+      }
+    }
+
+    const { resolveSessionPractitionerId } = await import(
+      "@/lib/auth/session-practitioner"
+    );
+    const practitionerId = await resolveSessionPractitionerId(session.sub);
+
+    const data: {
+      anamnesisText?: string | null;
+      anamnesisUpdatedAt?: Date | null;
+      anamnesisByPractitionerId?: string | null;
+    } = {};
     if (body.anamnesisText !== undefined) {
       const trimmed = body.anamnesisText?.trim() || null;
       data.anamnesisText = trimmed;
       data.anamnesisUpdatedAt = trimmed ? new Date() : null;
+      if (!trimmed) {
+        data.anamnesisByPractitionerId = null;
+      } else if (!episode.anamnesisByPractitionerId && practitionerId) {
+        // Stamp author only on first write; later edits keep original doctor.
+        data.anamnesisByPractitionerId = practitionerId;
+      }
     }
     const updated = await prisma.clinicalEpisode.update({
       where: { id },
       data,
+      include: {
+        anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
+      },
     });
-    return jsonOk(updated);
+
+    let day1Program: Awaited<
+      ReturnType<
+        typeof import("@/domain/sanatorium/open-program-after-therapist.service").tryOpenProgramAfterTherapistStage
+      >
+    > | null = null;
+    if (body.anamnesisText !== undefined && updated.anamnesisText?.trim()) {
+      try {
+        const { tryOpenProgramAfterTherapistStage } = await import(
+          "@/domain/sanatorium/open-program-after-therapist.service"
+        );
+        day1Program = await tryOpenProgramAfterTherapistStage(id);
+      } catch (err) {
+        day1Program = {
+          opened: false,
+          reason: "INSTANTIATE_FAILED",
+        };
+        console.error("[day1] open program after anamnesis failed", id, err);
+      }
+    }
+
+    return jsonOk({ ...updated, day1Program });
   } catch (err) {
     return handleRouteError(err);
   }
@@ -106,26 +169,61 @@ export async function POST(
   try {
     const { id } = await params;
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const permDenied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
     );
     if (permDenied) return permDenied;
+    const scopeDenied = await assertEpisodeDataScope(session, id);
+    if (scopeDenied) return scopeDenied;
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
     const rawBody = await req.text();
     const body = rawBody ? JSON.parse(rawBody) : {};
 
+    const clinicalActions = new Set([
+      "complaint",
+      "diagnosis",
+      "lab",
+      "instantiate-program",
+      "complete-checkup",
+    ]);
+    if (action && clinicalActions.has(action)) {
+      const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(id));
+      if (careDenied) {
+        return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
+      }
+    }
+
     if (action === "complaint") {
       const parsed = complaintSchema.parse(body);
-      return jsonOk(await addComplaint(id, parsed.text));
+      const { resolveSessionPractitionerId } = await import(
+        "@/lib/auth/session-practitioner"
+      );
+      const row = await addComplaint(id, parsed.text, {
+        recordedByPractitionerId: await resolveSessionPractitionerId(session.sub),
+      });
+      let day1Program = null;
+      try {
+        const { tryOpenProgramAfterTherapistStage } = await import(
+          "@/domain/sanatorium/open-program-after-therapist.service"
+        );
+        day1Program = await tryOpenProgramAfterTherapistStage(id);
+      } catch (err) {
+        console.error("[day1] open program after complaint failed", id, err);
+      }
+      return jsonOk({ ...row, day1Program });
     }
     if (action === "diagnosis") {
       const parsed = diagnosisSchema.parse(body);
       return jsonOk(
         await addDiagnosis(id, {
           ...parsed,
-          recordedByUserId: session?.sub ?? null,
+          recordedByUserId: session.sub,
+          recordedByPractitionerId: await (
+            await import("@/lib/auth/session-practitioner")
+          ).resolveSessionPractitionerId(session.sub),
         }),
       );
     }

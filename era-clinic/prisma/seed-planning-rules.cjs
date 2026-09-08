@@ -15,7 +15,10 @@ function cuidLike() {
 
 /** Explicit body-part overrides (code → BodyPart). Unlisted types default to FULL_BODY. */
 const BODY_PART_BY_CODE = {
-  "SVC-TAM-BEDEN-NAFTALAN-VANNASI": "FULL_BODY",
+  "SVC-NAFTALAN-VANNASI-QADIN": "FULL_BODY",
+  "SVC-NAFTALAN-VANNASI-KISI": "FULL_BODY",
+  "SVC-APLIKASIYA-NAFTALAN-QADIN": "FULL_BODY",
+  "SVC-APLIKASIYA-NAFTALAN-KISI": "FULL_BODY",
   "SVC-4-KAMERALI-NAFTALAN-VANNASI": "ARM_LEFT",
   "SVC-4-KAMERALI-HIDROQALVANIZASIYA": "ARM_LEFT",
   "SVC-SUPER-INDUCTIVE-SYSTEM-TERAPIYASI": "BACK",
@@ -26,6 +29,29 @@ const BODY_PART_BY_CODE = {
   "SVC-PARAFINOTERAPIYA-ASAGI-ETRAF": "LEG_LEFT",
   "SVC-HIDROMASAJ-VANNASI": "FULL_BODY",
   "SVC-YOD-BROM-VANNASI": "FULL_BODY",
+  "SVC-TRAKSIYA": "BACK",
+};
+
+/** ♀/♂ naftalan immersion + aplikasiya share the same gender cabin pool. */
+const NAFTALAN_CABIN_POOLS = {
+  QADIN: {
+    procedureCodes: ["SVC-NAFTALAN-VANNASI-QADIN", "SVC-APLIKASIYA-NAFTALAN-QADIN"],
+    resourceCodes: [
+      "RES-VANNA-1-QADIN",
+      "RES-VANNA-2-QADIN",
+      "RES-VANNA-3-QADIN",
+      "RES-VANNA-4-QADIN",
+    ],
+  },
+  KISI: {
+    procedureCodes: ["SVC-NAFTALAN-VANNASI-KISI", "SVC-APLIKASIYA-NAFTALAN-KISI"],
+    resourceCodes: [
+      "RES-VANNA-1-KISI",
+      "RES-VANNA-2-KISI",
+      "RES-VANNA-3-KISI",
+      "RES-VANNA-4-KISI",
+    ],
+  },
 };
 
 /** Name/code substrings → extendedEndHour=22 (peak / late modalities). */
@@ -47,13 +73,16 @@ const ROTATION_RULES = [
     code: "NAFTALAN_BATH_ROTATION",
     name: "Naftalan bath consecutive-day rotation",
     memberCodes: [
-      "SVC-TAM-BEDEN-NAFTALAN-VANNASI",
+      "SVC-NAFTALAN-VANNASI-QADIN",
+      "SVC-NAFTALAN-VANNASI-KISI",
+      "SVC-APLIKASIYA-NAFTALAN-QADIN",
+      "SVC-APLIKASIYA-NAFTALAN-KISI",
       "SVC-4-KAMERALI-NAFTALAN-VANNASI",
     ],
     scope: "GROUP",
     maxConsecutiveDays: 2,
     restProcedureCode: "SVC-YOD-BROM-VANNASI",
-    note: "Max 2 consecutive naftalan bath days, then iod-brom rest day",
+    note: "Max 2 consecutive naftalan bath/aplikasiya days, then iod-brom rest day",
   },
   {
     code: "SUPERINDUCTIVE_BODY_PART",
@@ -77,9 +106,24 @@ const ROTATION_RULES = [
 
 const SUBSTITUTION_RULES = [
   {
-    originalCode: "SVC-TAM-BEDEN-NAFTALAN-VANNASI",
+    originalCode: "SVC-NAFTALAN-VANNASI-QADIN",
     substituteCode: "SVC-YOD-BROM-VANNASI",
-    note: "Full-body naftalan contraindicated → iod-brom bath (quota preserved)",
+    note: "Naftalan ♀ contraindicated → iod-brom bath (quota preserved)",
+  },
+  {
+    originalCode: "SVC-NAFTALAN-VANNASI-KISI",
+    substituteCode: "SVC-YOD-BROM-VANNASI",
+    note: "Naftalan ♂ contraindicated → iod-brom bath (quota preserved)",
+  },
+  {
+    originalCode: "SVC-APLIKASIYA-NAFTALAN-QADIN",
+    substituteCode: "SVC-YOD-BROM-VANNASI",
+    note: "Aplikasiya ♀ contraindicated → iod-brom bath",
+  },
+  {
+    originalCode: "SVC-APLIKASIYA-NAFTALAN-KISI",
+    substituteCode: "SVC-YOD-BROM-VANNASI",
+    note: "Aplikasiya ♂ contraindicated → iod-brom bath",
   },
   {
     originalCode: "SVC-4-KAMERALI-NAFTALAN-VANNASI",
@@ -188,8 +232,52 @@ async function seedSubstitutionRules() {
   console.log(`ProcedureSubstitutionRule upserted: ${upserted}`);
 }
 
+async function seedNaftalanSharedCabinRequirements() {
+  let wired = 0;
+  for (const pool of Object.values(NAFTALAN_CABIN_POOLS)) {
+    for (const code of pool.procedureCodes) {
+      const pt = await prisma.procedureType.findFirst({ where: { code } });
+      if (!pt) {
+        console.warn(`[seed-planning-rules] missing procedure type ${code}`);
+        continue;
+      }
+      await prisma.procedureTypeRequirement.deleteMany({
+        where: { procedureTypeId: pt.id, role: { in: ["LOCATION", "EQUIPMENT"] } },
+      });
+      for (const resourceCode of pool.resourceCodes) {
+        await prisma.procedureTypeRequirement.create({
+          data: {
+            procedureTypeId: pt.id,
+            role: "LOCATION",
+            resourceKind: "ROOM",
+            resourceCode,
+            staffMode: "HARD",
+            required: true,
+          },
+        });
+      }
+      const hasStaff = await prisma.procedureTypeRequirement.findFirst({
+        where: { procedureTypeId: pt.id, role: "STAFF" },
+      });
+      if (!hasStaff) {
+        await prisma.procedureTypeRequirement.create({
+          data: {
+            procedureTypeId: pt.id,
+            role: "STAFF",
+            staffMode: "SOFT",
+            required: true,
+          },
+        });
+      }
+      wired++;
+    }
+  }
+  console.log(`Naftalan shared cabin LOCATION requirements wired: ${wired} types`);
+}
+
 async function main() {
   await seedBodyPartsAndExtendedHours();
+  await seedNaftalanSharedCabinRequirements();
   await seedRotationRules();
   await seedSubstitutionRules();
   console.log("seed-planning-rules: done");

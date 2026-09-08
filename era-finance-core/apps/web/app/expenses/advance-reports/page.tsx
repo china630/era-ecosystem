@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
+import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { EmptyState } from "../../../components/empty-state";
@@ -31,6 +32,7 @@ type EmployeeOpt = {
   displayName?: string;
   firstName?: string;
   lastName?: string;
+  middleName?: string;
 };
 
 type ReportRow = {
@@ -62,11 +64,7 @@ const emptyLine = (): ExpenseLineForm => ({
 
 function employeeLabel(e?: EmployeeOpt): string {
   if (!e) return "—";
-  return (
-    e.displayName?.trim() ||
-    `${e.lastName ?? ""} ${e.firstName ?? ""}`.trim() ||
-    e.id.slice(0, 8)
-  );
+  return formatAzEmployeeListName(e) !== "—" ? formatAzEmployeeListName(e) : e.id.slice(0, 8);
 }
 
 function AdvanceReportsPageContent() {

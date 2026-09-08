@@ -18,17 +18,24 @@
 ```typescript
 import { linkPersonIdentity } from "@era/satellite-kit";
 
+// Prefer name parts; fullName alone is still accepted (MDM splits + dual-writes).
 const { globalPersonId } = await linkPersonIdentity({
-  fin, passport, issuingCountry, fullName, phone, nationality,
+  fin, passport, issuingCountry,
+  firstName, middleName, lastName, // or fullName
+  phone, nationality, // nationality = ISO citizenship (AZ, KZ)
   sex, birthDate, globalPersonId: existingId,
 }, { requesterOrgId, purpose: "intake" });
 ```
+
+**Resolve / ops-profile shape:** write and read `firstName` / `middleName` / `lastName` plus denormalized `fullName`. Empty incoming fields do not clear existing MDM values. Passport `issuingCountry` is the document country (not person nationality).
 
 ## Anti-patterns
 
 - Lookup-only on create routes
 - Duplicate FIN/passport plaintext in satellite DB when MDM-linked
 - Direct citizen PII in industry satellites bypassing MDM
+- Treating `nationality` as ethnicity or passport issuing country
+- Clearing middleName / phone by sending empty strings on resolve
 
 ## Related
 

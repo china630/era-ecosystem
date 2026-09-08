@@ -314,17 +314,19 @@ export async function checkInProcedureOrder(
   await assertCheckInWindow(order, channel);
   await assertResourceFreeForCheckIn(order);
 
-  if (await isClinicElektrawebDualRun()) {
-    const charge = await resolveProcedureCharge(order, { burnQuota: false });
-    if (
-      extraNeedsPaperTicket({ amountNet: charge.amountNet }) &&
-      !order.extraTicketIssuedAt
-    ) {
-      throw new ProcedureAttendanceError(
-        "Extra procedure requires an issued ticket (3 copies) before check-in",
-        "TICKET_REQUIRED",
-      );
-    }
+  const charge = await resolveProcedureCharge(order, { burnQuota: false });
+  if (
+    extraNeedsPaperTicket({
+      amountNet: charge.amountNet,
+      inPackage: order.inPackage === true,
+      packageIncluded: order.inPackage === true,
+    }) &&
+    !order.extraTicketIssuedAt
+  ) {
+    throw new ProcedureAttendanceError(
+      "Extra procedure requires an issued ticket (3 copies) before check-in",
+      "TICKET_REQUIRED",
+    );
   }
 
   const now = new Date();

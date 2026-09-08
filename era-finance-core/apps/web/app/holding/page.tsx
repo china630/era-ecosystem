@@ -10,7 +10,7 @@ import { useRequireAuth } from "../../lib/use-require-auth";
 import { CARD_CONTAINER_CLASS, LINK_ACCENT_CLASS, PRIMARY_BUTTON_CLASS } from "../../lib/design-system";
 import { EmptyState } from "../../components/empty-state";
 import { PageHeader } from "../../components/layout/page-header";
-import { ledgerQueryParam, useLedger } from "../../lib/ledger-context";
+import { holdingLedgerQueryParam, useLedger } from "../../lib/ledger-context";
 
 type HoldingListItem = {
   id: string;
@@ -42,7 +42,7 @@ const ORCH_WEB =
 export default function HoldingDashboardPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, activeBook, ready: ledgerReady } = useLedger();
   const params = useSearchParams();
   const holdingIdFromQuery = params.get("id") ?? "";
 
@@ -89,7 +89,7 @@ export default function HoldingDashboardPage() {
     setLoading(true);
     setError(null);
     const res = await apiFetch(
-      `/api/holdings/${encodeURIComponent(holdingId)}/summary?${ledgerQueryParam(ledgerType)}`,
+      `/api/holdings/${encodeURIComponent(holdingId)}/summary?${holdingLedgerQueryParam(ledgerType, activeBook?.code ?? null)}`,
     );
     if (!res.ok) {
       setSummary(null);
@@ -99,7 +99,7 @@ export default function HoldingDashboardPage() {
     }
     setSummary((await res.json()) as HoldingSummary);
     setLoading(false);
-  }, [token, holdingId, t, ledgerType]);
+  }, [token, holdingId, t, ledgerType, activeBook?.code]);
 
   useEffect(() => {
     if (!ready || !ledgerReady || !token || !holdingId) return;

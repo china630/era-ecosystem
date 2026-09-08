@@ -75,7 +75,7 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 | Appointment create K-01 | PRD | yes | **missing** | — | API-only | **SHIPPED** modal |
 | Service catalog M6 | PRD | yes | — | **missing** | API-only | **SHIPPED** `/admin/catalog` |
 | Procedure rules | M11 | yes | — | inline form | UX + FIFO rules | **SHIPPED** modal + tabs |
-| Clinical/program templates | vNext | partial | — | **missing** | seed-only | **SHIPPED** `/admin/templates` |
+| Clinical/program templates | vNext | Y | Y CPOE | Y diagnostic + packages | dual SoT | **SCREEN** `/admin/diagnostic-catalog` + `/admin/program-templates` + `/visits/[id]` CPOE; `ClinicalTemplate` dropped ([doc](../era-clinic/doc/CLINICAL_AND_PROGRAM_TEMPLATES.md)) |
 | LIS profiles | M11 | yes | — | yes | OK | **OK** |
 | Sanatorium chart | K5 | yes | yes | yes | OK | **OK** |
 | Reception queue | W3 | yes | yes | — | OK | **OK** |

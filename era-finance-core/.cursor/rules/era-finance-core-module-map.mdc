@@ -11,14 +11,19 @@ globs: era-finance-core/**/*
 
 | Route | API |
 |-------|-----|
-| `/accounting/chart` | `GET /api/accounts`, `GET /api/accounts/templates`, `POST /api/accounts/import-from-template` |
-| `/accounting/mapping` | NAS↔IFRS pairing |
-| `/accounting/ifrs-mapping` | IFRS auto-map rules |
+| `/accounting/books` | `GET/POST /api/accounting/books`, `GET /api/accounting/books/slots`, `GET /api/accounting/books/:id`; slot-gated extra books; TEMPLATE / EMPTY / NAS_CLONE CoA strategies; optional statutory translation DRAFT; header book selector via `ledger-context` (`ledgerType` + `accountingBookId` alias) |
+| `/accounting/chart` | NAS/IFRS CoA; `GET /api/accounts?ledgerType=`; NAS import; `POST /api/accounts/ifrs-provision`, `POST /api/accounts/ifrs`; ops `POST /api/accounts/ifrs-mirror` |
+| `/accounting/ledger-mappings` | Versioned arbitrary book-pair LedgerMappingSet UI/API; source-book fan-out to every PUBLISHED target, per-set outcomes, soft/strict policy; NAS_TO_IFRS primary/fallback compatibility |
+| `/accounting/adjustments` | Manual journals; `ledgerType` NAS\|IFRS (P1) |
+| `/accounting/mapping` | redirect → ledger-mappings |
+| `/accounting/ifrs-mapping` | redirect → ledger-mappings |
 | `/accounting/posting-roles` | `GET/PATCH /api/accounting/posting-roles` |
 | `/accounting/adjustments` | Manual voucher: `GET/POST /api/accounting/manual-adjustments`, `GET …/:id`, `GET …/:id/pdf`, `POST …/preview`, `POST …/:id/reverse`, `GET …/templates`; basis links + PDF + reverse — ADR [finance-manual-adjusting-journal.md](../../../docs/adr/finance-manual-adjusting-journal.md) wave 3 |
 | `/sales/invoices` (ViewInvoiceModal) | `POST /api/invoices/:id/credit-adjustment` — internal remaining credit (wave 2–3 VAT split REVENUE); overpayment CTA → adjustments |
 | `/fixed-assets` | lifecycle journal ref → adjustments; `?asset=` deep link (wave 3) |
 | `/reporting/journal` | `GET /api/reporting/general-ledger` (read-only) |
+| `/reporting/compare-books` | `GET /api/reporting/compare-books?bookA=&bookB=&dateFrom=&dateTo=`; book-scoped trial-balance comparison |
+| `/audit-hub/reconciliation` | `GET /api/audit-hub/reconciliation/nas-ifrs`; compatibility route comparing default ops book with every ACTIVE non-ops book for presence and debit parity |
 | `/expenses/quick` | `POST /api/accounting/quick-expense` (fixed 731/101) |
 
 Roles for posting: OWNER / ADMIN / ACCOUNTANT. USER cannot post journal vouchers (`assertMayPostManualJournal`).

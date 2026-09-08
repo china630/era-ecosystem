@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { LedgerType, Prisma } from "@erafinance/database";
 import { AccessControlService } from "../access/access-control.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { BankBalancesSyncQueueService } from "../banking/bank-balances-sync.queue";
 import { BankingGatewayService } from "../banking/banking-gateway.service";
 import { CurrencyConverterService } from "../fx/currency-converter.service";
@@ -30,6 +31,12 @@ type HoldingOrgRow = {
   taxIdBlindIndex: string | null;
 };
 
+type HoldingBookScope = {
+  ledgerType: LedgerType;
+  accountingBookId?: string;
+  bookCode?: string;
+};
+
 @Injectable()
 export class HoldingsReportingService {
   private readonly logger = new Logger(HoldingsReportingService.name);
@@ -42,6 +49,7 @@ export class HoldingsReportingService {
     private readonly bankSyncQueue: BankBalancesSyncQueueService,
     private readonly taxpayerIntegration: TaxpayerIntegrationService,
     private readonly holdingsCp: OrchestratorHoldingsClientService,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   private async loadHoldingOrgs(
@@ -78,6 +86,77 @@ export class HoldingsReportingService {
     }
     const organizations = await this.loadHoldingOrgs(holding);
     return { holding, organizations };
+  }
+
+  /**
+   * Cross-org book scope: prefer stable `bookCode`, then same-org UUID, then NAS/IFRS alias.
+   * Returns null when the peer org has no matching ACTIVE book (caller skips that org).
+   */
+  private async resolvePeerBook(
+    organizationId: string,
+    scope: HoldingBookScope,
+  ): Promise<{ id: string; code: string; ledgerType: LedgerType } | null> {
+    const code = scope.bookCode?.trim();
+    if (code) {
+      const byCode = await this.accountingBooks.findActiveByCode(
+        organizationId,
+        code,
+      );
+      if (!byCode) return null;
+      return {
+        id: byCode.id,
+        code: byCode.code,
+        ledgerType:
+          byCode.gaapKind === "IFRS"
+            ? LedgerType.IFRS
+            : byCode.gaapKind === "MANAGEMENT" ||
+                byCode.gaapKind === "TAX" ||
+                byCode.gaapKind === "CUSTOM"
+              ? LedgerType.MANAGEMENT
+              : LedgerType.NAS,
+      };
+    }
+    if (scope.accountingBookId?.trim()) {
+      try {
+        const book = await this.accountingBooks.getBook(
+          organizationId,
+          scope.accountingBookId.trim(),
+        );
+        return {
+          id: book.id,
+          code: book.code,
+          ledgerType:
+            book.gaapKind === "IFRS"
+              ? LedgerType.IFRS
+              : book.gaapKind === "MANAGEMENT" ||
+                  book.gaapKind === "TAX" ||
+                  book.gaapKind === "CUSTOM"
+                ? LedgerType.MANAGEMENT
+                : LedgerType.NAS,
+        };
+      } catch {
+        return null;
+      }
+    }
+    if (
+      scope.ledgerType === LedgerType.NAS ||
+      scope.ledgerType === LedgerType.IFRS
+    ) {
+      try {
+        const book = await this.accountingBooks.resolveByLedgerType(
+          organizationId,
+          scope.ledgerType,
+        );
+        return {
+          id: book.id,
+          code: book.code,
+          ledgerType: scope.ledgerType,
+        };
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   async getHoldingBalancesSummaryForUser(userId: string, holdingId: string) {
@@ -241,7 +320,12 @@ export class HoldingsReportingService {
   async getHoldingSummary(
     userId: string,
     holdingId: string,
-    params?: { asOf?: string; ledgerType?: LedgerType },
+    params?: {
+      asOf?: string;
+      ledgerType?: LedgerType;
+      accountingBookId?: string;
+      bookCode?: string;
+    },
   ) {
     const { holding, organizations: orgs } = await this.resolveHolding(
       userId,
@@ -250,6 +334,11 @@ export class HoldingsReportingService {
 
     const baseCur = (holding.baseCurrency ?? "AZN").toUpperCase();
     const ledgerType = params?.ledgerType ?? LedgerType.NAS;
+    const bookScope: HoldingBookScope = {
+      ledgerType,
+      accountingBookId: params?.accountingBookId,
+      bookCode: params?.bookCode,
+    };
     let asOfDate: Date;
     try {
       asOfDate = params?.asOf ? parseIsoDateOnly(params.asOf) : new Date();
@@ -259,6 +348,7 @@ export class HoldingsReportingService {
 
     let fxNote: string | null = null;
     let totalCashBankInBase = new Decimal(0);
+    const skippedOrgs: string[] = [];
     const organizations: Array<{
       organizationId: string;
       organizationName: string;
@@ -266,13 +356,25 @@ export class HoldingsReportingService {
       currency: string;
       cashBankBalance: string;
       cashBankInHoldingBase: string | null;
+      accountingBookId?: string;
+      bookCode?: string;
     }> = [];
 
     for (const org of orgs) {
+      const peerBook = await this.resolvePeerBook(org.id, bookScope);
+      if (!peerBook) {
+        skippedOrgs.push(org.name);
+        continue;
+      }
       const cur = (org.currency ?? "AZN").toUpperCase();
       const dash = await runWithTenantContextAsync(
         { organizationId: org.id, skipTenantFilter: false },
-        () => this.reporting.dashboard(org.id, ledgerType),
+        () =>
+          this.reporting.dashboard(
+            org.id,
+            peerBook.ledgerType,
+            peerBook.id,
+          ),
       );
       const cash = new Decimal(dash.cashBankBalance);
       const row = {
@@ -282,6 +384,8 @@ export class HoldingsReportingService {
         currency: cur,
         cashBankBalance: cash.toFixed(4),
         cashBankInHoldingBase: null as string | null,
+        accountingBookId: peerBook.id,
+        bookCode: peerBook.code,
       };
       try {
         const inBaseRaw = await this.currency.convert(
@@ -313,14 +417,20 @@ export class HoldingsReportingService {
       organizations.push(row);
     }
 
+    const skipNote =
+      skippedOrgs.length > 0
+        ? `Skipped orgs without matching book (${bookScope.bookCode ?? bookScope.ledgerType}): ${skippedOrgs.join(", ")}.`
+        : null;
+
     return {
       holdingId: holding.id,
       holdingName: holding.name,
       holdingBaseCurrency: baseCur,
       fxAsOfDate: asOfDate.toISOString().slice(0, 10),
+      bookCode: bookScope.bookCode?.trim().toUpperCase() || null,
       totalCashBankInHoldingBase: fxNote ? null : totalCashBankInBase.toFixed(4),
       organizations,
-      consolidationNote: fxNote,
+      consolidationNote: [fxNote, skipNote].filter(Boolean).join(" ") || null,
     };
   }
 
@@ -330,6 +440,8 @@ export class HoldingsReportingService {
     dateFrom: string,
     dateTo: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
+    bookCode?: string,
   ) {
     const { holding, organizations: orgs } = await this.resolveHolding(
       userId,
@@ -351,18 +463,30 @@ export class HoldingsReportingService {
       fxSlices = [{ fromStr: dateFrom, toStr: dateTo, fxAsOf: dateToD }];
     }
 
+    const bookScope: HoldingBookScope = {
+      ledgerType,
+      accountingBookId,
+      bookCode,
+    };
     const organizations = [];
     const totalsByCurrency = new Map<string, Decimal>();
     let consolidatedNetProfitInBase = new Decimal(0);
     let fxNote: string | null = null;
+    const skippedOrgs: string[] = [];
 
     for (const org of orgs) {
+      const peerBook = await this.resolvePeerBook(org.id, bookScope);
+      if (!peerBook) {
+        skippedOrgs.push(org.name);
+        continue;
+      }
       const pnl = await this.reporting.profitAndLoss(
         org.id,
         dateFrom,
         dateTo,
-        ledgerType,
+        peerBook.ledgerType,
         null,
+        peerBook.id,
       );
       const np = new Decimal(pnl.netProfit);
       const cur = (org.currency ?? "AZN").toUpperCase();
@@ -373,6 +497,8 @@ export class HoldingsReportingService {
         currency: cur,
         netProfit: pnl.netProfit,
         netProfitInHoldingBase: null as string | null,
+        accountingBookId: peerBook.id,
+        bookCode: peerBook.code,
       });
       totalsByCurrency.set(
         cur,
@@ -386,8 +512,9 @@ export class HoldingsReportingService {
             org.id,
             seg.fromStr,
             seg.toStr,
-            ledgerType,
+            peerBook.ledgerType,
             null,
+            peerBook.id,
           );
           const npSeg = new Decimal(pnlSeg.netProfit);
           const part = await this.currency.convert(
@@ -427,6 +554,13 @@ export class HoldingsReportingService {
       consolidatedNetProfitByCurrency[c] = v.toFixed(4);
     }
 
+    const skipNote =
+      skippedOrgs.length > 0
+        ? `Skipped orgs without matching book (${bookScope.bookCode ?? bookScope.ledgerType}): ${skippedOrgs.join(", ")}.`
+        : null;
+    const fxModeNote =
+      "Чистая прибыль за каждый календарный фрагмент месяца внутри периода переводится в валюту холдинга по курсу ЦБА на последний день фрагмента; суммы по фрагментам складываются.";
+
     return {
       holdingId: holding.id,
       holdingName: holding.name,
@@ -436,14 +570,14 @@ export class HoldingsReportingService {
       dateFrom,
       dateTo,
       ledgerType,
+      bookCode: bookScope.bookCode?.trim().toUpperCase() || null,
       organizations,
       consolidatedNetProfitByCurrency,
       consolidatedNetProfitInHoldingBase: fxNote
         ? null
         : consolidatedNetProfitInBase.toFixed(4),
       consolidationNote:
-        fxNote ??
-        "Чистая прибыль за каждый календарный фрагмент месяца внутри периода переводится в валюту холдинга по курсу ЦБА на последний день фрагмента; суммы по фрагментам складываются.",
+        [fxNote, skipNote].filter(Boolean).join(" ") || fxModeNote,
     };
   }
 }

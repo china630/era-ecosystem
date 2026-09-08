@@ -1,4 +1,10 @@
-import { isValidAzFin, linkPersonIdentity } from "@era/satellite-kit";
+import {
+  composePersonFullName,
+  isValidAzFin,
+  linkPersonIdentity,
+  normalizeNationalityIso,
+  resolveIncomingNameParts,
+} from "@era/satellite-kit";
 import {
   lookupHotelGuestByIdentity,
   lookupHotelStayGlobalPerson,
@@ -6,12 +12,17 @@ import {
 
 function orderedFullName(input: {
   fullName: string;
-  givenName?: string;
-  surname?: string;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
 }): string {
-  const given = input.givenName?.trim() ?? "";
-  const sur = input.surname?.trim() ?? "";
-  if (given && sur) return `${given} ${sur}`;
+  const parts = resolveIncomingNameParts(input);
+  const composed = composePersonFullName(
+    parts?.firstName,
+    parts?.middleName,
+    parts?.lastName,
+  );
+  if (composed) return composed;
   return input.fullName.trim();
 }
 
@@ -28,8 +39,9 @@ function classifyFoDocument(raw?: string): { fin?: string; passport?: string } {
  */
 export async function resolveCutoverPatientMdm(input: {
   fullName: string;
-  givenName?: string;
-  surname?: string;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
   phone?: string;
   nationality?: string;
   sex?: string;
@@ -41,6 +53,7 @@ export async function resolveCutoverPatientMdm(input: {
 }): Promise<string | null> {
   const fullName = orderedFullName(input);
   if (!fullName) return null;
+  const parts = resolveIncomingNameParts({ ...input, fullName });
   const existing = input.existingGlobalPersonId?.trim() || "";
   const docs = classifyFoDocument(input.passport);
   let fromHotel: string | null = null;
@@ -60,9 +73,12 @@ export async function resolveCutoverPatientMdm(input: {
   const seed = existing || fromHotel || undefined;
   try {
     const linked = await linkPersonIdentity({
+      firstName: parts?.firstName?.trim() || undefined,
+      middleName: parts?.middleName?.trim() || undefined,
+      lastName: parts?.lastName?.trim() || undefined,
       fullName,
       phone: input.phone?.trim() || undefined,
-      nationality: input.nationality?.trim() || undefined,
+      nationality: normalizeNationalityIso(input.nationality) ?? undefined,
       sex: input.sex,
       birthDate: input.birthDate?.trim().slice(0, 10) || undefined,
       fin: docs.fin,

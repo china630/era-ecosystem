@@ -10,6 +10,7 @@ import {
   MODAL_FOOTER_ACTIONS_CLASS,
   MODAL_FOOTER_BUTTON_CLASS,
 } from "../../lib/design-system";
+import { formatAzEmployeeListName } from "../../lib/employee-display-name";
 import { apiFetch } from "../../lib/api-client";
 import { Button } from "../ui/button";
 
@@ -19,7 +20,7 @@ export type EmployeeAbsenceRow = {
   startDate: string;
   endDate: string;
   note: string;
-  employee: { id: string; firstName: string; lastName: string };
+  employee: { id: string; firstName: string; lastName: string; middleName?: string; displayName?: string | null };
   absenceType?: AbsenceTypeOpt;
 };
 
@@ -132,7 +133,7 @@ export function EmployeeAbsencesModal({
         <header className="flex shrink-0 items-start justify-between gap-3">
           <div className="min-w-0 flex-1 pr-2">
             <h3 className="m-0 text-lg font-semibold leading-snug text-[#34495E]">
-              {employee ? `${employee.lastName} ${employee.firstName}` : employeeLabel || t("common.emptyValue")}
+              {employee ? formatAzEmployeeListName(employee) : employeeLabel || t("common.emptyValue")}
             </h3>
             <p className="mb-0 mt-1 text-[13px] leading-snug text-[#7F8C8D]">
               {t("payroll.employeeAbsencesSubtitle", { period: periodLabel })}

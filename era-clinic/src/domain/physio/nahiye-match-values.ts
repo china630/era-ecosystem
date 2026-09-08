@@ -14,6 +14,18 @@ export function inferLateralityFromText(raw: string): PhysioLateralityCode | nul
   return null;
 }
 
+/**
+ * Import/cutover default: when the site allows laterality and WO did not say L/R/BOTH → BOTH.
+ * Midline / non-lateral sites stay null.
+ */
+export function defaultLateralityForSite(
+  siteAllowsLaterality: boolean,
+  inferred: PhysioLateralityCode | null,
+): PhysioLateralityCode | null {
+  if (!siteAllowsLaterality) return null;
+  return inferred ?? "BOTH";
+}
+
 function firstWhole(n: string, needles: string[]): boolean {
   return needles.some((x) => indexWhole(n, x) >= 0);
 }
@@ -65,6 +77,7 @@ export function physioFieldsFromFlags(
     if (firstWhole(n, ["gunasiri", "guna siri"])) out.dayBlock = "ALTERNATING";
     else if (firstWhole(n, ["5 gun ardindan", "5 gun"])) out.dayBlock = "5";
     else if (firstWhole(n, ["3 gun"])) out.dayBlock = "3";
+    else if (firstWhole(n, ["2 gun"])) out.dayBlock = "2";
   }
   if (has("SPINE_LEVEL")) {
     const levels = ["l4 l5", "l5 s1", "l1 l5", "c3 c4 c5", "c3 c4", "c4 c5", "c5 c6", "c6 c7"];

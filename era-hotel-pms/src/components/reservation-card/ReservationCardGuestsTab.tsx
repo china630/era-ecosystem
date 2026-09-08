@@ -216,6 +216,11 @@ export function ReservationCardGuestsTab({
         render: (row) => row.firstName || '—',
       },
       {
+        key: 'middleName',
+        header: t('patronymic'),
+        render: (row) => row.middleName || '—',
+      },
+      {
         key: 'lastName',
         header: t('surname'),
         render: (row) => row.lastName || '—',

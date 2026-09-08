@@ -19,4 +19,18 @@ export class PlatformEntitlementService {
     }
     await this.subscriptionAccess.assertModuleAccess(orgId, moduleKey);
   }
+
+  async assertAnyPlatformModule(
+    organizationId: string,
+    moduleKeys: readonly string[],
+  ): Promise<void> {
+    const orgId = resolveOrganizationUuid(organizationId);
+    if (!orgId) {
+      throw new BadRequestException("Invalid organization id");
+    }
+    for (const key of moduleKeys) {
+      if (await this.subscriptionAccess.hasModule(orgId, key)) return;
+    }
+    await this.subscriptionAccess.assertModuleAccess(orgId, moduleKeys[0] ?? "platform_reference_data");
+  }
 }

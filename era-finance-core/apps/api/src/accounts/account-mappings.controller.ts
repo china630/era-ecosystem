@@ -22,6 +22,7 @@ import { CreateAccountMappingDto } from "./dto/create-account-mapping.dto";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { legacyMappingGone } from "../accounting/ledger-mapping.controller";
 
 @ApiTags("account-mappings")
 @ApiBearerAuth("bearer")
@@ -32,7 +33,7 @@ export class AccountMappingsController {
   constructor(private readonly accounts: AccountsService) {}
 
   @Get()
-  @ApiOperation({ summary: "Список сопоставлений NAS ↔ IFRS" })
+  @ApiOperation({ summary: "Legacy list — prefer /accounting/ledger-mappings" })
   list(@OrganizationId() organizationId: string) {
     return this.accounts.listMappings(organizationId);
   }
@@ -40,22 +41,22 @@ export class AccountMappingsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: "Создать сопоставление счёта NAS с IFRS" })
+  @ApiOperation({ summary: "Gone — use /accounting/ledger-mappings" })
   create(
-    @OrganizationId() organizationId: string,
-    @Body() dto: CreateAccountMappingDto,
+    @OrganizationId() _organizationId: string,
+    @Body() _dto: CreateAccountMappingDto,
   ) {
-    return this.accounts.createMapping(organizationId, dto);
+    return legacyMappingGone();
   }
 
   @Delete(":id")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: "Удалить сопоставление" })
+  @ApiOperation({ summary: "Gone — use /accounting/ledger-mappings" })
   remove(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
+    @OrganizationId() _organizationId: string,
+    @Param("id", ParseUUIDPipe) _id: string,
   ) {
-    return this.accounts.deleteMapping(organizationId, id);
+    return legacyMappingGone();
   }
 }

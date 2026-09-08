@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ColorLegend } from '@era/satellite-kit/ui';
-import { rackNumberTextClass, formatSharePoolBadge } from '@/lib/room-rack-display';
+import { rackNumberTextClass } from '@/lib/room-rack-display';
 import { RoomPlanBar } from '@/components/room-plan/RoomPlanBar';
-import { hoverMarkerLabel } from '@/components/room-plan/format';
+import { hoverMarkerLabel, planHeaderParts } from '@/components/room-plan/format';
 import {
   barLayoutOffset,
   calendarDateKey,
@@ -19,9 +19,11 @@ import {
   toShareLaneInput,
 } from '@/components/room-plan/share-lanes';
 import {
-  HK_SQUARE_COLORS,
   PLAN_BAR_COLORS,
+  PLAN_BAR_OCCUPANCY_STROKE,
+  isPlanVisibleRoom,
   type PlanBarDayState,
+  type PlanBarOccupancyKind,
 } from '@/components/room-plan/plan-bar-theme';
 import type {
   RoomPlanGroup,
@@ -38,8 +40,10 @@ export type {
 } from '@/components/room-plan/types';
 
 const ROOM_COL_W = 120;
-const DAY_MIN_W = 52;
+const DAY_MIN_W = 56;
 const ROW_H_BASE = 36;
+const DATE_HEADER_H = 44;
+const AVAIL_ROW_H = 28;
 const BAR_GUTTER = 2;
 
 function rowHeightForRoom(room: RoomPlanRoom, roomBars: RoomPlanReservationBar[]): number {
@@ -73,13 +77,16 @@ function ChevronSwatch({ fill }: { fill: string }) {
   );
 }
 
-function SquareSwatch({ fill }: { fill: string }) {
+function OccupancySwatch({ stroke }: { stroke: string }) {
   return (
-    <span
-      className="inline-block h-3 w-3 shrink-0 rounded-sm border border-[#D5DADF]"
-      style={{ backgroundColor: fill }}
-      aria-hidden
-    />
+    <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden className="shrink-0">
+      <path
+        d="M0 0 L12 0 L18 6 L12 12 L0 12 L4 6 Z"
+        fill="#FFFFFF"
+        stroke={stroke}
+        strokeWidth="1.6"
+      />
+    </svg>
   );
 }
 
@@ -135,24 +142,19 @@ function RoomLabelCell({
   rowHeight: number;
   highlighted?: boolean;
 }) {
-  const isOoo = room.status === 'OOO' || room.status === 'OOS';
   const numCls = rackNumberTextClass({
     status: room.status,
     rackDisplayState: undefined,
   });
-  const poolBadge = room.sharePool ? formatSharePoolBadge(room.sharePool) : null;
   return (
     <div
       className={`${stickyRoomClass(
-        highlighted ? 'bg-[#EBF5FB]' : isOoo ? 'bg-red-50' : 'bg-white',
+        highlighted ? 'bg-[#EBF5FB]' : 'bg-white',
       )} flex flex-col justify-center border-t border-[#D5DADF] px-2 py-1`}
       style={{ minHeight: rowHeight }}
     >
       <div className="flex items-center gap-1">
         <span className={`text-[13px] font-bold leading-tight ${numCls}`}>{room.roomNumber}</span>
-        {poolBadge ? (
-          <span className={`text-[10px] font-semibold ${poolBadge.className}`}>{poolBadge.text}</span>
-        ) : null}
       </div>
       <span className="text-[10px] leading-tight text-[#7F8C8D]">
         fl.{room.floor} · {room.roomType.code}
@@ -186,9 +188,8 @@ function TimelineCells({
   onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
   onMoveReservation?: (reservationId: string, toRoomId: string) => void;
 }) {
-  const isOoo = room.status === 'OOO' || room.status === 'OOS';
   const placed = computePlacedBars(from, days, roomBars);
-  const dayBg = isOoo ? 'bg-red-50/80' : 'bg-white';
+  const dayBg = 'bg-white';
   const laneCount = shareLaneCount(
     roomBars.map(toShareLaneInput),
     room.sharePool?.capacity ?? 2,
@@ -272,8 +273,6 @@ function TimelineCells({
               selected={selectedId === bar.id}
               draggable={Boolean(onResizeEnd || onMoveReservation)}
               roomBars={roomBars}
-              roomStatus={room.status}
-              roomHkCondition={room.hkCondition}
               onSelect={() => onSelect(selectedId === bar.id ? null : bar.id)}
               onDragStart={(e) => {
                 if (!onMoveReservation && !onResizeEnd) return;
@@ -385,6 +384,7 @@ export default function RoomPlanGrid({
   fillViewport?: boolean;
 }) {
   const t = useTranslations('roomPlan');
+  const locale = useLocale();
   const from = useMemo(() => parseCalendarDate(fromIso), [fromIso]);
   const [hover, setHover] = useState<HoverCell | null>(null);
 
@@ -414,7 +414,17 @@ export default function RoomPlanGrid({
     return map;
   }, [reservations]);
 
-  const avail = availabilityByDay ?? {};
+  const visibleRooms = useMemo(() => rooms.filter(isPlanVisibleRoom), [rooms]);
+  const visibleGroups = useMemo(
+    () =>
+      groups
+        ?.map((g) => {
+          const list = g.rooms.filter(isPlanVisibleRoom);
+          return { ...g, rooms: list, roomCount: list.length };
+        })
+        .filter((g) => g.roomCount > 0),
+    [groups],
+  );
   const cols = `${ROOM_COL_W}px repeat(${days}, minmax(${DAY_MIN_W}px, 1fr))`;
   const minTableW = ROOM_COL_W + days * DAY_MIN_W;
 
@@ -439,16 +449,17 @@ export default function RoomPlanGrid({
     swatch: <ChevronSwatch fill={PLAN_BAR_COLORS[state].fill} />,
   }));
 
-  const squareLegendItems = [
-    { id: 'hk-clean', label: t('legendHkClean'), fill: HK_SQUARE_COLORS.clean },
-    { id: 'hk-dirty', label: t('legendHkDirty'), fill: HK_SQUARE_COLORS.dirty },
-    { id: 'hk-maint', label: t('legendHkMaintenance'), fill: HK_SQUARE_COLORS.maintenance },
-    { id: 'hk-closed', label: t('legendHkClosed'), fill: HK_SQUARE_COLORS.closed },
-  ].map((item) => ({
+  const occupancyLegendItems = (
+    [
+      { id: 'exclusive' as const, label: t('legendOccupancyExclusive') },
+      { id: 'shareM' as const, label: t('legendOccupancyShareM') },
+      { id: 'shareF' as const, label: t('legendOccupancyShareF') },
+    ] satisfies { id: PlanBarOccupancyKind; label: string }[]
+  ).map((item) => ({
     id: item.id,
     label: item.label,
     swatchClassName: '',
-    swatch: <SquareSwatch fill={item.fill} />,
+    swatch: <OccupancySwatch stroke={PLAN_BAR_OCCUPANCY_STROKE[item.id]} />,
   }));
 
   const renderRoomBlock = (roomList: RoomPlanRoom[]) =>
@@ -489,13 +500,7 @@ export default function RoomPlanGrid({
     >
       <div className={`space-y-1.5 ${fillViewport ? 'shrink-0' : ''}`}>
         <ColorLegend ariaLabel={t('legendBarsAria')} items={barLegendItems} />
-        <ColorLegend
-          ariaLabel={t('legendSquaresAria')}
-          items={[
-            ...squareLegendItems,
-            { id: 'ooo', label: t('legendOoo'), swatchClassName: 'bg-red-600' },
-          ]}
-        />
+        <ColorLegend ariaLabel={t('legendOccupancyAria')} items={occupancyLegendItems} />
       </div>
       <div
         className={`w-full overflow-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm ${
@@ -511,11 +516,13 @@ export default function RoomPlanGrid({
         >
           <div
             className={`${stickyRoomClass('top-0 z-40 bg-[#F8FAFC]')} flex items-center border-b border-[#D5DADF] px-2 text-[13px] font-semibold text-[#34495E]`}
-            style={{ minHeight: ROW_H_BASE }}
+            style={{ minHeight: DATE_HEADER_H }}
           >
             {t('roomColumn')}
           </div>
-          {dateHeaders.map((d, i) => (
+          {dateHeaders.map((d, i) => {
+            const { day, weekday } = planHeaderParts(d, locale);
+            return (
             <div
               key={d}
               className={`${stickyDateHeaderClass(
@@ -523,17 +530,25 @@ export default function RoomPlanGrid({
                   ? 'bg-[#EBF5FB] font-semibold text-[#2980B9]'
                   : isWeekendKey(d)
                     ? 'bg-[#FDECEC] text-[#C0392B]'
-                    : 'bg-[#F8FAFC] text-[#7F8C8D]',
-              )} flex items-center justify-center px-1 text-center text-[13px]`}
-              style={{ minHeight: ROW_H_BASE }}
+                    : 'bg-[#F8FAFC] text-[#34495E]',
+              )} flex flex-col items-center justify-center px-1 py-0.5 text-center leading-tight`}
+              style={{ minHeight: DATE_HEADER_H }}
             >
-              {d.slice(5)}
+              <span className="text-[16px] font-bold">{day}</span>
+              <span
+                className={`text-[10px] font-medium ${
+                  isWeekendKey(d) && hover?.dayIndex !== i ? 'text-[#C0392B]' : 'text-[#7F8C8D]'
+                }`}
+              >
+                {weekday}
+              </span>
             </div>
-          ))}
+            );
+          })}
 
           <div
             className={`${stickyRoomClass('z-40 bg-[#EBF5FB]')} flex items-center border-b border-[#D5DADF] px-2 text-[11px] font-medium text-[#2980B9]`}
-            style={{ minHeight: ROW_H_BASE, top: ROW_H_BASE }}
+            style={{ minHeight: AVAIL_ROW_H, top: DATE_HEADER_H }}
           >
             {t('availability')}
           </div>
@@ -541,14 +556,14 @@ export default function RoomPlanGrid({
             <div
               key={`avail-${d}`}
               className={`${stickyAvailHeaderClass('bg-[#EBF5FB]')} flex items-center justify-center py-1 text-center text-[11px] font-semibold text-[#2980B9]`}
-              style={{ minHeight: ROW_H_BASE, top: ROW_H_BASE }}
+              style={{ minHeight: AVAIL_ROW_H, top: DATE_HEADER_H }}
             >
-              {avail[d] ?? '—'}
+              {availabilityByDay?.[d] ?? '—'}
             </div>
           ))}
 
-          {groups
-            ? groups.map((g) => (
+          {visibleGroups
+            ? visibleGroups.map((g) => (
                 <div key={g.key} className="contents">
                   <div
                     className={`${stickyRoomClass('bg-[#2980B9]/10')} border-t border-[#2980B9]/30 px-2 py-1.5 text-[12px] font-semibold text-[#2980B9]`}
@@ -574,7 +589,7 @@ export default function RoomPlanGrid({
                   {renderRoomBlock(g.rooms)}
                 </div>
               ))
-            : renderRoomBlock(rooms)}
+            : renderRoomBlock(visibleRooms)}
         </div>
       </div>
       {hover && dateHeaders[hover.dayIndex]

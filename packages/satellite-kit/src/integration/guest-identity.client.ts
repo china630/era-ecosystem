@@ -33,7 +33,11 @@ function serviceToken(opts?: GuestIdentityClientOptions): string | undefined {
 export async function resolveGlobalPerson(
   input: {
     fin?: string;
-    fullName: string;
+    /** Legacy single-line name; MDM splits when parts omitted. */
+    fullName?: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     phone?: string;
     passport?: string;
     issuingCountry?: string;

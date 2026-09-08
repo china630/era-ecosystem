@@ -5,20 +5,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Eye, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  ColorLegend,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_SCROLL_CLASS,
-  DATA_TABLE_SHELL_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
   DatePicker,
+  EraDataGrid,
   EraListFilterBar,
+  EraListWorkspace,
   Field,
   FieldSelect,
   FieldTextarea,
-  LINK_ACCENT_CLASS,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -29,6 +23,8 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  type EraDataGridColumn,
+  usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
@@ -58,6 +54,7 @@ type LabOrder = {
   createdAt?: string;
   collectedAt?: string | null;
   resultDate?: string | null;
+  visitId?: string | null;
   patientRef: { refCode: string; fullName: string };
   items?: LabOrderItem[];
 };
@@ -67,6 +64,18 @@ function labOrderListDate(order: LabOrder): Date | null {
   if (!raw) return null;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function AssignmentDot({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
+        ok ? "bg-[#27AE60]" : "bg-[#E74C3C]"
+      }`}
+      title={ok ? yes : no}
+      aria-label={ok ? yes : no}
+    />
+  );
 }
 
 type ListFilters = {
@@ -122,12 +131,7 @@ export default function LabOrdersPage() {
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [orders, setOrders] = useState<LabOrder[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
   const [filters, setFilters] = useState<ListFilters>(emptyFilters);
-  const [loading, setLoading] = useState(true);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ patientRefCode: "", patientFullName: "", visitId: "" });
@@ -148,34 +152,43 @@ export default function LabOrdersPage() {
     unknown
   > | null>(null);
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-    if (filters.status) params.set("status", filters.status);
-    if (filters.criticalOnly) params.set("criticalOnly", "true");
-    if (filters.modality) params.set("modality", filters.modality);
-    if (filters.q.trim()) params.set("q", filters.q.trim());
-    if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.set("dateTo", filters.dateTo);
-    const res = await fetch(`/api/lab-orders?${params}`);
-    const raw = await res.json();
-    if (Array.isArray(raw)) {
-      // Legacy shape (pre-pagination API) — treat the array as a single unpaginated page.
-      setOrders(raw);
-      setTotal(raw.length);
-    } else {
-      const list = (raw.data ?? raw.items ?? []) as LabOrder[];
-      setOrders(Array.isArray(list) ? list : []);
-      setTotal(typeof raw.total === "number" ? raw.total : list.length);
-      if (typeof raw.page === "number") setPage(raw.page);
-      if (typeof raw.pageSize === "number") setPageSize(raw.pageSize);
-    }
-    setLoading(false);
-  }, [filters, page, pageSize]);
+  const fetcher = useCallback(
+    async ({
+      page,
+      pageSize,
+      filters: f,
+    }: {
+      page: number;
+      pageSize: number;
+      filters: ListFilters;
+    }) => {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      if (f.status) params.set("status", f.status);
+      if (f.criticalOnly) params.set("criticalOnly", "true");
+      if (f.modality) params.set("modality", f.modality);
+      if (f.q.trim()) params.set("q", f.q.trim());
+      if (f.dateFrom) params.set("dateFrom", f.dateFrom);
+      if (f.dateTo) params.set("dateTo", f.dateTo);
+      const res = await fetch(`/api/lab-orders?${params}`);
+      if (!res.ok) throw new Error("Failed to load lab orders");
+      return res.json();
+    },
+    [],
+  );
 
-  useEffect(() => {
-    void loadOrders();
-  }, [loadOrders]);
+  const {
+    items: orders,
+    total,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    loading,
+    reload: loadOrders,
+  } = usePaginatedList<LabOrder, ListFilters>({ fetcher, filters });
 
   useEffect(() => {
     const fromQuery = searchParams.get("order");
@@ -225,12 +238,10 @@ export default function LabOrdersPage() {
 
   function patchFilters(patch: Partial<ListFilters>) {
     setFilters((prev) => ({ ...prev, ...patch }));
-    setPage(1);
   }
 
   function resetFilters() {
     setFilters(emptyFilters);
-    setPage(1);
   }
 
   async function cancelOrder(id: string) {
@@ -315,207 +326,211 @@ export default function LabOrdersPage() {
 
   async function completeOrder(id: string) {
     await fetch(`/api/lab-orders/${id}/complete`, { method: "POST" });
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: "COMPLETED" } : o)),
-    );
+    await loadOrders();
   }
 
-  return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
-            {t("createTitle")}
+  const columns = useMemo<EraDataGridColumn<LabOrder & Record<string, unknown>>[]>(
+    () => [
+      {
+        key: "assignment",
+        header: t("colAssignment"),
+        className: "w-10",
+        render: (order) => (
+          <AssignmentDot
+            ok={Boolean(order.visitId)}
+            yes={t("assignmentYes")}
+            no={t("assignmentNo")}
+          />
+        ),
+      },
+      {
+        key: "patient",
+        header: t("colPatient"),
+        render: (order) => (
+          <div>
+            <div className="font-medium">{order.patientRef.fullName}</div>
+            <div className={TEXT_MUTED_CLASS}>{order.patientRef.refCode}</div>
+          </div>
+        ),
+      },
+      {
+        key: "services",
+        header: t("colServices"),
+        render: (order) => (
+          <button
+            type="button"
+            className="font-medium text-[#2980B9] hover:underline"
+            onClick={() => setWorkflowId(order.id)}
+          >
+            {servicesLabel(order, locale)}
           </button>
-        }
-      />
-      <EraListFilterBar
-        resetLabel={tc("filterReset")}
-        onReset={resetFilters}
-        actionsExtra={
-          <label className={`inline-flex items-center gap-2 text-[13px] ${MODAL_FIELD_LABEL_CLASS}`}>
-            <input
-              type="checkbox"
-              className={MODAL_CHECKBOX_CLASS}
-              checked={filters.criticalOnly}
-              onChange={(e) => patchFilters({ criticalOnly: e.target.checked })}
-            />
-            {t("criticalOnly")}
-          </label>
-        }
-      >
-        <Field
-          label={t("patientFilter")}
-          preset="shortText"
-          value={filters.q}
-          onChange={(e) => patchFilters({ q: e.target.value })}
-          placeholder={t("patientSearchPlaceholder")}
-        />
-        <FieldSelect
-          label={t("statusFilter")}
-          preset="select"
-          value={filters.status}
-          onChange={(e) => patchFilters({ status: e.target.value })}
-        >
-          <option value="">{tc("all")}</option>
-          <option value="ORDERED">ORDERED</option>
-          <option value="COLLECTED">COLLECTED</option>
-          <option value="RESULT_READY">RESULT_READY</option>
-          <option value="PUBLISHED">PUBLISHED</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
-        </FieldSelect>
-        <FieldSelect
-          label={t("modalityFilter")}
-          preset="select"
-          value={filters.modality}
-          onChange={(e) => patchFilters({ modality: e.target.value })}
-        >
-          <option value="">{tc("all")}</option>
-          {modalities.map((m) => (
-            <option key={m.code} value={m.code}>
-              {pickL10n(m.title, locale)}
-            </option>
-          ))}
-        </FieldSelect>
-        <DatePicker
-          label={t("dateFrom")}
-          value={filters.dateFrom}
-          onChange={(isoDate) => patchFilters({ dateFrom: isoDate })}
-          placeholder={tc("datePlaceholder")}
-          openCalendarLabel={tc("openCalendar")}
-        />
-        <DatePicker
-          label={t("dateTo")}
-          value={filters.dateTo}
-          onChange={(isoDate) => patchFilters({ dateTo: isoDate })}
-          placeholder={tc("datePlaceholder")}
-          openCalendarLabel={tc("openCalendar")}
-        />
-      </EraListFilterBar>
+        ),
+      },
+      {
+        key: "modality",
+        header: t("colType"),
+        render: (order) => modalityLabel(order),
+      },
+      { key: "status", header: tc("status"), render: (order) => order.status },
+      {
+        key: "amount",
+        header: t("colAmount"),
+        render: (order) => `${order.amountNet} AZN`,
+      },
+      {
+        key: "created",
+        header: t("colCreated"),
+        render: (order) => labOrderListDate(order)?.toLocaleDateString() ?? "—",
+      },
+      {
+        key: "actions",
+        header: tc("actions"),
+        render: (order) => (
+          <div className="flex flex-wrap items-center gap-1">
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={t("openOrder")}
+              onClick={() => setWorkflowId(order.id)}
+            >
+              <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+            </button>
+            {order.status === "ORDERED" ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={t("cancelOrder")}
+                onClick={() => void cancelOrder(order.id)}
+              >
+                <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+              </button>
+            ) : null}
+            {order.status === "PUBLISHED" ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("complete")}
+                onClick={() => void completeOrder(order.id)}
+              >
+                <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [t, tc, locale],
+  );
 
-      <ColorLegend
-        className="mb-2"
-        items={[
-          { id: "ordered", label: "ORDERED", swatchClassName: "bg-slate-100" },
-          { id: "ready", label: "RESULT_READY", swatchClassName: "bg-blue-50" },
-          { id: "done", label: "COMPLETED", swatchClassName: "bg-green-50" },
-        ]}
-      />
-
-      <div className={DATA_TABLE_SHELL_CLASS}>
-        <div className={DATA_TABLE_SCROLL_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPatient")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colServices")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colType")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("status")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colAmount")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCreated")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr
-                  key={order.id}
-                  className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}
-                  onClick={() => setWorkflowId(order.id)}
-                >
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="font-medium">{order.patientRef.fullName}</div>
-                    <div className={TEXT_MUTED_CLASS}>{order.patientRef.refCode}</div>
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <button
-                      type="button"
-                      className={`font-medium ${LINK_ACCENT_CLASS}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setWorkflowId(order.id);
-                      }}
-                    >
-                      {servicesLabel(order, locale)}
-                    </button>
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{modalityLabel(order)}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{order.status}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{order.amountNet} AZN</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {labOrderListDate(order)?.toLocaleDateString() ?? "—"}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={t("openOrder")}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setWorkflowId(order.id);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                      </button>
-                      {order.status === "ORDERED" && (
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={t("cancelOrder")}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void cancelOrder(order.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                        </button>
-                      )}
-                      {order.status === "PUBLISHED" && (
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={tc("complete")}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void completeOrder(order.id);
-                          }}
-                        >
-                          <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {orders.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                    {loading ? tc("loading") : t("empty")}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-        <ListPaginationFooter
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          loading={loading}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          labels={{
-            rowsPerPage: tc("rowsPerPage"),
-            pageOf: tc("pageOf"),
-            prev: tc("prev"),
-            next: tc("next"),
-          }}
+  return (
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
+              {t("createTitle")}
+            </button>
+          }
         />
       </div>
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tc("filterReset")}
+            onReset={resetFilters}
+            actionsExtra={
+              <label className={`inline-flex items-center gap-2 text-[13px] ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={filters.criticalOnly}
+                  onChange={(e) => patchFilters({ criticalOnly: e.target.checked })}
+                />
+                {t("criticalOnly")}
+              </label>
+            }
+          >
+            <Field
+              label={t("patientFilter")}
+              preset="shortText"
+              value={filters.q}
+              onChange={(e) => patchFilters({ q: e.target.value })}
+              placeholder={t("patientSearchPlaceholder")}
+            />
+            <FieldSelect
+              label={t("statusFilter")}
+              preset="select"
+              value={filters.status}
+              onChange={(e) => patchFilters({ status: e.target.value })}
+            >
+              <option value="">{tc("all")}</option>
+              <option value="ORDERED">ORDERED</option>
+              <option value="COLLECTED">COLLECTED</option>
+              <option value="RESULT_READY">RESULT_READY</option>
+              <option value="PUBLISHED">PUBLISHED</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </FieldSelect>
+            <FieldSelect
+              label={t("modalityFilter")}
+              preset="select"
+              value={filters.modality}
+              onChange={(e) => patchFilters({ modality: e.target.value })}
+            >
+              <option value="">{tc("all")}</option>
+              {modalities.map((m) => (
+                <option key={m.code} value={m.code}>
+                  {pickL10n(m.title, locale)}
+                </option>
+              ))}
+            </FieldSelect>
+            <DatePicker
+              label={t("dateFrom")}
+              value={filters.dateFrom}
+              onChange={(isoDate) => patchFilters({ dateFrom: isoDate })}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+            <DatePicker
+              label={t("dateTo")}
+              value={filters.dateTo}
+              onChange={(isoDate) => patchFilters({ dateTo: isoDate })}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+          </EraListFilterBar>
+        }
+        table={
+          <EraDataGrid
+            columns={columns}
+            rows={orders as (LabOrder & Record<string, unknown>)[]}
+            rowKey={(o) => o.id}
+            emptyMessage={loading ? tc("loading") : t("empty")}
+            pagination={false}
+            paginationMode="server"
+            embedded
+          />
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            labels={{
+              rowsPerPage: tc("rowsPerPage"),
+              pageOf: tc("pageOf"),
+              prev: tc("prev"),
+              next: tc("next"),
+            }}
+          />
+        }
+      />
 
       <ModalShell
         open={createOpen}
@@ -639,6 +654,6 @@ export default function LabOrdersPage() {
           {t("labRepeatBody", { code: pendingRepeatCode })}
         </p>
       </ModalShell>
-    </>
+    </div>
   );
 }

@@ -16,11 +16,9 @@ export function patientHasMdmIdentifier(input: {
   finCode?: string | null;
   passportNumber?: string | null;
   issuingCountry?: string | null;
-  phone?: string | null;
 }): boolean {
   if (input.finCode?.trim()) return true;
   if (input.passportNumber?.trim() && input.issuingCountry?.trim()) return true;
-  if (input.phone?.trim()) return true;
   return false;
 }
 

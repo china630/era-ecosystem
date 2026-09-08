@@ -7,6 +7,9 @@ import {
 describe("@era/clinic-domain", () => {
   it("detects patient identifiers", () => {
     expect(patientHasMdmIdentifier({ finCode: "ABC1234" })).toBe(true);
+    expect(
+      patientHasMdmIdentifier({ phone: "+994501112233" } as { finCode?: string | null }),
+    ).toBe(false);
     expect(patientHasMdmIdentifier({})).toBe(false);
   });
 

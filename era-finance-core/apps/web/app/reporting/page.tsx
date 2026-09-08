@@ -101,7 +101,7 @@ export default function ReportingPage() {
   const { t, i18n } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { user } = useAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
   const [to, setTo] = useState(b.to);
@@ -124,7 +124,7 @@ export default function ReportingPage() {
     if (!token) return;
     setLoading("tb");
     setErr(null);
-    const path = `/api/reporting/trial-balance?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType)}`;
+    const path = `/api/reporting/trial-balance?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType, accountingBookId)}`;
     const res = await apiFetch(path);
     setLoading(null);
     if (!res.ok) {
@@ -143,7 +143,12 @@ export default function ReportingPage() {
     const res = await apiFetch("/api/reporting/close-period", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ year: closeYear, month: closeMonth }),
+      body: JSON.stringify({
+        year: closeYear,
+        month: closeMonth,
+        ledgerType,
+        accountingBookId,
+      }),
     });
     setClosing(false);
     if (!res.ok) {
@@ -182,7 +187,7 @@ export default function ReportingPage() {
     if (!token) return;
     setLoading("pl");
     setErr(null);
-    let path = `/api/reporting/pl?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType)}`;
+    let path = `/api/reporting/pl?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&${ledgerQueryParam(ledgerType, accountingBookId)}`;
     if (canFilterPlByDepartment && plDepartmentId.trim()) {
       path += `&departmentId=${encodeURIComponent(plDepartmentId.trim())}`;
     }
@@ -205,9 +210,13 @@ export default function ReportingPage() {
       const qs = new URLSearchParams({
         dateFrom: from,
         dateTo: to,
-        ledgerType,
         format,
       });
+      for (const [k, v] of new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      )) {
+        qs.set(k, v);
+      }
       if (kind === "pl" && canFilterPlByDepartment && plDepartmentId.trim()) {
         qs.set("departmentId", plDepartmentId.trim());
       }
@@ -284,6 +293,9 @@ export default function ReportingPage() {
               </Link>
               <Link href="/reporting/account-card" className="text-action hover:text-primary">
                 {t("reporting.accountCard.link")}
+              </Link>
+              <Link href="/reporting/compare-books" className="text-action hover:text-primary">
+                {t("compareBooks.title")}
               </Link>
               <Link href="/reporting/turnovers" className="text-action hover:text-primary">
                 {t("reporting.turnovers.link")}

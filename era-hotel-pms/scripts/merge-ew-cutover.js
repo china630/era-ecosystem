@@ -163,6 +163,26 @@ function main() {
     path.join(EW, "11-Reservations.xlsx"),
   ]);
 
+  console.log("\n>> enrich Guest Id on reservations (FOCP export has Guest Name only)");
+  {
+    const enrichArgs = [
+      "tsx",
+      path.join(scriptsDir, "enrich-reservations-guest-id.ts"),
+      path.join(EW, "10-Guest-Cards.xlsx"),
+      path.join(EW, "11-Reservations.xlsx"),
+      path.join(EW, "11-Reservations.xlsx"),
+    ];
+    const r = spawnSync("npx", enrichArgs, {
+      cwd: path.join(scriptsDir, ".."),
+      stdio: "inherit",
+      shell: true,
+      windowsHide: true,
+    });
+    if (r.status !== 0) {
+      throw new Error(`enrich-reservations-guest-id.ts exited ${r.status}`);
+    }
+  }
+
   fs.mkdirSync(path.join(EW, "..", "fnb"), { recursive: true });
   run(path.join(scriptsDir, "merge-folio-transactions.js"), [
     "--files",

@@ -48,13 +48,13 @@ export default function AppSidebar() {
   }
 
   const items: NavItem[] = [
-    { href: '/fo/rack', labelKey: 'chessboard', icon: LayoutGrid, show: true },
     {
       href: '/fo/room-plan',
       labelKey: 'roomPlan',
       icon: BedDouble,
       show: can(PERMISSIONS.RESERVATIONS_READ),
     },
+    { href: '/fo/rack', labelKey: 'chessboard', icon: LayoutGrid, show: true },
     {
       href: '/bookings/new',
       labelKey: 'roomBooking',
@@ -77,6 +77,12 @@ export default function AppSidebar() {
       href: '/front-cash/agency-ledger',
       labelKey: 'agencyLedger',
       icon: ClipboardList,
+      show: can(PERMISSIONS.REPORTS_READ),
+    },
+    {
+      href: '/front-cash/company-ledger',
+      labelKey: 'companyLedger',
+      icon: Building2,
       show: can(PERMISSIONS.REPORTS_READ),
     },
     {

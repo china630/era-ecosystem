@@ -95,8 +95,15 @@ function pickUnique(list) {
 }
 
 function mapFoGender(g) {
-  if (g === 1) return "F";
-  if (g === 2) return "M";
+  // Elektraweb Guest Cards / FO: 0 = Male, 1 = Female (UI label "0 - Male").
+  // Some legacy FO dumps used 2 = Male — keep as M.
+  if (g === 0 || g === "0" || g === 2 || g === "2") return "M";
+  if (g === 1 || g === "1") return "F";
+  if (typeof g === "string") {
+    const u = g.trim().toUpperCase();
+    if (u === "M" || u === "MALE" || u.startsWith("0 ")) return "M";
+    if (u === "F" || u === "FEMALE" || u.startsWith("1 ")) return "F";
+  }
   return "";
 }
 

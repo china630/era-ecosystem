@@ -39,7 +39,8 @@ export const DEVICE_PARAM_CODES = [
   "WATER_BEFORE",
 ] as const;
 export const APPLICATION_SURFACE_CODES = ["FRONT_BACK", "UPPER", "LOWER"] as const;
-export const DAY_BLOCK_CODES = ["3", "5", "ALTERNATING", "5_THEN"] as const;
+/** FO closed list: günaşırı / 2 / 3 / 5 (naftalan family only). */
+export const DAY_BLOCK_CODES = ["2", "3", "5", "ALTERNATING"] as const;
 export const BATH_SEQUENCE_CODES = ["SITZ_THEN_FULL"] as const;
 export const NAFTALAN_FILL_CODES = ["TAM", "OTURAQ", "QURSAQ"] as const;
 export const INTENSITY_CODES = ["LIGHT", "WEAK", "NOT_HOT", "MEDIUM", "MORE"] as const;
@@ -309,8 +310,8 @@ const PRINT_FIELD_LABEL: Record<string, Record<"en" | "az" | "ru", string>> = {
   III: { en: "III", az: "III", ru: "III" },
   IV: { en: "IV", az: "IV", ru: "IV" },
   V: { en: "V", az: "V", ru: "V" },
-  "2": { en: "2 pads", az: "2 lövhə", ru: "2 электрода" },
-  "4": { en: "4 pads", az: "4 lövhə", ru: "4 электрода" },
+  ELECTRODE_2: { en: "2 pads", az: "2 lövhə", ru: "2 электрода" },
+  ELECTRODE_4: { en: "4 pads", az: "4 lövhə", ru: "4 электрода" },
   FRONT_BACK: { en: "front/back", az: "ön/arxa", ru: "перёд/зад" },
   UPPER: { en: "upper", az: "yuxarı", ru: "верх" },
   LOWER: { en: "lower", az: "aşağı", ru: "низ" },
@@ -319,10 +320,11 @@ const PRINT_FIELD_LABEL: Record<string, Record<"en" | "az" | "ru", string>> = {
   NOT_HOT: { en: "not hot", az: "isti olmasın", ru: "не горячо" },
   MEDIUM: { en: "medium", az: "orta", ru: "средний" },
   MORE: { en: "more", az: "daha", ru: "сильнее" },
-  "3": { en: "3 days", az: "3 gün", ru: "3 дня" },
-  "5": { en: "5 days", az: "5 gün", ru: "5 дней" },
+  DAY_2: { en: "2 days", az: "2 gün", ru: "2 дня" },
+  DAY_3: { en: "3 days", az: "3 gün", ru: "3 дня" },
+  DAY_5: { en: "5 days", az: "5 gün", ru: "5 дней" },
   ALTERNATING: { en: "every other day", az: "günaşırı", ru: "через день" },
-  "5_THEN": { en: "5 days then", az: "5 gün ardından", ru: "5 дней затем" },
+  "5_THEN": { en: "5 days then", az: "5 gün sonra", ru: "5 дней затем" },
   SITZ_THEN_FULL: { en: "sitz then full", az: "oturaq sonra tam", ru: "сидячая, затем полная" },
   TAM: { en: "full body fill", az: "tam", ru: "полный налив" },
   OTURAQ: { en: "sitz fill", az: "oturaq", ru: "сидячий налив" },
@@ -338,6 +340,19 @@ const PRINT_FIELD_LABEL: Record<string, Record<"en" | "az" | "ru", string>> = {
 
 function loc(lang: "en" | "az" | "ru", code: string): string {
   return PRINT_FIELD_LABEL[code]?.[lang] ?? code;
+}
+
+function locElectrode(lang: "en" | "az" | "ru", count: string): string {
+  if (count === "2") return loc(lang, "ELECTRODE_2");
+  if (count === "4") return loc(lang, "ELECTRODE_4");
+  return count;
+}
+
+function locDayBlock(lang: "en" | "az" | "ru", block: string): string {
+  if (block === "2") return loc(lang, "DAY_2");
+  if (block === "3") return loc(lang, "DAY_3");
+  if (block === "5") return loc(lang, "DAY_5");
+  return loc(lang, block);
 }
 
 export function formatLateralityLabel(
@@ -358,7 +373,7 @@ export function formatPhysioFieldsPrint(
   const bits: string[] = [];
   if (fields.amplipulsWorkKind) bits.push(loc(lang, fields.amplipulsWorkKind));
   if (labels?.program) bits.push(labels.program);
-  if (fields.electrodeCount) bits.push(loc(lang, fields.electrodeCount));
+  if (fields.electrodeCount) bits.push(locElectrode(lang, fields.electrodeCount));
   if (fields.deviceParam) bits.push(loc(lang, fields.deviceParam));
   if (fields.noAdditive) bits.push(lang === "ru" ? "без добавки" : lang === "az" ? "sadə" : "no additive");
   if (fields.applicationSurface) bits.push(loc(lang, fields.applicationSurface));
@@ -366,7 +381,7 @@ export function formatPhysioFieldsPrint(
   if (fields.extraOil) bits.push(lang === "ru" ? "больше масла" : lang === "az" ? "bol yağ" : "extra oil");
   if (fields.holdOrStop) bits.push(lang === "ru" ? "стоп" : lang === "az" ? "dayandırılsın" : "hold/stop");
   if (fields.spineLevel) bits.push(fields.spineLevel);
-  if (fields.dayBlock) bits.push(loc(lang, fields.dayBlock));
+  if (fields.dayBlock) bits.push(locDayBlock(lang, fields.dayBlock));
   if (fields.bathSequence) bits.push(loc(lang, fields.bathSequence));
   if (fields.naftalanFill) bits.push(loc(lang, fields.naftalanFill));
   if (fields.intensity) bits.push(loc(lang, fields.intensity));

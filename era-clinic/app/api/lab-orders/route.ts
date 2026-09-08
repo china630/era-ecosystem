@@ -9,6 +9,10 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import {
+  resolveClinicDataScope,
+  labOrderAssignedToPractitionerWhere,
+} from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
@@ -70,6 +74,7 @@ const querySchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
     if (denied) return denied;
 
@@ -87,7 +92,18 @@ export async function GET(req: Request) {
       includeCancelled: url.searchParams.get("includeCancelled") ?? undefined,
     });
 
+    const dataScope = await resolveClinicDataScope(
+      session,
+      CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
+    );
+    if (dataScope.mode === "ASSIGNED" && !dataScope.practitionerId) {
+      return jsonOk({ data: [], total: 0, page: query.page, pageSize: query.pageSize });
+    }
+
     const conditions: Prisma.LabOrderWhereInput[] = [];
+    if (dataScope.mode === "ASSIGNED" && dataScope.practitionerId) {
+      conditions.push(labOrderAssignedToPractitionerWhere(dataScope.practitionerId));
+    }
     if (!query.includeCancelled && !query.status) {
       conditions.push({ status: { not: "CANCELLED" } });
     }

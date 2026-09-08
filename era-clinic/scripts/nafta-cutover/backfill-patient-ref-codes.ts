@@ -22,8 +22,8 @@ async function main() {
       organizationId: true,
       refCode: true,
       fullName: true,
-      givenName: true,
-      surname: true,
+      firstName: true,
+      lastName: true,
     },
     orderBy: { createdAt: "asc" },
   });
@@ -65,11 +65,11 @@ async function main() {
           where: { id: row.id },
           data: {
             refCode: nextCode,
-            ...(row.givenName
+            ...(row.firstName
               ? {}
               : {
-                  givenName: row.fullName.split(/\s+/)[0] || row.fullName,
-                  surname: row.fullName.split(/\s+/).slice(-1)[0] || "",
+                  firstName: row.fullName.split(/\s+/)[0] || row.fullName,
+                  lastName: row.fullName.split(/\s+/).slice(-1)[0] || "",
                 }),
           },
         });

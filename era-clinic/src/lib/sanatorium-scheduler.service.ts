@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { planProgramFifo } from "@/lib/treatment-planner.service";
 import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
 
 export async function instantiateProgramFromTemplate(input: {
@@ -50,7 +49,12 @@ export async function instantiateProgramFromTemplate(input: {
     };
   });
 
-  const instance = await prisma.programInstance.create({
+  /**
+   * ProgramProcedureBalance is not tenant-scoped. Nested `procedureLines.create`
+   * under ProgramInstance is stamped with organizationId and rejected (same class
+   * as LabOrderItem). Create instance first, then top-level balance rows.
+   */
+  const created = await prisma.programInstance.create({
     data: {
       templateId: template.id,
       episodeId: input.episodeId,
@@ -58,10 +62,20 @@ export async function instantiateProgramFromTemplate(input: {
       programCode: template.code,
       startsOn: input.startsOn,
       endsOn,
-      procedureLines: {
-        create: balanceRows,
-      },
     },
+  });
+  if (balanceRows.length > 0) {
+    await prisma.programProcedureBalance.createMany({
+      data: balanceRows.map((row) => ({
+        instanceId: created.id,
+        procedureCode: row.procedureCode,
+        quotaTotal: row.quotaTotal,
+        quotaUsed: row.quotaUsed,
+      })),
+    });
+  }
+  const instance = await prisma.programInstance.findUniqueOrThrow({
+    where: { id: created.id },
     include: { procedureLines: true },
   });
 
@@ -70,14 +84,15 @@ export async function instantiateProgramFromTemplate(input: {
     data: { programCode: template.code },
   });
 
-  await scheduleProgramProcedures(instance.id, input.startsOn);
+  // CLI-57: balances only — doctor assigns via package modal (no buildProposedPlan pre-expand).
   return instance;
 }
 
 /**
  * Recalculate balances after nights or package change.
- * Never decreases quotaUsed; does not cancel SCHEDULED.
- * Drops only PROPOSED for codes removed from the new package.
+ * Never decreases quotaUsed below consumed; does not cancel CHECKED_IN/COMPLETED.
+ * Drops orphan PROPOSED for codes removed from the new package.
+ * CLI-57: when endsOn shortens, cancel future SCHEDULED past the new end.
  */
 export async function recalcProgramQuotas(
   instanceId: string,
@@ -169,17 +184,27 @@ export async function recalcProgramQuotas(
     },
   });
 
+  if (opts.endsOn) {
+    const { cancelFutureScheduledPastEnd } = await import(
+      "@/domain/sanatorium/package-assign.service"
+    );
+    await cancelFutureScheduledPastEnd(instanceId, opts.endsOn);
+  }
+
   return prisma.programInstance.findUnique({
     where: { id: instanceId },
     include: { procedureLines: true },
   });
 }
 
+/**
+ * @deprecated CLI-57 — package assign is lazy via package-assign API. No-op retained for import safety.
+ */
 export async function scheduleProgramProcedures(
-  instanceId: string,
-  startsOn: Date,
+  _instanceId: string,
+  _startsOn: Date,
 ) {
-  await planProgramFifo(instanceId, startsOn);
+  return 0;
 }
 
 export async function useProcedureQuota(input: {

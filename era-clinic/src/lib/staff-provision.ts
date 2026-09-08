@@ -4,7 +4,7 @@ import {
   satelliteStaffDeactivatedSchema,
   satelliteStaffProvisionedSchema,
 } from "@era/contracts";
-import { hashPassword } from "@era/satellite-kit";
+import { hashPassword, splitFullNameToParts } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
 import { permissionsJsonForRole } from "@/lib/auth/clinic-permissions";
@@ -219,8 +219,12 @@ export async function handleStaffProvisionEvent(event: unknown) {
       fullName: p.fullName,
       staffKind,
     });
+    const nameParts = splitFullNameToParts(p.fullName);
     const practitionerPatch = {
       fullName: p.fullName,
+      firstName: nameParts.firstName,
+      middleName: nameParts.middleName,
+      lastName: nameParts.lastName,
       staffKind,
       globalPersonId,
       userId,

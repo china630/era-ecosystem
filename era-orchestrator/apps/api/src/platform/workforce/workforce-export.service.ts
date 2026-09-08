@@ -34,7 +34,7 @@ export class WorkforceExportService {
     const profiles = await this.mdm.batchGetPersonOpsProfile(personIds, organizationId);
 
     const header =
-      "staffCode,globalPersonId,displayName,orgUnit,position,hireDate,status";
+      "staffCode,globalPersonId,firstName,middleName,lastName,displayName,orgUnit,position,hireDate,status";
     const lines = rows.map((r) => {
       const profile = profiles[r.globalPersonId];
       const displayName =
@@ -43,6 +43,9 @@ export class WorkforceExportService {
       return [
         staffCodeFromEmployment(r.id),
         r.globalPersonId,
+        profile?.firstName ?? "",
+        profile?.middleName ?? "",
+        profile?.lastName ?? "",
         displayName,
         r.orgUnit?.name ?? "",
         r.position?.name ?? "",

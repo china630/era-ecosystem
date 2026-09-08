@@ -3,6 +3,7 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   routePermission,
   adminApiRoutePermission,
+  migrateStoredPermissions,
 } from "@/lib/auth/clinic-permissions";
 import { CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
@@ -79,6 +80,40 @@ describe("clinic default permissions", () => {
     expect(routePermission("/admin/diagnostic-catalog")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
     );
+    expect(routePermission("/admin/program-templates")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+    );
+    expect(routePermission("/admin/templates")).not.toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+    );
+  });
+
+  it("adminApiRoutePermission maps program-templates and diagnostic catalog", () => {
+    expect(adminApiRoutePermission("/api/admin/program-templates")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+    );
+    expect(adminApiRoutePermission("/api/admin/program-templates/x")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+    );
+    expect(adminApiRoutePermission("/api/admin/diagnostic-catalog/services")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
+    );
+    expect(adminApiRoutePermission("/api/admin/clinical-templates")).toBeNull();
+  });
+
+  it("CLINIC_ADMIN defaults include program templates and not legacy templates key", () => {
+    const perms = DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.CLINIC_ADMIN];
+    expect(perms).toContain(CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES);
+    expect(perms).toContain(CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG);
+    expect(perms).not.toContain("screen:admin.templates" as never);
+  });
+
+  it("migrateStoredPermissions expands legacy screen:admin.templates", () => {
+    const next = migrateStoredPermissions(["screen:admin.templates", "screen:home"]);
+    expect(next).toContain(CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG);
+    expect(next).toContain(CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES);
+    expect(next).toContain(CLINIC_PERMISSION.SCREEN_HOME);
+    expect(next).not.toContain("screen:admin.templates" as never);
   });
 
   it("adminApiRoutePermission longest-prefix maps admin APIs", () => {

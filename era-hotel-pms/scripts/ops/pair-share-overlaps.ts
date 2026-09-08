@@ -28,7 +28,7 @@ type Row = {
   shareGender: string | null;
   checkInDate: Date;
   checkOutDate: Date;
-  guest: { gender: string | null };
+  guest: { sex: string | null };
   agency: { code: string; name: string } | null;
   room: { roomNumber: string } | null;
 };
@@ -37,7 +37,7 @@ function gateRow(row: Row) {
   return canGuestJoinSharePool({
     adults: row.adults,
     shareGender: row.shareGender,
-    guestGender: row.guest.gender,
+    guestGender: row.guest.sex,
     isOta: row.agency ? isOtaAgency(row.agency.code, row.agency.name) : false,
   });
 }
@@ -56,7 +56,7 @@ async function main() {
       shareGender: true,
       checkInDate: true,
       checkOutDate: true,
-      guest: { select: { gender: true } },
+      guest: { select: { sex: true } },
       agency: { select: { code: true, name: true } },
       room: { select: { roomNumber: true } },
     },

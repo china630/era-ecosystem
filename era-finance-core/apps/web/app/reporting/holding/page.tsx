@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
-import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
+import { holdingLedgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -66,7 +66,7 @@ type ConsolidatedPayload = {
 export default function HoldingConsolidatedReportingPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, activeBook, ready: ledgerReady } = useLedger();
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
   const [to, setTo] = useState(b.to);
@@ -103,7 +103,10 @@ export default function HoldingConsolidatedReportingPage() {
     }
   }, [holdings, holdingId]);
 
-  const ledgerParam = ledgerQueryParam(ledgerType);
+  const ledgerParam = holdingLedgerQueryParam(
+    ledgerType,
+    activeBook?.code ?? null,
+  );
   const loadReport = useCallback(async () => {
     if (!token || !holdingId) return;
     setLoadingReport(true);

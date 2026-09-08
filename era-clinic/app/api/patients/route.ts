@@ -7,15 +7,15 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { resolveClinicDataScope } from "@/lib/auth/clinic-data-scope";
 import {
   listPatientsPaged,
   createPatient,
   PatientMdmRequiredError,
-  PatientAnamnesisRequiredError,
 } from "@/domain/patient/patient.service";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
 
-const patientSex = z.enum(["MALE", "FEMALE", "OTHER", "UNKNOWN"]);
+const patientSex = z.enum(["MALE", "FEMALE", "UNKNOWN"]);
 const patientBloodGroup = z.enum([
   "A_POS",
   "A_NEG",
@@ -28,11 +28,30 @@ const patientBloodGroup = z.enum([
   "UNKNOWN",
 ]);
 
+const patientNameAliases = z.object({
+  firstName: z.string().min(1).optional(),
+  middleName: z.string().nullable().optional(),
+  lastName: z.string().min(1).optional(),
+  givenName: z.string().min(1).optional(),
+  surname: z.string().min(1).optional(),
+  fatherName: z.string().nullable().optional(),
+});
+
+function normalizePatientName(d: z.infer<typeof patientNameAliases>) {
+  const firstName = (d.firstName ?? d.givenName ?? "").trim();
+  const lastName = (d.lastName ?? d.surname ?? "").trim();
+  const middleName =
+    d.middleName !== undefined
+      ? d.middleName?.trim() || null
+      : d.fatherName !== undefined
+        ? d.fatherName?.trim() || null
+        : null;
+  return { firstName, middleName, lastName };
+}
+
 const createSchema = z
   .object({
-    givenName: z.string().min(1),
-    surname: z.string().min(1),
-    fatherName: z.string().nullable().optional(),
+    ...patientNameAliases.shape,
     fullName: z.string().optional(),
     phone: z.string().optional(),
     nationality: z.string().nullable().optional(),
@@ -45,8 +64,15 @@ const createSchema = z
     passportNumber: z.string().optional(),
     issuingCountry: z.string().optional(),
   })
+  .transform((d) => {
+    const { givenName, surname, fatherName, ...rest } = d;
+    return { ...rest, ...normalizePatientName(d) };
+  })
+  .refine((d) => Boolean(d.firstName && d.lastName), {
+    message: "firstName and lastName are required",
+  })
   .refine((d) => patientHasMdmIdentifier(d), {
-    message: "Provide FIN, passport+country, or phone for MDM resolve",
+    message: "Provide FIN or passport with issuing country for MDM resolve",
   });
 
 function parseHasMdm(raw: string | null): 0 | 1 | undefined {
@@ -60,8 +86,17 @@ export async function GET(req: Request) {
     const session = await getRouteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
+    if (!session) return jsonError("Unauthorized", 401);
 
-        const params = new URL(req.url).searchParams;
+    const scope = await resolveClinicDataScope(
+      session,
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+    );
+    if (scope.mode === "ASSIGNED" && !scope.practitionerId) {
+      return jsonOk({ items: [], total: 0, page: 1, pageSize: 25 });
+    }
+
+    const params = new URL(req.url).searchParams;
     const q = params.get("q") ?? undefined;
     const sexRaw = params.get("sex");
     const bloodRaw = params.get("bloodGroup");
@@ -94,6 +129,8 @@ export async function GET(req: Request) {
       episodeStatus,
       page: pageRaw ? Number(pageRaw) : undefined,
       pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
+      careTeamPractitionerId:
+        scope.mode === "ASSIGNED" ? scope.practitionerId ?? undefined : undefined,
     });
     return jsonOk(result);
   } catch (err) {

@@ -14,7 +14,11 @@ describe("pricing-hospitality.catalog", () => {
 
   it("uses consolidated keys in bundle marketing", () => {
     const city = PRICING_HOSPITALITY_BUNDLE_MARKETING.find((b) => b.marketingId === "hotel_city");
-    expect(city?.matchModuleKeys).toEqual(["hotel_core", "hotel_housekeeping"]);
+    expect(city?.matchModuleKeys).toEqual([
+      "hotel_core",
+      "hotel_housekeeping",
+      "hotel_migration_pro",
+    ]);
     expect(city?.matchModuleKeys).not.toContain("hotel_front_office");
   });
 });

@@ -57,18 +57,63 @@ export async function listReservationNotesReport() {
     }));
 }
 
-export async function listReservationTimes(from: Date, to: Date) {
-  return prisma.reservation.findMany({
-    where: {
-      checkInDate: { lte: to },
-      checkOutDate: { gte: from },
+export type ReservationTimesQuery = {
+  from: Date;
+  to: Date;
+  guestQ?: string;
+  agencyQ?: string;
+};
+
+/** Inclusive calendar `to` → exclusive next-day bound (local dateOnly). */
+export function exclusiveEndOfDay(d: Date): Date {
+  const x = dateOnly(d);
+  x.setDate(x.getDate() + 1);
+  return x;
+}
+
+/** Actual CI/CO journal: Stay exists and CI or CO falls in [from, to]. */
+export function buildReservationTimesWhere(q: ReservationTimesQuery) {
+  const from = dateOnly(q.from);
+  const toExcl = exclusiveEndOfDay(q.to);
+  const guestQ = q.guestQ?.trim();
+  const agencyQ = q.agencyQ?.trim();
+  return {
+    stay: {
+      is: {
+        OR: [
+          { actualCheckIn: { gte: from, lt: toExcl } },
+          { actualCheckOut: { gte: from, lt: toExcl } },
+        ],
+      },
     },
+    ...(guestQ
+      ? { guest: { is: { fullName: { contains: guestQ, mode: 'insensitive' as const } } } }
+      : {}),
+    ...(agencyQ
+      ? {
+          agency: {
+            is: {
+              OR: [
+                { name: { contains: agencyQ, mode: 'insensitive' as const } },
+                { code: { contains: agencyQ, mode: 'insensitive' as const } },
+              ],
+            },
+          },
+        }
+      : {}),
+  };
+}
+
+export async function listReservationTimes(q: ReservationTimesQuery) {
+  return prisma.reservation.findMany({
+    where: buildReservationTimesWhere(q),
     include: {
       guest: true,
       room: true,
       stay: true,
+      agency: { select: { name: true, code: true } },
     },
-    orderBy: { checkInDate: 'asc' },
+    orderBy: { stay: { actualCheckIn: 'desc' } },
     take: 500,
   });
 }

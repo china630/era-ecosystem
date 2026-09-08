@@ -7,7 +7,8 @@ export type PaxRow = {
   /** Linked Guest master record when picked/created from FO. */
   guestId?: string;
   title: string;
-  gender: string;
+  sex: string;
+  middleName: string;
   firstName: string;
   lastName: string;
   nationality: string;

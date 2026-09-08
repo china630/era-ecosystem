@@ -58,14 +58,14 @@ export class HrRemindersService {
         kind: EmployeeKind.EMPLOYEE,
         employmentStatus: EmployeeEmploymentStatus.ACTIVE,
         deletedAt: null,
-        OR: [{ contractEndDate: contractTarget }, { dateOfBirth: { not: null } }],
+        OR: [{ contractEndDate: contractTarget }, { birthDate: { not: null } }],
       },
       select: {
         id: true,
         organizationId: true,
         globalPersonId: true,
         contractEndDate: true,
-        dateOfBirth: true,
+        birthDate: true,
       },
     });
 
@@ -115,7 +115,7 @@ export class HrRemindersService {
         }
       }
 
-      if (emp.dateOfBirth && sameMonthDay(emp.dateOfBirth, today)) {
+      if (emp.birthDate && sameMonthDay(emp.birthDate, today)) {
         for (const email of recipients) {
           await this.safeNotify(emp.organizationId, email, {
             templateKey: "hr.birthday.reminder",

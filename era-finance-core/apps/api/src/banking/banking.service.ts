@@ -129,7 +129,11 @@ export class BankingService {
   /**
    * Сетка карточек: касса vs банк по официальному плану kind (Q-01 221/223, NAS-GOV 101/103).
    */
-  async getAccountCards(organizationId: string, ledgerType: LedgerType) {
+  async getAccountCards(
+    organizationId: string,
+    ledgerType: LedgerType,
+    accountingBookId?: string,
+  ) {
     const kind = await this.posting.getOrganizationKind(organizationId);
     const today = new Date().toISOString().slice(0, 10);
     const yearStart = `${new Date().getUTCFullYear()}-01-01`;
@@ -138,10 +142,15 @@ export class BankingService {
       yearStart,
       today,
       ledgerType,
+      accountingBookId,
     );
 
     const accounts = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType },
+      where: {
+        organizationId,
+        ledgerType: tb.ledgerType,
+        accountingBookId: tb.accountingBookId,
+      },
       select: {
         code: true,
         nameAz: true,
@@ -182,7 +191,8 @@ export class BankingService {
     return {
       dateFrom: tb.dateFrom,
       dateTo: tb.dateTo,
-      ledgerType,
+      ledgerType: tb.ledgerType,
+      accountingBookId: tb.accountingBookId,
       accounts: accountsOut,
     };
   }

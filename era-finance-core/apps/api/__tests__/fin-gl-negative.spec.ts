@@ -5,6 +5,12 @@ import { ManualAdjustmentService } from "../src/accounting/manual-adjustment.ser
 import type { PostingAccountResolver } from "../src/accounting/posting/posting-account-resolver.service";
 import type { PrismaService } from "../src/prisma/prisma.service";
 
+jest.mock("../src/subscription/subscription-access.service", () => ({
+  SubscriptionAccessService: class SubscriptionAccessService {
+    hasModule = jest.fn().mockResolvedValue(false);
+  },
+}));
+
 describe("Finance GL negative paths (AC-FIN-GL)", () => {
   const noop = {} as never;
   const posting = {
@@ -12,7 +18,7 @@ describe("Finance GL negative paths (AC-FIN-GL)", () => {
   } as unknown as PostingAccountResolver;
 
   function makeService(prisma: PrismaService): AccountingService {
-    return new AccountingService(prisma, noop, posting, noop);
+    return new AccountingService(prisma, noop, posting, noop, noop);
   }
 
   it("validateBalance refuses unbalanced journal lines", () => {
@@ -115,7 +121,12 @@ describe("Finance GL manual adjustment negatives (AC-FIN-GL)", () => {
       invoice: { findFirst: jest.fn() },
     }) as unknown as PrismaService;
     const posting = { resolveAccountCode: jest.fn() } as unknown as PostingAccountResolver;
-    return new ManualAdjustmentService(prisma, accounting, posting);
+    return new ManualAdjustmentService(prisma, accounting, posting, {
+      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
+        id: bookId ?? "book-nas",
+        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
+      })),
+    } as never);
   }
 
   it("create refuses short reason without posting", async () => {

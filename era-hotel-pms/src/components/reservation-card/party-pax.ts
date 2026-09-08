@@ -16,7 +16,8 @@ export function splitFullName(label: string): { firstName: string; lastName: str
 export function emptyPax(partial?: Partial<PaxRow>): PaxRow {
   return {
     title: '',
-    gender: '',
+    sex: '',
+    middleName: '',
     firstName: '',
     lastName: '',
     nationality: '',

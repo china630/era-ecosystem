@@ -96,7 +96,7 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 | M0 | Platform shell, SSO | **DONE** | — |
 | M1 | Patient registry (ref, не полная EMR) | **SHIPPED** (registry UI) | Counterparty / patient ref sync; episode-scoped card archive = CLI-55 PLANNED |
 | M2 | Practitioners, rooms, schedule | **SHIPPED** (master-data admin; `staffKind` DOCTOR/NURSE/LAB) | — |
-| M3d | Monthly nurse/lab duty roster | **SHIPPED** | Head-doctor matrix `/sanatorium/nurse-roster`; clinic-local absences (Finance HR sync later) |
+| M3d | Monthly nurse/lab duty roster | **SHIPPED** (CLI-38 + CLI-38b) | Head-doctor matrix `/sanatorium/nurse-roster`; dual nurse/procedure tables; clinic-local absences; day overrides by head doctor only; planner: override → posted → no silent pool — ADR |
 | M3 | Appointment & check-in | **DONE** | — |
 | M3b | Sanatorium nurse day-ops | **SHIPPED** | Check-in → `CHECKED_IN`; auto-complete at `endsAt`; `NO_SHOW` burns quota; event at complete |
 | M3e | Procedure TTK (consumable BOM) | **API** | Finance inventory on COMPLETED; ADR clinic-procedure-consumable-ttk; SatAdmin BOM; UAT open |

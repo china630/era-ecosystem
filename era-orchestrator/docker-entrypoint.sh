@@ -52,7 +52,15 @@ if [ "$1" = "start" ]; then
   if [ -d apps/web/public ] && [ ! -d "${STANDALONE}/public" ]; then
     cp -r apps/web/public "${STANDALONE}/public"
   fi
-  PORT="${API_PORT}" node apps/api/dist/main.js &
+  api_main="apps/api/dist/main.js"
+  if [ ! -f "$api_main" ]; then
+    api_main="apps/api/dist/era-orchestrator/apps/api/src/main.js"
+  fi
+  if [ ! -f "$api_main" ]; then
+    echo "[entrypoint] ERROR: Nest API entry not found (expected dist/main.js)" >&2
+    exit 1
+  fi
+  PORT="${API_PORT}" node "$api_main" &
   if [ -f apps/web/.next/standalone/apps/web/server.js ]; then
     export PORT="${WEB_PORT}"
     export HOSTNAME=0.0.0.0

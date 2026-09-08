@@ -923,6 +923,13 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
+            href="/reporting/compare-books"
+            label={t("nav.compareBooks")}
+            isActive={pathname.startsWith("/reporting/compare-books")}
+            icon={Scale}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/reporting/turnovers"
             label={t("nav.accountTurnovers")}
             isActive={pathname.startsWith("/reporting/turnovers")}
@@ -1065,6 +1072,14 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
+              href="/accounting/books"
+              label={t("nav.accountingBooks")}
+              isActive={pathname.startsWith("/accounting/books")}
+              icon={BookOpen}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
               href="/accounting/adjustments"
               label={t("nav.manualAdjustments")}
               isActive={pathname.startsWith("/accounting/adjustments")}
@@ -1073,19 +1088,16 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href="/accounting/mapping"
+              href="/accounting/ledger-mappings"
               label={t("nav.accountingMappingNav")}
-              isActive={pathname.startsWith("/accounting/mapping")}
+              isActive={
+                pathname.startsWith("/accounting/ledger-mappings") ||
+                pathname.startsWith("/accounting/mapping") ||
+                pathname.startsWith("/accounting/ifrs-mapping")
+              }
               locked={lockedIfrsMapping}
               icon={Link2}
               nested
-              onNavClick={onNavClick}
-            />
-            <SideNavSubItem
-              href="/accounting/ifrs-mapping"
-              label={t("nav.accountingIfrsNav")}
-              isActive={pathname.startsWith("/accounting/ifrs-mapping")}
-              icon={Link2}
               onNavClick={onNavClick}
             />
           </CollapsibleNavSection>

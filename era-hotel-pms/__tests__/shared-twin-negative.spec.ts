@@ -65,6 +65,9 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
     it('requires gender for share', () => {
       expect(normalizeShareGender('M')).toBe('M');
       expect(normalizeShareGender('female')).toBe('F');
+      expect(normalizeShareGender('0')).toBe('M');
+      expect(normalizeShareGender('1')).toBe('F');
+      expect(normalizeShareGender('0 - Male')).toBe('M');
       expect(normalizeShareGender('X')).toBeNull();
       expect(() =>
         validateShareCandidate({ shareEligible: true, shareGender: null, adults: 1 }),
@@ -438,7 +441,7 @@ describe('resolveDoorAssignment auto-share', () => {
         checkInDate: new Date('2026-08-20T10:00:00Z'),
         checkOutDate: new Date('2026-08-29T08:00:00Z'),
         shareBedIndex: null,
-        guest: { gender: 'M' },
+        guest: { sex: 'M' },
         agency: { code: 'UNION', name: 'Hamkarlar' },
       },
     ]);
@@ -486,7 +489,7 @@ describe('resolveDoorAssignment auto-share', () => {
         checkInDate: new Date('2026-08-20T10:00:00Z'),
         checkOutDate: new Date('2026-08-27T08:00:00Z'),
         shareBedIndex: null,
-        guest: { gender: 'M' },
+        guest: { sex: 'M' },
         agency: null,
       },
     ]);

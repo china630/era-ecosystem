@@ -34,6 +34,7 @@ const createSchema = z.object({
   extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
   needsSite: z.boolean().optional(),
   physioOrderFields: z.array(z.string().min(1)).optional(),
+  allowedSiteCodes: z.array(z.string().min(1)).optional(),
 });
 
 export async function GET(req: Request) {

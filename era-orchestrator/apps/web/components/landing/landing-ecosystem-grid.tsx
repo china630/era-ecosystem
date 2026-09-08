@@ -1,6 +1,6 @@
 import { LANDING_CARD_HOVER_CLASS } from "../../lib/landing-motion";
 import {
-  Brain,
+  BedDouble,
   Building2,
   Calculator,
   Factory,
@@ -8,13 +8,16 @@ import {
   MessageCircle,
   Package,
   Shield,
-  ShoppingBag,
+  Stethoscope,
+  Store,
   Truck,
   Users,
+  UtensilsCrossed,
   Wallet,
   Globe2,
   BookOpen,
-  Handshake,
+  Wrench,
+  Warehouse,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -26,19 +29,23 @@ import type {
 const MODULE_ICONS: Record<string, LucideIcon> = {
   core_accounting: BookOpen,
   cash_bank: Wallet,
-  treasury: Calculator,
-  supply_chain: Handshake,
   warehouse: Package,
   manufacturing: Factory,
   fixed_assets: Landmark,
   hr_payroll: Users,
-  retail: ShoppingBag,
-  construction: Building2,
+  hotel: BedDouble,
+  clinic: Stethoscope,
+  fnb: UtensilsCrossed,
+  retail: Store,
+  auto: Wrench,
   logistics: Truck,
-  crm_whatsapp: MessageCircle,
+  construction: Building2,
+  wholesale: Warehouse,
+  crm: MessageCircle,
+  banking: Landmark,
   tax_pro: Shield,
   trade_pro: Globe2,
-  compliance_pro: Brain,
+  compliance_pro: Calculator,
 };
 
 function statusLabel(copy: LandingEcosystemCopy, status: EcosystemModuleStatus): string {
@@ -126,6 +133,15 @@ function ModuleCard({
           >
             {module.title}
           </h3>
+          {module.priceLabel ? (
+            <p
+              className={`mt-1 m-0 text-[12px] font-semibold tabular-nums ${
+                isPremiumSection ? "text-indigo-200" : "text-[#2980B9]"
+              }`}
+            >
+              {module.priceLabel}
+            </p>
+          ) : null}
         </div>
         <ul className={`mt-3 space-y-1.5 p-0 list-none ${isPremiumSection ? "text-slate-300" : ""}`}>
           {module.tasks.map((task) => (

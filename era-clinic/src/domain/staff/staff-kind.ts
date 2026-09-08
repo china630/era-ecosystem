@@ -87,9 +87,11 @@ export function isAbsentOnYmd(windows: AbsenceWindow[], ymd: string): boolean {
 export type DutyCandidate = { id: string; fullName: string; code: string };
 
 /**
- * When an approved roster posts a nurse to this procedure, prefer them.
- * If they are absent that day, fall back to the remaining skilled pool.
- * Draft / missing roster ⇒ use the skilled pool unchanged.
+ * Duty resolution for STAFF slots (CLI-38b):
+ * 1. Explicit day override → that practitioner
+ * 2. APPROVED + posted present → posted only
+ * 3. APPROVED + (absent | unassigned) + no override → empty (no silent pool)
+ * 4. Draft / missing roster → skilled pool unchanged
  */
 export function resolveDutyCandidates(input: {
   rosterStatus: "DRAFT" | "APPROVED" | null;
@@ -97,16 +99,38 @@ export function resolveDutyCandidates(input: {
   posted?: DutyCandidate | null;
   postedAbsent: boolean;
   skilled: DutyCandidate[];
+  /** Head-doctor day substitute; wins over posted when set. */
+  dayOverridePractitionerId?: string | null;
+  dayOverride?: DutyCandidate | null;
 }): DutyCandidate[] {
-  if (input.rosterStatus !== "APPROVED" || !input.postedPractitionerId) {
+  const overrideId = input.dayOverridePractitionerId ?? null;
+  if (overrideId) {
+    const override =
+      input.dayOverride ??
+      input.skilled.find((p) => p.id === overrideId) ??
+      null;
+    if (override) return [override];
+    return [{ id: overrideId, fullName: "", code: "" }];
+  }
+
+  if (input.rosterStatus !== "APPROVED") {
     return input.skilled;
   }
+
+  if (!input.postedPractitionerId || input.postedAbsent) {
+    return [];
+  }
+
   const posted =
     input.posted ??
     input.skilled.find((p) => p.id === input.postedPractitionerId) ??
     null;
-  if (posted && !input.postedAbsent) {
-    return [posted];
-  }
-  return input.skilled.filter((p) => p.id !== input.postedPractitionerId);
+  if (posted) return [posted];
+  return [
+    {
+      id: input.postedPractitionerId,
+      fullName: "",
+      code: "",
+    },
+  ];
 }
