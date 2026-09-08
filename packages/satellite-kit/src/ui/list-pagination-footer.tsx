@@ -42,11 +42,19 @@ export function ListPaginationFooter({
 }: ListPaginationFooterProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div
+        className={`flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEDF0] px-3 py-2 text-[13px] text-[#7F8C8D] ${className}`.trim()}
+      >
+        <span>…</span>
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEDF0] px-3 py-3 text-[13px] text-[#34495E] ${className}`.trim()}
+      className={`flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEDF0] px-3 py-2 text-[13px] text-[#34495E] ${className}`.trim()}
     >
       <label className="flex items-center gap-2">
         <span className="text-[#7F8C8D]">{labels.rowsPerPage}</span>

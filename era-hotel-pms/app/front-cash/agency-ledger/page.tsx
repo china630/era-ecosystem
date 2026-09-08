@@ -13,6 +13,10 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import {
+  CityLedgerStatementGrid,
+  type ClStatementLine,
+} from '@/components/CityLedgerStatementGrid';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -33,6 +37,7 @@ interface Ledger {
   cityLedger: number;
   closing: number;
   reservationCount: number;
+  lines?: ClStatementLine[];
 }
 
 interface SummaryRow {
@@ -322,6 +327,25 @@ export default function AgencyLedgerPage() {
               { label: t('cityLedger'), value: `${ledger.cityLedger.toFixed(2)} ${tc('azn')}` },
             ]}
             rowKey={(r) => String(r.label)}
+          />
+          <PageHeader title={t('statementTitle')} subtitle={t('statementSubtitle')} />
+          <CityLedgerStatementGrid
+            lines={ledger.lines ?? []}
+            labels={{
+              date: t('statementDate'),
+              kind: t('statementKind'),
+              stay: t('statementStay'),
+              guest: t('guest'),
+              room: t('statementRoom'),
+              description: t('statementDescription'),
+              amount: tc('amount'),
+              running: t('statementRunning'),
+              empty: t('statementEmpty'),
+              kindCharge: t('statementKindCharge'),
+              kindPayment: t('statementKindPayment'),
+              kindRefund: t('statementKindRefund'),
+              azn: tc('azn'),
+            }}
           />
           {transferred.length > 0 ? (
             <section className="mt-4 rounded-lg border border-[#E8EEF2] p-4">

@@ -9,11 +9,13 @@ import { LandingLanguageToggle } from "./landing-language-toggle";
 export function LandingChrome({
   hero,
   loginLabel,
+  satellitesLabel,
   locale,
   onLocaleChange,
 }: {
   hero: LandingMarketingCopy["hero"];
   loginLabel: string;
+  satellitesLabel: string;
   locale: Locale;
   onLocaleChange?: (next: Locale) => void;
 }) {
@@ -25,6 +27,9 @@ export function LandingChrome({
         </Link>
         <nav className="flex flex-wrap items-center gap-2 md:gap-3">
           <LandingLanguageToggle locale={locale} onLocaleChange={onLocaleChange} />
+          <Link href="/satellites" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+            {satellitesLabel}
+          </Link>
           <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
             {hero.navPricing}
           </Link>

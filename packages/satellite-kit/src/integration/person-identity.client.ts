@@ -34,11 +34,16 @@ export type PersonIdentityInput = {
   gender?: string;
   /** Calendar date YYYY-MM-DD or Date. */
   birthDate?: string | Date | null;
+  /** Satellite org — upserts PersonAccessGrant on resolve. */
+  organizationId?: string;
+  requesterOrgId?: string;
 };
 
 export type MdmClientOptions = {
   orchestratorUrl?: string;
   serviceToken?: string;
+  /** Default org for resolve grant / ops-profile when not passed per call. */
+  organizationId?: string;
 };
 
 function baseUrl(opts?: MdmClientOptions): string {
@@ -110,13 +115,18 @@ export async function lookupGlobalPersonByFin(
   };
 }
 
-function resolveBody(input: PersonIdentityInput) {
+function resolveBody(input: PersonIdentityInput, opts?: MdmClientOptions) {
   const sex = normalizePersonSex(input.sex ?? input.gender);
   const birthDate = toBirthDateIso(input.birthDate);
   const composed =
     composePersonFullName(input.firstName, input.middleName, input.lastName) ||
     input.fullName?.trim() ||
     undefined;
+  const organizationId =
+    input.organizationId?.trim() ||
+    input.requesterOrgId?.trim() ||
+    opts?.organizationId?.trim() ||
+    deploymentOrgId();
   return {
     fin: input.fin,
     passport: input.passport,
@@ -132,6 +142,7 @@ function resolveBody(input: PersonIdentityInput) {
     globalPersonId: input.globalPersonId?.trim() || undefined,
     ...(sex ? { sex } : {}),
     ...(birthDate ? { birthDate } : {}),
+    ...(organizationId ? { organizationId } : {}),
   };
 }
 
@@ -145,7 +156,7 @@ export async function resolvePersonIdentity(
   const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons/resolve`, {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify(resolveBody(input)),
+    body: JSON.stringify(resolveBody(input, opts)),
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) return { globalPersonId: null };
@@ -267,6 +278,28 @@ export async function getPersonOpsProfile(
   );
   if (!res.ok) return null;
   return (await res.json()) as PersonOpsProfile;
+}
+
+/** Upsert PersonAccessGrant so ops-profile returns sex/DOB for this satellite org. */
+export async function ensurePersonAccessGrant(
+  globalPersonId: string,
+  organizationId: string,
+  opts?: MdmClientOptions,
+): Promise<boolean> {
+  const token = serviceToken(opts);
+  const gpid = globalPersonId.trim();
+  const orgId = organizationId.trim();
+  if (!token || !gpid || !orgId) return false;
+  const res = await fetch(
+    `${baseUrl(opts)}/internal/v1/mdm/persons/${encodeURIComponent(gpid)}/access-grant`,
+    {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ organizationId: orgId }),
+      signal: AbortSignal.timeout(10_000),
+    },
+  );
+  return res.ok;
 }
 
 /**

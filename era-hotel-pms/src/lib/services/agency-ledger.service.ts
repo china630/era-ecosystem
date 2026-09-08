@@ -9,8 +9,18 @@ export async function listAgencies() {
 type FolioSlice = {
   type: string;
   charges: Array<{ amount: Decimal; qty: number; businessDate: Date }>;
-  payments: Array<{ amount: Decimal; paymentMethod: string; createdAt: Date }>;
+  payments: Array<{
+    amount: Decimal;
+    paymentMethod: string;
+    createdAt: Date;
+    kind?: string | null;
+  }>;
 };
+
+/** Net payment amount: PAYMENT increases settlement; REFUND reverses it. */
+export function paymentSignedAmount(amount: number, kind?: string | null): number {
+  return kind === 'REFUND' ? -amount : amount;
+}
 
 export function sumFolioTypeActivity(
   folios: FolioSlice[],
@@ -32,11 +42,13 @@ export function sumFolioTypeActivity(
       else if (c.businessDate >= from && c.businessDate <= to) newCharges += amt;
     }
     for (const p of folio.payments) {
-      const amt = decimalToNumber(p.amount);
+      const amt = paymentSignedAmount(decimalToNumber(p.amount), p.kind);
       if (p.createdAt < from) openingPayments += amt;
       else if (p.createdAt >= from && p.createdAt <= to) {
         payments += amt;
-        if (p.paymentMethod === 'CASH') cashPaid += amt;
+        if (p.kind !== 'REFUND' && p.paymentMethod === 'CASH') {
+          cashPaid += decimalToNumber(p.amount);
+        }
       }
     }
   }
@@ -44,11 +56,140 @@ export function sumFolioTypeActivity(
   return { opening: openingCharges - openingPayments, newCharges, payments, cashPaid };
 }
 
+export type CityLedgerStatementLine = {
+  id: string;
+  kind: 'CHARGE' | 'PAYMENT' | 'REFUND';
+  at: string;
+  businessDate: string | null;
+  reservationId: string;
+  reservationRef: string | null;
+  guestName: string | null;
+  roomLabel: string | null;
+  folioId: string;
+  folioStatus: string;
+  description: string;
+  code: string | null;
+  qty: number | null;
+  /** Signed toward party debt: charge/refund +, payment − */
+  amount: number;
+  runningBalance: number;
+};
+
+type FolioForStatement = {
+  id: string;
+  type: string;
+  status: string;
+  reservationId: string;
+  charges: Array<{
+    id: string;
+    amount: Decimal;
+    qty: number;
+    description: string;
+    businessDate: Date;
+    revenueCode: { code: string; name: string } | null;
+  }>;
+  payments: Array<{
+    id: string;
+    amount: Decimal;
+    paymentMethod: string;
+    kind: string;
+    createdAt: Date;
+  }>;
+  reservation: {
+    id: string;
+    externalRef: string | null;
+    checkInDate: Date;
+    checkOutDate: Date;
+    guest: { fullName: string } | null;
+    room: { roomNumber: string } | null;
+    roomType: { code: string } | null;
+  };
+};
+
+function buildStatementLines(
+  folios: FolioForStatement[],
+  folioType: 'AGENCY' | 'COMPANY',
+  from: Date,
+  to: Date,
+  opening: number,
+): CityLedgerStatementLine[] {
+  type Raw = Omit<CityLedgerStatementLine, 'runningBalance'> & { sortAt: number };
+  const raw: Raw[] = [];
+
+  for (const folio of folios) {
+    if (folio.type !== folioType) continue;
+    const guestName = folio.reservation.guest?.fullName ?? null;
+    const roomLabel =
+      folio.reservation.room?.roomNumber != null
+        ? folio.reservation.room.roomNumber
+        : (folio.reservation.roomType?.code ?? null);
+    const reservationRef = folio.reservation.externalRef;
+
+    for (const c of folio.charges) {
+      if (c.businessDate < from || c.businessDate > to) continue;
+      const amt = decimalToNumber(c.amount) * c.qty;
+      const atIso = c.businessDate.toISOString();
+      raw.push({
+        id: `chg:${c.id}`,
+        kind: 'CHARGE',
+        at: atIso,
+        businessDate: atIso.slice(0, 10),
+        reservationId: folio.reservationId,
+        reservationRef,
+        guestName,
+        roomLabel,
+        folioId: folio.id,
+        folioStatus: folio.status,
+        description: c.description || c.revenueCode?.name || 'Charge',
+        code: c.revenueCode?.code ?? null,
+        qty: c.qty,
+        amount: amt,
+        sortAt: c.businessDate.getTime(),
+      });
+    }
+
+    for (const p of folio.payments) {
+      if (p.createdAt < from || p.createdAt > to) continue;
+      const abs = decimalToNumber(p.amount);
+      const isRefund = p.kind === 'REFUND';
+      const atIso = p.createdAt.toISOString();
+      raw.push({
+        id: `pay:${p.id}`,
+        kind: isRefund ? 'REFUND' : 'PAYMENT',
+        at: atIso,
+        businessDate: atIso.slice(0, 10),
+        reservationId: folio.reservationId,
+        reservationRef,
+        guestName,
+        roomLabel,
+        folioId: folio.id,
+        folioStatus: folio.status,
+        description: isRefund ? `Refund (${p.paymentMethod})` : `Payment (${p.paymentMethod})`,
+        code: p.paymentMethod,
+        qty: null,
+        // Debt direction: charge +, payment −, refund +
+        amount: isRefund ? abs : -abs,
+        sortAt: p.createdAt.getTime(),
+      });
+    }
+  }
+
+  raw.sort((a, b) => a.sortAt - b.sortAt || a.id.localeCompare(b.id));
+
+  let running = opening;
+  return raw.map(({ sortAt: _s, ...line }) => {
+    running += line.amount;
+    return { ...line, runningBalance: Math.round(running * 100) / 100 };
+  });
+}
+
 function packLedger(
   party: { code: string; name: string; settlementMode?: string; commissionPercent?: unknown },
   slice: { opening: number; newCharges: number; payments: number; cashPaid: number },
+  lines: CityLedgerStatementLine[],
 ) {
   const closing = slice.opening + slice.newCharges - slice.payments;
+  const lastRunning = lines.length > 0 ? lines[lines.length - 1]!.runningBalance : slice.opening;
   return {
     code: party.code,
     name: party.name,
@@ -62,34 +203,62 @@ function packLedger(
     netAmount: slice.newCharges - slice.payments,
     cityLedger: closing,
     closing,
+    /** Statement running balance must match closing (within rounding). */
+    statementBalance: lastRunning,
+    lines,
   };
+}
+
+const folioInclude = {
+  charges: { include: { revenueCode: true } },
+  payments: true,
+  reservation: {
+    select: {
+      id: true,
+      externalRef: true,
+      checkInDate: true,
+      checkOutDate: true,
+      guest: { select: { fullName: true } },
+      room: { select: { roomNumber: true } },
+      roomType: { select: { code: true } },
+    },
+  },
+} as const;
+
+/**
+ * Load party CL folios with full history (not stay-overlap only).
+ * Stay-overlap filter would drop open AR from earlier stays and understate opening.
+ */
+async function loadPartyFolios(
+  folioType: 'AGENCY' | 'COMPANY',
+  partyField: 'agencyId' | 'companyId',
+  partyId: string,
+) {
+  return prisma.folio.findMany({
+    where: {
+      type: folioType,
+      reservation: { [partyField]: partyId },
+    },
+    include: folioInclude,
+    orderBy: { createdAt: 'asc' },
+  });
 }
 
 export async function getAgencyLedger(agencyId: string, from: Date, to: Date) {
   const agency = await prisma.agency.findUnique({ where: { id: agencyId } });
   if (!agency) throw new Error('Agency not found');
 
-  const reservations = await prisma.reservation.findMany({
-    where: {
-      agencyId,
-      OR: [{ checkInDate: { lte: to }, checkOutDate: { gte: from } }],
-    },
-    include: {
-      folios: {
-        include: {
-          charges: { include: { revenueCode: true } },
-          payments: true,
-        },
-      },
-    },
-  });
+  const folios = await loadPartyFolios('AGENCY', 'agencyId', agencyId);
+  const slice = sumFolioTypeActivity(folios, 'AGENCY', from, to);
+  const lines = buildStatementLines(folios, 'AGENCY', from, to, slice.opening);
+  const reservationIds = new Set(folios.map((f) => f.reservationId));
 
-  const slice = sumFolioTypeActivity(reservations.flatMap((r) => r.folios), 'AGENCY', from, to);
   return {
     kind: 'AGENCY' as const,
     agency,
-    ...packLedger(agency, slice),
-    reservationCount: reservations.length,
+    ...packLedger(agency, slice, lines),
+    reservationCount: reservationIds.size,
+    folioCount: folios.length,
   };
 }
 
@@ -97,27 +266,17 @@ export async function getCompanyLedger(companyId: string, from: Date, to: Date) 
   const company = await prisma.company.findUnique({ where: { id: companyId } });
   if (!company) throw new Error('Company not found');
 
-  const reservations = await prisma.reservation.findMany({
-    where: {
-      companyId,
-      OR: [{ checkInDate: { lte: to }, checkOutDate: { gte: from } }],
-    },
-    include: {
-      folios: {
-        include: {
-          charges: { include: { revenueCode: true } },
-          payments: true,
-        },
-      },
-    },
-  });
+  const folios = await loadPartyFolios('COMPANY', 'companyId', companyId);
+  const slice = sumFolioTypeActivity(folios, 'COMPANY', from, to);
+  const lines = buildStatementLines(folios, 'COMPANY', from, to, slice.opening);
+  const reservationIds = new Set(folios.map((f) => f.reservationId));
 
-  const slice = sumFolioTypeActivity(reservations.flatMap((r) => r.folios), 'COMPANY', from, to);
   return {
     kind: 'COMPANY' as const,
     company,
-    ...packLedger(company, slice),
-    reservationCount: reservations.length,
+    ...packLedger(company, slice, lines),
+    reservationCount: reservationIds.size,
+    folioCount: folios.length,
   };
 }
 

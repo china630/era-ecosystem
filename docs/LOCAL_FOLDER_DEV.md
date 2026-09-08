@@ -68,6 +68,29 @@ After changing kit or contracts, rebuild the package and restart the app dev ser
 
 Use bootstrap when you need platform super-admin, demo org, and cross-app SSO smoke. Per-app seed is enough for isolated feature work.
 
+### Pull real DBs from the droplet (destructive local replace)
+
+When staging/prod on the DigitalOcean droplet already has real Nafta data and you want the same rows locally:
+
+1. Ensure local Postgres is up: `docker compose up -d postgres`
+2. Put SSH target in gitignored `.env.droplet-pull` (or root `.env`):
+
+```bash
+ERA_DROPLET_SSH=deploy@YOUR_DROPLET_IP
+# optional: ERA_DROPLET_SSH_KEY=~/.ssh/id_ed25519
+```
+
+3. Pull (default preset `nafta` = hotel + clinic + fnb + mdm):
+
+```bash
+npm run db:pull-from-droplet:nafta
+# or
+node scripts/pull-dbs-from-droplet.mjs --list
+node scripts/pull-dbs-from-droplet.mjs --i-know-this-wipes-local --only hotel,clinic,mdm
+```
+
+Requires `ssh`/`scp` + Docker. Overwrites the selected **local** databases; remote is dump-only. Dumps land under `tmp/db-pull/` unless cleaned (default). Include `mdm` when working hotel/clinic so guest/patient names resolve.
+
 ---
 
 ## Per-app quick start

@@ -26,7 +26,8 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 
 - Cutoff cron: POST /api/cron/allotment-block-cutoff (Bearer HOTEL_CRON_SECRET) -> RELEASED
 - MASTER/SPLIT posting: booking-folio.service routes room&tax to AGENCY on master stay; extras to GUEST
-- Pickup UI: /admin/allotment-blocks Pickup creates Booking + N stays
+- Pickup UI: `/distribution/allotment-blocks` — create/edit multi-line blocks, optional sales contract link, status transitions, Pickup creates Booking + N stays
+- Contracts bridge: `/distribution/contracts` → **Create block** opens allotment-blocks with `?contractId=` prefilling season/agency
 
 ### Still deferred
 

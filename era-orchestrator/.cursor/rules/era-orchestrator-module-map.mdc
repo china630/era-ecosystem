@@ -19,7 +19,8 @@ globs:
 | `/login` | `app/login/page.tsx` | AuthLoginCard; post-login 0/1/N routing (0 → onboarding gate, 1 → `/workspace`, N → `/organizations` picker on every login) |
 | `/register` | `app/register/page.tsx` | User signup → `/organizations` |
 | `/register-org` | `app/register-org/page.tsx` | Fallback org registration (modal preferred) |
-| `/pricing` | `app/pricing/**` | Public storefront |
+| `/pricing` | `app/pricing/**` | Public catalog (TOC, meters, SKU constructor) |
+| `/satellites`, `/satellites/[slug]` | `app/satellites/**` | Public satellite pages (not `/industry/*` launcher) |
 | `/help`, `/terms`, `/partner` | `app/help`, `app/terms`, `app/partner` | Public |
 | `/portal/person-access` | `app/portal/person-access/page.tsx` | MDM Phase 2 citizen consent (guest QR session) |
 
@@ -29,10 +30,10 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 
 | Route | File | Notes |
 |-------|------|-------|
-| `/` | `app/page.tsx` | Redirect only |
+| `/` | `app/page.tsx` | Guest marketing hub (no app shell); authed → `/workspace` |
 | `/organizations` | `app/organizations/page.tsx` | Org hub; `CreateOrganizationModal`; company-less onboarding gate auto-opens create modal; lists pending invites with Accept; link to `/holdings` |
 | `/holdings` | `app/holdings/page.tsx` | Holding SoT: create, attach/detach orgs, report-access members; API `v1/holdings/*` |
-| `/workspace` | `app/workspace/page.tsx` | Satellite cards: Open + per-satellite Modules modal + ⚙ Settings on active cards; concrete active-modules price; "+ Add" opens all-satellites modal; `POST connect-satellite`, `POST billing/toggle-module` |
+| `/workspace` | `app/workspace/page.tsx` | Satellite cards (Open / Modules / Settings). Workforce tile only while `platform_workforce` is off (sidebar otherwise). No Hotel upsell banner; department UUIDs live on `/super-admin/orgs/[orgId]`. `POST connect-satellite`, `POST billing/toggle-module` |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
 | `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership |

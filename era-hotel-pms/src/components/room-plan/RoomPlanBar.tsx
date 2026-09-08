@@ -8,8 +8,9 @@ import { barSvgPath, type BarShapeFlags } from './shapes';
 import {
   BAR_LABEL_PAD_LEFT_PX,
   CHEVRON_PX,
-  PLAN_BAR_OCCUPANCY_STROKE,
+  PLAN_BAR_OCCUPANCY_MARK,
   hasOverlappingShareRoommate,
+  occupancyMarkLabel,
   resolvePlanBarDayState,
   resolvePlanBarOccupancyKind,
   themeForDayState,
@@ -165,7 +166,9 @@ export function RoomPlanBar({
   const dayState = resolvePlanBarDayState(selfInput, inputs);
   const theme = themeForDayState(dayState);
   const occupancy = resolvePlanBarOccupancyKind(selfInput);
-  const stroke = PLAN_BAR_OCCUPANCY_STROKE[occupancy];
+  const occupancyMark = PLAN_BAR_OCCUPANCY_MARK[occupancy];
+  const showOccupancyBadge = occupancy !== 'exclusive';
+  const labelPadLeft = showOccupancyBadge ? BAR_LABEL_PAD_LEFT_PX + 14 : BAR_LABEL_PAD_LEFT_PX;
   const roommateNames = roomBars
     .filter((other) => {
       if (other.id === bar.id) return false;
@@ -222,17 +225,29 @@ export function RoomPlanBar({
           <path
             d={barSvgPath(shape, widthPx, 26)}
             fill={theme.fill}
-            stroke={stroke}
-            strokeWidth={1.6}
+            stroke={theme.stroke}
+            strokeWidth={1.25}
             strokeDasharray={theme.dashed ? '3 2' : undefined}
             vectorEffect="non-scaling-stroke"
           />
         </svg>
+        {showOccupancyBadge ? (
+          <span
+            className="pointer-events-none absolute top-1/2 z-[2] flex h-[18px] w-[14px] -translate-y-1/2 items-center justify-center rounded-[3px] text-[11px] font-black leading-none text-white shadow-sm"
+            style={{
+              left: Math.max(2, shape.leftConcave ? CHEVRON_PX - 2 : 2),
+              backgroundColor: occupancyMark,
+            }}
+            aria-hidden
+          >
+            {occupancyMarkLabel(occupancy)}
+          </span>
+        ) : null}
         <span
           className={`pointer-events-none absolute inset-0 flex items-center truncate text-left text-[10px] font-bold ${
             debt ? 'pr-8' : 'pr-2'
           }`}
-          style={{ paddingLeft: BAR_LABEL_PAD_LEFT_PX, color: theme.text }}
+          style={{ paddingLeft: labelPadLeft, color: theme.text }}
         >
           {caption}
         </span>

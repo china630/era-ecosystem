@@ -7,6 +7,11 @@ type ClinicCheckInInput = {
   phone?: string;
   globalPersonId?: string | null;
   organizationId?: string;
+  /** Medical package code (rate stamp) — must reach clinic from-stay. */
+  programCode?: string | null;
+  roomNumber?: string | null;
+  hotelStayId?: string | null;
+  paxKey?: string | null;
 };
 
 function clinicBaseUrl(): string | null {
@@ -55,6 +60,10 @@ export async function notifyClinicCheckIn(input: ClinicCheckInInput): Promise<vo
       phone: input.phone,
       globalPersonId: input.globalPersonId ?? null,
       organizationId,
+      programCode: input.programCode ?? null,
+      roomNumber: input.roomNumber ?? null,
+      hotelStayId: input.hotelStayId ?? null,
+      paxKey: input.paxKey ?? null,
     }),
     signal: AbortSignal.timeout(12000),
   });

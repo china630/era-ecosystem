@@ -60,9 +60,25 @@ export type LandingZeroKnowledgeCopy = {
   badges: string[];
 };
 
+export type LandingHubCopy = {
+  coreTitle: string;
+  coreBody: string;
+  coreCta: string;
+  satellitesTitle: string;
+  satellitesIntro: string;
+  dataHubTitle: string;
+  dataHubBody: string;
+  dataHubCta: string;
+  addonsTitle: string;
+  addonsBody: string;
+  addonsCta: string;
+  catalogCta: string;
+};
+
 export type LandingMarketingCopy = {
   chrome: {
     login: string;
+    navSatellites: string;
   };
   footer: string;
   hero: {
@@ -73,6 +89,7 @@ export type LandingMarketingCopy = {
     ctaMicrocopy: string;
     navPricing: string;
   };
+  hub: LandingHubCopy;
   trial: {
     cornerBadge: string;
     offerPrimary: string;
@@ -93,7 +110,7 @@ export type LandingMarketingCopy = {
   };
   faq: {
     title: string;
-    items: { id: string; question: string; answer: string }[];
+    items: { id: string; question: string; answer: string; chips?: string[] }[];
   };
   features: {
     finance: LandingFeatureCopy;
@@ -138,16 +155,31 @@ export type LandingMarketingCopy = {
 const landingMarketingRu: LandingMarketingCopy = {
   chrome: {
     login: "Войти",
+    navSatellites: "Спутники",
   },
   footer: "ERA 365 — платформа учёта и отраслевых спутников в Азербайджане",
   hero: {
-    title: "Учёт, гостиница, клиника и касса — в одной платформе",
+    title: "Учёт и отраслевые спутники — одна платформа",
     subtitle:
-      "ERA Core (NAS/MMUS) и отраслевые спутники. Палитра модулей 19 / 29 / 39 / 99 AZN. 3 месяца trial без карты.",
+      "ERA Core, гостиница, клиника, касса и Data HUB. Палитра 19 / 29 / 39 / 99 AZN. 3 месяца trial без карты.",
     ctaPrimary: "Начать 3 месяца бесплатно",
-    ctaSecondary: "Смотреть тарифы",
+    ctaSecondary: "Полный каталог",
     ctaMicrocopy: "Без привязки карты • Отмена в любой момент",
     navPricing: "Тарифы",
+  },
+  hub: {
+    coreTitle: "ERA Core",
+    coreBody: "Учёт NAS/MMUS: книга, касса, склад, производство, ОС, кадры. Foundation 29 AZN.",
+    coreCta: "О ядре Finance",
+    satellitesTitle: "Отраслевые спутники",
+    satellitesIntro: "Gate — рабочее место и базовая ёмкость. Ядра и пакеты — на странице спутника и в каталоге.",
+    dataHubTitle: "Data HUB",
+    dataHubBody: "Справочники и обмен. Bronze / Silver / Gold — только один тариф.",
+    dataHubCta: "Data HUB",
+    addonsTitle: "Платформенные add-on",
+    addonsBody: "Уведомления, хранение, лояльность, доставка, Workforce 2/4 AZN. XOR на полке каталога.",
+    addonsCta: "Add-on в каталоге",
+    catalogCta: "Собрать подписку",
   },
   trial: {
     cornerBadge: "Специальное предложение для старта",
@@ -175,7 +207,7 @@ const landingMarketingRu: LandingMarketingCopy = {
       {
         title: "Нулевой доступ",
         detail:
-          "Сотрудники ERA Finance технически не могут просматривать ваши проводки, счета и остатки кассы.",
+          "Сотрудники ERA технически не могут просматривать ваши данные: ни учёт, ни спутники.",
       },
       {
         title: "Государственный якорь безопасности",
@@ -248,34 +280,40 @@ const landingMarketingRu: LandingMarketingCopy = {
     title: "Частые вопросы",
     items: [
       {
-        id: "platform",
-        question: "Где регистрировать компанию и входить в ERA?",
+        id: "what",
+        question: "Что такое ERA 365?",
         answer:
-          "Новые организации создаются на платформе ERA (app.era-365.online): аккаунт, VÖEN и модули подписки. После входа модуль Finance открывается из launcher платформы.",
+          "Платформа учёта (ERA Core) и отраслевых спутников для Азербайджана: гостиница, клиника, касса, логистика и другие рабочие места в одном контуре с MDM и подпиской.",
       },
       {
-        id: "finance",
-        question: "Что даёт ERA Finance?",
+        id: "pricing",
+        question: "Как устроены цены?",
         answer:
-          "Облачный учёт для Азербайджана: NAS/MMUS, касса и банк, продажи и закупки, склад и отчётность — в одном контуре с платформой ERA.",
-      },
-      {
-        id: "sso",
-        question: "Можно ли войти через SSO?",
-        answer:
-          "Да. Используйте единый вход ERA (Orchestrator / Finance). Для усиленной аутентификации следуйте подсказкам ASAN İmza в интерфейсе.",
-      },
-      {
-        id: "catalog",
-        question: "Как устроены цены модулей и спутников?",
-        answer:
-          "SKU — палитра 19 / 29 / 39 / 99 AZN. Foundation 29. Отрасль: Gate открывает приложение и 1 единицу ёмкости; ядра (hotel_core, EMR) продаются отдельно. Счета входят в документы NAS. Банк CBS в прайсе — Sandbox / Pilot.",
+          "SKU — палитра 19 / 29 / 39 / 99 AZN. Foundation 29. Gate открывает спутник и базовую ёмкость. Документы, OCR, SMS и хранение считаются метрами. Полный конструктор — на странице тарифов.",
       },
       {
         id: "xor",
         question: "Какие модули нельзя включить вместе?",
+        answer: "В каждой группе выбирается только один SKU.",
+        chips: [
+          "Data HUB Bronze / Silver / Gold",
+          "Workforce Base / PRO",
+          "Loyalty XOR Retail promo",
+          "Delivery XOR F&B hub",
+          "Hotel XOR Clinic sanatorium",
+        ],
+      },
+      {
+        id: "trial",
+        question: "Что входит в 3 месяца trial?",
         answer:
-          "Data HUB Bronze/Silver/Gold; Workforce Base/PRO; platform_loyalty и retail_promotions; platform_delivery и fnb_delivery_hub; hotel_medical_sanatorium и clinic_sanatorium_clinical.",
+          "Foundation и отраслевые Gate — 0 AZN без карты. Premium Finance и production CBS в trial list не входят. OCR сверх 50 стр. и документы сверх 1000/мес могут начисляться.",
+      },
+      {
+        id: "register",
+        question: "Где зарегистрироваться?",
+        answer:
+          "На app.era-365.online: аккаунт, VÖEN и модули. После входа спутники открываются из launcher. Регистрация не на страницах /industry — они только для авторизованных.",
       },
     ],
   },
@@ -391,16 +429,31 @@ const landingMarketingRu: LandingMarketingCopy = {
 const landingMarketingAz: LandingMarketingCopy = {
   chrome: {
     login: "Daxil ol",
+    navSatellites: "Peyklər",
   },
   footer: "ERA 365 — Azərbaycanda uçot və sənaye peykləri platforması",
   hero: {
-    title: "Uçot, otel, klinika və kassa — bir platformada",
+    title: "Uçot və sənaye peykləri — bir platforma",
     subtitle:
-      "ERA Core (NAS/MMUS) və sənaye peykləri. Modul palitrası 19 / 29 / 39 / 99 AZN. 3 ay trial, kart tələb olunmur.",
+      "ERA Core, otel, klinika, kassa və Data HUB. Palitra 19 / 29 / 39 / 99 AZN. 3 ay trial, kart tələb olunmur.",
     ctaPrimary: "3 ay tam pulsuz başla",
-    ctaSecondary: "Tariflərə baxın",
+    ctaSecondary: "Tam kataloq",
     ctaMicrocopy: "Kredit kartı tələb olunmur • İstənilən vaxt ləğv et",
     navPricing: "Tariflər",
+  },
+  hub: {
+    coreTitle: "ERA Core",
+    coreBody: "NAS/MMUS uçotu: kitab, kassa, anbar, istehsalat, ƏV, kadrlar. Foundation 29 AZN.",
+    coreCta: "Finance nüvəsi",
+    satellitesTitle: "Sənaye peykləri",
+    satellitesIntro: "Gate — iş yeri və baza tutumu. Nüvə və paketlər peyk səhifəsində və kataloqdadır.",
+    dataHubTitle: "Data HUB",
+    dataHubBody: "Soraqçalar və mübadilə. Bronze / Silver / Gold — yalnız bir tarif.",
+    dataHubCta: "Data HUB",
+    addonsTitle: "Platforma add-on",
+    addonsBody: "Bildiriş, yaddaş, loyallıq, çatdırılma, Workforce 2/4 AZN. XOR kataloq rəfindədir.",
+    addonsCta: "Add-on kataloqu",
+    catalogCta: "Abunəni yığ",
   },
   trial: {
     cornerBadge: "Start üçün xüsusi təklif",
@@ -428,7 +481,7 @@ const landingMarketingAz: LandingMarketingCopy = {
       {
         title: "Sıfır giriş",
         detail:
-          "ERA Finance işçiləri texniki olaraq sizin qaimələr, hesablar və kassa qalıqlarını görə bilməz.",
+          "ERA işçiləri texniki olaraq sizin məlumatlarınıza baxa bilməz: nə uçot, nə peyklər.",
       },
       {
         title: "Dövlət təhlükəsizlik lövbəri",
@@ -501,34 +554,40 @@ const landingMarketingAz: LandingMarketingCopy = {
     title: "Tez-tez verilən suallar",
     items: [
       {
-        id: "platform",
-        question: "Şirkəti harada qeydiyyatdan keçirmək və ERA-ya daxil olmaq olar?",
+        id: "what",
+        question: "ERA 365 nədir?",
         answer:
-          "Yeni təşkilatlar ERA platformasında (app.era-365.online) yaradılır: hesab, VÖEN və abunə modulları. Daxil olduqdan sonra Finance modulu platforma launcher-indən açılır.",
+          "Azərbaycan üçün uçot (ERA Core) və sənaye peykləri platforması: otel, klinika, kassa, logistika və digər iş yerləri MDM və abunə ilə eyni konturdə.",
       },
       {
-        id: "finance",
-        question: "ERA Finance nə verir?",
+        id: "pricing",
+        question: "Qiymətlər necə qurulub?",
         answer:
-          "Azərbaycan üçün bulud uçotu: NAS/MMUS, kassa və bank, satış və alış, anbar və hesabat — ERA platforması ilə vahid konturdə.",
-      },
-      {
-        id: "sso",
-        question: "SSO ilə daxil olmaq olarmı?",
-        answer:
-          "Bəli. ERA vahid girişindən (Orchestrator / Finance) istifadə edin. Gücləndirilmiş autentifikasiya üçün interfeysdə ASAN İmza göstərişlərinə əməl edin.",
-      },
-      {
-        id: "catalog",
-        question: "Modul və peyk qiymətləri necə qurulub?",
-        answer:
-          "SKU palitrası 19 / 29 / 39 / 99 AZN. Foundation 29. Sənaye: Gate tətbiqi və 1 tutum vahidini açır; nüvələr (hotel_core, EMR) ayrıca satılır. Qaimələr NAS sənədlərinə daxildir. Bank CBS qiyməti Sandbox / Pilot-dur.",
+          "SKU palitrası 19 / 29 / 39 / 99 AZN. Foundation 29. Gate peyki və baza tutumunu açır. Sənəd, OCR, SMS və yaddaş metrlərdir. Tam konstruktor tarif səhifəsindədir.",
       },
       {
         id: "xor",
         question: "Hansı modulları eyni anda açmaq olmaz?",
+        answer: "Hər qrupda yalnız bir SKU seçilir.",
+        chips: [
+          "Data HUB Bronze / Silver / Gold",
+          "Workforce Base / PRO",
+          "Loyalty XOR Retail promo",
+          "Delivery XOR F&B hub",
+          "Hotel XOR Clinic sanatorium",
+        ],
+      },
+      {
+        id: "trial",
+        question: "3 aylıq trial-a nə daxildir?",
         answer:
-          "Data HUB Bronze/Silver/Gold; Workforce Base/PRO; platform_loyalty və retail_promotions; platform_delivery və fnb_delivery_hub; hotel_medical_sanatorium və clinic_sanatorium_clinical.",
+          "Foundation və sənaye Gate — kart olmadan 0 AZN. Finance premium və production CBS trial list-də yoxdur. 50 OCR və 1000 sənəd/ay limitindən artıq metr tutula bilər.",
+      },
+      {
+        id: "register",
+        question: "Harada qeydiyyatdan keçmək olar?",
+        answer:
+          "app.era-365.online: hesab, VÖEN və modullar. Daxil olduqdan sonra peyklər launcher-dən açılır. /industry səhifələri yalnız avtorizasiya olunmuşlar üçündür.",
       },
     ],
   },

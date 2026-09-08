@@ -1,6 +1,6 @@
 import { resolvePersonIdentity } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
-import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
+import { assertHotelIdMatches, bridgeRequestOrganizationId } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
 import { syncGuestIdentityDocuments } from '@/lib/guest-document-sync';
 import { genderFromElektrawebGuest } from '@/lib/integration/elektraweb-share-map';
@@ -95,6 +95,7 @@ export async function upsertGuestFromElektrawebRow(
       globalPersonId: globalPersonId || undefined,
       sex: sex ?? undefined,
       birthDate: birthDate ?? undefined,
+      organizationId: bridgeRequestOrganizationId(),
     });
     globalPersonId = resolved.globalPersonId ?? globalPersonId;
   } catch (e) {

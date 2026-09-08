@@ -343,7 +343,9 @@ async function main() {
     { code: "PKG-DETOKS", name: "Nafta Detoks", durationDays: 10 },
   ];
   for (const pkg of naftaPackages) {
-    const existing = await prisma.programTemplate.findFirst({ where: { code: pkg.code } });
+    const existing = await prisma.programTemplate.findFirst({
+      where: { code: pkg.code, isCurrent: true },
+    });
     if (!existing) {
       await prisma.programTemplate.create({
         data: {
@@ -352,16 +354,23 @@ async function main() {
           durationDays: pkg.durationDays,
           minNights: pkg.code === "PKG-STANDART" ? 5 : 7,
           maxNights: 21,
+          version: 1,
+          isCurrent: true,
         },
       });
     } else {
-      await prisma.programTemplate.update({
-        where: { id: existing.id },
-        data: {
-          minNights: existing.minNights ?? (pkg.code === "PKG-STANDART" ? 5 : 7),
-          maxNights: existing.maxNights ?? 21,
-        },
+      const pinned = await prisma.programInstance.count({
+        where: { templateId: existing.id },
       });
+      if (pinned === 0) {
+        await prisma.programTemplate.update({
+          where: { id: existing.id },
+          data: {
+            minNights: existing.minNights ?? (pkg.code === "PKG-STANDART" ? 5 : 7),
+            maxNights: existing.maxNights ?? 21,
+          },
+        });
+      }
     }
   }
 
@@ -370,8 +379,17 @@ async function main() {
     code: string,
     knots: Array<{ nights: number; qty: number }>,
   ) {
-    const tpl = await prisma.programTemplate.findFirst({ where: { code } });
+    const tpl = await prisma.programTemplate.findFirst({
+      where: { code, isCurrent: true },
+    });
     if (!tpl) return;
+    const pinned = await prisma.programInstance.count({ where: { templateId: tpl.id } });
+    if (pinned > 0) {
+      console.log(
+        `Skip seedBathKnots(${code}): ${pinned} program instance(s) pin current version`,
+      );
+      return;
+    }
     const hasProc = await prisma.programTemplateProcedure.findFirst({
       where: { templateId: tpl.id, procedureCode: "NAFTALAN_BATH" },
     });
@@ -445,8 +463,17 @@ async function main() {
     { code: "LAB", name: "Lab panel" },
   ];
   async function seedExamKnots(pkgCode: string, nightCols: number[]) {
-    const tpl = await prisma.programTemplate.findFirst({ where: { code: pkgCode } });
+    const tpl = await prisma.programTemplate.findFirst({
+      where: { code: pkgCode, isCurrent: true },
+    });
     if (!tpl) return;
+    const pinned = await prisma.programInstance.count({ where: { templateId: tpl.id } });
+    if (pinned > 0) {
+      console.log(
+        `Skip seedExamKnots(${pkgCode}): ${pinned} program instance(s) pin current version`,
+      );
+      return;
+    }
     for (const exam of EXAM_CODES) {
       const hasProc = await prisma.programTemplateProcedure.findFirst({
         where: { templateId: tpl.id, procedureCode: exam.code },

@@ -42,7 +42,8 @@ On `GlobalNaturalPerson`:
 ### Satellite rules
 
 - Store **`globalPersonId`** as the satellite identity link; **identifier values (FIN, passport) live in MDM**, not duplicated as plaintext on satellite models.
-- **Person core demographics (SoR):** `sex` (`MALE` | `FEMALE` | `UNKNOWN`) and `birthDate` on `GlobalNaturalPerson`. Azerbaijan does not use a third legal sex — **no OTHER**. Satellites (hotel `Guest.sex`, clinic `PatientRef.sex` / `birthDate`) are **ops cache**; resolve/link writes the core; ops-profile is the read path.
+- **Person core demographics (SoR):** `sex` (`MALE` | `FEMALE` | `UNKNOWN`) and `birthDate` on `GlobalNaturalPerson`. Azerbaijan does not use a third legal sex — **no OTHER**. Satellites (hotel `Guest.sex`, clinic `PatientRef.sex` / `birthDate`) are **ops cache**; resolve/link writes the core; ops-profile is the read path. Resolve with `organizationId` upserts `PersonAccessGrant` (ops-profile otherwise returns `accessDenied` and null sex/DOB). Clinic soft-fill may `POST .../persons/:id/access-grant` when PatientRef already has `globalPersonId`.
+- **Hotel reservation party:** Guests tab / FOCP sync hydrate empty `ReservationGuest` snapshot demographics from linked `Guest` master (import often writes names only).
 - **Exception — hotel ops cache:** `Guest` may retain non-identifier operational fields (name, phone, visa, CRM, gender/DOB cache) per [hotel-guest-pii-ops-cache.md](./hotel-guest-pii-ops-cache.md); plaintext FIN/passport on `Guest` is **deprecated** (removed Wave 4).
 - **lookup** = prefill/read; **resolve** = create/update person (name parts + sex/DOB fill-not-clear); **merge** = foreigner → citizen.
 - Unified client: `linkPersonIdentity` in `@era/satellite-kit`. Accepts `firstName`/`middleName`/`lastName` and/or legacy `fullName`; pass `sex`/`gender` + `birthDate`. When the satellite already has `globalPersonId`, pass it so a card edit fills MDM without a second person.

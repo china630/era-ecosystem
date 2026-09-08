@@ -59,6 +59,14 @@ export async function syncReservationPaxFromImport(
             firstName: true,
             middleName: true,
             lastName: true,
+            sex: true,
+            nationality: true,
+            birthDate: true,
+            documents: {
+              select: { docType: true, docNumber: true, isPrimary: true },
+              orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+              take: 8,
+            },
           },
         })
       : [];
@@ -69,12 +77,23 @@ export async function syncReservationPaxFromImport(
     data: planned.map((row) => {
       const guest = row.guestId ? guestById.get(row.guestId) : undefined;
       const parsed = splitDisplayName(row.displayName);
+      const passport =
+        guest?.documents.find((d) =>
+          String(d.docType ?? '').toUpperCase().includes('PASSPORT'),
+        )?.docNumber ??
+        guest?.documents.find((d) => d.isPrimary)?.docNumber ??
+        guest?.documents.find((d) => d.docNumber?.trim())?.docNumber ??
+        null;
       return {
         reservationId,
         guestId: row.guestId,
         firstName: guest?.firstName ?? parsed.firstName,
         middleName: guest?.middleName ?? parsed.middleName,
         lastName: guest?.lastName ?? parsed.lastName,
+        sex: guest?.sex ?? null,
+        nationality: guest?.nationality ?? null,
+        birthDate: guest?.birthDate ?? null,
+        passportNo: passport,
         isPrimary: row.isPrimary,
         ownsFolio: row.isPrimary,
         sortOrder: row.sortOrder,

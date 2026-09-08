@@ -186,13 +186,17 @@ async function ensureDemoPractitioners() {
 
 /** Minimal bootstrap when seed-vnext never ran (prod image without kit). */
 async function ensureBootstrap() {
-  let template = await prisma.programTemplate.findUnique({ where: { code: "DETOX-7" } });
+  let template = await prisma.programTemplate.findFirst({
+    where: { code: "DETOX-7", isCurrent: true },
+  });
   if (!template) {
     template = await prisma.programTemplate.create({
       data: {
         code: "DETOX-7",
         name: "Detox 7 days",
         durationDays: 7,
+        version: 1,
+        isCurrent: true,
         procedures: {
           create: [
             { procedureCode: "MASSAGE", procedureName: "Massage", quotaTotal: 5, avoidAfterHour: 14 },

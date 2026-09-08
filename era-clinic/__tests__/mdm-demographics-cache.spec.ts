@@ -61,7 +61,7 @@ describe("patient MDM demographics fill (list holes)", () => {
     expect(patch).toBeNull();
   });
 
-  it("fills UNKNOWN sex and empty DOB from MDM", () => {
+  it("fills UNKNOWN or null sex and empty DOB from MDM", () => {
     const patch = buildPatientDemographicsFillPatch(base, {
       sex: "FEMALE",
       birthDate: "1985-06-15",
@@ -70,5 +70,11 @@ describe("patient MDM demographics fill (list holes)", () => {
     });
     expect(patch?.sex).toBe("FEMALE");
     expect(patch?.birthDate?.toISOString().slice(0, 10)).toBe("1985-06-15");
+
+    const fromNullSex = buildPatientDemographicsFillPatch(
+      { ...base, sex: null },
+      { sex: "MALE", birthDate: "1980-01-02" },
+    );
+    expect(fromNullSex?.sex).toBe("MALE");
   });
 });

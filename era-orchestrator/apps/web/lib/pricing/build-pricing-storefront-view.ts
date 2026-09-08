@@ -122,6 +122,8 @@ export type PricingStorefrontView = {
   hospitalityIntro: string;
   hospitalityGateLabel: string;
   hospitalityBundleSelect: string;
+  industryRegisterCta: string;
+  industryAfterSignup: string;
   hospitalityBundles: Array<{
     marketingId: string;
     name: string;
@@ -390,6 +392,8 @@ export function buildPricingStorefrontView(
     hospitalityIntro: ui.hospitalityIntro,
     hospitalityGateLabel: ui.hospitalityGateLabel,
     hospitalityBundleSelect: ui.hospitalityBundleSelect,
+    industryRegisterCta: ui.industryRegisterCta,
+    industryAfterSignup: ui.industryAfterSignup,
     hospitalityBundles,
     hospitalityModules,
   };

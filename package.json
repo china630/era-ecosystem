@@ -62,7 +62,9 @@
     "test:design-tokens": "node --test scripts/__tests__/design-tokens.spec.mjs scripts/__tests__/token-layers.spec.mjs",
     "test:acceptance": "node --test scripts/__tests__/acceptance-consistency.spec.mjs",
     "test:security-sso": "node --test scripts/__tests__/sso-hmac-v2.spec.mjs",
-    "security:authz-smoke": "node scripts/security/authz-smoke.mjs"
+    "security:authz-smoke": "node scripts/security/authz-smoke.mjs",
+    "db:pull-from-droplet": "node scripts/pull-dbs-from-droplet.mjs",
+    "db:pull-from-droplet:nafta": "node scripts/pull-dbs-from-droplet.mjs --i-know-this-wipes-local --preset nafta"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

@@ -133,6 +133,16 @@ Honest audit vs Opera-like CL. ADR: [docs/adr/hotel-city-ledger-and-fo-money.md]
 |----|------|---------------|--------|-------|
 | H-BL-50 | **Nafta weekend tours** (`/tours`, roster, `TOUR` charge, desk/folio line-pay) | hotel-pms | **Done** | ADR [hotel-guest-tours.md](../../docs/adr/hotel-guest-tours.md); ops [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md); HOT-TOUR-01 SHIPPED. Not concierge. Not `/front-cash/pending`. |
 
+### P8 — Vouchers / promos / certificates (Opera split — debt 2026-09-07)
+
+Do **not** collapse into one field. ADR: [docs/adr/hotel-vouchers-promotions-certificates.md](../../docs/adr/hotel-vouchers-promotions-certificates.md).
+
+| ID | Task | Primary owner | Status | Notes |
+|----|------|---------------|--------|-------|
+| H-BL-51 | **Agency voucher ref polish** | hotel-pms | **Debt** | Keep `Reservation.voucherNo` as agency/tour document # only (EW parity). Search/list/report; UX: not a hotel promo. Small effort; high value for B2B/Nafta. |
+| H-BL-52 | **Promotion code apply on stay** | hotel-pms | **Debt** | `/distribution/promotion-codes` is CRUD only today. Wire validate → `discountPercent` (or promo FK) + audit on reservation card. Medium effort; medium need (packages/contracts often replace desk promos). |
+| H-BL-53 | **Gift / prepaid certificates** | hotel-pms (+ Finance) | **Debt** | New ledger: issue / redeem / void on folio; not `voucherNo`. High effort; defer past Nafta cutover unless a named hotel asks. |
+
 ### P3 — Future / optional parity
 
 | ID | Task | Primary owner | Status | Notes |

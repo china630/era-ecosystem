@@ -57,11 +57,15 @@ Optional `PASSPORT_SCAN` on `ReservationAttachment` via `@era/storage` (`attachm
 
 ### 6. Out of scope (P2+)
 
-Notify Pack triggers, CL snapshot in agency UI, self-cancel by cutoff, mandatory scan, group/MASTER folio from portal, live OTA, `/b2c` BAR for agents.
+Notify Pack triggers, self-cancel by cutoff, mandatory scan, group/MASTER folio from portal, live OTA, `/b2c` BAR for agents.
+
+### 7. City Ledger in portal (read-only)
+
+Agents may view **their own** AGENCY folio statement via `GET /api/agency/ledger` + `/agency/ledger` (period filters, opening / charges / payments / lines). Party id is taken from `era_agency_session` only — never from query. No Push CL snapshot, no settle, no Finance allocate from portal (hotel staff + Finance remain SoT for AR).
 
 ## Consequences
 
-- Coverage: `HOT-AGP-01` … `HOT-AGP-03`; AC `AC-HOT-AGP`.
+- Coverage: `HOT-AGP-01` … `HOT-AGP-04`; AC `AC-HOT-AGP`.
 - Taxonomy: 10th hotel submodule key (was “9-key”; docs updated).
 - Negative tests required before Scaffold ✅.
 
@@ -70,4 +74,5 @@ Notify Pack triggers, CL snapshot in agency UI, self-cancel by cutoff, mandatory
 - [hotel-b2b-sales-contracts.md](./hotel-b2b-sales-contracts.md)
 - [hotel-booking-hierarchy.md](./hotel-booking-hierarchy.md)
 - [hotel-module-taxonomy.md](./hotel-module-taxonomy.md)
+- [hotel-city-ledger-and-fo-money.md](./hotel-city-ledger-and-fo-money.md)
 - [INTEGRATION_SSO_EVENTS.md](../INTEGRATION_SSO_EVENTS.md)

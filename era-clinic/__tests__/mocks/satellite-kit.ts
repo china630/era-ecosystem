@@ -110,6 +110,7 @@ export const shouldDeferWalkInToHub = jest.fn().mockReturnValue(false);
 export const shouldRouteRevenueToParent = jest.fn().mockReturnValue(false);
 export const linkPersonIdentity = jest.fn();
 export const getPersonOpsProfile = jest.fn().mockResolvedValue(null);
+export const ensurePersonAccessGrant = jest.fn().mockResolvedValue(true);
 export function normalizePersonSex(raw: unknown): "MALE" | "FEMALE" | "UNKNOWN" | undefined {
   if (raw == null || raw === "") return undefined;
   const s = String(raw).trim().toUpperCase();

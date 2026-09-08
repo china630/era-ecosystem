@@ -50,7 +50,10 @@ export function buildPatientDemographicsFillPatch(
   if (profile.accessDenied) return null;
   const patch: PatientDemographicsFillPatch = {};
   const sex = normalizePersonSex(profile.sex);
-  if ((sex === "MALE" || sex === "FEMALE") && patient.sex === "UNKNOWN") {
+  if (
+    (sex === "MALE" || sex === "FEMALE") &&
+    (!patient.sex || patient.sex === "UNKNOWN")
+  ) {
     patch.sex = sex;
   }
   const birthDate = parsePersonBirthDate(profile.birthDate);
