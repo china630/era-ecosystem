@@ -201,6 +201,7 @@ describe("AC-CLI-SAN-PKG unknown program code", () => {
           findFirst: jest.fn().mockResolvedValue({
             id: "tpl-1",
             code: "PKG-PREMIUM",
+            version: 1,
             durationDays: 10,
             minNights: 7,
             maxNights: 21,
@@ -209,6 +210,7 @@ describe("AC-CLI-SAN-PKG unknown program code", () => {
               { procedureCode: "PHYSIO_POOL", quotaTotal: 24 },
             ],
             quotaKnots: [],
+            blockMembers: [],
           }),
         },
         programInstance: { create, findUniqueOrThrow },

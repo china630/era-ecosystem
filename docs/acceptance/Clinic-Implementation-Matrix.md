@@ -22,7 +22,7 @@
 | AC-CLI-LAB | Lab orders ops + diagnostic catalog | ✅ | [ ] | `__tests__/cli-lab-negative.spec.ts` + CLI-11,12,32 | **Ops only** — illegal publish / collect / complete; not live HL7 |
 | AC-CLI-SAN | Sanatorium chart + doctor-confirm FIFO | ✅ | [ ] | `__tests__/cli-san-negative.spec.ts` + CLI-13,31,38,39 | Negative: FIFO skip → 409; module gate; ICD empty/chapter reject (`__tests__/icd10-catalog.spec.ts`) |
 | AC-CLI-SAN-PKG | Staff assign 4 Nafta SKUs + episode without hotel program (Wave A) | 🟡 | [ ] | `cli-san-negative` unknown template; CLI-50 | **Out of AC-CLI-SAN rollup** — dual-run assign; do not flip SAN |
-| AC-CLI-SAN-QUOTA | PDF knots + nights recalc + charge by quota (Wave B) | 🟡 | [ ] | `__tests__/program-quota.spec.ts`; CLI-51 | **Out of AC-CLI-SAN rollup** |
+| AC-CLI-SAN-QUOTA | PDF knots + nights recalc + charge by quota (Wave B) | 🟡 | [ ] | `__tests__/program-quota.spec.ts`; `__tests__/entitlement-usage.spec.ts`; CLI-51 | **Out of AC-CLI-SAN rollup** — W1: Lab/Visit burn via COUNT SoT |
 | AC-CLI-SAN-DAY1 | Doctor first-day 2–3 confirm; no Confirm all (Wave C) | 🟡 | [ ] | FIFO gates unchanged; CLI-52 | **Out of AC-CLI-SAN rollup** — does not reopen SAN ✅ |
 | AC-CLI-ASSIGN | Package lazy-assign modal + extras Pay→folio→plan (CLI-57) | 🟡 | [ ] | `__tests__/cli57-package-assign.spec.ts` | **Out of BE rollup** until UAT; SCREEN UI landed |
 | AC-CLI-BONUS | Doctor bonus extras-only buckets (Wave D) | 🟡 | [ ] | CLI-53; bonusEligible | **Out of AC-CLI-SAN rollup** |

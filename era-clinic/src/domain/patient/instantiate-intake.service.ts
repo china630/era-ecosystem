@@ -74,6 +74,8 @@ const VISIT_TITLES: Record<string, string> = {
  * Idempotent Nafta check-in package on episode open.
  * Creates missing intake / GYN|URO visits and ORDERED LabOrders (ECG-12, USG-ABD).
  * Does not start physio FIFO / program instantiation.
+ * Stamps inPackage + packageQuotaCode when a ProgramInstance balance matches (W1).
+ * Prices lines via resolveEntitlementCharge (W3) — no silent hardcoded zeros for paid paths.
  */
 export async function instantiateIntakePackage(
   episodeId: string,
@@ -88,6 +90,8 @@ export async function instantiateIntakePackage(
   const patientRefId = episode.patientRefId;
   const organizationId = episode.organizationId;
   const sex = episode.patientRef.sex;
+  const patientOrigin =
+    episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
 
   const createdVisitCodes: string[] = [];
   const skippedVisitCodes: string[] = [];
@@ -96,6 +100,16 @@ export async function instantiateIntakePackage(
 
   const practitionerId = await resolveCareTeamPractitioner(episodeId);
   const visitCodes = naftaIntakeVisitCodes(sex);
+
+  const {
+    resolvePackageStampForEpisode,
+    resolveEntitlementInstance,
+    syncEntitlementUsage,
+  } = await import("@/domain/sanatorium/entitlement-usage.service");
+  const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
+    "@/domain/sanatorium/entitlement-charge.service"
+  );
+  const quotaCodesTouched = new Set<string>();
 
   for (const code of visitCodes) {
     if (await hasVisitLine(patientRefId, episodeId, code)) {
@@ -109,7 +123,22 @@ export async function instantiateIntakePackage(
       continue;
     }
 
-    await prisma.visit.create({
+    const stamp = await resolvePackageStampForEpisode({
+      episodeId,
+      serviceCode: code,
+    });
+    const charge = applyPriceMissingFallback(
+      await resolveEntitlementCharge({
+        episodeId,
+        patientOrigin,
+        quotaCode: stamp?.packageQuotaCode,
+        serviceCode: code,
+        inPackage: Boolean(stamp),
+      }),
+      { serviceCode: code, where: "intake-visit" },
+    );
+
+    const visit = await prisma.visit.create({
       data: {
         organizationId,
         patientRefId,
@@ -119,16 +148,25 @@ export async function instantiateIntakePackage(
         patientOrigin: episode.patientOrigin,
         reservationId: episode.reservationId,
         roomNumber: episode.roomNumber,
-        amountNet: 0,
-        serviceLines: {
-          create: {
-            serviceCode: code,
-            description: VISIT_TITLES[code] ?? code,
-            amount: 0,
-          },
-        },
+        amountNet: charge.amountNet,
       },
     });
+    await prisma.visitServiceLine.create({
+      data: {
+        visitId: visit.id,
+        serviceCode: code,
+        description: VISIT_TITLES[code] ?? code,
+        amount: charge.amountNet,
+        inPackage: stamp?.inPackage ?? false,
+        packageQuotaCode: stamp?.packageQuotaCode ?? null,
+      },
+    });
+    // Visit.amountNet = sum of service line amounts (single line here; keep in sync).
+    await prisma.visit.update({
+      where: { id: visit.id },
+      data: { amountNet: charge.amountNet },
+    });
+    if (stamp?.packageQuotaCode) quotaCodesTouched.add(stamp.packageQuotaCode);
     createdVisitCodes.push(code);
   }
 
@@ -143,8 +181,22 @@ export async function instantiateIntakePackage(
       codes: [code],
       source: "IN_HOUSE",
       fasting: false,
+      patientOrigin,
     });
     createdLabCodes.push(code);
+  }
+
+  if (quotaCodesTouched.size > 0) {
+    const instance = await resolveEntitlementInstance(episodeId);
+    if (instance) {
+      for (const quotaCode of quotaCodesTouched) {
+        await syncEntitlementUsage({
+          instanceId: instance.id,
+          episodeId,
+          quotaCode,
+        });
+      }
+    }
   }
 
   return {

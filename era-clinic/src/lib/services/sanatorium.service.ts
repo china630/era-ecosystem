@@ -4,6 +4,8 @@ import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.servi
 import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { splitFullNameToParts } from '@era/satellite-kit';
+import { applyPackageAutoBlocks } from '@/domain/sanatorium/package-auto-apply.service';
+/** @deprecated Prefer applyPackageAutoBlocks — kept as fallback when no ProgramInstance. */
 import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
 import {
   assertLabOrderCanCreate,
@@ -102,9 +104,13 @@ async function findOpenEpisodeForStay(
 
 async function safeInstantiateIntake(episodeId: string) {
   try {
-    await instantiateIntakePackage(episodeId);
+    const auto = await applyPackageAutoBlocks(episodeId, { trigger: "OPEN" });
+    if (auto && "skipped" in auto && auto.skipped === "NO_PROGRAM") {
+      // @deprecated — hard-coded PKG-NAFTA-INTAKE path when episode has no ProgramInstance yet
+      await instantiateIntakePackage(episodeId);
+    }
   } catch (err) {
-    console.error("[sanatorium] instantiateIntakePackage failed", episodeId, err);
+    console.error("[sanatorium] package auto-apply / intake failed", episodeId, err);
   }
 }
 
@@ -614,12 +620,39 @@ export async function listOpenEpisodes(input?: {
     };
   }
 
+  /** Ops package signal for list badges / filters. */
+  function packageSignal(e: {
+    programCode: string | null;
+    noPackageConfirmedAt?: Date | null;
+    programInstance?: { id: string } | null;
+  }): "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED" {
+    if (e.noPackageConfirmedAt) return "NO_PACKAGE_CONFIRMED";
+    if (e.programInstance) return "OK";
+    if (e.programCode?.trim()) return "NO_PROGRAM";
+    return "NO_PROGRAM_CODE";
+  }
+
+  function withPackageSignal<
+    T extends {
+      programCode: string | null;
+      noPackageConfirmedAt?: Date | null;
+      programInstance?: { id: string } | null;
+      careDoctors?: { id: string }[];
+    },
+  >(e: T) {
+    const flagged = withCareTeamFlag(e);
+    return {
+      ...flagged,
+      packageSignal: packageSignal(e),
+    };
+  }
+
   const walkInIds = episodes
     .filter((e) => e.patientOrigin === "WALK_IN")
     .map((e) => e.id);
   if (walkInIds.length === 0) {
     const data = episodes.map((e) => ({
-      ...withCareTeamFlag(e),
+      ...withPackageSignal(e),
       canCloseWalkIn: false as boolean,
     }));
     return {
@@ -662,7 +695,7 @@ export async function listOpenEpisodes(input?: {
   );
 
   const data = episodes.map((e) => {
-    const base = withCareTeamFlag(e);
+    const base = withPackageSignal(e);
     if (e.patientOrigin !== "WALK_IN") {
       return { ...base, canCloseWalkIn: false };
     }

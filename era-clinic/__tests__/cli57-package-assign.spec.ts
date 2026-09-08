@@ -81,6 +81,30 @@ describe("CLI-57 package assign helpers", () => {
     expect(list.map((x) => x.code).sort()).toEqual(["WO-TR-68", "WO-TR-72"]);
   });
 
+  it("eligibleSkusForQuotaAlias filters by patient sex", () => {
+    const types = [
+      { code: "SVC-NAFTALAN-VANNASI-KISI", name: "Naftalan vannası (Kişi)" },
+      { code: "SVC-NAFTALAN-VANNASI-QADIN", name: "Naftalan vannası (Qadın)" },
+    ];
+    expect(
+      eligibleSkusForQuotaAlias("NAFTALAN_BATH", types, "FEMALE").map((x) => x.code),
+    ).toEqual(["SVC-NAFTALAN-VANNASI-QADIN"]);
+    expect(
+      eligibleSkusForQuotaAlias("NAFTALAN_BATH", types, "MALE").map((x) => x.code),
+    ).toEqual(["SVC-NAFTALAN-VANNASI-KISI"]);
+    expect(
+      eligibleSkusForQuotaAlias("NAFTALAN_BATH", types, "UNKNOWN")
+        .map((x) => x.code)
+        .sort(),
+    ).toEqual(["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"]);
+  });
+
+  it("PackageAssignError PLACE_FAILED uses 409", () => {
+    const err = new PackageAssignError("no slot", "PLACE_FAILED", 409);
+    expect(err.code).toBe("PLACE_FAILED");
+    expect(err.status).toBe(409);
+  });
+
   it("eligibleSkusForPool paraffin vs physio and excludes dedicated balances", () => {
     const types = [
       { code: "SVC-PARAFIN-ARM", name: "Parafin qol", needsSite: true, active: true },

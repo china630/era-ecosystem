@@ -94,10 +94,12 @@ function isFemaleBathSku(code: string, name: string): boolean {
 /**
  * Real ProcedureTypes that may burn a NAFTALAN_BATH (or other quota-alias) balance line.
  * Prefers seeded SVC gender SKUs; falls back to WO-TR / name-matched baths when seed is missing.
+ * When `sex` is MALE/FEMALE, only that gender's SKUs are returned (UNKNOWN → both for picker).
  */
 export function eligibleSkusForQuotaAlias(
   quotaCode: string,
   types: Array<{ code: string; name: string; active?: boolean | null }>,
+  sex?: string | null,
 ): PoolEligibleSku[] {
   const c = quotaCode.trim().toUpperCase();
   if (!isPackageQuotaAlias(c)) return [];
@@ -113,26 +115,33 @@ export function eligibleSkusForQuotaAlias(
     return out;
   };
 
+  let list: PoolEligibleSku[] = [];
   if (c === "NAFTALAN_BATH") {
     const male = pickCandidates(NAFTALAN_BATH_SKU_CANDIDATES.MALE);
     const female = pickCandidates(NAFTALAN_BATH_SKU_CANDIDATES.FEMALE);
     if (male.length || female.length) {
       const seen = new Set<string>();
-      const out: PoolEligibleSku[] = [];
       for (const s of [...female, ...male]) {
         const k = s.code.toUpperCase();
         if (seen.has(k)) continue;
         seen.add(k);
-        out.push(s);
+        list.push(s);
       }
-      return out;
+    } else {
+      list = active
+        .filter((t) => isMaleBathSku(t.code, t.name) || isFemaleBathSku(t.code, t.name))
+        .map((t) => ({ code: t.code, name: t.name }));
     }
-    // Last resort: any gender-tagged naftalan bath in catalog
-    return active
-      .filter((t) => isMaleBathSku(t.code, t.name) || isFemaleBathSku(t.code, t.name))
-      .map((t) => ({ code: t.code, name: t.name }));
   }
-  return [];
+
+  const gender = sexNorm(sex);
+  if (gender === "MALE") {
+    return list.filter((s) => isMaleBathSku(s.code, s.name));
+  }
+  if (gender === "FEMALE") {
+    return list.filter((s) => isFemaleBathSku(s.code, s.name));
+  }
+  return list;
 }
 
 /**
@@ -151,7 +160,7 @@ export function resolvePackageQuotaSku(
   const types =
     typeMeta ??
     [...typeCodes].map((code) => ({ code, name: code, active: true as boolean | null }));
-  const eligible = eligibleSkusForQuotaAlias(c, types);
+  const eligible = eligibleSkusForQuotaAlias(c, types, sex);
   if (eligible.length === 0) return null;
 
   const gender = sexNorm(sex);
@@ -370,6 +379,11 @@ export type PackageBalanceRow = {
   isQuotaAlias: boolean;
   /** When set, UI should open SKU picker (pool or unresolved quota alias). */
   needsSkuPicker: boolean;
+  /**
+   * False for intake labs/exams (fulfilled via LabOrder/Visit auto-apply).
+   * Modal shows them read-only; only assignable rows open the picker.
+   */
+  assignable: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -530,34 +544,33 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   const typeRows = types.map((t) => ({ ...t, active: true as boolean | null }));
   const patientSex = episode.patientRef?.sex ?? null;
 
-  const balances: PackageBalanceRow[] = instance.procedureLines
-    .filter((line) =>
-      isPackageAssignTreatmentLine(
-        line.procedureCode,
-        nameByCode.get(line.procedureCode) ?? line.procedureCode,
-      ),
-    )
-    .map((line) => {
+  const balances: PackageBalanceRow[] = instance.procedureLines.map((line) => {
     const c = counts.get(line.procedureCode) ?? { circ: 0, consumed: 0 };
     const used = c.circ + c.consumed;
     const configured = membersByBlock.get(line.procedureCode) ?? [];
     const isPool = isEntitlementBucket(line.procedureCode, configured);
     const isQuotaAlias = isPackageQuotaAlias(line.procedureCode);
+    const assignable = isPackageAssignTreatmentLine(
+      line.procedureCode,
+      nameByCode.get(line.procedureCode) ?? line.procedureCode,
+    );
     let needsSkuPicker = false;
-    if (configured.length > 1) {
-      needsSkuPicker = true;
-    } else if (configured.length === 1) {
-      needsSkuPicker = false;
-    } else if (isPackagePoolCode(line.procedureCode)) {
-      needsSkuPicker = true;
-    } else if (isQuotaAlias) {
-      const auto = resolvePackageQuotaSku(
-        line.procedureCode,
-        patientSex,
-        types.map((t) => t.code),
-        typeRows,
-      );
-      needsSkuPicker = auto == null;
+    if (assignable) {
+      if (configured.length > 1) {
+        needsSkuPicker = true;
+      } else if (configured.length === 1) {
+        needsSkuPicker = false;
+      } else if (isPackagePoolCode(line.procedureCode)) {
+        needsSkuPicker = true;
+      } else if (isQuotaAlias) {
+        const auto = resolvePackageQuotaSku(
+          line.procedureCode,
+          patientSex,
+          types.map((t) => t.code),
+          typeRows,
+        );
+        needsSkuPicker = auto == null;
+      }
     }
     return {
       procedureCode: line.procedureCode,
@@ -570,6 +583,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
       isPool,
       isQuotaAlias,
       needsSkuPicker,
+      assignable,
     };
   });
 
@@ -587,6 +601,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
       poolEligible[b.procedureCode] = eligibleSkusForQuotaAlias(
         b.procedureCode,
         typeRows,
+        patientSex,
       );
     }
   }
@@ -708,6 +723,7 @@ export async function assignPackageProcedures(
       const eligible = eligibleSkusForQuotaAlias(
         burnQuota,
         types.map((t) => ({ code: t.code, name: t.name, active: true })),
+        episode.patientRef?.sex,
       );
       if (!eligible.some((e) => e.code === line.procedureCode)) {
         throw new PackageAssignError(
@@ -742,6 +758,7 @@ export async function assignPackageProcedures(
           : eligibleSkusForQuotaAlias(
               burnQuota,
               types.map((t) => ({ code: t.code, name: t.name, active: true })),
+              episode.patientRef?.sex,
             );
       if (!eligible.some((e) => e.code === line.procedureCode)) {
         throw new PackageAssignError(
@@ -843,6 +860,29 @@ export async function assignPackageProcedures(
     confirmedByUserId: opts?.confirmedByUserId,
   });
 
+  if (placed < createdIds.length) {
+    const stillProposed = await prisma.procedureOrder.findMany({
+      where: { id: { in: createdIds }, status: "PROPOSED" },
+      select: { id: true, procedureCode: true, procedureName: true },
+    });
+    if (stillProposed.length > 0) {
+      const codes = [...new Set(stillProposed.map((o) => o.procedureCode))].join(", ");
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: stillProposed.map((o) => o.id) } },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+          cancelReason: "place_failed_no_slot_or_resource",
+        },
+      });
+      throw new PackageAssignError(
+        `Could not place ${stillProposed.length} of ${createdIds.length} session(s) (${codes}). Check procedure resources, staff skills, and schedule capacity.`,
+        "PLACE_FAILED",
+        409,
+      );
+    }
+  }
+
   const codes = [...new Set(resolved.map((l) => l.quotaCode))];
   for (const code of codes) {
     await syncQuotaUsed(instance.id, episodeId, code);
@@ -852,21 +892,10 @@ export async function assignPackageProcedures(
 }
 
 async function syncQuotaUsed(instanceId: string, episodeId: string, quotaCode: string) {
-  const used = await prisma.procedureOrder.count({
-    where: {
-      clinicalEpisodeId: episodeId,
-      inPackage: true,
-      status: { in: [...IN_CIRCULATION, ...CONSUMED] },
-      OR: [
-        { packageQuotaCode: quotaCode },
-        { packageQuotaCode: null, procedureCode: quotaCode },
-      ],
-    },
-  });
-  await prisma.programProcedureBalance.updateMany({
-    where: { instanceId, procedureCode: quotaCode },
-    data: { quotaUsed: used },
-  });
+  const { syncEntitlementUsage } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+  await syncEntitlementUsage({ instanceId, episodeId, quotaCode });
 }
 
 /**
@@ -972,6 +1001,7 @@ export async function replacePackageProcedures(
           : eligibleSkusForQuotaAlias(
               pool,
               types.map((t) => ({ ...t, active: true })),
+              episode.patientRef?.sex,
             );
       if (eligible.some((e) => e.code === input.toCode)) {
         inPackageTarget = true;

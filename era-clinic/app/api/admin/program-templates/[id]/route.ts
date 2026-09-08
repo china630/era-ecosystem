@@ -5,6 +5,7 @@ import {
   shapeProgramTemplate,
   saveProgramTemplatePatch,
   countOpenInstancesForTemplate,
+  countAnyInstancesForTemplate,
 } from "@/domain/sanatorium/program-template-admin";
 
 export async function PATCH(
@@ -19,13 +20,16 @@ export async function PATCH(
 
     try {
       const row = await saveProgramTemplatePatch(id, body);
-      const openInstanceCount = await countOpenInstancesForTemplate(row.id);
+      const [openInstanceCount, pinInstanceCount] = await Promise.all([
+        countOpenInstancesForTemplate(row.id),
+        countAnyInstancesForTemplate(row.id),
+      ]);
       const previousOpen =
         row.supersedesId != null
           ? await countOpenInstancesForTemplate(row.supersedesId)
           : 0;
       return jsonOk({
-        ...shapeProgramTemplate({ ...row, openInstanceCount }),
+        ...shapeProgramTemplate({ ...row, openInstanceCount, pinInstanceCount }),
         versionBumped: row.supersedesId != null,
         previousVersionOpenStays: previousOpen,
       });
@@ -36,6 +40,15 @@ export async function PATCH(
         return jsonOk(
           { error: "RETIRED_TEMPLATE", message: "Edit the current version only" },
           409,
+        );
+      }
+      if (code === "INVALID_VALIDITY_RANGE") {
+        return jsonOk(
+          {
+            error: "INVALID_VALIDITY_RANGE",
+            message: "Valid-to must not precede valid-from",
+          },
+          400,
         );
       }
       if (code === "COMPOSITION_REQUIRES_PROCEDURES") {

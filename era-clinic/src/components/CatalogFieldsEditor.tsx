@@ -4,6 +4,7 @@ import {
   Field,
   FieldSelect,
   FieldTextarea,
+  MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
@@ -178,6 +179,7 @@ export function CatalogFieldsEditor({ value, onChange, labels }: Props) {
               )}
               <label className="flex items-center gap-2 text-[13px]">
                 <input
+                  className={MODAL_CHECKBOX_CLASS}
                   type="checkbox"
                   checked={!!field.required}
                   onChange={(e) => updateAt(index, { required: e.target.checked })}

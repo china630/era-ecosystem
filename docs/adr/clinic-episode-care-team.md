@@ -83,9 +83,11 @@ After ≥1 doctor: existing CLI-55 blocks (anamnesis → CI → complaints/ICD �
 
 CLOSED episode: care team read-only.
 
-### D5 — Intake visits
+### D5 — Intake visits / package auto-apply
 
 `instantiateIntakePackage` must **not** invent a default “first doctor by code”. Prefer a care-team member as `Visit.practitionerId`; if care team empty, skip creating intake visits (labs may still open per existing rules) until a doctor is assigned.
+
+**Amended 2026-09-08 (W2):** Prefer `applyPackageAutoBlocks` driven by template block axes (`AUTO_ON_OPEN` / `requiresDoctor`). On **any** care-team add when `ProgramInstance.autoApplyState === PENDING_DOCTOR` **or** the team was empty (`before === 0`), call `applyPackageAutoBlocks(…, { trigger: "CARE_TEAM" })` — not a one-shot first-doctor-only hook. Hard-coded `instantiateIntakePackage` remains only as fallback when there is no `ProgramInstance`.
 
 ### D6 — Appointments (deferred design)
 

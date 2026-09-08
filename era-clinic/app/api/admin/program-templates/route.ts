@@ -2,11 +2,15 @@ import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 import {
+  bakuDateOnly,
+  closeProgramTemplateValidity,
+  parseDateOnly,
   programTemplateCreateSchema,
   programTemplateInclude,
   replaceTemplateProceduresAndKnots,
   shapeProgramTemplate,
   countOpenInstancesForTemplate,
+  countAnyInstancesForTemplate,
   purgeRetiredTemplatesWithoutInstances,
   backfillEntitlementSnapshots,
 } from "@/domain/sanatorium/program-template-admin";
@@ -24,11 +28,15 @@ export async function GET(req: Request) {
     });
     const shaped = [];
     for (const row of rows) {
-      const openInstanceCount = await countOpenInstancesForTemplate(row.id);
+      const [openInstanceCount, pinInstanceCount] = await Promise.all([
+        countOpenInstancesForTemplate(row.id),
+        countAnyInstancesForTemplate(row.id),
+      ]);
       shaped.push(
         shapeProgramTemplate({
           ...row,
           openInstanceCount,
+          pinInstanceCount,
         }),
       );
     }
@@ -70,6 +78,15 @@ export async function POST(req: Request) {
         409,
       );
     }
+    const effectiveFrom =
+      parseDateOnly(body.effectiveFrom ?? null) ?? parseDateOnly(bakuDateOnly());
+    const effectiveTo = parseDateOnly(body.effectiveTo ?? null);
+    if (effectiveFrom && effectiveTo && effectiveTo < effectiveFrom) {
+      return jsonOk(
+        { error: "INVALID_VALIDITY_RANGE", message: "Valid-to must not precede valid-from" },
+        400,
+      );
+    }
     const row = await prisma.$transaction(async (tx) => {
       const created = await tx.programTemplate.create({
         data: {
@@ -78,6 +95,8 @@ export async function POST(req: Request) {
           durationDays: body.durationDays,
           version: 1,
           isCurrent: true,
+          effectiveFrom,
+          effectiveTo,
           ...(body.minNights !== undefined ? { minNights: body.minNights } : {}),
           ...(body.maxNights !== undefined ? { maxNights: body.maxNights } : {}),
         },
@@ -93,7 +112,7 @@ export async function POST(req: Request) {
         include: programTemplateInclude,
       });
     });
-    return jsonOk(shapeProgramTemplate({ ...row, openInstanceCount: 0 }), 201);
+    return jsonOk(shapeProgramTemplate({ ...row, openInstanceCount: 0, pinInstanceCount: 0 }), 201);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -107,16 +126,12 @@ export async function DELETE(req: Request) {
     if (!id) return jsonOk({ error: "id required" }, 400);
     const pinned = await prisma.programInstance.count({ where: { templateId: id } });
     if (pinned > 0) {
-      return jsonOk(
-        {
-          error: "HAS_INSTANCES",
-          message: "Cannot delete a package version that has guest program instances",
-        },
-        409,
-      );
+      // Guests pinned this version — close the sales window instead of erasing their entitlement.
+      const { effectiveTo } = await closeProgramTemplateValidity(id);
+      return jsonOk({ deleted: false, closed: true, effectiveTo, pinnedInstances: pinned });
     }
     await prisma.programTemplate.delete({ where: { id } });
-    return jsonOk({ deleted: true });
+    return jsonOk({ deleted: true, closed: false });
   } catch (err) {
     return handleRouteError(err);
   }

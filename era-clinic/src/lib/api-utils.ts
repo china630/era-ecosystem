@@ -64,6 +64,7 @@ export function handleRouteError(err: unknown) {
       "LAB_NOT_ORDERED",
       "LAB_ALREADY_OPEN",
       "LAB_ALREADY_COMPLETED",
+      "LAB_OVER_QUOTA_BLOCKED",
     ]);
     if (conflictCodes.has(code)) {
       const testCode =

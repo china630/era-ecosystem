@@ -2,6 +2,7 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     patientRef: { findUnique: jest.fn() },
     clinicalEpisode: { findUnique: jest.fn() },
+    programInstance: { findFirst: jest.fn() },
     labOrder: { findFirst: jest.fn() },
     labOrderItem: { findFirst: jest.fn() },
     visitServiceLine: { findFirst: jest.fn() },
@@ -20,6 +21,7 @@ import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
 const mockedPrisma = prisma as unknown as {
   patientRef: { findUnique: jest.Mock };
   clinicalEpisode: { findUnique: jest.Mock };
+  programInstance: { findFirst: jest.Mock };
   labOrder: { findFirst: jest.Mock };
   visitServiceLine: { findFirst: jest.Mock };
   visit: { findFirst: jest.Mock; findMany: jest.Mock };
@@ -39,6 +41,7 @@ describe("getIntakeChecklist", () => {
       ],
     });
     mockedPrisma.patientRef.findUnique.mockResolvedValue({ id: "p1", sex: "FEMALE" });
+    mockedPrisma.programInstance.findFirst.mockResolvedValue(null);
     mockedPrisma.clinicalEpisode.findUnique.mockResolvedValue({
       anamnesisText: null,
       _count: { complaints: 0 },
