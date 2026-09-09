@@ -259,6 +259,7 @@ services:
       CLINIC_URL: http://clinic:3203
       NEXT_PUBLIC_FNB_POS_URL: ${ERA_FNB_POS_ORIGIN:-https://fnb-pos.era-365.online}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-hotel-pms}
+      AUTH_COOKIE_NAME: ${HOTEL_AUTH_COOKIE_NAME:-era_hotel_session}
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
@@ -301,6 +302,7 @@ services:
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       FNB_POS_WEBHOOK_SECRET: ${FNB_POS_WEBHOOK_SECRET:-dev-fnb-pos-webhook-secret}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
+      AUTH_COOKIE_NAME: ${FNB_AUTH_COOKIE_NAME:-era_fnb_session}
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
@@ -520,6 +522,7 @@ services:
       ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-}}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_CLINIC_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
+      AUTH_COOKIE_NAME: ${CLINIC_AUTH_COOKIE_NAME:-era_clinic_session}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       RUN_SEED: ${CLINIC_RUN_SEED:-true}
       PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-chingiz@era.com,shirinov.chingiz@gmail.com,inaram84@gmail.com}

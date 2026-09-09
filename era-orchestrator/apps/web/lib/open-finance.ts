@@ -20,12 +20,25 @@ export async function fetchSatelliteSsoTicket(
   organizationId: string,
 ): Promise<SatelliteSsoTicket | null> {
   try {
-    const res = await orchFetch("/auth/satellite-sso-ticket", {
+    let token = accessToken;
+    let res = await orchFetch("/auth/satellite-sso-ticket", {
       method: "POST",
-      token: accessToken,
+      token,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ organizationId }),
     });
+    // Match finance handoff: refresh once on 401 so satellite SSO does not silently fail.
+    if (res.status === 401) {
+      const fresh = await ensureFreshOrchAccessToken();
+      if (!fresh) return null;
+      token = fresh;
+      res = await orchFetch("/auth/satellite-sso-ticket", {
+        method: "POST",
+        token,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizationId }),
+      });
+    }
     if (!res.ok) return null;
     return (await res.json()) as SatelliteSsoTicket;
   } catch {

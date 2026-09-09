@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 4,
+      maxAge: 60 * 60 * 12,
     });
     res.cookies.set(PRESETS_COOKIE, serializePresetsCookie(enabledPresets), {
       httpOnly: false,

@@ -22,6 +22,7 @@ import {
 import { EARLY_ACCESS_MODULES } from "../../components/early-access/modules.config";
 import {
   buildFinanceHandoffUrl,
+  ensureFreshOrchAccessToken,
   fetchSatelliteLaunchUrl,
   fetchSatelliteSsoTicket,
   getOrchAccessToken,
@@ -159,13 +160,18 @@ function SystemCard({
     }
     const item = industryNavItemForKey(systemKey);
     if (!item || !user?.email || !user.organizationId) return;
-    const token = getOrchAccessToken();
-    if (!token) return;
     const satelliteKey = workspaceSatelliteKey(systemKey);
     // Open the tab synchronously to avoid popup blockers, then redirect once signed.
     const popup = window.open("", "_blank");
     const organizationId = user.organizationId;
     void (async () => {
+      // Same as Finance: refresh near-expiry access token before minting SSO ticket.
+      const token = await ensureFreshOrchAccessToken();
+      if (!token) {
+        popup?.close();
+        window.location.assign("/login?reason=session_expired");
+        return;
+      }
       const fromRegistry = satelliteKey
         ? await fetchSatelliteLaunchUrl(token, satelliteKey)
         : null;
@@ -178,6 +184,7 @@ function SystemCard({
       const ticket = await fetchSatelliteSsoTicket(token, organizationId);
       if (!ticket) {
         popup?.close();
+        window.alert("SSO ticket failed. Try again or re-login.");
         return;
       }
       const url = buildSatelliteSsoLaunchUrlFromTicket(base, ticket);
