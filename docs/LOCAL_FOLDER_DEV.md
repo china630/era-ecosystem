@@ -146,5 +146,6 @@ Set `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` when Finance runs in the
 | `Cannot find module '@era/satellite-kit'` | Build `packages/satellite-kit` |
 | CP billing / tier bar empty | `CONTROL_PLANE_URL` must point to Orch **:4000** |
 | Hotel Finance links open wrong host | `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` |
-| Auth SSO fails locally | Same `ERA_JWT_SECRET` / `AUTH_JWT_SECRET` across Orch + satellite per `INTEGRATION_SSO_EVENTS.md` |
+| Auth SSO fails locally | Same `ERA_SSO_SHARED_SECRET` across Orch + satellite. Prefer **`127.0.0.1` only** (not mix with `localhost`) — browsers treat them as different hosts, so clinic cookies “vanish”. On Docker Compose, satellites use distinct `AUTH_COOKIE_NAME` (`era_clinic_session`, `era_hotel_session`, …) because cookies are **not** port-scoped. |
+| Orch token / SSO launch silently dies | Orch access lives in `localStorage`; stale access JWT without refresh made satellite ticket mint fail. Workspace now refreshes before SSO. Also: do not mix `localhost` vs `127.0.0.1` launch URLs in `satellite_endpoints`. |
 | Finance `Session invalid — use Orchestrator login` | Finance web must proxy `/api` → **:4100** and `/cp` → Orch **:4000**. Set `NEXT_PUBLIC_API_URL=http://127.0.0.1:4100` and `NEXT_PUBLIC_CONTROL_PLANE_URL=http://127.0.0.1:4000`, then restart `finance-web`. SSO users (`sso:no-password`) can also use the Finance login form — the API verifies the password at Orchestrator and runs `cp-provision`. A 500 on `/auth/cp-handoff` is a Finance API provision crash, not a wrong proxy. |

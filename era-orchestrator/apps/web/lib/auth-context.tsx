@@ -84,11 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin: payload.isSuperAdmin ?? false,
       });
       setReady(true);
-      void loadMemberships(stored).then(setMemberships).catch(() => {
-        clearOrchTokens();
-        setToken(null);
-        setUser(null);
-      });
+      // Do not clear tokens on memberships failure — transient API/CORS blips
+      // were wiping orch SSO state and made satellite launch look "broken".
+      void loadMemberships(stored)
+        .then(setMemberships)
+        .catch(() => undefined);
     } catch {
       clearOrchTokens();
       setReady(true);
