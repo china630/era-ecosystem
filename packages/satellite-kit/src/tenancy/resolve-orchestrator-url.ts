@@ -1,4 +1,7 @@
 import { getRuntimeConfigMemory } from "./runtime-config-memory";
+import { rewriteComposeHostnameForHost } from "./compose-hostname";
+
+export { isRunningInsideDocker, rewriteComposeHostnameForHost } from "./compose-hostname";
 
 /**
  * Orchestrator / control-plane base URL.
@@ -9,7 +12,9 @@ export function resolveOrchestratorBaseUrl(opts?: {
   fallback?: string;
 }): string {
   const fromMem = getRuntimeConfigMemory().orchestratorEventUrl?.trim();
-  if (fromMem) return fromMem.replace(/\/$/, "");
+  if (fromMem) {
+    return rewriteComposeHostnameForHost(fromMem);
+  }
 
   const fromEnv = (
     process.env.ORCHESTRATOR_EVENT_URL?.trim() ||
@@ -17,9 +22,12 @@ export function resolveOrchestratorBaseUrl(opts?: {
     process.env.CONTROL_PLANE_URL?.trim() ||
     ""
   );
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (fromEnv) {
+    return rewriteComposeHostnameForHost(fromEnv);
+  }
 
-  return (opts?.fallback ?? "http://127.0.0.1:4100").replace(/\/$/, "");
+  const fallback = (opts?.fallback ?? "http://127.0.0.1:4000").replace(/\/$/, "");
+  return rewriteComposeHostnameForHost(fallback);
 }
 
 /** Event / internal service token: memory first, then env bootstrap. */
@@ -28,6 +36,7 @@ export function resolveSatelliteEventServiceToken(): string {
   if (fromMem) return fromMem;
   return (
     process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+    process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN?.trim() ||
     process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
     ""
   );

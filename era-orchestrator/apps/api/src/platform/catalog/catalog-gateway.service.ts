@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { DATA_HUB_XOR } from "@era365/database";
 import { PlatformAuditService } from "../platform-audit.service";
 import { PlatformEntitlementService } from "../platform-entitlement.service";
 import { resolveOrganizationUuid } from "../../common/organization-id.util";
-import { DATA_HUB_XOR } from "@era365/database";
 import { DataHubProxyClient } from "./data-hub-proxy.client";
 
 const PLATFORM_REFERENCE_DATA = "platform_reference_data";

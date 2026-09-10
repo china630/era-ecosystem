@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceSeatService } from "./workforce-seat.service";
 
@@ -12,6 +13,7 @@ export class WorkforceSecurityService {
     private readonly entitlement: WorkforceEntitlementService,
     private readonly scope: WorkforceScopeService,
     private readonly seats: WorkforceSeatService,
+    private readonly employments: WorkforceEmploymentsService,
   ) {}
 
   async overview(organizationId: string) {
@@ -130,7 +132,14 @@ export class WorkforceSecurityService {
       }),
       this.prisma.workforceRoleBinding.count({ where }),
     ]);
-    return { items, total, page, pageSize };
+    const personIds = items
+      .map((row) => row.employment.globalPersonId)
+      .filter(Boolean);
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      personIds,
+    );
+    return { items, total, page, pageSize, persons };
   }
 
   async auditLog(

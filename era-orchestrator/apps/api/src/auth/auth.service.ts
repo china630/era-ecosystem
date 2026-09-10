@@ -20,6 +20,7 @@ import type { EraJwtPayload } from "./jwt-payload.type";
 import { resolvePermissionsForRole } from "./role-permissions";
 import {
   accessTokenSignOptions,
+  accessTokenVerifyOptions,
   jwksPublicKeys,
 } from "./jwt-signing.util";
 
@@ -429,10 +430,13 @@ export class AuthService {
     const audience =
       this.config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ??
       "era-finance-core";
+    const verify = accessTokenVerifyOptions(this.config, token);
     return this.jwt.verifyAsync<EraJwtPayload>(token, {
       issuer,
       audience,
-      algorithms: ["HS256"],
+      algorithms: verify.algorithms,
+      // KeyObject is valid for jsonwebtoken RS256; NestJS types only allow string|Buffer.
+      secret: verify.secret as never,
     });
   }
 
@@ -478,26 +482,15 @@ export class AuthService {
     const sign = accessTokenSignOptions(this.config);
     const expiresIn = (this.config.get<string>("ERA_JWT_ACCESS_EXPIRES") ??
       "12h") as `${number}h`;
-    if (sign.algorithm === "RS256" && sign.privateKey) {
-      return this.jwt.signAsync(
-        { ...claims },
-        {
-          issuer,
-          audience,
-          algorithm: "RS256",
-          privateKey: sign.privateKey,
-          keyid: sign.keyid,
-          expiresIn,
-        },
-      );
-    }
     return this.jwt.signAsync(
       { ...claims },
       {
         issuer,
         audience,
-        algorithm: "HS256",
-        secret: sign.secret,
+        algorithm: sign.algorithm,
+        // KeyObject is valid for jsonwebtoken RS256; NestJS types only allow string|Buffer.
+        secret: sign.secret as never,
+        ...(sign.keyid ? { keyid: sign.keyid } : {}),
         expiresIn,
       },
     );

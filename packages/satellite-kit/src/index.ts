@@ -38,6 +38,7 @@ export { getRuntimeSsoSharedSecret } from "./tenancy/runtime-config-memory";
 export {
   resolveOrchestratorBaseUrl,
   resolveSatelliteEventServiceToken,
+  rewriteComposeHostnameForHost,
 } from "./tenancy/resolve-orchestrator-url";
 export {
   runWithSatelliteTenant,

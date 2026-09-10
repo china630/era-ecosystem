@@ -2,12 +2,7 @@ import {
   isSatelliteEvent,
   getSatelliteEventType,
   isFinanceOutboundStaffEvent,
-  isSatelliteHotelGuestCheckedIn,
-  isSatelliteHotelGuestCheckedOut,
-  isSatelliteHotelRoomChanged,
-    isSatelliteHotelSanatoriumBookingCreated,
-    isSatelliteHotelStayProductChanged,
-    isSatelliteStaffDeactivated,
+  isSatelliteStaffDeactivated,
   isSatelliteStaffProvisioned,
   satelliteStaffDeactivatedSchema,
   satelliteStaffProvisionedSchema,
@@ -29,18 +24,9 @@ import {
 } from "./satellite-endpoint-registry.service";
 import { SatelliteEventSubscriberRegistry } from "./satellite-event-subscriber.registry";
 import { SatelliteFanoutWorker } from "./satellite-fanout.worker";
+import { isClinicLifecycleEvent } from "./clinic-lifecycle-event";
 
 export const ERA_SATELLITE_EVENTS_QUEUE = "era-satellite-events";
-
-function isClinicLifecycleEvent(data: unknown): boolean {
-  return (
-    isSatelliteHotelGuestCheckedIn(data) ||
-    isSatelliteHotelGuestCheckedOut(data) ||
-    isSatelliteHotelRoomChanged(data) ||
-    isSatelliteHotelSanatoriumBookingCreated(data) ||
-    isSatelliteHotelStayProductChanged(data)
-  );
-}
 
 @Injectable()
 export class SatelliteEventsService {
