@@ -136,10 +136,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
         {t("careTeamTitle")}
       </h2>
       <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("careTeamHint")}</p>
-        {items.length === 0 ? (
-          <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("careTeamEmpty")}</p>
-        ) : (
+        {items.length > 0 ? (
           <ul className="space-y-1.5">
             {items.map((row) => (
               <li
@@ -166,7 +163,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
         {!readOnly ? (
           <div className="flex flex-wrap items-end gap-2">
             <div className="w-full max-w-md">

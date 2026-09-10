@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import {
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
+  isSatelliteHotelGuestDeparted,
+  isSatelliteHotelGuestMoved,
   isSatelliteHotelRoomChanged,
   isSatelliteHotelSanatoriumBookingCreated,
   isSatelliteHotelStayProductChanged,
@@ -10,6 +12,8 @@ import {
 import {
   handleGuestCheckedIn,
   handleGuestCheckedOut,
+  handleGuestDeparted,
+  handleGuestMoved,
   handleRoomChanged,
   handleSanatoriumBookingCreated,
   handleStayProductChanged,
@@ -58,6 +62,14 @@ export async function POST(request: Request) {
     }
     if (isSatelliteHotelGuestCheckedOut(body)) {
       await handleGuestCheckedOut(body);
+      return NextResponse.json({ ok: true });
+    }
+    if (isSatelliteHotelGuestDeparted(body)) {
+      await handleGuestDeparted(body);
+      return NextResponse.json({ ok: true });
+    }
+    if (isSatelliteHotelGuestMoved(body)) {
+      await handleGuestMoved(body);
       return NextResponse.json({ ok: true });
     }
     if (isSatelliteHotelRoomChanged(body)) {

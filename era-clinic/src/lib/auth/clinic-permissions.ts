@@ -1,4 +1,9 @@
-import { CLINIC_ROLE, type ClinicRoleCode } from "@/lib/clinic-roles";
+import {
+  CLINIC_ROLE,
+  type ClinicRoleCode,
+} from "@/lib/clinic-roles";
+
+export { SYSTEM_CLINIC_ROLES, CONFIGURABLE_CLINIC_ROLES } from "@/lib/clinic-roles";
 
 /** Stable permission keys — SSOT for nav, middleware, API, and admin matrix. */
 export const CLINIC_PERMISSION = {
@@ -380,7 +385,11 @@ export function defaultPermissionsForRole(
   roleCode: string,
 ): ClinicPermission[] {
   const code = roleCode as ClinicRoleCode;
-  return DEFAULT_ROLE_PERMISSIONS[code] ?? [...COMMON_AUTHENTICATED];
+  if (DEFAULT_ROLE_PERMISSIONS[code]) {
+    return DEFAULT_ROLE_PERMISSIONS[code];
+  }
+  // Unknown / custom role without stored JSON: do not invent RECEPTION-like grants.
+  return [CLINIC_PERMISSION.SCREEN_HOME];
 }
 
 export function effectiveRolePermissions(
@@ -505,6 +514,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/wards", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/beds", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
+  { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
 ];
@@ -589,12 +599,3 @@ export function navEntryPermission(
   if (!p || typeof p !== "string") return null;
   return isClinicPermission(p) ? p : null;
 }
-
-export const CONFIGURABLE_CLINIC_ROLES: ClinicRoleCode[] = [
-  CLINIC_ROLE.RECEPTION,
-  CLINIC_ROLE.DOCTOR,
-  CLINIC_ROLE.NURSE,
-  CLINIC_ROLE.FLOOR,
-  CLINIC_ROLE.LAB_TECH,
-  CLINIC_ROLE.CLINIC_ADMIN,
-];

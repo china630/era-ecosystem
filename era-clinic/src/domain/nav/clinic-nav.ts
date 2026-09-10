@@ -56,7 +56,6 @@ export type ClinicNavEntry = {
 };
 
 export type ClinicNavBuildCtx = {
-  role: string;
   permissions: string[];
   presetEnabled: (code: ClinicPresetCode) => boolean;
 };

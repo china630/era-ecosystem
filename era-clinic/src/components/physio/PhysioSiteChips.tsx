@@ -20,6 +20,7 @@ import {
   type PhysioOrderFieldCode,
   type PhysioOrderFields,
 } from "@/domain/physio/physio-order-fields";
+import { siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 
 export type PhysioCatalogSite = {
   id: string;
@@ -45,6 +46,7 @@ export type PhysioChipsValue = {
   physioOrderFields: string[];
   allowedSiteCodes: string[];
   forceSiteTogether?: boolean;
+  hideSitePicker?: boolean;
   sitesHintKey?: "hydro_jet_safety" | null;
   siteIds: string[];
   siteApplyMode: "TOGETHER" | "TURN" | null;
@@ -93,6 +95,7 @@ export type PhysioChipsLabels = {
   fillTam: string;
   fillOturaq: string;
   fillQursaq: string;
+  bathSequenceHint: string;
   catalogEmpty: string;
   catalogEmptyLink: string;
   intensityLight: string;
@@ -150,6 +153,7 @@ export function PhysioSiteChips({
   onLateralityChange,
   onFieldsChange,
   compact = false,
+  sessionQty = 1,
 }: {
   value: PhysioChipsValue;
   catalog: PhysioCatalogSite[];
@@ -165,6 +169,8 @@ export function PhysioSiteChips({
   onFieldsChange: (fields: PhysioOrderFields) => void;
   /** Narrow selects / 2-col grid for assign modals. */
   compact?: boolean;
+  /** Bath sequence (sit→full over days) only when qty > 1. */
+  sessionQty?: number;
 }) {
   const [note, setNote] = useState(value.note ?? "");
   useEffect(() => {
@@ -215,6 +221,28 @@ export function PhysioSiteChips({
     onFieldsChange({ ...fields, ...next });
   }
 
+  const hideSites = value.hideSitePicker === true;
+  const fillCode = pickOpt(NAFTALAN_FILL_CODES, fields.naftalanFill);
+  useEffect(() => {
+    if (!hideSites || !editable) return;
+    if (!fillCode) {
+      patchFields({ naftalanFill: "TAM" });
+      return;
+    }
+    const siteCode = siteCodeForNaftalanFill(fillCode);
+    const row = catalog.find((s) => s.code === siteCode);
+    if (!row) return;
+    if (value.siteIds.length === 1 && value.siteIds[0] === row.id) return;
+    onSitesChange([row.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync occupancy chip from fill only
+  }, [hideSites, editable, fillCode, catalog, value.siteIds.join("|")]);
+
+  useEffect(() => {
+    if (!editable || sessionQty > 1 || !fields.bathSequence) return;
+    patchFields({ bathSequence: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editable, sessionQty, fields.bathSequence]);
+
   const showLaterality = hasField(allowed, "LATERALITY");
   const fieldWidth = compact ? ("select" as const) : undefined;
   const fieldsGridClass = compact
@@ -223,7 +251,7 @@ export function PhysioSiteChips({
 
   return (
     <div className={fieldsGridClass}>
-      {value.needsSite ? (
+      {value.needsSite && !hideSites ? (
         <>
           <div className={compact ? "sm:col-span-2" : undefined}>
             <p className="mb-1 text-[12px] font-medium text-[#2C3E50]">{labels.sites}</p>
@@ -253,6 +281,22 @@ export function PhysioSiteChips({
             </div>
             {value.sitesHintKey === "hydro_jet_safety" ? (
               <p className="mt-1 text-[11px] leading-snug text-[#7F8C8D]">{labels.sitesHintHydroJets}</p>
+            ) : null}
+            {value.siteIds.length >= 2 && editable && !value.forceSiteTogether ? (
+              <div className="mt-2">
+                <CatalogField
+                  kind="OPS_HOT"
+                  label={labels.applyMode}
+                  value={value.siteApplyMode ?? "TOGETHER"}
+                  onChange={(next) => onModeChange(String(next) === "TURN" ? "TURN" : "TOGETHER")}
+                  options={modeOptions}
+                />
+              </div>
+            ) : null}
+            {value.siteIds.length >= 2 && !editable && value.siteApplyMode && !value.forceSiteTogether ? (
+              <p className="mt-1 text-[12px] text-[#7F8C8D]">
+                {value.siteApplyMode === "TURN" ? labels.turn : labels.together}
+              </p>
             ) : null}
             {showLaterality
               ? value.siteIds.map((id) => {
@@ -310,20 +354,6 @@ export function PhysioSiteChips({
                 className={compact ? "sm:col-span-2" : undefined}
               />
             )
-          ) : null}
-          {value.siteIds.length >= 2 && editable && !value.forceSiteTogether ? (
-            <CatalogField
-              kind="OPS_HOT"
-              label={labels.applyMode}
-              value={value.siteApplyMode ?? "TOGETHER"}
-              onChange={(next) => onModeChange(String(next) === "TURN" ? "TURN" : "TOGETHER")}
-              options={modeOptions}
-            />
-          ) : null}
-          {value.siteIds.length >= 2 && !editable && value.siteApplyMode && !value.forceSiteTogether ? (
-            <p className="text-[12px] text-[#7F8C8D]">
-              {value.siteApplyMode === "TURN" ? labels.turn : labels.together}
-            </p>
           ) : null}
         </>
       ) : null}
@@ -411,6 +441,19 @@ export function PhysioSiteChips({
           widthPreset={fieldWidth}
         />
       ) : null}
+      {hasField(allowed, "NAFTALAN_FILL") ? (
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={labels.naftalanFill}
+          value={fields.naftalanFill ?? ""}
+          onChange={(next) => patchFields({ naftalanFill: pickOpt(NAFTALAN_FILL_CODES, next) })}
+          options={NAFTALAN_FILL_CODES.map((v) => ({
+            value: v,
+            label: v === "TAM" ? labels.fillTam : v === "OTURAQ" ? labels.fillOturaq : labels.fillQursaq,
+          }))}
+          disabled={!editable}
+        />
+      ) : null}
       {hasField(allowed, "DAY_BLOCK") ? (
         <CatalogField
           kind="CLOSED_SMALL"
@@ -433,28 +476,16 @@ export function PhysioSiteChips({
           disabled={!editable}
         />
       ) : null}
-      {hasField(allowed, "BATH_SEQUENCE") ? (
+      {hasField(allowed, "BATH_SEQUENCE") && sessionQty > 1 ? (
         <CatalogField
           kind="CLOSED_SMALL"
           label={labels.bathSequence}
+          hint={labels.bathSequenceHint}
           value={fields.bathSequence ?? ""}
           onChange={(next) => patchFields({ bathSequence: pickOpt(BATH_SEQUENCE_CODES, next) })}
           options={BATH_SEQUENCE_CODES.map((v) => ({
             value: v,
             label: labels.bathSitzThenFull,
-          }))}
-          disabled={!editable}
-        />
-      ) : null}
-      {hasField(allowed, "NAFTALAN_FILL") ? (
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={labels.naftalanFill}
-          value={fields.naftalanFill ?? ""}
-          onChange={(next) => patchFields({ naftalanFill: pickOpt(NAFTALAN_FILL_CODES, next) })}
-          options={NAFTALAN_FILL_CODES.map((v) => ({
-            value: v,
-            label: v === "TAM" ? labels.fillTam : v === "OTURAQ" ? labels.fillOturaq : labels.fillQursaq,
           }))}
           disabled={!editable}
         />

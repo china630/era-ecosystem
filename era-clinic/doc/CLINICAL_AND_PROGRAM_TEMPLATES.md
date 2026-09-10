@@ -8,7 +8,7 @@
 
 `ProgramTemplate` is a **different domain** (sanatorium treatment quotas by nights) — not form schemas.
 
-**Entitlement blocks (CLI-51 amend):** each package line is a **block** (`ProgramTemplateProcedure` code = balance key). Optional `ProgramTemplateBlockMember` lists real `ProcedureType` SKUs that may burn that block. Knot matrix stores **qty per block** at PDF night columns only (interpolate for other stays). Admin edit modal is wide (`max-w-4xl`) with dynamic physio / bath / paraffin / lab / exam blocks.
+**Entitlement blocks (CLI-51 amend):** each package line is a **block** (`ProgramTemplateProcedure` code = balance key). Optional `ProgramTemplateBlockMember` lists SKUs that may burn that block (`ProcedureType` for treatment families; diagnostic catalog for LAB/EXAM). Knot matrix stores **qty per block** at PDF night columns only (interpolate for other stays). Admin edit modal is wide with physio / bath / paraffin / lab / exam blocks. **`fulfillment` is derived from block kind** (İcra is not a separate admin control). Membership picker is cascaded by kind — not the full treatment catalog on a lab block.
 
 **Versioning:** composition save creates `version+1` and retires the previous row (`isCurrent=false`). `ProgramInstance.templateId` stays pinned; `entitlementSnapshot` freezes members/knots at open. New check-ins use the current version.
 

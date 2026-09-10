@@ -25,10 +25,18 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
+import { pickL10n, type DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
+import {
+  CUSTOM_QUERY_MIN,
+  filterCustomSkus,
+  filterTreatmentSkus,
+  fulfillmentFromKind,
+  type ProgramBlockFulfillment,
+  type ProgramBlockKind,
+} from "@/domain/sanatorium/program-block-catalog";
 
-type BlockKind = "PHYSIO" | "BATH" | "PARAFFIN" | "LAB" | "EXAM" | "CUSTOM";
+type BlockKind = ProgramBlockKind;
 type AssignMode = "AUTO_ON_OPEN" | "AUTO_DAY1" | "ON_INDICATION" | "MANUAL";
-type Fulfillment = "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
 type QuotaBasis = "PER_NIGHTS" | "PER_STAY";
 
 type ProgramBlock = {
@@ -38,10 +46,10 @@ type ProgramBlock = {
   kind: BlockKind | null;
   sortOrder: number;
   memberCodes: string[];
-  assignMode: AssignMode;
-  fulfillment: Fulfillment;
-  quotaBasis: QuotaBasis;
-  requiresDoctor: boolean;
+  assignMode: AssignMode | "";
+  fulfillment: ProgramBlockFulfillment | "";
+  quotaBasis: QuotaBasis | "";
+  requiresDoctor: boolean | null;
 };
 
 type ProgramKnot = { nights: number; procedureCode: string; qty: number };
@@ -69,15 +77,6 @@ type ProcTypeOpt = { code: string; name: string };
 
 const KNOT_NIGHT_CHIPS = [7, 10, 14, 21];
 
-const KIND_DEFAULT_CODE: Record<BlockKind, string> = {
-  PHYSIO: "PHYSIO_POOL",
-  BATH: "NAFTALAN_BATH",
-  PARAFFIN: "PARAFFIN_POOL",
-  LAB: "LAB_BLOCK",
-  EXAM: "EXAM_BLOCK",
-  CUSTOM: "",
-};
-
 /** Known pool / alias entitlement codes — membership chips are optional. */
 function isEntitlementPoolOrAlias(code: string): boolean {
   const c = code.trim().toUpperCase();
@@ -93,7 +92,7 @@ function inferBlockKind(code: string, kind: BlockKind | null | undefined): Block
   if (c === "PHYSIO_POOL" || c.startsWith("PHYSIO_POOL_")) return "PHYSIO";
   if (c === "PARAFFIN_POOL" || c.startsWith("PARAFFIN_POOL_")) return "PARAFFIN";
   if (c === "NAFTALAN_BATH" || c === "NAFTALAN" || c.includes("NAFTALAN")) return "BATH";
-  if (c === "LAB_BLOCK" || c.startsWith("LAB_") || c === "LAB") return "LAB";
+  if (c === "LAB_BLOCK" || c.startsWith("LAB_") || c.startsWith("LAB-") || c === "LAB") return "LAB";
   if (
     c === "EXAM_BLOCK" ||
     c === "THERAPIST" ||
@@ -125,44 +124,18 @@ function defaultBlockName(kind: BlockKind, t: (k: string) => string): string {
   }
 }
 
-function uniqueBlockCode(
-  base: string,
-  existing: ProgramBlock[],
-  excludeCode?: string | null,
-): string {
-  const taken = (c: string) =>
-    existing.some((b) => b.procedureCode === c && b.procedureCode !== excludeCode);
-  const root = base.trim() || `BLOCK_${existing.length + 1}`;
-  if (!taken(root)) return root;
-  let i = 2;
-  while (taken(`${root}_${i}`)) i += 1;
-  return `${root}_${i}`;
-}
-
-function emptyBlockDraft(
-  kind: BlockKind,
-  existing: ProgramBlock[],
-  t: (k: string) => string,
-): ProgramBlock {
-  const raw = KIND_DEFAULT_CODE[kind];
-  const code = uniqueBlockCode(
-    kind === "CUSTOM" || !raw ? `BLOCK_${existing.length + 1}` : raw,
-    existing,
-  );
-  const nameBase = defaultBlockName(kind, t);
-  const name =
-    code === raw || kind === "CUSTOM" ? nameBase : `${nameBase} (${code})`;
+function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
   return {
-    procedureCode: code,
-    procedureName: name,
+    procedureCode: "",
+    procedureName: "",
     quotaTotal: 1,
-    kind,
+    kind: null,
     sortOrder: existing.length,
     memberCodes: [],
-    assignMode: "MANUAL",
-    fulfillment: "PROCEDURE_ORDER",
-    quotaBasis: "PER_NIGHTS",
-    requiresDoctor: false,
+    assignMode: "",
+    fulfillment: "",
+    quotaBasis: "",
+    requiresDoctor: null,
   };
 }
 
@@ -218,6 +191,9 @@ export default function ProgramTemplatesAdminPage() {
   const locale = useLocale();
   const [rows, setRows] = useState<ProgramTemplate[]>([]);
   const [procTypes, setProcTypes] = useState<ProcTypeOpt[]>([]);
+  const [diagItems, setDiagItems] = useState<DiagnosticCatalogItem[]>([]);
+  const [labCategory, setLabCategory] = useState("");
+  const [memberQuery, setMemberQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -249,9 +225,10 @@ export default function ProgramTemplatesAdminPage() {
     setLoadError(null);
     try {
       const qs = includeRetired ? "?includeRetired=1" : "";
-      const [pRes, ptRes] = await Promise.all([
+      const [pRes, ptRes, diagRes] = await Promise.all([
         fetch(`/api/admin/program-templates${qs}`),
         fetch(`/api/admin/procedure-types?locale=${encodeURIComponent(locale)}`),
+        fetch("/api/diagnostic-catalog?kinds=lab_panel,visit&applyFavorites=false"),
       ]);
       if (!pRes.ok) {
         setRows([]);
@@ -278,6 +255,11 @@ export default function ProgramTemplatesAdminPage() {
         unique.sort((a, b) => a.code.localeCompare(b.code));
         setProcTypes(unique);
       }
+      if (diagRes.ok) {
+        const diagJson = await diagRes.json();
+        const payload = (diagJson.data ?? diagJson) as { items?: DiagnosticCatalogItem[] };
+        setDiagItems(Array.isArray(payload.items) ? payload.items : []);
+      }
     } catch {
       setRows([]);
       setLoadError(tc("failed"));
@@ -300,15 +282,74 @@ export default function ProgramTemplatesAdminPage() {
     return rows.slice(start, start + pageSize);
   }, [rows, page, pageSize]);
 
-  const procOptions = useMemo(
-    () => procTypes.map((p) => ({ value: p.code, label: `${p.code} · ${p.name}` })),
-    [procTypes],
+  const diagSkuOptions = useMemo(
+    () =>
+      diagItems.map((item) => ({
+        value: item.code,
+        label: `${item.code} · ${pickL10n(item.title, locale)}`,
+        kind: item.kind,
+        category: item.category,
+      })),
+    [diagItems, locale],
   );
+
+  const labCategoryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const opts: { value: string; label: string }[] = [];
+    for (const item of diagItems) {
+      if (item.kind !== "lab_panel") continue;
+      const cat = String(item.category ?? "").trim();
+      if (!cat || seen.has(cat)) continue;
+      seen.add(cat);
+      opts.push({ value: cat, label: cat });
+    }
+    opts.sort((a, b) => a.label.localeCompare(b.label));
+    return opts;
+  }, [diagItems]);
 
   const memberPickOptions = useMemo(() => {
     const taken = new Set(blockDraft?.memberCodes ?? []);
-    return procOptions.filter((o) => !taken.has(o.value));
-  }, [procOptions, blockDraft?.memberCodes]);
+    const kind = blockDraft?.kind;
+    if (!kind) return [];
+
+    let source: { value: string; label: string }[] = [];
+    if (kind === "PHYSIO" || kind === "BATH" || kind === "PARAFFIN") {
+      source = filterTreatmentSkus(kind, procTypes).map((p) => ({
+        value: p.code,
+        label: `${p.code} · ${p.name}`,
+      }));
+    } else if (kind === "LAB") {
+      source = diagSkuOptions.filter((o) => {
+        if (o.kind !== "lab_panel") return false;
+        if (labCategory && o.category !== labCategory) return false;
+        return true;
+      });
+    } else if (kind === "EXAM") {
+      source = diagSkuOptions.filter((o) => o.kind === "visit");
+    } else {
+      const merged: { code: string; name: string }[] = [
+        ...procTypes,
+        ...diagItems.map((item) => ({
+          code: item.code,
+          name: pickL10n(item.title, locale),
+        })),
+      ];
+      source = filterCustomSkus(memberQuery, merged).map((p) => ({
+        value: p.code,
+        label: `${p.code} · ${p.name}`,
+      }));
+    }
+    return source.filter((o) => !taken.has(o.value));
+  }, [
+    blockDraft?.kind,
+    blockDraft?.memberCodes,
+    procTypes,
+    diagSkuOptions,
+    diagItems,
+    labCategory,
+    memberQuery,
+    locale,
+  ]);
 
   const kindOptions = useMemo(
     () =>
@@ -329,15 +370,6 @@ export default function ProgramTemplatesAdminPage() {
           "MANUAL",
         ] as AssignMode[]
       ).map((v) => ({ value: v, label: t(`assignMode_${v}`) })),
-    [t],
-  );
-
-  const fulfillmentOptions = useMemo(
-    () =>
-      (["PROCEDURE_ORDER", "LAB_ORDER", "VISIT"] as Fulfillment[]).map((v) => ({
-        value: v,
-        label: t(`fulfillment_${v}`),
-      })),
     [t],
   );
 
@@ -410,7 +442,7 @@ export default function ProgramTemplatesAdminPage() {
           sortOrder: p.sortOrder ?? i,
           memberCodes: Array.isArray(p.memberCodes) ? p.memberCodes : [],
           assignMode: (p.assignMode as AssignMode) || "MANUAL",
-          fulfillment: (p.fulfillment as Fulfillment) || "PROCEDURE_ORDER",
+          fulfillment: fulfillmentFromKind(kind),
           quotaBasis: (p.quotaBasis as QuotaBasis) || "PER_NIGHTS",
           requiresDoctor: Boolean(p.requiresDoctor),
         };
@@ -444,13 +476,17 @@ export default function ProgramTemplatesAdminPage() {
     setBlockDraft(null);
     setBlockError(null);
     setMemberPick("");
+    setLabCategory("");
+    setMemberQuery("");
   }
 
   function openBlockCreate() {
     setBlockOriginalCode(null);
-    setBlockDraft(emptyBlockDraft("PHYSIO", blocks, t));
+    setBlockDraft(emptyBlockDraft(blocks));
     setBlockError(null);
     setMemberPick("");
+    setLabCategory("");
+    setMemberQuery("");
     setBlockModalOpen(true);
   }
 
@@ -460,45 +496,29 @@ export default function ProgramTemplatesAdminPage() {
     setBlockDraft({
       ...b,
       kind,
+      fulfillment: fulfillmentFromKind(kind),
       memberCodes: [...b.memberCodes],
     });
     setBlockError(null);
     setMemberPick("");
+    setLabCategory("");
+    setMemberQuery("");
     setBlockModalOpen(true);
   }
 
-  function applyBlockKind(kind: BlockKind) {
-    setBlockDraft((prev) => {
-      if (!prev) return prev;
-      const prevKind = inferBlockKind(prev.procedureCode, prev.kind);
-      const prevDefaultCode = KIND_DEFAULT_CODE[prevKind] || "";
-      const nameWasDefault =
-        prev.procedureName === defaultBlockName(prevKind, t) ||
-        prev.procedureName.startsWith(`${defaultBlockName(prevKind, t)} (`);
-      const codeWasDefault =
-        !prev.procedureCode.trim() ||
-        prev.procedureCode === prevDefaultCode ||
-        (prevDefaultCode !== "" && prev.procedureCode.startsWith(`${prevDefaultCode}_`)) ||
-        /^BLOCK_\d+$/.test(prev.procedureCode);
-
-      let nextCode = prev.procedureCode;
-      if (codeWasDefault) {
-        const raw = KIND_DEFAULT_CODE[kind];
-        nextCode = uniqueBlockCode(
-          kind === "CUSTOM" || !raw ? `BLOCK_${blocks.length + 1}` : raw,
-          blocks,
-          blockOriginalCode,
-        );
-      }
-      const nameBase = defaultBlockName(kind, t);
-      const raw = KIND_DEFAULT_CODE[kind];
-      const nextName = nameWasDefault
-        ? nextCode === raw || kind === "CUSTOM" || !raw
-          ? nameBase
-          : `${nameBase} (${nextCode})`
-        : prev.procedureName;
-      return { ...prev, kind, procedureName: nextName, procedureCode: nextCode };
-    });
+  function applyBlockKind(kind: BlockKind | null) {
+    setMemberPick("");
+    setLabCategory("");
+    setMemberQuery("");
+    setBlockDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            kind,
+            fulfillment: kind ? fulfillmentFromKind(kind) : "",
+          }
+        : prev,
+    );
   }
 
   function addMemberFromPick(code: string) {
@@ -513,6 +533,7 @@ export default function ProgramTemplatesAdminPage() {
       return { ...prev, memberCodes: [...prev.memberCodes, c] };
     });
     setMemberPick("");
+    setMemberQuery("");
   }
 
   function removeMemberChip(code: string) {
@@ -527,7 +548,14 @@ export default function ProgramTemplatesAdminPage() {
     if (!blockDraft) return;
     const code = blockDraft.procedureCode.trim();
     const name = blockDraft.procedureName.trim();
-    if (!code || !name) {
+    if (
+      !code ||
+      !name ||
+      !blockDraft.kind ||
+      !blockDraft.assignMode ||
+      !blockDraft.quotaBasis ||
+      blockDraft.requiresDoctor === null
+    ) {
       setBlockError(t("validationRequired"));
       return;
     }
@@ -547,6 +575,7 @@ export default function ProgramTemplatesAdminPage() {
       procedureName: name,
       quotaTotal: Math.max(1, blockDraft.quotaTotal || 1),
       kind,
+      fulfillment: fulfillmentFromKind(kind),
       memberCodes: [...blockDraft.memberCodes],
     };
 
@@ -575,12 +604,18 @@ export default function ProgramTemplatesAdminPage() {
 
   function procLabel(code: string): string {
     const hit = procTypes.find((p) => p.code === code);
-    return hit ? `${hit.code} · ${hit.name}` : code;
+    if (hit) return `${hit.code} · ${hit.name}`;
+    const diag = diagItems.find((p) => p.code === code);
+    if (diag) return `${diag.code} · ${pickL10n(diag.title, locale)}`;
+    return code;
   }
 
   function procShortLabel(code: string): string {
     const hit = procTypes.find((p) => p.code === code);
-    return hit?.name ?? code;
+    if (hit) return hit.name;
+    const diag = diagItems.find((p) => p.code === code);
+    if (diag) return pickL10n(diag.title, locale);
+    return code;
   }
 
   function setKnotQty(nights: number, procedureCode: string, qty: number) {
@@ -682,7 +717,7 @@ export default function ProgramTemplatesAdminPage() {
           sortOrder: b.sortOrder ?? i,
           memberCodes: b.memberCodes,
           assignMode: b.assignMode || "MANUAL",
-          fulfillment: b.fulfillment || "PROCEDURE_ORDER",
+          fulfillment: fulfillmentFromKind(b.kind),
           quotaBasis: b.quotaBasis || "PER_NIGHTS",
           requiresDoctor: Boolean(b.requiresDoctor),
         };
@@ -902,7 +937,7 @@ export default function ProgramTemplatesAdminPage() {
           closeBlockModal();
           setOpen(false);
         }}
-        maxWidthClass="max-w-5xl"
+        maxWidthClass="max-w-[76rem]"
       >
         <div className={`${FORM_STACK_CLASS} max-h-[min(70vh,42rem)] overflow-y-auto pr-1`}>
           {editingId ? (
@@ -939,44 +974,52 @@ export default function ProgramTemplatesAdminPage() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field
-              label={t("durationDays")}
-              preset="count"
-              value={form.durationDays}
-              onChange={(e) => setForm({ ...form, durationDays: e.target.value })}
-            />
-            <Field
-              label={t("minNights")}
-              preset="count"
-              value={form.minNights}
-              onChange={(e) => setForm({ ...form, minNights: e.target.value })}
-            />
-            <Field
-              label={t("maxNights")}
-              preset="count"
-              value={form.maxNights}
-              onChange={(e) => setForm({ ...form, maxNights: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <DatePicker
-              label={t("effectiveFrom")}
-              value={form.effectiveFrom}
-              onChange={(isoDate) => setForm({ ...form, effectiveFrom: isoDate })}
-              placeholder={tc("datePlaceholder")}
-              openCalendarLabel={tc("openCalendar")}
-              fluid
-            />
-            <DatePicker
-              label={t("effectiveTo")}
-              value={form.effectiveTo}
-              onChange={(isoDate) => setForm({ ...form, effectiveTo: isoDate })}
-              placeholder={tc("datePlaceholder")}
-              openCalendarLabel={tc("openCalendar")}
-              hint={t("effectiveToHint")}
-              fluid
-            />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-[6.5rem] shrink-0">
+              <Field
+                label={t("durationDays")}
+                preset="count"
+                value={form.durationDays}
+                onChange={(e) => setForm({ ...form, durationDays: e.target.value })}
+              />
+            </div>
+            <div className="w-[6.5rem] shrink-0">
+              <Field
+                label={t("minNights")}
+                preset="count"
+                value={form.minNights}
+                onChange={(e) => setForm({ ...form, minNights: e.target.value })}
+              />
+            </div>
+            <div className="w-[6.5rem] shrink-0">
+              <Field
+                label={t("maxNights")}
+                preset="count"
+                value={form.maxNights}
+                onChange={(e) => setForm({ ...form, maxNights: e.target.value })}
+              />
+            </div>
+            <div className="min-w-[10.5rem] flex-1">
+              <DatePicker
+                label={t("effectiveFrom")}
+                value={form.effectiveFrom}
+                onChange={(isoDate) => setForm({ ...form, effectiveFrom: isoDate })}
+                placeholder={tc("datePlaceholder")}
+                openCalendarLabel={tc("openCalendar")}
+                fluid
+              />
+            </div>
+            <div className="min-w-[10.5rem] flex-1">
+              <DatePicker
+                label={t("effectiveTo")}
+                value={form.effectiveTo}
+                onChange={(isoDate) => setForm({ ...form, effectiveTo: isoDate })}
+                placeholder={tc("datePlaceholder")}
+                openCalendarLabel={tc("openCalendar")}
+                hint={t("effectiveToHint")}
+                fluid
+              />
+            </div>
           </div>
 
           <section className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
@@ -992,20 +1035,6 @@ export default function ProgramTemplatesAdminPage() {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {KNOT_NIGHT_CHIPS.map((n) => {
-                const inMatrix = matrixNights.includes(n);
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    className={inMatrix ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-                    onClick={() => addMatrixNight(n)}
-                    title={inMatrix ? t("nightAlreadyInMatrix", { n }) : t("addNightColumn", { n })}
-                  >
-                    {n}n
-                  </button>
-                );
-              })}
               <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
                 <span className="shrink-0 font-medium">{t("customNights")}</span>
                 <input
@@ -1087,7 +1116,7 @@ export default function ProgramTemplatesAdminPage() {
                             <p className={`mb-0 mt-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
                               {defaultBlockName(kind, t)}
                               {" · "}
-                              {t(`fulfillment_${b.fulfillment}`)}
+                              {t(`fulfillment_${fulfillmentFromKind(kind)}`)}
                             </p>
                             {chips.length === 0 ? (
                               <p className={`mb-0 mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>
@@ -1204,8 +1233,11 @@ export default function ProgramTemplatesAdminPage() {
             <CatalogField
               kind="CLOSED_SMALL"
               label={t("blockKind")}
-              value={blockDraft.kind ?? "CUSTOM"}
-              onChange={(v) => applyBlockKind(String(v) as BlockKind)}
+              value={blockDraft.kind ?? ""}
+              onChange={(v) => {
+                const next = String(v ?? "");
+                applyBlockKind(next ? (next as BlockKind) : null);
+              }}
               options={kindOptions}
             />
             <div className="grid gap-3 sm:grid-cols-2">
@@ -1234,22 +1266,10 @@ export default function ProgramTemplatesAdminPage() {
                 onChange={(v) =>
                   setBlockDraft({
                     ...blockDraft,
-                    assignMode: String(v) as AssignMode,
+                    assignMode: String(v ?? "") as AssignMode | "",
                   })
                 }
                 options={assignModeOptions}
-              />
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("fulfillment")}
-                value={blockDraft.fulfillment}
-                onChange={(v) =>
-                  setBlockDraft({
-                    ...blockDraft,
-                    fulfillment: String(v) as Fulfillment,
-                  })
-                }
-                options={fulfillmentOptions}
               />
               <CatalogField
                 kind="CLOSED_SMALL"
@@ -1258,7 +1278,7 @@ export default function ProgramTemplatesAdminPage() {
                 onChange={(v) =>
                   setBlockDraft({
                     ...blockDraft,
-                    quotaBasis: String(v) as QuotaBasis,
+                    quotaBasis: String(v ?? "") as QuotaBasis | "",
                   })
                 }
                 options={quotaBasisOptions}
@@ -1266,13 +1286,20 @@ export default function ProgramTemplatesAdminPage() {
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={t("requiresDoctor")}
-                value={blockDraft.requiresDoctor ? "yes" : "no"}
-                onChange={(v) =>
+                value={
+                  blockDraft.requiresDoctor === null
+                    ? ""
+                    : blockDraft.requiresDoctor
+                      ? "yes"
+                      : "no"
+                }
+                onChange={(v) => {
+                  const raw = String(v ?? "");
                   setBlockDraft({
                     ...blockDraft,
-                    requiresDoctor: String(v) === "yes",
-                  })
-                }
+                    requiresDoctor: raw === "" ? null : raw === "yes",
+                  });
+                }}
                 options={[
                   { value: "yes", label: t("requiresDoctorYes") },
                   { value: "no", label: t("requiresDoctorNo") },
@@ -1281,13 +1308,30 @@ export default function ProgramTemplatesAdminPage() {
             </div>
 
             <div className="space-y-2">
+              {blockDraft.kind === "LAB" && labCategoryOptions.length > 1 ? (
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("labCategory")}
+                  value={labCategory}
+                  onChange={(v) => setLabCategory(String(v ?? ""))}
+                  options={labCategoryOptions}
+                />
+              ) : null}
               <CatalogField
                 kind="SEARCHABLE"
                 label={t("addMember")}
                 value={memberPick}
                 onChange={(v) => addMemberFromPick(String(v ?? ""))}
                 options={memberPickOptions}
-                hint={t("blockMembersHint")}
+                disabled={!blockDraft.kind}
+                onQueryChange={blockDraft.kind === "CUSTOM" ? setMemberQuery : undefined}
+                hint={
+                  !blockDraft.kind
+                    ? t("pickKindFirst")
+                    : blockDraft.kind === "CUSTOM"
+                      ? t("memberSearchMin", { n: CUSTOM_QUERY_MIN })
+                      : t("blockMembersHint")
+                }
               />
               {blockDraft.memberCodes.length === 0 ? (
                 <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("membersEmptyHint")}</p>

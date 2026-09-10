@@ -2,6 +2,9 @@ import {
   bakuDayKey,
   PackageAssignError,
   paramsLabelFromOrder,
+  paramsLinesFromOrder,
+  mergeParamLines,
+  assignedAggGroupKey,
   isPackagePoolCode,
   isEntitlementBucket,
   eligibleSkusForPool,
@@ -127,6 +130,25 @@ describe("CLI-57 package assign helpers", () => {
     expect(codes).not.toContain("SVC-LAB-CBC");
   });
 
+  it("eligibleSkusForPool drops WO-TR cutover rows when SVC seed SKUs exist", () => {
+    const types = [
+      {
+        code: "SVC-PARAFINOTERAPIYA-ASAGI-ETRAF",
+        name: "Parafinoterapiya (aşağı ətraf)",
+        needsSite: true,
+        active: true,
+      },
+      {
+        code: "WO-TR-10",
+        name: "Парафинотерапия (нижние конечности)",
+        needsSite: true,
+        active: true,
+      },
+    ];
+    const paraffin = eligibleSkusForPool("PARAFFIN_POOL", ["PARAFFIN_POOL"], types);
+    expect(paraffin.map((s) => s.code)).toEqual(["SVC-PARAFINOTERAPIYA-ASAGI-ETRAF"]);
+  });
+
   it("eligibleSkusForPool uses configured membership whitelist when present", () => {
     const types = [
       { code: "SVC-LASER", name: "Laser", needsSite: true, active: true },
@@ -163,6 +185,30 @@ describe("CLI-57 package assign helpers", () => {
     expect(label).toContain("TURN");
     expect(label).toContain("intensity: MEDIUM");
     expect(label).toContain("soft");
+    expect(paramsLinesFromOrder({
+      physioFields: { naftalanFill: "TAM", dayBlock: 2 },
+    })).toEqual(["naftalanFill: TAM", "dayBlock: 2"]);
+  });
+
+  it("assignedAggGroupKey merges batches and param fingerprints for the same SKU", () => {
+    const a = assignedAggGroupKey({
+      procedureCode: "SVC-AMP",
+      packageQuotaCode: "PHYSIO_POOL",
+      locked: false,
+      consumed: false,
+    });
+    const b = assignedAggGroupKey({
+      procedureCode: "SVC-AMP",
+      packageQuotaCode: "PHYSIO_POOL",
+      locked: false,
+      consumed: false,
+    });
+    expect(a).toBe(b);
+    expect(mergeParamLines(["naftalanFill: TAM · dayBlock: 2", "naftalanFill: TAM · bathSequence: SITZ_THEN_FULL"])).toEqual([
+      "naftalanFill: TAM",
+      "dayBlock: 2",
+      "bathSequence: SITZ_THEN_FULL",
+    ]);
   });
 
   it("extraNeedsPaperTicket prefers inPackage over amountNet", () => {

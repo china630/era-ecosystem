@@ -26,9 +26,23 @@ export type PhysioTypeGate = {
   allowedSiteCodes: string[];
   /** When true, multi-site is one simultaneous application (hide TURN). */
   forceSiteTogether: boolean;
+  /**
+   * Immersion naftalan ♀/♂: doctor picks fill level, not S chips / Tətbiq.
+   * One site is derived from NAFTALAN_FILL for occupancy.
+   */
+  hideSitePicker: boolean;
   /** Optional nurse/doctor hint under site chips. */
   sitesHintKey: PhysioSitesHintKey | null;
 };
+
+/** Water-line → occupancy chip. Oturaq ≠ qurşaq (FO 2026-09-09). */
+export function siteCodeForNaftalanFill(
+  fill: "TAM" | "OTURAQ" | "QURSAQ" | null | undefined,
+): string {
+  if (fill === "OTURAQ") return ZONE.SITZ;
+  if (fill === "QURSAQ") return ZONE.TO_WAIST;
+  return ZONE.FULL_BODY;
+}
 
 function foldHay(code: string, name: string): string {
   return `${code} ${name}`
@@ -71,6 +85,7 @@ export function inferPhysioTypeGate(code: string, name = ""): PhysioTypeGate {
       fields: unique(fields),
       allowedSiteCodes: [],
       forceSiteTogether: false,
+      hideSitePicker: false,
       sitesHintKey: null,
     };
   }
@@ -195,7 +210,8 @@ export function inferPhysioTypeGate(code: string, name = ""): PhysioTypeGate {
     needsSite: true,
     fields: unique(fields),
     allowedSiteCodes: inferAllowedSites(hay),
-    forceSiteTogether: /limfodrenaj/.test(hay),
+    forceSiteTogether: /limfodrenaj/.test(hay) || isNaftalanImmersionBath,
+    hideSitePicker: isNaftalanImmersionBath,
     sitesHintKey: /hidromasaj/.test(hay) ? "hydro_jet_safety" : null,
   };
 }

@@ -2,6 +2,7 @@ import type {
   ProcedureOverQuotaPolicy,
   ProgramSchedulingMode,
 } from "@prisma/client";
+import { DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP, clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import { getDefaultTenant } from "@/domain/settings/settings.service";
 
 export type SchedulingSettings = {
@@ -18,6 +19,7 @@ export type SchedulingSettings = {
   defaultProcedureGapMinutes: number;
   peakModeEnabled: boolean;
   peakDayEndHour: number;
+  dailyPackageProcedureCap: number;
 };
 
 export type TenantWorkHours = Pick<
@@ -44,6 +46,7 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   defaultProcedureGapMinutes: 5,
   peakModeEnabled: false,
   peakDayEndHour: 22,
+  dailyPackageProcedureCap: DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP,
 };
 
 export const DEFAULT_WORK_HOURS: TenantWorkHours = {
@@ -76,6 +79,7 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
     defaultAppointmentSlotMinutes: tenant.defaultAppointmentSlotMinutes ?? 30,
     procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
+    dailyPackageProcedureCap: clampDailyPackageProcedureCap(tenant.dailyPackageProcedureCap),
     ...workHoursFromTenant(tenant),
   };
 }

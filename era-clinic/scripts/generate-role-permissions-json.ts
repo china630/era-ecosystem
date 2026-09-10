@@ -1,11 +1,11 @@
 import fs from "fs";
 import {
   permissionsJsonForRole,
-  CONFIGURABLE_CLINIC_ROLES,
+  SYSTEM_CLINIC_ROLES,
 } from "../src/lib/auth/clinic-permissions";
 
 const out: Record<string, string[]> = {};
-for (const code of CONFIGURABLE_CLINIC_ROLES) {
+for (const code of SYSTEM_CLINIC_ROLES) {
   out[code] = JSON.parse(permissionsJsonForRole(code)) as string[];
 }
 fs.writeFileSync(

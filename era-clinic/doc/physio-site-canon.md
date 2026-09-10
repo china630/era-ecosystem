@@ -35,7 +35,7 @@ UI: `CatalogField` SEARCHABLE / MULTI chips. Locale title + Latin on the chip. S
 - **Nafta `boyun`** = **collar** (trapezius / scalenus). `ZONE-NECK` stays 817 §3 for explicit neck-only; no WO alias `boyun`.
 - **Coccyx** is its own S. `bel oma` does not include it.
 - **Panty (Shcherbak)** ≠ sitz bath ≠ hip joint — three codes.
-- **Naftalan fill (practice):** values `TAM` | `OTURAQ` | `QURSAQ` on order field **`NAFTALAN_FILL`** (closed select). Matcher also maps bare `tam` / `oturaq` / `qurşaq` → chips `ZONE-FULL-BODY` / `ZONE-SITZ` (+ fill field). Multi-day «1 ci oturaq son tam» stays **`BATH_SEQUENCE=SITZ_THEN_FULL`** only — do not set `NAFTALAN_FILL` for that phrase. Four-chamber is a **different procedure** (`ZONE-FOUR-CHAMBER`), not a fill.
+- **Naftalan fill (practice):** values `TAM` | `OTURAQ` | `QURSAQ` on order field **`NAFTALAN_FILL`** (closed select). Water line (FO 2026-09-09): **qurşaq** = to waist; **oturaq** = sitting fill above the navel / roughly below the chest (not the same as qurşaq); **tam** = full body. Assign UI hides S chips and Tətbiq; occupancy chip is derived from fill (`ZONE-FULL-BODY` / `ZONE-SITZ` / `ZONE-TO-WAIST`). Matcher still maps bare `tam` / `oturaq` / `qurşaq` → those chips + fill field. Multi-day «1 ci oturaq son tam» is **`BATH_SEQUENCE=SITZ_THEN_FULL`** only when **qty > 1** — do not set `NAFTALAN_FILL` for that phrase. Four-chamber is a **different procedure** (`ZONE-FOUR-CHAMBER`), not a fill.
 - **`belinə` / `beline`** → **`ZONE-LUMBOSACRAL`** (same as `bel`).
 - **`ayaqlara qarina`** = legs + abdomen (`ZONE-LOWER-LIMB` + `ZONE-ABDOMEN`). `qarina` is dative of `qarın`.
 - **`böyrəküstü` / `böyrək üstü` / `öyrəküstü`** = lumbar / above the kidneys → **`ZONE-LUMBOSACRAL`**. Not a new S.
@@ -113,7 +113,7 @@ Paraffin stays **four SKUs**. Extra nahiye on the "wrong" SKU is sloppy WO data,
 | Bükmə (body wrap) | Full body (head out) |
 | Limfodrenaj | Legs (default); abdomen optional addon if `qarın` / note. **Not** arms |
 | `4 kamera*` | Four-chamber |
-| Naftalan ♀/♂ | **Full body** when fill omitted; `oturaq` text → sitz. **Order fields:** sit/full (`NAFTALAN_FILL`), multi-day sit→full (`BATH_SEQUENCE`), **`DAY_BLOCK`** (günaşırı / 2 / 3 / 5). **No SMEAR on bath** — paid smear = `SVC-APLIKASIYA-NAFTALAN-QADIN` / `-KISI` (same gender cabins). Gender = schedule slot |
+| Naftalan ♀/♂ | **Fill field** is SoT (tam / oturaq above-navel / qurşaq waist). UI hides chips + Tətbiq. Occupancy chip derived from fill. **`BATH_SEQUENCE`** only when qty > 1. **`DAY_BLOCK`** (günaşırı / 2 / 3 / 5). **No SMEAR on bath** — paid smear = `SVC-APLIKASIYA-NAFTALAN-QADIN` / `-KISI`. Gender = schedule slot |
 | Oturaq (text on naftalan) | Sitz chip — not a separate procedure |
 | Amplipuls / electro / UFF / surface (FULL in allowlist) | Full body when nahiye empty |
 | ESWT / types without FULL | No FULL invent — leave empty or single allowlist code |

@@ -11,11 +11,16 @@ import {
   episodeCareTeamDenied,
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
-import { DAY1_SOFT_CONFIRM_CAP } from "@/lib/sanatorium-day1";
+import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
+import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import {
   resolveMembersByBlock,
   parseEntitlementSnapshot,
 } from "@/domain/sanatorium/program-template-admin";
+import {
+  isSeedProcedureCode,
+  isWoProcedureCode,
+} from "@/lib/import/seed-catalog-match";
 
 export class PackageAssignError extends Error {
   constructor(
@@ -136,12 +141,12 @@ export function eligibleSkusForQuotaAlias(
 
   const gender = sexNorm(sex);
   if (gender === "MALE") {
-    return list.filter((s) => isMaleBathSku(s.code, s.name));
+    return preferCanonicalPoolSkus(list.filter((s) => isMaleBathSku(s.code, s.name)));
   }
   if (gender === "FEMALE") {
-    return list.filter((s) => isFemaleBathSku(s.code, s.name));
+    return preferCanonicalPoolSkus(list.filter((s) => isFemaleBathSku(s.code, s.name)));
   }
-  return list;
+  return preferCanonicalPoolSkus(list);
 }
 
 /**
@@ -263,34 +268,47 @@ export function eligibleSkusForPool(
   configuredMemberCodes?: string[] | null,
 ): PoolEligibleSku[] {
   const active = types.filter((t) => t.active !== false);
+  let list: PoolEligibleSku[];
   if (configuredMemberCodes && configuredMemberCodes.length > 0) {
     const want = new Set(configuredMemberCodes.map((c) => c.trim().toUpperCase()));
-    return active
+    list = active
       .filter((t) => want.has(t.code.toUpperCase()))
       .map((t) => ({ code: t.code, name: t.name }));
+  } else {
+    const dedicated = new Set(
+      packageBalanceCodes.filter((c) => !isPackagePoolCode(c)),
+    );
+    if (poolCode === "PARAFFIN_POOL" || /paraffin/i.test(poolCode)) {
+      list = active
+        .filter((t) => isParaffinType(t.code, t.name))
+        .map((t) => ({ code: t.code, name: t.name }));
+    } else {
+      list = active
+        .filter((t) => {
+          if (dedicated.has(t.code)) return false;
+          if (isParaffinType(t.code, t.name)) return false;
+          if (isPackagePoolCode(t.code)) return false;
+          if (t.needsSite === true) return true;
+          if (/^SVC-/i.test(t.code) && !/LAB|USM|ECG|ALT|AST|GLU|CBC|URINE/i.test(t.code)) {
+            return true;
+          }
+          return false;
+        })
+        .map((t) => ({ code: t.code, name: t.name }));
+    }
   }
-  const dedicated = new Set(
-    packageBalanceCodes.filter((c) => !isPackagePoolCode(c)),
-  );
-  if (poolCode === "PARAFFIN_POOL" || /paraffin/i.test(poolCode)) {
-    return active
-      .filter((t) => isParaffinType(t.code, t.name))
-      .map((t) => ({ code: t.code, name: t.name }));
-  }
-  // PHYSIO_POOL and other *_POOL catch-alls
-  return active
-    .filter((t) => {
-      if (dedicated.has(t.code)) return false;
-      if (isParaffinType(t.code, t.name)) return false;
-      if (isPackagePoolCode(t.code)) return false;
-      if (t.needsSite === true) return true;
-      // Broad physio/treatment SVC catalog (Nafta seed)
-      if (/^SVC-/i.test(t.code) && !/LAB|USM|ECG|ALT|AST|GLU|CBC|URINE/i.test(t.code)) {
-        return true;
-      }
-      return false;
-    })
-    .map((t) => ({ code: t.code, name: t.name }));
+  return preferCanonicalPoolSkus(list);
+}
+
+/**
+ * Cutover imported WO-TR-* rows keep Russian Elektra names; Nafta seed SVC-* owns AZ/EN.
+ * When both exist in a pool picker, keep the seed SKU so the list is not AZ+RU duplicates.
+ */
+export function preferCanonicalPoolSkus(skus: PoolEligibleSku[]): PoolEligibleSku[] {
+  const hasSeed = skus.some((s) => isSeedProcedureCode(s.code));
+  if (!hasSeed) return skus;
+  const withoutCutover = skus.filter((s) => !isWoProcedureCode(s.code));
+  return withoutCutover.length > 0 ? withoutCutover : skus;
 }
 
 function quotaCodeOf(o: { packageQuotaCode?: string | null; procedureCode: string }): string {
@@ -301,7 +319,7 @@ function newBatchId(): string {
   return `batch_${randomBytes(8).toString("hex")}`;
 }
 
-export function paramsLabelFromOrder(o: {
+export function paramsLinesFromOrder(o: {
   note?: string | null;
   bodyPart?: string | null;
   siteApplyMode?: string | null;
@@ -311,7 +329,7 @@ export function paramsLabelFromOrder(o: {
     laterality?: string | null;
     site?: { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null } | null;
   }>;
-}): string {
+}): string[] {
   const parts: string[] = [];
   const siteNames = (o.sites ?? [])
     .map((s) => {
@@ -320,7 +338,7 @@ export function paramsLabelFromOrder(o: {
       if (!title) return null;
       return lat ? `${title} (${lat})` : title;
     })
-    .filter(Boolean);
+    .filter((x): x is string => Boolean(x));
   if (siteNames.length) parts.push(siteNames.join(", "));
   if (o.siteApplyMode) parts.push(String(o.siteApplyMode));
   if (o.bodyPart) parts.push(o.bodyPart);
@@ -331,28 +349,39 @@ export function paramsLabelFromOrder(o: {
     }
   }
   if (o.note?.trim()) parts.push(o.note.trim());
-  return parts.join(" · ");
+  return parts;
 }
 
-function fingerprintParams(o: {
-  note?: string | null;
-  bodyPart?: string | null;
-  siteApplyMode?: string | null;
-  physioFields?: unknown;
-  sites?: Array<{ siteId?: string; laterality?: string | null }>;
+export function paramsLabelFromOrder(
+  o: Parameters<typeof paramsLinesFromOrder>[0],
+): string {
+  return paramsLinesFromOrder(o).join(" · ");
+}
+
+/** Unique param lines from one or more "a · b" labels (right-column cards). */
+export function mergeParamLines(labels: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const lab of labels) {
+    for (const part of lab.split(" · ")) {
+      const p = part.trim();
+      if (p && !seen.has(p)) {
+        seen.add(p);
+        out.push(p);
+      }
+    }
+  }
+  return out;
+}
+
+/** One right-column card per SKU + quota + lock, not per assign batch / param fingerprint. */
+export function assignedAggGroupKey(o: {
+  procedureCode: string;
+  packageQuotaCode?: string | null;
+  locked: boolean;
+  consumed: boolean;
 }): string {
-  const siteIds = (o.sites ?? [])
-    .map((s) => `${s.siteId ?? ""}:${s.laterality ?? ""}`)
-    .filter(Boolean)
-    .sort()
-    .join(",");
-  return JSON.stringify({
-    note: o.note ?? "",
-    bodyPart: o.bodyPart ?? "",
-    siteApplyMode: o.siteApplyMode ?? "",
-    physioFields: o.physioFields ?? null,
-    siteIds,
-  });
+  return `${quotaCodeOf(o)}:${o.procedureCode}:${o.locked ? "locked" : "active"}:${o.consumed ? "done" : "live"}`;
 }
 
 /** Baku calendar day key YYYY-MM-DD from a Date (UTC instant interpreted in Asia/Baku). */
@@ -395,6 +424,8 @@ export type PackageAssignedAgg = {
   locked: boolean;
   /** Human-readable physio / clinical params under the title. */
   paramsLabel: string;
+  /** Same as paramsLabel, one field per line for the assign card. */
+  paramsLines: string[];
   /** Balance line burned (pool code or procedureCode). */
   packageQuotaCode: string;
 };
@@ -610,11 +641,21 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   for (const o of orders) {
     const consumed = (CONSUMED as readonly string[]).includes(o.status);
     const locked = consumed || o.status === "CHECKED_IN";
-    const fp = fingerprintParams(o);
-    const key = `${o.assignBatchId ?? o.procedureCode}:${quotaCodeOf(o)}:${fp}:${locked ? "locked" : "active"}:${consumed ? "done" : "live"}`;
+    const key = assignedAggGroupKey({
+      procedureCode: o.procedureCode,
+      packageQuotaCode: quotaCodeOf(o),
+      locked,
+      consumed,
+    });
     const prev = batchMap.get(key);
+    const nextLines = mergeParamLines([
+      prev?.paramsLabel ?? "",
+      paramsLabelFromOrder(o),
+    ]);
     if (prev) {
       prev.qty += 1;
+      prev.paramsLabel = nextLines.join(" · ");
+      prev.paramsLines = nextLines;
     } else {
       batchMap.set(key, {
         assignBatchId: o.assignBatchId,
@@ -623,7 +664,8 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
         qty: 1,
         statusKind: consumed ? "consumed" : "active",
         locked,
-        paramsLabel: paramsLabelFromOrder(o),
+        paramsLabel: nextLines.join(" · "),
+        paramsLines: nextLines,
         packageQuotaCode: quotaCodeOf(o),
       });
     }
@@ -685,7 +727,6 @@ export async function assignPackageProcedures(
   const types = await prisma.procedureType.findMany();
   const typeByCode = new Map(types.map((t) => [t.code, t]));
 
-  let totalQty = 0;
   const resolved: Array<AssignLineInput & { quotaCode: string }> = [];
 
   for (const line of lines) {
@@ -788,13 +829,16 @@ export async function assignPackageProcedures(
       ...bal,
       remaining: bal.remaining - line.qty,
     });
-    totalQty += line.qty;
     resolved.push({ ...line, procedureCode: skuCode, quotaCode });
   }
 
+  const packageCap = clampDailyPackageProcedureCap(
+    (await getSchedulingSettings()).dailyPackageProcedureCap,
+  );
+  const distinctCodes = new Set(resolved.map((l) => l.procedureCode)).size;
   const softWarn =
-    totalQty > DAY1_SOFT_CONFIRM_CAP
-      ? `Day-1 soft cap: Nafta default is ${DAY1_SOFT_CONFIRM_CAP}; batch has ${totalQty}`
+    distinctCodes > packageCap
+      ? `Daily in-package cap is ${packageCap} distinct codes; batch has ${distinctCodes} (remainder places from next work day)`
       : null;
 
   const orgId = requestOrganizationId();
@@ -1085,16 +1129,20 @@ export async function replacePackageProcedures(
 }
 
 /**
- * Day-1 auto: up to 3 distinct non-pool package codes with remaining > 0, qty 1 each.
+ * Day-1 auto: up to N distinct non-pool package codes with remaining > 0, qty 1 each.
+ * N = Tenant.dailyPackageProcedureCap (default 3).
  */
 export async function day1AutoAssign(
   episodeId: string,
   opts?: { confirmedByUserId?: string },
 ): Promise<{ placed: number; softWarn: string | null; orderIds: string[] }> {
+  const packageCap = clampDailyPackageProcedureCap(
+    (await getSchedulingSettings()).dailyPackageProcedureCap,
+  );
   const snap = await getPackageAssignSnapshot(episodeId);
   const picks = snap.balances
     .filter((b) => !b.isPool && !b.isQuotaAlias && !b.needsSkuPicker && b.remaining > 0)
-    .slice(0, DAY1_SOFT_CONFIRM_CAP);
+    .slice(0, packageCap);
   if (picks.length === 0) {
     throw new PackageAssignError("No remaining package quota", "EMPTY_REMAINING", 400);
   }

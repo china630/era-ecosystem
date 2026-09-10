@@ -45,6 +45,11 @@ export async function POST(request: Request) {
     const organizationId = user.organizationId;
     enterSatelliteTenant({ organizationId });
 
+    const { ensureSystemClinicRoles } = await import(
+      "@/lib/auth/ensure-system-clinic-roles"
+    );
+    await ensureSystemClinicRoles(prisma, organizationId);
+
     const permissions = await permissionsForUser(user.id);
     const token = await signSatelliteSession({
       sub: user.id,
