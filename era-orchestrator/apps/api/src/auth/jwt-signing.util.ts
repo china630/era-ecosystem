@@ -57,24 +57,65 @@ function publicJwkFromPrivate(jwk: Record<string, unknown>): Record<string, unkn
   }
 }
 
+function hs256Secret(config: ConfigService): string {
+  return (
+    config.get<string>("ERA_JWT_SECRET") ??
+    config.get<string>("JWT_SECRET") ??
+    ""
+  );
+}
+
+export function jwtHeaderAlg(token: string): string | undefined {
+  const header = token.split(".")[0];
+  if (!header) return undefined;
+  try {
+    const json = Buffer.from(header, "base64url").toString("utf8");
+    const parsed = JSON.parse(json) as { alg?: string };
+    return parsed.alg;
+  } catch {
+    return undefined;
+  }
+}
+
 export function accessTokenSignOptions(config: ConfigService): {
   algorithm: "HS256" | "RS256";
-  secret?: string;
+  /**
+   * Pass to NestJS `JwtService.signAsync({ secret })`.
+   * `@nestjs/jwt` prefers `options.secret` over `options.privateKey` when the
+   * module was registered with an HS256 `secret` — using `privateKey` here
+   * signs with the HS256 string under `algorithm: RS256` and throws.
+   */
+  secret: string | ReturnType<typeof createPrivateKey>;
   privateKey?: ReturnType<typeof createPrivateKey>;
   keyid?: string;
 } {
   const mode = resolveJwtSigningMode(config);
   const jwk = parseRs256Jwk(config);
   if ((mode === "rs256" || mode === "dual") && jwk) {
+    const privateKey = createPrivateKey({ key: jwk, format: "jwk" });
     return {
       algorithm: "RS256",
-      privateKey: createPrivateKey({ key: jwk, format: "jwk" }),
+      secret: privateKey,
+      privateKey,
       keyid: String(jwk.kid),
     };
   }
-  const secret =
-    config.get<string>("ERA_JWT_SECRET") ??
-    config.get<string>("JWT_SECRET") ??
-    "";
-  return { algorithm: "HS256", secret };
+  return { algorithm: "HS256", secret: hs256Secret(config) };
+}
+
+export function accessTokenVerifyOptions(
+  config: ConfigService,
+  token: string,
+): {
+  algorithms: ("HS256" | "RS256")[];
+  secret: string | ReturnType<typeof createPublicKey>;
+} {
+  const mode = resolveJwtSigningMode(config);
+  const jwk = parseRs256Jwk(config);
+  const alg = jwtHeaderAlg(token);
+  if (alg === "RS256" && (mode === "rs256" || mode === "dual") && jwk) {
+    const priv = createPrivateKey({ key: jwk, format: "jwk" });
+    return { algorithms: ["RS256"], secret: createPublicKey(priv) };
+  }
+  return { algorithms: ["HS256"], secret: hs256Secret(config) };
 }

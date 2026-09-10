@@ -137,13 +137,20 @@ export class WorkforceEmploymentsController {
 
   @Patch(":id/reprovision")
   @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
-  @ApiOperation({ summary: "Re-emit STAFF_PROVISIONED for active bindings" })
+  @ApiOperation({
+    summary:
+      "Re-emit STAFF_PROVISIONED; optional satelliteKeys replaces per-person satellite access",
+  })
   reprovision(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @CurrentUser() user: EraJwtPayload,
     @Body() dto: ReprovisionEmploymentDto,
   ) {
-    return this.provision.reprovision(organizationId, id, user.sub, dto);
+    return this.provision.reprovision(organizationId, id, user.sub, {
+      login: dto.login,
+      pin: dto.pin,
+      satelliteKeys: dto.satelliteKeys,
+    });
   }
 }

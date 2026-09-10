@@ -214,6 +214,7 @@ export default function WorkforceEmploymentsPage() {
   const [orgCopied, setOrgCopied] = useState(false);
   const [loginEditLogin, setLoginEditLogin] = useState("");
   const [loginEditPin, setLoginEditPin] = useState("0000");
+  const [loginEditSatelliteKeys, setLoginEditSatelliteKeys] = useState<string[]>([]);
   const [loginModalError, setLoginModalError] = useState<string | null>(null);
 
   const workspaceOrgId =
@@ -618,16 +619,22 @@ export default function WorkforceEmploymentsPage() {
 
   async function reprovisionEmployment(
     emp: EmploymentRow,
-    opts?: { login?: string; pin?: string; skipConfirm?: boolean },
+    opts?: {
+      login?: string;
+      pin?: string;
+      satelliteKeys?: string[];
+      skipConfirm?: boolean;
+    },
   ) {
     if (!opts?.skipConfirm && !window.confirm(t("reprovisionConfirm"))) return;
     setMoreMenuId(null);
     setBusy(true);
     setError(null);
     setLoginModalError(null);
-    const body: { login?: string; pin?: string } = {};
+    const body: { login?: string; pin?: string; satelliteKeys?: string[] } = {};
     if (opts?.login?.trim()) body.login = opts.login.trim().toLowerCase();
     if (opts?.pin?.trim()) body.pin = opts.pin.trim();
+    if (opts?.satelliteKeys !== undefined) body.satelliteKeys = opts.satelliteKeys;
     const res = await workforceFetch(`employments/${emp.id}/reprovision`, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -646,9 +653,11 @@ export default function WorkforceEmploymentsPage() {
   async function saveLoginAccess(e: React.FormEvent) {
     e.preventDefault();
     if (!loginEmp || busy) return;
+    const hasSatellites = loginEditSatelliteKeys.length > 0;
     const ok = await reprovisionEmployment(loginEmp, {
-      login: loginEditLogin,
-      pin: loginEditPin,
+      login: hasSatellites ? loginEditLogin : undefined,
+      pin: hasSatellites ? loginEditPin : undefined,
+      satelliteKeys: loginEditSatelliteKeys,
       skipConfirm: true,
     });
     if (ok) {
@@ -1007,11 +1016,9 @@ export default function WorkforceEmploymentsPage() {
                 const hasBindings = (r.roleBindings?.length ?? 0) > 0;
                 const canReprovision =
                   r.status !== "TERMINATED" && hasBindings;
-                const canLoginAccess = canReprovision;
+                const canLoginAccess = r.status !== "TERMINATED";
                 const loginAccessTitle = !canLoginAccess
-                  ? r.status === "TERMINATED"
-                    ? t("reprovisionTerminated")
-                    : t("reprovisionNoBindings")
+                  ? t("reprovisionTerminated")
                   : t("loginInfo");
                 const reprovisionTitle = !canReprovision
                   ? r.status === "TERMINATED"
@@ -1126,6 +1133,13 @@ export default function WorkforceEmploymentsPage() {
                                   setLoginEmp(r);
                                   setLoginEditLogin(displayStaffLogin(r));
                                   setLoginEditPin(r.satelliteStaffPin?.trim() || "0000");
+                                  setLoginEditSatelliteKeys([
+                                    ...new Set(
+                                      (r.roleBindings ?? [])
+                                        .map((b) => b.satelliteKey)
+                                        .filter(Boolean),
+                                    ),
+                                  ]);
                                   setLoginModalError(null);
                                   setLoginCopied(false);
                                   setLoginOpen(true);
@@ -1605,9 +1619,67 @@ export default function WorkforceEmploymentsPage() {
       >
         {loginEmp ? (
           <form onSubmit={(e) => void saveLoginAccess(e)} className="space-y-4 text-[13px] text-[#34495E]">
-            {(loginEmp.roleBindings?.length ?? 0) === 0 ? (
-              <p className="text-[13px] text-[#C0392B]">{t("reprovisionNoBindings")}</p>
-            ) : null}
+            <fieldset className="rounded-lg border border-[#D5DADF] p-3">
+              <legend className="px-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
+                {t("satellitesAccess")}
+              </legend>
+              <p className="mb-2 text-xs text-[#7F8C8D]">{t("satelliteAccessEditHint")}</p>
+              <div className="space-y-2">
+                {satelliteFilterOptions.map((s) => {
+                  const binding = (loginEmp.roleBindings ?? []).find(
+                    (b) => b.satelliteKey === s.key,
+                  );
+                  const checked = loginEditSatelliteKeys.includes(s.key);
+                  const href = satelliteLoginHref(s.key, workspaceOrgId);
+                  return (
+                    <div
+                      key={s.key}
+                      className="flex flex-wrap items-center gap-2 rounded-md border border-[#E8ECF0] px-3 py-2"
+                    >
+                      <label className="flex min-w-0 flex-1 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            setLoginEditSatelliteKeys((prev) =>
+                              e.target.checked
+                                ? [...prev, s.key]
+                                : prev.filter((k) => k !== s.key),
+                            );
+                          }}
+                        />
+                        <span className="font-medium text-[#2C3E50]">{s.label}</span>
+                        {checked ? (
+                          <span className="text-[#7F8C8D]">
+                            {binding?.satelliteRole
+                              ? humanizeSatelliteRole(binding.satelliteRole)
+                              : t("roleFromMatrix")}
+                          </span>
+                        ) : null}
+                        {binding?.provisionState === "FAILED" ? (
+                          <span
+                            className="text-[12px] text-[#C0392B]"
+                            title={binding.lastProvisionError ?? undefined}
+                          >
+                            {t("provisionFailedBadge")}
+                          </span>
+                        ) : null}
+                      </label>
+                      {checked && href ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[12px] text-[#2980B9] hover:underline"
+                        >
+                          {t("openSatelliteLogin")}
+                        </a>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
             <div>
               <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
                 {t("loginLabel")}
@@ -1617,9 +1689,9 @@ export default function WorkforceEmploymentsPage() {
                   className="min-w-[12rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[14px] text-[#2C3E50]"
                   value={loginEditLogin}
                   onChange={(e) => setLoginEditLogin(e.target.value)}
-                  required={(loginEmp.roleBindings?.length ?? 0) > 0}
-                  disabled={(loginEmp.roleBindings?.length ?? 0) === 0}
-                  readOnly={(loginEmp.roleBindings?.length ?? 0) === 0}
+                  required={loginEditSatelliteKeys.length > 0}
+                  disabled={loginEditSatelliteKeys.length === 0}
+                  readOnly={loginEditSatelliteKeys.length === 0}
                 />
                 <button
                   type="button"
@@ -1644,8 +1716,8 @@ export default function WorkforceEmploymentsPage() {
                 className="block w-full max-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[14px]"
                 value={loginEditPin}
                 onChange={(e) => setLoginEditPin(e.target.value)}
-                disabled={(loginEmp.roleBindings?.length ?? 0) === 0}
-                readOnly={(loginEmp.roleBindings?.length ?? 0) === 0}
+                disabled={loginEditSatelliteKeys.length === 0}
+                readOnly={loginEditSatelliteKeys.length === 0}
               />
             </label>
             {workspaceOrgId ? (
@@ -1675,58 +1747,6 @@ export default function WorkforceEmploymentsPage() {
             ) : null}
             <p className="text-[#7F8C8D]">{t("defaultPinHint")}</p>
             <p className="text-[12px] text-[#7F8C8D]">{t("syncEventualHint")}</p>
-            <div>
-              <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
-                {t("satellitesAccess")}
-              </div>
-              {(loginEmp.roleBindings ?? []).length === 0 ? (
-                <p className="text-[#7F8C8D]">{t("noSatelliteAccess")}</p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {(loginEmp.roleBindings ?? []).map((b) => {
-                    const href = satelliteLoginHref(b.satelliteKey, workspaceOrgId);
-                    return (
-                      <li
-                        key={`${b.satelliteKey}:${b.satelliteRole ?? ""}`}
-                        className="rounded-md border border-[#E8ECF0] px-3 py-2"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="font-medium text-[#2C3E50]">
-                            {satelliteLabel(b.satelliteKey)}
-                          </span>
-                          <span className="text-[#7F8C8D]">
-                            {b.satelliteRole
-                              ? humanizeSatelliteRole(b.satelliteRole)
-                              : t("roleUnset")}
-                          </span>
-                        </div>
-                        {b.provisionState === "FAILED" ? (
-                          <p
-                            className="mt-1 text-[12px] text-[#C0392B]"
-                            title={b.lastProvisionError ?? undefined}
-                          >
-                            {t("provisionFailedBadge")}
-                            {b.lastProvisionError
-                              ? `: ${b.lastProvisionError}`
-                              : ""}
-                          </p>
-                        ) : null}
-                        {href ? (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-1 inline-block text-[12px] text-[#2980B9] hover:underline"
-                          >
-                            {t("openSatelliteLogin")}
-                          </a>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
             {loginModalError ? (
               <p className="text-[13px] text-[#C0392B]">{loginModalError}</p>
             ) : null}
@@ -1745,7 +1765,7 @@ export default function WorkforceEmploymentsPage() {
               >
                 {tCommon("cancel")}
               </button>
-              <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy || !(loginEmp.roleBindings?.length ?? 0)}>
+              <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
                 {busy ? t("busy") : t("saveLoginAccess")}
               </button>
             </div>

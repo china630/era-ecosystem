@@ -23,6 +23,7 @@ import {
 } from "../../../../../lib/workforce-satellites";
 import {
   isWorkforceGate403,
+  parseOrgUnitItems,
   workforceFetch as wfFetch,
 } from "../../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../../components/workspace/workforce-gate";
@@ -34,9 +35,16 @@ type BindingRow = {
   provisionState?: string;
   lastProvisionError?: string | null;
   employment: {
+    globalPersonId?: string;
     orgUnit?: { id: string; name: string };
     position?: { id: string; name: string };
   };
+};
+
+type PersonProfile = {
+  globalPersonId: string;
+  displayName: string | null;
+  accessDenied?: boolean;
 };
 
 type OrgUnitOpt = { id: string; name: string };
@@ -48,6 +56,7 @@ export default function WorkforceSecurityBindingsPage() {
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
   const [items, setItems] = useState<BindingRow[]>([]);
+  const [persons, setPersons] = useState<Record<string, PersonProfile>>({});
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
@@ -81,11 +90,12 @@ export default function WorkforceSecurityBindingsPage() {
   );
 
   const filterPositionOptions = useMemo(() => {
-    return positions
+    const rows = positions
       .filter((p) => !filterOrgUnitId || p.orgUnitId === filterOrgUnitId)
       .map((p) => ({ value: p.id, label: p.name }))
       .sort((a, b) => a.label.localeCompare(b.label, "az"));
-  }, [positions, filterOrgUnitId]);
+    return [{ value: "", label: t("filterAll") }, ...rows];
+  }, [positions, filterOrgUnitId, t]);
 
   const filterRoleOptions = useMemo(() => {
     if (!filterSatellite) return [];
@@ -132,13 +142,15 @@ export default function WorkforceSecurityBindingsPage() {
       const data = (await bindRes.json()) as {
         items: BindingRow[];
         total: number;
+        persons?: Record<string, PersonProfile>;
       };
       setItems(Array.isArray(data.items) ? data.items : []);
       setTotal(typeof data.total === "number" ? data.total : 0);
+      setPersons(data.persons ?? {});
     }
     if (ouRes.ok) {
-      const units = (await ouRes.json()) as OrgUnitOpt[];
-      setOrgUnits(Array.isArray(units) ? units : []);
+      const units = parseOrgUnitItems<OrgUnitOpt>(await ouRes.json());
+      setOrgUnits(units);
     }
     if (posRes.ok) {
       const rows = (await posRes.json()) as PositionOpt[];
@@ -208,7 +220,10 @@ export default function WorkforceSecurityBindingsPage() {
                 setFilterOrgUnitId(String(next));
                 setFilterPositionId("");
               }}
-              options={orgUnits.map((u) => ({ value: u.id, label: u.name }))}
+              options={[
+                { value: "", label: t("filterAll") },
+                ...orgUnits.map((u) => ({ value: u.id, label: u.name })),
+              ]}
               emptyLabel={t("filterAll")}
             />
             <CatalogField
@@ -252,6 +267,7 @@ export default function WorkforceSecurityBindingsPage() {
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSatellite")}</th>
@@ -262,13 +278,19 @@ export default function WorkforceSecurityBindingsPage() {
               <tbody>
                 {items.length === 0 ? (
                   <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS} colSpan={5}>
+                    <td className={DATA_TABLE_TD_CLASS} colSpan={6}>
                       {emptyMessage}
                     </td>
                   </tr>
                 ) : (
                   items.map((b) => (
                     <tr key={b.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {persons[b.employment?.globalPersonId ?? ""]?.displayName ??
+                          (persons[b.employment?.globalPersonId ?? ""]?.accessDenied
+                            ? t("maskedPerson")
+                            : (b.employment?.globalPersonId?.slice(0, 8) ?? "—"))}
+                      </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {b.employment?.orgUnit?.name ?? "—"}
                       </td>

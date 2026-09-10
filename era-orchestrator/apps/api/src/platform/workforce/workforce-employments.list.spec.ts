@@ -35,7 +35,12 @@ describe("WorkforceEmploymentsService.list include", () => {
         include: expect.objectContaining({
           roleBindings: {
             where: { status: RoleBindingStatus.ACTIVE },
-            select: { satelliteKey: true, satelliteRole: true },
+            select: {
+              satelliteKey: true,
+              satelliteRole: true,
+              provisionState: true,
+              lastProvisionError: true,
+            },
           },
         }),
       }),
@@ -49,7 +54,12 @@ describe("WorkforceEmploymentsService.list include", () => {
         include: expect.objectContaining({
           roleBindings: {
             where: { status: RoleBindingStatus.ACTIVE },
-            select: { satelliteKey: true, satelliteRole: true },
+            select: {
+              satelliteKey: true,
+              satelliteRole: true,
+              provisionState: true,
+              lastProvisionError: true,
+            },
           },
         }),
       }),

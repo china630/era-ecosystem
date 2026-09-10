@@ -1,4 +1,5 @@
 import { enrichPublicPricingStorefront } from "../billing/pricing-storefront-snapshot.util";
+import { INDUSTRY_STOREFRONT_GROUP_ORDER } from "../billing/pricing-industry.catalog";
 
 describe("enrichPublicPricingStorefront catalog freeze", () => {
   const hotelModules = [
@@ -88,5 +89,45 @@ describe("enrichPublicPricingStorefront catalog freeze", () => {
     const clinic = out.industryGroups.find((g) => g.satelliteKey === "industry_clinic");
     expect(clinic?.gate?.pricePerMonth).toBe(29);
     expect(clinic?.modules.map((m) => m.key).sort()).toEqual(["clinic_lab", "clinic_registry_emr"]);
+  });
+
+  it("exposes hotel room capacity driver from catalog freeze", () => {
+    const out = enrichPublicPricingStorefront({
+      foundationMonthlyAzn: 29,
+      pricingModules: hotelModules,
+      pricingBundles: [],
+      tierSpendCeilingsAzn: {},
+      meterUnitPricing: {
+        pricePerUserMonthAzn: 2,
+        pricePerGbMonthAzn: 0.5,
+        pricePerWhatsappAlertAzn: 0.05,
+        pricePerInvoiceAzn: 0,
+        pricePerOcrPageAzn: 0.02,
+      },
+    });
+    expect(out.capacityDrivers.find((d) => d.satelliteKey === "industry_hotel_pms")).toEqual({
+      satelliteKey: "industry_hotel_pms",
+      includedInGate: 5,
+      unitAzn: 4,
+      unit: "room",
+    });
+  });
+
+  it("maps every industry storefront group to a public pricing hash", () => {
+    const anchors: Record<string, string> = {
+      industry_hotel_pms: "hotel",
+      industry_clinic: "clinic",
+      industry_fnb_pos: "fnb",
+      industry_retail: "retail",
+      industry_auto_service: "auto",
+      industry_logistics: "logistics",
+      industry_construction: "construction",
+      industry_wholesale: "wholesale",
+      industry_crm: "crm",
+      industry_banking: "banking",
+    };
+    for (const key of INDUSTRY_STOREFRONT_GROUP_ORDER) {
+      expect(anchors[key]).toBeTruthy();
+    }
   });
 });

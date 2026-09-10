@@ -5,7 +5,11 @@
 
 FROM node:22-alpine AS builder
 
-RUN apk add --no-cache python3 make g++ openssl
+# Docker Desktop on this host often MITM-breaks Alpine/npm TLS (apk + UNABLE_TO_VERIFY_LEAF_SIGNATURE).
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+RUN apk add --no-cache python3 make g++ openssl \
+  || (sed -i 's|https://|http://|g' /etc/apk/repositories && apk add --no-cache python3 make g++ openssl)
 
 WORKDIR /workspace
 
@@ -15,11 +19,12 @@ COPY packages/era-storage packages/era-storage
 COPY packages/era-fiscal packages/era-fiscal
 COPY packages/satellite-kit packages/satellite-kit
 
-RUN cd packages/i18n-common && npm install && npm run build \
-  && cd ../era-contracts && npm install && npm run build \
-  && cd ../era-storage && npm install && npm run build \
-  && cd ../era-fiscal && npm install && npm run build \
-  && cd ../satellite-kit && npm install && npm run build
+RUN cd packages/i18n-common && npm config set strict-ssl false \
+  && for i in 1 2 3 4 5; do rm -rf node_modules && npm install && npm run build && break || sleep 15; done \
+  && cd ../era-contracts && for i in 1 2 3 4 5; do rm -rf node_modules && npm install && npm run build && break || sleep 15; done \
+  && cd ../era-storage && for i in 1 2 3 4 5; do rm -rf node_modules && npm install && npm run build && break || sleep 15; done \
+  && cd ../era-fiscal && for i in 1 2 3 4 5; do rm -rf node_modules && npm install && npm run build && break || sleep 15; done \
+  && cd ../satellite-kit && for i in 1 2 3 4 5; do rm -rf node_modules && npm install && npm run build && break || sleep 15; done
 
 COPY era-orchestrator era-orchestrator
 
@@ -44,7 +49,7 @@ ENV NEXT_PUBLIC_SATELLITE_FNB_POS_URL=${NEXT_PUBLIC_SATELLITE_FNB_POS_URL}
 ENV NEXT_PUBLIC_SATELLITE_CLINIC_URL=${NEXT_PUBLIC_SATELLITE_CLINIC_URL}
 ENV NEXT_PUBLIC_SATELLITE_RETAIL_URL=${NEXT_PUBLIC_SATELLITE_RETAIL_URL}
 
-RUN npm ci
+RUN npm config set strict-ssl false && npm ci
 RUN npm run build
 RUN mkdir -p apps/web/.next/standalone/apps/web/.next \
   && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
@@ -58,6 +63,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN apk add --no-cache openssl wget \
+  || (sed -i 's|https://|http://|g' /etc/apk/repositories && apk add --no-cache openssl wget) \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 era
 

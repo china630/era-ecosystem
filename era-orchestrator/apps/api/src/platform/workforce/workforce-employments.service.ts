@@ -27,7 +27,12 @@ const EMPLOYMENT_INCLUDE = {
   position: true,
   roleBindings: {
     where: { status: RoleBindingStatus.ACTIVE },
-    select: { satelliteKey: true, satelliteRole: true },
+    select: {
+      satelliteKey: true,
+      satelliteRole: true,
+      provisionState: true,
+      lastProvisionError: true,
+    },
   },
 };
 

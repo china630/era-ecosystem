@@ -14,6 +14,7 @@ import {
   MessageCircle,
   type LucideIcon,
 } from "lucide-react";
+import { SATELLITE_KEY_TO_PRICING_ANCHOR } from "../../lib/satellites/public-satellite-catalog";
 import type { PricingStorefrontView } from "../../lib/pricing/build-pricing-storefront-view";
 import { PRICING_CARD_HOVER_CLASS } from "../../lib/landing-motion";
 
@@ -69,8 +70,13 @@ export function PricingIndustrySection({
           {groups.map((g) => {
             const Icon = GROUP_ICONS[g.satelliteKey] ?? Store;
             const selectedId = selectedBySatellite[g.satelliteKey] ?? null;
+            const anchor = SATELLITE_KEY_TO_PRICING_ANCHOR[g.satelliteKey] ?? g.satelliteKey;
             return (
-              <article key={g.satelliteKey} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <article
+                id={anchor}
+                key={g.satelliteKey}
+                className="scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5"
+              >
                 <div className="flex items-center gap-2">
                   <Icon className="h-5 w-5 text-slate-600" aria-hidden />
                   <h3 className="m-0 text-[16px] font-bold text-slate-800">{g.title}</h3>
