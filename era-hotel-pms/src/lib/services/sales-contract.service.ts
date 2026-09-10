@@ -173,7 +173,14 @@ export async function updateSalesContract(
 export async function findActiveSalesContract(
   salesContractId: string,
   checkInDate: Date,
-): Promise<{ id: string; ratePlanId: string; agencyId: string | null; commissionPercent: number | null } | null> {
+): Promise<{
+  id: string;
+  ratePlanId: string;
+  agencyId: string | null;
+  companyId: string | null;
+  counterpartyType: 'AGENCY' | 'CORPORATE';
+  commissionPercent: number | null;
+} | null> {
   const day = new Date(checkInDate.toISOString().slice(0, 10));
   const contract = await prisma.salesContract.findFirst({
     where: {
@@ -186,6 +193,8 @@ export async function findActiveSalesContract(
       id: true,
       ratePlanId: true,
       agencyId: true,
+      companyId: true,
+      counterpartyType: true,
       commissionPercent: true,
       minStay: true,
       cta: true,
@@ -206,6 +215,20 @@ export async function listActiveContractsForAgency(agencyId: string, checkInDate
   return prisma.salesContract.findMany({
     where: {
       agencyId,
+      status: 'ACTIVE',
+      validFrom: { lte: day },
+      OR: [{ validTo: null }, { validTo: { gte: day } }],
+    },
+    include: { ratePlan: true, allotments: { include: { roomType: true } } },
+    orderBy: { code: 'asc' },
+  });
+}
+
+export async function listActiveContractsForCompany(companyId: string, checkInDate: Date) {
+  const day = new Date(checkInDate.toISOString().slice(0, 10));
+  return prisma.salesContract.findMany({
+    where: {
+      companyId,
       status: 'ACTIVE',
       validFrom: { lte: day },
       OR: [{ validTo: null }, { validTo: { gte: day } }],

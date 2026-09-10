@@ -286,7 +286,7 @@ function TimelineCells({
               selected={selectedId === bar.id}
               draggable={Boolean(onResizeEnd || onMoveReservation)}
               roomBars={roomBars}
-              onSelect={() => onSelect(selectedId === bar.id ? null : bar.id)}
+              onSelect={() => onSelect(bar.id)}
               onDragStart={(e) => {
                 if (!onMoveReservation && !onResizeEnd) return;
                 e.dataTransfer.setData('reservationId', bar.id);

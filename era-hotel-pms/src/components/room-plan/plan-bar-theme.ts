@@ -153,18 +153,44 @@ function staysOverlapKeys(a: PlanBarInput, b: PlanBarInput): boolean {
   return aCi < bCo && bCi < aCo;
 }
 
-/** True when another effective share on the same door overlaps this stay. */
-export function hasOverlappingShareRoommate(
-  bar: PlanBarInput,
-  roomBars: PlanBarInput[],
-): boolean {
-  if (!isEffectiveShareBar(bar) || !bar.roomId) return false;
-  return roomBars.some((other) => {
+function overlappingShareNeighbors(bar: PlanBarInput, roomBars: PlanBarInput[]): PlanBarInput[] {
+  if (!isEffectiveShareBar(bar) || !bar.roomId) return [];
+  return roomBars.filter((other) => {
     if (other.id === bar.id) return false;
     if (other.roomId !== bar.roomId) return false;
     if (!isEffectiveShareBar(other)) return false;
     return staysOverlapKeys(bar, other);
   });
+}
+
+/**
+ * Two independent contracts on one door, opposite gender — Nafta closed pair.
+ * Not an open same-gender pool: no concatenated roommate names, no ♂/♀ badge.
+ */
+export function isClosedSharePair(bar: PlanBarInput, roomBars: PlanBarInput[]): boolean {
+  const others = overlappingShareNeighbors(bar, roomBars);
+  if (others.length !== 1) return false;
+  const selfG = normalizeShareGender(bar.shareGender);
+  const otherG = normalizeShareGender(others[0]!.shareGender);
+  return selfG != null && otherG != null && selfG !== otherG;
+}
+
+/** Open same-gender share pool roommate (not closed mixed pair). */
+export function hasOverlappingShareRoommate(
+  bar: PlanBarInput,
+  roomBars: PlanBarInput[],
+): boolean {
+  if (!isEffectiveShareBar(bar) || !bar.roomId) return false;
+  const selfG = normalizeShareGender(bar.shareGender);
+  return overlappingShareNeighbors(bar, roomBars).some((other) => {
+    return normalizeShareGender(other.shareGender) === selfG;
+  });
+}
+
+/** ♂/♀ badge for open pool (including a lone share stay after the pair opens). */
+export function showSharePoolOccupancyBadge(bar: PlanBarInput, roomBars: PlanBarInput[]): boolean {
+  if (!isEffectiveShareBar(bar)) return false;
+  return !isClosedSharePair(bar, roomBars);
 }
 
 /**

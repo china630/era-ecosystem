@@ -4,18 +4,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Camera, UserPlus, UserSearch } from 'lucide-react';
 import {
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
-  CHIP_GROUP_CLASS,
   CatalogField,
+  DROPDOWN_ITEM_CLASS,
+  DROPDOWN_PANEL_CLASS,
   Field,
+  GHOST_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
   showSuccess,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import {
   attachGuestToPax,
   splitFullName,
@@ -24,28 +26,33 @@ import type { PartyBillingMode, PaxRow, SelectOption } from './types';
 
 export { emptyPax } from '@/components/reservation-card/party-pax';
 
-const MEDICAL_PKG_OPTIONS = [
-  { value: 'PKG-STANDART', label: 'PKG-STANDART' },
-  { value: 'PKG-PREMIUM', label: 'PKG-PREMIUM' },
-  { value: 'PKG-DERMO', label: 'PKG-DERMO' },
-  { value: 'PKG-DETOKS', label: 'PKG-DETOKS' },
-];
-
 type PaxGridRow = PaxRow & Record<string, unknown> & { _idx: number };
 
 /**
- * Party list: PRIMARY = one folio owner + companions; EQUAL = each peer owns a GUEST folio.
- * + opens guest card (create); search attaches an existing guest as primary or companion.
+ * Compact party list (HOT-BOOK-06): role · name link · docs · DOB/age · medical badge · status · ⋮.
  */
 export function ReservationCardGuestsTab({
   guestId,
   guestOptions,
   pax,
   partyBillingMode,
-  onPartyBillingMode,
+  onPartyBillingMode: _onPartyBillingMode,
   onGuestId,
   onPax,
   onNewGuest,
+  onOpenGuestCard,
+  onScanId,
+  preferredBed = '',
+  preferredLocation = '',
+  voucherNo = '',
+  allergenCount = 0,
+  vipType = '',
+  tripReason = '',
+  onVipType,
+  onTripReason,
+  partyOpsEnabled = false,
+  onDepartGuest,
+  onMoveGuest,
 }: {
   isCreate?: boolean;
   guestId: string;
@@ -54,27 +61,34 @@ export function ReservationCardGuestsTab({
   partyBillingMode: PartyBillingMode;
   onPartyBillingMode: (mode: PartyBillingMode) => void;
   onGuestId: (id: string) => void;
-  /** Replaces party list; parent syncs adults/children to row count. */
   onPax: (rows: PaxRow[]) => void;
   onNewGuest: () => void;
   onRepeatGuest?: () => void;
+  /** Open existing guest profile (name click). */
+  onOpenGuestCard?: (guestId: string) => void;
+  /** Open guest card with ID reader stub (Scan ID). */
+  onScanId?: (guestId: string | null) => void;
+  preferredBed?: string;
+  preferredLocation?: string;
+  voucherNo?: string;
+  allergenCount?: number;
+  vipType?: string;
+  tripReason?: string;
+  onVipType?: (v: string) => void;
+  onTripReason?: (v: string) => void;
+  partyOpsEnabled?: boolean;
+  onDepartGuest?: (paxIndex: number) => void;
+  onMoveGuest?: (paxIndex: number) => void;
 }) {
   const t = useTranslations('reservationCard');
+  const { byKind } = useHotelLookupOptions(['VIP_TYPE', 'TRIP_REASON']);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [remoteHits, setRemoteHits] = useState<SelectOption[] | null>(null);
   const [searchBusy, setSearchBusy] = useState(false);
+  const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
   const equalMode = partyBillingMode === 'EQUAL';
 
-  const primaryPax = pax.find((p) => p.isPrimary) ?? pax[0];
-  const primaryFromPax =
-    primaryPax && (primaryPax.firstName.trim() || primaryPax.lastName.trim())
-      ? [primaryPax.firstName, primaryPax.lastName].filter(Boolean).join(' ').trim()
-      : '';
-  const selectedLabel =
-    guestOptions.find((g) => g.id === guestId)?.label ??
-    remoteHits?.find((g) => g.id === guestId)?.label ??
-    primaryFromPax;
   const hasPartyMembers = pax.some(
     (p) => Boolean(p.guestId) || Boolean(p.firstName.trim()) || Boolean(p.lastName.trim()),
   );
@@ -117,20 +131,6 @@ export function ReservationCardGuestsTab({
       .slice(0, 40);
   }, [guestOptions, query, remoteHits]);
 
-  function applyPartyBillingMode(mode: PartyBillingMode) {
-    onPartyBillingMode(mode);
-    if (mode === 'EQUAL') {
-      onPax(pax.map((p) => ({ ...p, ownsFolio: true })));
-    } else {
-      onPax(
-        pax.map((p, i) => ({
-          ...p,
-          ownsFolio: Boolean(p.isPrimary) || (!pax.some((r) => r.isPrimary) && i === 0),
-        })),
-      );
-    }
-  }
-
   function setPrimaryAt(index: number) {
     if (equalMode) return;
     const row = pax[index];
@@ -165,7 +165,6 @@ export function ReservationCardGuestsTab({
     onPax(next);
   }
 
-  /** Search pick: fill incomplete slot first; else append companion / create primary. */
   function pickGuest(g: SelectOption) {
     const { firstName, lastName } = splitFullName(g.label);
     const attached = attachGuestToPax(
@@ -195,7 +194,8 @@ export function ReservationCardGuestsTab({
           if (equalMode) {
             return <span className="text-[12px]">{t('equalPeerGuest')}</span>;
           }
-          const isPrimary = Boolean(row.isPrimary) || (!pax.some((p) => p.isPrimary) && row._idx === 0);
+          const isPrimary =
+            Boolean(row.isPrimary) || (!pax.some((p) => p.isPrimary) && row._idx === 0);
           return (
             <label className="inline-flex items-center gap-1.5 text-[12px]">
               <input
@@ -211,158 +211,208 @@ export function ReservationCardGuestsTab({
         },
       },
       {
-        key: 'firstName',
+        key: 'fullName',
         header: t('name'),
-        render: (row) => row.firstName || '—',
-      },
-      {
-        key: 'middleName',
-        header: t('patronymic'),
-        render: (row) => row.middleName || '—',
-      },
-      {
-        key: 'lastName',
-        header: t('surname'),
-        render: (row) => row.lastName || '—',
-      },
-      {
-        key: 'nationality',
-        header: t('nationality'),
-        render: (row) => row.nationality || '—',
-      },
-      {
-        key: 'age',
-        header: t('age'),
-        className: 'text-center',
-        render: (row) => row.age || '—',
+        render: (row) => {
+          const name =
+            [row.firstName, row.middleName, row.lastName].filter(Boolean).join(' ').trim() || '—';
+          if (row.guestId && onOpenGuestCard) {
+            return (
+              <button
+                type="button"
+                className="text-left text-[13px] font-medium text-[#2980B9] underline-offset-2 hover:underline"
+                data-testid="pax-name-link"
+                onClick={() => onOpenGuestCard(row.guestId!)}
+              >
+                {name}
+              </button>
+            );
+          }
+          return <span className="text-[13px]">{name}</span>;
+        },
       },
       {
         key: 'passportNo',
-        header: t('passport'),
-        render: (row) => row.passportNo || row.idCardNo || '—',
+        header: t('passportPin'),
+        className: 'whitespace-nowrap text-[12px]',
+        render: (row) => {
+          const passport = (row.passportNo ?? '').trim();
+          const pin = (row.idCardNo ?? '').trim();
+          if (!passport && !pin) return '—';
+          if (passport && pin && passport !== pin) return `${passport} · ${pin}`;
+          return passport || pin;
+        },
+      },
+      {
+        key: 'birthAge',
+        header: t('birthAge'),
+        className: 'whitespace-nowrap text-[12px]',
+        render: (row) => {
+          const dob = row.birthDate ? String(row.birthDate).slice(0, 10) : '';
+          const age = row.age || '';
+          if (!dob && !age) return '—';
+          if (dob && age) return `${dob} · ${age}`;
+          return dob || age;
+        },
       },
       {
         key: 'medicalPackageCode',
         header: t('medicalPackageCode'),
-        className: 'min-w-[9rem]',
-        render: (row) => (
-          <CatalogField
-            kind="CLOSED_SMALL"
-            name={`pax-pkg-${row._idx}`}
-            label={t('medicalPackageCode')}
-            value={row.medicalPackageCode ?? ''}
-            onChange={(v) => {
-              const next = pax.map((p, i) =>
-                i === row._idx ? { ...p, medicalPackageCode: String(v ?? '') } : p,
-              );
-              onPax(next);
-            }}
-            options={MEDICAL_PKG_OPTIONS}
-            emptyLabel="—"
-            className="mb-0"
-          />
-        ),
+        className: 'min-w-[6rem]',
+        render: (row) =>
+          row.medicalPackageCode ? (
+            <span className="rounded bg-sky-50 px-1.5 py-0.5 text-[11px] font-medium text-sky-900">
+              {row.medicalPackageCode}
+            </span>
+          ) : (
+            <span className={TEXT_MUTED_CLASS}>—</span>
+          ),
       },
       {
-        key: 'payStatus',
-        header: t('payStatus'),
-        render: (row) => row.payStatus || '—',
+        key: 'guestState',
+        header: t('paxStatus'),
+        className: 'whitespace-nowrap',
+        render: (row) =>
+          row.departedAt ? (
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
+              {t('guestDeparted')}
+            </span>
+          ) : partyOpsEnabled ? (
+            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] text-emerald-900">
+              {t('guestInHouse')}
+            </span>
+          ) : (
+            <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{row.guestState || '—'}</span>
+          ),
       },
       {
         key: 'actions',
         header: t('partyActions'),
-        className: 'whitespace-nowrap',
+        className: 'whitespace-nowrap w-[3rem]',
         render: (row) => (
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => removeAt(row._idx)}
-          >
-            {t('removeFromParty')}
-          </button>
+          <div className="relative flex items-center justify-end">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              aria-label={t('partyRowMenu')}
+              title={partyOpsEnabled ? t('partyRowMenu') : t('partyOpsRequiresInHouse')}
+              onClick={() => setMenuOpenIdx((v) => (v === row._idx ? null : row._idx))}
+            >
+              ⋮
+            </button>
+            {menuOpenIdx === row._idx ? (
+              <div className={`${DROPDOWN_PANEL_CLASS} right-0 z-20`}>
+                <button
+                  type="button"
+                  className={DROPDOWN_ITEM_CLASS}
+                  onClick={() => {
+                    setMenuOpenIdx(null);
+                    onScanId?.(row.guestId ?? null);
+                  }}
+                >
+                  {t('scanId')}
+                </button>
+                <button
+                  type="button"
+                  className={DROPDOWN_ITEM_CLASS}
+                  disabled={!partyOpsEnabled || !onDepartGuest || Boolean(row.departedAt)}
+                  onClick={() => {
+                    setMenuOpenIdx(null);
+                    onDepartGuest?.(row._idx);
+                  }}
+                >
+                  {t('departGuest')}
+                </button>
+                <button
+                  type="button"
+                  className={DROPDOWN_ITEM_CLASS}
+                  disabled={!partyOpsEnabled || !onMoveGuest || Boolean(row.departedAt)}
+                  onClick={() => {
+                    setMenuOpenIdx(null);
+                    onMoveGuest?.(row._idx);
+                  }}
+                >
+                  {t('moveGuest')}
+                </button>
+                <button
+                  type="button"
+                  className={DROPDOWN_ITEM_CLASS}
+                  onClick={() => {
+                    setMenuOpenIdx(null);
+                    removeAt(row._idx);
+                  }}
+                >
+                  {t('removeFromParty')}
+                </button>
+              </div>
+            ) : null}
+          </div>
         ),
       },
     ],
-    // setPrimaryAt / removeAt close over pax — refresh when pax / mode changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pax, equalMode, t],
+    [
+      pax,
+      equalMode,
+      t,
+      menuOpenIdx,
+      partyOpsEnabled,
+      onDepartGuest,
+      onMoveGuest,
+      onOpenGuestCard,
+      onScanId,
+    ],
   );
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>{t('partyBillingMode')}</span>
-          <div className={CHIP_GROUP_CLASS} role="group" aria-label={t('partyBillingMode')}>
-            <button
-              type="button"
-              className={partyBillingMode === 'PRIMARY' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-              onClick={() => applyPartyBillingMode('PRIMARY')}
-            >
-              {t('partyBillingPrimary')}
-            </button>
-            <button
-              type="button"
-              className={partyBillingMode === 'EQUAL' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-              onClick={() => applyPartyBillingMode('EQUAL')}
-            >
-              {t('partyBillingEqual')}
-            </button>
-          </div>
-        </div>
-        <p className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{t('hintPartyBilling')}</p>
-      </div>
-
-      {hasPartyMembers && selectedLabel ? (
-        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-          {equalMode ? t('equalPeerGuest') : t('primaryGuest')}:{' '}
-          <strong className="text-[#34495E]">{selectedLabel}</strong>
-          {!equalMode ? <span className="ml-2">{t('companionsHint')}</span> : null}
-        </p>
-      ) : !hasPartyMembers ? (
+    <div className="space-y-3" data-testid="reservation-guests-tab">
+      {!hasPartyMembers ? (
         <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t('paxEmpty')}</p>
       ) : null}
 
-      <HotelDataGrid<PaxGridRow>
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id ?? row.guestId ?? `pax-${row._idx}`}
-        emptyMessage={t('paxEmpty')}
-        pagination={false}
-        toolbar={
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              title={t('newGuestAria')}
-              aria-label={t('newGuestAria')}
-              onClick={onNewGuest}
-            >
-              <UserPlus className="h-4 w-4" />
-              <span className="ml-1">{t('addPartyMember')}</span>
-            </button>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              title={t('searchGuestAria')}
-              aria-label={t('searchGuestAria')}
-              onClick={() => setSearchOpen((v) => !v)}
-            >
-              <UserSearch className="h-4 w-4" />
-              <span className="ml-1">{t('searchGuest')}</span>
-            </button>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              title={t('cameraStub')}
-              aria-label={t('camera')}
-              onClick={() => showSuccess(t('cameraStub'))}
-            >
-              <Camera className="h-4 w-4" />
-            </button>
-          </div>
-        }
-      />
+      <div className="rounded-md border border-[#D5DADF] bg-white p-2">
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS}
+            title={t('newGuestAria')}
+            aria-label={t('newGuestAria')}
+            onClick={onNewGuest}
+          >
+            <UserPlus className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS}
+            title={t('searchGuestAria')}
+            aria-label={t('searchGuestAria')}
+            onClick={() => setSearchOpen((v) => !v)}
+          >
+            <UserSearch className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS}
+            title={t('cameraStub')}
+            aria-label={t('camera')}
+            onClick={() => showSuccess(t('cameraStub'))}
+          >
+            <Camera className="h-4 w-4" />
+          </button>
+        </div>
+        <HotelDataGrid<PaxGridRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id ?? row.guestId ?? `pax-${row._idx}`}
+          emptyMessage={t('paxEmpty')}
+          embedded
+          pagination={false}
+          paginationMode="server"
+          page={1}
+          pageSize={Math.max(rows.length, 1)}
+          total={rows.length}
+        />
+      </div>
 
       {searchOpen ? (
         <div className="space-y-2 rounded-md border border-[#D5DADF] bg-[#F8F9FA] p-3">
@@ -409,6 +459,45 @@ export function ReservationCardGuestsTab({
           </div>
         </div>
       ) : null}
+
+      <div className={SUBSECTION_SURFACE_CLASS} data-testid="reservation-guests-specials">
+        <p className={`mb-1 text-[11px] font-medium uppercase ${TEXT_MUTED_CLASS}`}>
+          {t('specialsStrip')}
+        </p>
+        <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('vipType')}
+            value={vipType}
+            onChange={(v) => onVipType?.(Array.isArray(v) ? v.join(',') : v)}
+            options={withOrphanOption(byKind.VIP_TYPE ?? [], vipType)}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('tripReason')}
+            value={tripReason}
+            onChange={(v) => onTripReason?.(Array.isArray(v) ? v.join(',') : v)}
+            options={withOrphanOption(byKind.TRIP_REASON ?? [], tripReason)}
+          />
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[#34495E]">
+          <span>
+            {t('voucherNo')}: <strong>{voucherNo || '—'}</strong>
+          </span>
+          <span>
+            {t('preferredBed')}: <strong>{preferredBed || '—'}</strong>
+          </span>
+          <span>
+            {t('preferredLocation')}: <strong>{preferredLocation || '—'}</strong>
+          </span>
+          <span data-testid="reservation-allergens-badge">
+            {t('allergens')}:{' '}
+            <strong className={allergenCount > 0 ? 'text-amber-800' : undefined}>
+              {allergenCount > 0 ? allergenCount : '—'}
+            </strong>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

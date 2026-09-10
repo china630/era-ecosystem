@@ -626,4 +626,65 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 7. `/front-cash/company-ledger` — code/name/settlement; COMPANY folio totals + statement lines; TRANSFERRED_AR list; no commission column.
 8. `/agency/ledger` — agency portal read-only statement (session agency only).
 
+## 43. Depart guest (HOT-FO-05)
 
+**Status:** Engineering API/SCREEN — not SHIPPED.
+
+1. IN_HOUSE exclusive party (2 adults) → Guests ⋮ **Depart guest** on companion → stay stays **IN_HOUSE**; departed badge on row; occupancy preview in modal.
+2. Adults 2→1; remaining unlocked nights recalc from depart date; HK **PICKUP** + STAYOVER task (not DIRTY).
+3. Clinic: only departed pax episode CLOSED (`SATELLITE_HOTEL_GUEST_DEPARTED` via orch fan-out); remaining spouse OPEN.
+4. Share-pool roommate → 409 (use stay checkout). Last live pax → `needs_checkout` → FO redirected to folio checkout (no blind Depart checkout).
+5. Reissue-key task created **server-side** (HOT-FO-08 STUB). CLOSE_PERSONAL only when pax `ownsFolio`.
+
+## 44. Move guest / Swap rooms (HOT-FO-06/07)
+
+**Status:** Engineering API/SCREEN — not SHIPPED.
+
+1. Booking with 2 stays → Guests ⋮ **Move** to sibling → card switches to destination; source not emptied (409 if last live pax).
+2. Clinic episode retargets `reservationId` / room (no close) via `GUEST_MOVED`.
+3. StaysBar **Swap rooms** → doors exchange; folios/rates stay with each stay; two `ROOM_CHANGED`; reissue-key tasks on both stays.
+4. Different `groupId` / departed pax → 409.
+
+## 45. Card Guests density (HOT-BOOK-06)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Open stay card → Guests: compact party grid (role · name · passport · DOB/age · medical badge · status).
+2. Click guest name → Guest card opens.
+3. Row ⋮ **Scan ID** → guest card + ID reader stub.
+4. Specials strip visible (voucher / bed / view / allergies).
+
+## 46. Card Rate Grid (HOT-BOOK-07)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Saved stay → Pricing shows daily table (date · amount · discount% · fixed).
+2. Create with rate+dates → quote preview when nights not yet saved.
+3. If `packageCompose` present → summary block under grid (not per-night clinic column).
+
+## 47. Card Folio chrome (HOT-BOOK-08)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Folio chips: All / Guest / Agency / Company (not Opera windows).
+2. Empty stay → empty-state with Posting / Payment / Invoice links.
+3. Card authorizations collapsed by default.
+
+## 48. Card Notes feed (HOT-BOOK-09)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Notes tab: filter All / FO / HK / Billing; filled notes as feed rows.
+2. Open stay with CIN_NOTE or EXTRA_REQ or allergens → one dismissible alert popup.
+
+## 49. Role access matrix (HOT-RBAC-01 / Variant A)
+
+**Status:** Engineering SCREEN — field UAT open (not SHOW / not SHIPPED).
+
+1. Sign in as **Hotel_Admin** → **/settings/access** opens; matrix lists system roles and permission groups.
+2. Uncheck `folio:void` on **Hotel_Admin**, Save (session refresh). Void charge on folio returns **403**; UI hides void when can(folio:void) is false.
+3. Re-check + Save → void restored.
+4. **Clone** NightAuditor → NIGHT_MANAGER; assign a user on /settings/users; login as that user → grants match clone.
+5. Delete empty custom role OK; role with users → 409.
+6. Provision unknown satelliteRole → fail (no silent Receptionist).
+7. After image/DB upgrade run hotel Prisma migrate so Role.isSystem / cloneFromCode exist; first login or /settings/access runs `ensureSystemHotelRoles`.

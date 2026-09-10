@@ -373,13 +373,16 @@ export async function applyElektrawebSharePair(
     reservation.room.roomType.adultCapacity,
   );
 
-  const poolGender = ordered[0]!.gender;
-  const compatible = ordered.filter((m) => m.gender === poolGender);
-  if (compatible.length === 0) {
+  const closedPair =
+    ordered.length === 2 && ordered[0]!.gender !== ordered[1]!.gender && maxBed >= 2;
+  const members = closedPair
+    ? ordered
+    : ordered.filter((m) => m.gender === ordered[0]!.gender);
+  if (members.length === 0) {
     return { applied: false, pairedIds: [], skippedReason: 'gender_mismatch' };
   }
   // Alone without EW second: do not keep a one-bed "pool" sticky.
-  if (compatible.length < 2 && !input.isSecond && !neighborShare) {
+  if (members.length < 2 && !input.isSecond && !neighborShare) {
     if (reservation.shareEligible && isLiveShareStatus(reservation.status)) {
       await clearShareFlags(db, reservation.id, input.shareNo, input.dryRun);
       return {
@@ -391,12 +394,12 @@ export async function applyElektrawebSharePair(
     }
     return { applied: false, pairedIds: [], skippedReason: 'no_share_signal' };
   }
-  if (compatible.length > maxBed) {
-    compatible.length = maxBed;
+  if (members.length > maxBed) {
+    members.length = maxBed;
   }
 
   const assigned: Array<{ id: string; bed: number; gender: ShareGender }> = [];
-  for (const m of compatible) {
+  for (const m of members) {
     const bed =
       m.existingBed != null &&
       m.existingBed >= 1 &&
@@ -407,7 +410,7 @@ export async function applyElektrawebSharePair(
             assigned.map((a) => ({ shareBedIndex: a.bed })),
             maxBed,
           );
-    assigned.push({ id: m.id, bed, gender: poolGender });
+    assigned.push({ id: m.id, bed, gender: closedPair ? m.gender : ordered[0]!.gender });
   }
 
   if (input.dryRun) {

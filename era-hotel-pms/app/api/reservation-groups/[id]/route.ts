@@ -31,6 +31,7 @@ const addStaySchema = z.object({
   checkOutDate: z.coerce.date(),
   paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT', 'LOYALTY_POINTS']),
   agencyId: z.string().uuid().optional(),
+  companyId: z.string().uuid().optional(),
   salesContractId: z.string().uuid().optional(),
   sourceId: z.string().uuid().optional(),
   adults: z.number().int().positive().optional(),

@@ -158,6 +158,12 @@ export function deriveSharePoolForDate(
       normalizeShareGender(r.shareGender) != null,
   );
   if (shareStays.length === 0) return null;
+  const genders = new Set(
+    shareStays
+      .map((s) => normalizeShareGender(s.shareGender))
+      .filter((g): g is NonNullable<typeof g> => g != null),
+  );
+  if (genders.size > 1) return null;
   const gender =
     normalizeShareGender(shareStays.find((r) => r.status === 'IN_HOUSE')?.shareGender) ??
     normalizeShareGender(shareStays[0]!.shareGender);

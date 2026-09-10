@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import {
   CatalogField,
   EraListFilterBar,
   useDebouncedValue,
   Field,
-  FieldSelect,
+  FieldRow,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
   PageHeader,
@@ -29,8 +29,21 @@ type CompanyRow = {
   name: string;
   voen: string | null;
   settlementMode?: 'PREPAID' | 'POSTPAID';
+  creditLimitAzn?: string | number | null;
+  paymentTermsDays?: number | null;
+  financeCounterpartyId?: string | null;
   active: boolean;
 };
+
+function catalogStr(v: string | string[]): string {
+  return Array.isArray(v) ? (v[0] ?? '') : v;
+}
+
+function financeHint(row: CompanyRow, t: (key: string) => string): string {
+  if (row.financeCounterpartyId) return t('financeLinked');
+  if (row.voen && row.voen.replace(/\D/g, '').length === 10) return t('financeVoenOnly');
+  return t('financeMissing');
+}
 
 export default function CompaniesPage() {
   const { can } = useAuth();
@@ -43,9 +56,29 @@ export default function CompaniesPage() {
   const [q, setQ] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [settlementFilter, setSettlementFilter] = useState('');
   const [voen, setVoen] = useState('');
   const [nameHint, setNameHint] = useState('');
   const [settlementMode, setSettlementMode] = useState<'PREPAID' | 'POSTPAID'>('POSTPAID');
+  const [creditLimitAzn, setCreditLimitAzn] = useState('');
+  const [paymentTermsDays, setPaymentTermsDays] = useState('');
+
+  const statusOptions = useMemo(
+    () => [
+      { value: 'ALL', label: t('allStatuses') },
+      { value: 'ACTIVE', label: t('activeOnly') },
+      { value: 'INACTIVE', label: t('inactiveOnly') },
+    ],
+    [t],
+  );
+  const settlementFilterOptions = useMemo(
+    () => [
+      { value: '', label: tc('all') },
+      { value: 'POSTPAID', label: t('postpaid') },
+      { value: 'PREPAID', label: t('prepaid') },
+    ],
+    [t, tc],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -67,10 +100,16 @@ export default function CompaniesPage() {
 
   const filteredRows = useMemo(
     () =>
-      rows.filter(
-        (r) => matchesCodeNameQuery(r, debouncedQ) && matchesActiveFilter(r, activeFilter),
-      ),
-    [rows, debouncedQ, activeFilter],
+      rows.filter((r) => {
+        if (!matchesCodeNameQuery(r, debouncedQ)) return false;
+        if (!matchesActiveFilter(r, activeFilter)) return false;
+        if (settlementFilter) {
+          const mode = r.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID';
+          if (mode !== settlementFilter) return false;
+        }
+        return true;
+      }),
+    [rows, debouncedQ, activeFilter, settlementFilter],
   );
 
   const formId = 'company-form';
@@ -80,6 +119,8 @@ export default function CompaniesPage() {
     setVoen('');
     setNameHint('');
     setSettlementMode('POSTPAID');
+    setCreditLimitAzn('');
+    setPaymentTermsDays('');
     setModalOpen(true);
   }
 
@@ -88,6 +129,10 @@ export default function CompaniesPage() {
     setVoen(row.voen ?? '');
     setNameHint('');
     setSettlementMode(row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID');
+    setCreditLimitAzn(
+      row.creditLimitAzn != null && row.creditLimitAzn !== '' ? String(row.creditLimitAzn) : '',
+    );
+    setPaymentTermsDays(row.paymentTermsDays != null ? String(row.paymentTermsDays) : '');
     setModalOpen(true);
   }
 
@@ -107,11 +152,14 @@ export default function CompaniesPage() {
           </button>
         }
       />
+      <p className="mb-4 text-xs text-[#7F8C8D]">{t('productNote')}</p>
+
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {
           setQ('');
           setActiveFilter('ALL');
+          setSettlementFilter('');
         }}
       >
         <Field
@@ -121,34 +169,73 @@ export default function CompaniesPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder={t('filterPlaceholder')}
         />
-        <FieldSelect
+        <CatalogField
+          kind="CLOSED_SMALL"
           label={tc('status')}
-          preset="select"
           value={activeFilter}
-          onChange={(e) => setActiveFilter(e.target.value)}
-        >
-          <option value="ALL">{t('allStatuses')}</option>
-          <option value="ACTIVE">{t('activeOnly')}</option>
-          <option value="INACTIVE">{t('inactiveOnly')}</option>
-        </FieldSelect>
+          onChange={(v) => setActiveFilter(catalogStr(v) || 'ALL')}
+          options={statusOptions}
+          emptyLabel={null}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('settlementMode')}
+          value={settlementFilter}
+          onChange={(v) => setSettlementFilter(catalogStr(v))}
+          options={settlementFilterOptions}
+          emptyLabel={null}
+        />
       </EraListFilterBar>
+
       <HotelDataGrid<CompanyRow & Record<string, unknown>>
         columns={[
-          { key: 'code', header: t('code') },
           { key: 'name', header: t('name') },
+          { key: 'code', header: t('code') },
           { key: 'voen', header: 'VÖEN', render: (r) => r.voen ?? '—' },
           {
             key: 'settlementMode',
             header: t('settlementMode'),
             render: (r) => t(r.settlementMode === 'PREPAID' ? 'prepaid' : 'postpaid'),
           },
-          { key: 'active', header: t('active'), render: (r) => String(r.active) },
+          {
+            key: 'creditLimitAzn',
+            header: t('creditLimitAzn'),
+            render: (r) => (r.creditLimitAzn != null && r.creditLimitAzn !== '' ? String(r.creditLimitAzn) : '—'),
+          },
+          {
+            key: 'finance',
+            header: t('finance'),
+            render: (r) => (
+              <span className="text-[12px] text-[#7F8C8D]" title={t('financeHint')}>
+                {financeHint(r, t)}
+              </span>
+            ),
+          },
+          {
+            key: 'active',
+            header: t('active'),
+            render: (r) => (
+              <span
+                className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                  r.active ? 'bg-[#E8F8F5] text-[#1E8449]' : 'bg-[#F5F6F7] text-[#7F8C8D]'
+                }`}
+              >
+                {r.active ? t('activeBadge') : t('inactiveBadge')}
+              </span>
+            ),
+          },
           {
             key: 'actions',
             header: tc('actions'),
             render: (r) => (
-              <button type="button" className="text-[#2980B9] hover:underline" onClick={() => openEdit(r)}>
-                {tc('edit')}
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#BDC3C7] text-[#2C3E50] hover:bg-[#ECF0F1]"
+                title={tc('edit')}
+                aria-label={tc('edit')}
+                onClick={() => openEdit(r)}
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
               </button>
             ),
           },
@@ -159,7 +246,7 @@ export default function CompaniesPage() {
 
       <EraModal
         open={modalOpen}
-        title={t('title')}
+        title={editRow ? t('editTitle') : t('createTitle')}
         onClose={() => setModalOpen(false)}
         footer={
           <EraModalFooter
@@ -187,6 +274,9 @@ export default function CompaniesPage() {
                   name: fd.get('name'),
                   voen: voen || (fd.get('voen') as string) || undefined,
                   settlementMode,
+                  creditLimitAzn: creditLimitAzn.trim() === '' ? null : Number(creditLimitAzn),
+                  paymentTermsDays:
+                    paymentTermsDays.trim() === '' ? null : Number(paymentTermsDays),
                   active: fd.get('active') === 'on',
                 }),
               });
@@ -206,20 +296,22 @@ export default function CompaniesPage() {
             }
           }}
         >
-          <Field
-            label={t('code')}
-            preset="code"
-            name="code"
-            defaultValue={editRow?.code ?? ''}
-            required
-          />
-          <Field
-            label={t('name')}
-            preset="shortText"
-            name="name"
-            defaultValue={editRow?.name ?? ''}
-            required
-          />
+          <FieldRow cols={2}>
+            <Field
+              label={t('name')}
+              preset="shortText"
+              name="name"
+              defaultValue={editRow?.name ?? ''}
+              required
+            />
+            <Field
+              label={t('code')}
+              preset="code"
+              name="code"
+              defaultValue={editRow?.code ?? ''}
+              required
+            />
+          </FieldRow>
           <VoenLookupField
             value={voen}
             onChange={setVoen}
@@ -235,17 +327,48 @@ export default function CompaniesPage() {
             }}
           />
           {nameHint ? <p className="text-xs text-[#7F8C8D]">{nameHint}</p> : null}
+          {editRow ? (
+            <p className="text-xs text-[#7F8C8D]">
+              {t('financeHint')}: {financeHint(editRow, t)}
+            </p>
+          ) : (
+            <p className="text-xs text-[#7F8C8D]">{t('financeHint')}</p>
+          )}
           <input type="hidden" name="voen" value={voen} />
           <CatalogField
             kind="CLOSED_SMALL"
             label={t('settlementMode')}
             value={settlementMode}
-            onChange={(v) => setSettlementMode(v === 'PREPAID' ? 'PREPAID' : 'POSTPAID')}
+            onChange={(v) =>
+              setSettlementMode(catalogStr(v) === 'PREPAID' ? 'PREPAID' : 'POSTPAID')
+            }
             options={[
               { value: 'POSTPAID', label: t('postpaid') },
               { value: 'PREPAID', label: t('prepaid') },
             ]}
+            emptyLabel={null}
           />
+          <FieldRow cols={2}>
+            <Field
+              label={t('creditLimitAzn')}
+              preset="amount"
+              type="number"
+              min={0}
+              step="0.01"
+              value={creditLimitAzn}
+              onChange={(e) => setCreditLimitAzn(e.target.value)}
+              hint={t('creditLimitHint')}
+            />
+            <Field
+              label={t('paymentTermsDays')}
+              preset="count"
+              type="number"
+              min={0}
+              value={paymentTermsDays}
+              onChange={(e) => setPaymentTermsDays(e.target.value)}
+              hint={t('paymentTermsHint')}
+            />
+          </FieldRow>
           <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
             <input
               name="active"

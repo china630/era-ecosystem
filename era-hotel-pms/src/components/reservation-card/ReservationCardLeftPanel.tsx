@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { Lock, Search } from 'lucide-react';
+import { Lock, PlaneLanding, PlaneTakeoff, Search } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   DatePicker,
@@ -21,8 +21,9 @@ import {
   TEXT_SUCCESS_CLASS,
 } from '@era/satellite-kit/ui';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
-import { bookingSourceKind } from '@/lib/booking-source-kind';
+import { bookingSourceKind, contractsForSource } from '@/lib/booking-source-kind';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
+import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
 import type { AgencyOption, RatePlanOption, SelectOption, SourceOption } from './types';
 
 /** BAR (BASE) or unscoped plans apply to any room type; derived packages may be type-scoped. */
@@ -39,13 +40,79 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
 }
 
+/** One plane: arrival (red landing), departure (red takeoff), or IN_HOUSE mid-stay early checkout (yellow takeoff). */
+function StayDateFlightIcons({
+  checkIn,
+  checkOut,
+  status,
+  canEarlyStayCheckout,
+  earlyStayCheckoutBusy,
+  onEarlyStayCheckout,
+}: {
+  checkIn: string;
+  checkOut: string;
+  status?: string;
+  canEarlyStayCheckout?: boolean;
+  earlyStayCheckoutBusy?: boolean;
+  onEarlyStayCheckout?: () => void;
+}) {
+  const t = useTranslations('reservationCard');
+  const kind = resolveStayWindowPlane({ checkIn, checkOut, status });
+  if (!kind) return <div className="h-3.5" data-testid="stay-flight-icons" />;
+  if (kind === 'arrival') {
+    return (
+      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
+        <span title={t('flightIconArrival')} aria-label={t('flightIconArrival')} className="text-[#E74C3C]">
+          <PlaneLanding className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    );
+  }
+  if (kind === 'departure') {
+    return (
+      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
+        <span title={t('flightIconDeparture')} aria-label={t('flightIconDeparture')} className="text-[#E74C3C]">
+          <PlaneTakeoff className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    );
+  }
+  const earlyLabel = t('flightIconEarlyCheckout');
+  if (canEarlyStayCheckout && onEarlyStayCheckout) {
+    return (
+      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
+        <button
+          type="button"
+          title={earlyLabel}
+          aria-label={earlyLabel}
+          disabled={earlyStayCheckoutBusy}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onEarlyStayCheckout();
+          }}
+          className="text-amber-500 hover:text-amber-600 disabled:opacity-50"
+        >
+          <PlaneTakeoff className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center justify-center" data-testid="stay-flight-icons">
+      <span title={earlyLabel} aria-label={earlyLabel} className="text-amber-500">
+        <PlaneTakeoff className="h-3.5 w-3.5" />
+      </span>
+    </div>
+  );
+}
+
+
 const OPTION_STATE_OPTIONS = ['OPTION', 'CONFIRMED', 'EXPIRED', 'RELEASED'] as const;
 
 const LOOKUP_KINDS = [
   'MARKET',
   'SEGMENT',
-  'VIP_TYPE',
-  'TRIP_REASON',
   'ACCOM_TYPE',
   'RECORD_TYPE',
   'SPECIAL_STATE',
@@ -54,7 +121,7 @@ const LOOKUP_KINDS = [
 export type ReservationCardLeftPanelProps = {
   isCreate: boolean;
   isLocked: boolean;
-  /** Show physical room / times / early-late (CONFIRMED+ or room already assigned). */
+  /** Show physical door assign / share / early-late (CONFIRMED+ or room already assigned). */
   showAssignment?: boolean;
   /** Create-only sellable preview (same gate as POST /api/reservations). */
   sellable?: { available: number; booked: number; quota: number; stopSell: boolean } | null;
@@ -62,6 +129,10 @@ export type ReservationCardLeftPanelProps = {
   checkOut: string;
   checkInTime: string;
   checkOutTime: string;
+  stayStatus?: string;
+  canEarlyStayCheckout?: boolean;
+  earlyStayCheckoutBusy?: boolean;
+  onEarlyStayCheckout?: () => void;
   voucherNo: string;
   agencyId: string;
   companyId: string;
@@ -94,24 +165,35 @@ export type ReservationCardLeftPanelProps = {
   preferredLocation: string;
   preferredBed: string;
   givenRoomTypeId: string;
+  /** Assigned door no longer matches Given / Room type physical category. */
+  doorPhysicalMismatch?: boolean;
+  assignedRoomLabel?: string;
   contractRef: string;
   salesContractId: string;
   creditLimitAzn: string;
   folioBalance: number;
+  /** One-line GUEST / AGENCY / COMPANY routing summary (ADR D3). */
+  billingRoutingSummary?: string;
+  onFolioRouting?: () => void;
   /** Optional until FO editor wires commercial booker fields. */
   booker?: string;
   guestRep?: string;
   paidBy?: string;
-  vipType?: string;
   accomType?: string;
   recordType?: string;
-  tripReason?: string;
-  statusLabel?: string;
   reservationId?: string | null;
   agencies: AgencyOption[];
   companies: AgencyOption[];
   sources: SourceOption[];
-  salesContracts: Array<{ id: string; label: string; agencyId: string | null; ratePlanId: string; code: string }>;
+  salesContracts: Array<{
+    id: string;
+    label: string;
+    agencyId: string | null;
+    companyId: string | null;
+    counterpartyType?: string | null;
+    ratePlanId: string;
+    code: string;
+  }>;
   roomTypes: SelectOption[];
   mealPlans: SelectOption[];
   ratePlans: RatePlanOption[];
@@ -123,6 +205,8 @@ export type ReservationCardLeftPanelProps = {
   assignTitle?: string;
   onFocusRoomSelect?: () => void;
   onToggleLock?: () => void;
+  /** HK condition badge (CLEAN/DIRTY/INSPECTED/PICKUP), not inventory status. */
+  roomHkCondition?: string;
   roomStatus?: string;
 };
 
@@ -140,10 +224,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     booker = '',
     guestRep = '',
     paidBy = '',
-    vipType = '',
     accomType = '',
     recordType = '',
-    tripReason = '',
     agencies,
     companies,
     sources,
@@ -158,6 +240,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     assignTitle,
     onFocusRoomSelect,
     onToggleLock,
+    roomHkCondition,
     roomStatus,
     onBreakShare,
     breakShareBusy,
@@ -171,10 +254,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
 
-  const contractsForAgency = salesContracts.filter(
-    (c) => !props.agencyId || !c.agencyId || c.agencyId === props.agencyId,
-  );
-
   const filteredRatePlans = useMemo(
     () => ratePlans.filter((rp) => ratePlanFitsRoomType(rp, props.roomTypeId)),
     [ratePlans, props.roomTypeId],
@@ -186,79 +265,118 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const selectedSource = sources.find((s) => s.id === props.sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
   const walkInLocked = sourceKind === 'WALKIN';
+  const corporateLocked = sourceKind === 'CORPORATE';
+  const agencyPickerLocked = walkInLocked || corporateLocked;
+  const showAgencyContract = sourceKind === 'AGENCY' || sourceKind === 'BOOKING';
+  const showCompanyContract = corporateLocked;
+  const showOptionalCompany = !corporateLocked;
   const agencyOptions = useMemo(() => {
     if (sourceKind === 'AGENCY') return agencies.filter((a) => !a.isOta);
     if (sourceKind === 'BOOKING') return agencies.filter((a) => a.isOta);
     return agencies;
   }, [agencies, sourceKind]);
   const agencyFieldLabel =
-    sourceKind === 'BOOKING' ? t('otaChannel') : sourceKind === 'WALKIN' ? t('individual') : t('agency');
-  const agencyFieldHint =
     sourceKind === 'BOOKING'
-      ? t('hintOtaChannel')
+      ? t('otaChannel')
       : sourceKind === 'WALKIN'
-        ? t('hintAgency')
-        : t('hintAgency');
+        ? t('individual')
+        : sourceKind === 'CORPORATE'
+          ? t('company')
+          : t('agency');
+  const contractsForKind = useMemo(
+    () =>
+      contractsForSource(salesContracts, {
+        sourceKind,
+        agencyId: props.agencyId,
+        companyId: props.companyId,
+      }),
+    [salesContracts, sourceKind, props.agencyId, props.companyId],
+  );
+
+  const hkBadge = (roomHkCondition || roomStatus || '').toUpperCase() || null;
 
   return (
     <aside className="min-h-0 space-y-3 overflow-y-auto border-r border-[#D5DADF] pr-3 text-[13px]">
-      {/* 1. Stay — agency booking dates + refs */}
-      <FieldPanel title={t('stay')}>
-        <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_4.75rem] items-end gap-2">
-            <DatePicker
-              label={tb('checkIn')}
-              fluid
-              value={props.checkIn}
-              onChange={(iso) => onChange({ checkIn: iso })}
-              placeholder={tc('datePlaceholder')}
-              openCalendarLabel={tc('openCalendar')}
-              hint={t('hintCheckIn')}
-              disabled={disabled}
-            />
-            <DatePicker
-              label={tb('checkOut')}
-              fluid
-              value={props.checkOut}
-              onChange={(iso) => onChange({ checkOut: iso })}
-              placeholder={tc('datePlaceholder')}
-              openCalendarLabel={tc('openCalendar')}
-              hint={t('hintCheckOut')}
-              disabled={disabled}
-            />
-            <Field
-              label={t('nights')}
-              preset="count"
-              value={String(nights)}
-              readOnly
-              className="min-w-0"
-              inputClassName="w-full min-w-0 text-center"
-              hint={t('hintNights')}
+      {/* 1. Stay window — dates + times always visible */}
+      <FieldPanel title={t('stayWindow')}>
+        <div className="space-y-2">
+          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_4.5rem] items-end gap-1.5">
+            <fieldset disabled={disabled} className="contents">
+              <DatePicker
+                label={tb('checkIn')}
+                fluid
+                value={props.checkIn}
+                onChange={(iso) => onChange({ checkIn: iso })}
+                placeholder={tc('datePlaceholder')}
+                openCalendarLabel={tc('openCalendar')}
+                disabled={disabled}
+              />
+              <Field
+                label={t('checkInTime')}
+                preset="time"
+                type="time"
+                value={props.checkInTime}
+                onChange={set('checkInTime')}
+              />
+              <Field
+                label={t('nights')}
+                preset="count"
+                value={String(nights)}
+                readOnly
+                className="min-w-0 w-full"
+                inputClassName="w-full min-w-0 text-center"
+              />
+              <DatePicker
+                label={tb('checkOut')}
+                fluid
+                value={props.checkOut}
+                onChange={(iso) => onChange({ checkOut: iso })}
+                placeholder={tc('datePlaceholder')}
+                openCalendarLabel={tc('openCalendar')}
+                disabled={disabled}
+              />
+              <Field
+                label={t('checkOutTime')}
+                preset="time"
+                type="time"
+                value={props.checkOutTime}
+                onChange={set('checkOutTime')}
+              />
+            </fieldset>
+            <StayDateFlightIcons
+              checkIn={props.checkIn}
+              checkOut={props.checkOut}
+              status={props.stayStatus}
+              canEarlyStayCheckout={props.canEarlyStayCheckout}
+              earlyStayCheckoutBusy={props.earlyStayCheckoutBusy}
+              onEarlyStayCheckout={props.onEarlyStayCheckout}
             />
           </div>
-          <FieldRow cols={2}>
-            <Field
-              label={t('resNo')}
-              preset="code"
-              value={props.resNo}
-              onChange={set('resNo')}
-              hint={t('hintResNo')}
-            />
-            <Field
-              label={t('voucherNo')}
-              preset="code"
-              value={props.voucherNo}
-              onChange={set('voucherNo')}
-              hint={t('hintVoucherNo')}
-            />
-          </FieldRow>
-        </fieldset>
+          <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
+            <FieldRow cols={2}>
+              <Field label={t('resNo')} preset="code" value={props.resNo} onChange={set('resNo')} />
+              <Field
+                label={t('voucherNo')}
+                preset="code"
+                value={props.voucherNo}
+                onChange={set('voucherNo')}
+              />
+            </FieldRow>
+            {props.reservationId ? (
+              <ReservationCardEarlyLatePanel
+                reservationId={props.reservationId}
+                checkInTime={props.checkInTime}
+                checkOutTime={props.checkOutTime}
+              />
+            ) : null}
+          </fieldset>
+        </div>
       </FieldPanel>
 
-      {/* 2. Product — Nafta package / BAR + room category (not door) */}
-      <FieldPanel title={t('productSection')}>
-        <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
-          <FieldRow cols={3} className="min-w-0">
+      {/* 2. Room — Room type = charge; Given = physical door list; Room no. follows Given||Room type */}
+      <FieldPanel title={t('roomSection')}>
+        <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
+          <FieldRow cols={2} className="min-w-0">
             <FieldSelect
               label={tb('roomType')}
               preset="select"
@@ -266,8 +384,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               selectClassName="w-full min-w-0 max-w-full"
               value={props.roomTypeId}
               onChange={set('roomTypeId')}
-              hint={t('hintRoomType')}
               required
+              hint={t('roomTypeChargeHint')}
             >
               <option value="">{tc('select')}</option>
               {roomTypes.map((rt) => (
@@ -277,40 +395,48 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               ))}
             </FieldSelect>
             <FieldSelect
-              label={t('packageOrRate')}
+              label={t('givenRoomType')}
               preset="select"
               className="min-w-0"
               selectClassName="w-full min-w-0 max-w-full"
-              value={props.ratePlanId}
-              onChange={set('ratePlanId')}
-              hint={t('hintPackageOrRate')}
-              required
-            >
-              <option value="">{tc('select')}</option>
-              {filteredRatePlans.map((rp) => (
-                <option key={rp.id} value={rp.id}>
-                  {rp.label}
-                </option>
-              ))}
-            </FieldSelect>
-            <FieldSelect
-              label={t('mealPlan')}
-              preset="select"
-              className="min-w-0"
-              selectClassName="w-full min-w-0 max-w-full"
-              value={props.mealPlanId}
-              onChange={set('mealPlanId')}
-              hint={mealLockedByPackage ? t('hintMealLocked') : t('hintMealPlan')}
-              disabled={mealLockedByPackage}
+              value={props.givenRoomTypeId}
+              onChange={set('givenRoomTypeId')}
+              hint={t('givenRoomTypePhysicalHint')}
             >
               <option value="">—</option>
-              {mealPlans.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
+              {roomTypes.map((rt) => (
+                <option key={rt.id} value={rt.id}>
+                  {rt.label}
                 </option>
               ))}
             </FieldSelect>
           </FieldRow>
+          {props.givenRoomTypeId &&
+          props.roomTypeId &&
+          props.givenRoomTypeId !== props.roomTypeId ? (
+            <p
+              className="m-0 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-950"
+              data-testid="complimentary-upgrade-chip"
+            >
+              {t('complimentaryUpgradeChip', {
+                charge:
+                  roomTypes.find((r) => r.id === props.roomTypeId)?.label ?? props.roomTypeId,
+                physical:
+                  roomTypes.find((r) => r.id === props.givenRoomTypeId)?.label ??
+                  props.givenRoomTypeId,
+              })}
+            </p>
+          ) : null}
+          {props.doorPhysicalMismatch ? (
+            <p
+              className="m-0 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-950"
+              data-testid="door-physical-mismatch"
+            >
+              {t('doorPhysicalMismatch', {
+                room: props.assignedRoomLabel ?? '—',
+              })}
+            </p>
+          ) : null}
           {isCreate && sellable ? (
             <div
               className={`rounded-md border px-3 py-2 text-[12px] ${
@@ -329,28 +455,152 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                   quota: sellable.quota,
                 })}
               </div>
-              {sellable.available < 1 ? (
-                <div className="mt-1">
-                  {t('noSellableHint')}{' '}
-                  <Link href="/fo/availability" className="underline">
-                    {t('openRoomTypeAvailability')}
-                  </Link>
+              <div className="mt-1">
+                {sellable.available < 1 ? <span>{t('noSellableHint')} </span> : null}
+                <Link href="/fo/availability" className="underline">
+                  {t('openRoomTypeAvailability')}
+                </Link>
+              </div>
+            </div>
+          ) : null}
+          {showAssignment ? (
+            <>
+              <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <FieldSelect
+                  label={t('roomNo')}
+                  preset="selectWide"
+                  id="res-card-room-select"
+                  value={props.roomId}
+                  onChange={set('roomId')}
+                  hint={t('roomNoPhysicalHint')}
+                >
+                  <option value="">—</option>
+                  {rooms.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.roomNumber}
+                    </option>
+                  ))}
+                </FieldSelect>
+                <div
+                  className="flex shrink-0 flex-wrap items-end gap-1 pb-0.5"
+                  data-testid="room-door-actions"
+                >
+                  <button
+                    type="button"
+                    className={`${SECONDARY_BUTTON_CLASS} !px-2`}
+                    title={isLocked ? t('unlock') : t('lock')}
+                    aria-label={isLocked ? t('unlock') : t('lock')}
+                    disabled={!onToggleLock}
+                    onClick={onToggleLock}
+                  >
+                    <Lock className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${SECONDARY_BUTTON_CLASS} !px-2`}
+                    title={t('roomSearch')}
+                    aria-label={t('roomSearch')}
+                    disabled={!onFocusRoomSelect}
+                    onClick={onFocusRoomSelect}
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                  {props.roomId ? (
+                    <Link
+                      href={`/hk?roomId=${props.roomId}`}
+                      className={`${SECONDARY_BUTTON_CLASS} min-w-[4.75rem] justify-center text-[11px]`}
+                      title={t('roomHk')}
+                      data-testid="reservation-hk-badge"
+                    >
+                      {hkBadge ?? 'HK'}
+                    </Link>
+                  ) : (
+                    <span
+                      className={`${SECONDARY_BUTTON_CLASS} min-w-[4.75rem] justify-center text-[11px] opacity-40`}
+                      aria-hidden
+                      data-testid="reservation-hk-badge-placeholder"
+                    >
+                      —
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    title={assignTitle ?? t('assignRoom')}
+                    disabled={assignBusy || !props.roomId || !onAssignRoom}
+                    onClick={onAssignRoom}
+                  >
+                    {t('assignRoom')}
+                  </button>
                 </div>
-              ) : (
-                <div className="mt-1">
-                  <Link href="/fo/availability" className="underline">
-                    {t('openRoomTypeAvailability')}
-                  </Link>
-                </div>
-              )}
+              </div>
+              <FieldRow cols={2} className="items-end">
+                <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
+                  <input
+                    type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
+                    checked={props.shareEligible}
+                    disabled={disabled || Number(props.adults) !== 1}
+                    onChange={(e) =>
+                      onChange({ shareEligible: e.target.checked ? 'true' : 'false' })
+                    }
+                  />
+                  <span title={t('shareEligibleHint')}>{t('shareEligible')}</span>
+                </label>
+                {props.shareEligible ? (
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t('gender')}
+                    value={props.guestGender}
+                    onChange={(v) =>
+                      onChange({ guestGender: (Array.isArray(v) ? v[0] : v) ?? '' })
+                    }
+                    options={[
+                      { value: 'M', label: t('genderMale') },
+                      { value: 'F', label: t('genderFemale') },
+                    ]}
+                    disabled={disabled}
+                  />
+                ) : null}
+              </FieldRow>
+              {props.shareEligible && props.shareNeighborHint ? (
+                <p className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{props.shareNeighborHint}</p>
+              ) : null}
+              {props.shareEligible && !isCreate && onBreakShare ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled || breakShareBusy}
+                  onClick={onBreakShare}
+                >
+                  {t('breakShare')}
+                </button>
+              ) : null}
+            </>
+          ) : props.roomId ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {t('roomNo')}:{' '}
+                <strong>
+                  {rooms.find((r) => r.id === props.roomId)?.roomNumber ?? props.roomId}
+                </strong>
+              </span>
+              <Link
+                href={`/hk?roomId=${props.roomId}`}
+                className={`${SECONDARY_BUTTON_CLASS} min-w-[4.75rem] justify-center text-[11px]`}
+                title={t('roomHk')}
+                data-testid="reservation-hk-badge"
+              >
+                {hkBadge ?? 'HK'}
+              </Link>
             </div>
           ) : null}
         </fieldset>
       </FieldPanel>
 
-      {/* 3. Pax — one row of count fields */}
-      <FieldPanel title={t('pax')}>
-        <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
+      {/* 3. Pax & board */}
+      <FieldPanel title={t('paxAndBoard')}>
+        <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
           <FieldRow cols={4}>
             <Field
               label={t('adults')}
@@ -385,16 +635,136 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               onChange={set('children1_0')}
             />
           </FieldRow>
+          <FieldSelect
+            label={t('mealPlan')}
+            preset="select"
+            className="min-w-0"
+            selectClassName="w-full min-w-0 max-w-full"
+            value={props.mealPlanId}
+            onChange={set('mealPlanId')}
+            disabled={mealLockedByPackage}
+          >
+            <option value="">—</option>
+            {mealPlans.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </FieldSelect>
         </fieldset>
       </FieldPanel>
 
-      {/* 4. Classification — agency-relevant only */}
-      <FieldPanel title={t('classification')}>
-        <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
-          {props.statusLabel ? (
-            <Field label={t('statusLabel')} preset="shortText" value={props.statusLabel} readOnly />
+      {/* 4. Rate & source — sell path only (channel, counterparty, contract, rate) */}
+      <FieldPanel title={t('rateAndSource')}>
+        <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
+          <FieldRow cols={2} className="min-w-0">
+            <FieldSelect
+              label={t('source')}
+              preset="select"
+              value={props.sourceId}
+              onChange={set('sourceId')}
+            >
+              <option value="">—</option>
+              {sources.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </FieldSelect>
+            {corporateLocked ? (
+              <FieldSelect
+                label={t('company')}
+                preset="selectWide"
+                value={props.companyId}
+                onChange={set('companyId')}
+              >
+                <option value="">{tc('select')}</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </FieldSelect>
+            ) : (
+              <FieldSelect
+                label={agencyFieldLabel}
+                preset="selectWide"
+                value={agencyPickerLocked ? '' : props.agencyId}
+                onChange={set('agencyId')}
+                disabled={agencyPickerLocked}
+              >
+                <option value="">{agencyPickerLocked ? t('individual') : tc('select')}</option>
+                {!agencyPickerLocked
+                  ? agencyOptions.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label}
+                      </option>
+                    ))
+                  : null}
+              </FieldSelect>
+            )}
+          </FieldRow>
+          {showOptionalCompany ? (
+            <FieldSelect
+              label={t('company')}
+              preset="selectWide"
+              value={props.companyId}
+              onChange={set('companyId')}
+              hint={t('companyOptionalHint')}
+            >
+              <option value="">{tc('select')}</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </FieldSelect>
           ) : null}
-          <FieldRow cols={4} className="min-w-0">
+          {showAgencyContract || showCompanyContract ? (
+            <FieldRow cols={2}>
+              <FieldSelect
+                label={showCompanyContract ? t('companyContract') : t('agencyContract')}
+                preset="selectWide"
+                value={props.salesContractId}
+                onChange={set('salesContractId')}
+                disabled={
+                  showCompanyContract
+                    ? !props.companyId && contractsForKind.length === 0
+                    : !props.agencyId && contractsForKind.length === 0
+                }
+              >
+                <option value="">—</option>
+                {contractsForKind.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </FieldSelect>
+              <Field
+                label={t('contractRef')}
+                preset="code"
+                value={props.contractRef}
+                onChange={set('contractRef')}
+              />
+            </FieldRow>
+          ) : null}
+          <FieldSelect
+            label={t('packageOrRate')}
+            preset="select"
+            className="min-w-0"
+            selectClassName="w-full min-w-0 max-w-full"
+            value={props.ratePlanId}
+            onChange={set('ratePlanId')}
+            required
+          >
+            <option value="">{tc('select')}</option>
+            {filteredRatePlans.map((rp) => (
+              <option key={rp.id} value={rp.id}>
+                {rp.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldRow cols={2} className="min-w-0">
             <CatalogField
               kind="CLOSED_SMALL"
               label={t('market')}
@@ -402,7 +772,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               value={props.market}
               onChange={setCatalog('market')}
               options={withOrphanOption(byKind.MARKET ?? [], props.market)}
-              hint={t('hintMarket')}
               disabled={disabled}
             />
             <CatalogField
@@ -412,258 +781,41 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               value={props.segment}
               onChange={setCatalog('segment')}
               options={withOrphanOption(byKind.SEGMENT ?? [], props.segment)}
-              hint={t('hintSegment')}
-              disabled={disabled}
-            />
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('vipType')}
-              className="min-w-0"
-              value={vipType}
-              onChange={setCatalog('vipType')}
-              options={withOrphanOption(byKind.VIP_TYPE ?? [], vipType)}
-              hint={t('vipFromGuestHint')}
-              disabled={disabled}
-            />
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('tripReason')}
-              className="min-w-0"
-              value={tripReason}
-              onChange={setCatalog('tripReason')}
-              options={withOrphanOption(byKind.TRIP_REASON ?? [], tripReason)}
               disabled={disabled}
             />
           </FieldRow>
         </fieldset>
       </FieldPanel>
 
-      {/* 5. Commercial — agency / contract / payer */}
-      <FieldPanel title={t('commercialSales')}>
-        <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
-          <FieldRow cols={3}>
-            <FieldSelect
-              label={t('source')}
-              preset="select"
-              value={props.sourceId}
-              onChange={set('sourceId')}
-              hint={t('hintSource')}
-            >
-              <option value="">—</option>
-              {sources.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </FieldSelect>
-            <FieldSelect
-              label={agencyFieldLabel}
-              preset="selectWide"
-              value={walkInLocked ? '' : props.agencyId}
-              onChange={set('agencyId')}
-              hint={agencyFieldHint}
-              disabled={walkInLocked}
-            >
-              <option value="">{walkInLocked ? t('individual') : tc('select')}</option>
-              {!walkInLocked
-                ? agencyOptions.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.label}
-                    </option>
-                  ))
-                : null}
-            </FieldSelect>
-            <FieldSelect
-              label={t('company')}
-              preset="selectWide"
-              value={props.companyId}
-              onChange={set('companyId')}
-              hint={t('hintCompany')}
-            >
-              <option value="">{tc('select')}</option>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </FieldSelect>
-          </FieldRow>
-          <FieldRow cols={2}>
-            <FieldSelect
-              label={t('salesContract')}
-              preset="selectWide"
-              value={props.salesContractId}
-              onChange={set('salesContractId')}
-              disabled={!props.agencyId && contractsForAgency.length === 0}
-              hint={t('hintSalesContract')}
-            >
-              <option value="">—</option>
-              {contractsForAgency.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </FieldSelect>
-            <Field label={t('contractRef')} preset="code" value={props.contractRef} onChange={set('contractRef')} />
-          </FieldRow>
-          <FieldRow cols={3}>
-            <Field label={t('booker')} preset="shortText" value={booker} onChange={set('booker')} />
-            <Field label={t('guestRep')} preset="shortText" value={guestRep} onChange={set('guestRep')} />
-            <Field label={t('paidBy')} preset="shortText" value={paidBy} onChange={set('paidBy')} />
-          </FieldRow>
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={tb('paymentMethod')}
-              value={props.paymentMethod}
-              onChange={setCatalog('paymentMethod')}
-              options={hotelTenderOptions(tenderLocale)}
-              disabled={disabled}
-            />
-        </fieldset>
-      </FieldPanel>
-
-      {/* 6. Assignment — physical room / times (hidden until arrival stage) */}
-      {showAssignment ? (
-        <FieldPanel title={t('assignmentSection')}>
-          <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
-            <FieldRow cols={2} className="items-end">
-              <FieldSelect
-                label={t('roomNo')}
-                preset="selectWide"
-                id="res-card-room-select"
-                value={props.roomId}
-                onChange={set('roomId')}
-              >
-                <option value="">—</option>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.roomNumber}
-                  </option>
-                ))}
-              </FieldSelect>
-              <div className="flex flex-wrap items-end gap-1 pb-0.5">
+      {/* 5. Billing summary */}
+      <FieldPanel title={t('billing')}>
+        <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={tb('paymentMethod')}
+            value={props.paymentMethod}
+            onChange={setCatalog('paymentMethod')}
+            options={hotelTenderOptions(tenderLocale)}
+            disabled={disabled}
+          />
+          {props.billingRoutingSummary ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
+              <span className={TEXT_MUTED_CLASS} data-testid="billing-routing-summary">
+                {t('billingRouting')}: <strong className="text-[#34495E]">{props.billingRoutingSummary}</strong>
+              </span>
+              {props.onFolioRouting ? (
                 <button
                   type="button"
                   className={SECONDARY_BUTTON_CLASS}
-                  title={isLocked ? t('unlock') : t('lock')}
-                  disabled={!onToggleLock}
-                  onClick={onToggleLock}
-                >
-                  <Lock className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  title={t('roomSearch')}
-                  disabled={!onFocusRoomSelect}
-                  onClick={onFocusRoomSelect}
-                >
-                  <Search className="h-4 w-4" />
-                </button>
-                {props.roomId ? (
-                  <Link
-                    href={`/hk?roomId=${props.roomId}`}
-                    className={`${SECONDARY_BUTTON_CLASS} text-[11px]`}
-                    title={t('roomHk')}
-                  >
-                    {roomStatus ?? 'HK'}
-                  </Link>
-                ) : null}
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  title={assignTitle ?? t('assignRoom')}
-                  disabled={assignBusy || !props.roomId || !onAssignRoom}
-                  onClick={onAssignRoom}
-                >
-                  {t('assignRoom')}
-                </button>
-              </div>
-            </FieldRow>
-            <FieldRow cols={2} className="items-end">
-              <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
-                <input
-                  type="checkbox"
-                  className={MODAL_CHECKBOX_CLASS}
-                  checked={props.shareEligible}
-                  disabled={disabled || Number(props.adults) !== 1}
-                  onChange={(e) => onChange({ shareEligible: e.target.checked ? 'true' : 'false' })}
-                />
-                <span title={t('shareEligibleHint')}>{t('shareEligible')}</span>
-              </label>
-              {props.shareEligible ? (
-                <CatalogField
-                  kind="CLOSED_SMALL"
-                  label={t('gender')}
-                  value={props.guestGender}
-                  onChange={(v) =>
-                    onChange({ guestGender: (Array.isArray(v) ? v[0] : v) ?? '' })
-                  }
-                  options={[
-                    { value: 'M', label: t('genderMale') },
-                    { value: 'F', label: t('genderFemale') },
-                  ]}
                   disabled={disabled}
-                />
+                  onClick={props.onFolioRouting}
+                >
+                  {t('editFolioRouting')}
+                </button>
               ) : null}
-            </FieldRow>
-            {props.shareEligible && props.shareNeighborHint ? (
-              <p className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{props.shareNeighborHint}</p>
-            ) : null}
-            {props.shareEligible && !isCreate && onBreakShare ? (
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={disabled || breakShareBusy}
-                onClick={onBreakShare}
-              >
-                {t('breakShare')}
-              </button>
-            ) : null}
-            <FieldSelect
-              label={t('givenRoomType')}
-              preset="select"
-              value={props.givenRoomTypeId}
-              onChange={set('givenRoomTypeId')}
-            >
-              <option value="">—</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.label}
-                </option>
-              ))}
-            </FieldSelect>
-            <FieldRow cols={2}>
-              <Field
-                label={t('checkInTime')}
-                preset="time"
-                type="time"
-                value={props.checkInTime}
-                onChange={set('checkInTime')}
-              />
-              <Field
-                label={t('checkOutTime')}
-                preset="time"
-                type="time"
-                value={props.checkOutTime}
-                onChange={set('checkOutTime')}
-              />
-            </FieldRow>
-            {props.reservationId ? (
-              <ReservationCardEarlyLatePanel
-                reservationId={props.reservationId}
-                checkInTime={props.checkInTime}
-                checkOutTime={props.checkOutTime}
-              />
-            ) : null}
-          </fieldset>
-        </FieldPanel>
-      ) : null}
-
-      {/* 7. Billing — after save */}
-      {!isCreate ? (
-        <FieldPanel title={t('billing')}>
-          <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
+            </div>
+          ) : null}
+          {!isCreate ? (
             <FieldRow cols={2}>
               <Field
                 label={t('creditLimitAzn')}
@@ -698,11 +850,11 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 )}
               </div>
             </FieldRow>
-          </fieldset>
-        </FieldPanel>
-      ) : null}
+          ) : null}
+        </fieldset>
+      </FieldPanel>
 
-      {/* 8. Additional — rare / ElektraWeb residue (collapsed) */}
+      {/* 6. Additional — rare / ElektraWeb residue */}
       <FieldSection title={t('additionalSection')} defaultOpen={false}>
         <fieldset disabled={disabled} className="space-y-3 border-0 p-0">
           <FieldRow cols={2}>
@@ -794,6 +946,11 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             value={props.salesProject}
             onChange={set('salesProject')}
           />
+          <FieldRow cols={3}>
+            <Field label={t('booker')} preset="shortText" value={booker} onChange={set('booker')} />
+            <Field label={t('guestRep')} preset="shortText" value={guestRep} onChange={set('guestRep')} />
+            <Field label={t('paidBy')} preset="shortText" value={paidBy} onChange={set('paidBy')} />
+          </FieldRow>
         </fieldset>
       </FieldSection>
     </aside>

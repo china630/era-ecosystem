@@ -57,6 +57,8 @@ export default function GuestCardModal({
   guestId,
   onClose,
   onCreated,
+  onSaved,
+  openIdReaderOnOpen = false,
 }: {
   open: boolean;
   guestId: string | null;
@@ -65,6 +67,10 @@ export default function GuestCardModal({
     guestId: string,
     meta?: { fullName: string; firstName: string; lastName: string },
   ) => void;
+  /** Fired after successful PATCH of an existing guest. */
+  onSaved?: (guestId: string) => void;
+  /** Open ID reader stub when the modal opens (Scan ID from reservation party row). */
+  openIdReaderOnOpen?: boolean;
 }) {
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
@@ -248,6 +254,15 @@ export default function GuestCardModal({
     void load();
   }, [open, guestId, load]);
 
+  useEffect(() => {
+    if (!open) {
+      setIdReaderOpen(false);
+      return;
+    }
+    if (!openIdReaderOnOpen) return;
+    setIdReaderOpen(true);
+  }, [open, openIdReaderOnOpen, guestId]);
+
   const crmActions = crmTabButtons(guestId, crmBadges);
   const resActions = reservationDetailsButtons(guestId, crmBadges);
 
@@ -383,6 +398,7 @@ export default function GuestCardModal({
       }
       showSuccess(tc('success'));
       await load();
+      onSaved?.(guestId);
     } finally {
       setBusy(false);
     }

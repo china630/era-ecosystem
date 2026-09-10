@@ -38,6 +38,9 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | /fo/rack | rack | Door tiles; From–To stay overlap; filter pane and grid scroll separately |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
 | Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes`; date amend via `PATCH` reservation-full → `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` (checkIn/checkOut) for clinic quota recalc (CLI-51) | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
+| Depart guest | `POST /api/reservations/:id/pax/:paxId/depart` → `SATELLITE_HOTEL_GUEST_DEPARTED` | Exclusive party only; stay IN_HOUSE; ADR `hotel-reservation-card-and-party-ops.md` D4 |
+| Move guest | `POST /api/reservations/:id/pax/:paxId/move` → `SATELLITE_HOTEL_GUEST_MOVED` | Sibling `ReservationGroup` only; stable paxKey |
+| Swap rooms | `POST /api/reservations/:id/swap-room` | Sibling group; transactional door swap |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
@@ -202,12 +205,21 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | `/reports/nightly-pack` | `GET /api/reports/pack`, `GET /api/reports/pack/download?businessDate=&lang=` | ZIP for closed business date |
 | `/settings/report-pack` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership config |
 
+## Settings / RBAC (HOT-RBAC-01)
+
+| Route | API | Notes |
+|-------|-----|-------|
+| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `access:manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
+| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | User CRUD + role assign (`users:manage`); role select includes custom clones |
+| Staff `/login` / SSO | JWT `permissions[]`; ensure system roles | Hotel_Admin does **not** bypass matrix |
+
 ## Related docs
 
 - `doc/nafta/B2B-GATE.md` — Nafta P4 gate defaults
 - `docs/adr/hotel-b2b-sales-contracts.md` — contract + allotment ADR
 - `docs/adr/hotel-city-ledger-and-fo-money.md` — FO money + CL ops vs Finance AR
 - `docs/adr/hotel-bar-accounting-vs-package-sell.md` — BAR vs package sell
+- `docs/adr/hotel-domain-permissions-and-rbac.md` — Variant A RBAC
 - `doc/BACKLOG-PRODUCTION.md` § P5
-- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money)
+- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money), §45 (RBAC)
 - `doc/MANAGEMENT-REPORTS-CATALOG.md` — EW Management Reports catalog + Nafta nightly ZIP

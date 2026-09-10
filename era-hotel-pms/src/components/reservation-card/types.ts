@@ -1,5 +1,5 @@
 export type TabId = 'guests' | 'pricing' | 'folio' | 'notes';
-export type FolioSubTab = 'all' | 'agency' | 'guest' | 'first' | 'second';
+export type FolioSubTab = 'all' | 'agency' | 'guest' | 'company';
 export type BottomTab = 'details' | 'notes' | 'folio';
 
 export type PaxRow = {
@@ -26,6 +26,8 @@ export type PaxRow = {
   ownsFolio?: boolean;
   /** Medical package SKU (PKG-STANDART | PKG-PREMIUM | PKG-DERMO | PKG-DETOKS). */
   medicalPackageCode?: string;
+  /** Person-level early departure (stay may remain IN_HOUSE). */
+  departedAt?: string | null;
 };
 
 export type DailyRateRow = {

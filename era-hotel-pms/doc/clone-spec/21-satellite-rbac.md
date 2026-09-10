@@ -1,6 +1,8 @@
 # 21. Satellite RBAC (реализация era-hotel-pms)
 
 > Операционные пользователи отеля **только в БД сателлита**. Квоты мест и SSO бухгалтера — через ERA Core ([20-seat-licensing.md](20-seat-licensing.md), §18.11 ниже).
+>
+> **Variant A (2026-09):** system roles + `/settings/access` matrix; API guards use DB/JWT grants (not role-name templates); `Hotel_Admin` does **not** bypass. Canon: [hotel-domain-permissions-and-rbac.md](../../../docs/adr/hotel-domain-permissions-and-rbac.md).
 
 ## Принцип
 
@@ -8,9 +10,10 @@
 |---------|----------|
 | Аутентификация | Логин + пароль (scrypt), JWT 12h |
 | Сессия | httpOnly cookie `era_session` или `Authorization: Bearer` |
-| Авторизация | Роль → JSON permissions в `Role.permissionsJson` |
+| Авторизация | `Role.permissionsJson` (valid JSON array is authoritative, incl. empty) + session grants |
 | Квоты | `POST /api/admin/users` → licensing check |
 | SSO | `POST /api/auth/sso/exchange` → `Financial_Auditor`, `isCrossSystem=true` |
+| Access matrix | `/settings/access` (`access:manage`); clone custom roles |
 
 ERP **не хранит** пароли портье и горничных.
 
@@ -43,6 +46,7 @@ ERP **не хранит** пароли портье и горничных.
 | `night_audit:run` | NightAuditor, Manager |
 | `master_data:manage` | Hotel_Admin, Manager |
 | `users:manage` | Hotel_Admin |
+| `access:manage` | Hotel_Admin (matrix UI `/settings/access`) |
 | `reports:read` | NightAuditor, Financial_Auditor |
 | `cash:shift` | Reception, NightAuditor, Financial_Auditor |
 

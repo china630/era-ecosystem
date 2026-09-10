@@ -23,9 +23,11 @@ export default function AppNav() {
             {t('roomPlan')}
           </Link>
         )}
-        <Link href="/fo/rack" className="text-sky-400 hover:underline">
-          {t('chessboard')}
-        </Link>
+        {can(PERMISSIONS.RESERVATIONS_READ) && (
+          <Link href="/fo/rack" className="text-sky-400 hover:underline">
+            {t('chessboard')}
+          </Link>
+        )}
         {can(PERMISSIONS.RESERVATIONS_WRITE) && (
           <Link href="/bookings/new" className="text-sky-400 hover:underline">
             {t('roomBooking')}
@@ -77,6 +79,11 @@ export default function AppNav() {
         {can(PERMISSIONS.USERS_MANAGE) && (
           <Link href="/settings/users" className="text-sky-400 hover:underline">
             {t('users')}
+          </Link>
+        )}
+        {can(PERMISSIONS.ACCESS_MANAGE) && (
+          <Link href="/settings/access" className="text-sky-400 hover:underline">
+            {t('access')}
           </Link>
         )}
         {(can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS)) && (

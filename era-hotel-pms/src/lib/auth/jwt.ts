@@ -9,6 +9,10 @@ export interface SessionPayload {
   email?: string;
   /** ERA hotel org for this session (SHARED request tenant). */
   organizationId?: string;
+  /** Role grants snapshot for page middleware; API reloads from DB in getSessionFromHeaders. */
+  permissions?: string[];
+  /** Org owner — bypasses permission matrix (not Hotel_Admin). */
+  isOwner?: boolean;
 }
 
 function getSecret() {
@@ -27,6 +31,8 @@ export async function signToken(payload: SessionPayload): Promise<string> {
   };
   if (payload.email) claims.email = payload.email;
   if (payload.organizationId) claims.organizationId = payload.organizationId;
+  if (payload.permissions?.length) claims.permissions = payload.permissions;
+  if (payload.isOwner === true) claims.isOwner = true;
 
   return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
@@ -40,6 +46,10 @@ export async function verifyToken(token: string): Promise<SessionPayload> {
   const { payload } = await jwtVerify(token, getSecret());
   const sub = payload.sub;
   if (!sub || typeof sub !== "string") throw new Error("Invalid token subject");
+  const permissionsRaw = payload.permissions;
+  const permissions = Array.isArray(permissionsRaw)
+    ? permissionsRaw.map(String)
+    : undefined;
   return {
     sub,
     login: String(payload.login ?? ""),
@@ -48,5 +58,7 @@ export async function verifyToken(token: string): Promise<SessionPayload> {
     email: payload.email != null ? String(payload.email) : undefined,
     organizationId:
       payload.organizationId != null ? String(payload.organizationId) : undefined,
+    permissions,
+    isOwner: payload.isOwner === true,
   };
 }

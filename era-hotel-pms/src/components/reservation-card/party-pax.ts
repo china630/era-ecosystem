@@ -1,4 +1,5 @@
 import { paxHasRealName } from '@/lib/reservation-names';
+import { GUEST_FIN_DOC_TYPES } from '@/lib/guest-list-identity';
 import type { PaxRow } from './types';
 
 /** Party row with no display name — fillable slot (may still have guestId from TBA/hold). */
@@ -275,11 +276,19 @@ function passportFromGuest(guest: LinkedGuestDemographics | null | undefined): s
   if (!guest) return '';
   if (guest.passportNo?.trim()) return guest.passportNo.trim();
   const docs = guest.documents ?? [];
-  const passport =
-    docs.find((d) => String(d.docType ?? '').toUpperCase().includes('PASSPORT') && d.docNumber?.trim()) ??
-    docs.find((d) => d.isPrimary && d.docNumber?.trim()) ??
-    docs.find((d) => d.docNumber?.trim());
+  const passport = docs.find(
+    (d) => String(d.docType ?? '').toUpperCase().includes('PASSPORT') && d.docNumber?.trim(),
+  );
   return passport?.docNumber?.trim() ?? '';
+}
+
+function finFromGuest(guest: LinkedGuestDemographics | null | undefined): string {
+  if (!guest) return '';
+  const docs = guest.documents ?? [];
+  const fin = docs.find(
+    (d) => GUEST_FIN_DOC_TYPES.has(String(d.docType ?? '').toUpperCase()) && d.docNumber?.trim(),
+  );
+  return fin?.docNumber?.trim() ?? '';
 }
 
 /**
@@ -305,6 +314,7 @@ export function hydratePaxDemographicsFromGuest(
       birthDate,
       age,
       passportNo: row.passportNo?.trim() || passportFromGuest(linked) || '',
+      idCardNo: row.idCardNo?.trim() || finFromGuest(linked) || '',
     };
   });
 }

@@ -322,6 +322,10 @@ model Role {
   code            String
   name            String
   permissionsJson String   @db.Text
+  /// Seeded ops roles — cannot delete; Reset restores template matrix.
+  isSystem        Boolean  @default(false)
+  /// Custom role created by cloning; Reset copies donor's effective grants.
+  cloneFromCode   String?
   users           User[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1547,6 +1551,8 @@ model ReservationGuest {
   sortOrder     Int         @default(0)
   /** Nafta commercial medical package (PKG-STANDART|PKG-PREMIUM|PKG-DERMO|PKG-DETOKS). */
   medicalPackageCode String?
+  /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
+  departedAt    DateTime?
   folio         Folio?
 
   @@index([reservationId])

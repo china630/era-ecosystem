@@ -482,9 +482,10 @@ describe('elektraweb-share-map', () => {
         reservationId: 'mx',
         isSecond: true,
       });
-      // Pool gender = first ordered member; opposite gender filtered out of compatible set.
-      expect(male.shareEligible || female.shareEligible).toBe(true);
-      expect(male.shareEligible && female.shareEligible).toBe(false);
+      // Closed pair: both keep shareEligible and own gender.
+      expect(male.shareEligible && female.shareEligible).toBe(true);
+      expect(male.shareGender).toBe('M');
+      expect(female.shareGender).toBe('F');
 
       const noGender = stay({
         id: 'ng',

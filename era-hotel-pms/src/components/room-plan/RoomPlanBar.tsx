@@ -13,6 +13,7 @@ import {
   occupancyMarkLabel,
   resolvePlanBarDayState,
   resolvePlanBarOccupancyKind,
+  showSharePoolOccupancyBadge,
   themeForDayState,
   type PlanBarInput,
 } from './plan-bar-theme';
@@ -167,7 +168,7 @@ export function RoomPlanBar({
   const theme = themeForDayState(dayState);
   const occupancy = resolvePlanBarOccupancyKind(selfInput);
   const occupancyMark = PLAN_BAR_OCCUPANCY_MARK[occupancy];
-  const showOccupancyBadge = occupancy !== 'exclusive';
+  const showOccupancyBadge = showSharePoolOccupancyBadge(selfInput, inputs);
   const labelPadLeft = showOccupancyBadge ? BAR_LABEL_PAD_LEFT_PX + 14 : BAR_LABEL_PAD_LEFT_PX;
   const roommateNames = roomBars
     .filter((other) => {

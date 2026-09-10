@@ -30,6 +30,17 @@ export function formatPax(
   return `${adults ?? 0}+${childrenTotal(c11, c5, c1)}`;
 }
 
+/** Token-order invariant key so "A B" and "B A" collapse. */
+export function planBarNameKey(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .sort()
+    .join(' ');
+}
+
 export function formatPlanBarNames(
   primary: string,
   partyNames: string[] = [],
@@ -40,8 +51,8 @@ export function formatPlanBarNames(
   for (const raw of [primary, ...partyNames, ...roommateNames]) {
     const t = raw.trim();
     if (!t) continue;
-    const key = t.toLowerCase();
-    if (seen.has(key)) continue;
+    const key = planBarNameKey(t);
+    if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(t);
   }
