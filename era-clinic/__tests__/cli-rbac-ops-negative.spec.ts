@@ -152,7 +152,6 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
     );
     const nav = buildClinicNav(
       {
-        role: CLINIC_ROLE.RECEPTION,
         permissions: perms,
         presetEnabled: () => true,
       },

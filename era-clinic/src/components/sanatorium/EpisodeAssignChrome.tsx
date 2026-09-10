@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -16,16 +17,22 @@ export type ScheduleCardItem = {
 };
 
 type Props = {
-  title: string;
+  title?: string;
   emptyLabel: string;
   items: ScheduleCardItem[];
+  actions?: ReactNode;
 };
 
 /** CLI-57 — stacked schedule cards on Müalicə kartı (not proposed checkboxes). */
-export function EpisodeScheduleCards({ title, emptyLabel, items }: Props) {
+export function EpisodeScheduleCards({ title, emptyLabel, items, actions }: Props) {
   return (
     <section className="space-y-2">
-      <h3 className="font-semibold">{title}</h3>
+      {title || actions ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {title ? <h3 className="font-semibold">{title}</h3> : <span />}
+          {actions}
+        </div>
+      ) : null}
       {items.length === 0 ? (
         <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{emptyLabel}</p>
       ) : (
@@ -37,7 +44,23 @@ export function EpisodeScheduleCards({ title, emptyLabel, items }: Props) {
             >
               <div className="font-medium">{item.title}</div>
               <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                {[item.atLabel, item.subtitle, item.status].filter(Boolean).join(" · ")}
+                {item.atLabel ? (
+                  <span className="font-semibold text-[#34495E]">{item.atLabel}</span>
+                ) : null}
+                {(() => {
+                  let rest = item.subtitle?.trim() ?? "";
+                  if (item.atLabel && rest.startsWith(item.atLabel)) {
+                    rest = rest.slice(item.atLabel.length).replace(/^[·\-\s]+/, "");
+                  }
+                  const parts = [rest || null, item.status].filter(Boolean);
+                  if (parts.length === 0) return null;
+                  return (
+                    <span>
+                      {item.atLabel ? " · " : ""}
+                      {parts.join(" · ")}
+                    </span>
+                  );
+                })()}
               </p>
             </li>
           ))}

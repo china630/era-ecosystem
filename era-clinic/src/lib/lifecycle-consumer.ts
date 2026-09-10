@@ -1,6 +1,8 @@
 import type {
   SatelliteHotelGuestCheckedInEvent,
   SatelliteHotelGuestCheckedOutEvent,
+  SatelliteHotelGuestDepartedEvent,
+  SatelliteHotelGuestMovedEvent,
   SatelliteHotelRoomChangedEvent,
   SatelliteHotelSanatoriumBookingCreatedEvent,
   SatelliteHotelStayProductChangedEvent,
@@ -88,7 +90,7 @@ export async function handleGuestCheckedOut(
 ) {
   enterRequestTenant(event.organizationId);
   const p = event.payload;
-  // Wave E: close ALL OPEN episodes for the reservation (both spouses)
+  // Wave E: close ALL OPEN episodes for the reservation (both spouses) — stay checkout only
   await prisma.clinicalEpisode.updateMany({
     where: { reservationId: p.reservationId, status: "OPEN" },
     data: { status: "CLOSED", closedAt: new Date() },
@@ -107,6 +109,100 @@ export async function handleGuestCheckedOut(
       status: "PENDING_PAY",
     },
   });
+}
+
+/** Person-level Depart guest — close only that pax episode (ADR hotel-reservation-card-and-party-ops D4/D6). */
+export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEvent) {
+  enterRequestTenant(event.organizationId);
+  const p = event.payload;
+  const paxKey = p.paxKey;
+  const gpid = p.globalPersonId ?? event.globalPersonId;
+  const resPrefix = p.reservationId.slice(0, 8);
+  const expectedRef = `HOTEL-${resPrefix}-${paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
+
+  const episodes = await prisma.clinicalEpisode.findMany({
+    where: {
+      reservationId: p.reservationId,
+      status: "OPEN",
+      OR: [
+        ...(gpid
+          ? [
+              { globalPersonId: gpid },
+              { patientRef: { globalPersonId: gpid } },
+            ]
+          : []),
+        { patientRef: { refCode: expectedRef } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  const targetIds = episodes.map((e) => e.id);
+  if (targetIds.length === 0) return;
+
+  await prisma.clinicalEpisode.updateMany({
+    where: { id: { in: targetIds } },
+    data: { status: "CLOSED", closedAt: new Date() },
+  });
+  await prisma.procedureOrder.updateMany({
+    where: {
+      clinicalEpisodeId: { in: targetIds },
+      status: { in: ["SCHEDULED", "CHECKED_IN"] },
+    },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelReason: "hotel_guest_departed",
+    },
+  });
+  await prisma.procedureOrder.deleteMany({
+    where: {
+      clinicalEpisodeId: { in: targetIds },
+      status: "PENDING_PAY",
+    },
+  });
+}
+
+export async function handleGuestMoved(event: SatelliteHotelGuestMovedEvent) {
+  enterRequestTenant(event.organizationId);
+  const p = event.payload;
+  const paxKey = p.paxKey;
+  const gpid = p.globalPersonId ?? event.globalPersonId;
+  const resPrefix = p.fromReservationId.slice(0, 8);
+  const expectedRef = `HOTEL-${resPrefix}-${paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
+
+  await prisma.clinicalEpisode.updateMany({
+    where: {
+      status: "OPEN",
+      reservationId: p.fromReservationId,
+      OR: [
+        ...(gpid
+          ? [{ globalPersonId: gpid }, { patientRef: { globalPersonId: gpid } }]
+          : []),
+        { patientRef: { refCode: expectedRef } },
+      ],
+    },
+    data: {
+      reservationId: p.toReservationId,
+      hotelStayId: p.toReservationId,
+      roomNumber: p.newRoomNumber,
+    },
+  });
+
+  // Also retarget OPEN episodes that already match MDM person on from stay
+  if (gpid) {
+    await prisma.visit.updateMany({
+      where: {
+        reservationId: p.fromReservationId,
+        status: "IN_PROGRESS",
+        patientRef: { globalPersonId: gpid },
+      },
+      data: {
+        reservationId: p.toReservationId,
+        roomNumber: p.newRoomNumber,
+      },
+    });
+  }
 }
 
 export async function handleRoomChanged(event: SatelliteHotelRoomChangedEvent) {

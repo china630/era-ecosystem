@@ -8,13 +8,22 @@ import {
   platformSuperAdminBootstrapPassword,
   platformSuperAdminEmails,
 } from "@era/satellite-kit";
-import { permissionsJsonForRole } from "../src/lib/auth/clinic-permissions";
+import { ensureSystemClinicRoles } from "../src/lib/auth/ensure-system-clinic-roles";
+import { CLINIC_ROLE } from "../src/lib/clinic-roles";
 import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
 
 const requireCjs = createRequire(__filename);
 const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
 ) as unknown as PrismaClient;
+
+function seedOrgId(): string {
+  return (
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    process.env.ORGANIZATION_ID?.trim() ||
+    "demo-org"
+  );
+}
 
 type L10n = { en: string; ru: string; az: string };
 type CatalogField = Record<string, unknown>;
@@ -148,42 +157,56 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
 
 async function seedDemoAdmin() {
   const password = platformSuperAdminBootstrapPassword();
-  const roleCode = process.env.ECOSYSTEM_DEMO_ADMIN_ROLE ?? "CLINIC_ADMIN";
+  const organizationId = seedOrgId();
+  await ensureSystemClinicRoles(prisma, organizationId);
+
+  const preferred =
+    process.env.ECOSYSTEM_DEMO_ADMIN_ROLE?.trim() || CLINIC_ROLE.CLINIC_ADMIN;
+  const role =
+    (await prisma.role.findFirst({
+      where: { organizationId, code: preferred },
+    })) ??
+    (await prisma.role.findFirst({
+      where: { organizationId, code: CLINIC_ROLE.CLINIC_ADMIN },
+    }));
+  if (!role) {
+    throw new Error("System roles missing after ensureSystemClinicRoles");
+  }
+
   const logins = [...platformSuperAdminEmails()];
   const extra = process.env.ECOSYSTEM_DEMO_LOGIN?.trim().toLowerCase();
   if (extra?.includes("@") && !logins.includes(extra)) logins.push(extra);
 
-  const role = await prisma.role.upsert({
-    where: { code: roleCode },
-    update: { name: "Clinic administrator", permissionsJson: permissionsJsonForRole(roleCode) },
-    create: {
-      code: roleCode,
-      name: "Clinic administrator",
-      permissionsJson: permissionsJsonForRole(roleCode),
-    },
-  });
-
   const passwordHash = await hashPassword(password);
   for (const login of logins) {
-    await prisma.user.upsert({
-      where: { login },
-      create: {
-        login,
-        email: login,
-        fullName: "Platform Super Admin",
-        passwordHash,
-        roleId: role.id,
-        status: "ACTIVE",
-        isCrossSystem: true,
-      },
-      update: {
-        email: login,
-        passwordHash,
-        roleId: role.id,
-        status: "ACTIVE",
-        isCrossSystem: true,
-      },
+    const existing = await prisma.user.findFirst({
+      where: { organizationId, login },
     });
+    if (existing) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          email: login,
+          passwordHash,
+          roleId: role.id,
+          status: "ACTIVE",
+          isCrossSystem: true,
+        },
+      });
+    } else {
+      await prisma.user.create({
+        data: {
+          organizationId,
+          login,
+          email: login,
+          fullName: "Platform Super Admin",
+          passwordHash,
+          roleId: role.id,
+          status: "ACTIVE",
+          isCrossSystem: true,
+        },
+      });
+    }
   }
 }
 

@@ -31,7 +31,12 @@ export function PrintLanguageDialog({ open, onClose, href, title }: Props) {
   }
 
   return (
-    <ModalShell open={open} title={title ?? t("chooseLanguage")} onClose={onClose}>
+    <ModalShell
+      open={open}
+      title={title ?? t("chooseLanguage")}
+      onClose={onClose}
+      overlayZClass="z-[240]"
+    >
       <FieldSelect
         label={t("chooseLanguage")}
         preset="select"

@@ -28,6 +28,8 @@ model Tenant {
   patientCardPlanPreview    Int                     @default(15) @map("patient_card_plan_preview")
   patientCardHistoryPageSize Int                    @default(25) @map("patient_card_history_page_size")
   patientCardPlanPageSize   Int                     @default(25) @map("patient_card_plan_page_size")
+  /// Max distinct in-package procedure codes per guest per Asia/Baku day (paid extras excluded).
+  dailyPackageProcedureCap Int                    @default(3) @map("daily_package_procedure_cap")
   /// Check-in allowed from scheduledAt − N minutes
   procedureCheckInGraceBeforeMin Int                @default(5) @map("procedure_check_in_grace_before_min")
   /// Check-in allowed until scheduledAt + N minutes
@@ -1830,10 +1832,16 @@ model ProcessedEvent {
 
 model Role {
   id              String   @id @default(cuid())
-  organizationId String @map("organization_id")
+  organizationId  String   @map("organization_id")
   code            String
   name            String
   permissionsJson String   @default("[]")
+  /// Seeded ops roles — cannot delete; Reset restores template matrix.
+  isSystem        Boolean  @default(false) @map("is_system")
+  /// Practitioner persona: DOCTOR | NURSE | LAB | NONE (not used for screen/API gates).
+  staffKind       String?  @map("staff_kind")
+  /// Custom role created by cloning; Reset copies donor's effective grants.
+  cloneFromCode   String?  @map("clone_from_code")
   users           User[]
   @@unique([organizationId, code])
   @@index([organizationId])

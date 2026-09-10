@@ -18,7 +18,7 @@ import {
   type PhysioChipsValue,
 } from "@/components/physio/PhysioSiteChips";
 import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
-import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
+import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 
 type ProcOption = { value: string; label: string; name: string; amount?: number };
 
@@ -76,6 +76,7 @@ const EMPTY_PHYSIO: PhysioChipsValue = {
   physioOrderFields: [],
   allowedSiteCodes: [],
   forceSiteTogether: false,
+  hideSitePicker: false,
   sitesHintKey: null,
   siteIds: [],
   siteApplyMode: null,
@@ -92,8 +93,10 @@ function gateToPhysio(code: string, name: string): PhysioChipsValue {
     physioOrderFields: gate.fields,
     allowedSiteCodes: gate.allowedSiteCodes,
     forceSiteTogether: gate.forceSiteTogether,
+    hideSitePicker: gate.hideSitePicker,
     sitesHintKey: gate.sitesHintKey,
     siteApplyMode: gate.forceSiteTogether ? "TOGETHER" : null,
+    physioFields: gate.hideSitePicker ? { naftalanFill: "TAM" } : {},
   };
 }
 
@@ -103,11 +106,11 @@ function paramsLabelFromPhysio(
 ): string {
   const parts: string[] = [];
   const byId = new Map(catalog.map((s) => [s.id, s]));
-  const siteNames = (p.siteIds ?? [])
+  const siteNames = (p.hideSitePicker ? [] : p.siteIds ?? [])
     .map((id) => byId.get(id)?.titleEn || byId.get(id)?.code)
     .filter(Boolean);
   if (siteNames.length) parts.push(siteNames.join(", "));
-  if (p.siteApplyMode) parts.push(p.siteApplyMode);
+  if (p.siteApplyMode && !p.hideSitePicker) parts.push(p.siteApplyMode);
   if (p.physioFields && typeof p.physioFields === "object") {
     for (const [k, v] of Object.entries(p.physioFields)) {
       if (v != null && String(v).trim()) parts.push(`${k}: ${String(v)}`);
@@ -219,8 +222,17 @@ export function ExtrasAssignModal({
 
   function addDraft() {
     if (!code || !selected) return;
-    // Display-only total; the server prices the order from the catalog on create.
     const unit = prices[code] ?? selected.amount ?? 0;
+    const fill = formPhysio.physioFields?.naftalanFill;
+    const fillCode =
+      fill === "OTURAQ" || fill === "QURSAQ" || fill === "TAM" ? fill : "TAM";
+    const occupancy =
+      formPhysio.hideSitePicker && formPhysio.siteIds.length === 0
+        ? (() => {
+            const row = catalog.find((s) => s.code === siteCodeForNaftalanFill(fillCode));
+            return row ? [row.id] : [];
+          })()
+        : formPhysio.siteIds;
     setDraft((prev) => [
       ...prev,
       {
@@ -230,11 +242,17 @@ export function ExtrasAssignModal({
         qty: Math.max(1, qty),
         amountNet: unit,
         note: formPhysio.note ?? "",
-        physioFields: formPhysio.physioFields as Record<string, unknown>,
-        siteIds: formPhysio.siteIds,
-        siteApplyMode: formPhysio.siteApplyMode,
+        physioFields: {
+          ...formPhysio.physioFields,
+          ...(qty <= 1 ? { bathSequence: null } : {}),
+        } as Record<string, unknown>,
+        siteIds: occupancy,
+        siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
         siteLaterality: formPhysio.siteLaterality,
-        paramsLabel: paramsLabelFromPhysio(formPhysio, catalog),
+        paramsLabel: paramsLabelFromPhysio(
+          { ...formPhysio, siteIds: occupancy },
+          catalog,
+        ),
       },
     ]);
     setCode("");
@@ -358,20 +376,31 @@ export function ExtrasAssignModal({
 
         {formOpen && selected ? (
           <div className="z-10 max-w-xl rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
-            <h4 className="mb-1 font-medium">{selected.name}</h4>
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <h4 className="min-w-0 flex-1 font-medium">{selected.name}</h4>
+              <label className="flex shrink-0 items-center gap-1 text-[12px]">
+                {labels.qty}
+                <input
+                  className={`${MODAL_INPUT_CLASS} w-[5ch]`}
+                  type="number"
+                  min={1}
+                  value={qty}
+                  onChange={(e) => {
+                    const n = Number(e.target.value) || 1;
+                    setQty(n);
+                    if (n <= 1) {
+                      setFormPhysio((prev) => ({
+                        ...prev,
+                        physioFields: { ...prev.physioFields, bathSequence: null },
+                      }));
+                    }
+                  }}
+                />
+              </label>
+            </div>
             <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
               {labels.price}: {formatUnitPrice(prices[code] ?? selected.amount)}
             </p>
-            <label className="mb-2 block text-[12px]">
-              {labels.qty}
-              <input
-                className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
-                type="number"
-                min={1}
-                value={qty}
-                onChange={(e) => setQty(Number(e.target.value) || 1)}
-              />
-            </label>
             <PhysioSiteChips
               value={formPhysio}
               catalog={catalog}
@@ -380,6 +409,7 @@ export function ExtrasAssignModal({
               locale={locale}
               editable
               compact
+              sessionQty={qty}
               labels={physioLabels}
               onSitesChange={(siteIds) =>
                 setFormPhysio((prev) => ({ ...prev, siteIds }))

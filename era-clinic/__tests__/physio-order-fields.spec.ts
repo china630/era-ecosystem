@@ -4,7 +4,7 @@ import {
   sanitizePhysioFields,
   assertLateralityAllowed,
 } from "@/domain/physio/physio-order-fields";
-import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
+import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { matchProcedureToSeed } from "@/lib/import/seed-catalog-match";
 
 describe("physio type-gated fields (CLI-49 W3)", () => {
@@ -14,6 +14,7 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
       fields: [],
       allowedSiteCodes: [],
       forceSiteTogether: false,
+      hideSitePicker: false,
       sitesHintKey: null,
     });
   });
@@ -24,6 +25,7 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
       fields: ["NO_ADDITIVE", "SUBSTANCE_OR_ADDITIVE"],
       allowedSiteCodes: [],
       forceSiteTogether: false,
+      hideSitePicker: false,
       sitesHintKey: null,
     });
   });
@@ -100,7 +102,8 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
     expect(qadin.fields).not.toContain("LATERALITY");
     expect(qadin.fields).not.toContain("DEVICE_PARAMS");
     expect(qadin.fields).not.toContain("DEVICE_PROGRAM");
-    expect(qadin.fields).not.toContain("HOLD_OR_STOP");
+    expect(qadin.hideSitePicker).toBe(true);
+    expect(qadin.forceSiteTogether).toBe(true);
     expect(
       inferPhysioTypeGate("SVC-4-KAMERALI-NAFTALAN-VANNASI", "4 kameralı naftalan vannası").fields,
     ).not.toContain("BATH_SEQUENCE");
@@ -115,6 +118,13 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
     ).toContain("SUBSTANCE_OR_ADDITIVE");
   });
 
+  it("maps naftalan fill to occupancy chips (oturaq ≠ qurşaq)", () => {
+    expect(siteCodeForNaftalanFill("TAM")).toBe("ZONE-FULL-BODY");
+    expect(siteCodeForNaftalanFill("OTURAQ")).toBe("ZONE-SITZ");
+    expect(siteCodeForNaftalanFill("QURSAQ")).toBe("ZONE-TO-WAIST");
+    expect(siteCodeForNaftalanFill(null)).toBe("ZONE-FULL-BODY");
+  });
+
   it("infers Aplikasiya Naftalan ♀/♂: anatomical + substance + day block (shares bath cabins)", () => {
     for (const [code, name] of [
       ["SVC-APLIKASIYA-NAFTALAN-QADIN", "Aplikasiya Naftalan (Qadın)"],
@@ -122,6 +132,7 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
     ] as const) {
       const gate = inferPhysioTypeGate(code, name);
       expect(gate.needsSite).toBe(true);
+      expect(gate.hideSitePicker).toBe(false);
       expect(gate.fields).toEqual(
         expect.arrayContaining([
           "LATERALITY",
@@ -214,13 +225,13 @@ describe("physio type-gated fields (CLI-49 W3)", () => {
     expect(gate.sitesHintKey).toBe("hydro_jet_safety");
   });
 
-  it("binds naftalan ♀/♂ to FULL + SITZ only", () => {
+  it("binds naftalan ♀/♂ to FULL + SITZ + waist fill chips", () => {
     expect(
       inferPhysioTypeGate("SVC-NAFTALAN-VANNASI-QADIN", "Naftalan vannası (Qadın)").allowedSiteCodes,
-    ).toEqual(["ZONE-FULL-BODY", "ZONE-SITZ"]);
+    ).toEqual(["ZONE-FULL-BODY", "ZONE-SITZ", "ZONE-TO-WAIST"]);
     expect(
       inferPhysioTypeGate("SVC-NAFTALAN-VANNASI-KISI", "Naftalan vannası (Kişi)").allowedSiteCodes,
-    ).toEqual(["ZONE-FULL-BODY", "ZONE-SITZ"]);
+    ).toEqual(["ZONE-FULL-BODY", "ZONE-SITZ", "ZONE-TO-WAIST"]);
   });
 
   it("binds amplipuls/electro/UFF without ear/scalp", () => {

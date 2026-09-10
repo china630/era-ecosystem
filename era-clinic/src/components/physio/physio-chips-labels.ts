@@ -44,6 +44,9 @@ export function buildPhysioChipsLabels(t: Translate): PhysioChipsLabels {
     fillTam: t("physioFillTam", { defaultValue: "Full body (tam)" }),
     fillOturaq: t("physioFillOturaq", { defaultValue: "Sitz (oturaq)" }),
     fillQursaq: t("physioFillQursaq", { defaultValue: "To waist (qurşaq)" }),
+    bathSequenceHint: t("physioBathSequenceHint", {
+      defaultValue: "Across stay days when quantity is more than one — not this session.",
+    }),
     catalogEmpty: t("physioCatalogEmpty", {
       defaultValue: "Physio site catalog is not seeded.",
     }),

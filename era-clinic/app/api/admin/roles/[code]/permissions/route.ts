@@ -5,19 +5,19 @@ import {
   jsonError,
   requireClinicPermission,
 } from "@/lib/api-utils";
+import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
-  assertClinicAdminRoute,
-} from "@/lib/auth/clinic-admin-guard";
-import {
-  CONFIGURABLE_CLINIC_ROLES,
   CLINIC_PERMISSION,
   DEFAULT_ROLE_PERMISSIONS,
+  effectiveRolePermissions,
   isClinicPermission,
   parseRolePermissions,
   serializeRolePermissions,
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
+import { isSystemClinicRoleCode } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
 const patchSchema = z.object({
@@ -27,34 +27,27 @@ const patchSchema = z.object({
 
 type RouteParams = { params: Promise<{ code: string }> };
 
-function isConfigurableRole(code: string): boolean {
-  return (CONFIGURABLE_CLINIC_ROLES as readonly string[]).includes(code);
-}
-
 export async function GET(_req: Request, { params }: RouteParams) {
   try {
     const gate = await assertClinicAdminRoute(_req);
     if (gate.error) return gate.error;
 
     const { code } = await params;
-    if (!isConfigurableRole(code)) {
-      return jsonError("Role not configured for matrix", 404);
-    }
-
-    const role = await prisma.role.findFirst({ where: { code } });
+    const organizationId = requestOrganizationId();
+    const role = await prisma.role.findFirst({
+      where: { organizationId, code },
+    });
     if (!role) return jsonError("Role not found", 404);
 
-    const stored = parseRolePermissions(role.permissionsJson);
-    const permissions =
-      stored.length > 0
-        ? stored
-        : (DEFAULT_ROLE_PERMISSIONS[code as keyof typeof DEFAULT_ROLE_PERMISSIONS] ?? []);
-
+    const permissions = effectiveRolePermissions(role.code, role.permissionsJson);
     return jsonOk({
       code: role.code,
       name: role.name,
+      isSystem: role.isSystem,
+      staffKind: role.staffKind,
+      cloneFromCode: role.cloneFromCode,
       permissions,
-      customized: stored.length > 0,
+      customized: parseRolePermissions(role.permissionsJson).length > 0,
     });
   } catch (err) {
     return handleRouteError(err);
@@ -73,17 +66,28 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (denied) return denied;
 
     const { code } = await params;
-    if (!isConfigurableRole(code)) {
-      return jsonError("Role not configured for matrix", 404);
-    }
-
+    const organizationId = requestOrganizationId();
     const body = patchSchema.parse(await req.json());
-    const role = await prisma.role.findFirst({ where: { code } });
+    const role = await prisma.role.findFirst({
+      where: { organizationId, code },
+    });
     if (!role) return jsonError("Role not found", 404);
 
     let next: ClinicPermission[];
     if (body.resetToDefaults) {
-      next = DEFAULT_ROLE_PERMISSIONS[code as keyof typeof DEFAULT_ROLE_PERMISSIONS] ?? [];
+      if (isSystemClinicRoleCode(code) && DEFAULT_ROLE_PERMISSIONS[code]) {
+        next = [...DEFAULT_ROLE_PERMISSIONS[code]];
+      } else if (role.cloneFromCode) {
+        const donor = await prisma.role.findFirst({
+          where: { organizationId, code: role.cloneFromCode },
+        });
+        if (!donor) {
+          return jsonError("cloneFrom role missing; cannot reset", 400);
+        }
+        next = effectiveRolePermissions(donor.code, donor.permissionsJson);
+      } else {
+        return jsonError("No defaults available for this role", 400);
+      }
     } else if (body.permissions) {
       const invalid = body.permissions.filter((p) => !isClinicPermission(p));
       if (invalid.length > 0) {

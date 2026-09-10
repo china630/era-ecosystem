@@ -56,6 +56,11 @@ export async function POST(request: Request) {
 
     enterSatelliteTenant({ organizationId: body.organizationId });
 
+    const { ensureSystemClinicRoles } = await import(
+      "@/lib/auth/ensure-system-clinic-roles"
+    );
+    await ensureSystemClinicRoles(prisma, body.organizationId);
+
     const { user } = await executeSatelliteSsoExchange(
       { ...body, financeRole },
       prisma,

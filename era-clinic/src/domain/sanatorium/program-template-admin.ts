@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
 
@@ -66,9 +65,7 @@ export type ProgramProcedureInput = z.infer<typeof procedureSchema>;
 export type ProgramKnotInput = z.infer<typeof knotSchema>;
 
 export const programTemplateInclude = {
-  procedures: {
-    orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }],
-  },
+  procedures: { orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }] },
   quotaKnots: true,
   blockMembers: true,
 };
@@ -776,10 +773,9 @@ export async function purgeRetiredTemplatesWithoutInstances(opts?: {
 
 /** Backfill entitlementSnapshot for instances that still lack one. */
 export async function backfillEntitlementSnapshots(): Promise<{ updated: number }> {
-  const missing = await prisma.programInstance.findMany({
-    where: { entitlementSnapshot: { equals: Prisma.DbNull } },
-    select: { id: true, templateId: true },
-  });
+  const missing = await prisma.$queryRaw<Array<{ id: string; templateId: string }>>`
+    SELECT id, "templateId" FROM "ProgramInstance" WHERE entitlement_snapshot IS NULL
+  `;
   let updated = 0;
   for (const row of missing) {
     const template = await prisma.programTemplate.findUnique({
