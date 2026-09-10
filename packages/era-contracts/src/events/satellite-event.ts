@@ -15,6 +15,8 @@ import {
   isSatelliteHotelCityLedgerSnapshot,
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
+  isSatelliteHotelGuestDeparted,
+  isSatelliteHotelGuestMoved,
   isSatelliteHotelInvoiceIssued,
   isSatelliteHotelNightAuditClosed,
   isSatelliteHotelReservationCompleted,
@@ -69,6 +71,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteHotelCityLedgerSnapshot(data) ||
     isSatelliteHotelGuestCheckedIn(data) ||
     isSatelliteHotelGuestCheckedOut(data) ||
+    isSatelliteHotelGuestDeparted(data) ||
+    isSatelliteHotelGuestMoved(data) ||
     isSatelliteHotelRoomChanged(data) ||
     isSatelliteHotelSanatoriumBookingCreated(data) ||
     isSatelliteHotelStayProductChanged(data) ||

@@ -258,6 +258,59 @@ export function isSatelliteHotelGuestCheckedOut(
   return satelliteHotelGuestCheckedOutSchema.safeParse(data).success;
 }
 
+export const SATELLITE_HOTEL_GUEST_DEPARTED =
+  "SATELLITE_HOTEL_GUEST_DEPARTED" as const;
+
+export const satelliteHotelGuestDepartedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_GUEST_DEPARTED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload.extend({
+    /** Required — ReservationGuest.id; clinic closes only this pax episode. */
+    paxKey: z.string().min(1),
+  }),
+});
+
+export type SatelliteHotelGuestDepartedEvent = z.infer<
+  typeof satelliteHotelGuestDepartedSchema
+>;
+
+export function isSatelliteHotelGuestDeparted(
+  data: unknown,
+): data is SatelliteHotelGuestDepartedEvent {
+  return satelliteHotelGuestDepartedSchema.safeParse(data).success;
+}
+
+export const SATELLITE_HOTEL_GUEST_MOVED =
+  "SATELLITE_HOTEL_GUEST_MOVED" as const;
+
+export const satelliteHotelGuestMovedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_GUEST_MOVED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload.extend({
+    paxKey: z.string().min(1),
+    fromReservationId: z.string().min(1),
+    toReservationId: z.string().min(1),
+    previousRoomNumber: z.string().optional(),
+    newRoomNumber: z.string().min(1),
+  }),
+});
+
+export type SatelliteHotelGuestMovedEvent = z.infer<
+  typeof satelliteHotelGuestMovedSchema
+>;
+
+export function isSatelliteHotelGuestMoved(
+  data: unknown,
+): data is SatelliteHotelGuestMovedEvent {
+  return satelliteHotelGuestMovedSchema.safeParse(data).success;
+}
+
 export const SATELLITE_HOTEL_ROOM_CHANGED =
   "SATELLITE_HOTEL_ROOM_CHANGED" as const;
 
