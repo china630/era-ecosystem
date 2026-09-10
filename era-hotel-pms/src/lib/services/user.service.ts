@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import {
   ALL_PERMISSIONS,
-  parsePermissions,
+  effectiveRolePermissions,
   ROLE_CODES,
   type Permission,
 } from '@/lib/auth/permissions';
@@ -143,10 +143,10 @@ export async function getUserByLogin(
 export function userPermissions(user: {
   email?: string | null;
   login: string;
-  role: { permissionsJson: string };
+  role: { code: string; permissionsJson: string };
 }): Permission[] {
   if (isPlatformSuperAdminUser(user)) {
     return [...ALL_PERMISSIONS];
   }
-  return parsePermissions(user.role.permissionsJson);
+  return effectiveRolePermissions(user.role.code, user.role.permissionsJson);
 }

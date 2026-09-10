@@ -15,6 +15,8 @@ import {
   isPosBridgeApiPath,
   verifyPosBridgeFromHeaders,
 } from '@/lib/pos-bridge-auth-edge';
+import { routePermissions } from '@/lib/auth/page-route-permissions';
+import { sessionHasHotelPermission } from '@/lib/auth/permission-check';
 
 const STAFF_COOKIE = authCookieName();
 const AGENCY_COOKIE = agencyAuthCookieName();
@@ -130,6 +132,9 @@ export async function middleware(request: NextRequest) {
       if (session.organizationId) {
         headers.set('x-era-organization-id', session.organizationId);
       }
+      if (session.isOwner === true) {
+        headers.set('x-user-is-owner', '1');
+      }
       headers.set('x-user-actor', 'staff');
       return NextResponse.next({ request: { headers } });
     } catch {
@@ -175,7 +180,23 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await verifySatelliteSession(token);
+    const session = await verifySatelliteSession(token);
+    const required = routePermissions(pathname);
+    const sessionView = {
+      login: session.login,
+      email: session.email,
+      role: session.role,
+      permissions: session.permissions,
+      isOwner: session.isOwner,
+    };
+    if (
+      required &&
+      !required.some((p) => sessionHasHotelPermission(sessionView, p))
+    ) {
+      const forbiddenUrl = new URL('/login', request.url);
+      forbiddenUrl.searchParams.set('error', 'forbidden');
+      return redirectNoStore(forbiddenUrl);
+    }
     return NextResponse.next({ request: { headers: reqHeaders } });
   } catch {
     const loginUrl = new URL('/login', request.url);

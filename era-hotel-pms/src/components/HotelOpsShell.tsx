@@ -141,6 +141,9 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: Home,
               active:
                 pathname === '/executive' || pathname.startsWith('/executive/'),
+              show:
+                can(PERMISSIONS.REPORTS_READ) ||
+                can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
               id: 'home-forecast',
@@ -148,6 +151,9 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               label: t('forecast'),
               icon: TrendingUp,
               active: pathname.startsWith('/executive/forecast'),
+              show:
+                can(PERMISSIONS.REPORTS_READ) ||
+                can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
               id: 'home-unit-econ',
@@ -155,6 +161,9 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               label: t('unitEconomics'),
               icon: TrendingUp,
               active: pathname.startsWith('/executive/unit-economics'),
+              show:
+                can(PERMISSIONS.MASTER_DATA_MANAGE) ||
+                can(PERMISSIONS.RESERVATIONS_READ),
             },
           ],
         },
@@ -189,7 +198,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/fo/rack',
               labelKey: 'chessboard',
               icon: LayoutGrid,
-              show: true,
+              show: can(PERMISSIONS.RESERVATIONS_READ),
             },
             {
               id: 'fo-groups',
@@ -687,6 +696,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'users',
               icon: Users,
               show: can(PERMISSIONS.USERS_MANAGE),
+            },
+            {
+              id: 'set-access',
+              href: '/settings/access',
+              labelKey: 'access',
+              icon: Users,
+              show: can(PERMISSIONS.ACCESS_MANAGE),
             },
             {
               id: 'set-int',

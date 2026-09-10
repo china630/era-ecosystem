@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
+import { assertAnyPermission } from '@/lib/auth/require';
+import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getOccupancyForecast } from '@/lib/services/forecast.service';
 
 const querySchema = z.object({
@@ -17,10 +19,10 @@ const querySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
-    if (!session) {
-      return handleRouteError(new Error('Forbidden'));
-    }
+    assertAnyPermission(await getSessionFromHeaders(), [
+      PERMISSIONS.REPORTS_READ,
+      PERMISSIONS.RESERVATIONS_READ,
+    ]);
     const params = Object.fromEntries(new URL(request.url).searchParams);
     const { days } = querySchema.parse(params);
     return jsonOk(serialize(await getOccupancyForecast(days)));

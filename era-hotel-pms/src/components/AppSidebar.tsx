@@ -54,7 +54,7 @@ export default function AppSidebar() {
       icon: BedDouble,
       show: can(PERMISSIONS.RESERVATIONS_READ),
     },
-    { href: '/fo/rack', labelKey: 'chessboard', icon: LayoutGrid, show: true },
+    { href: '/fo/rack', labelKey: 'chessboard', icon: LayoutGrid, show: can(PERMISSIONS.RESERVATIONS_READ) },
     {
       href: '/bookings/new',
       labelKey: 'roomBooking',
@@ -124,6 +124,12 @@ export default function AppSidebar() {
       labelKey: 'users',
       icon: Users,
       show: can(PERMISSIONS.USERS_MANAGE),
+    },
+    {
+      href: '/settings/access',
+      labelKey: 'access',
+      icon: Users,
+      show: can(PERMISSIONS.ACCESS_MANAGE),
     },
     {
       href: '/hk',

@@ -9,26 +9,12 @@ import {
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { signToken } from "@/lib/auth/jwt";
 import { prisma } from "@/lib/prisma";
-import {
-  ROLE_CODES,
-  permissionsForRole,
-  serializePermissions,
-} from "@/lib/auth/permissions";
+import { ROLE_CODES } from "@/lib/auth/permissions";
 import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
+import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
+import { userPermissions } from "@/lib/services/user.service";
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "era_session";
-
-async function ensureRole(code: string) {
-  const existing = await prisma.role.findFirst({ where: { code } });
-  if (existing) return existing;
-  return prisma.role.create({
-    data: {
-      code,
-      name: code.replace(/_/g, " "),
-      permissionsJson: serializePermissions(permissionsForRole(code)),
-    },
-  });
-}
 
 /**
  * SEC-SSO-02/01: Orchestrator mints HMAC (v2/v3); replay guard via consumeSsoSignatureOnce.
@@ -74,17 +60,25 @@ export async function POST(request: Request) {
 
     const organizationId = body.organizationId;
     enterSatelliteTenant({ organizationId });
+    await ensureSystemHotelRoles(prisma, organizationId);
 
     const email = body.email.trim().toLowerCase();
     const isPlatformSuperAdmin = isPlatformSuperAdminUser({
       email,
       login: email,
     });
+    const isOwner =
+      financeRole === "BUSINESS_OWNER" || body.financeRole === "BUSINESS_OWNER";
 
     const roleCode = isPlatformSuperAdmin
       ? ROLE_CODES.HOTEL_ADMIN
       : ROLE_CODES.FINANCIAL_AUDITOR;
-    const role = await ensureRole(roleCode);
+    const role = await prisma.role.findFirst({
+      where: { organizationId, code: roleCode },
+    });
+    if (!role) {
+      return jsonError("System role missing after ensure", 500);
+    }
 
     const login = `sso_${email.split("@")[0]}`;
     let user = await prisma.user.findFirst({
@@ -122,6 +116,7 @@ export async function POST(request: Request) {
       return jsonError("SSO user provisioning failed", 500);
     }
 
+    const permissions = userPermissions(user);
     const token = await signToken({
       sub: user.id,
       login: user.login,
@@ -129,6 +124,8 @@ export async function POST(request: Request) {
       fullName: user.fullName,
       email,
       organizationId,
+      permissions,
+      isOwner,
     });
 
     const res = jsonOk({
@@ -140,6 +137,7 @@ export async function POST(request: Request) {
         organizationId,
         isPlatformSuperAdmin,
         financeRole,
+        permissions,
       },
       token,
     });

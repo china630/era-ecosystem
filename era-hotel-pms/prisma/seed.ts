@@ -1,11 +1,8 @@
 import { Prisma, PrismaClient, PaymentMethod } from '@prisma/client';
 import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { createSatelliteTenantExtension } from '@era/satellite-kit/tenancy';
-import {
-  ROLE_CODES,
-  ROLE_PERMISSIONS,
-  serializePermissions,
-} from '../src/lib/auth/permissions';
+import { ROLE_CODES } from '../src/lib/auth/permissions';
+import { ensureSystemHotelRoles } from '../src/lib/auth/ensure-system-hotel-roles';
 import { hashPassword } from '../src/lib/auth/password';
 import {
   platformSuperAdminBootstrapPassword,
@@ -85,17 +82,11 @@ async function main() {
     },
   });
 
-  const roleEntries = Object.entries(ROLE_PERMISSIONS) as [string, string[]][];
+  await ensureSystemHotelRoles(prisma, organizationId);
+  const roleRows = await prisma.role.findMany({ where: { organizationId } });
   const roles: Record<string, string> = {};
-  for (const [code, perms] of roleEntries) {
-    const role = await prisma.role.create({
-      data: {
-        code,
-        name: code.replace(/_/g, ' '),
-        permissionsJson: serializePermissions(perms as never[]),
-      },
-    });
-    roles[code] = role.id;
+  for (const role of roleRows) {
+    roles[role.code] = role.id;
   }
 
   const adminHash = await hashPassword('admin123');
@@ -320,6 +311,7 @@ async function main() {
   const sourceBooking = await prisma.bookingSource.create({
     data: { code: 'BOOKING', name: 'Booking / OTA' },
   });
+  await prisma.bookingSource.create({ data: { code: 'CORPORATE', name: 'Corporate' } });
   void sourceAgency;
 
   const rooms = await Promise.all(

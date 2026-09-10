@@ -25,6 +25,7 @@ import {
   validateShareCandidate,
 } from '@/lib/services/share-assignment.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
+import { contractCounterpartyType } from '@/lib/booking-source-kind';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
@@ -88,6 +89,7 @@ export async function createReservation(input: {
   ratePlanId: string;
   mealPlanId?: string;
   roomId?: string;
+  givenRoomTypeId?: string;
   sourceId?: string;
   agencyId?: string;
   companyId?: string;
@@ -118,6 +120,7 @@ export async function createReservation(input: {
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
+  let companyId = input.companyId;
   let salesContractId = input.salesContractId;
   const partyBillingMode = input.partyBillingMode ?? 'PRIMARY';
 
@@ -125,7 +128,11 @@ export async function createReservation(input: {
     const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
     if (!contract) throw new Error('Sales contract is not active for check-in date');
     ratePlanId = contract.ratePlanId;
-    agencyId = contract.agencyId ?? agencyId;
+    if (contractCounterpartyType(contract) === 'CORPORATE') {
+      companyId = contract.companyId ?? companyId;
+    } else if (contract.agencyId) {
+      agencyId = contract.agencyId;
+    }
     await assertContractAllotmentAvailable(
       salesContractId,
       input.roomTypeId,
@@ -149,6 +156,12 @@ export async function createReservation(input: {
   const roomType = await prisma.roomType.findUnique({ where: { id: input.roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
   assertActiveForNewUse(`Room type ${roomType.code}`, roomType.active);
+
+  if (input.givenRoomTypeId) {
+    const givenType = await prisma.roomType.findUnique({ where: { id: input.givenRoomTypeId } });
+    if (!givenType) throw new Error('Given room type not found');
+    assertActiveForNewUse(`Given room type ${givenType.code}`, givenType.active);
+  }
 
   const ratePlan = await prisma.ratePlan.findUnique({ where: { id: ratePlanId } });
   if (!ratePlan) throw new Error('Rate plan not found');
@@ -270,13 +283,14 @@ export async function createReservation(input: {
     data: {
       organizationId: requestOrganizationId(),
       roomTypeId: input.roomTypeId,
+      givenRoomTypeId: input.givenRoomTypeId,
       guestId: input.guestId,
       ratePlanId,
       mealPlanId: input.mealPlanId,
       roomId: input.roomId,
       sourceId: input.sourceId,
       agencyId,
-      companyId: input.companyId,
+      companyId,
       salesContractId,
       groupId: input.groupId,
       checkInDate: input.checkInDate,
@@ -465,6 +479,14 @@ export async function checkInReservation(id: string) {
   if (!reservation.roomId) throw new Error('Assign a room before check-in');
 
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
+  if (room) {
+    const physicalTypeId = reservation.givenRoomTypeId ?? reservation.roomTypeId;
+    if (room.roomTypeId !== physicalTypeId) {
+      throw new Error(
+        'Assigned Room no. does not match Given room type — re-assign the door before check-in',
+      );
+    }
+  }
   const othersInHouse = reservation.roomId
     ? await countRemainingInHouseOnDoor(reservation.roomId, id)
     : 0;

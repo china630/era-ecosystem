@@ -61,6 +61,7 @@ export async function addStayToBooking(input: {
   checkOutDate: Date;
   paymentMethod: PaymentMethod;
   agencyId?: string;
+  companyId?: string;
   salesContractId?: string;
   sourceId?: string;
   adults?: number;
@@ -74,6 +75,7 @@ export async function addStayToBooking(input: {
     ratePlanId: input.ratePlanId,
     mealPlanId: input.mealPlanId,
     agencyId: input.agencyId ?? group.agencyId ?? undefined,
+    companyId: input.companyId,
     salesContractId: input.salesContractId,
     sourceId: input.sourceId,
     groupId: input.groupId,
@@ -103,6 +105,7 @@ export async function createGroupBookingWithStays(input: {
   code?: string;
   name: string;
   agencyId?: string;
+  companyId?: string;
   folioMode?: BookingFolioMode;
   checkInDate: Date;
   checkOutDate: Date;
@@ -151,6 +154,7 @@ export async function createGroupBookingWithStays(input: {
         agencyId: input.agencyId,
         salesContractId: input.salesContractId,
         sourceId: input.sourceId,
+        companyId: input.companyId,
         groupId: group.id,
         checkInDate: stayIn,
         checkOutDate: stayOut,
@@ -218,6 +222,7 @@ export async function addRoomStayFromReservation(reservationId: string) {
     checkOutDate: src.checkOutDate,
     paymentMethod: src.paymentMethod,
     agencyId: src.agencyId ?? undefined,
+    companyId: src.companyId ?? undefined,
     salesContractId: src.salesContractId ?? undefined,
     sourceId: src.sourceId ?? undefined,
     adults: src.adults,

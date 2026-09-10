@@ -11,6 +11,10 @@ import {
   showApiError,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import {
+  CityLedgerStatementGrid,
+  type ClStatementLine,
+} from '@/components/CityLedgerStatementGrid';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -30,6 +34,14 @@ interface Ledger {
   cityLedger: number;
   closing: number;
   reservationCount: number;
+  lines?: ClStatementLine[];
+}
+
+interface TransferredRow {
+  id: string;
+  type: string;
+  reservationId: string;
+  balance: number;
 }
 
 interface SummaryRow {
@@ -57,6 +69,7 @@ export default function CompanyLedgerPage() {
   const [to, setTo] = useState(todayIso);
   const [ledger, setLedger] = useState<Ledger | null>(null);
   const [summary, setSummary] = useState<SummaryRow[]>([]);
+  const [transferred, setTransferred] = useState<TransferredRow[]>([]);
 
   useEffect(() => {
     const f = searchParams.get('from');
@@ -102,19 +115,23 @@ export default function CompanyLedgerPage() {
   useEffect(() => {
     if (!companyId) {
       setLedger(null);
+      setTransferred([]);
       return;
     }
     void (async () => {
       try {
-        const ledgerRes = await fetch(
-          `/api/companies/${companyId}/ledger?from=${from}&to=${to}`,
-        );
+        const [ledgerRes, trRes] = await Promise.all([
+          fetch(`/api/companies/${companyId}/ledger?from=${from}&to=${to}`),
+          fetch(`/api/companies/${companyId}/settlement`),
+        ]);
         const data = await ledgerRes.json();
         if (!ledgerRes.ok) {
           showApiError(data, tc('loadError'));
           return;
         }
         setLedger(data);
+        const tr = await trRes.json();
+        if (trRes.ok && Array.isArray(tr)) setTransferred(tr);
       } catch (e) {
         showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
       }
@@ -136,6 +153,7 @@ export default function CompanyLedgerPage() {
           setTo(d);
           setCompanyId('');
           setLedger(null);
+          setTransferred([]);
         }}
       >
         <DatePicker
@@ -229,6 +247,41 @@ export default function CompanyLedgerPage() {
             ]}
             rowKey={(r) => String(r.label)}
           />
+          <PageHeader title={t('statementTitle')} subtitle={t('statementSubtitle')} />
+          <CityLedgerStatementGrid
+            lines={ledger.lines ?? []}
+            labels={{
+              date: t('statementDate'),
+              kind: t('statementKind'),
+              stay: t('statementStay'),
+              guest: t('guest'),
+              room: t('statementRoom'),
+              description: t('statementDescription'),
+              amount: tc('amount'),
+              running: t('statementRunning'),
+              empty: t('statementEmpty'),
+              kindCharge: t('statementKindCharge'),
+              kindPayment: t('statementKindPayment'),
+              kindRefund: t('statementKindRefund'),
+              azn: tc('azn'),
+            }}
+          />
+          {transferred.length > 0 ? (
+            <section className="mt-4 rounded-lg border border-[#E8EEF2] p-4">
+              <h3 className="mb-2 text-sm font-semibold text-[#34495E]">
+                {t('transferredArTitle', { count: transferred.length })}
+              </h3>
+              <ul className="mb-3 space-y-1 text-[13px] text-[#7F8C8D]">
+                {transferred.map((row) => (
+                  <li key={row.id}>
+                    {row.type} · {row.reservationId.slice(0, 8)} · {row.balance.toFixed(2)}{' '}
+                    {tc('azn')}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[12px] text-[#7F8C8D]">{t('financeBankMatchHint')}</p>
+            </section>
+          ) : null}
         </>
       ) : null}
     </>

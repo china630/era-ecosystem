@@ -11,6 +11,8 @@ export interface AuthUser {
   organizationName?: string | null;
   organizationId?: string | null;
   isPlatformSuperAdmin?: boolean;
+  /** OrgOwner / BUSINESS_OWNER — matrix bypass (same as API). */
+  isOwner?: boolean;
   canRunElektrawebImport?: boolean;
 }
 
@@ -38,13 +40,14 @@ export function useAuth() {
   }, [refresh]);
 
   const isPlatformSuperAdmin = user?.isPlatformSuperAdmin === true;
+  const isOwner = user?.isOwner === true;
 
   const can = useCallback(
     (permission: string) => {
-      if (isPlatformSuperAdmin) return true;
+      if (isPlatformSuperAdmin || isOwner) return true;
       return user?.permissions.includes(permission) ?? false;
     },
-    [user, isPlatformSuperAdmin],
+    [user, isPlatformSuperAdmin, isOwner],
   );
 
   const canRunElektrawebImport = user?.canRunElektrawebImport === true;

@@ -17,7 +17,7 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { bookingSourceKind, isOtaAgency } from '@/lib/booking-source-kind';
+import { bookingSourceKind, contractsForSource, fksFromSalesContract, isOtaAgency, persistCounterpartyIds } from '@/lib/booking-source-kind';
 
 type SelectOpt = { id: string; label: string; code?: string; adultCapacity?: number; isOta?: boolean };
 
@@ -33,6 +33,8 @@ type ContractOpt = {
   label: string;
   code: string;
   agencyId: string | null;
+  companyId: string | null;
+  counterpartyType?: string | null;
   ratePlanId: string;
 };
 
@@ -111,6 +113,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [mealPlanId, setMealPlanId] = useState('');
   const [sourceId, setSourceId] = useState('');
   const [agencyId, setAgencyId] = useState('');
+  const [companyId, setCompanyId] = useState('');
   const [salesContractId, setSalesContractId] = useState('');
   const [contractRef, setContractRef] = useState('');
   const [booker, setBooker] = useState('');
@@ -126,6 +129,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [mealPlans, setMealPlans] = useState<SelectOpt[]>([]);
   const [sources, setSources] = useState<SelectOpt[]>([]);
   const [agencies, setAgencies] = useState<SelectOpt[]>([]);
+  const [companies, setCompanies] = useState<SelectOpt[]>([]);
   const [roomTypes, setRoomTypes] = useState<SelectOpt[]>([]);
   const [salesContracts, setSalesContracts] = useState<ContractOpt[]>([]);
   const [avlByType, setAvlByType] = useState<Record<string, number>>({});
@@ -133,6 +137,10 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
   const walkInLocked = sourceKind === 'WALKIN';
+  const corporateLocked = sourceKind === 'CORPORATE';
+  const agencyPickerLocked = walkInLocked || corporateLocked;
+  const showAgencyContract = sourceKind === 'AGENCY' || sourceKind === 'BOOKING';
+  const showCompanyContract = corporateLocked;
   const nights = nightsBetween(checkIn, checkOut);
 
   const selectedRatePlan = ratePlans.find((rp) => rp.id === ratePlanId);
@@ -145,11 +153,22 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   }, [agencies, sourceKind]);
 
   const agencyFieldLabel =
-    sourceKind === 'BOOKING' ? tr('otaChannel') : sourceKind === 'WALKIN' ? tr('individual') : tr('agency');
+    sourceKind === 'BOOKING'
+      ? tr('otaChannel')
+      : sourceKind === 'WALKIN'
+        ? tr('individual')
+        : sourceKind === 'CORPORATE'
+          ? tr('company')
+          : tr('agency');
 
-  const contractsForAgency = useMemo(
-    () => salesContracts.filter((c) => !agencyId || !c.agencyId || c.agencyId === agencyId),
-    [salesContracts, agencyId],
+  const contractsForKind = useMemo(
+    () =>
+      contractsForSource(salesContracts, {
+        sourceKind,
+        agencyId,
+        companyId,
+      }),
+    [salesContracts, sourceKind, agencyId, companyId],
   );
 
   const filteredRatePlans = useMemo(
@@ -209,6 +228,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     setMealPlanId('');
     setSourceId('');
     setAgencyId('');
+    setCompanyId('');
     setSalesContractId('');
     setContractRef('');
     setBooker('');
@@ -225,9 +245,10 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       fetch('/api/master/meal-plans').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/master/booking-sources').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/agencies').then((r) => (r.ok ? r.json() : [])),
+      fetch('/api/companies').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/master/room-types').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/admin/contracts?status=ACTIVE').then((r) => (r.ok ? r.json() : [])),
-    ]).then(([g, rp, mp, src, ag, rt, contracts]) => {
+    ]).then(([g, rp, mp, src, ag, co, rt, contracts]) => {
       if (Array.isArray(g)) {
         setGuests(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
       }
@@ -286,6 +307,15 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
           })),
         );
       }
+      if (Array.isArray(co)) {
+        setCompanies(
+          co.map((x: { id: string; code: string; name: string }) => ({
+            id: x.id,
+            code: x.code,
+            label: `${x.code} — ${x.name}`,
+          })),
+        );
+      }
       if (Array.isArray(rt)) {
         setRoomTypes(
           rt
@@ -305,11 +335,15 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               code: string;
               name: string;
               agencyId: string | null;
+              companyId: string | null;
+              counterpartyType?: string | null;
               ratePlanId: string;
             }) => ({
               id: x.id,
               code: x.code,
               agencyId: x.agencyId,
+              companyId: x.companyId,
+              counterpartyType: x.counterpartyType,
               ratePlanId: x.ratePlanId,
               label: `${x.code} — ${x.name}`,
             }),
@@ -392,7 +426,9 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     const c = salesContracts.find((x) => x.id === nextId);
     if (!c) return;
     setContractRef(c.code);
-    if (c.agencyId) setAgencyId(c.agencyId);
+    const fks = fksFromSalesContract(c);
+    if (fks.agencyId !== undefined) setAgencyId(fks.agencyId ?? '');
+    if (fks.companyId !== undefined) setCompanyId(fks.companyId ?? '');
     if (c.ratePlanId) applyRatePlan(c.ratePlanId);
   }
 
@@ -468,6 +504,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
 
     setBusy(true);
     try {
+      const parties = persistCounterpartyIds({ sourceKind, agencyId, companyId });
       const body = {
         code: code.trim() || undefined,
         name: name.trim(),
@@ -475,7 +512,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
         ratePlanId,
         mealPlanId: mealPlanId || undefined,
         sourceId: sourceId || undefined,
-        agencyId: walkInLocked ? undefined : agencyId || undefined,
+        agencyId: parties.agencyId ?? undefined,
+        companyId: parties.companyId ?? undefined,
         salesContractId: salesContractId || undefined,
         contractRef: contractRef.trim() || undefined,
         booker: booker.trim() || undefined,
@@ -665,51 +703,94 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                   </option>
                 ))}
               </FieldSelect>
-              <FieldSelect
-                label={agencyFieldLabel}
-                preset="selectWide"
-                value={walkInLocked ? '' : agencyId}
-                onChange={(e) => {
-                  setAgencyId(e.target.value);
-                  setSalesContractId('');
-                  setContractRef('');
-                }}
-                disabled={walkInLocked}
-                hint={tr('hintAgency')}
-              >
-                <option value="">{walkInLocked ? tr('individual') : tc('select')}</option>
-                {!walkInLocked
-                  ? agencyOptions.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.label}
-                      </option>
-                    ))
-                  : null}
-              </FieldSelect>
+              {corporateLocked ? (
+                <FieldSelect
+                  label={tr('company')}
+                  preset="selectWide"
+                  value={companyId}
+                  onChange={(e) => {
+                    setCompanyId(e.target.value);
+                    setSalesContractId('');
+                    setContractRef('');
+                  }}
+                  hint={tr('hintCompany')}
+                >
+                  <option value="">{tc('select')}</option>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </FieldSelect>
+              ) : (
+                <FieldSelect
+                  label={agencyFieldLabel}
+                  preset="selectWide"
+                  value={agencyPickerLocked ? '' : agencyId}
+                  onChange={(e) => {
+                    setAgencyId(e.target.value);
+                    setSalesContractId('');
+                    setContractRef('');
+                  }}
+                  disabled={agencyPickerLocked}
+                  hint={tr('hintAgency')}
+                >
+                  <option value="">{agencyPickerLocked ? tr('individual') : tc('select')}</option>
+                  {!agencyPickerLocked
+                    ? agencyOptions.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.label}
+                        </option>
+                      ))
+                    : null}
+                </FieldSelect>
+              )}
             </FieldRow>
-            <FieldRow cols={2}>
+            {!corporateLocked ? (
               <FieldSelect
-                label={tr('salesContract')}
+                label={tr('company')}
                 preset="selectWide"
-                value={salesContractId}
-                onChange={(e) => applySalesContract(e.target.value)}
-                disabled={!agencyId && contractsForAgency.length === 0}
-                hint={tr('hintSalesContract')}
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                hint={tr('companyOptionalHint')}
               >
-                <option value="">—</option>
-                {contractsForAgency.map((c) => (
+                <option value="">{tc('select')}</option>
+                {companies.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.label}
                   </option>
                 ))}
               </FieldSelect>
-              <Field
-                label={tr('contractRef')}
-                preset="code"
-                value={contractRef}
-                onChange={(e) => setContractRef(e.target.value)}
-              />
-            </FieldRow>
+            ) : null}
+            {showAgencyContract || showCompanyContract ? (
+              <FieldRow cols={2}>
+                <FieldSelect
+                  label={showCompanyContract ? tr('companyContract') : tr('agencyContract')}
+                  preset="selectWide"
+                  value={salesContractId}
+                  onChange={(e) => applySalesContract(e.target.value)}
+                  disabled={
+                    showCompanyContract
+                      ? !companyId && contractsForKind.length === 0
+                      : !agencyId && contractsForKind.length === 0
+                  }
+                  hint={tr('hintSalesContract')}
+                >
+                  <option value="">—</option>
+                  {contractsForKind.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </FieldSelect>
+                <Field
+                  label={tr('contractRef')}
+                  preset="code"
+                  value={contractRef}
+                  onChange={(e) => setContractRef(e.target.value)}
+                />
+              </FieldRow>
+            ) : null}
             <FieldSelect
               label={t('bookerGuest')}
               preset="selectWide"

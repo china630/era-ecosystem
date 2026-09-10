@@ -1,11 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import {
+  CreditCard,
+  History,
+  Lock,
+  LockOpen,
+  MoreVertical,
+  Paperclip,
+  Printer,
+  Zap,
+} from 'lucide-react';
 import {
   DROPDOWN_ITEM_CLASS,
   DROPDOWN_PANEL_CLASS,
   CHIP_CLASS,
+  GHOST_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUCCESS_BUTTON_CLASS,
@@ -33,7 +44,9 @@ export type ReservationCardToolbarProps = {
 
 type ActionMode = 'header' | 'footer' | 'all';
 
-/** Header / footer action cluster for reservation card (no duplicate title). */
+const ICON_BTN = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
+
+/** Header / footer action cluster for reservation card (icon header, text footer). */
 export function ReservationCardActions({
   busy,
   loading,
@@ -63,23 +76,25 @@ export function ReservationCardActions({
   const showFooter = mode === 'footer' || mode === 'all';
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
       {showHeader ? (
         <button
           type="button"
-          className={`${SECONDARY_BUTTON_CLASS} ${attachOpen ? 'ring-2 ring-[#2980B9]' : ''}`}
-          title={!onAttachToggle ? t('availableAfterSave') : undefined}
+          className={`${ICON_BTN} ${attachOpen ? 'ring-2 ring-[#2980B9]' : ''}`}
+          title={!onAttachToggle ? t('availableAfterSave') : t('attach')}
+          aria-label={t('attach')}
           disabled={busy || !onAttachToggle}
           onClick={onAttachToggle}
         >
-          {t('attach')}
+          <Paperclip className="h-4 w-4" />
         </button>
       ) : null}
       {showHeader ? (
         <div className="relative">
           <button
             type="button"
-            className={SECONDARY_BUTTON_CLASS}
+            className={ICON_BTN}
+            aria-label={t('lightning')}
             disabled={busy || (!onRecalc && !onChargeAll && !onAmendProduct && !canCheckIn)}
             title={
               !onRecalc && !onChargeAll && !onAmendProduct && !canCheckIn
@@ -88,7 +103,7 @@ export function ReservationCardActions({
             }
             onClick={() => setLightningOpen((o) => !o)}
           >
-            {t('lightning')}
+            <Zap className="h-4 w-4" />
           </button>
           {lightningOpen ? (
             <div className={DROPDOWN_PANEL_CLASS}>
@@ -125,17 +140,6 @@ export function ReservationCardActions({
               >
                 {t('amendProduct')}
               </button>
-              <button
-                type="button"
-                className={DROPDOWN_ITEM_CLASS}
-                disabled={!canCheckIn || !onConfirmCheckIn}
-                onClick={() => {
-                  setLightningOpen(false);
-                  onConfirmCheckIn?.();
-                }}
-              >
-                {t('confirmCheckIn')}
-              </button>
             </div>
           ) : null}
         </div>
@@ -143,23 +147,26 @@ export function ReservationCardActions({
       {showHeader ? (
         <button
           type="button"
-          className={SECONDARY_BUTTON_CLASS}
-          title={!onHistory ? t('availableAfterSave') : undefined}
+          className={ICON_BTN}
+          title={!onHistory ? t('availableAfterSave') : t('history')}
+          aria-label={t('history')}
           disabled={busy || !onHistory}
           onClick={onHistory}
         >
-          {t('history')}
+          <History className="h-4 w-4" />
         </button>
       ) : null}
       {showHeader ? (
         <div className="relative">
           <button
             type="button"
-            className={SECONDARY_BUTTON_CLASS}
+            className={ICON_BTN}
+            aria-label={t('menu')}
+            title={t('menu')}
             disabled={busy}
             onClick={() => setMenuOpen((o) => !o)}
           >
-            {t('menu')}
+            <MoreVertical className="h-4 w-4" />
           </button>
           {menuOpen ? (
             <div className={DROPDOWN_PANEL_CLASS}>
@@ -171,7 +178,10 @@ export function ReservationCardActions({
                   (onPrint ?? (() => window.print()))();
                 }}
               >
-                {t('print')}
+                <span className="inline-flex items-center gap-2">
+                  <Printer className="h-3.5 w-3.5" />
+                  {t('print')}
+                </span>
               </button>
               {showLock ? (
                 <button
@@ -184,21 +194,15 @@ export function ReservationCardActions({
                     onToggleLock?.();
                   }}
                 >
-                  {isLocked ? t('unlock') : t('lock')}
+                  <span className="inline-flex items-center gap-2">
+                    {isLocked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                    {isLocked ? t('unlock') : t('lock')}
+                  </span>
                 </button>
               ) : null}
             </div>
           ) : null}
         </div>
-      ) : null}
-      {showHeader ? (
-        <button
-          type="button"
-          className={SECONDARY_BUTTON_CLASS}
-          onClick={onPrint ?? (() => window.print())}
-        >
-          {t('print')}
-        </button>
       ) : null}
 
       {showFooter ? (
@@ -265,11 +269,19 @@ export function ReservationCardBottomBar({
 }) {
   const t = useTranslations('reservationCard');
 
-  const stubs: { label: string; onClick?: () => void }[] = [
-    { label: t('bottom.creditCard'), onClick: onCreditCard },
-    { label: t('bottom.packages'), onClick: onPackages },
-    { label: t('bottom.tasks', { count: taskCount }), onClick: onTasks },
-    { label: t('bottom.folioRouting'), onClick: onFolioRouting },
+  const stubs: { label: string; icon: ReactNode; onClick?: () => void }[] = [
+    {
+      label: t('bottom.creditCard'),
+      icon: <CreditCard className="h-3.5 w-3.5" />,
+      onClick: onCreditCard,
+    },
+    { label: t('bottom.packages'), icon: null, onClick: onPackages },
+    {
+      label: t('bottom.tasks', { count: taskCount }),
+      icon: null,
+      onClick: onTasks,
+    },
+    { label: t('bottom.folioRouting'), icon: null, onClick: onFolioRouting },
   ];
 
   return (
@@ -281,8 +293,16 @@ export function ReservationCardBottomBar({
           className={CHIP_CLASS}
           disabled={!stubsEnabled || !s.onClick}
           onClick={s.onClick}
+          title={s.label}
         >
-          {s.label}
+          {s.icon ? (
+            <span className="inline-flex items-center gap-1">
+              {s.icon}
+              <span className="hidden sm:inline">{s.label}</span>
+            </span>
+          ) : (
+            s.label
+          )}
         </button>
       ))}
     </div>

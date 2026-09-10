@@ -1,8 +1,10 @@
 import {
   hasOverlappingShareRoommate,
+  isClosedSharePair,
   PLAN_BAR_COLORS,
   resolveHkSquareKind,
   resolvePlanBarDayState,
+  showSharePoolOccupancyBadge,
   themeForDayState,
   type PlanBarInput,
 } from '@/components/room-plan/plan-bar-theme';
@@ -121,6 +123,32 @@ describe('plan-bar-theme', () => {
     expect(hasOverlappingShareRoommate(a, [a, b])).toBe(true);
     expect(resolvePlanBarDayState(a, [a, b], today)).toBe('multiple');
     expect(themeForDayState('multiple').fill).toBe('#00BCD4');
+  });
+
+  it('closed mixed pair is not open-pool roommate / multiple / badge', () => {
+    const a = bar({
+      id: 'a',
+      status: 'IN_HOUSE',
+      checkInDate: '2026-06-05',
+      checkOutDate: '2026-06-15',
+      shareEligible: true,
+      shareGender: 'F',
+      adults: 1,
+    });
+    const b = bar({
+      id: 'b',
+      status: 'IN_HOUSE',
+      checkInDate: '2026-06-05',
+      checkOutDate: '2026-06-15',
+      shareEligible: true,
+      shareGender: 'M',
+      adults: 1,
+    });
+    expect(isClosedSharePair(a, [a, b])).toBe(true);
+    expect(hasOverlappingShareRoommate(a, [a, b])).toBe(false);
+    expect(showSharePoolOccupancyBadge(a, [a, b])).toBe(false);
+    expect(resolvePlanBarDayState(a, [a, b], today)).toBe('inHouse');
+    expect(showSharePoolOccupancyBadge(a, [a])).toBe(true);
   });
 
   it('resolves HK square kinds from room status', () => {

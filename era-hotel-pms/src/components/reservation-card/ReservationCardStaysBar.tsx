@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CHIP_CLASS, SECONDARY_BUTTON_CLASS, TEXT_MUTED_CLASS } from '@era/satellite-kit/ui';
+import { Plus } from 'lucide-react';
+import { CHIP_CLASS, GHOST_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, TEXT_MUTED_CLASS } from '@era/satellite-kit/ui';
 
 export type BookingStaySummary = {
   id: string;
@@ -28,6 +29,8 @@ export function ReservationCardStaysBar({
   addDisabled,
   onSaveBookingName,
   nameDisabled,
+  onSwapRooms,
+  swapDisabled,
 }: {
   bookingCode?: string | null;
   bookingName?: string | null;
@@ -39,6 +42,8 @@ export function ReservationCardStaysBar({
   addDisabled?: boolean;
   onSaveBookingName?: (name: string) => Promise<void> | void;
   nameDisabled?: boolean;
+  onSwapRooms?: () => void;
+  swapDisabled?: boolean;
 }) {
   const t = useTranslations('booking');
   const [editingName, setEditingName] = useState(false);
@@ -50,7 +55,8 @@ export function ReservationCardStaysBar({
     setEditingName(false);
   }, [bookingName, bookingCode]);
 
-  if (!stays.length && !bookingCode && !onAddStay) return null;
+  const multiRoom = stays.length > 1;
+  if (!multiRoom && !bookingCode && !onAddStay) return null;
 
   async function commitName() {
     if (!onSaveBookingName || nameDisabled) {
@@ -78,10 +84,52 @@ export function ReservationCardStaysBar({
 
   const nameLabel = (bookingName ?? '').trim();
 
+  /** Single-door stay: thin GRP strip — no "Family / group · 1 room" chrome. */
+  if (!multiRoom) {
+    return (
+      <div
+        className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2.5 py-1.5"
+        data-testid="reservation-family-stays-bar"
+        data-mode="single"
+      >
+        <p className={`m-0 min-w-0 truncate text-[12px] ${TEXT_MUTED_CLASS}`}>
+          {bookingCode ? (
+            <>
+              <span className="font-mono text-[#34495E]">{bookingCode}</span>
+              {folioMode ? <span className="ml-2">{t('folioMode')}: {folioMode}</span> : null}
+            </>
+          ) : (
+            t('singleStayHint')
+          )}
+        </p>
+        {onAddStay ? (
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS}
+            disabled={addDisabled}
+            title={addDisabled ? t('availableAfterSave') : t('addStay')}
+            aria-label={t('addStay')}
+            onClick={onAddStay}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="ml-1 hidden sm:inline">{t('addStay')}</span>
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div className="mb-3 shrink-0 space-y-2 border-b border-[#D5DADF] pb-3">
+    <div
+      className="mb-2 shrink-0 space-y-2 rounded-lg border border-[#D5DADF] bg-[#F8F9FA] p-2.5"
+      data-testid="reservation-family-stays-bar"
+      data-mode="multi"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className={`flex min-w-0 flex-wrap items-center gap-x-1.5 ${TEXT_MUTED_CLASS}`}>
+          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900">
+            {t('familyGroupBadge', { count: stays.length })}
+          </span>
           {onSaveBookingName && editingName ? (
             <input
               className="h-7 min-w-[10rem] max-w-[16rem] rounded border border-[#2980B9] bg-white px-2 text-[12px] font-semibold text-[#34495E] outline-none"
@@ -118,45 +166,53 @@ export function ReservationCardStaysBar({
           ) : null}
 
           {bookingCode ? (
-            <span className="truncate">
-              {(nameLabel || onSaveBookingName) && <span aria-hidden> · </span>}
-              {t('bookingLabel')}: <strong className="text-[#34495E]">{bookingCode}</strong>
-              {folioMode ? ` · ${t('folioMode')}: ${folioMode}` : ''}
-            </span>
-          ) : !nameLabel && !onSaveBookingName ? (
-            <span>{t('staysList')}</span>
+            <span className="truncate font-mono text-[12px] text-[#34495E]">{bookingCode}</span>
           ) : null}
         </div>
-        {onAddStay ? (
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={addDisabled}
-            title={addDisabled ? t('availableAfterSave') : t('addStay')}
-            onClick={onAddStay}
-          >
-            {t('addStay')}
-          </button>
-        ) : null}
+        <div className="flex flex-wrap gap-1.5">
+          {onSwapRooms ? (
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={swapDisabled}
+              title={t('swapRooms')}
+              onClick={onSwapRooms}
+            >
+              {t('swapRooms')}
+            </button>
+          ) : null}
+          {onAddStay ? (
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={addDisabled}
+              title={addDisabled ? t('availableAfterSave') : t('addStay')}
+              onClick={onAddStay}
+            >
+              {t('addStay')}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {stays.map((s, i) => {
-          const primary = s.paxGuests[0];
+        {stays.map((s) => {
+          const primary = s.paxGuests.find((p) => p.isPrimary) ?? s.paxGuests[0];
           const label =
             primary?.firstName || primary?.lastName
               ? `${primary.firstName ?? ''} ${primary.lastName ?? ''}`.trim()
               : s.guest.fullName;
           const active = s.id === activeStayId;
+          const roomNo = s.room?.roomNumber ? `№${s.room.roomNumber}` : s.roomType.code;
           return (
             <button
               key={s.id}
               type="button"
               className={`${CHIP_CLASS} ${active ? 'ring-2 ring-[#2980B9]' : ''}`}
               onClick={() => onSelectStay(s.id)}
+              title={`${label} · ${s.status}`}
             >
-              #{i + 1} {s.roomType.code}
-              {s.room ? ` · ${s.room.roomNumber}` : ''} · {label} · {s.status}
+              {roomNo} · {label}
             </button>
           );
         })}
