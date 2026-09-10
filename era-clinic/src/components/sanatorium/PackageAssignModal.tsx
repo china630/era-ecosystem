@@ -808,7 +808,6 @@ export function PackageAssignModal({
         if (!busy) onClose();
       }}
       maxWidthClass="max-w-4xl w-full min-h-[min(85vh,52rem)] max-h-[90vh]"
-      overlayZClass="z-[210]"
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto"
       footer={
         <div className="flex flex-wrap justify-end gap-2">

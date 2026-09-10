@@ -668,7 +668,6 @@ export function PatientCardClinicalSections({
         onClose={() => setPlanOpen(false)}
         closeLabel={tc("close")}
         maxWidthClass="max-w-4xl"
-        overlayZClass="z-[210]"
         headerActions={
           <button
             type="button"
