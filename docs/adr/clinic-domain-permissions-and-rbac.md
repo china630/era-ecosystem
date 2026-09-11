@@ -1,8 +1,8 @@
 # ADR: Clinic domain permissions and configurable RBAC (Variant A → C)
 
-**Status:** Accepted — Phase A shipped (Waves 1–3)  
-**Date:** 2026-09-01  
-**Implementation:** Phase A complete — DB-authoritative API, CLINIC_ADMIN matrix enforcement, full staff ops API catalog (`opsApiRoutePermission`), nav without legacy `roles` fallback. Variant B/C (Orchestrator sync) remain out of scope.
+**Status:** Accepted — Phase A shipped (Waves 1–3) + custom roles / system seed (2026-09)  
+**Date:** 2026-09-01 (amended 2026-09-09)  
+**Implementation:** Phase A complete — DB-authoritative API, CLINIC_ADMIN matrix enforcement, full staff ops API catalog (`opsApiRoutePermission`), nav without legacy `roles` fallback. **Custom roles** (clone from system) and **system role seed** (`ensureSystemClinicRoles`) are in scope. Variant B/C (Orchestrator sync) remain out of scope.
 
 **Related:**
 
@@ -28,7 +28,7 @@ The Prisma `Role.permissionsJson` column is the satellite SoR for ops grants. Wa
 
 Nafta and ONPREM appliances must enforce access **locally** without a live Orchestrator on every request. CP Workforce answers *“which role does this employee get?”* — not *“which screens may RECEPTION open?”*.
 
-Hotel (`era-hotel-pms`) has a partial precedent: string permissions + `permissionsJson` in DB, but API guards still use hardcoded `permissionsForRole()` and there is **no admin matrix UI**. Clinic should not copy that half-state.
+Hotel (`era-hotel-pms`) Variant A landed in [hotel-domain-permissions-and-rbac.md](./hotel-domain-permissions-and-rbac.md) (HOT-RBAC-01). Prior half-state (DB JSON + hardcoded API) is closed.
 
 Product ask: configurable **role × screen** (and API) matrix editable without code deploy — required for ONPREM and a prerequisite for a future CP-central UI (Variant C).
 
@@ -177,13 +177,24 @@ Enforcement: `resolveClinicDataScope` + list/detail filters. Without `scope:*.al
 - Admins can misconfigure (lock out RECEPTION from cashier) — need “Reset to defaults” per role.
 - Dual UI risk when Phase B ships — mitigate with master/slave rules (D5).
 
-### Out of scope — Phase A
+### Out of scope — Phase A (original) / still deferred
 
 - Per-user overrides (use CP ManualGrant + role change today).
-- Custom roles beyond fixed `CLINIC_ROLE` enum.
 - Orchestrator UI or bidirectional sync (Phase B/C).
 - Hotel / F&B / retail satellites (separate waves after clinic proves pattern).
 - Action-level CRUD matrix (`create` vs `read`) — Phase A.1 optional.
+
+### Amendment — custom roles + system seed (2026-09)
+
+**In scope now** (was “Custom roles beyond fixed `CLINIC_ROLE` enum”):
+
+1. **System roles** (`RECEPTION`, `DOCTOR`, `NURSE`, `FLOOR`, `LAB_TECH`, `CLINIC_ADMIN`) are seeded per org via `ensureSystemClinicRoles` (`isSystem=true`, `staffKind` persona). Re-seed fills empty `permissionsJson` only — never overwrites a customized matrix.
+2. **Custom roles** — `POST /api/admin/roles` with `cloneFrom`; `PATCH` name/`staffKind` (custom only); `DELETE` when unused; matrix PATCH on any org role. Example: `CHIEF_DOCTOR` = clone `DOCTOR` + `scope:episodes.all` + `screen:patients`.
+3. **User ↔ role** — `GET /api/admin/users` + `PATCH /api/admin/users/[id]` `{ roleCode }` on `/admin/access` (requires `admin:access_manage`).
+4. **Enforcement** uses `permissions[]` / `staffKind` only — no `auth.role === "DOCTOR"` gates for capabilities.
+5. **Provision / login / SSO** — `ensureSystemClinicRoles` before grants; system aliases (`ADMIN`→`CLINIC_ADMIN`, …) only; unknown `satelliteRole` fails if no `Role` row (no silent `RECEPTION`).
+
+Phase B (CP matrix sync) still later.
 
 ---
 
