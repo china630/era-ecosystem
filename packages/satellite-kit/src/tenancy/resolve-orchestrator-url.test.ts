@@ -3,11 +3,13 @@ import { afterEach, describe, it } from "node:test";
 import {
   rewriteComposeHostnameForHost,
   resolveOrchestratorBaseUrl,
+  resolveControlPlaneBearerToken,
 } from "./resolve-orchestrator-url";
 import { resetRuntimeConfigMemoryForTests } from "./runtime-config-memory";
 
 afterEach(() => {
   delete process.env.ERA_IN_DOCKER;
+  delete process.env.NODE_ENV;
   delete process.env.ORCHESTRATOR_EVENT_URL;
   delete process.env.ORCHESTRATOR_URL;
   delete process.env.CONTROL_PLANE_URL;
@@ -45,5 +47,27 @@ describe("resolveOrchestratorBaseUrl", () => {
     process.env.ERA_IN_DOCKER = "0";
     process.env.ORCHESTRATOR_EVENT_URL = "http://orchestrator:4000";
     assert.equal(resolveOrchestratorBaseUrl(), "http://127.0.0.1:4000");
+  });
+});
+
+describe("resolveControlPlaneBearerToken", () => {
+  afterEach(() => {
+    delete process.env.CONTROL_PLANE_SERVICE_TOKEN;
+    delete process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN;
+    delete process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+  });
+
+  it("does not let folklore CP/internal defaults shadow the droplet event token", () => {
+    process.env.CONTROL_PLANE_SERVICE_TOKEN = "";
+    process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN = "dev-control-plane-token";
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN = "prod-event-secret";
+    assert.equal(resolveControlPlaneBearerToken(), "prod-event-secret");
+  });
+
+  it("keeps folklore tokens when that is all that is configured (local compose)", () => {
+    process.env.CONTROL_PLANE_SERVICE_TOKEN = "dev-control-plane-token";
+    delete process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN;
+    delete process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+    assert.equal(resolveControlPlaneBearerToken(), "dev-control-plane-token");
   });
 });

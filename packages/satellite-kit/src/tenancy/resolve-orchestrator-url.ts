@@ -30,6 +30,12 @@ export function resolveOrchestratorBaseUrl(opts?: {
   return rewriteComposeHostnameForHost(fallback);
 }
 
+/** Compose folklore defaults — must not shadow a real droplet SATELLITE_EVENT token. */
+const FOLKLORE_S2S_TOKENS = new Set([
+  "dev-control-plane-token",
+  "dev-satellite-event-token",
+]);
+
 /** Event / internal service token: memory first, then env bootstrap. */
 export function resolveSatelliteEventServiceToken(): string {
   const fromMem = getRuntimeConfigMemory().satelliteEventServiceToken?.trim();
@@ -40,4 +46,23 @@ export function resolveSatelliteEventServiceToken(): string {
     process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
     ""
   );
+}
+
+/**
+ * Bearer for CP internal snapshot / platform S2S.
+ * Prefer a non-folklore secret so `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN=dev-control-plane-token`
+ * (clinic compose default) cannot hide `SATELLITE_EVENT_SERVICE_TOKEN` from droplet `.env`.
+ * Hotel never sets CONTROL_PLANE in compose and already falls through to the event token.
+ */
+export function resolveControlPlaneBearerToken(explicit?: string): string {
+  const candidates = [
+    explicit,
+    process.env.CONTROL_PLANE_SERVICE_TOKEN,
+    process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN,
+    resolveSatelliteEventServiceToken(),
+  ]
+    .map((c) => (typeof c === "string" ? c.trim() : ""))
+    .filter(Boolean);
+  const real = candidates.filter((t) => !FOLKLORE_S2S_TOKENS.has(t));
+  return (real[0] || candidates[0] || "").trim();
 }
