@@ -56,7 +56,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-04 | Procedure types | vNext | Y | — | Y Add+Edit reqs (resource + STAFF mode) | — | — | SHIPPED | Backfill missing requirements on SatAdmin list |
 | CLI-05 | Appointment create + practitioner day matrix | PRD K-01 / Pattern B | Y calendar + create/reschedule/cancel/check-in | Y `/appointments` matrix (rows=doctors) | — | — | — | SHIPPED | Legacy `/scheduling` + `/api/scheduling/slots` removed |
 | CLI-06 | Patient registry (M1) | PRD | Y paginated filters; clinic-native `P-######` refCode; Ad/Soyad/Ata adı; default ALL + `hasOpenEpisode` | Y `/patients` identity grid + Open badge; room/program on `/sanatorium`; reception hides MDM column/filter; sex K/Q | — | — | — | SHIPPED | Anamnesis on episode (CLI-55); WO keys only in CutoverImportKey |
-| CLI-07 | Service catalog (M6) | PRD | Y | — | Y `/admin/catalog` grid + kind/paid/package filters + Nafta import | — | — | SHIPPED | `ServiceCatalogKind`; procedure picker = PROCEDURE only; prices → `amountNet` by `code` |
+| CLI-07 | Service catalog (M6) | PRD | Y | — | Y `/admin/catalog` grid + kind/paid/package filters + Nafta import | — | — | SHIPPED | `ServiceCatalogKind`; kind from code prefix (LAB/VISIT/CARDIO/USG/SVC), not şöbə; procedure picker = PROCEDURE only; prices → `amountNet` by `code` |
 | CLI-08 | Procedure compatibility rules | M11 | Y | — | Y modal | — | — | SHIPPED | — |
 | CLI-09 | Procedure sequence rules (FIFO) | vNext | Y | — | Y modal | — | — | SHIPPED | — |
 | CLI-10 | Visit forms + sanatorium packages (single Diagnostic SoT) | [CLINICAL_AND_PROGRAM_TEMPLATES](../era-clinic/doc/CLINICAL_AND_PROGRAM_TEMPLATES.md) | Y catalog + cpoe | Y `/visits/[id]` CPOE + print; card exam notes | Y `/admin/diagnostic-catalog` (visit) + `/admin/program-templates` | — | — | SHOW | Print `/print/visit-exam/[id]` (labels snapshotted, diagnoses, AuthZ); FHIR/whole-visit debt |
@@ -489,6 +489,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-12 | CLI-07: catalog kind from code prefix (LAB/VISIT/DIAGNOSTIC/SVC); şöbə no longer forces PROCEDURE. Re-import Nafta after deploy. |
 | 2026-09-12 | CLI-07/CLI-51: Drive Spa Services overlay onto Chingiz (same 152 SKUs; price fixes electrophoresis 14, IV injection 9). Kit skips folklore CP token so clinic entitlement snapshot uses droplet event token. |
 | 2026-09-08 | `/workspace` chrome: drop Hotel upsell banner + env-UUID panel (Super-Admin orgs); workforce tile only while SKU off. Status API. |
 | 2026-09-07 | HOT-CL-03/06 statement lines + HOT-AGP-04 portal CL; opening from full party history; REFUND netted; company TRANSFERRED_AR list. |
