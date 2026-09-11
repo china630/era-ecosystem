@@ -393,10 +393,10 @@ addTpl("MRI", {
 
 // --- CARDIO ---
 addTpl("CARDIO", {
-  code: "STRESS-ECHO",
+  code: "CARDIO-STRESS-ECHO",
   category: "stress",
   title: L("Stress echocardiography", "Стресс-ЭхоКГ", "Stress ExoKQ"),
-  serviceCode: "STRESS-ECHO",
+  serviceCode: "CARDIO-STRESS-ECHO",
   fields: [
     f("protocol", "text", L("Protocol", "Протокол", "Protokol")),
     f("restWall", "textarea", L("Rest WMA", "Покой нарушения сократимости", "İstirahət")),
@@ -406,10 +406,10 @@ addTpl("CARDIO", {
   ],
 });
 addTpl("CARDIO", {
-  code: "TEE",
+  code: "CARDIO-TEE",
   category: "echo",
   title: L("Transesophageal echo", "Чреспищеводная ЭхоКГ", "TEE ExoKQ"),
-  serviceCode: "TEE",
+  serviceCode: "CARDIO-TEE",
   fields: [
     f("indication", "textarea", L("Indication", "Показание", "Göstəriş")),
     findings(),
@@ -420,10 +420,10 @@ addTpl("CARDIO", {
   ],
 });
 addTpl("CARDIO", {
-  code: "CORO-REPORT",
+  code: "CARDIO-CORO-REPORT",
   category: "invasive",
   title: L("Coronary angiography report", "Отчёт коронарографии", "Koronaroqrafiya hesabatı"),
-  serviceCode: "CORO-REPORT",
+  serviceCode: "CARDIO-CORO-REPORT",
   fields: [
     f("access", "text", L("Access", "Доступ", "Giriş")),
     f("vessels", "textarea", L("Vessel lesions", "Поражения сосудов", "Damər lezyonları")),
@@ -431,7 +431,7 @@ addTpl("CARDIO", {
     conc(),
   ],
 });
-const echo = mod("CARDIO").templates.find((t) => t.code === "ECHO-CG");
+const echo = mod("CARDIO").templates.find((t) => t.code === "CARDIO-ECHO");
 if (echo && !echo.fields.some((x) => x.key === "papMmHg")) {
   echo.fields.splice(
     echo.fields.length - 1,
@@ -443,10 +443,10 @@ if (echo && !echo.fields.some((x) => x.key === "papMmHg")) {
 
 // --- FUNC ---
 addTpl("FUNC", {
-  code: "SPIRO-BD",
+  code: "FUNC-SPIRO-BD",
   category: "pulmonology",
   title: L("Spirometry with bronchodilator", "Спирометрия с бронхолитиком", "Bronxodilatatorlu spirometriya"),
-  serviceCode: "SPIRO-BD",
+  serviceCode: "FUNC-SPIRO-BD",
   fields: [
     f("fev1Pre", "number", L("FEV1 pre", "ОФВ1 до", "FEV1 əvvəl"), { unit: "L" }),
     f("fev1Post", "number", L("FEV1 post", "ОФВ1 после", "FEV1 sonra"), { unit: "L" }),
@@ -455,10 +455,10 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "PEF",
+  code: "FUNC-PEF",
   category: "pulmonology",
   title: L("Peak flowmetry", "Пикфлоуметрия", "Pikfloumetriya"),
-  serviceCode: "PEF",
+  serviceCode: "FUNC-PEF",
   fields: [
     f("pefBest", "number", L("Best PEF", "Лучший ПОС", "Ən yaxşı PEF")),
     f("predictedPct", "number", L("% predicted", "% от должного", "% gözlənilən")),
@@ -466,10 +466,10 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "TYMP",
+  code: "FUNC-TYMP",
   category: "ent",
   title: L("Tympanometry", "Тимпанометрия", "Timpanometriya"),
-  serviceCode: "TYMP",
+  serviceCode: "FUNC-TYMP",
   fields: [
     f("rightEar", "textarea", L("Right", "Справа", "Sağ")),
     f("leftEar", "textarea", L("Left", "Слева", "Sol")),
@@ -478,17 +478,17 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "VEST",
+  code: "FUNC-VEST",
   category: "ent",
   title: L("Vestibular / calorics", "Вестибулометрия", "Vestibulometriya"),
-  serviceCode: "VEST",
+  serviceCode: "FUNC-VEST",
   fields: [findings(), conc()],
 });
 addTpl("FUNC", {
-  code: "ENT-EXAM",
+  code: "FUNC-ENT-EXAM",
   category: "ent",
   title: L("ENT exam (oto/rhino/pharyngo)", "ЛОР-осмотр", "LOR müayinə"),
-  serviceCode: "ENT-EXAM",
+  serviceCode: "FUNC-ENT-EXAM",
   fields: [
     f("ears", "textarea", L("Ears", "Уши", "Qulaqlar")),
     f("nose", "textarea", L("Nose", "Нос", "Burun")),
@@ -497,10 +497,10 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "COLPO",
+  code: "FUNC-COLPO",
   category: "gyn",
   title: L("Colposcopy", "Кольпоскопия", "Kolposkopiya"),
-  serviceCode: "COLPO",
+  serviceCode: "FUNC-COLPO",
   fields: [
     f("acetowhite", "textarea", L("Acetowhite / iodine", "Ацетобелый / йод", "Asetobel / yod")),
     f("vessels", "textarea", L("Vascular pattern", "Сосудистый рисунок", "Damər şəkli")),
@@ -510,10 +510,10 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "UREA-BREATH",
+  code: "FUNC-UREA-BREATH",
   category: "gi",
   title: L("H. pylori urea breath test", "Дыхательный тест H. pylori", "H. pylori nəfəs testi"),
-  serviceCode: "UREA-BREATH",
+  serviceCode: "FUNC-UREA-BREATH",
   fields: [
     f("result", "select", L("Result", "Результат", "Nəticə"), {
       options: ["negative", "positive", "indeterminate"],
@@ -523,10 +523,10 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "EP",
+  code: "FUNC-EP",
   category: "neuro",
   title: L("Evoked potentials", "Вызванные потенциалы", "Yaranma potensialları"),
-  serviceCode: "EP",
+  serviceCode: "FUNC-EP",
   fields: [
     f("modality", "select", L("Modality", "Модальность", "Modal"), {
       options: ["VEP", "AEP", "SEP", "other"],
@@ -536,10 +536,10 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "PSG",
+  code: "FUNC-PSG",
   category: "neuro",
   title: L("Polysomnography (summary)", "Полисомнография (резюме)", "Polisomnoqrafiya"),
-  serviceCode: "PSG",
+  serviceCode: "FUNC-PSG",
   fields: [
     f("ahi", "number", L("AHI", "ИАГ", "AHI")),
     f("minSpo2", "number", L("Min SpO2", "Мин SpO2", "Min SpO2"), { unit: "%" }),
@@ -550,43 +550,43 @@ addTpl("FUNC", {
   ],
 });
 addTpl("FUNC", {
-  code: "STABILO",
+  code: "FUNC-STABILO",
   category: "neuro",
   title: L("Stabilometry", "Стабилометрия", "Stabilometriya"),
-  serviceCode: "STABILO",
+  serviceCode: "FUNC-STABILO",
   fields: [findings(), conc()],
 });
 
 // --- ENDO ---
 addTpl("ENDO", {
-  code: "RRS",
+  code: "ENDO-RRS",
   category: "gi",
   title: L("Rectosigmoidoscopy", "Ректороманоскопия", "Rektoromanoskopiya"),
-  serviceCode: "RRS",
+  serviceCode: "ENDO-RRS",
   fields: [findings(), f("biopsy", "boolean", L("Biopsy", "Биопсия", "Biopsiya")), conc()],
 });
 addTpl("ENDO", {
-  code: "CYSTO",
+  code: "ENDO-CYSTO",
   category: "urology",
   title: L("Cystoscopy", "Цистоскопия", "Sistoskopiya"),
-  serviceCode: "CYSTO",
+  serviceCode: "ENDO-CYSTO",
   fields: [findings(), f("biopsy", "boolean", L("Biopsy", "Биопсия", "Biopsiya")), conc()],
 });
 addTpl("ENDO", {
-  code: "RHINO-ENDO",
+  code: "ENDO-RHINO",
   category: "ent",
   title: L("Nasal endoscopy", "Эндоскопия носа", "Burun endoskopiyası"),
-  serviceCode: "RHINO-ENDO",
+  serviceCode: "ENDO-RHINO",
   fields: [findings(), conc()],
 });
 addTpl("ENDO", {
-  code: "LARYNGO",
+  code: "ENDO-LARYNGO",
   category: "ent",
   title: L("Laryngoscopy", "Ларингоскопия", "Laringoskopiya"),
-  serviceCode: "LARYNGO",
+  serviceCode: "ENDO-LARYNGO",
   fields: [findings(), conc()],
 });
-const colono = mod("ENDO").templates.find((t) => t.code === "COLONO");
+const colono = mod("ENDO").templates.find((t) => t.code === "ENDO-COLONO");
 if (colono && !colono.fields.some((x) => x.key === "polyps")) {
   colono.fields.splice(
     colono.fields.length - 1,
@@ -951,7 +951,7 @@ const visitFieldsBase = () => [
   f("plan", "textarea", L("Plan", "План", "Plan")),
 ];
 addVisit({
-  code: "GYN-VISIT",
+  code: "VISIT-GYN",
   specialty: "GYN",
   title: L("Gynecology visit", "Гинекологический приём", "Ginekoloji qəbul"),
   fields: [
@@ -961,7 +961,7 @@ addVisit({
   ],
 });
 addVisit({
-  code: "PED-VISIT",
+  code: "VISIT-PED",
   specialty: "PED",
   title: L("Pediatrics visit", "Педиатрический приём", "Pediatrik qəbul"),
   fields: [
@@ -972,13 +972,13 @@ addVisit({
   ],
 });
 addVisit({
-  code: "ENT-VISIT",
+  code: "VISIT-ENT",
   specialty: "ENT",
   title: L("ENT visit", "ЛОР-приём", "LOR qəbul"),
   fields: visitFieldsBase(),
 });
 addVisit({
-  code: "NEURO-VISIT",
+  code: "VISIT-NEURO",
   specialty: "NEURO",
   title: L("Neurology visit", "Неврологический приём", "Nevroloji qəbul"),
   fields: [
@@ -987,37 +987,37 @@ addVisit({
   ],
 });
 addVisit({
-  code: "ENDO-VISIT",
+  code: "VISIT-ENDOCRINE",
   specialty: "ENDOCRINE",
   title: L("Endocrinology visit", "Эндокринологический приём", "Endokrinoloji qəbul"),
   fields: visitFieldsBase(),
 });
 addVisit({
-  code: "URO-VISIT",
+  code: "VISIT-URO",
   specialty: "URO",
   title: L("Urology visit", "Урологический приём", "Uroloji qəbul"),
   fields: visitFieldsBase(),
 });
 addVisit({
-  code: "DERM-VISIT",
+  code: "VISIT-DERM",
   specialty: "DERM",
   title: L("Dermatology visit", "Дерматологический приём", "Dermatoloji qəbul"),
   fields: visitFieldsBase(),
 });
 addVisit({
-  code: "PULM-VISIT",
+  code: "VISIT-PULM",
   specialty: "PULM",
   title: L("Pulmonology visit", "Пульмонологический приём", "Pulmonoloji qəbul"),
   fields: visitFieldsBase(),
 });
 addVisit({
-  code: "ORTHO-VISIT",
+  code: "VISIT-ORTHO",
   specialty: "ORTHO",
   title: L("Ortho / trauma visit", "Ортопедия / травма", "Ortopediya / travma"),
   fields: visitFieldsBase(),
 });
 addVisit({
-  code: "CHECKUP-VISIT",
+  code: "VISIT-CHECKUP",
   specialty: "GP",
   title: L("Check-up visit", "Приём чекап", "Check-up qəbul"),
   fields: [
@@ -1029,7 +1029,7 @@ addVisit({
   ],
 });
 addVisit({
-  code: "SANATORIUM-INTAKE",
+  code: "VISIT-SANATORIUM-INTAKE",
   specialty: "SANATORIUM",
   title: L("Sanatorium intake exam", "Санаторный первичный осмотр", "Sanatoriya ilkin müayinə"),
   fields: [
@@ -1046,7 +1046,7 @@ c.packages = [
   {
     code: "PKG-BASIC",
     title: L("Check-up Basic", "Чекап базовый", "Check-up Basic"),
-    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-URINE", "ECG-12", "XR-FLUORO"],
+    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-URINE", "CARDIO-ECG", "XR-FLUORO"],
   },
   {
     code: "PKG-WOMAN",
@@ -1065,7 +1065,7 @@ c.packages = [
   {
     code: "PKG-MAN",
     title: L("Check-up Man", "Чекап мужской", "Check-up Men"),
-    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-LIPID", "LAB-URINE", "USG-ABD", "USG-PROSTATE", "ECG-12"],
+    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-LIPID", "LAB-URINE", "USG-ABD", "USG-PROSTATE", "CARDIO-ECG"],
   },
   {
     code: "PKG-SENIOR",
@@ -1076,8 +1076,8 @@ c.packages = [
       "LAB-LIPID",
       "LAB-GLUCOSE",
       "LAB-CARDIAC",
-      "ECG-12",
-      "ECHO-CG",
+      "CARDIO-ECG",
+      "CARDIO-ECHO",
       "USG-ABD",
       "XR-FLUORO",
     ],
@@ -1085,17 +1085,17 @@ c.packages = [
   {
     code: "PKG-PREOP",
     title: L("Pre-operative pack", "Предоперационный пакет", "Preop paket"),
-    includes: ["LAB-CBC", "LAB-COAG", "LAB-GLUCOSE", "LAB-BG", "LAB-INFECT", "ECG-12", "XR-CHEST"],
+    includes: ["LAB-CBC", "LAB-COAG", "LAB-GLUCOSE", "LAB-BG", "LAB-INFECT", "CARDIO-ECG", "XR-CHEST"],
   },
   {
     code: "PKG-EMPLOY",
     title: L("Employment / occupancy screen", "Профосмотр", "Peşə müayinəsi"),
-    includes: ["LAB-CBC", "LAB-URINE", "LAB-INFECT", "XR-FLUORO", "ECG-12", "OPHTH-DX", "ENT-EXAM"],
+    includes: ["LAB-CBC", "LAB-URINE", "LAB-INFECT", "XR-FLUORO", "CARDIO-ECG", "FUNC-OPHTH", "FUNC-ENT-EXAM"],
   },
   {
     code: "PKG-SAN-ADM",
     title: L("Sanatorium admission", "Поступление в санаторий", "Sanatoriya qəbul"),
-    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-URINE", "ECG-12", "XR-FLUORO", "SANATORIUM-INTAKE"],
+    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-URINE", "CARDIO-ECG", "XR-FLUORO", "VISIT-SANATORIUM-INTAKE"],
   },
 ];
 

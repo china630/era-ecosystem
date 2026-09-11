@@ -3,7 +3,7 @@
  * Ensure PKG-* current templates have intake auto blocks (W2):
  *   SANATORIUM-INTAKE — VISIT, AUTO_ON_OPEN, PER_STAY, requiresDoctor
  *   GYN-OR-URO       — VISIT, AUTO_ON_OPEN, PER_STAY, requiresDoctor
- *   ECG-12           — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
+ *   CARDIO-ECG       — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
  *   USG-ABD          — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
  *
  * Idempotent. Prefer in-place when zero ProgramInstance pins; bump otherwise.
@@ -23,7 +23,7 @@ const prisma = new PrismaClient();
 
 const INTAKE_BLOCKS = [
   {
-    procedureCode: "SANATORIUM-INTAKE",
+    procedureCode: "VISIT-SANATORIUM-INTAKE",
     procedureName: "Sanatorium intake / doctor exam",
     kind: "EXAM",
     assignMode: "AUTO_ON_OPEN",
@@ -43,7 +43,7 @@ const INTAKE_BLOCKS = [
     sortOrder: 1,
   },
   {
-    procedureCode: "ECG-12",
+    procedureCode: "CARDIO-ECG",
     procedureName: "ECG 12-lead",
     kind: "LAB",
     assignMode: "AUTO_ON_OPEN",

@@ -105,7 +105,7 @@ describe("program template versioning helpers", () => {
       version: 2,
       procedures: [
         {
-          procedureCode: "ECG-12",
+          procedureCode: "CARDIO-ECG",
           procedureName: "ECG",
           quotaTotal: 1,
           kind: "LAB",
@@ -116,7 +116,7 @@ describe("program template versioning helpers", () => {
           requiresDoctor: false,
         },
       ],
-      knots: [{ nights: 10, procedureCode: "ECG-12", qty: 1 }],
+      knots: [{ nights: 10, procedureCode: "CARDIO-ECG", qty: 1 }],
       members: [],
     });
     expect(snap.procedures[0].assignMode).toBe("AUTO_ON_OPEN");

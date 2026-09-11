@@ -40,7 +40,7 @@ describe("buildUnifiedBill", () => {
       serviceLines: [
         {
           id: "sl0",
-          serviceCode: "SANATORIUM-INTAKE",
+          serviceCode: "VISIT-SANATORIUM-INTAKE",
           description: "Intake",
           amount: 0,
         },
@@ -54,10 +54,10 @@ describe("buildUnifiedBill", () => {
       labOrders: [
         {
           id: "lo1",
-          testCode: "ECG-12",
+          testCode: "CARDIO-ECG",
           amountNet: 40,
           items: [
-            { id: "li0", serviceCode: "ECG-12", amountNet: 0 },
+            { id: "li0", serviceCode: "CARDIO-ECG", amountNet: 0 },
             { id: "li1", serviceCode: "LAB-CBC", amountNet: 15 },
           ],
         },

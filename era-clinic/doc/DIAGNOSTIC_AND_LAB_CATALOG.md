@@ -39,13 +39,15 @@ v1.2 lab adds: Sysmex CBC extras (`MCV`…`PLT-PCT`), Nafta liver/renal/cardiac/
 
 Shared imaging meta (`commonMetaFields`): indication, studyDate, performer, device, contrastReaction, imagesAttached.
 
-Labels: `en` + `ru` + `az` on every title/field/analyte.
+Labels: `en` + `ru` + `az` on every title/field/analyte. **Study titles (AZ/RU)** lead with the modality token so pickers sort as a family: `USM …` / `УЗИ …`, `Rentgen …` / `Рентген …`, `KT …` / `КТ …`, `MRT …` / `МРТ …`. Field labels stay organ/measure names without that prefix.
+
+**Code canon** (`{FAMILY}-{ENGLISH_SLUG}`): visits are `VISIT-*` (`VISIT-GYN`, `VISIT-CARDIO`, `VISIT-ENDOCRINE`, `VISIT-SANATORIUM-INTAKE`); heart studies `CARDIO-*` (`CARDIO-ECG`, not `CARDIO-ECG`); functional `FUNC-*`; endoscopy `ENDO-*`. English lives in the code; az/ru/en stay in titles. Rename table: [`catalog-code-canon.map.json`](../prisma/seed-data/catalog-code-canon.map.json). `seed-diagnostic-catalog` applies that map to existing org rows, then upserts this JSON. Live DB aliases (`CARDIO-ECG`, `VISIT-GYN`) still resolve in intake/package services.
 
 ---
 
 ## 1. Imaging / instrumental (highlights + v1.1 additions)
 
-### Ultrasound (`USG`) — 24 templates
+### Ultrasound (`USG`) — 24 templates (AZ titles `USM …`)
 Baseline abdomen/kidney/thyroid/breast/pelvic/obstetric/soft/prostate/doppler/MSK/hip-infant  
 **+** retroperitoneal, pleura, salivary/neck, TRUS, BCA Doppler, LL veins, obst T1/T2/T3, folliculometry, liver elastography, orbit, cervical LN
 
@@ -61,16 +63,16 @@ MRI: brain, spine, joint, abd **+** pituitary, breast, soft tissue, MRA, cardiac
 Also: mammography, DXA
 
 ### Cardiology (`CARDIO`)
-ECG-12, Holter, ABPM, EchoCG (enriched PASP/diastolic), stress ECG  
-**+** stress-echo, TEE, coronary angio report
+`CARDIO-ECG`, `CARDIO-HOLTER`, `CARDIO-ABPM`, `CARDIO-ECHO` (PASP/diastolic), `CARDIO-STRESS-ECG`  
+**+** `CARDIO-STRESS-ECHO`, `CARDIO-TEE`, `CARDIO-CORO-REPORT`
 
 ### Functional (`FUNC`)
-Spirometry, EEG, EMG, audiometry, ophthalmology, dermatoscopy  
-**+** spirometry+BD, PEF, tympanometry, vestibular, ENT exam, colposcopy, urea breath, evoked potentials, PSG, stabilometry
+`FUNC-SPIRO`, `FUNC-EEG`, `FUNC-EMG`, `FUNC-AUDIO`, `FUNC-OPHTH`, `FUNC-DERM`  
+**+** `FUNC-SPIRO-BD`, `FUNC-PEF`, `FUNC-TYMP`, `FUNC-VEST`, `FUNC-ENT-EXAM`, `FUNC-COLPO`, `FUNC-UREA-BREATH`, `FUNC-EP`, `FUNC-PSG`, `FUNC-STABILO`
 
 ### Endoscopy (`ENDO`)
-EGD, colonoscopy (+ polyps table), bronchoscopy  
-**+** RRS, cystoscopy, nasal endoscopy, laryngoscopy
+`ENDO-EGD`, `ENDO-COLONO` (+ polyps table), `ENDO-BRONCHO`  
+**+** `ENDO-RRS`, `ENDO-CYSTO`, `ENDO-RHINO`, `ENDO-LARYNGO`
 
 ---
 
@@ -83,14 +85,14 @@ EGD, colonoscopy (+ polyps table), bronchoscopy
 | Hormones | `LAB-THYROID`, `LAB-SEX-HORM`, `LAB-ENDO-HORM`, `LAB-BHCG` |
 | Infection | `LAB-INFECT`, `LAB-TORCH`, `LAB-HEP-EXT`, `LAB-INFECT-REG`, `LAB-TB-IGRA`, `LAB-RESP-PCR`, `LAB-PCR-STI` |
 | Allergy | `LAB-ALLERGY`, `LAB-ALLERGY-FOOD`, `LAB-ALLERGY-INH`, `LAB-ALLERGY-PED` |
-| Specialty | `LAB-RHEUMA`, `LAB-TUMOR`, `LAB-TUMOR-EXT`, `LAB-VITMIN`, `LAB-TRACE`, `LAB-IG`, `LAB-HOMOC`, `LAB-CELIAC` |
+| Specialty | `LAB-RHEUMA`, `LAB-TUMOR`, `LAB-TUMOR-EXT`, `LAB-VITAMIN`, `LAB-TRACE`, `LAB-IG`, `LAB-HOMOC`, `LAB-CELIAC` |
 | Micro / GI / gyn | `LAB-URINE-CULT`, `LAB-MICRO-CULT`, `LAB-STOOL`, `LAB-COPROG`, `LAB-SPUTUM`, `LAB-GYN-SMEAR`, `LAB-HPV`, `LAB-CYTOLOGY`, `LAB-HISTO`, `LAB-SEMEN`, `LAB-BG`, `LAB-DRUG-SCR` |
 
 ---
 
 ## 3. Visit templates (13)
 
-`GP-VISIT`, `CARDIO-VISIT`, `GYN-VISIT`, `PED-VISIT`, `ENT-VISIT`, `NEURO-VISIT`, `ENDO-VISIT`, `URO-VISIT`, `DERM-VISIT`, `PULM-VISIT`, `ORTHO-VISIT`, `CHECKUP-VISIT`, `SANATORIUM-INTAKE`
+`VISIT-GP`, `VISIT-CARDIO`, `VISIT-GYN`, `VISIT-PED`, `VISIT-ENT`, `VISIT-NEURO`, `VISIT-ENDOCRINE`, `VISIT-URO`, `VISIT-DERM`, `VISIT-PULM`, `VISIT-ORTHO`, `VISIT-CHECKUP`, `VISIT-SANATORIUM-INTAKE`
 
 ---
 
@@ -105,7 +107,7 @@ EGD, colonoscopy (+ polyps table), bronchoscopy
 | `PKG-PREOP` | CBC, coag, glucose, BG, infect screen, ECG, chest XR |
 | `PKG-EMPLOY` | CBC, urine, infect, fluoro, ECG, ophth, ENT |
 | `PKG-SAN-ADM` | CBC, biochem, urine, ECG, fluoro, sanatorium intake |
-| `PKG-NAFTA-INTAKE` | Nafta check-in checklist: `SANATORIUM-INTAKE`, `GYN-OR-URO` (→ GYN/URO by sex), `ECG-12`, `USG-ABD`. WO source = PatientDiagnostic «İlkin diaqnostik prosedurlar», **not** CheckUp `#33`. Lives in **Nafta overlay** seed, not base catalog. |
+| `PKG-NAFTA-INTAKE` | Nafta check-in checklist: `VISIT-SANATORIUM-INTAKE`, `GYN-OR-URO` (→ GYN/URO by sex), `CARDIO-ECG`, `USG-ABD`. WO source = PatientDiagnostic «İlkin diaqnostik prosedurlar», **not** CheckUp `#33`. Lives in **Nafta overlay** seed, not base catalog. |
 
 Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. **Layers:** base `diagnostic-lab-catalog.json` + org overlay `nafta/diagnostic-overlay.json`. Seed: `node prisma/seed-diagnostic-catalog.cjs` (base then Nafta). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
 ---

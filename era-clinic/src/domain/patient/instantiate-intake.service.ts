@@ -65,9 +65,9 @@ async function hasLabOrder(
 }
 
 const VISIT_TITLES: Record<string, string> = {
-  "SANATORIUM-INTAKE": "Sanatorium intake / doctor exam",
-  "GYN-VISIT": "Gynecologist exam",
-  "URO-VISIT": "Urologist exam",
+  "VISIT-SANATORIUM-INTAKE": "Sanatorium intake / doctor exam",
+  "VISIT-GYN": "Gynecologist exam",
+  "VISIT-URO": "Urologist exam",
 };
 
 /**

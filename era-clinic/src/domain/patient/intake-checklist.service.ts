@@ -35,12 +35,14 @@ const VISIT_DONE = new Set(["COMPLETED"]);
 const VISIT_OPEN = new Set(["IN_PROGRESS"]);
 
 const SLOT_ALIASES: Record<string, NaftaIntakeSlotCode> = {
-  "SANATORIUM-INTAKE": "SANATORIUM-INTAKE",
-  THERAPIST: "SANATORIUM-INTAKE",
+  "VISIT-SANATORIUM-INTAKE": "VISIT-SANATORIUM-INTAKE",
+  "SANATORIUM-INTAKE": "VISIT-SANATORIUM-INTAKE",
+  THERAPIST: "VISIT-SANATORIUM-INTAKE",
   "GYN-OR-URO": "GYN-OR-URO",
   GYN: "GYN-OR-URO",
-  "ECG-12": "ECG-12",
-  ECG: "ECG-12",
+  "CARDIO-ECG": "CARDIO-ECG",
+  "ECG-12": "CARDIO-ECG",
+  ECG: "CARDIO-ECG",
   "USG-ABD": "USG-ABD",
   USG: "USG-ABD",
 };
@@ -57,6 +59,19 @@ function visitStatus(status: string): IntakeChecklistStatus {
   return "MISSING";
 }
 
+function lookupCodes(code: string): string[] {
+  const c = code.trim();
+  if (c === "CARDIO-ECG" || c === "ECG-12" || c === "ECG") {
+    return ["CARDIO-ECG", "ECG-12", "ECG"];
+  }
+  if (c === "VISIT-SANATORIUM-INTAKE" || c === "SANATORIUM-INTAKE") {
+    return ["VISIT-SANATORIUM-INTAKE", "SANATORIUM-INTAKE"];
+  }
+  if (c === "VISIT-GYN" || c === "GYN-VISIT") return ["VISIT-GYN", "GYN-VISIT"];
+  if (c === "VISIT-URO" || c === "URO-VISIT") return ["VISIT-URO", "URO-VISIT"];
+  return [c];
+}
+
 type EpisodeScope = { clinicalEpisodeId: string };
 
 async function findLabOrder(
@@ -69,7 +84,7 @@ async function findLabOrder(
     where: {
       patientRefId,
       ...episodeFilter,
-      items: { some: { serviceCode: testCode } },
+      items: { some: { serviceCode: { in: lookupCodes(testCode) } } },
     },
     orderBy: { createdAt: "desc" },
     select: { id: true, status: true },
@@ -79,11 +94,11 @@ async function findLabOrder(
     where: {
       patientRefId,
       ...episodeFilter,
-      OR: [
-        { testCode },
-        { testCode: { startsWith: `${testCode},` } },
-        { testCode: { endsWith: `,${testCode}` } },
-      ],
+      OR: lookupCodes(testCode).flatMap((code) => [
+        { testCode: code },
+        { testCode: { startsWith: `${code},` } },
+        { testCode: { endsWith: `,${code}` } },
+      ]),
     },
     orderBy: { createdAt: "desc" },
     select: { id: true, status: true },
@@ -97,7 +112,7 @@ async function findVisitByServiceCode(
 ): Promise<{ id: string; status: string } | null> {
   const line = await prisma.visitServiceLine.findFirst({
     where: {
-      serviceCode,
+      serviceCode: { in: lookupCodes(serviceCode) },
       visit: {
         patientRefId,
         ...(episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {}),
@@ -130,18 +145,18 @@ async function findGynOrUroVisit(
   episode?: EpisodeScope,
 ): Promise<{ id: string; status: string; resolvedCode: string } | null> {
   const resolved = resolveNaftaIntakeCode(GYN_OR_URO_SLOT, sex);
-  if (resolved === "GYN-VISIT" || resolved === "URO-VISIT") {
+  if (resolved === "VISIT-GYN" || resolved === "VISIT-URO") {
     const byCode = await findVisitByServiceCode(patientRefId, resolved, episode);
     if (byCode) return { ...byCode, resolvedCode: resolved };
   }
-  for (const code of ["GYN-VISIT", "URO-VISIT"] as const) {
+  for (const code of ["VISIT-GYN", "VISIT-URO"] as const) {
     const byCode = await findVisitByServiceCode(patientRefId, code, episode);
     if (byCode) return { ...byCode, resolvedCode: code };
   }
   const specialtyNeedle =
-    resolved === "URO-VISIT"
+    resolved === "VISIT-URO"
       ? ["uro", "уролог"]
-      : resolved === "GYN-VISIT"
+      : resolved === "VISIT-GYN"
         ? ["gyn", "gine", "гинек"]
         : ["gyn", "gine", "uro", "уролог", "гинек"];
   const visits = await prisma.visit.findMany({
@@ -239,7 +254,7 @@ export async function getIntakeChecklist(
     const kind = naftaIntakeSlotKind(slot);
     const resolved = resolveNaftaIntakeCode(slot, patient?.sex);
 
-    if (slot === "ECG-12" || slot === "USG-ABD") {
+    if (slot === "CARDIO-ECG" || slot === "USG-ABD") {
       const order = await findLabOrder(patientRefId, slot, episode);
       items.push({
         slot,
@@ -253,7 +268,7 @@ export async function getIntakeChecklist(
       continue;
     }
 
-    if (slot === "SANATORIUM-INTAKE") {
+    if (slot === "VISIT-SANATORIUM-INTAKE") {
       // Therapist stage: anamnesis + ≥1 complaint on this course ⇒ DONE (diagnosis optional).
       if (opts?.episodeId) {
         const course = await prisma.clinicalEpisode.findUnique({
@@ -269,7 +284,7 @@ export async function getIntakeChecklist(
         if (therapistStageDone) {
           items.push({
             slot,
-            resolvedCode: "SANATORIUM-INTAKE",
+            resolvedCode: "VISIT-SANATORIUM-INTAKE",
             kind,
             title,
             status: "DONE",
@@ -282,13 +297,13 @@ export async function getIntakeChecklist(
 
       const byLine = await findVisitByServiceCode(
         patientRefId,
-        "SANATORIUM-INTAKE",
+        "VISIT-SANATORIUM-INTAKE",
         episode,
       );
       const visit = byLine ?? (await findAttendingOrAnyVisit(patientRefId, episode));
       items.push({
         slot,
-        resolvedCode: "SANATORIUM-INTAKE",
+        resolvedCode: "VISIT-SANATORIUM-INTAKE",
         kind,
         title,
         status: visit ? visitStatus(visit.status) : "MISSING",

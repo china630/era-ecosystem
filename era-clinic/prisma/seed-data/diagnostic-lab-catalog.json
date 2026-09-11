@@ -24,7 +24,7 @@
           "title": {
             "en": "Abdominal ultrasound",
             "ru": "УЗИ органов брюшной полости",
-            "az": "Qarın boşluğu USM"
+            "az": "USM Qarın boşluğu"
           },
           "serviceCode": "USG-ABD",
           "fields": [
@@ -158,7 +158,7 @@
           "title": {
             "en": "Kidney & urinary tract ultrasound",
             "ru": "УЗИ почек и мочевыводящих путей",
-            "az": "Böyrək və sidik yolları USM"
+            "az": "USM Böyrək və sidik yolları"
           },
           "serviceCode": "USG-KIDNEY",
           "fields": [
@@ -217,7 +217,7 @@
           "title": {
             "en": "Thyroid ultrasound",
             "ru": "УЗИ щитовидной железы",
-            "az": "Qalxanabənzər vəzi USM"
+            "az": "USM Qalxanabənzər vəzi"
           },
           "serviceCode": "USG-THYROID",
           "fields": [
@@ -284,7 +284,7 @@
           "title": {
             "en": "Breast ultrasound",
             "ru": "УЗИ молочных желёз",
-            "az": "Süd vəziləri USM"
+            "az": "USM Süd vəziləri"
           },
           "serviceCode": "USG-BREAST",
           "fields": [
@@ -351,7 +351,7 @@
           "title": {
             "en": "Pelvic / gynecologic ultrasound",
             "ru": "УЗИ органов малого таза (гинекология)",
-            "az": "Kiçik çanaq USM (ginekol.)"
+            "az": "USM Kiçik çanaq (ginekol.)"
           },
           "serviceCode": "USG-PELVIC",
           "fields": [
@@ -410,7 +410,7 @@
           "title": {
             "en": "Obstetric ultrasound",
             "ru": "УЗИ акушерское (плод)",
-            "az": "Mamalıq USM"
+            "az": "USM Mamalıq"
           },
           "serviceCode": "USG-OBST",
           "fields": [
@@ -497,7 +497,7 @@
           "title": {
             "en": "Soft tissue / lymph nodes ultrasound",
             "ru": "УЗИ мягких тканей / лимфоузлов",
-            "az": "Yumşaq toxuma / limfa USM"
+            "az": "USM Yumşaq toxuma / limfa"
           },
           "serviceCode": "USG-SOFT",
           "fields": [
@@ -547,7 +547,7 @@
           "title": {
             "en": "Prostate / scrotum ultrasound",
             "ru": "УЗИ предстательной железы / мошонки",
-            "az": "Prostata / xaya USM"
+            "az": "USM Prostata / xaya"
           },
           "serviceCode": "USG-PROSTATE",
           "fields": [
@@ -597,7 +597,7 @@
           "title": {
             "en": "Vascular Doppler ultrasound",
             "ru": "УЗИ сосудов (доплер)",
-            "az": "Damər Doppler USM"
+            "az": "USM Damər Doppler"
           },
           "serviceCode": "USG-DOPPLER",
           "fields": [
@@ -655,7 +655,7 @@
           "title": {
             "en": "Musculoskeletal ultrasound",
             "ru": "УЗИ суставов / мышц",
-            "az": "Oynaq / əzələ USM"
+            "az": "USM Oynaq / əzələ"
           },
           "serviceCode": "USG-MSK",
           "fields": [
@@ -696,7 +696,7 @@
           "title": {
             "en": "Infant hip ultrasound (Graf)",
             "ru": "УЗИ ТБС новорождённых (Graf)",
-            "az": "Körpə bud-çanaq USM (Graf)"
+            "az": "USM Körpə bud-çanaq (Graf)"
           },
           "serviceCode": "USG-HIP-INF",
           "fields": [
@@ -745,7 +745,7 @@
           "title": {
             "en": "Retroperitoneal / adrenal ultrasound",
             "ru": "УЗИ забрюшинного пространства / надпочечников",
-            "az": "Retroperitoneal / adrenal USM"
+            "az": "USM Retroperitoneal / adrenal"
           },
           "serviceCode": "USG-RETRO",
           "fields": [
@@ -794,7 +794,7 @@
           "title": {
             "en": "Pleural ultrasound",
             "ru": "УЗИ плевральной полости",
-            "az": "Plevra USM"
+            "az": "USM Plevra"
           },
           "serviceCode": "USG-PLEURA",
           "fields": [
@@ -843,7 +843,7 @@
           "title": {
             "en": "Salivary glands / neck US",
             "ru": "УЗИ слюнных желёз / шеи",
-            "az": "Tüpürcək / boyun USM"
+            "az": "USM Tüpürcək / boyun"
           },
           "serviceCode": "USG-SALIV",
           "fields": [
@@ -883,8 +883,8 @@
           "category": "andrology",
           "title": {
             "en": "TRUS prostate",
-            "ru": "ТРУЗИ простаты",
-            "az": "Prostata TRUS"
+            "ru": "УЗИ простаты (ТРУЗИ)",
+            "az": "USM Prostata TRUS"
           },
           "serviceCode": "USG-TRUS",
           "fields": [
@@ -942,8 +942,8 @@
           "category": "vascular",
           "title": {
             "en": "BCA Doppler (carotid/vertebral)",
-            "ru": "УЗДГ БЦА (сонные/вертебральные)",
-            "az": "BCA Doppler"
+            "ru": "УЗИ БЦА (сонные/вертебральные)",
+            "az": "USM BCA Doppler"
           },
           "serviceCode": "USG-BCA",
           "fields": [
@@ -1001,8 +1001,8 @@
           "category": "vascular",
           "title": {
             "en": "Lower limb veins Doppler",
-            "ru": "УЗДГ вен нижних конечностей",
-            "az": "Aşağı ətraf venaları Doppler"
+            "ru": "УЗИ вен нижних конечностей",
+            "az": "USM Aşağı ətraf venaları Doppler"
           },
           "serviceCode": "USG-VEIN-LL",
           "fields": [
@@ -1071,7 +1071,7 @@
           "title": {
             "en": "Obstetric US trimester 1",
             "ru": "УЗИ плода 1 триместр",
-            "az": "Mamalıq USM 1 trimestr"
+            "az": "USM Mamalıq 1 trimestr"
           },
           "serviceCode": "USG-OBST-T1",
           "fields": [
@@ -1141,7 +1141,7 @@
           "title": {
             "en": "Obstetric US trimester 2 (anomaly scan)",
             "ru": "УЗИ плода 2 триместр (скрининг)",
-            "az": "Mamalıq USM 2 trimestr"
+            "az": "USM Mamalıq 2 trimestr"
           },
           "serviceCode": "USG-OBST-T2",
           "fields": [
@@ -1219,7 +1219,7 @@
           "title": {
             "en": "Obstetric US trimester 3",
             "ru": "УЗИ плода 3 триместр",
-            "az": "Mamalıq USM 3 trimestr"
+            "az": "USM Mamalıq 3 trimestr"
           },
           "serviceCode": "USG-OBST-T3",
           "fields": [
@@ -1295,8 +1295,8 @@
           "category": "gyn",
           "title": {
             "en": "Folliculometry",
-            "ru": "Фолликулометрия",
-            "az": "Follikulometriya"
+            "ru": "УЗИ фолликулометрия",
+            "az": "USM Follikulometriya"
           },
           "serviceCode": "USG-FOLLIC",
           "fields": [
@@ -1364,8 +1364,8 @@
           "category": "abdomen",
           "title": {
             "en": "Liver elastography",
-            "ru": "Эластография печени",
-            "az": "Qaraciyər elastografiya"
+            "ru": "УЗИ эластография печени",
+            "az": "USM Qaraciyər elastografiya"
           },
           "serviceCode": "USG-ELASTO",
           "fields": [
@@ -1430,7 +1430,7 @@
           "title": {
             "en": "Orbit / eye ultrasound",
             "ru": "УЗИ глаза / орбиты",
-            "az": "Göz / orbit USM"
+            "az": "USM Göz / orbit"
           },
           "serviceCode": "USG-ORBIT",
           "fields": [
@@ -1475,7 +1475,7 @@
           "title": {
             "en": "Cervical lymph nodes ultrasound",
             "ru": "УЗИ лимфоузлов шеи",
-            "az": "Boyun limfa USM"
+            "az": "USM Boyun limfa"
           },
           "serviceCode": "USG-NECK-LN",
           "fields": [
@@ -1526,7 +1526,7 @@
           "title": {
             "en": "Chest X-ray",
             "ru": "Рентген органов грудной клетки",
-            "az": "Döş qəfəsi rentgeni"
+            "az": "Rentgen Döş qəfəsi"
           },
           "serviceCode": "XR-CHEST",
           "fields": [
@@ -1572,7 +1572,7 @@
           "title": {
             "en": "Spine X-ray",
             "ru": "Рентген позвоночника",
-            "az": "Onurğa rentgeni"
+            "az": "Rentgen Onurğa"
           },
           "serviceCode": "XR-SPINE",
           "fields": [
@@ -1619,7 +1619,7 @@
           "title": {
             "en": "Extremity X-ray",
             "ru": "Рентген конечностей / суставов",
-            "az": "Ətraf / oynaq rentgeni"
+            "az": "Rentgen Ətraf / oynaq"
           },
           "serviceCode": "XR-EXT",
           "fields": [
@@ -1660,7 +1660,7 @@
           "title": {
             "en": "Paranasal sinuses X-ray",
             "ru": "Рентген придаточных пазух носа",
-            "az": "Burun əlavə boşluqları rentgeni"
+            "az": "Rentgen Burun əlavə boşluqları"
           },
           "serviceCode": "XR-SINUS",
           "fields": [
@@ -1690,8 +1690,8 @@
           "category": "abdomen",
           "title": {
             "en": "Abdominal plain film",
-            "ru": "Обзорная рентгенография брюшной полости",
-            "az": "Qarın boşluğu icmal rentgeni"
+            "ru": "Рентген обзор брюшной полости",
+            "az": "Rentgen Qarın boşluğu icmal"
           },
           "serviceCode": "XR-ABD",
           "fields": [
@@ -1721,8 +1721,8 @@
           "category": "chest",
           "title": {
             "en": "Fluorography",
-            "ru": "Флюорография",
-            "az": "Flyuoroqrafiya"
+            "ru": "Рентген флюорография",
+            "az": "Rentgen Flyuoroqrafiya"
           },
           "serviceCode": "XR-FLUORO",
           "fields": [
@@ -1766,7 +1766,7 @@
           "title": {
             "en": "Skull / sella X-ray",
             "ru": "Рентген черепа / турецкого седла",
-            "az": "Kəllə rentgeni"
+            "az": "Rentgen Kəllə"
           },
           "serviceCode": "XR-SKULL",
           "fields": [
@@ -1796,8 +1796,8 @@
           "category": "dental",
           "title": {
             "en": "Orthopantomogram",
-            "ru": "Ортопантомограмма",
-            "az": "Ortopantomogramma"
+            "ru": "Рентген ортопантомограмма",
+            "az": "Rentgen Ortopantomogramma"
           },
           "serviceCode": "XR-OPG",
           "fields": [
@@ -1828,7 +1828,7 @@
           "title": {
             "en": "Foot X-ray",
             "ru": "Рентген стопы",
-            "az": "Ayaq rentgeni"
+            "az": "Rentgen Ayaq"
           },
           "serviceCode": "XR-FOOT",
           "fields": [
@@ -1873,7 +1873,7 @@
           "title": {
             "en": "Hand X-ray",
             "ru": "Рентген кисти",
-            "az": "Əl rentgeni"
+            "az": "Rentgen Əl"
           },
           "serviceCode": "XR-HAND",
           "fields": [
@@ -1929,7 +1929,7 @@
           "title": {
             "en": "Head CT",
             "ru": "КТ головного мозга",
-            "az": "Baş beyin KT"
+            "az": "KT Baş beyin"
           },
           "serviceCode": "CT-HEAD",
           "fields": [
@@ -1974,7 +1974,7 @@
           "title": {
             "en": "Chest CT",
             "ru": "КТ органов грудной клетки",
-            "az": "Döş qəfəsi KT"
+            "az": "KT Döş qəfəsi"
           },
           "serviceCode": "CT-CHEST",
           "fields": [
@@ -2018,7 +2018,7 @@
           "title": {
             "en": "Abdomen / pelvis CT",
             "ru": "КТ брюшной полости / малого таза",
-            "az": "Qarın / çanaq KT"
+            "az": "KT Qarın / çanaq"
           },
           "serviceCode": "CT-ABD",
           "fields": [
@@ -2064,7 +2064,7 @@
           "title": {
             "en": "Spine CT",
             "ru": "КТ позвоночника",
-            "az": "Onurğa KT"
+            "az": "KT Onurğa"
           },
           "serviceCode": "CT-SPINE",
           "fields": [
@@ -2108,7 +2108,7 @@
           "category": "vascular",
           "title": {
             "en": "CT angiography",
-            "ru": "КТ-ангиография",
+            "ru": "КТ ангиография",
             "az": "KT angioqrafiya"
           },
           "serviceCode": "CT-ANGIO",
@@ -2150,7 +2150,7 @@
           "title": {
             "en": "Paranasal sinuses CT",
             "ru": "КТ придаточных пазух",
-            "az": "Burun boşluqları KT"
+            "az": "KT Burun boşluqları"
           },
           "serviceCode": "CT-SINUS",
           "fields": [
@@ -2194,7 +2194,7 @@
           "title": {
             "en": "TMJ / jaw CT",
             "ru": "КТ ВНЧС / челюсти",
-            "az": "Çənə / VNS KT"
+            "az": "KT Çənə / VNS"
           },
           "serviceCode": "CT-TMJ",
           "fields": [
@@ -2225,7 +2225,7 @@
           "title": {
             "en": "Kidney CT (multiphase)",
             "ru": "КТ почек (фазы)",
-            "az": "Böyrək KT"
+            "az": "KT Böyrək"
           },
           "serviceCode": "CT-KIDNEY",
           "fields": [
@@ -2264,8 +2264,8 @@
           "category": "cardiac",
           "title": {
             "en": "Coronary CT angiography",
-            "ru": "КТ-коронарография",
-            "az": "Koronar KT angio"
+            "ru": "КТ коронарография",
+            "az": "KT Koronar angio"
           },
           "serviceCode": "CT-CORO",
           "fields": [
@@ -2316,7 +2316,7 @@
           "title": {
             "en": "Brain MRI",
             "ru": "МРТ головного мозга",
-            "az": "Baş beyin MRT"
+            "az": "MRT Baş beyin"
           },
           "serviceCode": "MRI-BRAIN",
           "fields": [
@@ -2369,7 +2369,7 @@
           "title": {
             "en": "Spine MRI",
             "ru": "МРТ позвоночника",
-            "az": "Onurğa MRT"
+            "az": "MRT Onurğa"
           },
           "serviceCode": "MRI-SPINE",
           "fields": [
@@ -2415,7 +2415,7 @@
           "title": {
             "en": "Joint MRI",
             "ru": "МРТ сустава",
-            "az": "Oynaq MRT"
+            "az": "MRT Oynaq"
           },
           "serviceCode": "MRI-JOINT",
           "fields": [
@@ -2456,7 +2456,7 @@
           "title": {
             "en": "Abdomen / pelvis MRI",
             "ru": "МРТ брюшной полости / малого таза",
-            "az": "Qarın / çanaq MRT"
+            "az": "MRT Qarın / çanaq"
           },
           "serviceCode": "MRI-ABD",
           "fields": [
@@ -2500,7 +2500,7 @@
           "title": {
             "en": "Pituitary MRI",
             "ru": "МРТ гипофиза",
-            "az": "Hipofiz MRT"
+            "az": "MRT Hipofiz"
           },
           "serviceCode": "MRI-PIT",
           "fields": [
@@ -2544,7 +2544,7 @@
           "title": {
             "en": "Breast MRI",
             "ru": "МРТ молочных желёз",
-            "az": "Süd vəzi MRT"
+            "az": "MRT Süd vəzi"
           },
           "serviceCode": "MRI-BREAST",
           "fields": [
@@ -2593,7 +2593,7 @@
           "title": {
             "en": "Soft tissue MRI",
             "ru": "МРТ мягких тканей",
-            "az": "Yumşaq toxuma MRT"
+            "az": "MRT Yumşaq toxuma"
           },
           "serviceCode": "MRI-SOFT",
           "fields": [
@@ -2633,8 +2633,8 @@
           "category": "vascular",
           "title": {
             "en": "MR angiography",
-            "ru": "МР-ангиография",
-            "az": "MR angioqrafiya"
+            "ru": "МРТ ангиография",
+            "az": "MRT angioqrafiya"
           },
           "serviceCode": "MRI-MRA",
           "fields": [
@@ -2675,7 +2675,7 @@
           "title": {
             "en": "Cardiac MRI",
             "ru": "МРТ сердца",
-            "az": "Ürək MRT"
+            "az": "MRT Ürək"
           },
           "serviceCode": "MRI-HEART",
           "fields": [
@@ -2721,14 +2721,14 @@
       },
       "templates": [
         {
-          "code": "ECG-12",
+          "code": "CARDIO-ECG",
           "category": "ecg",
           "title": {
             "en": "12-lead ECG",
             "ru": "ЭКГ (12 отведений)",
             "az": "EKQ (12 aparat)"
           },
-          "serviceCode": "ECG-12",
+          "serviceCode": "CARDIO-ECG",
           "fields": [
             {
               "key": "hr",
@@ -2810,14 +2810,14 @@
           ]
         },
         {
-          "code": "HOLTER",
+          "code": "CARDIO-HOLTER",
           "category": "ecg",
           "title": {
             "en": "Holter ECG",
             "ru": "Холтер ЭКГ",
             "az": "Holter EKQ"
           },
-          "serviceCode": "HOLTER",
+          "serviceCode": "CARDIO-HOLTER",
           "fields": [
             {
               "key": "durationH",
@@ -2879,14 +2879,14 @@
           ]
         },
         {
-          "code": "ABPM",
+          "code": "CARDIO-ABPM",
           "category": "bp",
           "title": {
             "en": "Ambulatory BP monitoring",
             "ru": "СМАД",
             "az": "Günlük təzyiq monitorinqi"
           },
-          "serviceCode": "ABPM",
+          "serviceCode": "CARDIO-ABPM",
           "fields": [
             {
               "key": "avgDay",
@@ -2934,14 +2934,14 @@
           ]
         },
         {
-          "code": "ECHO-CG",
+          "code": "CARDIO-ECHO",
           "category": "echo",
           "title": {
             "en": "Echocardiography",
             "ru": "ЭхоКГ",
             "az": "ExoKQ"
           },
-          "serviceCode": "ECHO-CG",
+          "serviceCode": "CARDIO-ECHO",
           "fields": [
             {
               "key": "lvef",
@@ -3012,14 +3012,14 @@
           ]
         },
         {
-          "code": "STRESS-ECG",
+          "code": "CARDIO-STRESS-ECG",
           "category": "stress",
           "title": {
             "en": "Exercise stress ECG",
             "ru": "Нагрузочная проба (тредмил/вело)",
             "az": "Yük sınağı"
           },
-          "serviceCode": "STRESS-ECG",
+          "serviceCode": "CARDIO-STRESS-ECG",
           "fields": [
             {
               "key": "protocol",
@@ -3062,14 +3062,14 @@
           ]
         },
         {
-          "code": "STRESS-ECHO",
+          "code": "CARDIO-STRESS-ECHO",
           "category": "stress",
           "title": {
             "en": "Stress echocardiography",
             "ru": "Стресс-ЭхоКГ",
             "az": "Stress ExoKQ"
           },
-          "serviceCode": "STRESS-ECHO",
+          "serviceCode": "CARDIO-STRESS-ECHO",
           "fields": [
             {
               "key": "protocol",
@@ -3121,14 +3121,14 @@
           ]
         },
         {
-          "code": "TEE",
+          "code": "CARDIO-TEE",
           "category": "echo",
           "title": {
             "en": "Transesophageal echo",
             "ru": "Чреспищеводная ЭхоКГ",
             "az": "TEE ExoKQ"
           },
-          "serviceCode": "TEE",
+          "serviceCode": "CARDIO-TEE",
           "fields": [
             {
               "key": "indication",
@@ -3175,14 +3175,14 @@
           ]
         },
         {
-          "code": "CORO-REPORT",
+          "code": "CARDIO-CORO-REPORT",
           "category": "invasive",
           "title": {
             "en": "Coronary angiography report",
             "ru": "Отчёт коронарографии",
             "az": "Koronaroqrafiya hesabatı"
           },
-          "serviceCode": "CORO-REPORT",
+          "serviceCode": "CARDIO-CORO-REPORT",
           "fields": [
             {
               "key": "access",
@@ -3235,14 +3235,14 @@
       },
       "templates": [
         {
-          "code": "SPIRO",
+          "code": "FUNC-SPIRO",
           "category": "pulmonology",
           "title": {
             "en": "Spirometry",
             "ru": "Спирометрия",
             "az": "Spirometriya"
           },
-          "serviceCode": "SPIRO",
+          "serviceCode": "FUNC-SPIRO",
           "fields": [
             {
               "key": "fvc",
@@ -3278,9 +3278,9 @@
               "key": "pef",
               "type": "number",
               "label": {
-                "en": "PEF",
+                "en": "FUNC-PEF",
                 "ru": "ПОС",
-                "az": "PEF"
+                "az": "FUNC-PEF"
               }
             },
             {
@@ -3296,14 +3296,14 @@
           ]
         },
         {
-          "code": "EEG",
+          "code": "FUNC-EEG",
           "category": "neuro",
           "title": {
-            "en": "EEG",
+            "en": "FUNC-EEG",
             "ru": "ЭЭГ",
             "az": "EEQ"
           },
-          "serviceCode": "EEG",
+          "serviceCode": "FUNC-EEG",
           "fields": [
             {
               "key": "background",
@@ -3336,14 +3336,14 @@
           ]
         },
         {
-          "code": "EMG",
+          "code": "FUNC-EMG",
           "category": "neuro",
           "title": {
             "en": "EMG / NCS",
             "ru": "ЭНМГ",
             "az": "ENMQ"
           },
-          "serviceCode": "EMG",
+          "serviceCode": "FUNC-EMG",
           "fields": [
             {
               "key": "region",
@@ -3376,14 +3376,14 @@
           ]
         },
         {
-          "code": "AUDIO",
+          "code": "FUNC-AUDIO",
           "category": "ent",
           "title": {
             "en": "Audiometry",
             "ru": "Аудиометрия",
             "az": "Audiometriya"
           },
-          "serviceCode": "AUDIO",
+          "serviceCode": "FUNC-AUDIO",
           "fields": [
             {
               "key": "rightEar",
@@ -3416,14 +3416,14 @@
           ]
         },
         {
-          "code": "OPHTH-DX",
+          "code": "FUNC-OPHTH",
           "category": "ophthalmology",
           "title": {
             "en": "Ophthalmology exam",
             "ru": "Офтальмологическое обследование",
             "az": "Oftalmoloji müayinə"
           },
-          "serviceCode": "OPHTH-DX",
+          "serviceCode": "FUNC-OPHTH",
           "fields": [
             {
               "key": "visusOd",
@@ -3474,14 +3474,14 @@
           ]
         },
         {
-          "code": "DERM-DX",
+          "code": "FUNC-DERM",
           "category": "dermatology",
           "title": {
             "en": "Dermatology / dermoscopy",
             "ru": "Дерматоскопия / осмотр кожи",
             "az": "Dermatologiya / dermoskopiya"
           },
-          "serviceCode": "DERM-DX",
+          "serviceCode": "FUNC-DERM",
           "fields": [
             {
               "key": "lesionSite",
@@ -3514,14 +3514,14 @@
           ]
         },
         {
-          "code": "SPIRO-BD",
+          "code": "FUNC-SPIRO-BD",
           "category": "pulmonology",
           "title": {
             "en": "Spirometry with bronchodilator",
             "ru": "Спирометрия с бронхолитиком",
             "az": "Bronxodilatatorlu spirometriya"
           },
-          "serviceCode": "SPIRO-BD",
+          "serviceCode": "FUNC-SPIRO-BD",
           "fields": [
             {
               "key": "fev1Pre",
@@ -3566,14 +3566,14 @@
           ]
         },
         {
-          "code": "PEF",
+          "code": "FUNC-PEF",
           "category": "pulmonology",
           "title": {
             "en": "Peak flowmetry",
             "ru": "Пикфлоуметрия",
             "az": "Pikfloumetriya"
           },
-          "serviceCode": "PEF",
+          "serviceCode": "FUNC-PEF",
           "fields": [
             {
               "key": "pefBest",
@@ -3606,14 +3606,14 @@
           ]
         },
         {
-          "code": "TYMP",
+          "code": "FUNC-TYMP",
           "category": "ent",
           "title": {
             "en": "Tympanometry",
             "ru": "Тимпанометрия",
             "az": "Timpanometriya"
           },
-          "serviceCode": "TYMP",
+          "serviceCode": "FUNC-TYMP",
           "fields": [
             {
               "key": "rightEar",
@@ -3655,14 +3655,14 @@
           ]
         },
         {
-          "code": "VEST",
+          "code": "FUNC-VEST",
           "category": "ent",
           "title": {
             "en": "Vestibular / calorics",
             "ru": "Вестибулометрия",
             "az": "Vestibulometriya"
           },
-          "serviceCode": "VEST",
+          "serviceCode": "FUNC-VEST",
           "fields": [
             {
               "key": "findings",
@@ -3686,14 +3686,14 @@
           ]
         },
         {
-          "code": "ENT-EXAM",
+          "code": "FUNC-ENT-EXAM",
           "category": "ent",
           "title": {
             "en": "ENT exam (oto/rhino/pharyngo)",
             "ru": "ЛОР-осмотр",
             "az": "LOR müayinə"
           },
-          "serviceCode": "ENT-EXAM",
+          "serviceCode": "FUNC-ENT-EXAM",
           "fields": [
             {
               "key": "ears",
@@ -3735,14 +3735,14 @@
           ]
         },
         {
-          "code": "COLPO",
+          "code": "FUNC-COLPO",
           "category": "gyn",
           "title": {
             "en": "Colposcopy",
             "ru": "Кольпоскопия",
             "az": "Kolposkopiya"
           },
-          "serviceCode": "COLPO",
+          "serviceCode": "FUNC-COLPO",
           "fields": [
             {
               "key": "acetowhite",
@@ -3793,14 +3793,14 @@
           ]
         },
         {
-          "code": "UREA-BREATH",
+          "code": "FUNC-UREA-BREATH",
           "category": "gi",
           "title": {
             "en": "H. pylori urea breath test",
             "ru": "Дыхательный тест H. pylori",
             "az": "H. pylori nəfəs testi"
           },
-          "serviceCode": "UREA-BREATH",
+          "serviceCode": "FUNC-UREA-BREATH",
           "fields": [
             {
               "key": "result",
@@ -3838,14 +3838,14 @@
           ]
         },
         {
-          "code": "EP",
+          "code": "FUNC-EP",
           "category": "neuro",
           "title": {
             "en": "Evoked potentials",
             "ru": "Вызванные потенциалы",
             "az": "Yaranma potensialları"
           },
-          "serviceCode": "EP",
+          "serviceCode": "FUNC-EP",
           "fields": [
             {
               "key": "modality",
@@ -3884,14 +3884,14 @@
           ]
         },
         {
-          "code": "PSG",
+          "code": "FUNC-PSG",
           "category": "neuro",
           "title": {
             "en": "Polysomnography (summary)",
             "ru": "Полисомнография (резюме)",
             "az": "Polisomnoqrafiya"
           },
-          "serviceCode": "PSG",
+          "serviceCode": "FUNC-PSG",
           "fields": [
             {
               "key": "ahi",
@@ -3935,14 +3935,14 @@
           ]
         },
         {
-          "code": "STABILO",
+          "code": "FUNC-STABILO",
           "category": "neuro",
           "title": {
             "en": "Stabilometry",
             "ru": "Стабилометрия",
             "az": "Stabilometriya"
           },
-          "serviceCode": "STABILO",
+          "serviceCode": "FUNC-STABILO",
           "fields": [
             {
               "key": "findings",
@@ -3977,14 +3977,14 @@
       },
       "templates": [
         {
-          "code": "EGD",
+          "code": "ENDO-EGD",
           "category": "gi",
           "title": {
             "en": "EGD (gastroscopy)",
             "ru": "ЭГДС (гастроскопия)",
             "az": "Qastroskopiya"
           },
-          "serviceCode": "EGD",
+          "serviceCode": "ENDO-EGD",
           "fields": [
             {
               "key": "esophagus",
@@ -4035,14 +4035,14 @@
           ]
         },
         {
-          "code": "COLONO",
+          "code": "ENDO-COLONO",
           "category": "gi",
           "title": {
             "en": "Colonoscopy",
             "ru": "Колоноскопия",
             "az": "Kolonoskopiya"
           },
-          "serviceCode": "COLONO",
+          "serviceCode": "ENDO-COLONO",
           "fields": [
             {
               "key": "preparation",
@@ -4108,14 +4108,14 @@
           ]
         },
         {
-          "code": "BRONCHO",
+          "code": "ENDO-BRONCHO",
           "category": "pulmonology",
           "title": {
             "en": "Bronchoscopy",
             "ru": "Бронхоскопия",
             "az": "Bronxoskopiya"
           },
-          "serviceCode": "BRONCHO",
+          "serviceCode": "ENDO-BRONCHO",
           "fields": [
             {
               "key": "findings",
@@ -4148,14 +4148,14 @@
           ]
         },
         {
-          "code": "RRS",
+          "code": "ENDO-RRS",
           "category": "gi",
           "title": {
             "en": "Rectosigmoidoscopy",
             "ru": "Ректороманоскопия",
             "az": "Rektoromanoskopiya"
           },
-          "serviceCode": "RRS",
+          "serviceCode": "ENDO-RRS",
           "fields": [
             {
               "key": "findings",
@@ -4188,14 +4188,14 @@
           ]
         },
         {
-          "code": "CYSTO",
+          "code": "ENDO-CYSTO",
           "category": "urology",
           "title": {
             "en": "Cystoscopy",
             "ru": "Цистоскопия",
             "az": "Sistoskopiya"
           },
-          "serviceCode": "CYSTO",
+          "serviceCode": "ENDO-CYSTO",
           "fields": [
             {
               "key": "findings",
@@ -4228,14 +4228,14 @@
           ]
         },
         {
-          "code": "RHINO-ENDO",
+          "code": "ENDO-RHINO",
           "category": "ent",
           "title": {
             "en": "Nasal endoscopy",
             "ru": "Эндоскопия носа",
             "az": "Burun endoskopiyası"
           },
-          "serviceCode": "RHINO-ENDO",
+          "serviceCode": "ENDO-RHINO",
           "fields": [
             {
               "key": "findings",
@@ -4259,14 +4259,14 @@
           ]
         },
         {
-          "code": "LARYNGO",
+          "code": "ENDO-LARYNGO",
           "category": "ent",
           "title": {
             "en": "Laryngoscopy",
             "ru": "Ларингоскопия",
             "az": "Laringoskopiya"
           },
-          "serviceCode": "LARYNGO",
+          "serviceCode": "ENDO-LARYNGO",
           "fields": [
             {
               "key": "findings",
@@ -4370,14 +4370,14 @@
       },
       "templates": [
         {
-          "code": "DXA",
+          "code": "DENSITOMETRY-DXA",
           "category": "msk",
           "title": {
             "en": "DXA bone density",
             "ru": "DXA плотность кости",
             "az": "DXA sümük sıxlığı"
           },
-          "serviceCode": "DXA",
+          "serviceCode": "DENSITOMETRY-DXA",
           "fields": [
             {
               "key": "sites",
@@ -5631,14 +5631,14 @@
       ]
     },
     {
-      "code": "LAB-VITMIN",
+      "code": "LAB-VITAMIN",
       "category": "vitamins_iron",
       "title": {
         "en": "Vitamins / iron panel",
         "ru": "Витамины / железо",
         "az": "Vitaminlər / dəmir"
       },
-      "serviceCode": "LAB-VITMIN",
+      "serviceCode": "LAB-VITAMIN",
       "analytes": [
         {
           "code": "VITD",
@@ -8321,7 +8321,7 @@
   ],
   "visitTemplates": [
     {
-      "code": "GP-VISIT",
+      "code": "VISIT-GP",
       "specialty": "GP",
       "title": {
         "en": "General visit",
@@ -8387,7 +8387,7 @@
       ]
     },
     {
-      "code": "CARDIO-VISIT",
+      "code": "VISIT-CARDIO",
       "specialty": "CARDIO",
       "title": {
         "en": "Cardiology visit",
@@ -8435,7 +8435,7 @@
       ]
     },
     {
-      "code": "GYN-VISIT",
+      "code": "VISIT-GYN",
       "specialty": "GYN",
       "title": {
         "en": "Gynecology visit",
@@ -8510,7 +8510,7 @@
       ]
     },
     {
-      "code": "PED-VISIT",
+      "code": "VISIT-PED",
       "specialty": "PED",
       "title": {
         "en": "Pediatrics visit",
@@ -8596,7 +8596,7 @@
       ]
     },
     {
-      "code": "ENT-VISIT",
+      "code": "VISIT-ENT",
       "specialty": "ENT",
       "title": {
         "en": "ENT visit",
@@ -8653,7 +8653,7 @@
       ]
     },
     {
-      "code": "NEURO-VISIT",
+      "code": "VISIT-NEURO",
       "specialty": "NEURO",
       "title": {
         "en": "Neurology visit",
@@ -8719,7 +8719,7 @@
       ]
     },
     {
-      "code": "ENDO-VISIT",
+      "code": "VISIT-ENDOCRINE",
       "specialty": "ENDOCRINE",
       "title": {
         "en": "Endocrinology visit",
@@ -8776,7 +8776,7 @@
       ]
     },
     {
-      "code": "URO-VISIT",
+      "code": "VISIT-URO",
       "specialty": "URO",
       "title": {
         "en": "Urology visit",
@@ -8833,7 +8833,7 @@
       ]
     },
     {
-      "code": "DERM-VISIT",
+      "code": "VISIT-DERM",
       "specialty": "DERM",
       "title": {
         "en": "Dermatology visit",
@@ -8890,7 +8890,7 @@
       ]
     },
     {
-      "code": "PULM-VISIT",
+      "code": "VISIT-PULM",
       "specialty": "PULM",
       "title": {
         "en": "Pulmonology visit",
@@ -8947,7 +8947,7 @@
       ]
     },
     {
-      "code": "ORTHO-VISIT",
+      "code": "VISIT-ORTHO",
       "specialty": "ORTHO",
       "title": {
         "en": "Ortho / trauma visit",
@@ -9004,7 +9004,7 @@
       ]
     },
     {
-      "code": "CHECKUP-VISIT",
+      "code": "VISIT-CHECKUP",
       "specialty": "GP",
       "title": {
         "en": "Check-up visit",
@@ -9060,7 +9060,7 @@
       ]
     },
     {
-      "code": "SANATORIUM-INTAKE",
+      "code": "VISIT-SANATORIUM-INTAKE",
       "specialty": "SANATORIUM",
       "title": {
         "en": "Sanatorium intake exam",
@@ -9200,7 +9200,7 @@
         "LAB-CBC",
         "LAB-BIOCHEM",
         "LAB-URINE",
-        "ECG-12",
+        "CARDIO-ECG",
         "XR-FLUORO"
       ]
     },
@@ -9236,7 +9236,7 @@
         "LAB-URINE",
         "USG-ABD",
         "USG-PROSTATE",
-        "ECG-12"
+        "CARDIO-ECG"
       ]
     },
     {
@@ -9252,8 +9252,8 @@
         "LAB-LIPID",
         "LAB-GLUCOSE",
         "LAB-CARDIAC",
-        "ECG-12",
-        "ECHO-CG",
+        "CARDIO-ECG",
+        "CARDIO-ECHO",
         "USG-ABD",
         "XR-FLUORO"
       ]
@@ -9271,7 +9271,7 @@
         "LAB-GLUCOSE",
         "LAB-BG",
         "LAB-INFECT",
-        "ECG-12",
+        "CARDIO-ECG",
         "XR-CHEST"
       ]
     },
@@ -9287,9 +9287,9 @@
         "LAB-URINE",
         "LAB-INFECT",
         "XR-FLUORO",
-        "ECG-12",
-        "OPHTH-DX",
-        "ENT-EXAM"
+        "CARDIO-ECG",
+        "FUNC-OPHTH",
+        "FUNC-ENT-EXAM"
       ]
     },
     {
@@ -9303,9 +9303,9 @@
         "LAB-CBC",
         "LAB-BIOCHEM",
         "LAB-URINE",
-        "ECG-12",
+        "CARDIO-ECG",
         "XR-FLUORO",
-        "SANATORIUM-INTAKE"
+        "VISIT-SANATORIUM-INTAKE"
       ]
     }
   ],

@@ -60,11 +60,11 @@ describe("resolveEntitlementCharge", () => {
     mockedUsage.resolveEntitlementInstance.mockResolvedValue({
       id: "inst1",
       entitlementSnapshot: null,
-      procedureLines: [{ procedureCode: "ECG-12" }],
+      procedureLines: [{ procedureCode: "CARDIO-ECG" }],
     });
     mockedUsage.resolvePackageStampForEpisode.mockResolvedValue({
       inPackage: true,
-      packageQuotaCode: "ECG-12",
+      packageQuotaCode: "CARDIO-ECG",
     });
     mockedUsage.isOverEntitlementQuota.mockResolvedValue({
       hasBalance: true,
@@ -79,9 +79,9 @@ describe("resolveEntitlementCharge", () => {
     const r = await resolveEntitlementCharge({
       episodeId: "ep1",
       patientOrigin: "IN_HOUSE",
-      serviceCode: "ECG-12",
+      serviceCode: "CARDIO-ECG",
       inPackage: true,
-      quotaCode: "ECG-12",
+      quotaCode: "CARDIO-ECG",
     });
     expect(r).toMatchObject({
       amountNet: 0,
@@ -95,14 +95,14 @@ describe("resolveEntitlementCharge", () => {
     mockedUsage.resolveEntitlementInstance.mockResolvedValue({
       id: "inst1",
       entitlementSnapshot: null,
-      procedureLines: [{ procedureCode: "ECG-12" }],
+      procedureLines: [{ procedureCode: "CARDIO-ECG" }],
     });
     const r = await resolveEntitlementCharge({
       episodeId: "ep1",
       patientOrigin: "WALK_IN",
-      serviceCode: "ECG-12",
+      serviceCode: "CARDIO-ECG",
       inPackage: true,
-      quotaCode: "ECG-12",
+      quotaCode: "CARDIO-ECG",
     });
     expect(r).toMatchObject({
       amountNet: 40,
@@ -141,7 +141,7 @@ describe("resolveEntitlementCharge", () => {
     const r = await resolveEntitlementCharge({
       episodeId: "ep1",
       patientOrigin: "IN_HOUSE",
-      serviceCode: "ECG-12",
+      serviceCode: "CARDIO-ECG",
     });
     expect(r).toMatchObject({
       amountNet: 40,
@@ -159,7 +159,7 @@ describe("resolveEntitlementCharge", () => {
     const r = await resolveEntitlementCharge({
       episodeId: "ep1",
       patientOrigin: "IN_HOUSE",
-      serviceCode: "ECG-12",
+      serviceCode: "CARDIO-ECG",
     });
     expect(r).toMatchObject({
       amountNet: 0,
@@ -188,7 +188,7 @@ describe("applyPriceMissingFallback", () => {
     for (const reason of ["in_quota", "awaiting_package"]) {
       const r = applyPriceMissingFallback(
         { amountNet: 0, overQuota: false, priceMissing: true, reason },
-        { serviceCode: "ECG-12", where: "lab" },
+        { serviceCode: "CARDIO-ECG", where: "lab" },
       );
       expect(r.amountNet).toBe(0);
     }
@@ -197,7 +197,7 @@ describe("applyPriceMissingFallback", () => {
   it("keeps a resolved price untouched", () => {
     const r = applyPriceMissingFallback(
       { amountNet: 40, overQuota: true, priceMissing: false, reason: "over_quota" },
-      { serviceCode: "ECG-12", where: "procedure" },
+      { serviceCode: "CARDIO-ECG", where: "procedure" },
     );
     expect(r.amountNet).toBe(40);
   });

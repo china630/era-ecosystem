@@ -10,15 +10,15 @@ describe("expandPackageCodes Nafta intake", () => {
       category: "checkup",
       title: { en: "intake", ru: "intake", az: "intake" },
       serviceCode: "PKG-NAFTA-INTAKE",
-      includes: ["SANATORIUM-INTAKE", "GYN-OR-URO", "ECG-12", "USG-ABD"],
+      includes: ["VISIT-SANATORIUM-INTAKE", "GYN-OR-URO", "CARDIO-ECG", "USG-ABD"],
     },
     {
-      code: "ECG-12",
+      code: "CARDIO-ECG",
       kind: "imaging",
       modality: "CARDIO",
       category: "ecg",
       title: { en: "ECG", ru: "ECG", az: "EKQ" },
-      serviceCode: "ECG-12",
+      serviceCode: "CARDIO-ECG",
     },
     {
       code: "USG-ABD",
@@ -29,16 +29,16 @@ describe("expandPackageCodes Nafta intake", () => {
       serviceCode: "USG-ABD",
     },
     {
-      code: "SANATORIUM-INTAKE",
+      code: "VISIT-SANATORIUM-INTAKE",
       kind: "visit",
       modality: "VISIT",
       category: "intake",
       title: { en: "intake", ru: "intake", az: "qebul" },
-      serviceCode: "SANATORIUM-INTAKE",
+      serviceCode: "VISIT-SANATORIUM-INTAKE",
     },
   ];
 
   it("expands only orderable lab/imaging codes from PKG-NAFTA-INTAKE", () => {
-    expect(expandPackageCodes(["PKG-NAFTA-INTAKE"], items)).toEqual(["ECG-12", "USG-ABD"]);
+    expect(expandPackageCodes(["PKG-NAFTA-INTAKE"], items)).toEqual(["CARDIO-ECG", "USG-ABD"]);
   });
 });
