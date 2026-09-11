@@ -100,14 +100,14 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-AGP-01/02/03 | Hotel | agency portal + FO inbox | Y | `/agency/*` + `/fo/agency-inbox` | **SCREEN** | P0–P1; AC-HOT-AGP 🟡; out of Hotel SHOW rollup | ADR hotel-agency-portal |
 | HOT-AGP-04 | Hotel | portal own CL statement | Y session ledger | `/agency/ledger` | **SHOW** | HOT-AGP-04 SHIPPED; UAT §27.12 | ADR §7 read-only |
 | CLI-50 | Clinic | Nafta package Select + deep-link chart | Y lifecycle + templates | `/sanatorium` Select + `?episode=` | **SCREEN** | UAT CLI-50 open; AC-CLI-SAN-PKG 🟡 | Wave A dual-run |
-| CLI-51 | Clinic | PDF quota knots + versioned entitlement editor | Y `quotaFor` / version bump + snapshot | `/admin/program-templates` blocks+vN | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B; open stays pinned |
+| CLI-51 | Clinic | PDF quota knots + versioned entitlement editor | Y `quotaFor` / version bump + snapshot | `/admin/program-templates` blocks+vN; member picker cascaded by kind | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B; open stays pinned |
 | CLI-52 | Clinic | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP; 4th same-day paid | Y exam-prefix + daily-cap + POST guard | `/sanatorium` + card + `/admin/settings` | **SCREEN** | UAT CLI-52 open; AC-CLI-SAN-DAY1 🟡 | Wave C; FIFO unchanged |
 | CLI-53 | Clinic | Doctor bonus extras-only + origin buckets | Y `bonusEligible` + % settings | `/reports/procedures` doctor-bonus | **SCREEN** | UAT CLI-53 open; AC-CLI-BONUS 🟡 | Wave D |
 | CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E |
 | CLI-55 | Clinic | Episode as care course (switcher, children, walk-in close) | Y | Y | **SCREEN** | Card CatalogField + Close + cron; UAT open → not SHOW | not CLI-54 list rows alone |
 | CLI-56 | Clinic | Episode care team (multi-doctor) | Y | Y | **SCREEN** | Card identity+package+`+ Doctor`; clinical gated; UAT open → not SHOW | extends CLI-55 / assigned scope |
 | CLI-57 | Clinic | Package balance assign + extras Pay→plan→ticket | Y package-assign / extras-prescribe / Pay | Y Müalicə kartı modals + schedule cards | **SCREEN** | UAT open → not SHOW; amends CLI-52 proposed confirm UX | ADR clinic-episode-procedure-assign-modal |
-| CLI-RBAC-01 | Clinic | Role×screen/API matrix (Variant A) | Y ops+admin permission catalog | `/admin/access` | **SCREEN** | AC-CLI-RBAC 🟡; UAT open → not SHOW | Phase A Waves 1–3 |
+| CLI-RBAC-01 | Clinic | Role×screen/API matrix + custom roles | Y ops+admin permission catalog; system seed; clone | `/admin/access` | **SCREEN** | AC-CLI-RBAC 🟡; UAT open → not SHOW | Phase A + custom roles |
 | CLI-WF-PWD-01 | Clinic | Local staff change own password | Y `PATCH /api/auth/password` | `/account/password` | **SHIPPED** | UAT first login 0000 then change; SSO 403 | not CP password UI |
 | HOT-PKG-02 | Hotel | Medical SKU resolve + notes | Y resolve + notes import | import wizard / notes tab | **SCREEN** | UAT §38 open; AC-HOT-PKG-NAFTA 🟡 | Wave A |
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |

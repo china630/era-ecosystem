@@ -62,7 +62,7 @@ Single modal; **no nested second modal**.
 ```
 
 1. **Left:** package lines from `ProgramProcedureBalance` (and template names): procedure name, remaining count, `+`. Not an expanded session list.
-2. **Right:** aggregations by assign batch / code — name, quantity, delete (when allowed). **COMPLETED** (consumed) rows are **grey, locked**, qty = consumed; no delete; quota does not return.
+2. **Right:** one card per SKU + quota + lock (not per assign batch). Title is `Name ×qty (draft)`; physio params each on their own line. **COMPLETED** (consumed) rows are **grey, locked**, qty = consumed; no delete; quota does not return. Card actions are compact icons (+ / − / replace / delete).
 3. **`+` or edit:** form **overlays the right column** (drawer/panel inside the same modal) — type-gated physio fields, sites, note, **quantity**. [Done] on the form only updates **draft** on the right.
 4. **Save (modal):** single commit — create/adjust orders, run placement, refresh balances and card schedule. **Cancel:** discard draft; DB unchanged.
 5. **Reopen:** right side shows last committed state. Doctor may increase qty on an active right row, or use **All** (fill remaining for that line / selection), then Save → planner **incrementally** places only the delta (does not move fixed history).
@@ -71,7 +71,7 @@ Single modal; **no nested second modal**.
 
 - Quantity **≠** one schedule card: `qty = N` means **N sessions**, planner spreads them (see D5).
 - Right column shows **aggregates** (`Ozone ×7`); schedule zone on the card shows **per-slot cards**.
-- One assign batch shares one field template (sites / physioFields / note). Same settings → edit qty on the right. Different clinical settings → new `+` from the left (second batch).
+- Qty edits (+/−) and leftover drafts merge onto the same SKU card. Distinct physio params still appear as stacked lines on that card rather than splitting cards.
 - Placement times are **automatic** (FIFO / incremental engine). No slot picker in the doctor form in this slice.
 
 ### D4 — Lazy assign replaces package pre-expand (amends CLI-31 UX)
@@ -87,7 +87,7 @@ For **in-package** treatment lines:
 
 **Day-1 auto (replaces “confirm 2–3 from a long PROPOSED list” as the happy path):**
 
-- A dedicated control (button/trigger), not silent on every open: schedule up to **3 distinct procedure codes** from the package in **standard** field defaults, then place.
+- A dedicated control (button/trigger), not silent on every open: schedule up to **N distinct procedure codes** from the package in **standard** field defaults, then place. **N** = `Tenant.dailyPackageProcedureCap` (default 3; `/admin/settings`).
 - Soft-warn spirit of CLI-52 remains; do not hard-block larger manual batches without product revisit.
 - Exam/intake sorting rules stay relevant only where intake still produces proposed/scheduled clinical exams — not mixed into this package menu (out of scope).
 
@@ -95,7 +95,8 @@ For **in-package** treatment lines:
 
 Planner constraint for package (and default for extras unless overridden later):
 
-- **At most one session per procedure code (category) per calendar day** for the episode.
+- **At most one session per procedure code (category) per calendar day** (Asia/Baku) for the episode.
+- **Daily in-package cap:** at most **N distinct in-package procedure codes** on a Baku day (`Tenant.dailyPackageProcedureCap`, default **3**, clinic `/admin/settings`, clamp 1–12). Paid extras (`inPackage: false`) do **not** count toward N and may still land today. Remainder of a large package Save starts on the **next work morning**, not from the last historical slot (avoids weekend “day after tomorrow” cursor). Same-code collision jumps the **whole next work day**, not +5 minutes.
 
 Consequences:
 

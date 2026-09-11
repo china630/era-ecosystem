@@ -99,7 +99,9 @@ Labs, intake visits, and ICD/complaints are **not** blocked by empty anamnesis.
 
 ### D5 — Close rules
 
-**IN_HOUSE (hotel):** unchanged. `SATELLITE_HOTEL_GUEST_CHECKED_OUT` closes every OPEN episode for that reservation and cancels leftover `SCHEDULED` / `CHECKED_IN` procedures (`hotel_checkout`). Early checkout is a hotel fact; clinic follows.
+**IN_HOUSE (hotel):** `SATELLITE_HOTEL_GUEST_CHECKED_OUT` closes every OPEN episode for that **reservation** when the **RoomStay** checks out (last in-house guest / room checkout) and cancels leftover `SCHEDULED` / `CHECKED_IN` procedures (`hotel_checkout`). Early **stay** checkout is a hotel fact; clinic follows.
+
+**Companion / Depart guest** (stay remains `IN_HOUSE`): do **not** use stay-level `GUEST_CHECKED_OUT`. Close only that pax’s episode — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D4/D6. Move guest retargets stay/room on the same episode.
 
 **WALK_IN:** never auto-close while the course is still running.
 
@@ -169,3 +171,5 @@ Cutover import already attaches history to an episode (OPEN or CLOSED archive). 
 - CLI-55 in `docs/COVERAGE_MATRIX.md` (**SCREEN**)
 - `era-clinic/doc/UAT-SMOKE.md` § Episode as care course
 - AC-CLI-EPISODE in Clinic Implementation-Matrix (🟡, out of BE rollup)
+- [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) — person-level depart/move vs stay checkout
+- [nafta-episode-per-pax.md](./nafta-episode-per-pax.md)
