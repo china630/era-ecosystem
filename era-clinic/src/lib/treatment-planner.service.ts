@@ -2,8 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
-import { bakuDayBounds } from "@/lib/baku-day";
-import { bakuDateKey } from "@/domain/patient/patient-timeline.service";
+import { bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
+import {
+  clampDailyPackageProcedureCap,
+  inPackageCodesOnBakuDay,
+  packageDayIsFullForNewCode,
+} from "@/domain/sanatorium/daily-package-cap";
 import {
   DEFAULT_WORK_HOURS,
   alignDurationToSlotMinutes,
@@ -50,14 +54,6 @@ function addMinutes(d: Date, mins: number): Date {
 
 function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
   return aStart < bEnd && bStart < aEnd;
-}
-
-function dayBounds(d: Date): { start: Date; end: Date } {
-  const start = new Date(d);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-  return { start, end };
 }
 
 import { effectivePatientRestMinutes } from "@/domain/procedure/resource-occupancy";
@@ -132,13 +128,13 @@ export async function hasProcedureSameDay(
   day: Date,
   excludeOrderId?: string,
 ): Promise<boolean> {
-  const { start, end } = dayBounds(day);
+  const { start, end } = bakuDayBounds(bakuDateKey(day));
   const count = await prisma.procedureOrder.count({
     where: {
       patientRefId,
       procedureCode,
       scheduledAt: { gte: start, lt: end },
-      status: { notIn: ["CANCELLED", "PROPOSED"] },
+      status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY"] },
       ...(excludeOrderId ? { id: { not: excludeOrderId } } : {}),
     },
   });
@@ -204,6 +200,17 @@ export async function nextWorkSlot(
     return next;
   }
   return d;
+}
+
+async function jumpNextWorkMorning(
+  from: Date,
+  hours: TenantWorkHours,
+  dayEndHour?: number,
+): Promise<Date> {
+  const d = new Date(from);
+  d.setDate(d.getDate() + 1);
+  d.setHours(hours.dayStartHour, 0, 0, 0);
+  return nextWorkSlot(d, hours, dayEndHour);
 }
 
 async function expandProposedSlots(instanceId: string): Promise<{
@@ -319,76 +326,24 @@ async function expandProposedSlots(instanceId: string): Promise<{
 }
 
 /**
- * Build PROPOSED procedure orders from program quotas (no resource bookings).
- * Doctor must confirm before placeConfirmedProcedures places them on the matrix.
+ * @deprecated CLI-57 — do not pre-expand package into PROPOSED. Use package-assign API.
+ * Returns 0 and does not create orders.
  */
-export async function buildProposedPlan(instanceId: string): Promise<number> {
-  const workHours = await getTenantWorkHours();
-  const {
-    patientRefId,
-    patientOrigin,
-    reservationId,
-    clinicalEpisodeId,
-    startsOn,
-    slots,
-  } = await expandProposedSlots(instanceId);
-  if (!patientRefId || slots.length === 0) return 0;
+export async function buildProposedPlan(_instanceId: string): Promise<number> {
+  console.warn(
+    "[clinic] buildProposedPlan is deprecated (CLI-57); use package-assign instead",
+  );
+  return 0;
+}
 
-  if (clinicalEpisodeId) {
-    const episode = await prisma.clinicalEpisode.findUnique({
-      where: { id: clinicalEpisodeId },
-      select: { anamnesisText: true },
-    });
-    const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
-      "@/domain/sanatorium/episode-gates"
-    );
-    const denied = episodeAnamnesisDenied(episode?.anamnesisText);
-    if (denied) {
-      const err = new Error(denied);
-      (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
-      throw err;
-    }
-  }
-
-  // Idempotent: drop previous unconfirmed PROPOSED for this reservation/patient from this program run
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      patientRefId,
-      status: "PROPOSED",
-      ...(reservationId ? { reservationId } : {}),
-      ...(clinicalEpisodeId ? { clinicalEpisodeId } : {}),
-    },
-  });
-
-  let cursor = new Date(startsOn);
-  cursor.setHours(workHours.dayStartHour, 0, 0, 0);
-  let created = 0;
-
-  for (const item of slots) {
-    if (!item.procedureTypeId) continue;
-    const proposedAt = await nextWorkSlot(cursor, workHours);
-    await prisma.procedureOrder.create({
-      data: {
-        organizationId: requestOrganizationId(),
-        patientRefId,
-        clinicalEpisodeId: clinicalEpisodeId ?? undefined,
-        procedureCode: item.procedureCode,
-        procedureName: item.procedureName,
-        procedureTypeId: item.procedureTypeId,
-        scheduledAt: proposedAt,
-        endsAt: addMinutes(proposedAt, item.durationMin),
-        sequenceIndex: item.sequenceIndex,
-        bodyPart: item.bodyPart ?? undefined,
-        patientOrigin,
-        reservationId: reservationId ?? undefined,
-        status: "PROPOSED",
-      },
-    });
-    cursor = addMinutes(proposedAt, item.durationMin + item.minGapMinutes);
-    created++;
-  }
-
-  return created;
+/**
+ * @deprecated CLI-57 — alias of buildProposedPlan no-op.
+ */
+export async function planProgramFifo(
+  instanceId: string,
+  _startsOn: Date,
+): Promise<number> {
+  return buildProposedPlan(instanceId);
 }
 
 /**
@@ -403,6 +358,7 @@ export async function placeConfirmedProcedures(
 
   const settings = await getSchedulingSettings();
   const { schedulingSlotMinutes: slotMinutes } = settings;
+  const packageCap = clampDailyPackageProcedureCap(settings.dailyPackageProcedureCap);
   const workHours = await getTenantWorkHours();
 
   const orders = await prisma.procedureOrder.findMany({
@@ -445,6 +401,7 @@ export async function placeConfirmedProcedures(
       bodyPart: true,
       scheduledAt: true,
       endsAt: true,
+      inPackage: true,
       procedureType: { select: { patientRestMinutes: true } },
     },
     orderBy: { scheduledAt: "asc" },
@@ -456,12 +413,14 @@ export async function placeConfirmedProcedures(
     start: Date;
     end: Date;
     patientRestMinutes: number;
+    inPackage: boolean;
   }[] = existing.map((e) => ({
     code: e.procedureCode,
     bodyPart: e.bodyPart,
     start: e.scheduledAt,
     end: e.endsAt ?? e.scheduledAt,
     patientRestMinutes: e.procedureType?.patientRestMinutes ?? 15,
+    inPackage: e.inPackage === true,
   }));
 
   const rotationContext: RotationContextSlot[] = scheduledPatient.map((s) => ({
@@ -470,18 +429,6 @@ export async function placeConfirmedProcedures(
     startAt: s.start,
     endAt: s.end,
   }));
-
-  const lastPlaced = scheduledPatient[scheduledPatient.length - 1];
-  let cursor =
-    lastPlaced != null
-      ? addMinutes(lastPlaced.end, lastPlaced.patientRestMinutes)
-      : new Date(orders[0].scheduledAt);
-  cursor.setHours(
-    Math.max(cursor.getHours(), workHours.dayStartHour),
-    cursor.getMinutes(),
-    0,
-    0,
-  );
 
   let placed = 0;
   const now = new Date();
@@ -549,7 +496,7 @@ export async function placeConfirmedProcedures(
       resourceExtendedEndHour: physicalResources[0]?.extendedEndHour,
     });
 
-    let slotStart = await nextWorkSlot(cursor, typeHours, dayEnd);
+    let slotStart = await nextWorkSlot(now, typeHours, dayEnd);
     if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
       slotStart.setDate(slotStart.getDate() + 1);
       slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
@@ -559,7 +506,7 @@ export async function placeConfirmedProcedures(
     }
 
     let orderPlaced = false;
-    for (let attempt = 0; attempt < 96 && !orderPlaced; attempt++) {
+    for (let attempt = 0; attempt < 240 && !orderPlaced; attempt++) {
       slotStart = avoidLunchOverlap(slotStart, duration, typeHours);
       if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
         slotStart.setDate(slotStart.getDate() + 1);
@@ -580,9 +527,23 @@ export async function placeConfirmedProcedures(
         continue;
       }
 
+      if (order.inPackage === true) {
+        const codesOnDay = inPackageCodesOnBakuDay(
+          scheduledPatient.map((s) => ({
+            code: s.code,
+            start: s.start,
+            inPackage: s.inPackage,
+          })),
+          slotStart,
+        );
+        if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, packageCap)) {
+          slotStart = await jumpNextWorkMorning(slotStart, typeHours, dayEnd);
+          continue;
+        }
+      }
+
       if (await hasProcedureSameDay(patientRefId, order.procedureCode, slotStart, order.id)) {
-        slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
+        slotStart = await jumpNextWorkMorning(slotStart, typeHours, dayEnd);
         continue;
       }
 
@@ -716,6 +677,7 @@ export async function placeConfirmedProcedures(
         start: slotStart,
         end: slotEnd,
         patientRestMinutes: patientRest,
+        inPackage: order.inPackage === true,
       };
       scheduledPatient.push(placedSlot);
       rotationContext.push({
@@ -724,22 +686,10 @@ export async function placeConfirmedProcedures(
         startAt: placedSlot.start,
         endAt: placedSlot.end,
       });
-      cursor = addMinutes(slotEnd, patientRest);
       placed++;
       orderPlaced = true;
     }
   }
 
   return placed;
-}
-
-/**
- * @deprecated Prefer buildProposedPlan + placeConfirmedProcedures.
- * Kept for callers that still expect one-shot schedule; now builds PROPOSED only.
- */
-export async function planProgramFifo(
-  instanceId: string,
-  _startsOn: Date,
-): Promise<number> {
-  return buildProposedPlan(instanceId);
 }

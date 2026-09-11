@@ -33,31 +33,19 @@ describe("Clinic data scope (scope:*.all)", () => {
     ).not.toContain(CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL);
   });
 
-  it("defaults: doctor has no patients screen/API", () => {
+  it("defaults: doctor has patients API for assigned card (no patients screen)", () => {
     expect(
       DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.DOCTOR],
     ).not.toContain(CLINIC_PERMISSION.SCREEN_PATIENTS);
     expect(
       DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.DOCTOR],
-    ).not.toContain(CLINIC_PERMISSION.API_PATIENTS);
+    ).toContain(CLINIC_PERMISSION.API_PATIENTS);
   });
 
-  it("episode assigned where includes visit, prescription, allocation", () => {
+  it("episode assigned where is care-team only (CLI-56 strict)", () => {
     const where = episodeAssignedToPractitionerWhere("prac-1");
     expect(where).toEqual({
-      OR: [
-        { visits: { some: { practitionerId: "prac-1" } } },
-        {
-          procedureOrders: {
-            some: { prescribedByPractitionerId: "prac-1" },
-          },
-        },
-        {
-          procedureOrders: {
-            some: { allocations: { some: { practitionerId: "prac-1" } } },
-          },
-        },
-      ],
+      careDoctors: { some: { practitionerId: "prac-1" } },
     });
   });
 

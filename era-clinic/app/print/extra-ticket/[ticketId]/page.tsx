@@ -8,7 +8,7 @@ import { normalizePrintLang } from "@/domain/print/print-types";
 
 type Props = {
   params: Promise<{ ticketId: string }>;
-  searchParams: Promise<{ lang?: string; autoprint?: string }>;
+  searchParams: Promise<{ lang?: string; autoprint?: string; sheets?: string; copy?: string }>;
 };
 
 const COPIES = ["copyReception", "copyNurse", "copyGuest"] as const;
@@ -21,6 +21,14 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
   if (!orders.length) notFound();
   const first = orders[0]!;
   const branding = await getPrintBranding(lang);
+  // CLI-57 field: sheets=1 → one copy per window (reception opens ×3). Default = all 3 sheets.
+  const sheetCount = sp.sheets === "1" ? 1 : COPIES.length;
+  const copyIdx = Math.min(
+    Math.max(0, Number(sp.copy ?? "1") - 1),
+    COPIES.length - 1,
+  );
+  const copies: Array<(typeof COPIES)[number]> =
+    sheetCount === 1 ? [COPIES[copyIdx]!] : [...COPIES];
   const patient = {
     fullName: first.patientRef.fullName,
     sex: first.patientRef.sex,
@@ -42,7 +50,7 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
       title={printLabel(lang, "extraTicket")}
       autoPrint={sp.autoprint === "1"}
     >
-      {COPIES.map((copyKey, idx) => (
+      {copies.map((copyKey, idx) => (
         <Fragment key={copyKey}>
           {idx > 0 ? (
             <div className="mt-8 border-t border-black pt-6 print:break-before-page print:mt-0 print:border-0 print:pt-0" />

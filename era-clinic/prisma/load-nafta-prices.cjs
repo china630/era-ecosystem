@@ -6,6 +6,46 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const DEFAULT_PATH = path.join(__dirname, "seed-data", "nafta", "era-prices.json");
 
+function seedOrgId() {
+  return (
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    process.env.ORGANIZATION_ID?.trim() ||
+    "demo-org"
+  );
+}
+
+function inferKind(code, department) {
+  const c = String(code || "").trim().toUpperCase();
+  if (!c) return "OTHER";
+  if (c.startsWith("SVC-")) return "PROCEDURE";
+  if (department && String(department).trim()) return "PROCEDURE";
+  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return "LAB";
+  if (c.startsWith("VISIT-") || c === "CONSULT") return "VISIT";
+  if (
+    c.startsWith("CT-") ||
+    c.startsWith("MR-") ||
+    c.startsWith("MRI-") ||
+    c.startsWith("XR-") ||
+    c.startsWith("US-") ||
+    c.startsWith("USG") ||
+    c.startsWith("CARDIO-") ||
+    c.startsWith("FUNC-") ||
+    c.startsWith("ENDO-") ||
+    c.startsWith("DENSITOMETRY-") ||
+    c.startsWith("MAMMO") ||
+    c.startsWith("ECG") ||
+    c.startsWith("ECHO") ||
+    c.startsWith("DXA") ||
+    c.startsWith("HOLTER") ||
+    c.startsWith("ABPM") ||
+    c.startsWith("PET") ||
+    c.startsWith("UROFLOW")
+  ) {
+    return "DIAGNOSTIC";
+  }
+  return "OTHER";
+}
+
 function resolveDescription(row) {
   return (
     (row.description && String(row.description).trim()) ||
@@ -27,6 +67,7 @@ async function main() {
     throw new Error("era-prices.json must be a JSON array");
   }
 
+  const organizationId = seedOrgId();
   const now = new Date();
   let catalogCount = 0;
   let typeCount = 0;
@@ -49,21 +90,27 @@ async function main() {
         ? String(enByCode[code]).trim()
         : null;
     const packageIncluded = Boolean(row.packageIncluded);
-    const amount = packageIncluded ? 0 : Number(row.amount ?? 0);
+    const rowAmount = Number(row.amount ?? 0);
+    const amount = packageIncluded ? 0 : rowAmount;
+    const listAmount = rowAmount > 0 ? rowAmount : null;
     const department = row.department ? String(row.department).trim() : null;
 
+    const kind = inferKind(code, department);
+
     await prisma.serviceCatalogCache.upsert({
-      where: { code },
+      where: { organizationId_code: { organizationId, code } },
       create: {
+        organizationId,
         code,
         description,
         descriptionAz,
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
-        kind: "PROCEDURE",
+        kind,
         syncedAt: now,
       },
       update: {
@@ -72,17 +119,18 @@ async function main() {
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
-        kind: "PROCEDURE",
+        kind,
         syncedAt: now,
       },
     });
     catalogCount++;
 
     const pt = await prisma.procedureType.upsert({
-      where: { code },
-      create: { code, name: description, durationMin: 15 },
+      where: { organizationId_code: { organizationId, code } },
+      create: { organizationId, code, name: description, durationMin: 15 },
       update: { name: description },
     });
     typeCount++;

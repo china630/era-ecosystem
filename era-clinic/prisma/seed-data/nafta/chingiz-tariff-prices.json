@@ -1,0 +1,1472 @@
+[
+  {
+    "code": "CARDIO-ECG",
+    "descriptionAz": "EKQ",
+    "descriptionRu": "ЭКГ",
+    "descriptionEn": "ECG",
+    "description": "ЭКГ",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Naftalan Müayinə Programı"
+  },
+  {
+    "code": "CARDIO-ECHO",
+    "descriptionAz": "EXO KQ",
+    "descriptionRu": "",
+    "descriptionEn": "Echocardiography",
+    "description": "EXO KQ",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  },
+  {
+    "code": "LAB-AF-GENITAL",
+    "descriptionAz": "AF Genital",
+    "descriptionRu": "АФ Генитал",
+    "descriptionEn": "AF Genital",
+    "description": "АФ Генитал",
+    "amount": 65,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-AFP",
+    "descriptionAz": "AFP",
+    "descriptionRu": "AFP",
+    "descriptionEn": "AFP",
+    "description": "AFP",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ALAT",
+    "descriptionAz": "ALAT",
+    "descriptionRu": "АЛАТ",
+    "descriptionEn": "ALAT",
+    "description": "АЛАТ",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ALP",
+    "descriptionAz": "ALP",
+    "descriptionRu": "ЩФ",
+    "descriptionEn": "ALP",
+    "description": "ЩФ",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ANTI-TPO",
+    "descriptionAz": "Anti-TPO",
+    "descriptionRu": "Anti-TPO",
+    "descriptionEn": "Anti-TPO",
+    "description": "Anti-TPO",
+    "amount": 27,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ASAT",
+    "descriptionAz": "ASAT",
+    "descriptionRu": "АСАТ",
+    "descriptionEn": "ASAT",
+    "description": "АСАТ",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ASO",
+    "descriptionAz": "ASO",
+    "descriptionRu": "ASO",
+    "descriptionEn": "ASO",
+    "description": "ASO",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-BIOCHEM",
+    "descriptionAz": "Ümumi müayinə paneli (Urea, Crea, GLU, ALT, AST, UA, HDL, TC, TG, LDL*)",
+    "descriptionRu": "Общая метабоическая панель",
+    "descriptionEn": "Comprhensice kit",
+    "description": "Общая метабоическая панель",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-CALCIUM",
+    "descriptionAz": "Kalsium",
+    "descriptionRu": "Кальций",
+    "descriptionEn": "Calcium",
+    "description": "Кальций",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-CARDIAC",
+    "descriptionAz": "Kardial panel (AST, LDH, HBDH, CK, CK-MB)",
+    "descriptionRu": "Сердечная панель",
+    "descriptionEn": "Cardial kit",
+    "description": "Сердечная панель",
+    "amount": 28,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-CBC",
+    "descriptionAz": "Qanın ümumi analizi (18 parametr+EÇS)",
+    "descriptionRu": "Общий анализ крови (18 параметров+СОЭ)",
+    "descriptionEn": "CBC (18 parameters+ ESR)",
+    "description": "Общий анализ крови (18 параметров+СОЭ)",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-CHOL",
+    "descriptionAz": "Xolesterol",
+    "descriptionRu": "Холестерол",
+    "descriptionEn": "Cholesterol",
+    "description": "Холестерол",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-COAG",
+    "descriptionAz": "Koaquloqramma (APTT, Fib, PT, TT, INR*)",
+    "descriptionRu": "Коагулограмма",
+    "descriptionEn": "Coagulation panel",
+    "description": "Коагулограмма",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-CREATININE",
+    "descriptionAz": "Creatinin",
+    "descriptionRu": "Креатинин",
+    "descriptionEn": "Creatinin",
+    "description": "Креатинин",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-CRP",
+    "descriptionAz": "C-Reactive Protein (CRP)",
+    "descriptionRu": "C-Reactive Protein (CRP)",
+    "descriptionEn": "C-Reactive Protein (CRP)",
+    "description": "C-Reactive Protein (CRP)",
+    "amount": 22,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-D-DIMER",
+    "descriptionAz": "D-dimer",
+    "descriptionRu": "D-dimer",
+    "descriptionEn": "D-dimer",
+    "description": "D-dimer",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-DIFF",
+    "descriptionAz": "Leykoformula",
+    "descriptionRu": "Лейкоформула",
+    "descriptionEn": "Leykoformula",
+    "description": "Лейкоформула",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ELECTRO",
+    "descriptionAz": "Elektrolit paneli (Ca,Cl, K, Na, PHOS, Mg, tCO2)",
+    "descriptionRu": "Электрлиты",
+    "descriptionEn": "Eletrolites",
+    "description": "Электрлиты",
+    "amount": 28,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-ESTRADIOL",
+    "descriptionAz": "Estradiol (E2) Diagnostic Kit",
+    "descriptionRu": "Estradiol (E2) Diagnostic Kit",
+    "descriptionEn": "Estradiol (E2) Diagnostic Kit",
+    "description": "Estradiol (E2) Diagnostic Kit",
+    "amount": 27,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-FPSA",
+    "descriptionAz": "Free Prostate Specific Antigen (f-PSA)",
+    "descriptionRu": "Free Prostate Specific Antigen (f-PSA)",
+    "descriptionEn": "Free Prostate Specific Antigen (f-PSA)",
+    "description": "Free Prostate Specific Antigen (f-PSA)",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-FT3",
+    "descriptionAz": "Free Triiodothyronine (fT3)",
+    "descriptionRu": "Free Triiodothyronine (fT3)",
+    "descriptionEn": "Free Triiodothyronine (fT3)",
+    "description": "Free Triiodothyronine (fT3)",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-FT4",
+    "descriptionAz": "Free Thyroxine (fT4)",
+    "descriptionRu": "Free Thyroxine (fT4)",
+    "descriptionEn": "Free Thyroxine (fT4)",
+    "description": "Free Thyroxine (fT4)",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-GLUCOSE",
+    "descriptionAz": "Qan zərdabında şəkər",
+    "descriptionRu": "Сахар в крови",
+    "descriptionEn": "Glucose",
+    "description": "Сахар в крови",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-GYN-SMEAR",
+    "descriptionAz": "Uretral/vaginal yaxma",
+    "descriptionRu": "Уретральный/вагинальный мазок",
+    "descriptionEn": "Urethral\\Vaginal smear",
+    "description": "Уретральный/вагинальный мазок",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-HBA1C",
+    "descriptionAz": "HbA1c- Glycosylated Hemoglobin",
+    "descriptionRu": "HbA1c- Glycosylated Hemoglobin",
+    "descriptionEn": "HbA1c- Glycosylated Hemoglobin",
+    "description": "HbA1c- Glycosylated Hemoglobin",
+    "amount": 22,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-HBSAG",
+    "descriptionAz": "HBsAg",
+    "descriptionRu": "HBsAg",
+    "descriptionEn": "HBsAg",
+    "description": "HBsAg",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-HCV",
+    "descriptionAz": "HCV",
+    "descriptionRu": "HCV",
+    "descriptionEn": "HCV",
+    "description": "HCV",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-HDL",
+    "descriptionAz": "HDL Xolesterol",
+    "descriptionRu": "ХДЛ Холестерол",
+    "descriptionEn": "HDL Cholesterol",
+    "description": "ХДЛ Холестерол",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-IGE",
+    "descriptionAz": "Total Immunoglobulin E (Total IgE)",
+    "descriptionRu": "Total Immunoglobulin E (Total IgE)",
+    "descriptionEn": "Total Immunoglobulin E (Total IgE)",
+    "description": "Total Immunoglobulin E (Total IgE)",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-INSULIN",
+    "descriptionAz": "Insulin (INS)",
+    "descriptionRu": "Insulin (INS)",
+    "descriptionEn": "Insulin (INS)",
+    "description": "Insulin (INS)",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-LDL",
+    "descriptionAz": "LDL Xolesterol",
+    "descriptionRu": "ЛДЛ Холестерин",
+    "descriptionEn": "LDL Cholesterol",
+    "description": "ЛДЛ Холестерин",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-LIVER",
+    "descriptionAz": "Qara ciyər paneli (ALB, ALP, ALT, AST, DB, GGT, TB, TP, A/G*, GLOB*, IBIL)",
+    "descriptionRu": "Печеночные пробы",
+    "descriptionEn": "Liver panel",
+    "description": "Печеночные пробы",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-MAU",
+    "descriptionAz": "MAU-Urinary Microalbumin",
+    "descriptionRu": "MAU-Urinary Microalbumin",
+    "descriptionEn": "MAU-Urinary Microalbumin",
+    "description": "MAU-Urinary Microalbumin",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-PROLACTIN",
+    "descriptionAz": "Prolactin (PRL)",
+    "descriptionRu": "Prolactin (PRL)",
+    "descriptionEn": "Prolactin (PRL)",
+    "description": "Prolactin (PRL)",
+    "amount": 27,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-PSA",
+    "descriptionAz": "Prostate Specific Antigen (PSA)",
+    "descriptionRu": "Prostate Specific Antigen (PSA)",
+    "descriptionEn": "Prostate Specific Antigen (PSA)",
+    "description": "Prostate Specific Antigen (PSA)",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-PT",
+    "descriptionAz": "Protrombin",
+    "descriptionRu": "Протромбин",
+    "descriptionEn": "Prothrombin",
+    "description": "Протромбин",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-RENAL",
+    "descriptionAz": "Böyrək paneli (Ca, Crea, GLU, UA, tCO2, PHOS, UREA)",
+    "descriptionRu": "Почечные пробы",
+    "descriptionEn": "Kidney panel",
+    "description": "Почечные пробы",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-RF",
+    "descriptionAz": "Revmatik faktor",
+    "descriptionRu": "Ревматический фактор",
+    "descriptionEn": "Reumatic factor",
+    "description": "Ревматический фактор",
+    "amount": 22,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-SEMEN",
+    "descriptionAz": "Spermogram",
+    "descriptionRu": "Спермограм",
+    "descriptionEn": "Spermogram",
+    "description": "Спермограм",
+    "amount": 24,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-SMEAR",
+    "descriptionAz": "Yaxma mikroskopiyası",
+    "descriptionRu": "Микроскопия мазка",
+    "descriptionEn": "Smear microscopy",
+    "description": "Микроскопия мазка",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-SYPHILIS",
+    "descriptionAz": "Syphilis",
+    "descriptionRu": "Syphilis",
+    "descriptionEn": "Syphilis",
+    "description": "Syphilis",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-T3",
+    "descriptionAz": "Triiodothyronine (T3)",
+    "descriptionRu": "Triiodothyronine (T3)",
+    "descriptionEn": "Triiodothyronine (T3)",
+    "description": "Triiodothyronine (T3)",
+    "amount": 22,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-T4",
+    "descriptionAz": "Thyroxine (T4)",
+    "descriptionRu": "Thyroxine (T4)",
+    "descriptionEn": "Thyroxine (T4)",
+    "description": "Thyroxine (T4)",
+    "amount": 22,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-TESTOSTERONE",
+    "descriptionAz": "Testosterone (TSTO)",
+    "descriptionRu": "Testosterone (TSTO)",
+    "descriptionEn": "Testosterone (TSTO)",
+    "description": "Testosterone (TSTO)",
+    "amount": 22,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-TRIG",
+    "descriptionAz": "Triqliseridlər",
+    "descriptionRu": "Триглицериды",
+    "descriptionEn": "Triglycerides",
+    "description": "Триглицериды",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-TSH",
+    "descriptionAz": "Thyroid Stimulating Hormone (TSH)",
+    "descriptionRu": "Thyroid Stimulating Hormone (TSH)",
+    "descriptionEn": "Thyroid Stimulating Hormone (TSH)",
+    "description": "Thyroid Stimulating Hormone (TSH)",
+    "amount": 27,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-UREA",
+    "descriptionAz": "Sidik cövhəri",
+    "descriptionRu": "Мочевина",
+    "descriptionEn": "Urea",
+    "description": "Мочевина",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-URIC-ACID",
+    "descriptionAz": "Sidik turşusu",
+    "descriptionRu": "Мочевая кислота",
+    "descriptionEn": "Uric acid",
+    "description": "Мочевая кислота",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-URINE",
+    "descriptionAz": "Sidiyin ümumi analizi",
+    "descriptionRu": "Общий анализ мочи",
+    "descriptionEn": "Urinalysis",
+    "description": "Общий анализ мочи",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-VITAMIN-B12",
+    "descriptionAz": "Vitamin B12 (VB12)",
+    "descriptionRu": "Vitamin B12 (VB12)",
+    "descriptionEn": "Vitamin B12 (VB12)",
+    "description": "Vitamin B12 (VB12)",
+    "amount": 48,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-VITAMIN-D",
+    "descriptionAz": "Vitamin D -25-OH-D",
+    "descriptionRu": "Vitamin D -25-OH-D",
+    "descriptionEn": "Vitamin D -25-OH-D",
+    "description": "Vitamin D -25-OH-D",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-VLDL",
+    "descriptionAz": "VLDL Xolesterol",
+    "descriptionRu": "ВЛДЛ Холестерол",
+    "descriptionEn": "VLDL Cholesterol",
+    "description": "ВЛДЛ Холестерол",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "SVC-AMPLIPULS",
+    "descriptionAz": "Amplipuls",
+    "descriptionRu": "Амплипульстерапия",
+    "descriptionEn": "Amplipulse therapy",
+    "description": "Амплипульстерапия",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-AYAQLARIN-REFLEKSO-TERAPIYAS",
+    "descriptionAz": "Ayaqların Refleksoterapiyası",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Ayaqların Refleksoterapiyası",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-BIOREVITALIZASIYA",
+    "descriptionAz": "Biorevitalizasiya",
+    "descriptionRu": "Биоревитализация",
+    "descriptionEn": "Biorevitalization",
+    "description": "Биоревитализация",
+    "amount": 160,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-BUKME",
+    "descriptionAz": "Bükmə",
+    "descriptionRu": "Обертывание",
+    "descriptionEn": "Wrapping",
+    "description": "Обертывание",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-DARSONVAL",
+    "descriptionAz": "Darsonval",
+    "descriptionRu": "Дарсонваль",
+    "descriptionEn": "Darsonvalization",
+    "description": "Дарсонваль",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-DOLGU-1QR",
+    "descriptionAz": "Dolğu 1qr",
+    "descriptionRu": "Филлеры 1 мл",
+    "descriptionEn": "Dermal filler 1 ml",
+    "description": "Филлеры 1 мл",
+    "amount": 220,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-ELEKTROFOREZ",
+    "descriptionAz": "Elektroforez",
+    "descriptionRu": "Электрофорез",
+    "descriptionEn": "Electrophoresis",
+    "description": "Электрофорез",
+    "amount": 0,
+    "packageIncluded": false,
+    "department": "Пакет услуг"
+  },
+  {
+    "code": "SVC-FITO-TERAPIYA-BOCKA",
+    "descriptionAz": "Fito terapiya (boçka)",
+    "descriptionRu": "Фитотерапия (бочка)",
+    "descriptionEn": "Herbal steam barrel (phytotherapy)",
+    "description": "Фитотерапия (бочка)",
+    "amount": 16,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-FULL-BOTOKS-1-PROSEDURU",
+    "descriptionAz": "Full botoks 1 proseduru",
+    "descriptionRu": "Полный ботокс (1 процедура)",
+    "descriptionEn": "Full-face botulinum toxin (1 session)",
+    "description": "Полный ботокс (1 процедура)",
+    "amount": 200,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-GINEKOLOJI-TAMPON",
+    "descriptionAz": "Ginekoloji tampon",
+    "descriptionRu": "Гинекологический тампон",
+    "descriptionEn": "Gynecological tampon",
+    "description": "Гинекологический тампон",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-HICAMA-1-BANKA",
+    "descriptionAz": "Hicama 1 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 1 Banka",
+    "amount": 8,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-10-BANKA",
+    "descriptionAz": "Hicama 10 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 10 Banka",
+    "amount": 45,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-2-BANKA",
+    "descriptionAz": "Hicama 2 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 2 Banka",
+    "amount": 9,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-3-BANKA",
+    "descriptionAz": "Hicama 3 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 3 Banka",
+    "amount": 13.5,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-4-BANKA",
+    "descriptionAz": "Hicama 4 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 4 Banka",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-5-BANKA",
+    "descriptionAz": "Hicama 5 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 5 Banka",
+    "amount": 22.5,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-6-BANKA",
+    "descriptionAz": "Hicama 6 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 6 Banka",
+    "amount": 27,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-7-BANKA",
+    "descriptionAz": "Hicama 7 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 7 Banka",
+    "amount": 31.5,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-8-BANKA",
+    "descriptionAz": "Hicama 8 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 8 Banka",
+    "amount": 36,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-9-BANKA",
+    "descriptionAz": "Hicama 9 Banka",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama 9 Banka",
+    "amount": 40.5,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-BOYUK",
+    "descriptionAz": "Hicama (böyük nahiyyə)",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama (böyük nahiyyə)",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HICAMA-KICIK",
+    "descriptionAz": "Hicama (kicik nahiyyə)",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Hicama (kicik nahiyyə)",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "HICAMA"
+  },
+  {
+    "code": "SVC-HIDROKOLON",
+    "descriptionAz": "Hidrokolon",
+    "descriptionRu": "Гидроколон",
+    "descriptionEn": "Hydrocolon",
+    "description": "Гидроколон",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-HIDROKOLON-BITKI",
+    "descriptionAz": "Hidrokоlon (bitki çayı ilə)",
+    "descriptionRu": "Гидроколон (с настойкой цветов ромашки полевой)",
+    "descriptionEn": "Hydrocolon (with herbal tincture)",
+    "description": "Гидроколон (с настойкой цветов ромашки полевой)",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-HIDROMASAJ-VANNASI",
+    "descriptionAz": "Hidromasaj vannası",
+    "descriptionRu": "Гидромассажная ванна",
+    "descriptionEn": "Hydromassage bath",
+    "description": "Гидромассажная ванна",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-HIDROQALVANIZASIYA-4-KAMERA-VANNA",
+    "descriptionAz": "4 kamera hidroqalvanizasiya vannası",
+    "descriptionRu": "4 камерная ванна гидрогальванизация",
+    "descriptionEn": "4 chamber hydrogalvanization bath",
+    "description": "4 камерная ванна гидрогальванизация",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-INQALYASIYA",
+    "descriptionAz": "İnqalyasiya",
+    "descriptionRu": "Ингаляции",
+    "descriptionEn": "Inhalation therapy",
+    "description": "Ингаляции",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-ISIQ-VANNAS",
+    "descriptionAz": "İşıq Vannası",
+    "descriptionRu": "Светвая ванна",
+    "descriptionEn": "Light bath",
+    "description": "Светвая ванна",
+    "amount": 10,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-KARBOKSITERAPIYA",
+    "descriptionAz": "Karboksiterapiya",
+    "descriptionRu": "Карбокситерапия",
+    "descriptionEn": "Carboxytherapy",
+    "description": "Карбокситерапия",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-KARBON-VANNASI",
+    "descriptionAz": "Karbon vannası",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Karbon vannası",
+    "amount": 19,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-KINEZIOTERAPIYA",
+    "descriptionAz": "Kinezioterapiya",
+    "descriptionRu": "Кинезиотерапия",
+    "descriptionEn": "Kinesiotherapy",
+    "description": "Кинезиотерапия",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Мануальная терапия"
+  },
+  {
+    "code": "SVC-LAZERTERAPIYA",
+    "descriptionAz": "Lazerterapiya",
+    "descriptionRu": "Лазеротерапия",
+    "descriptionEn": "Laser therapy",
+    "description": "Лазеротерапия",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-LIMFODRENAJ",
+    "descriptionAz": "Limfodrenaj",
+    "descriptionRu": "Лимфодренаж",
+    "descriptionEn": "Lymphatic drainage",
+    "description": "Лимфодренаж",
+    "amount": 16,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-MANUAL-TERAPIYA",
+    "descriptionAz": "Manual terapiya",
+    "descriptionRu": "Мануальная терапия",
+    "descriptionEn": "Manual therapy",
+    "description": "Мануальная терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия"
+  },
+  {
+    "code": "SVC-MAQNITOTERAPIYA",
+    "descriptionAz": "Maqnitoterapiya",
+    "descriptionRu": "Магнитотерапия",
+    "descriptionEn": "Magnetic field therapy",
+    "description": "Магнитотерапия",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-MASSAJ-KLASIK-15-DQ",
+    "descriptionAz": "Massaj klassik 15 dəq",
+    "descriptionRu": "Массаж классический 15 мин",
+    "descriptionEn": "Classic massage 15 min",
+    "description": "Массаж классический 15 мин",
+    "amount": 16,
+    "packageIncluded": false,
+    "department": "Klassik Masaj (tibbi)"
+  },
+  {
+    "code": "SVC-MASSAJ-KLASIK-30-DQ",
+    "descriptionAz": "Massaj klassik 30 dəq",
+    "descriptionRu": "Массаж классический 30 мин",
+    "descriptionEn": "Classic massage 30 min",
+    "description": "Массаж классический 30 мин",
+    "amount": 19,
+    "packageIncluded": false,
+    "department": "Klassik Masaj (tibbi)"
+  },
+  {
+    "code": "SVC-METABOLIK-INFUZIYA",
+    "descriptionAz": "Metabolik infuziya",
+    "descriptionRu": "Метаболические инфузии",
+    "descriptionEn": "Metabolic infusion",
+    "description": "Метаболические инфузии",
+    "amount": 75,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-MEZOTERAPIYA-SAC",
+    "descriptionAz": "Mezoterapiya (saç)",
+    "descriptionRu": "Мезотерапия волос",
+    "descriptionEn": "Hair mesotherapy",
+    "description": "Мезотерапия волос",
+    "amount": 75,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-MEZOTERAPIYA-UZ",
+    "descriptionAz": "Mezoterapiya (üz)",
+    "descriptionRu": "Мезотерапия лица",
+    "descriptionEn": "Facial mesotherapy",
+    "description": "Мезотерапия лица",
+    "amount": 75,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-MIKROKLSIMA",
+    "descriptionAz": "Mikrokilizma",
+    "descriptionRu": "Микроклизма",
+    "descriptionEn": "Microclyster",
+    "description": "Микроклизма",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-MIOFASSIAL-TERAPIYA",
+    "descriptionAz": "Miofassial terapiya",
+    "descriptionRu": "Миофасциальная терапия",
+    "descriptionEn": "Myofascial therapy",
+    "description": "Миофасциальная терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия"
+  },
+  {
+    "code": "SVC-MUALICEVI-BLOKADA",
+    "descriptionAz": "Müalicəvi blokada",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Müalicəvi blokada",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-MUALICEVI-IDMAN",
+    "descriptionAz": "Mualicevi Idman",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Mualicevi Idman",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Naftalan Müalicə Programı"
+  },
+  {
+    "code": "SVC-NAFTALAN-4-KAMERA-VANNA",
+    "descriptionAz": "4 kamera naftalan vanna",
+    "descriptionRu": "4-х камерная ванна нафталан",
+    "descriptionEn": "4-chamber naftalan bath",
+    "description": "4-х камерная ванна нафталан",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-NAFTALAN-APLIKASIYA",
+    "descriptionAz": "Aplikasiya naftalan",
+    "descriptionRu": "Аппликация ректифицированным нафталаном",
+    "descriptionEn": "Application with rectified naphthalan oil",
+    "description": "Аппликация ректифицированным нафталаном",
+    "amount": 24,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-OSTEOPATIYA",
+    "descriptionAz": "Osteopatiya",
+    "descriptionRu": "Остеопатия",
+    "descriptionEn": "Osteopathy",
+    "description": "Остеопатия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия"
+  },
+  {
+    "code": "SVC-OZONTERAPIYA",
+    "descriptionAz": "Ozonterapiya",
+    "descriptionRu": "Озонотерапия",
+    "descriptionEn": "Ozone therapy",
+    "description": "Озонотерапия",
+    "amount": 17,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-PARAFIN-ASAGI-ETRAF",
+    "descriptionAz": "Parafin aşağı nahiyə",
+    "descriptionRu": "Парафин поясница-нихние конечности",
+    "descriptionEn": "Paraffin lower back-lower limbs",
+    "description": "Парафин поясница-нихние конечности",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Parafin"
+  },
+  {
+    "code": "SVC-PARAFIN-BUTUN-BEDEN",
+    "descriptionAz": "Parafin bütün bədən",
+    "descriptionRu": "Парафин все тело",
+    "descriptionEn": "Paraffin whole body",
+    "description": "Парафин все тело",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "Parafin"
+  },
+  {
+    "code": "SVC-PARAFIN-KUREK-ONURGA",
+    "descriptionAz": "Parafin kürək onurğa",
+    "descriptionRu": "Парафин спина",
+    "descriptionEn": "Paraffin back",
+    "description": "Парафин спина",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Parafin"
+  },
+  {
+    "code": "SVC-PARAFIN-YUXARI-ETRAF",
+    "descriptionAz": "Parafin yuxarı nahiyə",
+    "descriptionRu": "Парафин плечевая область",
+    "descriptionEn": "Paraffin shoulder area",
+    "description": "Парафин плечевая область",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Parafin"
+  },
+  {
+    "code": "SVC-PILINQ-UZ",
+    "descriptionAz": "Pilinq (üz)",
+    "descriptionRu": "Пилинг лица",
+    "descriptionEn": "Facial peel",
+    "description": "Пилинг лица",
+    "amount": 70,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-PNEVMOPUNKTURA",
+    "descriptionAz": "Pnevmopunktura",
+    "descriptionRu": "Пневмопунктура",
+    "descriptionEn": "Pneumo puncture",
+    "description": "Пневмопунктура",
+    "amount": 19,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-PRP-TERAPIYA",
+    "descriptionAz": "PRP terapiya",
+    "descriptionRu": "PRP-терапия",
+    "descriptionEn": "PRP therapy",
+    "description": "PRP-терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Косметолог"
+  },
+  {
+    "code": "SVC-QiSA-DALGA-TERAPIYA",
+    "descriptionAz": "Qısa dalğa terapiya (UVÇ)",
+    "descriptionRu": "Коротко волновая терапия УВЧ",
+    "descriptionEn": "Short vawe therapu",
+    "description": "Коротко волновая терапия УВЧ",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Naftalan Müalicə Programı"
+  },
+  {
+    "code": "SVC-QUA-SA-TERAPIYA",
+    "descriptionAz": "QUA-SA terapiya",
+    "descriptionRu": "Гуаша-терапия",
+    "descriptionEn": "Gua sha therapy",
+    "description": "Гуаша-терапия",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Мануальная терапия"
+  },
+  {
+    "code": "SVC-REFLEKSO-TERAPIYA",
+    "descriptionAz": "Reflekso terapiya (iynə batırma)",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Reflekso terapiya (iynə batırma)",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-SOLLYUKS",
+    "descriptionAz": "Sollyuks",
+    "descriptionRu": "Соллюкс",
+    "descriptionEn": "Sollux lamp therapy",
+    "description": "Соллюкс",
+    "amount": 14,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-SPELEOTERAPIYA",
+    "descriptionAz": "Speleoterapiya (duz otağı)",
+    "descriptionRu": "Спелеотерапия (соляная комната)",
+    "descriptionEn": "Speleotherapy (salt room)",
+    "description": "Спелеотерапия (соляная комната)",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-SUPER-INDUCTIVE-TERAPIYA",
+    "descriptionAz": "Super induktiv terapiya",
+    "descriptionRu": "Супер индуктивная терапия",
+    "descriptionEn": "Super inductive therapy",
+    "description": "Супер индуктивная терапия",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-TRAKSIYA",
+    "descriptionAz": "Traksiya (quru)",
+    "descriptionRu": "Тракция (сухая)",
+    "descriptionEn": "Traction (dry)",
+    "description": "Тракция (сухая)",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-TURUNDA-BURUN",
+    "descriptionAz": "Turunda burun",
+    "descriptionRu": "Турунда в нос ректфицированным нафталаном",
+    "descriptionEn": "Nasal tampon with rectified naphthalan oil",
+    "description": "Турунда в нос ректфицированным нафталаном",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-TURUNDA-QULAQ",
+    "descriptionAz": "Turunda qulaq",
+    "descriptionRu": "Турунда в ухо ректфицированным нафталаном",
+    "descriptionEn": "Ear tampon ear with rectified naphthalan oil",
+    "description": "Турунда в ухо ректфицированным нафталаном",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-UFB-TERAPIYA",
+    "descriptionAz": "UFB terapiya",
+    "descriptionRu": "УФБ-терапия",
+    "descriptionEn": "UVB phototherapy",
+    "description": "УФБ-терапия",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-ULTRAFONOFOREZ",
+    "descriptionAz": "Ultrafonoforez (Naftalan yağıyla)",
+    "descriptionRu": "Ультрафонофорез (масло)",
+    "descriptionEn": "Ultraphonophoresis (naftalan oil)",
+    "description": "Ультрафонофорез (масло)",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-UROLOJI-VIBRO-LAZER",
+    "descriptionAz": "Uroloji Vibro lazer",
+    "descriptionRu": "Урологический вибролазер",
+    "descriptionEn": "Urological vibrolaser therapy",
+    "description": "Урологический вибролазер",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-UZ-MASAJI-15-DQ",
+    "descriptionAz": "Sadə üz masajı 15 dəq",
+    "descriptionRu": "Простой массаж лица 15 мин.",
+    "descriptionEn": "Simple facial massage 15 min.",
+    "description": "Простой массаж лица 15 мин.",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": null
+  },
+  {
+    "code": "SVC-VAKUUMTERAPIYA",
+    "descriptionAz": "Vakuumterapiya",
+    "descriptionRu": "Вакуумная терапия",
+    "descriptionEn": "Vacuum therapy",
+    "description": "Вакуумная терапия",
+    "amount": 11,
+    "packageIncluded": false,
+    "department": "Физиотерапия"
+  },
+  {
+    "code": "SVC-VENADAXILI-INYEKSIYA",
+    "descriptionAz": "Venadaxili inyeksiya",
+    "descriptionRu": "Внутривенные инъекции",
+    "descriptionEn": "Intravenous injection",
+    "description": "Внутривенные инъекции",
+    "amount": 3,
+    "packageIncluded": false,
+    "department": "Поликлиника"
+  },
+  {
+    "code": "SVC-VENADAXILI-SISTEM",
+    "descriptionAz": "Venadxili sistem",
+    "descriptionRu": "Внутривенное вливание",
+    "descriptionEn": "Intravenous infusion",
+    "description": "Внутривенное вливание",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-VISSERAL-TERAPIYA",
+    "descriptionAz": "Visseral terapiya",
+    "descriptionRu": "Висцеральная терапия",
+    "descriptionEn": "Visceral therapy",
+    "description": "Висцеральная терапия",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Мануальная терапия"
+  },
+  {
+    "code": "SVC-XALLARIN-KOAQULYASIYASI",
+    "descriptionAz": "Xalların koaqulyasiyası",
+    "descriptionRu": "",
+    "descriptionEn": "",
+    "description": "Xalların koaqulyasiyası",
+    "amount": 5,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-YOD-BROM-VANNASI",
+    "descriptionAz": "Yod-Brom vannası",
+    "descriptionRu": "Йод Бром ванна",
+    "descriptionEn": "Iodine Bromine bath",
+    "description": "Йод Бром ванна",
+    "amount": 18,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "SVC-ZERBE-DALGA-TERAPIYA",
+    "descriptionAz": "Zərbə dalğa",
+    "descriptionRu": "Ударно-волновая терапия",
+    "descriptionEn": "Shock wave therapy",
+    "description": "Ударно-волновая терапия",
+    "amount": 24,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "USG-ABD",
+    "descriptionAz": "USM Ümumi abdominal",
+    "descriptionRu": "УЗИ общее полость живота",
+    "descriptionEn": "Abdominal cavity ltrasound",
+    "description": "УЗИ общее полость живота",
+    "amount": 45,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-BREAST",
+    "descriptionAz": "USM Süd vəziləri",
+    "descriptionRu": "УЗИ молочных желез",
+    "descriptionEn": "Mammary glands ultrsound",
+    "description": "УЗИ молочных желез",
+    "amount": 30,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-KIDNEY",
+    "descriptionAz": "USM Böyrəklər",
+    "descriptionRu": "УЗИ почек",
+    "descriptionEn": "Renal USM",
+    "description": "УЗИ почек",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "USG-MSK",
+    "descriptionAz": "USM Bud-çanaq oynağı nahiyəsi",
+    "descriptionRu": "Тазобедренный сустав УЗИ",
+    "descriptionEn": "Hip joint ulstarsound",
+    "description": "Тазобедренный сустав УЗИ",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-NECK-LN",
+    "descriptionAz": "USM Limfa düyünləri",
+    "descriptionRu": "УЗИ лмфатических узлов",
+    "descriptionEn": "Lypmphatic noodles USM",
+    "description": "УЗИ лмфатических узлов",
+    "amount": 12,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-OBST-T1",
+    "descriptionAz": "USM Hamiləlik kiçik müddət",
+    "descriptionRu": "Беременность УЗИ малый срок",
+    "descriptionEn": "Pregnancy short therm ultrasound",
+    "description": "Беременность УЗИ малый срок",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-OBST-T3",
+    "descriptionAz": "USM Hamiləlik böyük müddət",
+    "descriptionRu": "Беременность УЗИ большой срок",
+    "descriptionEn": "Pregnancy long therm ultrasound",
+    "description": "Беременность УЗИ большой срок",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-PELVIC",
+    "descriptionAz": "USM Ginekoloji",
+    "descriptionRu": "Гинекологиеское УЗИ",
+    "descriptionEn": "Gynecological",
+    "description": "Гинекологиеское УЗИ",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "Ödənişli Prosedurlar"
+  },
+  {
+    "code": "USG-PROSTATE",
+    "descriptionAz": "USM Skrotal",
+    "descriptionRu": "",
+    "descriptionEn": "Prostate / scrotum ultrasound",
+    "description": "USM Skrotal",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-THYROID",
+    "descriptionAz": "USM Tiroid",
+    "descriptionRu": "УЗИ щитовидной железы",
+    "descriptionEn": "Thyroid ultrasound",
+    "description": "УЗИ щитовидной железы",
+    "amount": 25,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "USG-VEIN-LL",
+    "descriptionAz": "USM Dopler 2 ətraf",
+    "descriptionRu": "Доплерография УЗИ 2 конечности",
+    "descriptionEn": "Doppler ultrasound 2 legs",
+    "description": "Доплерография УЗИ 2 конечности",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": "USM"
+  },
+  {
+    "code": "VISIT-CARDIO",
+    "descriptionAz": "Kardioloqun qəbulu",
+    "descriptionRu": "Приём кардиолога",
+    "descriptionEn": "Cardiology visit",
+    "description": "Приём кардиолога",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  },
+  {
+    "code": "VISIT-CHECKUP",
+    "descriptionAz": "Baş Həkim qəbulu",
+    "descriptionRu": "Приём главного врача",
+    "descriptionEn": "Chief Physician's Office",
+    "description": "Приём главного врача",
+    "amount": 35,
+    "packageIncluded": false,
+    "department": null
+  },
+  {
+    "code": "VISIT-DERM",
+    "descriptionAz": "Dermatoloq qəbulu",
+    "descriptionRu": "Приём дерматолога",
+    "descriptionEn": "Dermatology visit",
+    "description": "Приём дерматолога",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  },
+  {
+    "code": "VISIT-GP",
+    "descriptionAz": "Terapevt qəbulu",
+    "descriptionRu": "Приём терапевта",
+    "descriptionEn": "Physician specialist visit",
+    "description": "Приём терапевта",
+    "amount": 20,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  },
+  {
+    "code": "VISIT-GYN",
+    "descriptionAz": "Ginekoloq qəbulu",
+    "descriptionRu": "Приём гинеколога",
+    "descriptionEn": "Gynecology visit",
+    "description": "Приём гинеколога",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  },
+  {
+    "code": "VISIT-NEURO",
+    "descriptionAz": "Nevroloqun qəbulu",
+    "descriptionRu": "Приём невролога",
+    "descriptionEn": "Neurology visit",
+    "description": "Приём невролога",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  },
+  {
+    "code": "VISIT-URO",
+    "descriptionAz": "Uroloq qəbulu",
+    "descriptionRu": "Приём уролога",
+    "descriptionEn": "Urology visit",
+    "description": "Приём уролога",
+    "amount": 15,
+    "packageIncluded": false,
+    "department": "Əlavə Həkim qəbulu"
+  }
+]

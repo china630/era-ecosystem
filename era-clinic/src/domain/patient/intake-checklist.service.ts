@@ -9,6 +9,7 @@ import {
   resolveNaftaIntakeCode,
   type NaftaIntakeSlotCode,
 } from "@/lib/import/nafta-intake-map";
+import { parseEntitlementSnapshot } from "@/domain/sanatorium/program-template-admin";
 
 export type IntakeChecklistStatus = "DONE" | "ORDERED" | "MISSING";
 
@@ -33,6 +34,19 @@ const LAB_ORDERED = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
 const VISIT_DONE = new Set(["COMPLETED"]);
 const VISIT_OPEN = new Set(["IN_PROGRESS"]);
 
+const SLOT_ALIASES: Record<string, NaftaIntakeSlotCode> = {
+  "VISIT-SANATORIUM-INTAKE": "VISIT-SANATORIUM-INTAKE",
+  "SANATORIUM-INTAKE": "VISIT-SANATORIUM-INTAKE",
+  THERAPIST: "VISIT-SANATORIUM-INTAKE",
+  "GYN-OR-URO": "GYN-OR-URO",
+  GYN: "GYN-OR-URO",
+  "CARDIO-ECG": "CARDIO-ECG",
+  "ECG-12": "CARDIO-ECG",
+  ECG: "CARDIO-ECG",
+  "USG-ABD": "USG-ABD",
+  USG: "USG-ABD",
+};
+
 function labStatus(status: string): IntakeChecklistStatus {
   if (LAB_DONE.has(status)) return "DONE";
   if (LAB_ORDERED.has(status)) return "ORDERED";
@@ -43,6 +57,19 @@ function visitStatus(status: string): IntakeChecklistStatus {
   if (VISIT_DONE.has(status)) return "DONE";
   if (VISIT_OPEN.has(status)) return "ORDERED";
   return "MISSING";
+}
+
+function lookupCodes(code: string): string[] {
+  const c = code.trim();
+  if (c === "CARDIO-ECG" || c === "ECG-12" || c === "ECG") {
+    return ["CARDIO-ECG", "ECG-12", "ECG"];
+  }
+  if (c === "VISIT-SANATORIUM-INTAKE" || c === "SANATORIUM-INTAKE") {
+    return ["VISIT-SANATORIUM-INTAKE", "SANATORIUM-INTAKE"];
+  }
+  if (c === "VISIT-GYN" || c === "GYN-VISIT") return ["VISIT-GYN", "GYN-VISIT"];
+  if (c === "VISIT-URO" || c === "URO-VISIT") return ["VISIT-URO", "URO-VISIT"];
+  return [c];
 }
 
 type EpisodeScope = { clinicalEpisodeId: string };
@@ -57,7 +84,7 @@ async function findLabOrder(
     where: {
       patientRefId,
       ...episodeFilter,
-      items: { some: { serviceCode: testCode } },
+      items: { some: { serviceCode: { in: lookupCodes(testCode) } } },
     },
     orderBy: { createdAt: "desc" },
     select: { id: true, status: true },
@@ -67,11 +94,11 @@ async function findLabOrder(
     where: {
       patientRefId,
       ...episodeFilter,
-      OR: [
-        { testCode },
-        { testCode: { startsWith: `${testCode},` } },
-        { testCode: { endsWith: `,${testCode}` } },
-      ],
+      OR: lookupCodes(testCode).flatMap((code) => [
+        { testCode: code },
+        { testCode: { startsWith: `${code},` } },
+        { testCode: { endsWith: `,${code}` } },
+      ]),
     },
     orderBy: { createdAt: "desc" },
     select: { id: true, status: true },
@@ -85,7 +112,7 @@ async function findVisitByServiceCode(
 ): Promise<{ id: string; status: string } | null> {
   const line = await prisma.visitServiceLine.findFirst({
     where: {
-      serviceCode,
+      serviceCode: { in: lookupCodes(serviceCode) },
       visit: {
         patientRefId,
         ...(episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {}),
@@ -118,18 +145,18 @@ async function findGynOrUroVisit(
   episode?: EpisodeScope,
 ): Promise<{ id: string; status: string; resolvedCode: string } | null> {
   const resolved = resolveNaftaIntakeCode(GYN_OR_URO_SLOT, sex);
-  if (resolved === "GYN-VISIT" || resolved === "URO-VISIT") {
+  if (resolved === "VISIT-GYN" || resolved === "VISIT-URO") {
     const byCode = await findVisitByServiceCode(patientRefId, resolved, episode);
     if (byCode) return { ...byCode, resolvedCode: resolved };
   }
-  for (const code of ["GYN-VISIT", "URO-VISIT"] as const) {
+  for (const code of ["VISIT-GYN", "VISIT-URO"] as const) {
     const byCode = await findVisitByServiceCode(patientRefId, code, episode);
     if (byCode) return { ...byCode, resolvedCode: code };
   }
   const specialtyNeedle =
-    resolved === "URO-VISIT"
+    resolved === "VISIT-URO"
       ? ["uro", "уролог"]
-      : resolved === "GYN-VISIT"
+      : resolved === "VISIT-GYN"
         ? ["gyn", "gine", "гинек"]
         : ["gyn", "gine", "uro", "уролог", "гинек"];
   const visits = await prisma.visit.findMany({
@@ -156,6 +183,45 @@ async function findGynOrUroVisit(
 }
 
 /**
+ * Prefer entitlement snapshot intake blocks (LAB_ORDER|VISIT or kind LAB|EXAM).
+ * Falls back to PKG-NAFTA-INTAKE catalog includes.
+ */
+async function resolveIntakeSlots(
+  episodeId: string | null | undefined,
+): Promise<{ packageCode: string; slots: NaftaIntakeSlotCode[] }> {
+  if (episodeId) {
+    const instance = await prisma.programInstance.findFirst({
+      where: { episodeId },
+      select: { programCode: true, entitlementSnapshot: true },
+    });
+    const snap = parseEntitlementSnapshot(instance?.entitlementSnapshot);
+    if (snap?.procedures?.length) {
+      const fromSnap: NaftaIntakeSlotCode[] = [];
+      const seen = new Set<string>();
+      for (const p of snap.procedures) {
+        const isIntakeFulfillment =
+          p.fulfillment === "LAB_ORDER" || p.fulfillment === "VISIT";
+        const isIntakeKind =
+          p.kind === "LAB" || p.kind === "EXAM";
+        if (!isIntakeFulfillment && !isIntakeKind) continue;
+        const slot = SLOT_ALIASES[p.procedureCode.trim().toUpperCase()]
+          ?? SLOT_ALIASES[p.procedureCode.trim()];
+        if (!slot || seen.has(slot)) continue;
+        seen.add(slot);
+        fromSnap.push(slot);
+      }
+      if (fromSnap.length > 0) {
+        return {
+          packageCode: instance?.programCode ?? snap.code ?? PKG_NAFTA_INTAKE,
+          slots: fromSnap,
+        };
+      }
+    }
+  }
+  return { packageCode: PKG_NAFTA_INTAKE, slots: [...NAFTA_INTAKE_SLOT_CODES] };
+}
+
+/**
  * Derive Nafta check-in checklist from existing Visit / LabOrder rows.
  * When episodeId is set, only that care course counts (CLI-55).
  */
@@ -166,19 +232,21 @@ export async function getIntakeChecklist(
   const episode = opts?.episodeId
     ? { clinicalEpisodeId: opts.episodeId }
     : undefined;
-  const [catalog, patient] = await Promise.all([
+  const [catalog, patient, slotSource] = await Promise.all([
     getDiagnosticCatalog(),
     prisma.patientRef.findUnique({
       where: { id: patientRefId },
       select: { id: true, sex: true },
     }),
+    resolveIntakeSlots(opts?.episodeId),
   ]);
   const pkg = catalog.items.find((i) => i.code === PKG_NAFTA_INTAKE && i.kind === "package");
-  const slots = (pkg?.includes?.length
-    ? pkg.includes.filter((c): c is NaftaIntakeSlotCode =>
-        (NAFTA_INTAKE_SLOT_CODES as readonly string[]).includes(c),
-      )
-    : [...NAFTA_INTAKE_SLOT_CODES]) as NaftaIntakeSlotCode[];
+  const slots =
+    slotSource.packageCode === PKG_NAFTA_INTAKE && pkg?.includes?.length
+      ? (pkg.includes.filter((c): c is NaftaIntakeSlotCode =>
+          (NAFTA_INTAKE_SLOT_CODES as readonly string[]).includes(c),
+        ) as NaftaIntakeSlotCode[])
+      : slotSource.slots;
 
   const items: IntakeChecklistItem[] = [];
   for (const slot of slots) {
@@ -186,7 +254,7 @@ export async function getIntakeChecklist(
     const kind = naftaIntakeSlotKind(slot);
     const resolved = resolveNaftaIntakeCode(slot, patient?.sex);
 
-    if (slot === "ECG-12" || slot === "USG-ABD") {
+    if (slot === "CARDIO-ECG" || slot === "USG-ABD") {
       const order = await findLabOrder(patientRefId, slot, episode);
       items.push({
         slot,
@@ -200,16 +268,42 @@ export async function getIntakeChecklist(
       continue;
     }
 
-    if (slot === "SANATORIUM-INTAKE") {
+    if (slot === "VISIT-SANATORIUM-INTAKE") {
+      // Therapist stage: anamnesis + ≥1 complaint on this course ⇒ DONE (diagnosis optional).
+      if (opts?.episodeId) {
+        const course = await prisma.clinicalEpisode.findUnique({
+          where: { id: opts.episodeId },
+          select: {
+            anamnesisText: true,
+            _count: { select: { complaints: true } },
+          },
+        });
+        const therapistStageDone =
+          Boolean(course?.anamnesisText?.trim()) &&
+          (course?._count.complaints ?? 0) > 0;
+        if (therapistStageDone) {
+          items.push({
+            slot,
+            resolvedCode: "VISIT-SANATORIUM-INTAKE",
+            kind,
+            title,
+            status: "DONE",
+            href: null,
+            recordId: null,
+          });
+          continue;
+        }
+      }
+
       const byLine = await findVisitByServiceCode(
         patientRefId,
-        "SANATORIUM-INTAKE",
+        "VISIT-SANATORIUM-INTAKE",
         episode,
       );
       const visit = byLine ?? (await findAttendingOrAnyVisit(patientRefId, episode));
       items.push({
         slot,
-        resolvedCode: "SANATORIUM-INTAKE",
+        resolvedCode: "VISIT-SANATORIUM-INTAKE",
         kind,
         title,
         status: visit ? visitStatus(visit.status) : "MISSING",
@@ -232,7 +326,7 @@ export async function getIntakeChecklist(
   }
 
   return {
-    packageCode: PKG_NAFTA_INTAKE,
+    packageCode: slotSource.packageCode,
     packageTitle: pkg?.title ?? {
       en: "Nafta initial diagnostic procedures",
       ru: "Nafta первичные диагностические процедуры",

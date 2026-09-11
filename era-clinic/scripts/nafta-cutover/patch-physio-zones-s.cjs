@@ -1362,7 +1362,7 @@ function main() {
     {
       id: "TURUNDA-IS-PROCEDURE",
       decision: "turunda / tampon = tampon procedure, not a site. Remaining tokens (qulaq / burun) are the S.",
-      why: "SVC-TURUNDA-BURUN-VE-QULAQ.",
+      why: "SVC-TURUNDA-BURUN / SVC-TURUNDA-QULAQ.",
     },
     {
       id: "CHAMOMILE-ADDITIVE",

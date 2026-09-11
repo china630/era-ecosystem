@@ -1,0 +1,208 @@
+{
+  "dayHits": {
+    "gunasiri": 191,
+    "3_gun": 10,
+    "5_gun": 52
+  },
+  "dayFiveTop": [
+    [
+      "Darsonval",
+      21
+    ],
+    [
+      "Parafin Yuxarı nahiyə",
+      11
+    ],
+    [
+      "Ultrafonoforez (Naftalan yağıyla)",
+      10
+    ],
+    [
+      "Parafin bütün bədən",
+      10
+    ]
+  ],
+  "dayTwoTop": [],
+  "gunasiriTop": [
+    [
+      "Super induktiv terapiya",
+      121
+    ],
+    [
+      "Zərbə dalğa",
+      18
+    ],
+    [
+      "Karboksiterapiya",
+      15
+    ],
+    [
+      "Yod-brom vanna",
+      14
+    ],
+    [
+      "Ozonterapiya",
+      9
+    ],
+    [
+      "Massaj 30",
+      5
+    ],
+    [
+      "Maqnitoterapiya",
+      5
+    ],
+    [
+      "Naftalan vannası (Kişi)",
+      4
+    ]
+  ],
+  "infraRows": 5103,
+  "infraZones": [
+    [
+      "ZONE-LOWER-LIMB",
+      1618
+    ],
+    [
+      "ZONE-BACK",
+      1134
+    ],
+    [
+      "ZONE-SCALP",
+      804
+    ],
+    [
+      "ZONE-COLLAR",
+      732
+    ],
+    [
+      "ZONE-FULL-BODY",
+      525
+    ],
+    [
+      "ZONE-UPPER-LIMB",
+      439
+    ],
+    [
+      "ZONE-HEAD",
+      358
+    ],
+    [
+      "ZONE-KNEE",
+      321
+    ],
+    [
+      "ZONE-LUMBOSACRAL",
+      260
+    ],
+    [
+      "ZONE-HAND-FOREARM",
+      235
+    ],
+    [
+      "ZONE-HIP-GLUTEAL",
+      195
+    ],
+    [
+      "ZONE-SHOULDER",
+      185
+    ],
+    [
+      "ZONE-FOOT-LEG",
+      136
+    ],
+    [
+      "ZONE-BACK-AND-LUMBAR",
+      117
+    ],
+    [
+      "ZONE-ELBOW",
+      81
+    ],
+    [
+      "ZONE-ABDOMEN",
+      74
+    ],
+    [
+      "ZONE-ANKLE",
+      43
+    ],
+    [
+      "ZONE-SPINE-FULL",
+      37
+    ],
+    [
+      "ZONE-EAR",
+      23
+    ],
+    [
+      "ZONE-CHEST",
+      12
+    ],
+    [
+      "ZONE-WRIST",
+      6
+    ]
+  ],
+  "triggerCount": 2,
+  "triggerSample": [
+    {
+      "proc": "Triqqerzonalar ile isleme",
+      "nahiye": ""
+    },
+    {
+      "proc": "Triqqerzonalar ile isleme",
+      "nahiye": ""
+    }
+  ],
+  "triggerProcNames": [
+    "Triqqerzonalar ile isleme"
+  ],
+  "isiqRows": 81,
+  "isiqEmpty": 6,
+  "isiqFlags": {
+    "SEQUENCE_ALTERNATING": 8
+  },
+  "isiqTextsTop": [
+    [
+      "ayyaqlar",
+      13
+    ],
+    [
+      "EYAQLAR",
+      13
+    ],
+    [
+      "kürək,ayaqlar,növbəli",
+      8
+    ],
+    [
+      "bel",
+      8
+    ],
+    [
+      "bel oma",
+      8
+    ],
+    [
+      "DİZ VE EYAQLAR",
+      8
+    ],
+    [
+      "ayaqlar",
+      6
+    ],
+    [
+      "ayaqlara",
+      5
+    ],
+    [
+      "kürəyə",
+      5
+    ],
+    [
+      "baldır nahiyəsi",
+      1
+    ]
+  ]
+}

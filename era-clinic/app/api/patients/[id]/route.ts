@@ -7,12 +7,14 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { resolveClinicDataScope } from "@/lib/auth/clinic-data-scope";
 import {
   getPatient,
   updatePatient,
   PatientMdmRequiredError,
   PatientAnamnesisRequiredError,
 } from "@/domain/patient/patient.service";
+import { prisma } from "@/lib/prisma";
 
 const patientSex = z.enum(["MALE", "FEMALE", "UNKNOWN"]);
 const patientBloodGroup = z.enum([
@@ -85,8 +87,29 @@ export async function GET(
     const session = await getRouteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
+    if (!session) return jsonError("Unauthorized", 401);
 
         const { id } = await ctx.params;
+    const scope = await resolveClinicDataScope(
+      session,
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+    );
+    if (scope.mode === "ASSIGNED") {
+      if (!scope.practitionerId) return jsonError("Not found", 404);
+      const hit = await prisma.patientRef.findFirst({
+        where: {
+          id,
+          episodes: {
+            some: {
+              careDoctors: { some: { practitionerId: scope.practitionerId } },
+            },
+          },
+        },
+        select: { id: true },
+      });
+      if (!hit) return jsonError("Not found", 404);
+    }
+
     const row = await getPatient(id);
     if (!row) return jsonError("Not found", 404);
     return jsonOk(row);

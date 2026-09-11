@@ -28,6 +28,8 @@ model Tenant {
   patientCardPlanPreview    Int                     @default(15) @map("patient_card_plan_preview")
   patientCardHistoryPageSize Int                    @default(25) @map("patient_card_history_page_size")
   patientCardPlanPageSize   Int                     @default(25) @map("patient_card_plan_page_size")
+  /// Max distinct in-package procedure codes per guest per Asia/Baku day (paid extras excluded).
+  dailyPackageProcedureCap Int                    @default(3) @map("daily_package_procedure_cap")
   /// Check-in allowed from scheduledAt − N minutes
   procedureCheckInGraceBeforeMin Int                @default(5) @map("procedure_check_in_grace_before_min")
   /// Check-in allowed until scheduledAt + N minutes
@@ -144,6 +146,8 @@ enum ProcedureStaffMode {
 enum ProcedureOrderStatus {
   /// Package line shown on patient card; not on resources until doctor confirms
   PROPOSED
+  /// Paid extra prescribed; not scheduled until reception Pay (CLI-57)
+  PENDING_PAY
   SCHEDULED
   CHECKED_IN
   COMPLETED
@@ -339,7 +343,12 @@ model Practitioner {
   scheduleRules      PractitionerScheduleRule[]
   scheduleExceptions PractitionerScheduleException[]
   dutyLines          StaffDutyLine[]
+  dutyDayOverrides   StaffDutyDayOverride[]
   absences           StaffAbsence[]
+  episodeCareRows    EpisodeCareDoctor[]
+  anamnesisEpisodes  ClinicalEpisode[] @relation("EpisodeAnamnesisAuthor")
+  authoredComplaints ClinicalComplaint[] @relation("ComplaintAuthor")
+  authoredDiagnoses  ClinicalDiagnosis[] @relation("DiagnosisAuthor")
   @@unique([organizationId, code])
   @@index([organizationId])
   @@index([staffKind])
@@ -547,9 +556,15 @@ model VisitServiceLine {
   serviceCode String
   description String
   amount      Decimal @db.Decimal(12, 2)
+  /// Burns a package entitlement when true (CLI package quota sync).
+  inPackage         Boolean @default(false) @map("in_package")
+  /// Balance line code burned (may differ from serviceCode for pools/aliases).
+  packageQuotaCode  String? @map("package_quota_code")
   visit       Visit   @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([visitId])
+  @@index([packageQuotaCode])
+  @@index([inPackage])
 }
 
 model LabOrder {
@@ -728,12 +743,18 @@ model LabOrderItem {
   serviceCode         String             @map("service_code")
   amountNet           Decimal            @default(0) @db.Decimal(12, 2) @map("amount_net")
   sortOrder           Int                @default(0) @map("sort_order")
+  /// Burns a package entitlement when true (CLI package quota sync).
+  inPackage           Boolean            @default(false) @map("in_package")
+  /// Balance line code burned (may differ from serviceCode for pools/aliases).
+  packageQuotaCode    String?            @map("package_quota_code")
   results             LabResult[]
   createdAt           DateTime           @default(now())
 
   @@index([labOrderId])
   @@index([diagnosticServiceId])
   @@index([serviceCode])
+  @@index([packageQuotaCode])
+  @@index([inPackage])
 }
 
 model LabResult {
@@ -770,9 +791,15 @@ model ClinicalEpisode {
   /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
   anamnesisText       String?             @map("anamnesis_text") @db.Text
   anamnesisUpdatedAt  DateTime?           @map("anamnesis_updated_at")
+  /// Practitioner who first wrote anamnesis (kept on later edits).
+  anamnesisByPractitionerId String?       @map("anamnesis_by_practitioner_id")
+  anamnesisByPractitioner   Practitioner? @relation("EpisodeAnamnesisAuthor", fields: [anamnesisByPractitionerId], references: [id], onDelete: SetNull)
   status              String              @default("OPEN")
   openedAt            DateTime            @default(now())
   closedAt            DateTime?
+  /// Ops confirmed guest has no medical package (signal, not a ProgramInstance).
+  noPackageConfirmedAt DateTime?          @map("no_package_confirmed_at")
+  noPackageConfirmedByUserId String?      @map("no_package_confirmed_by_user_id")
   complaints          ClinicalComplaint[]
   diagnoses           ClinicalDiagnosis[]
   contraindications   PatientContraindication[]
@@ -780,10 +807,29 @@ model ClinicalEpisode {
   visits              Visit[]
   procedureOrders     ProcedureOrder[]
   programInstance     ProgramInstance?
+  /// CLI-56 — doctors on this course (therapist, gyn, uro, …).
+  careDoctors         EpisodeCareDoctor[]
 
   @@index([reservationId])
   @@index([organizationId, status])
   @@index([reservationId, patientRefId, status])
+  @@index([anamnesisByPractitionerId])
+}
+
+/// CLI-56 — multi-doctor care team for a sanatorium / walk-in course.
+model EpisodeCareDoctor {
+  id               String          @id @default(cuid())
+  episodeId        String          @map("episode_id")
+  practitionerId   String          @map("practitioner_id")
+  assignedAt       DateTime        @default(now()) @map("assigned_at")
+  assignedByUserId String?         @map("assigned_by_user_id")
+  episode          ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  practitioner     Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@unique([episodeId, practitionerId])
+  @@index([practitionerId])
+  @@index([episodeId, assignedAt])
+  @@map("episode_care_doctor")
 }
 
 model ClinicalComplaint {
@@ -792,8 +838,11 @@ model ClinicalComplaint {
   episode    ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   text       String
   recordedAt DateTime        @default(now())
+  recordedByPractitionerId String?       @map("recorded_by_practitioner_id")
+  recordedByPractitioner   Practitioner? @relation("ComplaintAuthor", fields: [recordedByPractitionerId], references: [id], onDelete: SetNull)
 
   @@index([episodeId])
+  @@index([recordedByPractitionerId])
 }
 
 model ClinicalDiagnosis {
@@ -805,9 +854,12 @@ model ClinicalDiagnosis {
   note             String?
   recordedAt       DateTime        @default(now())
   recordedByUserId String?         @map("recorded_by_user_id")
+  recordedByPractitionerId String?       @map("recorded_by_practitioner_id")
+  recordedByPractitioner   Practitioner? @relation("DiagnosisAuthor", fields: [recordedByPractitionerId], references: [id], onDelete: SetNull)
 
   @@index([episodeId])
   @@index([icdCodeId])
+  @@index([recordedByPractitionerId])
 }
 
 enum IcdCodeKind {
@@ -1034,6 +1086,8 @@ model ProcedureType {
   needsSite          Boolean       @default(true) @map("needs_site")
   /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
   physioOrderFields  String[]      @default([]) @map("physio_order_fields")
+  /// PhysioSite.code allowlist for the doctor picker. Empty + needsSite = legacy all; seed fills concrete lists.
+  allowedSiteCodes   String[]      @default([]) @map("allowed_site_codes")
   afterLunchAllowed  Boolean       @default(true)
   /// When false, slot must start at or after lunchEndHour (men 4-chamber after lunch).
   beforeLunchAllowed Boolean       @default(true) @map("before_lunch_allowed")
@@ -1048,6 +1102,7 @@ model ProcedureType {
   consumableLines    ProcedureConsumableLine[]
   skills             PractitionerSkill[]
   dutyLines          StaffDutyLine[]
+  dutyDayOverrides   StaffDutyDayOverride[]
 
   @@index([resourceCode])
   @@unique([organizationId, code])
@@ -1090,6 +1145,7 @@ model StaffDutyRoster {
   copiedFromYearMonth String?                @map("copied_from_year_month")
   note                String?
   lines               StaffDutyLine[]
+  dayOverrides        StaffDutyDayOverride[]
   createdAt           DateTime               @default(now()) @map("created_at")
   updatedAt           DateTime               @updatedAt @map("updated_at")
 
@@ -1117,6 +1173,30 @@ model StaffDutyLine {
   @@index([practitionerId])
   @@index([organizationId])
   @@map("staff_duty_line")
+}
+
+/// Head-doctor day substitution for one procedure on one civil day (Asia/Baku).
+/// Wins over the monthly posted nurse; never invents a silent skilled-pool fallback.
+model StaffDutyDayOverride {
+  id              String          @id @default(cuid())
+  organizationId  String          @map("organization_id")
+  rosterId        String          @map("roster_id")
+  roster          StaffDutyRoster @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  /// UTC midnight of the Asia/Baku civil day
+  dutyDate        DateTime        @map("duty_date")
+  procedureTypeId String          @map("procedure_type_id")
+  procedureType   ProcedureType   @relation(fields: [procedureTypeId], references: [id], onDelete: Cascade)
+  practitionerId  String          @map("practitioner_id")
+  practitioner    Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  note            String?
+  createdByUserId String?         @map("created_by_user_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@unique([rosterId, dutyDate, procedureTypeId])
+  @@index([organizationId, dutyDate])
+  @@index([practitionerId])
+  @@map("staff_duty_day_override")
 }
 
 /// Clinic-local absence overlay (vacation / sick / training). Finance HR sync is later.
@@ -1238,6 +1318,8 @@ model ServiceCatalogCache {
   descriptionRu    String?            @map("description_ru")
   descriptionEn    String?            @map("description_en")
   amount           Decimal            @db.Decimal(12, 2)
+  /// Retail / walk-in / over-quota list price (kept when package `amount` is 0).
+  listAmount       Decimal?           @map("list_amount") @db.Decimal(12, 2)
   packageIncluded  Boolean            @default(false) @map("package_included")
   department       String?
   kind             ServiceCatalogKind @default(OTHER)
@@ -1262,32 +1344,51 @@ model VisitDiscountAudit {
   @@index([organizationId])
 }
 
-model ClinicalTemplate {
-  id          String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  code        String
-  title       String
-  specialty   String?
-  bodyJson    String
-  createdAt   DateTime @default(now())
-  @@unique([organizationId, code])
-  @@index([organizationId])
-}
-
 model ProgramTemplate {
   id          String                  @id @default(cuid())
   organizationId String @map("organization_id")
+  /** Stable product code (PKG-STANDART). Versions share the same code. */
   code        String
   name        String
   durationDays Int
   /** Wave B — PDF stay window; instantiate refuses below min, clamps to max. */
   minNights   Int?
   maxNights   Int?
+  /** Monotonic version per code; new composition save bumps. */
+  version     Int                     @default(1)
+  /** Only one current row per code — used for new check-ins. */
+  isCurrent   Boolean                 @default(true) @map("is_current")
+  /**
+   * Sales window (product level, admin-editable, never bumps version).
+   * `effectiveTo` null = open-ended; delete of a pinned package closes it instead of erasing.
+   * Distinct from `retiredAt`, which is the technical version-supersession stamp.
+   */
+  effectiveFrom DateTime?             @map("effective_from") @db.Date
+  effectiveTo   DateTime?             @map("effective_to") @db.Date
+  retiredAt   DateTime?               @map("retired_at")
+  /** Previous version id when this row was created by a composition bump. */
+  supersedesId String?                @map("supersedes_id")
   procedures  ProgramTemplateProcedure[]
   quotaKnots  ProgramTemplateQuotaKnot[]
+  blockMembers ProgramTemplateBlockMember[]
   instances   ProgramInstance[]
-  @@unique([organizationId, code])
+  @@unique([organizationId, code, version])
   @@index([organizationId])
+  @@index([organizationId, code, isCurrent])
+}
+
+/** Explicit SKUs that may burn a package entitlement block (PHYSIO_POOL, custom, …). */
+model ProgramTemplateBlockMember {
+  id            String          @id @default(cuid())
+  templateId    String          @map("template_id")
+  /** Matches ProgramTemplateProcedure.procedureCode / ProgramProcedureBalance.procedureCode. */
+  blockCode     String          @map("block_code")
+  procedureCode String          @map("procedure_code")
+  template      ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, blockCode, procedureCode])
+  @@index([templateId, blockCode])
+  @@map("program_template_block_member")
 }
 
 model ProgramTemplateQuotaKnot {
@@ -1311,6 +1412,16 @@ model ProgramTemplateProcedure {
   quotaTotal       Int
   minGapMinutes    Int?
   avoidAfterHour   Int?
+  /** Admin UI block kind: PHYSIO | BATH | PARAFFIN | LAB | EXAM | CUSTOM */
+  kind             String?
+  sortOrder        Int             @default(0) @map("sort_order")
+  /** AUTO_ON_OPEN | AUTO_DAY1 | ON_INDICATION | MANUAL */
+  assignMode       String          @default("MANUAL") @map("assign_mode")
+  /** PROCEDURE_ORDER | LAB_ORDER | VISIT */
+  fulfillment      String          @default("PROCEDURE_ORDER")
+  /** PER_NIGHTS | PER_STAY */
+  quotaBasis       String          @default("PER_NIGHTS") @map("quota_basis")
+  requiresDoctor   Boolean         @default(false) @map("requires_doctor")
   template         ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([templateId])
@@ -1319,12 +1430,22 @@ model ProgramTemplateProcedure {
 model ProgramInstance {
   id              String          @id @default(cuid())
   organizationId String @map("organization_id")
+  /** Pinned template version — night recalc must not re-point to latest. */
   templateId      String
   episodeId       String          @unique
   reservationId   String?
   programCode     String
   startsOn        DateTime
   endsOn          DateTime
+  /**
+   * Frozen entitlement at instantiate / package-code change:
+   * { version, procedures, knots, members: { blockCode, procedureCode }[] }
+   */
+  entitlementSnapshot Json?       @map("entitlement_snapshot")
+  /** PENDING | APPLIED | PARTIAL | PENDING_DOCTOR */
+  autoApplyState  String          @default("PENDING") @map("auto_apply_state")
+  autoApplyAt     DateTime?       @map("auto_apply_at")
+  autoApplyNote   String?         @map("auto_apply_note")
   template        ProgramTemplate @relation(fields: [templateId], references: [id])
   episode         ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   procedureLines  ProgramProcedureBalance[]
@@ -1372,6 +1493,14 @@ model ProcedureOrder {
   note             String?              @db.Text
   /// Type-gated physio values (program, substance, work-kind, …). W3.
   physioFields     Json?                @map("physio_fields")
+  /// CLI-57 package modal: groups sessions created in one Save batch.
+  assignBatchId    String?              @map("assign_batch_id")
+  /// CLI-57: true = burns package quota; false = paid extra / over-quota folio.
+  inPackage        Boolean              @default(false) @map("in_package")
+  /// CLI-57: package balance line burned (PHYSIO_POOL / PARAFFIN_POOL / same as procedureCode).
+  packageQuotaCode String?              @map("package_quota_code")
+  /// Clinic reception confirmed guest payment receipt before Pay (walk-in / extras).
+  paymentReceiptRef String?             @map("payment_receipt_ref")
   quantity         Int                  @default(1)
   patientOrigin    PatientOrigin        @default(WALK_IN)
   reservationId    String?
@@ -1419,6 +1548,9 @@ model ProcedureOrder {
   @@index([prescribedByPractitionerId, scheduledAt])
   @@index([organizationId])
   @@index([extraTicketId])
+  @@index([assignBatchId])
+  @@index([inPackage])
+  @@index([packageQuotaCode])
 }
 
 model ProcedureAllocation {
@@ -1700,10 +1832,16 @@ model ProcessedEvent {
 
 model Role {
   id              String   @id @default(cuid())
-  organizationId String @map("organization_id")
+  organizationId  String   @map("organization_id")
   code            String
   name            String
   permissionsJson String   @default("[]")
+  /// Seeded ops roles — cannot delete; Reset restores template matrix.
+  isSystem        Boolean  @default(false) @map("is_system")
+  /// Practitioner persona: DOCTOR | NURSE | LAB | NONE (not used for screen/API gates).
+  staffKind       String?  @map("staff_kind")
+  /// Custom role created by cloning; Reset copies donor's effective grants.
+  cloneFromCode   String?  @map("clone_from_code")
   users           User[]
   @@unique([organizationId, code])
   @@index([organizationId])

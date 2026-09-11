@@ -1,6 +1,8 @@
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     patientRef: { findUnique: jest.fn() },
+    clinicalEpisode: { findUnique: jest.fn() },
+    programInstance: { findFirst: jest.fn() },
     labOrder: { findFirst: jest.fn() },
     labOrderItem: { findFirst: jest.fn() },
     visitServiceLine: { findFirst: jest.fn() },
@@ -18,6 +20,8 @@ import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
 
 const mockedPrisma = prisma as unknown as {
   patientRef: { findUnique: jest.Mock };
+  clinicalEpisode: { findUnique: jest.Mock };
+  programInstance: { findFirst: jest.Mock };
   labOrder: { findFirst: jest.Mock };
   visitServiceLine: { findFirst: jest.Mock };
   visit: { findFirst: jest.Mock; findMany: jest.Mock };
@@ -31,12 +35,17 @@ describe("getIntakeChecklist", () => {
         {
           code: "PKG-NAFTA-INTAKE",
           kind: "package",
-          includes: ["SANATORIUM-INTAKE", "GYN-OR-URO", "ECG-12", "USG-ABD"],
+          includes: ["VISIT-SANATORIUM-INTAKE", "GYN-OR-URO", "CARDIO-ECG", "USG-ABD"],
           title: { en: "intake", ru: "intake", az: "ilkin" },
         },
       ],
     });
     mockedPrisma.patientRef.findUnique.mockResolvedValue({ id: "p1", sex: "FEMALE" });
+    mockedPrisma.programInstance.findFirst.mockResolvedValue(null);
+    mockedPrisma.clinicalEpisode.findUnique.mockResolvedValue({
+      anamnesisText: null,
+      _count: { complaints: 0 },
+    });
     mockedPrisma.visitServiceLine.findFirst.mockResolvedValue(null);
     mockedPrisma.visit.findFirst.mockResolvedValue({ id: "v-att", status: "COMPLETED" });
     mockedPrisma.visit.findMany.mockResolvedValue([]);
@@ -64,12 +73,37 @@ describe("getIntakeChecklist", () => {
   it("marks USG-ABD DONE when LabOrder exists with result", async () => {
     const checklist = await getIntakeChecklist("p1");
     const usg = checklist.items.find((i) => i.slot === "USG-ABD");
-    const ecg = checklist.items.find((i) => i.slot === "ECG-12");
-    const intake = checklist.items.find((i) => i.slot === "SANATORIUM-INTAKE");
+    const ecg = checklist.items.find((i) => i.slot === "CARDIO-ECG");
+    const intake = checklist.items.find((i) => i.slot === "VISIT-SANATORIUM-INTAKE");
     expect(usg?.status).toBe("DONE");
     expect(ecg?.status).toBe("MISSING");
     expect(intake?.status).toBe("DONE");
     expect(checklist.items).toHaveLength(4);
+  });
+
+  it("marks SANATORIUM-INTAKE DONE when episode has anamnesis + complaint", async () => {
+    mockedPrisma.clinicalEpisode.findUnique.mockResolvedValue({
+      anamnesisText: "HTN, no allergies",
+      _count: { complaints: 1 },
+    });
+    mockedPrisma.visit.findFirst.mockResolvedValue(null);
+    const checklist = await getIntakeChecklist("p1", { episodeId: "ep1" });
+    const intake = checklist.items.find((i) => i.slot === "VISIT-SANATORIUM-INTAKE");
+    expect(intake?.status).toBe("DONE");
+    expect(mockedPrisma.clinicalEpisode.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "ep1" } }),
+    );
+  });
+
+  it("keeps SANATORIUM-INTAKE MISSING when anamnesis without complaint", async () => {
+    mockedPrisma.clinicalEpisode.findUnique.mockResolvedValue({
+      anamnesisText: "only anamnesis",
+      _count: { complaints: 0 },
+    });
+    mockedPrisma.visit.findFirst.mockResolvedValue(null);
+    const checklist = await getIntakeChecklist("p1", { episodeId: "ep1" });
+    const intake = checklist.items.find((i) => i.slot === "VISIT-SANATORIUM-INTAKE");
+    expect(intake?.status).toBe("MISSING");
   });
 
   it("scopes LabOrder / Visit queries by clinicalEpisodeId when provided", async () => {

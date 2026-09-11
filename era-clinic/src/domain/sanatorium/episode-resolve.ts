@@ -11,6 +11,7 @@ export type EpisodeListItem = {
   closedAt: string | null;
   anamnesisText: string | null;
   anamnesisUpdatedAt: string | null;
+  anamnesisByPractitioner: { fullName: string; specialty: string | null } | null;
   label: string;
 };
 
@@ -51,6 +52,7 @@ export async function listPatientEpisodes(
       closedAt: true,
       anamnesisText: true,
       anamnesisUpdatedAt: true,
+      anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
   return rows.map((r) => ({
@@ -64,6 +66,7 @@ export async function listPatientEpisodes(
     closedAt: r.closedAt?.toISOString() ?? null,
     anamnesisText: r.anamnesisText,
     anamnesisUpdatedAt: r.anamnesisUpdatedAt?.toISOString() ?? null,
+    anamnesisByPractitioner: r.anamnesisByPractitioner,
     label: formatEpisodeLabel(r),
   }));
 }

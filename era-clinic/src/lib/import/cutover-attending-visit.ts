@@ -24,6 +24,7 @@ export function attendingVisitExternalRef(patientExternalRef: string): string {
  * Reception assigns the episode doctor via the first Visit.
  * Cutover: one visit on check-in (idempotent). No Appointment (calendar stays clean).
  * OPEN episode → IN_PROGRESS; archive → COMPLETED. Missing #27 row → skip.
+ * Also seeds EpisodeCareDoctor when clinicalEpisodeId is known (CLI-56).
  */
 export async function ensureCutoverAttendingVisit(
   tx: ImportTx,
@@ -59,23 +60,45 @@ export async function ensureCutoverAttendingVisit(
   };
 
   const existingId = await findImportRecordId(tx, CUTOVER_ATTENDING_VISIT_ENTITY, visitKey);
+  let visitId: string;
   if (existingId) {
     await tx.visit.update({
       where: { id: existingId },
       data,
     });
-    return existingId;
+    visitId = existingId;
+  } else {
+    const created = await tx.visit.create({
+      data: {
+        organizationId: requestOrganizationId(),
+        patientRefId: input.patientRefId,
+        amountNet: 0,
+        createdAt: at,
+        ...data,
+      },
+    });
+    await bindImportRecord(tx, CUTOVER_ATTENDING_VISIT_ENTITY, visitKey, created.id, false);
+    visitId = created.id;
   }
 
-  const created = await tx.visit.create({
-    data: {
-      organizationId: requestOrganizationId(),
-      patientRefId: input.patientRefId,
-      amountNet: 0,
-      createdAt: at,
-      ...data,
-    },
-  });
-  await bindImportRecord(tx, CUTOVER_ATTENDING_VISIT_ENTITY, visitKey, created.id, false);
-  return created.id;
+  const episodeId = input.clinicalEpisodeId ?? null;
+  if (episodeId) {
+    await tx.episodeCareDoctor.upsert({
+      where: {
+        episodeId_practitionerId: {
+          episodeId,
+          practitionerId,
+        },
+      },
+      create: {
+        episodeId,
+        practitionerId,
+        assignedAt: at,
+        assignedByUserId: null,
+      },
+      update: {},
+    });
+  }
+
+  return visitId;
 }

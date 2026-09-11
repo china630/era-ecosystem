@@ -8,13 +8,22 @@ import {
   platformSuperAdminBootstrapPassword,
   platformSuperAdminEmails,
 } from "@era/satellite-kit";
-import { permissionsJsonForRole } from "../src/lib/auth/clinic-permissions";
+import { ensureSystemClinicRoles } from "../src/lib/auth/ensure-system-clinic-roles";
+import { CLINIC_ROLE } from "../src/lib/clinic-roles";
 import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
 
 const requireCjs = createRequire(__filename);
 const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
 ) as unknown as PrismaClient;
+
+function seedOrgId(): string {
+  return (
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    process.env.ORGANIZATION_ID?.trim() ||
+    "demo-org"
+  );
+}
 
 type L10n = { en: string; ru: string; az: string };
 type CatalogField = Record<string, unknown>;
@@ -63,37 +72,12 @@ function loadDiagnosticCatalog(): DiagnosticCatalog {
   return JSON.parse(readFileSync(path, "utf8")) as DiagnosticCatalog;
 }
 
+/** ServiceCatalogCache only — ClinicalTemplate retired (Diagnostic catalog SoT). */
 async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
-  let clinicalCount = 0;
   let catalogCount = 0;
-  const meta = catalog.commonMetaFields ?? [];
 
   for (const modality of catalog.modalities) {
     for (const tpl of modality.templates) {
-      const bodyJson = JSON.stringify({
-        kind: modality.kind,
-        modality: modality.code,
-        category: tpl.category,
-        title: tpl.title,
-        metaFields: meta,
-        fields: tpl.fields,
-      });
-      await prisma.clinicalTemplate.upsert({
-        where: { code: tpl.code },
-        create: {
-          code: tpl.code,
-          title: tpl.title.en,
-          specialty: modality.code,
-          bodyJson,
-        },
-        update: {
-          title: tpl.title.en,
-          specialty: modality.code,
-          bodyJson,
-        },
-      });
-      clinicalCount += 1;
-
       const serviceCode = tpl.serviceCode ?? tpl.code;
       await prisma.serviceCatalogCache.upsert({
         where: { code: serviceCode },
@@ -120,28 +104,6 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
   }
 
   for (const panel of catalog.labPanels) {
-    const bodyJson = JSON.stringify({
-      kind: "lab_panel",
-      category: panel.category,
-      title: panel.title,
-      analytes: panel.analytes,
-    });
-    await prisma.clinicalTemplate.upsert({
-      where: { code: panel.code },
-      create: {
-        code: panel.code,
-        title: panel.title.en,
-        specialty: "LAB",
-        bodyJson,
-      },
-      update: {
-        title: panel.title.en,
-        specialty: "LAB",
-        bodyJson,
-      },
-    });
-    clinicalCount += 1;
-
     const serviceCode = panel.serviceCode ?? panel.code;
     await prisma.serviceCatalogCache.upsert({
       where: { code: serviceCode },
@@ -166,51 +128,7 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
     catalogCount += 1;
   }
 
-  for (const visit of catalog.visitTemplates) {
-    const bodyJson = JSON.stringify({
-      kind: "visit",
-      specialty: visit.specialty,
-      title: visit.title,
-      fields: visit.fields,
-    });
-    await prisma.clinicalTemplate.upsert({
-      where: { code: visit.code },
-      create: {
-        code: visit.code,
-        title: visit.title.en,
-        specialty: visit.specialty,
-        bodyJson,
-      },
-      update: {
-        title: visit.title.en,
-        specialty: visit.specialty,
-        bodyJson,
-      },
-    });
-    clinicalCount += 1;
-  }
-
   for (const pkg of catalog.packages ?? []) {
-    const bodyJson = JSON.stringify({
-      kind: "package",
-      title: pkg.title,
-      includes: pkg.includes,
-    });
-    await prisma.clinicalTemplate.upsert({
-      where: { code: pkg.code },
-      create: {
-        code: pkg.code,
-        title: pkg.title.en,
-        specialty: "PACKAGE",
-        bodyJson,
-      },
-      update: {
-        title: pkg.title.en,
-        specialty: "PACKAGE",
-        bodyJson,
-      },
-    });
-    clinicalCount += 1;
     await prisma.serviceCatalogCache.upsert({
       where: { code: pkg.code },
       create: {
@@ -234,47 +152,61 @@ async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
     catalogCount += 1;
   }
 
-  return { clinicalCount, catalogCount };
+  return { catalogCount };
 }
 
 async function seedDemoAdmin() {
   const password = platformSuperAdminBootstrapPassword();
-  const roleCode = process.env.ECOSYSTEM_DEMO_ADMIN_ROLE ?? "CLINIC_ADMIN";
+  const organizationId = seedOrgId();
+  await ensureSystemClinicRoles(prisma, organizationId);
+
+  const preferred =
+    process.env.ECOSYSTEM_DEMO_ADMIN_ROLE?.trim() || CLINIC_ROLE.CLINIC_ADMIN;
+  const role =
+    (await prisma.role.findFirst({
+      where: { organizationId, code: preferred },
+    })) ??
+    (await prisma.role.findFirst({
+      where: { organizationId, code: CLINIC_ROLE.CLINIC_ADMIN },
+    }));
+  if (!role) {
+    throw new Error("System roles missing after ensureSystemClinicRoles");
+  }
+
   const logins = [...platformSuperAdminEmails()];
   const extra = process.env.ECOSYSTEM_DEMO_LOGIN?.trim().toLowerCase();
   if (extra?.includes("@") && !logins.includes(extra)) logins.push(extra);
 
-  const role = await prisma.role.upsert({
-    where: { code: roleCode },
-    update: { name: "Clinic administrator", permissionsJson: permissionsJsonForRole(roleCode) },
-    create: {
-      code: roleCode,
-      name: "Clinic administrator",
-      permissionsJson: permissionsJsonForRole(roleCode),
-    },
-  });
-
   const passwordHash = await hashPassword(password);
   for (const login of logins) {
-    await prisma.user.upsert({
-      where: { login },
-      create: {
-        login,
-        email: login,
-        fullName: "Platform Super Admin",
-        passwordHash,
-        roleId: role.id,
-        status: "ACTIVE",
-        isCrossSystem: true,
-      },
-      update: {
-        email: login,
-        passwordHash,
-        roleId: role.id,
-        status: "ACTIVE",
-        isCrossSystem: true,
-      },
+    const existing = await prisma.user.findFirst({
+      where: { organizationId, login },
     });
+    if (existing) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          email: login,
+          passwordHash,
+          roleId: role.id,
+          status: "ACTIVE",
+          isCrossSystem: true,
+        },
+      });
+    } else {
+      await prisma.user.create({
+        data: {
+          organizationId,
+          login,
+          email: login,
+          fullName: "Platform Super Admin",
+          passwordHash,
+          roleId: role.id,
+          status: "ACTIVE",
+          isCrossSystem: true,
+        },
+      });
+    }
   }
 }
 
@@ -434,7 +366,9 @@ async function main() {
     { code: "PKG-DETOKS", name: "Nafta Detoks", durationDays: 10 },
   ];
   for (const pkg of naftaPackages) {
-    const existing = await prisma.programTemplate.findFirst({ where: { code: pkg.code } });
+    const existing = await prisma.programTemplate.findFirst({
+      where: { code: pkg.code, isCurrent: true },
+    });
     if (!existing) {
       await prisma.programTemplate.create({
         data: {
@@ -443,16 +377,23 @@ async function main() {
           durationDays: pkg.durationDays,
           minNights: pkg.code === "PKG-STANDART" ? 5 : 7,
           maxNights: 21,
+          version: 1,
+          isCurrent: true,
         },
       });
     } else {
-      await prisma.programTemplate.update({
-        where: { id: existing.id },
-        data: {
-          minNights: existing.minNights ?? (pkg.code === "PKG-STANDART" ? 5 : 7),
-          maxNights: existing.maxNights ?? 21,
-        },
+      const pinned = await prisma.programInstance.count({
+        where: { templateId: existing.id },
       });
+      if (pinned === 0) {
+        await prisma.programTemplate.update({
+          where: { id: existing.id },
+          data: {
+            minNights: existing.minNights ?? (pkg.code === "PKG-STANDART" ? 5 : 7),
+            maxNights: existing.maxNights ?? 21,
+          },
+        });
+      }
     }
   }
 
@@ -461,8 +402,17 @@ async function main() {
     code: string,
     knots: Array<{ nights: number; qty: number }>,
   ) {
-    const tpl = await prisma.programTemplate.findFirst({ where: { code } });
+    const tpl = await prisma.programTemplate.findFirst({
+      where: { code, isCurrent: true },
+    });
     if (!tpl) return;
+    const pinned = await prisma.programInstance.count({ where: { templateId: tpl.id } });
+    if (pinned > 0) {
+      console.log(
+        `Skip seedBathKnots(${code}): ${pinned} program instance(s) pin current version`,
+      );
+      return;
+    }
     const hasProc = await prisma.programTemplateProcedure.findFirst({
       where: { templateId: tpl.id, procedureCode: "NAFTALAN_BATH" },
     });
@@ -536,8 +486,17 @@ async function main() {
     { code: "LAB", name: "Lab panel" },
   ];
   async function seedExamKnots(pkgCode: string, nightCols: number[]) {
-    const tpl = await prisma.programTemplate.findFirst({ where: { code: pkgCode } });
+    const tpl = await prisma.programTemplate.findFirst({
+      where: { code: pkgCode, isCurrent: true },
+    });
     if (!tpl) return;
+    const pinned = await prisma.programInstance.count({ where: { templateId: tpl.id } });
+    if (pinned > 0) {
+      console.log(
+        `Skip seedExamKnots(${pkgCode}): ${pinned} program instance(s) pin current version`,
+      );
+      return;
+    }
     for (const exam of EXAM_CODES) {
       const hasProc = await prisma.programTemplateProcedure.findFirst({
         where: { templateId: tpl.id, procedureCode: exam.code },
@@ -600,7 +559,6 @@ async function main() {
 
   console.log("Clinic vNext seed OK", {
     usg: usg.code,
-    clinicalTemplates: seeded.clinicalCount,
     catalogCodes: seeded.catalogCount,
   });
 }

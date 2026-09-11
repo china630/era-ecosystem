@@ -80,7 +80,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — identity registry (full base, `episodeStatus=ALL`): filter bar sex (no Other) / blood / age min·max inclusive ≥/≤ / MDM filter·column **only platform Super-Admin**; grid shows clinic-native **`P-######`**, sex **K/Q**, thin **Open course** badge (no room/package/check-in columns); one server paginator. **Register patient**: Ad / Ata adı / Soyad (`firstName` / `middleName` / `lastName`); save composes `fullName`; nationality empty default; sex M/F/unknown only; **FIN or passport+country required** (phone alone rejected). Re-save without middle name → MDM fill-not-clear. **Open card** modal — identity + episode selector; contraindications title **inside** amber box; complaints `+ Şikayət` / ICD `+ Diaqnoz` outside cards; results print **per row only** (no header checkup print); intake checklist has **no** block print; **Klinik tarixçə** — type (All / Appointments / Visits / Exams / Labs) + period default 30d; compact cards + print. Course room/program ops live on **`/sanatorium`**. **`/patients/[id]`** via shared `PatientCardBody`.
+3. **`/patients`** — identity registry (full base, `episodeStatus=ALL`): filter bar sex (no Other) / blood / age min·max inclusive ≥/≤ / MDM filter·column **only platform Super-Admin**; grid shows clinic-native **`P-######`**, sex **K/Q**, thin **Open course** badge (no room/package/check-in columns); one server paginator. **MDM soft fill on list load:** only rows on the current page with `globalPersonId` **and** a hole (sex UNKNOWN / no DOB / missing Ad or Soyad) get one `ops-profile/batch`; reception-filled fields are never overwritten (fill-not-clear). **Register patient**: Ad / Ata adı / Soyad (`firstName` / `middleName` / `lastName`); save composes `fullName`; nationality empty default; sex M/F/unknown only; **FIN or passport+country required** (phone alone rejected). Re-save without middle name → MDM fill-not-clear. **Open card** modal — identity + episode selector; contraindications title **inside** amber box; complaints `+ Şikayət` / ICD `+ Diaqnoz` outside cards; results print **per row only** (no header checkup print); intake checklist has **no** block print; **Klinik tarixçə** — type (All / Appointments / Visits / Exams / Labs) + period default 30d; compact cards + print. Course room/program ops live on **`/sanatorium`**. **`/patients/[id]`** via shared `PatientCardBody`.
 4. **`/appointments`** — practitioner day matrix; click free cell → **New appointment** modal (prefilled); occupied → check-in / cancel; DnD reschedule.
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
@@ -112,7 +112,7 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 9. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
 10. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
 11. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
-12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; assign nurses to procedure rows (**`SVC-*` names, no leftover `WO-TR-*`**); mark stable; add vacation overlapping the month → warning on the row; **Approve**. Confirm a proposed program: STAFF allocation should be the posted nurse (unless they are absent that day). Master-data practitioners show Doctor / Nurse / Lab. Procedure table has pagination footer.
+12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; toggle **Procedures | Nurses**; assign nurses to procedure rows (**`SVC-*` names, no leftover `WO-TR-*`**) or assign procedures to a nurse (multi-select); mark stable; add vacation overlapping the month → warning on the row; **Approve**. Set a **day substitute** (Substitute for date…) when the posted nurse is away. Confirm a proposed program: STAFF allocation = day override if set, else posted nurse if present; if posted absent and **no** override → staff unallocated (no silent skilled-pool substitute). Master-data practitioners show Doctor / Nurse / Lab. Tables have pagination footers. ADR `clinic-staff-duty-roster.md`.
 
 ### ICD-10 catalog (CLI-39…42)
 
@@ -183,8 +183,11 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 7. Without `api:sanatorium.episodes.read`, `GET /api/sanatorium/episodes` and `GET /api/sanatorium/episodes/[id]` return **403** (API uses DB, not stale JWT). Without `api:procedures.reception`, `POST /api/procedures` returns **403**.
 8. **Wave 2 — CLINIC_ADMIN matrix:** uncheck `screen:admin.catalog` for **CLINIC_ADMIN**, Save (session refresh). Catalog nav item hidden; `/admin/catalog` forbidden after refresh; `GET /api/admin/catalog` returns **403**. Re-check + Save → access restored. OrgOwner SSO still sees all admin screens.
 9. **Wave 3 — staff APIs:** uncheck `screen:patients` / `api:patients` for RECEPTION → patients nav hidden; `GET /api/patients` **403**. Uncheck `api:appointments.write` → `POST /api/appointments` **403** (session required). Queue/lab/confirm similarly gated by matrix.
-10. **Gap closeout:** role without `api:catalog.read` → `GET /api/imaging-phrases` **403**. Without `api:lab_orders` → `POST /api/lab/import` **403**. Without `screen:admin.templates` → `/api/templates` **403**. After upgrade, customized matrices: **Reset to defaults** (or grant new keys) so Wave 3 api:* keys appear.
+10. **Gap closeout:** role without `api:catalog.read` → `GET /api/imaging-phrases` **403**. Without `api:lab_orders` → `POST /api/lab/import` **403**. Legacy `/api/templates` and `/api/admin/clinical-templates` **removed**. After upgrade, customized matrices: **Reset to defaults** (or grant `screen:admin.program_templates`) so new keys appear. Legacy `screen:admin.templates` expands to diagnostic_catalog + program_templates on parse.
 11. **Data scope:** DOCTOR without `scope:episodes.all` (default) → `GET /api/sanatorium/episodes` returns only episodes with a visit / prescription / allocation for that doctor’s Practitioner; detail of another doctor’s episode → **404**. Grant `scope:episodes.all` → full list. Same for labs with `scope:lab_orders.all`. After upgrade: **Reset** RECEPTION/NURSE/LAB_TECH/CLINIC_ADMIN so they gain `scope:*.all`.
+12. **Custom role (chief doctor):** Create role `CHIEF_DOCTOR` clone from `DOCTOR`; set **staffKind=DOCTOR** if needed; enable `scope:episodes.all` + `screen:patients`; Save. On the same page **Staff role assignment** — pick a user → `CHIEF_DOCTOR`. Chief sees another doctor’s episode (**200**); plain DOCTOR still **404**. Delete custom role only when `userCount=0`.
+13. **FO manager permission (no role-name bypass):** Uncheck `api:procedures.fo_manager` on **CLINIC_ADMIN**, Save + refresh. Package assign modal must **not** show out-of-package Replace solely because role is CLINIC_ADMIN. Re-check permission → Replace returns.
+14. **Ops:** after image/DB upgrade run clinic Prisma migrate so `Role.is_system` / `staff_kind` / `clone_from_code` exist; first login or `/admin/access` runs `ensureSystemClinicRoles`.
 
 
 
@@ -203,15 +206,37 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 
 Prerequisite (ops): clinic cutover policy `elektrawebDualRun` + Sync; hotel org `writeEnabled` + Sync; pool kill switch; extension on **sanatorium** desk with Write ON and SPA open.
 
-1. Doctor assigns a paid extra (or over-quota).
-2. **`/reception/extra-tickets`** — select rows → **Issue ticket**. ERA opens 3-copy print (`/print/extra-ticket/…`). Charge is **not** posted on nurse complete.
+1. Doctor assigns a paid extra (`PENDING_PAY` on Müalicə kartı / extras modal — price shown).
+2. **`/reception/extra-tickets`** — filter by patient/procedure/origin; row **Banknote** or select rows → **Pay** (receipt/cheque required). ERA posts hotel folio (or walk-in cashier/EW channel), places onto schedule, then opens 3-copy print (`/print/extra-ticket/…`).
 3. Confirm hotel health `writeEnabled` and outbox not stuck `FAILED`. Unknown SPA product must fail enqueue (do not guess).
 4. **`/nurse`** — extra without ticket → check-in blocked (`TICKET_REQUIRED`).
-5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio, not clinic cashier (field).
+5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio / hotel cashier path, not clinic cashier (field).
+6. Explicit guest decline → delete `PENDING_PAY`; episode close / hotel check-out auto-purges unpaid pending.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=saas-wave6-hot06-lab
 cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
+```
+
+## Episode procedure assign (CLI-57)
+
+**Status:** SCREEN — not SHIPPED / not Pilot. ADR `docs/adr/clinic-episode-procedure-assign-modal.md`.
+
+1. **In-house** Müalicə kartı: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. Placement: **today ≤ N distinct in-package codes** (`/admin/settings` daily cap, default 3) + any **paid extras**; rest from next work day. Day-1 auto ≤ N distinct codes. Card **Cədvəl** = today (Baku) only; **Tam plan** + print in the plan modal (cards, same width as the patient card). Language picker must sit **above** the plan/card modal. Print **Doctor** = episode care team (not cabin/roster nurse).
+2. **Walk-in:** package block hidden; **Additional procedures** only; reception Pay requires payment receipt/cheque ref.
+3. Extras modal shows unit price + muted total; Save → `PENDING_PAY` on card (not nurse list until ticket).
+4. `/reception/extra-tickets` → filters + row money icon or select all → Pay with receipt → folio/cashier → schedule → print ×3 per procedure.
+5. Nurse `/nurse?mine=1`: unpaid extras absent; paid without ticket → check-in `TICKET_REQUIRED`.
+6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
+7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
+8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
+9. **Package left menu** shows **named treatment SKUs only** (e.g. Naftalan). Pool buckets (Fizioprosedurlar* / Parafin* / `PHYSIO_POOL`) are **hidden** — not assignable as a catch-all from this modal.
+10. Opening package assign on an OPEN episode **without** `ProgramInstance` returns **200** + `blockReason` (`NO_PROGRAM_CODE` / `NO_PROGRAM`) — modal shows how to set/open the package (not a generic load failure). Mutations still 409 `NO_PROGRAM`.
+11. **Naftalan vannası** overlay: title + **Miqdar** top-right (no duplicate Prosedur field); fill Tam / Oturaq (above navel) / Qurşaq (waist); no zone chips / Tətbiq; **Vanna ardıcıllığı** only if qty > 1. Overlay top aligns with **Paket qalığı** list.
+12. Assigned card copy: `Name ×qty (draft)` then one param per line (`naftalanFill`, `dayBlock`, `bathSequence`). Same SKU must not split into multiple cards.
+
+```bash
+cd era-clinic && npm test -- --testPathPattern=cli57-package-assign
 ```
 
 ## Topology — two-org isolation (CP-TENANT-01 / SaaS Waves 5 + 9)
@@ -288,8 +313,8 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 2. **/patients**: identity filters only; open-course badge; hotel room + program filters are on `/sanatorium`. After overlay + Re-Apply `#24`, agency/Həmkarlar (incl. September Reservation) and Extra/Res/CIn/Operator/Payment phrases show in **Proqram / paket** on the sanatorium board.
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time. After this deploy: re-Apply `#27` so lab rows have `LabOrderItem` (not empty COMPLETED shells) and single-test Word files (Dimer/CRP/PRL/Insulin/Hormon) bind to catalog codes.
-5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`SANATORIUM-INTAKE`, `GYN-OR-URO`, `ECG-12`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Check-up print form remains at `/print/checkup/...` (not linked from intake header).
-6. Live check-in (hotel stay / walk-in): open episode → ECG-12 + USG-ABD appear as ORDERED if missing; second open does not duplicate; physio FIFO still requires complete-checkup / program path (not auto from intake).
+5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`VISIT-SANATORIUM-INTAKE`, `GYN-OR-URO`, `CARDIO-ECG`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Check-up print form remains at `/print/checkup/...` (not linked from intake header).
+6. Live check-in (hotel stay / walk-in): open episode → CARDIO-ECG + USG-ABD appear as ORDERED if missing; second open does not duplicate; physio FIFO still requires complete-checkup / program path (not auto from intake).
 7. After re-Apply `#23` (Baku `+04:00` slot parse): Yağmur — two Solyuks times both visible; compact PLAN date+time matches modal for the same `procedure:{id}`; **Növbəti** is nearest `scheduledAt >= now` in Baku (not a 2024 leftover). No 18:36↔10:36 jump after re-import.
 
 ## CLI-49 — Physio sites (W2–W4)
@@ -323,15 +348,36 @@ Doctor card (no curl):
 4. Open `/sanatorium?episode=<id>` → treatment chart modal opens (not only PatientCard).
 5. Patient card «Gün planını aç» href lands on that deep link.
 
+## Visit CPOE / diagnostic SoT (CLI-10)
+
+**Status:** SHOW — print + card entry; FHIR / whole-visit print remain debt.
+
+1. [x] `/admin/diagnostic-catalog` → Services → **Visit templates** filter → edit fields via field designer (not raw JSON only).
+2. [x] `/admin/program-templates` visible only with `screen:admin.program_templates` (not legacy templates key).
+3. [x] Doctor: open `/visits/[id]` → pick visit template → fill fields → Save → history row appears.
+4. [x] History row → **Print exam** → language dialog → `/print/visit-exam/[cpoeEntryId]` opens and print dialog appears (one entry; diagnoses block; snapshotted labels).
+5. [x] Patient card → **Exam notes** section → print icon → same print route.
+6. [x] Role without `api:visits` and without `api:patients` → `/print/visit-exam/...` redirects forbidden.
+7. [x] Legacy `/api/admin/clinical-templates` and `/api/templates` routes are **gone** (404).
+
 ## Program quota knots (CLI-51 / Wave B)
 
 **Status:** Engineering API — not SHIPPED.
 
-1. `/admin/templates` program tab — edit multi-procedure JSON + knots JSON; Save keeps all lines.
+1. `/admin/program-templates` — edit entitlement blocks (member SKUs) + knots matrix; composition save bumps version (open stays stay pinned). Empty list shows empty-state row.
 2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
 3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
 4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.
-5. In-quota procedure charge = 0 AZN; over-quota = list price; walk-in without package paid.
+5. In-quota procedure/lab/visit charge = 0 AZN; over-quota = **listAmount** (retail); walk-in without package paid; guest with `noPackageConfirmedAt` paid; missing list → `priceMissing` (admin `?missingListPrice=1`).
+6. **W2 block axes:** set assignMode / quotaBasis / requiresDoctor on a block; **İcra is not shown** (LAB→lab order, EXAM→visit, treatment→procedure). Membership list follows block kind (labs from diagnostic catalog, not SVC physio). AUTO badge appears; PER_STAY shows one stay-qty cell.
+7. Open episode with AUTO_ON_OPEN lab block → LabOrder created; requiresDoctor visit without care team → `PENDING_DOCTOR`; add care doctor → auto retry.
+8. `/sanatorium` list shows packageSignal badge when not OK; Confirm no package stamps `noPackageConfirmedAt`; **Undo no-package** clears it, and assigning a package clears it automatically (guest stops being billed at list price).
+9. `POST /api/sanatorium/episodes/[id]/package-apply` retries auto blocks (api:procedures.confirm).
+10. Complete a procedure on a hotel episode **without** a package code: amount stays 0 (`awaiting_package`) **and** a `ProcedureChargeLog` row appears — delivered work must not vanish from the cashier backlog.
+11. Order a lab for a code without `listAmount` on a paid path (walk-in / confirmed no-package): line posts `DEFAULT_OVER_QUOTA_AZN`, never 0, and the code still appears in `?missingListPrice=1`.
+12. Switch package on an open episode: codes added by the switch show `quotaUsed` matching already-created in-package fulfillments (not 0).
+13. Cancel an intake lab, then `package-apply` → the lab is re-created (a cancelled order must not block retry).
+14. With `procedureOverQuotaPolicy = BLOCK`, ordering an over-quota package lab returns 409 `LAB_OVER_QUOTA_BLOCKED`.
 
 ## Doctor first-day confirm (CLI-52 / Wave C)
 
@@ -372,10 +418,25 @@ Doctor card (no curl):
 
 ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md).
 
-1. Patient card — episode CatalogField (default latest); anamnesis above CI → ICD → clinical blocks; CLOSED = read-only.
+1. Patient card — episode CatalogField (default latest); anamnesis (+Anamnesis modal once per episode, then edit; author specialty + name under text) above CI → complaints/ICD (author under each row) → clinical blocks; CLOSED = read-only.
 2. Empty OPEN anamnesis → confirm procedures disabled / API `409 ANAMNESIS_REQUIRED`; demographics save works without anamnesis.
 3. Second OPEN walk-in for same patient → `409 WALK_IN_OPEN_EXISTS`.
 4. `/sanatorium` Close on idle WALK_IN; refuse when live procedures or open labs remain (no silent cancel).
 5. Returning guest intake creates ECG/USG on the **new** episode (does not skip last year’s labs).
 6. Print checkup/procedures with `?episode=` for a past course does not mix the new stay.
+
+## Episode care team (CLI-56) — SCREEN
+
+**Status:** SCREEN. Not SHIPPED. ADR: [clinic-episode-care-team.md](../../docs/adr/clinic-episode-care-team.md).
+
+1. Reception opens patient card from `/sanatorium` → sees identity + package + **Care team** only.
+2. **+ Doctor** (therapist / gyn / uro …) → Save → doctor with assigned-only scope sees the course on `/sanatorium`.
+3. Clinical blocks (anamnesis, CI, complaints/ICD, plan/confirm) appear only after ≥1 care-team doctor.
+4. Empty care team → API `409 CARE_TEAM_REQUIRED` on anamnesis / complaints / diagnoses / complete-checkup / procedure assign.
+5. Doctor already on team can **+ Doctor** peers; first assign requires RECEPTION/admin (`scope:episodes.all`).
+6. Appointments linkage deferred (Pattern B `/appointments` unchanged).
+7. `VISIT-SANATORIUM-INTAKE` checklist → **Keçdi/Passed** when OPEN episode has anamnesis + ≥1 complaint (diagnosis optional).
+8. Same trigger **auto-opens** stay `programCode` as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) — do not wait for labs. Then Confirm 2–3.
+9. `/sanatorium` list rows: light sky tint when care team assigned; light red tint when not.
+10. If episode has no `programCode`, proposed stays empty until package is set (walk-in Select / hotel product).
 

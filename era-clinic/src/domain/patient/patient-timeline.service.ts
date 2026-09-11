@@ -30,6 +30,9 @@ export type PatientTimelineEvent = {
   physio?: {
     needsSite: boolean;
     physioOrderFields: string[];
+    allowedSiteCodes: string[];
+    forceSiteTogether?: boolean;
+    sitesHintKey?: "hydro_jet_safety" | null;
     siteIds: string[];
     siteApplyMode: "TOGETHER" | "TURN" | null;
     siteLaterality: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;

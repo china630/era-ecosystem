@@ -110,6 +110,7 @@ export const shouldDeferWalkInToHub = jest.fn().mockReturnValue(false);
 export const shouldRouteRevenueToParent = jest.fn().mockReturnValue(false);
 export const linkPersonIdentity = jest.fn();
 export const getPersonOpsProfile = jest.fn().mockResolvedValue(null);
+export const ensurePersonAccessGrant = jest.fn().mockResolvedValue(true);
 export function normalizePersonSex(raw: unknown): "MALE" | "FEMALE" | "UNKNOWN" | undefined {
   if (raw == null || raw === "") return undefined;
   const s = String(raw).trim().toUpperCase();
@@ -118,8 +119,13 @@ export function normalizePersonSex(raw: unknown): "MALE" | "FEMALE" | "UNKNOWN" 
   if (s === "OTHER" || s === "UNKNOWN") return "UNKNOWN";
   return undefined;
 }
-export function parsePersonBirthDate(): Date | undefined {
-  return undefined;
+export function parsePersonBirthDate(raw?: string | Date | null): Date | undefined {
+  if (raw == null || raw === "") return undefined;
+  if (raw instanceof Date && !Number.isNaN(raw.getTime())) return raw;
+  const s = String(raw).trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
+  const d = new Date(`${s}T00:00:00.000Z`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
 export function composePersonFullName(

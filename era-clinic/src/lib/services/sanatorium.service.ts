@@ -3,7 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
-import { getPersonOpsProfile, normalizePersonSex, parsePersonBirthDate, splitFullNameToParts } from '@era/satellite-kit';
+import { splitFullNameToParts } from '@era/satellite-kit';
+import { applyPackageAutoBlocks } from '@/domain/sanatorium/package-auto-apply.service';
+/** @deprecated Prefer applyPackageAutoBlocks — kept as fallback when no ProgramInstance. */
 import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
 import {
   assertLabOrderCanCreate,
@@ -11,6 +13,7 @@ import {
 } from '@/domain/lab/lab-order-conflict.service';
 import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
 import { composeFullName } from '@/domain/patient/patient-ref-code';
+import { applyMdmDemographicsCache } from '@/domain/patient/mdm-demographics-cache';
 import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
 
 function refCodeFromPassport(passport: string): string {
@@ -101,58 +104,14 @@ async function findOpenEpisodeForStay(
 
 async function safeInstantiateIntake(episodeId: string) {
   try {
-    await instantiateIntakePackage(episodeId);
+    const auto = await applyPackageAutoBlocks(episodeId, { trigger: "OPEN" });
+    if (auto && "skipped" in auto && auto.skipped === "NO_PROGRAM") {
+      // @deprecated — hard-coded PKG-NAFTA-INTAKE path when episode has no ProgramInstance yet
+      await instantiateIntakePackage(episodeId);
+    }
   } catch (err) {
-    console.error("[sanatorium] instantiateIntakePackage failed", episodeId, err);
+    console.error("[sanatorium] package auto-apply / intake failed", episodeId, err);
   }
-}
-
-async function applyMdmDemographicsCache(
-  patientId: string,
-  globalPersonId: string | null | undefined,
-) {
-  if (!globalPersonId?.trim()) return;
-  const profile = await getPersonOpsProfile(globalPersonId.trim());
-  if (!profile || profile.accessDenied) return;
-  const sex = normalizePersonSex(profile.sex);
-  const birthDate = parsePersonBirthDate(profile.birthDate);
-  const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
-  if (!patient) return;
-  const nextSex =
-    sex === "MALE" || sex === "FEMALE"
-      ? sex
-      : undefined;
-  const namePatch: {
-    firstName?: string;
-    middleName?: string | null;
-    lastName?: string;
-    fullName?: string;
-  } = {};
-  if (profile.firstName?.trim() && !patient.firstName?.trim()) {
-    namePatch.firstName = profile.firstName.trim();
-  }
-  if (profile.middleName?.trim() && !patient.middleName?.trim()) {
-    namePatch.middleName = profile.middleName.trim();
-  }
-  if (profile.lastName?.trim() && !patient.lastName?.trim()) {
-    namePatch.lastName = profile.lastName.trim();
-  }
-  if (Object.keys(namePatch).length > 0) {
-    namePatch.fullName = composeFullName({
-      firstName: namePatch.firstName ?? patient.firstName,
-      middleName: namePatch.middleName ?? patient.middleName,
-      lastName: namePatch.lastName ?? patient.lastName,
-    });
-  }
-  await prisma.patientRef.update({
-    where: { id: patientId },
-    data: {
-      ...(nextSex && patient.sex === "UNKNOWN" ? { sex: nextSex } : {}),
-      ...(!patient.birthDate && birthDate ? { birthDate } : {}),
-      globalPersonId: globalPersonId.trim(),
-      ...namePatch,
-    },
-  });
 }
 
 function walkInLegacyRefCode(finOrPassport: string): string {
@@ -484,9 +443,7 @@ export async function completeCheckupAndSchedule(input: {
   });
   if (!episode) throw new Error('Episode not found');
   if (episode.programInstance) throw new Error('Program already assigned');
-  if (episode.complaints.length === 0 && episode.diagnoses.length === 0) {
-    throw new Error('Add at least one complaint or diagnosis before scheduling');
-  }
+  // Strict AND: anamnesis + ≥1 complaint (ICD/labs optional — day-1 before diagnostics).
   const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
     "@/domain/sanatorium/episode-gates"
   );
@@ -495,6 +452,9 @@ export async function completeCheckupAndSchedule(input: {
     const err = new Error(anamnesisDenied);
     (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
     throw err;
+  }
+  if (episode.complaints.length === 0) {
+    throw new Error('Add anamnesis and at least one complaint before scheduling');
   }
 
   const programCode = input.programCode ?? episode.programCode;
@@ -549,27 +509,47 @@ export async function listOpenEpisodes(input?: {
       ? episodeAssignedToPractitionerWhere(input.dataScope.practitionerId)
       : undefined;
 
-  const where = {
-    status: 'OPEN' as const,
+  const and: Prisma.ClinicalEpisodeWhereInput[] = [];
+  if (input?.origin) {
+    and.push({ patientOrigin: input.origin as "IN_HOUSE" | "WALK_IN" });
+  }
+  if (roomNumber) {
+    and.push({ roomNumber: { equals: roomNumber, mode: "insensitive" } });
+  }
+  if (programCode) {
+    and.push({
+      OR: [
+        { programCode: { equals: programCode, mode: "insensitive" } },
+        {
+          programInstance: {
+            programCode: { equals: programCode, mode: "insensitive" },
+          },
+        },
+      ],
+    });
+  }
+  if (input?.q?.trim()) {
+    const needle = input.q.trim();
+    and.push({
+      OR: [
+        { patientRef: { fullName: { contains: needle, mode: "insensitive" } } },
+        { patientRef: { refCode: { contains: needle, mode: "insensitive" } } },
+        { roomNumber: { contains: needle, mode: "insensitive" } },
+        { programCode: { contains: needle, mode: "insensitive" } },
+        {
+          programInstance: {
+            programCode: { contains: needle, mode: "insensitive" },
+          },
+        },
+      ],
+    });
+  }
+  if (scopeFilter) and.push(scopeFilter);
+
+  const where: Prisma.ClinicalEpisodeWhereInput = {
+    status: "OPEN",
     ...(input?.organizationId ? { organizationId: input.organizationId } : {}),
-    ...(input?.origin ? { patientOrigin: input.origin as 'IN_HOUSE' | 'WALK_IN' } : {}),
-    ...(roomNumber
-      ? { roomNumber: { equals: roomNumber, mode: 'insensitive' as const } }
-      : {}),
-    ...(programCode
-      ? { programCode: { equals: programCode, mode: 'insensitive' as const } }
-      : {}),
-    ...(input?.q?.trim()
-      ? {
-          OR: [
-            { patientRef: { fullName: { contains: input.q.trim(), mode: 'insensitive' as const } } },
-            { patientRef: { refCode: { contains: input.q.trim(), mode: 'insensitive' as const } } },
-            { roomNumber: { contains: input.q.trim(), mode: 'insensitive' as const } },
-            { programCode: { contains: input.q.trim(), mode: 'insensitive' as const } },
-          ],
-        }
-      : {}),
-    ...(scopeFilter ? { AND: [scopeFilter] } : {}),
+    ...(and.length ? { AND: and } : {}),
   };
 
   const { listHotelRoomNumbers, listProgramCodes } = await import(
@@ -582,6 +562,7 @@ export async function listOpenEpisodes(input?: {
       where,
       include: {
         patientRef: true,
+        careDoctors: { select: { id: true }, take: 1 },
         complaints: { orderBy: { recordedAt: 'desc' }, take: 3 },
         diagnoses: {
           orderBy: { recordedAt: 'desc' },
@@ -629,11 +610,51 @@ export async function listOpenEpisodes(input?: {
     walkInCloseDenied,
   } = await import("@/domain/sanatorium/episode-gates");
 
+  function withCareTeamFlag<T extends { careDoctors?: { id: string }[] }>(
+    e: T,
+  ): Omit<T, "careDoctors"> & { hasCareTeam: boolean } {
+    const { careDoctors, ...rest } = e;
+    return {
+      ...rest,
+      hasCareTeam: (careDoctors?.length ?? 0) > 0,
+    };
+  }
+
+  /** Ops package signal for list badges / filters. */
+  function packageSignal(e: {
+    programCode: string | null;
+    noPackageConfirmedAt?: Date | null;
+    programInstance?: { id: string } | null;
+  }): "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED" {
+    if (e.noPackageConfirmedAt) return "NO_PACKAGE_CONFIRMED";
+    if (e.programInstance) return "OK";
+    if (e.programCode?.trim()) return "NO_PROGRAM";
+    return "NO_PROGRAM_CODE";
+  }
+
+  function withPackageSignal<
+    T extends {
+      programCode: string | null;
+      noPackageConfirmedAt?: Date | null;
+      programInstance?: { id: string } | null;
+      careDoctors?: { id: string }[];
+    },
+  >(e: T) {
+    const flagged = withCareTeamFlag(e);
+    return {
+      ...flagged,
+      packageSignal: packageSignal(e),
+    };
+  }
+
   const walkInIds = episodes
     .filter((e) => e.patientOrigin === "WALK_IN")
     .map((e) => e.id);
   if (walkInIds.length === 0) {
-    const data = episodes.map((e) => ({ ...e, canCloseWalkIn: false as boolean }));
+    const data = episodes.map((e) => ({
+      ...withPackageSignal(e),
+      canCloseWalkIn: false as boolean,
+    }));
     return {
       data,
       total,
@@ -674,14 +695,15 @@ export async function listOpenEpisodes(input?: {
   );
 
   const data = episodes.map((e) => {
+    const base = withPackageSignal(e);
     if (e.patientOrigin !== "WALK_IN") {
-      return { ...e, canCloseWalkIn: false };
+      return { ...base, canCloseWalkIn: false };
     }
     const denied = walkInCloseDenied({
       liveProcedureCount: liveByEp.get(e.id) ?? 0,
       openLabCount: labsByEp.get(e.id) ?? 0,
     });
-    return { ...e, canCloseWalkIn: !denied };
+    return { ...base, canCloseWalkIn: !denied };
   });
   return {
     data,
@@ -699,7 +721,11 @@ export async function listInHouseEpisodes(organizationId?: string) {
   return result.data;
 }
 
-export async function addComplaint(episodeId: string, text: string) {
+export async function addComplaint(
+  episodeId: string,
+  text: string,
+  opts?: { recordedByPractitionerId?: string | null },
+) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
     select: { status: true },
@@ -719,7 +745,14 @@ export async function addComplaint(episodeId: string, text: string) {
     throw err;
   }
   return prisma.clinicalComplaint.create({
-    data: { episodeId, text },
+    data: {
+      episodeId,
+      text,
+      recordedByPractitionerId: opts?.recordedByPractitionerId ?? null,
+    },
+    include: {
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
@@ -727,6 +760,9 @@ export async function listEpisodeComplaints(episodeId: string) {
   return prisma.clinicalComplaint.findMany({
     where: { episodeId },
     orderBy: { recordedAt: "desc" },
+    include: {
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
@@ -774,12 +810,20 @@ export async function updateEpisodeComplaint(
   return prisma.clinicalComplaint.update({
     where: { id },
     data: { text: text.trim() },
+    include: {
+      recordedByPractitioner: { select: { fullName: true, specialty: true } },
+    },
   });
 }
 
 export async function addDiagnosis(
   episodeId: string,
-  input: { icdCodeId: string; note?: string | null; recordedByUserId?: string | null },
+  input: {
+    icdCodeId: string;
+    note?: string | null;
+    recordedByUserId?: string | null;
+    recordedByPractitionerId?: string | null;
+  },
 ) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
@@ -871,8 +915,20 @@ export async function getEpisode(id: string) {
     where: { id },
     include: {
       patientRef: true,
-      complaints: { orderBy: { recordedAt: 'desc' } },
-      diagnoses: { orderBy: { recordedAt: 'desc' }, include: { icdCode: true } },
+      complaints: {
+        orderBy: { recordedAt: "desc" },
+        include: {
+          recordedByPractitioner: { select: { fullName: true, specialty: true } },
+        },
+      },
+      diagnoses: {
+        orderBy: { recordedAt: "desc" },
+        include: {
+          icdCode: true,
+          recordedByPractitioner: { select: { fullName: true, specialty: true } },
+        },
+      },
+      anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
       labOrders: {
         orderBy: { createdAt: 'desc' },
         include: {
@@ -995,6 +1051,11 @@ export async function closeWalkInEpisode(episodeId: string) {
     (err as Error & { code?: string }).code = EPISODE_NOT_IDLE;
     throw err;
   }
+
+  const { purgePendingExtrasForEpisode } = await import(
+    "@/domain/sanatorium/extras-assign.service"
+  );
+  await purgePendingExtrasForEpisode(episodeId);
 
   return prisma.clinicalEpisode.update({
     where: { id: episodeId },

@@ -11,6 +11,10 @@ const bodySchema = z.object({
   phone: z.string().optional(),
   organizationId: z.string().min(1),
   globalPersonId: z.string().nullable().optional(),
+  /** Medical package / program template code from hotel rate stamp. */
+  programCode: z.string().min(1).nullable().optional(),
+  roomNumber: z.string().nullable().optional(),
+  paxKey: z.string().nullable().optional(),
 });
 
 /** SEC-CLI-01: fail closed in production when CLINIC_BRIDGE_SECRET unset */

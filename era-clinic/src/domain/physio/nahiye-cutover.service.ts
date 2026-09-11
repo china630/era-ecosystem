@@ -5,13 +5,14 @@ import type { ImportTx } from "@/lib/import/types";
 import {
   bucketOf,
   buildMatcher,
-  classifyEmptyNahiye,
   fillImportedNote,
   fold,
   overlayZoneAliases,
+  resolveEmptyImportSiteCodes,
   type NahiyeMatchCatalog,
 } from "./nahiye-match";
 import {
+  defaultLateralityForSite,
   inferLateralityFromText,
   physioFieldsFromFlags,
   siteApplyModeFromFlags,
@@ -20,6 +21,7 @@ import {
 import { deriveCoarseBodyPart, resolveSiteApplyMode, uniqueOrderedIds } from "./physio-order-sites";
 import { parseAliasList, PhysioCatalogError } from "./physio-catalog";
 import { loadMergedPhysioZonesCatalog } from "./physio-catalog-layers";
+import { inferPhysioTypeGate } from "./physio-type-gate";
 
 let catalogCache: NahiyeMatchCatalog | null = null;
 
@@ -117,15 +119,19 @@ export async function applyNahiyeToProcedureOrder(
   let residue = "";
   let bucket = "empty-text";
 
+  const gate = inferPhysioTypeGate(procType?.code ?? "", input.procedureName);
+  const allowedSiteCodes =
+    procType?.allowedSiteCodes?.length ? procType.allowedSiteCodes : gate.allowedSiteCodes;
+  const needsSite = procType?.needsSite ?? gate.needsSite;
+
   if (raw) {
     const m = matcher.match(raw, { procedureName: input.procedureName });
     chips = m.chips;
     flags = m.flags;
     residue = m.residue;
     bucket = bucketOf(m);
-  } else if (procType?.needsSite !== false) {
-    const empty = classifyEmptyNahiye(input.procedureName);
-    chips = empty.defaults;
+  } else if (needsSite) {
+    chips = resolveEmptyImportSiteCodes(input.procedureName, allowedSiteCodes);
   }
 
   const listHits: ListAliasHit[] = [];
@@ -143,7 +149,7 @@ export async function applyNahiyeToProcedureOrder(
   }
 
   const physioFields = raw ? physioFieldsFromFlags(flags, raw, listHits) : {};
-  const laterality = raw ? inferLateralityFromText(raw) : null;
+  const inferredLaterality = raw ? inferLateralityFromText(raw) : null;
   const flaggedMode = siteApplyModeFromFlags(flags);
 
   const byCode = new Map(dbSites.map((s) => [s.code, s]));
@@ -183,7 +189,10 @@ export async function applyNahiyeToProcedureOrder(
           procedureOrderId: orderId,
           siteId: site.id,
           sortOrder: i,
-          laterality: (site.laterality && laterality ? laterality : null) as ProcedureSiteLaterality | null,
+          laterality: defaultLateralityForSite(
+            site.laterality,
+            inferredLaterality,
+          ) as ProcedureSiteLaterality | null,
         })),
       });
     }

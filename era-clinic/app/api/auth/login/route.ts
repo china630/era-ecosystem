@@ -45,6 +45,11 @@ export async function POST(request: Request) {
     const organizationId = user.organizationId;
     enterSatelliteTenant({ organizationId });
 
+    const { ensureSystemClinicRoles } = await import(
+      "@/lib/auth/ensure-system-clinic-roles"
+    );
+    await ensureSystemClinicRoles(prisma, organizationId);
+
     const permissions = await permissionsForUser(user.id);
     const token = await signSatelliteSession({
       sub: user.id,
@@ -71,7 +76,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 4,
+      maxAge: 60 * 60 * 12,
     });
     res.cookies.set(PRESETS_COOKIE, serializePresetsCookie(enabledPresets), {
       httpOnly: false,

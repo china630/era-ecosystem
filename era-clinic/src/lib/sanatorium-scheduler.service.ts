@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { planProgramFifo } from "@/lib/treatment-planner.service";
 import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
+import {
+  buildEntitlementSnapshot,
+  findCurrentProgramTemplate,
+  programTemplateInclude,
+} from "@/domain/sanatorium/program-template-admin";
 
 export async function instantiateProgramFromTemplate(input: {
   episodeId: string;
@@ -12,10 +16,7 @@ export async function instantiateProgramFromTemplate(input: {
   checkInDate?: Date;
   nights?: number;
 }) {
-  const template = await prisma.programTemplate.findFirst({
-    where: { code: input.programCode },
-    include: { procedures: true, quotaKnots: true },
-  });
+  const template = await findCurrentProgramTemplate(input.programCode);
   if (!template) throw new Error(`Program template ${input.programCode} not found`);
 
   const checkIn = input.checkInDate ?? input.startsOn;
@@ -32,7 +33,12 @@ export async function instantiateProgramFromTemplate(input: {
 
   const endsOn = checkOut;
 
-  const balanceRows = template.procedures.map((p) => {
+  const balanceRows = template.procedures.map(
+    (p: {
+      quotaTotal: number;
+      procedureCode: string;
+      quotaBasis?: string | null;
+    }) => {
     let quotaTotal = p.quotaTotal;
     if (template.quotaKnots.length > 0) {
       quotaTotal = quotaFor({
@@ -41,6 +47,7 @@ export async function instantiateProgramFromTemplate(input: {
         procedureCode: p.procedureCode,
         minNights: template.minNights,
         maxNights: template.maxNights,
+        quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
       });
     }
     return {
@@ -50,7 +57,21 @@ export async function instantiateProgramFromTemplate(input: {
     };
   });
 
-  const instance = await prisma.programInstance.create({
+  const entitlementSnapshot = buildEntitlementSnapshot({
+    templateId: template.id,
+    code: template.code,
+    version: template.version,
+    procedures: template.procedures,
+    knots: template.quotaKnots,
+    members: template.blockMembers,
+  });
+
+  /**
+   * ProgramProcedureBalance is not tenant-scoped. Nested `procedureLines.create`
+   * under ProgramInstance is stamped with organizationId and rejected (same class
+   * as LabOrderItem). Create instance first, then top-level balance rows.
+   */
+  const created = await prisma.programInstance.create({
     data: {
       templateId: template.id,
       episodeId: input.episodeId,
@@ -58,26 +79,48 @@ export async function instantiateProgramFromTemplate(input: {
       programCode: template.code,
       startsOn: input.startsOn,
       endsOn,
-      procedureLines: {
-        create: balanceRows,
-      },
+      entitlementSnapshot,
     },
+  });
+  if (balanceRows.length > 0) {
+    await prisma.programProcedureBalance.createMany({
+      data: balanceRows.map(
+        (row: { procedureCode: string; quotaTotal: number; quotaUsed: number }) => ({
+        instanceId: created.id,
+        procedureCode: row.procedureCode,
+        quotaTotal: row.quotaTotal,
+        quotaUsed: row.quotaUsed,
+      })),
+    });
+  }
+  const instance = await prisma.programInstance.findUniqueOrThrow({
+    where: { id: created.id },
     include: { procedureLines: true },
   });
 
+  // A package arrived, so a prior "guest has no package" confirmation is stale —
+  // clearing it puts entitlement pricing back in charge of this episode.
   await prisma.clinicalEpisode.update({
     where: { id: input.episodeId },
-    data: { programCode: template.code },
+    data: {
+      programCode: template.code,
+      noPackageConfirmedAt: null,
+      noPackageConfirmedByUserId: null,
+    },
   });
 
-  await scheduleProgramProcedures(instance.id, input.startsOn);
+  // CLI-57: balances only — doctor assigns via package modal (no buildProposedPlan pre-expand).
   return instance;
 }
 
 /**
  * Recalculate balances after nights or package change.
- * Never decreases quotaUsed; does not cancel SCHEDULED.
- * Drops only PROPOSED for codes removed from the new package.
+ * Never decreases quotaUsed below consumed; does not cancel CHECKED_IN/COMPLETED.
+ * Drops orphan PROPOSED for codes removed from the new package.
+ * CLI-57: when endsOn shortens, cancel future SCHEDULED past the new end.
+ *
+ * Night-only recalc keeps pinned templateId + snapshot knots.
+ * Explicit programCode change switches to the **current** template version and refreshes snapshot.
  */
 export async function recalcProgramQuotas(
   instanceId: string,
@@ -95,16 +138,34 @@ export async function recalcProgramQuotas(
   if (!instance) throw new Error("Program instance not found");
 
   const code = opts.programCode ?? instance.programCode;
-  const template = await prisma.programTemplate.findFirst({
-    where: { code },
-    include: { procedures: true, quotaKnots: true },
-  });
+  const packageCodeChanged = Boolean(opts.programCode && opts.programCode !== instance.programCode);
+
+  let template = packageCodeChanged
+    ? await findCurrentProgramTemplate(code)
+    : await prisma.programTemplate.findUnique({
+        where: { id: instance.templateId },
+        include: programTemplateInclude,
+      });
+
   if (!template) throw new Error(`Program template ${code} not found`);
 
-  const newCodes = new Set(template.procedures.map((p) => p.procedureCode));
+  const snapshot = buildEntitlementSnapshot({
+    templateId: template.id,
+    code: template.code,
+    version: template.version,
+    procedures: template.procedures,
+    knots: template.quotaKnots,
+    members: template.blockMembers,
+  });
+
+  const newCodes = new Set(
+    template.procedures.map((p: { procedureCode: string }) => p.procedureCode),
+  );
   const existingByCode = new Map(
     instance.procedureLines.map((l) => [l.procedureCode, l]),
   );
+
+  const addedCodes: string[] = [];
 
   for (const p of template.procedures) {
     let newTotal = p.quotaTotal;
@@ -115,6 +176,7 @@ export async function recalcProgramQuotas(
         procedureCode: p.procedureCode,
         minNights: template.minNights,
         maxNights: template.maxNights,
+        quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
       });
     }
     const existing = existingByCode.get(p.procedureCode);
@@ -133,6 +195,7 @@ export async function recalcProgramQuotas(
           quotaUsed: 0,
         },
       });
+      addedCodes.push(p.procedureCode);
     }
   }
 
@@ -164,10 +227,49 @@ export async function recalcProgramQuotas(
     where: { id: instanceId },
     data: {
       programCode: code,
-      templateId: template.id,
+      ...(packageCodeChanged
+        ? { templateId: template.id, entitlementSnapshot: snapshot }
+        : instance.entitlementSnapshot
+          ? {}
+          : { entitlementSnapshot: snapshot }),
       ...(opts.endsOn ? { endsOn: opts.endsOn } : {}),
     },
   });
+
+  if (opts.endsOn) {
+    const { cancelFutureScheduledPastEnd } = await import(
+      "@/domain/sanatorium/package-assign.service"
+    );
+    await cancelFutureScheduledPastEnd(instanceId, opts.endsOn);
+  }
+
+  if (packageCodeChanged) {
+    await prisma.clinicalEpisode.update({
+      where: { id: instance.episodeId },
+      data: {
+        programCode: code,
+        noPackageConfirmedAt: null,
+        noPackageConfirmedByUserId: null,
+      },
+    });
+  }
+
+  // Rows added by this recalc start at quotaUsed 0 while stamped fulfillments may
+  // already exist for those codes (package switch, nights growth). Re-derive only
+  // the new rows: a blanket resync would zero legacy instances whose historical
+  // fulfillments are not stamped yet — that is the backfill script's job.
+  if (addedCodes.length > 0) {
+    const { syncEntitlementUsage } = await import(
+      "@/domain/sanatorium/entitlement-usage.service"
+    );
+    for (const quotaCode of addedCodes) {
+      await syncEntitlementUsage({
+        instanceId,
+        episodeId: instance.episodeId,
+        quotaCode,
+      });
+    }
+  }
 
   return prisma.programInstance.findUnique({
     where: { id: instanceId },
@@ -175,32 +277,30 @@ export async function recalcProgramQuotas(
   });
 }
 
+/**
+ * @deprecated CLI-57 — package assign is lazy via package-assign API. No-op retained for import safety.
+ */
 export async function scheduleProgramProcedures(
-  instanceId: string,
-  startsOn: Date,
+  _instanceId: string,
+  _startsOn: Date,
 ) {
-  await planProgramFifo(instanceId, startsOn);
+  return 0;
 }
 
+/**
+ * @deprecated Prefer `isOverEntitlementQuota` from entitlement-usage.service.
+ * Read-only over-quota check — does NOT increment quotaUsed (CLI-57 single COUNT SoT).
+ */
 export async function useProcedureQuota(input: {
   instanceId: string;
   procedureCode: string;
 }): Promise<{ allowed: boolean; overQuota: boolean }> {
-  const line = await prisma.programProcedureBalance.findUnique({
-    where: {
-      instanceId_procedureCode: {
-        instanceId: input.instanceId,
-        procedureCode: input.procedureCode,
-      },
-    },
+  const { isOverEntitlementQuota } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+  const r = await isOverEntitlementQuota({
+    instanceId: input.instanceId,
+    quotaCode: input.procedureCode,
   });
-  if (!line) return { allowed: true, overQuota: false };
-  if (line.quotaUsed >= line.quotaTotal) {
-    return { allowed: true, overQuota: true };
-  }
-  await prisma.programProcedureBalance.update({
-    where: { id: line.id },
-    data: { quotaUsed: { increment: 1 } },
-  });
-  return { allowed: true, overQuota: false };
+  return { allowed: true, overQuota: r.overQuota };
 }

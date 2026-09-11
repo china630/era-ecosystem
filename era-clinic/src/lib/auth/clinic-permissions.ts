@@ -1,4 +1,9 @@
-import { CLINIC_ROLE, type ClinicRoleCode } from "@/lib/clinic-roles";
+import {
+  CLINIC_ROLE,
+  type ClinicRoleCode,
+} from "@/lib/clinic-roles";
+
+export { SYSTEM_CLINIC_ROLES, CONFIGURABLE_CLINIC_ROLES } from "@/lib/clinic-roles";
 
 /** Stable permission keys — SSOT for nav, middleware, API, and admin matrix. */
 export const CLINIC_PERMISSION = {
@@ -23,7 +28,7 @@ export const CLINIC_PERMISSION = {
   SCREEN_ADMIN_CATALOG: "screen:admin.catalog",
   SCREEN_ADMIN_DIAGNOSTIC_CATALOG: "screen:admin.diagnostic_catalog",
   SCREEN_ADMIN_ICD_FAVORITES: "screen:admin.icd_favorites",
-  SCREEN_ADMIN_TEMPLATES: "screen:admin.templates",
+  SCREEN_ADMIN_PROGRAM_TEMPLATES: "screen:admin.program_templates",
   SCREEN_ADMIN_IMPORT: "screen:admin.import",
   SCREEN_ADMIN_PROCEDURE_RULES: "screen:admin.procedure_rules",
   SCREEN_ADMIN_LIS_PROFILES: "screen:admin.lis_profiles",
@@ -58,6 +63,8 @@ export const CLINIC_PERMISSION = {
   API_NURSE_OVERDUE: "api:nurse.overdue",
   API_PATIENTS: "api:patients",
   API_PROCEDURES_CONFIRM: "api:procedures.confirm",
+  /** FO desk manager: out-of-package replace / concessions (CLI-57). */
+  API_PROCEDURES_FO_MANAGER: "api:procedures.fo_manager",
   API_INPATIENT: "api:inpatient",
   API_VISITS: "api:visits",
   API_MDM: "api:mdm",
@@ -136,7 +143,7 @@ const ADMIN_SCREENS: ClinicPermission[] = [
   CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
   CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
   CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
-  CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES,
+  CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
   CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
@@ -160,6 +167,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES,
       CLINIC_PERMISSION.API_PROCEDURES_READ,
       CLINIC_PERMISSION.API_PROCEDURES_RECEPTION,
+      CLINIC_PERMISSION.API_PROCEDURES_CONFIRM,
       CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_WRITE,
       CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_READ,
       CLINIC_PERMISSION.API_APPOINTMENTS_WRITE,
@@ -200,6 +208,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_APPOINTMENTS_READ,
       CLINIC_PERMISSION.API_INPATIENT,
       CLINIC_PERMISSION.API_VISITS,
+      CLINIC_PERMISSION.API_PATIENTS,
       CLINIC_PERMISSION.API_MDM,
       CLINIC_PERMISSION.API_OPS_DAY_SUMMARY,
       CLINIC_PERMISSION.API_ICD_READ,
@@ -336,18 +345,33 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
 
 const PERMISSION_SET = new Set<string>(ALL_CLINIC_PERMISSIONS);
 
+/** Pre-single-SoT key — expand into diagnostic + program template screens. */
+const LEGACY_SCREEN_ADMIN_TEMPLATES = "screen:admin.templates";
+
 export function isClinicPermission(value: string): value is ClinicPermission {
   return PERMISSION_SET.has(value);
+}
+
+/** Map stored JSON (incl. legacy keys) → current ClinicPermission[]. */
+export function migrateStoredPermissions(raw: unknown[]): ClinicPermission[] {
+  const out = new Set<ClinicPermission>();
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    if (item === LEGACY_SCREEN_ADMIN_TEMPLATES) {
+      out.add(CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG);
+      out.add(CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES);
+      continue;
+    }
+    if (isClinicPermission(item)) out.add(item);
+  }
+  return [...out];
 }
 
 export function parseRolePermissions(json: string): ClinicPermission[] {
   try {
     const parsed = JSON.parse(json) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item): item is ClinicPermission =>
-        typeof item === "string" && isClinicPermission(item),
-    );
+    return migrateStoredPermissions(parsed);
   } catch {
     return [];
   }
@@ -361,7 +385,11 @@ export function defaultPermissionsForRole(
   roleCode: string,
 ): ClinicPermission[] {
   const code = roleCode as ClinicRoleCode;
-  return DEFAULT_ROLE_PERMISSIONS[code] ?? [...COMMON_AUTHENTICATED];
+  if (DEFAULT_ROLE_PERMISSIONS[code]) {
+    return DEFAULT_ROLE_PERMISSIONS[code];
+  }
+  // Unknown / custom role without stored JSON: do not invent RECEPTION-like grants.
+  return [CLINIC_PERMISSION.SCREEN_HOME];
 }
 
 export function effectiveRolePermissions(
@@ -400,7 +428,7 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/admin/catalog": CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
   "/admin/diagnostic-catalog": CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
   "/admin/icd-favorites": CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
-  "/admin/templates": CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES,
+  "/admin/program-templates": CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
   "/admin/import": CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   "/admin/procedure-rules": CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   "/admin/lis-profiles": CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
@@ -455,7 +483,6 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/import", permission: CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT },
   { prefix: "/api/admin/diagnostic-catalog", permission: CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG },
   { prefix: "/api/admin/icd-favorites", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES },
-  { prefix: "/api/admin/clinical-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES },
   { prefix: "/api/admin/procedure-rules", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES },
   {
     prefix: "/api/admin/procedure-compatibility-rules",
@@ -473,7 +500,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/practitioners", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
   { prefix: "/api/admin/rooms", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
   { prefix: "/api/admin/resources", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
-  { prefix: "/api/admin/program-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
+  { prefix: "/api/admin/program-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES },
   { prefix: "/api/admin/catalog-favorites", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
   { prefix: "/api/admin/procedure-types", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
   { prefix: "/api/admin/catalog", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
@@ -487,6 +514,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/wards", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/beds", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
+  { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
 ];
@@ -532,7 +560,6 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/procedure-types", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/catalog/services", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/imaging-phrases", permission: CLINIC_PERMISSION.API_CATALOG_READ },
-  { prefix: "/api/templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_TEMPLATES },
   { prefix: "/api/identity/guest-qr", permission: CLINIC_PERMISSION.API_IDENTITY_GUEST_QR },
   { prefix: "/api/billing/context", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/cashier", permission: CLINIC_PERMISSION.API_CASHIER },
@@ -545,6 +572,10 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   {
     prefix: "/api/sanatorium/program-templates",
     permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+  },
+  {
+    prefix: "/api/sanatorium/episodes",
+    permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
   },
 ];
 
@@ -568,12 +599,3 @@ export function navEntryPermission(
   if (!p || typeof p !== "string") return null;
   return isClinicPermission(p) ? p : null;
 }
-
-export const CONFIGURABLE_CLINIC_ROLES: ClinicRoleCode[] = [
-  CLINIC_ROLE.RECEPTION,
-  CLINIC_ROLE.DOCTOR,
-  CLINIC_ROLE.NURSE,
-  CLINIC_ROLE.FLOOR,
-  CLINIC_ROLE.LAB_TECH,
-  CLINIC_ROLE.CLINIC_ADMIN,
-];

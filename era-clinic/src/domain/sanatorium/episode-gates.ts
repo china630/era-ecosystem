@@ -23,7 +23,12 @@ export function episodeWriteDenied(status: string | null | undefined): string | 
 }
 
 /** Live procedure statuses that block walk-in close. */
-export const LIVE_PROCEDURE_STATUSES = ["PROPOSED", "SCHEDULED", "CHECKED_IN"] as const;
+export const LIVE_PROCEDURE_STATUSES = [
+  "PROPOSED",
+  "SCHEDULED",
+  "CHECKED_IN",
+] as const;
+/** PENDING_PAY is purged on episode close — not a close blocker. */
 
 /** Open lab statuses that block walk-in close. */
 export const OPEN_LAB_STATUSES = ["ORDERED", "COLLECTED", "IN_PROGRESS"] as const;

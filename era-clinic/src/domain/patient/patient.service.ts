@@ -10,6 +10,7 @@ import {
 } from "@/domain/patient/patient-demographics";
 import { allocatePatientRefCode } from "@/domain/patient/allocate-patient-ref-code";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
+import { fillPatientPageDemographicsFromMdm } from "@/domain/patient/mdm-demographics-cache";
 
 export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN or passport with issuing country") {
@@ -61,6 +62,11 @@ export type ListPatientsQuery = {
   episodeStatus?: "OPEN" | "CLOSED" | "ALL";
   page?: number;
   pageSize?: number;
+  /**
+   * CLI-56 — when set (assigned-only doctor), only patients with this practitioner
+   * on an episode care team.
+   */
+  careTeamPractitionerId?: string;
 };
 
 function demographicsWriteData(data: PatientClinicalDemographicsInput) {
@@ -128,18 +134,28 @@ export async function listPatients(query?: string) {
 export async function listProgramCodes(
   episodeStatus: "OPEN" | "CLOSED" | "ALL" = "OPEN",
 ): Promise<string[]> {
-  const where =
+  const episodeWhere =
     episodeStatus === "ALL"
       ? { programCode: { not: null } }
       : { status: episodeStatus, programCode: { not: null } };
-  const rows = await prisma.clinicalEpisode.findMany({
-    where,
-    select: { programCode: true },
-  });
+  const instanceWhere =
+    episodeStatus === "ALL" ? {} : { episode: { status: episodeStatus } };
+
+  const [fromEpisode, fromInstance] = await Promise.all([
+    prisma.clinicalEpisode.findMany({
+      where: episodeWhere,
+      select: { programCode: true },
+    }),
+    prisma.programInstance.findMany({
+      where: instanceWhere,
+      select: { programCode: true },
+    }),
+  ]);
+
   return [
     ...new Set(
-      rows
-        .map((r) => r.programCode?.trim())
+      [...fromEpisode.map((r) => r.programCode), ...fromInstance.map((r) => r.programCode)]
+        .map((n) => n?.trim())
         .filter((n): n is string => Boolean(n)),
     ),
   ].sort((a, b) => a.localeCompare(b));
@@ -206,6 +222,11 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   if (programCode) {
     episodeSome.programCode = { equals: programCode, mode: "insensitive" };
   }
+  if (input.careTeamPractitionerId) {
+    episodeSome.careDoctors = {
+      some: { practitionerId: input.careTeamPractitionerId },
+    };
+  }
 
   const hasEpisodeSome = Object.keys(episodeSome).length > 0;
   if (episodeStatus === "CLOSED") {
@@ -217,7 +238,7 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
     where.episodes = { some: episodeSome };
   }
 
-  const [rows, total, hotelRooms, programCodes] = await Promise.all([
+  const [rawRows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -240,14 +261,16 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
       : Promise.resolve(undefined),
   ]);
 
+  // Soft MDM fill for holes on this page only (reception-filled fields stay put).
+  const patientsOnly = rawRows.map(({ episodes: _e, ...patient }) => patient);
+  const filledPatients = await fillPatientPageDemographicsFromMdm(patientsOnly);
+  const openById = new Map(rawRows.map((r) => [r.id, r.episodes.length > 0]));
+
   return {
-    items: rows.map((row) => {
-      const { episodes, ...patient } = row;
-      return {
-        ...withDerivedDemographics(patient),
-        hasOpenEpisode: episodes.length > 0,
-      };
-    }),
+    items: filledPatients.map((patient) => ({
+      ...withDerivedDemographics(patient),
+      hasOpenEpisode: openById.get(patient.id) ?? false,
+    })),
     total,
     page,
     pageSize,

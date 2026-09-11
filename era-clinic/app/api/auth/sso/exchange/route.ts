@@ -56,6 +56,11 @@ export async function POST(request: Request) {
 
     enterSatelliteTenant({ organizationId: body.organizationId });
 
+    const { ensureSystemClinicRoles } = await import(
+      "@/lib/auth/ensure-system-clinic-roles"
+    );
+    await ensureSystemClinicRoles(prisma, body.organizationId);
+
     const { user } = await executeSatelliteSsoExchange(
       { ...body, financeRole },
       prisma,
@@ -84,7 +89,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 4,
+      maxAge: 60 * 60 * 12,
     });
     return res;
   } catch (err) {

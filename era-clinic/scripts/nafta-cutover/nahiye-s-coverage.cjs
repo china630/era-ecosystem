@@ -69,7 +69,7 @@ function classifyTreatment(name) {
     .replace(/\u0435/g, "e")
     .replace(/\u0430/g, "a");
   if (!n) return { kind: "unknown", defaults: [] };
-  if (/inqalyasiya|hidrokolon|uroloji|ozonterapiya|fito terapiya/.test(n)) {
+  if (/inqalyasiya|hidrokolon|uroloji|ozonterapiya|fito terapiya|ginekoloji tampon|proloter/.test(n)) {
     return { kind: "no-surface-site", defaults: [] };
   }
   if (/turunda qulaq|trunda qulaq/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-EAR"] };
@@ -95,12 +95,14 @@ function classifyTreatment(name) {
   }
   if (/yod brom|yod-brom/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/hidromasaj/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
-  if (/massaj 30/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
+  if (/isiq vann|işıq vann/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
+  if (/massaj 30|massaj 15/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/^ufb\b|ufb terapiya/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/bukme|bükmə/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   if (/limfodrenaj/.test(n)) return { kind: "site-in-name", defaults: ["ZONE-LOWER-LIMB"] };
+  // Empty fill on ♀/♂ naftalan → FULL (canon 2026-09); oturaq only when text says so.
   if (/naftalan vannasi|naftalan vannası|isiq vann|işıq vann/.test(n)) {
-    return { kind: "fill-ambiguous", defaults: [] };
+    return { kind: "site-in-name", defaults: ["ZONE-FULL-BODY"] };
   }
   return { kind: "needs-nahiye", defaults: [] };
 }

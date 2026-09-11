@@ -49,24 +49,12 @@ export async function resolveClinicDataScope(
   return { mode: "ASSIGNED", practitionerId };
 }
 
-/** Episode has a visit, prescription, or procedure staff allocation for this practitioner. */
+/** Episode assigned when practitioner is on the CLI-56 care team (strict). */
 export function episodeAssignedToPractitionerWhere(
   practitionerId: string,
 ): Prisma.ClinicalEpisodeWhereInput {
   return {
-    OR: [
-      { visits: { some: { practitionerId } } },
-      {
-        procedureOrders: {
-          some: { prescribedByPractitionerId: practitionerId },
-        },
-      },
-      {
-        procedureOrders: {
-          some: { allocations: { some: { practitionerId } } },
-        },
-      },
-    ],
+    careDoctors: { some: { practitionerId } },
   };
 }
 

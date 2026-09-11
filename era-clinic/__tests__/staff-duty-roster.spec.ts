@@ -68,7 +68,7 @@ describe("staff kind + monthly duty roster", () => {
     ).toEqual(["n1"]);
   });
 
-  it("falls back to the skilled pool when the posted nurse is absent", () => {
+  it("does not silently fall back when the posted nurse is absent (CLI-38b)", () => {
     const skilled = [
       { id: "n1", fullName: "Amina", code: "NR-01" },
       { id: "n2", fullName: "Maya", code: "NR-02" },
@@ -79,6 +79,54 @@ describe("staff kind + monthly duty roster", () => {
         postedPractitionerId: "n1",
         postedAbsent: true,
         skilled,
+      }).map((p) => p.id),
+    ).toEqual([]);
+  });
+
+  it("returns empty when approved roster has no posted nurse and no override", () => {
+    const skilled = [
+      { id: "n1", fullName: "Amina", code: "NR-01" },
+      { id: "n2", fullName: "Maya", code: "NR-02" },
+    ];
+    expect(
+      resolveDutyCandidates({
+        rosterStatus: "APPROVED",
+        postedPractitionerId: null,
+        postedAbsent: false,
+        skilled,
+      }).map((p) => p.id),
+    ).toEqual([]);
+  });
+
+  it("prefers an explicit day override over the posted nurse", () => {
+    const skilled = [
+      { id: "n1", fullName: "Amina", code: "NR-01" },
+      { id: "n2", fullName: "Maya", code: "NR-02" },
+    ];
+    expect(
+      resolveDutyCandidates({
+        rosterStatus: "APPROVED",
+        postedPractitionerId: "n1",
+        postedAbsent: false,
+        skilled,
+        dayOverridePractitionerId: "n2",
+      }).map((p) => p.id),
+    ).toEqual(["n2"]);
+  });
+
+  it("uses day override when the posted nurse is absent", () => {
+    const skilled = [
+      { id: "n1", fullName: "Amina", code: "NR-01" },
+      { id: "n2", fullName: "Maya", code: "NR-02" },
+    ];
+    expect(
+      resolveDutyCandidates({
+        rosterStatus: "APPROVED",
+        postedPractitionerId: "n1",
+        postedAbsent: true,
+        skilled,
+        dayOverridePractitionerId: "n2",
+        dayOverride: { id: "n2", fullName: "Maya", code: "NR-02" },
       }).map((p) => p.id),
     ).toEqual(["n2"]);
   });

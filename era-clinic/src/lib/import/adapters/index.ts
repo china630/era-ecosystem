@@ -20,6 +20,7 @@ import {
   isClinicPatientRefCode,
 } from "@/domain/patient/patient-ref-code";
 import { splitFullNameToParts } from "@era/satellite-kit";
+import { ensureWritableCurrentTemplate } from "@/domain/sanatorium/program-template-admin";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -201,6 +202,14 @@ async function ensureCutoverEpisode(tx: ImportTx, patientId: string) {
   });
 }
 
+function isPrismaRecordNotFound(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; message?: string; name?: string };
+  if (e.code === "P2025") return true;
+  const msg = String(e.message ?? "");
+  return /No record was found for an update/i.test(msg) || /Record to update not found/i.test(msg);
+}
+
 async function upsertByRef(
   tx: ImportTx,
   entity: string,
@@ -212,8 +221,16 @@ async function upsertByRef(
   const existingId = await findImportRecordId(tx, entity, ref);
   if (dryRun) return existingId ? "updated" : "created";
   if (existingId) {
-    await update(existingId);
-    return "updated";
+    try {
+      await update(existingId);
+      return "updated";
+    } catch (err) {
+      // Stale CutoverImportKey after wipe/delete: key points at missing row.
+      if (!isPrismaRecordNotFound(err)) throw err;
+      console.warn(
+        `[import:${entity}] stale key for ${ref} → recreate (missing ${existingId})`,
+      );
+    }
   }
   const id = await create();
   await bindImportRecord(tx, entity, ref, id, false);
@@ -879,10 +896,19 @@ const quotasAdapter: ImportAdapter<{
     let instance = await tx.programInstance.findUnique({ where: { episodeId: episode.id } });
     if (!instance) {
       const code = episode.programCode || "CUTOVER";
-      let template = await tx.programTemplate.findFirst({ where: { code } });
+      let template = await tx.programTemplate.findFirst({
+        where: { code, isCurrent: true },
+      });
       if (!template) {
         template = await tx.programTemplate.create({
-          data: { organizationId: orgId(), code, name: code, durationDays: 14 },
+          data: {
+            organizationId: orgId(),
+            code,
+            name: code,
+            durationDays: 14,
+            version: 1,
+            isCurrent: true,
+          },
         });
       }
       if (!template) throw new Error(`Could not resolve program template ${code}`);
@@ -1624,7 +1650,7 @@ const programTemplatesAdapter: ImportAdapter<{
   upsert: async (tx, row, dryRun) => {
     if (dryRun) return "updated";
     let template = await tx.programTemplate.findFirst({
-      where: { organizationId: orgId(), code: row.templateCode },
+      where: { organizationId: orgId(), code: row.templateCode, isCurrent: true },
     });
     if (!template) {
       template = await tx.programTemplate.create({
@@ -1635,9 +1661,13 @@ const programTemplatesAdapter: ImportAdapter<{
           durationDays: row.durationDays,
           minNights: row.minNights,
           maxNights: row.maxNights,
+          version: 1,
+          isCurrent: true,
         },
       });
     } else {
+      const writableId = await ensureWritableCurrentTemplate(tx as never, template.id);
+      template = await tx.programTemplate.findUniqueOrThrow({ where: { id: writableId } });
       await tx.programTemplate.update({
         where: { id: template.id },
         data: {

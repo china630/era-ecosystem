@@ -5,19 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Eye, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  ColorLegend,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
   DatePicker,
+  EraDataGrid,
   EraListFilterBar,
   EraListWorkspace,
   Field,
   FieldSelect,
   FieldTextarea,
-  LINK_ACCENT_CLASS,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
@@ -29,6 +23,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  type EraDataGridColumn,
   usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
@@ -59,6 +54,7 @@ type LabOrder = {
   createdAt?: string;
   collectedAt?: string | null;
   resultDate?: string | null;
+  visitId?: string | null;
   patientRef: { refCode: string; fullName: string };
   items?: LabOrderItem[];
 };
@@ -68,6 +64,18 @@ function labOrderListDate(order: LabOrder): Date | null {
   if (!raw) return null;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function AssignmentDot({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
+        ok ? "bg-[#27AE60]" : "bg-[#E74C3C]"
+      }`}
+      title={ok ? yes : no}
+      aria-label={ok ? yes : no}
+    />
+  );
 }
 
 type ListFilters = {
@@ -321,13 +329,105 @@ export default function LabOrdersPage() {
     await loadOrders();
   }
 
+  const columns = useMemo<EraDataGridColumn<LabOrder & Record<string, unknown>>[]>(
+    () => [
+      {
+        key: "assignment",
+        header: t("colAssignment"),
+        className: "w-10",
+        render: (order) => (
+          <AssignmentDot
+            ok={Boolean(order.visitId)}
+            yes={t("assignmentYes")}
+            no={t("assignmentNo")}
+          />
+        ),
+      },
+      {
+        key: "patient",
+        header: t("colPatient"),
+        render: (order) => (
+          <div>
+            <div className="font-medium">{order.patientRef.fullName}</div>
+            <div className={TEXT_MUTED_CLASS}>{order.patientRef.refCode}</div>
+          </div>
+        ),
+      },
+      {
+        key: "services",
+        header: t("colServices"),
+        render: (order) => (
+          <button
+            type="button"
+            className="font-medium text-[#2980B9] hover:underline"
+            onClick={() => setWorkflowId(order.id)}
+          >
+            {servicesLabel(order, locale)}
+          </button>
+        ),
+      },
+      {
+        key: "modality",
+        header: t("colType"),
+        render: (order) => modalityLabel(order),
+      },
+      { key: "status", header: tc("status"), render: (order) => order.status },
+      {
+        key: "amount",
+        header: t("colAmount"),
+        render: (order) => `${order.amountNet} AZN`,
+      },
+      {
+        key: "created",
+        header: t("colCreated"),
+        render: (order) => labOrderListDate(order)?.toLocaleDateString() ?? "—",
+      },
+      {
+        key: "actions",
+        header: tc("actions"),
+        render: (order) => (
+          <div className="flex flex-wrap items-center gap-1">
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={t("openOrder")}
+              onClick={() => setWorkflowId(order.id)}
+            >
+              <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+            </button>
+            {order.status === "ORDERED" ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={t("cancelOrder")}
+                onClick={() => void cancelOrder(order.id)}
+              >
+                <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+              </button>
+            ) : null}
+            {order.status === "PUBLISHED" ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("complete")}
+                onClick={() => void completeOrder(order.id)}
+              >
+                <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [t, tc, locale],
+  );
+
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
           className="!mb-0"
           title={t("title")}
-          subtitle={t("subtitle")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
               {t("createTitle")}
@@ -403,109 +503,16 @@ export default function LabOrdersPage() {
             />
           </EraListFilterBar>
         }
-        toolbar={
-          <ColorLegend
-            items={[
-              { id: "ordered", label: "ORDERED", swatchClassName: "bg-slate-100" },
-              { id: "ready", label: "RESULT_READY", swatchClassName: "bg-blue-50" },
-              { id: "done", label: "COMPLETED", swatchClassName: "bg-green-50" },
-            ]}
-          />
-        }
         table={
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPatient")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colServices")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colType")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("status")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colAmount")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCreated")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr
-                  key={order.id}
-                  className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}
-                  onClick={() => setWorkflowId(order.id)}
-                >
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="font-medium">{order.patientRef.fullName}</div>
-                    <div className={TEXT_MUTED_CLASS}>{order.patientRef.refCode}</div>
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <button
-                      type="button"
-                      className={`font-medium ${LINK_ACCENT_CLASS}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setWorkflowId(order.id);
-                      }}
-                    >
-                      {servicesLabel(order, locale)}
-                    </button>
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{modalityLabel(order)}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{order.status}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{order.amountNet} AZN</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {labOrderListDate(order)?.toLocaleDateString() ?? "—"}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={t("openOrder")}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setWorkflowId(order.id);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                      </button>
-                      {order.status === "ORDERED" && (
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={t("cancelOrder")}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void cancelOrder(order.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                        </button>
-                      )}
-                      {order.status === "PUBLISHED" && (
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={tc("complete")}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void completeOrder(order.id);
-                          }}
-                        >
-                          <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {orders.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                    {loading ? tc("loading") : t("empty")}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+          <EraDataGrid
+            columns={columns}
+            rows={orders as (LabOrder & Record<string, unknown>)[]}
+            rowKey={(o) => o.id}
+            emptyMessage={loading ? tc("loading") : t("empty")}
+            pagination={false}
+            paginationMode="server"
+            embedded
+          />
         }
         footer={
           <ListPaginationFooter

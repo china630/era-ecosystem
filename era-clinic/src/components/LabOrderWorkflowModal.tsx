@@ -362,7 +362,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
         subtitle={orderId ? t("subtitle", { id: orderId.slice(0, 8) }) : undefined}
         onClose={onClose}
         closeLabel={tc("close")}
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-3xl w-full"
         headerActions={
           <>
             {order?.status === "ORDERED" ? (
@@ -564,7 +564,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
         title={t("resultLines")}
         onClose={() => setResultsModalOpen(false)}
         closeLabel={tc("close")}
-        maxWidthClass="max-w-2xl"
+        maxWidthClass="max-w-3xl w-full"
         footer={
           <ModalFooter
             formId={resultsFormId}

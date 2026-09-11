@@ -3,6 +3,7 @@ import path from "path";
 import { prisma } from "@/lib/prisma";
 import { ensureDefaultRequirements } from "@/domain/procedure/procedure-allocation.service";
 import { inferServiceCatalogKind } from "@/domain/catalog/service-catalog-kind";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 export type NaftaPriceRow = {
   code: string;
@@ -26,6 +27,7 @@ export function resolveNaftaDescription(row: NaftaPriceRow): string {
 }
 
 export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
+  const organizationId = requestOrganizationId();
   const now = new Date();
   let catalogCount = 0;
   let typeCount = 0;
@@ -59,19 +61,25 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
       }
     }
     const packageIncluded = Boolean(row.packageIncluded);
+    const rowAmount = row.amount != null ? Number(row.amount) : NaN;
+    const hasRowAmount = Number.isFinite(rowAmount) && rowAmount > 0;
+    // Commercial package amount stays 0 when included; listAmount keeps retail.
     const amount = packageIncluded ? 0 : Number(row.amount ?? 0);
+    const listAmount = hasRowAmount ? rowAmount : null;
     const department = row.department?.trim() || null;
     const kind = inferServiceCatalogKind(code, department);
 
     await prisma.serviceCatalogCache.upsert({
-      where: { code } as never,
+      where: { organizationId_code: { organizationId, code } },
       create: {
+        organizationId,
         code,
         description,
         descriptionAz,
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
         kind,
@@ -83,6 +91,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
         descriptionRu,
         descriptionEn,
         amount,
+        listAmount,
         packageIncluded,
         department,
         kind,
@@ -92,8 +101,8 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
     catalogCount++;
 
     const pt = await prisma.procedureType.upsert({
-      where: { code } as never,
-      create: { code, name: description, durationMin: 15 },
+      where: { organizationId_code: { organizationId, code } },
+      create: { organizationId, code, name: description, durationMin: 15 },
       update: { name: description },
     });
     await ensureDefaultRequirements(pt.id);

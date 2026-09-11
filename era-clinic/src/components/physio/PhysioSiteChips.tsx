@@ -20,6 +20,7 @@ import {
   type PhysioOrderFieldCode,
   type PhysioOrderFields,
 } from "@/domain/physio/physio-order-fields";
+import { siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 
 export type PhysioCatalogSite = {
   id: string;
@@ -43,6 +44,10 @@ export type PhysioCatalogListItem = {
 export type PhysioChipsValue = {
   needsSite: boolean;
   physioOrderFields: string[];
+  allowedSiteCodes: string[];
+  forceSiteTogether?: boolean;
+  hideSitePicker?: boolean;
+  sitesHintKey?: "hydro_jet_safety" | null;
   siteIds: string[];
   siteApplyMode: "TOGETHER" | "TURN" | null;
   siteLaterality: Record<string, PhysioLateralityCode | null>;
@@ -90,6 +95,7 @@ export type PhysioChipsLabels = {
   fillTam: string;
   fillOturaq: string;
   fillQursaq: string;
+  bathSequenceHint: string;
   catalogEmpty: string;
   catalogEmptyLink: string;
   intensityLight: string;
@@ -97,23 +103,25 @@ export type PhysioChipsLabels = {
   intensityNotHot: string;
   intensityMedium: string;
   intensityMore: string;
+  sitesHintHydroJets: string;
 };
 
 function siteChipLabel(site: PhysioCatalogSite, locale: string): string {
-  const loc =
-    locale.startsWith("ru") ? site.titleRu : locale.startsWith("az") ? site.titleAz : site.titleEn;
-  return `${loc} / ${site.titleLa}`;
+  if (locale.startsWith("az") && site.titleAz?.trim()) return site.titleAz.trim();
+  if (locale.startsWith("ru") && site.titleRu?.trim()) return site.titleRu.trim();
+  if (site.titleEn?.trim()) return site.titleEn.trim();
+  return site.titleLa?.trim() || site.code;
 }
 
 function siteSearchLabel(site: PhysioCatalogSite, locale: string): string {
-  const aliases = (site.aliases ?? []).map((a) => a.alias).join(" ");
-  return `${siteChipLabel(site, locale)} ${site.code} ${aliases}`.trim();
+  return siteChipLabel(site, locale);
 }
 
 function listItemLabel(item: PhysioCatalogListItem, locale: string): string {
-  const loc =
-    locale.startsWith("ru") ? item.titleRu : locale.startsWith("az") ? item.titleAz : item.titleEn;
-  return `${loc} (${item.code})`;
+  if (locale.startsWith("az") && item.titleAz?.trim()) return item.titleAz.trim();
+  if (locale.startsWith("ru") && item.titleRu?.trim()) return item.titleRu.trim();
+  if (item.titleEn?.trim()) return item.titleEn.trim();
+  return item.code;
 }
 
 function hasField(fields: string[], code: PhysioOrderFieldCode): boolean {
@@ -144,6 +152,8 @@ export function PhysioSiteChips({
   onNoteBlur,
   onLateralityChange,
   onFieldsChange,
+  compact = false,
+  sessionQty = 1,
 }: {
   value: PhysioChipsValue;
   catalog: PhysioCatalogSite[];
@@ -157,6 +167,10 @@ export function PhysioSiteChips({
   onNoteBlur: (note: string) => void;
   onLateralityChange: (siteId: string, laterality: PhysioLateralityCode | null) => void;
   onFieldsChange: (fields: PhysioOrderFields) => void;
+  /** Narrow selects / 2-col grid for assign modals. */
+  compact?: boolean;
+  /** Bath sequence (sit→full over days) only when qty > 1. */
+  sessionQty?: number;
 }) {
   const [note, setNote] = useState(value.note ?? "");
   useEffect(() => {
@@ -165,13 +179,24 @@ export function PhysioSiteChips({
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
   const allowed = value.physioOrderFields ?? [];
   const fields = value.physioFields ?? {};
+  const allowedSiteCodes = value.allowedSiteCodes ?? [];
+
+  const pickerCatalog = useMemo(() => {
+    if (!allowedSiteCodes.length) return catalog;
+    const allow = new Set(allowedSiteCodes);
+    return catalog.filter((s) => allow.has(s.code) || value.siteIds.includes(s.id));
+  }, [catalog, allowedSiteCodes, value.siteIds]);
 
   const options: CatalogOption[] = useMemo(
     () =>
-      catalog
+      pickerCatalog
         .filter((s) => !value.siteIds.includes(s.id))
-        .map((s) => ({ value: s.id, label: siteSearchLabel(s, locale) })),
-    [catalog, locale, value.siteIds],
+        .map((s) => ({
+          value: s.id,
+          // Visible title; codes/aliases stay searchable via label text for local filter
+          label: siteSearchLabel(s, locale),
+        })),
+    [pickerCatalog, locale, value.siteIds],
   );
 
   const modeOptions: CatalogOption[] = [
@@ -196,13 +221,39 @@ export function PhysioSiteChips({
     onFieldsChange({ ...fields, ...next });
   }
 
+  const hideSites = value.hideSitePicker === true;
+  const fillCode = pickOpt(NAFTALAN_FILL_CODES, fields.naftalanFill);
+  useEffect(() => {
+    if (!hideSites || !editable) return;
+    if (!fillCode) {
+      patchFields({ naftalanFill: "TAM" });
+      return;
+    }
+    const siteCode = siteCodeForNaftalanFill(fillCode);
+    const row = catalog.find((s) => s.code === siteCode);
+    if (!row) return;
+    if (value.siteIds.length === 1 && value.siteIds[0] === row.id) return;
+    onSitesChange([row.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync occupancy chip from fill only
+  }, [hideSites, editable, fillCode, catalog, value.siteIds.join("|")]);
+
+  useEffect(() => {
+    if (!editable || sessionQty > 1 || !fields.bathSequence) return;
+    patchFields({ bathSequence: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editable, sessionQty, fields.bathSequence]);
+
   const showLaterality = hasField(allowed, "LATERALITY");
+  const fieldWidth = compact ? ("select" as const) : undefined;
+  const fieldsGridClass = compact
+    ? "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
+    : "mt-2 space-y-2";
 
   return (
-    <div className="mt-2 space-y-2">
-      {value.needsSite ? (
+    <div className={fieldsGridClass}>
+      {value.needsSite && !hideSites ? (
         <>
-          <div>
+          <div className={compact ? "sm:col-span-2" : undefined}>
             <p className="mb-1 text-[12px] font-medium text-[#2C3E50]">{labels.sites}</p>
             <div className="flex flex-wrap gap-1">
               {value.siteIds.map((id) => {
@@ -228,6 +279,25 @@ export function PhysioSiteChips({
                 );
               })}
             </div>
+            {value.sitesHintKey === "hydro_jet_safety" ? (
+              <p className="mt-1 text-[11px] leading-snug text-[#7F8C8D]">{labels.sitesHintHydroJets}</p>
+            ) : null}
+            {value.siteIds.length >= 2 && editable && !value.forceSiteTogether ? (
+              <div className="mt-2">
+                <CatalogField
+                  kind="OPS_HOT"
+                  label={labels.applyMode}
+                  value={value.siteApplyMode ?? "TOGETHER"}
+                  onChange={(next) => onModeChange(String(next) === "TURN" ? "TURN" : "TOGETHER")}
+                  options={modeOptions}
+                />
+              </div>
+            ) : null}
+            {value.siteIds.length >= 2 && !editable && value.siteApplyMode && !value.forceSiteTogether ? (
+              <p className="mt-1 text-[12px] text-[#7F8C8D]">
+                {value.siteApplyMode === "TURN" ? labels.turn : labels.together}
+              </p>
+            ) : null}
             {showLaterality
               ? value.siteIds.map((id) => {
                   const site = byId.get(id);
@@ -280,22 +350,10 @@ export function PhysioSiteChips({
                 }}
                 options={options}
                 emptyLabel={null}
+                widthPreset={fieldWidth}
+                className={compact ? "sm:col-span-2" : undefined}
               />
             )
-          ) : null}
-          {value.siteIds.length >= 2 && editable ? (
-            <CatalogField
-              kind="OPS_HOT"
-              label={labels.applyMode}
-              value={value.siteApplyMode ?? "TOGETHER"}
-              onChange={(next) => onModeChange(String(next) === "TURN" ? "TURN" : "TOGETHER")}
-              options={modeOptions}
-            />
-          ) : null}
-          {value.siteIds.length >= 2 && !editable && value.siteApplyMode ? (
-            <p className="text-[12px] text-[#7F8C8D]">
-              {value.siteApplyMode === "TURN" ? labels.turn : labels.together}
-            </p>
           ) : null}
         </>
       ) : null}
@@ -318,6 +376,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ deviceProgramId: String(next) || null })}
           options={programs.map((p) => ({ value: p.id, label: listItemLabel(p, locale) }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "ELECTRODE_COUNT") ? (
@@ -354,6 +413,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ substanceId: String(next) || null })}
           options={substances.map((p) => ({ value: p.id, label: listItemLabel(p, locale) }))}
           disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "APPLICATION_SURFACE") ? (
@@ -378,32 +438,7 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ spineLevel: pickOpt(SPINE_LEVEL_CODES, next) })}
           options={SPINE_LEVEL_CODES.map((v) => ({ value: v, label: v }))}
           disabled={!editable}
-        />
-      ) : null}
-      {hasField(allowed, "DAY_BLOCK") ? (
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={labels.dayBlock}
-          value={fields.dayBlock ?? ""}
-          onChange={(next) => patchFields({ dayBlock: pickOpt(DAY_BLOCK_CODES, next) })}
-          options={DAY_BLOCK_CODES.map((v) => ({
-            value: v,
-            label: v === "ALTERNATING" ? labels.dayBlockAlt : v === "5_THEN" ? labels.dayBlockThen : v,
-          }))}
-          disabled={!editable}
-        />
-      ) : null}
-      {hasField(allowed, "BATH_SEQUENCE") ? (
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={labels.bathSequence}
-          value={fields.bathSequence ?? ""}
-          onChange={(next) => patchFields({ bathSequence: pickOpt(BATH_SEQUENCE_CODES, next) })}
-          options={BATH_SEQUENCE_CODES.map((v) => ({
-            value: v,
-            label: labels.bathSitzThenFull,
-          }))}
-          disabled={!editable}
+          widthPreset={fieldWidth}
         />
       ) : null}
       {hasField(allowed, "NAFTALAN_FILL") ? (
@@ -415,6 +450,42 @@ export function PhysioSiteChips({
           options={NAFTALAN_FILL_CODES.map((v) => ({
             value: v,
             label: v === "TAM" ? labels.fillTam : v === "OTURAQ" ? labels.fillOturaq : labels.fillQursaq,
+          }))}
+          disabled={!editable}
+        />
+      ) : null}
+      {hasField(allowed, "DAY_BLOCK") ? (
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={labels.dayBlock}
+          value={fields.dayBlock ?? ""}
+          onChange={(next) => patchFields({ dayBlock: pickOpt(DAY_BLOCK_CODES, next) })}
+          options={DAY_BLOCK_CODES.map((v) => ({
+            value: v,
+            label:
+              v === "ALTERNATING"
+                ? labels.dayBlockAlt
+                : v === "2"
+                  ? "2"
+                  : v === "3"
+                    ? "3"
+                    : v === "5"
+                      ? "5"
+                      : v,
+          }))}
+          disabled={!editable}
+        />
+      ) : null}
+      {hasField(allowed, "BATH_SEQUENCE") && sessionQty > 1 ? (
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={labels.bathSequence}
+          hint={labels.bathSequenceHint}
+          value={fields.bathSequence ?? ""}
+          onChange={(next) => patchFields({ bathSequence: pickOpt(BATH_SEQUENCE_CODES, next) })}
+          options={BATH_SEQUENCE_CODES.map((v) => ({
+            value: v,
+            label: labels.bathSitzThenFull,
           }))}
           disabled={!editable}
         />
@@ -495,16 +566,18 @@ export function PhysioSiteChips({
       ) : null}
 
       {editable ? (
-        <FieldTextarea
-          label={labels.note}
-          hint={labels.noteHint}
-          rows={2}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={() => {
-            if (note !== (value.note ?? "")) onNoteBlur(note);
-          }}
-        />
+        <div className={compact ? "sm:col-span-2 max-w-md" : undefined}>
+          <FieldTextarea
+            label={labels.note}
+            hint={labels.noteHint}
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => {
+              if (note !== (value.note ?? "")) onNoteBlur(note);
+            }}
+          />
+        </div>
       ) : value.note ? (
         <p className="text-[12px] text-[#7F8C8D]">{value.note}</p>
       ) : null}

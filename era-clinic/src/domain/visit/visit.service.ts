@@ -24,6 +24,31 @@ export async function cancelVisit(visitId: string, reason: string, userId?: stri
     }
     return updated;
   }).then(async (updated) => {
+    if (visit.clinicalEpisodeId) {
+      const lines = await prisma.visitServiceLine.findMany({
+        where: { visitId, inPackage: true },
+        select: { packageQuotaCode: true, serviceCode: true },
+      });
+      if (lines.length > 0) {
+        const { resolveEntitlementInstance, syncEntitlementUsage } = await import(
+          "@/domain/sanatorium/entitlement-usage.service"
+        );
+        const instance = await resolveEntitlementInstance(visit.clinicalEpisodeId);
+        if (instance) {
+          const codes = new Set(
+            lines.map((l) => l.packageQuotaCode?.trim() || l.serviceCode),
+          );
+          for (const quotaCode of codes) {
+            if (!quotaCode) continue;
+            await syncEntitlementUsage({
+              instanceId: instance.id,
+              episodeId: visit.clinicalEpisodeId,
+              quotaCode,
+            });
+          }
+        }
+      }
+    }
     await recordClinicAudit(
       { userId: userId ?? null },
       "Visit",

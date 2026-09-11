@@ -6,6 +6,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
+import { sellableTemplateWhere } from "@/domain/sanatorium/program-template-admin";
 
 export async function GET() {
   try {
@@ -16,8 +17,15 @@ export async function GET() {
     );
     if (denied) return denied;
     const rows = await prisma.programTemplate.findMany({
+      where: sellableTemplateWhere(),
       orderBy: { code: "asc" },
-      select: { id: true, code: true, name: true, durationDays: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        durationDays: true,
+        version: true,
+      },
     });
     return jsonOk(rows);
   } catch (err) {

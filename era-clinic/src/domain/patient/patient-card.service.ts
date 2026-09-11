@@ -15,7 +15,7 @@ import {
   toPhysioOrderPayload,
 } from "@/domain/physio/physio-order-sites.service";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
-import { bakuDateTimeLabel } from "@/lib/baku-day";
+import { bakuDateTimeLabel, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -121,7 +121,13 @@ function mapProcedureEvent(p: {
   siteApplyMode: "TOGETHER" | "TURN" | null;
   physioFields?: unknown;
   amountNet: { toString(): string };
-  procedureType?: { needsSite: boolean; physioOrderFields?: string[] } | null;
+  procedureType?: {
+    needsSite: boolean;
+    physioOrderFields?: string[];
+    allowedSiteCodes?: string[];
+    code?: string;
+    name?: string;
+  } | null;
   sites: Array<{ siteId: string; laterality?: "LEFT" | "RIGHT" | "BOTH" | null }>;
 }): PatientTimelineEvent {
   const siteCodes = p.sites.length ? `${p.sites.length} S` : null;
@@ -167,6 +173,7 @@ export async function getPatientCardSummary(
 ) {
   const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
   const now = new Date();
+  const todayBounds = bakuDayBounds(todayBakuYmd(now));
 
   const activeEpisode = opts?.episodeId
     ? await prisma.clinicalEpisode.findFirst({
@@ -191,7 +198,9 @@ export async function getPatientCardSummary(
     resultLabs,
     upcomingProcedures,
     proposedProcedures,
+    pendingExtras,
     intakeChecklist,
+    examNotes,
   ] = await Promise.all([
     prisma.appointment.findFirst({
       where: {
@@ -237,12 +246,11 @@ export async function getPatientCardSummary(
       where: {
         patientRefId,
         ...episodeFilter,
-        scheduledAt: { gte: now },
-        status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
+        scheduledAt: { gte: todayBounds.start, lt: todayBounds.end },
+        status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
-      take: settings.patientCardPlanPreview,
     }),
     prisma.procedureOrder.findMany({
       where: {
@@ -254,7 +262,30 @@ export async function getPatientCardSummary(
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
     }),
+    prisma.procedureOrder.findMany({
+      where: {
+        patientRefId,
+        ...episodeFilter,
+        status: "PENDING_PAY",
+        inPackage: false,
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: 40,
+    }),
     getIntakeChecklist(patientRefId, { episodeId: checklistEpisodeId }),
+    prisma.cpoeEntry.findMany({
+      where: {
+        visit: {
+          patientRefId,
+          ...(checklistEpisodeId ? { clinicalEpisodeId: checklistEpisodeId } : {}),
+        },
+      },
+      include: {
+        visit: { select: { id: true, practitioner: { select: { fullName: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: settings.patientCardResultsPreview,
+    }),
   ]);
 
   return {
@@ -305,7 +336,41 @@ export async function getPatientCardSummary(
     resultsPreview: resultLabs.map((o) => mapLabEvent(o, catalog.items)).map(withTimeSubtitle),
     planPreview: upcomingProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
     proposedPreview: proposedProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
+    pendingExtras: pendingExtras.map((p) => ({
+      id: p.id,
+      title: p.procedureName,
+      code: p.procedureCode,
+      amountNet: Number(p.amountNet ?? 0),
+      status: p.status,
+    })),
     intakeChecklist,
+    examNotesPreview: examNotes.map((e) => {
+      let titleL10n: L10n | undefined;
+      let title = e.templateId ?? "Exam";
+      try {
+        const payload = JSON.parse(e.payloadJson) as { title?: L10n | string; templateCode?: string };
+        if (payload.title && typeof payload.title === "object") {
+          titleL10n = payload.title;
+          title = payload.title.en || e.templateId || "Exam";
+        } else if (typeof payload.title === "string" && payload.title.trim()) {
+          title = payload.title;
+        }
+      } catch {
+        /* keep defaults */
+      }
+      return {
+        id: e.id,
+        visitId: e.visit.id,
+        at: e.createdAt.toISOString(),
+        atLabel: bakuDateTimeLabel(e.createdAt),
+        title,
+        titleL10n,
+        templateId: e.templateId,
+        doctorName: e.visit.practitioner.fullName,
+        href: `/visits/${e.visit.id}`,
+        printHref: `/print/visit-exam/${e.id}`,
+      };
+    }),
   };
 }
 

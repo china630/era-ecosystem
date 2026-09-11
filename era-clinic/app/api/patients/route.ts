@@ -7,6 +7,7 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { resolveClinicDataScope } from "@/lib/auth/clinic-data-scope";
 import {
   listPatientsPaged,
   createPatient,
@@ -85,8 +86,17 @@ export async function GET(req: Request) {
     const session = await getRouteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
+    if (!session) return jsonError("Unauthorized", 401);
 
-        const params = new URL(req.url).searchParams;
+    const scope = await resolveClinicDataScope(
+      session,
+      CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
+    );
+    if (scope.mode === "ASSIGNED" && !scope.practitionerId) {
+      return jsonOk({ items: [], total: 0, page: 1, pageSize: 25 });
+    }
+
+    const params = new URL(req.url).searchParams;
     const q = params.get("q") ?? undefined;
     const sexRaw = params.get("sex");
     const bloodRaw = params.get("bloodGroup");
@@ -119,6 +129,8 @@ export async function GET(req: Request) {
       episodeStatus,
       page: pageRaw ? Number(pageRaw) : undefined,
       pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
+      careTeamPractitionerId:
+        scope.mode === "ASSIGNED" ? scope.practitionerId ?? undefined : undefined,
     });
     return jsonOk(result);
   } catch (err) {
