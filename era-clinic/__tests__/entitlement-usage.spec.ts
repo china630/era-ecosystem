@@ -32,11 +32,11 @@ describe("resolveQuotaCodeForServiceCode", () => {
   it("returns exact balance code", () => {
     expect(
       resolveQuotaCodeForServiceCode({
-        balanceCodes: ["ECG-12", "PHYSIO_POOL"],
+        balanceCodes: ["CARDIO-ECG", "PHYSIO_POOL"],
         membersByBlock: new Map(),
-        serviceCode: "ECG-12",
+        serviceCode: "CARDIO-ECG",
       }),
-    ).toBe("ECG-12");
+    ).toBe("CARDIO-ECG");
   });
 
   it("maps pool member SKU to block code", () => {

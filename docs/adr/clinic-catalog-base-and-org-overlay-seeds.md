@@ -33,4 +33,6 @@ Clinic runs on SHARED topology: catalogs remain **org-scoped rows** (`organizati
 
 - A second org on the same SHARED clinic DB gets base without Nafta WO noise unless its overlay is applied.  
 - Droplet ops: base then Nafta overlay (or the wrappers), then re-Apply `#23` / `#31` as before.  
-- SatAdmin can still edit either layer’s rows after seed; JSON is bootstrap only.
+- SatAdmin can still edit either layer’s rows after seed; JSON is bootstrap only.  
+- Diagnostic SKU codes follow `{FAMILY}-{ENGLISH_SLUG}` in `diagnostic-lab-catalog.json`. `seed-diagnostic-catalog` remaps live rows from `catalog-code-canon.map.json` (e.g. `ECG-12` → `CARDIO-ECG`) before upsert so old codes are not duplicated. Do not run full `db:seed` on production to pick this up — `npm run db:seed:diagnostic-catalog` (and intake-blocks if needed) is enough.  
+- Nafta commercial prices: annotated Chingiz tariff → `chingiz-tariff-prices.json`, merged into `era-prices.json` (Import Nafta / `load-nafta-prices`). Collapsed aliases keep the **higher** list price. Do not Sync from Finance on the droplet (empty catalog stubs).

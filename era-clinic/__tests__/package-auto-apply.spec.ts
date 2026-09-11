@@ -35,8 +35,8 @@ const mocked = prisma as unknown as {
 
 describe("resolveAutoBlockServiceCode", () => {
   it("resolves GYN-OR-URO by sex", () => {
-    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "FEMALE")).toBe("GYN-VISIT");
-    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "MALE")).toBe("URO-VISIT");
+    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "FEMALE")).toBe("VISIT-GYN");
+    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "MALE")).toBe("VISIT-URO");
     expect(resolveAutoBlockServiceCode("GYN-OR-URO", "UNKNOWN")).toBeNull();
   });
 });
@@ -83,7 +83,7 @@ describe("applyPackageAutoBlocks", () => {
           code: "PKG-STANDART",
           procedures: [
             {
-              procedureCode: "ECG-12",
+              procedureCode: "CARDIO-ECG",
               procedureName: "ECG",
               quotaTotal: 1,
               kind: "LAB",
@@ -97,7 +97,7 @@ describe("applyPackageAutoBlocks", () => {
           knots: [],
           members: [],
         },
-        procedureLines: [{ procedureCode: "ECG-12", quotaTotal: 1, quotaUsed: 0 }],
+        procedureLines: [{ procedureCode: "CARDIO-ECG", quotaTotal: 1, quotaUsed: 0 }],
         template: { version: 1, procedures: [] },
       },
     });
@@ -109,10 +109,10 @@ describe("applyPackageAutoBlocks", () => {
     expect(createLabOrderWithItems).toHaveBeenCalledWith(
       expect.objectContaining({
         clinicalEpisodeId: "ep1",
-        codes: ["ECG-12"],
+        codes: ["CARDIO-ECG"],
       }),
     );
-    expect(r.createdLabCodes).toEqual(["ECG-12"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
     expect(r.autoApplyState).toBe("APPLIED");
   });
 
@@ -136,7 +136,7 @@ describe("applyPackageAutoBlocks", () => {
           code: "PKG-STANDART",
           procedures: [
             {
-              procedureCode: "ECG-12",
+              procedureCode: "CARDIO-ECG",
               procedureName: "ECG",
               quotaTotal: 1,
               kind: "LAB",
@@ -160,7 +160,7 @@ describe("applyPackageAutoBlocks", () => {
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     expect(createLabOrderWithItems).not.toHaveBeenCalled();
     if ("skipped" in r) return;
-    expect(r.skippedLabCodes).toContain("ECG-12");
+    expect(r.skippedLabCodes).toContain("CARDIO-ECG");
     expect(r.autoApplyState).toBe("APPLIED");
   });
 
@@ -184,7 +184,7 @@ describe("applyPackageAutoBlocks", () => {
           code: "PKG-STANDART",
           procedures: [
             {
-              procedureCode: "SANATORIUM-INTAKE",
+              procedureCode: "VISIT-SANATORIUM-INTAKE",
               procedureName: "Intake",
               quotaTotal: 1,
               kind: "EXAM",
@@ -214,7 +214,7 @@ describe("applyPackageAutoBlocks", () => {
   it("VISIT block without a doctor is PENDING_DOCTOR even when requiresDoctor is false", async () => {
     mocked.clinicalEpisode.findUnique.mockResolvedValue(
       episodeWithBlock({
-        procedureCode: "SANATORIUM-INTAKE",
+        procedureCode: "VISIT-SANATORIUM-INTAKE",
         procedureName: "Intake",
         kind: "EXAM",
         fulfillment: "VISIT",
@@ -233,7 +233,7 @@ describe("applyPackageAutoBlocks", () => {
   it("re-creates a lab whose earlier order was cancelled", async () => {
     mocked.clinicalEpisode.findUnique.mockResolvedValue(
       episodeWithBlock({
-        procedureCode: "ECG-12",
+        procedureCode: "CARDIO-ECG",
         procedureName: "ECG",
         kind: "LAB",
         fulfillment: "LAB_ORDER",
@@ -250,7 +250,7 @@ describe("applyPackageAutoBlocks", () => {
       }),
     );
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["ECG-12"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
   });
 });
 

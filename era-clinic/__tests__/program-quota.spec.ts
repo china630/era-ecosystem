@@ -77,15 +77,15 @@ describe("program-quota quotaFor", () => {
 
   it("PER_STAY uses single knot qty without interpolation", () => {
     const intake = [
-      { nights: 7, procedureCode: "ECG-12", qty: 1 },
-      { nights: 10, procedureCode: "ECG-12", qty: 1 },
-      { nights: 14, procedureCode: "ECG-12", qty: 1 },
+      { nights: 7, procedureCode: "CARDIO-ECG", qty: 1 },
+      { nights: 10, procedureCode: "CARDIO-ECG", qty: 1 },
+      { nights: 14, procedureCode: "CARDIO-ECG", qty: 1 },
     ];
     expect(
       quotaFor({
         knots: intake,
         nights: 12,
-        procedureCode: "ECG-12",
+        procedureCode: "CARDIO-ECG",
         minNights: 7,
         maxNights: 21,
         quotaBasis: "PER_STAY",

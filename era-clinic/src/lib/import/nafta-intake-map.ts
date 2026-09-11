@@ -7,22 +7,22 @@ export const PKG_NAFTA_INTAKE = "PKG-NAFTA-INTAKE";
 
 /** Canonical checklist lines (package includesJson). */
 export const NAFTA_INTAKE_SLOT_CODES = [
-  "SANATORIUM-INTAKE",
+  "VISIT-SANATORIUM-INTAKE",
   "GYN-OR-URO",
-  "ECG-12",
+  "CARDIO-ECG",
   "USG-ABD",
 ] as const;
 
 export type NaftaIntakeSlotCode = (typeof NAFTA_INTAKE_SLOT_CODES)[number];
 
-/** Pseudo-slot resolved to GYN-VISIT or URO-VISIT by patient sex. */
+/** Pseudo-slot resolved to VISIT-GYN or VISIT-URO by patient sex. */
 export const GYN_OR_URO_SLOT = "GYN-OR-URO";
 
 export type NaftaIntakeResolvedCode =
-  | "SANATORIUM-INTAKE"
-  | "GYN-VISIT"
-  | "URO-VISIT"
-  | "ECG-12"
+  | "VISIT-SANATORIUM-INTAKE"
+  | "VISIT-GYN"
+  | "VISIT-URO"
+  | "CARDIO-ECG"
   | "USG-ABD";
 
 export type NaftaIntakeSlotKind = "visit" | "lab" | "imaging";
@@ -31,7 +31,7 @@ const TITLES: Record<
   NaftaIntakeSlotCode,
   { en: string; ru: string; az: string; woNames: string[] }
 > = {
-  "SANATORIUM-INTAKE": {
+  "VISIT-SANATORIUM-INTAKE": {
     en: "Doctor intake",
     ru: "Приём врача",
     az: "Həkim qəbulu",
@@ -43,7 +43,7 @@ const TITLES: Record<
     az: "Ginekoloq/Uroloq müayinəsi",
     woNames: ["Ginekoloq/Uroloq müayinəsi", "Ginekoloq", "Uroloq"],
   },
-  "ECG-12": {
+  "CARDIO-ECG": {
     en: "ECG and cardiologist exam",
     ru: "ЭКГ и осмотр кардиолога",
     az: "EKQ və kardioloqun müayinəsi",
@@ -86,10 +86,10 @@ export function mapWoIntakeProcedureName(procedureName: string): NaftaIntakeSlot
   const n = fold(procedureName);
   if (!n.trim()) return null;
   if (/bas\s*hekim|hekim\s*qebul|hekim\s*qabul/.test(n) && !/ginek|uroloq|nevropatol|kardioloq/.test(n)) {
-    return "SANATORIUM-INTAKE";
+    return "VISIT-SANATORIUM-INTAKE";
   }
   if (/ginek|uroloq/.test(n)) return "GYN-OR-URO";
-  if (/ekq|ecg|kardioloq/.test(n)) return "ECG-12";
+  if (/ekq|ecg|kardioloq/.test(n)) return "CARDIO-ECG";
   if (/usm|usg|ultrason|qarin\s*bosl|ki[cç]ik\s*[cç]anaq/.test(n)) return "USG-ABD";
   return null;
 }
@@ -104,7 +104,7 @@ export function naftaIntakeSlotTitle(code: NaftaIntakeSlotCode): {
 }
 
 export function naftaIntakeSlotKind(code: NaftaIntakeSlotCode): NaftaIntakeSlotKind {
-  if (code === "ECG-12") return "lab";
+  if (code === "CARDIO-ECG") return "lab";
   if (code === "USG-ABD") return "imaging";
   return "visit";
 }
@@ -116,32 +116,32 @@ export function resolveNaftaIntakeCode(
 ): NaftaIntakeResolvedCode | "GYN-OR-URO" {
   if (slot !== "GYN-OR-URO") return slot;
   const s = String(sex || "").toUpperCase();
-  if (s === "MALE") return "URO-VISIT";
-  if (s === "FEMALE") return "GYN-VISIT";
+  if (s === "MALE") return "VISIT-URO";
+  if (s === "FEMALE") return "VISIT-GYN";
   return "GYN-OR-URO";
 }
 
 /** Codes that become LabOrder rows when instantiating the package. */
 export function naftaIntakeLabOrderCodes(
   sex: "MALE" | "FEMALE" | "UNKNOWN" | string | null | undefined,
-): Array<"ECG-12" | "USG-ABD"> {
+): Array<"CARDIO-ECG" | "USG-ABD"> {
   void sex;
-  return ["ECG-12", "USG-ABD"];
+  return ["CARDIO-ECG", "USG-ABD"];
 }
 
 /** Visit template codes to create (excluding unresolved GYN-OR-URO). */
 export function naftaIntakeVisitCodes(
   sex: "MALE" | "FEMALE" | "UNKNOWN" | string | null | undefined,
-): Array<"SANATORIUM-INTAKE" | "GYN-VISIT" | "URO-VISIT"> {
+): Array<"VISIT-SANATORIUM-INTAKE" | "VISIT-GYN" | "VISIT-URO"> {
   const resolved = resolveNaftaIntakeCode("GYN-OR-URO", sex);
-  const out: Array<"SANATORIUM-INTAKE" | "GYN-VISIT" | "URO-VISIT"> = ["SANATORIUM-INTAKE"];
-  if (resolved === "GYN-VISIT" || resolved === "URO-VISIT") out.push(resolved);
+  const out: Array<"VISIT-SANATORIUM-INTAKE" | "VISIT-GYN" | "VISIT-URO"> = ["VISIT-SANATORIUM-INTAKE"];
+  if (resolved === "VISIT-GYN" || resolved === "VISIT-URO") out.push(resolved);
   return out;
 }
 
 export function printSpecialtyForIntakeSlot(code: NaftaIntakeSlotCode): string {
-  if (code === "SANATORIUM-INTAKE") return "therapist";
+  if (code === "VISIT-SANATORIUM-INTAKE") return "therapist";
   if (code === "GYN-OR-URO") return "gynecologist";
-  if (code === "ECG-12") return "cardiologist";
+  if (code === "CARDIO-ECG") return "cardiologist";
   return "usm";
 }

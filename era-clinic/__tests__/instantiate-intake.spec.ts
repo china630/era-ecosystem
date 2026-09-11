@@ -69,8 +69,8 @@ describe("instantiateIntakePackage", () => {
 
   it("creates intake + GYN visit and ECG/USG orders when care team has a doctor", async () => {
     const r = await instantiateIntakePackage("ep1");
-    expect(r.createdVisitCodes).toEqual(["SANATORIUM-INTAKE", "GYN-VISIT"]);
-    expect(r.createdLabCodes).toEqual(["ECG-12", "USG-ABD"]);
+    expect(r.createdVisitCodes).toEqual(["VISIT-SANATORIUM-INTAKE", "VISIT-GYN"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "USG-ABD"]);
     expect(mockedPrisma.visit.create).toHaveBeenCalledTimes(2);
     expect(mockedPrisma.visitServiceLine.create).toHaveBeenCalledTimes(2);
     expect(createLabOrderWithItems).toHaveBeenCalledTimes(2);
@@ -80,8 +80,8 @@ describe("instantiateIntakePackage", () => {
     mockedPrisma.episodeCareDoctor.findFirst.mockResolvedValue(null);
     const r = await instantiateIntakePackage("ep1");
     expect(r.createdVisitCodes).toEqual([]);
-    expect(r.skippedVisitCodes).toEqual(["SANATORIUM-INTAKE", "GYN-VISIT"]);
-    expect(r.createdLabCodes).toEqual(["ECG-12", "USG-ABD"]);
+    expect(r.skippedVisitCodes).toEqual(["VISIT-SANATORIUM-INTAKE", "VISIT-GYN"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "USG-ABD"]);
     expect(mockedPrisma.visit.create).not.toHaveBeenCalled();
   });
 
@@ -101,17 +101,17 @@ describe("instantiateIntakePackage", () => {
       id: "inst1",
       entitlementSnapshot: null,
       procedureLines: [
-        { procedureCode: "SANATORIUM-INTAKE" },
-        { procedureCode: "GYN-VISIT" },
+        { procedureCode: "VISIT-SANATORIUM-INTAKE" },
+        { procedureCode: "VISIT-GYN" },
       ],
     });
     await instantiateIntakePackage("ep1");
     expect(mockedPrisma.visitServiceLine.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          serviceCode: "SANATORIUM-INTAKE",
+          serviceCode: "VISIT-SANATORIUM-INTAKE",
           inPackage: true,
-          packageQuotaCode: "SANATORIUM-INTAKE",
+          packageQuotaCode: "VISIT-SANATORIUM-INTAKE",
         }),
       }),
     );

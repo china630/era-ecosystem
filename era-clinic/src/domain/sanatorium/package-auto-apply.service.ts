@@ -29,9 +29,9 @@ export type AutoApplyResult =
 type SnapshotProc = EntitlementSnapshot["procedures"][number];
 
 const VISIT_TITLES: Record<string, string> = {
-  "SANATORIUM-INTAKE": "Sanatorium intake / doctor exam",
-  "GYN-VISIT": "Gynecologist exam",
-  "URO-VISIT": "Urologist exam",
+  "VISIT-SANATORIUM-INTAKE": "Sanatorium intake / doctor exam",
+  "VISIT-GYN": "Gynecologist exam",
+  "VISIT-URO": "Urologist exam",
 };
 
 async function resolveCareTeamPractitioner(
@@ -100,8 +100,10 @@ export function resolveAutoBlockServiceCode(
     if (resolved === "GYN-OR-URO") return null;
     return resolved;
   }
-  if (code === "THERAPIST") return "SANATORIUM-INTAKE";
-  if (code === "ECG") return "ECG-12";
+  if (code === "THERAPIST" || code === "SANATORIUM-INTAKE") return "VISIT-SANATORIUM-INTAKE";
+  if (code === "ECG" || code === "ECG-12") return "CARDIO-ECG";
+  if (code === "GYN-VISIT") return "VISIT-GYN";
+  if (code === "URO-VISIT") return "VISIT-URO";
   if (code === "USG") return "USG-ABD";
   return code;
 }

@@ -313,7 +313,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 2. **/patients**: identity filters only; open-course badge; hotel room + program filters are on `/sanatorium`. After overlay + Re-Apply `#24`, agency/Həmkarlar (incl. September Reservation) and Extra/Res/CIn/Operator/Payment phrases show in **Proqram / paket** on the sanatorium board.
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time. After this deploy: re-Apply `#27` so lab rows have `LabOrderItem` (not empty COMPLETED shells) and single-test Word files (Dimer/CRP/PRL/Insulin/Hormon) bind to catalog codes.
-5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`SANATORIUM-INTAKE`, `GYN-OR-URO`, `ECG-12`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Check-up print form remains at `/print/checkup/...` (not linked from intake header).
+5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`VISIT-SANATORIUM-INTAKE`, `GYN-OR-URO`, `CARDIO-ECG`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Check-up print form remains at `/print/checkup/...` (not linked from intake header).
 6. Live check-in (hotel stay / walk-in): open episode → ECG-12 + USG-ABD appear as ORDERED if missing; second open does not duplicate; physio FIFO still requires complete-checkup / program path (not auto from intake).
 7. After re-Apply `#23` (Baku `+04:00` slot parse): Yağmur — two Solyuks times both visible; compact PLAN date+time matches modal for the same `procedure:{id}`; **Növbəti** is nearest `scheduledAt >= now` in Baku (not a 2024 leftover). No 18:36↔10:36 jump after re-import.
 
@@ -435,7 +435,7 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 4. Empty care team → API `409 CARE_TEAM_REQUIRED` on anamnesis / complaints / diagnoses / complete-checkup / procedure assign.
 5. Doctor already on team can **+ Doctor** peers; first assign requires RECEPTION/admin (`scope:episodes.all`).
 6. Appointments linkage deferred (Pattern B `/appointments` unchanged).
-7. `SANATORIUM-INTAKE` checklist → **Keçdi/Passed** when OPEN episode has anamnesis + ≥1 complaint (diagnosis optional).
+7. `VISIT-SANATORIUM-INTAKE` checklist → **Keçdi/Passed** when OPEN episode has anamnesis + ≥1 complaint (diagnosis optional).
 8. Same trigger **auto-opens** stay `programCode` as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) — do not wait for labs. Then Confirm 2–3.
 9. `/sanatorium` list rows: light sky tint when care team assigned; light red tint when not.
 10. If episode has no `programCode`, proposed stays empty until package is set (walk-in Select / hotel product).
