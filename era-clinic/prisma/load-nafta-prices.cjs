@@ -17,10 +17,9 @@ function seedOrgId() {
 function inferKind(code, department) {
   const c = String(code || "").trim().toUpperCase();
   if (!c) return "OTHER";
-  if (c.startsWith("SVC-")) return "PROCEDURE";
-  if (department && String(department).trim()) return "PROCEDURE";
-  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return "LAB";
   if (c.startsWith("VISIT-") || c === "CONSULT") return "VISIT";
+  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return "LAB";
+  if (c.startsWith("SVC-")) return "PROCEDURE";
   if (
     c.startsWith("CT-") ||
     c.startsWith("MR-") ||
@@ -43,6 +42,7 @@ function inferKind(code, department) {
   ) {
     return "DIAGNOSTIC";
   }
+  if (department && String(department).trim()) return "PROCEDURE";
   return "OTHER";
 }
 
