@@ -13,7 +13,10 @@ import {
 } from '@/domain/lab/lab-order-conflict.service';
 import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
 import { composeFullName } from '@/domain/patient/patient-ref-code';
-import { applyMdmDemographicsCache } from '@/domain/patient/mdm-demographics-cache';
+import {
+  applyMdmDemographicsCache,
+  applyStayDemographicsCache,
+} from '@/domain/patient/mdm-demographics-cache';
 import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
 
 function refCodeFromPassport(passport: string): string {
@@ -130,6 +133,8 @@ export async function openEpisodeFromStay(input: {
   roomNumber?: string | null;
   /** Wave E — stable pax key when no MDM (defaults to passport/reservation). */
   paxKey?: string | null;
+  sex?: string | null;
+  birthDate?: string | Date | null;
 }) {
   const hotelStayId = resolveHotelStayId(input);
   const legacyRef = resolveHotelPatientRefCode({
@@ -186,14 +191,18 @@ export async function openEpisodeFromStay(input: {
     paxKey: input.paxKey,
   };
 
+  const fillPatientDemographics = async (patientId: string | null | undefined) => {
+    if (!patientId) return;
+    await applyStayDemographicsCache(patientId, {
+      sex: input.sex,
+      birthDate: input.birthDate,
+    });
+    await applyMdmDemographicsCache(patientId, gpid);
+  };
+
   const existingFast = await findOpenEpisodeForStay(prisma, stayLookup);
   if (existingFast) {
-    if (existingFast.patientRefId) {
-      await applyMdmDemographicsCache(
-        existingFast.patientRefId,
-        gpid ?? existingFast.globalPersonId,
-      );
-    }
+    await fillPatientDemographics(existingFast.patientRefId);
     return patchOpenEpisode(existingFast);
   }
 
@@ -275,23 +284,13 @@ export async function openEpisodeFromStay(input: {
     // Concurrent check-in: loser retries as read of the winner's episode.
     const raced = await findOpenEpisodeForStay(prisma, stayLookup);
     if (raced) {
-      if (raced.patientRefId) {
-        await applyMdmDemographicsCache(
-          raced.patientRefId,
-          gpid ?? raced.globalPersonId,
-        );
-      }
+      await fillPatientDemographics(raced.patientRefId);
       return patchOpenEpisode(raced);
     }
     throw err;
   }
 
-  if (created.patientRefId) {
-    await applyMdmDemographicsCache(
-      created.patientRefId,
-      gpid ?? created.globalPersonId,
-    );
-  }
+  await fillPatientDemographics(created.patientRefId);
   await safeInstantiateIntake(created.id);
   return created;
 }
