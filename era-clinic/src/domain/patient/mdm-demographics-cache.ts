@@ -127,6 +127,28 @@ export async function fetchOpsProfileForPatientFill(
   return profile;
 }
 
+/** Single-person fill from hotel check-in payload (fill-not-clear). */
+export async function applyStayDemographicsCache(
+  patientId: string,
+  stay: { sex?: string | null; birthDate?: string | Date | null },
+): Promise<void> {
+  const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
+  if (!patient) return;
+  const patch = buildPatientDemographicsFillPatch(patient, {
+    sex: normalizePersonSex(stay.sex) ?? null,
+    birthDate:
+      stay.birthDate instanceof Date
+        ? stay.birthDate.toISOString().slice(0, 10)
+        : stay.birthDate ?? null,
+    firstName: null,
+    middleName: null,
+    lastName: null,
+    accessDenied: false,
+  });
+  if (!patch) return;
+  await persistFill(patientId, patch);
+}
+
 /** Single-person fill (check-in / episode open). */
 export async function applyMdmDemographicsCache(
   patientId: string,
