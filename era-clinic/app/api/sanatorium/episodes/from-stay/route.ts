@@ -15,6 +15,8 @@ const bodySchema = z.object({
   programCode: z.string().min(1).nullable().optional(),
   roomNumber: z.string().nullable().optional(),
   paxKey: z.string().nullable().optional(),
+  sex: z.string().nullable().optional(),
+  birthDate: z.string().nullable().optional(),
 });
 
 /** SEC-CLI-01: fail closed in production when CLINIC_BRIDGE_SECRET unset */

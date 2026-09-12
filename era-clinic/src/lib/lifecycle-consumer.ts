@@ -25,6 +25,8 @@ async function ensureEpisodeAndProgram(
       checkInDate?: string;
       roomNumber?: string;
       paxKey?: string;
+      sex?: string;
+      birthDate?: string;
     };
   },
 ) {
@@ -41,6 +43,8 @@ async function ensureEpisodeAndProgram(
     programCode: p.programCode,
     roomNumber: p.roomNumber,
     paxKey: p.paxKey,
+    sex: p.sex,
+    birthDate: p.birthDate,
   });
   const existingProgram = await prisma.programInstance.findUnique({
     where: { episodeId: episode.id },
