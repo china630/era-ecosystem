@@ -135,7 +135,7 @@ export async function applyStayDemographicsCache(
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return;
   const patch = buildPatientDemographicsFillPatch(patient, {
-    sex: stay.sex ?? null,
+    sex: normalizePersonSex(stay.sex) ?? null,
     birthDate:
       stay.birthDate instanceof Date
         ? stay.birthDate.toISOString().slice(0, 10)
