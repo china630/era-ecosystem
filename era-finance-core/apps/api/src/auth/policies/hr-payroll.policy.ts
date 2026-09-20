@@ -2,6 +2,7 @@ import { ForbiddenException } from "@nestjs/common";
 import type { UserRole } from "@erafinance/database";
 import {
   CP_PERMISSION,
+  defaultPermissionsForCpRole,
   sessionHasAnyCpPermission,
 } from "@era/contracts";
 import type { PolicySubject } from "./invoice-finance.policy";
@@ -12,7 +13,9 @@ function asSubject(roleOrSubject: UserRole | PolicySubject): PolicySubject {
 }
 
 function effectiveGranted(subject: PolicySubject): string[] {
-  return Array.isArray(subject.permissions) ? subject.permissions : [];
+  if (Array.isArray(subject.permissions)) return subject.permissions;
+  if (subject.role) return defaultPermissionsForCpRole(String(subject.role));
+  return [];
 }
 
 /** Payroll money (runs, payout) — api:payroll.money (not hr_card alone). */

@@ -62,6 +62,12 @@ describe("AccountsService.provisionIfrsFromTemplate (P1)", () => {
       {} as PostingAccountResolver,
       ledgerMapping,
       { hasModule: jest.fn().mockResolvedValue(true) } as never,
+      {
+        ensureSystemBooks: jest.fn().mockResolvedValue({
+          ifrs: { id: "ifrs-book" },
+          nas: { id: "nas-book" },
+        }),
+      } as never,
     );
 
     const out = await svc.provisionIfrsFromTemplate("org-1", db as never);

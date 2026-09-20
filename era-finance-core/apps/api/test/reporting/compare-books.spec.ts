@@ -4,6 +4,7 @@ jest.mock("../../src/accounting/accounting.service", () => ({
   AccountingService: class AccountingService {},
 }));
 
+import { createMockAccountingBooks } from "../helpers/mock-posting-resolver";
 import { ReportingService } from "../../src/reporting/reporting.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 
@@ -70,6 +71,7 @@ describe("ReportingService compareBooks", () => {
       undefined as never,
       undefined as never,
       undefined as never,
+      createMockAccountingBooks(),
     );
 
     const result = await service.compareBooks(

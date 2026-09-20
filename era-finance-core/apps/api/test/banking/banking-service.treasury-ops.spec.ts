@@ -46,6 +46,7 @@ describe("BankingService treasury operations", () => {
       accounting,
       {} as any,
       {} as any,
+      {} as any,
       createMockPostingResolver(),
       cbarRates,
     );

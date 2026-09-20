@@ -42,7 +42,7 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       }),
     } as unknown as ConstructorParameters<typeof EmployeesService>[0];
 
-    const svc = new EmployeesService(prisma, syncRuns, mdm as any);
+    const svc = new EmployeesService(prisma, syncRuns, mdm as any, { get: jest.fn() } as any);
     await svc.create("org-1", {
       globalPersonId: "person-1",
       positionId: "pos-1",
@@ -82,7 +82,7 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       ),
     } as unknown as ConstructorParameters<typeof EmployeesService>[0];
 
-    const svc = new EmployeesService(prisma, syncRuns, mdm as any);
+    const svc = new EmployeesService(prisma, syncRuns, mdm as any, { get: jest.fn() } as any);
     await expect(
       svc.create("org-1", {
         globalPersonId: "person-1",
@@ -104,7 +104,7 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
     const prisma = { $transaction: jest.fn() } as unknown as ConstructorParameters<
       typeof EmployeesService
     >[0];
-    const svc = new EmployeesService(prisma, syncRuns, mdmMissing as any);
+    const svc = new EmployeesService(prisma, syncRuns, mdmMissing as any, { get: jest.fn() } as any);
     await expect(
       svc.create("org-1", {
         globalPersonId: "missing",

@@ -101,6 +101,9 @@ exports.mockContractsService = {};
 exports.mockGovBudgetService = { checkLimit: jest.fn() };
 function createTestInventoryService(prisma, accounting, stock, access) {
     const posting = createMockPostingResolver();
-    return new inventory_service_1.InventoryService(prisma, accounting, stock, access, exports.mockContractsService, exports.mockGovBudgetService, posting, createMockPostingJournalBuilder(accounting, posting));
+    const accountingBooks = {
+        resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({ id: "nas-book" }),
+    };
+    return new inventory_service_1.InventoryService(prisma, accounting, accountingBooks, stock, access, exports.mockContractsService, exports.mockGovBudgetService, posting, createMockPostingJournalBuilder(accounting, posting), { ensureLatestRates: jest.fn() });
 }
 exports.createTestInventoryService = createTestInventoryService;

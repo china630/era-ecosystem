@@ -1,7 +1,7 @@
 import { Prisma } from "@erafinance/database";
 import { LedgerType } from "@erafinance/database";
 import { ReportingService } from "../../src/reporting/reporting.service";
-import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
+import { createMockAccountingBooks, createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
 describe("ReportingService performance and cross-validation", () => {
   it("trialBalance processes 10k+ rows and keeps period balanced", async () => {
@@ -39,6 +39,7 @@ describe("ReportingService performance and cross-validation", () => {
       { get: jest.fn() } as never,
       createMockPostingResolver(),
       {} as never,
+      createMockAccountingBooks(),
     );
     const out = await svc.trialBalance(
       "org-1",
@@ -119,6 +120,7 @@ describe("ReportingService performance and cross-validation", () => {
       { get: jest.fn() } as never,
       createMockPostingResolver(),
       {} as never,
+      createMockAccountingBooks(),
     );
     const out = await svc.profitAndLoss(
       "org-1",
