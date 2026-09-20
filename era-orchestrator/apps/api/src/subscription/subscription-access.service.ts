@@ -13,8 +13,12 @@ import {
   hasCashBankModuleInList,
   normalizeCashBankActiveModules,
   PRICING_MODULE_CASH_BANK_PRO,
+  applyCatalogMutex,
+  isClinicFeatureEntitled,
+  isWorkforceHubKey,
 } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { assertDomainPackDowngradeAllowed } from "../platform/domains/domain-pack-limits";
 import { PricingService } from "../admin/pricing.service";
 import { type ModuleEntitlementKey } from "./subscription.constants";
 
@@ -65,6 +69,10 @@ export type OrganizationModuleEntitlements = {
   tradePro: boolean;
   /** Paid Audit Hub (timeline, sampling, bulk export, backdating). */
   auditHub: boolean;
+  /** Trade credit control (facility + pickup grants). */
+  tradeCreditControl: boolean;
+  /** Phase 2c factoring referral lead unlock. */
+  tradeCreditFactorLead: boolean;
   /** Risk & Compliance (ERM): automated risk alerts and dashboard. */
   compliancePro: boolean;
   /** Commercial contract registry (PRD §4.15). */
@@ -126,6 +134,8 @@ function entitlementsFromConstructorModules(
     taxPro: has("tax_pro"),
     tradePro: has("trade_pro"),
     auditHub: has("audit_hub"),
+    tradeCreditControl: has("trade_credit_control"),
+    tradeCreditFactorLead: has("trade_credit_factor_lead"),
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
@@ -192,6 +202,8 @@ function emptyOrganizationSnapshot(): {
       taxPro: false,
       tradePro: false,
       auditHub: false,
+      tradeCreditControl: false,
+      tradeCreditFactorLead: false,
       compliancePro: false,
       contractManagementPro: false,
       govBudgetPro: false,
@@ -234,6 +246,8 @@ function computeEntitlementsLegacy(sub: {
     taxPro: has("tax_pro"),
     tradePro: has("trade_pro"),
     auditHub: has("audit_hub"),
+    tradeCreditControl: has("trade_credit_control"),
+    tradeCreditFactorLead: has("trade_credit_factor_lead"),
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
@@ -272,6 +286,8 @@ function computeEntitlements(sub: {
       taxPro: true,
       tradePro: true,
       auditHub: true,
+      tradeCreditControl: true,
+      tradeCreditFactorLead: true,
       compliancePro: true,
       contractManagementPro: true,
       govBudgetPro: true,
@@ -323,6 +339,10 @@ function isAllowedByConstructorModules(
       return has("trade_pro");
     case "audit_hub":
       return has("audit_hub");
+    case "trade_credit_control":
+      return has("trade_credit_control");
+    case "trade_credit_factor_lead":
+      return has("trade_credit_factor_lead");
     case "compliance_pro":
       return has("compliance_pro");
     case "industry_retail":
@@ -527,15 +547,25 @@ export class SubscriptionAccessService {
       case "audit_hub":
         allowed = ent.auditHub;
         break;
+      case "trade_credit_control":
+        allowed = ent.tradeCreditControl;
+        break;
+      case "trade_credit_factor_lead":
+        allowed = ent.tradeCreditFactorLead;
+        break;
       case "recovery_pro":
         allowed = new Set(normalizeActiveModules(sub.activeModules)).has(
           "recovery_pro",
         );
         break;
-      default:
-        allowed = new Set(normalizeActiveModules(sub.activeModules)).has(
-          String(moduleKey),
-        );
+      default: {
+        const mods = normalizeActiveModules(sub.activeModules);
+        allowed =
+          mods.includes(String(moduleKey)) ||
+          (isWorkforceHubKey(String(moduleKey)) && mods.some((k) => isWorkforceHubKey(k))) ||
+          isClinicFeatureEntitled(mods, String(moduleKey));
+        break;
+      }
     }
 
     if (!allowed) {
@@ -667,11 +697,15 @@ export class SubscriptionAccessService {
       tax_pro?: boolean;
       trade_pro?: boolean;
       audit_hub?: boolean;
+      trade_credit_control?: boolean;
       compliance_pro?: boolean;
       contract_management_pro?: boolean;
       gov_budget_pro?: boolean;
       recovery_pro?: boolean;
       ifrs_mapping?: boolean;
+      accounting_book_extra?: boolean;
+      /** Stackable EXTRA book slots (0–7). Takes precedence over boolean→1/0. */
+      accountingBookExtraSlots?: number;
       extraSlugs?: Record<string, boolean>;
     },
     tx?: Prisma.TransactionClient,
@@ -715,11 +749,13 @@ export class SubscriptionAccessService {
     apply("tax_pro", patch.tax_pro);
     apply("trade_pro", patch.trade_pro);
     apply("audit_hub", patch.audit_hub);
+    apply("trade_credit_control", patch.trade_credit_control);
     apply("compliance_pro", patch.compliance_pro);
     apply("contract_management_pro", patch.contract_management_pro);
     apply("gov_budget_pro", patch.gov_budget_pro);
     apply("recovery_pro", patch.recovery_pro);
     apply("ifrs_mapping", patch.ifrs_mapping);
+    apply("accounting_book_extra", patch.accounting_book_extra);
 
     if (patch.production === true) {
       set.add("production");
@@ -743,22 +779,57 @@ export class SubscriptionAccessService {
       set.delete("ifrs");
     }
 
+    let preferEnabled: string | undefined;
     if (patch.extraSlugs) {
       for (const [slug, v] of Object.entries(patch.extraSlugs)) {
         apply(slug, v);
+        if (v) preferEnabled = slug;
       }
     }
 
-    const activeModules = normalizeCashBankActiveModules(Array.from(set));
+    const activeModules = applyCatalogMutex(
+      normalizeCashBankActiveModules(Array.from(set)),
+      preferEnabled,
+    );
+
+    const hadOrgPack = sub.activeModules.includes("platform_domain_org");
+    const willHaveOrgPack = activeModules.includes("platform_domain_org");
+    if (hadOrgPack && !willHaveOrgPack) {
+      await assertDomainPackDowngradeAllowed(db, organizationId);
+    }
 
     const customList = parseCustomModules(sub.customConfig);
     let customConfigData: Prisma.InputJsonValue | undefined;
-    if (customList && customList.length > 0) {
+    const slotsPatch =
+      patch.accountingBookExtraSlots !== undefined
+        ? Math.min(
+            7,
+            Math.max(0, Math.floor(Number(patch.accountingBookExtraSlots) || 0)),
+          )
+        : patch.accounting_book_extra === undefined
+          ? undefined
+          : patch.accounting_book_extra
+            ? 1
+            : 0;
+    if ((customList && customList.length > 0) || slotsPatch !== undefined) {
       const raw =
         sub.customConfig != null && typeof sub.customConfig === "object"
           ? (sub.customConfig as Record<string, unknown>)
           : {};
-      customConfigData = { ...raw, modules: activeModules } as Prisma.InputJsonValue;
+      const rawQuotas =
+        raw.quotas != null && typeof raw.quotas === "object" && !Array.isArray(raw.quotas)
+          ? (raw.quotas as Record<string, unknown>)
+          : {};
+      customConfigData = {
+        ...raw,
+        ...(customList && customList.length > 0 ? { modules: activeModules } : {}),
+        quotas: {
+          ...rawQuotas,
+          ...(slotsPatch === undefined
+            ? {}
+            : { accountingBookExtraSlots: slotsPatch }),
+        },
+      } as Prisma.InputJsonValue;
     }
 
     await db.organizationSubscription.update({

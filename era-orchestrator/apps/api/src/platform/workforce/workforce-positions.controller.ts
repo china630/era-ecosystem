@@ -8,12 +8,14 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserRole, OrgUnitStatus } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   CreateWorkforcePositionDto,
@@ -24,12 +26,12 @@ import { WorkforcePositionsService } from "./workforce-positions.service";
 @ApiTags("platform-workforce-positions")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/positions")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforcePositionsController {
   constructor(private readonly positions: WorkforcePositionsService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "List workforce positions" })
   list(
     @OrganizationId() organizationId: string,
@@ -44,7 +46,7 @@ export class WorkforcePositionsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_POSITIONS)
   create(
     @OrganizationId() organizationId: string,
     @CurrentUser() user: EraJwtPayload,
@@ -54,7 +56,7 @@ export class WorkforcePositionsController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_POSITIONS)
   update(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -65,7 +67,7 @@ export class WorkforcePositionsController {
   }
 
   @Post(":id/archive")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_POSITIONS)
   @ApiOperation({ summary: "Archive position (no active employments)" })
   archive(
     @OrganizationId() organizationId: string,

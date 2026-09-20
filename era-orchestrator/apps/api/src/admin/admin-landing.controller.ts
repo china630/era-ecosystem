@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
 import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
@@ -7,7 +8,7 @@ import { PatchLandingModuleMarketingDto } from "./dto/patch-landing-module-marke
 import { LandingMarketingService } from "./landing-marketing.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin")
 export class AdminLandingController {
   constructor(private readonly landing: LandingMarketingService) {}

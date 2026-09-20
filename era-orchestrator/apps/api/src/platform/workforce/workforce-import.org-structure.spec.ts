@@ -17,6 +17,7 @@ describe("WorkforceImportService.importOrgStructure", () => {
   const absences = {};
   const orgUnits = { create: jest.fn(), archive: jest.fn() };
   const positions = { create: jest.fn(), update: jest.fn() };
+  const audit = { log: jest.fn().mockResolvedValue(undefined) };
 
   const svc = new WorkforceImportService(
     prisma as never,
@@ -27,6 +28,7 @@ describe("WorkforceImportService.importOrgStructure", () => {
     absences as never,
     orgUnits as never,
     positions as never,
+    audit as never,
   );
 
   beforeEach(() => {

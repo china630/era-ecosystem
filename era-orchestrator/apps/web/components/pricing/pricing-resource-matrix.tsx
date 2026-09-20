@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { PricingStorefrontView } from "../../lib/pricing/build-pricing-storefront-view";
+import type { QuotaUnitPricing } from "../../lib/public-pricing-types";
 import { PRICING_MATRIX_ROW_CLASS } from "../../lib/landing-motion";
 
 const GRID_CLASS = "grid grid-cols-5 gap-1.5 items-stretch";
@@ -30,6 +31,7 @@ export function PricingResourceMatrix({
   tiers,
   unitPriceLabels,
   meterUnitPricing,
+  quotaUnitPricing,
   selectedTierId,
   onSelectTier,
 }: {
@@ -38,21 +40,27 @@ export function PricingResourceMatrix({
   tiers: PricingStorefrontView["tiers"];
   unitPriceLabels: PricingStorefrontView["unitPriceLabels"];
   meterUnitPricing: PricingStorefrontView["meterUnitPricing"];
+  quotaUnitPricing: QuotaUnitPricing | null;
   selectedTierId: PricingStorefrontView["tiers"][number]["id"];
   onSelectTier: (id: PricingStorefrontView["tiers"][number]["id"]) => void;
 }) {
+  const docsPack = quotaUnitPricing?.documentPackSize ?? 1000;
+  const docsPrice = quotaUnitPricing?.pricePerDocumentPackAzn ?? 5;
+  const headcountSize = quotaUnitPricing?.employeeBlockSize ?? 1;
+  const headcountPrice = quotaUnitPricing?.pricePerEmployeeBlockAzn ?? 2;
+
   const unitRows: { id: string; label: string; Icon: LucideIcon; value: string }[] = [
     {
       id: "users",
       label: unitPriceLabels.users,
       Icon: Users,
-      value: `${fmtUnit(meterUnitPricing.pricePerUserMonthAzn)} AZN`,
+      value: `${fmtUnit(headcountPrice)} AZN / ${headcountSize}`,
     },
     {
-      id: "invoices",
-      label: unitPriceLabels.invoices,
+      id: "documents",
+      label: unitPriceLabels.documents,
       Icon: FileText,
-      value: `${fmtUnit(meterUnitPricing.pricePerInvoiceAzn)} AZN`,
+      value: `${fmtUnit(docsPrice)} AZN / ${docsPack}`,
     },
     {
       id: "storage",
@@ -75,7 +83,7 @@ export function PricingResourceMatrix({
   ];
 
   return (
-    <section className="px-4 py-4" aria-labelledby="pricing-limits-title">
+    <section id="spend-tiers" className="scroll-mt-24 px-4 py-4" aria-labelledby="pricing-limits-title">
       <div className="mx-auto max-w-[88rem]">
         <h2
           id="pricing-limits-title"

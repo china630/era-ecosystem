@@ -27,6 +27,24 @@ export class ListWorkforceTimesheetQueryDto {
   @Min(1)
   @Max(12)
   month!: number;
+
+  @ApiPropertyOptional({ example: 1, description: "1-based employment page" })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({
+    example: 40,
+    description: "Employments per page (max 100) for ~240 headcount grids",
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
 }
 
 export class WorkforceTimesheetBatchItemDto {

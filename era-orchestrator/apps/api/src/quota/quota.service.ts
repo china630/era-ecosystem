@@ -86,6 +86,32 @@ export class QuotaService {
     });
   }
 
+  /**
+   * ERA till/register capacity overage (CAPACITY_DRIVERS).
+   * `billableStationCount` = distinct outlets (F&B) or registers (retail) with a till —
+   * not FiscalHardwareDevice rows.
+   */
+  async assertPosStationOverage(
+    organizationId: string,
+    satelliteKey: string,
+    billableStationCount: number,
+  ): Promise<{ overageUnits: number }> {
+    const { posStationOverageUnits } = await import("./pos-station-capacity");
+    const overageUnits = posStationOverageUnits(
+      billableStationCount,
+      satelliteKey,
+    );
+    if (overageUnits <= 0) return { overageUnits: 0 };
+    await this.billingMeter.recordPosStationOverageGauge(
+      organizationId,
+      overageUnits,
+    );
+    this.logger.log(
+      `POS station overage ${overageUnits} for ${satelliteKey} org=${organizationId}`,
+    );
+    return { overageUnits };
+  }
+
   async getQuotaSnapshot(organizationId: string) {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) return null;

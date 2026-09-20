@@ -448,6 +448,133 @@ exports.Prisma.WorkforceTimesheetEntryScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkforcePlaceScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  name: 'name',
+  status: 'status',
+  responsibleOrgUnitId: 'responsibleOrgUnitId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAttendanceDeviceScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  placeId: 'placeId',
+  name: 'name',
+  code: 'code',
+  tokenHash: 'tokenHash',
+  hmacSecretHash: 'hmacSecretHash',
+  status: 'status',
+  lastSeenAt: 'lastSeenAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAttendanceIdentityScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  personRef: 'personRef',
+  employmentId: 'employmentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAttendancePunchScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  deviceId: 'deviceId',
+  placeId: 'placeId',
+  employmentId: 'employmentId',
+  personRef: 'personRef',
+  direction: 'direction',
+  occurredAt: 'occurredAt',
+  externalId: 'externalId',
+  status: 'status',
+  placeMismatch: 'placeMismatch',
+  pairId: 'pairId',
+  hoursAttributed: 'hoursAttributed',
+  workDate: 'workDate',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceShiftTypeScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  name: 'name',
+  startMinute: 'startMinute',
+  endMinute: 'endMinute',
+  breakMinutes: 'breakMinutes',
+  isNight: 'isNight',
+  defaultHours: 'defaultHours',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceShiftCycleScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  name: 'name',
+  cycleAnchor: 'cycleAnchor',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceShiftCycleSlotScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  cycleId: 'cycleId',
+  slotIndex: 'slotIndex',
+  shiftTypeId: 'shiftTypeId'
+};
+
+exports.Prisma.WorkforceBrigadeScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceBrigadeMemberScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  brigadeId: 'brigadeId',
+  employmentId: 'employmentId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceShiftAssignmentScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  placeId: 'placeId',
+  cycleId: 'cycleId',
+  employmentId: 'employmentId',
+  brigadeId: 'brigadeId',
+  effectiveFrom: 'effectiveFrom',
+  effectiveTo: 'effectiveTo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceDayOverrideScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  employmentId: 'employmentId',
+  workDate: 'workDate',
+  kind: 'kind',
+  placeId: 'placeId',
+  shiftTypeId: 'shiftTypeId',
+  note: 'note',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforceVacationPlanScalarFieldEnum = {
   id: 'id',
   workforceScopeId: 'workforceScopeId',
@@ -475,6 +602,19 @@ exports.Prisma.WorkforceVacationPlanLineScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkforcePersonnelOrderTemplateScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  holdingId: 'holdingId',
+  type: 'type',
+  locale: 'locale',
+  name: 'name',
+  bodyHtml: 'bodyHtml',
+  placeholders: 'placeholders',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforcePersonnelOrderScalarFieldEnum = {
   id: 'id',
   workforceScopeId: 'workforceScopeId',
@@ -483,12 +623,18 @@ exports.Prisma.WorkforcePersonnelOrderScalarFieldEnum = {
   type: 'type',
   status: 'status',
   orderNumber: 'orderNumber',
+  sequenceYear: 'sequenceYear',
+  sequenceSeq: 'sequenceSeq',
   effectiveDate: 'effectiveDate',
   note: 'note',
+  locale: 'locale',
+  contextJson: 'contextJson',
   personDisplayName: 'personDisplayName',
   documentStorageKey: 'documentStorageKey',
   issuedByUserId: 'issuedByUserId',
   issuedAt: 'issuedAt',
+  cancelledByUserId: 'cancelledByUserId',
+  cancelledAt: 'cancelledAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -601,6 +747,7 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   id: 'id',
   name: 'name',
   ownerId: 'ownerId',
+  publicOrgNumber: 'publicOrgNumber',
   taxIdBlindIndex: 'taxIdBlindIndex',
   taxIdCipher: 'taxIdCipher',
   subscriptionPlan: 'subscriptionPlan',
@@ -676,10 +823,24 @@ exports.Prisma.HoldingMembershipScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.OrganizationRoleScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  name: 'name',
+  isSystem: 'isSystem',
+  cloneFromCode: 'cloneFromCode',
+  permissionsJson: 'permissionsJson',
+  permissionCatalogVersion: 'permissionCatalogVersion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrganizationMembershipScalarFieldEnum = {
   userId: 'userId',
   organizationId: 'organizationId',
   role: 'role',
+  organizationRoleId: 'organizationRoleId',
   joinedAt: 'joinedAt',
   deletedAt: 'deletedAt',
   deletedByUserId: 'deletedByUserId',
@@ -705,6 +866,7 @@ exports.Prisma.OrganizationInviteScalarFieldEnum = {
   organizationId: 'organizationId',
   email: 'email',
   role: 'role',
+  organizationRoleCode: 'organizationRoleCode',
   status: 'status',
   invitedByUserId: 'invitedByUserId',
   createdAt: 'createdAt',
@@ -947,6 +1109,8 @@ exports.Prisma.PlatformCustomDomainScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
   hostname: 'hostname',
+  kind: 'kind',
+  satelliteKey: 'satelliteKey',
   status: 'status',
   metadata: 'metadata',
   createdAt: 'createdAt',
@@ -1014,6 +1178,27 @@ exports.Prisma.AgencyPropertyGrantScalarFieldEnum = {
   agencyVoen: 'agencyVoen',
   localAgencyId: 'localAgencyId',
   localAgencyCode: 'localAgencyCode',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BuyerPortalAccountScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  fullName: 'fullName',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BuyerOrgGrantScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  organizationId: 'organizationId',
+  voen: 'voen',
+  financeCounterpartyId: 'financeCounterpartyId',
   revokedAt: 'revokedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1173,6 +1358,35 @@ exports.WorkforceTimesheetEntryStatus = exports.$Enums.WorkforceTimesheetEntrySt
   APPROVED: 'APPROVED'
 };
 
+exports.WorkforcePlaceStatus = exports.$Enums.WorkforcePlaceStatus = {
+  ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.WorkforceAttendanceDeviceStatus = exports.$Enums.WorkforceAttendanceDeviceStatus = {
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED'
+};
+
+exports.WorkforceAttendanceDirection = exports.$Enums.WorkforceAttendanceDirection = {
+  IN: 'IN',
+  OUT: 'OUT'
+};
+
+exports.WorkforceAttendancePunchStatus = exports.$Enums.WorkforceAttendancePunchStatus = {
+  UNMAPPED: 'UNMAPPED',
+  MAPPED: 'MAPPED',
+  OPEN: 'OPEN',
+  PAIRED: 'PAIRED',
+  REJECTED: 'REJECTED'
+};
+
+exports.WorkforceDayOverrideKind = exports.$Enums.WorkforceDayOverrideKind = {
+  DAY_OFF: 'DAY_OFF',
+  EXTRA: 'EXTRA',
+  SWAP: 'SWAP'
+};
+
 exports.WorkforceVacationPlanStatus = exports.$Enums.WorkforceVacationPlanStatus = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
@@ -1183,7 +1397,8 @@ exports.WorkforceVacationPlanStatus = exports.$Enums.WorkforceVacationPlanStatus
 exports.WorkforcePersonnelOrderType = exports.$Enums.WorkforcePersonnelOrderType = {
   HIRE: 'HIRE',
   TRANSFER: 'TRANSFER',
-  TERMINATE: 'TERMINATE'
+  TERMINATE: 'TERMINATE',
+  LEAVE_ANNUAL: 'LEAVE_ANNUAL'
 };
 
 exports.WorkforcePersonnelOrderStatus = exports.$Enums.WorkforcePersonnelOrderStatus = {
@@ -1365,6 +1580,11 @@ exports.PlatformPromotionStatus = exports.$Enums.PlatformPromotionStatus = {
   DISABLED: 'DISABLED'
 };
 
+exports.PlatformCustomDomainKind = exports.$Enums.PlatformCustomDomainKind = {
+  portal: 'portal',
+  satellite_login: 'satellite_login'
+};
+
 exports.PlatformCustomDomainStatus = exports.$Enums.PlatformCustomDomainStatus = {
   PENDING_DNS: 'PENDING_DNS',
   ACTIVE: 'ACTIVE',
@@ -1405,8 +1625,20 @@ exports.Prisma.ModelName = {
   WorkforceAbsence: 'WorkforceAbsence',
   WorkforceTimesheet: 'WorkforceTimesheet',
   WorkforceTimesheetEntry: 'WorkforceTimesheetEntry',
+  WorkforcePlace: 'WorkforcePlace',
+  WorkforceAttendanceDevice: 'WorkforceAttendanceDevice',
+  WorkforceAttendanceIdentity: 'WorkforceAttendanceIdentity',
+  WorkforceAttendancePunch: 'WorkforceAttendancePunch',
+  WorkforceShiftType: 'WorkforceShiftType',
+  WorkforceShiftCycle: 'WorkforceShiftCycle',
+  WorkforceShiftCycleSlot: 'WorkforceShiftCycleSlot',
+  WorkforceBrigade: 'WorkforceBrigade',
+  WorkforceBrigadeMember: 'WorkforceBrigadeMember',
+  WorkforceShiftAssignment: 'WorkforceShiftAssignment',
+  WorkforceDayOverride: 'WorkforceDayOverride',
   WorkforceVacationPlan: 'WorkforceVacationPlan',
   WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',
+  WorkforcePersonnelOrderTemplate: 'WorkforcePersonnelOrderTemplate',
   WorkforcePersonnelOrder: 'WorkforcePersonnelOrder',
   StaffScheduleRevision: 'StaffScheduleRevision',
   WorkforceAuditLog: 'WorkforceAuditLog',
@@ -1423,6 +1655,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   Holding: 'Holding',
   HoldingMembership: 'HoldingMembership',
+  OrganizationRole: 'OrganizationRole',
   OrganizationMembership: 'OrganizationMembership',
   AccessRequest: 'AccessRequest',
   OrganizationInvite: 'OrganizationInvite',
@@ -1450,7 +1683,9 @@ exports.Prisma.ModelName = {
   PlatformIdempotencyRecord: 'PlatformIdempotencyRecord',
   PlatformLoyaltyLedger: 'PlatformLoyaltyLedger',
   AgencyPortalAccount: 'AgencyPortalAccount',
-  AgencyPropertyGrant: 'AgencyPropertyGrant'
+  AgencyPropertyGrant: 'AgencyPropertyGrant',
+  BuyerPortalAccount: 'BuyerPortalAccount',
+  BuyerOrgGrant: 'BuyerOrgGrant'
 };
 
 /**

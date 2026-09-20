@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   Body,
   Controller,
@@ -16,7 +17,7 @@ import { SatelliteEndpointRegistryService } from "../satellite-events/satellite-
 import { UpsertSatelliteEndpointDto } from "./dto/upsert-satellite-endpoint.dto";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin/orgs/:orgId/satellite-endpoints")
 export class SatelliteEndpointsController {
   constructor(private readonly registry: SatelliteEndpointRegistryService) {}

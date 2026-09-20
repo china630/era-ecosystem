@@ -34,11 +34,16 @@ export type PersonIdentityInput = {
   gender?: string;
   /** Calendar date YYYY-MM-DD or Date. */
   birthDate?: string | Date | null;
+  /** Satellite org — upserts PersonAccessGrant on resolve. */
+  organizationId?: string;
+  requesterOrgId?: string;
 };
 
 export type MdmClientOptions = {
   orchestratorUrl?: string;
   serviceToken?: string;
+  /** Default org for resolve grant / ops-profile when not passed per call. */
+  organizationId?: string;
 };
 
 function baseUrl(opts?: MdmClientOptions): string {
@@ -110,13 +115,18 @@ export async function lookupGlobalPersonByFin(
   };
 }
 
-function resolveBody(input: PersonIdentityInput) {
+function resolveBody(input: PersonIdentityInput, opts?: MdmClientOptions) {
   const sex = normalizePersonSex(input.sex ?? input.gender);
   const birthDate = toBirthDateIso(input.birthDate);
   const composed =
     composePersonFullName(input.firstName, input.middleName, input.lastName) ||
     input.fullName?.trim() ||
     undefined;
+  const organizationId =
+    input.organizationId?.trim() ||
+    input.requesterOrgId?.trim() ||
+    opts?.organizationId?.trim() ||
+    deploymentOrgId();
   return {
     fin: input.fin,
     passport: input.passport,
@@ -132,6 +142,7 @@ function resolveBody(input: PersonIdentityInput) {
     globalPersonId: input.globalPersonId?.trim() || undefined,
     ...(sex ? { sex } : {}),
     ...(birthDate ? { birthDate } : {}),
+    ...(organizationId ? { organizationId } : {}),
   };
 }
 
@@ -145,7 +156,7 @@ export async function resolvePersonIdentity(
   const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons/resolve`, {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify(resolveBody(input)),
+    body: JSON.stringify(resolveBody(input, opts)),
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) return { globalPersonId: null };
@@ -267,6 +278,86 @@ export async function getPersonOpsProfile(
   );
   if (!res.ok) return null;
   return (await res.json()) as PersonOpsProfile;
+}
+
+/** Upsert PersonAccessGrant so ops-profile returns sex/DOB for this satellite org. */
+export async function ensurePersonAccessGrant(
+  globalPersonId: string,
+  organizationId: string,
+  opts?: MdmClientOptions,
+): Promise<boolean> {
+  const token = serviceToken(opts);
+  const gpid = globalPersonId.trim();
+  const orgId = organizationId.trim();
+  if (!token || !gpid || !orgId) return false;
+  const res = await fetch(
+    `${baseUrl(opts)}/internal/v1/mdm/persons/${encodeURIComponent(gpid)}/access-grant`,
+    {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ organizationId: orgId }),
+      signal: AbortSignal.timeout(10_000),
+    },
+  );
+  return res.ok;
+}
+
+/**
+ * Batch ops-profile (max 100 ids). Returns sex / birthDate / name parts when granted.
+ * Used by clinic patient-list fill for rows with demographic holes.
+ */
+export async function batchGetPersonOpsProfiles(
+  personIds: string[],
+  organizationId: string,
+  opts?: MdmClientOptions,
+): Promise<Record<string, PersonOpsProfile>> {
+  const token = serviceToken(opts);
+  const orgId = organizationId.trim();
+  const unique = [...new Set(personIds.map((id) => id.trim()).filter(Boolean))];
+  if (!token || !orgId || unique.length === 0) return {};
+
+  const out: Record<string, PersonOpsProfile> = {};
+  const CHUNK = 100;
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const chunk = unique.slice(i, i + CHUNK);
+    const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons/ops-profile/batch`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ personIds: chunk, organizationId: orgId }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) continue;
+    const data = (await res.json()) as Record<
+      string,
+      {
+        globalPersonId?: string;
+        displayName?: string | null;
+        firstName?: string | null;
+        middleName?: string | null;
+        lastName?: string | null;
+        sex?: string | null;
+        birthDate?: string | null;
+        accessDenied?: boolean;
+        primaryIdentifierMasked?: string | null;
+      }
+    >;
+    for (const [id, row] of Object.entries(data)) {
+      const gpid = (row.globalPersonId ?? id).trim();
+      out[gpid] = {
+        globalPersonId: gpid,
+        fullName: row.displayName ?? null,
+        firstName: row.firstName ?? null,
+        middleName: row.middleName ?? null,
+        lastName: row.lastName ?? null,
+        phoneMasked: null,
+        sex: (row.sex as PersonOpsProfile["sex"]) ?? null,
+        birthDate: row.birthDate ?? null,
+        identifiers: [],
+        accessDenied: Boolean(row.accessDenied),
+      };
+    }
+  }
+  return out;
 }
 
 export async function resolveIdentifierForCompliance(

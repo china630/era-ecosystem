@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Injectable,
 } from "@nestjs/common";
-import { Prisma, TariffTier } from "@era365/database";
+import { Prisma, TariffTier, bundleConflictsWithModules } from "@era365/database";
 import { AccessControlService } from "../access/access-control.service";
 import { PricingService } from "../admin/pricing.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -131,6 +131,16 @@ export class BillingBundleToggleService {
       inCatalog;
 
     if (dto.enabled) {
+      if (
+        bundleConflictsWithModules(bundle.name, moduleKeys, snap.activeModules)
+      ) {
+        throw new BadRequestException({
+          code: "MUTEX_SANATORIUM_MEDICAL",
+          message:
+            "Hotel Sanatorium bundle cannot be combined with clinic_sanatorium_clinical. Use Hotel Resort plus the clinic SKU.",
+        });
+      }
+
       if (fullyActive) {
         return {
           organizationId,

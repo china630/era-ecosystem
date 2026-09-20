@@ -20,12 +20,25 @@ export async function fetchSatelliteSsoTicket(
   organizationId: string,
 ): Promise<SatelliteSsoTicket | null> {
   try {
-    const res = await orchFetch("/auth/satellite-sso-ticket", {
+    let token = accessToken;
+    let res = await orchFetch("/auth/satellite-sso-ticket", {
       method: "POST",
-      token: accessToken,
+      token,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ organizationId }),
     });
+    // Match finance handoff: refresh once on 401 so satellite SSO does not silently fail.
+    if (res.status === 401) {
+      const fresh = await ensureFreshOrchAccessToken();
+      if (!fresh) return null;
+      token = fresh;
+      res = await orchFetch("/auth/satellite-sso-ticket", {
+        method: "POST",
+        token,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizationId }),
+      });
+    }
     if (!res.ok) return null;
     return (await res.json()) as SatelliteSsoTicket;
   } catch {
@@ -133,6 +146,12 @@ export type FinanceHandoffResult =
   | { ok: true; url: string }
   | { ok: false; reason: "needs_relogin" | "finance_unavailable" | "handoff_failed" };
 
+const SAFE_RELATIVE_PATH = /^\/[A-Za-z0-9/_?=&%-]*$/;
+
+export function isSafeFinanceHandoffNextPath(nextPath: string): boolean {
+  return SAFE_RELATIVE_PATH.test(nextPath);
+}
+
 /**
  * One-time ticket handoff (preferred). Legacy `?token=` only for HS256 tokens —
  * RS256 control-plane JWTs are rejected by Finance `/auth/me` and must never be
@@ -140,6 +159,7 @@ export type FinanceHandoffResult =
  */
 export async function buildFinanceHandoffUrl(
   accessToken?: string | null,
+  nextPath?: string,
 ): Promise<FinanceHandoffResult> {
   const base = financeWebUrl();
   if (!base) return { ok: false, reason: "finance_unavailable" };
@@ -148,6 +168,9 @@ export async function buildFinanceHandoffUrl(
   if (!token) return { ok: false, reason: "needs_relogin" };
 
   const url = new URL("/auth/cp-handoff", base.replace(/\/$/, ""));
+  if (nextPath && isSafeFinanceHandoffNextPath(nextPath)) {
+    url.searchParams.set("next", nextPath);
+  }
   try {
     const res = await orchFetch("/auth/finance-handoff", {
       method: "POST",

@@ -3,6 +3,11 @@ import { TariffTier } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import type { TierQuotas } from "../constants/quotas";
 import { TIER_QUOTAS } from "../constants/quotas";
+import {
+  billingCanonChanged,
+  canonMeterUnitPricing,
+  canonQuotaUnitPricing,
+} from "../billing/billing-meter-canon";
 
 const BILLING_PRICE_KEYS: Record<TariffTier, string> = {
   TIER_0: "billing.price.TIER_0",
@@ -76,14 +81,22 @@ export type MeterUnitPricing = {
   pricePerWhatsappAlertAzn: number;
   pricePerInvoiceAzn: number;
   pricePerOcrPageAzn: number;
+  pricePerTradeCreditBuyerAzn: number;
+  /** Phase 2b registry deep-check (~1–3 AZN). */
+  pricePerTradeCreditEnrichAzn: number;
+  /** ERA till/register overage (CAPACITY_DRIVERS unitAzn, default 19). */
+  pricePerPosStationMonthAzn?: number;
 };
 
 const DEFAULT_METER_UNIT_PRICING: MeterUnitPricing = {
   pricePerUserMonthAzn: 2,
   pricePerGbMonthAzn: 0.5,
   pricePerWhatsappAlertAzn: 0.05,
-  pricePerInvoiceAzn: 0.1,
+  pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
+  pricePerTradeCreditBuyerAzn: 1,
+  pricePerTradeCreditEnrichAzn: 2,
+  pricePerPosStationMonthAzn: 19,
 };
 
 @Injectable()
@@ -237,45 +250,33 @@ export class SystemConfigService {
   }
 
   async getQuotaUnitPricing(): Promise<QuotaUnitPricing> {
-    const raw = await this.getJson(QUOTA_UNIT_PRICING_KEY);
-    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-      const o = raw as Record<string, unknown>;
-      return {
-        employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 10)),
-        pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 15),
-        documentPackSize: Math.max(1, toPositiveNum(o.documentPackSize, 1000)),
-        pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
-      };
-    }
-    return {
-      employeeBlockSize: 10,
-      pricePerEmployeeBlockAzn: 15,
-      documentPackSize: 1000,
-      pricePerDocumentPackAzn: 5,
-    };
+    return canonQuotaUnitPricing(await this.readQuotaUnitPricingRaw());
   }
 
   async getMeterUnitPricing(): Promise<MeterUnitPricing> {
-    const raw = await this.getJson(METER_UNIT_PRICING_KEY);
-    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-      const o = raw as Record<string, unknown>;
-      return {
-        pricePerUserMonthAzn: toPositiveNum(o.pricePerUserMonthAzn, DEFAULT_METER_UNIT_PRICING.pricePerUserMonthAzn),
-        pricePerGbMonthAzn: toPositiveNum(o.pricePerGbMonthAzn, DEFAULT_METER_UNIT_PRICING.pricePerGbMonthAzn),
-        pricePerWhatsappAlertAzn: toPositiveNum(
-          o.pricePerWhatsappAlertAzn,
-          DEFAULT_METER_UNIT_PRICING.pricePerWhatsappAlertAzn,
-        ),
-        pricePerInvoiceAzn: toPositiveNum(o.pricePerInvoiceAzn, DEFAULT_METER_UNIT_PRICING.pricePerInvoiceAzn),
-        pricePerOcrPageAzn: toPositiveNum(o.pricePerOcrPageAzn, DEFAULT_METER_UNIT_PRICING.pricePerOcrPageAzn),
-      };
+    return canonMeterUnitPricing(await this.readMeterUnitPricingRaw());
+  }
+
+  /**
+   * Persist catalog freeze into SystemConfig JSON so a leftover 0.10/invoice
+   * (or 10×15 headcount) cannot keep charging after API boot.
+   */
+  async syncMeterCatalogCanon(): Promise<void> {
+    const meterRaw = await this.readMeterUnitPricingRaw();
+    const meterNext = canonMeterUnitPricing(meterRaw);
+    if (billingCanonChanged(meterRaw, meterNext)) {
+      await this.setJson(METER_UNIT_PRICING_KEY, meterNext);
     }
-    return { ...DEFAULT_METER_UNIT_PRICING };
+    const quotaRaw = await this.readQuotaUnitPricingRaw();
+    const quotaNext = canonQuotaUnitPricing(quotaRaw);
+    if (billingCanonChanged(quotaRaw, quotaNext)) {
+      await this.setJson(QUOTA_UNIT_PRICING_KEY, quotaNext);
+    }
   }
 
   async setMeterUnitPricing(patch: Partial<MeterUnitPricing>): Promise<MeterUnitPricing> {
     const current = await this.getMeterUnitPricing();
-    const next: MeterUnitPricing = {
+    const next = canonMeterUnitPricing({
       pricePerUserMonthAzn:
         patch.pricePerUserMonthAzn !== undefined
           ? Math.max(0, patch.pricePerUserMonthAzn)
@@ -296,14 +297,22 @@ export class SystemConfigService {
         patch.pricePerOcrPageAzn !== undefined
           ? Math.max(0, patch.pricePerOcrPageAzn)
           : current.pricePerOcrPageAzn,
-    };
+      pricePerTradeCreditBuyerAzn:
+        patch.pricePerTradeCreditBuyerAzn !== undefined
+          ? Math.max(0, patch.pricePerTradeCreditBuyerAzn)
+          : current.pricePerTradeCreditBuyerAzn,
+      pricePerTradeCreditEnrichAzn:
+        patch.pricePerTradeCreditEnrichAzn !== undefined
+          ? Math.max(0, patch.pricePerTradeCreditEnrichAzn)
+          : current.pricePerTradeCreditEnrichAzn,
+    });
     await this.setJson(METER_UNIT_PRICING_KEY, next);
     return next;
   }
 
   async setQuotaUnitPricing(patch: Partial<QuotaUnitPricing>): Promise<QuotaUnitPricing> {
     const current = await this.getQuotaUnitPricing();
-    const next: QuotaUnitPricing = {
+    const next = canonQuotaUnitPricing({
       employeeBlockSize:
         patch.employeeBlockSize !== undefined
           ? Math.max(1, patch.employeeBlockSize)
@@ -320,9 +329,58 @@ export class SystemConfigService {
         patch.pricePerDocumentPackAzn !== undefined
           ? Math.max(0, patch.pricePerDocumentPackAzn)
           : current.pricePerDocumentPackAzn,
-    };
+    });
     await this.setJson(QUOTA_UNIT_PRICING_KEY, next);
     return next;
+  }
+
+  private async readMeterUnitPricingRaw(): Promise<MeterUnitPricing> {
+    const raw = await this.getJson(METER_UNIT_PRICING_KEY);
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      const o = raw as Record<string, unknown>;
+      return {
+        pricePerUserMonthAzn: toPositiveNum(o.pricePerUserMonthAzn, DEFAULT_METER_UNIT_PRICING.pricePerUserMonthAzn),
+        pricePerGbMonthAzn: toPositiveNum(o.pricePerGbMonthAzn, DEFAULT_METER_UNIT_PRICING.pricePerGbMonthAzn),
+        pricePerWhatsappAlertAzn: toPositiveNum(
+          o.pricePerWhatsappAlertAzn,
+          DEFAULT_METER_UNIT_PRICING.pricePerWhatsappAlertAzn,
+        ),
+        pricePerInvoiceAzn: toPositiveNum(o.pricePerInvoiceAzn, DEFAULT_METER_UNIT_PRICING.pricePerInvoiceAzn),
+        pricePerOcrPageAzn: toPositiveNum(o.pricePerOcrPageAzn, DEFAULT_METER_UNIT_PRICING.pricePerOcrPageAzn),
+        pricePerTradeCreditBuyerAzn: toPositiveNum(
+          o.pricePerTradeCreditBuyerAzn,
+          DEFAULT_METER_UNIT_PRICING.pricePerTradeCreditBuyerAzn,
+        ),
+        pricePerTradeCreditEnrichAzn: toPositiveNum(
+          o.pricePerTradeCreditEnrichAzn,
+          DEFAULT_METER_UNIT_PRICING.pricePerTradeCreditEnrichAzn,
+        ),
+        pricePerPosStationMonthAzn: toPositiveNum(
+          o.pricePerPosStationMonthAzn,
+          DEFAULT_METER_UNIT_PRICING.pricePerPosStationMonthAzn ?? 19,
+        ),
+      };
+    }
+    return { ...DEFAULT_METER_UNIT_PRICING };
+  }
+
+  private async readQuotaUnitPricingRaw(): Promise<QuotaUnitPricing> {
+    const raw = await this.getJson(QUOTA_UNIT_PRICING_KEY);
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      const o = raw as Record<string, unknown>;
+      return {
+        employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 1)),
+        pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 2),
+        documentPackSize: Math.max(1, toPositiveNum(o.documentPackSize, 1000)),
+        pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
+      };
+    }
+    return {
+      employeeBlockSize: 1,
+      pricePerEmployeeBlockAzn: 2,
+      documentPackSize: 1000,
+      pricePerDocumentPackAzn: 5,
+    };
   }
 
   /**
@@ -506,8 +564,8 @@ export class SystemConfigService {
         }
         case "quota_unit_pricing":
           defaultValue = {
-            employeeBlockSize: 10,
-            pricePerEmployeeBlockAzn: 15,
+            employeeBlockSize: 1,
+            pricePerEmployeeBlockAzn: 2,
             documentPackSize: 1000,
             pricePerDocumentPackAzn: 5,
           };
@@ -606,12 +664,12 @@ export class SystemConfigService {
           throw new BadRequestException("Expected quota unit pricing object");
         }
         const o = value as Record<string, unknown>;
-        return {
-          employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 10)),
-          pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 15),
+        return canonQuotaUnitPricing({
+          employeeBlockSize: Math.max(1, toPositiveNum(o.employeeBlockSize, 1)),
+          pricePerEmployeeBlockAzn: toPositiveNum(o.pricePerEmployeeBlockAzn, 2),
           documentPackSize: Math.max(1, toPositiveNum(o.documentPackSize, 1000)),
           pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
-        };
+        });
       }
       default:
         throw new BadRequestException("Unsupported value kind");

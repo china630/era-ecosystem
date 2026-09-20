@@ -13,6 +13,10 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../auth/cp-permissions";
+
 import type { Response } from "express";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import type { EraJwtPayload } from "../auth/jwt-payload.type";
@@ -23,9 +27,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../common/decorators/roles.decorator";
-import { RolesGuard } from "../common/guards/roles.guard";
-import { UserRole } from "@era365/database";
 import { TariffTier } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
@@ -46,8 +47,8 @@ import { ToggleBundleDto } from "./dto/toggle-bundle.dto";
 @ApiTags("billing")
 @ApiBearerAuth("bearer")
 @Controller("v1/billing")
-@UseGuards(RolesGuard)
-@Roles(UserRole.OWNER)
+@UseGuards(PermissionsGuard)
+@RequirePermissions(CP_PERMISSION.API_BILLING_MANAGE)
 export class BillingController {
   constructor(
     private readonly payment: PaymentProviderService,

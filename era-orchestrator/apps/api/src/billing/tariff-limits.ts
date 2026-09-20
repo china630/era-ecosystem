@@ -45,23 +45,23 @@ export const TARIFF_TIER_LIMITS: Record<TariffTier, TariffResourceLimits> = {
     maxWorkspaces: 1,
     maxWhatsappAlertsPerMonth: 100,
     maxOcrPagesPerMonth: 50,
-    maxInvoicesPerMonth: 100,
+    maxInvoicesPerMonth: 1000,
     baseMonthlyFeeAzn: 49,
   },
   [TariffTier.TIER_2]: {
     maxUsers: 15,
     maxWorkspaces: 3,
     maxWhatsappAlertsPerMonth: 500,
-    maxOcrPagesPerMonth: 250,
-    maxInvoicesPerMonth: 500,
+    maxOcrPagesPerMonth: 50,
+    maxInvoicesPerMonth: 1000,
     baseMonthlyFeeAzn: 129,
   },
   [TariffTier.TIER_3]: {
     maxUsers: 50,
     maxWorkspaces: 10,
     maxWhatsappAlertsPerMonth: 2000,
-    maxOcrPagesPerMonth: 1000,
-    maxInvoicesPerMonth: 5000,
+    maxOcrPagesPerMonth: 50,
+    maxInvoicesPerMonth: 1000,
     baseMonthlyFeeAzn: 299,
   },
 };
@@ -71,8 +71,8 @@ export const TARIFF_TIER_LIMITS: Record<TariffTier, TariffResourceLimits> = {
  * Runtime billing prefers `pricing_modules.price_per_month` when present.
  */
 export const PREMIUM_MODULE_MONTHLY_AZN: Record<PremiumModuleSlug, number> = {
-  tax_pro: 19,
-  trade_pro: 19,
+  tax_pro: 39,
+  trade_pro: 39,
   compliance_pro: 99,
   audit_hub: 99,
 };

@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   Body,
   Controller,
@@ -16,7 +17,7 @@ import { SetOperatingModeDto } from "./dto/set-operating-mode.dto";
 import { OrgOperatingModeService } from "./org-operating-mode.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin/orgs/:orgId/operating-mode")
 export class OrgOperatingModeController {
   constructor(private readonly service: OrgOperatingModeService) {}

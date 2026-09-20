@@ -9,12 +9,13 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   BootstrapWorkforceScopeDto,
@@ -29,7 +30,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 @ApiTags("platform-workforce-org")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceOrgController {
   constructor(
     private readonly scope: WorkforceScopeService,
@@ -38,14 +39,14 @@ export class WorkforceOrgController {
   ) {}
 
   @Get("scope")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Resolve workforce scope for commercial org" })
   getScope(@OrganizationId() organizationId: string) {
     return this.scope.resolveScopeForCommercialOrg(organizationId);
   }
 
   @Post("scope/bootstrap")
-  @Roles(UserRole.OWNER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_BOOTSTRAP)
   @ApiOperation({ summary: "Bootstrap workforce scope + root OrgUnit" })
   bootstrap(
     @OrganizationId() organizationId: string,
@@ -56,7 +57,7 @@ export class WorkforceOrgController {
   }
 
   @Get("org-units")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   listOrgUnits(
     @OrganizationId() organizationId: string,
     @Query("tree") tree?: string,
@@ -65,7 +66,7 @@ export class WorkforceOrgController {
   }
 
   @Post("org-units")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ORG)
   createOrgUnit(
     @OrganizationId() organizationId: string,
     @CurrentUser() user: EraJwtPayload,
@@ -75,7 +76,7 @@ export class WorkforceOrgController {
   }
 
   @Patch("org-units/:id")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ORG)
   updateOrgUnit(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -86,7 +87,7 @@ export class WorkforceOrgController {
   }
 
   @Post("org-units/:id/archive")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ORG)
   archiveOrgUnit(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -96,7 +97,7 @@ export class WorkforceOrgController {
   }
 
   @Get("commercial-links/:organizationId")
-  @Roles(UserRole.OWNER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_BOOTSTRAP)
   getCommercialLink(@Param("organizationId") orgId: string) {
     return this.prisma.orgUnitCommercialLink.findUnique({
       where: { organizationId: orgId },
@@ -105,7 +106,7 @@ export class WorkforceOrgController {
   }
 
   @Put("commercial-links/:organizationId")
-  @Roles(UserRole.OWNER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_BOOTSTRAP)
   upsertCommercialLink(
     @Param("organizationId") orgId: string,
     @Body() dto: UpsertCommercialLinkDto,

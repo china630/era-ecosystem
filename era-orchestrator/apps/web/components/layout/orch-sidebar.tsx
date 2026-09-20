@@ -20,8 +20,10 @@ import {
   Sparkles,
   Tags,
   Users,
+  Radio,
 } from "lucide-react";
 import { EraAppSidebar } from "@era/satellite-kit/ui";
+import { useAuth } from "../../lib/auth-context";
 import {
   CollapsibleNavSection,
   SideNavItem,
@@ -44,6 +46,7 @@ export function OrchSidebar({
 }) {
   const pathname = usePathname() ?? "";
   const t = useTranslations("nav");
+  const { can } = useAuth();
   const [layoutWide, setLayoutWide] = useState(false);
 
   useEffect(() => {
@@ -61,7 +64,8 @@ export function OrchSidebar({
       organization:
         pathname.startsWith("/organizations") ||
         pathname.startsWith("/holdings") ||
-        pathname.startsWith("/settings/team"),
+        pathname.startsWith("/settings/team") ||
+        pathname.startsWith("/settings/access"),
       workforce: pathname.startsWith("/workspace/workforce"),
       resources: pathname === "/pricing" || pathname.startsWith("/help"),
       settings:
@@ -69,7 +73,8 @@ export function OrchSidebar({
         pathname.startsWith("/settings/subscription") ||
         pathname.startsWith("/settings/invoices") ||
         pathname.startsWith("/settings/orders") ||
-        pathname.startsWith("/settings/team"),
+        pathname.startsWith("/settings/team") ||
+        pathname.startsWith("/settings/access"),
       platform: pathname.startsWith("/super-admin"),
     }),
     [pathname],
@@ -135,14 +140,16 @@ export function OrchSidebar({
             nested
             onNavClick={onNavClick}
           />
-          <SideNavItem
-            href="/holdings"
-            label={t("holdings")}
-            isActive={pathname === "/holdings" || pathname.startsWith("/holdings/")}
-            icon={Building2}
-            nested
-            onNavClick={onNavClick}
-          />
+          {can("screen:holdings") ? (
+            <SideNavItem
+              href="/holdings"
+              label={t("holdings")}
+              isActive={pathname === "/holdings" || pathname.startsWith("/holdings/")}
+              icon={Building2}
+              nested
+              onNavClick={onNavClick}
+            />
+          ) : null}
         </CollapsibleNavSection>
 
         <CollapsibleNavSection
@@ -156,6 +163,14 @@ export function OrchSidebar({
             label={t("wfEmployments")}
             isActive={pathname.startsWith("/workspace/workforce/employments")}
             icon={Users}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/group"
+            label={t("wfGroup")}
+            isActive={pathname.startsWith("/workspace/workforce/group")}
+            icon={Building2}
             nested
             onNavClick={onNavClick}
           />
@@ -204,6 +219,38 @@ export function OrchSidebar({
             label={t("wfStaffSchedule")}
             isActive={pathname.startsWith("/workspace/workforce/staff-schedule")}
             icon={Building2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/places"
+            label={t("wfPlaces")}
+            isActive={pathname.startsWith("/workspace/workforce/places")}
+            icon={Building2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/shifts"
+            label={t("wfShifts")}
+            isActive={pathname.startsWith("/workspace/workforce/shifts")}
+            icon={CalendarClock}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/roster"
+            label={t("wfRoster")}
+            isActive={pathname.startsWith("/workspace/workforce/roster")}
+            icon={CalendarClock}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/attendance"
+            label={t("wfAttendance")}
+            isActive={pathname.startsWith("/workspace/workforce/attendance")}
+            icon={CalendarClock}
             nested
             onNavClick={onNavClick}
           />
@@ -321,14 +368,26 @@ export function OrchSidebar({
             nested
             onNavClick={onNavClick}
           />
-          <SideNavItem
-            href="/settings/team"
-            label={t("team")}
-            isActive={pathname.startsWith("/settings/team")}
-            icon={Users}
-            nested
-            onNavClick={onNavClick}
-          />
+          {can("screen:settings.team") ? (
+            <SideNavItem
+              href="/settings/team"
+              label={t("team")}
+              isActive={pathname.startsWith("/settings/team")}
+              icon={Users}
+              nested
+              onNavClick={onNavClick}
+            />
+          ) : null}
+          {can("screen:settings.access") ? (
+            <SideNavItem
+              href="/settings/access"
+              label={t("access")}
+              isActive={pathname.startsWith("/settings/access")}
+              icon={Shield}
+              nested
+              onNavClick={onNavClick}
+            />
+          ) : null}
         </CollapsibleNavSection>
 
         {isSuperAdmin ? (
@@ -464,6 +523,14 @@ export function OrchSidebar({
               label={t("platformSecurity")}
               isActive={pathname.startsWith("/super-admin/security")}
               icon={ShieldAlert}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href="/super-admin/vendors/channex"
+              label={t("platformChannex")}
+              isActive={pathname.startsWith("/super-admin/vendors/channex")}
+              icon={Radio}
               nested
               onNavClick={onNavClick}
             />

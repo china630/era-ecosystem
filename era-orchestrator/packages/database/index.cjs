@@ -6,6 +6,7 @@ const pricingModuleSeed = require("./runtime-cjs/core/pricing-module-seed.js");
 const pricingBundleSeed = require("./runtime-cjs/core/pricing-bundle-seed.js");
 const pricingModuleKeys = require("./runtime-cjs/core/pricing-module-keys.js");
 const hotelModuleKeys = require("./runtime-cjs/core/hotel-module-keys.js");
+const pricingCatalogCanon = require("./runtime-cjs/core/pricing-catalog-canon.js");
 
 module.exports = {
   ...prisma,
@@ -13,4 +14,5 @@ module.exports = {
   ...pricingBundleSeed,
   ...pricingModuleKeys,
   ...hotelModuleKeys,
+  ...pricingCatalogCanon,
 };

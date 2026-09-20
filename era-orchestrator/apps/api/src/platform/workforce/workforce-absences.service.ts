@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from "@nestjs/common";
 import {
   WORKFORCE_ABSENCE_APPROVED,
@@ -17,6 +19,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
 import type {
   CreateWorkforceAbsenceDto,
@@ -42,6 +45,8 @@ export class WorkforceAbsencesService {
     private readonly audit: WorkforceAuditService,
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly timesheets: WorkforceTimesheetsService,
+    @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
+    private readonly personnelOrders: WorkforcePersonnelOrdersService,
   ) {}
 
   async list(
@@ -205,7 +210,29 @@ export class WorkforceAbsencesService {
       action: "ABSENCE_APPROVED",
       entityType: "ABSENCE",
       entityId: id,
+      globalPersonId: updated.employment.globalPersonId,
+      cpEmploymentId: updated.employmentId,
     });
+    const leaveType = this.personnelOrders.orderTypeForAbsenceKind(updated.kind);
+    if (leaveType) {
+      try {
+        await this.personnelOrders.ensureDraftForMutation({
+          organizationId,
+          actorUserId,
+          employmentId: updated.employmentId,
+          type: leaveType,
+          effectiveDate: isoDay(updated.startDate),
+          leaveStartDate: isoDay(updated.startDate),
+          leaveEndDate: isoDay(updated.endDate),
+          note: updated.note || undefined,
+        });
+      } catch (err) {
+        console.warn(
+          `[workforce] ensureDraft LEAVE failed for ${updated.employmentId}:`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
     await this.emitAbsenceEvent(
       WORKFORCE_ABSENCE_APPROVED,
       updated,

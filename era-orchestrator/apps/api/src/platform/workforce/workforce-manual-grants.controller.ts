@@ -7,12 +7,13 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   CreateManualGrantDto,
@@ -23,12 +24,12 @@ import { WorkforceManualGrantService } from "./workforce-manual-grant.service";
 @ApiTags("platform-workforce-manual-grants")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/manual-grants")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceManualGrantsController {
   constructor(private readonly grants: WorkforceManualGrantService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_MANUAL_GRANTS)
   list(
     @OrganizationId() organizationId: string,
     @Query() query: ListManualGrantsQueryDto,
@@ -44,7 +45,7 @@ export class WorkforceManualGrantsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_MANUAL_GRANTS)
   create(
     @OrganizationId() organizationId: string,
     @CurrentUser() user: EraJwtPayload,
@@ -54,7 +55,7 @@ export class WorkforceManualGrantsController {
   }
 
   @Post(":id/revoke")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_MANUAL_GRANTS)
   revoke(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -64,7 +65,7 @@ export class WorkforceManualGrantsController {
   }
 
   @Post(":id/restore")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_MANUAL_GRANTS)
   @ApiOperation({ summary: "Restore a revoked manual satellite grant" })
   restore(
     @OrganizationId() organizationId: string,

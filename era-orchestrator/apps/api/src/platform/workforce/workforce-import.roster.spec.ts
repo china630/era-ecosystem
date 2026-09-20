@@ -27,6 +27,7 @@ describe("WorkforceImportService.importRoster", () => {
   const absences = {};
   const orgUnits = {};
   const positions = {};
+  const audit = { log: jest.fn().mockResolvedValue(undefined) };
 
   const svc = new WorkforceImportService(
     prisma as never,
@@ -37,6 +38,7 @@ describe("WorkforceImportService.importRoster", () => {
     absences as never,
     orgUnits as never,
     positions as never,
+    audit as never,
   );
 
   beforeEach(() => {
@@ -86,6 +88,12 @@ describe("WorkforceImportService.importRoster", () => {
       }),
     );
     expect(result.created).toBe(1);
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "WORKFORCE_IMPORT_APPLIED",
+        payload: expect.objectContaining({ kind: "roster", created: 1 }),
+      }),
+    );
   });
 
   it("skips hire for the same person+unit+position after MDM update", async () => {

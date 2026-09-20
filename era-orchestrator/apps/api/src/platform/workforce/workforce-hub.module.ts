@@ -64,6 +64,14 @@ import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
 
 import { WorkforceTimesheetSubscriberService } from "./workforce-timesheet-subscriber.service";
 
+import { WorkforceRosterController } from "./workforce-roster.controller";
+
+import { WorkforceRosterService } from "./workforce-roster.service";
+
+import { WorkforceHoldingController } from "./workforce-holding.controller";
+
+import { WorkforceHoldingService } from "./workforce-holding.service";
+
 import { WorkforceVacationPlansController } from "./workforce-vacation-plans.controller";
 
 import { WorkforceVacationPlansService } from "./workforce-vacation-plans.service";
@@ -72,11 +80,21 @@ import { WorkforcePersonnelOrdersController, StaffScheduleRevisionsController } 
 
 import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 
+import { FinanceWorkforceMirrorClient } from "./finance-workforce-mirror.client";
+
 import { StaffScheduleRevisionsService } from "./staff-schedule-revisions.service";
 
 import { LicensingSeatsController } from "./licensing-seats.controller";
 
 import { WorkforceSeatsController } from "./workforce-seats.controller";
+
+import { WorkforceAttendanceController } from "./workforce-attendance.controller";
+
+import { WorkforceAttendanceIngestController } from "./workforce-attendance-ingest.controller";
+
+import { WorkforceAttendanceService } from "./workforce-attendance.service";
+
+import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
 
 
 
@@ -118,6 +136,10 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
 
     WorkforceTimesheetsController,
 
+    WorkforceRosterController,
+
+    WorkforceHoldingController,
+
     WorkforceVacationPlansController,
 
     WorkforcePersonnelOrdersController,
@@ -127,6 +149,10 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
     LicensingSeatsController,
 
     WorkforceSeatsController,
+
+    WorkforceAttendanceController,
+
+    WorkforceAttendanceIngestController,
 
   ],
 
@@ -164,13 +190,23 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
 
     WorkforceTimesheetsService,
 
+    WorkforceRosterService,
+
+    WorkforceHoldingService,
+
     WorkforceTimesheetSubscriberService,
 
     WorkforceVacationPlansService,
 
     WorkforcePersonnelOrdersService,
 
+    FinanceWorkforceMirrorClient,
+
     StaffScheduleRevisionsService,
+
+    WorkforceAttendanceService,
+
+    WorkforceAttendanceCronService,
 
   ],
 
@@ -189,6 +225,8 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
     WorkforceRoleTemplateService,
 
     WorkforceSeatService,
+
+    WorkforceAttendanceService,
 
   ],
 

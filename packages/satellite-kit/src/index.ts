@@ -38,6 +38,8 @@ export { getRuntimeSsoSharedSecret } from "./tenancy/runtime-config-memory";
 export {
   resolveOrchestratorBaseUrl,
   resolveSatelliteEventServiceToken,
+  resolveControlPlaneBearerToken,
+  rewriteComposeHostnameForHost,
 } from "./tenancy/resolve-orchestrator-url";
 export {
   runWithSatelliteTenant,
@@ -222,6 +224,8 @@ export {
   linkPersonIdentity,
   listPersonIdentifiers,
   getPersonOpsProfile,
+  ensurePersonAccessGrant,
+  batchGetPersonOpsProfiles,
   resolveIdentifierForCompliance,
   isValidAzFin,
   type MdmLookupOptions,
@@ -247,6 +251,7 @@ export {
   normalizeNationalityIso,
   hasPersonNameInput,
   resolveIncomingNameParts,
+  isPatronymicParticle,
   type PersonNameParts,
 } from "./integration/person-name";
 export {

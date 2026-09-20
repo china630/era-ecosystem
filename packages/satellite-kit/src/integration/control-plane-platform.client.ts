@@ -4,7 +4,7 @@
 
 import {
   resolveOrchestratorBaseUrl,
-  resolveSatelliteEventServiceToken,
+  resolveControlPlaneBearerToken,
 } from "../tenancy/resolve-orchestrator-url";
 
 export type PlatformCallOptions = {
@@ -13,15 +13,11 @@ export type PlatformCallOptions = {
 };
 
 function baseUrl(): string {
-  return resolveOrchestratorBaseUrl({ fallback: "http://127.0.0.1:4100" });
+  return resolveOrchestratorBaseUrl({ fallback: "http://127.0.0.1:4000" });
 }
 
 function bearerToken(explicit?: string): string | undefined {
-  const token =
-    explicit?.trim() ||
-    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
-    resolveSatelliteEventServiceToken();
-  return token || undefined;
+  return resolveControlPlaneBearerToken(explicit) || undefined;
 }
 
 async function platformGet<T>(path: string, opts?: PlatformCallOptions): Promise<T> {

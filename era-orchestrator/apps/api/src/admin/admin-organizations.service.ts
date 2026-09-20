@@ -20,6 +20,9 @@ export class AdminOrganizationsService {
       if (/^[0-9a-f-]{36}$/i.test(q)) {
         or.push({ id: q });
       }
+      if (/^[1-9][0-9]{5}$/.test(q)) {
+        or.push({ publicOrgNumber: Number(q) });
+      }
       if (/^\d{10}$/.test(q)) {
         or.push({
           taxIdBlindIndex: blindIndexForVoen(
@@ -41,6 +44,7 @@ export class AdminOrganizationsService {
         select: {
           id: true,
           name: true,
+          publicOrgNumber: true,
           operatingMode: true,
           deploymentTopology: true,
           billingStatus: true,
@@ -66,6 +70,7 @@ export class AdminOrganizationsService {
       items: rows.map((r) => ({
         id: r.id,
         name: r.name,
+        publicOrgNumber: r.publicOrgNumber,
         operatingMode: r.operatingMode,
         deploymentTopology: r.deploymentTopology,
         billingStatus: r.billingStatus,

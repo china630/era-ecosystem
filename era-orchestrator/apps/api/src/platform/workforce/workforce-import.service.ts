@@ -6,6 +6,7 @@ import { WorkforceAbsenceKind, WorkforceEmploymentStatus, OrgUnitStatus } from "
 import { MdmService } from "../../mdm/mdm.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceAbsencesService } from "./workforce-absences.service";
+import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceOrgUnitsService } from "./workforce-org-units.service";
 import { WorkforcePositionsService } from "./workforce-positions.service";
@@ -124,7 +125,32 @@ export class WorkforceImportService {
     private readonly absences: WorkforceAbsencesService,
     private readonly orgUnits: WorkforceOrgUnitsService,
     private readonly positions: WorkforcePositionsService,
+    private readonly audit: WorkforceAuditService,
   ) {}
+
+  private async logImportApplied(
+    organizationId: string,
+    actorUserId: string,
+    kind: string,
+    result: ImportResult,
+    scopeId?: string,
+  ) {
+    if (result.dryRun) return;
+    await this.audit.log({
+      organizationId,
+      workforceScopeId: scopeId,
+      actorUserId,
+      action: "WORKFORCE_IMPORT_APPLIED",
+      entityType: "WorkforceImport",
+      entityId: organizationId,
+      payload: {
+        kind,
+        created: result.created,
+        skipped: result.skipped,
+        errors: result.errors,
+      },
+    });
+  }
 
   async importRoster(
     organizationId: string,
@@ -388,7 +414,15 @@ export class WorkforceImportService {
       }
     }
 
-    return { dryRun, created, skipped, errors, rows: results };
+    const result = { dryRun, created, skipped, errors, rows: results };
+    await this.logImportApplied(
+      organizationId,
+      actorUserId,
+      "roster",
+      result,
+      link.workforceScope?.id ?? link.workforceScopeId,
+    );
+    return result;
   }
 
   async importOrgStructure(
@@ -538,7 +572,15 @@ export class WorkforceImportService {
       }
     }
 
-    return { dryRun, created, skipped, errors, rows: results };
+    const result = { dryRun, created, skipped, errors, rows: results };
+    await this.logImportApplied(
+      organizationId,
+      actorUserId,
+      "org-structure",
+      result,
+      link.workforceScope?.id ?? link.workforceScopeId,
+    );
+    return result;
   }
 
   async importAbsences(
@@ -658,6 +700,19 @@ export class WorkforceImportService {
       }
     }
 
-    return { dryRun, created, skipped, errors, rows: results };
+    const result = { dryRun, created, skipped, errors, rows: results };
+    try {
+      const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
+      await this.logImportApplied(
+        organizationId,
+        actorUserId,
+        "absences",
+        result,
+        link.workforceScope?.id ?? link.workforceScopeId,
+      );
+    } catch {
+      await this.logImportApplied(organizationId, actorUserId, "absences", result);
+    }
+    return result;
   }
 }

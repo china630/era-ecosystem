@@ -120,11 +120,50 @@ export class BillingToggleService {
         });
       }
 
+      if (dto.moduleKey === "clinic_sanatorium_clinical") {
+        const sanatoriumPack = await this.isModuleCoveredByActiveBundle(
+          organizationId,
+          "hotel_medical_sanatorium",
+          now,
+        );
+        if (sanatoriumPack) {
+          throw new BadRequestException({
+            code: "MUTEX_SANATORIUM_MEDICAL",
+            message:
+              "Hotel Sanatorium bundle includes hotel_medical_sanatorium. Disable that bundle (use Hotel Resort) before enabling clinic_sanatorium_clinical.",
+            bundleName: sanatoriumPack,
+          });
+        }
+      }
+
       if (this.pricing.isPremiumModuleKey(dto.moduleKey)) {
         this.premiumActivation.assertNotTrialLockedPremium(subRow, dto.moduleKey);
       }
 
       if (fullyActive) {
+        if (
+          dto.moduleKey === "accounting_book_extra" &&
+          dto.quantity != null
+        ) {
+          const { activeModules } =
+            await this.subscriptionAccess.updateModuleAddons(
+              organizationId,
+              catalogModuleKeyToPatch(dto.moduleKey, true, dto.quantity),
+            );
+          return {
+            organizationId,
+            moduleKey: dto.moduleKey,
+            enabled: true,
+            activeModules,
+            proRataAzn: "0.00",
+            orderId: null,
+            paymentUrl: null,
+            providerMode: null,
+            skipped: false,
+            requiresPayment: false,
+            note: "accounting_book_extra_quantity_updated",
+          };
+        }
         return {
           organizationId,
           moduleKey: dto.moduleKey,
@@ -177,7 +216,7 @@ export class BillingToggleService {
       const { activeModules } = await this.prisma.$transaction(async (tx) => {
         const u = await this.subscriptionAccess.updateModuleAddons(
           organizationId,
-          catalogModuleKeyToPatch(dto.moduleKey, true),
+          catalogModuleKeyToPatch(dto.moduleKey, true, dto.quantity),
           tx,
         );
         await this.orgModules.upsertActiveInTx(

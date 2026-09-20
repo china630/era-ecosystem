@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 /**
@@ -10,6 +10,8 @@ export function SsoCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  /** One-shot: Strict Mode / unstable searchParams must not replay one-time tickets. */
+  const exchangeStarted = useRef(false);
 
   useEffect(() => {
     const email = searchParams.get("email");
@@ -32,7 +34,8 @@ export function SsoCallbackPage() {
       return;
     }
 
-    let cancelled = false;
+    if (exchangeStarted.current) return;
+    exchangeStarted.current = true;
 
     (async () => {
       const res = await fetch("/api/auth/sso/exchange", {
@@ -49,7 +52,6 @@ export function SsoCallbackPage() {
           jti,
         }),
       });
-      if (cancelled) return;
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
         setError(j.error ?? `SSO failed (${res.status})`);
@@ -58,14 +60,8 @@ export function SsoCallbackPage() {
       router.replace("/");
       router.refresh();
     })().catch((err) => {
-      if (!cancelled) {
-        setError(err instanceof Error ? err.message : "SSO failed");
-      }
+      setError(err instanceof Error ? err.message : "SSO failed");
     });
-
-    return () => {
-      cancelled = true;
-    };
   }, [searchParams, router]);
 
   return (

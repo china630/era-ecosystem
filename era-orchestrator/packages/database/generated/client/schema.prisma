@@ -166,6 +166,11 @@ enum PlatformCustomDomainStatus {
   DISABLED
 }
 
+enum PlatformCustomDomainKind {
+  portal
+  satellite_login
+}
+
 enum PlatformShipmentStatus {
   CREATED
   IN_TRANSIT
@@ -500,6 +505,35 @@ enum WorkforceTimesheetEntryType {
   BUSINESS_TRIP
 }
 
+enum WorkforceAttendanceDeviceStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum WorkforceAttendanceDirection {
+  IN
+  OUT
+}
+
+enum WorkforceAttendancePunchStatus {
+  UNMAPPED
+  MAPPED
+  OPEN
+  PAIRED
+  REJECTED
+}
+
+enum WorkforcePlaceStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum WorkforceDayOverrideKind {
+  DAY_OFF
+  EXTRA
+  SWAP
+}
+
 enum WorkforceVacationPlanStatus {
   DRAFT
   SUBMITTED
@@ -511,6 +545,7 @@ enum WorkforcePersonnelOrderType {
   HIRE
   TRANSFER
   TERMINATE
+  LEAVE_ANNUAL
 }
 
 enum WorkforcePersonnelOrderStatus {
@@ -591,6 +626,7 @@ model OrgUnit {
   employments         WorkforceEmployment[]   @relation("EmploymentOrgUnit")
   commercialLinks     OrgUnitCommercialLink[]
   vacationPlans       WorkforceVacationPlan[]
+  responsiblePlaces   WorkforcePlace[]
 
   @@unique([workforceScopeId, parentId, name])
   @@index([workforceScopeId, parentId])
@@ -700,35 +736,40 @@ model WorkforceSeatAllocation {
 
 /// CP workforce employment — no PII; person via MDM globalPersonId.
 model WorkforceEmployment {
-  id                       String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId           String                      @map("organization_id") @db.Uuid
-  workforceScopeId         String                      @map("workforce_scope_id") @db.Uuid
-  orgUnitId                String                      @map("org_unit_id") @db.Uuid
-  positionId               String                      @map("position_id") @db.Uuid
-  globalPersonId           String                      @map("global_person_id") @db.Uuid
-  status                   WorkforceEmploymentStatus   @default(ACTIVE)
-  hireDate                 DateTime                    @map("hire_date") @db.Date
-  financeEmployeeId        String?                     @map("finance_employee_id") @db.Uuid
-  commercialOrganizationId String?                     @map("commercial_organization_id") @db.Uuid
-  platformUserId           String?                     @map("platform_user_id") @db.Uuid
+  id                       String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId           String                        @map("organization_id") @db.Uuid
+  workforceScopeId         String                        @map("workforce_scope_id") @db.Uuid
+  orgUnitId                String                        @map("org_unit_id") @db.Uuid
+  positionId               String                        @map("position_id") @db.Uuid
+  globalPersonId           String                        @map("global_person_id") @db.Uuid
+  status                   WorkforceEmploymentStatus     @default(ACTIVE)
+  hireDate                 DateTime                      @map("hire_date") @db.Date
+  financeEmployeeId        String?                       @map("finance_employee_id") @db.Uuid
+  commercialOrganizationId String?                       @map("commercial_organization_id") @db.Uuid
+  platformUserId           String?                       @map("platform_user_id") @db.Uuid
   /// Local satellite login override; default emp-{employmentId hex prefix} when null at provision.
-  satelliteStaffLogin      String?                     @map("satellite_staff_login") @db.VarChar(64)
+  satelliteStaffLogin      String?                       @map("satellite_staff_login") @db.VarChar(64)
   /// Default PIN pushed on provision / reprovision (pilot default 0000).
-  satelliteStaffPin        String?                     @map("satellite_staff_pin") @db.VarChar(32)
-  createdAt                DateTime                    @default(now()) @map("created_at")
-  updatedAt                DateTime                    @updatedAt @map("updated_at")
-  organization             Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workforceScope           WorkforceScope              @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
-  orgUnit                  OrgUnit                     @relation("EmploymentOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
-  position                 WorkforcePosition           @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  satelliteStaffPin        String?                       @map("satellite_staff_pin") @db.VarChar(32)
+  createdAt                DateTime                      @default(now()) @map("created_at")
+  updatedAt                DateTime                      @updatedAt @map("updated_at")
+  organization             Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workforceScope           WorkforceScope                @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  orgUnit                  OrgUnit                       @relation("EmploymentOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+  position                 WorkforcePosition             @relation(fields: [positionId], references: [id], onDelete: Restrict)
   absences                 WorkforceAbsence[]
-  managedOrgUnits          OrgUnit[]                   @relation("OrgUnitManager")
+  managedOrgUnits          OrgUnit[]                     @relation("OrgUnitManager")
   roleBindings             WorkforceRoleBinding[]
   manualGrants             WorkforceManualGrant[]
   seatAllocation           WorkforceSeatAllocation?
   timesheetEntries         WorkforceTimesheetEntry[]
   vacationPlanLines        WorkforceVacationPlanLine[]
   personnelOrders          WorkforcePersonnelOrder[]
+  brigadeMemberships       WorkforceBrigadeMember[]
+  shiftAssignments         WorkforceShiftAssignment[]
+  dayOverrides             WorkforceDayOverride[]
+  attendanceIdentities     WorkforceAttendanceIdentity[]
+  attendancePunches        WorkforceAttendancePunch[]
 
   @@index([organizationId, status])
   @@index([workforceScopeId, orgUnitId])
@@ -804,6 +845,232 @@ model WorkforceTimesheetEntry {
   @@map("workforce_timesheet_entries")
 }
 
+/// Client site / post for labor roster (≠ OrgUnit). Optional home org-unit for responsibility only.
+model WorkforcePlace {
+  id                   String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String                      @map("organization_id") @db.Uuid
+  code                 String                      @db.VarChar(64)
+  name                 String                      @db.VarChar(255)
+  status               WorkforcePlaceStatus        @default(ACTIVE)
+  responsibleOrgUnitId String?                     @map("responsible_org_unit_id") @db.Uuid
+  createdAt            DateTime                    @default(now()) @map("created_at")
+  updatedAt            DateTime                    @updatedAt @map("updated_at")
+  organization         Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  responsibleOrgUnit   OrgUnit?                    @relation(fields: [responsibleOrgUnitId], references: [id], onDelete: SetNull)
+  assignments          WorkforceShiftAssignment[]
+  dayOverrides         WorkforceDayOverride[]
+  attendanceDevices    WorkforceAttendanceDevice[]
+  attendancePunches    WorkforceAttendancePunch[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@map("workforce_places")
+}
+
+/// Wave 6: tablet / FaceID device bound to one org + usually one Place. Auth via att_ token (hash stored).
+model WorkforceAttendanceDevice {
+  id             String                          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                          @map("organization_id") @db.Uuid
+  placeId        String                          @map("place_id") @db.Uuid
+  name           String                          @db.VarChar(128)
+  code           String?                         @db.VarChar(64)
+  tokenHash      String                          @map("token_hash") @db.VarChar(128)
+  /// Optional HMAC secret hash for body signature (sha256 hex of secret).
+  hmacSecretHash String?                         @map("hmac_secret_hash") @db.VarChar(128)
+  status         WorkforceAttendanceDeviceStatus @default(ACTIVE)
+  lastSeenAt     DateTime?                       @map("last_seen_at") @db.Timestamptz(6)
+  createdAt      DateTime                        @default(now()) @map("created_at")
+  updatedAt      DateTime                        @updatedAt @map("updated_at")
+  organization   Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  place          WorkforcePlace                  @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  punches        WorkforceAttendancePunch[]
+
+  @@unique([organizationId, tokenHash])
+  @@index([organizationId, status])
+  @@index([placeId])
+  @@map("workforce_attendance_devices")
+}
+
+/// Wave 6: device personRef → employment within one org (two VÖEN = two mappings).
+model WorkforceAttendanceIdentity {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  personRef      String              @map("person_ref") @db.VarChar(128)
+  employmentId   String              @map("employment_id") @db.Uuid
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employment     WorkforceEmployment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, personRef])
+  @@index([organizationId, employmentId])
+  @@map("workforce_attendance_identities")
+}
+
+/// Wave 6: immutable raw punch. No biometric templates.
+model WorkforceAttendancePunch {
+  id              String                         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String                         @map("organization_id") @db.Uuid
+  deviceId        String                         @map("device_id") @db.Uuid
+  placeId         String                         @map("place_id") @db.Uuid
+  employmentId    String?                        @map("employment_id") @db.Uuid
+  personRef       String                         @map("person_ref") @db.VarChar(128)
+  direction       WorkforceAttendanceDirection
+  occurredAt      DateTime                       @map("occurred_at") @db.Timestamptz(6)
+  externalId      String?                        @map("external_id") @db.VarChar(128)
+  status          WorkforceAttendancePunchStatus @default(UNMAPPED)
+  placeMismatch   Boolean                        @default(false) @map("place_mismatch")
+  pairId          String?                        @map("pair_id") @db.Uuid
+  hoursAttributed Decimal?                       @map("hours_attributed") @db.Decimal(10, 2)
+  workDate        DateTime?                      @map("work_date") @db.Date
+  createdAt       DateTime                       @default(now()) @map("created_at")
+  organization    Organization                   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device          WorkforceAttendanceDevice      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  place           WorkforcePlace                 @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  employment      WorkforceEmployment?           @relation(fields: [employmentId], references: [id], onDelete: SetNull)
+
+  @@unique([deviceId, externalId])
+  @@index([organizationId, occurredAt])
+  @@index([organizationId, status])
+  @@index([organizationId, employmentId, occurredAt])
+  @@index([pairId])
+  @@map("workforce_attendance_punches")
+}
+
+/// Named shift window in Asia/Baku local minutes (start/end may cross midnight).
+model WorkforceShiftType {
+  id             String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                    @map("organization_id") @db.Uuid
+  code           String                    @db.VarChar(32)
+  name           String                    @db.VarChar(128)
+  /// Minutes from local midnight [0, 1440).
+  startMinute    Int                       @map("start_minute")
+  endMinute      Int                       @map("end_minute")
+  breakMinutes   Int                       @default(0) @map("break_minutes")
+  isNight        Boolean                   @default(false) @map("is_night")
+  defaultHours   Decimal                   @default(8) @map("default_hours") @db.Decimal(10, 2)
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cycleSlots     WorkforceShiftCycleSlot[]
+  dayOverrides   WorkforceDayOverride[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("workforce_shift_types")
+}
+
+/// Repeating tape of SHIFT or OFF slots (e.g. 5/2, 2/2). Offset from cycleAnchor (Asia/Baku date).
+model WorkforceShiftCycle {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  code           String                     @db.VarChar(32)
+  name           String                     @db.VarChar(128)
+  /// Anchor date for day-0 of the tape (calendar Asia/Baku).
+  cycleAnchor    DateTime                   @map("cycle_anchor") @db.Date
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  slots          WorkforceShiftCycleSlot[]
+  assignments    WorkforceShiftAssignment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("workforce_shift_cycles")
+}
+
+model WorkforceShiftCycleSlot {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  cycleId        String              @map("cycle_id") @db.Uuid
+  /// 0-based position in the repeating tape.
+  slotIndex      Int                 @map("slot_index")
+  /// OFF when shiftTypeId is null.
+  shiftTypeId    String?             @map("shift_type_id") @db.Uuid
+  cycle          WorkforceShiftCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  shiftType      WorkforceShiftType? @relation(fields: [shiftTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([cycleId, slotIndex])
+  @@index([organizationId, cycleId])
+  @@map("workforce_shift_cycle_slots")
+}
+
+model WorkforceBrigade {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  code           String                     @db.VarChar(64)
+  name           String                     @db.VarChar(255)
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        WorkforceBrigadeMember[]
+  assignments    WorkforceShiftAssignment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("workforce_brigades")
+}
+
+model WorkforceBrigadeMember {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  brigadeId      String              @map("brigade_id") @db.Uuid
+  employmentId   String              @map("employment_id") @db.Uuid
+  createdAt      DateTime            @default(now()) @map("created_at")
+  brigade        WorkforceBrigade    @relation(fields: [brigadeId], references: [id], onDelete: Cascade)
+  employment     WorkforceEmployment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+
+  @@unique([brigadeId, employmentId])
+  @@index([organizationId, employmentId])
+  @@map("workforce_brigade_members")
+}
+
+/// Dated roster assignment: employment XOR brigade → place + cycle.
+model WorkforceShiftAssignment {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  placeId        String               @map("place_id") @db.Uuid
+  cycleId        String               @map("cycle_id") @db.Uuid
+  employmentId   String?              @map("employment_id") @db.Uuid
+  brigadeId      String?              @map("brigade_id") @db.Uuid
+  effectiveFrom  DateTime             @map("effective_from") @db.Date
+  effectiveTo    DateTime?            @map("effective_to") @db.Date
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  place          WorkforcePlace       @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  cycle          WorkforceShiftCycle  @relation(fields: [cycleId], references: [id], onDelete: Restrict)
+  employment     WorkforceEmployment? @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  brigade        WorkforceBrigade?    @relation(fields: [brigadeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, placeId, effectiveFrom])
+  @@index([organizationId, employmentId, effectiveFrom])
+  @@index([organizationId, brigadeId, effectiveFrom])
+  @@map("workforce_shift_assignments")
+}
+
+/// Per-person day exception; wins over cycle; loses to lockedFromAbsence.
+model WorkforceDayOverride {
+  id             String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  employmentId   String                   @map("employment_id") @db.Uuid
+  workDate       DateTime                 @map("work_date") @db.Date
+  kind           WorkforceDayOverrideKind
+  placeId        String?                  @map("place_id") @db.Uuid
+  shiftTypeId    String?                  @map("shift_type_id") @db.Uuid
+  note           String?                  @db.VarChar(500)
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employment     WorkforceEmployment      @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  place          WorkforcePlace?          @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  shiftType      WorkforceShiftType?      @relation(fields: [shiftTypeId], references: [id], onDelete: SetNull)
+
+  @@unique([employmentId, workDate])
+  @@index([organizationId, workDate])
+  @@map("workforce_day_overrides")
+}
+
 /// Department (or scope) annual vacation plan — master in CP; Finance mirror is HEADLESS (event only).
 model WorkforceVacationPlan {
   id                String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -845,7 +1112,28 @@ model WorkforceVacationPlanLine {
   @@map("workforce_vacation_plan_lines")
 }
 
-/// Printable kadr order (hire/transfer/terminate) — document workflow over operational employment changes.
+/// Org- or holding-default HTML template for printable personnel orders (az/ru).
+model WorkforcePersonnelOrderTemplate {
+  id             String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  /// Org override; null when holding-default.
+  organizationId String?                     @map("organization_id") @db.Uuid
+  /// Holding default; null when org-scoped.
+  holdingId      String?                     @map("holding_id") @db.Uuid
+  type           WorkforcePersonnelOrderType
+  locale         String                      @db.VarChar(8)
+  name           String
+  bodyHtml       String                      @map("body_html") @db.Text
+  /// Declared placeholder paths for UI help (e.g. person.fullName).
+  placeholders   Json                        @default("[]") @map("placeholders")
+  createdAt      DateTime                    @default(now()) @map("created_at")
+  updatedAt      DateTime                    @updatedAt @map("updated_at")
+
+  @@index([organizationId, type, locale])
+  @@index([holdingId, type, locale])
+  @@map("workforce_personnel_order_templates")
+}
+
+/// Printable kadr order (hire/transfer/terminate/leave) — document workflow over operational employment changes.
 model WorkforcePersonnelOrder {
   id                 String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   workforceScopeId   String                        @map("workforce_scope_id") @db.Uuid
@@ -854,21 +1142,30 @@ model WorkforcePersonnelOrder {
   type               WorkforcePersonnelOrderType
   status             WorkforcePersonnelOrderStatus @default(DRAFT)
   orderNumber        String                        @map("order_number")
+  /// Per legal entity + type + calendar year sequence (printed as Ə-Q-2026-00012).
+  sequenceYear       Int?                          @map("sequence_year")
+  sequenceSeq        Int?                          @map("sequence_seq")
   effectiveDate      DateTime                      @map("effective_date") @db.Date
   note               String                        @default("")
+  locale             String                        @default("az") @db.VarChar(8)
+  /// Frozen snapshot at ISSUED (person, org, leave.remainingDays, salary, …).
+  contextJson        Json?                         @map("context_json")
   /// Snapshot of person display name at issue time (not vault PII — display only).
   personDisplayName  String?                       @map("person_display_name")
   documentStorageKey String?                       @map("document_storage_key")
   issuedByUserId     String?                       @map("issued_by_user_id") @db.Uuid
   issuedAt           DateTime?                     @map("issued_at") @db.Timestamptz(6)
+  cancelledByUserId  String?                       @map("cancelled_by_user_id") @db.Uuid
+  cancelledAt        DateTime?                     @map("cancelled_at") @db.Timestamptz(6)
   createdAt          DateTime                      @default(now()) @map("created_at")
   updatedAt          DateTime                      @updatedAt @map("updated_at")
   workforceScope     WorkforceScope                @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
   employment         WorkforceEmployment           @relation(fields: [employmentId], references: [id], onDelete: Cascade)
 
   @@unique([workforceScopeId, orderNumber])
+  @@unique([organizationId, type, sequenceYear, sequenceSeq])
   @@index([workforceScopeId, type, status])
-  @@index([employmentId])
+  @@index([employmentId, type, status])
   @@map("workforce_personnel_orders")
 }
 
@@ -1050,71 +1347,84 @@ enum HoldingAccessRole {
 }
 
 model Organization {
-  id                         String                             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name                       String
-  ownerId                    String?                            @map("owner_id") @db.Uuid
-  taxIdBlindIndex            String?                            @unique @map("tax_id_blind_index")
-  taxIdCipher                String?                            @map("tax_id_cipher")
-  subscriptionPlan           String?                            @map("subscription_plan")
-  billingStatus              BillingStatus                      @default(ACTIVE) @map("billing_status")
-  operatingMode              OrgOperatingMode                   @default(STANDALONE) @map("operating_mode")
+  id                            String                             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                          String
+  ownerId                       String?                            @map("owner_id") @db.Uuid
+  /// Human-facing ERA ID (6 digits). Canonical tenant key remains `id` (UUID).
+  publicOrgNumber               Int                                @unique @map("public_org_number")
+  taxIdBlindIndex               String?                            @unique @map("tax_id_blind_index")
+  taxIdCipher                   String?                            @map("tax_id_cipher")
+  subscriptionPlan              String?                            @map("subscription_plan")
+  billingStatus                 BillingStatus                      @default(ACTIVE) @map("billing_status")
+  operatingMode                 OrgOperatingMode                   @default(STANDALONE) @map("operating_mode")
   /// Placement for license defaults. Per-endpoint mix is a later PlacementJob.
-  deploymentTopology         DeploymentTopology                 @default(SHARED) @map("deployment_topology")
-  parentOrgId                String?                            @map("parent_org_id") @db.Uuid
+  deploymentTopology            DeploymentTopology                 @default(SHARED) @map("deployment_topology")
+  parentOrgId                   String?                            @map("parent_org_id") @db.Uuid
   /// Holding grouping for multi-entity consolidation — distinct from parentOrgId/DEPARTMENT money routing.
-  holdingId                  String?                            @map("holding_id") @db.Uuid
-  fiscalRouting              OrgRouting                         @default(OWN) @map("fiscal_routing")
-  revenueRouting             OrgRouting                         @default(OWN) @map("revenue_routing")
-  activeModules              String[]                           @default([]) @map("active_modules")
-  storageUsedBytes           BigInt                             @default(0) @map("storage_used_bytes")
-  currentCreditTier          TariffTier?                        @map("current_credit_tier")
-  accumulatedBalance         Decimal                            @default(0) @map("accumulated_balance") @db.Decimal(12, 2)
-  billingPeriodKey           String?                            @map("billing_period_key") @db.VarChar(7)
-  whatsappAlertsUsed         Int                                @default(0) @map("whatsapp_alerts_used")
-  ocrPagesUsed               Int                                @default(0) @map("ocr_pages_used")
-  currency                   String                             @default("AZN")
-  settings                   Json                               @default("{}")
-  drakarisClientId           String?                            @unique @map("drakaris_client_id")
-  deletedAt                  DateTime?                          @map("deleted_at") @db.Timestamptz(6)
-  createdAt                  DateTime                           @default(now()) @map("created_at")
-  updatedAt                  DateTime                           @updatedAt @map("updated_at")
-  usageMeterEvents           UsageMeterEvent[]
-  earlyAccessEvents          EarlyAccessEvent[]
-  earlyAccessSignups         EarlyAccessSignup[]
-  auditLogs                  AuditLog[]
-  subscription               OrganizationSubscription?
-  paymentOrders              PaymentOrder[]
-  memberships                OrganizationMembership[]
-  billingInvoiceItems        BillingInvoiceItem[]
-  notificationTemplates      NotificationTemplate[]
-  notificationOutboxEntries  NotificationOutbox[]
-  notificationDeliveryLogs   NotificationDeliveryLog[]
-  platformPaymentLinks       PlatformPaymentLink[]
-  platformPortalLinks        PlatformPortalLink[]
-  bookableResources          BookableResource[]
-  bookingSlots               BookingSlot[]
-  bookingAppointments        BookingAppointment[]
-  platformPromotions         PlatformPromotion[]
-  platformCustomDomains      PlatformCustomDomain[]
-  platformShipments          PlatformShipment[]
-  platformAuditLogs          PlatformAuditLog[]
-  platformIdempotencyRecords PlatformIdempotencyRecord[]
-  platformLoyaltyLedger      PlatformLoyaltyLedger[]
-  satelliteEndpoints         SatelliteEndpoint[]
-  placementJobs              PlacementJob[]
-  satelliteEntitlements      OrganizationSatelliteEntitlement[]
-  workforceAssignments       WorkforceAssignment[]
-  workforceEmployments       WorkforceEmployment[]
-  workforceTimesheets        WorkforceTimesheet[]
-  orgUnitCommercialLinks     OrgUnitCommercialLink[]
-  elektrawebBridgePolicy     ElektrawebBridgePolicy?
-  clinicCutoverPolicy        ClinicCutoverPolicy?
-  clinicCutoverAsHotel       ClinicCutoverPolicy[]              @relation("ClinicCutoverHotelOrg")
-  owner                      User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
-  parentOrg                  Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
-  departments                Organization[]                     @relation("OrgParent")
-  holding                    Holding?                           @relation(fields: [holdingId], references: [id], onDelete: SetNull)
-  agencyPropertyGrants       AgencyPropertyGrant[]
+  holdingId                     String?                            @map("holding_id") @db.Uuid
+  fiscalRouting                 OrgRouting                         @default(OWN) @map("fiscal_routing")
+  revenueRouting                OrgRouting                         @default(OWN) @map("revenue_routing")
+  activeModules                 String[]                           @default([]) @map("active_modules")
+  storageUsedBytes              BigInt                             @default(0) @map("storage_used_bytes")
+  currentCreditTier             TariffTier?                        @map("current_credit_tier")
+  accumulatedBalance            Decimal                            @default(0) @map("accumulated_balance") @db.Decimal(12, 2)
+  billingPeriodKey              String?                            @map("billing_period_key") @db.VarChar(7)
+  whatsappAlertsUsed            Int                                @default(0) @map("whatsapp_alerts_used")
+  ocrPagesUsed                  Int                                @default(0) @map("ocr_pages_used")
+  currency                      String                             @default("AZN")
+  settings                      Json                               @default("{}")
+  drakarisClientId              String?                            @unique @map("drakaris_client_id")
+  deletedAt                     DateTime?                          @map("deleted_at") @db.Timestamptz(6)
+  createdAt                     DateTime                           @default(now()) @map("created_at")
+  updatedAt                     DateTime                           @updatedAt @map("updated_at")
+  usageMeterEvents              UsageMeterEvent[]
+  earlyAccessEvents             EarlyAccessEvent[]
+  earlyAccessSignups            EarlyAccessSignup[]
+  auditLogs                     AuditLog[]
+  subscription                  OrganizationSubscription?
+  paymentOrders                 PaymentOrder[]
+  memberships                   OrganizationMembership[]
+  organizationRoles             OrganizationRole[]
+  billingInvoiceItems           BillingInvoiceItem[]
+  notificationTemplates         NotificationTemplate[]
+  notificationOutboxEntries     NotificationOutbox[]
+  notificationDeliveryLogs      NotificationDeliveryLog[]
+  platformPaymentLinks          PlatformPaymentLink[]
+  platformPortalLinks           PlatformPortalLink[]
+  bookableResources             BookableResource[]
+  bookingSlots                  BookingSlot[]
+  bookingAppointments           BookingAppointment[]
+  platformPromotions            PlatformPromotion[]
+  platformCustomDomains         PlatformCustomDomain[]
+  platformShipments             PlatformShipment[]
+  platformAuditLogs             PlatformAuditLog[]
+  platformIdempotencyRecords    PlatformIdempotencyRecord[]
+  platformLoyaltyLedger         PlatformLoyaltyLedger[]
+  satelliteEndpoints            SatelliteEndpoint[]
+  placementJobs                 PlacementJob[]
+  satelliteEntitlements         OrganizationSatelliteEntitlement[]
+  workforceAssignments          WorkforceAssignment[]
+  workforceEmployments          WorkforceEmployment[]
+  workforceTimesheets           WorkforceTimesheet[]
+  workforcePlaces               WorkforcePlace[]
+  workforceShiftTypes           WorkforceShiftType[]
+  workforceShiftCycles          WorkforceShiftCycle[]
+  workforceBrigades             WorkforceBrigade[]
+  workforceShiftAssignments     WorkforceShiftAssignment[]
+  workforceDayOverrides         WorkforceDayOverride[]
+  workforceAttendanceDevices    WorkforceAttendanceDevice[]
+  workforceAttendanceIdentities WorkforceAttendanceIdentity[]
+  workforceAttendancePunches    WorkforceAttendancePunch[]
+  orgUnitCommercialLinks        OrgUnitCommercialLink[]
+  elektrawebBridgePolicy        ElektrawebBridgePolicy?
+  clinicCutoverPolicy           ClinicCutoverPolicy?
+  clinicCutoverAsHotel          ClinicCutoverPolicy[]              @relation("ClinicCutoverHotelOrg")
+  owner                         User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  parentOrg                     Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
+  departments                   Organization[]                     @relation("OrgParent")
+  holding                       Holding?                           @relation(fields: [holdingId], references: [id], onDelete: SetNull)
+  agencyPropertyGrants          AgencyPropertyGrant[]
+  buyerOrgGrants                BuyerOrgGrant[]
 
   @@index([ownerId])
   @@index([parentOrgId])
@@ -1207,19 +1517,44 @@ model HoldingMembership {
   @@map("holding_memberships")
 }
 
+/// Org-scoped CP role package (Variant A). Global Role/Permission tables remain legacy unused SoT.
+model OrganizationRole {
+  id                       String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId           String   @map("organization_id") @db.Uuid
+  code                     String
+  name                     String
+  isSystem                 Boolean  @default(false) @map("is_system")
+  cloneFromCode            String?  @map("clone_from_code")
+  permissionsJson          String   @default("[]") @map("permissions_json") @db.Text
+  permissionCatalogVersion Int      @default(1) @map("permission_catalog_version")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  organization Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships  OrganizationMembership[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("organization_roles")
+}
+
 model OrganizationMembership {
-  userId          String       @map("user_id") @db.Uuid
-  organizationId  String       @map("organization_id") @db.Uuid
-  role            UserRole
-  joinedAt        DateTime     @default(now()) @map("joined_at")
-  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
-  deletedByUserId String?      @map("deleted_by_user_id") @db.Uuid
-  deletedReason   String?      @map("deleted_reason")
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId             String            @map("user_id") @db.Uuid
+  organizationId     String            @map("organization_id") @db.Uuid
+  /// Finance donor enum until Wave 5 — system code or cloneFrom donor.
+  role               UserRole
+  organizationRoleId String?           @map("organization_role_id") @db.Uuid
+  joinedAt           DateTime          @default(now()) @map("joined_at")
+  deletedAt          DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId    String?           @map("deleted_by_user_id") @db.Uuid
+  deletedReason      String?           @map("deleted_reason")
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationRole   OrganizationRole? @relation(fields: [organizationRoleId], references: [id], onDelete: SetNull)
 
   @@id([userId, organizationId])
   @@index([organizationId])
+  @@index([organizationRoleId])
   @@index([organizationId, deletedAt], map: "organization_memberships_org_deleted_at_idx")
   @@map("organization_memberships")
 }
@@ -1244,17 +1579,18 @@ model AccessRequest {
 }
 
 model OrganizationInvite {
-  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId  String       @map("organization_id") @db.Uuid
-  email           String
-  role            UserRole
-  status          InviteStatus @default(PENDING)
-  invitedByUserId String?      @map("invited_by_user_id") @db.Uuid
-  createdAt       DateTime     @default(now()) @map("created_at")
-  decidedAt       DateTime?    @map("decided_at")
-  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
-  deletedByUserId String?      @map("deleted_by_user_id") @db.Uuid
-  deletedReason   String?      @map("deleted_reason")
+  id                   String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String       @map("organization_id") @db.Uuid
+  email                String
+  role                 UserRole
+  organizationRoleCode String?      @map("organization_role_code")
+  status               InviteStatus @default(PENDING)
+  invitedByUserId      String?      @map("invited_by_user_id") @db.Uuid
+  createdAt            DateTime     @default(now()) @map("created_at")
+  decidedAt            DateTime?    @map("decided_at")
+  deletedAt            DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId      String?      @map("deleted_by_user_id") @db.Uuid
+  deletedReason        String?      @map("deleted_reason")
 
   @@index([organizationId, email])
   @@index([organizationId, deletedAt], map: "organization_invites_org_deleted_at_idx")
@@ -1607,14 +1943,16 @@ model PlatformPromotion {
 model PlatformCustomDomain {
   id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String                     @map("organization_id") @db.Uuid
-  hostname       String                     @db.VarChar(253)
+  hostname       String                     @unique @db.VarChar(253)
+  kind           PlatformCustomDomainKind   @default(portal)
+  satelliteKey   String?                    @map("satellite_key") @db.VarChar(64)
   status         PlatformCustomDomainStatus @default(PENDING_DNS)
   metadata       Json                       @default("{}")
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@unique([organizationId, hostname])
+  @@index([organizationId])
   @@map("platform_custom_domains")
 }
 
@@ -1711,4 +2049,37 @@ model AgencyPropertyGrant {
   @@index([organizationId])
   @@index([agencyVoen])
   @@map("agency_property_grants")
+}
+
+/// B2B trade-credit buyer portal identity (not OrganizationMembership / staff User).
+model BuyerPortalAccount {
+  id           String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email        String          @unique
+  passwordHash String          @map("password_hash")
+  fullName     String?         @map("full_name")
+  active       Boolean         @default(true)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  grants       BuyerOrgGrant[]
+
+  @@map("buyer_portal_accounts")
+}
+
+/// Explicit per-org access for a buyer portal account (VÖEN-bound counterparty).
+model BuyerOrgGrant {
+  id                    String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  accountId             String             @map("account_id") @db.Uuid
+  organizationId        String             @map("organization_id") @db.Uuid
+  voen                  String             @db.VarChar(10)
+  financeCounterpartyId String             @map("finance_counterparty_id")
+  revokedAt             DateTime?          @map("revoked_at") @db.Timestamptz(6)
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  account               BuyerPortalAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  organization          Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, organizationId, financeCounterpartyId])
+  @@index([organizationId])
+  @@index([voen])
+  @@map("buyer_org_grants")
 }

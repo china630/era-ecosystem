@@ -69,9 +69,25 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:4100/auth/sso/
 # expect 401
 ```
 
+## 4. Org permission matrix (Wave 4 — AC-CP-RBAC, not SHOW)
+
+UI: `/settings/access` (Owner/Admin with `screen:settings.access`). ADR: `docs/adr/cp-domain-permissions-and-rbac.md`.
+
+1. Open **Settings → Access**. Confirm system roles listed (OWNER…PARTNER).
+2. Select **HR_MANAGER** → uncheck `api:workforce.hire` → Save. Confirm session refresh toast/token update.
+3. As that HR user (or after re-login): `POST /platform/v1/workforce/employments/hire` → **403**. Re-check hire → 2xx.
+4. Select **ADMIN** → uncheck all grants → Save. Admin screens/APIs **403** — must **not** fall back to full role template. **Reset to defaults** restores template.
+5. PATCH with locked key `api:org.transfer_ownership` or `api:workforce.bootstrap` → **400**.
+6. Clone role `CHIEF_HR` from `HR_MANAGER`; invite with `organizationRoleCode=CHIEF_HR`. JWT `role` donor remains `HR_MANAGER` (Finance until Wave 5).
+7. Finance note: stripping `api:ledger.post` in CP matrix does **not** yet block Finance GL (Wave 5).
+8. DEPARTMENT_HEAD: lists OK; `POST …/employments/hire` and `POST …/scope/bootstrap` → **403**.
+
+Proof suites: `cp-rbac-wave4.spec.ts`, `cp-wf-negative.spec.ts` (deny by grant, not role name).
+
 ## Pass
 
 - All calls return 2xx without 5xx
 - Finance `switch` returns new `accessToken` with same `organizationId`
 - Matrix §2.1 Orch + Fin RBAC rows → **Live**
 - Deny steps above return 401 (not 5xx)
+- Wave 4 matrix steps 2–5 behave as documented (SCREEN, not SHIPPED)

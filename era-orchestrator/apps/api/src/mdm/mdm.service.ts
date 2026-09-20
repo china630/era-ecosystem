@@ -34,6 +34,7 @@ import {
 import {
   composePersonFullName,
   hasPersonNameInput,
+  isPatronymicParticle,
   mergePersonNameParts,
   normalizeNationalityIso,
   resolveIncomingNameParts,
@@ -51,6 +52,7 @@ import {
   assertMatchingServiceToken,
   maskPhone,
 } from "../common/utils/internal-service-token.util";
+import { allocatePublicOrgNumber } from "../organization/public-org-number";
 import * as QRCode from "qrcode";
 
 const FIN_PATTERN = /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/;
@@ -202,11 +204,14 @@ export class MdmService {
       throw new ConflictException("VÖEN already in MDM");
     }
 
+    const publicOrgNumber = await allocatePublicOrgNumber(this.controlPlane);
+
     const org = await this.controlPlane.organization.create({
       data: {
         name,
         taxIdBlindIndex,
         ownerId: input.ownerUserId ?? null,
+        publicOrgNumber,
       },
     });
 
@@ -219,7 +224,11 @@ export class MdmService {
       },
     });
 
-    return { organizationId: org.id, globalLegalEntityId: legalEntity.id };
+    return {
+      organizationId: org.id,
+      publicOrgNumber: org.publicOrgNumber,
+      globalLegalEntityId: legalEntity.id,
+    };
   }
 
   async lookupNaturalPersonByFin(input: {
@@ -309,7 +318,13 @@ export class MdmService {
   }
 
   async resolvePersonIdentity(input: ResolvePersonInput) {
-    return this.resolveOrCreatePerson(input, true);
+    const person = await this.resolveOrCreatePerson(input, true);
+    const orgId =
+      input.organizationId?.trim() || input.requesterOrgId?.trim() || "";
+    if (orgId && person?.id) {
+      await this.ensureWorkforceAccessGrant(person.id, orgId);
+    }
+    return person;
   }
 
   /** @deprecated Prefer resolvePersonIdentity — kept for backward compatibility. */
@@ -332,18 +347,33 @@ export class MdmService {
     let lastName = person.lastNameCipher
       ? (decryptText(person.lastNameCipher) ?? "").trim() || null
       : null;
-    if (!firstName && !lastName && person.fullNameCipher) {
-      const split = splitFullNameToParts(decryptText(person.fullNameCipher));
+    const fullPlain = person.fullNameCipher
+      ? (decryptText(person.fullNameCipher) ?? "").trim() || null
+      : null;
+    if (!firstName && !lastName && fullPlain) {
+      const split = splitFullNameToParts(fullPlain);
       firstName = split.firstName;
       middleName = split.middleName;
       lastName = split.lastName;
+    } else if (fullPlain) {
+      // Repair Western split of AZ surname-first blobs (last token = oğlu/qızı).
+      const tokens = fullPlain.split(/\s+/).filter(Boolean);
+      const particleLast =
+        tokens.length >= 3 && isPatronymicParticle(tokens[tokens.length - 1]);
+      if (
+        particleLast &&
+        (isPatronymicParticle(lastName) ||
+          lastName === tokens[tokens.length - 1] ||
+          !lastName)
+      ) {
+        const repaired = splitFullNameToParts(fullPlain);
+        firstName = repaired.firstName;
+        middleName = repaired.middleName;
+        lastName = repaired.lastName;
+      }
     }
     const composed = composePersonFullName(firstName, middleName, lastName);
-    const fullName =
-      composed ||
-      (person.fullNameCipher
-        ? (decryptText(person.fullNameCipher) ?? "").trim() || null
-        : null);
+    const fullName = composed || fullPlain;
     return { firstName, middleName, lastName, fullName };
   }
 
@@ -1272,6 +1302,7 @@ export class MdmService {
       },
       update: {},
     });
+    return { globalPersonId: canonical, organizationId: granteeOrgId.trim() };
   }
 
   private async resolveOpsProfileData(

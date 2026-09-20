@@ -54,6 +54,10 @@
       "earlyAccessLink": "Early access — waitlist",
       "securityLink": "Security — disputes and org state"
     },
+    "channexVendorTitle": "Channex partner credentials",
+    "channexVendorLoadFailed": "Load failed",
+    "channexVendorSaveFailed": "Save failed",
+    "channexVendorSaved": "Saved",
     "mdm": {
       "title": "MDM",
       "subtitle": "Master data: legal entities and person identity across the platform.",
@@ -421,7 +425,23 @@
       "syncFailed": "Sync bindings failed ({status})",
       "syncEmpty": "No enabled industry endpoints to sync — save hotel/fnb/clinic URLs first",
       "syncOk": "Synced {count} satellite binding(s)",
-      "syncPartial": "Synced {ok}/{total}. Failed: {failed}"
+      "syncPartial": "Synced {ok}/{total}. Failed: {failed}",
+      "fiscalTitle": "Fiscal KKM / bank POS",
+      "fiscalHint": "N devices per org. Secrets encrypted at rest; Sync pushes plaintext to satellites over the internal token. Kit is free — billed unit is ERA till/register capacity.",
+      "fiscalKind": "Kind",
+      "fiscalProvider": "Provider",
+      "fiscalLabel": "Label",
+      "fiscalOutlet": "Outlet code",
+      "fiscalRegister": "Register code",
+      "fiscalEndpoint": "Agent URL",
+      "fiscalSecrets": "Secrets JSON (optional)",
+      "fiscalOrgDefault": "Org default",
+      "fiscalAdd": "Add device",
+      "fiscalRetire": "Retire",
+      "fiscalEmpty": "No devices yet — Kafe records cash/card without KKM.",
+      "fiscalSaved": "Fiscal device saved",
+      "fiscalSaveFailed": "Fiscal device save failed ({status})",
+      "fiscalRetired": "Device retired"
     },
     "referrals": {
       "title": "Referral partners",
@@ -578,6 +598,7 @@
     "platformMdmPersons": "Persons",
     "platformEarlyAccess": "Early access",
     "platformSecurity": "Security",
+    "platformChannex": "Channex",
     "profileMenuAria": "Account menu",
     "sidebarExpandAria": "Expand sidebar",
     "sidebarCollapseAria": "Collapse sidebar",

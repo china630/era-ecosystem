@@ -10,7 +10,7 @@ export function computePricingTotals(
   selectedTierId: PricingStorefrontView["tiers"][number]["id"],
   selectedPremiumSlugs: readonly string[],
   selectedBundleId: string | null,
-  selectedHospitalityBundleId: string | null = null,
+  selectedIndustryBundles: Record<string, string | null> = {},
 ): { dueTodayAzn: number; postpaidAzn: number; dueTodayLabel: string; postpaidLabel: string } {
   const premiumMonthly = selectedPremiumSlugs.reduce((s, slug) => {
     const mod = view.premiumModules.find((m) => m.slug === slug);
@@ -21,10 +21,13 @@ export function computePricingTotals(
     ? view.bundles.find((b) => b.marketingId === selectedBundleId) ?? null
     : null;
 
-  const hospitalityBundle = selectedHospitalityBundleId
-    ? view.hospitalityBundles.find((b) => b.marketingId === selectedHospitalityBundleId) ??
-      null
-    : null;
+  let industryMonthly = 0;
+  for (const group of view.industryGroups) {
+    const id = selectedIndustryBundles[group.satelliteKey];
+    if (!id) continue;
+    const hit = group.bundles.find((b) => b.marketingId === id);
+    industryMonthly += hit?.discountedPriceAzn ?? 0;
+  }
 
   const postpaidCore = estimatePostpaidWithBundleDedup({
     foundationMonthlyAzn: view.foundation.foundationMonthlyAzn,
@@ -37,7 +40,7 @@ export function computePricingTotals(
     selectedPremiumMonthly: premiumMonthly,
   });
 
-  const postpaid = Math.round((postpaidCore + (hospitalityBundle?.discountedPriceAzn ?? 0)) * 100) / 100;
+  const postpaid = Math.round((postpaidCore + industryMonthly) * 100) / 100;
   const dueTodayAzn = 0;
 
   return {

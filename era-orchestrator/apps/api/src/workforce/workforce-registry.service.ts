@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   isSatelliteStaffDeactivated,
   isSatelliteStaffProvisioned,
@@ -167,5 +167,33 @@ export class WorkforceRegistryService {
         lastProvisionAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Idempotent write-back from Finance hire mirror (same financeEmployeeId re-PATCH is OK).
+   */
+  async linkFinanceEmployee(
+    employmentId: string,
+    financeEmployeeId: string,
+  ): Promise<{ ok: true; employmentId: string; financeEmployeeId: string }> {
+    const existing = await this.prisma.workforceEmployment.findUnique({
+      where: { id: employmentId },
+      select: { id: true, financeEmployeeId: true },
+    });
+    if (!existing) {
+      throw new NotFoundException(`WorkforceEmployment ${employmentId} not found`);
+    }
+    if (existing.financeEmployeeId === financeEmployeeId) {
+      return { ok: true, employmentId, financeEmployeeId };
+    }
+    await this.prisma.workforceEmployment.update({
+      where: { id: employmentId },
+      data: { financeEmployeeId },
+    });
+    await this.prisma.workforceAssignment.updateMany({
+      where: { cpEmploymentId: employmentId },
+      data: { financeEmployeeId },
+    });
+    return { ok: true, employmentId, financeEmployeeId };
   }
 }

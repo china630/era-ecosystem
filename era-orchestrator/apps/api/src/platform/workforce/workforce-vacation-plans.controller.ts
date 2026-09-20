@@ -8,12 +8,13 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   CreateWorkforceVacationPlanDto,
@@ -26,12 +27,12 @@ import { WorkforceVacationPlansService } from "./workforce-vacation-plans.servic
 @ApiTags("platform-workforce-vacation-plans")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/vacation-plans")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceVacationPlansController {
   constructor(private readonly plans: WorkforceVacationPlansService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "List workforce vacation plans" })
   list(
     @OrganizationId() organizationId: string,
@@ -41,7 +42,7 @@ export class WorkforceVacationPlansController {
   }
 
   @Get(":id")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Vacation plan detail" })
   getOne(
     @OrganizationId() organizationId: string,
@@ -51,7 +52,7 @@ export class WorkforceVacationPlansController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Create vacation plan (DRAFT or SUBMITTED)" })
   create(
     @OrganizationId() organizationId: string,
@@ -62,7 +63,7 @@ export class WorkforceVacationPlansController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Update vacation plan lines (DRAFT/REJECTED)" })
   update(
     @OrganizationId() organizationId: string,
@@ -74,7 +75,7 @@ export class WorkforceVacationPlansController {
   }
 
   @Post(":id/submit")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "DRAFT/REJECTED → SUBMITTED" })
   submit(
     @OrganizationId() organizationId: string,
@@ -85,7 +86,7 @@ export class WorkforceVacationPlansController {
   }
 
   @Post(":id/approve")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_VACATION)
   @ApiOperation({
     summary: "SUBMITTED → APPROVED (+ WORKFORCE_VACATION_PLAN_APPROVED event)",
   })
@@ -98,7 +99,7 @@ export class WorkforceVacationPlansController {
   }
 
   @Post(":id/reject")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_VACATION)
   @ApiOperation({ summary: "SUBMITTED → REJECTED" })
   reject(
     @OrganizationId() organizationId: string,

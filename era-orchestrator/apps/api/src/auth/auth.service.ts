@@ -18,8 +18,11 @@ import type { RegisterUserDto } from "./dto/register-user.dto";
 import type { SsoExchangeDto } from "./dto/sso-exchange.dto";
 import type { EraJwtPayload } from "./jwt-payload.type";
 import { resolvePermissionsForRole } from "./role-permissions";
+import { resolveCpPermissionsForMembership } from "./cp-permission.service";
+import { ALL_CP_PERMISSIONS } from "./cp-permissions";
 import {
   accessTokenSignOptions,
+  accessTokenVerifyOptions,
   jwksPublicKeys,
 } from "./jwt-signing.util";
 
@@ -82,6 +85,7 @@ export class AuthService {
       organizationId: membership.organizationId,
       role: membership.role,
       isSuperAdmin: user.isSuperAdmin,
+      organizationRoleId: membership.organizationRoleId,
     });
     const accessToken = await this.issueAccessToken(claims);
     const refreshToken = await this.issueRefreshToken(
@@ -147,6 +151,19 @@ export class AuthService {
       },
       update: { deletedAt: null, role: UserRole.OWNER },
     });
+    // Link OrganizationRole FK (Wave 4) before issuing JWT.
+    const { ensureSystemCpRoles } = await import("./ensure-system-cp-roles");
+    await ensureSystemCpRoles(this.prisma, organizationId);
+    const ownerRole = await this.prisma.organizationRole.findFirst({
+      where: { organizationId, code: UserRole.OWNER },
+      select: { id: true },
+    });
+    if (ownerRole) {
+      await this.prisma.organizationMembership.update({
+        where: { userId_organizationId: { userId, organizationId } },
+        data: { organizationRoleId: ownerRole.id },
+      });
+    }
     return this.switchOrganization(userId, organizationId);
   }
 
@@ -244,6 +261,7 @@ export class AuthService {
       organizationId: m.organizationId,
       role: m.role,
       isSuperAdmin: user.isSuperAdmin,
+      organizationRoleId: m.organizationRoleId,
     });
     return {
       accessToken: await this.issueAccessToken(claims),
@@ -270,6 +288,7 @@ export class AuthService {
       organizationId: m.organizationId,
       role: m.role,
       isSuperAdmin: user.isSuperAdmin,
+      organizationRoleId: m.organizationRoleId,
     });
     const accessToken = await this.issueAccessToken(claims);
     const refreshToken = await this.issueRefreshToken(user.id, organizationId);
@@ -366,6 +385,7 @@ export class AuthService {
       organizationId: dto.organizationId,
       role,
       isSuperAdmin: user.isSuperAdmin,
+      organizationRoleId: m.organizationRoleId,
     });
     const accessToken = await this.issueAccessToken(claims);
     return { accessToken, claims, financeRole: role };
@@ -429,10 +449,13 @@ export class AuthService {
     const audience =
       this.config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ??
       "era-finance-core";
+    const verify = accessTokenVerifyOptions(this.config, token);
     return this.jwt.verifyAsync<EraJwtPayload>(token, {
       issuer,
       audience,
-      algorithms: ["HS256"],
+      algorithms: verify.algorithms,
+      // KeyObject is valid for jsonwebtoken RS256; NestJS types only allow string|Buffer.
+      secret: verify.secret as never,
     });
   }
 
@@ -442,6 +465,7 @@ export class AuthService {
     organizationId: string | null;
     role: UserRole | null;
     isSuperAdmin: boolean;
+    organizationRoleId?: string | null;
   }): Promise<EraJwtPayload> {
     let isOwner = false;
     if (input.organizationId && input.role === "OWNER") {
@@ -454,9 +478,25 @@ export class AuthService {
       isOwner = org?.ownerId === input.sub;
     }
     const roles = input.role ? [input.role] : [];
-    const permissions = resolvePermissionsForRole(input.role, {
-      isSuperAdmin: input.isSuperAdmin,
-    });
+
+    let permissions: string[] = [];
+    if (input.isSuperAdmin || isOwner) {
+      permissions = [...ALL_CP_PERMISSIONS];
+    } else if (input.organizationId && input.role) {
+      permissions = await resolveCpPermissionsForMembership(this.prisma, {
+        userId: input.sub,
+        organizationId: input.organizationId,
+        role: input.role,
+        organizationRoleId: input.organizationRoleId,
+        isSuperAdmin: input.isSuperAdmin,
+        isOwner,
+      });
+    } else {
+      permissions = resolvePermissionsForRole(input.role, {
+        isSuperAdmin: input.isSuperAdmin,
+      });
+    }
+
     return {
       sub: input.sub,
       email: input.email,
@@ -478,26 +518,15 @@ export class AuthService {
     const sign = accessTokenSignOptions(this.config);
     const expiresIn = (this.config.get<string>("ERA_JWT_ACCESS_EXPIRES") ??
       "12h") as `${number}h`;
-    if (sign.algorithm === "RS256" && sign.privateKey) {
-      return this.jwt.signAsync(
-        { ...claims },
-        {
-          issuer,
-          audience,
-          algorithm: "RS256",
-          privateKey: sign.privateKey,
-          keyid: sign.keyid,
-          expiresIn,
-        },
-      );
-    }
     return this.jwt.signAsync(
       { ...claims },
       {
         issuer,
         audience,
-        algorithm: "HS256",
-        secret: sign.secret,
+        algorithm: sign.algorithm,
+        // KeyObject is valid for jsonwebtoken RS256; NestJS types only allow string|Buffer.
+        secret: sign.secret as never,
+        ...(sign.keyid ? { keyid: sign.keyid } : {}),
         expiresIn,
       },
     );
@@ -600,6 +629,7 @@ export class AuthService {
       organizationId,
       role: membership?.role ?? null,
       isSuperAdmin: user.isSuperAdmin,
+      organizationRoleId: membership?.organizationRoleId,
     });
     const accessToken = await this.issueAccessToken(claims);
     const refreshToken = await this.issueRefreshToken(user.id, organizationId);

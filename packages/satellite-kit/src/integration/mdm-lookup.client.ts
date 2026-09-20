@@ -46,6 +46,8 @@ export {
   linkPersonIdentity,
   listPersonIdentifiers,
   getPersonOpsProfile,
+  ensurePersonAccessGrant,
+  batchGetPersonOpsProfiles,
   resolveIdentifierForCompliance,
   isValidAzFin,
   type PersonIdentityInput,

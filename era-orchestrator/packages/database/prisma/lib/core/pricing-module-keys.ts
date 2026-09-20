@@ -1,6 +1,9 @@
 /** Canonical billing key: kassa + banking (single commercial module). */
 export const PRICING_MODULE_CASH_BANK_PRO = "cash_bank_pro" as const;
 
+/** Stackable slot: +1 ACTIVE AccountingBook beyond included statutory NAS (ADR finance-accounting-book). */
+export const PRICING_MODULE_ACCOUNTING_BOOK_EXTRA = "accounting_book_extra" as const;
+
 export const LEGACY_CASH_BANK_MODULE_KEYS = [
   "kassa_pro",
   "banking_pro",

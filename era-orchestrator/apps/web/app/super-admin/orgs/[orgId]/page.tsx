@@ -15,6 +15,8 @@ import { orchFetch } from "../../../../lib/orch-api";
 
 type OperatingMode = {
   organizationId: string;
+  name: string;
+  publicOrgNumber: number;
   mode: "STANDALONE" | "DEPARTMENT";
   parentOrgId: string | null;
   fiscalRouting: "OWN" | "PARENT";
@@ -32,6 +34,7 @@ type DepartmentRow = {
   name: string;
   operatingMode: string;
   parentOrgId: string | null;
+  publicOrgNumber: number;
   createdAt: string;
 };
 
@@ -66,6 +69,19 @@ type BridgeDraft = {
 type CutoverDraft = {
   elektrawebDualRun: boolean;
   hotelOrganizationId: string;
+};
+
+type FiscalDeviceRow = {
+  id: string;
+  kind: string;
+  providerId: string;
+  label: string;
+  outletCode: string | null;
+  registerCode: string | null;
+  endpoint: string | null;
+  status: string;
+  isOrgDefault: boolean;
+  hasSecrets: boolean;
 };
 
 const ENDPOINT_PRESETS = [
@@ -137,6 +153,18 @@ export default function SuperAdminOrgHubPage() {
   const [syncing, setSyncing] = useState(false);
   const [savingBridge, setSavingBridge] = useState(false);
   const [savingCutover, setSavingCutover] = useState(false);
+  const [fiscalDevices, setFiscalDevices] = useState<FiscalDeviceRow[]>([]);
+  const [fiscalDraft, setFiscalDraft] = useState({
+    kind: "FISCAL_KKM",
+    providerId: "mock",
+    label: "",
+    outletCode: "",
+    registerCode: "",
+    endpoint: "",
+    secrets: "",
+    isOrgDefault: false,
+  });
+  const [savingFiscal, setSavingFiscal] = useState(false);
 
   const showHotelBridge =
     industries.includes("hotel") ||
@@ -152,11 +180,12 @@ export default function SuperAdminOrgHubPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const [modeRes, epRes, deptRes, bridgeRes] = await Promise.all([
+      const [modeRes, epRes, deptRes, bridgeRes, fiscalRes] = await Promise.all([
         orchFetch(`/v1/admin/orgs/${orgId}/operating-mode`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/satellite-endpoints`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/departments`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/elektraweb-bridge`, { token }),
+        orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices`, { token }),
       ]);
       if (modeRes.ok) setMode((await modeRes.json()) as OperatingMode);
       if (epRes.ok) {
@@ -196,6 +225,9 @@ export default function SuperAdminOrgHubPage() {
               }
             : EMPTY_CUTOVER,
         );
+      }
+      if (fiscalRes.ok) {
+        setFiscalDevices((await fiscalRes.json()) as FiscalDeviceRow[]);
       }
     } finally {
       setLoading(false);
@@ -293,6 +325,11 @@ export default function SuperAdminOrgHubPage() {
   function copyUuid(id: string) {
     void navigator.clipboard.writeText(id);
     setMessage(t("copied", { id }));
+  }
+
+  function copyOrgNo(n: number) {
+    void navigator.clipboard.writeText(String(n));
+    setMessage(t("copiedOrgNo", { orgNo: n }));
   }
 
   async function saveElektrawebBridge() {
@@ -404,6 +441,61 @@ export default function SuperAdminOrgHubPage() {
     }
   }
 
+  async function addFiscalDevice() {
+    if (!token || !fiscalDraft.label.trim()) return;
+    setSavingFiscal(true);
+    setMessage("");
+    let secrets: Record<string, string> | undefined;
+    if (fiscalDraft.secrets.trim()) {
+      try {
+        secrets = JSON.parse(fiscalDraft.secrets) as Record<string, string>;
+      } catch {
+        setMessage(t("fiscalSaveFailed", { status: "JSON" }));
+        setSavingFiscal(false);
+        return;
+      }
+    }
+    try {
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices`, {
+        token,
+        method: "POST",
+        body: JSON.stringify({
+          kind: fiscalDraft.kind,
+          providerId: fiscalDraft.providerId,
+          label: fiscalDraft.label.trim(),
+          outletCode: fiscalDraft.outletCode.trim() || null,
+          registerCode: fiscalDraft.registerCode.trim() || null,
+          endpoint: fiscalDraft.endpoint.trim() || null,
+          secrets: secrets ?? undefined,
+          isOrgDefault: fiscalDraft.isOrgDefault,
+        }),
+      });
+      if (!res.ok) {
+        setMessage(t("fiscalSaveFailed", { status: res.status }));
+        return;
+      }
+      setFiscalDraft((d) => ({ ...d, label: "", secrets: "" }));
+      setMessage(t("fiscalSaved"));
+      await reload();
+    } finally {
+      setSavingFiscal(false);
+    }
+  }
+
+  async function retireFiscalDevice(deviceId: string) {
+    if (!token) return;
+    const res = await orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices/${deviceId}`, {
+      token,
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      setMessage(t("fiscalSaveFailed", { status: res.status }));
+      return;
+    }
+    setMessage(t("fiscalRetired"));
+    await reload();
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -416,7 +508,20 @@ export default function SuperAdminOrgHubPage() {
         <Link href={`/super-admin/orgs/${orgId}/placement`} className={GHOST_BUTTON_CLASS}>
           {t("placementLink")}
         </Link>
-        <h1 className="text-lg font-semibold text-[#34495E]">{t("title")}</h1>
+        <h1 className="text-lg font-semibold text-[#34495E]">
+          {mode?.name ? `${mode.name} · ` : ""}
+          {t("title")}
+        </h1>
+        {mode?.publicOrgNumber != null ? (
+          <button
+            type="button"
+            className={`${PRIMARY_BUTTON_CLASS} font-mono text-base`}
+            onClick={() => copyOrgNo(mode.publicOrgNumber)}
+            title={t("copyOrgNoHint")}
+          >
+            {t("eraIdLabel")}: {mode.publicOrgNumber}
+          </button>
+        ) : null}
         <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => copyUuid(orgId)}>
           {t("copyOrgUuid")}
         </button>
@@ -467,6 +572,98 @@ export default function SuperAdminOrgHubPage() {
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <h2 className="font-medium text-[#34495E]">{t("fiscalTitle")}</h2>
+        <p className="text-xs text-[#7F8C8D]">{t("fiscalHint")}</p>
+        <ul className="space-y-1 text-sm">
+          {fiscalDevices.map((d) => (
+            <li key={d.id} className="flex flex-wrap items-center gap-2">
+              <span>
+                {d.label} · {d.kind} · {d.providerId}
+                {d.isOrgDefault ? " · default" : ""}
+                {d.hasSecrets ? " · secrets" : ""}
+              </span>
+              <button
+                type="button"
+                className="text-xs text-[#E74C3C]"
+                onClick={() => void retireFiscalDevice(d.id)}
+              >
+                {t("fiscalRetire")}
+              </button>
+            </li>
+          ))}
+          {fiscalDevices.length === 0 ? (
+            <li className="text-[#7F8C8D]">{t("fiscalEmpty")}</li>
+          ) : null}
+        </ul>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <select
+            className={MODAL_INPUT_CLASS}
+            value={fiscalDraft.kind}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, kind: e.target.value }))}
+          >
+            <option value="FISCAL_KKM">{t("fiscalKind")}: KKM</option>
+            <option value="BANK_POS">{t("fiscalKind")}: BANK_POS</option>
+          </select>
+          <select
+            className={MODAL_INPUT_CLASS}
+            value={fiscalDraft.providerId}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, providerId: e.target.value }))}
+          >
+            <option value="mock">mock</option>
+            <option value="omnitech">omnitech</option>
+            <option value="nbc">nbc</option>
+            <option value="cybernet">cybernet</option>
+          </select>
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("fiscalLabel")}
+            value={fiscalDraft.label}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, label: e.target.value }))}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("fiscalOutlet")}
+            value={fiscalDraft.outletCode}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, outletCode: e.target.value }))}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("fiscalRegister")}
+            value={fiscalDraft.registerCode}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, registerCode: e.target.value }))}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("fiscalEndpoint")}
+            value={fiscalDraft.endpoint}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, endpoint: e.target.value }))}
+          />
+          <input
+            className={`${MODAL_INPUT_CLASS} sm:col-span-2`}
+            placeholder={t("fiscalSecrets")}
+            value={fiscalDraft.secrets}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, secrets: e.target.value }))}
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={fiscalDraft.isOrgDefault}
+            onChange={(e) => setFiscalDraft((d) => ({ ...d, isOrgDefault: e.target.checked }))}
+          />
+          {t("fiscalOrgDefault")}
+        </label>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={savingFiscal || !token}
+          onClick={() => void addFiscalDevice()}
+        >
+          {savingFiscal ? t("saving") : t("fiscalAdd")}
+        </button>
+      </section>
+
+      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <h2 className="font-medium text-[#34495E]">{t("departmentsTitle")}</h2>
         <div className="flex flex-wrap gap-2">
           <input
@@ -483,7 +680,17 @@ export default function SuperAdminOrgHubPage() {
           {departments.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-2">
               <span>{d.name}</span>
-              <code className="text-xs">{d.id}</code>
+              <code className="font-mono text-sm font-semibold text-[#2980B9]">
+                {d.publicOrgNumber}
+              </code>
+              <code className="text-xs text-[#95A5A6]">{d.id}</code>
+              <button
+                type="button"
+                className="text-xs text-[#2980B9]"
+                onClick={() => copyOrgNo(d.publicOrgNumber)}
+              >
+                {t("copyOrgNoHint")}
+              </button>
               <button type="button" className="text-xs text-[#2980B9]" onClick={() => copyUuid(d.id)}>
                 {t("copy")}
               </button>

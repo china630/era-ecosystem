@@ -108,10 +108,10 @@ export function PricingHospitalitySection({
 
         <p className="mt-4 text-[12px] text-slate-500">
           <Link href="/register-org" className="font-medium text-sky-700 hover:underline">
-            Register
+            Регистрация
           </Link>
           {" · "}
-          à la carte modules available in Billing → Modules after sign-up.
+          отдельные модули — в Биллинг → Модули после входа.
         </p>
       </div>
     </section>

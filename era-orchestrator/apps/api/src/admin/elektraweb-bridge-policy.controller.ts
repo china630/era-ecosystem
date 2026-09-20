@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   Body,
   Controller,
@@ -16,7 +17,7 @@ import { UpsertElektrawebBridgeDto } from "./dto/upsert-elektraweb-bridge.dto";
 import { ElektrawebBridgePolicyService } from "./elektraweb-bridge-policy.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin/orgs/:orgId")
 export class ElektrawebBridgePolicyController {
   constructor(private readonly service: ElektrawebBridgePolicyService) {}

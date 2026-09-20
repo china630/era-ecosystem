@@ -6,6 +6,7 @@
  *   npx tsx packages/mdm-database/prisma/scripts/backfill-person-name-parts.ts
  *
  * Dry-run: DRY_RUN=1 npx tsx ...
+ * Re-split rows that already have parts (AZ surname-first repair): FORCE=1
  */
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { config as loadEnv } from "dotenv";
@@ -19,6 +20,7 @@ loadEnv({ path: resolve(__dirname, "../../../../.env") });
 const ALG = "aes-256-gcm";
 const VERSION = "v1";
 const dryRun = process.env.DRY_RUN === "1" || process.env.DRY_RUN === "true";
+const force = process.env.FORCE === "1" || process.env.FORCE === "true";
 
 function resolveKey(primaryName: string): Buffer {
   const raw = process.env[primaryName]?.trim();
@@ -73,6 +75,14 @@ function composePersonFullName(
     .join(" ");
 }
 
+const PATRONYMIC_PARTICLE_RE =
+  /^(oğlu|oglu|oğli|ogli|qızı|qizi|kyzy|kizi|угли|углы|кызы)$/iu;
+
+function isPatronymicParticle(token: string | null | undefined): boolean {
+  return Boolean(token && PATRONYMIC_PARTICLE_RE.test(token.trim()));
+}
+
+/** Same heuristic as @era/satellite-kit splitFullNameToParts (AZ surname-first). */
 function splitFullNameToParts(fullName: string): {
   firstName: string | null;
   middleName: string | null;
@@ -88,11 +98,35 @@ function splitFullNameToParts(fullName: string): {
   if (parts.length === 2) {
     return { firstName: parts[0]!, middleName: null, lastName: parts[1]! };
   }
+  if (parts.length >= 3 && isPatronymicParticle(parts[parts.length - 1])) {
+    return {
+      lastName: parts[0]!,
+      firstName: parts[1]!,
+      middleName: parts.slice(2).join(" "),
+    };
+  }
   return {
     firstName: parts[0]!,
     middleName: parts.slice(1, -1).join(" "),
     lastName: parts[parts.length - 1]!,
   };
+}
+
+function needsRepair(
+  plain: string,
+  firstNameCipher: string | null,
+  lastNameCipher: string | null,
+): boolean {
+  if (!firstNameCipher || !lastNameCipher) return true;
+  if (!force) return false;
+  const lastPlain = decryptText(lastNameCipher)?.trim() || null;
+  if (isPatronymicParticle(lastPlain)) return true;
+  const tokens = plain.trim().split(/\s+/).filter(Boolean);
+  return (
+    tokens.length >= 3 &&
+    isPatronymicParticle(tokens[tokens.length - 1]) &&
+    lastPlain === tokens[tokens.length - 1]
+  );
 }
 
 const url = process.env.MDM_DATABASE_URL;
@@ -105,10 +139,12 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 async function main() {
   const persons = await prisma.globalNaturalPerson.findMany({
-    where: {
-      fullNameCipher: { not: null },
-      OR: [{ firstNameCipher: null }, { lastNameCipher: null }],
-    },
+    where: force
+      ? { fullNameCipher: { not: null } }
+      : {
+          fullNameCipher: { not: null },
+          OR: [{ firstNameCipher: null }, { lastNameCipher: null }],
+        },
     select: {
       id: true,
       fullNameCipher: true,
@@ -125,12 +161,12 @@ async function main() {
       skipped++;
       continue;
     }
-    if (p.firstNameCipher && p.lastNameCipher) {
+    const plain = decryptText(p.fullNameCipher);
+    if (!plain?.trim()) {
       skipped++;
       continue;
     }
-    const plain = decryptText(p.fullNameCipher);
-    if (!plain?.trim()) {
+    if (!needsRepair(plain, p.firstNameCipher, p.lastNameCipher)) {
       skipped++;
       continue;
     }
@@ -145,7 +181,9 @@ async function main() {
       continue;
     }
     if (dryRun) {
-      console.log(`[dry-run] ${p.id}: ${fullName}`);
+      console.log(
+        `[dry-run] ${p.id}: ${plain} → ${parts.firstName} | ${parts.middleName} | ${parts.lastName}`,
+      );
       updated++;
       continue;
     }
@@ -163,7 +201,7 @@ async function main() {
   console.log(
     `Backfilled name parts: updated=${updated} skipped=${skipped} scanned=${persons.length}${
       dryRun ? " (dry-run)" : ""
-    }`,
+    }${force ? " (force)" : ""}`,
   );
 }
 

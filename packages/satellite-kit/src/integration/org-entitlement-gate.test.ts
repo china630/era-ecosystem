@@ -42,6 +42,8 @@ describe("industry module key aliases", () => {
   it("checks clinic module presence", () => {
     assert.equal(isClinicModuleActive(["clinic_lab"], "clinic_lab"), true);
     assert.equal(isClinicModuleActive(["clinic_lab"], "clinic_inpatient"), false);
+    assert.equal(isClinicModuleActive(["clinic_registry_emr"], "clinic_patients"), true);
+    assert.equal(isClinicModuleActive(["clinic_inpatient"], "clinic_sanatorium_clinical"), true);
   });
 });
 

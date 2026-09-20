@@ -1,9 +1,11 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from "@nestjs/common";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { BillingStatus, UserRole } from "@era365/database";
+import { BillingStatus } from "@era365/database";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
-import { Roles } from "../common/decorators/roles.decorator";
-import { RolesGuard } from "../common/guards/roles.guard";
 import type { EraJwtPayload } from "../auth/jwt-payload.type";
 import { AccessControlService } from "../access/access-control.service";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -47,6 +49,7 @@ export class SubscriptionController {
           id: true,
           billingStatus: true,
           whatsappAlertsUsed: true,
+          publicOrgNumber: true,
           operatingMode: true,
           parentOrgId: true,
           fiscalRouting: true,
@@ -127,6 +130,7 @@ export class SubscriptionController {
 
     return {
       tier: snapshot.tier,
+      publicOrgNumber: org?.publicOrgNumber ?? null,
       activeModules,
       customConfig: snapshot.customConfig,
       modules: snapshot.modules,
@@ -169,8 +173,8 @@ export class SubscriptionController {
   }
 
   @Post("connect-satellite")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_BILLING_MANAGE)
   @ApiOperation({ summary: "Materialize trial satellite + allowlisted modules" })
   async connectSatellite(
     @CurrentUser() user: EraJwtPayload,
@@ -183,8 +187,8 @@ export class SubscriptionController {
   }
 
   @Post("select-plan")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_BILLING_MANAGE)
   @ApiOperation({ summary: "Смена тарифа (мок, без оплаты)" })
   async selectPlan(
     @CurrentUser() user: EraJwtPayload,
@@ -197,8 +201,8 @@ export class SubscriptionController {
   }
 
   @Patch("modules")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_BILLING_MANAGE)
   @ApiOperation({
     summary:
       "Включение/выключение модулей подписки (каталог + legacy production/ifrs)",

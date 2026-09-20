@@ -6,6 +6,15 @@ export type MeterUnitPricing = {
   pricePerWhatsappAlertAzn: number;
   pricePerInvoiceAzn: number;
   pricePerOcrPageAzn: number;
+  pricePerTradeCreditBuyerAzn: number;
+  pricePerTradeCreditEnrichAzn: number;
+};
+
+export type QuotaUnitPricing = {
+  employeeBlockSize: number;
+  pricePerEmployeeBlockAzn: number;
+  documentPackSize: number;
+  pricePerDocumentPackAzn: number;
 };
 
 export type PublicPricingModule = {
@@ -49,6 +58,26 @@ export type PublicTierStorefront = {
   spendCeilingAzn: number;
 };
 
+export type PublicIndustryGroup = {
+  satelliteKey: string;
+  gate: { key: string; name: string; pricePerMonth: number } | null;
+  modules: Array<{
+    key: string;
+    name: string;
+    pricePerMonth: number;
+    isPremium: boolean;
+  }>;
+  bundles: PublicBundleStorefront[];
+  capacity: { includedInGate: number; unitAzn: number; unit: string } | null;
+  note: "banking_sandbox" | null;
+};
+
+export type PublicPlatformAddon = {
+  key: string;
+  name: string;
+  pricePerMonth: number;
+};
+
 export type PublicPricingResponse = {
   currency: "AZN";
   foundationMonthlyAzn: number;
@@ -56,12 +85,21 @@ export type PublicPricingResponse = {
   pricingModules: PublicPricingModule[];
   pricingBundles: PublicPricingBundle[];
   meterUnitPricing: MeterUnitPricing;
+  quotaUnitPricing?: QuotaUnitPricing | null;
   tierSpendCeilings: Partial<Record<string, number>>;
   standardModules?: PublicStandardModule[];
   premiumModules?: PublicPremiumModule[];
   bundles?: PublicBundleStorefront[];
   hospitalityBundles?: PublicBundleStorefront[];
   hospitalityModules?: Array<PublicPricingModule & { isPremium?: boolean }>;
+  industryGroups?: PublicIndustryGroup[];
+  platformAddons?: PublicPlatformAddon[];
+  capacityDrivers?: Array<{
+    satelliteKey: string;
+    includedInGate: number;
+    unitAzn: number;
+    unit: string;
+  }>;
   tiers?: PublicTierStorefront[];
   unavailable?: true;
 };

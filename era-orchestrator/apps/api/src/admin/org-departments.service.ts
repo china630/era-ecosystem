@@ -6,12 +6,14 @@ import {
 } from "./dto/set-operating-mode.dto";
 import { OrgOperatingModeService } from "./org-operating-mode.service";
 import { CreateDepartmentOrgDto } from "./dto/create-department-org.dto";
+import { allocatePublicOrgNumber } from "../organization/public-org-number";
 
 export type DepartmentOrgView = {
   id: string;
   name: string;
   operatingMode: string;
   parentOrgId: string | null;
+  publicOrgNumber: number;
   createdAt: Date;
 };
 
@@ -36,6 +38,7 @@ export class OrgDepartmentsService {
         name: true,
         operatingMode: true,
         parentOrgId: true,
+        publicOrgNumber: true,
         createdAt: true,
       },
       orderBy: { createdAt: "asc" },
@@ -56,6 +59,8 @@ export class OrgDepartmentsService {
       throw new NotFoundException("Parent cannot be a department org");
     }
 
+    const publicOrgNumber = await allocatePublicOrgNumber(this.prisma);
+
     const org = await this.prisma.organization.create({
       data: {
         name: dto.name.trim(),
@@ -64,12 +69,14 @@ export class OrgDepartmentsService {
         deploymentTopology: parent.deploymentTopology,
         fiscalRouting: "OWN",
         revenueRouting: "OWN",
+        publicOrgNumber,
       },
       select: {
         id: true,
         name: true,
         operatingMode: true,
         parentOrgId: true,
+        publicOrgNumber: true,
         createdAt: true,
       },
     });
@@ -88,6 +95,7 @@ export class OrgDepartmentsService {
         name: true,
         operatingMode: true,
         parentOrgId: true,
+        publicOrgNumber: true,
         createdAt: true,
       },
     });

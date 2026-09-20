@@ -47,6 +47,8 @@ type AccessRequest = {
 
 const INVITE_ROLES = ["ADMIN", "ACCOUNTANT", "AUDITOR", "HR_MANAGER", "DIRECTOR", "USER"] as const;
 
+type OrgRoleOption = { code: string; name: string };
+
 export default function TeamSettingsPage() {
   const { ready } = useRequireAuth();
   const { token } = useAuth();
@@ -57,6 +59,7 @@ export default function TeamSettingsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<OrgInvite[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [orgRoles, setOrgRoles] = useState<OrgRoleOption[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -82,14 +85,19 @@ export default function TeamSettingsPage() {
   const load = useCallback(async () => {
     if (!token) return;
     setError(null);
-    const [memRes, invRes, reqRes] = await Promise.all([
+    const [memRes, invRes, reqRes, rolesRes] = await Promise.all([
       orchFetch("/team/members", { token }),
       orchFetch("/team/invites", { token }),
       orchFetch("/team/access-requests", { token }),
+      orchFetch("/platform/v1/access/roles", { token }),
     ]);
     if (memRes.ok) setMembers((await memRes.json()) as Member[]);
     if (invRes.ok) setInvites((await invRes.json()) as OrgInvite[]);
     if (reqRes.ok) setRequests((await reqRes.json()) as AccessRequest[]);
+    if (rolesRes.ok) {
+      const rows = (await rolesRes.json()) as OrgRoleOption[];
+      setOrgRoles(rows.map((r) => ({ code: r.code, name: r.name })));
+    }
     if (!memRes.ok && !invRes.ok && !reqRes.ok) {
       setError(tTeam("loadFailed"));
     }
@@ -107,7 +115,13 @@ export default function TeamSettingsPage() {
     const res = await orchFetch("/team/invites", {
       method: "POST",
       token,
-      body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      body: JSON.stringify({
+        email: inviteEmail.trim(),
+        organizationRoleCode: inviteRole,
+        role: INVITE_ROLES.includes(inviteRole as (typeof INVITE_ROLES)[number])
+          ? inviteRole
+          : "USER",
+      }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -375,9 +389,12 @@ export default function TeamSettingsPage() {
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value)}
             >
-              {INVITE_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {roleLabel(r)}
+              {(orgRoles.length > 0
+                ? orgRoles
+                : INVITE_ROLES.map((r) => ({ code: r, name: roleLabel(r) }))
+              ).map((r) => (
+                <option key={r.code} value={r.code}>
+                  {r.name}
                 </option>
               ))}
             </select>

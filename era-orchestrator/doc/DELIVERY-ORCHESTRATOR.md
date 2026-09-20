@@ -48,6 +48,8 @@ PRD: [../PRD.md](../PRD.md)
 **One plan, one cutover** — full inventory: [CP-BILLING-MIGRATION.md](../../docs/CP-BILLING-MIGRATION.md)
 
 - [x] CP-BILLING-1 … CP-BILLING-10 (see migration doc checklist)
+- [x] Commercial catalog freeze 2026-09 — palette 19/29/39/99, XOR mutex, `syncPricingModuleCatalog` ([ADR](../../docs/adr/era-commercial-catalog.md))
+- [x] Boot `syncMeterCatalogCanon` — persist invoice meter 0 and rewrite leftover 10×15 headcount in SystemConfig JSON
 
 ## CP-PLATFORM — Notifications + add-ons (post-billing)
 
@@ -67,7 +69,7 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] `platform_reference_data` in `pricing-module-seed`
 - [x] `POST /platform/reference-data/v1/validate-key` (service token; `@Public`)
-- [x] Entitlement guard `assertPlatformModule(org, platform_reference_data)` (skippable via `REFERENCE_DATA_SKIP_ENTITLEMENT=1` for dev)
+- [x] Entitlement guard `assertAnyPlatformModule` Data HUB Bronze/Silver/Gold XOR (skippable via `REFERENCE_DATA_SKIP_ENTITLEMENT=1` for dev)
 - [x] Meter stub — `PlatformAuditLog` action `validate_api_key`
 - [x] UAT — [UAT-SMOKE-PLATFORM.md](./UAT-SMOKE-PLATFORM.md) § CP-REFERENCE-DATA
 
@@ -126,7 +128,7 @@ Env (orchestrator): `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. Industry: `ORC
 
 ## CP-WF-F — Workforce extensions (Plan F)
 
-- [x] F6: `platform_workforce` SKU + workspace tile; strict entitlement guard
+- [x] F6: `platform_workforce` SKU; workspace offer tile only while SKU is off; sidebar when active
 - [x] F4: `WorkforceSeatService` + `POST /internal/v1/licensing/seats/check` + Security seats widget
 - [x] F5: `WorkforceAuditLog` correlation fields + `/workspace/workforce/security/audit` + satellite-kit stamp
 - [x] F1: Export API + `/workspace/workforce/export` UI (xlsx/csv roster+absences import); Nafta §7
@@ -141,3 +143,12 @@ Env (orchestrator): `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. Industry: `ORC
 - [x] CP employments/absences lists — MDM batch display + masked FIN; Finance Employee payroll-only + MDM read-through
 - [x] Audit `WORKFORCE_PII_LEAK` + ADR [cp-workforce-pii-tiers.md](../docs/adr/cp-workforce-pii-tiers.md)
 - [x] UAT — [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) `CP-WF-SEC-01`, `CP-WF-HIRE-01`, `CLI-WF-01`
+
+## CP-PUBLIC — Guest hub / catalog / satellites
+
+- [x] Bare public `/` and `/satellites` (no app shell); authed `/` still redirects to workspace
+- [x] Hub landing (Core / satellites / Data HUB / add-ons); Finance 1C + feature splits on `/satellites/finance`
+- [x] `/pricing` constructor: TOC, complete meters, hide empty SKU shelves when API unavailable
+- [x] Same-origin BFF `GET /api/public/pricing` + `ORCH_API_INTERNAL_URL` for SSR
+- [x] Public locale from cookie (`resolvePublicAzRuLocale`) on `/`, `/satellites`, `/pricing`
+- [x] `/workspace` launcher: satellite grid only; no Hotel upsell banner; department UUIDs on Super-Admin org hub; workforce tile only while SKU is off

@@ -1,5 +1,5 @@
 /**
- * Person name parts — canonical order: given name + patronymic + surname
+ * Person name parts — canonical MDM order: given name + patronymic + surname
  * (firstName + middleName + lastName). Shared by satellite-kit and MDM.
  */
 
@@ -21,10 +21,22 @@ export function composePersonFullName(
     .join(" ");
 }
 
+const PATRONYMIC_PARTICLE_RE =
+  /^(oğlu|oglu|oğli|ogli|qızı|qizi|kyzy|kizi|угли|углы|кызы)$/iu;
+
+export function isPatronymicParticle(token: string | null | undefined): boolean {
+  return Boolean(token && PATRONYMIC_PARTICLE_RE.test(token.trim()));
+}
+
 /**
- * Split a fullName blob into parts (EW / MDM given-first order).
- * 1 token → firstName; 2 → first + last; 3+ → first + middle(middle tokens) + last.
- * Particles like oglu/qizi stay inside middleName when they appear in the middle.
+ * Split a fullName blob into parts (MDM given-first order).
+ *
+ * Default (EW / given-first): 1 → first; 2 → first+last; 3+ → first + middle + last.
+ *
+ * Azerbaijan local/docs often use **Surname Given Patronymic**, with the particle
+ * (`oğlu` / `qızı`) as the **last** token — e.g. `Əlizadə Mehman Mahmud oğlu`.
+ * Detect that and map: lastName=Əlizadə, firstName=Mehman, middleName=Mahmud oğlu.
+ * Given-first forms like `Ali Vali oglu Mammadov` (particle not last) stay unchanged.
  */
 export function splitFullNameToParts(
   fullName: string | null | undefined,
@@ -39,6 +51,16 @@ export function splitFullNameToParts(
   if (parts.length === 2) {
     return { firstName: parts[0]!, middleName: null, lastName: parts[1]! };
   }
+
+  // AZ surname-first: Surname Given [PatronymicName] Particle
+  if (parts.length >= 3 && isPatronymicParticle(parts[parts.length - 1])) {
+    return {
+      lastName: parts[0]!,
+      firstName: parts[1]!,
+      middleName: parts.slice(2).join(" "),
+    };
+  }
+
   return {
     firstName: parts[0]!,
     middleName: parts.slice(1, -1).join(" "),

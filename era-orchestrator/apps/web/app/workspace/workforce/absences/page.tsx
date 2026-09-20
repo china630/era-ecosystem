@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, Plus } from "lucide-react";
@@ -76,6 +77,7 @@ export default function WorkforceAbsencesPage() {
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceAbsences");
   const tCommon = useTranslations("common");
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<AbsenceRow[]>([]);
   const [persons, setPersons] = useState<ListResponse["persons"]>({});
   const [loading, setLoading] = useState(true);
@@ -92,8 +94,15 @@ export default function WorkforceAbsencesPage() {
   const [fNote, setFNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [filterEmploymentId, setFilterEmploymentId] = useState("");
+  const [filterEmploymentId, setFilterEmploymentId] = useState(
+    () => searchParams.get("employmentId") ?? "",
+  );
   const [filterKind, setFilterKind] = useState<"" | AbsenceKind>("");
+
+  useEffect(() => {
+    const empId = searchParams.get("employmentId");
+    if (empId != null) setFilterEmploymentId(empId);
+  }, [searchParams]);
 
   const bounds = useMemo(() => {
     const [y, m] = month.split("-").map(Number);

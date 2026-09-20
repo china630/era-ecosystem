@@ -54,6 +54,10 @@
       "earlyAccessLink": "Early access — gözləmə siyahısı",
       "securityLink": "Təhlükəsizlik — mübahisələr və org state"
     },
+    "channexVendorTitle": "Channex tərəfdaş açarı",
+    "channexVendorLoadFailed": "Yüklənmədi",
+    "channexVendorSaveFailed": "Saxlanılmadı",
+    "channexVendorSaved": "Saxlanıldı",
     "mdm": {
       "title": "MDM",
       "subtitle": "Master data: hüquqi şəxslər və platforma üzrə şəxs identikliyi.",
@@ -421,7 +425,23 @@
       "syncFailed": "Sync alınmadı ({status})",
       "syncEmpty": "Aktiv industry endpoint yoxdur — əvvəl hotel/fnb/clinic URL saxlayın",
       "syncOk": "{count} satellite bağı sync olundu",
-      "syncPartial": "Sync {ok}/{total}. Uğursuz: {failed}"
+      "syncPartial": "Sync {ok}/{total}. Uğursuz: {failed}",
+      "fiscalTitle": "Fiskal KKM / bank POS",
+      "fiscalHint": "Org üzrə N cihaz. Sirrlər SoR-da şifrələnir; Sync daxili token ilə satellitə plaintext ötürür. Kit pulsuzdur — ERA kassa/register tutumu bill olunur.",
+      "fiscalKind": "Növ",
+      "fiscalProvider": "Provider",
+      "fiscalLabel": "Ad",
+      "fiscalOutlet": "Outlet kodu",
+      "fiscalRegister": "Register kodu",
+      "fiscalEndpoint": "Agent URL",
+      "fiscalSecrets": "Secrets JSON (istəyə bağlı)",
+      "fiscalOrgDefault": "Org defolt",
+      "fiscalAdd": "Əlavə et",
+      "fiscalRetire": "Retire",
+      "fiscalEmpty": "Cihaz yoxdur — Kafe KKM olmadan cash/card yazır.",
+      "fiscalSaved": "Cihaz saxlanıldı",
+      "fiscalSaveFailed": "Cihaz saxlanılmadı ({status})",
+      "fiscalRetired": "Cihaz retire olundu"
     },
     "referrals": {
       "title": "Referal tərəfdaşlar",
@@ -577,6 +597,7 @@
     "platformMdmPersons": "Şəxslər",
     "platformEarlyAccess": "Early access",
     "platformSecurity": "Təhlükəsizlik",
+    "platformChannex": "Channex",
     "profileMenuAria": "Hesab menyusu",
     "sidebarExpandAria": "Menyunu genişlət",
     "sidebarCollapseAria": "Menyunu yığ",

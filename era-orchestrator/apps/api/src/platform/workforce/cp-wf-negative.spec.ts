@@ -1,6 +1,7 @@
 import { ForbiddenException } from "@nestjs/common";
-import { UserRole } from "@era365/database";
-import { RolesGuard } from "../../common/guards/roles.guard";
+import { Reflector } from "@nestjs/core";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 
 function mockCtx(user: Record<string, unknown> | undefined) {
@@ -14,18 +15,39 @@ function mockCtx(user: Record<string, unknown> | undefined) {
 }
 
 describe("Platform WF negative paths (AC-CP-WF)", () => {
-  it("RolesGuard denies hire when role is not OWNER/HR_MANAGER (403)", () => {
+  it("PermissionsGuard denies hire when api:workforce.hire missing (403)", () => {
     const reflector = {
-      getAllAndOverride: () => [UserRole.OWNER, UserRole.HR_MANAGER],
-    };
-    const guard = new RolesGuard(reflector as never);
+      getAllAndOverride: () => [CP_PERMISSION.API_WORKFORCE_HIRE],
+    } as unknown as Reflector;
+    const guard = new PermissionsGuard(reflector);
     expect(() =>
       guard.canActivate(
         mockCtx({
           sub: "u1",
-          role: UserRole.ACCOUNTANT,
+          role: "ADMIN",
           isSuperAdmin: false,
-          permissions: [],
+          isOwner: false,
+          permissions: [CP_PERMISSION.API_WORKFORCE_READ],
+        }) as never,
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("PermissionsGuard denies terminate when api:workforce.terminate stripped", () => {
+    const reflector = {
+      getAllAndOverride: () => [CP_PERMISSION.API_WORKFORCE_TERMINATE],
+    } as unknown as Reflector;
+    const guard = new PermissionsGuard(reflector);
+    expect(() =>
+      guard.canActivate(
+        mockCtx({
+          sub: "u1",
+          role: "HR_MANAGER",
+          isOwner: false,
+          permissions: [
+            CP_PERMISSION.API_WORKFORCE_READ,
+            CP_PERMISSION.API_WORKFORCE_HIRE,
+          ],
         }) as never,
       ),
     ).toThrow(ForbiddenException);

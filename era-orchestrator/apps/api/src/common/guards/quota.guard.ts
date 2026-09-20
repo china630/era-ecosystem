@@ -40,6 +40,9 @@ export class QuotaGuard implements CanActivate {
         return true;
       case QuotaResource.STORAGE:
         return true;
+      case QuotaResource.POS_STATIONS:
+        // Gauge is reported by satellites via /v1/internal/capacity/pos-stations — not a hard HTTP guard.
+        return true;
       default:
         return true;
     }

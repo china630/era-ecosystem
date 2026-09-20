@@ -28,6 +28,48 @@ export class OrganizationService {
     );
   }
 
+  /**
+   * Resolve donor UserRole + OrganizationRole id for membership/invite binding.
+   */
+  private async resolveMembershipRoleBinding(
+    organizationId: string,
+    organizationRoleCode: string | undefined,
+    fallbackRole: UserRole,
+  ): Promise<{ donorRole: UserRole; organizationRoleId: string | null }> {
+    const { ensureSystemCpRoles } = await import(
+      "../auth/ensure-system-cp-roles"
+    );
+    const {
+      donorUserRoleForOrgRole,
+      isSystemCpRoleCode,
+    } = await import("../auth/cp-permissions");
+    await ensureSystemCpRoles(this.prisma, organizationId);
+
+    const code = (organizationRoleCode ?? fallbackRole).trim();
+    const orgRole = await this.prisma.organizationRole.findFirst({
+      where: { organizationId, code },
+    });
+    if (!orgRole) {
+      if (isSystemCpRoleCode(fallbackRole)) {
+        const systemRow = await this.prisma.organizationRole.findFirst({
+          where: { organizationId, code: fallbackRole },
+        });
+        return {
+          donorRole: fallbackRole,
+          organizationRoleId: systemRow?.id ?? null,
+        };
+      }
+      throw new BadRequestException("Organization role not found");
+    }
+    return {
+      donorRole: donorUserRoleForOrgRole({
+        code: orgRole.code,
+        cloneFromCode: orgRole.cloneFromCode,
+      }),
+      organizationRoleId: orgRole.id,
+    };
+  }
+
   async requestJoinByTaxId(
     userId: string,
     taxId: string,
@@ -99,19 +141,22 @@ export class OrganizationService {
     organizationId: string,
     requestId: string,
     actorUserId: string,
-    actorRole: UserRole,
+    _actorRole: UserRole,
     accept: boolean,
     assignRole: UserRole = UserRole.USER,
+    organizationRoleCode?: string,
   ) {
-    if (actorRole !== UserRole.OWNER && actorRole !== UserRole.ADMIN) {
-      throw new ForbiddenException();
-    }
     const req = await this.prisma.accessRequest.findFirst({
       where: { id: requestId, organizationId, deletedAt: null },
     });
     if (!req || req.status !== AccessRequestStatus.PENDING) {
       throw new NotFoundException("Request not found");
     }
+    const resolved = await this.resolveMembershipRoleBinding(
+      organizationId,
+      organizationRoleCode,
+      assignRole,
+    );
     await this.prisma.$transaction(async (tx) => {
       if (accept) {
         await tx.organizationMembership.upsert({
@@ -124,9 +169,14 @@ export class OrganizationService {
           create: {
             userId: req.requesterId,
             organizationId,
-            role: assignRole,
+            role: resolved.donorRole,
+            organizationRoleId: resolved.organizationRoleId,
           },
-          update: { role: assignRole, deletedAt: null },
+          update: {
+            role: resolved.donorRole,
+            organizationRoleId: resolved.organizationRoleId,
+            deletedAt: null,
+          },
         });
         await tx.accessRequest.update({
           where: { id: requestId },
@@ -297,6 +347,17 @@ export class OrganizationService {
    */
   async acceptInvite(userId: string, email: string, inviteId: string) {
     const normalized = email.trim().toLowerCase();
+    const invitePeek = await this.prisma.organizationInvite.findFirst({
+      where: { id: inviteId, email: normalized, deletedAt: null },
+    });
+    if (!invitePeek) {
+      throw new NotFoundException("Invitation not found");
+    }
+    const resolved = await this.resolveMembershipRoleBinding(
+      invitePeek.organizationId,
+      invitePeek.organizationRoleCode ?? undefined,
+      invitePeek.role,
+    );
     return this.prisma.$transaction(async (tx) => {
       const invite = await tx.organizationInvite.findFirst({
         where: { id: inviteId, email: normalized, deletedAt: null },
@@ -324,9 +385,14 @@ export class OrganizationService {
         create: {
           userId,
           organizationId: invite.organizationId,
-          role: invite.role,
+          role: resolved.donorRole,
+          organizationRoleId: resolved.organizationRoleId,
         },
-        update: { role: invite.role, deletedAt: null },
+        update: {
+          role: resolved.donorRole,
+          organizationRoleId: resolved.organizationRoleId,
+          deletedAt: null,
+        },
       });
       return { ok: true, organizationId: invite.organizationId };
     });
@@ -379,11 +445,17 @@ export class OrganizationService {
     invitedByUserId: string,
     email: string,
     role: UserRole,
+    organizationRoleCode?: string,
   ) {
     const normalized = email.trim().toLowerCase();
     if (!normalized || !normalized.includes("@")) {
       throw new BadRequestException("Valid email required");
     }
+    const resolved = await this.resolveMembershipRoleBinding(
+      organizationId,
+      organizationRoleCode,
+      role,
+    );
     const existingMember = await this.prisma.organizationMembership.findFirst({
       where: {
         organizationId,
@@ -402,16 +474,39 @@ export class OrganizationService {
         deletedAt: null,
       },
     });
+    const roleCode = organizationRoleCode?.trim() || resolved.donorRole;
     if (pending) {
       return this.prisma.organizationInvite.update({
         where: { id: pending.id },
-        data: { role, invitedByUserId },
-        select: { id: true, email: true, role: true, createdAt: true },
+        data: {
+          role: resolved.donorRole,
+          organizationRoleCode: roleCode,
+          invitedByUserId,
+        },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          organizationRoleCode: true,
+          createdAt: true,
+        },
       });
     }
     return this.prisma.organizationInvite.create({
-      data: { organizationId, email: normalized, role, invitedByUserId },
-      select: { id: true, email: true, role: true, createdAt: true },
+      data: {
+        organizationId,
+        email: normalized,
+        role: resolved.donorRole,
+        organizationRoleCode: roleCode,
+        invitedByUserId,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        organizationRoleCode: true,
+        createdAt: true,
+      },
     });
   }
 
