@@ -124,9 +124,9 @@ export async function upsertGuestFromElektrawebRow(
       organizationId: bridgeRequestOrganizationId(),
     });
     globalPersonId = resolved.globalPersonId ?? globalPersonId;
-    if (!resolved.globalPersonId && resolved.error) {
-      mdmError = resolved.error;
-      console.warn('elektraweb-bridge MDM resolve failed', externalRef, resolved.error);
+    if (!resolved.globalPersonId) {
+      mdmError = 'MDM resolve returned no person';
+      console.warn('elektraweb-bridge MDM resolve failed', externalRef);
     }
   } catch (e) {
     mdmError = e instanceof Error ? e.message : String(e);

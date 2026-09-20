@@ -324,5 +324,6 @@ export async function upsertReservationFromElektrawebRow(
     action: existing ? 'updated' : 'created',
     key: externalRef,
     events,
+    mdmLinked: false,
   };
 }
