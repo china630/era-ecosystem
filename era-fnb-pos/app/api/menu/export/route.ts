@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, sheet, "menu");
     const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
-    return new Response(buf, {
+    return new Response(Uint8Array.from(buf), {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
