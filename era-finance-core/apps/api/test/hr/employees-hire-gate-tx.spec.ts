@@ -36,6 +36,9 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       },
     };
     const prisma = {
+      organization: {
+        findUnique: jest.fn().mockResolvedValue({ settings: {} }),
+      },
       $transaction: jest.fn(async (fn: (tx: typeof txClient) => Promise<unknown>, opts?: unknown) => {
         captured.opts = opts;
         return fn(txClient);
