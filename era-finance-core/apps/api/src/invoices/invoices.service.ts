@@ -1697,7 +1697,11 @@ export class InvoicesService {
     return { transactionId };
   }
 
-  async sendInvoiceEmail(organizationId: string, id: string, role: UserRole) {
+  async sendInvoiceEmail(
+    organizationId: string,
+    id: string,
+    roleOrSubject: UserRole | PolicySubject,
+  ) {
     const inv = await this.prisma.invoice.findFirst({
       where: { id, organizationId },
       include: {
@@ -1706,7 +1710,7 @@ export class InvoicesService {
       },
     });
     if (!inv) throw new NotFoundException("Invoice not found");
-    assertUserMayMutateInvoiceInPaidStatus(role, inv.status);
+    assertUserMayMutateInvoiceInPaidStatus(roleOrSubject, inv.status);
 
     const email = inv.counterparty.email?.trim();
     if (!email) {
