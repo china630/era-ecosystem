@@ -6,7 +6,8 @@ import { enterRequestTenant, requestOrganizationId } from '@/lib/request-organiz
 import { enqueueAriPush } from '@/lib/channel/channel-ari-queue.service';
 import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
 import { toDecimal } from '@/lib/decimal';
-import type { PaymentMethod, Prisma } from '@prisma/client';
+import type { SatelliteTransactionClient } from '@era/satellite-kit';
+import type { PaymentMethod } from '@prisma/client';
 import { IndustryModuleInactiveError } from '@/lib/hotel-module-gate';
 import {
   IbeAuthError,
@@ -66,7 +67,7 @@ export async function resolveIbeTenant(req: Request): Promise<{
   return { organizationId: binding.organizationId, origins };
 }
 
-type Db = Prisma.TransactionClient | typeof prisma;
+type Db = typeof prisma | SatelliteTransactionClient;
 
 export async function searchIbeAvailability(
   input: {
