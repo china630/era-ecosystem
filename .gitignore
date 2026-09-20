@@ -4,6 +4,7 @@ era-finance-core/D*/
 .env
 .env.local
 .env*.local
+.env.ci
 era.droplet.env
 *.log
 # Stage-gate raw logs (commit *-signoff.md only)

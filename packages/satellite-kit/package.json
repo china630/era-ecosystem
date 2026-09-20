@@ -68,7 +68,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/auth/login-user.test.js dist/integration/org-entitlement-gate.test.js dist/integration/person-name.test.js dist/placement/slice-export.test.js dist/ui/paginated-list.test.js"
+    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/tenancy/login-org-no-persist.test.js dist/tenancy/login-hostname-memory.test.js dist/tenancy/era-org-subdomain.test.js dist/auth/login-user.test.js dist/auth/resolve-login-org.test.js dist/auth/staff-login-org.test.js dist/integration/org-entitlement-gate.test.js dist/integration/person-name.test.js dist/placement/slice-export.test.js dist/ui/paginated-list.test.js dist/extra-fields/extra-attributes.test.js dist/list-views/saved-list-view.test.js dist/print/print-snapshot.test.js"
   },
   "dependencies": {
     "@era/contracts": "file:../era-contracts",

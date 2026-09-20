@@ -26,6 +26,30 @@ export {
   type RuntimeConfigBody,
 } from "./tenancy/runtime-config";
 export {
+  parseEraOrgSubdomain,
+  assertOrgNoMatchesHost,
+  loginPoolHostSuffixesFromEnv,
+  type EraSubdomainOrgResult,
+} from "./tenancy/era-org-subdomain";
+export {
+  hydrateLoginOrgNoMapFromDisk,
+  mergeLoginOrgNoPersistent,
+  pruneLoginOrgNoPersistent,
+} from "./tenancy/login-org-no-persist";
+export {
+  hydrateLoginHostnameMapFromDisk,
+  mergeLoginHostnamesForOrg,
+  resolveLoginHost,
+  resolveHostBoundLoginOrganizationId,
+  lookupLoginHostname,
+  upsertLoginHostname,
+  clearLoginHostnameCacheForTests,
+  satelliteKeyFromEnv,
+  type LoginHostnameEntry,
+  type LoginHostnameSyncRow,
+  type LoginHostnameKind,
+} from "./tenancy/login-hostname-persist";
+export {
   applySatelliteRuntimeConfig,
   satelliteRuntimeConfig,
   onSatelliteRuntimeBoot,
@@ -123,7 +147,11 @@ export {
   getBearerOrCookieToken,
   isPublicApiPath,
 } from "./auth/middleware-helpers";
-export { hashPassword, verifyPassword } from "./auth/password";
+export {
+  hashPassword,
+  verifyPassword,
+  burnPasswordVerifyCost,
+} from "./auth/password";
 export {
   platformSuperAdminEmails,
   platformSuperAdminBootstrapPassword,
@@ -135,6 +163,30 @@ export {
   verifySatelliteUserPassword,
   type SatelliteUserRecord,
 } from "./auth/login-user";
+export {
+  ORG_NO_RE,
+  UUID_RE,
+  upsertLoginOrgNo,
+  lookupLoginOrgNo,
+  removeLoginOrgNo,
+  removeLoginOrgNosForOrganizationId,
+  clearLoginOrgNoCacheForTests,
+  resolveLoginOrganizationId,
+  assertLoginOrgRateLimit,
+  type LoginOrgResolveResult,
+} from "./auth/resolve-login-org";
+export {
+  LOGIN_ORG_NO_STORAGE_KEY,
+  clientIpFromRequest,
+  resolveStaffLoginTenant,
+  readLoginOrgNoPrefill,
+  persistLoginOrgNo,
+  describeLoginHostBinding,
+  jsonLoginHostBinding,
+  readStaffLoginJson,
+  type StaffLoginTenantResult,
+  type LoginHostBinding,
+} from "./auth/staff-login-org";
 export { redirectNoStore } from "./auth/redirect-no-store";
 export { assignNoStoreRedirect } from "./auth/assign-no-store-redirect";
 export {
@@ -208,11 +260,20 @@ export {
 } from "./integration/operating-mode";
 export {
   fiscalizeForSatellite,
+  saleForSatelliteRouted,
+  refundForSatelliteRouted,
+  voidForSatelliteRouted,
+  listDevicesForSatellite,
+  resolveDefaultDevicesForSatellite,
+  assertLiveFiscalReady,
   isFiscalPaymentMethod,
   isFiscalSkipped,
+  FiscalError,
+  FISCAL_ERROR,
   type SatelliteFiscalizeOutcome,
   type SatelliteFiscalizeSkipped,
 } from "./integration/satellite-fiscal";
+export { reportPosStationCapacity } from "./integration/report-pos-station-capacity";
 export {
   mdmHealthCheck,
   lookupGlobalPersonByFin,
@@ -326,6 +387,12 @@ export {
   type WorkforceHireMode,
   type WorkforcePolicyClientOptions,
 } from "./integration/workforce-policy.client";
+export {
+  fetchChannexClientConfig,
+  clearChannexClientConfigCache,
+  type ChannexClientConfig,
+} from "./integration/channex-client-config";
+
 export type { CalendarDayType, CalendarDayPoint } from "@era/contracts";
 export {
   getCalendarDay,
@@ -425,8 +492,62 @@ export {
   verifyAgencySession,
   type AgencySessionPayload,
 } from "./auth/agency-session";
+export {
+  buildBuyerSsoPayload,
+  signBuyerSsoPayload,
+  verifyBuyerSsoSignature,
+  buyerSsoExchangeBodySchema,
+  newBuyerSsoJti,
+  type BuyerSsoExchangeBody,
+} from "./auth/buyer-sso";
+export {
+  buyerAuthCookieName,
+  signBuyerSession,
+  verifyBuyerSession,
+  type BuyerSessionPayload,
+} from "./auth/buyer-session";
 
 export { getSatelliteStorage, uploadSatelliteAttachment } from "./storage/satellite-upload";
+export {
+  EXTRA_ENTITY_FINANCE_INVOICE,
+  EXTRA_FIELD_KEY_RE,
+  assertExtraFieldKey,
+  defaultCatalogFieldKind,
+  normalizeExtraAttributes,
+  type ExtraAttributesIssue,
+  type ExtraAttributesResult,
+  type ExtraEntityType,
+  type ExtraFieldDefinitionView,
+  type ExtraFieldValueKind,
+} from "./extra-fields/extra-attributes";
+
+export {
+  SAVED_LIST_VIEW_GRID_FINANCE_INVOICE,
+  assertSavedListViewGridKey,
+  normalizeSavedListView,
+  type SavedListViewConfig,
+  type SavedListViewGridKey,
+  type SavedListViewIssue,
+  type SavedListViewResult,
+  type SavedListViewSchema,
+  type SavedListViewSortDir,
+} from "./list-views/saved-list-view";
+
+export {
+  PRINT_BLANK_FINANCE_INVOICE_COMMERCIAL,
+  PRINT_LINES_MAX,
+  FINANCE_INVOICE_COMMERCIAL_BASE_WHITELIST,
+  FINANCE_INVOICE_COMMERCIAL_LINE_WHITELIST,
+  interpolatePrintTemplate,
+  normalizePrintLang,
+  type PrintBlankId,
+  type PrintInterpolateResult,
+  type PrintLang,
+  type PrintSnapshot,
+  type PrintSnapshotIssue,
+  type PrintSnapshotLine,
+  type PrintSnapshotScalar,
+} from "./print/print-snapshot";
 
 export {
   parsePaginatedList,
