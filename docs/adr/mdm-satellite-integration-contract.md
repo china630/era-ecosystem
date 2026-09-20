@@ -27,7 +27,7 @@ const { globalPersonId } = await linkPersonIdentity({
 }, { requesterOrgId, purpose: "intake" });
 ```
 
-**Resolve / ops-profile shape:** write and read `firstName` / `middleName` / `lastName` plus denormalized `fullName`. Empty incoming fields do not clear existing MDM values. Passport `issuingCountry` is the document country (not person nationality).
+**Resolve / ops-profile shape:** write and read `firstName` / `middleName` / `lastName` plus denormalized `fullName`. Empty incoming fields do not clear existing MDM values. Passport `issuingCountry` is the document country (not person nationality). Pass `organizationId` on resolve (grant). Soft-fill: `getPersonOpsProfile` + `ensurePersonAccessGrant` when accessDenied.
 
 ## Anti-patterns
 
