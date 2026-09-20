@@ -9,7 +9,7 @@ import {
   getDeviceDirectory,
   listDevices,
 } from "@era/fiscal";
-import { hydrateFiscalDevicesFromSync } from "../integration/fiscal-device-hydrate";
+import { hydrateFiscalDevicesFromSync } from "../fiscal-device-hydrate";
 
 describe("fiscal device org isolation", () => {
   beforeEach(() => {
