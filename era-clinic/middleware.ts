@@ -9,7 +9,7 @@ import {
   nextWithOptionalHostBoundOrg,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
-import { CLINIC_SATELLITE_KEY } from "@/lib/workforce-policy";
+import { CLINIC_SATELLITE_KEY } from "@/lib/clinic-satellite-key";
 import { sessionHasAnyClinicPermission } from "@/lib/auth/clinic-permission-check";
 import {
   isAuthOnlyStaffPage,
