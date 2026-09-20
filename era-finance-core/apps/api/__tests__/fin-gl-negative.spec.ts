@@ -121,7 +121,10 @@ describe("Finance GL manual adjustment negatives (AC-FIN-GL)", () => {
       invoice: { findFirst: jest.fn() },
     }) as unknown as PrismaService;
     const posting = { resolveAccountCode: jest.fn() } as unknown as PostingAccountResolver;
-    return new ManualAdjustmentService(prisma, accounting, posting);
+    return new ManualAdjustmentService(prisma, accounting, posting, {
+      resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
+      resolveByIdOrLedgerAlias: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
+    } as never);
   }
 
   it("create refuses short reason without posting", async () => {
