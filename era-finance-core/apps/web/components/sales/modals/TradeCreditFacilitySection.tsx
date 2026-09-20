@@ -597,12 +597,12 @@ export function TradeCreditFacilitySection({
 
           <div>
             <span className={lbl}>{t("tradeCredit.creditLimit")}</span>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              className={MODAL_INPUT_CLASS}
-              value={creditLimit}
+              <input
+                className={MODAL_INPUT_CLASS}
+                type="number"
+                min={0}
+                step="0.01"
+                value={creditLimit}
               onChange={(e) => setCreditLimit(e.target.value)}
               disabled={busy}
             />
@@ -643,10 +643,10 @@ export function TradeCreditFacilitySection({
           <div className="pt-2 space-y-2">
             <span className={lbl}>{t("tradeCredit.grantAmount")}</span>
             <input
+              className={MODAL_INPUT_CLASS}
               type="number"
               min={0.01}
               step="0.01"
-              className={MODAL_INPUT_CLASS}
               value={grantAmount}
               onChange={(e) => setGrantAmount(e.target.value)}
               disabled={busy}
@@ -692,9 +692,9 @@ export function TradeCreditFacilitySection({
                   })}
                 </p>
                 <input
+                  className={`${MODAL_INPUT_CLASS} mt-1 font-mono text-[12px]`}
                   type="text"
                   readOnly
-                  className={`${MODAL_INPUT_CLASS} mt-1 font-mono text-[12px]`}
                   value={inviteTempPassword}
                   onFocus={(e) => e.currentTarget.select()}
                 />

@@ -10,6 +10,8 @@ import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { CP_PERMISSION } from "../../../lib/role-utils";
 import {
   CARD_CONTAINER_CLASS,
+  MODAL_CHECKBOX_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -153,7 +155,7 @@ export default function ExtraFieldsSettingsPage() {
           <label className="block text-sm">
             {t("extraFields.key")}
             <input
-              className="mt-1 w-full rounded border border-[#D5DADF] px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={key}
               onChange={(e) => setKey(e.target.value)}
               required
@@ -173,7 +175,7 @@ export default function ExtraFieldsSettingsPage() {
           <label className="block text-sm">
             {t("extraFields.labelAz")}
             <input
-              className="mt-1 w-full rounded border border-[#D5DADF] px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={labelAz}
               onChange={(e) => setLabelAz(e.target.value)}
               required
@@ -182,7 +184,7 @@ export default function ExtraFieldsSettingsPage() {
           <label className="block text-sm">
             {t("extraFields.labelEn")}
             <input
-              className="mt-1 w-full rounded border border-[#D5DADF] px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={labelEn}
               onChange={(e) => setLabelEn(e.target.value)}
               required
@@ -191,7 +193,7 @@ export default function ExtraFieldsSettingsPage() {
           <label className="block text-sm">
             {t("extraFields.labelRu")}
             <input
-              className="mt-1 w-full rounded border border-[#D5DADF] px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={labelRu}
               onChange={(e) => setLabelRu(e.target.value)}
               required
@@ -201,7 +203,7 @@ export default function ExtraFieldsSettingsPage() {
             <label className="block text-sm">
               {t("extraFields.selectOptions")}
               <input
-                className="mt-1 w-full rounded border border-[#D5DADF] px-2 py-1"
+                className={MODAL_INPUT_CLASS}
                 value={selectOptions}
                 onChange={(e) => setSelectOptions(e.target.value)}
               />
@@ -210,6 +212,7 @@ export default function ExtraFieldsSettingsPage() {
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
               checked={required}
               onChange={(e) => setRequired(e.target.checked)}
             />

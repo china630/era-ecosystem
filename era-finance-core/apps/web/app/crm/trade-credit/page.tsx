@@ -16,6 +16,7 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CHECKBOX_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -354,7 +355,7 @@ export default function TradeCreditGrantsPage() {
           <label className="flex items-center gap-2 text-sm text-[#34495E]">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#D5DADF]"
+              className={MODAL_CHECKBOX_CLASS}
               checked={orgPolicy.enrichRiskyForcesD}
               disabled={orgPolicyBusy}
               onChange={(e) =>
@@ -368,7 +369,7 @@ export default function TradeCreditGrantsPage() {
           <label className="flex items-center gap-2 text-sm text-[#34495E]">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#D5DADF]"
+              className={MODAL_CHECKBOX_CLASS}
               checked={orgPolicy.enrichVoenInactiveForcesD}
               disabled={orgPolicyBusy}
               onChange={(e) =>
@@ -382,7 +383,7 @@ export default function TradeCreditGrantsPage() {
           <label className="flex items-center gap-2 text-sm text-[#34495E]">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#D5DADF]"
+              className={MODAL_CHECKBOX_CLASS}
               checked={orgPolicy.restoreProposalEnabled}
               disabled={orgPolicyBusy}
               onChange={(e) =>
@@ -397,10 +398,10 @@ export default function TradeCreditGrantsPage() {
             <label className="text-sm text-[#34495E]">
               {t("tradeCredit.trialLimitAzn")}
               <input
+                className={`${MODAL_INPUT_CLASS} !mt-1 !w-32`}
                 type="number"
                 min={0}
                 step={50}
-                className={`${MODAL_INPUT_CLASS} !mt-1 !w-32`}
                 value={orgPolicy.trialLimitAzn}
                 disabled={orgPolicyBusy}
                 onBlur={(e) => {
@@ -419,10 +420,10 @@ export default function TradeCreditGrantsPage() {
             <label className="text-sm text-[#34495E]">
               {t("tradeCredit.enrichTtlDays")}
               <input
+                className={`${MODAL_INPUT_CLASS} !mt-1 !w-24`}
                 type="number"
                 min={1}
                 step={1}
-                className={`${MODAL_INPUT_CLASS} !mt-1 !w-24`}
                 value={orgPolicy.enrichTtlDays}
                 disabled={orgPolicyBusy}
                 onBlur={(e) => {
@@ -458,10 +459,10 @@ export default function TradeCreditGrantsPage() {
               <label key={key} className="text-sm text-[#34495E]">
                 {t(`tradeCredit.${key}`)}
                 <input
+                  className={`${MODAL_INPUT_CLASS} !mt-1 !w-28`}
                   type="number"
                   min={min}
                   step={step}
-                  className={`${MODAL_INPUT_CLASS} !mt-1 !w-28`}
                   value={value}
                   disabled={orgPolicyBusy}
                   onBlur={(e) => {
@@ -481,10 +482,10 @@ export default function TradeCreditGrantsPage() {
             <label className="text-sm text-[#34495E]">
               {t("tradeCredit.suggestedCapAzn")}
               <input
+                className={`${MODAL_INPUT_CLASS} !mt-1 !w-32`}
                 type="number"
                 min={0}
                 step={50}
-                className={`${MODAL_INPUT_CLASS} !mt-1 !w-32`}
                 value={orgPolicy.suggestedCapAzn ?? ""}
                 disabled={orgPolicyBusy}
                 placeholder="—"

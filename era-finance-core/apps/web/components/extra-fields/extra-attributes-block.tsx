@@ -134,10 +134,10 @@ export function ExtraAttributesBlock({
                 {d.required ? <span className="text-[#E74C3C]"> *</span> : null}
               </span>
               <input
+                className={MODAL_INPUT_CLASS}
                 type="number"
                 step="any"
                 disabled={disabled}
-                className={MODAL_INPUT_CLASS}
                 value={raw == null ? "" : String(raw)}
                 onChange={(e) =>
                   setKey(d.key, e.target.value === "" ? undefined : e.target.value)
@@ -154,9 +154,9 @@ export function ExtraAttributesBlock({
                 {d.required ? <span className="text-[#E74C3C]"> *</span> : null}
               </span>
               <input
+                className={MODAL_INPUT_CLASS}
                 type="date"
                 disabled={disabled}
-                className={MODAL_INPUT_CLASS}
                 value={typeof raw === "string" ? raw : ""}
                 onChange={(e) => setKey(d.key, e.target.value)}
               />

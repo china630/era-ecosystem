@@ -5,6 +5,9 @@ import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  MODAL_CHECKBOX_CLASS,
+  MODAL_INPUT_CLASS,
+  MODAL_TEXTAREA_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   showApiError,
@@ -128,20 +131,25 @@ export function ChannelBindingCard({ onSaved }: { onSaved?: () => void }) {
         <label className="block text-[13px] text-[#34495E]">
           {t('bindingPropertyId')}
           <input
-            className="mt-1 w-full rounded-lg border border-[#D5DADF] px-2.5 py-2 text-sm"
+            className={MODAL_INPUT_CLASS}
             value={propertyId}
             onChange={(e) => setPropertyId(e.target.value)}
             placeholder="channex property uuid"
           />
         </label>
         <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
-          <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} />
+          <input
+            type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
+            checked={live}
+            onChange={(e) => setLive(e.target.checked)}
+          />
           {t('bindingLive')}
         </label>
         <label className="block text-[13px] text-[#34495E] md:col-span-2">
           {t('bindingWebhookSecret')}
           <input
-            className="mt-1 w-full rounded-lg border border-[#D5DADF] px-2.5 py-2 text-sm"
+            className={MODAL_INPUT_CLASS}
             type="password"
             autoComplete="off"
             value={webhookSecret}
@@ -152,7 +160,7 @@ export function ChannelBindingCard({ onSaved }: { onSaved?: () => void }) {
         <label className="block text-[13px] text-[#34495E] md:col-span-2">
           {t('bindingOrigins')}
           <textarea
-            className="mt-1 w-full rounded-lg border border-[#D5DADF] px-2.5 py-2 text-sm"
+            className={MODAL_TEXTAREA_CLASS}
             rows={3}
             value={origins}
             onChange={(e) => setOrigins(e.target.value)}

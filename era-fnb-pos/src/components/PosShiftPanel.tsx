@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
+import { MODAL_INPUT_CLASS } from "@era/satellite-kit/ui";
 
 type OpenShift = {
   id: string;
@@ -183,7 +184,7 @@ export default function PosShiftPanel() {
             <label className="mb-2 block text-xs text-[#7F8C8D]">
               {t("outletCode")}
               <input
-                className={`${INPUT_CLASS} mt-1 w-full`}
+                className={`${MODAL_INPUT_CLASS} ${INPUT_CLASS} mt-1 w-full`}
                 value={outletCode}
                 onChange={(e) => setOutletCode(e.target.value)}
               />
@@ -191,10 +192,10 @@ export default function PosShiftPanel() {
             <label className="mb-3 block text-xs text-[#7F8C8D]">
               {t("openingCash")}
               <input
+                className={`${MODAL_INPUT_CLASS} ${INPUT_CLASS} mt-1 w-full`}
                 type="number"
                 min={0}
                 step={0.01}
-                className={`${INPUT_CLASS} mt-1 w-full`}
                 value={openingCash}
                 onChange={(e) => setOpeningCash(e.target.value)}
               />
@@ -203,7 +204,7 @@ export default function PosShiftPanel() {
               <label className="mb-2 block text-xs text-[#7F8C8D]">
                 {t("fiscalDevice", { defaultValue: "Cash register (KKM)" })}
                 <select
-                  className={`${INPUT_CLASS} mt-1 w-full`}
+                  className={`${MODAL_INPUT_CLASS} ${INPUT_CLASS} mt-1 w-full`}
                   value={fiscalDeviceId}
                   onChange={(e) => setFiscalDeviceId(e.target.value)}
                 >
@@ -220,7 +221,7 @@ export default function PosShiftPanel() {
               <label className="mb-3 block text-xs text-[#7F8C8D]">
                 {t("bankTerminal", { defaultValue: "Bank POS" })}
                 <select
-                  className={`${INPUT_CLASS} mt-1 w-full`}
+                  className={`${MODAL_INPUT_CLASS} ${INPUT_CLASS} mt-1 w-full`}
                   value={bankTerminalId}
                   onChange={(e) => setBankTerminalId(e.target.value)}
                 >

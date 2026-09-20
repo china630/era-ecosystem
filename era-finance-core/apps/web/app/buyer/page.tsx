@@ -5,6 +5,10 @@ import QRCode from "qrcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {
+  MODAL_CHECKBOX_CLASS,
+  MODAL_INPUT_CLASS,
+} from "../../lib/design-system";
 
 type FacilityView = {
   counterpartyId: string;
@@ -352,7 +356,7 @@ export default function BuyerPortalHomePage() {
           <label className="flex cursor-pointer items-start gap-3 text-sm text-neutral-800">
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-neutral-300"
+              className={MODAL_CHECKBOX_CLASS}
               checked={notifyOptIn}
               disabled={notifyBusy}
               onChange={(e) => void saveNotifyOptIn(e.target.checked)}
@@ -369,7 +373,7 @@ export default function BuyerPortalHomePage() {
             <label className="block text-sm text-neutral-700">
               {t("buyer.grantAmount")}
               <input
-                className="mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-base"
+                className={MODAL_INPUT_CLASS}
                 type="number"
                 min="0.01"
                 step="0.01"

@@ -21,6 +21,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
 } from "../../../lib/design-system";
 import { TOOLBAR_MONTH_INPUT_CLASS } from "../../../lib/form-styles";
 
@@ -188,10 +189,10 @@ export default function MgmtLaborDeltaPage() {
             {t("hrMgmtDelta.period")}
           </span>
           <input
+            className={`${MODAL_INPUT_CLASS} h-8 ${TOOLBAR_MONTH_INPUT_CLASS}`}
             type="month"
             value={yearMonth}
             onChange={(e) => setYearMonth(e.target.value)}
-            className={`h-8 ${TOOLBAR_MONTH_INPUT_CLASS}`}
           />
         </label>
         <button

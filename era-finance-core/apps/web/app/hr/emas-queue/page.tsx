@@ -16,6 +16,7 @@ import {
   DATA_TABLE_TR_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
 } from "../../lib/design-system";
 
 type QueueItem = {
@@ -343,7 +344,7 @@ export default function EmasQueuePage() {
                       {row.status === "PENDING_MANUAL" || row.status === "FAILED" ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <input
-                            className="rounded border px-2 py-1 text-xs"
+                            className={MODAL_INPUT_CLASS}
                             placeholder={t("employees.emas.notePlaceholder", "Optional note")}
                             value={noteById[row.id] ?? ""}
                             onChange={(e) =>
