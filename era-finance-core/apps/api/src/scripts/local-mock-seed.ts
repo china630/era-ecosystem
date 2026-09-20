@@ -26,6 +26,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { apiEnvFilePaths } from "../load-env-paths";
 import { PrismaModule } from "../prisma/prisma.module";
 import { PrismaService } from "../prisma/prisma.service";
+import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { DEFAULT_TRIAL_MODULE_SLUGS } from "../subscription/trial-package.util";
 import {
   blindIndex,
@@ -83,18 +84,33 @@ const OWNER_EMAIL = "shirinov.chingiz@gmail.com";
     PostingAccountResolver,
     SubcontoService,
     {
+      provide: SubscriptionAccessService,
+      useValue: {
+        hasModule: async () => true,
+      },
+    },
+    {
       provide: AccountingService,
       useFactory: (
         prisma: PrismaService,
         ifrs: IfrsAutoMappingService,
         posting: PostingAccountResolver,
         subconto: SubcontoService,
-      ) => new AccountingService(prisma, ifrs, posting, subconto),
+        subscriptionAccess: SubscriptionAccessService,
+      ) =>
+        new AccountingService(
+          prisma,
+          ifrs,
+          posting,
+          subconto,
+          subscriptionAccess,
+        ),
       inject: [
         PrismaService,
         IfrsAutoMappingService,
         PostingAccountResolver,
         SubcontoService,
+        SubscriptionAccessService,
       ],
     },
   ],
@@ -290,10 +306,18 @@ async function recreateOrganization(
       organization.id,
       OrganizationKind.COMMERCIAL,
     );
+    const nasBook = await tx.accountingBook.findFirst({
+      where: { organizationId: organization.id, code: "NAS" },
+      select: { id: true },
+    });
+    if (!nasBook) {
+      throw new Error("NAS accounting book missing after provision");
+    }
     let accountableAccount = await tx.account.findFirst({
       where: {
         organizationId: organization.id,
         ledgerType: LedgerType.NAS,
+        accountingBookId: nasBook.id,
         OR: [{ code: "244" }, { code: { startsWith: "244." } }],
       },
       orderBy: { code: "asc" },
@@ -304,6 +328,7 @@ async function recreateOrganization(
         where: {
           organizationId: organization.id,
           ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
           code: "24",
         },
         select: { id: true },
@@ -311,6 +336,7 @@ async function recreateOrganization(
       accountableAccount = await tx.account.create({
         data: {
           organizationId: organization.id,
+          accountingBookId: nasBook.id,
           ledgerType: LedgerType.NAS,
           code: "244",
           nameAz: "Təhtəlhesab şəxslərlə hesablaşmalar",

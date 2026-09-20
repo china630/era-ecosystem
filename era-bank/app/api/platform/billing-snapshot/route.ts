@@ -2,13 +2,16 @@ import {
   fetchSubscriptionSnapshot,
   resolveSatelliteOrganizationId,
 } from "@era/satellite-kit";
-import { jsonOk } from "@/lib/api-utils";
+import { jsonOk, getRouteSession, jsonError } from "@/lib/api-utils";
 
 /**
  * Soft billing snapshot for HeaderTierUsageBar.
  * Falls back to a demo tier when control-plane is unreachable (local docker).
  */
 export async function GET() {
+  const session = await getRouteSession();
+  if (!session) return jsonError("Unauthorized", 401);
+
   const { organizationId, source } = resolveSatelliteOrganizationId({
     allowFallback: true,
   });

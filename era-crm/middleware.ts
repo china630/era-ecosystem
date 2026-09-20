@@ -5,6 +5,7 @@ import {
   eraPathnameRequestHeaders,
   getBearerOrCookieToken,
   isPublicApiPath,
+  nextWithOptionalHostBoundOrg,
   redirectNoStore,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
@@ -47,6 +48,12 @@ export async function middleware(request: NextRequest) {
     pathname === "/help" ||
     pathname.startsWith("/help/")
   ) {
+    if (pathname === "/login") {
+      return nextWithOptionalHostBoundOrg(
+        reqHeaders,
+        request.headers.get("x-forwarded-host") || request.headers.get("host"),
+      );
+    }
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
   const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);

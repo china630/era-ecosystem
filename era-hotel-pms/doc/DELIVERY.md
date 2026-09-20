@@ -104,6 +104,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 - [x] `POST /api/auth/sso/exchange` — Financial_Auditor (cross-system, no seat quota)
 - [x] UI: `/login`, `/bookings/new`, `/folio/[reservationId]`, `/admin/users`
 - [x] Chessboard: AppNav, permission-gated actions, folio link
+- [x] Variant A: `Role.isSystem` / clone, `/settings/access`, DB-authoritative guards (`Hotel_Admin` no bypass) — ADR `docs/adr/hotel-domain-permissions-and-rbac.md`
 
 **Demo logins (after seed):** `admin` / `admin123` (Hotel_Admin), `reception` / `reception123` (Receptionist).
 
@@ -522,7 +523,7 @@ Tracked in [BACKLOG-PRODUCTION.md § P5](BACKLOG-PRODUCTION.md) · [COVERAGE_MAT
 - [x] Cutoff cron `POST /api/cron/allotment-block-cutoff` (HEADLESS); MASTER/SPLIT folio routing; block Pickup → N stays
 - [x] Room plan: Tarix/Otaq/Qonaq filters + fullscreen (clinic matrix pattern)
 - [x] Room plan bars: half-day model rewrite — arrow on depart, concave turnover both edges, flat clipped/continues; precomputed geometry in `computePlacedBars` (`shapes.spec.ts` green)
-- [x] Room plan EW palette wave: day-state colors + HK squares (`plan-bar-theme.ts`); blunt `CHEVRON_PX` nose/butt; share row rhythm = exclusive; per-night bed assign + paint lanes without overlay; `CHECKED_OUT` on plan feed
+- [x] Room plan EW palette wave: day-state fill + occupancy-frame strokes (`plan-bar-theme.ts`); OOO/OOS omitted; blunt `CHEVRON_PX` nose/butt; share row rhythm = exclusive; per-night bed assign + paint lanes without overlay; `CHECKED_OUT` on plan feed
 - [x] Stay times: `hotel-calendar.ts` (14:00/12:00 Baku); FO seed + `load-nafta-transactions.cjs` no overlaps; room-plan availability in Baku TZ
 - Tokens ADR: `docs/adr/era-design-tokens-3tier.md`
 
@@ -532,6 +533,9 @@ Wave A (Nafta ops slice) + Wave B (OTA safety / ARI / honest live STUB):
 
 - [x] HOT-CL-01 stay folio routing overrides + card table + `postCharge` prefer override
 - [x] HOT-CASH-06 front-cash shift filter + printable ops Z + Close shift
+- [~] HOT-CASH-07 reservation folio balances + HOT-CASH-08 folio journal (API/SCREEN; UAT §42)
+- [x] HOT-CL-06 Company profile + company CL statement at `/front-cash/company-ledger` (lines + TRANSFERRED_AR; ADR hotel-agency-vs-company-profiles)
+- [x] HOT-AGP-04 Agency portal own CL statement `/agency/ledger` + `GET /api/agency/ledger` (session-scoped, read-only)
 - [x] HOT-XFER-01 transfer charge via routing + cancel/void + day-board driver print
 - [x] HOT-CASH-01 `BANK_TRANSFER` tender + `bankReference` on pay/settle
 - [x] HOT-NA-03 EOD no-shows / room-moves / VIP + CSV

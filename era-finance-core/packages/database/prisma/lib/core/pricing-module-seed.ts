@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import { PRICING_MODULE_CASH_BANK_PRO } from "./pricing-module-keys";
+import { PRICING_MODULE_CASH_BANK_PRO, PRICING_MODULE_ACCOUNTING_BOOK_EXTRA } from "./pricing-module-keys";
 
 export type PricingModuleSeedRow = {
   key: string;
@@ -27,6 +27,13 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
   { key: "manufacturing", name: "Manufacturing", pricePerMonth: 19, sortOrder: 2 },
   { key: "hr_full", name: "HR", pricePerMonth: 19, sortOrder: 3 },
   { key: "ifrs_mapping", name: "IFRS", pricePerMonth: 19, sortOrder: 4 },
+  {
+    key: PRICING_MODULE_ACCOUNTING_BOOK_EXTRA,
+    name: "Extra accounting book (slot)",
+    pricePerMonth: 19,
+    sortOrder: 5,
+    isPremium: false,
+  },
   { key: "tax_pro", name: "Tax Pro", pricePerMonth: 19, sortOrder: 10, isPremium: true },
   { key: "trade_pro", name: "Trade Pro", pricePerMonth: 19, sortOrder: 11, isPremium: true },
   { key: "audit_hub", name: "Audit Hub", pricePerMonth: 99, sortOrder: 12, isPremium: true },

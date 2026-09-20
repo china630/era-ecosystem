@@ -9,7 +9,16 @@ type OpenShift = {
   status: string;
   openingCash: string | number;
   openedAt: string;
+  fiscalDeviceId?: string | null;
+  bankTerminalId?: string | null;
   outlet: { code: string; name: string };
+};
+
+type FiscalDevice = {
+  id: string;
+  kind: string;
+  label: string;
+  providerId: string;
 };
 
 export default function PosShiftPanel() {
@@ -23,6 +32,10 @@ export default function PosShiftPanel() {
   const [openModal, setOpenModal] = useState(false);
   const [outletCode, setOutletCode] = useState("RESTAURANT");
   const [openingCash, setOpeningCash] = useState("0");
+  const [kkms, setKkms] = useState<FiscalDevice[]>([]);
+  const [banks, setBanks] = useState<FiscalDevice[]>([]);
+  const [fiscalDeviceId, setFiscalDeviceId] = useState("");
+  const [bankTerminalId, setBankTerminalId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,9 +51,33 @@ export default function PosShiftPanel() {
     setLoading(false);
   }, []);
 
+  const loadDevices = useCallback(async (outlet: string) => {
+    const res = await fetch(
+      `/api/fiscal/devices?outlet=${encodeURIComponent(outlet)}`,
+    );
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      devices?: FiscalDevice[];
+      defaults?: { fiscalDeviceId?: string | null; bankTerminalId?: string | null };
+    };
+    const devices = data.devices ?? [];
+    setKkms(devices.filter((d) => d.kind === "FISCAL_KKM"));
+    setBanks(devices.filter((d) => d.kind === "BANK_POS"));
+    if (data.defaults?.fiscalDeviceId) {
+      setFiscalDeviceId(data.defaults.fiscalDeviceId);
+    }
+    if (data.defaults?.bankTerminalId) {
+      setBankTerminalId(data.defaults.bankTerminalId);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (openModal) void loadDevices(outletCode.trim() || "RESTAURANT");
+  }, [openModal, outletCode, loadDevices]);
 
   async function openShift() {
     setBusy(true);
@@ -51,6 +88,8 @@ export default function PosShiftPanel() {
       body: JSON.stringify({
         outletCode: outletCode.trim() || "RESTAURANT",
         openingCash: Number(openingCash) || 0,
+        ...(fiscalDeviceId ? { fiscalDeviceId } : {}),
+        ...(bankTerminalId ? { bankTerminalId } : {}),
       }),
     });
     const data = await res.json();
@@ -104,6 +143,9 @@ export default function PosShiftPanel() {
                 cash: Number(shift.openingCash).toFixed(2),
                 time: new Date(shift.openedAt).toLocaleTimeString(),
               })}
+              {shift.fiscalDeviceId
+                ? ` · KKM ${shift.fiscalDeviceId.slice(0, 8)}`
+                : ""}
             </p>
           ) : (
             <p className="text-sm text-[#7F8C8D]">{t("noShift")}</p>
@@ -157,6 +199,40 @@ export default function PosShiftPanel() {
                 onChange={(e) => setOpeningCash(e.target.value)}
               />
             </label>
+            {kkms.length > 0 && (
+              <label className="mb-2 block text-xs text-[#7F8C8D]">
+                {t("fiscalDevice", { defaultValue: "Cash register (KKM)" })}
+                <select
+                  className={`${INPUT_CLASS} mt-1 w-full`}
+                  value={fiscalDeviceId}
+                  onChange={(e) => setFiscalDeviceId(e.target.value)}
+                >
+                  <option value="">{t("autoDefault", { defaultValue: "Default / auto" })}</option>
+                  {kkms.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.label} ({d.providerId})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {banks.length > 0 && (
+              <label className="mb-3 block text-xs text-[#7F8C8D]">
+                {t("bankTerminal", { defaultValue: "Bank POS" })}
+                <select
+                  className={`${INPUT_CLASS} mt-1 w-full`}
+                  value={bankTerminalId}
+                  onChange={(e) => setBankTerminalId(e.target.value)}
+                >
+                  <option value="">{t("autoDefault", { defaultValue: "Default / auto" })}</option>
+                  {banks.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.label} ({d.providerId})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div className="flex justify-end gap-2">
               <button
                 type="button"

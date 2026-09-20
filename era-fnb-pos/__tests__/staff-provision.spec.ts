@@ -1,6 +1,7 @@
 import {
   handleStaffProvisionEvent,
   SatelliteLoginTakenError,
+  UnknownSatelliteRoleError,
 } from "@/lib/staff-provision";
 
 jest.mock("@era/satellite-kit", () => ({
@@ -9,7 +10,12 @@ jest.mock("@era/satellite-kit", () => ({
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    role: { findFirst: jest.fn() },
+    role: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
     user: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
@@ -23,12 +29,30 @@ jest.mock("@/lib/prisma", () => ({
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    fnbOrgProfile: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 
 jest.mock("@/lib/request-organization", () => ({
   requestOrganizationId: () => "770e8400-e29b-41d4-a716-446655440002",
   enterRequestTenant: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/ensure-system-fnb-roles", () => ({
+  ensureSystemFnbRoles: jest.fn(async () => undefined),
+  resolveFnbEdition: jest.fn(() => "hotel"),
+}));
+
+jest.mock("@/lib/fnb-org-profile", () => ({
+  getFnbOrgProfile: jest.fn(async () => ({
+    organizationId: "770e8400-e29b-41d4-a716-446655440002",
+    edition: "hotel",
+    hotelMode: true,
+    waiterPinPacks: 1,
+    activeModules: [],
+  })),
 }));
 
 const CP_EMPLOYMENT_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -62,7 +86,7 @@ describe("fnb staff-provision", () => {
     prisma.staffRoster.create.mockResolvedValue({ id: "roster-1" });
   });
 
-  it("stamps organizationId and uses scrypt for User, SHA-256 for PIN roster", async () => {
+  it("stamps organizationId, pinRole WAITER, scrypt User + SHA-256 PIN", async () => {
     const result = await handleStaffProvisionEvent(provisionEvent);
     expect(result).toEqual({ satelliteUserId: "user-1" });
     const { prisma } = jest.requireMock("@/lib/prisma");
@@ -75,18 +99,30 @@ describe("fnb staff-provision", () => {
         }),
       }),
     );
-    expect(prisma.role.findFirst).toHaveBeenCalledWith({ where: { code: "FB_WAITER" } });
+    expect(prisma.role.findFirst).toHaveBeenCalledWith({
+      where: { organizationId: ORG_ID, code: "FB_WAITER" },
+    });
     expect(prisma.staffRoster.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           organizationId: ORG_ID,
           staffCode: "FINEMP1",
+          pinRole: "WAITER",
         }),
       }),
     );
     const rosterData = prisma.staffRoster.create.mock.calls[0][0].data;
     expect(rosterData.pinHash).not.toBe("salt:1234");
     expect(rosterData.pinHash).toHaveLength(64);
+  });
+
+  it("throws UnknownSatelliteRoleError for unknown CP role", async () => {
+    await expect(
+      handleStaffProvisionEvent({
+        ...provisionEvent,
+        payload: { ...provisionEvent.payload, satelliteRole: "BANANA" },
+      }),
+    ).rejects.toBeInstanceOf(UnknownSatelliteRoleError);
   });
 
   it("throws SatelliteLoginTakenError when login belongs to another cpEmploymentId", async () => {

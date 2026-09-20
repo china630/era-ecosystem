@@ -1,6 +1,6 @@
 {
   "templateKey": "ifrsMapping.az",
-  "version": 1,
+  "version": 2,
   "defaultRule": {
     "type": "IDENTITY",
     "ratio": "1"
@@ -10,18 +10,48 @@
       "nasCode": "211",
       "ifrsCode": "1200",
       "ratio": "1",
-      "description": "Demo override: receivables"
+      "description": "Trade receivables (IFRS MVP)"
     },
     {
       "nasCode": "601",
       "ifrsCode": "4000",
       "ratio": "1",
-      "description": "Demo override: revenue"
+      "description": "Revenue (IFRS MVP)"
+    },
+    {
+      "nasCode": "221",
+      "ifrsCode": "1100",
+      "ratio": "1",
+      "description": "Cash at bank (IFRS MVP)"
+    },
+    {
+      "nasCode": "101",
+      "ifrsCode": "1000",
+      "ratio": "1",
+      "description": "Cash on hand (IFRS MVP)"
+    },
+    {
+      "nasCode": "531",
+      "ifrsCode": "2100",
+      "ratio": "1",
+      "description": "Trade payables (IFRS MVP)"
+    },
+    {
+      "nasCode": "701",
+      "ifrsCode": "5000",
+      "ratio": "1",
+      "description": "Cost of sales (IFRS MVP)"
+    },
+    {
+      "nasCode": "721",
+      "ifrsCode": "5100",
+      "ratio": "1",
+      "description": "Operating expenses (IFRS MVP)"
     }
   ],
   "meta": {
-    "note": "IDENTITY means: if no override exists, nasCode maps to the same ifrsCode (=nasCode). Store only overrides to keep file maintainable.",
-    "source": "ERA Finance template package"
+    "note": "P1 MVP IFRS chart: curated overrides only (not NAS identity dump). Expand catalog over time. IDENTITY default is unused for org provision — provision uses overrides (+ existing NAS matches).",
+    "source": "ERA Finance template package P1",
+    "mvp": true
   }
 }
-

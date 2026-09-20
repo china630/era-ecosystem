@@ -9,7 +9,10 @@
     "loginIdLabel": "İstifadəçi adı",
     "passwordLabel": "Şifrə",
     "submitLabel": "Daxil ol",
-    "loginFailed": "Yanlış istifadəçi adı və ya şifrə"
+    "loginFailed": "Yanlış istifadəçi adı və ya şifrə",
+    "organizationIdLabel": "Təşkilat kodu (ERA ID)",
+    "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
+    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz."
   },
   "login": {
     "subtitle": "Lokal ops girişi — filial əməkdaşları",
@@ -73,7 +76,8 @@
     "card3ds": "3DS çağırışları",
     "cardAtm": "ATM şəbəkəsi",
     "markets": "Bazar FO",
-    "amlCases": "AML işləri"
+    "amlCases": "AML işləri",
+    "access": "Giriş matrisi"
   },
   "home": {
     "title": "Bank əməliyyatları",
@@ -92,14 +96,16 @@
     "eodLockBanner": "EOD {status} — paket bitənə qədər mutasiyalar bloklanıb.",
     "filterReset": "Sıfırla",
     "rowsPerPage": "Sətir / səhifə",
-    "pageOf": "Səhifə {page} / {pages} ({total})",
+    "pageOf": "Səhifə '{'page'}' / '{'pages'}' ({'{'total'}'})",
     "prev": "Əvvəl",
     "next": "Sonra",
     "actions": "Əməliyyatlar",
     "search": "Axtarış",
     "all": "Hamısı",
     "yes": "Bəli",
-    "no": "Xeyr"
+    "no": "Xeyr",
+    "loadError": "Yüklənmədi",
+    "saveError": "Saxlanılmadı"
   },
   "pages": {
     "cif": {
@@ -1010,5 +1016,37 @@
     "empty": "Bildiriş yoxdur",
     "markAll": "Hamısını oxunmuş et",
     "close": "Bağla"
+  },
+  "settingsAccess": {
+    "title": "Rol erişimi",
+    "subtitle": "Hər bank ops rolunun icazələrini konfiqurasiya edin. BRANCH_MANAGER matrisə tabe olur (bypass yox).",
+    "role": "Rol",
+    "clone": "Rolu klonla",
+    "save": "Saxla",
+    "reset": "Defolta qaytar",
+    "delete": "Rolu sil",
+    "deleteInUse": "Silməzdən əvvəl istifadəçiləri yenidən təyin edin",
+    "newCode": "Kod",
+    "newName": "Ad",
+    "cloneFrom": "Klon mənbəyi",
+    "create": "Yarat",
+    "saved": "İcazələr saxlanıldı",
+    "resetDone": "Defoltlar bərpa olundu",
+    "created": "Rol yaradıldı",
+    "deleted": "Rol silindi",
+    "sessionRefreshed": "Sessiya icazələri yeniləndi",
+    "assignTitle": "İşçi rolunu təyin et",
+    "assignUser": "İşçi",
+    "assignRole": "Rol",
+    "assign": "Təyin et",
+    "assigned": "Rol təyin edildi",
+    "groupScreens": "Ekranlar",
+    "groupCore": "Əsas / GL",
+    "groupPayments": "Ödənişlər / kassa",
+    "groupProducts": "Məhsullar",
+    "groupCards": "Kartlar",
+    "groupAml": "AML / hesabatlar",
+    "groupTreasury": "Xəzinə / risk",
+    "groupAdmin": "Admin"
   }
 }

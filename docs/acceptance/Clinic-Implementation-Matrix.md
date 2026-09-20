@@ -22,12 +22,13 @@
 | AC-CLI-LAB | Lab orders ops + diagnostic catalog | ✅ | [ ] | `__tests__/cli-lab-negative.spec.ts` + CLI-11,12,32 | **Ops only** — illegal publish / collect / complete; not live HL7 |
 | AC-CLI-SAN | Sanatorium chart + doctor-confirm FIFO | ✅ | [ ] | `__tests__/cli-san-negative.spec.ts` + CLI-13,31,38,39 | Negative: FIFO skip → 409; module gate; ICD empty/chapter reject (`__tests__/icd10-catalog.spec.ts`) |
 | AC-CLI-SAN-PKG | Staff assign 4 Nafta SKUs + episode without hotel program (Wave A) | 🟡 | [ ] | `cli-san-negative` unknown template; CLI-50 | **Out of AC-CLI-SAN rollup** — dual-run assign; do not flip SAN |
-| AC-CLI-SAN-QUOTA | PDF knots + nights recalc + charge by quota (Wave B) | 🟡 | [ ] | `__tests__/program-quota.spec.ts`; CLI-51 | **Out of AC-CLI-SAN rollup** |
+| AC-CLI-SAN-QUOTA | PDF knots + nights recalc + charge by quota (Wave B) | 🟡 | [ ] | `__tests__/program-quota.spec.ts`; `__tests__/entitlement-usage.spec.ts`; CLI-51 | **Out of AC-CLI-SAN rollup** — W1: Lab/Visit burn via COUNT SoT |
 | AC-CLI-SAN-DAY1 | Doctor first-day 2–3 confirm; no Confirm all (Wave C) | 🟡 | [ ] | FIFO gates unchanged; CLI-52 | **Out of AC-CLI-SAN rollup** — does not reopen SAN ✅ |
+| AC-CLI-ASSIGN | Package lazy-assign modal + extras Pay→folio→plan (CLI-57) | 🟡 | [ ] | `__tests__/cli57-package-assign.spec.ts` | **Out of BE rollup** until UAT; SCREEN UI landed |
 | AC-CLI-BONUS | Doctor bonus extras-only buckets (Wave D) | 🟡 | [ ] | CLI-53; bonusEligible | **Out of AC-CLI-SAN rollup** |
 | AC-CLI-SAN-PAX | One stay two episodes (Wave E) | 🟡 | [ ] | CLI-54; openEpisode per patient | **Out of AC-CLI-SAN rollup** |
 | AC-CLI-EPISODE | Episode as care course (card switcher, children, walk-in close) | 🟡 | [ ] | CLI-55; ADR clinic-episode-as-clinical-course; `__tests__/cli-episode-negative.spec.ts` + `cli-episode-gates.spec.ts` | **Out of BE rollup** until field UAT; SCREEN UI landed; Scaffold stays 🟡 |
-| AC-CLI-RBAC | Configurable role×screen/API matrix (Variant A Waves 1–3) | 🟡 | [ ] | `cli-rbac-negative` + `cli-rbac-admin-negative` + `cli-rbac-ops-negative`; ADR clinic-domain-permissions-and-rbac; `/admin/access` | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-CLI-RBAC | Configurable role×screen/API matrix + custom roles (Variant A) | 🟡 | [ ] | `cli-rbac-negative` + `cli-rbac-admin-negative` + `cli-rbac-ops-negative` + `clinic-system-roles` + staff-provision unknown role; ADR clinic-domain-permissions-and-rbac; `/admin/access` clone | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 | AC-CLI-CASH | Cashier settle / ops | ✅ | [ ] | `__tests__/cli-cash-negative.spec.ts` + CLI-33 | **Settle/ops only** — visit/shift deny; live fiscal = External |
 | AC-CLI-PRINT | Print forms + branding | ✅ | [ ] | `__tests__/cli-print-negative.spec.ts` + CLI-34 | Negative: missing source; unsupported lang |
 | AC-CLI-CAP | Clinic→hotel capacity foresight | ✅ | [ ] | `__tests__/cli-cap-negative.spec.ts` + CLI-27 | Negative: critical risk blocks booking |
@@ -57,6 +58,8 @@ Do not call this table «product readiness».
 | CLI-32 / CLI-34 / CLI-25 | Nafta intake checklist + Baku slots | Out of BE plan | `PKG-NAFTA-INTAKE` card/print + live instantiate; `#23` `parseBakuDateTime(+04:00)` + PLAN/now `gte now` — UAT punch in `UAT-SMOKE.md` |
 | Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 | CLI-55 / AC-CLI-EPISODE | Episode as care course | Out of BE plan | ADR `clinic-episode-as-clinical-course`; SCREEN W1–W5; AC stays 🟡 until field UAT; do not reopen AC-CLI-PT demographics anamnesis |
+| CLI-56 | Episode care team (multi-doctor) | Out of BE plan | ADR `clinic-episode-care-team`; SCREEN; assigned-only scope + card gate; appointments link deferred |
+| CLI-57 | Package/extras assign modal | Out of BE plan | ADR `clinic-episode-procedure-assign-modal`; SCREEN; UAT open |
 
 ### Negative-path proof index
 
@@ -74,3 +77,6 @@ Do not call this table «product readiness».
 | `era-clinic/__tests__/cli-rbac-negative.spec.ts` | AC-CLI-RBAC (Wave 1) |
 | `era-clinic/__tests__/cli-rbac-admin-negative.spec.ts` | AC-CLI-RBAC (Wave 2) |
 | `era-clinic/__tests__/cli-rbac-ops-negative.spec.ts` | AC-CLI-RBAC (Wave 3) |
+| `era-clinic/__tests__/clinic-page-route-inventory.spec.ts` | AC-CLI-RBAC (Wave 3 page fail-closed) |
+| `era-clinic/__tests__/clinic-system-roles.spec.ts` | AC-CLI-RBAC (system seed + custom role model) |
+| `era-clinic/__tests__/clinic-role-admin.spec.ts` | AC-CLI-RBAC (create/delete/staffKind/assign API rules) |

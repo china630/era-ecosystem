@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
-import type { FiscalDriver, FiscalizeInput, FiscalizeResult } from "../types";
+import type { FiscalizeInput, FiscalizeResult } from "../types";
+import { PartialFiscalDriver } from "./partial";
 
-export class NbcFiscalDriverStub implements FiscalDriver {
+export class NbcFiscalDriverStub extends PartialFiscalDriver {
   readonly name = "nbc";
 
   async fiscalize(input: FiscalizeInput): Promise<FiscalizeResult> {

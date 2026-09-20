@@ -4,6 +4,11 @@ import {
   verifySatelliteSession,
   type SatelliteSessionPayload,
 } from "@era/satellite-kit";
+import {
+  permissionsForUserId,
+  permissionsForRoleCode,
+} from "@/lib/auth/fnb-permission.service";
+import { isSystemFnbRoleCode } from "@/lib/auth/permissions";
 
 export async function getSessionFromRequest(
   request: Request,
@@ -18,12 +23,34 @@ export async function getSessionFromRequest(
   if (!match) return null;
   const token = decodeURIComponent(match.slice(name.length + 1));
   try {
-    return await verifySatelliteSession(token);
+    const session = await verifySatelliteSession(token);
+    // Reload grants from DB for User-backed sessions (API authority).
+    if (session.organizationId && session.pin !== true) {
+      try {
+        const permissions = await permissionsForUserId(session.sub);
+        return { ...session, permissions };
+      } catch {
+        return session;
+      }
+    }
+    if (session.organizationId && session.pin === true && isSystemFnbRoleCode(session.role)) {
+      try {
+        const permissions = await permissionsForRoleCode(
+          session.organizationId,
+          session.role,
+        );
+        return { ...session, permissions };
+      } catch {
+        return session;
+      }
+    }
+    return session;
   } catch {
     return null;
   }
 }
 
+/** @deprecated Prefer denyUnlessPermission / assertPermission — role name grants nothing. */
 export function requireAnyRole(
   session: SatelliteSessionPayload | null,
   roles: string[],
@@ -46,4 +73,6 @@ export function requireAnyRole(
 export const FB_ROLES = {
   WAITER: "FB_WAITER",
   MANAGER: "FB_MANAGER",
+  CASHIER: "FB_CASHIER",
+  KITCHEN: "FB_KITCHEN",
 } as const;

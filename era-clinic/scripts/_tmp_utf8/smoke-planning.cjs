@@ -24,7 +24,7 @@ function req(method, path, body, cookie) {
 
 (async () => {
   const login = await req("POST", "/api/auth/login", {
-    login: "chingiz@era.com",
+    login: "shirinov.chingiz@gmail.com",
     password: "12345678",
   });
   const cookie = (login.headers["set-cookie"] || [])

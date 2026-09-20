@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -9,9 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { PerDiemNormsService } from "./per-diem-norms.service";
 import {
@@ -22,19 +23,19 @@ import {
 @ApiTags("hr-per-diem-norms")
 @ApiBearerAuth("bearer")
 @Controller("hr/per-diem-norms")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class PerDiemNormsController {
   constructor(private readonly norms: PerDiemNormsService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "List per diem norms" })
   list(@OrganizationId() organizationId: string) {
     return this.norms.list(organizationId);
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   create(
     @OrganizationId() organizationId: string,
     @Body() dto: CreatePerDiemNormDto,
@@ -43,7 +44,7 @@ export class PerDiemNormsController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   update(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -53,7 +54,7 @@ export class PerDiemNormsController {
   }
 
   @Delete(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   remove(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.norms.remove(organizationId, id);
   }

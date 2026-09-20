@@ -2,9 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
+  forwardRef,
 } from "@nestjs/common";
 import {
   AbsencePayFormula,
@@ -18,6 +21,7 @@ import { SubscriptionAccessService } from "../subscription/subscription-access.s
 import { enrichEmployeesWithMdm } from "./employee-person.util";
 import { HrCalendarService } from "./hr-calendar.service";
 import type { TimesheetBatchItemDto } from "./dto/timesheet-batch.dto";
+import { MgmtLaborDeltaService } from "./mgmt-labor-delta.service";
 
 function monthBoundsUtc(year: number, month: number): { start: Date; end: Date; lastDay: number } {
   const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -64,7 +68,26 @@ export class TimesheetService {
     private readonly calendar: HrCalendarService,
     private readonly mdm: OrchestratorMdmClientService,
     private readonly subscriptionAccess: SubscriptionAccessService,
+    @Optional()
+    @Inject(forwardRef(() => MgmtLaborDeltaService))
+    private readonly mgmtLaborDelta?: MgmtLaborDeltaService,
   ) {}
+
+  /** Best-effort Wave 5 MGMT labor delta after timesheet APPROVED. */
+  private scheduleMgmtLaborDeltaRebuild(
+    organizationId: string,
+    year: number,
+    month: number,
+  ) {
+    if (!this.mgmtLaborDelta) return;
+    void this.mgmtLaborDelta.rebuild(organizationId, year, month).catch((err) => {
+      this.logger.warn(
+        `MgmtLaborDelta rebuild skipped org=${organizationId} ${year}-${month}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    });
+  }
 
   private async isCpAttendanceMaster(organizationId: string): Promise<boolean> {
     return this.subscriptionAccess.hasModule(organizationId, "platform_workforce");
@@ -128,6 +151,33 @@ export class TimesheetService {
       });
     }
     return this.getFull(organizationId, ts.id, departmentId);
+  }
+
+  /**
+   * CP WORKFORCE_TIMESHEET_APPROVED handoff: set Finance header APPROVED without
+   * going through assertFinanceWritable (CP remains attendance SoR).
+   * Idempotent when already APPROVED. Returns timesheet id or null if missing.
+   */
+  async markApprovedFromCpMirror(
+    organizationId: string,
+    year: number,
+    month: number,
+  ): Promise<string | null> {
+    const ts = await this.prisma.timesheet.findFirst({
+      where: { organizationId, year, month },
+      select: { id: true, status: true },
+    });
+    if (!ts) return null;
+    if (ts.status === TimesheetStatus.APPROVED) return ts.id;
+    await this.prisma.timesheet.update({
+      where: { id: ts.id },
+      data: { status: TimesheetStatus.APPROVED },
+    });
+    this.logger.log(
+      `Finance timesheet ${ts.id} marked APPROVED from CP mirror (${year}-${month})`,
+    );
+    this.scheduleMgmtLaborDeltaRebuild(organizationId, year, month);
+    return ts.id;
   }
 
   async getFull(
@@ -432,6 +482,7 @@ export class TimesheetService {
       where: { id: timesheetId },
       data: { status: TimesheetStatus.APPROVED },
     });
+    this.scheduleMgmtLaborDeltaRebuild(organizationId, ts.year, ts.month);
     return this.getFull(organizationId, timesheetId, departmentId);
   }
 

@@ -695,7 +695,7 @@
     "descriptionRu": "Электрофорез",
     "descriptionEn": "Electrophoresis",
     "description": "Электрофорез",
-    "amount": 0,
+    "amount": 14,
     "packageIncluded": false,
     "department": "Пакет услуг"
   },
@@ -1765,7 +1765,7 @@
     "descriptionRu": "Внутривенные инъекции",
     "descriptionEn": "Intravenous injection",
     "description": "Внутривенные инъекции",
-    "amount": 3,
+    "amount": 9,
     "packageIncluded": false,
     "department": "Поликлиника"
   },

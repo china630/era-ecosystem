@@ -81,6 +81,16 @@ export class CreateManualAdjustmentDto {
   @IsUUID()
   basisFixedAssetId?: string;
 
+  @ApiPropertyOptional({ enum: ["NAS", "IFRS", "MANAGEMENT"], default: "NAS" })
+  @IsOptional()
+  @IsIn(["NAS", "IFRS", "MANAGEMENT"])
+  ledgerType?: "NAS" | "IFRS" | "MANAGEMENT";
+
+  @ApiPropertyOptional({ description: "Explicit accounting book UUID" })
+  @IsOptional()
+  @IsUUID()
+  accountingBookId?: string;
+
   @ApiProperty({ type: [ManualAdjustmentLineDto] })
   @IsArray()
   @ArrayMinSize(2)

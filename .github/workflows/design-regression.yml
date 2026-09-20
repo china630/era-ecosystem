@@ -47,7 +47,7 @@ jobs:
         run: node tools/bootstrap-local.mjs --reset-password --demo --migrate-satellites
         env:
           SKIP_HEAVY: '1'
-          ECOSYSTEM_DEMO_LOGIN: chingiz@era.com
+          ECOSYSTEM_DEMO_LOGIN: shirinov.chingiz@gmail.com
           ECOSYSTEM_DEMO_PASSWORD: '12345678'
           PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: '12345678'
       - name: Start hotel PMS
@@ -65,9 +65,9 @@ jobs:
         env:
           PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
           PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
-          PLAYWRIGHT_LOGIN: chingiz@era.com
+          PLAYWRIGHT_LOGIN: shirinov.chingiz@gmail.com
           PLAYWRIGHT_PASSWORD: '12345678'
-          PLAYWRIGHT_CLINIC_LOGIN: chingiz@era.com
+          PLAYWRIGHT_CLINIC_LOGIN: shirinov.chingiz@gmail.com
           PLAYWRIGHT_CLINIC_PASSWORD: '12345678'
       # Pixel snapshots are Windows/Chrome locals (see e2e/design-regression/snapshots/README.md).
       # Re-enable on Linux only after regenerating PNGs with: npm run test:design-regression:update

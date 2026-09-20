@@ -74,6 +74,7 @@ export class MhbsStatementsService {
     organizationId: string,
     asOfDate: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<MhbsStatementPayload> {
     const dateTo = utcDateOnlyStr(asOfDate);
     const tb = await this.reporting.trialBalance(
@@ -81,6 +82,7 @@ export class MhbsStatementsService {
       "1970-01-01",
       dateTo,
       ledgerType,
+      accountingBookId,
     );
     const catalog = await loadMhbsStatementCatalog();
     const defs = linesForForm(catalog, "BALANCE");
@@ -103,6 +105,7 @@ export class MhbsStatementsService {
     dateFrom: string,
     dateTo: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<MhbsStatementPayload> {
     const from = utcDateOnlyStr(dateFrom);
     const to = utcDateOnlyStr(dateTo);
@@ -111,6 +114,7 @@ export class MhbsStatementsService {
       from,
       to,
       ledgerType,
+      accountingBookId,
     );
     const catalog = await loadMhbsStatementCatalog();
     const defs = linesForForm(catalog, "PL");
@@ -137,6 +141,7 @@ export class MhbsStatementsService {
     dateFrom: string,
     dateTo: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<MhbsStatementPayload> {
     const from = utcDateOnlyStr(dateFrom);
     const to = utcDateOnlyStr(dateTo);
@@ -144,6 +149,7 @@ export class MhbsStatementsService {
       dateFrom: from,
       dateTo: to,
       ledgerType,
+      accountingBookId,
     });
     const catalog = await loadMhbsStatementCatalog();
     const defs = linesForForm(catalog, "CASH_FLOW");
@@ -187,6 +193,7 @@ export class MhbsStatementsService {
     organizationId: string,
     year: number,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<MhbsStatementPayload> {
     if (!Number.isInteger(year) || year < 1970 || year > 2100) {
       throw new BadRequestException("year must be a valid calendar year");
@@ -197,6 +204,7 @@ export class MhbsStatementsService {
       fromStr,
       toStr,
       ledgerType,
+      accountingBookId,
     );
     const catalog = await loadMhbsStatementCatalog();
     const defs = linesForForm(catalog, "EQUITY_CHANGES");
@@ -243,6 +251,7 @@ export class MhbsStatementsService {
     organizationId: string,
     asOfDate: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ): Promise<MhbsStatementPayload> {
     const dateTo = utcDateOnlyStr(asOfDate);
     const tb = await this.reporting.trialBalance(
@@ -250,6 +259,7 @@ export class MhbsStatementsService {
       "1970-01-01",
       dateTo,
       ledgerType,
+      accountingBookId,
     );
     const catalog = await loadMhbsStatementCatalog();
     const defs = linesForForm(catalog, "NOTES");

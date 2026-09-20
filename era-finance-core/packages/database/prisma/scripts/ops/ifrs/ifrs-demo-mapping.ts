@@ -7,11 +7,39 @@
  */
 import {
   AccountType,
+  AccountingBookBillingSlotKind,
+  AccountingBookGaapKind,
+  AccountingBookStatus,
   LedgerType,
 } from "@prisma/client";
 import { closePrismaPool, createPrismaClient } from "../../../prisma-client";
 
 const prisma = createPrismaClient();
+
+async function ensureIfrsBookId(organizationId: string): Promise<string> {
+  const existing = await prisma.accountingBook.findFirst({
+    where: { organizationId, code: "IFRS" },
+    select: { id: true },
+  });
+  if (existing) return existing.id;
+  const created = await prisma.accountingBook.create({
+    data: {
+      organizationId,
+      code: "IFRS",
+      nameAz: "Beynəlxalq Maliyyə Hesabatı Standartları",
+      nameRu: "Международные стандарты финансовой отчётности",
+      nameEn: "International Financial Reporting Standards",
+      gaapKind: AccountingBookGaapKind.IFRS,
+      isSystem: true,
+      isDefaultOps: false,
+      status: AccountingBookStatus.ACTIVE,
+      billingSlotKind: AccountingBookBillingSlotKind.EXTRA,
+      sortOrder: 10,
+    },
+    select: { id: true },
+  });
+  return created.id;
+}
 
 async function main() {
   const orgIdEnv = process.env.ORG_ID?.trim();
@@ -30,6 +58,8 @@ async function main() {
   }
 
   console.info(`[ifrs-demo-map] organization: ${org.name} (${org.id})`);
+
+  const ifrsBookId = await ensureIfrsBookId(org.id);
 
   const nas211 = await prisma.account.findFirst({
     where: {
@@ -56,6 +86,7 @@ async function main() {
     where: {
       organizationId: org.id,
       ledgerType: LedgerType.IFRS,
+      accountingBookId: ifrsBookId,
       code: "1200",
     },
   });
@@ -63,6 +94,7 @@ async function main() {
     ifrs1200 = await prisma.account.create({
       data: {
         organizationId: org.id,
+        accountingBookId: ifrsBookId,
         code: "1200",
         nameAz: "Debitor borcu (IFRS)",
         nameRu: "Дебиторская задолженность (IFRS)",
@@ -80,6 +112,7 @@ async function main() {
     where: {
       organizationId: org.id,
       ledgerType: LedgerType.IFRS,
+      accountingBookId: ifrsBookId,
       code: "4000",
     },
   });
@@ -87,6 +120,7 @@ async function main() {
     ifrs4000 = await prisma.account.create({
       data: {
         organizationId: org.id,
+        accountingBookId: ifrsBookId,
         code: "4000",
         nameAz: "Gəlir (IFRS)",
         nameRu: "Выручка (IFRS Revenue)",

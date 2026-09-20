@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -17,13 +19,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import {
-  StockMovementReason,
-  StockMovementType,
-  UserRole,
-} from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { StockMovementReason, StockMovementType } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
@@ -48,7 +44,7 @@ import { SubscriptionGuard } from "../subscription/subscription.guard";
 @ApiTags("inventory")
 @ApiBearerAuth("bearer")
 @Controller("inventory")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule("inventory")
 export class InventoryController {
   constructor(
@@ -57,13 +53,7 @@ export class InventoryController {
   ) {}
 
   @Get("shipments/:id/forma-5")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Forma-5 PDF (release requisition) for warehouse shipment by sales invoice id",
@@ -83,13 +73,7 @@ export class InventoryController {
   }
 
   @Get("physical-adjustments/:id/forma-2")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary: "Forma-2 PDF (write-off / surplus act) for physical adjustment",
   })
@@ -114,7 +98,7 @@ export class InventoryController {
   }
 
   @Patch("settings")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Обновить настройки склада в organization.settings" })
   patchSettings(
     @OrganizationId() organizationId: string,
@@ -129,7 +113,7 @@ export class InventoryController {
   }
 
   @Post("warehouses")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Создать склад" })
   createWarehouse(
     @OrganizationId() organizationId: string,
@@ -148,7 +132,7 @@ export class InventoryController {
   }
 
   @Post("bins")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Создать ячейку склада" })
   createBin(
     @OrganizationId() organizationId: string,
@@ -200,12 +184,7 @@ export class InventoryController {
   }
 
   @Get("purchase-invoices/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Alış fakturası по id: строки из purchaseSnapshot (для автозаполнения mədaxil orderi)",
@@ -233,12 +212,7 @@ export class InventoryController {
   }
 
   @Get("sales-invoices/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Satış по id транзакции выручки: строки из salesSnapshot (автозаполнение məxaric orderi)",
@@ -290,7 +264,7 @@ export class InventoryController {
   }
 
   @Post("purchase")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Alış fakturası: kind=goods — Дт 201 (+241 при ценах с НДС) Кт 531 без StockMovement; kind=services — Дт 731 (+241) Кт 531. Складской приход — отдельный документ (roadmap).",
@@ -303,12 +277,7 @@ export class InventoryController {
   }
 
   @Post("receipts")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Anbar mədaxil orderi: физический приход (StockMovement IN, RECEIPT), без проводок; опционально basisTransactionId или referenceId (alış fakturası); строки — lines или items",
@@ -321,12 +290,7 @@ export class InventoryController {
   }
 
   @Post("shipments")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Anbar məxarici orderi: StockMovement OUT (SHIPMENT) + COGS 701/201 при привязке к Satış; строки — lines или items",
@@ -339,7 +303,7 @@ export class InventoryController {
   }
 
   @Post("transfer")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Перемещение между складами" })
   transfer(
     @OrganizationId() organizationId: string,
@@ -349,12 +313,7 @@ export class InventoryController {
   }
 
   @Post("transfers")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Yerdəyişmə: internal transfer — paired StockMovement OUT (source) + IN (target) per line, one DB transaction",
@@ -367,7 +326,7 @@ export class InventoryController {
   }
 
   @Post("adjustments")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Корректировка: списание (Дт 731 — Кт 201/204) или оприходование (Дт 201/204 — Кт 631)",
@@ -381,7 +340,7 @@ export class InventoryController {
   }
 
   @Post("documents/surplus")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Документ: оприходование излишков" })
   surplusDocument(
     @OrganizationId() organizationId: string,
@@ -430,7 +389,7 @@ export class InventoryController {
   }
 
   @Post("physical-adjustments")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Черновик: ожидаемое количество из StockItem, факт из тела, delta = факт − учёт",
@@ -443,7 +402,7 @@ export class InventoryController {
   }
 
   @Post("physical-adjustments/:id/post")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Провести документ: движения склада + проводки 731/201 (недостача), 201/631 (излишек); списание по FIFO",
@@ -462,7 +421,7 @@ export class InventoryController {
   }
 
   @Post("documents/write-off")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Документ: списание товаров" })
   writeOffDocument(
     @OrganizationId() organizationId: string,

@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   EmployeeContractPrefillSchema,
   type EmployeeContractPrefill,
@@ -9,6 +9,10 @@ import {
 import { MSG, type PortalBulkResultMsg } from "../../shared/messages";
 import { mapPrefillToFields } from "../../connectors/emas/adapters/erp-to-muqavile";
 import { mapInvoicePrefillToFields } from "../../connectors/etaxes/adapters/erp-to-eqaime";
+import {
+  queueItemsForPrefill,
+  type EmasQueuePickerItem,
+} from "../../connectors/emas/queue-picker";
 
 const card: CSSProperties = {
   borderRadius: 8,
@@ -40,6 +44,8 @@ export function AutofillStep(props: {
   blockedReason?: string | null;
 }) {
   const [entityId, setEntityId] = useState("");
+  const [queueItems, setQueueItems] = useState<EmasQueuePickerItem[]>([]);
+  const [showAdvancedId, setShowAdvancedId] = useState(false);
   const [bulkIdsRaw, setBulkIdsRaw] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [isRunningBulk, setIsRunningBulk] = useState(false);
@@ -48,6 +54,28 @@ export function AutofillStep(props: {
   const [status, setStatus] = useState<string | null>(null);
   const pauseRef = useRef(false);
   const cancelRef = useRef(false);
+
+  useEffect(() => {
+    if (props.flow !== "emuqavile") return;
+    let cancelled = false;
+    chrome.runtime.sendMessage({ type: MSG.EMAS_QUEUE_GET }, (res) => {
+      if (cancelled) return;
+      if (chrome.runtime.lastError || !res?.ok) {
+        setQueueItems([]);
+        return;
+      }
+      const items = Array.isArray(res.data?.items)
+        ? (res.data.items as EmasQueuePickerItem[])
+        : [];
+      const ready = queueItemsForPrefill(items);
+      setQueueItems(ready);
+      if (ready[0] && !entityId) setEntityId(ready[0].employeeId);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per flow
+  }, [props.flow]);
 
   const bulkIds = useMemo(
     () =>
@@ -252,20 +280,54 @@ export function AutofillStep(props: {
         {props.flow === "eqaime"
           ? props.t("extension.widget.selectInvoice")
           : props.t("extension.widget.selectEmployee")}
-        <input
-          style={{
-            marginTop: 4,
-            width: "100%",
-            borderRadius: 4,
-            border: "1px solid #cbd5e1",
-            padding: "6px 8px",
-            fontSize: 13,
-          }}
-          value={entityId}
-          onChange={(e) => setEntityId(e.target.value)}
-          placeholder="UUID"
-        />
+        {props.flow === "emuqavile" && queueItems.length > 0 && !showAdvancedId ? (
+          <select
+            style={{
+              marginTop: 4,
+              width: "100%",
+              borderRadius: 4,
+              border: "1px solid #cbd5e1",
+              padding: "6px 8px",
+              fontSize: 13,
+            }}
+            value={entityId}
+            onChange={(e) => setEntityId(e.target.value)}
+          >
+            {queueItems.map((q) => (
+              <option key={q.employeeId} value={q.employeeId}>
+                {(q.displayName ?? q.employeeId.slice(0, 8)) +
+                  (q.positionTitle ? ` — ${q.positionTitle}` : "") +
+                  " (READY)"}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            style={{
+              marginTop: 4,
+              width: "100%",
+              borderRadius: 4,
+              border: "1px solid #cbd5e1",
+              padding: "6px 8px",
+              fontSize: 13,
+            }}
+            value={entityId}
+            onChange={(e) => setEntityId(e.target.value)}
+            placeholder="UUID"
+          />
+        )}
       </label>
+      {props.flow === "emuqavile" ? (
+        <label style={{ display: "block", marginTop: 6, fontSize: 11, color: "#64748b" }}>
+          <input
+            type="checkbox"
+            checked={showAdvancedId}
+            onChange={(e) => setShowAdvancedId(e.target.checked)}
+            style={{ marginRight: 6 }}
+          />
+          Advanced: paste employee UUID
+        </label>
+      ) : null}
       <label style={{ display: "block", marginTop: 8, fontSize: 11, color: "#64748b" }}>
         <input
           type="checkbox"

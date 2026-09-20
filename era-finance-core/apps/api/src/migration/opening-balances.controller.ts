@@ -1,8 +1,9 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, ParseArrayPipe, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { OpeningBalanceFinanceLineDto } from "./dto/opening-balance-finance-line.dto";
 import { OpeningBalanceHrLineDto } from "./dto/opening-balance-hr-line.dto";
@@ -16,8 +17,8 @@ export class OpeningBalancesController {
   constructor(private readonly openingBalances: OpeningBalancesService) {}
 
   @Post("finance")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Opening Balances (Finance): Dr/Cr posting with technical account 000 in one transaction.",
@@ -31,8 +32,8 @@ export class OpeningBalancesController {
   }
 
   @Post("hr")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Opening Balances (HR): import employees with migration baseline fields.",
@@ -46,8 +47,8 @@ export class OpeningBalancesController {
   }
 
   @Post("inventory")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Opening Balances (Inventory): Dr 201/204 - Cr 000 plus StockMovement IN in one transaction.",

@@ -37,7 +37,7 @@ type Payload = {
 export default function ReceivablesPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ export default function ReceivablesPage() {
     setLoading(true);
     setError(null);
     const res = await apiFetch(
-      `/api/reporting/receivables?${ledgerQueryParam(ledgerType)}`,
+      `/api/reporting/receivables?${ledgerQueryParam(ledgerType, accountingBookId)}`,
     );
     if (!res.ok) {
       setError(`${t("receivables.loadErr")}: ${res.status}`);

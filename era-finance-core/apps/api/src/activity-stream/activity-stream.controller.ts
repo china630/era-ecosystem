@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -18,8 +21,6 @@ import {
 } from "@nestjs/swagger";
 import { UserRole } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import type { Request } from "express";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -45,20 +46,8 @@ export class ActivityStreamController {
   }
 
   @Post(":entityType/:entityId/comments")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-    UserRole.USER,
-    UserRole.PROCUREMENT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.HR_OFFICER,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-    UserRole.DIRECTOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Post a comment; @email mentions notify users in the org" })
   postComment(
     @OrganizationId() orgId: string,
@@ -83,20 +72,8 @@ export class ActivityStreamController {
   }
 
   @Patch("comments/:id")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-    UserRole.USER,
-    UserRole.PROCUREMENT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.HR_OFFICER,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-    UserRole.DIRECTOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Edit own comment" })
   patchComment(
     @OrganizationId() orgId: string,
@@ -114,20 +91,8 @@ export class ActivityStreamController {
   }
 
   @Delete("comments/:id")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-    UserRole.USER,
-    UserRole.PROCUREMENT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.HR_OFFICER,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-    UserRole.DIRECTOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Soft-delete own comment" })
   deleteComment(
     @OrganizationId() orgId: string,

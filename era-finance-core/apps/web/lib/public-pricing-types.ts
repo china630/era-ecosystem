@@ -6,6 +6,8 @@ export type MeterUnitPricing = {
   pricePerWhatsappAlertAzn: number;
   pricePerInvoiceAzn: number;
   pricePerOcrPageAzn: number;
+  pricePerTradeCreditBuyerAzn: number;
+  pricePerTradeCreditEnrichAzn: number;
 };
 
 export type PublicPricingModule = {

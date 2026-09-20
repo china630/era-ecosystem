@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { BankDirectoryService } from "../banking/bank-directory.service";
@@ -8,7 +11,6 @@ import {
   TaxRateKind,
   UserRole,
 } from "@erafinance/database";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { PrismaService } from "../prisma/prisma.service";
 
 const DEFAULT_INVOICE_VAT_RATES = [-1, 0, 2, 8, 18] as const;
@@ -24,7 +26,7 @@ const TEAM_INVITE_ROLES: UserRole[] = [
 @ApiTags("system")
 @ApiBearerAuth("bearer")
 @Controller("system")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class SystemCatalogController {
   constructor(
     private readonly prisma: PrismaService,

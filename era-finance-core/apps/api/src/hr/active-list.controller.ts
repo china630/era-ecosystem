@@ -1,20 +1,21 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Controller, Get, StreamableFile, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { ActiveListService } from "./active-list.service";
 
 @ApiTags("hr-reports")
 @ApiBearerAuth()
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 @Controller("hr/reports")
 export class ActiveListController {
   constructor(private readonly activeList: ActiveListService) {}
 
   @Get("active-list")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary:
       "Aktiv list: ACTIVE employees + MDM ops-profile (read-through) + latest posted slip",
@@ -24,7 +25,7 @@ export class ActiveListController {
   }
 
   @Get("active-list.xlsx")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Aktiv list Excel export (ExcelJS)" })
   async xlsx(
     @OrganizationId() organizationId: string,

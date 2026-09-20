@@ -8,6 +8,7 @@ export const MSG = {
   PORTAL_PREFILL: "erafinance:portal:prefill",
   PORTAL_BULK_PREFILL: "erafinance:portal:bulkPrefill",
   PORTAL_BULK_RESULT: "erafinance:portal:bulkResult",
+  EMAS_QUEUE_GET: "erafinance:emas:queueGet",
   ERP_HANDSHAKE: "erafinance:erp:handshake",
   ERP_HANDSHAKE_RESULT: "erafinance:erp:handshakeResult",
 } as const;

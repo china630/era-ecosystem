@@ -9,9 +9,10 @@ export async function GET(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
-    const dateParam = new URL(request.url).searchParams.get('date');
-    const date = dateParam ? new Date(dateParam) : new Date();
-    const arrivals = await listArrivals(date);
+    const params = new URL(request.url).searchParams;
+    const dateFrom = params.get('dateFrom') ?? params.get('date');
+    const dateTo = params.get('dateTo') ?? dateFrom;
+    const arrivals = await listArrivals(dateFrom ?? new Date(), dateTo ?? dateFrom ?? new Date());
     return jsonOk(serialize(arrivals));
   } catch (err) {
     return handleRouteError(err);

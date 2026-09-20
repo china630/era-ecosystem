@@ -36,6 +36,7 @@
     "db:seed:placeholders": "tsx prisma/seed.ts --layers=core --only=system-product-templates",
     "db:audit-currency-codes": "tsx prisma/scripts/ops/audit/audit-currency-codes.ts",
     "db:ifrs-demo-map": "tsx prisma/scripts/ops/ifrs/ifrs-demo-mapping.ts",
+    "db:migrate-legacy-ifrs-mapping": "tsx prisma/scripts/ops/ifrs/migrate-legacy-ifrs-mapping.ts",
     "db:studio": "prisma studio",
     "db:sync-i18n": "tsx prisma/scripts/ops/i18n/sync-translation-overrides-from-resources.ts",
     "db:sync-i18n:prune": "tsx prisma/scripts/ops/i18n/sync-translation-overrides-from-resources.ts --prune",

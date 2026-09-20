@@ -114,16 +114,20 @@ Do **not** extract before a second consumer or stable inpatient API — avoid gu
 
 **Do not** spin off `era-hospital-his` until maintainability forces it; prefer preset + module keys + optional package extract.
 
-### D6 — Commercial module keys (future)
+### D6 — Commercial module keys
 
-Optional billable keys under `industry_clinic` (orchestrator `pricing_modules`), mirroring `hotel_*`:
+Billable keys under `industry_clinic` (orchestrator `pricing_modules`, [ADR era-commercial-catalog](./era-commercial-catalog.md)):
 
-| Key | Preset / feature |
-|-----|------------------|
-| `clinic_outpatient` | Base (default with gate) |
-| `clinic_inpatient_day` | Ward ADT-light |
-| `clinic_sanatorium` | Program/quota/chart |
-| `clinic_wellness` | SV8 light mode |
+| Key | AZN | Feature |
+|-----|-----|---------|
+| Gate `industry_clinic` | 29 | Schedule, cashier, appointments + 1 cabinet |
+| `clinic_nurse_roster` | 19 | Nurse / procedure post |
+| `clinic_inpatient` | 19 | Day ward |
+| `clinic_telehealth` | 19 | Telehealth |
+| `clinic_registry_emr` | 29 | EMR / protocols (grants patients/visit/ehr) |
+| `clinic_lab` | 29 | Lab + LIS |
+| `clinic_sanatorium_clinical` | 29 | Sanatorium chart (XOR `hotel_medical_sanatorium`) |
+| `clinic_insurance` | 39 | DMS / OMS registries |
 
 Marketing name “ERA Hospital” = **`industry_clinic` gate + inpatient module pack**, not a new launcher tile.
 

@@ -38,6 +38,9 @@ export function handleRouteError(err: unknown) {
         : 403;
     return jsonError(err.message, status);
   }
+  if (err instanceof Error && err.name === "FiscalError") {
+    return jsonError(err.message, 400);
+  }
   if (err instanceof Error && err.name === "PatientMdmRequiredError") {
     return jsonError(err.message, 400);
   }
@@ -136,6 +139,7 @@ export async function getRouteSession(): Promise<SatelliteSessionPayload | null>
   return session;
 }
 
+/** @deprecated Prefer hasClinicAdminAccess — name implies role-code bypass. */
 export function hasClinicAdminRole(session: SatelliteSessionPayload): boolean {
   return hasClinicAdminAccess(session);
 }

@@ -26,11 +26,24 @@
 
 ## FB-0 — Auth & menu
 
-1. `POST /api/auth/login` `{ "login": "waiter", "password": "waiter" }` — session cookie
-2. `GET /api/menu` — seeded items
-3. Manager: `/admin/menu` — modal CRUD category + dish; price history; optional recipe SKU + image URL
-4. Manager: `/admin/tables` — create/edit/delete static tables
-5. RBAC: waiter can fire/pay; manager required for void line and Z-close
+1. **UI:** `/login` — enter **ERA ID** (`orgNo`, six digits) on SHARED pool; optional `?org=` prefill. Owner login posts `{ "login", "password", "orgNo" }` (not UUID `organizationId`).
+2. **API (DEDICATED / appliance):** `POST /api/auth/login` `{ "login": "waiter", "password": "waiter" }` — session cookie. **SHARED:** add `"orgNo": "104221"`.
+3. **PIN floor:** `/pin?org=104221` — posts `{ "pin", "orgNo", "outletId" }`.
+4. `GET /api/menu` — seeded items
+5. Manager: `/admin/menu` — modal CRUD category + dish; price history; optional recipe SKU + image URL
+6. Manager: `/admin/tables` — create/edit/delete static tables
+7. RBAC Variant A: doors are grants (`api:*` / `screen:*`), not role names. Waiter can fire/pay (hotel); manager required for void/Z — strip void on `/admin/access` → API 403. Kitchen without `screen:admin.menu` cannot open that page. Kitchen also cannot `GET /api/tickets` / `GET /api/menu` (till-read grants).
+
+## FNB-RBAC-01 — access matrix (SCREEN; not SHIPPED)
+
+1. Manager login → `/admin/access` — edit `FB_MANAGER`, uncheck `api:tickets.void`, Save, refresh-permissions.
+2. Attempt void line → 403.
+3. Kitchen PIN (bound outlet) → `/admin/menu` redirects forbidden; `/kds` OK if grant + SKU; `GET /api/tickets` → 403.
+4. PIN without `StaffRoster.outletId` → 403 `PIN_OUTLET_UNBOUND`.
+5. Kafe edition: waiter package has no `api:tickets.pay` → pay 403 `FNB_WAITER_NO_PAY`.
+6. `POST /api/outlets/select` requires `admin:outlet_bind`; PIN session always 403 (cannot rebind).
+7. Roster create requires `outletId` + `admin:staff_pin` | `api:labor.roster.write`.
+8. Cutover import: PIN session forbidden even with grant.
 
 ## FB-3 — Standalone GL (no hotel)
 
@@ -59,16 +72,17 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 
 1. Walk-in ticket: `POST /api/tickets` `{ "serviceChannel": "WALK_IN", "walkInLabel": "Street", "lines": [...] }`
 2. **Hub mode** (`settlementPolicy.deferWalkInToHub`): `POST /api/tickets/{id}/defer-to-hub` → **200**; pay at hotel `/front-cash/pending`; callback closes ticket
-3. **Own mode**: `POST /api/tickets/{id}/pay` `{ "method": "CASH" }` → **201**, local fiscal
+3. **Own mode**: `POST /api/tickets/{id}/pay` `{ "method": "CASH" }` → **201**, local fiscal (`@era/fiscal` mock; empty device catalog → recorded_no_device)
 4. In-house: `PATCH /api/tickets/{id}` `{ "roomChargeReservationId": "<uuid-or-room>" }`
 5. `POST /api/tickets/{id}/pay` → **400** (settle via room charge)
 6. `POST /api/tickets/{id}/room-charge` → folio charge on hotel PMS
+7. **UI (F3):** Open shift modal — optional KKM / bank POS select from `GET /api/fiscal/devices`; bound ids stored on `PosShift`
 
 ## Quartet (Track A)
 
 1. `node scripts/quartet-smoke.mjs` â€” FB health 200 when dev server up
 2. `node era-hotel-pms/scripts/test-pos-bridge.mjs` â€” bridge regression
-3. KKM: pay returns `fiscal.driver` = `mock` (not stub flag)
+3. KKM: with a synced mock device, pay returns `fiscal.driver` = `mock`; empty catalog returns skipped `recorded_no_device` (not an env mock receipt)
 4. Entitlement: pay without `platform_loyalty` in snapshot â†’ no promotion created in Orch (hooks gated)
 
 ## FB-4 — Banquet service day (UI)
@@ -104,4 +118,16 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 1. **Module off → 403:** With `industry_fnb_pos` inactive (or unbound org / source=fallback), operational routes that call `assertFnbEntitled` return **403** (`Industry module not active: industry_fnb_pos`). Proof: `__tests__/fnb-pos-negative.spec.ts` (+ inv/labor suites).
 2. **Foreign / empty org:** Unbound satellite (no CP bind, no env org) fails closed — same 403 path; list/mutation does not silently serve another tenant’s data.
 3. **Domain denies:** CLOSED ticket refuses line/fire mutations; hotel-folio settlement blocks cash pay; VOID lines excluded from stock consumption; wrong PIN → 401 on `/api/labor/clock`.
+
+## ERA Kafe (street café on SHARED F&B pool)
+
+1. Orch `/kafe` → `POST /v1/public/kafe/onboard` creates org `subscriptionPlan=kafe`, endpoint on existing F&B pool URL.
+2. Owner `/login` (password) ≠ cashier `/pin`.
+3. Floor: empty ticket; tap dish adds line; **bitdi/var** on the tile; hotel APIs 403.
+4. Cashier PIN pays; waiter PIN cannot settle (403 `FNB_WAITER_NO_PAY`).
+5. Optional Zal/KDS/QR SKUs; QR `/m/{slug}` is read-only (POST 405).
+6. Excel `/api/menu/export` includes price history; suggest `/api/menu/suggest?q=`.
+7. Offline pay queues when network is down; replay on `online`.
+
+
 

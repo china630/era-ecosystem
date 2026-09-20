@@ -14,6 +14,8 @@ import { InvoicesService } from "./invoices.service";
 import { PublicInvoiceController } from "./public-invoice.controller";
 import { NetworkModule } from "../network/network.module";
 import { ReportingModule } from "../reporting/reporting.module";
+import { TradeCreditModule } from "../trade-credit/trade-credit.module";
+import { ExtraFieldsModule } from "../extra-fields/extra-fields.module";
 import { EqaimeSubmissionService } from "./eqaime-submission.service";
 
 @Module({
@@ -27,6 +29,8 @@ import { EqaimeSubmissionService } from "./eqaime-submission.service";
     forwardRef(() => ComplianceModule),
     NetworkModule,
     ReportingModule,
+    TradeCreditModule,
+    ExtraFieldsModule,
   ],
   controllers: [
     InvoicesController,

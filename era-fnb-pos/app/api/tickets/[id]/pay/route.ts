@@ -14,13 +14,18 @@ import {
   resolveTicketSettlement,
   shouldFiscalizeAtPos,
 } from "@/lib/billing-router";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { handleRouteError } from "@/lib/api-utils";
 
 const paySchema = z.object({
   method: z.enum(["CASH", "CARD", "TRANSFER"]),
   amount: z.number().positive().optional(),
   delivery: z.boolean().optional(),
   customHostname: z.string().max(253).optional(),
+  fiscalDeviceId: z.string().min(1).max(64).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(
@@ -28,9 +33,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   await assertFnbEntitled();
+  try {
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
-  if (denied) return denied;
+  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_PAY);
+  if (denied) {
+    if (denied.status === 401) return denied;
+    return new Response(
+      JSON.stringify({
+        error: "Forbidden: insufficient permissions",
+        code: "FNB_WAITER_NO_PAY",
+      }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
 
   const { id } = await params;
   const body = paySchema.parse(await request.json());
@@ -58,7 +73,7 @@ export async function POST(
     return NextResponse.json({ error: payBlock }, { status: 400 });
   }
 
-  const { fiscalizeForSatellite, isFiscalPaymentMethod, isFiscalSkipped } =
+  const { saleForSatelliteRouted, isFiscalPaymentMethod, isFiscalSkipped } =
     await import("@era/satellite-kit");
 
   let fiscal: {
@@ -66,19 +81,38 @@ export async function POST(
     qrPayload?: string | null;
     driver?: string | null;
     skipped?: boolean;
+    skipReason?: string;
   } = { skipped: true };
   if (isFiscalPaymentMethod(body.method) && shouldFiscalizeAtPos(settlement)) {
-    const outcome = await fiscalizeForSatellite(
-      {
-        documentRef: ticket.id,
-        amount,
-        paymentMethod: body.method,
-        outletCode: ticket.outlet.code,
-      },
-      organizationId,
+    const activeLines = ticket.lines.filter(
+      (l: TicketLine) => l.kitchenStatus !== "VOID",
     );
+    const openShift = await prisma.posShift.findFirst({
+      where: { outletId: ticket.outletId, status: "OPEN" },
+      orderBy: { openedAt: "desc" },
+    });
+    const outcome = await saleForSatelliteRouted({
+      documentRef: ticket.id,
+      organizationId: organizationId || undefined,
+      outletCode: ticket.outlet.code,
+      fiscalDeviceId: body.fiscalDeviceId ?? openShift?.fiscalDeviceId ?? undefined,
+      bankTerminalId: body.bankTerminalId ?? openShift?.bankTerminalId ?? undefined,
+      shiftFiscalDeviceId: openShift?.fiscalDeviceId ?? undefined,
+      shiftBankTerminalId: openShift?.bankTerminalId ?? undefined,
+      lines: activeLines.map((l: TicketLine) => ({
+        sku: l.menuItemId ?? undefined,
+        name: l.description || l.menuItemId || "Item",
+        qty: Number(l.qty),
+        unitPrice: Number(l.unitPriceAzn),
+      })),
+      tenders: [{ method: body.method, amount }],
+    });
     fiscal = isFiscalSkipped(outcome)
-      ? { skipped: true }
+      ? {
+          skipped: true,
+          skipReason:
+            "reason" in outcome ? String(outcome.reason) : "skipped",
+        }
       : {
           receiptId: outcome.receiptId ?? null,
           qrPayload: outcome.qrPayload ?? null,
@@ -187,4 +221,7 @@ export async function POST(
     },
     { status: 201 },
   );
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

@@ -19,6 +19,7 @@ import { AccessControlService } from "../access/access-control.service";
 import { getClosedPeriodKeys, monthKeyUtc } from "../reporting/reporting-period.util";
 import { randomUUID } from "node:crypto";
 import { AccountingService } from "../accounting/accounting.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { parseOrgIsVatPayer } from "../common/org-vat-payer.util";
@@ -53,6 +54,7 @@ export class InventoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly accountingBooks: AccountingBookService,
     private readonly stock: StockService,
     private readonly access: AccessControlService,
     private readonly contracts: ContractsService,
@@ -61,6 +63,19 @@ export class InventoryService {
     private readonly postingJournal: PostingJournalBuilder,
     private readonly cbarSync: CbarRateSyncService,
   ) {}
+
+  /** Wave 5: stock GL always posts to NAS ops book (never MGMT). */
+  private async resolveStockOpsBookId(
+    organizationId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string> {
+    const book = await this.accountingBooks.resolveOpsBookForMoneyPath(
+      organizationId,
+      undefined,
+      tx ?? this.prisma,
+    );
+    return book.id;
+  }
 
   private nas(
     organizationId: string,
@@ -713,7 +728,9 @@ export class InventoryService {
 
       await this.assertPurchaseLimitGateways(organizationId, dto, grAz);
 
+      const stockOpsBookId = await this.resolveStockOpsBookId(organizationId, tx);
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+        accountingBookId: stockOpsBookId,
         organizationId,
         date: documentDate,
         reference: journalRef,
@@ -851,7 +868,9 @@ export class InventoryService {
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
       await this.assertPurchaseLimitGateways(organizationId, dto, gAz);
 
+      const stockOpsBookId = await this.resolveStockOpsBookId(organizationId, tx);
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+        accountingBookId: stockOpsBookId,
         organizationId,
         date: documentDate,
         reference: journalRef,
@@ -1972,7 +1991,9 @@ export class InventoryService {
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
       await this.assertPurchaseLimitGateways(organizationId, dto, gAz);
 
+      const stockOpsBookId = await this.resolveStockOpsBookId(organizationId, tx);
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+        accountingBookId: stockOpsBookId,
         organizationId,
         date: documentDate,
         reference: journalRef,
@@ -2696,7 +2717,9 @@ export class InventoryService {
       });
 
       if (amount.gt(0)) {
-        await this.accounting.postJournalInTransaction(tx, {
+        const stockOpsBookId = await this.resolveStockOpsBookId(organizationId, tx);
+      await this.accounting.postJournalInTransaction(tx, {
+        accountingBookId: stockOpsBookId,
           organizationId,
           date: documentDate,
           reference: "INV-ADJ-OUT",
@@ -2773,7 +2796,9 @@ export class InventoryService {
     const surplusIncomeCode = await this.nas(organizationId, "INVENTORY_SURPLUS_INCOME", tx);
     const amount = qty.mul(unit);
     if (amount.gt(0)) {
+      const stockOpsBookId = await this.resolveStockOpsBookId(organizationId, tx);
       await this.accounting.postJournalInTransaction(tx, {
+        accountingBookId: stockOpsBookId,
         organizationId,
         date: documentDate,
         reference: "INV-ADJ-IN",
@@ -3295,7 +3320,9 @@ export class InventoryService {
     ];
 
     if (glLines.length) {
+      const stockOpsBookId = await this.resolveStockOpsBookId(organizationId, tx);
       await this.accounting.postJournalInTransaction(tx, {
+        accountingBookId: stockOpsBookId,
         organizationId,
         date: documentDate,
         reference: `INV-PHYS-${draft.id}`,

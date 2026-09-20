@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { AccountType, LedgerType, Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { AccountingBookService } from "./accounting-book.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 export const BANK_SUBACCOUNT_BANK_CODE_RE = /^[0-9]{2}$/;
 const SEQUENCE_MAX = 99;
@@ -43,6 +44,7 @@ export class BankSubaccountService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   private async bankParentCode(
@@ -132,6 +134,12 @@ export class BankSubaccountService {
       options.nameOverride?.trim() ||
       `${branch.bank.nameAz} — ${branch.name}`;
 
+    const nasBook = await this.accountingBooks.resolveByLedgerType(
+      organizationId,
+      LedgerType.NAS,
+      db,
+    );
+
     // Check for an already-linked subaccount via existing organization bank
     // accounts pointing to this branch (idempotent path on retries).
     const linked = await db.organizationBankAccount.findFirst({
@@ -148,6 +156,7 @@ export class BankSubaccountService {
         where: {
           organizationId,
           ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
           code: linked.ledgerAccountCode,
         },
         select: { id: true, code: true, nameAz: true, currency: true },
@@ -162,6 +171,7 @@ export class BankSubaccountService {
       where: {
         organizationId,
         ledgerType: LedgerType.NAS,
+        accountingBookId: nasBook.id,
         code: parentCode,
       },
       select: { id: true },
@@ -181,6 +191,7 @@ export class BankSubaccountService {
     const created = await db.account.create({
       data: {
         organizationId,
+        accountingBookId: nasBook.id,
         ledgerType: LedgerType.NAS,
         code,
         nameAz: baseName,

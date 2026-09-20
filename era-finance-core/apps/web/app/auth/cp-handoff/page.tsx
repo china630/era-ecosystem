@@ -7,6 +7,13 @@ import type { AuthUser, OrgSummary } from "../../../lib/auth-context";
 import { apiFetch } from "../../../lib/api-client";
 import { setControlPlaneTokens } from "../../../lib/session-keys";
 
+const SAFE_RELATIVE_PATH = /^\/[A-Za-z0-9/_?=&%-]*$/;
+
+function resolveHandoffNext(searchParams: URLSearchParams): string {
+  const next = searchParams.get("next")?.trim() ?? "";
+  return next && SAFE_RELATIVE_PATH.test(next) ? next : "/home";
+}
+
 async function readHandoffError(
   res: Response,
   fallback: string,
@@ -98,7 +105,7 @@ function HandoffInner() {
         // cookie + per-tab sessionStorage present. An SPA router.replace here
         // rendered /home before middleware/providers had the new session,
         // producing an empty/menu-less page that needed manual reloads.
-        window.location.replace("/home");
+        window.location.replace(resolveHandoffNext(searchParams));
         return;
       }
 
@@ -152,7 +159,7 @@ function HandoffInner() {
       };
       login(data.accessToken, data.user, data.organizations);
       setControlPlaneTokens(legacyToken, null);
-      window.location.replace("/home");
+      window.location.replace(resolveHandoffNext(searchParams));
     })();
   }, [ready, searchParams, login]);
 

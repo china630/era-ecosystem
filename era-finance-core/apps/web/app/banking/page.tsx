@@ -110,7 +110,7 @@ function BankingQuickExpenseModal({
 }) {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [cfItems, setCfItems] = useState<{ id: string; code: string; name: string }[]>([]);
   const [amount, setAmount] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
@@ -134,7 +134,7 @@ function BankingQuickExpenseModal({
   const loadBankAccounts = useCallback(
     async (preferCode?: string) => {
       if (!token || !ledgerReady) return;
-      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType)}`);
+      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType, accountingBookId)}`);
       if (!res.ok) return;
       const raw = (await res.json()) as {
         id: string;
@@ -384,7 +384,7 @@ function CashAccountCards({
 }) {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [data, setData] = useState<AccountCardsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -394,7 +394,7 @@ function CashAccountCards({
     if (!token || !ledgerReady) return;
     setLoading(true);
     setError(null);
-    const path = `/api/banking/account-cards?${ledgerQueryParam(ledgerType)}`;
+    const path = `/api/banking/account-cards?${ledgerQueryParam(ledgerType, accountingBookId)}`;
     const res = await apiFetch(path);
     if (!res.ok) {
       const detail = String(res.status);

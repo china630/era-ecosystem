@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -14,9 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
@@ -30,13 +30,13 @@ import { ManufacturingOverheadService } from "./manufacturing-overhead.service";
 @ApiTags("manufacturing-overhead")
 @ApiBearerAuth("bearer")
 @Controller("manufacturing/overhead")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule(ModuleEntitlement.MANUFACTURING)
 export class ManufacturingOverheadController {
   constructor(private readonly overhead: ManufacturingOverheadService) {}
 
   @Get("period-summary")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Period summary: releases, allocations, suggested overhead from account 741 debits",
@@ -49,7 +49,7 @@ export class ManufacturingOverheadController {
   }
 
   @Post("allocate-batch")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Create/update pool for period and allocate to selected releases (QUANTITY or MATERIAL_COST)",
@@ -62,14 +62,14 @@ export class ManufacturingOverheadController {
   }
 
   @Get("drivers")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List overhead allocation drivers" })
   listDrivers(@OrganizationId() organizationId: string) {
     return this.overhead.listDrivers(organizationId);
   }
 
   @Post("drivers")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create overhead driver" })
   createDriver(
     @OrganizationId() organizationId: string,
@@ -79,7 +79,7 @@ export class ManufacturingOverheadController {
   }
 
   @Patch("drivers/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Update overhead driver" })
   updateDriver(
     @OrganizationId() organizationId: string,
@@ -90,7 +90,7 @@ export class ManufacturingOverheadController {
   }
 
   @Get("pools")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List overhead pools (optional ?period=YYYY-MM)" })
   listPools(
     @OrganizationId() organizationId: string,
@@ -100,7 +100,7 @@ export class ManufacturingOverheadController {
   }
 
   @Post("pools")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create overhead pool for a calendar month" })
   createPool(
     @OrganizationId() organizationId: string,
@@ -110,7 +110,7 @@ export class ManufacturingOverheadController {
   }
 
   @Post("allocate")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Allocate overhead pools for YYYY-MM to manufacturing releases (idempotent per pool+release)",

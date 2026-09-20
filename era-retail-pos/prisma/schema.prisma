@@ -73,6 +73,8 @@ model Shift {
   status         ShiftStatus @default(OPEN)
   openedAt       DateTime    @default(now())
   closedAt       DateTime?
+  fiscalDeviceId String?     @map("fiscal_device_id")
+  bankTerminalId String?     @map("bank_terminal_id")
   register       Register    @relation(fields: [registerId], references: [id])
   receipts       Receipt[]
 

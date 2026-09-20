@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Controller,
@@ -12,8 +15,6 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { LedgerType, UserRole, SignatureProvider } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { MailService } from "../mail/mail.service";
@@ -50,8 +51,8 @@ export class ReportsController {
   ) {}
 
   @Get("cash-flow")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Cash Flow (direct method) by CashFlowItem" })
   cashFlowReport(
     @OrganizationId() organizationId: string,
@@ -60,6 +61,7 @@ export class ReportsController {
     @Query("cashDeskId") cashDeskId?: string,
     @Query("bankName") bankName?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.cashFlow.getDirectCashFlow(organizationId, {
       dateFrom,
@@ -67,12 +69,13 @@ export class ReportsController {
       cashDeskId,
       bankName,
       ledgerType: parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     });
   }
 
   @Get("cash-flow/export")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Cash Flow export to PDF/XLSX" })
   async cashFlowExport(
     @OrganizationId() organizationId: string,
@@ -82,6 +85,7 @@ export class ReportsController {
     @Query("cashDeskId") cashDeskId?: string,
     @Query("bankName") bankName?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.cashFlow.getDirectCashFlow(organizationId, {
       dateFrom,
@@ -89,6 +93,7 @@ export class ReportsController {
       cashDeskId,
       bankName,
       ledgerType: parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     });
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -106,24 +111,26 @@ export class ReportsController {
   }
 
   @Get("balance-sheet")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Balance Sheet (management) as of date" })
   balanceSheet(
     @OrganizationId() organizationId: string,
     @Query("asOfDate") asOfDate: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.financial.generateBalanceSheet(
       organizationId,
       asOfDate,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
   @Get("executive-widgets")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
       "Executive widgets: cash, AR (211), vendor AP (531), payroll/tax AP (521+523), net profit MTD",
@@ -131,16 +138,18 @@ export class ReportsController {
   executiveWidgets(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.financial.executiveWidgets(
       organizationId,
       parseLedgerTypeQuery(ledgerType) ?? LedgerType.NAS,
+      accountingBookId,
     );
   }
 
   @Get("reconciliation/:counterpartyId")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
       "Акт сверки взаиморасчётов (Üzləşmə aktı): сальдо, проводки журнала, обороты за период",
@@ -154,6 +163,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -170,13 +180,14 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
   }
 
   @Get("reconciliation/:counterpartyId/pdf")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "PDF акта сверки (AZ)" })
   async reconciliationActPdf(
     @OrganizationId() organizationId: string,
@@ -187,6 +198,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -203,6 +215,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
     return new StreamableFile(buffer, {
@@ -212,8 +225,8 @@ export class ReportsController {
   }
 
   @Get("reconciliation/:counterpartyId/xlsx")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Excel: акт сверки (строки журнала и сальдо)" })
   async reconciliationActXlsx(
     @OrganizationId() organizationId: string,
@@ -224,6 +237,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -240,6 +254,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
     return new StreamableFile(buffer, {
@@ -249,8 +264,8 @@ export class ReportsController {
   }
 
   @Post("reconciliation/:counterpartyId/signature/initiate")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Initiate ASAN İmza / SİMA signature for reconciliation act PDF (period query params required)",
@@ -281,8 +296,8 @@ export class ReportsController {
   }
 
   @Get("reconciliation/:counterpartyId/signature/:logId/status")
-  @UseGuards(RolesGuard)
-  @Roles(...RECON_ROLES)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Poll reconciliation act signature session" })
   reconciliationSignatureStatus(
     @OrganizationId() organizationId: string,
@@ -310,8 +325,8 @@ export class ReportsController {
   }
 
   @Post("reconciliation/:counterpartyId/email")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Отправить PDF акта сверки на email контрагента (если указан и настроен SMTP)",
   })
@@ -324,6 +339,7 @@ export class ReportsController {
     @Query("dateTo") dateTo?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<{ ok: boolean; sentTo: string }> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -353,6 +369,7 @@ export class ReportsController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
     await this.mail.sendMail({

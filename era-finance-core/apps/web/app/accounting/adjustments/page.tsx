@@ -10,6 +10,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
+import { useLedger } from "../../../lib/ledger-context";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
 import { ListPaginationFooter, DEFAULT_LIST_PAGE_SIZE } from "../../../components/list-pagination-footer";
@@ -67,6 +68,7 @@ export default function ManualAdjustmentsPage() {
   const searchParams = useSearchParams();
   const { token, ready } = useRequireAuth();
   const { canPostAccounting } = useOrgPermissions();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
   const [to, setTo] = useState(b.to);
@@ -93,7 +95,9 @@ export default function ManualAdjustmentsPage() {
       dateTo: to,
       page: String(page),
       pageSize: String(pageSize),
+      ledgerType,
     });
+    if (accountingBookId) qs.set("accountingBookId", accountingBookId);
     const res = await apiFetch(`/api/accounting/manual-adjustments?${qs.toString()}`);
     setLoading(false);
     if (!res.ok) {
@@ -104,12 +108,12 @@ export default function ManualAdjustmentsPage() {
     const parsed = parsePaginatedList<Row>(await res.json());
     setRows(parsed.items);
     setTotal(parsed.total);
-  }, [token, from, to, page, pageSize, t]);
+  }, [token, from, to, page, pageSize, t, ledgerType, accountingBookId]);
 
   useEffect(() => {
-    if (!ready || !token) return;
+    if (!ready || !token || !ledgerReady) return;
     void load();
-  }, [ready, token, load]);
+  }, [ready, token, ledgerReady, load]);
 
   useEffect(() => {
     if (!ready || !token) return;

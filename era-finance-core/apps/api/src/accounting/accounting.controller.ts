@@ -1,15 +1,16 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+import { LedgerType } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { requireOrgRole } from "../auth/require-org-role";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import type { AuthUser } from "../auth/types/auth-user";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { AccountingService } from "./accounting.service";
@@ -25,8 +26,8 @@ export class AccountingController {
   ) {}
 
   @Post("quick-expense")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Быстрая запись расхода: Дт 731 (прочие операционные) / Кт 101.01 (касса)",
@@ -50,7 +51,7 @@ export class AccountingController {
       reference: ref,
       description: desc,
       isFinal: true,
-      actingUserRole: requireOrgRole(user),
+      actingUser: requireOrgPolicySubject(user),
       departmentId: dto.departmentId ?? null,
       lines: [
         {
@@ -69,16 +70,25 @@ export class AccountingController {
   }
 
   @Get("period-close/checklist")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
-      "Проверка готовности к закрытию месяца: draft invoices, negative stock/cash, depreciation",
+      "Проверка готовности к закрытию месяца: draft invoices, negative stock/cash, depreciation (ledger-aware)",
   })
   periodCloseChecklist(
     @OrganizationId() organizationId: string,
     @Query("month") month: string,
+    @Query("ledgerType") ledgerTypeRaw?: string,
   ) {
-    return this.accounting.getPeriodCloseChecklist(organizationId, month);
+    const ledgerType =
+      ledgerTypeRaw?.trim().toUpperCase() === "IFRS"
+        ? LedgerType.IFRS
+        : LedgerType.NAS;
+    return this.accounting.getPeriodCloseChecklist(
+      organizationId,
+      month,
+      ledgerType,
+    );
   }
 }

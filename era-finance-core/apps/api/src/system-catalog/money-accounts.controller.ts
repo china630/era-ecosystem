@@ -1,7 +1,9 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { LedgerType } from "@erafinance/database";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -13,7 +15,7 @@ function matchesMoneyPrefix(code: string, root: string): boolean {
 @Controller("system")
 @ApiTags("system")
 @ApiBearerAuth("bearer")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class MoneyAccountsController {
   constructor(
     private readonly prisma: PrismaService,

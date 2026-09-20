@@ -61,7 +61,7 @@ Exact Prisma enum naming is an implementation detail of the FO money wave; this 
 | Corporate profile credit limit + payment terms | Limit enforce on checkout/transfer; terms display from contract/agency | Terms master + aging buckets |
 | Routing / payment instructions | Stay-level + revenue-code rules (extend `FolioRoutingRule` / card UI) | — |
 | Invoice matching (bank → N invoices) | — | Collections UI |
-| Agency statement / CL snapshot | Ops totals + event | Reconciliation |
+| Agency statement / CL snapshot | Ops totals + **line statement** (charge/payment/refund + running balance) + event | Reconciliation |
 
 ### D3 — FO money close wave IDs
 

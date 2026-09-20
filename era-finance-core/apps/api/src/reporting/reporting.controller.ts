@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Body,
@@ -5,6 +8,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -21,12 +25,10 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { UserRole } from "@erafinance/database";
+import { LedgerType, UserRole } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { VoenIntegrityGuard } from "../auth/guards/voen-integrity.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
@@ -37,6 +39,7 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { ClosePeriodDto } from "./dto/close-period.dto";
 import { CloseFiscalYearDto } from "./dto/close-fiscal-year.dto";
 import { ReopenFiscalYearDto } from "./dto/reopen-fiscal-year.dto";
+import { ReopenPeriodDto } from "./dto/reopen-period.dto";
 import { CreateNettingDto } from "./dto/create-netting.dto";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
 import { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
@@ -83,19 +86,48 @@ export class ReportingController {
     private readonly finance: FinanceService,
   ) {}
 
+  @Get("compare-books")
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
+  @ApiOperation({ summary: "Compare trial-balance totals for two accounting books" })
+  compareBooks(
+    @OrganizationId() organizationId: string,
+    @Query("bookA", ParseUUIDPipe) bookA: string,
+    @Query("bookB", ParseUUIDPipe) bookB: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+  ) {
+    return this.reporting.compareBooks(
+      organizationId,
+      bookA,
+      bookB,
+      dateFrom,
+      dateTo,
+    );
+  }
+
   @Get("trial-balance")
   @ApiOperation({ summary: "Оборотно-сальдовая ведомость за период" })
-  trialBalance(
+  async trialBalance(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
+    await this.reporting.assertReportBookAccess(
+      organizationId,
+      requireOrgRole(user),
+      accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    );
     return this.reporting.trialBalance(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -103,16 +135,25 @@ export class ReportingController {
   @ApiOperation({ summary: "Export Trial Balance to PDF/XLSX" })
   async trialBalanceExport(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
+    await this.reporting.assertReportBookAccess(
+      organizationId,
+      requireOrgRole(user),
+      accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    );
     const data = await this.reporting.trialBalance(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -137,6 +178,7 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("accountCode") accountCode: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.accountCard(
       organizationId,
@@ -144,6 +186,7 @@ export class ReportingController {
       dateTo,
       accountCode,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -156,6 +199,7 @@ export class ReportingController {
     @Query("accountCode") accountCode: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.accountCard(
       organizationId,
@@ -163,6 +207,7 @@ export class ReportingController {
       dateTo,
       accountCode,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     const code = data.account.code;
@@ -187,12 +232,14 @@ export class ReportingController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.accountTurnovers(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -204,12 +251,14 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.accountTurnovers(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -238,6 +287,7 @@ export class ReportingController {
     @Query("accountCode") accountCode: string,
     @Query("dimension") dimension: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const dim = (dimension ?? "counterparty").trim() as AnalysisDimension;
     return this.standardReports.accountAnalysis(
@@ -247,6 +297,7 @@ export class ReportingController {
       accountCode,
       dim,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -260,6 +311,7 @@ export class ReportingController {
     @Query("dimension") dimension: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const dim = (dimension ?? "counterparty").trim() as AnalysisDimension;
     const data = await this.standardReports.accountAnalysis(
@@ -269,6 +321,7 @@ export class ReportingController {
       accountCode,
       dim,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     const code = data.account.code;
@@ -298,6 +351,7 @@ export class ReportingController {
     @Query("accountCode") accountCode?: string,
     @Query("subcontoTypeId") subcontoTypeId?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.trialBalanceBySubconto(
       organizationId,
@@ -306,6 +360,7 @@ export class ReportingController {
       accountCode,
       subcontoTypeId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -322,6 +377,7 @@ export class ReportingController {
     @Query("subcontoTypeId") subcontoTypeId?: string,
     @Query("valueId") valueId?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.accountCardBySubconto(
       organizationId,
@@ -331,6 +387,7 @@ export class ReportingController {
       subcontoTypeId,
       valueId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -345,6 +402,7 @@ export class ReportingController {
     @Query("subcontoTypeId") subcontoTypeId: string,
     @Query("accountCode") accountCode?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.subcontoAnalysis(
       organizationId,
@@ -353,6 +411,7 @@ export class ReportingController {
       subcontoTypeId,
       accountCode,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -366,12 +425,14 @@ export class ReportingController {
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.standardReports.chessboard(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -383,12 +444,14 @@ export class ReportingController {
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.chessboard(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -417,6 +480,7 @@ export class ReportingController {
     @Query("departmentId") departmentId?: string,
     @Query("skip") skipStr?: string,
     @Query("take") takeStr?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const skip = skipStr != null && skipStr !== "" ? Number(skipStr) : undefined;
     const take = takeStr != null && takeStr !== "" ? Number(takeStr) : undefined;
@@ -431,6 +495,7 @@ export class ReportingController {
         departmentId,
         skip: Number.isFinite(skip) ? skip : undefined,
         take: Number.isFinite(take) ? take : undefined,
+        accountingBookId,
       },
     );
   }
@@ -446,6 +511,7 @@ export class ReportingController {
     @Query("accountCode") accountCode?: string,
     @Query("counterpartyId") counterpartyId?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const data = await this.standardReports.generalLedger(
       organizationId,
@@ -458,6 +524,7 @@ export class ReportingController {
         departmentId,
         skip: 0,
         take: 5000,
+        accountingBookId,
       },
     );
     const fmt = (format ?? "").toLowerCase();
@@ -476,27 +543,28 @@ export class ReportingController {
   }
 
   @Get("pl")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.AUDITOR,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "P&L по проводкам (начисление)" })
-  profitAndLoss(
+  async profitAndLoss(
     @OrganizationId() organizationId: string,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("accountingBookId") accountingBookId?: string,
     @CurrentUser() user?: AuthUser,
   ) {
     const requestedDepartment = departmentId?.trim();
     const role = user ? requireOrgRole(user) : null;
+    if (role) {
+      await this.reporting.assertReportBookAccess(
+        organizationId,
+        role,
+        accountingBookId,
+        parseLedgerTypeQuery(ledgerType),
+      );
+    }
     if (
       requestedDepartment &&
       role !== UserRole.OWNER &&
@@ -514,20 +582,13 @@ export class ReportingController {
       dateTo,
       parseLedgerTypeQuery(ledgerType),
       requestedDepartment,
+      accountingBookId,
     );
   }
 
   @Get("pl/export")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.AUDITOR,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Export Profit&Loss to PDF/XLSX" })
   async profitAndLossExport(
     @OrganizationId() organizationId: string,
@@ -536,10 +597,19 @@ export class ReportingController {
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("accountingBookId") accountingBookId?: string,
     @CurrentUser() user?: AuthUser,
   ): Promise<StreamableFile> {
     const requestedDepartment = departmentId?.trim();
     const role = user ? requireOrgRole(user) : null;
+    if (role) {
+      await this.reporting.assertReportBookAccess(
+        organizationId,
+        role,
+        accountingBookId,
+        parseLedgerTypeQuery(ledgerType),
+      );
+    }
     if (
       requestedDepartment &&
       role !== UserRole.OWNER &&
@@ -557,6 +627,7 @@ export class ReportingController {
       dateTo,
       parseLedgerTypeQuery(ledgerType),
       requestedDepartment,
+      accountingBookId,
     );
     const fmt = (format ?? "").toLowerCase();
     if (fmt === "xlsx") {
@@ -580,29 +651,55 @@ export class ReportingController {
   })
   dashboard(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.dashboard(
+    return this.reporting.assertReportBookAccess(
       organizationId,
+      requireOrgRole(user),
+      accountingBookId,
       parseLedgerTypeQuery(ledgerType),
+    ).then(() =>
+      this.reporting.dashboard(
+        organizationId,
+        parseLedgerTypeQuery(ledgerType),
+        accountingBookId,
+      ),
     );
   }
 
   @Get("period-status")
   @ApiOperation({
-    summary: "Статус закрытия текущего UTC-месяца (Maliyyə dövrü / виджет главной)",
+    summary: "Статус закрытия текущего UTC-месяца (per ledgerType)",
   })
-  periodStatus(@OrganizationId() organizationId: string) {
-    return this.reporting.getPeriodStatus(organizationId);
+  periodStatus(
+    @OrganizationId() organizationId: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
+  ) {
+    return this.reporting.getPeriodStatus(
+      organizationId,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("close-period-prompt")
   @ApiOperation({
     summary:
-      "Нужно ли показывать блок закрытия месяца: самый ранний незакрытый прошедший UTC-месяц",
+      "Нужно ли показывать блок закрытия месяца: самый ранний незакрытый прошедший UTC-месяц (per ledger)",
   })
-  closePeriodPrompt(@OrganizationId() organizationId: string) {
-    return this.reporting.getClosePeriodPrompt(organizationId);
+  closePeriodPrompt(
+    @OrganizationId() organizationId: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
+  ) {
+    return this.reporting.getClosePeriodPrompt(
+      organizationId,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("dashboard-mini")
@@ -613,34 +710,30 @@ export class ReportingController {
   dashboardMini(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.dashboardMiniFinancials(
       organizationId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
   @Get("receivables")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.AUDITOR,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Дебиторка (счёт 211): долг контрагентов с начисленной выручкой без оплаты",
   })
   receivables(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.reporting.accountsReceivable(
       organizationId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
@@ -653,6 +746,7 @@ export class ReportingController {
     @OrganizationId() organizationId: string,
     @Query("counterpartyId") counterpartyId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     if (!counterpartyId?.trim()) {
       throw new BadRequestException("counterpartyId is required");
@@ -661,12 +755,13 @@ export class ReportingController {
       organizationId,
       counterpartyId,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
   @Post("netting")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Взаимозачёт (FinanceService.executeNetting): Дт 531 — Кт 211",
   })
@@ -675,6 +770,7 @@ export class ReportingController {
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateNettingDto,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     return this.finance.executeNetting(
       organizationId,
@@ -686,6 +782,7 @@ export class ReportingController {
         userId: user.userId,
         previewSuggestedAmount: dto.previewSuggestedAmount,
       },
+      accountingBookId,
     );
   }
 
@@ -703,6 +800,7 @@ export class ReportingController {
     @Query("endDate") endDate?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -719,6 +817,7 @@ export class ReportingController {
       {
         currency: currency ?? null,
         ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+        accountingBookId,
       },
     );
   }
@@ -737,6 +836,7 @@ export class ReportingController {
     @Query("endDate") endDate?: string,
     @Query("currency") currency?: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
     const from = dateFrom ?? startDate;
     const to = dateTo ?? endDate;
@@ -754,6 +854,7 @@ export class ReportingController {
         {
           currency: currency ?? null,
           ledgerType: parseLedgerTypeQuery(ledgerType) ?? undefined,
+          accountingBookId,
         },
       );
     return new StreamableFile(buffer, {
@@ -770,8 +871,15 @@ export class ReportingController {
   aging(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.accountsReceivableAging(organizationId, asOf);
+    return this.reporting.accountsReceivableAging(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("ar-aging")
@@ -782,19 +890,20 @@ export class ReportingController {
   arAging(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.accountsReceivableAging(organizationId, asOf);
+    return this.reporting.accountsReceivableAging(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("ap-aging")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "AP Aging: supplier payables 531 aged 0-30 / 31-60 / 61-90 / 90+, optional asOf",
@@ -802,19 +911,20 @@ export class ReportingController {
   apAging(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.accountsPayableAging(organizationId, asOf);
+    return this.reporting.accountsPayableAging(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("creditor-payment-plan")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Creditor payment plan: outstanding 531 obligations + suggestedPayDate",
@@ -822,13 +932,20 @@ export class ReportingController {
   creditorPaymentPlan(
     @OrganizationId() organizationId: string,
     @Query("asOf") asOf?: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.creditorPaymentPlan(organizationId, asOf);
+    return this.reporting.creditorPaymentPlan(
+      organizationId,
+      asOf,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Get("eqf-registry")
-  @UseGuards(VoenIntegrityGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @UseGuards(VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "EQF / e-Qaimə registry by debtor (eqaime* + dvxSync* on sales invoices)",
@@ -845,9 +962,9 @@ export class ReportingController {
   }
 
   @Get("property-tax/preview")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
       "Preview annual property tax (Əmlak vergisi) on ACTIVE fixed-asset net book",
@@ -919,9 +1036,9 @@ export class ReportingController {
   }
 
   @Post("etaxes-vat-declaration/submit")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "ƏDV paketini vergi şlüzünə göndər (E_TAXES_VAT_SUBMIT_URL)",
   })
@@ -942,9 +1059,9 @@ export class ReportingController {
   }
 
   @Get("tax-declarations")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "List e-Taxes declaration exports with workflow statuses",
   })
@@ -953,9 +1070,9 @@ export class ReportingController {
   }
 
   @Post("tax-declarations/generate")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Generate declaration file for e-taxes (status: GENERATED)",
   })
@@ -967,9 +1084,9 @@ export class ReportingController {
   }
 
   @Get("tax-declarations/:id/download")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "Download generated declaration file and mark as UPLOADED",
   })
@@ -985,9 +1102,9 @@ export class ReportingController {
   }
 
   @Post("tax-declarations/:id/submit")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Submit generated declaration to e-taxes gateway (VAT / PROFIT_TAX / PAYROLL_WITHHOLDING via HSM/HTTP seam)",
@@ -1000,9 +1117,9 @@ export class ReportingController {
   }
 
   @Get("payroll-withholding/preview")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "Preview payroll withholding aggregate for YYYY-MM (POSTED payroll run)",
   })
@@ -1017,9 +1134,9 @@ export class ReportingController {
   }
 
   @Post("tax-declarations/:id/receipt")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
@@ -1041,9 +1158,9 @@ export class ReportingController {
   }
 
   @Get("profit-tax/adjustments")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "List profit tax book-to-tax adjustments for a year" })
   listProfitTaxAdjustments(
     @OrganizationId() organizationId: string,
@@ -1057,9 +1174,9 @@ export class ReportingController {
   }
 
   @Post("profit-tax/adjustments")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Create manual profit tax adjustment line" })
   createProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
@@ -1069,9 +1186,9 @@ export class ReportingController {
   }
 
   @Patch("profit-tax/adjustments/:id")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Update manual profit tax adjustment line" })
   updateProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
@@ -1082,9 +1199,9 @@ export class ReportingController {
   }
 
   @Delete("profit-tax/adjustments/:id")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Soft-delete manual profit tax adjustment line" })
   deleteProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
@@ -1094,9 +1211,9 @@ export class ReportingController {
   }
 
   @Get("profit-tax/preview")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Preview profit tax aggregate (accounting result + adjustments + tax)",
   })
@@ -1112,45 +1229,77 @@ export class ReportingController {
   }
 
   @Post("close-period")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: "Закрыть месяц: isLocked + запись в settings.reporting.closedPeriods" })
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
+  @ApiOperation({
+    summary:
+      "Close a month for one ledger (NAS or IFRS): isLocked + closedPeriodsByLedger",
+  })
   closePeriod(
     @OrganizationId() organizationId: string,
     @Body() dto: ClosePeriodDto,
   ) {
-    return this.reporting.closePeriod(organizationId, dto.year, dto.month);
+    return this.reporting.closePeriod(
+      organizationId,
+      dto.year,
+      dto.month,
+      dto.ledgerType ?? "NAS",
+      dto.accountingBookId,
+    );
+  }
+
+  @Post("reopen-period")
+  @UseGuards(VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
+  @ApiOperation({
+    summary:
+      "Reopen a closed month for one ledger (clears closedPeriodsByLedger + unlocks book-scoped txs)",
+  })
+  reopenPeriod(
+    @OrganizationId() organizationId: string,
+    @Body() dto: ReopenPeriodDto,
+  ) {
+    return this.reporting.reopenPeriod(
+      organizationId,
+      dto.year,
+      dto.month,
+      dto.ledgerType ?? "NAS",
+      dto.accountingBookId,
+    );
   }
 
   @Get("income-statement")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Full income statement (all REVENUE/EXPENSE accounts)",
   })
-  incomeStatement(
+  async incomeStatement(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
+    await this.reporting.assertReportBookAccess(
+      organizationId,
+      requireOrgRole(user),
+      accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    );
     return this.reporting.fullIncomeStatement(
       organizationId,
       dateFrom,
       dateTo,
       parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
     );
   }
 
   @Post("close-fiscal-year")
-  @UseGuards(RolesGuard, VoenIntegrityGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards( VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Close fiscal year: roll P&L to 801 then retained earnings 802",
   })
@@ -1163,27 +1312,36 @@ export class ReportingController {
       organizationId,
       dto.year,
       user?.userId ?? null,
+      parseLedgerTypeQuery(dto.ledgerType),
+      dto.accountingBookId,
     );
   }
 
   @Get("fiscal-year-close/:year")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Fiscal year close protocol (reformation report)" })
   fiscalYearClose(
     @OrganizationId() organizationId: string,
     @Param("year") yearStr: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const year = Number(yearStr);
     if (!Number.isFinite(year)) {
       throw new BadRequestException("year must be a number");
     }
-    return this.reporting.getFiscalYearClose(organizationId, year);
+    return this.reporting.getFiscalYearClose(
+      organizationId,
+      year,
+      parseLedgerTypeQuery(ledgerType),
+      accountingBookId,
+    );
   }
 
   @Post("reopen-fiscal-year")
-  @UseGuards(RolesGuard, VoenIntegrityGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards( VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Reopen fiscal year: reverse close journal and remove from closedYears",
   })
@@ -1196,6 +1354,8 @@ export class ReportingController {
       organizationId,
       dto.year,
       user?.userId ?? null,
+      parseLedgerTypeQuery(dto.ledgerType),
+      dto.accountingBookId,
     );
   }
 }

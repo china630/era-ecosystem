@@ -1,13 +1,15 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -19,7 +21,7 @@ import { SubscriptionGuard } from "../subscription/subscription.guard";
 @ApiTags("inventory-audits")
 @ApiBearerAuth("bearer")
 @Controller("inventory/audits")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule("inventory")
 export class InventoryAuditController {
   constructor(private readonly audits: InventoryAuditService) {}
@@ -35,8 +37,8 @@ export class InventoryAuditController {
   }
 
   @Patch("lines/:lineId")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Обновить строку описи (DRAFT): factQty и costPrice (запрещено в APPROVED/закрытом периоде)",
@@ -60,8 +62,8 @@ export class InventoryAuditController {
   }
 
   @Post(":id/approve")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Провести черновик опись: adjustStock + journal в одной prisma.$transaction (TZ §10.1)",
@@ -80,8 +82,8 @@ export class InventoryAuditController {
   }
 
   @Post(":id/sync-system")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Черновик описи: обновить systemQty по фактическим остаткам StockItem на складе документа",
@@ -108,8 +110,8 @@ export class InventoryAuditController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Инвентаризационная опись: DRAFT — только запись; APPROVED — корректировки в одной транзакции (adjustStockInTransaction(tx)) по расхождениям",
@@ -119,6 +121,6 @@ export class InventoryAuditController {
     @Body() dto: CreateInventoryAuditDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.audits.create(organizationId, dto, requireOrgRole(user));
+    return this.audits.create(organizationId, dto, requireOrgPolicySubject(user));
   }
 }

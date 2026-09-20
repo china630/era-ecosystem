@@ -24,7 +24,9 @@
     "integration": "Интеграция",
     "import": "Импорт cutover",
     "calendar": "Бронь столов",
-    "brand": "ERA F&B POS"
+    "brand": "ERA F&B POS",
+    "brandKafe": "ERA Kafe",
+    "access": "Доступ"
   },
   "home": {
     "title": "F&B POS",
@@ -54,7 +56,12 @@
     "tapOpen": "Нажмите, чтобы открыть чек",
     "occupiedHint": "Занят",
     "ticketOpened": "Чек на {table} — {total} AZN",
-    "menuStrip": "Меню (откройте стол для чека)"
+    "menuStrip": "Меню (откройте стол для чека)",
+    "stopListTitle": "Стоп-лист",
+    "stopListHint": "Нажмите блюдо: bitdi скрывает его с чека.",
+    "openTableFirst": "Сначала откройте стол или walk-in",
+    "soldOut": "Bitdi",
+    "dishAdded": "Добавлено: {name}"
   },
   "kds": {
     "title": "Экран кухни"
@@ -169,6 +176,7 @@
     "selectTicket": "Выберите чек",
     "fireKitchen": "На кухню",
     "payCash": "Оплата наличными",
+    "queuedOffline": "Сохранено офлайн — отправим, когда сеть вернётся",
     "payCard": "Оплата картой",
     "payTransfer": "Оплата переводом",
     "sendToReception": "На ресепшн",
@@ -213,7 +221,10 @@
     "openFailed": "Не удалось открыть смену",
     "closeFailed": "Не удалось закрыть смену",
     "managerRequired": "Для Z-close нужна роль менеджера",
-    "openTicketsBlock": "Z-close невозможен: {count} открытых чек(ов)"
+    "openTicketsBlock": "Z-close невозможен: {count} открытых чек(ов)",
+    "fiscalDevice": "Кассовый аппарат (KKM)",
+    "bankTerminal": "Банковский POS",
+    "autoDefault": "По умолчанию / авто"
   },
   "calendar": {
     "title": "Бронь столов",
@@ -229,13 +240,15 @@
   "common": {
     "azn": "AZN",
     "loading": "Загрузка…",
-    "emDash": "—"
+    "emDash": "—",
+    "loadError": "Ошибка загрузки",
+    "saveError": "Ошибка сохранения"
   },
   "auth": {
     "loginFailed": "Ошибка входа",
-    "organizationIdLabel": "ID организации (F&B)",
-    "organizationIdPlaceholder": "UUID — обязателен в общем F&B pool",
-    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
+    "organizationIdLabel": "Код организации (ERA ID)",
+    "organizationIdPlaceholder": "6 цифр (например, 104221)",
+    "organizationIdHint": "Обязательно на общем облачном pool. Получите код у менеджера или в Control Plane → Super-admin → Organizations. На dedicated appliance можно оставить пустым.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",
@@ -295,5 +308,29 @@
     "nextPhase": "Следующая фаза",
     "prevPhase": "Предыдущая фаза",
     "phaseProgress": "Фаза {current} из {total}"
+  },
+  "settingsAccess": {
+    "title": "Доступ ролей",
+    "subtitle": "Настройте права каждой роли F&B. FB_MANAGER следует матрице (без bypass).",
+    "role": "Роль",
+    "clone": "Клон роли",
+    "save": "Сохранить",
+    "reset": "Сброс к умолчанию",
+    "delete": "Удалить роль",
+    "deleteInUse": "Сначала переназначьте пользователей",
+    "newCode": "Код",
+    "newName": "Название",
+    "cloneFrom": "Клонировать из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "sessionRefreshed": "Права сессии обновлены",
+    "groupScreens": "Экраны",
+    "groupTill": "Касса / чеки",
+    "groupHotel": "Мост отеля",
+    "groupKds": "Кухня",
+    "groupAdmin": "Админ"
   }
 }

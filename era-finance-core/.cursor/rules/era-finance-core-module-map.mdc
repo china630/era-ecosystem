@@ -11,14 +11,63 @@ globs: era-finance-core/**/*
 
 | Route | API |
 |-------|-----|
-| `/accounting/chart` | `GET /api/accounts`, `GET /api/accounts/templates`, `POST /api/accounts/import-from-template` |
-| `/accounting/mapping` | NAS↔IFRS pairing |
-| `/accounting/ifrs-mapping` | IFRS auto-map rules |
+| `/accounting/books` | `GET/POST /api/accounting/books`, `GET /api/accounting/books/slots`, `GET /api/accounting/books/:id`; slot-gated extra books; TEMPLATE / EMPTY / NAS_CLONE CoA strategies; optional statutory translation DRAFT; header book selector via `ledger-context` (`ledgerType` + `accountingBookId` alias) |
+| `/accounting/chart` | NAS/IFRS CoA; `GET /api/accounts?ledgerType=`; NAS import; `POST /api/accounts/ifrs-provision`, `POST /api/accounts/ifrs`; ops `POST /api/accounts/ifrs-mirror` |
+| `/accounting/ledger-mappings` | Versioned arbitrary book-pair LedgerMappingSet UI/API; source-book fan-out to every PUBLISHED target, per-set outcomes, soft/strict policy; NAS_TO_IFRS primary/fallback compatibility |
+| `/accounting/adjustments` | Manual journals; `ledgerType` NAS\|IFRS (P1) |
+| `/accounting/mapping` | redirect → ledger-mappings |
+| `/accounting/ifrs-mapping` | redirect → ledger-mappings |
 | `/accounting/posting-roles` | `GET/PATCH /api/accounting/posting-roles` |
 | `/accounting/adjustments` | Manual voucher: `GET/POST /api/accounting/manual-adjustments`, `GET …/:id`, `GET …/:id/pdf`, `POST …/preview`, `POST …/:id/reverse`, `GET …/templates`; basis links + PDF + reverse — ADR [finance-manual-adjusting-journal.md](../../../docs/adr/finance-manual-adjusting-journal.md) wave 3 |
-| `/sales/invoices` (ViewInvoiceModal) | `POST /api/invoices/:id/credit-adjustment` — internal remaining credit (wave 2–3 VAT split REVENUE); overpayment CTA → adjustments |
+| `/sales/invoices` (ViewInvoiceModal) | `POST /api/invoices/:id/credit-adjustment` — internal remaining credit (wave 2–3 VAT split REVENUE); overpayment CTA → adjustments; extra attributes JSONB (not GL); Print → `/print/invoice/:id` |
+| `/sales/invoices` (register) | `GET /api/invoices` whitelist `status`/`dueFrom`/`dueTo`/`sortKey`/`sortDir`; `GET/POST/PATCH/DELETE /api/saved-list-views` — ADR extensibility W2 saved views (not SQL) |
+| `/settings/extra-fields` | `GET/POST/PATCH /api/extra-fields`, `PUT /api/extra-fields/values/FINANCE_INVOICE/:id` — ADR [extensibility-forms-print-reports](../../../docs/adr/extensibility-forms-print-reports.md) W1 |
+| `/settings/print-placeholders` | Read-only whitelist catalog for `FINANCE_INVOICE_COMMERCIAL` — ADR extensibility W3 |
+| `/print/invoice/:id` | `GET /api/invoices/:id/print-snapshot`, `GET /api/invoices/:id/print-html` — commercial invoice vendor HTML (not fiscal) |
 | `/fixed-assets` | lifecycle journal ref → adjustments; `?asset=` deep link (wave 3) |
 | `/reporting/journal` | `GET /api/reporting/general-ledger` (read-only) |
+| `/reporting/compare-books` | `GET /api/reporting/compare-books?bookA=&bookB=&dateFrom=&dateTo=`; book-scoped trial-balance comparison |
+| `/audit-hub/reconciliation` | `GET /api/audit-hub/reconciliation/nas-ifrs`; compatibility route comparing default ops book with every ACTIVE non-ops book for presence and debit parity |
 | `/expenses/quick` | `POST /api/accounting/quick-expense` (fixed 731/101) |
 
-Roles for posting: OWNER / ADMIN / ACCOUNTANT. USER cannot post journal vouchers (`assertMayPostManualJournal`).
+Roles for posting: Post/Approve = `api:ledger.post` (CP JWT grants via Nest `PermissionsGuard` + web `can()` — ADR [finance-domain-permissions-and-rbac](../../../docs/adr/finance-domain-permissions-and-rbac.md)). Matrix UI = Orchestrator `/settings/access` (no Finance local access matrix). `AuditorMutationGuard` locked belt on donor `AUDITOR`. USER / packages without `api:ledger.post` cannot post journal vouchers.
+
+## AuthZ / RBAC (Wave 5)
+
+| Surface | Notes |
+|---------|--------|
+| Nest door | `PermissionsGuard` + `@Permissions(...)` / policy helpers on `api:*` / `admin:*` / `screen:*` from `@era/contracts` |
+| Web door | `apps/web/lib/role-utils.ts` `can(...keys)` |
+| Catalog | Shared `CP_PERMISSION` (+ one-release legacy bare-code dual-read) |
+| Matrix UI | **Not in Finance** — Orchestrator `/settings/access` |
+| UAT | `doc/UAT-SMOKE.md` § FIN-RBAC-01 deny paths (SCREEN, not SHOW); § FIN-TCC Phase 0–3 staff-only (not Pilot) |
+
+## Trade credit (Phase 0–2 domain API)
+
+ADR: [finance-trade-credit-control.md](../../../docs/adr/finance-trade-credit-control.md), [finance-trade-credit-factor-lead.md](../../../docs/adr/finance-trade-credit-factor-lead.md). SKUs `trade_credit_control` + optional `trade_credit_factor_lead`. Domain API + staff UI (`/crm/trade-credit`, counterparty facility section with А–Г + Deep check) + Wholesale confirm consume + buyer SSO cabinet (`/buyer` PWA).
+
+| Route / surface | API |
+|-----------------|-----|
+| Counterparties (staff) | `GET/PUT /api/counterparties/:id/trade-credit` — staff view includes A–D policy fields |
+| Enrichment (staff) | `GET/POST /api/counterparties/:id/trade-credit/enrichment` — finance-only; meter `TRADE_CREDIT_ENRICH`; soft ceiling disables Deep check |
+| Facilities (staff) | `GET /api/trade-credit/facilities?policyGroup=` — staff-safe list (effective group) |
+| Grants (staff) | `POST /api/trade-credit/grants`, `POST /api/trade-credit/grants/:id/void`, `GET /api/trade-credit/grants` |
+| Policy (staff) | `GET/PUT /api/trade-credit/policy` (Phase 3 knobs: `limitK`, `trialLimitAzn`, haircuts, `enrichTtlDays`, `restoreProposalEnabled`, …); `POST .../policy/pin`, `accept-raise`, `reject-raise`, `restore-after-block`, `reclassify` |
+| Limit decisions (staff) | `GET /api/trade-credit/limit-decisions` — Accept/Reject feedback + 30d DPD follow-up (finance-only) |
+| Buyer invite (staff) | `POST /api/counterparties/:id/trade-credit/invite` → Orch `/buyer-portal/invite` (VÖEN required) |
+| Buyer SSO | `POST /api/auth/buyer-sso/exchange` (web + Nest); cookie `era_buyer_session` |
+| Buyer cabinet API | `GET /api/buyer/trade-credit` (+ `factorLeadEnabled`); `POST .../grants`; `GET .../grants/:id`; `GET .../invoices`; `POST .../invoices/:id/pay-link`; `GET/PUT .../notify-prefs`; `POST .../factor-leads` — **no** `policyGroup` |
+| Internal consume | `POST /api/internal/v1/trade-credit/grants/consume` (service token) |
+| Meter stub | `TradeCreditMeterService.snapshotBilledBuyers` — soft `TRADE_CREDIT_BUYER` overage; enrich soft `TRADE_CREDIT_ENRICH` |
+
+Mutate roles: OWNER / ADMIN / ACCOUNTANT. SKU off → **402** `TRADE_CREDIT_REQUIRED`. Do not expose A–D on sales or buyer APIs.
+
+## HR / workforce (Finance mirror)
+
+| Route | API |
+|-------|-----|
+| `/employees` | `GET/POST/PATCH/DELETE /api/hr/employees`, `POST …/:id/convert-to-fin`, bulk-contract-salary; S2S panel `GET /api/hr/emas/s2s-status` (`s2sConfigured` = `ERA_EMAS_S2S_ENABLED` ∧ `EMAS_SUBMIT_URL`) |
+| `/hr/emas-queue` | `GET /api/hr/emas/queue`, mark submitted, CSV export; Wave 7 manual portal path |
+| `/hr/mgmt-labor-delta` | `GET/POST /api/hr/mgmt-labor-delta?year=&month=` — OWNER/ADMIN/DIRECTOR; MGMT JE only (not pay/XML) |
+| `/hr/timesheet` | CP-master link-only when `platform_workforce` |
+| `/payroll` | payroll runs; contract salary 0 banner |

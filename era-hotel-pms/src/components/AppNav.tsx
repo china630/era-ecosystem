@@ -18,20 +18,22 @@ export default function AppNav() {
   return (
     <nav className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 pb-4 text-sm">
       <div className="flex flex-wrap gap-4">
-        <Link href="/fo/rack" className="text-sky-400 hover:underline">
-          {t('chessboard')}
-        </Link>
-        {can(PERMISSIONS.RESERVATIONS_READ) && (
+        {can(PERMISSIONS.SCREEN_FO) && (
           <Link href="/fo/room-plan" className="text-sky-400 hover:underline">
             {t('roomPlan')}
           </Link>
         )}
-        {can(PERMISSIONS.RESERVATIONS_WRITE) && (
+        {can(PERMISSIONS.SCREEN_FO) && (
+          <Link href="/fo/rack" className="text-sky-400 hover:underline">
+            {t('chessboard')}
+          </Link>
+        )}
+        {can(PERMISSIONS.SCREEN_FO) && (
           <Link href="/bookings/new" className="text-sky-400 hover:underline">
             {t('roomBooking')}
           </Link>
         )}
-        {can(PERMISSIONS.REPORTS_READ) && (
+        {can(PERMISSIONS.SCREEN_REPORTS) && (
           <>
             <Link href="/reports/occupancy" className="text-sky-400 hover:underline">
               {t('occupancy')}
@@ -39,12 +41,15 @@ export default function AppNav() {
             <Link href="/front-cash/agency-ledger" className="text-sky-400 hover:underline">
               {t('agencyLedger')}
             </Link>
+            <Link href="/front-cash/company-ledger" className="text-sky-400 hover:underline">
+              {t('companyLedger')}
+            </Link>
             <Link href="/reports/reconciliation" className="text-sky-400 hover:underline">
               {t('reconciliation')}
             </Link>
           </>
         )}
-        {can(PERMISSIONS.RESERVATIONS_READ) && (
+        {can(PERMISSIONS.SCREEN_FO) && (
           <a
             href={
               process.env.NEXT_PUBLIC_FNB_POS_URL ??
@@ -58,7 +63,7 @@ export default function AppNav() {
             {t('posCalendar')}
           </a>
         )}
-        {can(PERMISSIONS.MASTER_DATA_MANAGE) && (
+        {can(PERMISSIONS.SCREEN_SETTINGS) && (
           <>
             <Link href="/settings/master-data" className="text-sky-400 hover:underline">
               {t('masterData')}
@@ -71,27 +76,32 @@ export default function AppNav() {
             </Link>
           </>
         )}
-        {can(PERMISSIONS.USERS_MANAGE) && (
+        {can(PERMISSIONS.SCREEN_SETTINGS_USERS) && (
           <Link href="/settings/users" className="text-sky-400 hover:underline">
             {t('users')}
           </Link>
         )}
-        {(can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS)) && (
+        {can(PERMISSIONS.SCREEN_SETTINGS_ACCESS) && (
+          <Link href="/settings/access" className="text-sky-400 hover:underline">
+            {t('access')}
+          </Link>
+        )}
+        {can(PERMISSIONS.SCREEN_HK) && (
           <Link href="/hk" className="text-sky-400 hover:underline">
             {t('housekeeping')}
           </Link>
         )}
-        {can(PERMISSIONS.CHANNEL_MANAGE) && (
+        {can(PERMISSIONS.SCREEN_DISTRIBUTION) && (
           <Link href="/distribution/channel" className="text-sky-400 hover:underline">
             {t('channel')}
           </Link>
         )}
-        {can(PERMISSIONS.MEDICAL_MANAGE) && (
+        {can(PERMISSIONS.SCREEN_MEDICAL) && (
           <Link href="/medical" className="text-sky-400 hover:underline">
             {t('medical')}
           </Link>
         )}
-        {(can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.RESERVATIONS_CANCEL)) && (
+        {can(PERMISSIONS.SCREEN_NIGHT_AUDIT) && (
           <Link href="/night-audit" className="text-sky-400 hover:underline">
             {t('operations')}
           </Link>

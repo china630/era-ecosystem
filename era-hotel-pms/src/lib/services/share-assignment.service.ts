@@ -3,10 +3,11 @@ import { isOtaAgency } from '@/lib/booking-source-kind';
 import { hotelDateKey, parseHotelNoon, reservationStayOverlaps } from '@/lib/hotel-calendar';
 import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 import type { ReservationStatus } from '@prisma/client';
+import { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
+
+export { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
 
 export const SCHEDULABLE_STATUSES: ReservationStatus[] = ['CONFIRMED', 'IN_HOUSE', 'OPTION'];
-
-export type ShareGender = 'M' | 'F';
 
 export type ShareReservationSlice = {
   id: string;
@@ -18,23 +19,6 @@ export type ShareReservationSlice = {
   checkOutDate: Date;
   shareBedIndex?: number | null;
 };
-
-export function normalizeShareGender(g: string | null | undefined): ShareGender | null {
-  if (g == null) return null;
-  const raw = String(g).trim();
-  if (!raw) return null;
-  const u = raw.toUpperCase();
-  // Elektraweb Guest Cards UI: "0 - Male" / "1 - Female" (numeric codes in export/API).
-  if (u === '0' || u.startsWith('0 ') || u === '2' || u.startsWith('2 ')) return 'M';
-  if (u === '1' || u.startsWith('1 ')) return 'F';
-  if (u === 'M' || u === 'MALE' || u === '♂' || u === 'ERKEK' || u === 'KİŞİ' || u === 'KISI') {
-    return 'M';
-  }
-  if (u === 'F' || u === 'FEMALE' || u === '♀' || u === 'KADIN' || u === 'QADIN') return 'F';
-  if (/\bMALE\b/.test(u) && !/\bFEMALE\b/.test(u)) return 'M';
-  if (/\bFEMALE\b/.test(u)) return 'F';
-  return null;
-}
 
 export function resolveMaxBed(
   roomMaxBed: number | null | undefined,
@@ -54,6 +38,27 @@ export function isEffectiveShare(r: {
   if (!r.shareEligible) return false;
   if (r.adults !== 1) return false;
   return normalizeShareGender(r.shareGender) !== null;
+}
+
+/**
+ * Nafta closed pair: two share-eligible singles of opposite gender on one door.
+ * Open same-gender pool stays forbidden for mixed genders. Not auto-share onto exclusive family.
+ */
+export function canFormClosedSharePair(input: {
+  requestedShare: boolean;
+  candidateAdults: number;
+  candidateGender: ShareGender;
+  neighbors: Array<{ shareEligible: boolean; shareGender: string | null; adults: number }>;
+  maxBed: number;
+}): boolean {
+  if (!input.requestedShare) return false;
+  if (input.candidateAdults !== 1) return false;
+  if (input.maxBed < 2) return false;
+  if (input.neighbors.length !== 1) return false;
+  const n = input.neighbors[0]!;
+  if (!isEffectiveShare(n)) return false;
+  const nGender = normalizeShareGender(n.shareGender);
+  return nGender != null && nGender !== input.candidateGender;
 }
 
 function eachNight(from: Date, to: Date): Date[] {
@@ -280,6 +285,7 @@ export async function resolveDoorAssignment(input: {
   });
 
   let shareEligible = input.candidate.shareEligible;
+  const requestedShare = input.candidate.shareEligible;
   let shareGender =
     normalizeShareGender(input.candidate.shareGender) ??
     normalizeShareGender(input.candidate.guestGender);
@@ -344,13 +350,31 @@ export async function resolveDoorAssignment(input: {
 
   const candGender = shareGender!;
   const pullableNeighborIds: string[] = [];
+  let closedPair = false;
   for (const n of neighbors) {
     if (isEffectiveShare(n)) {
       const poolGender = normalizeShareGender(n.shareGender);
       if (poolGender !== candGender) {
+        if (
+          canFormClosedSharePair({
+            requestedShare,
+            candidateAdults: input.candidate.adults,
+            candidateGender: candGender,
+            neighbors,
+            maxBed,
+          })
+        ) {
+          closedPair = true;
+          continue;
+        }
         throw new Error('Opposite gender cannot share this room');
       }
       continue;
+    }
+    if (closedPair) {
+      throw new Error(
+        `Room conflict: overlapping stay cannot join share pool (${n.checkInDate.toISOString().slice(0, 10)} – ${n.checkOutDate.toISOString().slice(0, 10)})`,
+      );
     }
     const nGate = gateRowForShare(n);
     if (!nGate.ok || nGate.gender !== candGender) {
@@ -377,8 +401,10 @@ export async function resolveDoorAssignment(input: {
     maxBed,
   };
 
-  const pulledNeighborIds = [...shareNeighbors.map((n) => n.id), ...pullableNeighborIds];
-  if (pullableNeighborIds.length > 0) {
+  const pulledNeighborIds = closedPair
+    ? [...shareNeighbors.map((n) => n.id)]
+    : [...shareNeighbors.map((n) => n.id), ...pullableNeighborIds];
+  if (!closedPair && pullableNeighborIds.length > 0) {
     const pulled = await openSharePoolForDoor({
       roomId: input.roomId,
       checkIn: input.checkIn,

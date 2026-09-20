@@ -168,17 +168,22 @@ export default function PricingPolicyPage() {
             <p className="m-0 mb-2 font-semibold">{t('related')}</p>
             <ul className="m-0 list-disc space-y-1 pl-5">
               <li>
+                <Link className="text-[#2980B9] hover:underline" href="/settings/bar-calendar">
+                  {t('linkBarCalendar')}
+                </Link>
+              </li>
+              <li>
                 <Link className="text-[#2980B9] hover:underline" href="/settings/master-data">
                   {t('linkRatePlans')}
                 </Link>
               </li>
               <li>
-                <Link className="text-[#2980B9] hover:underline" href="/distribution/child-matrix">
+                <Link className="text-[#2980B9] hover:underline" href="/settings/child-matrix">
                   {t('linkChildMatrix')}
                 </Link>
               </li>
               <li>
-                <Link className="text-[#2980B9] hover:underline" href="/distribution/yield-rules">
+                <Link className="text-[#2980B9] hover:underline" href="/settings/yield-rules">
                   {t('linkYieldRules')}
                 </Link>
               </li>

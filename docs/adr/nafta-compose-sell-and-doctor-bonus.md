@@ -17,7 +17,7 @@
 
 ## Clinic bonus
 
-`ProcedureOrder.bonusEligible` at COMPLETED via `resolveBonusEligible` (`amountNet > 0`, not imported). Doctor-bonus report filters `bonusEligible`, splits **IN_HOUSE / WALK_IN**, applies `Tenant.doctorBonusPercentInHouse` / `doctorBonusPercentWalkIn` (default **0** until FO sets). Package confirm lines with amountNet 0 are excluded.
+`ProcedureOrder.bonusEligible` at COMPLETED via `resolveBonusEligible` (`amountNet > 0`, not imported). Doctor-bonus report filters `bonusEligible`, splits **IN_HOUSE / WALK_IN**, applies `Tenant.doctorBonusPercentInHouse` / `doctorBonusPercentWalkIn` (default **0** until FO sets). Package confirm / in-quota lines with amountNet 0 are excluded (W3 entitlement charge keeps package fulfillment at 0).
 
 ## Related
 

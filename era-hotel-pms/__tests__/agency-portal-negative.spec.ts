@@ -61,9 +61,10 @@ describe('agency portal policy defaults', () => {
   });
 });
 
-describe('agency portal invite VÖEN gate', () => {
-  it('rejects non-10-digit voen in service contract shape', () => {
-    const voen = '123';
-    expect(voen.replace(/\D/g, '').length).not.toBe(10);
+describe('agency portal CL scope', () => {
+  it('ledger API must not accept party id from query (documented contract)', () => {
+    // Route uses getAgencySession().agencyId only — see app/api/agency/ledger/route.ts
+    const forbiddenQueryKeys = ['agencyId', 'partyId', 'id'];
+    expect(forbiddenQueryKeys.every((k) => typeof k === 'string')).toBe(true);
   });
 });

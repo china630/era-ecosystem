@@ -53,6 +53,9 @@ model Outlet {
   shifts             PosShift[]
   menuCategories     MenuCategory[]
   dailyMenuEntries   DailyMenuEntry[]
+  soldOut            MenuItemSoldOut[]
+  staff              StaffRoster[]
+  publicSlug         String?  @unique @map("public_slug")
 
   @@map("outlets")
   @@unique([organizationId, code])
@@ -138,6 +141,7 @@ model MenuItem {
   lines      TicketLine[]
   dailyEntries DailyMenuEntry[]
   priceHistory MenuItemPrice[]
+  soldOut      MenuItemSoldOut[]
 
   @@unique([categoryId, plu])
   @@map("menu_items")
@@ -158,6 +162,21 @@ model MenuItemPrice {
 
   @@index([menuItemId, effectiveFrom])
   @@map("menu_item_prices")
+}
+
+model MenuItemSoldOut {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  menuItemId     String   @map("menu_item_id")
+  outletId       String   @map("outlet_id")
+  soldOut        Boolean  @default(true)
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  menuItem       MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  outlet         Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, menuItemId, outletId])
+  @@index([organizationId])
+  @@map("menu_item_sold_out")
 }
 
 model DailyMenuEntry {
@@ -234,11 +253,26 @@ model PosShift {
   openedAt    DateTime       @default(now()) @map("opened_at")
   closedAt    DateTime?      @map("closed_at")
   openingCash Decimal        @default(0) @map("opening_cash") @db.Decimal(12, 2)
+  /** Bound fiscal KKM for this ops shift (F3). */
+  fiscalDeviceId String?     @map("fiscal_device_id")
+  /** Bound bank POS for card tenders (F3). */
+  bankTerminalId String?     @map("bank_terminal_id")
   outlet      Outlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
 
   @@index([outletId, status])
   @@map("pos_shifts")
   @@index([organizationId])
+}
+
+model FnbOrgProfile {
+  organizationId String   @id @map("organization_id")
+  edition        String   @default("hotel")
+  hotelMode      Boolean  @default(true) @map("hotel_mode")
+  waiterPinPacks Int      @default(1) @map("waiter_pin_packs")
+  activeModules  String[] @default([]) @map("active_modules")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("fnb_org_profiles")
 }
 
 model StaffRoster {
@@ -247,11 +281,14 @@ model StaffRoster {
   staffCode      String @map("staff_code")
   fullName       String   @map("full_name")
   pinHash        String   @map("pin_hash")
+  pinRole        String   @default("CASHIER") @map("pin_role")
+  outletId       String?  @map("outlet_id")
   globalPersonId String?  @map("global_person_id")
   financeEmployeeId String? @map("finance_employee_id")
   cpEmploymentId  String? @unique @map("cp_employment_id")
   active         Boolean  @default(true)
   createdAt      DateTime @default(now()) @map("created_at")
+  outlet         Outlet?  @relation(fields: [outletId], references: [id])
 
   @@map("staff_rosters")
   @@unique([organizationId, staffCode])
@@ -271,12 +308,15 @@ model PinClockEvent {
 }
 
 model Role {
-  id              String @id @default(cuid())
-  organizationId String @map("organization_id")
-  code            String
-  name            String
-  permissionsJson String @default("[]") @map("permissions_json")
-  users           User[]
+  id                       String  @id @default(cuid())
+  organizationId           String  @map("organization_id")
+  code                     String
+  name                     String
+  permissionsJson          String  @default("[]") @map("permissions_json")
+  isSystem                 Boolean @default(false) @map("is_system")
+  cloneFromCode            String? @map("clone_from_code")
+  permissionCatalogVersion Int     @default(0) @map("permission_catalog_version")
+  users                    User[]
 
   @@map("roles")
   @@unique([organizationId, code])

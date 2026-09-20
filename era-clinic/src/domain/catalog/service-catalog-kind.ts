@@ -7,10 +7,10 @@ export function inferServiceCatalogKind(
 ): ServiceCatalogKind {
   const c = code.trim().toUpperCase();
   if (!c) return "OTHER";
-  if (c.startsWith("SVC-")) return "PROCEDURE";
-  if (department && department.trim()) return "PROCEDURE";
-  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return "LAB";
+  // Code prefixes beat department: Chingiz tariff fills şöbə on LAB/USG/CARDIO rows.
   if (c.startsWith("VISIT-") || c === "CONSULT") return "VISIT";
+  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return "LAB";
+  if (c.startsWith("SVC-")) return "PROCEDURE";
   if (
     c.startsWith("CT-") ||
     c.startsWith("MR-") ||
@@ -33,6 +33,7 @@ export function inferServiceCatalogKind(
   ) {
     return "DIAGNOSTIC";
   }
+  if (department && department.trim()) return "PROCEDURE";
   return "OTHER";
 }
 

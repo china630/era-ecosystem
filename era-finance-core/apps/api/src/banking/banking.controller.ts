@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Body,
@@ -25,9 +28,8 @@ import {
 import { BankStatementChannel } from "@erafinance/database";
 import { UserRole } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import { requireOrgRole } from "../auth/require-org-role";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
@@ -78,9 +80,10 @@ export class BankingController {
   accountCards(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
   ) {
     const lt = parseLedgerTypeQuery(ledgerType);
-    return this.banking.getAccountCards(organizationId, lt);
+    return this.banking.getAccountCards(organizationId, lt, accountingBookId);
   }
 
   @Get("balances")
@@ -93,8 +96,8 @@ export class BankingController {
   }
 
   @Get("direct-settings")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
       "Masked Open Banking / REST sync settings (URLs, token presence; no raw secrets)",
@@ -104,8 +107,8 @@ export class BankingController {
   }
 
   @Patch("direct-settings")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Update direct banking REST settings (per-bank URL, token)" })
   patchDirectSettings(
     @OrganizationId() organizationId: string,
@@ -153,8 +156,8 @@ export class BankingController {
   }
 
   @Post("cash-out")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Нəqd məxaric: Дт 731 / Кт 101.01 + строка реестра (касса)",
   })
@@ -163,12 +166,12 @@ export class BankingController {
     @Body() dto: CashOutDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.banking.manualCashOut(organizationId, dto, requireOrgRole(user));
+    return this.banking.manualCashOut(organizationId, dto, requireOrgPolicySubject(user));
   }
 
   @Post("manual-entry")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Ручная банковская операция: проводка (Дт/Кт банк + второй счёт) + строка реестра",
@@ -178,21 +181,20 @@ export class BankingController {
     @Body() dto: ManualBankEntryDto,
     @CurrentUser() user: AuthUser,
   ) {
-    requireOrgRole(user);
-    return this.banking.manualBankEntry(organizationId, dto);
+    return this.banking.manualBankEntry(organizationId, dto, requireOrgPolicySubject(user));
   }
 
   @Get("bank-accounts")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "CRUD: list organization bank accounts" })
   listBankAccounts(@OrganizationId() organizationId: string) {
     return this.banking.listOrganizationBankAccounts(organizationId);
   }
 
   @Post("bank-accounts")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "CRUD: create organization bank account" })
   createBankAccount(
     @OrganizationId() organizationId: string,
@@ -202,8 +204,8 @@ export class BankingController {
   }
 
   @Patch("bank-accounts/:id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "CRUD: update organization bank account" })
   updateBankAccount(
     @OrganizationId() organizationId: string,
@@ -214,8 +216,8 @@ export class BankingController {
   }
 
   @Delete("bank-accounts/:id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "CRUD: archive/delete organization bank account" })
   deleteBankAccount(
     @OrganizationId() organizationId: string,
@@ -225,8 +227,8 @@ export class BankingController {
   }
 
   @Post("transfers")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Внутренний перевод между своими счетами (через транзит 231, комиссия на 731)",
@@ -241,8 +243,8 @@ export class BankingController {
   }
 
   @Post("conversions")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Конвертация между своими валютными счетами с расчётом курсовой разницы (662/762)",
@@ -257,8 +259,8 @@ export class BankingController {
   }
 
   @Post("cash-deposits")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Взнос наличных на банковский счет (источник: касса 251 или средства учредителя 545)",
@@ -298,8 +300,8 @@ export class BankingController {
   }
 
   @Get("payment-drafts")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Исходящие платежные драфты в банк" })
   listPaymentDrafts(
     @OrganizationId() organizationId: string,
@@ -314,8 +316,8 @@ export class BankingController {
   }
 
   @Post("payment-drafts/send-all")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Отправить все черновики исходящих платежей (PENDING) в direct banking по очереди",
@@ -328,8 +330,8 @@ export class BankingController {
   }
 
   @Post("payment-drafts/send")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Отправка исходящего платежа в direct banking адаптер" })
   sendPaymentDraft(
     @OrganizationId() organizationId: string,

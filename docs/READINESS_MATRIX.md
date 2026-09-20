@@ -184,15 +184,16 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 
 ### 2.6 Fiscalization (KKM)
 
-Фискалка привязана к точке B2C-расчёта (не к каждому сателлиту). Сейчас — три независимых mock/stub-реализации; реального НБК-драйвера нет. План унификации в `@era/fiscal` + правило «без двойной фискализации»: [ADR sanatorium-vnext](./adr/sanatorium-vnext.md) SV7/SV14.
+Фискалка привязана к точке B2C-расчёта (не к каждому сателлиту). Сейчас — mock/stub в `@era/fiscal` + env; реального НБК-драйвера нет. Канон (N ККМ/POS на оргу, не env): [ADR era-fiscal-kkm-kit](./adr/era-fiscal-kkm-kit.md). SV7/SV14: [sanatorium-vnext](./adr/sanatorium-vnext.md).
 
 | Capability | Fin | Orch | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
 |------------|-----|------|-----|-----|-----|-----|-----|-----|------|-----|-----|
-| KKM provider (mock/stub) | N/A | N/A | Stub | Stub | Stub | N/A | N/A | N/A | Stub | Stub | `@era/fiscal` |
-| Real НБК/КИЗ driver | N/A | N/A | — | — | — | N/A | N/A | N/A | — | — | Future |
-| Shared `@era/fiscal` | N/A | N/A | Live | Live | Live | N/A | N/A | N/A | Live | Live | `packages/era-fiscal` |
+| KKM provider (mock/stub) | N/A | N/A | Stub | Stub | Stub | N/A | N/A | N/A | Stub | Stub | `@era/fiscal` + org devices |
+| Real НБК/КИЗ / Omnitech driver | N/A | N/A | — | — | — | N/A | N/A | N/A | — | — | VENDOR until field cert |
+| Shared `@era/fiscal` | N/A | N/A | Live | Live | Live | N/A | N/A | N/A | Live | Live | `packages/era-fiscal` F0–F5 |
+| ERA POS station meter (+19) | N/A | Live | — | Live | Live | N/A | N/A | N/A | — | — | `POS_STATION_MONTHLY` F6 |
 
-**Stub** = `ERA_FISCAL_PROVIDER`/`KKM_DRIVER=mock|nbc|cybernet` (nbc/cybernet stubs). Clinic cashier uses same package; revenue GL remains on visit-complete (settlement-only at pay).
+**Stub** = device catalog empty or `providerId=mock`. Live vendor = STUB/VENDOR until field cert. Clinic cashier uses `fiscalizeForSatellite`. Kit is not a billed SKU; station overage is `CAPACITY_DRIVERS`.
 
 ---
 

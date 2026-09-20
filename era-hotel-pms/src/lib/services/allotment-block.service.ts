@@ -75,9 +75,25 @@ export async function createAllotmentBlock(input: {
     if (line.quantity < 1) throw new Error('Line quantity must be >= 1');
   }
 
+  if (input.salesContractId) {
+    const contract = await prisma.salesContract.findUnique({
+      where: { id: input.salesContractId },
+    });
+    if (!contract) throw new Error('Sales contract not found');
+    const seasonFrom = new Date(contract.validFrom.toISOString().slice(0, 10));
+    const seasonTo = contract.validTo
+      ? new Date(contract.validTo.toISOString().slice(0, 10))
+      : null;
+    const from = new Date(input.validFrom.toISOString().slice(0, 10));
+    const to = new Date(input.validTo.toISOString().slice(0, 10));
+    if (from < seasonFrom || (seasonTo && to > seasonTo)) {
+      throw new Error('Block dates must sit inside the linked sales contract season');
+    }
+  }
+
   return prisma.allotmentBlock.create({
     data: {
-      code: input.code,
+      code: input.code.trim().toUpperCase(),
       name: input.name,
       status: input.status ?? 'TENTATIVE',
       agencyId: input.agencyId,
@@ -94,7 +110,17 @@ export async function createAllotmentBlock(input: {
         })),
       },
     },
-    include: { lines: true },
+    include: {
+      agency: { select: { id: true, code: true, name: true } },
+      salesContract: { select: { id: true, code: true, name: true } },
+      lines: {
+        include: {
+          roomType: { select: { id: true, code: true, name: true } },
+          ratePlan: { select: { id: true, code: true, name: true } },
+        },
+      },
+      _count: { select: { bookings: true } },
+    },
   });
 }
 
@@ -144,7 +170,17 @@ export async function updateAllotmentBlock(
     return tx.allotmentBlock.update({
       where: { id },
       data,
-      include: { lines: true },
+      include: {
+        agency: { select: { id: true, code: true, name: true } },
+        salesContract: { select: { id: true, code: true, name: true } },
+        lines: {
+          include: {
+            roomType: { select: { id: true, code: true, name: true } },
+            ratePlan: { select: { id: true, code: true, name: true } },
+          },
+        },
+        _count: { select: { bookings: true } },
+      },
     });
   });
 }

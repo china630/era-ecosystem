@@ -2,13 +2,17 @@ import {
   getChannelAdapterReadiness,
   resolveChannelAdapter,
 } from '@/lib/channel/adapters/registry';
+import { countPendingAriJobs } from '@/lib/channel/channel-ari-queue.service';
+import { getChannelManagerBinding } from '@/lib/channel/channel-manager-binding.service';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
 import { prisma } from '@/lib/prisma';
 
 export async function getChannelHealth() {
-  const adapter = resolveChannelAdapter();
-  const readiness = getChannelAdapterReadiness(adapter.code);
+  const adapter = await resolveChannelAdapter();
+  const readiness = await getChannelAdapterReadiness();
   const policy = await getHotelPolicy();
+  const binding = await getChannelManagerBinding();
+  const pendingAri = await countPendingAriJobs();
 
   const [lastPush, lastPull, lastError, lastOpenError] = await Promise.all([
     prisma.outboundEventLog.findFirst({
@@ -50,6 +54,9 @@ export async function getChannelHealth() {
     envReady: readiness.envReady,
     envFlags: readiness.envFlags,
     channelAutoPushEnabled: policy.channelAutoPushEnabled,
+    provider: binding?.provider ?? 'off',
+    live: binding?.live ?? false,
+    pendingAriJobs: pendingAri,
     lastPushAt: lastPush?.createdAt ?? null,
     lastPushStatus: lastPush?.status ?? null,
     lastPullAt: lastPull?.createdAt ?? null,

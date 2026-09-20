@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -14,9 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
@@ -38,7 +38,7 @@ import {
 @ApiTags("inventory-wms")
 @ApiBearerAuth("bearer")
 @Controller("inventory/wms")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule("inventory")
 export class WmsController {
   constructor(
@@ -78,7 +78,7 @@ export class WmsController {
   }
 
   @Post("zones")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Create warehouse zone" })
   createZone(
     @OrganizationId() organizationId: string,
@@ -88,7 +88,7 @@ export class WmsController {
   }
 
   @Patch("zones/:zoneId")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Update warehouse zone" })
   updateZone(
     @OrganizationId() organizationId: string,
@@ -99,7 +99,7 @@ export class WmsController {
   }
 
   @Delete("zones/:zoneId")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Delete empty warehouse zone" })
   deleteZone(
     @OrganizationId() organizationId: string,
@@ -122,7 +122,7 @@ export class WmsController {
   }
 
   @Post("receive")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.WAREHOUSE_KEEPER)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Receive stock into bin" })
   receive(
     @OrganizationId() organizationId: string,
@@ -132,7 +132,7 @@ export class WmsController {
   }
 
   @Post("issue")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.WAREHOUSE_KEEPER)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Issue stock from bin" })
   issue(
     @OrganizationId() organizationId: string,
@@ -142,7 +142,7 @@ export class WmsController {
   }
 
   @Post("transfer")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.WAREHOUSE_KEEPER)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Transfer stock between bins" })
   transfer(
     @OrganizationId() organizationId: string,
@@ -152,7 +152,7 @@ export class WmsController {
   }
 
   @Post("adjust")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Adjust bin quantity (cycle count)" })
   adjust(
     @OrganizationId() organizationId: string,
@@ -180,7 +180,7 @@ export class WmsController {
   }
 
   @Post("pick-lists")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.WAREHOUSE_KEEPER)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Create pick list (optionally from invoice)" })
   createPickList(
     @OrganizationId() organizationId: string,
@@ -190,7 +190,7 @@ export class WmsController {
   }
 
   @Post("pick-lists/:pickListId/confirm-line")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.WAREHOUSE_KEEPER)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Confirm pick line with bin scan" })
   confirmPickLine(
     @OrganizationId() organizationId: string,
@@ -201,7 +201,7 @@ export class WmsController {
   }
 
   @Post("pick-lists/:pickListId/cancel")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Cancel pick list" })
   cancelPickList(
     @OrganizationId() organizationId: string,

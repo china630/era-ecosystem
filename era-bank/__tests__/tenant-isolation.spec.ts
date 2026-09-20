@@ -21,4 +21,10 @@ describe("era-bank SHARED-schema isolation (CI, not live pool)", () => {
       AND: [{ organizationId: "org-a" }, { status: "ACTIVE" }],
     });
   });
+
+  it("staff login must scope OpsUser by organizationId (never username-only)", () => {
+    expect(mergeWhere({ username: "teller-a" }, "org-a")).toEqual({
+      AND: [{ organizationId: "org-a" }, { username: "teller-a" }],
+    });
+  });
 });

@@ -56,7 +56,7 @@ Worst **in-scope** class (NONE < PARTIAL < SCREEN < SHIPPED < SHOW). HEADLESS / 
 | Bank | ✅ lab | ✅ | **SHOW** | — | BANK-REF-01 **HEADLESS** (file/env snapshot); rails VENDOR; ≠ full ABS |
 | Bank DBO | ✅ lab | ✅ | **SHOW** | — | `/open-api` **SCREEN** (keys UI); AC-DBO-OPEN still Scaffold 🟡; ASAN VENDOR |
 | Platform | 🟡 | 🟡 | **SCREEN** | — | Placement `/super-admin/orgs/{id}/placement` **SCREEN**; AC-CP-TOPO still Scaffold 🟡 |
-| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-47 TTK **SCREEN**/API (UAT open → not SHOW); CLI-49 physio **SCREEN** (S admin + chips + empty-catalog + rematch; UAT open); CLI-25/32/34 intake checklist + checkup print **SCREEN** (UAT open); CLI-25/48 Baku slots **SCREEN**; CLI-50 Nafta package Select + `?episode=` **SCREEN** (NONE→SCREEN Wave A); CLI-51 program quota knots `/admin/templates` **SCREEN** (Wave B); CLI-52 first-day confirm **SCREEN** (Wave C; no Confirm all); CLI-53 doctor bonus extras **SCREEN** (Wave D); CLI-54 multi-episode sanatorium list **SCREEN** (Wave E); CLI-55 episode-as-course card switcher + walk-in close **SCREEN** (UAT open → not SHOW); CLI-RBAC-01 `/admin/access` **SCREEN** (UAT open → not SHOW); extra tickets `/reception/extra-tickets` **SHOW** (HOT-06 extension HEADLESS) | Fiscal / HL7 VENDOR; Demo 🟡 |
+| Clinic | 🟡 | 🟡 | **SCREEN** | CLI-10 visit CPOE + print **SHOW** (UAT punched; FHIR/whole-visit debt); CLI-47 TTK **SCREEN**/API (UAT open → not SHOW); CLI-49 physio **SCREEN** (S admin + chips + empty-catalog + rematch; UAT open); CLI-25/32/34 intake checklist + checkup print **SCREEN** (UAT open); CLI-25/48 Baku slots **SCREEN**; CLI-50 Nafta package Select + `?episode=` **SCREEN** (NONE→SCREEN Wave A); CLI-51 program quota knots `/admin/program-templates` **SCREEN** (Wave B); CLI-52 first-day confirm **SCREEN** (Wave C; no Confirm all); CLI-53 doctor bonus extras **SCREEN** (Wave D); CLI-54 multi-episode sanatorium list **SCREEN** (Wave E); CLI-55 episode-as-course card switcher + walk-in close **SCREEN** (UAT open → not SHOW); CLI-56 care team multi-doctor **SCREEN** (UAT open → not SHOW); CLI-57 package/extras assign modal **SCREEN** (UAT open → not SHOW); CLI-RBAC-01 `/admin/access` **SCREEN** (UAT open → not SHOW); extra tickets `/reception/extra-tickets` **SHOW** (HOT-06 extension HEADLESS; Pay path CLI-57) | Fiscal / HL7 VENDOR; Demo 🟡 |
 | Finance | 🟡 | ❌ | **SCREEN** | — (ERP paths exist) | tax/stat/contracts/EQF = SCREEN; worker HEADLESS; e-qaimé VENDOR |
 | F&B | 🟡 | 🟡 | **SCREEN** | — | Person card N/A (staff via HR); admin menu/tables/settings/daily-menu Done; KKM VENDOR |
 | Retail | 🟡 | 🟡 | **SCREEN** | — | No customer `globalPersonId` SoR; admin replenishment + supplier-match/settings/stock-check done; fiscal VENDOR |
@@ -82,34 +82,60 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-06 | Hotel | live bridge | Y ingest + MV3 outbox | extension **settings** HEADLESS; clinic `/reception/extra-tickets` **SHOW** (Wave 6 lab); Super-Admin org hub policy **SHOW** (Wave 6 lab) | **HEADLESS** (extension write) | Field UAT of SPA Insert before SHIPPED; do not claim SHIPPED/`ga` | HOT-05 import SuperAdmin SHIPPED |
 | BANK-REF-01 | Bank | hub catalog snapshot | Y | file/env loader | **HEADLESS** | Owner: not a cashier workflow | BK-FX teller SHIPPED |
 | IND-MDM-PERSON | Thin industry | person card | CRM only | CRM Done; others N/A or legal VÖEN | **N/A** / **PARTIAL** | Re-audit 2026-08-18: do not invent person SoR | Hotel / Clinic / Finance person UI SHIPPED |
+| FIN-EMAS-01 | Finance | ƏMAS queue + convert-FIN + extension prefill | Y STUB | `/hr/emas-queue`, employee card convert-FIN | **SCREEN** | Live portal UAT open; Status=STUB | no auto-İmzala; S2S 503 |
+| FIN-BOOK-MGMT-01 | Finance | MGMT labor delta | Y API | `/hr/mgmt-labor-delta` | **SCREEN** | Rebuild UI; not SHIPPED / not ga | OWNER/ADMIN/DIRECTOR |
 | FIN-GL-02 | Finance | manual journal voucher | Y | `/accounting/adjustments` | **SCREEN** | Lab RT: preview, PDF, reverse, copy, basis links | wave 3 UX |
+| FIN-BOOK-01 | Finance | accounting books + comparison | Y | `/accounting/books`, `/reporting/compare-books` | **SCREEN** | UAT-SMOKE § Accounting books + compare | slot upsell; arbitrary-pair mirror remains |
 | FIN-AR-CRADJ-01 | Finance | invoice credit adjustment | Y | `ViewInvoiceModal` | **SCREEN** | UAT-SMOKE § Invoice credit adjustment | not PDF credit note |
 | FIN-FA-DON-01 | Finance | FA in-kind donation | Y | `/fixed-assets` lifecycle | **SCREEN** | UAT-SMOKE § FA donation | GL template hint only |
+| FIN-TCC-01 | Finance | trade credit lock + buyer cabinet | Y | `/crm/trade-credit`, counterparty facility (А–Г staff), `/buyer`, Orch `/buyer/login` | **SCREEN** | UAT-SMOKE § FIN-TCC; COVERAGE API until Lab RT | Phase 1 policy eng; А–Г finance-only; no Pilot |
+| FIN-TCC-02 | Finance | trade credit mobile / PWA buyer | Y | `/buyer` responsive + grant QR + `/buyer/grants/:id`, notify opt-in | **SCREEN** | COVERAGE API; same SKU `trade_credit_control` | Phase 2a eng; no Pilot |
+| FIN-TCC-03 | Finance | trade credit enrichment deep check | Y | facility **Deep check** panel (finance-only) | **SCREEN** | meter `TRADE_CREDIT_ENRICH`; no buyer/wholesale leak | Phase 2b eng; no Pilot |
+| FIN-TCC-04 | Finance | trade credit pay-in-cabinet + factor lead | Y | `/buyer` open invoices Pay + Get paid today | **SCREEN** | SKU `trade_credit_factor_lead` referral; no GL | Phase 2c eng; no Pilot |
+| FIN-TCC-05 | Finance | trade credit WC suggested limit | Y | facility suggested/proposed + kind; `/crm/trade-credit` decisions + org knobs | **SCREEN** | COVERAGE **API**; UAT-SMOKE § FIN-TCC Phase 3; no buyer leak | Phase 3 eng; no Pilot |
+| FIN-EXT-01 | Finance | invoice extra fields | Y API | `/settings/extra-fields`, invoice create/view modal | **SCREEN** | COVERAGE API; not GL | W1; no Pilot |
+| FIN-VIEW-01 | Finance | invoice saved views | Y API | `/sales/invoices` EraListWorkspace + EraSavedViewsBar | **SCREEN** | COVERAGE API; whitelist only | W2; no Pilot |
+| FIN-PRINT-01 | Finance | commercial invoice print snapshot | Y API | `/print/invoice/:id`, ViewInvoiceModal Print, `/settings/print-placeholders` | **SCREEN** | COVERAGE API; vendor HTML; not fiscal | W3; no Pilot |
+| FIN-RBAC-01 | Finance | CP JWT grant doors (no local matrix) | Y `PermissionsGuard` + `can()` | Finance ERP via `can()`; matrix = Orch `/settings/access` | **SCREEN** | AC-FIN-RBAC 🟡 out of BE rollup; UAT open → not SHOW | Wave 5 Variant A consumer |
 | FIN-STAT-01 | Finance | Goskomstat | Y | `/reporting/statforms` | **SCREEN** | UAT-SMOKE UI | duplicate SHIPPED row in later COVERAGE block = engine+path, still Demo ❌ |
 | FIN-CTR-01 | Finance | contract limits | Y | `/contracts` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-PRC-01 / FIN-AP-01 | Finance | procurement / AP aging | Y | `/procurement/protocols`, `/reporting/ap-aging` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-EQAIME-02 / IN-01 | Finance | EQF + incoming | Y | registry / inbox | **SCREEN** | UAT-SMOKE UI | submit S2S = VENDOR/STUB |
 | FIN-HR-PAY / FA / IA | Finance | payroll / FA / IA | Y | `/payroll`, `/fixed-assets`, `/intangible-assets` | **SCREEN** | UAT-SMOKE UI | |
 | CP-WF-VAC/ORD/STAT/TS | Platform | vacation / orders / ştat / timesheets | Y | `/workspace/workforce/*` | **SCREEN** | UAT-SMOKE-PLATFORM | month grid CP master; Finance UI link-only; status gates; not SHOW |
+| CP-WF-ATT-01 | Platform | FaceID / attendance → DRAFT | Y | `/workspace/workforce/attendance` | **SCREEN** | UAT field tablet open; Status=API | device token + rebuild; not SHOW |
+| CP-WF-EMP-01 / CP-WF-SEC-01 | Platform | employments Login & access + security matrix/bindings | Y | `/workspace/workforce/employments`, `/security`, `/security/bindings`, `/security/audit` | **SCREEN** | UAT-SMOKE-PLATFORM | per-person satellite checkboxes; matrix = position defaults; audit CatalogField + actor/person labels (P1); not SHOW |
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
 | CP-BILL-OWNER-01 | Platform | invoices / orders | Y | `/settings/subscription\|invoices\|orders` | **SCREEN** | UAT-SMOKE | |
 | HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | FO SHOW rollup unchanged |
+| HOT-BOOK-04 | Hotel | reservation card IA | Y | header snapshot + Stay Details regroup | **SCREEN** | UAT open; Status=API | ADR hotel-reservation-card-and-party-ops |
+| HOT-BOOK-06…09 | Hotel | card right-pane density | Y | Guests/Pricing/Folio/Notes tabs | **SCREEN** | UAT §45–§48 open | no Opera windows |
+| HOT-FO-05 | Hotel | Depart guest | Y | Guests ⋮ + DepartGuestModal | **SCREEN** | UAT §43 open | stay IN_HOUSE; person event |
+| HOT-FO-06/07 | Hotel | Move guest / Swap rooms | Y | move/swap APIs + StaysBar | **SCREEN** | UAT §44 open | sibling group only |
+| HOT-FO-08 | Hotel | reissue key task | Y tasks create | FO task after Depart/Move/Swap | **STUB** | no encoder hardware | — |
 | HOT-UE-01 | Hotel | unit economics | Y | `/executive/unit-economics` | **SCREEN** | deepen + UAT | Hotel SHOW rollup unchanged (core FO SHOW) |
 | HOT-RPT-01/02 | Hotel | management PDF catalog + nightly ZIP | Y | `/reports/*` hubs + cubes | **SCREEN** | W1–W3 catalog + ZIP; email cron HEADLESS; out of Hotel SHOW rollup | HOT-NA-03 ops grids already SHIPPED |
 | HOT-AGP-01/02/03 | Hotel | agency portal + FO inbox | Y | `/agency/*` + `/fo/agency-inbox` | **SCREEN** | P0–P1; AC-HOT-AGP 🟡; out of Hotel SHOW rollup | ADR hotel-agency-portal |
+| HOT-AGP-04 | Hotel | portal own CL statement | Y session ledger | `/agency/ledger` | **SHOW** | HOT-AGP-04 SHIPPED; UAT §27.12 | ADR §7 read-only |
 | CLI-50 | Clinic | Nafta package Select + deep-link chart | Y lifecycle + templates | `/sanatorium` Select + `?episode=` | **SCREEN** | UAT CLI-50 open; AC-CLI-SAN-PKG 🟡 | Wave A dual-run |
-| CLI-51 | Clinic | PDF quota knots + template editor | Y `quotaFor` / recalc | `/admin/templates` program knots | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B |
+| CLI-51 | Clinic | PDF quota knots + versioned entitlement editor | Y `quotaFor` / version bump + snapshot | `/admin/program-templates` blocks+vN; member picker cascaded by kind | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B; open stays pinned |
 | CLI-52 | Clinic | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP; 4th same-day paid | Y exam-prefix + daily-cap + POST guard | `/sanatorium` + card + `/admin/settings` | **SCREEN** | UAT CLI-52 open; AC-CLI-SAN-DAY1 🟡 | Wave C; FIFO unchanged |
 | CLI-53 | Clinic | Doctor bonus extras-only + origin buckets | Y `bonusEligible` + % settings | `/reports/procedures` doctor-bonus | **SCREEN** | UAT CLI-53 open; AC-CLI-BONUS 🟡 | Wave D |
 | CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E |
 | CLI-55 | Clinic | Episode as care course (switcher, children, walk-in close) | Y | Y | **SCREEN** | Card CatalogField + Close + cron; UAT open → not SHOW | not CLI-54 list rows alone |
-| CLI-RBAC-01 | Clinic | Role×screen/API matrix (Variant A) | Y ops+admin permission catalog | `/admin/access` | **SCREEN** | AC-CLI-RBAC 🟡; UAT open → not SHOW | Phase A Waves 1–3 |
+| CLI-56 | Clinic | Episode care team (multi-doctor) | Y | Y | **SCREEN** | Card identity+package+`+ Doctor`; clinical gated; UAT open → not SHOW | extends CLI-55 / assigned scope |
+| CLI-57 | Clinic | Package balance assign + extras Pay→plan→ticket | Y package-assign / extras-prescribe / Pay | Y Müalicə kartı modals + schedule cards | **SCREEN** | UAT open → not SHOW; amends CLI-52 proposed confirm UX | ADR clinic-episode-procedure-assign-modal |
+| CLI-RBAC-01 | Clinic | Role×screen/API matrix + custom roles | Y ops+admin permission catalog; system seed; clone | `/admin/access` | **SCREEN** | AC-CLI-RBAC 🟡; UAT open → not SHOW | Phase A + custom roles |
+| HOT-RBAC-01 | Hotel | Role×permission matrix + custom roles | Y FO/folio/HK/admin catalog; system seed; clone | `/settings/access` | **SCREEN** | AC-HOT-RBAC 🟡; UAT open → not SHOW | Variant A |
+| FNB-RBAC-01 | F&B | Role×permission matrix + custom roles | Y till/KDS/admin catalog; system seed; clone; PIN bind | `/admin/access` | **SCREEN** | AC-FNB-RBAC 🟡; UAT open → not SHOW | Variant A |
+| BANK-RBAC-01 | Bank | Role×permission matrix + custom roles | Y ops catalog; system seed; clone; BFF grant doors | `/admin/access` | **SCREEN** | AC-BNK-RBAC 🟡; UAT open → not SHOW | Variant A |
 | CLI-WF-PWD-01 | Clinic | Local staff change own password | Y `PATCH /api/auth/password` | `/account/password` | **SHIPPED** | UAT first login 0000 then change; SSO 403 | not CP password UI |
 | HOT-PKG-02 | Hotel | Medical SKU resolve + notes | Y resolve + notes import | import wizard / notes tab | **SCREEN** | UAT §38 open; AC-HOT-PKG-NAFTA 🟡 | Wave A |
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |
 | HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey` | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
 | HOT-TOUR-01 | Hotel | Nafta weekend tours | Y | `/tours` `/tours/[id]/print` `/fleet` | **SCREEN** | Out of Hotel SHOW rollup (no Demo/TE); SHIPPED ops | ADR hotel-guest-tours |
-| HOT-HK-01…05 | Hotel | Nafta HK deepen | Y | `/hk` roster rotation laundry forecast discrepancy policy | **SCREEN** | UAT-SMOKE §34 open; out of Hotel SHOW rollup | AC-HOT-HK remains Dirty/Clean/Inspected |
+| HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | UAT §42 open; Status=API | out of Hotel SHOW rollup |
+| HOT-CL-06 | Hotel | Company profile + company CL statement | Y Company + ledger+lines | `/distribution/companies` + `/front-cash/company-ledger` | **SHOW** | UAT §27.11 / §42; Status=SHIPPED | Opera split; ADR hotel-agency-vs-company-profiles |
 | BANK-GL / PAY-APPR / LOAN-* / ECL / CAP | Bank | ops lab | Y | paths Y | **SHOW** lab | field / cert is VENDOR or Pilot — not a missing screen | Inventory OUT |
 | CLI-* admin/ops | Clinic | catalogs / appts / cash | Y | `/admin/*`, `/appointments`, `/cashier` | **SCREEN** | Demo/TE sign-off | Nafta 2026-06 API-only master-data is closed |
 | FNB/RET/CRM/AUTO/CON/WS/LOG surfaces | Industry | POS / orders / trips | Y | routes in PRM UI (short) | **SCREEN** | thin-industry modal CRUD wave closed: all listed products now have modal CRUD/admin surfaces; do not claim SHIPPED from route alone | do not claim SHIPPED from route alone |
@@ -137,7 +163,14 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
-| 2026-08-31 | Clinic CLI-WF-PWD-01 local password self-service SHIPPED (`/account/password`). Hotel/F&B STAFF_PROVISIONED User hash aligned to scrypt. |
+| 2026-09-20 | BANK-RBAC-01 Bank Variant A ops matrix **SCREEN** (not SHOW); AC-BNK-RBAC out of BE rollup. |
+| 2026-09-18 | FIN-RBAC-01 Finance Wave 5 CP grant doors **SCREEN** (not SHOW); AC-FIN-RBAC out of BE rollup. |
+| 2026-09-18 | P2 density: FIN-EMAS / roster / orders / group dual-VÖEN copy+preview stay **SCREEN** (not SHIPPED); Demo/Pilot unchanged. |
+| 2026-09-18 | P1 operator gaps: FIN-EMAS-01 / CP-WF-ATT-01 / CP-WF-SEC audit stay **SCREEN** (not SHIPPED); queue/attendance/audit label polish; group→Finance handoff. Demo/Pilot unchanged. |
+| 2026-09-17 | Platform CP-WF-ATT-01 attendance FaceID **SCREEN** (`/workspace/workforce/attendance`); COVERAGE Status=API until field tablet UAT. |
+| 2026-09-07 | Platform public IA: guest `/` hub + `/satellites/[slug]` + `/pricing` catalog/meters (SCREEN marketing, not SHOW). |
+| 2026-09-07 | HOT-CL-06 + HOT-AGP-04 statement SHOW; company CL SHIPPED with line statement. |
+| 2026-09-07 | HOT-CL-06 company CL moved to own `/front-cash/company-ledger` (Opera IA split from agency-ledger tabs). |
 | 2026-08-30 | Clinic Nafta card wave SCREEN: intake checklist (`PKG-NAFTA-INTAKE`), physio empty-catalog/Solyuks, Baku `#23` clock — UAT open; not SHOW / not GA. |
 | 2026-08-23 | HOT-TOUR-01 guest tours SHIPPED as SCREEN (`/tours` + `/fleet`); still out of Hotel SHOW rollup. |
 | 2026-08-27 | HOT-06 outbox drain + clinic `/reception/extra-tickets` SCREEN (dual-run). Hotel write remains HEADLESS (extension). Reverse folio ADR accepted. |

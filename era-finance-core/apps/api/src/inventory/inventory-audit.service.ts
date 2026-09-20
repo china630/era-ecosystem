@@ -13,6 +13,7 @@ import {
   UserRole,
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
+import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
 import type { CreateInventoryAuditDto } from "./dto/create-inventory-audit.dto";
@@ -97,7 +98,7 @@ export class InventoryAuditService {
   async create(
     organizationId: string,
     dto: CreateInventoryAuditDto,
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ) {
     const status = dto.status ?? InventoryAuditStatus.DRAFT;
     if (status !== InventoryAuditStatus.DRAFT) {
@@ -149,7 +150,7 @@ export class InventoryAuditService {
     });
   }
 
-  async startCounting(organizationId: string, auditId: string, actingUserRole: UserRole) {
+  async startCounting(organizationId: string, auditId: string, actingUserRole: UserRole | PolicySubject) {
     assertMayPostManualJournal(actingUserRole);
 
     const audit = await this.prisma.inventoryAudit.findFirst({
@@ -230,7 +231,7 @@ export class InventoryAuditService {
     organizationId: string,
     lineId: string,
     dto: { factQty?: number; costPrice?: number; unitCost?: number },
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ) {
     assertMayPostManualJournal(actingUserRole);
     const row = await this.prisma.inventoryAuditLine.findFirst({
@@ -287,7 +288,7 @@ export class InventoryAuditService {
     });
   }
 
-  async submitForReview(organizationId: string, auditId: string, actingUserRole: UserRole) {
+  async submitForReview(organizationId: string, auditId: string, actingUserRole: UserRole | PolicySubject) {
     assertMayPostManualJournal(actingUserRole);
     const audit = await this.prisma.inventoryAudit.findFirst({
       where: { id: auditId, organizationId, status: InventoryAuditStatus.COUNTING },
@@ -323,7 +324,7 @@ export class InventoryAuditService {
       accountableEmployeeId?: string | null;
       reasonNote?: string | null;
     },
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ) {
     assertMayPostManualJournal(actingUserRole);
     const row = await this.prisma.inventoryAuditLine.findFirst({
@@ -397,9 +398,17 @@ export class InventoryAuditService {
     organizationId: string,
     auditId: string,
     actingUserId: string,
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject | PolicySubject,
   ) {
-    await this.access.assertMayPostAccounting(actingUserId, organizationId);
+    const jwtPerms =
+      typeof actingUserRole === "object" && actingUserRole != null
+        ? actingUserRole.permissions
+        : undefined;
+    await this.access.assertMayPostAccounting(
+      actingUserId,
+      organizationId,
+      jwtPerms,
+    );
     assertMayPostManualJournal(actingUserRole);
 
     const draft = await this.prisma.inventoryAudit.findFirst({
@@ -712,7 +721,7 @@ export class InventoryAuditService {
   async cancel(
     organizationId: string,
     auditId: string,
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
     dto?: { reason?: string },
   ) {
     assertMayPostManualJournal(actingUserRole);
@@ -759,7 +768,7 @@ export class InventoryAuditService {
     organizationId: string,
     id: string,
     _actingUserId: string,
-    _actingUserRole: UserRole,
+    _actingUserRole: UserRole | PolicySubject | PolicySubject,
   ) {
     void organizationId;
     void id;
@@ -774,7 +783,7 @@ export class InventoryAuditService {
   async syncSystemFromStock(
     organizationId: string,
     auditId: string,
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ) {
     void organizationId;
     void auditId;
@@ -805,7 +814,7 @@ export class InventoryAuditService {
     organizationId: string,
     lineId: string,
     dto: { factQty?: number; costPrice?: number; unitCost?: number },
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ) {
     return this.setLineFact(organizationId, lineId, dto, actingUserRole);
   }

@@ -20,7 +20,7 @@ Env (canonical, see [ECOSYSTEM_URLS.md](../docs/ECOSYSTEM_URLS.md)):
 
 | Variable | Meaning |
 |----------|---------|
-| `ERA_BANK_ORGANIZATION_ID` | The single bank org for this deployment (one deployment = one bank) |
+| `ERA_BANK_ORGANIZATION_ID` | Emergency / appliance process bind. SHARED engine tenant is `X-Organization-Id` (ALS), not this env |
 | `BANK_CORE_DB` | `era_bank_core` |
 | `ERA_DATA_HUB_URL` / `ERA_DATA_HUB_ONPREM` | Reference data source; on-prem mode for isolated banks |
 | `PII_ENCRYPTION_KEY` / `PII_BLIND_INDEX_KEY` | Held by the bank (on-prem) |
@@ -57,7 +57,7 @@ era-bank-core/                 # headless engine (no UI)
 
 ## §2. Data model (kernel L1)
 
-Prisma-style; all monetary amounts are integer **minor units** (qəpik) with explicit `currency`. All tenant rows carry `bankOrgId` (= `ERA_BANK_ORGANIZATION_ID`) for defense-in-depth even in single-tenant deployment.
+Prisma-style; all monetary amounts are integer **minor units** (qəpik) with explicit `currency`. All tenant rows carry `bankOrgId` (UUID, same as request `organizationId`) for defense-in-depth. On an appliance this equals process bind; on SHARED it is the request tenant, not compose `ERA_BANK_ORGANIZATION_ID`.
 
 ### 2.1. Chart of accounts (CBAR)
 

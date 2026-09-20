@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { LedgerType, Prisma, type PostingRole } from "@erafinance/database";
+import { Prisma, type PostingRole } from "@erafinance/database";
 import type {
   AccountingAdapter,
   AccountingDispatchResult,
@@ -8,6 +8,10 @@ import {
   AccountingService,
   type PostTransactionLine,
 } from "../accounting/accounting.service";
+import {
+  AccountingBookService,
+  ledgerTypeForBookGaap,
+} from "../accounting/accounting-book.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { InvoicesService } from "../invoices/invoices.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -21,6 +25,7 @@ export class FinanceAccountingAdapterService implements AccountingAdapter {
     private readonly accounting: AccountingService,
     private readonly invoices: InvoicesService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   recordMetaOnly(meta: Record<string, unknown>): AccountingDispatchResult {
@@ -146,13 +151,18 @@ export class FinanceAccountingAdapterService implements AccountingAdapter {
       { accountCode: debit, debit: amount, credit: 0 },
       { accountCode: credit, debit: 0, credit: amount },
     ];
+    const opsBook = await this.accountingBooks.resolveDefaultOpsBook(
+      organizationId,
+      tx,
+    );
     const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
       organizationId,
       date: new Date(),
       reference: params.reference,
       description: params.description,
       counterpartyId: params.counterpartyId ?? undefined,
-      ledgerType: LedgerType.NAS,
+      ledgerType: ledgerTypeForBookGaap(opsBook.gaapKind),
+      accountingBookId: opsBook.id,
       lines,
     });
     return transactionId;

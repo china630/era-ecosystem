@@ -18,7 +18,7 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week E/L/N/OFF/ƏG |
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Accept IN_PLANT; Delivered → `LAUNDRY` (canon §9; code still posts on accept) |
-| `/fo/laundry` | same API + Delivered | FO fallback post; no ticket invent |
+| `/fo/laundry` | same API + Delivered | FO fallback grid + filters; Delivered on existing ticket; no invent |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Skip / Sleep board (Sleep ≠ SO) |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
@@ -33,11 +33,14 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 |-------|-----|------|
 | Staff `/login` | `POST /api/auth/login`; middleware sets `x-user-*` | UTF-8 `fullName`/`login` encoded for Edge Headers (`session-header-utf8.ts`) |
 | /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
-| /fo/reservations | reservations grid | Stay list / arrivals — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; default status=LIVE; `EraListWorkspace` |
-| /fo/rack | rack | Door tiles |
-| /fo/room-plan | room-plan API | Timeline bars; share twin N lanes without overlay; bed = per-night free; EW day-state palette + HK squares |
+| /fo/reservations | reservations grid | Stay list / arrivals — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; default status=LIVE; `EraListWorkspace`; notes column penultimate; `q` + `noteQ` + `hasNotes` |
+| /fo/room-plan | room-plan API | Timeline bars; share twin N lanes without overlay; bed = per-night free; EW day-state + occupancy-frame strokes; OOO/OOS hidden |
+| /fo/rack | rack | Door tiles; From–To stay overlap; filter pane and grid scroll separately |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
 | Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes`; date amend via `PATCH` reservation-full → `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` (checkIn/checkOut) for clinic quota recalc (CLI-51) | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
+| Depart guest | `POST /api/reservations/:id/pax/:paxId/depart` → `SATELLITE_HOTEL_GUEST_DEPARTED` | Exclusive party only; stay IN_HOUSE; ADR `hotel-reservation-card-and-party-ops.md` D4 |
+| Move guest | `POST /api/reservations/:id/pax/:paxId/move` → `SATELLITE_HOTEL_GUEST_MOVED` | Sibling `ReservationGroup` only; stable paxKey |
+| Swap rooms | `POST /api/reservations/:id/swap-room` | Sibling group; transactional door swap |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
@@ -45,8 +48,11 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | Route | API | Role |
 |-------|-----|------|
 | `/distribution/contracts` | `GET/POST /api/admin/contracts`, `GET/PATCH /api/admin/contracts/:id`, `?utilization=1` | B2B sales contract CRUD + pick-up |
+| `/distribution/travel-agencies` | `GET/POST /api/admin/travel-agencies` | Travel agent master (commission + settlementMode) |
+| `/distribution/companies` | `GET/POST /api/admin/companies` | Corporate master (settlementMode, no commission) |
 | `/distribution/allotment-blocks` | `GET/POST /api/admin/allotment-blocks`, `GET/PATCH …/:id` (+`?pickup=1`), `POST …/:id/pickup` | Corporate blocks + pickup to booking |
-| `/distribution/channel` | `GET/POST/DELETE /api/channel/*`, `GET /api/channel/health`, `POST /api/channel/ota-cancel`, sync push/pull | Local CM (HOT-CH-01); live OTA STUB (HOT-CH-02) |
+| `/distribution/channel` | `GET/PUT /api/channel/binding`, `GET/POST /api/channel/*`, health, ota-cancel, sync push/pull; `POST /api/integrations/channex/webhook`; cron `channel-ari-drain` | Local CM (HOT-CH-01); Channex binding + ARI queue (HOT-CH-02 STUB until live UAT) |
+| `/b2c` | `GET /api/public/v1/availability`, `POST /api/public/v1/holds`, `POST /api/public/v1/bookings` | Direct IBE (HOT-IBE-01); legacy `/api/public/booking/rates` → 410 |
 | Groups / booking envelope | `GET/POST /api/reservation-groups`, `POST /api/reservation-groups/book`, `GET/PATCH/POST /api/reservation-groups/:id` | Booking = group; `/book` = envelope + N stays; POST id = add RoomStay |
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
 | Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff; Wave 4 `runCronForEachTenant` → `byOrganization` |
@@ -111,9 +117,13 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 
 | Route | API | Role |
 |-------|-----|------|
-| `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Reception queue for department walk-in charges |
-| `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal + shift filter + Z summary + close (HOT-CASH-06) |
-| `/front-cash/agency-ledger` | agency ledger + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL ops + Finance re-push (HOT-CL-03/04) |
+| `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Receipt list; modal line items + pay/void |
+| `/front-cash/folio-balances` | `GET /api/front-cash/folio-balances?tab=` | Reservation with folio balances (HOT-CASH-07) |
+| `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations on `/folio/[id]` |
+| `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal tabs + Z modal + close (HOT-CASH-06) |
+| `/front-cash/agency-ledger` | agency ledger + statement lines + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL (HOT-CL-03); Finance re-push (HOT-CL-04) |
+| `/front-cash/company-ledger` | `GET /api/companies` + ledger + `GET /api/companies/[id]/settlement` + statement lines | Company CL (HOT-CL-06); no commission; no Finance snapshot yet |
+| `/agency/ledger` | `GET /api/agency/ledger` (session-scoped) | Portal own CL statement (HOT-AGP-04); read-only |
 | `/folio/[reservationId]` | `POST /api/folios/settle`, deposits, void charge, BANK_TRANSFER | Guest folio settle (HOT-CASH-01) |
 | `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); polish H-BL-44 |
 | `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD ops grids (HOT-NA-03); Management pack deep-links → `/reports` (HOT-RPT spec) |
@@ -166,8 +176,8 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 | `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell + costFloor versions |
 | `/settings/agency-medical-sku` | `GET/POST/DELETE /api/admin/agency-medical-sku-rules` | Agency name prefix → PKG-* (SatAdmin) |
 | `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
-| `/distribution/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount) |
-| `/distribution/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON) |
+| `/settings/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount); legacy `/distribution/child-matrix` redirects |
+| `/settings/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON); legacy `/distribution/yield-rules` redirects |
 | `/executive/unit-economics` | `GET /api/executive/unit-economics` | HOT-UE-01 Phase A proxy CPOR + floor risk |
 
 ADR: `docs/adr/hotel-bar-accounting-vs-package-sell.md`, `docs/adr/hotel-occupancy-and-load-pricing-flags.md` · Nafta: `doc/nafta/BAR_DERIVED_2026.md`
@@ -196,12 +206,26 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | `/reports/nightly-pack` | `GET /api/reports/pack`, `GET /api/reports/pack/download?businessDate=&lang=` | ZIP for closed business date |
 | `/settings/report-pack` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership config |
 
+## Settings / RBAC (HOT-RBAC-01)
+
+| Route | API | Notes |
+|-------|-----|-------|
+| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
+| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | User CRUD + role assign (`admin:users`); role select includes custom clones |
+| `/settings/import` | `GET/POST /api/import*` | `api:import.elektraweb` ∩ `hotel_migration_pro` (not role-name allowlist) |
+| Elektraweb bridge | `/api/integrations/elektraweb-bridge/*` | Staff: DB grant `api:integration.elektraweb_bridge` ∩ policy; S2S `role=bridge` |
+| Role clone / matrix Save | `POST /api/admin/roles`, `PATCH …/permissions` | Stamp `permissionCatalogVersion` so ensure does not restore stripped Wave-1 keys |
+| Staff `/login` / SSO | JWT `permissions[]`; ensure system roles + `permissionCatalogVersion`=3 (`screen:*` + `api:*`) | Hotel_Admin does **not** bypass matrix; page middleware fail-closed inventory |
+
+**Page map:** `src/lib/auth/page-route-permissions.ts` — every staff `app/**/page.tsx` must map (test: `hotel-page-route-inventory.spec.ts`).
+
 ## Related docs
 
 - `doc/nafta/B2B-GATE.md` — Nafta P4 gate defaults
 - `docs/adr/hotel-b2b-sales-contracts.md` — contract + allotment ADR
 - `docs/adr/hotel-city-ledger-and-fo-money.md` — FO money + CL ops vs Finance AR
 - `docs/adr/hotel-bar-accounting-vs-package-sell.md` — BAR vs package sell
+- `docs/adr/hotel-domain-permissions-and-rbac.md` — Variant A RBAC
 - `doc/BACKLOG-PRODUCTION.md` § P5
-- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money)
+- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money), §45 (RBAC)
 - `doc/MANAGEMENT-REPORTS-CATALOG.md` — EW Management Reports catalog + Nafta nightly ZIP

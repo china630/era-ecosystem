@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -10,53 +13,52 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { AccountsService } from "./accounts.service";
 import { CreateIfrsMappingRuleDto } from "./dto/create-ifrs-mapping-rule.dto";
 import { UpdateIfrsMappingRuleDto } from "./dto/update-ifrs-mapping-rule.dto";
+import { legacyMappingGone } from "../accounting/ledger-mapping.controller";
 
 @ApiTags("ifrs-mapping-rules")
 @ApiBearerAuth("bearer")
-@UseGuards(RolesGuard)
-@Roles(UserRole.OWNER, UserRole.ADMIN)
+@UseGuards(PermissionsGuard)
+@Permissions(CP_PERMISSION.API_LEDGER_READ)
 @Controller("ifrs-mapping-rules")
 export class IfrsMappingRulesController {
   constructor(private readonly accounts: AccountsService) {}
 
   @Get()
-  @ApiOperation({ summary: "List IFRS mapping rules" })
+  @ApiOperation({ summary: "Legacy list — prefer /accounting/ledger-mappings" })
   list(@OrganizationId() organizationId: string) {
     return this.accounts.listIfrsMappingRules(organizationId);
   }
 
   @Post()
-  @ApiOperation({ summary: "Create IFRS mapping rule" })
+  @ApiOperation({ summary: "Gone — use /accounting/ledger-mappings" })
   create(
-    @OrganizationId() organizationId: string,
-    @Body() dto: CreateIfrsMappingRuleDto,
+    @OrganizationId() _organizationId: string,
+    @Body() _dto: CreateIfrsMappingRuleDto,
   ) {
-    return this.accounts.createIfrsMappingRule(organizationId, dto);
+    return legacyMappingGone();
   }
 
   @Patch(":id")
-  @ApiOperation({ summary: "Update IFRS mapping rule" })
+  @ApiOperation({ summary: "Gone — use /accounting/ledger-mappings" })
   update(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: UpdateIfrsMappingRuleDto,
+    @OrganizationId() _organizationId: string,
+    @Param("id", ParseUUIDPipe) _id: string,
+    @Body() _dto: UpdateIfrsMappingRuleDto,
   ) {
-    return this.accounts.updateIfrsMappingRule(organizationId, id, dto);
+    return legacyMappingGone();
   }
 
   @Delete(":id")
-  @ApiOperation({ summary: "Delete IFRS mapping rule" })
+  @ApiOperation({ summary: "Gone — use /accounting/ledger-mappings" })
   remove(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
+    @OrganizationId() _organizationId: string,
+    @Param("id", ParseUUIDPipe) _id: string,
   ) {
-    return this.accounts.deleteIfrsMappingRule(organizationId, id);
+    return legacyMappingGone();
   }
 }

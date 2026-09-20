@@ -13,6 +13,7 @@
 ## Scope
 
 - In scope: GL/NAS (including manual adjusting journal; wave 2 invoice credit adjustment + FA donation), AR/AP, inventory, HR/payroll, tax/statforms, FA, contracts, satellite event ingress
+- **Wave 5 RBAC:** Finance consumes CP JWT grants (`FIN-RBAC-01` SCREEN / `AC-FIN-RBAC` 🟡 out of BE rollup) — not SHOW/GA; does not reopen AC-FIN-GL
 - Out of scope: Industry FO cash as SoT (hotel/clinic own ops money until posted)
 - **Topology:** Finance is already multi-org in one DB. Dedicated finance = isolated Postgres + same binary. Sync pushes `POST/GET /api/internal/v1/runtime-config` to Finance Nest (AC-FIN-CFG Scaffold ✅ — negatives landed; Pilot/UI open) — [deployment-topology.md](../adr/deployment-topology.md) §4.
 

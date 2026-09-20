@@ -2,6 +2,7 @@ import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
 import { upsertOtaReservation } from '@/lib/channel/ota-ingest.service';
 import { logSyncError } from '@/lib/services/channel.service';
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 async function recordPullEvent(
   adapter: string,
@@ -12,6 +13,7 @@ async function recordPullEvent(
   try {
     await prisma.outboundEventLog.create({
       data: {
+        organizationId: requestOrganizationId(),
         eventType: 'channel.pull',
         payloadJson: JSON.stringify({ adapter, ...payload }),
         status: ok ? 'SENT' : 'FAILED',
@@ -25,7 +27,7 @@ async function recordPullEvent(
 }
 
 export async function pullOtaReservations(since?: Date) {
-  const adapter = resolveChannelAdapter();
+  const adapter = await resolveChannelAdapter();
   if (!adapter.pullReservations) {
     const result = {
       ok: true,

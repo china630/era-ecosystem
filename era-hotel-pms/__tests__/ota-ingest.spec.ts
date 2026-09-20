@@ -122,4 +122,24 @@ describe('ota-ingest', () => {
       errorMessage: 'Cancel received for unknown OTA reservation',
     });
   });
+
+  it('refuses Channex ingest when room_type_id is unmapped (no first-room fallback)', async () => {
+    const { prisma } = await import('@/lib/prisma');
+    (prisma.channel.findFirst as jest.Mock).mockResolvedValueOnce({
+      roomMappings: [],
+    });
+
+    await expect(
+      upsertOtaReservation({
+        externalReservationId: 'chnx-1',
+        event: 'create',
+        channelCode: 'CHANNEX',
+        guest: { fullName: 'Guest' },
+        checkInDate: '2026-09-21',
+        checkOutDate: '2026-09-22',
+        otaRoomCode: '994d1375-dbbd-4072-8724-b2ab32ce781b',
+        otaRateCode: '445835fb-7956-42ac-9efc-3e6f331f0808',
+      }),
+    ).rejects.toThrow(/Unmapped Channex room_type_id/);
+  });
 });

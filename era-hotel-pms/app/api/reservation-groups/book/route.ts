@@ -22,6 +22,7 @@ const schema = z.object({
   code: z.string().min(1).max(32).optional(),
   name: z.string().trim().min(1).max(120),
   agencyId: z.string().uuid().optional(),
+  companyId: z.string().uuid().optional(),
   folioMode: z.enum(['INDIVIDUAL', 'MASTER', 'SPLIT']).optional(),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),

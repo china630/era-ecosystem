@@ -1,16 +1,23 @@
-import { ROLE_CODES, type RoleCode } from '@/lib/auth/permissions';
+import {
+  PERMISSIONS,
+  type Permission,
+} from '@/lib/auth/permissions';
+import {
+  sessionHasHotelPermission,
+  type HotelPermissionSession,
+} from '@/lib/auth/permission-check';
 
-/** Hotel roles that may open Əsas / executive KPI dashboard (local PMS session). */
-const HOTEL_EXECUTIVE_ROLES = new Set<RoleCode>([
-  ROLE_CODES.HOTEL_ADMIN,
-  ROLE_CODES.MANAGER,
-  ROLE_CODES.FINANCIAL_AUDITOR,
-  ROLE_CODES.RECEPTIONIST,
-  ROLE_CODES.NIGHT_AUDITOR,
-  ROLE_CODES.CRM,
-]);
+/** Executive KPI pages/APIs: reports or reservations read (any-of). */
+export const HOTEL_EXECUTIVE_PERMISSIONS: Permission[] = [
+  PERMISSIONS.REPORTS_READ,
+  PERMISSIONS.RESERVATIONS_READ,
+];
 
-export function canViewHotelExecutive(role: string | undefined | null): boolean {
-  if (!role) return false;
-  return HOTEL_EXECUTIVE_ROLES.has(role as RoleCode);
+export function canViewHotelExecutive(
+  session: HotelPermissionSession | null | undefined,
+): boolean {
+  if (!session) return false;
+  return HOTEL_EXECUTIVE_PERMISSIONS.some((p) =>
+    sessionHasHotelPermission(session, p),
+  );
 }

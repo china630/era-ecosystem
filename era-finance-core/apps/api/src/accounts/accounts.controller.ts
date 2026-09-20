@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -12,13 +15,12 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { OrganizationKind, UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { OrganizationKind } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { AccountsService } from "./accounts.service";
 import { CreateBankAccountDto } from "./dto/create-bank-account.dto";
+import { CreateIfrsAccountDto } from "./dto/create-ifrs-account.dto";
 import { ImportFromTemplateDto } from "./dto/import-from-template.dto";
 
 function parseOrganizationKindQuery(raw?: string): OrganizationKind | undefined {
@@ -75,6 +77,7 @@ export class AccountsController {
   list(
     @OrganizationId() organizationId: string,
     @Query("ledgerType") ledgerType?: string,
+    @Query("accountingBookId") accountingBookId?: string,
     @Query("locale") locale?: string,
     @Headers("accept-language") acceptLanguage?: string,
   ) {
@@ -82,23 +85,46 @@ export class AccountsController {
       organizationId,
       parseLedgerTypeQuery(ledgerType),
       locale?.trim() || acceptLanguage,
+      accountingBookId,
     );
   }
 
   @Post("ifrs-mirror")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
-      "Создать недостающие IFRS-счета по структуре NAS (копия плана счетов)",
+      "Ops escape hatch: clone NAS CoA codes into IFRS (not onboarding default — P1 uses TemplateIFRSMapping)",
   })
   mirrorIfrs(@OrganizationId() organizationId: string) {
     return this.accounts.mirrorNasToIfrs(organizationId);
   }
 
+  @Post("ifrs-provision")
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
+  @ApiOperation({
+    summary:
+      "Provision IFRS accounts + LedgerMappingSet from TemplateIFRSMapping (idempotent)",
+  })
+  provisionIfrs(@OrganizationId() organizationId: string) {
+    return this.accounts.provisionIfrsFromTemplate(organizationId);
+  }
+
+  @Post("ifrs")
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
+  @ApiOperation({ summary: "Create an IFRS account in the org chart" })
+  createIfrs(
+    @OrganizationId() organizationId: string,
+    @Body() dto: CreateIfrsAccountDto,
+  ) {
+    return this.accounts.createIfrsAccount(organizationId, dto);
+  }
+
   @Post("import-from-template")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Импортировать NAS-счёт из глобального шаблона в план организации",
   })
@@ -113,8 +139,8 @@ export class AccountsController {
   }
 
   @Post("bank-accounts")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create a bank ledger account (221.xx)" })
   createBankAccount(
     @OrganizationId() organizationId: string,

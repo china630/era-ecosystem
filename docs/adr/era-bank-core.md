@@ -99,8 +99,10 @@ The BullMQ event bus remains, but only for **notifications, statements, analytic
 
 ### D8 — Deployment and licensing for selling to banks
 
-- **Current implementation:** one deployment = one bank (`ERA_BANK_ORGANIZATION_ID`) is the usual appliance, not a schema law.
+- **Current implementation:** one deployment = one bank (`ERA_BANK_ORGANIZATION_ID`) is the usual **appliance**, not a schema law and **not** the SHARED login SoT.
 - **Product intent:** Bank uses the **same** topology ladder as other satellites (`SHARED` / `DEDICATED` / `ONPREM`) until the owner writes an exception. Live SHARED pool is not built yet (same as hotel/clinic TENANT 🟡) — do **not** narrate a bank-only ban. Canon: [deployment-topology.md](./deployment-topology.md).
+- **Staff login:** `era-bank` local ops login follows [org-public-number-and-login-host.md](./org-public-number-and-login-host.md) (`orgNo` on SHARED, Host bind, JWT UUID). Branches are not a substitute org key.
+- **DBO:** customers do not type ERA ID; channel org comes from Host / bind. Engine request tenant is `X-Organization-Id` (ALS), not process env, on SHARED.
 - **On-prem / private-cloud capable**: AZ banks frequently require data inside their perimeter. The regulated engine (`era-bank-core`) must run isolated, including an **on-prem reference data mode** (no dependency on the public `data-hub`).
 - Crypto keys (`PII_ENCRYPTION_KEY`, `PII_BLIND_INDEX_KEY`) held by the bank; identical across MDM resolve paths where cross-system resolution is used.
 - Licensing/activation through orchestrator (`industry_banking` gate + module set), but a bank license is a contract + activation key rather than SMB post-paid metering.
@@ -154,7 +156,8 @@ Rules:
 - Satellite: `era-bank/` (Next.js, `industry_banking` gate), DB `era_bank`, `:3210`. Spec: [era-bank/PRD.md](../../era-bank/PRD.md) · [era-bank/TZ.md](../../era-bank/TZ.md).
 - Product-line lead doc: [era-bank-core/PRD.md](../../era-bank-core/PRD.md). Ports/env: [ECOSYSTEM_URLS.md](../ECOSYSTEM_URLS.md).
 - Contracts: `packages/era-contracts/src/events/banking.events.ts` (see TZ §9).
-- Consumes: orchestrator SSO/RBAC/MDM/entitlements; data-hub FX/banks/IBAN/COA template/calendar.
+- Consumes: orchestrator SSO / MDM / entitlements (SKU gates); staff ops RBAC is a **local** Variant A matrix on `era-bank` (`OpsRole.permissionsJson`) — see [bank-domain-permissions-and-rbac.md](./bank-domain-permissions-and-rbac.md). Not a Finance-style CP permission-matrix consumer. Maker-checker (4-eyes) remains an engine SoD axis, not a substitute for screen/API grants.
+- Data-hub: FX/banks/IBAN/COA template/calendar.
 - Phases and DoD: [era-bank-core/PRD.md](../../era-bank-core/PRD.md) §7 and [era-bank-core/TZ.md](../../era-bank-core/TZ.md) §14.
 - Risk management & audit chain: [era-bank-core/TZ.md](../../era-bank-core/TZ.md) §12–§13 and ADR [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md).
 - GL account mapping (product + system): ADR [era-bank-gl-account-mapping.md](./era-bank-gl-account-mapping.md); open code debt tracker [OPEN-TASKS.md](../../era-bank-core/doc/OPEN-TASKS.md).

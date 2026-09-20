@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "@era/contracts";
 import {
   Body,
   Controller,
@@ -18,10 +19,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { PurchaseRequestStatus, UserRole } from "@erafinance/database";
+import { PurchaseRequestStatus } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
@@ -34,19 +33,13 @@ import { PurchaseRequestsService } from "./purchase-requests.service";
 @ApiTags("procurement-requests")
 @ApiBearerAuth("bearer")
 @Controller("procurement/requests")
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class PurchaseRequestsController {
   constructor(private readonly requests: PurchaseRequestsService) {}
 
   @Get()
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "List purchase requests" })
   list(
     @OrganizationId() organizationId: string,
@@ -59,13 +52,8 @@ export class PurchaseRequestsController {
   }
 
   @Post()
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Create purchase request (DRAFT)" })
   create(
     @OrganizationId() organizationId: string,
@@ -76,14 +64,8 @@ export class PurchaseRequestsController {
   }
 
   @Get(":id")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Get purchase request" })
   get(
     @OrganizationId() organizationId: string,
@@ -93,13 +75,8 @@ export class PurchaseRequestsController {
   }
 
   @Patch(":id")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Update purchase request" })
   update(
     @OrganizationId() organizationId: string,
@@ -110,8 +87,8 @@ export class PurchaseRequestsController {
   }
 
   @Delete(":id")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Delete DRAFT purchase request" })
   remove(
     @OrganizationId() organizationId: string,
@@ -121,13 +98,8 @@ export class PurchaseRequestsController {
   }
 
   @Post(":id/submit")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Submit purchase request (DRAFT → SUBMITTED)" })
   submit(
     @OrganizationId() organizationId: string,
@@ -137,13 +109,8 @@ export class PurchaseRequestsController {
   }
 
   @Post(":id/approve")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.DIRECTOR,
-    UserRole.ACCOUNTANT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Approve or reject purchase request" })
   approve(
     @OrganizationId() organizationId: string,

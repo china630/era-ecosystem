@@ -7,6 +7,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   ValidateNested,
 } from "class-validator";
@@ -110,9 +111,40 @@ export class PatchOrganizationSettingsDto {
   @IsDateString()
   lockedPeriodUntil?: string | null;
 
+  /** Legacy ledger alias; also syncs lockedPeriodUntilByLedger. */
+  @IsOptional()
+  @IsIn(["NAS", "IFRS", "MANAGEMENT"])
+  ledgerType?: "NAS" | "IFRS" | "MANAGEMENT";
+
+  /** Active AccountingBook; authoritative key for N-book period locks. */
+  @IsOptional()
+  @IsUUID()
+  accountingBookId?: string;
+
   /** ASAN İmza / HSM subscriber id stored at Organization.settings.tax.asanUserId */
   @IsOptional()
   @IsString()
   @MaxLength(128)
   asanUserId?: string | null;
+
+  /** P0 Multi-GAAP: soft (default) | strict IFRS mirror policy */
+  @IsOptional()
+  @IsIn(["soft", "strict"])
+  ledgerMirrorMode?: "soft" | "strict";
+
+  /**
+   * ƏMAS policy (PRD §13.2 / Evrostar wave 7). Stored at Organization.settings.hr.emasMode.
+   * OFF = no manual queue; SELECTIVE = emasEligible only; FULL = all hires/terminates.
+   */
+  @IsOptional()
+  @IsIn(["OFF", "SELECTIVE", "FULL"])
+  emasMode?: "OFF" | "SELECTIVE" | "FULL";
+
+  /**
+   * When true, HR_MANAGER may see grey FOT (internalRate) on MGMT book.
+   * ACCOUNTANT never sees it. Stored at Organization.settings.hr.internalRateVisibleToHrManager.
+   */
+  @IsOptional()
+  @IsBoolean()
+  internalRateVisibleToHrManager?: boolean;
 }

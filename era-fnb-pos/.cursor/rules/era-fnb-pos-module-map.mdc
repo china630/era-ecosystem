@@ -2,7 +2,21 @@
 
 | Route | API | Role |
 |-------|-----|------|
-| `/floor` | tickets, tables, outlets | Waiter — walk-in, banquet BEO |
+| `/floor` | tickets, tables, outlets, sold-out | Cashier PIN / waiter — empty ticket, bitdi/var |
+| `/pin` | `POST /api/auth/pin` | Cashier/waiter/kitchen PIN (not owner password) |
+| `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order) |
+| `/orders` | tickets, pay, offline replay | Cashier / manager |
+| `/kds` | kds fire | `fnb_kitchen_kds` |
+| `/admin/access` | `/api/admin/roles`, `…/permissions`, refresh-permissions | `admin:access_manage` + `screen:admin.access` — Variant A matrix |
+| `/admin/menu` | menu CRUD, `/api/menu/[id]/prices`, `/api/menu/export`, `/api/menu/suggest` | `api:menu.manage` / `screen:admin.menu` |
+| `/admin/tables` | tables | `api:tables.manage` / `screen:admin.tables` |
+| `/pin` | `POST /api/auth/pin` `{ organizationId, outletId, pin }` | PIN package grants; fail-closed if outlet unbound |
+
+Hotel-only (403 when edition=kafe): banquets, in-house, room-charge, defer-to-hub, room-service.
+
+Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` (per-org edition/modules in SHARED pool). Quotas: 120 ticket creates/min/org, 600 QR reads/min/IP.
+
+**SaaS:** login JWT `organizationId`; Kafe onboard upserts `SatelliteEndpoint` to pool URL (`ERA_FNB_POS_ORIGIN`). Schema+kit SHARED is in production path; live two-org field UAT remains a Product-Readiness 🟡, not a missing process.
 | `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel | Waiter / manager |
 | `/kds` | kds fire | Kitchen |
 | `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — categories/items modal CRUD, price history, recipeSku, imageUrl |

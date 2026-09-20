@@ -46,7 +46,17 @@
   "orders": {
     "title": "ERA Wholesale",
     "subtitle": "Операционная MVP-оболочка по DESIGN.md.",
-    "shellNote": "Реестры и формы будут в модалках по DESIGN.md."
+    "shellNote": "Реестры и формы будут в модалках по DESIGN.md.",
+    "confirm": "Подтвердить заказ",
+    "confirmed": "Заказ {order} подтверждён",
+    "confirmFailed": "Ошибка подтверждения",
+    "grantCode": "Код гранта торгового кредита",
+    "grantCodePlaceholder": "Код pickup-гранта",
+    "onAccount": "В кредит",
+    "prepaid": "Предоплата / наличные",
+    "showResidual": "Показать остаток лимита",
+    "available": "Доступно",
+    "limit": "Лимит"
   },
   "pickLists": {
     "title": "Списки комплектации",
@@ -60,6 +70,8 @@
     "counterpartyId": "Counterparty ID",
     "checkCredit": "Проверить кредит",
     "limit": "Лимит",
+    "available": "Доступно",
+    "stopList": "Стоп-лист",
     "openPickLists": "Открытые pick lists",
     "confirmPick": "Подтвердить сборку",
     "createFailed": "Ошибка создания",
@@ -77,9 +89,9 @@
   },
   "auth": {
     "loginFailed": "Ошибка входа",
-    "organizationIdLabel": "ID организации (wholesale)",
-    "organizationIdPlaceholder": "UUID — обязателен в общем wholesale pool",
-    "organizationIdHint": "На dedicated appliance оставьте пустым — используется process-bound org.",
+    "organizationIdLabel": "Код организации (ERA ID)",
+    "organizationIdPlaceholder": "6 цифр (например, 104221)",
+    "organizationIdHint": "Обязательно на общем облачном pool. Получите код у менеджера или в Control Plane → Super-admin → Organizations. На dedicated appliance можно оставить пустым.",
     "footerLegalNavAria": "Юридические ссылки и справка",
     "footerFaq": "FAQ",
     "footerTerms": "Условия использования",

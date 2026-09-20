@@ -1,3 +1,5 @@
+import { getSatelliteTenantContext, satelliteOrganizationId } from "@era/satellite-kit";
+
 export type EngineDboError = {
   status: number;
   message: string;
@@ -54,6 +56,20 @@ export async function engineDboFetch<T = unknown>(
     Authorization: `Bearer ${serviceToken()}`,
     ...options.headers,
   };
+  const orgId =
+    headers["X-Organization-Id"]?.trim() ||
+    getSatelliteTenantContext()?.organizationId?.trim() ||
+    (() => {
+      try {
+        const id = satelliteOrganizationId();
+        return id === "demo-org" ? "" : id;
+      } catch {
+        return "";
+      }
+    })();
+  if (orgId) {
+    headers["X-Organization-Id"] = orgId;
+  }
 
   if (options.customerJwt) {
     headers["X-Customer-Authorization"] = `Bearer ${options.customerJwt}`;

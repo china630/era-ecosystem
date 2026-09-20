@@ -35,6 +35,8 @@ export type BridgeIngestSummary = {
   created: number;
   updated: number;
   skipped: number;
+  mdmLinked: number;
+  mdmMissed: number;
   eventsEmitted: string[];
   errors: Array<{ index: number; message: string }>;
 };
@@ -43,6 +45,9 @@ let lastSuccessAt: string | null = null;
 let lastError: string | null = null;
 let ingestCount24h = 0;
 let ingestWindowStart = Date.now();
+
+/** Guest Cards ≈100 rows/page; serial MDM was ~minutes/page and starved the extension queue. */
+const GUEST_MDM_CONCURRENCY = 8;
 
 export function getBridgeHealth() {
   const now = Date.now();
@@ -73,6 +78,23 @@ function touchError(message: string) {
   lastError = message;
 }
 
+async function mapPool<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  if (items.length === 0) return;
+  let next = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      await fn(items[i]!, i);
+    }
+  });
+  await Promise.all(workers);
+}
+
 export async function ingestElektrawebBridgeEnvelope(
   auth: BridgeAuthContext,
   envelope: BridgeEnvelope,
@@ -92,6 +114,8 @@ export async function ingestElektrawebBridgeEnvelope(
     created: 0,
     updated: 0,
     skipped: 0,
+    mdmLinked: 0,
+    mdmMissed: 0,
     eventsEmitted: [],
     errors: [],
   };
@@ -109,58 +133,87 @@ export async function ingestElektrawebBridgeEnvelope(
 
   const noteStampIds = new Set<string>();
 
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]!;
+  const ingestOneGuest = async (row: Record<string, unknown>, i: number) => {
     try {
       const hid = rowHotelId(row);
       if (hid != null) await assertHotelIdMatches(hid);
-      // Detail payloads sometimes omit HOTELID — still OK if auth hotel matches policy
 
-      if (objectName === 'QA_EASYPMS_NOTES') {
-        const r = await upsertReservationNoteFromElektrawebRow(row);
-        if (r.action === 'skipped') {
+      if (objectName === 'QA_HOTEL_RES_GUEST') {
+        await stampStayGuestResNameId(row);
+        const guestCardId =
+          row.GUESTID != null && row.GUESTID !== '' ? String(row.GUESTID) : '';
+        if (!guestCardId) {
           summary.skipped += 1;
-        } else {
-          summary.accepted += 1;
-          if (r.action === 'created') summary.created += 1;
-          else summary.updated += 1;
-          if (r.reservationId) noteStampIds.add(r.reservationId);
+          return;
         }
-        continue;
       }
-
-      if (entity === 'guest') {
-        const r = await upsertGuestFromElektrawebRow(row);
-        summary.accepted += 1;
-        if (r.action === 'created') summary.created += 1;
-        else if (r.action === 'updated') summary.updated += 1;
-        else summary.skipped += 1;
-        if (objectName === 'QA_HOTEL_RES_GUEST') {
-          await stampStayGuestResNameId(row);
-        }
-      } else if (entity === 'reservation') {
-        const r = await upsertReservationFromElektrawebRow(row);
-        summary.accepted += 1;
-        if (r.action === 'created') summary.created += 1;
-        else summary.updated += 1;
-        summary.eventsEmitted.push(...r.events);
-      } else if (entity === 'folio') {
-        const r = await upsertFolioFromElektrawebRow(row);
-        if (r.action === 'skipped') {
-          summary.skipped += 1;
-        } else {
-          summary.accepted += 1;
-          if (r.action === 'created') summary.created += 1;
-          else summary.updated += 1;
+      const r = await upsertGuestFromElektrawebRow(row);
+      summary.accepted += 1;
+      if (r.action === 'created') summary.created += 1;
+      else if (r.action === 'updated') summary.updated += 1;
+      else summary.skipped += 1;
+      if (r.mdmLinked) summary.mdmLinked += 1;
+      else {
+        summary.mdmMissed += 1;
+        if (r.mdmError && summary.errors.length < 8) {
+          summary.errors.push({ index: i, message: r.mdmError });
         }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       summary.errors.push({ index: i, message });
-      // Hard fail whole batch on tenant mismatch
       if (message.includes('HOTELID mismatch')) {
         touchError(message);
         throw err;
+      }
+    }
+  };
+
+  if (entity === 'guest') {
+    await mapPool(rows, GUEST_MDM_CONCURRENCY, ingestOneGuest);
+  } else {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]!;
+      try {
+        const hid = rowHotelId(row);
+        if (hid != null) await assertHotelIdMatches(hid);
+
+        if (objectName === 'QA_EASYPMS_NOTES') {
+          const r = await upsertReservationNoteFromElektrawebRow(row);
+          if (r.action === 'skipped') {
+            summary.skipped += 1;
+          } else {
+            summary.accepted += 1;
+            if (r.action === 'created') summary.created += 1;
+            else summary.updated += 1;
+            if (r.reservationId) noteStampIds.add(r.reservationId);
+          }
+          continue;
+        }
+
+        if (entity === 'reservation') {
+          const r = await upsertReservationFromElektrawebRow(row);
+          summary.accepted += 1;
+          if (r.action === 'created') summary.created += 1;
+          else summary.updated += 1;
+          summary.eventsEmitted.push(...r.events);
+        } else if (entity === 'folio') {
+          const r = await upsertFolioFromElektrawebRow(row);
+          if (r.action === 'skipped') {
+            summary.skipped += 1;
+          } else {
+            summary.accepted += 1;
+            if (r.action === 'created') summary.created += 1;
+            else summary.updated += 1;
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        summary.errors.push({ index: i, message });
+        if (message.includes('HOTELID mismatch')) {
+          touchError(message);
+          throw err;
+        }
       }
     }
   }
@@ -174,7 +227,12 @@ export async function ingestElektrawebBridgeEnvelope(
     }
   }
 
-  if (summary.errors.length && summary.accepted === 0) {
+  if (summary.mdmMissed > 0 && summary.mdmMissed >= Math.max(1, Math.floor(summary.accepted / 2))) {
+    const tip =
+      summary.errors[0]?.message ||
+      'Many guests saved in hotel without MDM link — check SATELLITE_EVENT_SERVICE_TOKEN / ORCHESTRATOR_URL on hotel-pms';
+    touchError(tip);
+  } else if (summary.errors.length && summary.accepted === 0) {
     touchError(summary.errors[0]!.message);
   } else {
     touchSuccess();

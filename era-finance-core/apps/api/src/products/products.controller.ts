@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Controller,
   Get,
@@ -9,9 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
@@ -20,7 +21,7 @@ import { ProductsService } from "./products.service";
 @ApiTags("products")
 @ApiBearerAuth("bearer")
 @Controller("products")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class ProductsController {
   constructor(private readonly products: ProductsService) {}
 
@@ -53,14 +54,14 @@ export class ProductsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Создать товар или услугу" })
   create(@OrganizationId() orgId: string, @Body() dto: CreateProductDto) {
     return this.products.create(orgId, dto);
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Обновить товар" })
   update(
     @OrganizationId() orgId: string,

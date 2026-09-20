@@ -13,7 +13,9 @@ import {
   type UserRole,
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
+import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "../accounting/accounting.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { BankSubaccountService } from "../accounting/bank-subaccount.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { CbarRateSyncService } from "../fx/cbar-rate-sync.service";
@@ -54,6 +56,7 @@ export class BankingService {
     private readonly prisma: PrismaService,
     private readonly reporting: ReportingService,
     private readonly accounting: AccountingService,
+    private readonly accountingBooks: AccountingBookService,
     private readonly treasury: TreasuryService,
     private readonly bankSubaccount: BankSubaccountService,
     private readonly posting: PostingAccountResolver,
@@ -129,7 +132,11 @@ export class BankingService {
   /**
    * Сетка карточек: касса vs банк по официальному плану kind (Q-01 221/223, NAS-GOV 101/103).
    */
-  async getAccountCards(organizationId: string, ledgerType: LedgerType) {
+  async getAccountCards(
+    organizationId: string,
+    ledgerType: LedgerType,
+    accountingBookId?: string,
+  ) {
     const kind = await this.posting.getOrganizationKind(organizationId);
     const today = new Date().toISOString().slice(0, 10);
     const yearStart = `${new Date().getUTCFullYear()}-01-01`;
@@ -138,10 +145,15 @@ export class BankingService {
       yearStart,
       today,
       ledgerType,
+      accountingBookId,
     );
 
     const accounts = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType },
+      where: {
+        organizationId,
+        ledgerType: tb.ledgerType,
+        accountingBookId: tb.accountingBookId,
+      },
       select: {
         code: true,
         nameAz: true,
@@ -182,7 +194,8 @@ export class BankingService {
     return {
       dateFrom: tb.dateFrom,
       dateTo: tb.dateTo,
-      ledgerType,
+      ledgerType: tb.ledgerType,
+      accountingBookId: tb.accountingBookId,
       accounts: accountsOut,
     };
   }
@@ -190,7 +203,7 @@ export class BankingService {
   async manualCashOut(
     organizationId: string,
     dto: { amount: number; description?: string; date?: string },
-    role: UserRole,
+    role: UserRole | PolicySubject,
   ) {
     assertMayPostManualJournal(role);
     const amt = new Decimal(dto.amount);
@@ -212,12 +225,18 @@ export class BankingService {
         this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
         this.posting.resolveAccountCode(organizationId, "CASH_AZN", tx),
       ]);
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date,
         reference: "CASH-OUT",
         description: desc,
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines: [
           {
             accountCode: miscExpenseCode,
@@ -272,7 +291,11 @@ export class BankingService {
       cashFlowItemId: string;
       description?: string;
     },
+    actingUser?: UserRole | PolicySubject,
   ) {
+    if (actingUser !== undefined) {
+      assertMayPostManualJournal(actingUser);
+    }
     const bank = dto.bankAccountCode.trim();
     const offset = dto.offsetAccountCode.trim();
     const kind = await this.posting.getOrganizationKind(organizationId);
@@ -331,12 +354,18 @@ export class BankingService {
               { accountCode: bank, debit: "0", credit: amt.toString() },
             ];
 
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date,
         reference: "BANK-MANUAL",
         description: desc,
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines,
       });
 
@@ -453,12 +482,18 @@ export class BankingService {
       ];
       this.assertBalanced(lines);
 
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date,
         reference: "BANK-INTERNAL-TRANSFER",
         description: `Internal transfer ${source.iban} -> ${target.iban}`,
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines,
       });
 
@@ -833,12 +868,18 @@ export class BankingService {
       }
       this.assertBalanced(lines);
 
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date,
         reference: "BANK-CONVERSION",
         description: `Conversion ${source.currency}->${target.currency}`,
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines,
       });
 
@@ -955,6 +996,11 @@ export class BankingService {
       ];
       this.assertBalanced(lines);
 
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date,
@@ -963,6 +1009,7 @@ export class BankingService {
           dto.description?.trim() ||
           `Cash deposit to ${target.bankName} (${dto.source})`,
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines,
       });
 

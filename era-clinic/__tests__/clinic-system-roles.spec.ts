@@ -90,9 +90,20 @@ describe("ensureSystemClinicRoles", () => {
     }
   });
 
-  it("fills empty permissionsJson from template", async () => {
+  it("does not refill intentional empty permissionsJson", async () => {
     const db = makeDb([
       { code: CLINIC_ROLE.DOCTOR, permissionsJson: "[]", staffKind: null },
+    ]);
+    await ensureSystemClinicRoles(db, "org-1");
+    const doctor = db.store.get(CLINIC_ROLE.DOCTOR)!;
+    expect(doctor.permissionsJson).toBe("[]");
+    expect(doctor.staffKind).toBe("DOCTOR");
+    expect(doctor.isSystem).toBe(true);
+  });
+
+  it("fills invalid permissionsJson from template", async () => {
+    const db = makeDb([
+      { code: CLINIC_ROLE.DOCTOR, permissionsJson: "{broken", staffKind: null },
     ]);
     await ensureSystemClinicRoles(db, "org-1");
     const doctor = db.store.get(CLINIC_ROLE.DOCTOR)!;

@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
-import { useLedger } from "../../../lib/ledger-context";
+import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -75,7 +75,7 @@ function apiPath(tab: FormTab): string {
 export default function MhbsStatementsPage() {
   const { t, i18n } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const b = useMemo(() => monthBounds(), []);
 
   const [tab, setTab] = useState<FormTab>("balance");
@@ -95,7 +95,9 @@ export default function MhbsStatementsPage() {
   );
 
   const buildQuery = useCallback(() => {
-    const qs = new URLSearchParams({ ledgerType });
+    const qs = new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    );
     if (tab === "balance" || tab === "notes") {
       qs.set("asOfDate", asOf);
     } else if (tab === "equity-changes") {
@@ -105,7 +107,7 @@ export default function MhbsStatementsPage() {
       qs.set("dateTo", to);
     }
     return qs;
-  }, [tab, from, to, asOf, year, ledgerType]);
+  }, [tab, from, to, asOf, year, ledgerType, accountingBookId]);
 
   const load = useCallback(async () => {
     if (!token) return;

@@ -50,6 +50,7 @@ const ROW_BG: Record<string, string> = {
 type ListFilters = {
   q: string;
   status: string;
+  noteQ: string;
   notesOnly: boolean;
   guestId: string;
   dateFrom: string;
@@ -71,6 +72,7 @@ export default function ReservationsListPage() {
   const [statusFilter, setStatusFilter] = useState(() =>
     searchParams.get('guestId') ? 'ALL' : 'LIVE',
   );
+  const [noteQ, setNoteQ] = useState(searchParams.get('noteQ') ?? '');
   const [notesOnly, setNotesOnly] = useState(searchParams.get('hasNotes') === '1');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -87,12 +89,13 @@ export default function ReservationsListPage() {
     () => ({
       q,
       status: statusFilter,
+      noteQ,
       notesOnly,
       guestId: guestIdFilter,
       dateFrom,
       dateTo,
     }),
-    [q, statusFilter, notesOnly, guestIdFilter, dateFrom, dateTo],
+    [q, statusFilter, noteQ, notesOnly, guestIdFilter, dateFrom, dateTo],
   );
 
   const fetcher = useCallback(
@@ -112,6 +115,7 @@ export default function ReservationsListPage() {
       });
       if (f.guestId) params.set('guestId', f.guestId);
       if (f.q.trim()) params.set('q', f.q.trim());
+      if (f.noteQ.trim()) params.set('noteQ', f.noteQ.trim());
       if (f.notesOnly) params.set('hasNotes', '1');
       if (f.dateFrom) params.set('dateFrom', f.dateFrom);
       if (f.dateTo) params.set('dateTo', f.dateTo);
@@ -170,6 +174,7 @@ export default function ReservationsListPage() {
             onReset={() => {
               setQ('');
               setStatusFilter(guestIdFilter ? 'ALL' : 'LIVE');
+              setNoteQ('');
               setNotesOnly(false);
               setDateFrom('');
               setDateTo('');
@@ -219,31 +224,17 @@ export default function ReservationsListPage() {
               placeholder={tc('datePlaceholder')}
               openCalendarLabel={tc('openCalendar')}
             />
+            <Field
+              label={t('notes')}
+              preset="longText"
+              value={noteQ}
+              onChange={(e) => setNoteQ(e.target.value)}
+            />
           </EraListFilterBar>
         }
         table={
           <HotelDataGrid<Row & Record<string, unknown>>
             columns={[
-              {
-                key: 'notes',
-                header: t('notes'),
-                render: (r) =>
-                  r.hasNotes ? (
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 text-amber-700"
-                      title={r.notePreview ?? ''}
-                      onClick={() => setCardId(r.id)}
-                    >
-                      <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
-                      <span className="max-w-[8rem] truncate text-[12px]">
-                        {r.notePreview}
-                      </span>
-                    </button>
-                  ) : (
-                    '—'
-                  ),
-              },
               {
                 key: 'room',
                 header: t('room'),
@@ -280,6 +271,26 @@ export default function ReservationsListPage() {
                 key: 'state',
                 header: t('state'),
                 render: (r) => tRes(r.status as 'CONFIRMED'),
+              },
+              {
+                key: 'notes',
+                header: t('notes'),
+                render: (r) =>
+                  r.hasNotes ? (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-amber-700"
+                      title={r.notePreview ?? ''}
+                      onClick={() => setCardId(r.id)}
+                    >
+                      <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="max-w-[8rem] truncate text-[12px]">
+                        {r.notePreview}
+                      </span>
+                    </button>
+                  ) : (
+                    '—'
+                  ),
               },
               {
                 key: 'id',

@@ -26,6 +26,8 @@ export type BillingPayload = {
     pricePerWhatsappAlertAzn: number;
     pricePerInvoiceAzn: number;
     pricePerOcrPageAzn: number;
+    pricePerTradeCreditBuyerAzn: number;
+    pricePerTradeCreditEnrichAzn: number;
   };
   tierSpendCeilings?: Record<TierKey, number>;
   pricingBundles: Array<{

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
@@ -24,6 +25,7 @@ import {
   validateShareCandidate,
 } from '@/lib/services/share-assignment.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
+import { contractCounterpartyType } from '@/lib/booking-source-kind';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
@@ -87,8 +89,10 @@ export async function createReservation(input: {
   ratePlanId: string;
   mealPlanId?: string;
   roomId?: string;
+  givenRoomTypeId?: string;
   sourceId?: string;
   agencyId?: string;
+  companyId?: string;
   salesContractId?: string;
   /** Booking envelope (ReservationGroup) — multi-stay under one group. */
   groupId?: string;
@@ -116,6 +120,7 @@ export async function createReservation(input: {
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
+  let companyId = input.companyId;
   let salesContractId = input.salesContractId;
   const partyBillingMode = input.partyBillingMode ?? 'PRIMARY';
 
@@ -123,7 +128,11 @@ export async function createReservation(input: {
     const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
     if (!contract) throw new Error('Sales contract is not active for check-in date');
     ratePlanId = contract.ratePlanId;
-    agencyId = contract.agencyId ?? agencyId;
+    if (contractCounterpartyType(contract) === 'CORPORATE') {
+      companyId = contract.companyId ?? companyId;
+    } else if (contract.agencyId) {
+      agencyId = contract.agencyId;
+    }
     await assertContractAllotmentAvailable(
       salesContractId,
       input.roomTypeId,
@@ -147,6 +156,12 @@ export async function createReservation(input: {
   const roomType = await prisma.roomType.findUnique({ where: { id: input.roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
   assertActiveForNewUse(`Room type ${roomType.code}`, roomType.active);
+
+  if (input.givenRoomTypeId) {
+    const givenType = await prisma.roomType.findUnique({ where: { id: input.givenRoomTypeId } });
+    if (!givenType) throw new Error('Given room type not found');
+    assertActiveForNewUse(`Given room type ${givenType.code}`, givenType.active);
+  }
 
   const ratePlan = await prisma.ratePlan.findUnique({ where: { id: ratePlanId } });
   if (!ratePlan) throw new Error('Rate plan not found');
@@ -240,6 +255,11 @@ export async function createReservation(input: {
     if (!agency) throw new Error('Agency not found');
     assertActiveForNewUse(`Agency ${agency.code}`, agency.active);
   }
+  if (input.companyId) {
+    const company = await prisma.company.findUnique({ where: { id: input.companyId } });
+    if (!company) throw new Error('Company not found');
+    assertActiveForNewUse(`Company ${company.code}`, company.active);
+  }
 
   let totalAmount = toDecimal(0);
   try {
@@ -263,12 +283,14 @@ export async function createReservation(input: {
     data: {
       organizationId: requestOrganizationId(),
       roomTypeId: input.roomTypeId,
+      givenRoomTypeId: input.givenRoomTypeId,
       guestId: input.guestId,
       ratePlanId,
       mealPlanId: input.mealPlanId,
       roomId: input.roomId,
       sourceId: input.sourceId,
       agencyId,
+      companyId,
       salesContractId,
       groupId: input.groupId,
       checkInDate: input.checkInDate,
@@ -428,11 +450,13 @@ export async function assignRoom(reservationId: string, roomId: string) {
   return updated;
 }
 
-export async function listArrivals(date: Date) {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
+export async function listArrivals(from: Date | string, to: Date | string = from) {
+  const fromKey = hotelDateKey(from);
+  const toKey = hotelDateKey(to);
+  const lo = fromKey <= toKey ? fromKey : toKey;
+  const hi = fromKey <= toKey ? toKey : fromKey;
+  const start = new Date(`${lo}T00:00:00.000Z`);
+  const end = new Date(`${hi}T23:59:59.999Z`);
 
   return prisma.reservation.findMany({
     where: {
@@ -455,6 +479,14 @@ export async function checkInReservation(id: string) {
   if (!reservation.roomId) throw new Error('Assign a room before check-in');
 
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
+  if (room) {
+    const physicalTypeId = reservation.givenRoomTypeId ?? reservation.roomTypeId;
+    if (room.roomTypeId !== physicalTypeId) {
+      throw new Error(
+        'Assigned Room no. does not match Given room type — re-assign the door before check-in',
+      );
+    }
+  }
   const othersInHouse = reservation.roomId
     ? await countRemainingInHouseOnDoor(reservation.roomId, id)
     : 0;
@@ -531,7 +563,7 @@ export async function checkInReservation(id: string) {
     });
     // Pilot polish: Walkin leisure → no sanatorium lifecycle (clinic stays quiet)
     if (stamped.stayKind !== 'leisure') {
-      const { dispatchGuestCheckedIn } = await import(
+      const { dispatchGuestCheckedIn, lifecycleDemographicsFromPax } = await import(
         '@/lib/integration/guest-lifecycle-events'
       );
       const paxList =
@@ -567,6 +599,7 @@ export async function checkInReservation(id: string) {
           checkInDate: reservation.checkInDate.toISOString(),
           checkOutDate: reservation.checkOutDate.toISOString(),
           paxKey,
+          ...lifecycleDemographicsFromPax(pax),
         }).catch((e) => console.error('Guest lifecycle check-in failed', e));
       }
       if (full) {

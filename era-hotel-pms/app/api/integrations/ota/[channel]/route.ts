@@ -22,11 +22,12 @@ export async function POST(
   try {
     const { channel } = await params;
     const secret = process.env.ERA_OTA_WEBHOOK_SECRET?.trim();
-    if (secret) {
-      const header = request.headers.get('x-era-ota-secret')?.trim();
-      if (header !== secret) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    if (!secret) {
+      return Response.json({ error: 'OTA webhook secret not configured' }, { status: 503 });
+    }
+    const header = request.headers.get('x-era-ota-secret')?.trim();
+    if (!header || header !== secret) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const raw = bodySchema.parse(await request.json());
@@ -36,7 +37,7 @@ export async function POST(
       throw new Error('externalReservationId is required');
     }
 
-    const adapter = resolveChannelAdapter();
+    const adapter = await resolveChannelAdapter();
     let result;
     try {
       result = await upsertOtaReservation(normalized);
@@ -56,7 +57,7 @@ export async function POST(
       accepted: true,
       channel,
       adapter: adapter.code,
-      mode: process.env.ERA_CHANNEL_ADAPTER ?? 'webhook',
+      mode: adapter.code,
       ...serialize(result),
     });
   } catch (err) {

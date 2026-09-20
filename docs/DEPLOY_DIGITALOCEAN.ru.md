@@ -143,7 +143,7 @@ POS_BRIDGE_SECRET=<random>
 # Set once in this droplet .env (never commit). Used by bootstrap-local /
 # prod-init to create Orchestrator + Finance + satellite local logins.
 PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD=<demo-password-for-client>
-PLATFORM_SUPER_ADMIN_EMAILS=inaram84@gmail.com,shirinov.chingiz@gmail.com,chingiz@era.com
+PLATFORM_SUPER_ADMIN_EMAILS=shirinov.chingiz@gmail.com
 
 ERA_APP_ORIGIN=https://app.era-365.online
 ERA_API_ORIGIN=https://api.era-365.online
@@ -290,6 +290,16 @@ tar czf /root/era-docker-data.tgz -C /opt/era-ecosystem docker-data
 | Deploy `ghcr.io/v2/: denied` | Логин в GHCR идёт в `docker/scripts/deploy-droplet.sh`. В inline-скрипте appleboy/ssh-action нельзя ставить pipe — drone-ssh выкидывает такие строки и `docker login` не выполняется. |
 | Hotel Prisma errors | `docker exec era-hotel-pms` логи; `npx prisma migrate deploy` с хоста |
 | Старые данные после «очистки» | убедиться что удалён `docker-data/` и `docker compose down -v` |
+
+---
+
+## 11a. DNS / TLS — ERA subdomain и white-label login
+
+**ERA-owned subdomain (включено, не SKU):** `{orgNo}.<pool-host>` — например `104221.clinic.era-365.online`, `104221.bank.era-365.online`, `104221.dbo.era-365.online`. На edge нужны **wildcard DNS + TLS** (рекомендуется DNS-01 для `*.clinic.era-365.online`, `*.hotel-pms.era-365.online`, `*.bank.era-365.online`, `*.dbo.era-365.online`, …). На сателлите: `ERA_LOGIN_POOL_HOSTS=clinic.era-365.online,hotel-pms.era-365.online,...,bank.era-365.online,dbo.era-365.online`.
+
+**White-label (`platform_domain` 19 / `platform_domain_org` 29):** клиентский hostname → **CNAME** на pool-host сателлита (например `pms.client.az` → `clinic.era-365.online`). В control plane: `POST /platform/domains/v1/domains` с `kind: satellite_login` + `satelliteKey` → статус `PENDING_DNS`; после проверки CNAME — `POST .../domains/:id/activate` → `ACTIVE`. Orch Sync пушит ACTIVE hostnames на сателлит.
+
+**Честность:** white-label login **не SHIPPED** для продажи, пока нет живого per-hostname TLS на edge (Super-admin карточка ≠ reception-ready).
 
 ---
 

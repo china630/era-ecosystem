@@ -16,7 +16,7 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 |--------|--------|-------|
 | Allotment block | AllotmentBlock + lines | TENTATIVE/DEFINITE/CANCELLED/RELEASED; cutoff soft-release |
 | Booking | ReservationGroup | folioMode, allotmentBlockId, envelope dates |
-| RoomStay | Reservation | roomCount=1 on create; optional roomId |
+| RoomStay | Reservation | One **door + charged product** (`roomCount=1`); optional `roomId`. Party (`ReservationGuest`) lives on the stay — not “one person per row”. See [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) |
 | Assignment | roomId + share pool + shareBedIndex + Stay | Physical door; share pool for union twin — see [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
 | Master guest | ReservationGuest.isPrimary | Folio owner per stay (PRIMARY mode) |
 | Party billing | Reservation.partyBillingMode | PRIMARY (one owner) / EQUAL (each ownsFolio → personal GUEST folio) |
@@ -26,11 +26,13 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 
 - Cutoff cron: POST /api/cron/allotment-block-cutoff (Bearer HOTEL_CRON_SECRET) -> RELEASED
 - MASTER/SPLIT posting: booking-folio.service routes room&tax to AGENCY on master stay; extras to GUEST
-- Pickup UI: /admin/allotment-blocks Pickup creates Booking + N stays
+- Pickup UI: `/distribution/allotment-blocks` — create/edit multi-line blocks, optional sales contract link, status transitions, Pickup creates Booking + N stays
+- Contracts bridge: `/distribution/contracts` → **Create block** opens allotment-blocks with `?contractId=` prefilling season/agency
 
 ### Still deferred
 
 - Prisma rename Reservation -> RoomStay (semantic only today)
+- Person-level **Depart guest** / **Move guest** / **Swap rooms** and reservation-card IA target — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md)
 
 ## References
 
@@ -40,3 +42,5 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 ## Related
 
 - [hotel-fo-screen-chain.md](./hotel-fo-screen-chain.md) — FO menu priority and sellable vs doors
+- [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) — union share pool (not household party)
+- [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) — stay card IA; exclusive party vs share vs booking

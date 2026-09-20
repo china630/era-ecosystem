@@ -12,6 +12,7 @@ import {
   effectiveRolePermissions,
   isClinicPermission,
   parseRolePermissions,
+  rolePermissionsAreCustomized,
   serializeRolePermissions,
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
@@ -47,7 +48,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
       staffKind: role.staffKind,
       cloneFromCode: role.cloneFromCode,
       permissions,
-      customized: parseRolePermissions(role.permissionsJson).length > 0,
+      customized: rolePermissionsAreCustomized(role.code, role.permissionsJson),
     });
   } catch (err) {
     return handleRouteError(err);

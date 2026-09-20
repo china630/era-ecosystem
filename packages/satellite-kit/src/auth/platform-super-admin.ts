@@ -1,8 +1,4 @@
-const DEFAULT_EMAILS = [
-  "inaram84@gmail.com",
-  "shirinov.chingiz@gmail.com",
-  "chingiz@era.com",
-] as const;
+const DEFAULT_EMAILS = ["shirinov.chingiz@gmail.com"] as const;
 
 const DEFAULT_PASSWORD = "12345678";
 

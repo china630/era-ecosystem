@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -9,9 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { VacationSeniorityService } from "./vacation-seniority.service";
 import {
@@ -22,19 +23,19 @@ import {
 @ApiTags("hr-vacation-seniority")
 @ApiBearerAuth("bearer")
 @Controller("hr/vacation-seniority-rules")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class VacationSeniorityController {
   constructor(private readonly rules: VacationSeniorityService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "List vacation seniority rules" })
   list(@OrganizationId() organizationId: string) {
     return this.rules.list(organizationId);
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   create(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateVacationSeniorityRuleDto,
@@ -43,7 +44,7 @@ export class VacationSeniorityController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   update(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -53,7 +54,7 @@ export class VacationSeniorityController {
   }
 
   @Delete(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   remove(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.rules.remove(organizationId, id);
   }

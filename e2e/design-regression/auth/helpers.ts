@@ -1,10 +1,10 @@
 import type { Page } from '@playwright/test';
 
 export const DEFAULT_LOGIN =
-  process.env.PLAYWRIGHT_LOGIN ?? process.env.ECOSYSTEM_DEMO_LOGIN ?? 'chingiz@era.com';
+  process.env.PLAYWRIGHT_LOGIN ?? process.env.ECOSYSTEM_DEMO_LOGIN ?? 'shirinov.chingiz@gmail.com';
 export const DEFAULT_PASSWORD =
   process.env.PLAYWRIGHT_PASSWORD ?? process.env.ECOSYSTEM_DEMO_PASSWORD ?? '12345678';
-export const CLINIC_LOGIN = process.env.PLAYWRIGHT_CLINIC_LOGIN ?? process.env.ECOSYSTEM_DEMO_LOGIN ?? 'chingiz@era.com';
+export const CLINIC_LOGIN = process.env.PLAYWRIGHT_CLINIC_LOGIN ?? process.env.ECOSYSTEM_DEMO_LOGIN ?? 'shirinov.chingiz@gmail.com';
 export const CLINIC_PASSWORD = process.env.PLAYWRIGHT_CLINIC_PASSWORD ?? process.env.ECOSYSTEM_DEMO_PASSWORD ?? '12345678';
 
 export async function loginHotelPms(page: Page, login = DEFAULT_LOGIN, password = DEFAULT_PASSWORD) {

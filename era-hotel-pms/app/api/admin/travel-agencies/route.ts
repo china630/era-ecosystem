@@ -12,6 +12,9 @@ const schema = z.object({
   name: z.string().min(1),
   voen: z.string().optional(),
   commissionPercent: z.number().optional(),
+  settlementMode: z.enum(['PREPAID', 'POSTPAID']).optional(),
+  creditLimitAzn: z.number().nonnegative().nullable().optional(),
+  paymentTermsDays: z.number().int().nonnegative().nullable().optional(),
   active: z.boolean().optional(),
 });
 

@@ -1,6 +1,7 @@
 import {
   handleStaffProvisionEvent,
   SatelliteLoginTakenError,
+  UnknownSatelliteRoleError,
 } from "@/lib/staff-provision";
 
 jest.mock("@/lib/prisma", () => ({
@@ -19,6 +20,10 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/lib/request-organization", () => ({
   requestOrganizationId: () => "770e8400-e29b-41d4-a716-446655440002",
   enterRequestTenant: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/ensure-system-hotel-roles", () => ({
+  ensureSystemHotelRoles: jest.fn().mockResolvedValue(undefined),
 }));
 
 const CP_EMPLOYMENT_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -66,28 +71,22 @@ describe("hotel staff-provision", () => {
         }),
       }),
     );
-    expect(prisma.role.findFirst).toHaveBeenCalledWith({ where: { code: "Receptionist" } });
+    expect(prisma.role.findFirst).toHaveBeenCalledWith({
+      where: { organizationId: ORG_ID, code: "Receptionist" },
+    });
     expect(prisma.role.create).not.toHaveBeenCalled();
   });
 
-  it("ensures Receptionist role when missing (no seed)", async () => {
+  it("throws UnknownSatelliteRoleError when role missing (no silent Receptionist)", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.role.findFirst.mockResolvedValue(null);
-    const result = await handleStaffProvisionEvent(provisionEvent);
-    expect(result).toEqual({ satelliteUserId: "user-1" });
-    expect(prisma.role.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          code: "Receptionist",
-          permissionsJson: expect.any(String),
-        }),
+    await expect(
+      handleStaffProvisionEvent({
+        ...provisionEvent,
+        payload: { ...provisionEvent.payload, satelliteRole: "UNKNOWN_ROLE" },
       }),
-    );
-    expect(prisma.user.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ roleId: "role-new" }),
-      }),
-    );
+    ).rejects.toBeInstanceOf(UnknownSatelliteRoleError);
+    expect(prisma.user.create).not.toHaveBeenCalled();
   });
 
   it("throws SatelliteLoginTakenError when login belongs to another cpEmploymentId", async () => {

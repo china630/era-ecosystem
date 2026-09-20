@@ -5,10 +5,20 @@ import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
+import { assertTicketCreateQuota } from "@/lib/fnb-quota";
+import { handleRouteError } from "@/lib/api-utils";
+import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
+import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 
 export async function GET(request: Request) {
   await assertFnbEntitled();
+  const session = await getSessionFromRequest(request);
+  const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
+  if (denied) return denied;
   const url = new URL(request.url);
   const beoId = url.searchParams.get("beoId");
   const serviceChannel = url.searchParams.get("serviceChannel");
@@ -50,15 +60,27 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
-  if (denied) return denied;
+  try {
+    await assertFnbEntitled();
+    const session = await getSessionFromRequest(request);
+    const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_OPEN);
+    if (denied) return denied;
 
-  const body = createSchema.parse(await request.json());
-  const outlet = await ensureOutletByCode(body.outletCode);
+    const orgId = requestOrganizationId();
+    assertTicketCreateQuota(orgId);
 
-  const lines = body.lines ?? [];
+    const body = createSchema.parse(await request.json());
+    if (body.beoId || body.serviceChannel === "ROOM_SERVICE") {
+      await assertHotelFnbFeature("hotel-ticket");
+    }
+    const outlet = await ensureOutletByCode(body.outletCode);
+
+    const lines = body.lines ?? [];
+    for (const l of lines) {
+      if (l.menuItemPlu) {
+        await assertMenuItemNotSoldOut({ outletId: outlet.id, plu: l.menuItemPlu });
+      }
+    }
   const subtotal = lines.reduce(
     (s, l) => s + l.qty * l.unitPriceAzn,
     0,
@@ -111,4 +133,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(ticket, { status: 201 });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

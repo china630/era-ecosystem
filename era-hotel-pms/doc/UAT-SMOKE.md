@@ -33,7 +33,8 @@ Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API call
 ## 1. Auth & navigation
 
 1. Open `/login`, sign in as `reception` / `reception123`.
-2. Confirm Chessboard loads; AppNav shows allowed links only.
+2. **SHARED pool:** enter the 6-digit **ERA ID** (`orgNo`) on the login form or use `?org=104221` (from Control Plane → Super-admin → Organizations or Workforce → Login & access). DEDICATED appliance may omit the field.
+3. Confirm Chessboard loads; AppNav shows allowed links only.
 
 ## 1b. Room type availability (FO chain)
 
@@ -80,7 +81,7 @@ Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API call
 ### 6b. Settlement hub (pending walk-in)
 
 1. With Nafta org policy (`settlementHub=HOTEL_FRONT_CASH`): fb-pos walk-in ticket → **Send to reception**.
-2. `/front-cash/pending` — row appears; pay CASH → mock fiscal; fb ticket CLOSED via callback.
+2. `/front-cash/pending` — receipt row; **Open receipt** → line items; pay CASH → mock fiscal; fb ticket CLOSED via callback.
 3. Clinic walk-in visit complete → pending row; pay at Front Cash → visit `settledAt` set.
 4. Leave a pending row open → night audit **blocks** (default `pendingSettlementNaPolicy=BLOCK`); after pay → NA succeeds.
 
@@ -104,7 +105,10 @@ Room plan UI (Wave C+ / EW palette):
 - [ ] Bars show **blunt arrow tip** on the last night; **butt notch** on in-window starts; same-day turnover nests nose into butt
 - [ ] Guest names sit **right of the butt** (not clipped into the V)
 - [ ] Day-state colors match EW legend (reservation / expected arrival / in-house / expected departure / checkout / multiple / option)
-- [ ] HK squares on bar tail (clean / dirty / maintenance / closed)
+- [ ] Date header: large day number + weekday under (weekends red)
+- [ ] Arrow **stroke** = exclusive / shared male / shared female (not HK squares)
+- [ ] OOO / OOS / repair doors are **absent** from the plan (HK owns dirty / OOO)
+- [ ] Two guests on a door → both names on the bar; guest folio debt on the arrow nose
 - [ ] Share rows use the **same vertical gutter** as exclusive stays; no painted overlay of overlapping share stays
 - [ ] Hover a bar → tooltip with res no., guest, dates, agency, payment
 - [ ] Table uses **full content width**; exclusive row ~36px; share door = N × 36px
@@ -176,11 +180,14 @@ Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`.
 
 ## 18. B2B SALES CONTRACTS (Stage 24 / NW-3 PROC-24 / H-BL-30)
 
-1. `/admin/contracts` — create ACTIVE contract for TRAVEL-AZ with DERIVED −10% plan + 20 room-night allotment on STANDARD.
-2. `GET /api/admin/contracts/{id}?utilization=1` — utilization metrics after bookings.
-3. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
-4. `/reports/agency-profitability` — contract-sourced revenue visible.
-5. Legacy `/admin/contract-pricing` redirects to `/admin/contracts`; run `npx tsx prisma/scripts/migrate-contract-pricing-to-derived.ts` for CPR migration.
+1. `/distribution/contracts` — create DRAFT contract for TRAVEL-AZ (explicit agency + DERIVED plan, no silent defaults); set commission/notes/minStay as needed; **Activate** (confirm if no allotments).
+2. **Edit** contract — change notes/commission/CTA; code stays locked.
+3. **Allotments** — add STANDARD nightly quota (+ release days) inside the contract season; edit and delete work from the same modal.
+4. **Create block** — opens `/distribution/allotment-blocks?contractId=` with season/agency prefilled; add multi-line hold → DEFINITE → Pickup.
+5. `GET /api/admin/contracts/{id}?utilization=1` — utilization metrics after bookings.
+6. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
+7. `/reports/agency-profitability` — contract-sourced revenue visible.
+8. Legacy `/admin/contracts` and `/admin/contract-pricing` redirect to `/distribution/contracts`.
 
 ## 19. CHANNEL stop-sell regression (NW-4 / PROC-23)
 
@@ -239,15 +246,15 @@ Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d
 2. No **FO with notes** in Core; no **New booking** in header.
 3. `/bookings/new` redirects to `/?openReservation=1`.
 4. `/executive` (manager/admin): seven KPI cards (occupancy %, in-house, arrivals/departures, revenue, AR, ADR, RevPAR).
-5. Reports section: **Actual check-in/out times** → `/reports/reservation-times` (not in Core).
+5. Reports section: **Actual check-in/out times** → `/fo/reservation-times` (guest + agency filters; only actual CI/CO; newest actual CI first).
 
 ### Room rack & plan
-6. Rack tile shows: status, guest name, stay dates, pay badge, procedure count.
+6. Rack tile for the **filter date range** (From–To): guest + stay dates only if the stay overlaps that interval. Gender chip uses `normalizeShareGender` (EW `0` = male). Filter column and room grid scroll independently. Unassigned arrivals: compact room search + Assign (same type, assignable doors only).
 7. Drag in-house/confirmed reservation to another room → confirm → room updates (HK-03 enforced).
 8. `/room-plan`: **Grouping** and **Period** dropdowns (14/21/30); drag bar to another room row.
 
 ### Lists & cards
-9. `/reports/reservations`: notes column, amber rows with notes, filter **With notes**; `/reports/reservations/notes` → `?hasNotes=1`.
+9. `/fo/reservations`: notes column is **penultimate** (before Res. ID); notes search field + **With notes** filter; `/fo/reservations/notes` → `?hasNotes=1`.
 10. **+** on vacant rack tile opens reservation create with `roomId`; create/edit share toolbar + bottom bar chrome.
 11. Guest card: stats bar, CRM + Reservation Details button grids (not three links only).
 
@@ -295,7 +302,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 
 ## 22. Nafta W0 — analytics, child pricing, OTA (2026-06-13)
 
-1. `/admin/child-matrix` — ensure row 0–6 = 100% discount; create reservation with `children5_2=1` → **Pricing recalc** → nightly total unchanged vs adult-only baseline.
+1. `/settings/child-matrix` — ensure row 0–6 = 100% discount; create reservation with `children5_2=1` → **Pricing recalc** → nightly total unchanged vs adult-only baseline.
 2. `/reports/analytics` — set date range → booking sources, cancellations, nationality tables load.
 3. OTA webhook (with `ERA_OTA_WEBHOOK_SECRET` if set):
    ```bash
@@ -335,7 +342,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 1. **H-BL-28:** clinic `/admin/procedure-rules` — add FORBID_SAME_DAY rule → hotel `/procedures` book rejects conflict.
 2. **H-BL-26:** Guest card CRM — interests/social/general CRM pages; see `doc/GUEST-CRM-ELECTRAWEB.md`.
 3. **H-BL-27:** Folio split settlement shows loyalty balance; `LOYALTY_POINTS` line burns CP ledger.
-4. **H-BL-25:** `ERA_CHANNEL_ADAPTER=booking_com` + env → channel push includes BAR price.
+4. **H-BL-25:** Channel binding `provider=channex` + property id → push enqueues ARI (staging). Do not set `ERA_CHANNEL_ADAPTER`.
 5. **H-BL-23:** `POST /api/migration/{id}/submit` → mock `externalRef` on registration.
 6. **H-BL-24:** Fiscal doc shows `eqaimeId` / status when set.
 7. **H-BL-20:** `/concierge` catalog + order complete posts folio charge.
@@ -349,7 +356,7 @@ UI paths (no curl) for [NAFTA_DOC_API_UI_AUDIT](../../docs/NAFTA_DOC_API_UI_AUDI
 1. **Migration:** `/migration` → Prefill + Submit to registry on a registration row.
 2. **Folio card:** open reservation → Folio tab → Place card hold / Release; Billing → credit limit; early/late preview under check-in/out times.
 3. **Channel:** `/channel` → **Push OTA** / **Pull OTA**; confirm last sync message.
-4. **Admin:** `/admin/yield-rules` CRUD; `/admin/audit` filter by entity type + date range.
+4. **Admin:** `/settings/yield-rules` CRUD; `/settings/audit` filter by entity type + date range.
 
 ## 30. Reports W1 — Management reports catalog + nightly ZIP (HOT-RPT-01/02)
 
@@ -408,15 +415,18 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
 5. **Discount:** settle or check-out with discount amount → negative DISCOUNT charge.
 6. **Per-guest close:** EQUAL party → Close on one personal folio when balance 0.
-7. **Agency settle:** `/front-cash/agency-ledger` → TRANSFERRED_AR list → Apply to City Ledger.
+7. **Agency settle handoff:** `/front-cash/agency-ledger` → TRANSFERRED_AR list (AGENCY folios only) → bank match in Finance (hotel POST settle returns 409).
 8. **NA polish:** `/night-audit` → night audit status shows polishPreview (exceptions / auto no-show / trial).
 9. **Finance matching:** Finance `/reporting/aging` buckets; counterparty payment terms; `/sales/invoices/allocate` allocate tranche.
+10. **Agency statement lines (HOT-CL-03):** `/front-cash/agency-ledger` → pick agency + period → metrics opening/charges/payments → **Statement lines** grid (date, kind, stay, amount, running). Prior-stay opening must appear when period starts after checkout.
+11. **Company statement lines (HOT-CL-06):** `/front-cash/company-ledger` → pick company → same statement grid for COMPANY folios; TRANSFERRED_AR list; no commission / no Push snapshot.
+12. **Agency portal CL (HOT-AGP-04):** `/agency/ledger` (agency session) → period filters → own statement only; no Push / settle controls.
 
 ## 28. MENU-IA deepen — cash journal / EOD grids / updates (2026-08-07 → thin MVP 2026-08-11)
 
 UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / HOT-NA-04:
 
-1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → payments / HELD deposits / pending / method totals (incl. BANK_TRANSFER); select CashShift → **Print Z** → **Close shift** (ops packet, not fiscal KKM Z).
+1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → **Payments** / **Deposits** tabs + pending **link** (not a second queue) / method totals; select CashShift → **Print Z** (modal) → **Close shift** (ops packet, not fiscal KKM Z).
 2. **EOD hub (HOT-NA-03):** `/night-audit/reports` — pick date → open **09 Cancelled**, **10 Created**, **11 Folio transactions**, **12 Room price control**, **13 No-shows**, **14 Room moves**, **15 VIP in-house** → each shows a grid; **Export CSV** on report pages.
 3. **Folio day ledger:** `/night-audit/reports/folio-transactions?date=…` — CHARGE and PAYMENT rows for the day; Folio link opens `/folio/[reservationId]`.
 4. **Reservation updates (HOT-NA-04):** `/night-audit/reservation-updates` — filter Action type Cancel/Extend/Note/Other → grid updates; **Export CSV** downloads file.
@@ -430,7 +440,9 @@ UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / 
 3. **Transfers (HOT-XFER-01):** `/transfers` → filter pickup date → **Print driver sheet**; complete posts via folio routing; **Cancel** voids charge when DONE+charged.
 4. **BEO day sheet (HOT-BEO-01):** `/banquets/[id]` → preferred folio on confirm → **Print day sheet** (HTML lines/resources/staff/master folio).
 5. **CL snapshot (HOT-CL-04):** `/front-cash/agency-ledger` → select agency → see last snapshot meta → **Push CL snapshot** → **Open Finance AR** when Finance URL configured.
-6. **Channel local CM (HOT-CH-01):** `/distribution/channel` — health panel; cancel OTA by externalRef/reservationId only (no latest-OTA fallback); error journal OPEN→RESOLVED. Live Booking/Expedia/Exely = HOT-CH-02 **STUB** until vendor creds + UAT.
+6. **Channel local CM (HOT-CH-01):** `/distribution/channel` — binding card (provider/channex property/IBE key); health panel; cancel OTA by externalRef/reservationId only; error journal OPEN→RESOLVED.
+7. **Channex staging path (HOT-CH-02 STUB until live UAT):** Super-Admin `/super-admin/vendors/channex` partner key → hotel binding `provider=channex` + property id → map rooms/rates → **Push OTA** → pending ARI jobs drain via cron `/api/cron/channel-ari-drain`. Webhook: `POST /api/integrations/channex/webhook` with `property_id`. Do **not** use `ERA_CHANNEL_ADAPTER=booking_com`. Live=`true` only after PMS certification (W8).
+8. **Direct IBE (HOT-IBE-01):** `/b2c` with publishable key → `GET /api/public/v1/availability`; hold + book with Idempotency-Key. Wrong key / other origin → 401/403. Legacy rates URL returns 410.
 
 ## 30. Shared twin assignment (HOT-FO-03) (2026-08-20)
 
@@ -443,7 +455,7 @@ UI paths (OpsUI) — required before Status=SHIPPED. Queue APIs are API-only (no
 5. **Check-in second:** second share check-in on OCCUPIED succeeds.
 6. **Partial checkout / cancel:** first share leaves while roommate remains → door OCCUPIED (bed-HK note allowed, not full DIRTY); last-out → DIRTY + HK task.
 7. **Break share:** with no roommate → Break share → exclusive; with roommate → refused until relocate.
-8. **Import/bridge (ops note, not SHIPPED):** re-import reservations where Room No is `707` + `707S` (or detail SHARE / Room Count 0) → both stays `shareEligible` on door `707`, occupancy doors = 1; NORMAL primary is never treated as clear-share. See ADR hotel-shared-twin-assignment § Elektraweb cutover.
+8. **Import/bridge (ops note, not SHIPPED):** re-import reservations where Room No is `707` + `707S` (or detail SHARE / Room Count 0) → both stays `shareEligible` on door `707`, occupancy doors = 1. Alone after first-out + NORMAL → orphan `shareEligible` **cleared**; FO Break share + Save with `shareEligible=false` must stick (no autoShare / join-pool 409). See ADR hotel-shared-twin-assignment § Elektraweb cutover.
 9. **Door+overlap auto-pair (307 / Nafta):** two single M/F stays on the **same door** with overlapping nights (e.g. room **307**) → assign second without manual share checkbox **or** re-import without `S` suffix → both rows `shareEligible`, beds 1/2; `/fo/room-plan` shows **2 parallel lanes** (no bar overlay). OTA / adults>1 / ungendered → **409** with explicit message. Ops backfill: `npx tsx scripts/ops/pair-share-overlaps.ts [--dry-run]`; add `--include-checked-out` for IN_HOUSE + CHECKED_OUT history pairs.
 
 ## 31. Agency portal P0–P1 (HOT-AGP) (2026-08-20)
@@ -475,7 +487,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
 3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
-4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` fallback Delivered on the **same** ticket only.
+4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` **grid** (empty headers + guest/room/status/date filters) + fallback Delivered on the **same** ticket only.
 5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
 6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
 7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
@@ -604,4 +616,81 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 4. Share `707`/`707S` still two reservations / two episodes (no merge).
 5. Checkout closes **both** OPEN episodes for the reservation.
 
+## 42. Front cash deepen + agency vs company (HOT-CASH-07/08, HOT-CL-06)
 
+**Status:** CL statement paths SHIPPED (HOT-CL-03/06 + HOT-AGP-04); folio-balances / journal remain SCREEN deepen.
+
+1. `/front-cash/folio-balances` — tabs In house / any balance / guest balance / reservations; columns guest vs agency vs company; Folio link.
+2. `/front-cash/folio-journal` — date range charges+payments; no add/edit/delete; Folio link to `/folio/[id]`.
+3. `/distribution/companies` — create company code+name+VÖEN+prepaid/postpaid (no commission).
+4. `/distribution/travel-agencies` — settlement prepaid/postpaid saved on agency.
+5. Reservation card Commercial: set **Agency** and **Company** independently → save.
+6. `/front-cash/agency-ledger` — code/name/commission %; AGENCY folio totals + statement lines; opening from full history.
+7. `/front-cash/company-ledger` — code/name/settlement; COMPANY folio totals + statement lines; TRANSFERRED_AR list; no commission column.
+8. `/agency/ledger` — agency portal read-only statement (session agency only).
+
+## 43. Depart guest (HOT-FO-05)
+
+**Status:** Engineering API/SCREEN — not SHIPPED.
+
+1. IN_HOUSE exclusive party (2 adults) → Guests ⋮ **Depart guest** on companion → stay stays **IN_HOUSE**; departed badge on row; occupancy preview in modal.
+2. Adults 2→1; remaining unlocked nights recalc from depart date; HK **PICKUP** + STAYOVER task (not DIRTY).
+3. Clinic: only departed pax episode CLOSED (`SATELLITE_HOTEL_GUEST_DEPARTED` via orch fan-out); remaining spouse OPEN.
+4. Share-pool roommate → 409 (use stay checkout). Last live pax → `needs_checkout` → FO redirected to folio checkout (no blind Depart checkout).
+5. Reissue-key task created **server-side** (HOT-FO-08 STUB). CLOSE_PERSONAL only when pax `ownsFolio`.
+
+## 44. Move guest / Swap rooms (HOT-FO-06/07)
+
+**Status:** Engineering API/SCREEN — not SHIPPED.
+
+1. Booking with 2 stays → Guests ⋮ **Move** to sibling → card switches to destination; source not emptied (409 if last live pax).
+2. Clinic episode retargets `reservationId` / room (no close) via `GUEST_MOVED`.
+3. StaysBar **Swap rooms** → doors exchange; folios/rates stay with each stay; two `ROOM_CHANGED`; reissue-key tasks on both stays.
+4. Different `groupId` / departed pax → 409.
+
+## 45. Card Guests density (HOT-BOOK-06)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Open stay card → Guests: compact party grid (role · name · passport · DOB/age · medical badge · status).
+2. Click guest name → Guest card opens.
+3. Row ⋮ **Scan ID** → guest card + ID reader stub.
+4. Specials strip visible (voucher / bed / view / allergies).
+
+## 46. Card Rate Grid (HOT-BOOK-07)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Saved stay → Pricing shows daily table (date · amount · discount% · fixed).
+2. Create with rate+dates → quote preview when nights not yet saved.
+3. If `packageCompose` present → summary block under grid (not per-night clinic column).
+
+## 47. Card Folio chrome (HOT-BOOK-08)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Folio chips: All / Guest / Agency / Company (not Opera windows).
+2. Empty stay → empty-state with Posting / Payment / Invoice links.
+3. Card authorizations collapsed by default.
+
+## 48. Card Notes feed (HOT-BOOK-09)
+
+**Status:** Engineering SCREEN — not SHIPPED.
+
+1. Notes tab: filter All / FO / HK / Billing; filled notes as feed rows.
+2. Open stay with CIN_NOTE or EXTRA_REQ or allergens → one dismissible alert popup.
+
+## 49. Role access matrix (HOT-RBAC-01 / Variant A)
+
+**Status:** Engineering SCREEN — field UAT open (not SHOW / not SHIPPED).
+
+1. Sign in as **Hotel_Admin** → **/settings/access** opens; matrix lists system roles and permission groups (incl. Import / bridge).
+2. Uncheck `api:folio.void` on **Hotel_Admin**, Save (session refresh). Void charge on folio returns **403**; UI hides void when can(`api:folio.void`) is false.
+3. Re-check + Save → void restored.
+4. **Clone** NightAuditor → NIGHT_MANAGER; assign a user on /settings/users; login as that user → grants match clone.
+5. Delete empty custom role OK; role with users → 409.
+6. Provision unknown satelliteRole → fail (no silent Receptionist).
+7. After image/DB upgrade run hotel Prisma migrate (`Role.isSystem` / `cloneFromCode` / `permissionCatalogVersion`); **re-login or any page load** (`/api/auth/me` → ensure) so role JSON remaps to fleet-canon and page JWT picks up Wave-2 keys (API already dual-reads / reloads DB).
+8. Uncheck `api:import.elektraweb` (keep SKU), Save → `/settings/import` and `/api/import` **403**; re-check restores (SKU still required). Strip must survive the next login (`ensure` must not re-add).
+9. Sign in as **Housekeeper** → open `/spa` by URL → redirected forbidden (middleware).
+10. `/settings/hk-policy` is master-data (not HK prefix). Staff bridge JWT after grant strip → 403 without re-mint.

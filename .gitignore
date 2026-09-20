@@ -17,6 +17,9 @@ dist/
 
 # Local dev credentials (never commit)
 tmp/era-local-credentials.md
+# Droplet → local DB pull dumps (may contain PII)
+tmp/db-pull/
+.env.droplet-pull
 
 # Docker persistent data (never commit)
 docker-data/

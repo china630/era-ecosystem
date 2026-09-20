@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { Maximize2, Minimize2, X } from 'lucide-react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -17,7 +16,6 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
-import { EraModal } from '@/components/EraModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import RoomPlanGrid, { type RoomPlanGroup, type RoomPlanRoom } from '@/components/RoomPlanGrid';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,7 +85,6 @@ export default function RoomPlanPage() {
   const { can } = useAuth();
   const t = useTranslations('roomPlan');
   const tc = useTranslations('common');
-  const tRes = useTranslations('reservationStatus');
   const [fromDate, setFromDate] = useState(() => bakuYmd());
   const [days, setDays] = useState(14);
   const [groupMode, setGroupMode] = useState<GroupMode>('type');
@@ -126,9 +123,6 @@ export default function RoomPlanPage() {
       document.body.style.overflow = prev;
     };
   }, [fullscreen]);
-
-  const selected = data?.reservations.find((r) => r.id === selectedId)
-    ?? data?.unassigned.find((r) => r.id === selectedId);
 
   const filteredReservations = useMemo(() => {
     if (!data) return [];
@@ -201,32 +195,6 @@ export default function RoomPlanPage() {
         return;
       }
       showSuccess(t('moved'));
-      setSelectedId(null);
-      await load();
-    } catch (e) {
-      showApiError({ error: e instanceof Error ? e.message : tc('updateError') });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function extendNights(n: number) {
-    if (!selected) return;
-    setBusy(true);
-    try {
-      const checkOut = new Date(selected.checkOutDate);
-      checkOut.setDate(checkOut.getDate() + n);
-      const res = await fetch(`/api/reservations/${selected.id}/schedule`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkOutDate: checkOut.toISOString() }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        showApiError(json, tc('updateFailed'));
-        return;
-      }
-      showSuccess(t('extendTo', { date: checkOut.toISOString().slice(0, 10) }));
       setSelectedId(null);
       await load();
     } catch (e) {
@@ -378,7 +346,10 @@ export default function RoomPlanPage() {
           <button
             key={u.id}
             type="button"
-            onClick={() => setSelectedId(u.id)}
+            onClick={() => {
+              setSelectedId(u.id);
+              setCardReservationId(u.id);
+            }}
             className={`rounded-lg border px-2 py-0.5 ${
               selectedId === u.id
                 ? 'border-[#2980B9] bg-[#2980B9]/10 text-[#2980B9]'
@@ -393,37 +364,6 @@ export default function RoomPlanPage() {
 
   const modals = (
     <>
-      {selected && can(PERMISSIONS.RESERVATIONS_WRITE) && (
-        <EraModal
-          open={!!selectedId}
-          title={selected.guest.fullName}
-          subtitle={`${tRes(selected.status as 'CONFIRMED')} · ${selected.checkInDate.slice(0, 10)} → ${selected.checkOutDate.slice(0, 10)}`}
-          onClose={() => setSelectedId(null)}
-        >
-          <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#34495E]">
-            <button type="button" disabled={busy} onClick={() => extendNights(1)} className={SECONDARY_BUTTON_CLASS}>
-              {t('plusOneNight')}
-            </button>
-            <button type="button" disabled={busy} onClick={() => extendNights(2)} className={SECONDARY_BUTTON_CLASS}>
-              {t('plusTwoNights')}
-            </button>
-            <button
-              type="button"
-              className="text-[#2980B9] hover:underline"
-              onClick={() => {
-                setCardReservationId(selected.id);
-                setSelectedId(null);
-              }}
-            >
-              {t('openCard')}
-            </button>
-            <Link href={`/folio/${selected.id}`} className="text-[#2980B9] hover:underline">
-              {t('folio')}
-            </Link>
-          </div>
-        </EraModal>
-      )}
-
       <ReservationCardModal
         open={Boolean(cardReservationId)}
         reservationId={cardReservationId}
@@ -439,35 +379,16 @@ export default function RoomPlanPage() {
     return (
       <>
         <div
-          className="fixed inset-0 z-[180] flex flex-col bg-[#EBEDF0]"
+          className="fixed inset-0 z-[180] flex flex-col bg-[#EBEDF0] px-4 py-3 sm:px-6"
           role="dialog"
           aria-modal="true"
           aria-label={t('fullscreenTitle')}
         >
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#D5DADF] bg-white px-4 py-3 sm:px-6">
-            <div className="min-w-0">
-              <h2 className="m-0 truncate text-lg font-semibold text-[#34495E]">{t('fullscreenTitle')}</h2>
-              <p className="m-0 truncate text-[13px] text-[#7F8C8D]">
-                {fromDate} · {t('days', { count: days })}
-              </p>
-            </div>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setFullscreen(false)}
-              aria-label={t('exitFullscreen')}
-            >
-              <X className="h-4 w-4" aria-hidden />
-              {t('exitFullscreen')}
-            </button>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6">
-            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-end gap-2">{headerActions}</div>
-            <div className="shrink-0">{filters}</div>
-            {unassignedBlock}
-            <div className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden p-4`}>
-              {grid}
-            </div>
+          <div className="mb-3 flex shrink-0 flex-wrap items-center justify-end gap-2">{headerActions}</div>
+          <div className="shrink-0">{filters}</div>
+          {unassignedBlock}
+          <div className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden p-4`}>
+            {grid}
           </div>
         </div>
         {modals}

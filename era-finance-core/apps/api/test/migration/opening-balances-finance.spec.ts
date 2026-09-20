@@ -96,9 +96,16 @@ describe("OpeningBalancesService (finance import)", () => {
         ),
     } as unknown as AccountingService;
 
+    const accountingBooks = {
+      resolveByLedgerType: jest
+        .fn()
+        .mockResolvedValue({ id: "00000000-0000-0000-0000-0000000000aa" }),
+    } as never;
+
     const service = new OpeningBalancesService(
       prisma,
       accounting,
+      accountingBooks,
       createMockPostingResolver(),
       { workforceResolve: jest.fn() } as never,
     );

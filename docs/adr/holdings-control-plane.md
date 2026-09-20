@@ -29,3 +29,4 @@ Finance historically owned `Holding`, `HoldingMembership`, and `Organization.hol
 - `docs/adr/org-operating-mode.md` (DEPARTMENT ≠ holding)
 - `docs/CONTROL_PLANE_ARCHITECTURE.md`
 - `docs/INTEGRATION_SSO_EVENTS.md` (`internal/v1/holdings`)
+- [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md) — two STANDALONE + holding for dual-VÖEN HR; holdings are **not** a merged WorkforceScope

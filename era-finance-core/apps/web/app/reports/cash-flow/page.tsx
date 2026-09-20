@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
-import { useLedger } from "../../../lib/ledger-context";
+import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -62,7 +62,7 @@ function fmt(v: unknown): string {
 export default function CashFlowPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const b = useMemo(() => monthBounds(), []);
 
   const [from, setFrom] = useState(b.from);
@@ -86,7 +86,11 @@ export default function CashFlowPage() {
       ...(cashDeskId.trim() ? { cashDeskId: cashDeskId.trim() } : {}),
       ...(bankName.trim() ? { bankName: bankName.trim() } : {}),
     });
-    qs.set("ledgerType", ledgerType);
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      qs.set(key, value);
+    }
     const res = await apiFetch(`/api/reports/cash-flow?${qs.toString()}`);
     setLoading(false);
     if (!res.ok) {
@@ -94,7 +98,7 @@ export default function CashFlowPage() {
       return;
     }
     setData((await res.json()) as CashFlowPayload);
-  }, [token, from, to, cashDeskId, bankName, t, ledgerType]);
+  }, [token, from, to, cashDeskId, bankName, t, ledgerType, accountingBookId]);
 
   async function exportFile(format: "pdf" | "xlsx") {
     if (!token) return;
@@ -103,11 +107,15 @@ export default function CashFlowPage() {
       const qs = new URLSearchParams({
         dateFrom: from,
         dateTo: to,
-        ledgerType,
         format,
         ...(cashDeskId.trim() ? { cashDeskId: cashDeskId.trim() } : {}),
         ...(bankName.trim() ? { bankName: bankName.trim() } : {}),
       });
+      for (const [key, value] of new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      )) {
+        qs.set(key, value);
+      }
       const res = await apiFetch(`/api/reports/cash-flow/export?${qs.toString()}`);
       if (!res.ok) {
         setErr(`${t("reporting.exportErr", { defaultValue: "Export failed" })}: ${res.status}`);

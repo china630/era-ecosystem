@@ -21,6 +21,7 @@
 | AC-HOT-HK | Housekeeping + maintenance | ✅ | [ ] | `__tests__/hk-status-negative.spec.ts` | DIRTY not assignable; CLEAN/INSPECTED; **not** full Nafta deepen |
 | AC-HOT-RATE | Dynamic rate plans (scoped) | ✅ | [ ] | ADR hotel-dynamic-rate-plans + pricing-engine tests | **Scope-cut:** BAR Excel HOT-02 = separate BLOCKED contour (not this AC) |
 | AC-HOT-MDM | Guest MDM link + masked ops profile | ✅ | [ ] | `__tests__/mdm-negative.spec.ts` + guest-identity | Strict deny; masked ops-profile; invalid FIN merge schema |
+| AC-HOT-CM | Channel Manager (Channex ARI + inbound + IBE) | 🟡 | [ ] | `__tests__/channel-manager-hardening.spec.ts` + `channel-manager-isolation.spec.ts` + `ota-ingest.spec.ts` | **Out of Scaffold BE rollup.** Negatives: unmapped UUID, CORS no `*`, IBE key header-only, hold deduct, dual ARI endpoints. HOT-CH-02 STUB until cert UAT. |
 | AC-HOT-INT | Integrations (KKM, locks, B2C widget) | 🟡 | [ ] | HOT-03/04 STUB; HOT-06 HEADLESS (extension); Wave 6 lab SHOW for SuperAdmin policy + clinic Issue-ticket; Wave 8 ALS ingest stamps; Wave 9 field runbook | Explicit stub — **excluded from Scaffold BE rollup** (external ⏸). Lab: [`reports/hot06-lab-signoff.md`](../../reports/hot06-lab-signoff.md). Field: [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Still not SHIPPED (field SPA Insert open). |
 | AC-HOT-TENANT | SHARED pool: `organizationId` on ops rows | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 1 hotel session/JWT `enterSatelliteTenant`; Wave 4 cron `runCronForEachTenant` + `byOrganization`; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 | AC-HOT-AGP | Agency portal (CP grant + PMS book + FO inbox) | 🟡 | [ ] | ADR hotel-agency-portal; HOT-AGP-01/02/03; `__tests__/agency-portal-negative.spec.ts` | Negatives landed (SSO HMAC + auto-confirm default OFF); Scaffold ✅ after fuller isolation suite + UAT §31 |
@@ -30,6 +31,10 @@
 | AC-HOT-PKG-PAX | Per-pax check-in events for multi-program stay (Wave E) | 🟡 | [ ] | HOT-PKG-04; `paxKey` on lifecycle payload | **Out of Scaffold BE rollup** — note under HOT-PKG; not FO scaffold flip |
 | AC-HOT-CO-EARLY | Early unused-nights refund (net VAT, all folios) | 🟡 | [ ] | `__tests__/early-checkout-unused-nights.spec.ts` + HOT-CO-04 | **Out of Scaffold BE rollup** until fuller void/lump/CL negatives; does not reopen AC-HOT-CASH |
 | AC-HOT-AMEND | Mid-stay product change + Manual Price bar | 🟡 | [ ] | `__tests__/stay-amendment-policy.spec.ts` + HOT-FO-04 | **Not Scaffold ✅** — field-intent Nafta FO; UAT §35 open |
+| AC-HOT-DEPART-GUEST | Party Depart guest (stay remains IN_HOUSE) | 🟡 | [ ] | `__tests__/depart-guest-negative.spec.ts` (share 409, last-pax `needs_checkout`) + clinic `__tests__/guest-departed-moved.spec.ts` + HOT-FO-05 | **Out of Scaffold BE rollup** — ADR hotel-reservation-card-and-party-ops; UAT §43 open; orch fans out `GUEST_DEPARTED` |
+| AC-HOT-PAX-MOVE | Move guest / Swap rooms within booking | 🟡 | [ ] | `__tests__/depart-guest-negative.spec.ts` (move group/empty/departed) + `__tests__/swap-rooms-negative.spec.ts` + HOT-FO-06/07 | **Out of Scaffold BE rollup** — UAT §44 open; orch fans out `GUEST_MOVED` |
+| AC-HOT-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `hotel-rbac` + staff-provision unknown role; ADR hotel-domain-permissions-and-rbac; `/settings/access` | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-HOT-CARD-PANE | Reservation card right-pane density (Guests / Rate Grid / Folio / Notes) | 🟡 | [ ] | HOT-BOOK-06…09; UAT §45–§48; Sprint S-22…S-24; `e2e/reservation-card.spec.ts` | **Out of Scaffold BE rollup** — UI density only; not SHIPPED until UAT; no Opera windows |
 
 **Edition / wave rollup (BE, in-scope)** = worst(FO, CASH, HK, RATE, MDM) → **✅**.  
 AC-HOT-INT remains 🟡 and is **out of Scaffold BE rollup** until vendor modes leave STUB.  
@@ -40,6 +45,7 @@ AC-HOT-TOUR is Scaffold ✅ (negatives + UAT UI path) and stays **out of Scaffol
 AC-HOT-PKG-NAFTA is 🟡 and stays **out of Scaffold BE rollup**.
 AC-HOT-PKG-COMPOSE is 🟡 and stays **out of Scaffold BE rollup**.
 AC-HOT-PKG-PAX is 🟡 and stays **out of Scaffold BE rollup**.
+AC-HOT-RBAC is 🟡 (Variant A shipped; field UAT open) and stays **out of Scaffold BE rollup**.
 
 Do not call this table «product readiness» (UI / Pilot still separate).
 
@@ -62,6 +68,10 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 | `era-hotel-pms/__tests__/fo-gates-negative.spec.ts` | AC-HOT-FO |
 | `era-hotel-pms/__tests__/shared-twin-negative.spec.ts` | AC-HOT-FO-SHARE |
 | `era-hotel-pms/__tests__/mdm-negative.spec.ts` | AC-HOT-MDM |
+| `era-hotel-pms/__tests__/hotel-rbac.spec.ts` | AC-HOT-RBAC |
+| `era-hotel-pms/__tests__/staff-provision.spec.ts` | AC-HOT-RBAC (unknown role) |
 | `era-hotel-pms/__tests__/hk-status-negative.spec.ts` | AC-HOT-HK |
 | `era-hotel-pms/__tests__/hk-nafta.spec.ts` | Nafta HK deepen (out of AC rollup) |
 | `era-hotel-pms/__tests__/hotel-reports-negative.spec.ts` | HOT-RPT-01/02 |
+| `era-hotel-pms/__tests__/channel-manager-hardening.spec.ts` | AC-HOT-CM |
+| `era-hotel-pms/__tests__/channel-manager-isolation.spec.ts` | AC-HOT-CM |

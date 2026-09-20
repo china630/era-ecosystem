@@ -3,6 +3,8 @@ import { requestOrganizationId } from '@/lib/request-organization';
 import {
   SATELLITE_HOTEL_GUEST_CHECKED_IN,
   SATELLITE_HOTEL_GUEST_CHECKED_OUT,
+  SATELLITE_HOTEL_GUEST_DEPARTED,
+  SATELLITE_HOTEL_GUEST_MOVED,
   SATELLITE_HOTEL_ROOM_CHANGED,
   SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED,
   SATELLITE_HOTEL_STAY_PRODUCT_CHANGED,
@@ -20,6 +22,26 @@ async function publishLifecycle(event: Record<string, unknown>) {
   });
 }
 
+export function lifecycleDemographicsFromPax(pax: {
+  sex?: string | null;
+  birthDate?: Date | string | null;
+  guest?: { sex?: string | null; birthDate?: Date | string | null } | null;
+}): { sex?: string; birthDate?: string } {
+  const rawSex = pax.sex ?? pax.guest?.sex ?? undefined;
+  const rawDob = pax.birthDate ?? pax.guest?.birthDate ?? undefined;
+  let birthDate: string | undefined;
+  if (rawDob instanceof Date && !Number.isNaN(rawDob.getTime())) {
+    birthDate = rawDob.toISOString().slice(0, 10);
+  } else if (typeof rawDob === "string" && /^\d{4}-\d{2}-\d{2}/.test(rawDob.trim())) {
+    birthDate = rawDob.trim().slice(0, 10);
+  }
+  const sex = rawSex?.trim() || undefined;
+  return {
+    ...(sex ? { sex } : {}),
+    ...(birthDate ? { birthDate } : {}),
+  };
+}
+
 export async function dispatchGuestCheckedIn(input: {
   reservationId: string;
   roomNumber?: string;
@@ -30,6 +52,8 @@ export async function dispatchGuestCheckedIn(input: {
   checkOutDate?: string;
   /** Wave E — ReservationGuest.id (or similar) when MDM missing */
   paxKey?: string;
+  sex?: string;
+  birthDate?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_GUEST_CHECKED_IN,
@@ -43,6 +67,8 @@ export async function dispatchGuestCheckedIn(input: {
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
       paxKey: input.paxKey,
+      sex: input.sex,
+      birthDate: input.birthDate,
     },
   };
   await publishLifecycle(event);
@@ -61,6 +87,61 @@ export async function dispatchGuestCheckedOut(input: {
       roomNumber: input.roomNumber,
       programCode: input.programCode,
       earlyCheckout: input.earlyCheckout,
+    },
+  };
+  await publishLifecycle(event);
+}
+
+export async function dispatchGuestDeparted(input: {
+  reservationId: string;
+  paxKey: string;
+  roomNumber?: string;
+  programCode?: string;
+  globalPersonId?: string;
+  guestName?: string;
+  checkOutDate?: string;
+}) {
+  const event = {
+    type: SATELLITE_HOTEL_GUEST_DEPARTED,
+    globalPersonId: input.globalPersonId,
+    payload: {
+      reservationId: input.reservationId,
+      paxKey: input.paxKey,
+      roomNumber: input.roomNumber,
+      programCode: input.programCode,
+      globalPersonId: input.globalPersonId,
+      guestName: input.guestName,
+      checkOutDate: input.checkOutDate,
+    },
+  };
+  await publishLifecycle(event);
+}
+
+export async function dispatchGuestMoved(input: {
+  reservationId: string;
+  fromReservationId: string;
+  toReservationId: string;
+  paxKey: string;
+  previousRoomNumber?: string;
+  newRoomNumber: string;
+  programCode?: string;
+  globalPersonId?: string;
+  guestName?: string;
+}) {
+  const event = {
+    type: SATELLITE_HOTEL_GUEST_MOVED,
+    globalPersonId: input.globalPersonId,
+    payload: {
+      reservationId: input.toReservationId,
+      fromReservationId: input.fromReservationId,
+      toReservationId: input.toReservationId,
+      paxKey: input.paxKey,
+      previousRoomNumber: input.previousRoomNumber,
+      newRoomNumber: input.newRoomNumber,
+      programCode: input.programCode,
+      globalPersonId: input.globalPersonId,
+      guestName: input.guestName,
+      roomNumber: input.newRoomNumber,
     },
   };
   await publishLifecycle(event);

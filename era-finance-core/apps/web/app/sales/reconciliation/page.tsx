@@ -73,7 +73,7 @@ type NettingPreview = {
 export default function ReconciliationPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
   const [to, setTo] = useState(b.to);
@@ -111,7 +111,8 @@ export default function ReconciliationPage() {
     }
     let cancelled = false;
     setNettingLoad(true);
-    const q = new URLSearchParams({ counterpartyId: cpId, ledgerType });
+    const q = new URLSearchParams(ledgerQueryParam(ledgerType, accountingBookId));
+    q.set("counterpartyId", cpId);
     void apiFetch(`/api/reporting/netting/preview?${q.toString()}`).then(
       async (res) => {
         if (cancelled) return;
@@ -126,7 +127,7 @@ export default function ReconciliationPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, cpId, ledgerType, ledgerReady]);
+  }, [token, cpId, ledgerType, accountingBookId, ledgerReady]);
 
   async function runReport() {
     if (!token || !cpId) {
@@ -140,6 +141,11 @@ export default function ReconciliationPage() {
       dateFrom: from,
       dateTo: to,
     });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     const res = await apiFetch(`/api/reporting/reconciliation?${q.toString()}`);
     setLoading(false);
     if (!res.ok) {
@@ -162,6 +168,11 @@ export default function ReconciliationPage() {
       dateFrom: from,
       dateTo: to,
     });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     try {
       const res = await apiFetch(`/api/reporting/reconciliation/pdf?${q.toString()}`);
       if (!res.ok) {
@@ -195,8 +206,12 @@ export default function ReconciliationPage() {
     setNettingBusy(true);
     const q = new URLSearchParams({
       counterpartyId: cpId,
-      ledgerType,
     });
+    for (const [key, value] of new URLSearchParams(
+      ledgerQueryParam(ledgerType, accountingBookId),
+    )) {
+      q.set(key, value);
+    }
     const res = await apiFetch(`/api/reporting/netting/preview?${q.toString()}`);
     setNettingBusy(false);
     if (!res.ok) {
@@ -227,7 +242,7 @@ export default function ReconciliationPage() {
     const suggested =
       nettingPreview != null ? Number(nettingPreview.suggestedAmount) : undefined;
     const res = await apiFetch(
-      `/api/reporting/netting?${ledgerQueryParam(ledgerType)}`,
+      `/api/reporting/netting?${ledgerQueryParam(ledgerType, accountingBookId)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

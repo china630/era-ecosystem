@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -16,9 +19,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { AuthUser } from "../auth/types/auth-user";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -71,8 +72,8 @@ export class OrganizationsController {
   }
 
   @Post("transfer-ownership")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({
     summary:
       "Передать владение организацией: ownerId → newOwner; прежний OWNER становится ADMIN (v10.3)",

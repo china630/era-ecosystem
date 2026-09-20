@@ -9,7 +9,8 @@ import {
   showApiError,
 } from "@era/satellite-kit/ui";
 import { formatAznMajor } from "@/lib/bank-lookups";
-import { useOpsMe } from "@/components/ops/useOpsMe";
+import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type EclRun = {
   id: string;
@@ -27,7 +28,7 @@ export default function RiskEclPage() {
   const t = useTranslations("pages.risk");
   const tCommon = useTranslations("common");
   const me = useOpsMe();
-  const canApprove = me?.canApprove === true;
+  const canApprove = meCan(me, PERMISSIONS.RISK_APPROVE);
   const [result, setResult] = useState<string | null>(null);
   const [lastRun, setLastRun] = useState<EclRun | null>(null);
   const [busy, setBusy] = useState(false);

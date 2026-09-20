@@ -12,7 +12,9 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const from = new Date(url.searchParams.get('from') ?? new Date().toISOString().slice(0, 10));
     const to = new Date(url.searchParams.get('to') ?? new Date().toISOString().slice(0, 10));
-    return jsonOk(serialize(await listReservationTimes(from, to)));
+    const guestQ = url.searchParams.get('guest') ?? undefined;
+    const agencyQ = url.searchParams.get('agency') ?? undefined;
+    return jsonOk(serialize(await listReservationTimes({ from, to, guestQ, agencyQ })));
   } catch (err) {
     return handleRouteError(err);
   }

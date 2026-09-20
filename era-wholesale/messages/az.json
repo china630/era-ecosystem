@@ -46,7 +46,17 @@
   "orders": {
     "title": "ERA Wholesale",
     "subtitle": "Əməliyyat MVP qabığı — UI DESIGN.md-ə uyğundur.",
-    "shellNote": "Reyestr ekranları və əlavə/redaktə axınları DESIGN.md-ə uyğun modallarla tətbiq olunacaq."
+    "shellNote": "Reyestr ekranları və əlavə/redaktə axınları DESIGN.md-ə uyğun modallarla tətbiq olunacaq.",
+    "confirm": "Sifarişi təsdiqlə",
+    "confirmed": "{order} sifarişi təsdiqləndi",
+    "confirmFailed": "Təsdiq uğursuz oldu",
+    "grantCode": "Ticarət krediti grant kodu",
+    "grantCodePlaceholder": "Pickup grant kodu",
+    "onAccount": "Kreditlə",
+    "prepaid": "Önödəniş / nağd",
+    "showResidual": "Kredit qalığını göstər",
+    "available": "Mövcud",
+    "limit": "Limit"
   },
   "pickLists": {
     "title": "Yığım siyahıları",
@@ -60,6 +70,8 @@
     "counterpartyId": "Counterparty ID",
     "checkCredit": "Krediti yoxla",
     "limit": "Limit",
+    "available": "Mövcud",
+    "stopList": "Stop-list",
     "openPickLists": "Açıq yığım siyahıları",
     "confirmPick": "Yığımı təsdiqlə",
     "createFailed": "Yaratma uğursuz oldu",
@@ -77,9 +89,9 @@
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",
-    "organizationIdLabel": "Təşkilat ID (wholesale)",
-    "organizationIdPlaceholder": "UUID — paylaşılan wholesale pool üçün tələb olunur",
-    "organizationIdHint": "Dedicated appliance-də boş buraxın — process-bound org istifadə olunur.",
+    "organizationIdLabel": "Təşkilat kodu (ERA ID)",
+    "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
+    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz.",
     "footerLegalNavAria": "Hüquqi keçidlər və kömək",
     "footerFaq": "FAQ",
     "footerTerms": "İstifadə şərtləri",

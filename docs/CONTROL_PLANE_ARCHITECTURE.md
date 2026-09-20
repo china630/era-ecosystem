@@ -13,7 +13,7 @@ ERA started as **Finance-only** — identity, subscription, billing, and entitle
 
 **Rule:** anything **cross-tenant, cross-satellite, or commercial** (billing, entitlements, platform add-ons, public pricing, **deployment topology / placement**) → **orchestrator**. Finance keeps **ledger, documents, inventory, tax, and GL dispatch** for accounting events.
 
-**Placement:** `SHARED` / `DEDICATED` / `ONPREM` is a control-plane attribute per org (and later per `SatelliteEndpoint`), orthogonal to `operatingMode` (`STANDALONE` / `DEPARTMENT`). Schema stays multi-tenant; topology is packaging. Orchestrator owns desired runtime config: org bind + industry/Finance `runtime-config` Sync (SSO/PSA/event URL+token, optional `deploymentTopology` + `edition`) landed; Finance Nest treats `CONTROL_PLANE_URL` as install bootstrap and re-resolves orch URL from kit memory after Sync. **PlacementJob API** (create/list/advance + host agent poll + SHARED↔ONPREM reject + hotel JSON slice lab) landed — host restore / sellable migrate still open; not SaaS pool sell. Host GitOps applies compose — orch does not SSH-edit droplets. ADR: [deployment-topology.md](./adr/deployment-topology.md). **Request tenant + per-org vendor bridges (Waves 1–11 landed):** Super-Admin configures cutover bridges per org; satellite ops HTTP must not use process bind as the tenant — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) (do not sell pool — [SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md)).
+**Placement:** `SHARED` / `DEDICATED` / `ONPREM` is a control-plane attribute per org (and later per `SatelliteEndpoint`), orthogonal to `operatingMode` (`STANDALONE` / `DEPARTMENT`). Schema stays multi-tenant; topology is packaging. Orchestrator owns desired runtime config: org bind + industry/Finance `runtime-config` Sync (SSO/PSA/event URL+token, optional `deploymentTopology` + `edition`) landed; Finance Nest treats `CONTROL_PLANE_URL` as install bootstrap and re-resolves orch URL from kit memory after Sync. **PlacementJob API** (create/list/advance + host agent poll + SHARED↔ONPREM reject + hotel JSON slice lab) landed — host restore / sellable migrate still open; not SaaS pool sell. Host GitOps applies compose — orch does not SSH-edit droplets. ADR: [deployment-topology.md](./adr/deployment-topology.md). **Extensibility:** extra fields / branded print / saved views are the SHARED product; СКД-class studio is a DEDICATED/ONPREM compute privilege, not a module-palette upgrade — [extensibility-forms-print-reports.md](./adr/extensibility-forms-print-reports.md). **Request tenant + per-org vendor bridges (Waves 1–11 landed):** Super-Admin configures cutover bridges per org; satellite ops HTTP must not use process bind as the tenant — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) (do not sell pool — [SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md)).
 
 **Owner launcher URLs (Wave 8):** production SoR is `SatelliteEndpoint.baseUrl` per `(organizationId, satelliteKey)`, resolved by `GET /v1/satellites/launch-url` before SSO ticket mint. `NEXT_PUBLIC_SATELLITE_*` / `ERA_*_ORIGIN` remain local-dev / webpack-inline fallbacks only — not ten compose vars as the multi-tenant registry.
 
@@ -69,8 +69,8 @@ Two **independent** money flows per organization (VÖEN):
 | **Trial / license** | SHARED: system trial days at signup. DEDICATED/ONPREM: no trial, perpetual until super-admin sets a date. Super-admin may shrink, extend, or clear the clock (`null` = perpetual). See ADR platform-trial-hierarchy §1. |
 | **During trial** | Base ERP + trial bundle modules; **no** monthly platform invoice for modules |
 | **After trial** | **Post-paid:** usage in month **M** → platform invoice on **1st of M+1** for full month M |
-| **What is billed** | ERA Core (Foundation) + ERA Banking Core (Foundation, only when `industry_banking` is connected) + active `organization_modules` (ERP modules, `industry_*` satellites, platform add-ons) + bundle discounts |
-| **OCR** | Included pages via tier `maxOcrPagesPerMonth`; overlimit metered at `pricePerOcrPageAzn` (no separate hard-cap on OCR jobs) |
+| **What is billed** | ERA Core (Foundation **29 AZN**) + SKU palette **19/29/39/99** (`pricing_modules`, [ADR era-commercial-catalog](./adr/era-commercial-catalog.md)) + bundle discounts + meters (headcount, documents, OCR, SMS/WA, storage GB, acquiring) |
+| **OCR** | **50** pages included (Foundation); overlimit `pricePerOcrPageAzn` (0.02). Documents in `nas`: 1000/mo then **5 AZN / 1000**. Invoices count as documents (no per-invoice 0.10 meter). |
 | **Deactivation** | Module stays active until end of calendar month (`pendingDeactivation`) |
 
 ### 2. Metered quotas — tier spend ceiling (real-time accumulation)
@@ -113,6 +113,8 @@ Timezone for billing period: **Asia/Baku** unless noted otherwise in TZ.
 | **Workforce hub (v3 Plan A)** | Finance HR (legacy CRUD) | **Orchestrator** — `WorkforceEmployment`, `WorkforceAbsence` workflow; Finance payroll mirror via `WORKFORCE_ABSENCE_*` ([ADR](./adr/cp-workforce-absence-split.md)) |
 | **Workforce org structure (v3 Plan B)** | Finance `Department` CRUD | **Orchestrator** — `WorkforceScope`, `OrgUnit`, `WorkforcePosition`; Finance CostCenter mirror via `WORKFORCE_ORG_UNIT_*` / `WORKFORCE_POSITION_*` ([ADR](./adr/cp-workforce-org-units.md)) |
 | **Workforce roles + provisioning (v3 Plan C)** | Finance `Employee.provisionedSatellite*` | **Orchestrator** — `SatelliteRoleTemplate`, `WorkforceRoleBinding`, `WorkforceManualGrant`, seat allocation; CP publishes `STAFF_*`; Security Admin UI ([ADR](./adr/cp-workforce-role-templates-and-security-admin.md)) |
+| **Workforce labor roster (pilot)** | — | **Orchestrator** — shift types/cycles, places, assignments → CP timesheet; not hotel HK / clinic nurse duty posting ([ADR](./adr/evrostar-workforce-pilot.md)) |
+| **Holding-federated HR (pilot)** | — | **Orchestrator** — two `WorkforceScope` + holding UX; not a merged OrgUnit tree ([ADR](./adr/evrostar-workforce-pilot.md)) |
 
 ### Finance core keeps (accounting satellite)
 
@@ -187,6 +189,7 @@ Contracts package: extend **`@era/contracts`** with platform event types and ent
 ## Related docs
 
 - [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md)
+- [ADR extensibility-forms-print-reports](./adr/extensibility-forms-print-reports.md) — SaaS core vs deep studio; placement price plane ≠ 19/29/39/99
 - [MODULES_CATALOG.md](./MODULES_CATALOG.md)
 - [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md)
 - [era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md)

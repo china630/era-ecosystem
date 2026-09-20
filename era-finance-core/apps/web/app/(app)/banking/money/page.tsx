@@ -48,8 +48,8 @@ function aggregateBankByCurrency(accounts: AccountCard[]): Record<string, string
 export default function TreasuryMoneyDashboardPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
-  const lq = ledgerQueryParam(ledgerType);
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
+  const lq = ledgerQueryParam(ledgerType, accountingBookId);
 
   const [cashBalances, setCashBalances] = useState<Record<string, string> | null>(null);
   const [bankByCur, setBankByCur] = useState<Record<string, string> | null>(null);

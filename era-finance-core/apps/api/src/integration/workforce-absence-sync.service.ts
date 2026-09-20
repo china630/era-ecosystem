@@ -12,6 +12,7 @@ import { AbsenceTypesService } from "../hr/absence-types.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { WorkforceMirrorMissingError } from "./workforce-mirror-missing.error";
 
 type WorkforceKind =
   | "VACATION"
@@ -123,23 +124,31 @@ export class WorkforceAbsenceSyncService {
     }
 
     const payload = event.payload;
-    const employeeId = payload.financeEmployeeId?.trim();
-    if (!employeeId) {
-      this.logger.warn(
-        `Skip ${event.type} cpAbsence=${payload.cpAbsenceId}: no financeEmployeeId`,
-      );
-      return { meta: { skipped: true, reason: "no_finance_employee" } };
-    }
-
+    // Resolve by financeEmployeeId OR cpEmploymentId. Absence events published
+    // before hire write-back land with null financeEmployeeId — silent skip +
+    // worker idempotency would bury the vacation forever (Evrostar wave 0 UAT).
     const employee = await this.prisma.employee.findFirst({
-      where: { id: employeeId, organizationId, deletedAt: null },
+      where: {
+        organizationId,
+        deletedAt: null,
+        OR: [
+          ...(payload.financeEmployeeId?.trim()
+            ? [{ id: payload.financeEmployeeId.trim() }]
+            : []),
+          { cpEmploymentId: payload.employmentId },
+        ],
+      },
     });
     if (!employee) {
-      this.logger.warn(
-        `Skip ${event.type}: employee ${employeeId} not found in org ${organizationId}`,
+      this.logger.error(
+        `${event.type}: Employee mirror missing org=${organizationId} employment=${payload.employmentId} — retrying`,
       );
-      return { meta: { skipped: true, reason: "employee_not_found" } };
+      throw new WorkforceMirrorMissingError(
+        "employee_mirror_missing",
+        `employmentId=${payload.employmentId}`,
+      );
     }
+    const employeeId = employee.id;
 
     if (!KIND_TO_CODE[payload.kind as WorkforceKind]) {
       this.logger.log(

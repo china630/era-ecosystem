@@ -7,8 +7,10 @@ export const DEFAULT_METER_UNIT_PRICING: NonNullable<
   pricePerUserMonthAzn: 2,
   pricePerGbMonthAzn: 0.5,
   pricePerWhatsappAlertAzn: 0.05,
-  pricePerInvoiceAzn: 0.1,
+  pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
+  pricePerTradeCreditBuyerAzn: 1,
+  pricePerTradeCreditEnrichAzn: 2,
 };
 
 export const DEFAULT_TIER_SPEND_CEILINGS: NonNullable<

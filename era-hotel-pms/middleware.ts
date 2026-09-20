@@ -6,6 +6,7 @@ import {
   getBearerOrCookieToken,
   isPublicApiPath,
   redirectNoStore,
+  nextWithOptionalHostBoundOrg,
   verifyAgencySession,
   verifySatelliteSession,
 } from '@era/satellite-kit/auth/middleware-edge';
@@ -15,6 +16,8 @@ import {
   isPosBridgeApiPath,
   verifyPosBridgeFromHeaders,
 } from '@/lib/pos-bridge-auth-edge';
+import { routePermissions } from '@/lib/auth/page-route-permissions';
+import { sessionHasHotelPermission } from '@/lib/auth/permission-check';
 
 const STAFF_COOKIE = authCookieName();
 const AGENCY_COOKIE = agencyAuthCookieName();
@@ -26,6 +29,9 @@ const PUBLIC_API_EXTRA = [
   '/api/integration/staff-provision',
   '/api/auth/agency-sso/exchange',
   '/api/integrations/elektraweb-bridge',
+  '/api/integrations/channex',
+  '/api/integrations/ota',
+  '/api/public',
 ];
 
 function isAgencyPath(pathname: string): boolean {
@@ -130,6 +136,9 @@ export async function middleware(request: NextRequest) {
       if (session.organizationId) {
         headers.set('x-era-organization-id', session.organizationId);
       }
+      if (session.isOwner === true) {
+        headers.set('x-user-is-owner', '1');
+      }
       headers.set('x-user-actor', 'staff');
       return NextResponse.next({ request: { headers } });
     } catch {
@@ -137,11 +146,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (pathname === '/login') {
+    return nextWithOptionalHostBoundOrg(
+      reqHeaders,
+      request.headers.get('x-forwarded-host') || request.headers.get('host'),
+      'industry_hotel_pms',
+    );
+  }
+
   if (
-    pathname === '/login' ||
     pathname === '/sso/callback' ||
     pathname === '/help' ||
     pathname.startsWith('/help/') ||
+    pathname === '/b2c' ||
+    pathname.startsWith('/b2c/') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {
@@ -175,7 +193,24 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await verifySatelliteSession(token);
+    const session = await verifySatelliteSession(token);
+    const required = routePermissions(pathname);
+    const sessionView = {
+      login: session.login,
+      email: session.email,
+      role: session.role,
+      permissions: session.permissions,
+      isOwner: session.isOwner,
+    };
+    // Fail-closed: every staff page must map to a permission (see page inventory test).
+    if (
+      !required ||
+      !required.some((p) => sessionHasHotelPermission(sessionView, p))
+    ) {
+      const forbiddenUrl = new URL('/login', request.url);
+      forbiddenUrl.searchParams.set('error', 'forbidden');
+      return redirectNoStore(forbiddenUrl);
+    }
     return NextResponse.next({ request: { headers: reqHeaders } });
   } catch {
     const loginUrl = new URL('/login', request.url);

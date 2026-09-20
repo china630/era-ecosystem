@@ -14,6 +14,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   counterpartyType: z.enum(['AGENCY', 'CORPORATE']).optional(),
   agencyId: z.string().uuid().optional(),
+  companyId: z.string().uuid().optional(),
   companyGuestId: z.string().uuid().optional(),
   validFrom: z.coerce.date(),
   validTo: z.coerce.date().optional(),

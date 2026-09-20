@@ -1,16 +1,16 @@
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
+import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
+import {
+  countDoorsUsedOnNight,
+  loadShareSlicesForType,
+} from '@/lib/services/share-assignment.service';
 
 function dateOnly(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
-
-import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
-import {
-  countDoorsUsedOnNight,
-  loadShareSlicesForType,
-} from '@/lib/services/share-assignment.service';
 
 function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
@@ -150,7 +150,9 @@ export async function logSyncError(input: {
   otaReference?: string;
   errorMessage: string;
 }) {
-  return prisma.channelSyncError.create({ data: input });
+  return prisma.channelSyncError.create({
+    data: { ...input, organizationId: requestOrganizationId() },
+  });
 }
 
 export async function resolveSyncError(id: string) {

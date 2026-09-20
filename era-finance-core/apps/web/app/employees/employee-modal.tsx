@@ -211,6 +211,12 @@ export function CreateEmployeeModal({
     }
 
     toast.success(t("common.save"));
+    const created = (await res.json()) as { emasFinWarning?: boolean; message?: string };
+    if (created.emasFinWarning) {
+      toast.warning(t("employees.emasFinWarningToast"), {
+        description: created.message,
+      });
+    }
     onCreated();
     onClose();
   }

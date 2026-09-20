@@ -18,6 +18,8 @@ npm run dev
 
 Open `http://127.0.0.1:3211/login`
 
+Customers **do not** type ERA ID. Local appliance uses process bind. SHARED pool: Host `{orgNo}.dbo.era-365.online` or white-label CNAME (`satelliteKey=banking_dbo`). Lab scripts may POST optional `orgNo` on OTP JSON.
+
 ## Platform
 
 - [ ] `GET /api/health` → `{ status: "ok", service: "era-bank-dbo" }`

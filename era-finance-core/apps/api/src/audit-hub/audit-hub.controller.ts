@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -18,11 +20,9 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
-import { UserRole } from "@erafinance/database";
+
 import type { Request, Response } from "express";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import type { RequestWithAuditEngagement } from "../common/request-with-audit-engagement";
@@ -53,7 +53,7 @@ import { AuditHubRiskQueryDto } from "./dto/risk-query.dto";
 @ApiBearerAuth("bearer")
 @Controller("audit-hub")
 @Throttle({ default: { limit: 120, ttl: 60_000 } })
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule(ModuleEntitlement.AUDIT_HUB)
 export class AuditHubController {
   constructor(
@@ -70,24 +70,14 @@ export class AuditHubController {
   ) {}
 
   @Get("summary")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Dashboard KPIs for Audit Hub" })
   getSummary(@OrganizationId() organizationId: string) {
     return this.summary.getSummary(organizationId);
   }
 
   @Get("timeline")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Merged AuditLog + EntityActivity for an entity, or org-wide AuditLog",
@@ -100,12 +90,7 @@ export class AuditHubController {
   }
 
   @Get("backdating")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Document date vs system entry date gaps" })
   getBackdating(
     @OrganizationId() organizationId: string,
@@ -115,15 +100,10 @@ export class AuditHubController {
   }
 
   @Get("reconciliation/nas-ifrs")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
-      "Final transactions where NAS journal lines exist but IFRS do not (or vice versa)",
+      "Default-ops book vs each ACTIVE non-ops book: presence and debit parity",
   })
   getNasIfrsReconciliation(
     @OrganizationId() organizationId: string,
@@ -134,12 +114,7 @@ export class AuditHubController {
 
   @Get("risk")
   @Throttle({ default: { limit: 45, ttl: 60_000 } })
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Heuristic risk detectors (duplicate cash orders, …)",
   })
@@ -151,12 +126,7 @@ export class AuditHubController {
   }
 
   @Get("calculation/:type/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Explain posting / document (v1 JSON)" })
   getCalculation(
     @OrganizationId() organizationId: string,
@@ -167,24 +137,14 @@ export class AuditHubController {
   }
 
   @Get("engagements")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "List named audit engagements" })
   listEngagements(@OrganizationId() organizationId: string) {
     return this.engagements.list(organizationId);
   }
 
   @Post("engagements")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Create audit engagement" })
   createEngagement(
     @OrganizationId() organizationId: string,
@@ -195,7 +155,7 @@ export class AuditHubController {
   }
 
   @Patch("engagements/:id/status")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Update engagement status" })
   patchEngagementStatus(
     @OrganizationId() organizationId: string,
@@ -212,7 +172,7 @@ export class AuditHubController {
   }
 
   @Post("engagements/invites")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Invite external auditor (token returned once)" })
   createEngagementInvite(
     @OrganizationId() organizationId: string,
@@ -227,7 +187,7 @@ export class AuditHubController {
   }
 
   @Get("engagements/invites/outbox")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "List invites issued for this organization" })
   listEngagementInvitesOutbox(
     @OrganizationId() organizationId: string,
@@ -240,7 +200,7 @@ export class AuditHubController {
   }
 
   @Post("engagements/invites/:id/revoke")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Revoke a pending or accepted invite" })
   revokeEngagementInvite(
     @OrganizationId() organizationId: string,
@@ -255,12 +215,7 @@ export class AuditHubController {
   }
 
   @Get("engagements/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Get one audit engagement by id" })
   getEngagement(
     @OrganizationId() organizationId: string,
@@ -270,12 +225,7 @@ export class AuditHubController {
   }
 
   @Post("sampling")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Create a reproducible audit sample" })
   createSampling(
     @OrganizationId() organizationId: string,
@@ -290,12 +240,7 @@ export class AuditHubController {
   }
 
   @Get("sampling/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Get saved audit sample by id" })
   getSampling(
     @OrganizationId() organizationId: string,
@@ -305,12 +250,7 @@ export class AuditHubController {
   }
 
   @Post("bulk-export")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "ZIP attachments for a saved sample" })
   async postBulkExport(
     @OrganizationId() organizationId: string,

@@ -345,7 +345,7 @@ Sanatorium **business** = entitlements `industry_hotel_pms` + `industry_clinic` 
 | Area | Surfaces | Status (readiness) |
 |---|---|---|
 | Ops home / appointments / nurse | `/`, `/appointments`, `/nurse` | UI 🟡 |
-| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | UI 🟡 |
+| Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | UI ✅ (CLI-38b dual view + day override) |
 | Sanatorium МКБ | `/sanatorium` | UI 🟡 |
 | Patient card (after contraindications) | `/patients/[id]` | UI 🟡 |
 | Visit / inpatient | `/visits/[id]`, `/inpatient` | UI 🟡 |
@@ -521,7 +521,7 @@ Satellite gate: `industry_hotel_pms`. Billable keys (not 12 fine-grained leftove
 | `hotel_migration_pro` | Migration PRO | AZ registration queue |
 | `hotel_transfers` | Transfers & guest tours | Airport / fleet / Nafta weekend tours (tours not coded) |
 | `hotel_spa_scheduling` | SPA & Scheduling | `/spa/*`, `/procedures` |
-| `hotel_distribution` | Distribution | Channel manager, contracts, yield |
+| `hotel_distribution` | Channel Manager (OTA & Direct) | CM + site IBE + contracts — [ADR](../adr/hotel-channel-manager-pack.md) |
 | `hotel_agency_portal` | Agency Portal | B2B extranet — **sold separately**, not in default City/Resort/Sanatorium bundles |
 | `hotel_guest_experience` | Guest Profiles & Tasks | Guest card / tasks |
 | `hotel_banquets` | Banquets & BEO | `/banquets*` |

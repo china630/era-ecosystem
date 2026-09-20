@@ -20,6 +20,11 @@ import {
   organizationKindToPayrollSettingsTemplateGroup,
   OrganizationKind,
 } from "@erafinance/database";
+import {
+  CP_PERMISSION,
+  defaultPermissionsForCpRole,
+  sessionHasAnyCpPermission,
+} from "@era/contracts";
 import * as bcrypt from "bcrypt";
 import type { Response } from "express";
 import { OrgStructureService } from "../hr/org-structure.service";
@@ -1041,6 +1046,7 @@ export class AuthService {
           sub: string;
           email: string;
           isOwner?: boolean;
+          permissions?: string[];
         };
       }>({
         method: "POST",
@@ -1065,6 +1071,10 @@ export class AuthService {
           organizationId,
           role,
           canViewHoldingReports,
+          Array.isArray(out.claims.permissions)
+            ? out.claims.permissions
+            : [],
+          out.claims.isOwner,
         ),
       };
     }
@@ -1093,6 +1103,8 @@ export class AuthService {
         organizationId,
         m.role,
         canViewHoldingReports,
+        defaultPermissionsForCpRole(String(m.role)),
+        m.role === UserRole.OWNER,
       ),
     };
   }
@@ -1102,6 +1114,7 @@ export class AuthService {
     organizationId: string | null,
     role: UserRole | null,
     authorization?: string,
+    authUser?: AuthUser,
   ) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -1116,6 +1129,9 @@ export class AuthService {
       organizationId,
       role,
       canViewHoldingReports,
+      authUser?.permissions,
+      authUser?.isOwner,
+      authUser?.isSuperAdmin ?? Boolean(user.isSuperAdmin),
     );
     if (!organizationId || role == null) {
       return {
@@ -1257,19 +1273,28 @@ export class AuthService {
     organizationId: string | null,
     role: UserRole | null,
     canViewHoldingReports: boolean,
+    permissions?: string[] | null,
+    isOwner?: boolean,
+    isSuperAdmin?: boolean,
   ): {
     canPostAccounting: boolean;
     canViewHoldingReports: boolean;
+    permissions: string[];
   } {
-    if (!organizationId || role == null) {
-      return { canPostAccounting: false, canViewHoldingReports };
+    const granted = Array.isArray(permissions) ? permissions : [];
+    if (!organizationId || (role == null && !isOwner && !isSuperAdmin)) {
+      return {
+        canPostAccounting: false,
+        canViewHoldingReports,
+        permissions: granted,
+      };
     }
     return {
       canPostAccounting:
-        role === UserRole.OWNER ||
-        role === UserRole.ADMIN ||
-        role === UserRole.ACCOUNTANT,
+        Boolean(isSuperAdmin || isOwner) ||
+        sessionHasAnyCpPermission(granted, [CP_PERMISSION.API_LEDGER_POST]),
       canViewHoldingReports,
+      permissions: granted,
     };
   }
 
@@ -1398,6 +1423,8 @@ export class AuthService {
       email: user.email,
       organizationId,
       role: m.role,
+      permissions: defaultPermissionsForCpRole(String(m.role)),
+      isOwner: m.role === UserRole.OWNER,
     });
     const refreshToken = await this.jwt.signAsync(
       { sub: user.id, typ: "refresh", organizationId },
@@ -1448,6 +1475,8 @@ export class AuthService {
       email: user.email,
       organizationId,
       role: m.role,
+      permissions: defaultPermissionsForCpRole(String(m.role)),
+      isOwner: m.role === UserRole.OWNER,
       aud: "extension",
     });
     const refreshToken = await this.jwt.signAsync(
@@ -1518,6 +1547,8 @@ export class AuthService {
           orgIdFromPayload,
           m.role,
           canViewHoldingReports,
+          defaultPermissionsForCpRole(String(m.role)),
+          m.role === UserRole.OWNER,
         ),
       };
     }
@@ -1543,6 +1574,8 @@ export class AuthService {
           first.organizationId,
           first.role,
           canViewHoldingReports,
+          defaultPermissionsForCpRole(String(first.role)),
+          first.role === UserRole.OWNER,
         ),
       };
     }
@@ -1614,6 +1647,8 @@ export class AuthService {
           orgIdFromPayload,
           m.role,
           canViewHoldingReports,
+          defaultPermissionsForCpRole(String(m.role)),
+          m.role === UserRole.OWNER,
         ),
       };
     }
@@ -1639,6 +1674,8 @@ export class AuthService {
           first.organizationId,
           first.role,
           canViewHoldingReports,
+          defaultPermissionsForCpRole(String(first.role)),
+          first.role === UserRole.OWNER,
         ),
       };
     }
@@ -1661,6 +1698,8 @@ export class AuthService {
     email: string;
     organizationId: string | null;
     role: UserRole | null;
+    permissions?: string[];
+    isOwner?: boolean;
   }): Promise<AuthUser> {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -1688,12 +1727,14 @@ export class AuthService {
     if (!m) {
       throw new UnauthorizedException();
     }
-    /** Роль из БД — источник истины (смена OWNER↔ADMIN, transfer ownership без немедленного обновления JWT). */
+    /** Grants from JWT only — missing claim is empty (fail-closed). */
     return {
       userId: user.id,
       email: user.email,
       organizationId: payload.organizationId,
       role: m.role,
+      permissions: Array.isArray(payload.permissions) ? payload.permissions : [],
+      isOwner: Boolean(payload.isOwner) || m.role === UserRole.OWNER,
       isSuperAdmin: Boolean(user.isSuperAdmin),
     };
   }

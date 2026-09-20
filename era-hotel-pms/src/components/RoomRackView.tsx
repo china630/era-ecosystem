@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Mars, Plus, Venus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
   DatePicker,
@@ -17,8 +17,12 @@ import {
   rackNumberTextClass,
   formatSharePoolBadge,
   canQuickBookRoom,
+  pickRackStayForDate,
+  deriveSharePoolForDate,
   type RackDisplayState,
 } from '@/lib/room-rack-display';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { normalizeShareGender } from '@/lib/share-gender';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -45,11 +49,11 @@ export type RoomRackRoom = {
   roomNumber: string;
   status: RoomStatus;
   floor: number;
-  roomType: { code: string; name: string };
+  roomType: { code: string; name: string; adultCapacity?: number };
   reservations: Array<{
     id: string;
     status: ReservationStatus;
-    guest: { fullName: string };
+    guest: { fullName: string; sex?: string | null };
     checkInDate?: string;
     checkOutDate?: string;
     payStatus?: RackPayStatus;
@@ -59,9 +63,13 @@ export type RoomRackRoom = {
     agencyCode?: string | null;
     sourceId?: string | null;
     sourceCode?: string | null;
+    shareEligible?: boolean;
+    shareGender?: string | null;
+    adults?: number;
   }>;
   rackDisplayState?: RackDisplayState;
   sharePool?: { gender: string; occupied: number; capacity: number } | null;
+  maxBed?: number | null;
 };
 
 function formatStayRange(checkIn?: string, checkOut?: string): string {
@@ -99,10 +107,37 @@ function rackText(room: RoomRackRoom): string {
   return rackNumberTextClass(room);
 }
 
-function dayStart(d: Date): number {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x.getTime();
+function GenderChip({
+  gender,
+  occupied,
+  capacity,
+}: {
+  gender: string;
+  occupied?: number;
+  capacity?: number;
+}) {
+  const g = normalizeShareGender(gender);
+  if (!g) return null;
+  const male = g === 'M';
+  const Icon = male ? Mars : Venus;
+  const vis = formatSharePoolBadge({
+    gender: g,
+    occupied: occupied ?? 1,
+    capacity: capacity ?? 1,
+  });
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[12px] font-bold ${vis.className}`}
+      title={male ? 'M' : 'F'}
+    >
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={2.75} aria-hidden />
+      {occupied != null && capacity != null ? (
+        <span>
+          {occupied}/{capacity}
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 export type RoomRackViewProps = {
@@ -112,6 +147,10 @@ export type RoomRackViewProps = {
   onQuickBook?: (room: RoomRackRoom) => void;
   onRelocate?: (reservationId: string, toRoomId: string) => Promise<void>;
   loading?: boolean;
+  filterDateFrom: string;
+  filterDateTo: string;
+  onFilterDateFromChange: (next: string) => void;
+  onFilterDateToChange: (next: string) => void;
 };
 
 type ResFilter = 'all' | 'arrival' | 'in_house' | 'departure';
@@ -123,17 +162,19 @@ export default function RoomRackView({
   onQuickBook,
   onRelocate,
   loading,
+  filterDateFrom,
+  filterDateTo,
+  onFilterDateFromChange,
+  onFilterDateToChange,
 }: RoomRackViewProps) {
   const t = useTranslations('roomRack');
   const tc = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
-  const tRes = useTranslations('reservationStatus');
   const tPay = useTranslations('rackPayStatus');
   const [dragResId, setDragResId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
-  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [floorFilter, setFloorFilter] = useState<string>('all');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set());
   const [cleanOnly, setCleanOnly] = useState(false);
@@ -173,7 +214,10 @@ export default function RoomRackView({
     return Array.from(f).sort((a, b) => a - b);
   }, [rooms]);
 
-  const filterDay = useMemo(() => dayStart(new Date(filterDate)), [filterDate]);
+  const filterFromKey = hotelDateKey(filterDateFrom);
+  const filterToKey = hotelDateKey(filterDateTo);
+  const rangeLo = filterFromKey <= filterToKey ? filterFromKey : filterToKey;
+  const rangeHi = filterFromKey <= filterToKey ? filterToKey : filterFromKey;
 
   const filtered = useMemo(() => {
     return rooms.filter((room) => {
@@ -186,13 +230,12 @@ export default function RoomRackView({
       if (dirtyOnly && room.status !== 'DIRTY') return false;
       if (inspectedOnly && room.status !== 'INSPECTED') return false;
       if (oooOnly && room.status !== 'OOO') return false;
-      const isOccupied = room.status === 'OCCUPIED' || room.reservations.some((r) => r.status === 'IN_HOUSE');
+      const active = pickRackStayForDate(room.reservations, rangeLo, rangeHi);
+      const isOccupied = Boolean(active);
       if (occupiedOnly && !isOccupied) return false;
       if (vacantOnly && isOccupied) return false;
 
       if (agencyFilter !== 'all') {
-        const active =
-          room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
         if (!active) return false;
         if (agencyFilter === '') {
           if (active.agencyId) return false;
@@ -201,33 +244,24 @@ export default function RoomRackView({
         }
       }
       if (sourceFilter !== 'all') {
-        const active =
-          room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
         if (!active || active.sourceId !== sourceFilter) return false;
       }
       if (payFilter !== 'all') {
-        const active =
-          room.reservations.find((r) => r.status === 'IN_HOUSE') ??
-          room.reservations.find((r) => r.payStatus && r.payStatus !== 'NONE') ??
-          room.reservations[0];
         if (!active?.payStatus || active.payStatus !== payFilter) return false;
       }
       if (resFilter !== 'all') {
-        const active =
-          room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
         if (!active?.checkInDate || !active?.checkOutDate) {
           return false;
-        } else {
-          const ci = dayStart(new Date(active.checkInDate));
-          const co = dayStart(new Date(active.checkOutDate));
-          if (resFilter === 'arrival' && !(active.status === 'CONFIRMED' && ci === filterDay)) {
-            return false;
-          }
-          if (resFilter === 'departure' && !(active.status === 'IN_HOUSE' && co === filterDay)) {
-            return false;
-          }
-          if (resFilter === 'in_house' && active.status !== 'IN_HOUSE') return false;
         }
+        const ci = hotelDateKey(active.checkInDate);
+        const co = hotelDateKey(active.checkOutDate);
+        if (resFilter === 'arrival' && !(active.status === 'CONFIRMED' && ci >= rangeLo && ci <= rangeHi)) {
+          return false;
+        }
+        if (resFilter === 'departure' && !(active.status === 'IN_HOUSE' && co >= rangeLo && co <= rangeHi)) {
+          return false;
+        }
+        if (resFilter === 'in_house' && active.status !== 'IN_HOUSE') return false;
       }
       return true;
     });
@@ -243,14 +277,15 @@ export default function RoomRackView({
     occupiedOnly,
     vacantOnly,
     resFilter,
-    filterDay,
+    rangeLo,
+    rangeHi,
     agencyFilter,
     sourceFilter,
     payFilter,
   ]);
 
-  const occupiedCount = rooms.filter(
-    (r) => r.status === 'OCCUPIED' || r.reservations.some((x) => x.status === 'IN_HOUSE'),
+  const occupiedCount = rooms.filter((r) =>
+    Boolean(pickRackStayForDate(r.reservations, rangeLo, rangeHi)),
   ).length;
   const vacantCount = rooms.length - occupiedCount;
 
@@ -277,7 +312,9 @@ export default function RoomRackView({
     setAgencyFilter('all');
     setSourceFilter('all');
     setPayFilter('all');
-    setFilterDate(new Date().toISOString().slice(0, 10));
+    const today = hotelDateKey(new Date());
+    onFilterDateFromChange(today);
+    onFilterDateToChange(today);
   }
 
   if (loading) {
@@ -285,14 +322,32 @@ export default function RoomRackView({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 gap-4">
-      <aside className={`${CARD_CONTAINER_CLASS} w-60 shrink-0 space-y-4 p-4 text-[13px]`}>
+    <div className="flex min-h-0 min-w-0 flex-1 gap-4 overflow-hidden">
+      <aside
+        className={`${CARD_CONTAINER_CLASS} flex w-60 shrink-0 flex-col overflow-hidden text-[13px]`}
+      >
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         <DatePicker
-          label={t('filterDate')}
-          value={filterDate}
-          onChange={setFilterDate}
+          label={t('filterDateFrom')}
+          value={filterDateFrom}
+          onChange={(next) => {
+            onFilterDateFromChange(next);
+            if (next && filterDateTo && next > filterDateTo) onFilterDateToChange(next);
+          }}
           placeholder={tc('datePlaceholder')}
           preset="date"
+          fluid
+        />
+        <DatePicker
+          label={t('filterDateTo')}
+          value={filterDateTo}
+          onChange={(next) => {
+            onFilterDateToChange(next);
+            if (next && filterDateFrom && next < filterDateFrom) onFilterDateFromChange(next);
+          }}
+          placeholder={tc('datePlaceholder')}
+          preset="date"
+          fluid
         />
         <div>
           <label className="mb-1 block font-semibold text-[#34495E]">{t('searchRoom')}</label>
@@ -418,11 +473,12 @@ export default function RoomRackView({
           {t('resetFilters')}
         </button>
         <p className="text-[11px] text-[#7F8C8D]">{t('forecastDisabled')}</p>
+        </div>
       </aside>
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <ColorLegend
-          className="mb-3"
+          className="mb-3 shrink-0"
           ariaLabel={t('legendAria')}
           items={(
             [
@@ -439,9 +495,15 @@ export default function RoomRackView({
             swatchClassName: RACK_SWATCH_CLASS[state],
           }))}
         />
+        <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {filtered.map((room) => {
-            const active = room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
+            const active = pickRackStayForDate(room.reservations, rangeLo, rangeHi);
+            const sharePool = deriveSharePoolForDate(room, rangeLo, rangeHi);
+            const guestGender = active
+              ? (normalizeShareGender(active.shareGender) ??
+                normalizeShareGender(active.guest.sex))
+              : null;
             const top = rackBorder(room);
             const textCls = rackText(room);
             const showQuick = onQuickBook && canQuickBookRoom(room);
@@ -471,14 +533,16 @@ export default function RoomRackView({
                   <div className={`text-[11px] font-semibold uppercase ${textCls}`}>
                     {tRoom(room.status)}
                   </div>
-                  <div className={`flex items-center gap-1 text-xl font-bold ${textCls}`}>
+                  <div className={`flex flex-wrap items-center gap-1.5 text-xl font-bold ${textCls}`}>
                     <span>{room.roomNumber}</span>
-                    {room.sharePool ? (
-                      <span
-                        className={`text-[11px] font-semibold ${formatSharePoolBadge(room.sharePool).className}`}
-                      >
-                        {formatSharePoolBadge(room.sharePool).text}
-                      </span>
+                    {sharePool ? (
+                      <GenderChip
+                        gender={sharePool.gender}
+                        occupied={sharePool.occupied}
+                        capacity={sharePool.capacity}
+                      />
+                    ) : guestGender ? (
+                      <GenderChip gender={guestGender} />
                     ) : null}
                   </div>
                   <div className="text-[12px] text-[#7F8C8D]">{room.roomType.code}</div>
@@ -540,6 +604,7 @@ export default function RoomRackView({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

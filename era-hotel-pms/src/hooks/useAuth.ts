@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { normalizeHotelPermission } from '@/lib/auth/hotel-permission-rename';
 
 export interface AuthUser {
   id: string;
@@ -11,6 +12,8 @@ export interface AuthUser {
   organizationName?: string | null;
   organizationId?: string | null;
   isPlatformSuperAdmin?: boolean;
+  /** OrgOwner / BUSINESS_OWNER — matrix bypass (same as API). */
+  isOwner?: boolean;
   canRunElektrawebImport?: boolean;
 }
 
@@ -38,13 +41,19 @@ export function useAuth() {
   }, [refresh]);
 
   const isPlatformSuperAdmin = user?.isPlatformSuperAdmin === true;
+  const isOwner = user?.isOwner === true;
 
   const can = useCallback(
     (permission: string) => {
-      if (isPlatformSuperAdmin) return true;
-      return user?.permissions.includes(permission) ?? false;
+      if (isPlatformSuperAdmin || isOwner) return true;
+      if (!user?.permissions?.length) return false;
+      // Dual-read: tolerate legacy claims until refresh (Wave 2).
+      const want = normalizeHotelPermission(permission) ?? permission;
+      return user.permissions.some(
+        (p) => (normalizeHotelPermission(p) ?? p) === want,
+      );
     },
-    [user, isPlatformSuperAdmin],
+    [user, isPlatformSuperAdmin, isOwner],
   );
 
   const canRunElektrawebImport = user?.canRunElektrawebImport === true;

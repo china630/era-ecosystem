@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -10,9 +13,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { BusinessTripsService } from "./business-trips.service";
 import {
@@ -23,12 +24,12 @@ import {
 @ApiTags("hr-business-trips")
 @ApiBearerAuth("bearer")
 @Controller("hr/business-trips")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class BusinessTripsController {
   constructor(private readonly trips: BusinessTripsService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "List business trips" })
   list(
     @OrganizationId() organizationId: string,
@@ -38,13 +39,13 @@ export class BusinessTripsController {
   }
 
   @Get(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   getOne(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.trips.getOne(organizationId, id);
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   create(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateBusinessTripDto,
@@ -53,7 +54,7 @@ export class BusinessTripsController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   update(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -63,13 +64,13 @@ export class BusinessTripsController {
   }
 
   @Delete(":id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   remove(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.trips.remove(organizationId, id);
   }
 
   @Post(":id/calculate-per-diem")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Calculate per diem from org norms × calendar days" })
   calculatePerDiem(
     @OrganizationId() organizationId: string,
@@ -79,7 +80,7 @@ export class BusinessTripsController {
   }
 
   @Post(":id/create-advance")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Create advance report draft from trip per diem" })
   createAdvance(
     @OrganizationId() organizationId: string,

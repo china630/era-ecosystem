@@ -22,6 +22,7 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Control plane architecture | [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) |
 | Deployment topology (SHARED / DEDICATED / ONPREM) | [adr/deployment-topology.md](./adr/deployment-topology.md) — bind + runtime-config + PlacementJob **API scaffold** + host agent stub; **not** live SaaS pool / automated migrate sell |
 | SaaS request tenant + vendor bridges | [SAAS_SHARED_RUNTIME.md](./SAAS_SHARED_RUNTIME.md) · [adr/saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) · [acceptance/SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md) — Waves 1–11 runtime prep **landed**; sell SHARED pool / `ga` / field TENANT + HOT-06 SHIPPED still **open** |
+| Public org number + login Host | [adr/org-public-number-and-login-host.md](./adr/org-public-number-and-login-host.md) — **implemented** (A1–A6, B1–B4); SHARED login `orgNo`; white-label = `platform_domain` 19 / `platform_domain_org` 29 — not sell/SHIPPED without TLS UAT |
 | Satellite org bind + boot hydrate | [adr/satellite-organization-bind.md](./adr/satellite-organization-bind.md) — Wave 3: request-time `satelliteOrganizationId()` (no import-time env for product handlers) |
 | CP-BILLING migration (archive) | [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) |
 | Platform add-ons | [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |
@@ -88,7 +89,7 @@ All industry satellites, Orchestrator, and Finance `/login` share the same layou
 | Links (order) | need account → register org → pricing → FAQ; user agreement → Orch `/terms` |
 | Cross-app URLs | `orchPublicHref()` from `@era/satellite-kit/ui` (not main kit barrel) |
 
-**API:** `POST /api/auth/login` on each satellite resolves user by login/email/phone and verifies scrypt hash (`@era/satellite-kit/auth`). SSO path unchanged: `POST /api/auth/sso/exchange`.
+**API:** `POST /api/auth/login` on industry satellites **and `era-bank` ops** verifies scrypt hash and, on SHARED pools, resolves tenant from public `orgNo` (not UUID) — [org-public-number-and-login-host.md](./adr/org-public-number-and-login-host.md). JWT/SSO still use UUID `organizationId`. `POST /api/auth/sso/exchange` unchanged (UUID ticket). Finance Core and orchestrator login stay membership/SSO. Bank DBO customers do not type ERA ID (Host / bind).
 
 **Middleware:** whitelist `POST /api/locale` and public pages (`/login`, `/help`) so locale switch works without session.
 

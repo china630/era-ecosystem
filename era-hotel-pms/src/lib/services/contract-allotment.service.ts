@@ -32,6 +32,19 @@ export async function upsertContractAllotment(input: {
   const contract = await prisma.salesContract.findUnique({ where: { id: input.salesContractId } });
   if (!contract) throw new Error('Sales contract not found');
 
+  const seasonFrom = new Date(contract.validFrom.toISOString().slice(0, 10));
+  const allotFrom = new Date(input.validFrom.toISOString().slice(0, 10));
+  const allotTo = new Date(input.validTo.toISOString().slice(0, 10));
+  if (allotFrom < seasonFrom) {
+    throw new Error('Allotment validFrom must be on or after the contract season start');
+  }
+  if (contract.validTo) {
+    const seasonTo = new Date(contract.validTo.toISOString().slice(0, 10));
+    if (allotTo > seasonTo) {
+      throw new Error('Allotment validTo must be on or before the contract season end');
+    }
+  }
+
   const roomType = await prisma.roomType.findUnique({ where: { id: input.roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
 

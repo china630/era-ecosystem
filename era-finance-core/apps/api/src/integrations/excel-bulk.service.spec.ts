@@ -17,7 +17,11 @@ describe("ExcelBulkService", () => {
       },
     };
     const syncRuns = { start: jest.fn().mockResolvedValue("run-1") };
-    const service = new ExcelBulkService(prisma as never, syncRuns as never);
+    const service = new ExcelBulkService(
+      prisma as never,
+      syncRuns as never,
+      { get: () => null } as never,
+    );
     const out = await service.exportInvoices("org-1", ["inv-1"]);
     expect(out.byteLength).toBeGreaterThan(100);
     expect(syncRuns.start).toHaveBeenCalled();
@@ -45,7 +49,11 @@ describe("ExcelBulkService", () => {
       start: jest.fn().mockResolvedValue("run-c"),
       complete: jest.fn().mockResolvedValue(undefined),
     };
-    const service = new ExcelBulkService(prisma as never, syncRuns as never);
+    const service = new ExcelBulkService(
+      prisma as never,
+      syncRuns as never,
+      { get: () => null } as never,
+    );
     const buf = await service.exportCustoms("org-1", []);
     expect(buf.byteLength).toBeGreaterThan(80);
     expect(syncRuns.start).toHaveBeenCalledWith(
@@ -88,10 +96,56 @@ describe("ExcelBulkService", () => {
       start: jest.fn().mockResolvedValue("run-i"),
       complete: jest.fn().mockResolvedValue(undefined),
     };
-    const service = new ExcelBulkService(prisma as never, syncRuns as never);
+    const service = new ExcelBulkService(
+      prisma as never,
+      syncRuns as never,
+      { get: () => null } as never,
+    );
     const out = await service.importCustoms("org-1", buffer, "user-1");
     expect(out.inserted).toBe(1);
     expect(out.skipped).toBe(0);
     expect(syncRuns.complete).toHaveBeenCalled();
+  });
+
+  it("importEmployeeResults returns counts and marks SUBMITTED on SYNCED", async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("EMAS");
+    ws.addRow(["employeeId", "status", "error"]);
+    ws.addRow(["emp-1", "SYNCED", ""]);
+    ws.addRow(["missing", "ERROR", "not found"]);
+    const buffer = Buffer.from(await wb.xlsx.writeBuffer());
+
+    const markSubmittedManual = jest.fn().mockResolvedValue({});
+    const prisma = {
+      employee: {
+        updateMany: jest
+          .fn()
+          .mockResolvedValueOnce({ count: 1 })
+          .mockResolvedValueOnce({ count: 0 }),
+      },
+      emasContractEvent: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: "evt-1",
+          status: "PENDING_MANUAL",
+        }),
+        update: jest.fn(),
+      },
+    };
+    const service = new ExcelBulkService(
+      prisma as never,
+      { start: jest.fn(), complete: jest.fn() } as never,
+      {
+        get: () => ({ markSubmittedManual }),
+      } as never,
+    );
+    const out = await service.importEmployeeResults("org-1", buffer, "actor-1");
+    expect(out.matched).toBe(1);
+    expect(out.unmatched).toBe(1);
+    expect(markSubmittedManual).toHaveBeenCalledWith(
+      "org-1",
+      "evt-1",
+      "actor-1",
+      "excel_import_synced",
+    );
   });
 });

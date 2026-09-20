@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import type { CustomerSession } from "@prisma/client";
+import { enterSatelliteTenant } from "@era/satellite-kit";
 import { resolveCustomerSession } from "@/lib/customer-session";
 import { DBO_SESSION_COOKIE } from "@/lib/dbo-session-cookie";
 import type { EngineDboError } from "@/lib/engine-dbo-client";
@@ -60,6 +61,9 @@ export async function requireCustomerSession(): Promise<
   const token = await getSessionTokenFromRequest();
   const session = await resolveCustomerSession(token);
   if (!session) return jsonError("Unauthorized", 401);
+  if (session.organizationId) {
+    enterSatelliteTenant({ organizationId: session.organizationId });
+  }
   return { session };
 }
 

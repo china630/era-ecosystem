@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -15,12 +17,10 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
@@ -35,7 +35,7 @@ import { PatchRiskAuditDto } from "./dto/patch-risk-audit.dto";
 @ApiBearerAuth("bearer")
 @Controller("compliance")
 @Throttle({ default: { limit: 120, ttl: 60_000 } })
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule(ModuleEntitlement.COMPLIANCE_PRO)
 export class ComplianceController {
   constructor(
@@ -44,13 +44,7 @@ export class ComplianceController {
   ) {}
 
   @Get("vat-threshold-monitor")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "YTD AZN turnover vs 200k VAT registration reference (Baku calendar year; cash-method linked + standalone payments)",
@@ -60,26 +54,14 @@ export class ComplianceController {
   }
 
   @Get("risk-summary")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "ERM risk posture summary for header / dashboard" })
   getRiskSummary(@OrganizationId() organizationId: string) {
     return this.compliance.getRiskSummary(organizationId);
   }
 
   @Get("risk-audits")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Paginated list of risk audit records" })
   listRiskAudits(
     @OrganizationId() organizationId: string,
@@ -95,7 +77,7 @@ export class ComplianceController {
 
   @Post("council/deliberate")
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Request Council of Elders AI deliberation (manual)" })
   deliberateCouncil(
     @OrganizationId() organizationId: string,
@@ -126,13 +108,7 @@ export class ComplianceController {
   }
 
   @Get("council/verdicts")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List Council verdicts" })
   listCouncilVerdicts(
     @OrganizationId() organizationId: string,
@@ -142,13 +118,7 @@ export class ComplianceController {
   }
 
   @Get("council/verdicts/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Get Council verdict for Chamber UI" })
   getCouncilVerdict(
     @OrganizationId() organizationId: string,
@@ -158,7 +128,7 @@ export class ComplianceController {
   }
 
   @Patch("risk-audits/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Mitigate or ignore a pending risk alert" })
   patchRiskAudit(
     @OrganizationId() organizationId: string,

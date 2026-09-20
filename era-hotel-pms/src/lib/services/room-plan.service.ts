@@ -6,6 +6,7 @@ import {
   hotelDateKey,
   parseHotelNoon,
 } from '@/lib/hotel-calendar';
+import { normalizeShareGender } from '@/lib/share-gender';
 
 /** Active stays on the plan; CHECKED_OUT included so EW gold checkout bars appear. */
 export const PLAN_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION', 'CHECKED_OUT'] as const;
@@ -18,6 +19,14 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   const to = parseHotelNoon(addHotelDays(fromKey, days));
 
   const rooms = await prisma.room.findMany({
+    where: {
+      NOT: {
+        OR: [
+          { status: { in: ['OOO', 'OOS', 'MAINTENANCE'] } },
+          { inventoryStatus: { in: ['OOO', 'OOS'] } },
+        ],
+      },
+    },
     include: { roomType: true },
     orderBy: [{ floor: 'asc' }, { roomNumber: 'asc' }],
   });
@@ -32,6 +41,10 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     },
     include: {
       guest: { select: { fullName: true } },
+      paxGuests: {
+        select: { firstName: true, lastName: true, isPrimary: true, sortOrder: true },
+        orderBy: { sortOrder: 'asc' },
+      },
       roomType: { select: { code: true } },
       room: { select: { roomNumber: true } },
       agency: { select: { name: true } },
@@ -115,6 +128,10 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       shareGender: r.shareGender,
       shareBedIndex: r.shareBedIndex,
       guest: r.guest,
+      partyNames: r.paxGuests
+        .filter((p) => !p.isPrimary)
+        .map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim())
+        .filter(Boolean),
       roomType: r.roomType,
       room: r.room,
       agency: r.agency,
@@ -196,7 +213,19 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       );
       const maxBed = room.maxBed ?? room.roomType.adultCapacity ?? 2;
       let sharePool: { gender: string; occupied: number; capacity: number } | null = null;
-      if (shareStays.length > 0) {
+      const mixedClosedPair = dateKeys.some((day) => {
+        const genders = new Set<string>();
+        for (const stay of shareStays) {
+          const ci = hotelDateKey(stay.checkInDate);
+          const co = hotelDateKey(stay.checkOutDate);
+          if (ci <= day && day < co) {
+            const g = normalizeShareGender(stay.shareGender);
+            if (g) genders.add(g);
+          }
+        }
+        return genders.size > 1;
+      });
+      if (shareStays.length > 0 && !mixedClosedPair) {
         let peakOccupied = 0;
         let peakGender = shareStays[0]!.shareGender!;
         for (const day of dateKeys) {

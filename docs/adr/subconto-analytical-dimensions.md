@@ -39,3 +39,4 @@ Wave 1 report paths (`/reporting/account-card`, `/reporting/account-turnovers`) 
 - Wave 3 plan: `.cursor/plans/wave3-depth-subconto-assets_bc95bef2.plan.md` (Blocks C, D)
 - API: `apps/api/src/accounting/subconto.service.ts`, `apps/api/src/reporting/standard-reports.service.ts`
 - COVERAGE: `FIN-SUBCONTO-*` in `docs/COVERAGE_MATRIX.md`
+- Platform extensibility (JSONB extras ≠ GL dimensions): [extensibility-forms-print-reports.md](./extensibility-forms-print-reports.md)

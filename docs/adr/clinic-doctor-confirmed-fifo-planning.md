@@ -12,6 +12,8 @@ Amended 2026-08-30 (Wave C / Nafta): first-day confirm is a **FIFO prefix of 2�
 
 Amended 2026-08-31 — [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md): empty OPEN-episode anamnesis blocks `buildProposedPlan`, manual `POST /api/procedures`, `placeConfirmedProcedures`, and bulk-cancel **replace** (**SCREEN** / CLI-55). Contraindication substitution uses the **episode** set.
 
+Amended 2026-09-04 — [clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md) (**CLI-57 PLANNED**): package doctor happy path becomes **lazy assign from balance** (modal Save → place) plus optional **day-1 auto ≤3 distinct codes**; full `buildProposedPlan` pre-expand is no longer the primary Müalicə kartı UX. Paid extras: prescribe → `PENDING_PAY` → Pay/folio|cashier → schedule → ticket ×3 (amends Issue-ticket-first order). Placement engine / FIFO gates / rotation remain.
+
 ## Context
 
 Sanatorium program instantiation used to place procedures onto resources immediately (one-shot FIFO). Doctors need to review package lines first: adjust codes/body parts, cancel and replace, and only then commit scarce cabin/equipment capacity. Placement must respect already-scheduled orders for the same patient (incremental planning), consecutive-day rotation (naftalan baths, body-part therapies), contraindication-driven substitution, peak/extended hours, and lab intake rules for external results and fasting panels.

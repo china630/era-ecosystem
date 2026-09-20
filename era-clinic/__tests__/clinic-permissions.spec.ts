@@ -2,12 +2,20 @@ import {
   CLINIC_PERMISSION,
   DEFAULT_ROLE_PERMISSIONS,
   routePermission,
+  routePermissions,
   adminApiRoutePermission,
   migrateStoredPermissions,
+  effectiveRolePermissions,
+  permissionsJsonNeedsTemplate,
+  permissionsJsonForRole,
+  rolePermissionsAreCustomized,
 } from "@/lib/auth/clinic-permissions";
 import { CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
-import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
+import {
+  sessionHasAnyClinicPermission,
+  sessionHasClinicPermission,
+} from "@/lib/auth/clinic-permission-check";
 
 describe("clinic default permissions", () => {
   it("RECEPTION sees sanatorium resources but not nurse roster screen", () => {
@@ -158,5 +166,74 @@ describe("clinic default permissions", () => {
     const perms = DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.NURSE];
     expect(perms).toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
     expect(perms).not.toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE);
+  });
+
+  it("effectiveRolePermissions honors valid empty array", () => {
+    expect(
+      effectiveRolePermissions(CLINIC_ROLE.CLINIC_ADMIN, "[]"),
+    ).toEqual([]);
+    expect(permissionsJsonNeedsTemplate("[]")).toBe(false);
+    expect(permissionsJsonNeedsTemplate("{broken")).toBe(true);
+    expect(permissionsJsonNeedsTemplate("")).toBe(true);
+    expect(
+      effectiveRolePermissions(CLINIC_ROLE.CLINIC_ADMIN, "{broken").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("CLINIC_ADMIN with empty grants is denied (no role-name bypass)", () => {
+    expect(
+      sessionHasClinicPermission(
+        {
+          role: CLINIC_ROLE.CLINIC_ADMIN,
+          login: "admin",
+          permissions: [],
+        },
+        CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      ),
+    ).toBe(false);
+  });
+
+  it("undefined JWT permissions fail-closed (no role template)", () => {
+    expect(
+      sessionHasClinicPermission(
+        {
+          role: CLINIC_ROLE.CLINIC_ADMIN,
+          login: "admin",
+        },
+        CLINIC_PERMISSION.SCREEN_HOME,
+      ),
+    ).toBe(false);
+  });
+
+  it("print procedures/usm any-of allows nurse without screen:doctor", () => {
+    const nurse = {
+      role: CLINIC_ROLE.NURSE,
+      login: "nurse",
+      permissions: DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.NURSE],
+    };
+    expect(
+      sessionHasAnyClinicPermission(
+        nurse,
+        routePermissions("/print/procedures/x")!,
+      ),
+    ).toBe(true);
+    expect(
+      sessionHasAnyClinicPermission(nurse, routePermissions("/print/usm/x")!),
+    ).toBe(true);
+    expect(
+      sessionHasClinicPermission(nurse, CLINIC_PERMISSION.SCREEN_DOCTOR),
+    ).toBe(false);
+  });
+
+  it("rolePermissionsAreCustomized treats [] as customized", () => {
+    expect(rolePermissionsAreCustomized(CLINIC_ROLE.CLINIC_ADMIN, "[]")).toBe(
+      true,
+    );
+    expect(
+      rolePermissionsAreCustomized(
+        CLINIC_ROLE.DOCTOR,
+        permissionsJsonForRole(CLINIC_ROLE.DOCTOR),
+      ),
+    ).toBe(false);
   });
 });

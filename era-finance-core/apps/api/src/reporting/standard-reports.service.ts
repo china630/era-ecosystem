@@ -8,6 +8,7 @@ import {
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubcontoService } from "../accounting/subconto.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { decryptText } from "../security/pii-crypto.util";
 import {
   getClosedPeriodKeys,
@@ -90,19 +91,46 @@ export class StandardReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly subconto: SubcontoService,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
+
+  private async resolveBookScope(
+    organizationId: string,
+    ledgerType: LedgerType,
+    accountingBookId?: string,
+  ) {
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    return {
+      accountingBookId: book.id,
+      ledgerType:
+        book.gaapKind === "IFRS"
+          ? LedgerType.IFRS
+          : book.gaapKind === "MANAGEMENT"
+            ? LedgerType.MANAGEMENT
+            : LedgerType.NAS,
+    };
+  }
 
   private async resolveOpeningMap(
     organizationId: string,
     ledgerType: LedgerType,
     accountIds: string[],
     dateFrom: Date,
+    accountingBookId?: string,
   ): Promise<Map<string, { dr: Decimal; cr: Decimal }>> {
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
       select: { settings: true },
     });
-    const closedKeys = getClosedPeriodKeys(org?.settings);
+    const closedKeys = getClosedPeriodKeys(
+      org?.settings,
+      ledgerType === LedgerType.IFRS ? "IFRS" : "NAS",
+      accountingBookId,
+    );
     const closedEnds = closedKeys
       .map(parseClosedPeriodEnd)
       .filter((x): x is Date => x != null)
@@ -138,6 +166,7 @@ export class StandardReportsService {
           where: {
             organizationId,
             ledgerType,
+            accountingBookId,
             accountId: { in: missing },
             transaction: { date: { lt: dateFrom }, isFinal: true },
           },
@@ -156,6 +185,7 @@ export class StandardReportsService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId,
           accountId: { in: accountIds },
           transaction: { date: { lt: dateFrom }, isFinal: true },
         },
@@ -175,13 +205,19 @@ export class StandardReportsService {
     organizationId: string,
     ledgerType: LedgerType,
     accountCode: string,
+    accountingBookId?: string,
   ) {
     const code = accountCode?.trim();
     if (!code) {
       throw new BadRequestException("accountCode is required");
     }
     const account = await this.prisma.account.findFirst({
-      where: { organizationId, ledgerType, code },
+      where: {
+        organizationId,
+        ledgerType,
+        ...(accountingBookId ? { accountingBookId } : {}),
+        code,
+      },
     });
     if (!account) {
       throw new BadRequestException(`Account not found: ${code}`);
@@ -198,12 +234,16 @@ export class StandardReportsService {
     dateToStr: string,
     accountCode: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     const account = await this.resolveAccount(
       organizationId,
       ledgerType,
       accountCode,
+      scope.accountingBookId,
     );
 
     const openingMap = await this.resolveOpeningMap(
@@ -211,6 +251,7 @@ export class StandardReportsService {
       ledgerType,
       [account.id],
       dateFrom,
+      scope.accountingBookId,
     );
     const o = openingMap.get(account.id) ?? {
       dr: new Decimal(0),
@@ -223,6 +264,7 @@ export class StandardReportsService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: account.id,
         transaction: {
           date: { gte: dateFrom, lte: dateTo },
@@ -317,10 +359,13 @@ export class StandardReportsService {
     dateFromStr: string,
     dateToStr: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     const accounts = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType },
+      where: { organizationId, ledgerType, accountingBookId: scope.accountingBookId },
       orderBy: { code: "asc" },
     });
     if (accounts.length === 0) {
@@ -337,12 +382,14 @@ export class StandardReportsService {
       ledgerType,
       accountIds,
       dateFrom,
+      scope.accountingBookId,
     );
     const periodAgg = await this.prisma.journalEntry.groupBy({
       by: ["accountId"],
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: { in: accountIds },
         transaction: {
           date: { gte: dateFrom, lte: dateTo },
@@ -409,7 +456,10 @@ export class StandardReportsService {
     accountCode: string,
     dimension: AnalysisDimension,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     if (dimension !== "counterparty" && dimension !== "department") {
       throw new BadRequestException(
@@ -420,12 +470,14 @@ export class StandardReportsService {
       organizationId,
       ledgerType,
       accountCode,
+      scope.accountingBookId,
     );
 
     const entries = await this.prisma.journalEntry.findMany({
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         accountId: account.id,
         transaction: {
           date: { gte: dateFrom, lte: dateTo },
@@ -517,7 +569,10 @@ export class StandardReportsService {
     dateFromStr: string,
     dateToStr: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
 
     const txs = await this.prisma.transaction.findMany({
@@ -529,7 +584,7 @@ export class StandardReportsService {
       select: {
         id: true,
         journalEntries: {
-          where: { ledgerType },
+          where: { ledgerType, accountingBookId: scope.accountingBookId },
           select: {
             accountId: true,
             debit: true,
@@ -635,8 +690,15 @@ export class StandardReportsService {
       departmentId?: string;
       skip?: number;
       take?: number;
+      accountingBookId?: string;
     },
   ) {
+    const scope = await this.resolveBookScope(
+      organizationId,
+      ledgerType,
+      opts?.accountingBookId,
+    );
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     const skip = Math.max(0, opts?.skip ?? 0);
     const take = Math.min(Math.max(1, opts?.take ?? 200), 1000);
@@ -647,6 +709,7 @@ export class StandardReportsService {
         organizationId,
         ledgerType,
         opts.accountCode,
+        scope.accountingBookId,
       );
       accountId = acc.id;
     }
@@ -654,6 +717,7 @@ export class StandardReportsService {
     const where: Prisma.JournalEntryWhereInput = {
       organizationId,
       ledgerType,
+      accountingBookId: scope.accountingBookId,
       ...(accountId ? { accountId } : {}),
       transaction: {
         date: { gte: dateFrom, lte: dateTo },
@@ -884,6 +948,7 @@ export class StandardReportsService {
   private async aggregateSubcontoBuckets(
     organizationId: string,
     ledgerType: LedgerType,
+    accountingBookId: string,
     dateFrom: Date,
     dateTo: Date,
     opts: {
@@ -902,6 +967,7 @@ export class StandardReportsService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId,
           ...(opts.accountId ? { accountId: opts.accountId } : {}),
           ...dimensionClause,
           transaction: { isFinal: true, date: { lt: dateFrom } },
@@ -923,6 +989,7 @@ export class StandardReportsService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId,
           ...(opts.accountId ? { accountId: opts.accountId } : {}),
           ...dimensionClause,
           transaction: { isFinal: true, date: { gte: dateFrom, lte: dateTo } },
@@ -944,6 +1011,7 @@ export class StandardReportsService {
         where: {
           organizationId,
           ledgerType,
+          accountingBookId,
           ...(opts.accountId ? { id: opts.accountId } : {}),
         },
         select: {
@@ -1017,7 +1085,10 @@ export class StandardReportsService {
     accountCode?: string,
     subcontoTypeId?: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     const enabled = this.subconto.isEnabled();
 
@@ -1037,6 +1108,7 @@ export class StandardReportsService {
         dateFromStr,
         dateToStr,
         ledgerType,
+        scope.accountingBookId,
       );
       return {
         dateFrom: dateFromStr,
@@ -1052,6 +1124,7 @@ export class StandardReportsService {
     const { buckets, accountMap } = await this.aggregateSubcontoBuckets(
       organizationId,
       ledgerType,
+      scope.accountingBookId,
       dateFrom,
       dateTo,
       { accountId, subcontoTypeId },
@@ -1063,6 +1136,7 @@ export class StandardReportsService {
         dateFromStr,
         dateToStr,
         ledgerType,
+        scope.accountingBookId,
       );
       return {
         dateFrom: dateFromStr,
@@ -1123,6 +1197,7 @@ export class StandardReportsService {
       dateFrom: dateFromStr,
       dateTo: dateToStr,
       ledgerType,
+      accountingBookId: scope.accountingBookId,
       subcontoEnabled: true,
       note: null,
       rows,
@@ -1140,12 +1215,16 @@ export class StandardReportsService {
     subcontoTypeId?: string,
     valueId?: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     const account = await this.resolveAccount(
       organizationId,
       ledgerType,
       accountCode,
+      scope.accountingBookId,
     );
     const enabled = this.subconto.isEnabled();
 
@@ -1156,6 +1235,7 @@ export class StandardReportsService {
         dateToStr,
         accountCode,
         ledgerType,
+        scope.accountingBookId,
       );
       return {
         ...fallback,
@@ -1169,6 +1249,7 @@ export class StandardReportsService {
     const entryWhere: Prisma.JournalEntryWhereInput = {
       organizationId,
       ledgerType,
+      accountingBookId: scope.accountingBookId,
       accountId: account.id,
       ...(dimFilter ? { dimensions: { some: dimFilter } } : { dimensions: { some: {} } }),
       transaction: { isFinal: true },
@@ -1219,6 +1300,7 @@ export class StandardReportsService {
         dateToStr,
         accountCode,
         ledgerType,
+        scope.accountingBookId,
       );
       return {
         ...fallback,
@@ -1302,6 +1384,7 @@ export class StandardReportsService {
       dateFrom: dateFromStr,
       dateTo: dateToStr,
       ledgerType,
+      accountingBookId: scope.accountingBookId,
       subcontoEnabled: true,
       note: null,
       account: {
@@ -1339,7 +1422,10 @@ export class StandardReportsService {
     subcontoTypeId: string,
     accountCode?: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
+    ledgerType = scope.ledgerType;
     const { dateFrom, dateTo } = parsePeriod(dateFromStr, dateToStr);
     if (!subcontoTypeId?.trim()) {
       throw new BadRequestException("subcontoTypeId is required");
@@ -1359,6 +1445,7 @@ export class StandardReportsService {
         organizationId,
         ledgerType,
         accountCode,
+        scope.accountingBookId,
       );
       accountId = acc.id;
       accountMeta = {
@@ -1390,6 +1477,7 @@ export class StandardReportsService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: scope.accountingBookId,
         ...(accountId ? { accountId } : {}),
         dimensions: { some: { subcontoTypeId: subcontoType.id } },
         transaction: {
@@ -1484,6 +1572,7 @@ export class StandardReportsService {
       dateFrom: dateFromStr,
       dateTo: dateToStr,
       ledgerType,
+      accountingBookId: scope.accountingBookId,
       subcontoEnabled: true,
       note: null,
       subcontoType: {

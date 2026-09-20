@@ -68,6 +68,29 @@ After changing kit or contracts, rebuild the package and restart the app dev ser
 
 Use bootstrap when you need platform super-admin, demo org, and cross-app SSO smoke. Per-app seed is enough for isolated feature work.
 
+### Pull real DBs from the droplet (destructive local replace)
+
+When staging/prod on the DigitalOcean droplet already has real Nafta data and you want the same rows locally:
+
+1. Ensure local Postgres is up: `docker compose up -d postgres`
+2. Put SSH target in gitignored `.env.droplet-pull` (or root `.env`):
+
+```bash
+ERA_DROPLET_SSH=deploy@YOUR_DROPLET_IP
+# optional: ERA_DROPLET_SSH_KEY=~/.ssh/id_ed25519
+```
+
+3. Pull (default preset `nafta` = hotel + clinic + fnb + mdm):
+
+```bash
+npm run db:pull-from-droplet:nafta
+# or
+node scripts/pull-dbs-from-droplet.mjs --list
+node scripts/pull-dbs-from-droplet.mjs --i-know-this-wipes-local --only hotel,clinic,mdm
+```
+
+Requires `ssh`/`scp` + Docker. Overwrites the selected **local** databases; remote is dump-only. Dumps land under `tmp/db-pull/` unless cleaned (default). Include `mdm` when working hotel/clinic so guest/patient names resolve.
+
 ---
 
 ## Per-app quick start
@@ -110,6 +133,7 @@ Set `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` when Finance runs in the
 
 ## Cursor / AI agents
 
+- **Hot reload skill:** say **релод клиники** / **reload clinic** (or hotel, fnb, orch, …) → [`.cursor/skills/era-hot-reload/`](../.cursor/skills/era-hot-reload/SKILL.md) starts host `npm run dev` and stops the matching compose app container (keeps postgres/redis).
 - Scope context to the subfolder you are editing (`era-hotel-pms/**`, `era-finance-core/**`).
 - Pull infra URLs and port conventions from **repo root** `.env.example` and this doc — not from obsolete submodule READMEs.
 - UI shell contract: [`DESIGN.md`](../DESIGN.md) § App shell · [`UI_PLAYBOOK_SATELLITES.md`](./UI_PLAYBOOK_SATELLITES.md).
@@ -123,5 +147,6 @@ Set `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` when Finance runs in the
 | `Cannot find module '@era/satellite-kit'` | Build `packages/satellite-kit` |
 | CP billing / tier bar empty | `CONTROL_PLANE_URL` must point to Orch **:4000** |
 | Hotel Finance links open wrong host | `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` |
-| Auth SSO fails locally | Same `ERA_JWT_SECRET` / `AUTH_JWT_SECRET` across Orch + satellite per `INTEGRATION_SSO_EVENTS.md` |
+| `Industry module not active: industry_clinic` after clinic rebuild | Clinic used to overlay `CONTROL_PLANE_SERVICE_TOKEN=` empty and keep folklore `dev-control-plane-token` on ORCHESTRATOR_INTERNAL, which **shadowed** droplet `SATELLITE_EVENT_SERVICE_TOKEN`. Hotel never sets that overlay and uses the event token. Kit now skips folklore secrets when a real event token exists. Recreate clinic after this compose/kit change. Do not pin `ERA_SATELLITE_ORGANIZATION_ID=demo-org`. Shared `_era_runtime_config.orchestratorEventUrl` stays `http://orchestrator:4000`. |
+| Orch token / SSO launch silently dies | Orch access lives in `localStorage`; stale access JWT without refresh made satellite ticket mint fail. Workspace now refreshes before SSO. Also: do not mix `localhost` vs `127.0.0.1` launch URLs in `satellite_endpoints`. |
 | Finance `Session invalid — use Orchestrator login` | Finance web must proxy `/api` → **:4100** and `/cp` → Orch **:4000**. Set `NEXT_PUBLIC_API_URL=http://127.0.0.1:4100` and `NEXT_PUBLIC_CONTROL_PLANE_URL=http://127.0.0.1:4000`, then restart `finance-web`. SSO users (`sso:no-password`) can also use the Finance login form — the API verifies the password at Orchestrator and runs `cp-provision`. A 500 on `/auth/cp-handoff` is a Finance API provision crash, not a wrong proxy. |

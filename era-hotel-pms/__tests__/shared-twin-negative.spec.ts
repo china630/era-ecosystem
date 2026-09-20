@@ -9,6 +9,7 @@ import {
   nextShareBedIndex,
   normalizeShareGender,
   resolveDoorAssignment,
+  canFormClosedSharePair,
   validateShareCandidate,
   type ShareReservationSlice,
 } from '@/lib/services/share-assignment.service';
@@ -514,5 +515,91 @@ describe('resolveDoorAssignment auto-share', () => {
     expect(canGuestJoinSharePool({ adults: 2, guestGender: 'M' }).ok).toBe(false);
     expect(canGuestJoinSharePool({ adults: 1, guestGender: 'M', isOta: true }).ok).toBe(false);
     expect(canGuestJoinSharePool({ adults: 1, guestGender: 'M' }).ok).toBe(true);
+  });
+
+  it('allows closed pair when second share-eligible opposite gender joins a share door', async () => {
+    expect(
+      canFormClosedSharePair({
+        requestedShare: true,
+        candidateAdults: 1,
+        candidateGender: 'F',
+        neighbors: [{ shareEligible: true, shareGender: 'M', adults: 1 }],
+        maxBed: 2,
+      }),
+    ).toBe(true);
+
+    prisma.room.findUnique.mockResolvedValue({
+      id: 'room-402',
+      maxBed: 2,
+      roomType: { adultCapacity: 2 },
+    });
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'husband',
+        shareEligible: true,
+        shareGender: 'M',
+        adults: 1,
+        checkInDate: new Date('2026-08-20T10:00:00Z'),
+        checkOutDate: new Date('2026-08-29T08:00:00Z'),
+        shareBedIndex: 1,
+        guest: { sex: 'M' },
+        agency: { code: 'UNION', name: 'Hamkarlar' },
+      },
+    ]);
+
+    const result = await resolveDoorAssignment({
+      roomId: 'room-402',
+      checkIn: new Date('2026-08-21T10:00:00Z'),
+      checkOut: new Date('2026-08-28T08:00:00Z'),
+      excludeReservationId: 'wife',
+      candidate: {
+        shareEligible: true,
+        shareGender: 'F',
+        adults: 1,
+        guestGender: 'F',
+        isOta: false,
+      },
+    });
+
+    expect(result.shareEligible).toBe(true);
+    expect(result.shareGender).toBe('F');
+    expect(result.shareBedIndex).toBe(2);
+    expect(prisma.reservation.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects opposite gender auto-share onto exclusive neighbor', async () => {
+    prisma.room.findUnique.mockResolvedValue({
+      id: 'room-402',
+      maxBed: 2,
+      roomType: { adultCapacity: 2 },
+    });
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'exclusive',
+        shareEligible: false,
+        shareGender: null,
+        adults: 1,
+        checkInDate: new Date('2026-08-20T10:00:00Z'),
+        checkOutDate: new Date('2026-08-29T08:00:00Z'),
+        shareBedIndex: null,
+        guest: { sex: 'M' },
+        agency: { code: 'UNION', name: 'Hamkarlar' },
+      },
+    ]);
+
+    await expect(
+      resolveDoorAssignment({
+        roomId: 'room-402',
+        checkIn: new Date('2026-08-21T10:00:00Z'),
+        checkOut: new Date('2026-08-28T08:00:00Z'),
+        candidate: {
+          shareEligible: true,
+          shareGender: 'F',
+          adults: 1,
+          guestGender: 'F',
+          isOta: false,
+        },
+      }),
+    ).rejects.toThrow(/Opposite gender|cannot join share pool/);
   });
 });

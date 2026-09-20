@@ -322,6 +322,12 @@ model Role {
   code            String
   name            String
   permissionsJson String   @db.Text
+  /// Seeded ops roles — cannot delete; Reset restores template matrix.
+  isSystem        Boolean  @default(false)
+  /// Custom role created by cloning; Reset copies donor's effective grants.
+  cloneFromCode   String?
+  /// One-shot additive catalog bumps (Wave 1 import/bridge keys = 1).
+  permissionCatalogVersion Int @default(0)
   users           User[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -741,6 +747,12 @@ model BookingSource {
   @@index([organizationId])
 }
 
+/** Opera-style: Travel Agent vs Company are different profiles (commission vs direct bill). */
+enum B2bSettlementMode {
+  PREPAID
+  POSTPAID
+}
+
 model Agency {
   id                   String              @id @default(uuid())
   organizationId String
@@ -750,6 +762,8 @@ model Agency {
   /** Local cache for Finance counterparty (resolved by agency VÖEN). */
   financeCounterpartyId String?
   commissionPercent    Decimal?            @db.Decimal(5, 2)
+  /** When commission is taken: prepaid (deducted up front) vs postpaid (statement after stay). */
+  settlementMode       B2bSettlementMode   @default(POSTPAID)
   /** Max open AR (PENDING_AR + TRANSFERRED_AR) for this agency; null = use stay/hotel default */
   creditLimitAzn       Decimal?            @db.Decimal(12, 2)
   /** Net days after checkout for Finance aging (display + H-BL-48) */
@@ -761,6 +775,27 @@ model Agency {
   contractPricingRules ContractPricingRule[]
   salesContracts       SalesContract[]
   banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+/** Corporate account (Opera Company profile) — direct bill, no travel-agent commission. */
+model Company {
+  id                    String             @id @default(uuid())
+  organizationId        String
+  code                  String
+  name                  String
+  voen                  String?
+  financeCounterpartyId String?
+  creditLimitAzn        Decimal?           @db.Decimal(12, 2)
+  paymentTermsDays      Int?
+  settlementMode        B2bSettlementMode  @default(POSTPAID)
+  active                Boolean            @default(true)
+  reservations          Reservation[]
+  salesContracts        SalesContract[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
   @@unique([organizationId, code])
   @@index([organizationId])
 }
@@ -832,6 +867,8 @@ model SalesContract {
   counterpartyType  SalesContractCounterpartyType @default(AGENCY)
   agencyId          String?
   agency            Agency?                       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  companyId         String?
+  company           Company?                      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   companyGuestId    String?
   companyGuest      Guest?                        @relation("SalesContractCompany", fields: [companyGuestId], references: [id], onDelete: SetNull)
   validFrom         DateTime                      @db.Date
@@ -856,6 +893,7 @@ model SalesContract {
   updatedAt         DateTime                      @updatedAt
 
   @@index([agencyId, status])
+  @@index([companyId, status])
   @@index([validFrom, validTo])
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -1341,6 +1379,8 @@ model Reservation {
   source        BookingSource?    @relation(fields: [sourceId], references: [id])
   agencyId      String?
   agency        Agency?           @relation(fields: [agencyId], references: [id])
+  companyId     String?
+  company       Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
   groupId       String?
   group         ReservationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   salesContractId String?
@@ -1438,6 +1478,7 @@ model Reservation {
   @@index([bookerGuestId])
   @@index([roomTypeId])
   @@index([agencyId])
+  @@index([companyId])
   @@index([groupId])
   @@index([salesContractId])
   @@unique([organizationId, externalRef])
@@ -1512,6 +1553,8 @@ model ReservationGuest {
   sortOrder     Int         @default(0)
   /** Nafta commercial medical package (PKG-STANDART|PKG-PREMIUM|PKG-DERMO|PKG-DETOKS). */
   medicalPackageCode String?
+  /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
+  departedAt    DateTime?
   folio         Folio?
 
   @@index([reservationId])
@@ -1914,6 +1957,62 @@ model ChannelRateMapping {
   @@unique([channelId, ratePlanId])
 }
 
+/** Per-org Channel Manager / IBE binding — never process env (ADR hotel-channel-manager-pack). */
+model ChannelManagerBinding {
+  id                   String   @id @default(uuid())
+  organizationId       String   @unique
+  /** off | stub | webhook | channex */
+  provider             String   @default("off")
+  channexPropertyId    String?
+  /** hotel | vacation_rental */
+  propertyType         String   @default("hotel")
+  live                 Boolean  @default(false)
+  ibePublishableKey    String?
+  ibeAllowedOrigins    Json     @default("[]")
+  webhookSecretCipher  String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([channexPropertyId])
+  @@unique([ibePublishableKey])
+}
+
+/** ARI push queue — drain with 10 availability + 10 restriction calls/min/property. */
+model ChannelAriJob {
+  id                   String    @id @default(uuid())
+  organizationId       String
+  kind                 String    @default("AVAILABILITY")
+  payloadHash          String
+  payloadJson          String    @db.Text
+  status               String    @default("PENDING")
+  attempts             Int       @default(0)
+  lastError            String?
+  notBefore            DateTime  @default(now())
+  processingStartedAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([organizationId, status, notBefore])
+  @@index([organizationId, kind, payloadHash])
+}
+
+/** Direct IBE short hold before book. */
+model IbeHold {
+  id             String   @id @default(uuid())
+  organizationId String
+  roomTypeId     String
+  ratePlanId     String
+  checkInDate    DateTime @db.Date
+  checkOutDate   DateTime @db.Date
+  adults         Int      @default(1)
+  children       Int      @default(0)
+  expiresAt      DateTime
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, status, expiresAt])
+}
+
 model Stay {
   id             String      @id @default(uuid())
   organizationId String
@@ -2113,6 +2212,8 @@ model CashShift {
   registerId String
   status     CashShiftStatus @default(OPEN)
   isPrimary  Boolean         @default(false)
+  fiscalDeviceId String?
+  bankTerminalId String?
   openedAt   DateTime        @default(now())
   closedAt   DateTime?
   pendingSettlements SettlementPendingCharge[]
@@ -2191,13 +2292,17 @@ model HousekeepingTask {
 }
 
 model ChannelSyncError {
-  id            String             @id @default(uuid())
-  reservationId String?
-  reservation   Reservation?       @relation(fields: [reservationId], references: [id])
-  otaReference  String?
-  errorMessage  String
-  status        ChannelErrorStatus @default(OPEN)
-  createdAt     DateTime           @default(now())
+  id             String             @id @default(uuid())
+  organizationId String
+  reservationId  String?
+  reservation    Reservation?       @relation(fields: [reservationId], references: [id])
+  otaReference   String?
+  errorMessage   String
+  status         ChannelErrorStatus @default(OPEN)
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, status])
 }
 
 model MedicalAlert {
@@ -2725,14 +2830,18 @@ model RecipeLine {
 }
 
 model OutboundEventLog {
-  id          String              @id @default(uuid())
-  eventType   String
-  payloadJson String              @db.Text
-  status      OutboundEventStatus @default(PENDING)
-  attempts    Int                 @default(0)
-  lastError   String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id             String              @id @default(uuid())
+  organizationId String?
+  eventType      String
+  payloadJson    String              @db.Text
+  status         OutboundEventStatus @default(PENDING)
+  attempts       Int                 @default(0)
+  lastError      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, eventType])
 }
 
 model YieldRule {

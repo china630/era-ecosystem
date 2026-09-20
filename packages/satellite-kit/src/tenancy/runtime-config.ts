@@ -9,6 +9,16 @@ import {
   type SatelliteRuntimeConfig,
 } from "./runtime-config-core";
 import { applyOrganizationBind, type OrgBindPrisma } from "./organization-bind-core";
+import {
+  hydrateLoginOrgNoMapFromDisk,
+  mergeLoginOrgNoPersistent,
+  pruneLoginOrgNoPersistent,
+} from "./login-org-no-persist";
+import {
+  hydrateLoginHostnameMapFromDisk,
+  mergeLoginHostnamesForOrg,
+  type LoginHostnameSyncRow,
+} from "./login-hostname-persist";
 
 const elektrawebBridgeSchema = z.object({
   inboundEnabled: z.boolean(),
@@ -25,8 +35,31 @@ const clinicCutoverSchema = z.object({
   hotelOrganizationId: z.string().uuid().nullable().optional(),
 });
 
+const fiscalDeviceSyncSchema = z.object({
+  id: z.string().uuid(),
+  organizationId: z.string().uuid(),
+  kind: z.enum(["FISCAL_KKM", "BANK_POS"]),
+  providerId: z.string().min(1).max(64),
+  label: z.string().min(1).max(200),
+  outletCode: z.string().max(64).nullable().optional(),
+  registerCode: z.string().max(64).nullable().optional(),
+  serial: z.string().max(128).nullable().optional(),
+  externalIds: z.record(z.string()).nullable().optional(),
+  endpoint: z.string().max(512).nullable().optional(),
+  secretsCipher: z.string().nullable().optional(),
+  secrets: z.record(z.string()).nullable().optional(),
+  status: z.enum(["active", "retired"]),
+  isOrgDefault: z.boolean().optional(),
+  isOutletDefault: z.boolean().optional(),
+  isRegisterDefault: z.boolean().optional(),
+});
+
 const runtimeBodySchema = z.object({
   organizationId: z.string().uuid().optional(),
+  /** Public ERA ID — merge into satellite login orgNo map (A4). */
+  publicOrgNumber: z.number().int().min(100000).max(999999).optional(),
+  /** Soft-delete / revoke: drop this org from the satellite orgNo map. */
+  revokePublicOrgNumber: z.boolean().optional(),
   orchestratorEventUrl: z.string().url().optional(),
   publicBaseUrl: z.string().url().optional(),
   platformSuperAdminEmails: z.array(z.string().email()).max(50).optional(),
@@ -41,6 +74,21 @@ const runtimeBodySchema = z.object({
   elektrawebBridge: elektrawebBridgeSchema.optional(),
   /** Per-org clinic cutover — upserted by clinic satellite handler. */
   clinicCutover: clinicCutoverSchema.optional(),
+  /** Per-org fiscal KKM / bank POS devices — hydrate @era/fiscal directory. */
+  fiscalDevices: z.array(fiscalDeviceSyncSchema).max(200).optional(),
+  /** ACTIVE white-label satellite login hosts for this org (B2 Sync). */
+  loginHostnames: z
+    .array(
+      z.object({
+        hostname: z.string().min(1).max(253),
+        organizationId: z.string().uuid(),
+        satelliteKey: z.string().min(1).max(64).nullable().optional(),
+        kind: z.enum(["portal", "satellite_login"]).optional(),
+        status: z.enum(["ACTIVE", "PENDING_DNS", "DISABLED"]).optional(),
+      }),
+    )
+    .max(64)
+    .optional(),
 });
 
 export type ElektrawebBridgeSyncPayload = z.infer<typeof elektrawebBridgeSchema>;
@@ -58,6 +106,15 @@ export type RuntimeConfigHandlerOptions = {
   onClinicCutover?: (
     organizationId: string,
     policy: ClinicCutoverSyncPayload,
+  ) => Promise<void>;
+  /** Per-org snapshot on SHARED (edition / modules). Process-wide memory stays unstamped. */
+  onSharedOrgSnapshot?: (
+    organizationId: string,
+    snap: {
+      edition?: string;
+      activeModules?: string[];
+      hotelModules?: Record<string, boolean>;
+    },
   ) => Promise<void>;
 };
 
@@ -82,6 +139,8 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
     if (prisma) {
       await hydrateRuntimeConfigFromDb(prisma);
     }
+    hydrateLoginOrgNoMapFromDisk();
+    hydrateLoginHostnameMapFromDisk();
     return NextResponse.json({
       ok: true,
       config: publicRuntimeConfigView(satelliteRuntimeConfig()),
@@ -124,12 +183,41 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
         prisma,
       });
     }
+    // A4: merge orgNo → UUID (never replace the whole map with one org).
+    if (body.revokePublicOrgNumber && body.organizationId) {
+      pruneLoginOrgNoPersistent(body.organizationId);
+    } else if (
+      body.organizationId &&
+      body.publicOrgNumber != null &&
+      Number.isInteger(body.publicOrgNumber)
+    ) {
+      mergeLoginOrgNoPersistent(body.publicOrgNumber, body.organizationId);
+    }
+    if (body.organizationId && body.loginHostnames !== undefined) {
+      mergeLoginHostnamesForOrg(
+        body.organizationId,
+        body.loginHostnames as LoginHostnameSyncRow[],
+      );
+    }
     // SHARED: skip process bind — per-org vendor/cutover policies still upsert below.
     if (body.organizationId && body.elektrawebBridge && opts.onElektrawebBridge) {
       await opts.onElektrawebBridge(body.organizationId, body.elektrawebBridge);
     }
     if (body.organizationId && body.clinicCutover && opts.onClinicCutover) {
       await opts.onClinicCutover(body.organizationId, body.clinicCutover);
+    }
+    if (body.organizationId && body.fiscalDevices !== undefined) {
+      const { hydrateFiscalDevicesFromSync } = await import(
+        "../integration/fiscal-device-hydrate"
+      );
+      hydrateFiscalDevicesFromSync(body.organizationId, body.fiscalDevices);
+    }
+    if (body.organizationId && opts.onSharedOrgSnapshot) {
+      await opts.onSharedOrgSnapshot(body.organizationId, {
+        edition: body.edition,
+        activeModules: body.activeModules,
+        hotelModules: body.hotelModules,
+      });
     }
     const cfg = await applySatelliteRuntimeConfig({
       config: patch,

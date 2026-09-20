@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -15,9 +17,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
@@ -31,19 +31,13 @@ import { GovBudgetService } from "./gov-budget.service";
 @ApiTags("gov-budget")
 @ApiBearerAuth("bearer")
 @Controller("gov-budget")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule(ModuleEntitlement.GOV_BUDGET_PRO)
 export class GovBudgetController {
   constructor(private readonly govBudget: GovBudgetService) {}
 
   @Get("years")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List budget years" })
   listYears(
     @OrganizationId() organizationId: string,
@@ -54,7 +48,7 @@ export class GovBudgetController {
   }
 
   @Post("years")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Create budget year (DRAFT)" })
   createYear(
     @OrganizationId() organizationId: string,
@@ -64,7 +58,7 @@ export class GovBudgetController {
   }
 
   @Post("years/:id/approve")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Approve budget year" })
   approveYear(
     @OrganizationId() organizationId: string,
@@ -74,7 +68,7 @@ export class GovBudgetController {
   }
 
   @Post("years/:id/amend")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Mark approved budget year as amended (editable cycle)" })
   amendYear(
     @OrganizationId() organizationId: string,
@@ -84,13 +78,7 @@ export class GovBudgetController {
   }
 
   @Get("years/:id/lines")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List budget lines" })
   listLines(
     @OrganizationId() organizationId: string,
@@ -100,7 +88,7 @@ export class GovBudgetController {
   }
 
   @Post("funding")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Record treasury funding (BUDGET_APPROPRIATION ledger posting)",
   })
@@ -112,7 +100,7 @@ export class GovBudgetController {
   }
 
   @Post("expense-execution")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Execute budget expense against line (BUDGET_EXPENSE_EXECUTION + commitment)",
@@ -125,7 +113,7 @@ export class GovBudgetController {
   }
 
   @Post("check-limit")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Check budget line limit" })
   checkLimit(
     @OrganizationId() organizationId: string,
@@ -135,13 +123,7 @@ export class GovBudgetController {
   }
 
   @Get("years/:id/execution")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Plan vs fact execution snapshot (stub)" })
   execution(
     @OrganizationId() organizationId: string,
@@ -151,7 +133,7 @@ export class GovBudgetController {
   }
 
   @Post("years/:id/import-esmeta")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({
     summary: "E-Smeta import stub (Phase 2) — accepts JSON lines, returns preview",
   })

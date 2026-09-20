@@ -121,7 +121,11 @@
 | Access request (join by VÖEN) | [x] migrate | Proxy `/auth/join-org`, `/team/access-requests/*` → orchestrator |
 | Ownership dispute / arbitration | [x] migrate | Orchestrator `DisputeModule`; Finance freeze guard on legacy paths |
 | Billing / subscription SoT | [x] migrate | Orchestrator API/DB; Finance **web** proxies `/api/billing/*`, `/api/subscription/*` → CP (`resolveApiUrl`); Finance API keeps **quota assert** + ERP `BillingAccessGuard` on ledger mutations |
-| Domain finance policy (Post/Approve, payroll money) | — | Finance guards по `roles[]` из JWT |
+| Domain finance policy (Post/Approve, payroll money) | Matrix UI `/settings/access` | Finance **Wave 5:** `PermissionsGuard` / `can()` on `api:ledger.post`, `api:payroll.money`, … (ADR `finance-domain-permissions-and-rbac`) |
+
+**Wave 4 (2026-09-18):** orchestrator JWT `permissions[]` uses fleet canon `api:` / `screen:` / `admin:` from org-scoped `OrganizationRole.permissionsJson` (ADR `cp-domain-permissions-and-rbac`).
+
+**Wave 5 (2026-09-18):** Finance enforces CP grants — Post/Approve = **`api:ledger.post`**; payroll money = **`api:payroll.money`**. Door = permission keys, not `@Roles`. No local matrix UI in Finance (edit grants in Orchestrator `/settings/access`). `AuditorMutationGuard` remains the locked belt on donor `AUDITOR`. Legacy bare codes dual-read one release. AC-FIN-RBAC 🟡 / FIN-RBAC-01 SCREEN — not SHOW/GA.
 
 **Инвариант:** роль **OWNER** = владелец бизнеса и аккаунта SaaS (биллинг, карта, transfer ownership). В спутниках отображается как **`BUSINESS_OWNER`** (маппинг `OWNER` / `DIRECTOR`) — см. [SATELLITE_DOCUMENTATION.md](../docs/SATELLITE_DOCUMENTATION.md).
 
@@ -240,6 +244,15 @@
 | **Локализация** | Язык интерфейса портала: поле **`portal_locale`** у контрагента (`az` / `ru` / `en`), иначе — язык браузера (**Accept-Language**). |
 | **Безопасность** | См. **TZ.md §14.0** — неугадываемый токен + rate limit на публичные GET. |
 
+#### 4.4.1b. Trade credit control (limit, pickup grant, internal A–D) — PARTIAL
+
+**Status:** [~] **PARTIAL** — Phase 0–2 eng + **Phase 3 eng** (working-capital suggested limit / proposals / decision log; A–D remains lock). Not Pilot/SHIPPED. [finance-trade-credit-control.md](../docs/adr/finance-trade-credit-control.md).
+
+- Finance owns credit limit / facility, AR exposure, short-lived **pickup grant** (code/QR). Wholesale on-account shipment consumes the grant. Sales cannot issue grants.
+- Buyer **cabinet** (authenticated, SKU `trade_credit_control`) is distinct from the guest invoice link above: residual + schedule + grant — never internal group А–Г.
+- Groups **А–Г** (code A–D) are **finance-only** (not sales, not buyer). Phase 0 = lock; Phase 1 policy = **PARTIAL** eng (auto-block Г, optional auto-raise А proposal + staff accept).
+- Billing: unlock SKU 99 AZN/mo + quota on **managed trade-credit counterparties** (not the whole CRM list). Pay-per-invoice is forbidden.
+
 #### 4.4.1a. Price lists and discount rules (Wave 5 E7)
 
 - [x] **COMPLETED:** модели `PriceList`, `PriceListLine`, `DiscountRule`; CRUD API `GET/POST price-lists/*`; UI **`/catalog/price-lists`**; подстановка цены и скидок в `InvoicesService.buildItems` (snapshot на дату документа).
@@ -341,7 +354,7 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 - **Формы MHBS (Wave 4 G2):** statutory баланс, ОПиУ, ДДС, изменения капитала, пояснения с кодами строк MoF — UI `/reports/statements`, каталог `mhbs-statement-lines.v1.json`, экспорт XLSX/PDF — [ADR](../docs/adr/mhbs-statement-mapping.md); `@RequiresModule(tax_pro)`.
 - **Статистическая отчётность Goskomstat (Wave 5 G3):** конфигурируемый движок `StatReportDefinition` + генератор XLSX по маппингу строк на GL/склад/HR; стандартный placeholder-набор (1-müəssisə, труд, продукция, цены) — UI `/reporting/statforms`, API `GET/POST reporting/statforms/*`; entitlement `compliance_pro` или `tax_pro` — [ADR](../docs/adr/statform-engine.md).
 - Включён workflow e-Taxes деклараций: генерация файла декларации, подтверждение скачивания бухгалтером и прикрепление официальной квитанции `Elektron Bildiriş` (Постановление КМ АР №120) — типы `SIMPLIFIED_TAX` и `VAT`.
-- Multi-GAAP reporting views завершены: параллельные отчёты NAS/IFRS (ОСВ, P&L) и глобальный UI-toggle стандарта учёта.
+- Multi-GAAP reporting views **PARTIAL**: параллельные отчёты NAS/IFRS (ОСВ, P&L) и UI-toggle существуют; integrity mirror — P0 (`LedgerMappingSet`, soft/strict); полноценный IFRS chart / adjustments — P1. См. [ADR](../docs/adr/finance-ledger-mapping-integrity.md).
 - В P&L добавлен фильтр по департаменту (ЦФО): при выборе `departmentId` отчёт считает доходы/расходы только по транзакциям с этим **`Transaction.departmentId`**; расходы на оплату труда (**721**) в разрезе подразделения отражаются **нативно в ГК** за счёт пообъектного проведения зарплаты при **PAID** (см. модуль 6), без отдельной доводки через справочные отчёты по `PayrollSlip`.
 
 ### 4.8. Модуль 8: Неизменяемый аудит (Compliance & Security)
@@ -808,7 +821,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 |------|------------|
 | **A — Взаиморасчёты** | [x] **COMPLETED (v2026.04.25):** allocations, partial payments, tranche FIFO, акты сверки, **AR Aging** 0–30 / 31–60 / 61–90 / 90+ |
 | **B — Налоги** | [x] **COMPLETED (v2026.04.28):** e-Taxes Export v2, `TaxDeclarationExport`, XML/XLSX из Ledger, workflow `Elektron Bildiriş` |
-| **C — Multi-GAAP** | [x] **COMPLETED (v2026.05.01):** IFRS Trial Balance + P&L, глобальный NAS/IFRS toggle в UI |
+| **C — Multi-GAAP** | [~] **PARTIAL (P1.5 2026-09):** NAS↔IFRS integrity, provision, adj, per-book close/reopen. Next: UAT FIN-GAAP then [AccountingBook ADR](../docs/adr/finance-accounting-book.md) Waves A–C (slots / `accounting_book_extra`). |
 | **D — ОС и ТМЦ** | [x] **COMPLETED:** реестр ОС, линейная амортизация, проводки **Дт 713 — Кт 112**, UI `/fixed-assets`; FIFO для ТМЦ — в модуле 9 (§4.10) |
 
 ### 5.0.1. Market validation: «painted door» для отраслевых вертикалей (SMB AZ)
@@ -868,7 +881,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 |-------|-----------------------------|-------------------|
 | **Wave 1** | §5.E.2 Activity Stream, §5.E.3 Approval Workflow, §5.E.4 Director | По плану: см. чеклисты в подразделах |
 | **Wave 2** | §5.E.1 Virtual stock, §5.E.5 Prepaid (РБП), §5.E.6 Cost allocation, §5.E.7 PSA mini | E6–E7: см. чеклисты §5.E.6–§5.E.7 |
-| **Wave 3** | CRM Pipeline/Deals, user-defined Custom Fields, Disassembly, Resource Calendar, Mobile WMS scan | **Только roadmap** (без кода в этом цикле) |
+| **Wave 3** | CRM Pipeline/Deals, user-defined Custom Fields, Disassembly, Resource Calendar, Mobile WMS scan | **PARTIAL** — invoice extra fields W1 (`FIN-EXT-01`) is the first UDF slice (not full Wave 3) |
 
 #### 5.E.1. Virtual stock (доступный выпуск по BOM)
 
@@ -975,7 +988,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 - [x] **COMPLETED (v2026.04.17, SaaS Hardening v1 / Batch 1):** RBAC policy enforcement for critical mutations, ledger Period Lock (`lockedPeriodUntil`, HTTP `423 Locked`) and atomic rollback tests for double-entry posting.
 - [x] **COMPLETED (v2026.04.18, SaaS Hardening v1 / Batch 2):** RBAC auto-scanner for mutation endpoints, Public Invoice rate-limiting + strong token validation, and CRM degraded mode with VÖEN fallback + audit event.
 - [x] **COMPLETED (v2026.04.20, SaaS Hardening v1 / Batch 3):** reporting draft leakage prevention (posted-only), strict negative inventory guard with FIFO/COGS regression coverage, and multi-currency VAT rounding handling to FX accounts.
-- [x] **COMPLETED (v2026.04.21, Multi-GAAP Foundation):** parallel NAS/IFRS ledgers, automated IFRS mapping rules for mirror entries, ledger-aware reporting filters, and IFRS mapping management UI.
+- [~] **PARTIAL (v2026.04.21 foundation; P0 Integrity 2026-09):** parallel NAS/IFRS ledgers + ledger-aware reporting; runtime SSOT = published `LedgerMappingSet` (legacy `AccountMapping` / `IfrsMappingRule` migrated, write closed). Silent IFRS skip removed. Full IFRS product remains P1.
 - [x] **COMPLETED (v2026.04.22, NAS Chart of Accounts):** i18n (AZ/RU/EN); global **`TemplateAccount`** по **`OrganizationKind`**; онбординг **`organizations.kind`**; legacy **`ChartOfAccountsEntry.kind`**; **`POST /api/organizations`** alias; **`GET /api/accounts/templates`** + **`POST /api/accounts/import-from-template`**; UI **`/accounting/chart`**; API `locale` / `Accept-Language` for names.
 - [x] **COMPLETED (v2026.04.23, SaaS Hardening v1 M8 Audit & Compliance):** рекурсивное маскирование PII и секретов в интеграционных и аудит-пейлоадах (`DataMaskingService`), единая точка редукции в `AuditLog`, маскирование фрагментов ответов банковских API в application logs.
 - [x] **COMPLETED (v2026.04.24, Finance Core Reconciliation Act):** акт сверки взаиморасчётов по контрагенту: API `/api/reports/reconciliation/:id`, журнальные строки, PDF/XLSX и вкладка в карточке контрагента.
@@ -1054,7 +1067,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 |------|----------|
 | **Foundation / ERA Core** | Ежемесячная **базовая цена за активную организацию** (ориентир **29 AZN/мес.**) — доступ к **базовому учёту** (Ledger, CRM, дашборд) и **1 пользователь** (сид) в рамках этой организации; задаётся в Super-Admin (`SystemConfig`, ключ `billing.foundation_monthly_azn`). В веб-клиенте карточка базы подписана как **ERA Core** (i18n). Дополнительные пользователи — через **квоты** (§7.12.3). |
 | **Quota tier (`tier`)** | **STARTER / BUSINESS / ENTERPRISE** — **тариф включённых квот** (потолки по осям: сотрудники, инвойсы, диск и т.д.); хранится в **`OrganizationSubscription.tier`**. Смена тарифа квот — смена сидовых лимитов (и аналитика по сегменту); **модульный доступ** по-прежнему из **`customConfig.modules`** / **`organization_modules`**, кроме правила **`ENTERPRISE`** (все модули). |
-| **Module Marketplace (LEGO)** | Модули включаются **по организации** независимо; цена в месяц — в **`pricing_modules`**. Флаг **`is_premium`** задаётся в Super-Admin (секция Premium) и управляет trial shield / `activate-premium`. Ориентир (AZN/мес.): **`cash_bank_pro` 38** (касса+банк), **Warehouse / Manufacturing / HR / IFRS ~19**, premium **`tax_pro` / `trade_pro` ~19**, **`audit_hub` / `compliance_pro` ~99**. Legacy slugs `kassa_pro` / `banking_pro` сняты с каталога. |
+| **Module Marketplace (LEGO)** | Модули включаются **по организации** независимо; цена в месяц — в **`pricing_modules`**. Флаг **`is_premium`** задаётся в Super-Admin (секция Premium) и управляет trial shield / `activate-premium`. Палитра **19 / 29 / 39 / 99 AZN** ([ADR era-commercial-catalog](../docs/adr/era-commercial-catalog.md)): **`nas` 29**, **`cash_bank_pro` 39**, Warehouse 19, Manufacturing/HR 29, IFRS/Tax/Trade 39, **`audit_hub` / `compliance_pro` 99**. Legacy slugs `kassa_pro` / `banking_pro` сняты с каталога. |
 | **Quota scaling (докупка)** | Расширение **сверх** потолков тарифа квот (+ overrides): **цена за единицу надбавки** — блок сотрудников, пакет документов и т.п.; `SystemConfig` **`billing.quota_unit_pricing_v1`**, фактические купленные надбавки — в **`customConfig.quotas`** (см. §7.12.3). |
 | **Пакеты (bundles)** | Именованные наборы **модулей** с **скидкой пакета** (%) — таблица **`PricingBundles`**, Super-Admin (**Paket yaradıcısı**); для клиента — **предпросмотр** суммы. |
 | **Период оплаты** | При оплате **за год** — **автоматическая скидка** (по умолчанию **20%**) к итогу; процент хранится в `SystemConfig` (`billing.yearly_discount_percent`). |

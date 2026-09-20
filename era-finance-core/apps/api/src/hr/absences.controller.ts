@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -12,10 +15,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { isDepartmentHeadRole } from "../auth/policies/hr-payroll.policy";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
@@ -36,14 +37,8 @@ export class AbsencesController {
   ) {}
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Список отсутствий (отпуск / больничный)" })
   async list(
     @OrganizationId() organizationId: string,
@@ -73,14 +68,8 @@ export class AbsencesController {
   }
 
   @Get(":id")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Запись отсутствия (read-only mirror from CP)" })
   async getOne(
     @OrganizationId() organizationId: string,
@@ -95,8 +84,8 @@ export class AbsencesController {
   }
 
   @Post("vacation-pay/calculate")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary:
       "Расчёт отпускных: средняя ЗП за 12 мес. до месяца отпуска / 30.4 × календарные дни",
@@ -115,8 +104,8 @@ export class AbsencesController {
   }
 
   @Post("sick-pay/calculate")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary:
       "Xəstəlik vərəqəsi: ilk 14 gün işəgötürən (staj %), qalan təqvim günləri DSMF (kənar)",

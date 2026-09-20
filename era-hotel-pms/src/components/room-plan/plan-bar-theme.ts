@@ -1,11 +1,12 @@
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { normalizeShareGender } from '@/lib/share-gender';
 import type { ReservationStatus, RoomStatus } from './types';
 
 /** Blunt EW-style chevron depth in CSS pixels (bar height ~26px). */
 export const CHEVRON_PX = 10;
 
-/** Caption left padding clears the butt notch (+ optional HK square). */
-export const BAR_LABEL_PAD_LEFT_PX = CHEVRON_PX + 12;
+/** Caption left padding clears the butt notch. */
+export const BAR_LABEL_PAD_LEFT_PX = CHEVRON_PX + 4;
 
 export type PlanBarDayState =
   | 'option'
@@ -91,6 +92,25 @@ export const HK_SQUARE_COLORS: Record<Exclude<HkSquareKind, null>, string> = {
   closed: '#212121',
 };
 
+/** Occupancy mark (not HK). Fill stays day-state; mark is a left badge, not a thin stroke. */
+export type PlanBarOccupancyKind = 'exclusive' | 'shareM' | 'shareF';
+
+/** Solid mark colors for occupancy badge / legend (readable on any day-state fill). */
+export const PLAN_BAR_OCCUPANCY_MARK: Record<PlanBarOccupancyKind, string> = {
+  exclusive: '#34495E',
+  shareM: '#1565C0',
+  shareF: '#AD1457',
+};
+
+/** @deprecated Use PLAN_BAR_OCCUPANCY_MARK — kept for smoke tests / call-site compat. */
+export const PLAN_BAR_OCCUPANCY_STROKE = PLAN_BAR_OCCUPANCY_MARK;
+
+export function occupancyMarkLabel(kind: PlanBarOccupancyKind): string {
+  if (kind === 'shareM') return '♂';
+  if (kind === 'shareF') return '♀';
+  return '■';
+}
+
 export type PlanBarInput = {
   id: string;
   status: ReservationStatus;
@@ -105,8 +125,24 @@ export type PlanBarInput = {
 function isEffectiveShareBar(b: PlanBarInput): boolean {
   if (!b.shareEligible) return false;
   if ((b.adults ?? 1) !== 1) return false;
-  const g = (b.shareGender ?? '').trim().toUpperCase();
-  return g === 'M' || g === 'F' || g === 'MALE' || g === 'FEMALE' || g.startsWith('M') || g.startsWith('F');
+  return normalizeShareGender(b.shareGender) != null;
+}
+
+export function resolvePlanBarOccupancyKind(bar: PlanBarInput): PlanBarOccupancyKind {
+  if (!isEffectiveShareBar(bar)) return 'exclusive';
+  return normalizeShareGender(bar.shareGender) === 'F' ? 'shareF' : 'shareM';
+}
+
+/** Doors out of sale / repair are HK + inventory, not the room plan. */
+export function isPlanVisibleRoom(room: {
+  status?: string | null;
+  inventoryStatus?: string | null;
+}): boolean {
+  const status = (room.status ?? '').toUpperCase();
+  const inv = (room.inventoryStatus ?? '').toUpperCase();
+  if (status === 'OOO' || status === 'OOS' || status === 'MAINTENANCE') return false;
+  if (inv === 'OOO' || inv === 'OOS') return false;
+  return true;
 }
 
 function staysOverlapKeys(a: PlanBarInput, b: PlanBarInput): boolean {
@@ -117,18 +153,44 @@ function staysOverlapKeys(a: PlanBarInput, b: PlanBarInput): boolean {
   return aCi < bCo && bCi < aCo;
 }
 
-/** True when another effective share on the same door overlaps this stay. */
-export function hasOverlappingShareRoommate(
-  bar: PlanBarInput,
-  roomBars: PlanBarInput[],
-): boolean {
-  if (!isEffectiveShareBar(bar) || !bar.roomId) return false;
-  return roomBars.some((other) => {
+function overlappingShareNeighbors(bar: PlanBarInput, roomBars: PlanBarInput[]): PlanBarInput[] {
+  if (!isEffectiveShareBar(bar) || !bar.roomId) return [];
+  return roomBars.filter((other) => {
     if (other.id === bar.id) return false;
     if (other.roomId !== bar.roomId) return false;
     if (!isEffectiveShareBar(other)) return false;
     return staysOverlapKeys(bar, other);
   });
+}
+
+/**
+ * Two independent contracts on one door, opposite gender — Nafta closed pair.
+ * Not an open same-gender pool: no concatenated roommate names, no ♂/♀ badge.
+ */
+export function isClosedSharePair(bar: PlanBarInput, roomBars: PlanBarInput[]): boolean {
+  const others = overlappingShareNeighbors(bar, roomBars);
+  if (others.length !== 1) return false;
+  const selfG = normalizeShareGender(bar.shareGender);
+  const otherG = normalizeShareGender(others[0]!.shareGender);
+  return selfG != null && otherG != null && selfG !== otherG;
+}
+
+/** Open same-gender share pool roommate (not closed mixed pair). */
+export function hasOverlappingShareRoommate(
+  bar: PlanBarInput,
+  roomBars: PlanBarInput[],
+): boolean {
+  if (!isEffectiveShareBar(bar) || !bar.roomId) return false;
+  const selfG = normalizeShareGender(bar.shareGender);
+  return overlappingShareNeighbors(bar, roomBars).some((other) => {
+    return normalizeShareGender(other.shareGender) === selfG;
+  });
+}
+
+/** ♂/♀ badge for open pool (including a lone share stay after the pair opens). */
+export function showSharePoolOccupancyBadge(bar: PlanBarInput, roomBars: PlanBarInput[]): boolean {
+  if (!isEffectiveShareBar(bar)) return false;
+  return !isClosedSharePair(bar, roomBars);
 }
 
 /**

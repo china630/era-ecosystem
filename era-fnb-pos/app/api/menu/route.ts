@@ -3,15 +3,42 @@ import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/ap
 import { recordMenuItemPrice } from "@/lib/menu-price-history";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { TILL_READ_MENU } from "@/lib/auth/read-permission-sets";
+import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 
 export async function GET(request: Request) {
   await assertFnbEntitled();
   try {
+    const session = await getSessionFromRequest(request);
+    const denied = denyUnlessAnyPermission(session, TILL_READ_MENU);
+    if (denied) return denied;
     const url = new URL(request.url);
     const dailyOnly = url.searchParams.get("dailyOnly") === "true";
     const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
     const includeInactive = url.searchParams.get("includeInactive") === "true";
+    // Inactive catalog rows are admin-only (menu matrix).
+    if (
+      includeInactive &&
+      !(
+        session &&
+        sessionHasFnbPermission(
+          {
+            login: session.login,
+            email: session.email,
+            role: session.role,
+            permissions: session.permissions,
+            isOwner: session.isOwner,
+            pin: session.pin,
+          },
+          PERMISSIONS.MENU_MANAGE,
+        )
+      )
+    ) {
+      return jsonError("Forbidden: includeInactive requires api:menu.manage", 403);
+    }
 
     const categories = await prisma.menuCategory.findMany({
       include: {
@@ -72,7 +99,7 @@ export async function POST(request: Request) {
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());

@@ -12,6 +12,7 @@ import {
   getInvoicePrefill,
   getEmployeesBulkPrefill,
   getInvoicesBulkPrefill,
+  getEmasQueue,
   logoutExtension,
   reportEmployeesBulkResult,
   reportInvoicesBulkResult,
@@ -51,6 +52,11 @@ export default defineBackground(() => {
         }
         if (message?.type === MSG.ENTITLEMENTS_GET) {
           const data = await getSubscriptionSnapshot();
+          sendResponse({ ok: true, data });
+          return;
+        }
+        if (message?.type === MSG.EMAS_QUEUE_GET) {
+          const data = await getEmasQueue("PENDING_MANUAL");
           sendResponse({ ok: true, data });
           return;
         }

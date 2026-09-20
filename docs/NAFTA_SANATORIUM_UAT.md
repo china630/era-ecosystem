@@ -56,16 +56,16 @@ Quick smoke: `node scripts/quartet-smoke.mjs` · `node era-hotel-pms/scripts/tes
 ## 3. Onboarding (orchestrator UI — UI-first)
 
 1. **Register** owner at `http://127.0.0.1:3000/register` → **`/organizations`**.
-2. **+ Organization** — name + **VÖEN** (10 digits) → **`/workspace`**. Copy parent UUID → `ERA_HOTEL_ORGANIZATION_ID`.
+2. **+ Organization** — name + **VÖEN** (10 digits) → **`/workspace`**.
 3. **Connect satellites** on `/workspace` (Hotel, Clinic, F&B, Finance). Extend trial: `/super-admin/orgs/{orgId}/subscription`.
 4. **Super-admin org hub** — `/super-admin/orgs/{parentOrgId}`:
-   - **Create department** (F&B, Clinic) — no second VÖEN; copy UUIDs from list.
+   - Copy **parent UUID** from the org page (for `ERA_HOTEL_ORGANIZATION_ID`).
+   - **Create department** (F&B, Clinic) — no second VÖEN; copy UUIDs from the department list.
    - **Operating mode** — parent stays `STANDALONE`; departments get `DEPARTMENT` + `PARENT` routing automatically on create.
    - **Satellite endpoints** — set `industry_fnb_pos`, `industry_clinic` base URLs (docker hostnames or localhost ports).
-5. **Owner read-only view** — `/workspace` card **Departments & env UUIDs** (copy for `.env`).
-6. Set `.env` org UUIDs (§2), restart stack.
-7. **Automation (optional):** `ORCH_SUPER_ADMIN_TOKEN=… ERA_HOTEL_ORGANIZATION_ID=… node scripts/nafta-onboard-departments.mjs`
-8. **SSO smoke:** `SSO_ORG_ID=<parent>` · `node scripts/sso-launch-smoke.mjs`
+5. Set `.env` org UUIDs (§2), restart stack.
+6. **Automation (optional):** `ORCH_SUPER_ADMIN_TOKEN=… ERA_HOTEL_ORGANIZATION_ID=… node scripts/nafta-onboard-departments.mjs`
+7. **SSO smoke:** `SSO_ORG_ID=<parent>` · `node scripts/sso-launch-smoke.mjs`
 
 Legacy curl paths remain valid for CI; prefer UI above for onsite UAT.
 
@@ -215,7 +215,7 @@ Nafta parent org: **`platform_workforce` + industry modules**; **`hr_full` off**
 
 | Step | Action | Pass |
 |------|--------|------|
-| F1 | Enable `platform_workforce`; bootstrap workforce scope | `/workspace` shows Workforce Hub tile |
+| F1 | Enable `platform_workforce`; bootstrap workforce scope | Tile on `/workspace` while SKU is off; after enable open via sidebar **Kadrlar** (`/workspace/workforce/employments`) |
 | F2 | CP hire + absence (§6 W1–W4) | No Finance container required |
 | F3 | `/workspace/workforce/export` → download roster + absences CSV | Files open in Excel; no FIN column |
 | F4 | Monthly: operator imports CSV into 1C (manual procedure) | Documented in runbook |

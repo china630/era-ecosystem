@@ -20,7 +20,7 @@ Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/
   - [x] Double-entry GL, manual journals, transactional postings
   - [x] NAS chart commercial / budget / ngo (~99 accounts), seed catalog, import per org — `/accounting/chart`
   - [x] Posting roles + templates, period close checklist — `/accounting/posting-roles`, `/reporting` close-period
-  - [x] IFRS parallel book + NAS→IFRS mirror + mapping rules — `/accounting/ifrs-mapping`, `/accounting/mapping`
+  - [~] IFRS parallel book + NAS→IFRS (P0–P1.5); AccountingBook Waves A–C engineering slice: header book selector (`ledgerType` alias), slot-gated create, MANAGEMENT starter CoA, book list and compare UI/API — `/accounting/books`, `/reporting/compare-books`; close dual-writes `closedPeriodsByBookId`; arbitrary-pair mirroring and Lab UAT remain — [ADR books](../../docs/adr/finance-accounting-book.md) · COVERAGE `FIN-GAAP-01`, `FIN-BOOK-01`
   - [x] PostingRole de-hardcode of account literals (FEAT-FC-COA-001 / §4.18.3) — `PostingAccountResolver` + `lint-nas-literals.mjs` CI guard — `[x]` SHIPPED (Wave 3 A)
   - [x] NAS VAT posting roles (`VAT_INPUT→191`, `VAT_OUTPUT→545`, `VAT_DEPOSIT_ACCOUNT→223`) + output VAT on invoice SENT — `[x]` SHIPPED (Wave 4 A) — [ADR](../../docs/adr/vat-deposit-routing.md)
   - [x] Flexible subconto on journal lines (`SubcontoType`, `AccountSubcontoConfig`, `JournalEntryDimension`) behind `ERA_SUBCONTO_ENABLED` — `[x]` SHIPPED API; reports `[x]` SHIPPED UI when flag on — [ADR](../../docs/adr/subconto-analytical-dimensions.md)
@@ -58,7 +58,7 @@ Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/
 - [x] **M7 — Reporting** (PRD §4.7, §4.13, §5.0)
   - [x] Trial balance, P&L (with cost centers), management balance sheet, cash flow — `/reporting`, `/reports/balance-sheet`, `/reports/cash-flow`
   - [x] AR aging / receivables, reconciliation act, holding rollup (AZN) — `/reporting/aging`, `/reporting/receivables`, `/reporting/holding`
-  - [x] NAS / IFRS toggle via `ledgerType`; multi-GAAP
+  - [~] NAS / IFRS toggle via `ledgerType`; book-scoped comparison at `/reporting/compare-books`; general report selector and arbitrary-pair mapping remain PARTIAL
   - [~] VAT declaration package + dedicated UI — `[x]` SHIPPED (Wave 1) — `/reporting/vat`, `/reporting/tax-export`
   - [x] **Profit tax** (`PROFIT_TAX`) declaration + book-to-tax register — `/reporting/profit-tax`, `/reporting/tax-export` — `[x]` SHIPPED (Wave 2 G1)
   - [x] **Subconto reports** (OSV / card / analysis by journal-line dimension) — `/reporting/subconto-analysis`, filters on account-card & turnovers — `[x]` SHIPPED (Wave 3 E4 / Block D)

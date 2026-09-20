@@ -121,6 +121,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | In-app staff notifications | Bell in web shell | **DONE** | **Not** customer Notifications Pack |
 | Satellite GL dispatch | API worker | **DONE** | Consumes orchestrator events → journals |
 | Billing meter (Phase 16) | `/admin/config/billing/*` | **DONE** | recordUsage + intraday tier invoice |
+| Trade credit control | `/crm/trade-credit`, `/buyer`, SKU `trade_credit_control` | **MVP** | Phase 0–2 eng (lock + A–D + PWA/enrich/pay/factor lead); not Pilot — [ADR](./adr/finance-trade-credit-control.md) |
 
 **Billing & platform (2026-05):** subscription, billing, referrals, early-access, public pricing — **orchestrator only**. Finance web proxies via `/cp/*`. Notifications Pack live when `ERA_NOTIFICATIONS_PACK=true`. See [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md).
 
@@ -137,7 +138,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | `industry_hotel_pms` | Hotel PMS (satellite gate) | — |
 | `hotel_core` | PMS Core (FO, Front Cash, Night Audit) — Wave B FO live; **P5 FO money / CL ops open** ([ADR](./adr/hotel-city-ledger-and-fo-money.md)) | City+ |
 | `hotel_housekeeping` | Housekeeping & Room Rack | City+ |
-| `hotel_distribution` | Distribution (Channel + Contracts) | Resort |
+| `hotel_distribution` | Channel Manager (OTA & Direct) — CM + site IBE + contracts; **39 AZN** ([ADR](./adr/hotel-channel-manager-pack.md)) | City+ |
 | `hotel_agency_portal` | Agency Portal (B2B extranet) | Optional SKU — not in bundles; [ADR](./adr/hotel-agency-portal.md) |
 | `hotel_guest_experience` | Guest Profiles & Tasks | Resort |
 | `hotel_spa_scheduling` | SPA & Scheduling | Resort / Sanatorium |
@@ -342,7 +343,7 @@ Product lines & presets: [ADR clinic-product-lines-and-presets](./adr/clinic-pro
 | Events | — | visit + lab completed | — |
 | Growth | — | DELIVERY K6 | — |
 
-Satellite gate: `industry_clinic`. Clinic module keys live in orchestrator `pricing_modules` (`satelliteKey = industry_clinic`), default free.
+Satellite gate: `industry_clinic` **29 AZN**. Commercial SKUs (2026-09 catalog): EMR `clinic_registry_emr` 29, lab 29, sanatorium chart `clinic_sanatorium_clinical` 29, insurance 39, inpatient/telehealth/nurse roster 19. Gate includes schedule + appointments + cashier. XOR with `hotel_medical_sanatorium` — [ADR era-commercial-catalog](./adr/era-commercial-catalog.md).
 
 ---
 
@@ -397,7 +398,7 @@ ADR: [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md) · [fx-rat
 
 ## Banking (Core Banking System — `industry_banking`)
 
-Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS); **`era-bank`** = operational satellite (`industry_banking`); **`era-bank-dbo`** = customer channel. Licensed per bank (one deployment = one bank). Bank's corporate ERP stays in **finance-core**.
+Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS); **`era-bank`** = operational satellite (`industry_banking`); **`era-bank-dbo`** = customer channel. License is per org (SKU), not “one VM = one bank” as a schema law — topology is SHARED / DEDICATED / ONPREM ([era-bank-core.md](./adr/era-bank-core.md) D8). Typical appliance remains one process per licensed bank. Bank's corporate ERP stays in **finance-core**.
 
 **Product envelope:** Full commercial AZ CBS (PRD §4 + FC/XO roadmap) — **mvp** until product-depth + Pilot field; not ga. SSOT: [Bank-Capability-Inventory.md](./acceptance/Bank-Capability-Inventory.md) · [Bank-Full-CBS-Roadmap.md](./acceptance/Bank-Full-CBS-Roadmap.md). Live/cert: [CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md).
 

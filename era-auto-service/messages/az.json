@@ -92,9 +92,9 @@
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",
-    "organizationIdLabel": "Təşkilat ID (auto service)",
-    "organizationIdPlaceholder": "UUID — paylaşılan auto-service pool üçün tələb olunur",
-    "organizationIdHint": "Dedicated appliance-də boş buraxın — process-bound org istifadə olunur.",
+    "organizationIdLabel": "Təşkilat kodu (ERA ID)",
+    "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
+    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz.",
     "footerLegalNavAria": "Hüquqi keçidlər və kömək",
     "footerFaq": "FAQ",
     "footerTerms": "İstifadə şərtləri",

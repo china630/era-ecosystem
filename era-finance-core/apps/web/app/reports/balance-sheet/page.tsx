@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   CARD_CONTAINER_CLASS,
@@ -40,6 +41,7 @@ function fmt(v: unknown): string {
 export default function BalanceSheetPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [asOf, setAsOf] = useState(() => todayUtc());
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -50,7 +52,8 @@ export default function BalanceSheetPage() {
     setLoading(true);
     setErr(null);
     setData(null);
-    const qs = new URLSearchParams({ asOfDate: asOf });
+    const qs = new URLSearchParams(ledgerQueryParam(ledgerType, accountingBookId));
+    qs.set("asOfDate", asOf);
     const res = await apiFetch(`/api/reports/balance-sheet?${qs.toString()}`);
     setLoading(false);
     if (!res.ok) {
@@ -58,12 +61,12 @@ export default function BalanceSheetPage() {
       return;
     }
     setData((await res.json()) as BalanceSheetPayload);
-  }, [token, asOf, t]);
+  }, [token, asOf, t, ledgerType, accountingBookId]);
 
   useEffect(() => {
-    if (!ready || !token) return;
+    if (!ready || !ledgerReady || !token) return;
     void load();
-  }, [ready, token, load]);
+  }, [ready, ledgerReady, token, load]);
 
   const renderSide = useMemo(
     () =>

@@ -79,6 +79,10 @@ export default function OperationsPage() {
   const [noShows, setNoShows] = useState<Reservation[]>([]);
   const [cashier, setCashier] = useState('');
   const [registerId, setRegisterId] = useState('REG-01');
+  const [fiscalDeviceId, setFiscalDeviceId] = useState('');
+  const [bankTerminalId, setBankTerminalId] = useState('');
+  const [kkms, setKkms] = useState<{ id: string; label: string; kind: string; providerId: string }[]>([]);
+  const [banks, setBanks] = useState<{ id: string; label: string; kind: string; providerId: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
@@ -118,6 +122,25 @@ export default function OperationsPage() {
     if (can(PERMISSIONS.RESERVATIONS_CANCEL)) loadNoShows();
   }, [loadStatus, loadRuns, loadTourism, loadNoShows, can]);
 
+  useEffect(() => {
+    if (!shiftModalOpen) return;
+    void fetch(`/api/fiscal/devices?register=${encodeURIComponent(registerId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const devices = (data?.devices ?? []) as {
+          id: string;
+          label: string;
+          kind: string;
+          providerId: string;
+        }[];
+        setKkms(devices.filter((d) => d.kind === 'FISCAL_KKM'));
+        setBanks(devices.filter((d) => d.kind === 'BANK_POS'));
+        if (data?.defaults?.fiscalDeviceId) setFiscalDeviceId(String(data.defaults.fiscalDeviceId));
+        if (data?.defaults?.bankTerminalId) setBankTerminalId(String(data.defaults.bankTerminalId));
+      })
+      .catch(() => undefined);
+  }, [shiftModalOpen, registerId]);
+
   async function retryTourism(id: string) {
     const res = await fetch(`/api/tourism/${id}/retry`, { method: 'POST' });
     setMsg(res.ok ? t('tourismRetrySent') : t('retryFailed'));
@@ -138,7 +161,12 @@ export default function OperationsPage() {
       const res = await fetch('/api/cash/shifts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cashier: cashier || 'Cashier', registerId }),
+        body: JSON.stringify({
+          cashier: cashier || 'Cashier',
+          registerId,
+          ...(fiscalDeviceId ? { fiscalDeviceId } : {}),
+          ...(bankTerminalId ? { bankTerminalId } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? tc('failed'));
@@ -449,6 +477,46 @@ export default function OperationsPage() {
               onChange={(e) => setRegisterId(e.target.value)}
             />
           </div>
+          {kkms.length > 0 ? (
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-kkm">
+                {t('fiscalDevice')}
+              </label>
+              <select
+                id="shift-kkm"
+                className={MODAL_INPUT_CLASS}
+                value={fiscalDeviceId}
+                onChange={(e) => setFiscalDeviceId(e.target.value)}
+              >
+                <option value="">{t('autoDefault')}</option>
+                {kkms.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label} ({d.providerId})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+          {banks.length > 0 ? (
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-bank">
+                {t('bankTerminal')}
+              </label>
+              <select
+                id="shift-bank"
+                className={MODAL_INPUT_CLASS}
+                value={bankTerminalId}
+                onChange={(e) => setBankTerminalId(e.target.value)}
+              >
+                <option value="">{t('autoDefault')}</option>
+                {banks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label} ({d.providerId})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
         </form>
       </EraModal>
     </>

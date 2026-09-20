@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  MODAL_INPUT_CLASS,
+  LIST_PAGE_SHELL_CLASS,
+  CatalogField,
   PRIMARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
@@ -13,7 +14,9 @@ import { EraModal, EraModalFooter } from '@/components/EraModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import RoomInfoModal from '@/components/RoomInfoModal';
 import RoomRackView from '@/components/RoomRackView';
-import { computeRackDisplayState } from '@/lib/room-rack-display';
+import { computeRackDisplayState, deriveSharePoolForDate } from '@/lib/room-rack-display';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { normalizeShareGender } from '@/lib/share-gender';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -77,23 +80,97 @@ interface Arrival {
   checkOutDate?: string;
 }
 
-function roomAssignableForArrival(room: Room, arrival: Arrival): boolean {
+function roomAssignableForArrival(
+  room: Room,
+  arrival: Arrival,
+  fromKey: string,
+  toKey: string,
+): boolean {
   if (['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return true;
   if (room.status !== 'OCCUPIED') return false;
   const shareOk =
     arrival.shareEligible &&
     (arrival.adults ?? 1) === 1 &&
-    Boolean(arrival.shareGender);
+    Boolean(normalizeShareGender(arrival.shareGender));
   if (!shareOk) return false;
-  const pool = room.sharePool;
+  const pool = deriveSharePoolForDate(room, fromKey, toKey) ?? room.sharePool;
   if (!pool) {
-    // OCCUPIED without derived pool — allow only if no exclusive conflict (API will gate)
     return true;
   }
-  const g = (arrival.shareGender ?? '').toUpperCase().startsWith('F') ? 'F' : 'M';
-  const poolG = pool.gender.toUpperCase().startsWith('F') ? 'F' : 'M';
-  if (g !== poolG) return false;
+  const g = normalizeShareGender(arrival.shareGender);
+  const poolG = normalizeShareGender(pool.gender);
+  if (!g || !poolG || g !== poolG) return false;
   return pool.occupied < pool.capacity;
+}
+
+function UnassignedArrivalRow({
+  arrival,
+  rooms,
+  dateKeyFrom,
+  dateKeyTo,
+  busy,
+  onAssign,
+  onOpen,
+  assignLabel,
+  assignRoomLabel,
+  assignHint,
+  roomStatusLabel,
+}: {
+  arrival: Arrival;
+  rooms: Room[];
+  dateKeyFrom: string;
+  dateKeyTo: string;
+  busy: boolean;
+  onAssign: (reservationId: string, roomId: string) => void;
+  onOpen: (id: string) => void;
+  assignLabel: string;
+  assignRoomLabel: string;
+  assignHint: string;
+  roomStatusLabel: (status: RoomStatus) => string;
+}) {
+  const [roomId, setRoomId] = useState('');
+  const options = rooms
+    .filter((r) => r.roomType.code === arrival.roomType.code)
+    .filter((r) => roomAssignableForArrival(r, arrival, dateKeyFrom, dateKeyTo))
+    .map((r) => {
+      const pool = deriveSharePoolForDate(r, dateKeyFrom, dateKeyTo) ?? r.sharePool;
+      const shareHint =
+        pool && r.status === 'OCCUPIED' ? ` · share ${pool.occupied}/${pool.capacity}` : '';
+      return {
+        value: r.id,
+        label: `${r.roomNumber} (${roomStatusLabel(r.status)}${shareHint})`,
+      };
+    });
+
+  return (
+    <li className="flex flex-wrap items-end gap-2">
+      <button
+        type="button"
+        className="mb-1 text-[#2980B9] hover:underline"
+        onClick={() => onOpen(arrival.id)}
+      >
+        {arrival.guest.fullName} — {arrival.roomType.code}
+      </button>
+      <CatalogField
+        kind="SEARCHABLE"
+        label={assignRoomLabel}
+        className="w-56 shrink-0"
+        value={roomId}
+        onChange={(v) => setRoomId(Array.isArray(v) ? (v[0] ?? '') : v)}
+        options={options}
+        emptyLabel={assignRoomLabel}
+      />
+      <button
+        type="button"
+        disabled={busy || !roomId}
+        className={PRIMARY_BUTTON_CLASS}
+        onClick={() => onAssign(arrival.id, roomId)}
+      >
+        {assignLabel}
+      </button>
+      <span className="mb-1 text-[11px] text-[#7F8C8D]">{assignHint}</span>
+    </li>
+  );
 }
 
 export default function Chessboard() {
@@ -106,8 +183,9 @@ export default function Chessboard() {
   const roomStatusLabel = (status: RoomStatus) => tRoom(status);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
+  const [filterDateFrom, setFilterDateFrom] = useState(() => hotelDateKey(new Date()));
+  const [filterDateTo, setFilterDateTo] = useState(() => hotelDateKey(new Date()));
   const [selected, setSelected] = useState<Room | null>(null);
-  const [assignRoomId, setAssignRoomId] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [revenueCodes, setRevenueCodes] = useState<{ id: string; code: string }[]>([]);
@@ -130,9 +208,11 @@ export default function Chessboard() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const fromQ = encodeURIComponent(filterDateFrom);
+      const toQ = encodeURIComponent(filterDateTo);
       const [roomsRes, arrivalsRes, revRes] = await Promise.all([
         fetch('/api/rooms'),
-        fetch('/api/reservations/arrivals'),
+        fetch(`/api/reservations/arrivals?dateFrom=${fromQ}&dateTo=${toQ}`),
         fetch('/api/master/revenue-codes'),
       ]);
       const roomsData = await roomsRes.json();
@@ -150,7 +230,7 @@ export default function Chessboard() {
     } finally {
       setLoading(false);
     }
-  }, [t, tCommon]);
+  }, [t, tCommon, filterDateFrom, filterDateTo]);
 
   useEffect(() => {
     load();
@@ -249,56 +329,28 @@ export default function Chessboard() {
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <div className={LIST_PAGE_SHELL_CLASS}>
       {arrivals.length > 0 && (
-        <section className="mb-4 rounded-xl border border-[#D5DADF] bg-white p-4 shadow-sm">
+        <section className="mb-3 max-h-40 shrink-0 overflow-y-auto rounded-xl border border-[#D5DADF] bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('arrivalsTitle')}</h2>
           <ul className="space-y-2 text-[13px] text-[#34495E]">
             {arrivals
               .filter((a) => !a.room && a.status === 'CONFIRMED')
               .map((a) => (
-                <li key={a.id} className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    className="text-[#2980B9] hover:underline"
-                    onClick={() => openReservationCard(a.id)}
-                  >
-                    {a.guest.fullName} — {a.roomType.code}
-                  </button>
-                  <select
-                    className={MODAL_INPUT_CLASS}
-                    value={assignRoomId}
-                    onChange={(e) => setAssignRoomId(e.target.value)}
-                  >
-                    <option value="">{t('assignRoom')}</option>
-                    {rooms
-                      .filter((r) => r.roomType.code === a.roomType.code)
-                      .map((r) => {
-                        const assignable = roomAssignableForArrival(r, a);
-                        const shareHint =
-                          r.sharePool && assignable && r.status === 'OCCUPIED'
-                            ? ` · share ${r.sharePool.occupied}/${r.sharePool.capacity}`
-                            : '';
-                        return (
-                          <option key={r.id} value={r.id} disabled={!assignable}>
-                            {r.roomNumber}
-                            {assignable
-                              ? ` (${roomStatusLabel(r.status)}${shareHint})`
-                              : ` — ${roomStatusLabel(r.status)} (${t('dirtyNotAssignable')})`}
-                          </option>
-                        );
-                      })}
-                  </select>
-                  <button
-                    type="button"
-                    disabled={busy || !assignRoomId}
-                    className={PRIMARY_BUTTON_CLASS}
-                    onClick={() => assignToRoom(a.id, assignRoomId)}
-                  >
-                    {t('assign')}
-                  </button>
-                  <span className="text-[11px] text-[#7F8C8D]">{t('assignableOnlyHint')}</span>
-                </li>
+                <UnassignedArrivalRow
+                  key={a.id}
+                  arrival={a}
+                  rooms={rooms}
+                  dateKeyFrom={filterDateFrom}
+                  dateKeyTo={filterDateTo}
+                  busy={busy}
+                  onAssign={assignToRoom}
+                  onOpen={openReservationCard}
+                  assignLabel={t('assign')}
+                  assignRoomLabel={t('assignRoom')}
+                  assignHint={t('assignableOnlyHint')}
+                  roomStatusLabel={roomStatusLabel}
+                />
               ))}
           </ul>
         </section>
@@ -310,10 +362,14 @@ export default function Chessboard() {
             ? []
             : rooms.map((room) => ({
                 ...room,
-                rackDisplayState: computeRackDisplayState(room),
+                rackDisplayState: computeRackDisplayState(room, filterDateFrom, filterDateTo),
               }))
         }
         selectedId={selected?.id ?? null}
+        filterDateFrom={filterDateFrom}
+        filterDateTo={filterDateTo}
+        onFilterDateFromChange={setFilterDateFrom}
+        onFilterDateToChange={setFilterDateTo}
         onSelect={(rackRoom) => {
           const full = rooms.find((r) => r.id === rackRoom.id);
           if (full) setSelected(full);

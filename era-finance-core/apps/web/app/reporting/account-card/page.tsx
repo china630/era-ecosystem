@@ -66,7 +66,7 @@ type AnalysisRow = {
 export default function AccountCardPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const { types, enabled, ready: subcontoReady } = useSubcontoFilters(token);
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
@@ -90,7 +90,7 @@ export default function AccountCardPage() {
   useEffect(() => {
     if (!token || !ledgerReady) return;
     void (async () => {
-      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType)}`);
+      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType, accountingBookId)}`);
       if (!res.ok) return;
       const rows = (await res.json()) as AccountOpt[];
       setAccounts(rows);
@@ -110,8 +110,12 @@ export default function AccountCardPage() {
           dateFrom: from,
           dateTo: to,
           accountCode,
-          ledgerType,
         });
+        for (const [key, value] of new URLSearchParams(
+          ledgerQueryParam(ledgerType, accountingBookId),
+        )) {
+          qs.set(key, value);
+        }
         if (useSubcontoCard) {
           qs.set("subcontoTypeId", subcontoTypeId);
           if (subcontoValueId.trim()) qs.set("valueId", subcontoValueId.trim());
@@ -127,7 +131,7 @@ export default function AccountCardPage() {
         setReportNote(payload.note ?? null);
         setAnalysis(null);
       } else {
-        const path = `/api/reporting/account-analysis?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&accountCode=${encodeURIComponent(accountCode)}&dimension=${dimension}&${ledgerQueryParam(ledgerType)}`;
+        const path = `/api/reporting/account-analysis?dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&accountCode=${encodeURIComponent(accountCode)}&dimension=${dimension}&${ledgerQueryParam(ledgerType, accountingBookId)}`;
         const res = await apiFetch(path);
         if (!res.ok) {
           setErr(`${t("reporting.accountCard.analysisErr")}: ${res.status}`);
@@ -141,20 +145,20 @@ export default function AccountCardPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountCode, from, to, ledgerType, tab, dimension, t, useSubcontoCard, subcontoTypeId, subcontoValueId]);
+  }, [token, accountCode, from, to, ledgerType, accountingBookId, tab, dimension, t, useSubcontoCard, subcontoTypeId, subcontoValueId]);
 
   async function exportFile(format: "pdf" | "xlsx") {
     if (!token || !accountCode.trim()) return;
     setExportBusy(format);
     try {
       const base = tab === "card" ? "account-card" : "account-analysis";
-      const qs = new URLSearchParams({
-        dateFrom: from,
-        dateTo: to,
-        accountCode,
-        ledgerType,
-        format,
-      });
+      const qs = new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      );
+      qs.set("dateFrom", from);
+      qs.set("dateTo", to);
+      qs.set("accountCode", accountCode);
+      qs.set("format", format);
       if (tab === "analysis") qs.set("dimension", dimension);
       const res = await apiFetch(`/api/reporting/${base}/export?${qs.toString()}`);
       if (!res.ok) {

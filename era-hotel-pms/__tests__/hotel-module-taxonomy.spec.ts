@@ -9,6 +9,7 @@ describe('hotel module taxonomy (hotel-pms)', () => {
     expect(resolveHotelModuleForPathname('/fo/rack')).toBe('hotel_core');
     expect(resolveHotelModuleForPathname('/fo/in-house')).toBe('hotel_core');
     expect(resolveHotelModuleForPathname('/front-cash/pending')).toBe('hotel_core');
+    expect(resolveHotelModuleForPathname('/front-cash/company-ledger')).toBe('hotel_core');
     expect(resolveHotelModuleForPathname('/night-audit')).toBe('hotel_core');
     expect(resolveHotelModuleForPathname('/night-audit/logs')).toBe('hotel_core');
   });

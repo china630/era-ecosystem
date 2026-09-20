@@ -30,6 +30,8 @@ export function parseToggleModuleMetadata(
 
 /**
  * PATCH для `SubscriptionAccessService.updateModuleAddons` по ключу из `pricing_modules`.
+ * The accounting-book add-on mirrors its boolean state to the 1/0 slot quota;
+ * explicit quantities are carried by customConfig.quotas.
  */
 export function catalogModuleKeyToPatch(
   moduleKey: string,
@@ -49,6 +51,7 @@ export function catalogModuleKeyToPatch(
   compliance_pro?: boolean;
   contract_management_pro?: boolean;
   gov_budget_pro?: boolean;
+  accounting_book_extra?: boolean;
 } {
   if (moduleKey === PRICING_MODULE_CASH_BANK_PRO || isLegacyCashBankModuleKey(moduleKey)) {
     return { cash_bank_pro: enabled };
@@ -76,6 +79,8 @@ export function catalogModuleKeyToPatch(
       return { contract_management_pro: enabled };
     case "gov_budget_pro":
       return { gov_budget_pro: enabled };
+    case "accounting_book_extra":
+      return { accounting_book_extra: enabled };
     default:
       throw new BadRequestException({
         code: "UNKNOWN_MODULE",

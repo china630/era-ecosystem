@@ -1,6 +1,7 @@
 # ADR: CP workforce org units (Plan B)
 
 **Status:** Accepted (2026-06)  
+**Amended:** 2026-09-17 — dual-VÖEN = two scopes + holding view, not merged tree ([evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md))  
 **Context:** ERA v3 Workforce — three meanings of "department" were conflated. Empty DB clean cut.
 
 **Related:** [org-operating-mode.md](./org-operating-mode.md), [cp-workforce-absence-split.md](./cp-workforce-absence-split.md), [workforce-identity-and-hr-provisioning.md](./workforce-identity-and-hr-provisioning.md)
@@ -56,4 +57,4 @@ One HR tree under parent scope (Sanatorium → Med / Admin / F&B). Clinic and F&
 
 - Payroll departmental GL unchanged — uses mirrored `departmentId`.
 - Plan C: full hire/provisioning in CP; Finance `Employee` is payroll extension only (`cpEmploymentId` link). See [cp-workforce-role-templates-and-security-admin.md](./cp-workforce-role-templates-and-security-admin.md).
-- Multi-scope enterprise (unrelated VÖEN trees) — future; MVP one scope per anchor org.
+- **Multi-VÖEN group (Evrostar):** still **one `WorkforceScope` per STANDALONE anchor**. Do not merge OrgUnit trees or model the second VÖEN as `DEPARTMENT`. Holding composition stays on CP holdings. Optional **holding-federated HR view** (read-union of two scopes; person card via MDM `globalPersonId`) — writes always stamped with `employment.organizationId`. See [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md).

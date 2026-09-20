@@ -8,11 +8,11 @@
 2. `PatientRef` for in-house: `MDM-{globalPersonId}` when linked; else `HOTEL-{reservationId8}-{paxKey}` (`ReservationGuest.id`). Never one `HOTEL-{reservationId}` for the whole party.
 3. Hotel check-in emits **one** `SATELLITE_HOTEL_GUEST_CHECKED_IN` per pax with that guest’s `medicalPackageCode`, `globalPersonId`, `guestName`, and `paxKey`.
 4. Quota/charge resolve `ProgramInstance` via `episode.patientRefId` (OPEN), never `findFirst({ reservationId })` alone.
-5. Checkout / room-change fan-out to **all** OPEN episodes for the reservation. Stay date amend recalcs **each** instance with that episode’s `programCode`.
+5. **Stay-level** checkout / room-change fan-out to **all** OPEN episodes for the reservation. Stay date amend recalcs **each** instance with that episode’s `programCode`. **Person-level Depart guest** (companion leaves, stay stays `IN_HOUSE`) must fan-out to **that pax only** — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D4/D6. Until that verb ships, do not emit stay `GUEST_CHECKED_OUT` for a companion departure.
 6. Share rooms (`707` / `707S`) remain **two reservations** → two episodes — out of scope for merge.
 7. Same-SKU couple still gets **two** charts (two patients, same program code).
 8. Folio stays **one** reservation / Wave D composed nightly sell.
 
 ## Related
 
-CLI-54 SCREEN, HOT-PKG-04 API; folio compose = Wave D. Amends dual-run ADR pax column usage.
+CLI-54 SCREEN, HOT-PKG-04 API; folio compose = Wave D. Amends dual-run ADR pax column usage. Person-level depart vs stay checkout: [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md).

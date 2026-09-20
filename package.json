@@ -2,6 +2,8 @@
   "scripts": {
     "bootstrap:local": "node tools/bootstrap-local.mjs --reset-password --migrate-satellites",
     "bootstrap:local:demo": "node tools/bootstrap-local.mjs --reset-password --demo --migrate-satellites",
+    "db:pull-from-droplet": "node scripts/pull-dbs-from-droplet.mjs",
+    "db:pull-from-droplet:nafta": "node scripts/pull-dbs-from-droplet.mjs --i-know-this-wipes-local --preset nafta",
     "credentials:write": "node tools/write-local-credentials.mjs",
     "audit:integration": "node scripts/run-integration-audits.mjs",
     "audit:integration:ci": "node scripts/run-integration-audits.mjs --ci",

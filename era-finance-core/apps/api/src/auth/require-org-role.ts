@@ -3,8 +3,9 @@ import type { UserRole } from "@erafinance/database";
 import type { AuthUser } from "./types/auth-user";
 
 /**
- * Маршруты с @OrganizationId() должны иметь в JWT роль в организации.
- * Без организации в токене — только auth/companies.
+ * Org presence check — returns donor UserRole for legacy callers.
+ * Authorization grants are JWT `permissions[]` via PermissionsGuard (Wave 5),
+ * not this helper. Without organization in the token — auth/companies only.
  */
 export function requireOrgRole(user: AuthUser): UserRole {
   if (user.role == null) {

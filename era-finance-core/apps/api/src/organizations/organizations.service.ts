@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   OrganizationKind,
@@ -20,6 +21,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AccessControlService } from "../access/access-control.service";
 import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 
 @Injectable()
 export class OrganizationsService {
@@ -29,6 +31,8 @@ export class OrganizationsService {
     private readonly accounts: AccountsService,
     private readonly dataHub: DataHubClientService,
     private readonly holdingsCp: OrchestratorHoldingsClientService,
+    @Optional()
+    private readonly accountingBooks?: AccountingBookService,
   ) {}
 
   private chartRemoteLoader(): ChartJsonRemoteLoader | undefined {
@@ -60,6 +64,7 @@ export class OrganizationsService {
       kind,
       this.chartRemoteLoader(),
     );
+    await this.accountingBooks?.ensureSystemBooks(organizationId, {}, tx);
     await upsertGlobalPostingRoleTemplates(tx);
     await this.accounts.bootstrapMultiGaapForNewOrganization(organizationId, tx);
   }

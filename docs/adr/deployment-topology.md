@@ -2,8 +2,8 @@
 
 **Status:** Accepted (vocabulary + target architecture)  
 **Date:** 2026-08-17  
-**Implementation:** Not built. Current industry satellites are still mostly **one process + one DB + one org** (Nafta appliance).  
-**Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md) · [era-bank-core.md](./era-bank-core.md) D8 · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
+**Implementation:** Schema + kit filter + JWT `organizationId` + `SatelliteEndpoint` pool registry **shipped**. Default `deploymentTopology` is **SHARED**. Nafta appliances are DEDICATED/ONPREM *placement* of the same binary. Live two-org field UAT remains 🟡 in Product-Readiness (evidence), not “pool missing”.  
+**Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md) · [org-public-number-and-login-host.md](./org-public-number-and-login-host.md) · [era-bank-core.md](./era-bank-core.md) D8 · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md) · [extensibility-forms-print-reports.md](./extensibility-forms-print-reports.md) (SaaS core vs deep studio — not a topology feature flag)
 
 ## Context
 

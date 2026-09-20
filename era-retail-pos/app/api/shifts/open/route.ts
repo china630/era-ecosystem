@@ -6,6 +6,8 @@ const bodySchema = z.object({
   outletCode: z.string().default("MAIN"),
   registerCode: z.string().default("R1"),
   preset: z.enum(["grocery", "apparel", "electronics", "pharmacy"]).optional(),
+  fiscalDeviceId: z.string().min(1).max(64).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(req: Request) {
@@ -55,6 +57,27 @@ export async function POST(req: Request) {
     }
     if (!register) throw new Error("register unavailable");
 
+    const { resolveDefaultDevicesForSatellite, assertLiveFiscalReady } =
+      await import("@era/satellite-kit");
+    const { requestOrganizationId } = await import("@/lib/request-organization");
+    const organizationId = requestOrganizationId();
+    const defaults = resolveDefaultDevicesForSatellite({
+      organizationId,
+      outletCode: outlet.code,
+      registerRef: register.code,
+    });
+    const fiscalDeviceId =
+      body.fiscalDeviceId ?? defaults.fiscalDeviceId ?? undefined;
+    const bankTerminalId =
+      body.bankTerminalId ?? defaults.bankTerminalId ?? undefined;
+    if (process.env.ERA_FISCAL_LIVE === "true") {
+      assertLiveFiscalReady({
+        organizationId,
+        outletCode: outlet.code,
+        registerRef: register.code,
+      });
+    }
+
     const existing = await prisma.shift.findFirst({
       where: { registerId: register.id, status: "OPEN" },
     });
@@ -63,8 +86,16 @@ export async function POST(req: Request) {
     }
 
     const shift = await prisma.shift.create({
-      data: { registerId: register.id },
+      data: {
+        registerId: register.id,
+        fiscalDeviceId: fiscalDeviceId ?? null,
+        bankTerminalId: bankTerminalId ?? null,
+      },
     });
+    const { reportRetailPosStationCapacity } = await import(
+      "@/lib/report-pos-capacity"
+    );
+    void reportRetailPosStationCapacity(prisma).catch(() => undefined);
     return jsonOk(shift, 201);
   } catch (err) {
     return handleRouteError(err);

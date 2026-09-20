@@ -143,9 +143,9 @@ export default function RoomTypeAvailabilityPage() {
         {t('seeAlso')}{' '}
         <Link href="/fo/reservations" className="text-[#2980B9] underline">{t('reservationList')}</Link>
         {' · '}
-        <Link href="/fo/rack" className="text-[#2980B9] underline">{t('rack')}</Link>
-        {' · '}
         <Link href="/fo/room-plan" className="text-[#2980B9] underline">{t('roomPlan')}</Link>
+        {' · '}
+        <Link href="/fo/rack" className="text-[#2980B9] underline">{t('rack')}</Link>
       </p>
       <ReservationCardModal open={createOpen} onClose={() => setCreateOpen(false)} reservationId={null} />
     </>

@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -16,11 +19,9 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import { EmployeeDocumentsService } from "./employee-documents.service";
@@ -29,19 +30,12 @@ import { UploadEmployeeDocumentDto } from "./dto/upload-employee-document.dto";
 @ApiTags("hr-employee-documents")
 @ApiBearerAuth("bearer")
 @Controller("hr/employees/:employeeId/documents")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class EmployeeDocumentsController {
   constructor(private readonly documents: EmployeeDocumentsService) {}
 
   @Get()
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.HR_MANAGER,
-    UserRole.HR_OFFICER,
-    UserRole.ACCOUNTANT,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "List employee HR documents (vault metadata)" })
   list(
     @OrganizationId() organizationId: string,
@@ -51,7 +45,7 @@ export class EmployeeDocumentsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR_OFFICER)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {

@@ -17,6 +17,7 @@ import { PostingAccountResolver } from "./posting/posting-account-resolver.servi
 import { parseOrgIsVatPayer } from "../common/org-vat-payer.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { decryptText } from "../security/pii-crypto.util";
+import { AccountingBookService } from "./accounting-book.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -33,6 +34,7 @@ export class NettingService {
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
     private readonly posting: PostingAccountResolver,
+    private readonly accountingBooks: AccountingBookService,
   ) {}
 
   /** Непогашенная дебиторка по счетам с выручкой (как в accountsReceivable). */
@@ -66,6 +68,7 @@ export class NettingService {
     organizationId: string,
     counterpartyId: string,
     ledgerType: LedgerType,
+    accountingBookId?: string,
   ): Promise<Decimal> {
     const supplierPayableCode = await this.posting.resolveAccountCode(
       organizationId,
@@ -75,6 +78,7 @@ export class NettingService {
       where: {
         organizationId,
         ledgerType,
+        ...(accountingBookId ? { accountingBookId } : {}),
         code: supplierPayableCode,
       },
     });
@@ -84,6 +88,7 @@ export class NettingService {
       where: {
         organizationId,
         ledgerType,
+        ...(accountingBookId ? { accountingBookId } : {}),
         accountId: acc.id,
         transaction: { counterpartyId },
       },
@@ -199,7 +204,19 @@ export class NettingService {
     organizationId: string,
     counterpartyId: string,
     ledgerType: LedgerType = LedgerType.NAS,
+    accountingBookId?: string,
   ) {
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    ledgerType =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
     const cp = await this.prisma.counterparty.findFirst({
       where: { id: counterpartyId, organizationId },
       select: { id: true, nameCipher: true, isVatPayer: true },
@@ -215,6 +232,7 @@ export class NettingService {
       organizationId,
       counterpartyId,
       ledgerType,
+      book.id,
     );
     const maxNet = Decimal.min(receivable, payable);
     const canNet = maxNet.gt(0);
@@ -235,7 +253,19 @@ export class NettingService {
     ledgerType: LedgerType = LedgerType.NAS,
     actingUserRole?: UserRole,
     audit?: { userId?: string; previewSuggestedAmount?: number },
+    accountingBookId?: string,
   ) {
+    const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
+      organizationId,
+      accountingBookId,
+      ledgerType,
+    );
+    ledgerType =
+      book.gaapKind === "IFRS"
+        ? LedgerType.IFRS
+        : book.gaapKind === "MANAGEMENT"
+          ? LedgerType.MANAGEMENT
+          : LedgerType.NAS;
     if (actingUserRole !== undefined) {
       assertMayPostManualJournal(actingUserRole);
     }
@@ -271,6 +301,7 @@ export class NettingService {
       organizationId,
       counterpartyId,
       ledgerType,
+      book.id,
     );
     const maxNet = Decimal.min(receivable, payable);
     if (amount.gt(maxNet)) {
@@ -291,6 +322,7 @@ export class NettingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: book.id,
         code: receivableCode,
       },
     });
@@ -298,6 +330,7 @@ export class NettingService {
       where: {
         organizationId,
         ledgerType,
+        accountingBookId: book.id,
         code: supplierPayableCode,
       },
     });
@@ -325,6 +358,7 @@ export class NettingService {
           where: {
             organizationId,
             ledgerType,
+            accountingBookId: book.id,
             code: vatInputCode,
           },
         })
@@ -334,6 +368,7 @@ export class NettingService {
           where: {
             organizationId,
             ledgerType,
+            accountingBookId: book.id,
             code: vatOutputCode,
           },
         })
@@ -378,6 +413,8 @@ export class NettingService {
         description: `Взаимозачёт: ${cpName}`,
         isFinal: true,
         counterpartyId,
+        ledgerType,
+        accountingBookId: book.id,
         lines: [...baseLines, ...vatLines],
       });
 

@@ -49,7 +49,7 @@ type JournalLine = {
 export default function JournalPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { ledgerType, ready: ledgerReady } = useLedger();
+  const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const b = monthBounds();
   const [from, setFrom] = useState(b.from);
   const [to, setTo] = useState(b.to);
@@ -66,7 +66,7 @@ export default function JournalPage() {
   useEffect(() => {
     if (!token || !ledgerReady) return;
     void (async () => {
-      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType)}`);
+      const res = await apiFetch(`/api/accounts?${ledgerQueryParam(ledgerType, accountingBookId)}`);
       if (!res.ok) return;
       setAccounts((await res.json()) as AccountOpt[]);
     })();
@@ -77,13 +77,13 @@ export default function JournalPage() {
     setLoading(true);
     setErr(null);
     try {
-      const qs = new URLSearchParams({
-        dateFrom: from,
-        dateTo: to,
-        ledgerType,
-        skip: String(nextSkip),
-        take: String(take),
-      });
+      const qs = new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      );
+      qs.set("dateFrom", from);
+      qs.set("dateTo", to);
+      qs.set("skip", String(nextSkip));
+      qs.set("take", String(take));
       if (accountCode.trim()) qs.set("accountCode", accountCode.trim());
       const res = await apiFetch(`/api/reporting/general-ledger?${qs.toString()}`);
       if (!res.ok) {
@@ -98,13 +98,18 @@ export default function JournalPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, from, to, ledgerType, accountCode, t]);
+  }, [token, from, to, ledgerType, accountingBookId, accountCode, t]);
 
   async function exportFile(format: "pdf" | "xlsx") {
     if (!token) return;
     setExportBusy(true);
     try {
-      const qs = new URLSearchParams({ dateFrom: from, dateTo: to, ledgerType, format });
+      const qs = new URLSearchParams(
+        ledgerQueryParam(ledgerType, accountingBookId),
+      );
+      qs.set("dateFrom", from);
+      qs.set("dateTo", to);
+      qs.set("format", format);
       if (accountCode.trim()) qs.set("accountCode", accountCode.trim());
       const res = await apiFetch(`/api/reporting/general-ledger/export?${qs.toString()}`);
       if (!res.ok) {

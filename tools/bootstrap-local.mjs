@@ -290,7 +290,7 @@ async function main() {
       if (adminRole) {
         const demoEnv = {
           ...env,
-          ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
+          ECOSYSTEM_DEMO_LOGIN: "shirinov.chingiz@gmail.com",
           ECOSYSTEM_DEMO_PASSWORD: demoPassword,
           ECOSYSTEM_DEMO_ADMIN_ROLE: adminRole,
         };
@@ -323,7 +323,7 @@ async function main() {
       {
         DATABASE_URL: dbUrl("era_fnb_pos"),
         ...satelliteOrgEnv("era-fnb-pos"),
-        ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
+        ECOSYSTEM_DEMO_LOGIN: "shirinov.chingiz@gmail.com",
         ECOSYSTEM_DEMO_PASSWORD:
           process.env.PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD ?? "12345678",
         ECOSYSTEM_DEMO_ADMIN_ROLE: "FB_MANAGER",

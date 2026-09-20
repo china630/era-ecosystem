@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -16,10 +19,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { CreateFixedAssetDto } from "./dto/create-fixed-asset.dto";
 import { RunMonthlyDepreciationDto } from "./dto/run-monthly-depreciation.dto";
 import { RecordFixedAssetUsageDto } from "./dto/record-fixed-asset-usage.dto";
@@ -127,8 +128,8 @@ export class FixedAssetsController {
   }
 
   @Post("acquire")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create fixed asset and capitalize in one step" })
   acquireWithCreate(
     @OrganizationId() organizationId: string,
@@ -138,8 +139,8 @@ export class FixedAssetsController {
   }
 
   @Post(":id/acquire")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Capitalize existing fixed asset (Dt 111 / Cr supplier or bank)" })
   acquire(
     @OrganizationId() organizationId: string,
@@ -150,8 +151,8 @@ export class FixedAssetsController {
   }
 
   @Post(":id/modernize")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Capitalize modernization cost on fixed asset" })
   modernize(
     @OrganizationId() organizationId: string,
@@ -162,8 +163,8 @@ export class FixedAssetsController {
   }
 
   @Post(":id/revalue")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Revalue fixed asset up or down via revaluation reserve" })
   revalue(
     @OrganizationId() organizationId: string,
@@ -174,8 +175,8 @@ export class FixedAssetsController {
   }
 
   @Post(":id/dispose")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Dispose fixed asset (full or partial)" })
   dispose(
     @OrganizationId() organizationId: string,

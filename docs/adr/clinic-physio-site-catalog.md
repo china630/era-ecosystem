@@ -26,6 +26,7 @@ ICD-10 is diagnosis, not anatomy. Full SNOMED CT is not the engine (AZ affiliate
 9. **Seed JSON is not runtime SoR** — base `prisma/seed-data/base/physio-zones-s.json` + Nafta `physio-zones-overlay.json` feed the lookup once (see [clinic-catalog-base-and-org-overlay-seeds.md](./clinic-catalog-base-and-org-overlay-seeds.md)). After seed, SatAdmin + DB own the catalog.
 10. **Electro occupancy (planning)** — four boxes, six couches: BTL 4000 between 7∥8 and between 10∥11 (2 paws per output; **any** electro procedures in parallel, same or different — med brother 2026-08-26); UNISTIM 5S on 12 and BTL 4825S Premium on 13 (4 paws each, also usable as 2-pad; US on 4825S unused). Placement is **FIFO only** (`placeConfirmedProcedures`): 12/13 are ordinary 2-pad resources — do not hold them for `4 lü`. `4 lü` / 4-pole IFC may land only on 12 or 13 when free (capability, not priority). Cabin 14 not in ERA. US/UFF stays 15–17. One electro nurse on all six couches. Separate ProcedureTypes, shared resources. Not schema until the resource wave. Cutover `#40` LOCATION pool remains 7–13.
 11. **Device programs and substances are SatAdmin catalogs** — `PhysioListItem` (`DEVICE_PROGRAM` | `SUBSTANCE`) + aliases. Do not hardcode Select options; the WO tail is open-ended. Not stuffed into thin `ClinicLookup`.
+12. **Procedure → allowed S** — `ProcedureType.allowedSiteCodes` seeded from SKU via `inferPhysioTypeGate` (e.g. `4 kamera*` → `ZONE-FOUR-CHAMBER` only). Doctor chips and PATCH reject out-of-list sites. SatAdmin may override.
 
 ## Explicitly out of scope (this ADR)
 

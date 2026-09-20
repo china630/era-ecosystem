@@ -32,7 +32,7 @@ Children aged 12+ should be counted in `adults`, not child fields.
 | `freeCount` | First N children in the band free (e.g. 1 under-6) |
 | `amountOverride` | Absolute AZN / paying child / night when `policy.childAbsolutePricingEnabled` |
 
-UI: `/distribution/child-matrix` (full CRUD). Master toggle: `/settings/pricing-policy`.
+UI: `/settings/child-matrix` (full CRUD; legacy `/distribution/child-matrix` redirects). Master toggle: `/settings/pricing-policy`. Grouped under **Rates & pricing** with BAR calendar and yield rules.
 
 ## Integration point
 

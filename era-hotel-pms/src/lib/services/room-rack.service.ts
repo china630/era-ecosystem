@@ -6,7 +6,7 @@ import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 export type RackReservationSummary = {
   id: string;
   status: string;
-  guest: { fullName: string };
+  guest: { fullName: string; sex?: string | null };
   checkInDate: string;
   checkOutDate: string;
   payStatus: 'PAID' | 'PARTIAL' | 'UNPAID' | 'NONE';
@@ -16,12 +16,17 @@ export type RackReservationSummary = {
   agencyCode: string | null;
   sourceId: string | null;
   sourceCode: string | null;
+  shareEligible?: boolean;
+  shareGender?: string | null;
+  adults?: number;
 };
 
 export type RackRoomDto = {
   id: string;
   roomNumber: string;
   status: string;
+  hkCondition?: string;
+  inventoryStatus?: string;
   floor: number;
   roomTypeId: string;
   roomType: { code: string; name: string; adultCapacity?: number };
@@ -62,8 +67,11 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       (r) => r.shareEligible && r.shareGender && r.adults === 1,
     );
     const maxBed = room.maxBed ?? room.roomType.adultCapacity ?? 2;
+    const mixedGenders = new Set(
+      shareStays.map((s) => s.shareGender).filter(Boolean),
+    ).size > 1;
     const sharePool =
-      shareStays.length > 0
+      shareStays.length > 0 && !mixedGenders
         ? {
             gender: shareStays[0]!.shareGender!,
             occupied: shareStays.length,
@@ -74,6 +82,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       id: room.id,
       roomNumber: room.roomNumber,
       status: room.status,
+      hkCondition: room.hkCondition,
+      inventoryStatus: room.inventoryStatus,
       floor: room.floor,
       roomTypeId: room.roomTypeId,
       maxBed: room.maxBed,
@@ -92,7 +102,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         return {
           id: r.id,
           status: r.status,
-          guest: { fullName: r.guest.fullName },
+          guest: { fullName: r.guest.fullName, sex: r.guest.sex },
           checkInDate: r.checkInDate.toISOString(),
           checkOutDate: r.checkOutDate.toISOString(),
           payStatus: resolvePayStatus(balance, r.folios.length > 0),
@@ -102,6 +112,9 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           agencyCode: r.agency?.code ?? null,
           sourceId: r.sourceId,
           sourceCode: r.source?.code ?? null,
+          shareEligible: r.shareEligible,
+          shareGender: r.shareGender,
+          adults: r.adults,
         };
       }),
     };

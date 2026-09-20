@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
 
 export class ClosePeriodDto {
   @ApiProperty({ example: 2026 })
@@ -16,4 +16,15 @@ export class ClosePeriodDto {
   @Min(1)
   @Max(12)
   month!: number;
+
+  /** P1 per-book close (default NAS). */
+  @ApiPropertyOptional({ enum: ["NAS", "IFRS", "MANAGEMENT"], default: "NAS" })
+  @IsOptional()
+  @IsIn(["NAS", "IFRS", "MANAGEMENT"])
+  ledgerType?: "NAS" | "IFRS" | "MANAGEMENT";
+
+  @ApiPropertyOptional({ description: "Explicit accounting book UUID" })
+  @IsOptional()
+  @IsUUID()
+  accountingBookId?: string;
 }

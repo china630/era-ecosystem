@@ -42,4 +42,4 @@ UAT source: [`era-finance-core/doc/UAT-SMOKE.md`](../../era-finance-core/doc/UAT
 
 ### UAT-SMOKE deny steps (lab)
 
-See `era-finance-core/doc/UAT-SMOKE.md` § Green Scaffold deny paths.
+See `era-finance-core/doc/UAT-SMOKE.md` § FIN-RBAC-01 (CP grant doors) and related surface sections. Wave 5 deny paths are SCREEN evidence only — not SHOW/Pilot.
