@@ -6,7 +6,6 @@ import { enterRequestTenant, requestOrganizationId } from '@/lib/request-organiz
 import { enqueueAriPush } from '@/lib/channel/channel-ari-queue.service';
 import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
 import { toDecimal } from '@/lib/decimal';
-import type { SatelliteTransactionClient } from '@era/satellite-kit';
 import type { PaymentMethod } from '@prisma/client';
 import { IndustryModuleInactiveError } from '@/lib/hotel-module-gate';
 import {
@@ -67,7 +66,7 @@ export async function resolveIbeTenant(req: Request): Promise<{
   return { organizationId: binding.organizationId, origins };
 }
 
-type Db = typeof prisma | SatelliteTransactionClient;
+type Db = typeof prisma;
 
 export async function searchIbeAvailability(
   input: {
@@ -168,7 +167,7 @@ export async function createIbeHold(input: {
         adults: input.adults,
         children: input.children,
       },
-      tx,
+      tx as unknown as Db,
     );
     const match = avail.offers.find(
       (o) => o.roomTypeId === input.roomTypeId && o.ratePlanId === input.ratePlanId,
@@ -270,7 +269,7 @@ export async function bookIbe(input: {
         adults: input.adults,
         children: input.children,
       },
-      tx,
+        tx as unknown as Db,
     );
     const match = avail.offers.find(
       (o) => o.roomTypeId === input.roomTypeId && o.ratePlanId === input.ratePlanId,
