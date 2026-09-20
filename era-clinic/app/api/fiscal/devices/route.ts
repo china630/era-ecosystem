@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server";
-import { handleRouteError } from "@/lib/api-utils";
+import {
+  getRouteSession,
+  handleRouteError,
+  requireClinicPermission,
+} from "@/lib/api-utils";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 export async function GET(request: Request) {
   try {
+    const session = await getRouteSession();
+    const denied = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.API_CASHIER,
+    );
+    if (denied) return denied;
+
     const url = new URL(request.url);
     const outletCode = url.searchParams.get("outlet") ?? undefined;
     const registerRef = url.searchParams.get("register") ?? undefined;

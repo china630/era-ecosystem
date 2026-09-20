@@ -673,6 +673,7 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/identity/guest-qr", permission: CLINIC_PERMISSION.API_IDENTITY_GUEST_QR },
   { prefix: "/api/billing/context", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/cashier", permission: CLINIC_PERMISSION.API_CASHIER },
+  { prefix: "/api/fiscal", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/insurance/check", permission: CLINIC_PERMISSION.API_PATIENTS },
   { prefix: "/api/nurse/qr-scan", permission: CLINIC_PERMISSION.API_NURSE_QR_SCAN },
   { prefix: "/api/nurse/overdue", permission: CLINIC_PERMISSION.API_NURSE_OVERDUE },
