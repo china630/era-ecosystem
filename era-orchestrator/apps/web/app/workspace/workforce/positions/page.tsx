@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import { Archive, Pencil, Plus } from "lucide-react";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -15,6 +14,7 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   ListPaginationFooter,
   ModalShell,
   PageHeader,
@@ -29,6 +29,7 @@ import {
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type PositionRow = {
   id: string;
@@ -62,6 +63,7 @@ export default function PositionsPage() {
   const [formCode, setFormCode] = useState("");
   const [formSlots, setFormSlots] = useState(1);
   const [formError, setFormError] = useState<string | null>(null);
+  const [archiveRow, setArchiveRow] = useState<PositionRow | null>(null);
 
   const [filterOrgUnitId, setFilterOrgUnitId] = useState(
     () => searchParams.get("orgUnitId") ?? "",
@@ -161,7 +163,10 @@ export default function PositionsPage() {
   }
 
   async function archivePosition(row: PositionRow) {
-    if (!window.confirm(t("archiveConfirm", { name: row.name }))) return;
+    setArchiveRow(row);
+  }
+
+  async function submitArchive(row: PositionRow) {
     setBusy(true);
     setError(null);
     const res = await wfFetch(`positions/${row.id}/archive`, {
@@ -203,7 +208,14 @@ export default function PositionsPage() {
         }
       />
 
-      <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-4`}>
+      <EraListFilterBar
+        className="mb-4"
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setFilterOrgUnitId("");
+          setFilterStatus("ACTIVE");
+        }}
+      >
         <CatalogField
           kind="ENTITY_REF"
           label={t("filterOrgUnit")}
@@ -223,7 +235,7 @@ export default function PositionsPage() {
           ]}
           emptyLabel={t("filterAll")}
         />
-      </div>
+      </EraListFilterBar>
 
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
 
@@ -391,6 +403,21 @@ export default function PositionsPage() {
           </div>
         </form>
       </ModalShell>
+      <WorkforceConfirmDialog
+        open={archiveRow !== null}
+        title={t("archiveConfirm", { name: archiveRow?.name ?? "" })}
+        body={t("archiveConfirm", { name: archiveRow?.name ?? "" })}
+        confirmLabel={tCommon("confirm")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        danger
+        onCancel={() => setArchiveRow(null)}
+        onConfirm={() => {
+          const row = archiveRow;
+          setArchiveRow(null);
+          if (row) void submitArchive(row);
+        }}
+      />
     </>
   );
 }

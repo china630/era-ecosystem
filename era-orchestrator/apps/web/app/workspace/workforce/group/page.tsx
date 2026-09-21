@@ -14,10 +14,11 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   DEFAULT_LIST_PAGE_SIZE,
+  EraListFilterBar,
   ListPaginationFooter,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "../../../../lib/auth-context";
 import { orchFetch } from "../../../../lib/orch-api";
@@ -61,6 +62,7 @@ export default function WorkforceGroupPage() {
   const [filterOrgId, setFilterOrgId] = useState("");
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q, 300);
   const [items, setItems] = useState<PersonRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -99,7 +101,7 @@ export default function WorkforceGroupPage() {
     });
     if (filterOrgId) qs.set("organizationId", filterOrgId);
     if (status) qs.set("status", status);
-    if (q.trim()) qs.set("q", q.trim());
+    if (debouncedQ.trim()) qs.set("q", debouncedQ.trim());
     const res = await wfFetch(`holding-directory?${qs}`);
     if (await isWorkforceGate403(res)) {
       setNotEntitled(true);
@@ -127,11 +129,15 @@ export default function WorkforceGroupPage() {
     setTotal(body.total ?? 0);
     setVisibleOrgs(body.visibleOrgs ?? []);
     setLoading(false);
-  }, [holdingId, page, pageSize, filterOrgId, status, q, t]);
+  }, [holdingId, page, pageSize, filterOrgId, status, debouncedQ, t]);
 
   useEffect(() => {
     if (ready) void loadHoldings();
   }, [ready, loadHoldings]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQ, filterOrgId, status, holdingId, pageSize]);
 
   useEffect(() => {
     if (ready && holdingId) void loadDirectory();
@@ -158,61 +164,52 @@ export default function WorkforceGroupPage() {
   return (
     <div className="space-y-4">
       <PageHeader title={t("title")} subtitle={t("hint")} />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setFilterOrgId("");
+          setStatus("");
+          setQ("");
+          setPage(1);
+        }}
+      >
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("holding")}
+          value={holdingId}
+          onChange={(v) => {
+            setHoldingId(String(v));
+            setFilterOrgId("");
+          }}
+          options={holdingOptions}
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("filterOrg")}
+          value={filterOrgId}
+          onChange={(v) => setFilterOrgId(String(v))}
+          options={orgOptions}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("status")}
+          value={status}
+          onChange={(v) => setStatus(String(v))}
+          options={[
+            { value: "ACTIVE", label: t("statusActive") },
+            { value: "TERMINATED", label: t("statusTerminated") },
+          ]}
+          emptyLabel={t("statusAll")}
+        />
+        <CatalogField
+          kind="FREE_TEXT"
+          label={t("search")}
+          value={q}
+          onChange={(v) => setQ(String(v))}
+          options={[]}
+        />
+      </EraListFilterBar>
       <div className={CARD_CONTAINER_CLASS}>
-        <div className="mb-3 flex flex-wrap gap-3">
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("holding")}
-            value={holdingId}
-            onChange={(v) => {
-              setHoldingId(String(v));
-              setPage(1);
-              setFilterOrgId("");
-            }}
-            options={holdingOptions}
-          />
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("filterOrg")}
-            value={filterOrgId}
-            onChange={(v) => {
-              setFilterOrgId(String(v));
-              setPage(1);
-            }}
-            options={orgOptions}
-          />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("status")}
-            value={status}
-            onChange={(v) => {
-              setStatus(String(v));
-              setPage(1);
-            }}
-            options={[
-              { value: "", label: t("statusAll") },
-              { value: "ACTIVE", label: t("statusActive") },
-              { value: "TERMINATED", label: t("statusTerminated") },
-            ]}
-          />
-          <CatalogField
-            kind="FREE_TEXT"
-            label={t("search")}
-            value={q}
-            onChange={(v) => setQ(String(v))}
-            options={[]}
-          />
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setPage(1);
-              void loadDirectory();
-            }}
-          >
-            {t("apply")}
-          </button>
-        </div>
         {error ? <p className="mb-2 text-sm text-red-600">{error}</p> : null}
         {!holdingId && holdings.length === 0 ? (
           <p className="text-sm text-[var(--era-muted)]">{t("noHoldings")}</p>

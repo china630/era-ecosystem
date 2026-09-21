@@ -38,6 +38,7 @@ import {
   normalizeSatelliteStaffLogin,
   normalizeSatelliteStaffPin,
   resolveSatelliteStaffLogin,
+  requireSatelliteStaffPin,
   resolveSatelliteStaffPin,
   staffCodeFromEmployment,
 } from "./workforce-staff-login";
@@ -180,7 +181,10 @@ export class WorkforceProvisionService {
         include: { orgUnit: true, position: true },
       });
       const resolvedLogin = resolveSatelliteStaffLogin(row.id, null, dto.login);
-      const resolvedPin = resolveSatelliteStaffPin(null, dto.pin);
+      const resolvedPin =
+        entitledKeys.length > 0
+          ? requireSatelliteStaffPin(null, dto.pin)
+          : resolveSatelliteStaffPin(null, dto.pin);
       await assertSatelliteLoginAvailable(tx, organizationId, resolvedLogin);
       await tx.workforceEmployment.update({
         where: { id: row.id },
@@ -686,7 +690,7 @@ export class WorkforceProvisionService {
       args.employment.satelliteStaffLogin,
       args.login,
     );
-    const pin = resolveSatelliteStaffPin(
+    const pin = requireSatelliteStaffPin(
       args.employment.satelliteStaffPin,
       args.pin,
     );

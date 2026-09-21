@@ -29,6 +29,7 @@ import {
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type OrgUnit = {
   id: string;
@@ -83,11 +84,13 @@ export default function OrgStructurePage() {
   const [formCode, setFormCode] = useState("");
   const [formParentId, setFormParentId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [importCsv, setImportCsv] = useState("");
   const [importXlsx, setImportXlsx] = useState<string | null>(null);
   const [importName, setImportName] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importBusy, setImportBusy] = useState<"dry" | "apply" | null>(null);
+  const [archiveUnit, setArchiveUnit] = useState<OrgUnit | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -218,8 +221,11 @@ export default function OrgStructurePage() {
     }
   }
 
-  async function archiveUnit(unit: OrgUnit) {
-    if (!window.confirm(t("archiveConfirm", { name: unit.name }))) return;
+  async function archiveUnitRow(unit: OrgUnit) {
+    setArchiveUnit(unit);
+  }
+
+  async function submitArchiveUnit(unit: OrgUnit) {
     setBusy(true);
     const res = await wfFetch(`org-units/${unit.id}/archive`, { method: "POST", body: "{}" });
     setBusy(false);
@@ -249,10 +255,19 @@ export default function OrgStructurePage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addUnit")}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setImportOpen(true)}
+            >
+              {t("importTitle")}
+            </button>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addUnit")}
+            </button>
+          </div>
         }
       />
 
@@ -273,111 +288,6 @@ export default function OrgStructurePage() {
       {error && error !== "bootstrap" ? (
         <p className="mb-3 text-sm text-red-700">{error}</p>
       ) : null}
-
-      <div className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
-        <h3 className="text-sm font-semibold text-[#34495E]">{t("importTitle")}</h3>
-        <p className="text-xs text-[#7F8C8D]">{t("importHint")}</p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => {
-              setImportCsv(ORG_TEMPLATE);
-              setImportXlsx(null);
-              setImportName("org-structure-template.csv");
-              setImportResult(null);
-            }}
-          >
-            {t("loadTemplate")}
-          </button>
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => importInputRef.current?.click()}
-          >
-            {t("chooseFile")}
-          </button>
-        </div>
-        <input
-          ref={importInputRef}
-          type="file"
-          accept=".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          className="sr-only"
-          onChange={(e) => {
-            const file = e.target.files?.[0] ?? null;
-            e.target.value = "";
-            void onPickImportFile(file);
-          }}
-        />
-        <p className="text-xs text-[#34495E]">
-          {importName
-            ? t("fileSelected", { name: importName })
-            : importCsv.trim()
-              ? t("csvPasted")
-              : t("fileNone")}
-        </p>
-        <label className="block text-xs font-medium text-[#34495E]">
-          {t("csvEditor")}
-          <textarea
-            className="mt-1 block min-h-[5rem] w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[12px] text-[#34495E]"
-            value={importCsv}
-            onChange={(e) => {
-              setImportCsv(e.target.value);
-              setImportXlsx(null);
-              setImportName(null);
-              setImportResult(null);
-            }}
-            placeholder={t("csvPlaceholder")}
-            spellCheck={false}
-          />
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={importBusy != null || !importReady}
-            onClick={() => void runOrgImport(true)}
-          >
-            {importBusy === "dry" ? t("working") : t("validate")}
-          </button>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={importBusy != null || !importReady}
-            onClick={() => void runOrgImport(false)}
-          >
-            {importBusy === "apply" ? t("working") : t("apply")}
-          </button>
-        </div>
-        {importResult ? (
-          <div className="rounded-lg border border-[#EBEDF0] bg-[#F8FAFC] p-3 text-xs text-[#34495E]">
-            <p className="font-medium">
-              {importResult.dryRun ? t("resultDryRun") : t("resultApplied")}:{" "}
-              {t("resultSummary", {
-                created: importResult.created,
-                skipped: importResult.skipped,
-                errors: importResult.errors,
-              })}
-            </p>
-            <ul className="mt-2 max-h-40 space-y-1 overflow-auto">
-              {importResult.rows.map((r) => (
-                <li
-                  key={`${r.index}-${r.status}-${r.message}`}
-                  className={
-                    r.status === "error"
-                      ? "text-[#C0392B]"
-                      : r.status === "created"
-                        ? "text-[#27AE60]"
-                        : "text-[#7F8C8D]"
-                  }
-                >
-                  #{r.index} {r.status}: {r.message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </div>
 
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
@@ -439,7 +349,7 @@ export default function OrgStructurePage() {
                           title={t("archive")}
                           aria-label={t("archive")}
                           disabled={busy}
-                          onClick={() => void archiveUnit(u)}
+                          onClick={() => void archiveUnitRow(u)}
                         >
                           <Archive className="h-4 w-4 text-[#C0392B]" aria-hidden />
                         </button>
@@ -523,6 +433,142 @@ export default function OrgStructurePage() {
           </div>
         </form>
       </ModalShell>
+
+      <ModalShell
+        open={importOpen}
+        title={t("importTitle")}
+        onClose={() => setImportOpen(false)}
+        closeLabel={tCommon("close")}
+        maxWidthClass="max-w-xl"
+      >
+        <div className="space-y-3">
+          <p className="text-xs text-[#7F8C8D]">{t("importHint")}</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => {
+                setImportCsv(ORG_TEMPLATE);
+                setImportXlsx(null);
+                setImportName("org-structure-template.csv");
+                setImportResult(null);
+              }}
+            >
+              {t("loadTemplate")}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => importInputRef.current?.click()}
+            >
+              {t("chooseFile")}
+            </button>
+          </div>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              e.target.value = "";
+              void onPickImportFile(file);
+            }}
+          />
+          <p className="text-xs text-[#34495E]">
+            {importName
+              ? t("fileSelected", { name: importName })
+              : importCsv.trim()
+                ? t("csvPasted")
+                : t("fileNone")}
+          </p>
+          <label className="block text-xs font-medium text-[#34495E]">
+            {t("csvEditor")}
+            <textarea
+              className="mt-1 block min-h-[5rem] w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[12px] text-[#34495E]"
+              value={importCsv}
+              onChange={(e) => {
+                setImportCsv(e.target.value);
+                setImportXlsx(null);
+                setImportName(null);
+                setImportResult(null);
+              }}
+              placeholder={t("csvPlaceholder")}
+              spellCheck={false}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={importBusy != null || !importReady}
+              onClick={() => void runOrgImport(true)}
+            >
+              {importBusy === "dry" ? t("working") : t("validate")}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={importBusy != null || !importReady}
+              onClick={() => void runOrgImport(false)}
+            >
+              {importBusy === "apply" ? t("working") : t("apply")}
+            </button>
+          </div>
+          {importResult ? (
+            <div className="rounded-lg border border-[#EBEDF0] bg-[#F8FAFC] p-3 text-xs text-[#34495E]">
+              <p className="font-medium">
+                {importResult.dryRun ? t("resultDryRun") : t("resultApplied")}:{" "}
+                {t("resultSummary", {
+                  created: importResult.created,
+                  skipped: importResult.skipped,
+                  errors: importResult.errors,
+                })}
+              </p>
+              <ul className="mt-2 max-h-40 space-y-1 overflow-auto">
+                {importResult.rows.map((r) => (
+                  <li
+                    key={`${r.index}-${r.status}-${r.message}`}
+                    className={
+                      r.status === "error"
+                        ? "text-[#C0392B]"
+                        : r.status === "created"
+                          ? "text-[#27AE60]"
+                          : "text-[#7F8C8D]"
+                    }
+                  >
+                    #{r.index} {r.status}: {r.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setImportOpen(false)}
+            >
+              {tCommon("close")}
+            </button>
+          </div>
+        </div>
+      </ModalShell>
+      <WorkforceConfirmDialog
+        open={archiveUnit !== null}
+        title={t("archiveConfirm", { name: archiveUnit?.name ?? "" })}
+        body={t("archiveConfirm", { name: archiveUnit?.name ?? "" })}
+        confirmLabel={tCommon("confirm")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        danger
+        onCancel={() => setArchiveUnit(null)}
+        onConfirm={() => {
+          const unit = archiveUnit;
+          setArchiveUnit(null);
+          if (unit) void submitArchiveUnit(unit);
+        }}
+      />
     </>
   );
 }

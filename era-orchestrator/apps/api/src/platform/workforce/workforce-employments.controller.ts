@@ -62,6 +62,9 @@ export class WorkforceEmploymentsController {
       orgUnitIds: managedIds,
       positionId: query.positionId,
       satelliteKey: query.satelliteKey,
+      q: query.q,
+      sex: query.sex,
+      ageBucket: query.ageBucket,
       page: Math.max(1, Number(query.page) || 1),
       pageSize: Math.min(100, Math.max(1, Number(query.pageSize) || 50)),
     });

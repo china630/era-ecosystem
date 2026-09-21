@@ -8,9 +8,14 @@ import {
   UserRole,
   WorkforceEmploymentStatus,
 } from "@era365/database";
+import { MdmService } from "../../mdm/mdm.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import {
+  isWorkforceFinQuery,
+  personMatchesNameQuery,
+} from "./workforce-person-search.util";
 import { staffCodeFromEmployment } from "./workforce-staff-login";
 
 const HR_ROLES: UserRole[] = [UserRole.OWNER, UserRole.HR_MANAGER];
@@ -27,6 +32,7 @@ export class WorkforceHoldingService {
     private readonly prisma: PrismaService,
     private readonly entitlement: WorkforceEntitlementService,
     private readonly employments: WorkforceEmploymentsService,
+    private readonly mdm: MdmService,
   ) {}
 
   /**
@@ -159,21 +165,23 @@ export class WorkforceHoldingService {
 
     let personIds = [...byPerson.keys()];
 
-    // Optional q filter applied after MDM names (and staffCode)
-    const q = opts?.q?.trim().toLowerCase();
-    if (q) {
-      const personsPreview = await this.mergePersonProfiles(
-        scopedOrgIds,
-        personIds,
-      );
-      personIds = personIds.filter((pid) => {
-        const rows = byPerson.get(pid) ?? [];
-        const name = (personsPreview[pid]?.displayName ?? "").toLowerCase();
-        const codes = rows
-          .map((r) => staffCodeFromEmployment(r.id).toLowerCase())
-          .join(" ");
-        return name.includes(q) || codes.includes(q) || pid.toLowerCase().includes(q);
-      });
+    // Optional q: FIN exact (blind index) or name substring — never UUID / staffCode / mask
+    const qRaw = opts?.q?.trim() ?? "";
+    if (qRaw) {
+      if (isWorkforceFinQuery(qRaw)) {
+        const finPersonId = await this.mdm.findPersonIdByFin(qRaw);
+        personIds = finPersonId && byPerson.has(finPersonId) ? [finPersonId] : [];
+      } else if (qRaw.length >= 2) {
+        const personsPreview = await this.mergePersonProfiles(
+          scopedOrgIds,
+          personIds,
+        );
+        const qLower = qRaw.toLowerCase();
+        personIds = personIds.filter((pid) =>
+          personMatchesNameQuery(personsPreview[pid], qLower),
+        );
+      }
+      // 1-char non-FIN q is ignored (keep full directory) — do not empty the list.
     }
 
     personIds.sort((a, b) => a.localeCompare(b));

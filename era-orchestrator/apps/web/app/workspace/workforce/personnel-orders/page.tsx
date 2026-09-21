@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import { Ban, Check, FileText, MoreHorizontal, Plus } from "lucide-react";
 import {
   CatalogField,
   DATA_TABLE_CLASS,
@@ -12,12 +12,15 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
   ListPaginationFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   CARD_CONTAINER_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
@@ -26,6 +29,7 @@ import {
   workforceFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type OrderRow = {
   id: string;
@@ -42,6 +46,7 @@ type OrderRow = {
 type EmploymentOpt = { id: string; globalPersonId: string };
 
 const ORDER_TYPES = ["HIRE", "TRANSFER", "TERMINATE", "LEAVE_ANNUAL"] as const;
+const ORDER_STATUSES = ["DRAFT", "ISSUED", "CANCELLED"] as const;
 const LOCALES = ["az", "ru"] as const;
 
 export default function PersonnelOrdersPage() {
@@ -81,9 +86,24 @@ export default function PersonnelOrdersPage() {
   const [requireOrderIssuedBeforeTerminate, setRequireOrderIssuedBeforeTerminate] =
     useState(false);
   const [settingsBusy, setSettingsBusy] = useState(false);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
+  const [listType, setListType] = useState(orderTypeFilter);
+  const [listStatus, setListStatus] = useState("");
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
 
   const { page, pageSize, setPage, setPageSize, paged, total } =
     useListPagination(rows);
+
+  useEffect(() => {
+    if (!moreMenuId) return;
+    const onDoc = (e: MouseEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest("[data-order-more-menu]")) return;
+      setMoreMenuId(null);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [moreMenuId]);
 
   const empOptions = useMemo(
     () =>
@@ -115,10 +135,12 @@ export default function PersonnelOrdersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const qs = filterEmploymentId
-      ? `?employmentId=${encodeURIComponent(filterEmploymentId)}`
-      : "";
-    const res = await workforceFetch(`personnel-orders${qs}`);
+    const qs = new URLSearchParams();
+    if (filterEmploymentId) qs.set("employmentId", filterEmploymentId);
+    if (listType) qs.set("type", listType);
+    if (listStatus) qs.set("status", listStatus);
+    const q = qs.toString();
+    const res = await workforceFetch(`personnel-orders${q ? `?${q}` : ""}`);
     if (await isWorkforceGate403(res)) {
       setGated(true);
       setLoading(false);
@@ -144,7 +166,7 @@ export default function PersonnelOrdersPage() {
       if (data.persons) setPersons(data.persons);
     }
     setLoading(false);
-  }, [t, filterEmploymentId]);
+  }, [t, filterEmploymentId, listType, listStatus]);
 
   const loadSettings = useCallback(async () => {
     const res = await workforceFetch("personnel-orders/settings");
@@ -257,7 +279,10 @@ export default function PersonnelOrdersPage() {
   }
 
   async function cancel(id: string) {
-    if (!window.confirm(t("cancelConfirm"))) return;
+    setCancelOrderId(id);
+  }
+
+  async function submitCancel(id: string) {
     setBusy(true);
     try {
       const res = await workforceFetch(`personnel-orders/${id}/cancel`, {
@@ -387,25 +412,35 @@ export default function PersonnelOrdersPage() {
           </div>
         }
       />
+      <EraListFilterBar
+        className="mb-4"
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setListType("");
+          setListStatus("");
+        }}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colType")}
+          value={listType}
+          onChange={(next) => setListType(String(next))}
+          options={typeOptions}
+          emptyLabel={tCommon("all")}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colStatus")}
+          value={listStatus}
+          onChange={(next) => setListStatus(String(next))}
+          options={ORDER_STATUSES.map((v) => ({
+            value: v,
+            label: t(`status.${v}` as "status.DRAFT"),
+          }))}
+          emptyLabel={tCommon("all")}
+        />
+      </EraListFilterBar>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <div className={`space-y-2 ${CARD_CONTAINER_CLASS} p-3`}>
-        <p className="text-sm text-[var(--era-muted)]">{t("draftHint")}</p>
-        <label className="flex items-start gap-2 text-sm text-[#34495E]">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={requireOrderIssuedBeforeTerminate}
-            disabled={settingsBusy}
-            onChange={(e) => void patchSettings(e.target.checked)}
-          />
-          <span>
-            {t("requireOrderBeforeTerminate")}
-            <span className="mt-0.5 block text-xs text-[var(--era-muted)]">
-              {t("requireOrderBeforeTerminateHint")}
-            </span>
-          </span>
-        </label>
-      </div>
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
       ) : (
@@ -448,30 +483,62 @@ export default function PersonnelOrdersPage() {
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
                     </td>
-                    <td className={`${DATA_TABLE_TD_CLASS} flex flex-wrap gap-2`}>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "DRAFT"}
-                        onClick={() => void issue(r.id)}
-                      >
-                        {t("issue")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "DRAFT"}
-                        onClick={() => void cancel(r.id)}
-                      >
-                        {t("cancel")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => void downloadPdf(r.id)}
-                      >
-                        PDF
-                      </button>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <div className="relative flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("issue")}
+                          aria-label={t("issue")}
+                          disabled={busy || r.status !== "DRAFT"}
+                          onClick={() => void issue(r.id)}
+                        >
+                          <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("pdf")}
+                          aria-label={t("pdf")}
+                          disabled={busy}
+                          onClick={() => void downloadPdf(r.id)}
+                        >
+                          <FileText className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <div className="relative" data-order-more-menu="">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("moreActions")}
+                            aria-label={t("moreActions")}
+                            disabled={busy}
+                            onClick={() =>
+                              setMoreMenuId((id) => (id === r.id ? null : r.id))
+                            }
+                          >
+                            <MoreHorizontal
+                              className="h-4 w-4 text-[#7F8C8D]"
+                              aria-hidden
+                            />
+                          </button>
+                          {moreMenuId === r.id ? (
+                            <div className="absolute right-0 z-10 mt-1 min-w-[11rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || r.status !== "DRAFT"}
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  void cancel(r.id);
+                                }}
+                              >
+                                <Ban className="h-3.5 w-3.5 text-[#C0392B]" aria-hidden />
+                                {t("cancel")}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -521,35 +588,29 @@ export default function PersonnelOrdersPage() {
             onChange={(next) => setLocale(String(next))}
             options={localeOptions}
           />
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("colDate")}
-            <input
-              type="date"
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
-              value={effectiveDate}
-              onChange={(e) => setEffectiveDate(e.target.value)}
-            />
-          </label>
+          <DatePicker
+            label={t("colDate")}
+            value={effectiveDate}
+            onChange={setEffectiveDate}
+            placeholder={tCommon("datePlaceholder")}
+            fluid
+          />
           {type === "LEAVE_ANNUAL" ? (
             <>
-              <label className="block text-[13px] font-medium text-[#34495E]">
-                {t("leaveStart")}
-                <input
-                  type="date"
-                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
-                  value={leaveStart}
-                  onChange={(e) => setLeaveStart(e.target.value)}
-                />
-              </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
-                {t("leaveEnd")}
-                <input
-                  type="date"
-                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
-                  value={leaveEnd}
-                  onChange={(e) => setLeaveEnd(e.target.value)}
-                />
-              </label>
+              <DatePicker
+                label={t("leaveStart")}
+                value={leaveStart}
+                onChange={setLeaveStart}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+              />
+              <DatePicker
+                label={t("leaveEnd")}
+                value={leaveEnd}
+                onChange={setLeaveEnd}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+              />
             </>
           ) : null}
           <button
@@ -567,8 +628,27 @@ export default function PersonnelOrdersPage() {
         title={t("templates")}
         onClose={() => setTplOpen(false)}
         closeLabel={tCommon("close")}
+        maxWidthClass="max-w-xl"
       >
         <form className="grid gap-3" onSubmit={(e) => e.preventDefault()}>
+          <div className={`space-y-2 ${CARD_CONTAINER_CLASS} p-3`}>
+            <p className="text-sm text-[var(--era-muted)]">{t("draftHint")}</p>
+            <label className="flex items-start gap-2 text-sm text-[#34495E]">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={requireOrderIssuedBeforeTerminate}
+                disabled={settingsBusy}
+                onChange={(e) => void patchSettings(e.target.checked)}
+              />
+              <span>
+                {t("requireOrderBeforeTerminate")}
+                <span className="mt-0.5 block text-xs text-[var(--era-muted)]">
+                  {t("requireOrderBeforeTerminateHint")}
+                </span>
+              </span>
+            </label>
+          </div>
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("colType")}
@@ -628,6 +708,21 @@ export default function PersonnelOrdersPage() {
           </div>
         </form>
       </ModalShell>
+      <WorkforceConfirmDialog
+        open={cancelOrderId !== null}
+        title={t("cancel")}
+        body={t("cancelConfirm")}
+        confirmLabel={tCommon("confirm")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        danger
+        onCancel={() => setCancelOrderId(null)}
+        onConfirm={() => {
+          const id = cancelOrderId;
+          setCancelOrderId(null);
+          if (id) void submitCancel(id);
+        }}
+      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Ban, RotateCcw } from "lucide-react";
 import {
-  CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -14,12 +13,14 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   DEFAULT_LIST_PAGE_SIZE,
+  EraListFilterBar,
   ListPaginationFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
 import {
@@ -90,6 +91,7 @@ export default function WorkforceSecurityGrantsPage() {
   const [modalError, setModalError] = useState<string | null>(null);
 
   const [filterText, setFilterText] = useState("");
+  const debouncedFilterText = useDebouncedValue(filterText, 300);
   const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
   const [filterPositionId, setFilterPositionId] = useState("");
   const [filterSatellite, setFilterSatellite] = useState("");
@@ -225,26 +227,14 @@ export default function WorkforceSecurityGrantsPage() {
         if (posId !== filterPositionId) return false;
       }
       if (filterRole && g.satelliteRole !== filterRole) return false;
-      if (filterText.trim().length >= 2) {
-        const q = filterText.trim().toLowerCase();
-        const name = (emp ? personName(emp.globalPersonId) : "").toLowerCase();
-        const reason = (g.reason ?? "").toLowerCase();
-        const unit = (emp?.orgUnit?.name ?? "").toLowerCase();
-        const pos = (emp?.position?.name ?? "").toLowerCase();
-        const role = g.satelliteRole.toLowerCase();
-        const hay = `${name} ${reason} ${unit} ${pos} ${role}`;
-        if (!hay.includes(q)) return false;
-      }
       return true;
     });
   }, [
     grants,
-    filterText,
     filterOrgUnitId,
     filterPositionId,
     filterRole,
     employmentById,
-    personName,
   ]);
 
   const filterResetKey = [
@@ -268,7 +258,7 @@ export default function WorkforceSecurityGrantsPage() {
     if (filterStatus === "ACTIVE") qs.set("revoked", "false");
     else if (filterStatus === "REVOKED") qs.set("revoked", "true");
     if (filterSatellite) qs.set("satelliteKey", filterSatellite);
-    if (filterText.trim().length >= 2) qs.set("search", filterText.trim());
+    if (debouncedFilterText.trim().length >= 2) qs.set("search", debouncedFilterText.trim());
     const grantRes = await wfFetch(`manual-grants?${qs}`);
     if (grantRes.ok) {
       const payload = (await grantRes.json()) as {
@@ -278,7 +268,7 @@ export default function WorkforceSecurityGrantsPage() {
       setGrants(Array.isArray(payload.items) ? payload.items : []);
       setGrantsTotal(typeof payload.total === "number" ? payload.total : 0);
     }
-  }, [filterStatus, filterSatellite, filterText, page, pageSize]);
+  }, [filterStatus, filterSatellite, debouncedFilterText, page, pageSize]);
 
   const loadEmployments = useCallback(async (): Promise<boolean> => {
     const empRes = await wfFetch("employments?page=1&pageSize=100");
@@ -393,7 +383,25 @@ export default function WorkforceSecurityGrantsPage() {
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
       ) : (
         <>
-          <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-4`}>
+          <EraListFilterBar
+            className="mb-4"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setFilterText("");
+              setFilterOrgUnitId("");
+              setFilterPositionId("");
+              setFilterSatellite("");
+              setFilterRole("");
+              setFilterStatus("ACTIVE");
+            }}
+            actionsExtra={
+              hasActiveFilters ? (
+                <p className="pb-1 text-xs text-[#7F8C8D]">
+                  {t("filterResultCount", { count: filteredGrants.length })}
+                </p>
+              ) : null
+            }
+          >
             <label className="text-[13px] font-medium text-[#34495E]">
               {t("filterSearch")}
               <input
@@ -446,15 +454,12 @@ export default function WorkforceSecurityGrantsPage() {
               kind="CLOSED_SMALL"
               label={t("filterStatus")}
               value={filterStatus}
-              onChange={(next) => setFilterStatus(String(next) as GrantStatusFilter)}
+              onChange={(next) =>
+                setFilterStatus(String(next) as GrantStatusFilter)
+              }
               options={statusOptions}
             />
-            {hasActiveFilters ? (
-              <p className="pb-1 text-xs text-[#7F8C8D]">
-                {t("filterResultCount", { count: filteredGrants.length })}
-              </p>
-            ) : null}
-          </div>
+          </EraListFilterBar>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
