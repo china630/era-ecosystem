@@ -8,8 +8,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { orchFetch } from "../../../lib/orch-api";
-import { useAuth } from "../../../lib/auth-context";
+import { orchFetch } from "../../../../lib/orch-api";
+import { useAuth } from "../../../../lib/auth-context";
 
 type PublicCfg = {
   apiBase: string;

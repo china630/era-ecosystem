@@ -4322,6 +4322,8 @@ export const resources = {
         },
       },
       print: {
+        chooseLanguage: "Язык печати",
+        print: "Печать",
         ko1: {
           formNo: "Forma № KO-1",
           orderTitle: "KASSA MƏDAXİL ORDERI",
@@ -4662,6 +4664,7 @@ export const resources = {
         selectAll: "Выбрать все",
         paginationNext: "Вперёд",
         paginationPageOf: "Стр. {{page}} из {{pages}} (всего {{total}})",
+        filterReset: "Сбросить фильтр",
       },
       trade: {
         export: {
@@ -9059,6 +9062,8 @@ export const resources = {
         },
       },
       print: {
+        chooseLanguage: "Çap dili",
+        print: "Çap et",
         ko1: {
           formNo: "Forma № KO-1",
           orderTitle: "KASSA MƏDAXİL ORDERI",
@@ -9401,6 +9406,7 @@ export const resources = {
         selectAll: "Hamısını seç",
         paginationNext: "Növbəti",
         paginationPageOf: "Səh. {{page}} / {{pages}} (cəmi {{total}})",
+        filterReset: "Filtri sıfırla",
       },
       trade: {
         export: {
