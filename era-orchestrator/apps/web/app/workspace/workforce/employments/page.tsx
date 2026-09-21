@@ -1551,8 +1551,6 @@ export default function WorkforceEmploymentsPage() {
               {t("fieldStaffPin")}
               <input
                 className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
                 value={hirePin}
                 onChange={(e) => setHirePin(e.target.value)}
                 required={satelliteKeys.length > 0}
