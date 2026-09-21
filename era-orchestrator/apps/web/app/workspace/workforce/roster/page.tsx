@@ -12,6 +12,8 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -99,6 +101,7 @@ export default function WorkforceRosterPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [materializeMsg, setMaterializeMsg] = useState<string | null>(null);
+  const [materializeOpen, setMaterializeOpen] = useState(false);
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [targetKind, setTargetKind] = useState<"employment" | "brigade">(
@@ -367,6 +370,16 @@ export default function WorkforceRosterPage() {
               type="button"
               className={SECONDARY_BUTTON_CLASS}
               onClick={() => {
+                setMaterializeMsg(null);
+                setMaterializeOpen(true);
+              }}
+            >
+              {t("materialize")}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => {
                 setOvEmploymentId(employments[0]?.id ?? "");
                 setOvDay(1);
                 setOvKind("DAY_OFF");
@@ -397,60 +410,49 @@ export default function WorkforceRosterPage() {
         }
       />
 
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          const n = new Date();
+          setYear(n.getFullYear());
+          setMonth(n.getMonth() + 1);
+          setFilterPlaceId("");
+          setFilterOrgUnitId("");
+        }}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("year")}
+          value={String(year)}
+          onChange={(v) => setYear(Number(v))}
+          options={yearOptions}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("month")}
+          value={String(month)}
+          onChange={(v) => setMonth(Number(v))}
+          options={monthOptions}
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("filterPlace")}
+          value={filterPlaceId}
+          onChange={(v) => setFilterPlaceId(String(v))}
+          options={placeOptions}
+          emptyLabel={t("allPlaces")}
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("filterOrgUnit")}
+          value={filterOrgUnitId}
+          onChange={(v) => setFilterOrgUnitId(String(v))}
+          options={unitOptions}
+          emptyLabel={t("allUnits")}
+        />
+      </EraListFilterBar>
+
       <div className={CARD_CONTAINER_CLASS}>
-        <div className="mb-4 flex flex-wrap items-end gap-3">
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("year")}
-            value={String(year)}
-            onChange={(v) => setYear(Number(v))}
-            options={yearOptions}
-          />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("month")}
-            value={String(month)}
-            onChange={(v) => setMonth(Number(v))}
-            options={monthOptions}
-          />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("preserveManual")}
-            value={preserveManual ? "yes" : "no"}
-            onChange={(v) => setPreserveManual(v === "yes")}
-            options={[
-              { value: "no", label: t("preserveNo") },
-              { value: "yes", label: t("preserveYes") },
-            ]}
-          />
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={busy}
-            onClick={() => void materialize()}
-          >
-            {t("materialize")}
-          </button>
-        </div>
-        {materializeMsg ? (
-          <p className="mb-3 text-sm text-[var(--era-muted)]">{materializeMsg}</p>
-        ) : null}
-        <div className="mb-3 flex flex-wrap gap-3">
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("filterPlace")}
-            value={filterPlaceId}
-            onChange={(v) => setFilterPlaceId(String(v))}
-            options={[{ value: "", label: t("allPlaces") }, ...placeOptions]}
-          />
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("filterOrgUnit")}
-            value={filterOrgUnitId}
-            onChange={(v) => setFilterOrgUnitId(String(v))}
-            options={[{ value: "", label: t("allUnits") }, ...unitOptions]}
-          />
-        </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         {loading ? (
           <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
@@ -714,6 +716,52 @@ export default function WorkforceRosterPage() {
               {tCommon("save")}
             </button>
           </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={materializeOpen}
+        onClose={() => setMaterializeOpen(false)}
+        title={t("materialize")}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setMaterializeOpen(false)}
+            onSubmit={() => void materialize()}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={t("materialize")}
+            busy={busy}
+          />
+        }
+      >
+        <div className="space-y-3">
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("year")}
+            value={String(year)}
+            onChange={(v) => setYear(Number(v))}
+            options={yearOptions}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("month")}
+            value={String(month)}
+            onChange={(v) => setMonth(Number(v))}
+            options={monthOptions}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("preserveManual")}
+            value={preserveManual ? "yes" : "no"}
+            onChange={(v) => setPreserveManual(v === "yes")}
+            options={[
+              { value: "no", label: t("preserveNo") },
+              { value: "yes", label: t("preserveYes") },
+            ]}
+          />
+          {materializeMsg ? (
+            <p className="text-sm text-[var(--era-muted)]">{materializeMsg}</p>
+          ) : null}
         </div>
       </ModalShell>
     </div>

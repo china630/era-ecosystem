@@ -21,10 +21,14 @@ describe("WorkforceHoldingService", () => {
   const employments = {
     resolvePersonProfiles: jest.fn(),
   };
+  const mdm = {
+    findPersonIdByFin: jest.fn().mockResolvedValue(null),
+  };
   const svc = new WorkforceHoldingService(
     prisma,
     entitlement as never,
     employments as never,
+    mdm as never,
   );
 
   beforeEach(() => {
@@ -312,6 +316,36 @@ describe("WorkforceHoldingService", () => {
     expect(card.visibleOrgs.map((o) => o.organizationId).sort()).toEqual(
       [ORG_A, ORG_B].sort(),
     );
+  });
+
+  it("directory 1-char non-FIN q keeps all persons", async () => {
+    mockHoldingWithOrgs([
+      { id: ORG_A, name: "Evrostar", operatingMode: OrgOperatingMode.STANDALONE },
+    ]);
+    prisma.organizationMembership.findMany.mockResolvedValue([
+      {
+        organization: {
+          id: ORG_A,
+          name: "Evrostar",
+          operatingMode: OrgOperatingMode.STANDALONE,
+        },
+      },
+    ]);
+    prisma.workforceEmployment.findMany.mockResolvedValue([
+      {
+        id: EMP_A,
+        organizationId: ORG_A,
+        globalPersonId: PERSON,
+        status: "ACTIVE",
+        hireDate: new Date("2026-01-01"),
+        orgUnit: { id: "u1", name: "Ops" },
+        position: { id: "p1", name: "Cleaner" },
+        organization: { id: ORG_A, name: "Evrostar" },
+      },
+    ]);
+    const dir = await svc.directory(USER, ORG_A, HOLDING, { q: "I" });
+    expect(dir.items).toHaveLength(1);
+    expect(mdm.findPersonIdByFin).not.toHaveBeenCalled();
   });
 });
 

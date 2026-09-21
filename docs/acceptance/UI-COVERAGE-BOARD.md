@@ -166,7 +166,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-09-20 | BANK-RBAC-01 Bank Variant A ops matrix **SCREEN** (not SHOW); AC-BNK-RBAC out of BE rollup. |
 | 2026-09-18 | FIN-RBAC-01 Finance Wave 5 CP grant doors **SCREEN** (not SHOW); AC-FIN-RBAC out of BE rollup. |
 | 2026-09-18 | P2 density: FIN-EMAS / roster / orders / group dual-VÖEN copy+preview stay **SCREEN** (not SHIPPED); Demo/Pilot unchanged. |
-| 2026-09-18 | P1 operator gaps: FIN-EMAS-01 / CP-WF-ATT-01 / CP-WF-SEC audit stay **SCREEN** (not SHIPPED); queue/attendance/audit label polish; group→Finance handoff. Demo/Pilot unchanged. |
+| 2026-09-21 | Platform Workforce UI hygiene: nested shifts/attendance SCREENs; employments server q; modals for import/bulk/materialize; Status=API (not SHOW / not SHIPPED). |\n| 2026-09-18 | P1 operator gaps: FIN-EMAS-01 / CP-WF-ATT-01 / CP-WF-SEC audit stay **SCREEN** (not SHIPPED); queue/attendance/audit label polish; group→Finance handoff. Demo/Pilot unchanged. |
 | 2026-09-17 | Platform CP-WF-ATT-01 attendance FaceID **SCREEN** (`/workspace/workforce/attendance`); COVERAGE Status=API until field tablet UAT. |
 | 2026-09-07 | Platform public IA: guest `/` hub + `/satellites/[slug]` + `/pricing` catalog/meters (SCREEN marketing, not SHOW). |
 | 2026-09-07 | HOT-CL-06 + HOT-AGP-04 statement SHOW; company CL SHIPPED with line statement. |

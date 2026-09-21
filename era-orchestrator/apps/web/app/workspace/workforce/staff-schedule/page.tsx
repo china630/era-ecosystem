@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import {
+  Check,
+  FileText,
+  List,
+  MoreHorizontal,
+  Plus,
+  Send,
+} from "lucide-react";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -11,10 +18,11 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   ListPaginationFooter,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
@@ -54,8 +62,24 @@ export default function StaffSchedulePage() {
   const [busy, setBusy] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<SnapshotRow[]>([]);
+  const [confirmAct, setConfirmAct] = useState<{
+    id: string;
+    action: "submit" | "approve";
+  } | null>(null);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
   const { page, pageSize, setPage, setPageSize, paged, total } =
     useListPagination(rows);
+
+  useEffect(() => {
+    if (!moreMenuId) return;
+    const onDoc = (e: MouseEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest("[data-schedule-more-menu]")) return;
+      setMoreMenuId(null);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [moreMenuId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -104,6 +128,7 @@ export default function StaffSchedulePage() {
 
   async function act(id: string, action: "submit" | "approve") {
     setBusy(true);
+    setConfirmAct(null);
     try {
       const res = await workforceFetch(`staff-schedule/${id}/${action}`, {
         method: "POST",
@@ -202,38 +227,79 @@ export default function StaffSchedulePage() {
                     <td className={DATA_TABLE_TD_CLASS}>
                       {r.createdAt ? String(r.createdAt).slice(0, 10) : "—"}
                     </td>
-                    <td className={`${DATA_TABLE_TD_CLASS} flex flex-wrap gap-2`}>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => void toggleExpand(r.id)}
-                      >
-                        {expandedId === r.id ? t("hideSlots") : t("showSlots")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "DRAFT"}
-                        onClick={() => void act(r.id, "submit")}
-                      >
-                        {t("submit")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "SUBMITTED"}
-                        onClick={() => void act(r.id, "approve")}
-                      >
-                        {t("approve")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={r.status === "DRAFT"}
-                        onClick={() => void downloadPdf(r.id)}
-                      >
-                        PDF
-                      </button>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <div className="relative flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={
+                            expandedId === r.id ? t("hideSlots") : t("showSlots")
+                          }
+                          aria-label={
+                            expandedId === r.id ? t("hideSlots") : t("showSlots")
+                          }
+                          onClick={() => void toggleExpand(r.id)}
+                        >
+                          <List className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("submit")}
+                          aria-label={t("submit")}
+                          disabled={busy || r.status !== "DRAFT"}
+                          onClick={() =>
+                            setConfirmAct({ id: r.id, action: "submit" })
+                          }
+                        >
+                          <Send className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("approve")}
+                          aria-label={t("approve")}
+                          disabled={busy || r.status !== "SUBMITTED"}
+                          onClick={() =>
+                            setConfirmAct({ id: r.id, action: "approve" })
+                          }
+                        >
+                          <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+                        </button>
+                        <div className="relative" data-schedule-more-menu="">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("moreActions")}
+                            aria-label={t("moreActions")}
+                            disabled={busy}
+                            onClick={() =>
+                              setMoreMenuId((id) => (id === r.id ? null : r.id))
+                            }
+                          >
+                            <MoreHorizontal
+                              className="h-4 w-4 text-[#7F8C8D]"
+                              aria-hidden
+                            />
+                          </button>
+                          {moreMenuId === r.id ? (
+                            <div className="absolute right-0 z-10 mt-1 min-w-[11rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={r.status === "DRAFT"}
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  void downloadPdf(r.id);
+                                }}
+                              >
+                                <FileText className="h-3.5 w-3.5" aria-hidden />
+                                {t("pdf")}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -306,6 +372,33 @@ export default function StaffSchedulePage() {
             {t("create")}
           </button>
         </form>
+      </ModalShell>
+
+      <ModalShell
+        open={confirmAct != null}
+        title={confirmAct?.action === "approve" ? t("approve") : t("submit")}
+        onClose={() => setConfirmAct(null)}
+        closeLabel={tCommon("close")}
+        maxWidthClass="max-w-sm"
+        footer={
+          <ModalFooter
+            onCancel={() => setConfirmAct(null)}
+            onSubmit={() => {
+              if (confirmAct) void act(confirmAct.id, confirmAct.action);
+            }}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={
+              confirmAct?.action === "approve" ? t("approve") : t("submit")
+            }
+            busy={busy}
+          />
+        }
+      >
+        <p className="text-sm text-[#34495E]">
+          {confirmAct?.action === "approve"
+            ? t("confirmApprove")
+            : t("confirmSubmit")}
+        </p>
       </ModalShell>
     </div>
   );

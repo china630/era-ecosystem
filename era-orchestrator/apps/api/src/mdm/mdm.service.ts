@@ -231,6 +231,20 @@ export class MdmService {
     };
   }
 
+  /**
+   * Exact FIN → person id via blind index (Workforce list search).
+   * Returns null when FIN shape is invalid or person is missing — no grant side-effects.
+   */
+  async findPersonIdByFin(finRaw: string): Promise<string | null> {
+    const fin = finRaw.trim().toUpperCase();
+    if (!FIN_PATTERN.test(fin)) return null;
+    const person = await this.mdm.globalNaturalPerson.findUnique({
+      where: { finBlindIndex: blindIndexFin(fin) },
+      select: { id: true },
+    });
+    return person?.id ?? null;
+  }
+
   async lookupNaturalPersonByFin(input: {
     fin: string;
     requesterOrgId?: string;

@@ -13,6 +13,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -313,70 +314,78 @@ export default function WorkforceSecurityMatrixPage() {
             </div>
           </div>
 
+          <EraListFilterBar
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setFilterText("");
+              setFilterOrgUnitId("");
+              setFilterPositionId("");
+              setFilterSatellite("");
+              setFilterAccessState("");
+            }}
+            actionsExtra={
+              hasActiveFilters ? (
+                <p className="pb-1 text-xs text-[#7F8C8D]">
+                  {t("filterResultCount", { count: filteredPositions.length })}
+                </p>
+              ) : null
+            }
+          >
+            <label className="text-[13px] font-medium text-[#34495E]">
+              {t("filterSearch")}
+              <input
+                className="mt-1 block w-48 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                placeholder={t("filterSearchPlaceholder")}
+              />
+            </label>
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("filterOrgUnit")}
+              value={filterOrgUnitId}
+              onChange={(next) => {
+                setFilterOrgUnitId(String(next));
+                setFilterPositionId("");
+              }}
+              options={orgUnitOptions}
+              emptyLabel={t("filterAll")}
+            />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("filterPosition")}
+              value={filterPositionId}
+              onChange={(next) => setFilterPositionId(String(next))}
+              options={filterPositionOptions.map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))}
+              emptyLabel={t("filterAll")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("filterSatellite")}
+              value={filterSatellite}
+              onChange={(next) => setFilterSatellite(String(next))}
+              options={satelliteOptions}
+              emptyLabel={t("filterAll")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("filterAccessState")}
+              value={filterAccessState}
+              onChange={(next) =>
+                setFilterAccessState(String(next) as AccessStateFilter)
+              }
+              options={accessStateOptions}
+              emptyLabel={t("filterAll")}
+            />
+          </EraListFilterBar>
+
           <section className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
             <div className="border-b border-[#EBEDF0] px-4 py-3">
               <h2 className="text-sm font-semibold text-[#34495E]">{t("matrixTitle")}</h2>
               <p className="text-xs text-[#7F8C8D]">{t("matrixHint")}</p>
-            </div>
-            <div className="flex flex-wrap items-end gap-3 border-b border-[#EBEDF0] px-4 py-3">
-              <label className="text-[13px] font-medium text-[#34495E]">
-                {t("filterSearch")}
-                <input
-                  className="mt-1 block w-48 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                  value={filterText}
-                  onChange={(e) => setFilterText(e.target.value)}
-                  placeholder={t("filterSearchPlaceholder")}
-                />
-              </label>
-              <CatalogField
-                kind="ENTITY_REF"
-                label={t("filterOrgUnit")}
-                value={filterOrgUnitId}
-                onChange={(next) => {
-                  setFilterOrgUnitId(String(next));
-                  setFilterPositionId("");
-                }}
-                options={[
-                  { value: "", label: t("filterAll") },
-                  ...orgUnitOptions,
-                ]}
-                emptyLabel={t("filterAll")}
-              />
-              <CatalogField
-                kind="ENTITY_REF"
-                label={t("filterPosition")}
-                value={filterPositionId}
-                onChange={(next) => setFilterPositionId(String(next))}
-                options={[
-                  { value: "", label: t("filterAll") },
-                  ...filterPositionOptions.map((p) => ({
-                    value: p.id,
-                    label: p.name,
-                  })),
-                ]}
-                emptyLabel={t("filterAll")}
-              />
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("filterSatellite")}
-                value={filterSatellite}
-                onChange={(next) => setFilterSatellite(String(next))}
-                options={satelliteOptions}
-                emptyLabel={t("filterAll")}
-              />
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("filterAccessState")}
-                value={filterAccessState}
-                onChange={(next) => setFilterAccessState(String(next) as AccessStateFilter)}
-                options={accessStateOptions}
-                emptyLabel={t("filterAll")}
-              />
-              {hasActiveFilters ? (
-                <p className="pb-1 text-xs text-[#7F8C8D]">
-                  {t("filterResultCount", { count: filteredPositions.length })}
-                </p>
-              ) : null}
             </div>
             {matrixError ? (
               <p className="border-b border-[#EBEDF0] px-4 py-2 text-[13px] text-[#C0392B]">

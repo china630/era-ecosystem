@@ -61,3 +61,5 @@ Do not call this table «product readiness».
 | `era-orchestrator/apps/api/src/admin/cp-bind-negative.spec.ts` | AC-CP-BIND |
 | `era-orchestrator/apps/api/src/admin/cp-cfg-negative.spec.ts` | AC-CP-CFG |
 | `era-orchestrator/apps/api/src/placement/placement-job.service.spec.ts` (SHARED↔ONPREM + Wave 7 advance chain) | AC-CP-TOPO (still 🟡) |
+
+| 2026-09-21 | Workforce UI/API hygiene wave: server list q; i18n Group/Roster/Attendance; ModalShell for import/bulk/materialize; nested shifts/attendance. Scaffold stays 🟡 / Pilot [ ] — no UAT-SMOKE claim. |

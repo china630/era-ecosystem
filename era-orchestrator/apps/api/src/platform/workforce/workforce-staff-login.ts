@@ -85,11 +85,29 @@ export function resolveSatelliteStaffLogin(
   return defaultSatelliteStaffLogin(employmentId);
 }
 
+/** Resolved PIN or null — never invents a demo default (no silent `0000`). */
 export function resolveSatelliteStaffPin(
   stored: string | null | undefined,
   override?: string | null,
-): string {
-  return normalizeSatelliteStaffPin(override ?? undefined) ??
+): string | null {
+  return (
+    normalizeSatelliteStaffPin(override ?? undefined) ??
     normalizeSatelliteStaffPin(stored ?? undefined) ??
-    "0000";
+    null
+  );
+}
+
+/** Require PIN when saving/provisioning satellite login seats. */
+export function requireSatelliteStaffPin(
+  stored: string | null | undefined,
+  override?: string | null,
+): string {
+  const pin = resolveSatelliteStaffPin(stored, override);
+  if (!pin) {
+    throw new BadRequestException({
+      code: "PIN_REQUIRED",
+      message: "PIN is required for satellite login",
+    });
+  }
+  return pin;
 }

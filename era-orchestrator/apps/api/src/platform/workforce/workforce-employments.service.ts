@@ -22,6 +22,11 @@ import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import type { CreateWorkforceEmploymentDto } from "./dto/workforce-employment.dto";
 import type { TransferEmploymentDto } from "./dto/workforce-org.dto";
+import {
+  isWorkforceFinQuery,
+  personMatchesNameQuery,
+  personMatchesSexAge,
+} from "./workforce-person-search.util";
 
 function parseDateOnly(iso: string): Date {
   const d = iso.slice(0, 10);
@@ -67,6 +72,9 @@ export class WorkforceEmploymentsService {
       orgUnitIds?: string[] | null;
       positionId?: string;
       satelliteKey?: string;
+      q?: string;
+      sex?: string;
+      ageBucket?: string;
       page?: number;
       pageSize?: number;
     },
@@ -108,16 +116,84 @@ export class WorkforceEmploymentsService {
           }
         : {}),
     };
-    const [items, total] = await Promise.all([
-      this.prisma.workforceEmployment.findMany({
-        where,
-        include: EMPLOYMENT_INCLUDE,
-        orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.workforceEmployment.count({ where }),
-    ]);
+
+    const qRaw = opts?.q?.trim() ?? "";
+    const needsPersonFilter =
+      Boolean(qRaw) || Boolean(opts?.sex) || Boolean(opts?.ageBucket);
+
+    if (!needsPersonFilter) {
+      const [items, total] = await Promise.all([
+        this.prisma.workforceEmployment.findMany({
+          where,
+          include: EMPLOYMENT_INCLUDE,
+          orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        this.prisma.workforceEmployment.count({ where }),
+      ]);
+      const draftOrdersByEmployment = await this.personnelOrders.listDraftBanners(
+        organizationId,
+        items.map((i) => i.id),
+      );
+      return { items, total, page, pageSize, draftOrdersByEmployment };
+    }
+
+    const candidates = await this.prisma.workforceEmployment.findMany({
+      where,
+      select: { id: true, globalPersonId: true, hireDate: true, createdAt: true },
+      orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
+    });
+
+    let allowedPersonIds: Set<string> | null = null;
+    if (qRaw && isWorkforceFinQuery(qRaw)) {
+      const personId = await this.mdm.findPersonIdByFin(qRaw);
+      allowedPersonIds = new Set(personId ? [personId] : []);
+    } else if (qRaw.length >= 2 || opts?.sex || opts?.ageBucket) {
+      const uniquePersonIds = [...new Set(candidates.map((c) => c.globalPersonId))];
+      const profiles = await this.mdm.batchGetPersonOpsProfile(
+        uniquePersonIds,
+        organizationId,
+      );
+      const qLower = qRaw.length >= 2 ? qRaw.toLowerCase() : "";
+      allowedPersonIds = new Set(
+        uniquePersonIds.filter((pid) => {
+          const p = profiles[pid];
+          if (qLower && !personMatchesNameQuery(p, qLower)) return false;
+          if (!personMatchesSexAge(p, opts?.sex, opts?.ageBucket)) return false;
+          return true;
+        }),
+      );
+    }
+
+    const filteredIds =
+      allowedPersonIds == null
+        ? candidates.map((c) => c.id)
+        : candidates
+            .filter((c) => allowedPersonIds!.has(c.globalPersonId))
+            .map((c) => c.id);
+
+    const total = filteredIds.length;
+    const pageIds = filteredIds.slice((page - 1) * pageSize, page * pageSize);
+    if (pageIds.length === 0) {
+      return {
+        items: [],
+        total,
+        page,
+        pageSize,
+        draftOrdersByEmployment: {},
+      };
+    }
+
+    const itemsUnordered = await this.prisma.workforceEmployment.findMany({
+      where: { id: { in: pageIds } },
+      include: EMPLOYMENT_INCLUDE,
+    });
+    const byId = new Map(itemsUnordered.map((i) => [i.id, i]));
+    const items = pageIds
+      .map((id) => byId.get(id))
+      .filter((x): x is NonNullable<typeof x> => Boolean(x));
+
     const draftOrdersByEmployment = await this.personnelOrders.listDraftBanners(
       organizationId,
       items.map((i) => i.id),

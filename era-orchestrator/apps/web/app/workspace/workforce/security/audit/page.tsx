@@ -5,16 +5,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   ListPaginationFooter,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { getOrchAccessToken, orchFetch } from "../../../../../lib/orch-api";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
@@ -171,7 +170,15 @@ export default function WorkforceSecurityAuditPage() {
           ← {t("back")}
         </Link>
       </p>
-      <div className={`${CARD_CONTAINER_CLASS} mb-4 grid gap-3 p-4 sm:grid-cols-4`}>
+      <EraListFilterBar
+        className="mb-4"
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setAction("");
+          setGlobalPersonId("");
+          setHoldingId("");
+        }}
+      >
         <CatalogField
           kind="CLOSED_MEDIUM"
           label={t("filterAction")}
@@ -196,12 +203,7 @@ export default function WorkforceSecurityAuditPage() {
           options={holdingOptions}
           emptyLabel={t("holdingAny")}
         />
-        <div className="flex items-end">
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void load()}>
-            {loading ? t("loading") : t("apply")}
-          </button>
-        </div>
-      </div>
+      </EraListFilterBar>
       <div className={DATA_TABLE_VIEWPORT_CLASS}>
         <table className={DATA_TABLE_CLASS}>
           <thead>

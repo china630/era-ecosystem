@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -11,39 +11,37 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   PageHeader,
-  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { useRequireAuth } from "../../../../lib/use-require-auth";
+import { useRequireAuth } from "../../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
   workforceFetch as wfFetch,
-} from "../../../../lib/workforce-fetch";
-import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
-import { WorkforceShiftsSubnav } from "../../../../components/workspace/workforce-shifts-subnav";
-import { fmtMinutes, type ShiftType } from "./_lib/types";
+} from "../../../../../lib/workforce-fetch";
+import { WorkforceGate } from "../../../../../components/workspace/workforce-gate";
+import { WorkforceShiftsSubnav } from "../../../../../components/workspace/workforce-shifts-subnav";
+import { cycleTape, type Cycle } from "../_lib/types";
 
-export default function WorkforceShiftTypesPage() {
+export default function WorkforceShiftCyclesPage() {
   const { ready } = useRequireAuth();
   const t = useTranslations("workforceRoster");
   const tCommon = useTranslations("common");
 
-  const [types, setTypes] = useState<ShiftType[]>([]);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const tRes = await wfFetch("shift-types");
-    if (await isWorkforceGate403(tRes)) {
+    const cRes = await wfFetch("shift-cycles");
+    if (await isWorkforceGate403(cRes)) {
       setNotEntitled(true);
       setLoading(false);
       return;
     }
     setNotEntitled(false);
-    if (tRes.ok) setTypes(await tRes.json());
+    if (cRes.ok) setCycles(await cRes.json());
     else setError(t("loadError"));
     setLoading(false);
   }, [t]);
@@ -52,19 +50,21 @@ export default function WorkforceShiftTypesPage() {
     if (ready) void load();
   }, [ready, load]);
 
-  async function ensureDefaults() {
-    setBusy(true);
-    await wfFetch("roster/ensure-defaults", { method: "POST", body: "{}" });
-    setBusy(false);
-    await load();
-  }
+  const cycleSummaries = useMemo(
+    () =>
+      cycles.map((c) => ({
+        ...c,
+        tape: cycleTape(c.slots),
+      })),
+    [cycles],
+  );
 
   if (!ready) return null;
   if (notEntitled) return <WorkforceGate />;
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("shiftsTitle")} subtitle={t("shiftsHint")} />
+      <PageHeader title={t("cyclesHeading")} subtitle={t("shiftsHint")} />
       <WorkforceShiftsSubnav />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -72,39 +72,22 @@ export default function WorkforceShiftTypesPage() {
         <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
       ) : (
         <section className={CARD_CONTAINER_CLASS}>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold">{t("shiftTypesHeading")}</h2>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void ensureDefaults()}
-            >
-              {t("seedDefaults")}
-            </button>
-          </div>
+          <h2 className="mb-3 text-base font-semibold">{t("cyclesHeading")}</h2>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCode")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colWindow")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHours")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTape")}</th>
                 </tr>
               </thead>
               <tbody>
-                {types.map((row) => (
+                {cycleSummaries.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {fmtMinutes(row.startMinute)}–{fmtMinutes(row.endMinute)}
-                      {row.isNight ? ` (${t("night")})` : ""}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {String(row.defaultHours)}
-                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.tape}</td>
                   </tr>
                 ))}
               </tbody>
