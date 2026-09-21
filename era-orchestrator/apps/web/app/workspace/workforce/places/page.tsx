@@ -161,7 +161,7 @@ export default function WorkforcePlacesPage() {
     <div className="space-y-4">
       <PageHeader
         title={t("placesTitle")}
-        description={t("placesHint")}
+        subtitle={t("placesHint")}
         actions={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             <Plus className="h-4 w-4" />
@@ -175,7 +175,7 @@ export default function WorkforcePlacesPage() {
             kind="CLOSED_SMALL"
             label={t("filterStatus")}
             value={filterStatus}
-            onChange={setFilterStatus}
+            onChange={(next) => setFilterStatus(Array.isArray(next) ? (next[0] ?? "") : next)}
             options={statusOptions}
           />
         </div>
@@ -244,7 +244,7 @@ export default function WorkforcePlacesPage() {
               kind="CLOSED_SMALL"
               label={t("colStatus")}
               value={formStatus}
-              onChange={setFormStatus}
+              onChange={(v) => setFormStatus(String(v))}
               options={statusOptions}
             />
           ) : null}
@@ -252,7 +252,7 @@ export default function WorkforcePlacesPage() {
             kind="ENTITY_REF"
             label={t("responsibleUnit")}
             value={formOrgUnitId}
-            onChange={setFormOrgUnitId}
+            onChange={(v) => setFormOrgUnitId(String(v))}
             options={unitOptions}
           />
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}

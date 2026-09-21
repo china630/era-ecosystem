@@ -195,7 +195,7 @@ export default function WorkforceShiftsPage() {
     <div className="space-y-6">
       <PageHeader
         title={t("shiftsTitle")}
-        description={t("shiftsHint")}
+        subtitle={t("shiftsHint")}
         actions={
           <button
             type="button"

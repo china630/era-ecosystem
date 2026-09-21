@@ -360,7 +360,7 @@ export default function WorkforceRosterPage() {
     <div className="space-y-4">
       <PageHeader
         title={t("rosterTitle")}
-        description={t("rosterHint")}
+        subtitle={t("rosterHint")}
         actions={
           <div className="flex flex-wrap gap-2">
             <button

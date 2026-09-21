@@ -3,6 +3,8 @@ import {
   sessionHasAnyCpPermission,
 } from "@era/contracts";
 
+export { CP_PERMISSION };
+
 export type PermissionSubject = {
   permissions?: string[] | null;
   isOwner?: boolean;

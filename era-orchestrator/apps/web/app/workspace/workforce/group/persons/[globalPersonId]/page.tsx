@@ -168,7 +168,7 @@ export default function WorkforceGroupPersonPage() {
     <div className="space-y-4">
       <PageHeader
         title={personName ?? t("personCard")}
-        description={t("personHint")}
+        subtitle={t("personHint")}
         actions={
           <Link
             href={`/workspace/workforce/group?holdingId=${holdingId}`}
