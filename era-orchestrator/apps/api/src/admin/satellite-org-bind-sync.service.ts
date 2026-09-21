@@ -425,7 +425,9 @@ function decryptFiscalSecrets(
 ): Record<string, string> | null {
   if (!cipher?.trim()) return null;
   try {
-    return JSON.parse(decryptText(cipher)) as Record<string, string>;
+    const payload = decryptText(cipher);
+    if (!payload) return null;
+    return JSON.parse(payload) as Record<string, string>;
   } catch {
     return null;
   }

@@ -52,7 +52,7 @@ export class KafeOnboardService {
       name: dto.cafeName.trim(),
       taxId: dto.taxId.trim(),
     });
-    const organizationId = session.user.organizationId;
+    const organizationId = session.claims.organizationId;
     if (!organizationId) {
       throw new BadRequestException("Organization was not created");
     }

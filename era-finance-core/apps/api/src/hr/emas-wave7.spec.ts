@@ -55,6 +55,7 @@ describe("EmasContractService wave 7", () => {
   const adapterFactory = {
     assertEnabled: jest.fn(),
     get: jest.fn(),
+    isGatewayConfigured: jest.fn().mockReturnValue(false),
   };
   const svc = new EmasContractService(
     prisma,
