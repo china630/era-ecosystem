@@ -1,7 +1,17 @@
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
-const scryptAsync = promisify(scrypt);
+/** Lazily bind so importing this module in a non-Node bundle does not throw at load. */
+function scryptAsync(
+  password: string,
+  salt: string,
+  keylen: number,
+): Promise<Buffer> {
+  if (typeof scrypt !== "function") {
+    return Promise.reject(new Error("scrypt is not available in this runtime"));
+  }
+  return promisify(scrypt)(password, salt, keylen) as Promise<Buffer>;
+}
 
 /**
  * Fixed dummy scrypt row used to pad login miss paths so unknown org / unknown

@@ -6,7 +6,7 @@ import {
   FORM_INPUT_CLASS,
   MODAL_FIELD_LABEL_CLASS,
 } from "./design-system";
-import { readLoginOrgNoPrefill } from "../auth/staff-login-org";
+import { readLoginOrgNoPrefill } from "../auth/staff-login-org-storage";
 
 export function useStaffLoginOrgNo(searchParams: {
   get: (key: string) => string | null;

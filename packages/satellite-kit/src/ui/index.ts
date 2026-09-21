@@ -1,3 +1,8 @@
+/**
+ * Client UI barrel. Do not re-export Node auth (password/scrypt, session verify).
+ * Staff orgNo localStorage helpers live in staff-login-org-storage.ts so this
+ * graph stays browser-safe (prod crash: util.promisify(scrypt) on app.era-365.online).
+ */
 export { orchPublicHref, orchWebUrl } from "../platform/orch-web-url";
 export * from "./design-system";
 export { FIELD_WIDTH, fieldWidthClass, type FieldWidthPreset } from "./field-presets";
@@ -50,7 +55,7 @@ export {
   LOGIN_ORG_NO_STORAGE_KEY,
   readLoginOrgNoPrefill,
   persistLoginOrgNo,
-} from "../auth/staff-login-org";
+} from "../auth/staff-login-org-storage";
 export {
   useStaffLoginOrgNo,
   StaffLoginOrgNoField,
